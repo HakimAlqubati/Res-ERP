@@ -74,12 +74,12 @@ class UserResource extends Resource
                     ->label('')
                     ->inline()
                     ->options([
-                        'existing_employee' => 'Existing Employee',
+                        // 'existing_employee' => 'Existing Employee',
                         'attendance_user'   => 'Attendance User',
                         'new_user'          => 'New User',
                     ])
                     ->icons([
-                        'existing_employee' => 'heroicon-o-identification',
+                        // 'existing_employee' => 'heroicon-o-identification',
                         'attendance_user'   => 'heroicon-o-camera',
                         'new_user'          => 'heroicon-o-user-plus',
                     ])->visibleOn('create')
@@ -94,7 +94,7 @@ class UserResource extends Resource
                 //         ->inline(false)->helperText('Check if you want to create a user account for attendance webcam')
                 //         ->live(),
                 // ])->hiddenOn('edit'),
-                self::employeExistingForm(),
+                // self::employeExistingForm(),
                 self::newUserForm(),
                 self::attendanceForm(),
             ]);

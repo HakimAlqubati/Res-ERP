@@ -8,6 +8,8 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use OwenIt\Auditing\Contracts\Auditable;
@@ -335,7 +337,7 @@ class Employee extends Model implements Auditable
     {
         return $this->hasMany(EmployeeAllowance::class);
     }
-    
+
 
     public function deductions()
     {
@@ -468,7 +470,7 @@ class Employee extends Model implements Auditable
             for ($i = 0; $i < $attendances->count(); $i++) {
                 $checkIn = $attendances[$i];
 
-                if(count($attendances)>0){
+                if (count($attendances) > 0) {
                     // dd($attendances);
                 }
                 // Ensure the current record is a check-in
@@ -477,7 +479,7 @@ class Employee extends Model implements Auditable
                     $i++;
                     if ($i < $attendances->count()) {
                         $checkOut = $attendances[$i];
-                        
+
                         // Ensure it is indeed a check-out
                         if ($checkOut->check_type === 'checkout') {
                             // dd($checkIn,$checkOut);
@@ -785,5 +787,59 @@ class Employee extends Model implements Auditable
     public function faceData()
     {
         return $this->hasMany(EmployeeFaceData::class, 'employee_id');
+    }
+
+    public function createLinkedUser(array $data = []): ?User
+    {
+        if ($this->user_id) {
+            return $this->user; // عنده يوزر بالفعل
+        }
+
+        return DB::transaction(function () use ($data) {
+            try {
+                $managerUserId = $this->manager_id
+                    ? Employee::find($this->manager_id)?->user_id
+                    : null;
+
+                $userData = [
+                    'name'         => $data['name'] ?? $this->name,
+                    'email'        => $data['email'] ?? $this->email,
+                    'phone_number' => $data['phone_number'] ?? $this->phone_number,
+                    'password'     => bcrypt($data['password'] ?? '123456'),
+                    'branch_id'    => $this->branch_id,
+                    'user_type'    => $this->employee_type,
+                    'nationality'  => $this->nationality,
+                    'gender'       => $this->gender,
+                    'owner_id'     => $managerUserId,
+                ];
+
+                // avatar إذا موجود
+                if ($this->avatar && (
+                    Storage::disk('s3')->exists($this->avatar) ||
+                    Storage::disk('public')->exists($this->avatar)
+                )) {
+                    $userData['avatar'] = $this->avatar;
+                }
+
+                $user = User::create($userData);
+
+                $this->update(['user_id' => $user->id]);
+
+                // إرسال ايميل (اختياري)
+                if (!empty($user->email)) {
+                    Mail::to($user->email)->send(
+                        new MailableEmployee($this->name, $user->email)
+                    );
+                }
+
+                return $user;
+            } catch (\Throwable $e) {
+                Log::error('Failed to create user for employee', [
+                    'employee_id' => $this->id,
+                    'error'       => $e->getMessage(),
+                ]);
+                throw $e;
+            }
+        });
     }
 }

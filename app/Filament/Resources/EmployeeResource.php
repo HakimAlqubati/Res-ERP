@@ -180,43 +180,43 @@ class EmployeeResource extends Resource
                                                     ]),
 
                                             ]),]),
-                                    Tab::make('Address & Avatar')
+                                    Tab::make('Address')
                                         ->icon(Heroicon::MapPin)
                                         ->schema([
                                             Fieldset::make()->label('Employee address')->columnSpanFull()->schema([
                                                 Textarea::make('address')->label('')->columnSpanFull(),
                                             ]),
-                                            Fieldset::make()->label('Upload avatar image')
-                                                ->columnSpanFull()
-                                                ->schema([
-                                                    Grid::make()->columnSpanFull()->schema([
-                                                        FileUpload::make('avatar')
-                                                            ->image()
-                                                            ->label('')
-                                                            // ->avatar()
-                                                            ->imageEditor()
+                                        ]),
+                                    Tab::make('Avatar')
+                                        ->icon(Heroicon::UserCircle)
+                                        ->schema([
 
-                                                            ->circleCropper()
-                                                            ->disk('public')
-                                                            // ->directory('employees')
-                                                            ->visibility('public')
-                                                            ->imageEditorAspectRatios([
-                                                                '16:9',
-                                                                '4:3',
-                                                                '1:1',
-                                                            ])
-                                                            // ->disk('s3') // Change disk to S3
-                                                            ->directory('employees')
-                                                            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                                                return Str::random(15) . "." . $file->getClientOriginalExtension();
-                                                            })
-                                                            // ->imagePreviewHeight('250')
-                                                            // ->resize(5)
-                                                            ->maxSize(333)
-                                                            ->columnSpan(2)
-                                                            ->reactive(),
-                                                    ]),
-                                                ]),
+                                            FileUpload::make('avatar')->columnSpanFull()
+                                                ->image()
+                                                ->label('')
+                                                // ->avatar()
+                                                ->imageEditor()
+
+                                                ->circleCropper()
+                                                ->disk('public')
+                                                // ->directory('employees')
+                                                ->visibility('public')
+                                                ->imageEditorAspectRatios([
+                                                    '16:9',
+                                                    '4:3',
+                                                    '1:1',
+                                                ])
+                                                // ->disk('s3') // Change disk to S3
+                                                ->directory('employees')
+                                                ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                                    return Str::random(15) . "." . $file->getClientOriginalExtension();
+                                                })
+                                                // ->imagePreviewHeight('250')
+                                                // ->resize(5)
+                                                ->maxSize(1000)
+                                                ->columnSpan(2)
+                                                ->reactive(),
+
                                         ])
                                 ]),
 
@@ -243,6 +243,10 @@ class EmployeeResource extends Resource
                                             ->required()
                                             // ->disabledOn('edit')
                                             ->live()
+                                            ->afterStateUpdated(function ($state, callable $set) {
+                                                // عند تغيير الفرع -> أفرغ قيمة owner_id
+                                                $set('manager_id', null);
+                                            })
                                             ->options(
                                                 Branch::selectable()
                                                     ->select('id', 'name')
@@ -618,6 +622,11 @@ class EmployeeResource extends Resource
                     ->sortable()
                     ->wrap()
                     ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('manager.name')
+                    ->label('Manager')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->searchable(),
+
                 TextColumn::make('email')->icon('heroicon-m-envelope')->copyable()
                     ->sortable()->searchable()->limit(20)->default('@')->tooltip(fn($state) => $state)
                     ->toggleable(isToggledHiddenByDefault: false)
@@ -804,6 +813,25 @@ class EmployeeResource extends Resource
 
             ])
             ->recordActions([
+
+                Action::make('createUser')->button()
+                    ->label('Create User')
+                    ->icon('heroicon-o-user-plus')
+                    ->color('success')
+                    ->visible(fn($record) => ! $record->user_id)
+                    ->form(fn($record) => static::createUserForm($record))
+                    ->action(function (array $data, $record) {
+                        $user = $record->createLinkedUser($data);
+
+                        if ($user) {
+                            Notification::make()
+                                ->title('User Created')
+                                ->body("A new user has been created for {$record->name}.")
+                                ->success()
+                                ->send();
+                        }
+                    }),
+
 
                 Action::make('index')
                     ->label('AWS Indexing')->button()
@@ -1112,5 +1140,27 @@ class EmployeeResource extends Resource
         return array_map(function () {
             return round(mt_rand() / mt_getrandmax(), 6);
         }, range(1, 128));
+    }
+
+    public static function createUserForm($record = null): array
+    {
+        return [
+            Fieldset::make()->columnSpanFull()->columns(2)->schema([
+
+                TextInput::make('name')
+                    ->default($record?->name)
+                    ->required(),
+
+                TextInput::make('email')
+                    ->email()
+                    ->default($record?->email)->readOnly()
+                    ->unique(ignoreRecord: true) // يشيك داخل hr_employees
+                    ->required(),
+
+
+            ])
+
+
+        ];
     }
 }

@@ -67,6 +67,11 @@ trait HasNewUserForm
                                 $roles = $get('roles') ?? [];
                                 return ! in_array(5, $roles);
                             })
+                            ->live()
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                // عند تغيير الفرع -> أفرغ قيمة owner_id
+                                $set('owner_id', null);
+                            })
                             ->searchable()
                             ->options(function () {
                                 return Branch::selectable()
