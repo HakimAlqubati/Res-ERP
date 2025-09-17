@@ -144,6 +144,7 @@ trait HasNewUserForm
                                 return true;
                             }
                         })
+
                         ->label('Manager')
                         ->searchable()
                         ->options(function ($get) {
@@ -155,7 +156,8 @@ trait HasNewUserForm
                             return User::where('branch_id', $branchId)->whereIn('user_type', [1, 2, 3])
                                 ->select('id', 'name')
                                 ->pluck('name', 'id');
-                        }),
+                        })
+                        ->required(fn(Get $get) => in_array((int) $get('user_type'), [3, 4])),
 
                 ]),
                 Fieldset::make()->columnSpanFull()->label('')->schema([

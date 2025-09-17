@@ -34,42 +34,46 @@ class EditUser extends EditRecord
         // Access the related employee model
         $user = $this->record;
         $employee = $user->employee;
+
         // dd($user,$employee);
-        if ($employee) {
 
-            // Check if 'email' or 'phone_number' has changed in the user model
-            // if ($user->isDirty('email')) {
-            $employee->email = $user->email;
-            // }
-            // if ($user->isDirty('phone_number')) {
-            $employee->phone_number = $user->phone_number;
-            // }
-            // if ($user->isDirty('name')) {
-            $employee->name = $user->name;
-            // }
+        if (! $employee) {
+            return;
+        }
 
-            $employee->employee_type = $user?->user_type;
-            // if ($user->isDirty('branch_id')) {
-            $employee->branch_id = $user?->branch_id;
+        $updates = [];
 
-            if (!is_null($employee?->gender)) {
-                $employee->gender = $user->gender;
+        if ($user->wasChanged('email')) {
+            $updates['email'] = $user->email;
+        }
+        if ($user->wasChanged('phone_number')) {
+            $updates['phone_number'] = $user->phone_number;
+        }
+        if ($user->wasChanged('name')) {
+            $updates['name'] = $user->name;
+        }
+
+        $updates['employee_type'] = $user->user_type;
+        $updates['branch_id'] = $user->branch_id;
+
+        if ($user->wasChanged('gender')) {
+            $updates['gender'] = $user->gender;
+        }
+        if ($user->wasChanged('nationality')) {
+            $updates['nationality'] = $user->nationality;
+        }
+
+        if ($user->wasChanged('owner_id') && $user->owner_id) {
+            $managerEmployee = \App\Models\User::find($user->owner_id)?->employee;
+            if ($managerEmployee) {
+                $updates['manager_id'] = $managerEmployee->id;
             }
+        }
 
-            if (!is_null($employee?->nationality)) {
-                $employee->nationality = $user->nationality;
-            }
+        // dd($updates);
 
-            if (!is_null($user->owner_id)) {
-                $managerEmployee = \App\Models\User::find($user->owner_id)?->employee;
-                if ($managerEmployee) {
-                    $employee->manager_id = $managerEmployee->id;
-                }
-            }
-
-
-            // Save changes to the employee model
-            $employee->save();
+        if (! empty($updates)) {
+            $employee->updateQuietly($updates);
         }
     }
     protected function getRedirectUrl(): string
