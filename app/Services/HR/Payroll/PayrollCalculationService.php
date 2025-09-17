@@ -84,13 +84,13 @@ class PayrollCalculationService
                 'payroll_run_id' => $run->id,
                 'year'           => $run->year,
                 'month'          => $run->month,
-           
+
                 'unit'           => $txn['unit']        ?? null,
                 'qty'            => $txn['qty']         ?? null,
                 'rate'           => $txn['rate']        ?? null,
                 'multiplier'     => $txn['multiplier']  ?? null,
             ];
-            
+
             $payload = [
                 'employeeId' => $employee->id,
                 'amount'     => $amount,
@@ -98,7 +98,7 @@ class PayrollCalculationService
                 'description' => $txn['description'] ?? null,
                 'type'       => $txn['type'] ?? 'other',
                 'subType'    => $txn['sub_type'] ?? null,
-                'operation'  => $txn['operation'] ?? '+',
+                'operation' => array_key_exists('operation', $txn) ? $txn['operation'] : null,
                 'payrollId'  => $payroll->id,
                 // Make sure repo stores this on the model -> payroll_run_id
                 'extra'      =>  $extra,

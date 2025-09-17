@@ -17,6 +17,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Schemas\Components\Grid;
 use Illuminate\Validation\Rules\Unique;
 
 class ListLeaveBalances extends ListRecords
@@ -50,34 +51,37 @@ class ListLeaveBalances extends ListRecords
                 })
                 ->schema(function () {
                     return [
-                        Fieldset::make()->columnSpanFull()->columns(5)->schema([
-                            Select::make('employee_id')
-                                ->label('Employee')
-                                ->required()
-                                ->searchable()
-                                ->unique(
-                                    ignoreRecord: true,
-                                    modifyRuleUsing: function (Unique $rule,  Get $get, $state) {
-                                        return $rule->where('employee_id', $state)
-                                            ->where('leave_type_id', $get('leave_type_id'))
-                                            ->where('year', $get('year'))
-                                            ->where('month', $get('../../month'))
-                                        ;
-                                    }
-                                )->validationMessages([
-                                    'unique' => 'Balance already created'
-                                ])
-                                ->getSearchResultsUsing(fn(string $search): array => Employee::where('name', 'like', "%{$search}%")->limit(50)->pluck('name', 'id')->toArray())
-                                ->getOptionLabelUsing(fn($value): ?string => Employee::find($value)?->name),
-                            Select::make('leave_type_id')->label('Leave type')
-                                ->required()
+                        Fieldset::make()->columnSpanFull()->columns(3)->schema([
+                            Grid::make()->columns(2)->columnSpanFull()->schema([
+                                Select::make('employee_id')
+                                    ->label('Employee')
+                                    ->required()
+                                    ->searchable()
+                                    ->unique(
+                                        ignoreRecord: true,
+                                        modifyRuleUsing: function (Unique $rule,  Get $get, $state) {
+                                            return $rule->where('employee_id', $state)
+                                                ->where('leave_type_id', $get('leave_type_id'))
+                                                ->where('year', $get('year'))
+                                                ->where('month', $get('../../month'))
+                                            ;
+                                        }
+                                    )->validationMessages([
+                                        'unique' => 'Balance already created'
+                                    ])
+                                    ->getSearchResultsUsing(fn(string $search): array => Employee::where('name', 'like', "%{$search}%")->limit(50)->pluck('name', 'id')->toArray())
+                                    ->getOptionLabelUsing(fn($value): ?string => Employee::find($value)?->name),
+                                Select::make('leave_type_id')->label('Leave type')
+                                    ->required()
 
-                                ->live()
-                                ->options(LeaveType::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))
-                                ->afterStateUpdated(function (Get $get, Set $set, $state, $livewire) {
-                                    $leaveType = LeaveType::find($state);
-                                    $set('balance', $leaveType->count_days);
-                                }),
+                                    ->live()
+                                    ->options(LeaveType::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))
+                                    ->afterStateUpdated(function (Get $get, Set $set, $state, $livewire) {
+                                        $leaveType = LeaveType::find($state);
+                                        $set('balance', $leaveType->count_days);
+                                    }),
+
+                            ]),
                             Select::make('year')->options([
                                 2024 => 2024,
                                 2025 => 2025,

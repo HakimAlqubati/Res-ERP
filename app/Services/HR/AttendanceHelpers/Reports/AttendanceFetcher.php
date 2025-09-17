@@ -250,7 +250,10 @@ class AttendanceFetcher
                 foreach ($day['periods'] as $period) {
                     $lastCheckout = $period['attendances']['checkout']['lastcheckout'] ?? null;
                     if ($lastCheckout && isset($lastCheckout['missing_hours']['total_minutes'])) {
-                        $totalMissingHoursSeconds += $lastCheckout['missing_hours']['total_minutes'] * 60;
+                        $minutes = (int) ($lastCheckout['missing_hours']['total_minutes'] ?? 0);
+                        if ($minutes > 0) {
+                            $totalMissingHoursSeconds += $minutes * 60;
+                        }
                     }
                 }
             }
@@ -267,7 +270,44 @@ class AttendanceFetcher
         // Add the total missing hours to the result collection
         $result->put('total_missing_hours', [
             'total_minutes' => $totalMissingHoursSeconds / 60,
-            'formatted' => $totalMissingHours
+            'formatted' => $totalMissingHours,
+            'total_seconds' => round($totalMissingHoursSeconds, 2),
+            'total_hours' => round($totalMissingHoursSeconds / 3600, 2),
+        ]);
+
+        $totalEarlyDepartureSeconds = 0;
+        foreach ($result as $key => $day) {
+            if (
+                is_array($day)
+                && isset($day['periods'])
+                && $day['periods'] instanceof Collection
+            ) {
+                foreach ($day['periods'] as $period) {
+                    $lastCheckout = $period['attendances']['checkout']['lastcheckout'] ?? null;
+                    if ($lastCheckout && isset($lastCheckout['early_departure_minutes'])) {
+                        $minutes = (int) ($lastCheckout['early_departure_minutes'] ?? 0);
+                        if ($minutes > 0) {
+                            $totalEarlyDepartureSeconds += $minutes * 60;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Convert total seconds to H:i:s format
+        $totalEarlyDeparture = sprintf(
+            '%02d:%02d:%02d',
+            floor($totalEarlyDepartureSeconds / 3600),
+            ($totalEarlyDepartureSeconds / 60) % 60,
+            $totalEarlyDepartureSeconds % 60
+        );
+
+        // Add the total early departure to the result collection
+        $result->put('total_early_departure_minutes', [
+            'total_minutes' => $totalEarlyDepartureSeconds / 60,
+            'formatted'     => $totalEarlyDeparture,
+            'total_seconds' => $totalEarlyDepartureSeconds,
+            'total_hours'   => round($totalEarlyDepartureSeconds / 3600, 2),
         ]);
 
         $result->put('late_hours',  $this->helperFunctions->calculateTotalLateArrival($result));

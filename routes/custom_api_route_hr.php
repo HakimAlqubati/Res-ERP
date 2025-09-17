@@ -12,6 +12,7 @@ use App\Http\Controllers\API\HR\PayrollSimulationController;
 use App\Http\Controllers\AWS\EmployeeLivenessController;
 use App\Http\Controllers\Api\HR\RunPayrollController;
 use App\Models\EmployeeFaceData;
+use App\Services\HR\SalaryHelpers\WeeklyLeaveCalculator;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Route;
@@ -91,15 +92,15 @@ Route::get('/face-data', function () {
 });
 
 
- 
+
 
 Route::get('/testresult', function () {
     $nameRaw = "KHAIRALAH EBRAHIM MOHMMED ABDULLAH AL-dd-dd-dd-sdf-werw-sdf- 234sdf - SHARAEA-1";
     $parts  = explode('-', $nameRaw);
     $empId  = trim(array_pop($parts));          // آخر جزء = ID
-    $name   = trim(implode('-', $parts));  
+    $name   = trim(implode('-', $parts));
     return [
-        'empId'=> $empId,
+        'empId' => $empId,
         'name' => $name
     ];
 });
@@ -111,7 +112,7 @@ Route::get('/test-log', function () {
     Log::error('This is an ERROR level log message');
     Log::debug('This is a DEBUG level log message');
     Log::critical('This is a CRITICAL level log message');
-    
+
     // Test with context data
     Log::info('User action performed', [
         'user_id' => 123,
@@ -119,12 +120,12 @@ Route::get('/test-log', function () {
         'timestamp' => now(),
         'ip' => request()->ip()
     ]);
-    
+
     return response()->json([
         'message' => 'Log test completed successfully',
         'logs_written' => [
             'info' => 'INFO level log written',
-            'warning' => 'WARNING level log written', 
+            'warning' => 'WARNING level log written',
             'error' => 'ERROR level log written',
             'debug' => 'DEBUG level log written',
             'critical' => 'CRITICAL level log written',
@@ -135,3 +136,15 @@ Route::get('/test-log', function () {
 });
 
 
+
+Route::get('/testLeave', function () {
+    // استقبل المتغيرات من الرابط ?required=30&absent=8
+    $required = (int) request('required', 30);
+    $absent   = (int) request('absent', 8);
+
+
+    // $result = WeeklyLeaveCalculator::calculate($required, $absent);
+    $result = WeeklyLeaveCalculator::calculateLeave($absent);
+
+    return response()->json($result);
+});

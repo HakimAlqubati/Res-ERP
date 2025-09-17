@@ -609,6 +609,8 @@ class EmployeeResource extends Resource
                             'working_hours' => $hoursCount,
                         ]);
                     }),
+                TextColumn::make('working_days')->label('Working days')->toggleable(isToggledHiddenByDefault: true)
+                    ->searchable(isIndividual: false, isGlobal: false)->alignCenter(true),
                 TextColumn::make('position.title')->limit(20)
                     ->label('Position type')
                     ->toggleable(isToggledHiddenByDefault: true)

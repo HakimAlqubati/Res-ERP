@@ -127,7 +127,7 @@ class SalaryTransactionRepository
         float $amount,
         string $date,
         SalaryTransactionType $type,
-        string $operation,
+        ?string $operation,
         string $description,
         $reference = null,
         $payrollId = null,

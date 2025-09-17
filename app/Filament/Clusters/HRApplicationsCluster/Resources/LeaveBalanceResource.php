@@ -20,6 +20,8 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -190,7 +192,7 @@ class LeaveBalanceResource extends Resource
 
             ])->striped()
             ->filters([
-                TrashedFilter::make()->hidden(),
+                TrashedFilter::make(),
                 SelectFilter::make('branch_id')
                     ->searchable()
                     ->multiple()
@@ -243,7 +245,9 @@ class LeaveBalanceResource extends Resource
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    // Tables\Actions\DeleteBulkAction::make(),
+                    DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+
                 ]),
             ]);
     }

@@ -1057,7 +1057,7 @@ class EmployeeApplicationResource extends Resource
                     $data['month']      = $data['detail_month'];
                     $data['days_count'] = $data['detail_days_count'];
                     $date               = $get('detail_from_date') ?? now();
-                    app(MonthClosureService::class)->ensureMonthIsOpen($date);
+                    // app(MonthClosureService::class)->ensureMonthIsOpen($date);
                     return $data;
                 })
                 ->schema(

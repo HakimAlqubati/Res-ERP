@@ -751,7 +751,9 @@ Route::get('/_logs/files', function () {
     }
 
     // الأحدث أولاً
-    usort($list, function($a,$b){ return strcmp($b['updated'], $a['updated']); });
+    usort($list, function ($a, $b) {
+        return strcmp($b['updated'], $a['updated']);
+    });
 
     return response()->json($list);
 });
@@ -769,8 +771,8 @@ Route::get('/_logs', function () {
 
     $path = storage_path('logs/' . (
         $file
-            ? $file
-            : ($date ? "laravel-{$date}.log" : 'laravel.log')
+        ? $file
+        : ($date ? "laravel-{$date}.log" : 'laravel.log')
     ));
 
     if (! is_file($path)) {
@@ -788,7 +790,7 @@ Route::get('/_logs', function () {
     }
     if ($contains !== '') {
         $q = mb_strtolower($contains);
-        $entries = array_values(array_filter($entries, function($e) use ($q){
+        $entries = array_values(array_filter($entries, function ($e) use ($q) {
             return str_contains(mb_strtolower($e['message'] ?? ''), $q)
                 || str_contains(mb_strtolower($e['details'] ?? ''), $q);
         }));
@@ -811,11 +813,17 @@ Route::get('/admin/transactions/print/{payroll_id}', function ($payroll_id) {
     $transactions = $payroll->transactions()->orderBy('date')->get();
 
     // dd($payroll, $payroll_id);
-    $total = $transactions->sum(fn($t) => $t->operation === '+' ? $t->amount : -$t->amount);
+    $total = $transactions->sum(function ($t) {
+        if ($t->type === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value) {
+            return 0; // استثناء مساهمة صاحب العمل
+        }
+        return $t->operation === '+' ? $t->amount : -$t->amount;
+    });
 
+    $total = $total >= 0 ? $total : 0;
     return view('reports.hr.payroll.transactions', [
         'payroll'      => $payroll,
         'transactions' => $transactions,
-        'total'        => $total,
+        'total'        => formatMoneyWithCurrency($total),
     ]);
 })->name('transactions.print');

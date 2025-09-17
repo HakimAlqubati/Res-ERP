@@ -47,6 +47,7 @@ class SalaryCalculatorService
     protected array $totalActualDuration = ['hours' => 0, 'minutes' => 0];
     protected float $totalApprovedOvertime = 0.0;
     protected float $lateHours = 0.0;   // from analyzer
+    protected float $missingHours = 0.0;
 
     // Calculated rates
     protected float $dailyRate   = 0.0;
@@ -57,6 +58,11 @@ class SalaryCalculatorService
     protected float $lateDeduction    = 0.0;
     protected float $overtimeHours    = 0.0;
     protected float $overtimeAmount   = 0.0;
+    protected float $missingHoursDeduction = 0.0; // NEW
+
+
+    protected float $earlyDepartureHours = 0.0;       // NEW
+    protected float $earlyDepartureDeduction = 0.0;   // NEW
 
     // Totals
     protected float $grossSalary = 0.0; // base + positive additions
@@ -78,6 +84,9 @@ class SalaryCalculatorService
     protected array $advanceItems = [];      // list of scheduled installments in the month
     protected float $advanceInstallmentsTotal = 0.0; // sum of installments this month
 
+
+    protected array $allowanceItems = [];
+    protected float $allowanceTotal = 0.0;
 
     // Config
     public function __construct(
@@ -118,6 +127,8 @@ class SalaryCalculatorService
         $this->resetstate();
 
         $this->dailyRateMethod = settingWithDefault('daily_salary_calculation_method', DailyRateMethod::ByWorkingDays->value);
+        $this->overtimeMultiplier = (float) settingWithDefault('overtime_hour_multiplier', self::DEFAULT_OVERTIME_MULTIPLIER);
+
         // Validate
         $this->assertPositive($salary, 'Salary');
         $this->assertPositive($workingDays, 'Working days');
@@ -128,15 +139,20 @@ class SalaryCalculatorService
         $this->employee     = $employee;
         $this->employeeData = $employeeData;
         $this->salary       = $salary;
-        $this->workingDays  = $workingDays;
+        $this->workingDays  = $workingDays ?? 30;
         $this->dailyHours   = $dailyHours;
         $this->monthDays    = $monthDays;
+
+ 
 
 
         $this->totalDuration          = is_array($totalDuration) ? $this->sanitizeHM($totalDuration) : $this->parseHM($totalDuration);
         $this->totalActualDuration    = is_array($totalActualDuration) ? $this->sanitizeHM($totalActualDuration) : $this->parseHM($totalActualDuration);
         $this->totalApprovedOvertime = (float) $totalApprovedOvertime;
         $this->lateHours              = $this->extractLateHours($employeeData);
+        $this->missingHours = $this->extractMissingHours($employeeData); // NEW
+        $this->earlyDepartureHours = $this->extractEarlyDepartureHours($employeeData); // NEW
+
 
         $this->periodYear  = $periodYear;
         $this->periodMonth = $periodMonth;
@@ -149,11 +165,16 @@ class SalaryCalculatorService
         // Penalty deductions (approved in this month)
         $this->computePenaltyDeductions();
 
+        // Allowances
+        $this->computeAllowances();
+
+
         // Advance installments (scheduled in this month)
         $this->computeAdvanceInstallments(); // NEW
 
         // Attendance stats
         $this->extractAttendanceStats($employeeData);
+
 
         // Policy hooks (pre calculation)
         foreach ($this->policyHooks as $hook) {
@@ -170,12 +191,15 @@ class SalaryCalculatorService
         // dd($this->dailyRate,$this->dailyRateMethod,$this->monthDays,$this->salary);
         // Totals
         $this->baseSalary     = $this->salary;
-        $this->grossSalary    = $this->round($this->baseSalary + $this->overtimeAmount);
+        $this->grossSalary    = $this->round($this->baseSalary
+            +  $this->overtimeAmount +
+            $this->allowanceTotal);
         $this->totalDeductions = $this->round(
             $this->absenceDeduction +
                 $this->lateDeduction
                 + $this->penaltyTotal
                 + $this->advanceInstallmentsTotal
+                + $this->missingHoursDeduction
         );
         $this->netSalary      = $this->round($this->grossSalary - $this->totalDeductions);
 
@@ -254,14 +278,24 @@ class SalaryCalculatorService
     {
         $this->absenceDeduction = $this->round($this->absentDays * $this->dailyRate);
         $this->lateDeduction    = $this->round($this->lateHours * $this->hourlyRate);
+        $this->missingHoursDeduction = $this->round($this->missingHours * $this->hourlyRate);
+        $this->earlyDepartureDeduction = $this->round($this->earlyDepartureHours * $this->hourlyRate); // NEW
 
         // Hook: allow policies to alter deductions (caps, minimums…)
         foreach ($this->policyHooks as $hook) {
-            $adj = $hook->adjustDeductions($this->employee, $this->employeeData, $this->absenceDeduction, $this->lateDeduction);
+            $adj = $hook->adjustDeductions(
+                $this->employee,
+                $this->employeeData,
+                $this->absenceDeduction,
+                $this->lateDeduction,
+                $this->missingHoursDeduction,
+                $this->earlyDepartureDeduction
+            );
             if (is_array($adj) && count($adj) === 2) {
-                [$this->absenceDeduction, $this->lateDeduction] = [
+                [$this->absenceDeduction, $this->lateDeduction, $this->missingHoursDeduction] = [
                     max(0.0, $this->round((float)$adj[0])),
                     max(0.0, $this->round((float)$adj[1])),
+                    max(0.0, $this->round((float)$adj[2])),
                 ];
             }
         }
@@ -286,6 +320,26 @@ class SalaryCalculatorService
         $this->presentDays = (int)($stats['present_days'] ?? $stats['present'] ?? 0);
         $this->absentDays  = (int)($stats['absent'] ?? $stats['absent_days'] ?? 0);
     }
+
+    protected function extractMissingHours(array $data): float
+    {
+        $mh = $data['total_missing_hours'] ?? null;
+        if (is_array($mh) && isset($mh['total_hours'])) {
+            return (float) $mh['total_hours'];
+        }
+        return 0.0;
+    }
+
+    protected function extractEarlyDepartureHours(array $data): float
+    {
+        $ed = $data['total_early_departure_minutes'] ?? null;
+        if (is_array($ed) && isset($ed['total_hours'])) {
+            return (float) $ed['total_hours'];
+        }
+        return 0.0;
+    }
+
+
 
     protected function extractLateHours(array $data): float
     {
@@ -374,8 +428,19 @@ class SalaryCalculatorService
             // Components
             'absence_deduction'      => $this->round($this->absenceDeduction),
             'late_deduction'         => $this->round($this->lateDeduction),
+            'missing_hours' => $this->missingHours,
+            'missing_hours_deduction' => $this->round($this->missingHoursDeduction), // NEW
+
+            'early_departure_hours'      => $this->round($this->earlyDepartureHours), // NEW
+            'early_departure_deduction'  => $this->round($this->earlyDepartureDeduction), // NEW
+
+
             'overtime_amount'        => $this->round($this->overtimeAmount),
             'overtime_hours'         => $this->round($this->overtimeHours),
+
+            'allowance_total' => $this->round($this->allowanceTotal),
+            'allowances'      => $this->allowanceItems,
+
 
             // Rates
             'daily_rate'             => $this->round($this->dailyRate, 2),
@@ -403,6 +468,7 @@ class SalaryCalculatorService
             'penalties'     => $this->penaltyItems,
             'advance_installments_total' => $this->round($this->advanceInstallmentsTotal), // NEW
             'advance_installments'       => $this->advanceItems, // NEW
+
 
         ];
     }
@@ -479,6 +545,15 @@ class SalaryCalculatorService
                 $deductionAmount = (float) $deduction->amount;
             }
 
+            if ($deduction->employer_percentage > 0) {
+                $employerAmount = ($basicSalary * $deduction->employer_percentage) / 100;
+            } elseif ($deduction->employer_amount > 0) {
+                $employerAmount = (float) $deduction->employer_amount;
+            } else {
+                $employerAmount = 0.0;
+            }
+
+
             if (isset($deduction->has_brackets) && $deduction->has_brackets && isset($deduction->brackets)) {
 
                 $deductionAmount = $deduction->calculateTax($basicSalary)['monthly_tax'] ?? 0;
@@ -491,6 +566,8 @@ class SalaryCalculatorService
             $finalDeductions[] = [
                 'id' => $deduction['id'],
                 'name' => $deduction['name'],
+                'deduction_amount' => $deductionAmount,   // employee
+                'employer_deduction_amount' => $employerAmount, // employer
                 'deduction_amount' => $deductionAmount,
                 'is_percentage' => $deduction['is_percentage'],
                 'amount_value' => $deduction['amount'],
@@ -538,6 +615,24 @@ class SalaryCalculatorService
             ];
         }
 
+        // Allowances
+        if (!empty($this->allowanceItems)) {
+            foreach ($this->allowanceItems as $a) {
+                $tx[] = [
+                    'type'        => SalaryTransactionType::TYPE_ALLOWANCE,
+                    'sub_type'    => \Illuminate\Support\Str::slug($a['name']),
+                    'amount'      => $this->round($a['amount']),
+                    'operation'   => '+',
+                    'description' => $a['name'],
+                    'unit'        => null,
+                    'qty'         => null,
+                    'rate'        => null,
+                    'multiplier'  => null,
+                ];
+            }
+        }
+
+
         // Absence
         if ($this->absenceDeduction > 0) {
             $tx[] = [
@@ -554,6 +649,41 @@ class SalaryCalculatorService
                 'multiplier'  => 1.0,
             ];
         }
+
+
+        // missing hours
+        if ($this->missingHoursDeduction > 0) {
+            $tx[] = [
+                'type'        => SalaryTransactionType::TYPE_DEDUCTION,
+                'sub_type'    => SalaryTransactionSubType::MISSING_HOURS,
+                'amount'      => $this->round($this->missingHoursDeduction),
+                'operation'   => '-',
+                'description' => 'Missing hours deduction',
+
+
+                'unit'        => 'hour',
+                'qty'         => $this->missingHours,
+                'rate'        => $this->round($this->hourlyRate, 2),
+                'multiplier'  => 1.0,
+            ];
+        }
+
+        // Early Departure
+        if ($this->earlyDepartureDeduction > 0) {
+            $tx[] = [
+                'type'        => SalaryTransactionType::TYPE_DEDUCTION,
+                'sub_type'    => SalaryTransactionSubType::EARLY_DEPARTURE_HOURS,
+                'amount'      => $this->round($this->earlyDepartureDeduction),
+                'operation'   => '-',
+                'description' => 'Early departure deduction',
+
+                'unit'        => 'hour',
+                'qty'         => $this->round($this->earlyDepartureHours),
+                'rate'        => $this->round($this->hourlyRate, 2),
+                'multiplier'  => 1.0,
+            ];
+        }
+
 
         // Late
         if ($this->lateDeduction > 0) {
@@ -589,6 +719,25 @@ class SalaryCalculatorService
                 }
             }
         }
+
+        foreach ($this->dynamicDeductions as $key => $ded) {
+            if ($key === 'result') continue;
+
+            $employerAmount = (float)($ded['employer_deduction_amount'] ?? 0);
+            if ($employerAmount <= 0) continue;
+
+            $tx[] = [
+                'type'         => SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION,
+                'sub_type'     => $ded['name']?? SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION,
+                'amount'       => $this->round($employerAmount),
+                'operation'    => null, // التزام على الشركة وليس الموظف
+                'description'  => $ded['name'] ?? 'Employer contribution',
+                'deduction_id' => $ded['id'] ?? null,
+                // 'reference_id' => $ded['id'],
+                // 'reference_type' => Deduction::class,
+            ];
+        }
+
 
         // Dynamic general deductions from property
         foreach ($this->dynamicDeductions as $key => $ded) {
@@ -686,6 +835,10 @@ class SalaryCalculatorService
         'penaltyTotal' => 0.0,
         'advanceItems' => [],
         'advanceInstallmentsTotal' => 0.0,
+        'missingHours' => 0.0,
+        'earlyDepartureHours' => 0.0,        // NEW
+        'earlyDepartureDeduction' => 0.0,    // NEW
+
 
     ];
 
@@ -773,5 +926,69 @@ class SalaryCalculatorService
         }
 
         $this->advanceInstallmentsTotal = $this->round($this->advanceInstallmentsTotal);
+    }
+
+
+    protected function computeAllowances(): void
+    {
+        $this->allowanceItems = [];
+        $this->allowanceTotal = 0.0;
+
+        // 1) Allowances العامة
+        $generalAllowances = \App\Models\Allowance::query()
+            ->where('is_specific', 0)
+            ->where('active', 1)
+            ->get(['id', 'name', 'is_percentage', 'amount', 'percentage']);
+
+        foreach ($generalAllowances as $a) {
+            $amount = $a->is_percentage
+                ? ($this->salary * ($a->percentage / 100))
+                : (float)$a->amount;
+
+            if ($amount <= 0) continue;
+
+            $this->allowanceItems[] = [
+                'id' => $a->id,
+                'name' => $a->name,
+                'amount' => $this->round($amount),
+                'is_percentage' => $a->is_percentage,
+                'value' => $a->is_percentage ? $a->percentage : $a->amount,
+                'type' => 'general',
+            ];
+
+            $this->allowanceTotal += $amount;
+        }
+
+        // 2) Allowances الخاصة بالموظف
+        $specificAllowances = $this->employee->allowances()
+            ->with('allowance:id,name,is_percentage,amount,percentage')
+            ->get();
+
+        foreach ($specificAllowances as $empAllowance) {
+            $a = $empAllowance->allowance;
+            if (!$a) continue;
+
+            // إذا الموظف عنده نسبة أو مبلغ خاص -> استخدمه، غير كذا fallback على البدل الأساسي
+            $isPercentage = $empAllowance->is_percentage ?? $a->is_percentage;
+            $percentage   = $empAllowance->percentage   ?? $a->percentage;
+            $fixedAmount  = $empAllowance->amount       ?? $a->amount;
+
+            $amount = $isPercentage
+                ? ($this->salary * ($percentage / 100))
+                : (float) $fixedAmount;
+
+            if ($amount <= 0) continue;
+
+            $this->allowanceItems[] = [
+                'id'            => $a->id,
+                'name'          => $a->name,
+                'amount'        => $this->round($amount),
+                'is_percentage' => (bool) $isPercentage,
+                'value'         => $isPercentage ? $percentage : $fixedAmount,
+                'type'          => 'specific',
+            ];
+
+            $this->allowanceTotal += $amount;
+        }
     }
 }

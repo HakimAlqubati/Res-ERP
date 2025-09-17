@@ -1,4 +1,5 @@
-<?php 
+<?php
+
 namespace App\Contracts\HR;
 
 use App\Models\Employee;
@@ -20,7 +21,15 @@ interface SalaryPolicyHookInterface
      * Adjust absence/late deductions (caps/floors).
      * Return [absenceDeduction, lateDeduction].
      */
-    public function adjustDeductions(Employee $employee, array $context, float $absenceDeduction, float $lateDeduction): array;
+    public function adjustDeductions(
+        Employee $employee,
+        array $context,
+        float $absenceDeduction,
+        float $lateDeduction,
+        float $missingHoursDeduction,
+        float $earlyDepartureDeduction
+
+    ): array;
 
     /**
      * After totals computed; return final net salary (allow taxes, insurances…).

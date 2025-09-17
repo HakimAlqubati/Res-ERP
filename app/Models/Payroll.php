@@ -114,8 +114,9 @@ class Payroll extends Model
 
             $additions = $transactions->where('operation', SalaryTransaction::OPERATION_ADD)->sum('amount');
             $deductions = $transactions->where('operation', SalaryTransaction::OPERATION_SUB)->sum('amount');
-
-            return $additions - $deductions;
+            $result = $additions - $deductions;
+            $result = $result >= 0 ? $result : 0;
+            return $result;
         });
     }
 }

@@ -10,6 +10,7 @@ enum SalaryTransactionSubType: string
     case LATE = 'late';                 // خصم تأخير
     case LOAN = 'loan';                 // خصم سلفة
     case MISSING_HOURS = 'missing_hours';
+    case EARLY_DEPARTURE_HOURS = 'early_departure_hours';
         // إضافات / علاوات (Allowance)
     case HOUSING = 'housing_allowance'; // بدل سكن
     case TRANSPORT = 'transport_allowance'; // بدل مواصلات

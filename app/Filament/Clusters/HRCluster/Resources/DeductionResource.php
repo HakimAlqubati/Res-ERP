@@ -87,7 +87,7 @@ class DeductionResource extends Resource
                         ])->default('is_amount')
                         ->hidden(fn($get): bool => ($get('is_penalty') || $get('is_specific'))),
 
-                    Grid::make()
+                    Grid::make()->columnSpanFull()
                         ->hidden(fn($get): bool => ($get('is_penalty') || $get('is_specific')))
                         ->schema([
 
@@ -110,7 +110,7 @@ class DeductionResource extends Resource
                         ]),
                     // Tax Brackets Repeater
                     Repeater::make('brackets')  // The relationship field for Deduction Brackets
-                        ->label('Tax Brackets')
+                        ->label('Tax Brackets')->columnSpanFull()
                         ->relationship('brackets')
                         ->visible(fn($get): bool => $get('has_brackets'))->columnSpanFull()->columns(3)
                         ->schema([

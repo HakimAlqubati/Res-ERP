@@ -33,7 +33,7 @@ class HelperFunctions
                     $stats['present_days']++;
                     $stats['required_days']++;
                     break;
-                case AttendanceReportStatus::Absent->value: 
+                case AttendanceReportStatus::Absent->value:
                     $stats['absent']++;
                     $stats['required_days']++;
                     break;
@@ -165,20 +165,25 @@ class HelperFunctions
             ->having('total', '>', 1)
             ->exists();
 
+        
         if (!$isMultiple) {
             return [
                 'formatted' => '0 h 0m',
+                'total_hours' => 0,
                 'total_minutes' => 0,
+                'is_multiple' => $isMultiple,
             ];
         }
         if (in_array($status, [
             Attendance::STATUS_EARLY_DEPARTURE,
             Attendance::STATUS_LATE_ARRIVAL
         ])) {
-            // return [
-            //     'formatted' => '0 h 0m',
-            //     'total_minutes' => 0,
-            // ];
+            return [
+                'formatted' => '0 h 0m',
+                'total_hours' => 0,
+                'total_minutes' => 0,
+                'is_multiple' => $isMultiple,
+            ];
         }
         // Default the supposed duration if null
         $supposedDuration = $supposedDuration ?? '00:00:00';
@@ -190,7 +195,9 @@ class HelperFunctions
             // dd(\Carbon\Carbon::parse($supposedDuration), \Carbon\Carbon::parse($approvedOvertimeParsed));
             return [
                 'formatted' => '0 h 0m',
+                'total_hours' => 0,
                 'total_minutes' => 0,
+                'is_multiple' => $isMultiple,
             ];
         }
         // Calculate the difference
@@ -204,6 +211,7 @@ class HelperFunctions
             'formatted' => $difference->format('%h h %i m'),
             'total_minutes' => $totalMinutes,
             'total_hours' => $totalHours,
+            'is_multiple' => $isMultiple,
         ];
         // Return the formatted difference
         return $difference->format('%h h %i m');

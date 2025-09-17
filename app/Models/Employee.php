@@ -335,6 +335,7 @@ class Employee extends Model implements Auditable
     {
         return $this->hasMany(EmployeeAllowance::class);
     }
+    
 
     public function deductions()
     {

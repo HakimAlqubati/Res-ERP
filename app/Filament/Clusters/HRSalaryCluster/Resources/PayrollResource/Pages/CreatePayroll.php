@@ -9,6 +9,7 @@ use App\Services\HR\Payroll\PayrollRunService;
 use Carbon\Carbon;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Facades\DB;
 
 class CreatePayroll extends CreateRecord
 {
@@ -48,6 +49,7 @@ class CreatePayroll extends CreateRecord
      */
     protected function handleRecordCreation(array $data): \Illuminate\Database\Eloquent\Model
     {
+        DB::beginTransaction();
         try {
             //code...
 
@@ -66,6 +68,7 @@ class CreatePayroll extends CreateRecord
 
             if ($result['success']) {
                 // showSuccessNotifiMessage($result['message']);
+                DB::commit();
                 $this->getRedirectUrl();
                 return PayrollRun::findOrFail($result['meta']['payroll_run_id']);
             } else {
@@ -83,6 +86,7 @@ class CreatePayroll extends CreateRecord
                 ->danger()
                 ->send();
 
+            DB::rollBack();
             $this->halt();
         }
         return new PayrollRun();
