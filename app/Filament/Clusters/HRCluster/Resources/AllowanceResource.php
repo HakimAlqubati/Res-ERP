@@ -20,9 +20,11 @@ use App\Filament\Clusters\HRSalarySettingCluster;
 use App\Models\Allowance;
 use Filament\Forms;
 use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Slider;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
+use Filament\Support\RawJs;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
@@ -64,9 +66,35 @@ class AllowanceResource extends Resource
                     TextInput::make('amount')->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_amount'))->numeric()
                         ->suffixIcon('heroicon-o-calculator')
                         ->suffixIconColor('success'),
-                    TextInput::make('percentage')->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'))->numeric()
-                        ->suffixIcon('heroicon-o-percent-badge')
-                        ->suffixIconColor('success'),
+
+                    Slider::make('percentage')->hintIcon(Heroicon::PercentBadge)
+                        ->label('Percentage') 
+                        ->tooltips(RawJs::make(<<<'JS'
+                                    `%${$value.toFixed(0)}`
+                                JS))
+                        ->pips()
+                        ->pipsFilter(RawJs::make(<<<'JS'
+                                    ($value % 50) === 0
+                                        ? 1
+                                        : ($value % 10) === 0
+                                            ? 2
+                                            : ($value % 25) === 0
+                                                ? 0
+                                                : -1
+                                JS))
+
+                        ->fillTrack()
+                        ->required()
+                        ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'))
+                        ->minValue(0)
+                        ->step(1)
+                        ->maxValue(100)
+                        ->default(0)
+                        ->rtl(),
+                    // TextInput::make('percentage')
+                    // ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'))->numeric()
+                    //     ->suffixIcon('heroicon-o-percent-badge')
+                    //     ->suffixIconColor('success'),
                 ]),
             ]);
     }
@@ -81,7 +109,7 @@ class AllowanceResource extends Resource
                 ToggleColumn::make('is_percentage')->disabled(),
                 TextColumn::make('amount'),
                 TextColumn::make('percentage')->suffix(' % '),
-                ToggleColumn::make('active')->disabled(fn():bool=>isBranchManager()),
+                ToggleColumn::make('active')->disabled(fn(): bool => isBranchManager()),
             ])
             ->filters([
                 //

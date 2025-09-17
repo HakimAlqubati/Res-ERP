@@ -23,9 +23,11 @@ use Filament\Forms;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Slider;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
+use Filament\Support\RawJs;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -94,19 +96,77 @@ class DeductionResource extends Resource
                             TextInput::make('amount')->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_amount'))->numeric()
                                 ->suffixIcon('heroicon-o-calculator')
                                 ->suffixIconColor('success'),
-                            TextInput::make('percentage')->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'))->numeric()
-                                ->suffixIcon('heroicon-o-percent-badge')
-                                ->suffixIconColor('success'),
+                            // TextInput::make('percentage')
+                            //     ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'))
+                            //     ->numeric()
+                            //     ->suffixIcon('heroicon-o-percent-badge')
+                            //     ->suffixIconColor('success'),
+
+
+                            Slider::make('percentage')->hintIcon(Heroicon::PercentBadge)
+                                ->label('Percentage')
+                                // ->rangePadding([10, 20])
+                                // ->tooltips()
+                                ->tooltips(RawJs::make(<<<'JS'
+                                    `%${$value.toFixed(0)}`
+                                JS))
+                                ->pips()
+                                ->pipsFilter(RawJs::make(<<<'JS'
+                                    ($value % 50) === 0
+                                        ? 1
+                                        : ($value % 10) === 0
+                                            ? 2
+                                            : ($value % 25) === 0
+                                                ? 0
+                                                : -1
+                                JS))
+
+                                ->fillTrack()
+                                ->required()
+                                ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'))
+                                ->minValue(0)
+                                ->step(1)
+                                ->maxValue(100)
+                                ->default(0)
+                                ->rtl(),
                             TextInput::make('employer_amount')
                                 ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_amount') && (in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])))
                                 ->numeric()
                                 ->suffixIcon('heroicon-o-calculator')
                                 ->suffixIconColor('success'),
-                            TextInput::make('employer_percentage')
+
+                            Slider::make('employer_percentage')->hintIcon(Heroicon::PercentBadge)
+                                ->label('Employeer Percentage')
+                                // ->rangePadding([10, 20])
+                                // ->tooltips()
+                                ->tooltips(RawJs::make(<<<'JS'
+                                    `%${$value.toFixed(0)}`
+                                JS))
+                                ->pips()
+                                ->pipsFilter(RawJs::make(<<<'JS'
+                                    ($value % 50) === 0
+                                        ? 1
+                                        : ($value % 10) === 0
+                                            ? 2
+                                            : ($value % 25) === 0
+                                                ? 0
+                                                : -1
+                                JS))
+
+                                ->fillTrack()
+                                ->required()
                                 ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage') && (in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])))
-                                ->numeric()
-                                ->suffixIcon('heroicon-o-percent-badge')
-                                ->suffixIconColor('success'),
+                                ->minValue(0)
+                                ->step(1)
+                                ->maxValue(100)
+                                ->default(0)
+                                ->rtl(),
+
+                            // TextInput::make('employer_percentage')
+                            //     ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage') && (in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])))
+                            //     ->numeric()
+                            //     ->suffixIcon('heroicon-o-percent-badge')
+                            //     ->suffixIconColor('success'),
                         ]),
                     // Tax Brackets Repeater
                     Repeater::make('brackets')  // The relationship field for Deduction Brackets
@@ -122,7 +182,8 @@ class DeductionResource extends Resource
                                 ->maxValue(
                                     10000000000000
                                 )->label('Maximum Amount')->required()->numeric()->minValue(0),
-                            TextInput::make('percentage')->label('Percentage')->required()->numeric()->suffix(' %')->maxValue(100),
+                            TextInput::make('percentage')->label('Percentage')
+                                ->required()->numeric()->suffix(' %')->maxValue(100),
                         ])
                         ->createItemButtonLabel('Add Tax Bracket')
                         ->defaultItems(1),  // Default number of tax brackets

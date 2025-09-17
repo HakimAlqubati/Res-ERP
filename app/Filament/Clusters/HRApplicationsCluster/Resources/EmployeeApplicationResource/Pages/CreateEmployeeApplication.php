@@ -159,14 +159,15 @@ class CreateEmployeeApplication extends CreateRecord
 
             case EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST:
                 $data = $this->data['missedCheckoutRequest'] ?? null;
+                // dd($data);
                 if ($data) {
                     $this->record->missedCheckoutRequest()->create([
                         'application_id'        => $this->record->id,
                         'employee_id'           => $this->record->employee_id,
                         'application_type_id'   => EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
                         'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST],
-                        'date'                  => $data['date'],
-                        'time'                  => $data['time'],
+                        'date'                  => $data['detail_date'],
+                        'time'                  => $data['detail_time'],
                         'reason'                => $data['reason'] ?? null,
 
                     ]);
