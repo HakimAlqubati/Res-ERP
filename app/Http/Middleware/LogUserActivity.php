@@ -33,17 +33,19 @@ class LogUserActivity
         $user = Auth::user();
 
         // حد أقصى 100 سجل لكل مستخدم
-        $maxLogsPerUser = 100;
+      
 
-        $count = Activity::where('causer_id', $user->id)->count();
-        if ($count >= 100) {
-            Activity::where('causer_id', $user->id)
+        $maxLogsPerUser = 100;
+        $count = \Spatie\Activitylog\Models\Activity::where('causer_id', $user->id)->count();
+
+        if ($count >= $maxLogsPerUser) {
+            \Spatie\Activitylog\Models\Activity::where('causer_id', $user->id)
                 ->orderBy('created_at', 'asc')
-                ->limit($count - 99)
+                ->limit($count - $maxLogsPerUser + 1)
                 ->delete();
         }
 
-
+       
         // معالجة بيانات الطلب وفك snapshot إن وُجد
         $requestData = collect($request->except(['password', 'token', '_token']))
             ->map(function ($value, $key) {

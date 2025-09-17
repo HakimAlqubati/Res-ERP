@@ -236,7 +236,7 @@ class EmployeeResource extends Resource
                                         Select::make('employee_type')->columnSpan(1)->label('Role type')
                                             ->searchable()
                                             ->live()
-                                            ->options(UserType::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
+                                            ->options(UserType::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id'))->required(),
 
                                         Select::make('branch_id')->columnSpan(1)->label('Branch')
                                             ->searchable()
