@@ -3,6 +3,7 @@
 use App\Attendance\Services\AttendanceHandler;
 use App\Http\Controllers\Api\FaceImageController;
 use App\Http\Controllers\Api\HR\AttendanceController;
+use App\Http\Controllers\Api\HR\EmployeeApplicationController;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Api\HR\EmployeeController;
 use App\Http\Controllers\Api\HR\EmployeePeriodHistoryController;
@@ -30,6 +31,7 @@ Route::prefix('hr/payroll')
         // تشغيل وحفظ الرواتب
         Route::post('/run', [RunPayrollController::class, 'run']);
     });
+
 Route::prefix('hr')
     ->group(function () {
         Route::post('/attendance/store', [AttendanceController::class, 'store'])->middleware('auth:api');
@@ -49,6 +51,19 @@ Route::prefix('hr')
         Route::post('/liveness', [LivenessController::class, 'check']);
     });
 
+Route::prefix('applications')
+->middleware('auth:api')
+->group(function () {
+    Route::get('/', [EmployeeApplicationController::class, 'index']); // GET /applications
+    Route::post('/', [EmployeeApplicationController::class, 'store']); // POST /applications
+    Route::get('/{id}', [EmployeeApplicationController::class, 'show']); // GET /applications/{id}
+    Route::put('/{id}', [EmployeeApplicationController::class, 'update']); // PUT /applications/{id}
+    Route::delete('/{id}', [EmployeeApplicationController::class, 'destroy']); // DELETE /applications/{id}
+
+    // Actions
+    Route::post('/{id}/approve', [EmployeeApplicationController::class, 'approve']); // POST /applications/{id}/approve
+    Route::post('/{id}/reject', [EmployeeApplicationController::class, 'reject']);   // POST /applications/{id}/reject
+});
 Route::prefix('aws/employee-liveness')->group(function () {
     // بدء جلسة التحقق (startSession)
     Route::post('/start-session', [EmployeeLivenessController::class, 'startSession']);
