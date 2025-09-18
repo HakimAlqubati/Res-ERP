@@ -78,7 +78,7 @@ class PeriodHistoriesRelationManager extends RelationManager
                     ->label('Filter by Day'),
             ])
             ->headerActions([
-                CreateAction::make(),
+                // CreateAction::make(),
             ])
             ->actions([
                 Action::make('edit')->label('Edit')->button()
