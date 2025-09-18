@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\HR\ImageRecognize\LivenessController;
 use App\Http\Controllers\API\HR\PayrollSimulationController;
 use App\Http\Controllers\AWS\EmployeeLivenessController;
 use App\Http\Controllers\Api\HR\RunPayrollController;
+use App\Http\Controllers\Api\HR\TaskController;
+use App\Http\Controllers\Api\HR\TaskStepController;
 use App\Models\EmployeeFaceData;
 use App\Services\HR\SalaryHelpers\WeeklyLeaveCalculator;
 use Carbon\CarbonImmutable;
@@ -52,18 +54,60 @@ Route::prefix('hr')
     });
 
 Route::prefix('applications')
-->middleware('auth:api')
-->group(function () {
-    Route::get('/', [EmployeeApplicationController::class, 'index']); // GET /applications
-    Route::post('/', [EmployeeApplicationController::class, 'store']); // POST /applications
-    Route::get('/{id}', [EmployeeApplicationController::class, 'show']); // GET /applications/{id}
-    Route::put('/{id}', [EmployeeApplicationController::class, 'update']); // PUT /applications/{id}
-    Route::delete('/{id}', [EmployeeApplicationController::class, 'destroy']); // DELETE /applications/{id}
+    ->middleware('auth:api')
+    ->group(function () {
+        Route::get('/types', [EmployeeApplicationController::class, 'getTypes']); // ✅ الأنواع
 
-    // Actions
-    Route::post('/{id}/approve', [EmployeeApplicationController::class, 'approve']); // POST /applications/{id}/approve
-    Route::post('/{id}/reject', [EmployeeApplicationController::class, 'reject']);   // POST /applications/{id}/reject
-});
+        Route::get('/', [EmployeeApplicationController::class, 'index']); // GET /applications
+        Route::post('/', [EmployeeApplicationController::class, 'store']); // POST /applications
+        Route::get('/{id}', [EmployeeApplicationController::class, 'show']); // GET /applications/{id}
+        Route::put('/{id}', [EmployeeApplicationController::class, 'update']); // PUT /applications/{id}
+        Route::delete('/{id}', [EmployeeApplicationController::class, 'destroy']); // DELETE /applications/{id}
+
+        // Actions
+        Route::post('/{id}/approve', [EmployeeApplicationController::class, 'approve']); // POST /applications/{id}/approve
+        Route::post('/{id}/reject', [EmployeeApplicationController::class, 'reject']);   // POST /applications/{id}/reject
+
+
+    });
+
+
+Route::middleware(['auth:api'])
+    // ->prefix('tasks')
+    ->group(function () {
+
+        // Tasks
+        Route::get('tasks', [TaskController::class, 'index']);
+        Route::post('tasks', [TaskController::class, 'store']);
+        Route::get('tasks/{task}', [TaskController::class, 'show'])->name('tasks.show')->whereNumber('task');
+        Route::put('tasks/{task}', [TaskController::class, 'update']);
+        Route::delete('tasks/{task}', [TaskController::class, 'destroy']);
+
+        // Transitions
+        Route::post('tasks/{task}/move', [TaskController::class, 'move']);      // انتقال الحالة
+        Route::post('tasks/{task}/reject', [TaskController::class, 'reject']);  // رفض
+
+        // Comments
+        // Route::get('tasks/{task}/comments', [TaskCommentController::class, 'index']);
+        // Route::post('tasks/{task}/comments', [TaskCommentController::class, 'store']);
+
+        // Attachments
+        // Route::get('tasks/{task}/attachments', [TaskAttachmentController::class, 'index']);
+        // Route::post('tasks/{task}/attachments', [TaskAttachmentController::class, 'store']);
+        // Route::delete('tasks/{task}/attachments/{attachment}', [TaskAttachmentController::class, 'destroy']);
+
+        // Steps
+        Route::get('tasks/{task}/steps', [TaskStepController::class, 'index']);
+        Route::post('tasks/{task}/steps/{step}/toggle', [TaskStepController::class, 'toggleDone']);
+
+        // Rating
+        // Route::get('tasks/{task}/rating', [TaskRatingController::class, 'show']);
+        // Route::post('tasks/{task}/rating', [TaskRatingController::class, 'store']);
+
+        // Logs
+        // Route::get('tasks/{task}/logs', [TaskLogController::class, 'index']);
+    });
+
 Route::prefix('aws/employee-liveness')->group(function () {
     // بدء جلسة التحقق (startSession)
     Route::post('/start-session', [EmployeeLivenessController::class, 'startSession']);

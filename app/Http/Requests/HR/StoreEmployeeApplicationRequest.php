@@ -3,6 +3,10 @@
 namespace App\Http\Requests\HR;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator
+
+;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class StoreEmployeeApplicationRequest extends FormRequest
 {
@@ -21,10 +25,10 @@ class StoreEmployeeApplicationRequest extends FormRequest
             'notes'              => 'nullable|string|max:1000',
 
             // 🟢 Leave Request
-            'leaveRequest.detail_leave_type_id' => 'required_if:application_type_id,1|exists:hr_leave_types,id',
-            'leaveRequest.detail_from_date'     => 'required_if:application_type_id,1|date',
-            'leaveRequest.detail_to_date'       => 'required_if:application_type_id,1|date',
-            'leaveRequest.detail_days_count'    => 'required_if:application_type_id,1|integer|min:1',
+            'leave_request.detail_leave_type_id' => 'required_if:application_type_id,1|exists:hr_leave_types,id',
+            'leave_request.detail_from_date'     => 'required_if:application_type_id,1|date',
+            'leave_request.detail_to_date'       => 'required_if:application_type_id,1|date',
+            'leave_request.detail_days_count'    => 'required_if:application_type_id,1|integer|min:1',
 
             // 🟢 Advance Request
             'advance_request.detail_advance_amount'          => 'required_if:application_type_id,3|numeric|min:1',
@@ -38,8 +42,8 @@ class StoreEmployeeApplicationRequest extends FormRequest
             'missed_checkin_request.time' => 'required_if:application_type_id,2|date_format:H:i',
 
             // 🟢 Departure Fingerprint (Check-out)
-            'missed_checkout_request.detail_date' => 'required_if:application_type_id,4|date',
-            'missed_checkout_request.detail_time' => 'required_if:application_type_id,4|date_format:H:i',
+            'missed_checkout_request.date' => 'required_if:application_type_id,4|date',
+            'missed_checkout_request.time' => 'required_if:application_type_id,4|date_format:H:i',
         ];
     }
 
@@ -90,5 +94,13 @@ class StoreEmployeeApplicationRequest extends FormRequest
             'missed_checkout_request.detail_time.required_if' => 'The check-out time is required for a departure request.',
             'missed_checkout_request.detail_time.date_format' => 'The check-out time must be in the format HH:MM.',
         ];
+    }
+    protected function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $validator->errors(),
+        ], 422));
     }
 }
