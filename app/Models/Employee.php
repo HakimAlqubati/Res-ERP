@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Mail\MailableEmployee;
 use App\Traits\Scopes\BranchScope;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -603,6 +604,12 @@ class Employee extends Model implements Auditable
         static::created(function ($employee) {
             // فقط إذا لم يكن هناك user مرتبط
             if (! $employee->user_id) {
+
+                $existingUser = User::where('email', $employee->email)->first();
+                if ($existingUser) {
+                    throw new Exception("The email {$employee->email} is already used by another user.");
+                }
+
                 // الحصول على user_id الخاص بالمدير
                 $managerUserId = Employee::find($employee->manager_id)?->user_id;
 

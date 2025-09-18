@@ -37,5 +37,11 @@ class MissedCheckOutRequest extends Model implements Auditable
         return $this->belongsTo(Employee::class);
     }
 
+    public function application()
+    {
+        return $this->belongsTo(EmployeeApplicationV2::class, 'application_id');
+    }
+
+
     // You can define other relationships or methods as needed
 }

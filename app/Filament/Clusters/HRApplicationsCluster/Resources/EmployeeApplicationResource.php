@@ -201,7 +201,7 @@ class EmployeeApplicationResource extends Resource
     }
 
     public static function table(Table $table): Table
-    {
+    { 
         return $table->defaultSort('id', 'desc')
             ->paginated([10, 25, 50, 100])
             ->striped()
@@ -252,6 +252,9 @@ class EmployeeApplicationResource extends Resource
                     switch ($record->application_type_id) {
 
                         case EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST:
+                            $record->load([
+                                'leaveRequest',
+                            ]);
                             DB::beginTransaction();
                             try {
                                 $details = $record->leaveRequest;
@@ -281,7 +284,9 @@ class EmployeeApplicationResource extends Resource
                             }
                             break;
                         case EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST:
-
+                            $record->load([
+                                'advanceRequest',
+                            ]);
                             DB::beginTransaction();
                             try {
                                 //code...
@@ -297,6 +302,9 @@ class EmployeeApplicationResource extends Resource
                             }
                             break;
                         case EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST:
+                            $record->load([
+                                'missedCheckinRequest',
+                            ]);
                             DB::beginTransaction();
                             try {
                                 //code...
@@ -311,7 +319,10 @@ class EmployeeApplicationResource extends Resource
                             }
                             break;
                         case EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST:
-
+                            $record->load([
+                                'missedCheckoutRequest',
+                            ]);
+                            // dd('sd', $record);
                             DB::beginTransaction();
                             try {
                                 //code...

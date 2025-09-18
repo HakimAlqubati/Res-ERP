@@ -12,7 +12,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class EmployeeApplicationV2 extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable,BranchScope;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope;
 
     protected $appends = [
         'detailed_leave_request',
@@ -21,6 +21,16 @@ class EmployeeApplicationV2 extends Model implements Auditable
         'DetailedMissedCheckoutApplication',
 
     ];
+
+    // protected $with = [
+    //     'employee',
+    //     'createdBy',
+    //     'missedCheckoutRequest',
+    //     'missedCheckinRequest',
+    //     'advanceRequest',
+    //     'leaveRequest',
+    // ];
+
 
     protected $table = 'hr_employee_applications';
     protected $fillable = [

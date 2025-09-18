@@ -63,6 +63,7 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Assets\Css;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -303,12 +304,17 @@ class AdminPanelProvider extends PanelProvider
                 //         'sm' => 2,
                 //     ]),
             ])
+            
             ->assets([
                 Css::make('main', '')
             ])
             ->spa()
             ->databaseNotifications()->globalSearch(false)
             ->databaseTransactions()
+            ->renderHook(
+              PanelsRenderHook::GLOBAL_SEARCH_AFTER,
+              fn (): string => view('filament.partials.fullscreen-toggle')->render(),
+          )
             // ->renderHook( name: 'panels::topbar.start', hook: fn (): View => view('livewire.credits'), )
         ;
     }
