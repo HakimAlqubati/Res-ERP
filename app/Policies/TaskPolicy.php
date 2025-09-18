@@ -68,8 +68,8 @@ class TaskPolicy
         return $user->can('forse_delete_task');
     }
 
-  
-    
+
+
     public function rating(User $user): bool
     {
         return $user->can('rating_task');
@@ -79,14 +79,20 @@ class TaskPolicy
     {
         return $user->can('add_comment_task');
     }
-   
+
     public function addPhoto(User $user): bool
     {
         return $user->can('add_photo_task');
     }
-   
+
     public function moveStatus(User $user): bool
     {
         return $user->can('move_status_task');
+    }
+    public function reject(User $u, Task $task): bool
+    {
+        // وفق كودك: فقط إذا كانت الحالة مغلقة وكان المُكلِّف/المنشئ هو المستخدم (أو SuperAdmin)
+        return $task->task_status === Task::STATUS_CLOSED &&
+            (in_array($u->id, [$task->assigned_by, $task->created_by]) || isSuperAdmin());
     }
 }

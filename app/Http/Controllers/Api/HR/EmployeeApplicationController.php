@@ -183,4 +183,23 @@ class EmployeeApplicationController extends Controller
             ], 500);
         }
     }
+
+    public function getTypes()
+    {
+        // نجيب الكونستانت من الموديل
+        $types = EmployeeApplicationV2::APPLICATION_TYPE_NAMES;
+
+        // نحولهم لهيكل مرتب
+        $result = collect($types)->map(function ($label, $id) {
+            return [
+                'id'   => $id,
+                'name' => $label,
+            ];
+        })->values();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $result,
+        ]);
+    }
 }

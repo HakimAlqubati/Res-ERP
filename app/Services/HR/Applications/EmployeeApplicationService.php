@@ -42,7 +42,7 @@ class EmployeeApplicationService
                         'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST],
                         'date'                  => $details['date'],
                         'time'                  => $details['time'],
-                        'reason'                => $notes['reason'] ?? null,
+                        'reason'                => $notes['notes'] ?? null,
                     ]);
                 }
                 break;
@@ -55,15 +55,15 @@ class EmployeeApplicationService
                         'employee_id'           => $record->employee_id,
                         'application_type_id'   => EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
                         'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST],
-                        'date'                  => $details['detail_date'],
-                        'time'                  => $details['detail_time'],
+                        'date'                  => $details['date'],
+                        'time'                  => $details['time'],
                         'reason'                => $data['notes'] ?? null,
                     ]);
                 }
                 break;
 
             case EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST:
-                $details = $data['leaveRequest'] ?? null;
+                $details = $data['leave_request'] ?? null;
                 if ($details) {
                     $record->leaveRequest()->create([
                         'application_id'        => $record->id,
@@ -74,8 +74,13 @@ class EmployeeApplicationService
                         'end_date'              => $details['detail_to_date'],
                         'days_count'            => $details['detail_days_count'] ?? null,
                         'leave_type'            => $details['detail_leave_type_id'] ?? null,
-                        'year'                  => $details['detail_year'] ?? now()->year,
-                        'month'                 => $details['detail_month'] ?? now()->month,
+                        'year'  => isset($details['detail_from_date'])
+                            ? \Carbon\Carbon::parse($details['detail_from_date'])->year
+                            : null,
+
+                        'month' => isset($details['detail_from_date'])
+                            ? \Carbon\Carbon::parse($details['detail_from_date'])->month
+                            : null,
                         'reason' => $data['notes'],
                     ]);
                 }
@@ -93,7 +98,9 @@ class EmployeeApplicationService
                         'monthly_deduction_amount'     => $details['detail_monthly_deduction_amount'],
                         'deduction_starts_from'        => $details['detail_deduction_starts_from'],
                         'deduction_ends_at'            => $details['detail_deduction_ends_at'],
+                        'date' => $data['application_date'],
                         'number_of_months_of_deduction' => $details['detail_number_of_months_of_deduction'] ?? null,
+                        'reason' => $data['notes'],
                     ]);
                 }
                 break;

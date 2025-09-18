@@ -924,7 +924,7 @@ class EmployeeApplicationResource extends Resource
             ->color('info')
             ->icon('heroicon-m-newspaper')
 
-            ->disabledForm()
+            ->disabledSchema()
             ->schema(function ($record) {
                 $leaveRequest = $record?->leaveRequest;
                 $leaveTypeId  = $leaveRequest->leave_type;
@@ -933,23 +933,25 @@ class EmployeeApplicationResource extends Resource
                 $fromDate  = $leaveRequest->start_date;
                 $daysCount = $leaveRequest->days_count;
                 $year      = $leaveRequest->year;
-                $month     = getMonthArrayWithKeys()[$leaveRequest->month] ?? '';
+                // $month     = getMonthArrayWithKeys()[$leaveRequest->month] ?? '';
+                $month     =  $leaveRequest->month  ?? '';
                 $leaveType = LeaveType::find($leaveTypeId)->name;
 
                 return [
-                    Fieldset::make()->label('Request data')->columns(3)->schema([
-                        TextInput::make('employee')->default($record?->employee?->name),
+                    Fieldset::make()->columnSpanFull()->label('Request data')->columns(2)->schema([
+                        TextInput::make('employee')->columnSpan(2)->default($record?->employee?->name),
                         TextInput::make('leave')->default($leaveType),
+                        TextInput::make('days_count')->default($daysCount),
                         DatePicker::make('from_date')->default($fromDate)->label('From date'),
                         DatePicker::make('to_date')->default($toDate)->label('To date'),
                         TextInput::make('detail_year')->default($year)->label('Year'),
                         TextInput::make('detail_month')->default($month)->label('Month'),
-                        TextInput::make('days_count')->default($daysCount),
                     ]),
                 ];
             })
             // ->modalSubmitAction(false)
-            // ->modalCancelAction(false)
+            ->modalSubmitAction(false)
+            ->modalCancelAction(false)
         ;
     }
     private static function advancedRequestDetails(): Action
@@ -1314,7 +1316,7 @@ class EmployeeApplicationResource extends Resource
                 // ->saveRelationshipsBeforeChildrenUsing(function ($data) {
                 // dd($data);
                 // })
-               
+
                 ->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
                     Log::info('data', [$data]);
                     $data['application_type_id']   = 2;
