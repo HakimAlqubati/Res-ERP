@@ -63,10 +63,10 @@ trait HasNewUserForm
                         Select::make('branch_id')
                             ->label('Branch')
                             ->required()
-                            ->visible(function (Get $get) {
-                                $roles = $get('roles') ?? [];
-                                return ! in_array(5, $roles);
-                            })
+                            // ->visible(function (Get $get) {
+                            //     $roles = $get('roles') ?? [];
+                            //     return ! in_array(5, $roles);
+                            // })
                             ->searchable()
                             ->options(function () {
                                 return Branch::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id');
