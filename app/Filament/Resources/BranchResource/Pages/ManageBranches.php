@@ -26,7 +26,7 @@ class ManageBranches extends ManageRecords
             Branch::TYPE_BRANCH => Tab::make(__('Standard Branches'))
                 ->modifyQueryUsing(fn(Builder $query) => $query->normal())
                 ->icon('heroicon-o-building-storefront')
-                ->badge(Branch::normal()->count())
+                ->badge(Branch::normal()->forBranchManager('id')->count())
                 ->badgeColor('success'),
 
             // Branch::TYPE_CENTRAL_KITCHEN => Tab::make(__('Manufacturing Branches'))
@@ -37,7 +37,7 @@ class ManageBranches extends ManageRecords
             Branch::TYPE_POPUP => Tab::make(__('Popup Branches'))
                 ->modifyQueryUsing(fn(Builder $query) => $query->popups())
                 ->icon('heroicon-o-sparkles')
-                ->badge(Branch::popups()->count())
+                ->badge(Branch::popups()->forBranchManager('id')->count())
                 ->badgeColor('info'),
             // Branch::TYPE_RESELLER => Tab::make(__('Reseller Locations'))
             //     ->modifyQueryUsing(fn(Builder $query) => $query->where('type', Branch::TYPE_RESELLER))

@@ -38,6 +38,7 @@ class EmployeesAttednaceReportResource extends Resource
             ->filters([
                 SelectFilter::make('branch_id')->label('Branch')->options(
                     Branch::selectable()
+                        ->forBranchManager('id')
                         ->select('id', 'name')
                         ->get()
                         ->pluck('name', 'id')

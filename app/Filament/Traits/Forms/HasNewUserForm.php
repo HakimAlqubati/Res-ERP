@@ -76,6 +76,7 @@ trait HasNewUserForm
                             ->options(function () {
                                 return Branch::selectable()
                                     ->select('id', 'name')
+                                    ->forBranchManager('id')
                                     ->get()
                                     ->pluck('name', 'id');;
                             }),
@@ -154,6 +155,7 @@ trait HasNewUserForm
                             }
 
                             return User::where('branch_id', $branchId)->whereIn('user_type', [1, 2, 3])
+                                ->forBranchManager()
                                 ->select('id', 'name')
                                 ->pluck('name', 'id');
                         })

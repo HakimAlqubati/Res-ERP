@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Resources;
 
 use Filament\Pages\Enums\SubNavigationPosition;
@@ -47,19 +48,17 @@ class EquipmentTypeResource extends Resource
                     TextInput::make('name')
                         ->label('Name')
                         ->required()
-                        ->maxLength(255)->live(onBlur:true)
+                        ->maxLength(255)->live(onBlur: true)
                         ->afterStateUpdated(function ($state, callable $set) {
                             $set('code', strtoupper(Str::slug($state, '-')));
-                        })
-                        ,
+                        }),
 
                     TextInput::make('code')
                         ->label('Code')
                         ->required()
                         // ->maxLength(40)
                         ->unique()
-                        ->helperText('This will be used as the Asset Tag prefix.')
-                        ,
+                        ->helperText('This will be used as the Asset Tag prefix.'),
 
                     Select::make('category_id')
                         ->label('Category')
@@ -143,5 +142,12 @@ class EquipmentTypeResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return self::getModel()::count();
+    }
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager()  || isMaintenanceManager()) {
+            return true;
+        }
+        return false;
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Traits\Forms;
 
 use Filament\Schemas\Components\Fieldset;
@@ -12,7 +13,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password; 
+use Illuminate\Validation\Rules\Password;
+
 trait HasAttendanceForm
 {
 
@@ -32,8 +34,9 @@ trait HasAttendanceForm
 
                         Select::make('branch_id')->label('Branch')
                             ->options(Branch::select('name', 'id')
-                                    ->active()->normal()->activePopups()
-                                    ->pluck('name', 'id'))
+                                ->selectable()
+                                ->forBranchManager('id')
+                                ->pluck('name', 'id'))
                             ->default(function () {
                                 if (isStuff()) {
                                     return auth()->user()->branch_id;

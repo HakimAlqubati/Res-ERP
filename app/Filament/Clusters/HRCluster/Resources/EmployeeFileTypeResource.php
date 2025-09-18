@@ -60,7 +60,7 @@ class EmployeeFileTypeResource extends Resource
                             TextInput::make('field_name')
                                 ->label('Field Name')
                                 ->required(),
-                                Select::make('field_type')
+                            Select::make('field_type')
                                 ->label('Field Type')
                                 ->required()
                                 ->options([
@@ -73,7 +73,7 @@ class EmployeeFileTypeResource extends Resource
                         ->label('')
                         ->createItemButtonLabel('Add New Dynamic Field'),
                 ])
-                ->columnSpanFull(),
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -122,13 +122,13 @@ class EmployeeFileTypeResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager() ) {
+        if (isSuperAdmin() || isSystemManager()) {
             return true;
         }
         return false;
     }
 
-    
+
     public static function canDelete(Model $record): bool
     {
         if (isSuperAdmin() || isSystemManager()) {
@@ -145,7 +145,7 @@ class EmployeeFileTypeResource extends Resource
         return false;
     }
 
-   
+
     public static function canForceDelete(Model $record): bool
     {
         return false;
@@ -155,5 +155,4 @@ class EmployeeFileTypeResource extends Resource
     {
         return false;
     }
-
 }

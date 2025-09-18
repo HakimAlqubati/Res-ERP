@@ -183,6 +183,7 @@ class TransferOrderResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return static::getModel()::query()
+            ->forBranchManager()
             ->whereHas('branch', function ($query) {
                 $query->where('type', '!=', Branch::TYPE_RESELLER); // غيّر "warehouse" لنوع الفرع الذي تريده
             })
@@ -194,7 +195,7 @@ class TransferOrderResource extends Resource
         return static::getModel()::whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
             ->whereHas('branch', function ($query) {
                 $query->where('type', '!=', Branch::TYPE_RESELLER); // غيّر "warehouse" لنوع الفرع الذي تريده
-            })
+            })->forBranchManager()
             ->count();
     }
 }

@@ -437,10 +437,10 @@ class BranchResource extends Resource
         ];
     }
 
-    // public static function getNavigationBadge(): ?string
-    // {
-    //     return static::getModel()::count();
-    // }
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::branches()->forBranchManager('id')->count();
+    }
 
     public static function getRelations(): array
     {
@@ -453,6 +453,7 @@ class BranchResource extends Resource
     {
         return parent::getEloquentQuery()
             // ->whereIn('type', [Branch::TYPE_BRANCH])
+            ->forBranchManager('id')
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

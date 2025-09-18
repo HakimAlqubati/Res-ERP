@@ -47,7 +47,7 @@ class DeliveredResellerOrdersResource extends Resource
     protected static ?int $navigationSort = 1;
     public static function getNavigationBadge(): ?string
     {
-        return self::getEloquentQuery()->count();
+        return self::getEloquentQuery()->forBranchManager()->count();
     }
 
     public static function getPluralLabel(): ?string
@@ -294,6 +294,7 @@ class DeliveredResellerOrdersResource extends Resource
             ->whereHas('branch', function ($query) {
                 $query->where('type', Branch::TYPE_RESELLER);
             })
+            ->forBranchManager()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

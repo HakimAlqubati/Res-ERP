@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Exception;
 use InvalidArgumentException;
 use App\Traits\DynamicConnection;
+use App\Traits\Scopes\BranchScope;
 use Filament\Facades\Filament;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -16,7 +17,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class Task extends Model implements Auditable
 {
-    use SoftDeletes, DynamicConnection, \OwenIt\Auditing\Auditable;
+    use SoftDeletes, DynamicConnection, \OwenIt\Auditing\Auditable,BranchScope;
 
     protected $table = 'hr_tasks';
 

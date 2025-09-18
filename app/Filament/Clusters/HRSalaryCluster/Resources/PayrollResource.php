@@ -40,7 +40,7 @@ class PayrollResource extends Resource
     protected static ?string $cluster = HRSalaryCluster::class;
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return static::getModel()::forBranchManager()->count();
     }
     public static function getNavigationLabel(): string
     {
@@ -75,6 +75,7 @@ class PayrollResource extends Resource
                     Select::make('branch_id')->label('Choose branch')
                         ->disabledOn('view')->searchable()
                         ->options(Branch::selectable()
+                            ->forBranchManager('id')
                             ->select('id', 'name')
                             ->get()
                             ->pluck('name', 'id'))
@@ -157,7 +158,7 @@ class PayrollResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('branch_id')->label('Branch')
-                    ->relationship('branch', 'name'),
+                    ->options(Branch::selectable()->forBranchManager('id')->pluck('name', 'id')),
                 TrashedFilter::make(),
 
 
@@ -204,7 +205,7 @@ class PayrollResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        return parent::getEloquentQuery()->forBranchManager()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

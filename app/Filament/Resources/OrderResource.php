@@ -466,7 +466,7 @@ class OrderResource extends Resource
             ->whereHas('orderDetails')
             ->whereHas('branch', function ($query) {
                 $query->where('type', '!=', Branch::TYPE_RESELLER); // غيّر "warehouse" لنوع الفرع الذي تريده
-            })
+            })->forBranchManager()
             ->count();
     }
 
@@ -485,6 +485,7 @@ class OrderResource extends Resource
     }
     public static function canCreate(): bool
     {
+        return false;
         if (isSuperAdmin()) {
             return true;
         }
@@ -498,7 +499,7 @@ class OrderResource extends Resource
             ->whereHas('orderDetails')
             ->whereHas('branch', function ($query) {
                 $query->where('type', '!=', Branch::TYPE_RESELLER); // غيّر "warehouse" لنوع الفرع الذي تريده
-            })
+            })->forBranchManager()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

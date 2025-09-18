@@ -591,7 +591,7 @@ class ServiceRequestResource extends Resource
             // $query = $query::where('branch_id', auth()->user()->branch->id);
             return $query::query()->where('branch_id', auth()->user()->branch->id);
         }
-        return $query::query();
+        return $query::query()->forBranchManager();
     }
 
     public static function canDelete(Model $record): bool

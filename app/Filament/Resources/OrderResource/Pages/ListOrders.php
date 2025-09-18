@@ -29,7 +29,7 @@ class ListOrders extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            // CreateAction::make(),
             Action::make('importOrders')
                 ->label('Import Orders')
                 ->icon('heroicon-o-arrow-up-tray')
@@ -83,9 +83,11 @@ class ListOrders extends ListRecords
                 ->modifyQueryUsing(fn(Builder $query) => $query) // No filtering
                 ->icon('heroicon-o-circle-stack')
                 ->badge(Order::query()
+                    ->forBranchManager()
                     ->whereHas('branch', function ($query) {
-                        $query->where('type','!=', Branch::TYPE_RESELLER); // غيّر "warehouse" لنوع الفرع الذي تريده
+                        $query->where('type', '!=', Branch::TYPE_RESELLER); // غيّر "warehouse" لنوع الفرع الذي تريده
                     })
+                    ->whereHas('orderDetails')
                     ->count())
                 ->badgeColor('gray'),
         ];
@@ -95,7 +97,7 @@ class ListOrders extends ListRecords
             $tabs[$status] = Tab::make($label)
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('status', $status))
                 ->icon(Order::getStatusIcon($status))
-                ->badge(Order::query()
+                ->badge(Order::query()->forBranchManager()
                     ->whereHas('branch', function ($query) {
                         $query->where('type', '!=', Branch::TYPE_RESELLER); // غيّر "warehouse" لنوع الفرع الذي تريده
                     })

@@ -15,7 +15,9 @@ class ListEmployees extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make()->icon(Heroicon::OutlinedUserPlus),
+            CreateAction::make()->icon(Heroicon::OutlinedUserPlus)
+            ->visible(fn()=>isSuperAdmin()||isSystemManager())
+            ,
         ];
     }
 

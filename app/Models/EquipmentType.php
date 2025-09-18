@@ -1,10 +1,12 @@
 <?php
 namespace App\Models;
 
+use App\Traits\Scopes\BranchScope;
 use Illuminate\Database\Eloquent\Model;
 
 class EquipmentType extends Model
 {
+    use BranchScope;
     protected $table = 'hr_equipment_types';
 
     protected $fillable = [

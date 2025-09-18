@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\DynamicConnection;
+use App\Traits\Scopes\BranchScope;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +12,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class EmployeeApplicationV2 extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable,BranchScope;
 
     protected $appends = [
         'detailed_leave_request',

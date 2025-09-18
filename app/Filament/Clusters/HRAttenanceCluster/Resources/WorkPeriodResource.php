@@ -322,7 +322,7 @@ class WorkPeriodResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return static::getModel()::forBranchManager()->count();
     }
     public static function canViewAny(): bool
     {
@@ -344,6 +344,6 @@ class WorkPeriodResource extends Resource
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
-        return $query;
+        return $query->forBranchManager();
     }
 }

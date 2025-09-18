@@ -55,6 +55,7 @@ public static function form(Schema $schema): Schema    {
                 ->options(function ($search = null) {
                     return Employee::query()
                         ->where('active', 1)
+                        ->forBranchManager()
                         // ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
                         ->limit(20)
                         ->get()

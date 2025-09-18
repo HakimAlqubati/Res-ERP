@@ -6,6 +6,7 @@ use App\Services\FifoMethodService;
 use App\Services\CopyOrderOutToBranchStoreService;
 use App\Models\Scopes\OrderScopes;
 use App\Services\ProductCostingService;
+use App\Traits\Scopes\BranchScope;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,7 +17,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class Order extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, OrderScopes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, OrderScopes,BranchScope;
 
     public const ORDERED = 'ordered';
     public const PROCESSING = 'processing';

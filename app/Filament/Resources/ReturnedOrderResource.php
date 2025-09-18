@@ -37,6 +37,6 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
             static::scopeEloquentQueryToTenant($query, $tenant);
         }
 
-        return $query;
+        return $query->forBranchManager();
     }
 }

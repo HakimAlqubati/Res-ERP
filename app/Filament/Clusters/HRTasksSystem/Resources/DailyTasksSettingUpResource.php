@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Filament\Clusters\HRTasksSystem\Resources;
-
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Fieldset;
@@ -74,13 +74,18 @@ class DailyTasksSettingUpResource extends Resource
                             ->required()
                             ->default(auth()->user()->id)
                             ->columnSpan(1)
-                            ->options(User::select('name', 'id')->get()->pluck('name', 'id'))->searchable()
+                            ->options(User::select('name', 'id')
+                            ->active()->forBranchManager()
+                            ->get()->pluck('name', 'id'))->searchable()
                             ->selectablePlaceholder(false),
                         Select::make('assigned_to')
                             ->label('Assign to')
                             ->required()
                             ->columnSpan(1)
-                            ->options(Employee::select('name', 'id')->get()->pluck('name', 'id'))->searchable()
+                            ->options(Employee::select('name', 'id')
+                                ->forBranchManager()
+                                ->active()
+                                ->get()->pluck('name', 'id'))->searchable()
                             ->selectablePlaceholder(false),
                         Toggle::make('active')->default(1)->inline(false)->columnSpan(1),
 
@@ -136,10 +141,8 @@ class DailyTasksSettingUpResource extends Resource
                                         } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
                                             $set('end_date', date('Y-m-d', strtotime("+$state months")));
                                         }
-
                                     })
-                                    ->required()
-                                    ,
+                                    ->required(),
                             ]),
                             DatePicker::make('end_date')->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1)->minDate(date('Y-m-d'))
                                 ->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
@@ -269,6 +272,7 @@ class DailyTasksSettingUpResource extends Resource
                 ),
                 SelectFilter::make('branch_id')->label('Branch')->multiple()->options(
                     Branch::selectable()
+                        ->forBranchManager('id')
                         ->select('id', 'name')
                         ->get()
                         ->pluck('name', 'id')
@@ -318,36 +322,10 @@ class DailyTasksSettingUpResource extends Resource
             'view' => ViewDailyTasksSettingUp::route('/{record}'),
         ];
     }
-
-    // public static function getEloquentQuery(): Builder
-    // {
-    //     return static::getModel()::query();
-    //     $query = static::getModel()::query();
-
-    //     if (
-    //         static::isScopedToTenant() &&
-    //         ($tenant = Filament::getTenant())
-    //     ) {
-    //         static::scopeEloquentQueryToTenant($query, $tenant);
-    //     }
-
-    //     // if (!isSuperAdmin() && auth()->user()->can('view_own_task')) {
-    //     //     $query->where('assigned_to', auth()->user()->id)
-    //     //         ->orWhere('assigned_to', auth()->user()?->employee?->id)
-    //     //         ->orWhere('created_by', auth()->user()->id)
-    //     //     ;
-    //     // }
-
-    //     if (!in_array(getCurrentRole(), [1, 3])) {
-    //         $query->where('assigned_to', auth()->user()->id)
-    //             ->orWhere('assigned_to', auth()->user()?->employee?->id)
-    //             ->orWhere('assigned_by', auth()->user()?->employee?->id)
-    //             ->orWhere('assigned_by', auth()->user()->id)
-    //         // ->orWhere('created_by', auth()->user()->id)
-    //         ;
-    //     }
-    //     return $query;
-    // }
+    public static function getEloquentQuery(): Builder
+    {
+        return static::getModel()::query()->forBranchManager();
+    }
 
     public static function canView(Model $record): bool
     {

@@ -94,7 +94,7 @@ class EmployeeApplicationResource extends Resource
                             }
                         })
                         ->options(Employee::select('name', 'id')
-
+                            ->active()->forBranchManager()
                             ->get()->plucK('name', 'id')),
 
                     DatePicker::make('application_date')
@@ -242,7 +242,7 @@ class EmployeeApplicationResource extends Resource
                 ]),
                 SelectFilter::make('branch_id')
                     ->label('Branch')
-                    ->options(Branch::select('name', 'id')->pluck('name', 'id')),
+                    ->options(Branch::select('name', 'id')->selectable()->forBranchManager('id')->pluck('name', 'id')),
             ])
             ->recordActions([
                 RestoreAction::make(),
@@ -1360,6 +1360,6 @@ class EmployeeApplicationResource extends Resource
         $query->whereHas('employee', function ($q) {
             $q->whereNull('deleted_at'); // ignore soft-deleted employees
         });
-        return $query;
+        return $query->forBranchManager();
     }
 }

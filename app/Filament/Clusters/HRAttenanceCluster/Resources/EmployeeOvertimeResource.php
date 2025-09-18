@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Clusters\HRAttenanceCluster\Resources;
 
 use Filament\Pages\Enums\SubNavigationPosition;
@@ -33,7 +34,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\TimePicker;   
+use Filament\Forms\Components\TimePicker;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
@@ -55,7 +56,7 @@ class EmployeeOvertimeResource extends Resource
 {
     protected static ?string $model = EmployeeOvertime::class;
 
-    protected static string | \BackedEnum | null $navigationIcon =Heroicon::Briefcase;
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::Briefcase;
 
     protected static ?string $cluster                             = HRAttenanceCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
@@ -96,9 +97,13 @@ class EmployeeOvertimeResource extends Resource
                                 ->helperText('Select to populate the branch employees')
                                 ->required()->searchable()
                                 ->live()
-                                ->options(Branch::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))
+                                ->options(Branch::where('active', 1)
+                                    ->forBranchManager('id')
+                                    ->select('name', 'id')->get()->pluck('name', 'id'))
                                 ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                    $employees             = Employee::where('branch_id', $state)->where('active', 1)->select('name', 'id as employee_id')->get()->toArray();
+                                    $employees             = Employee::where('branch_id', $state)
+                                        ->forBranchManager()
+                                        ->where('active', 1)->select('name', 'id as employee_id')->get()->toArray();
                                     $employeesWithOvertime = [];
                                     foreach ($employees as $employeeData) {
                                         // Fetch the employee using the employee_id from the provided data
@@ -338,85 +343,85 @@ class EmployeeOvertimeResource extends Resource
                             [
                                 Grid::make()
                                     ->columns(4)->schema([
-                                    Select::make('employee_id')->live()
-                                        ->columnSpan(2)
-                                        ->unique(
-                                            ignoreRecord: true,
-                                            modifyRuleUsing: function (Unique $rule, Get $get, $state) {
-                                                return $rule->where('employee_id', $state)
-                                                    ->where('date', $get('../../date'))
-                                                ;
-                                            }
-                                        )
-                                        ->relationship('employee', 'name')
-                                        ->validationMessages([
-                                            'unique' => 'This overtime has been recorded',
-                                        ])
-                                        ->required(),
-                                    select::make('dates')->multiple()->label('Dates')
-                                        ->columnSpan(2)
+                                        Select::make('employee_id')->live()
+                                            ->columnSpan(2)
+                                            ->unique(
+                                                ignoreRecord: true,
+                                                modifyRuleUsing: function (Unique $rule, Get $get, $state) {
+                                                    return $rule->where('employee_id', $state)
+                                                        ->where('date', $get('../../date'))
+                                                    ;
+                                                }
+                                            )
+                                            ->relationship('employee', 'name')
+                                            ->validationMessages([
+                                                'unique' => 'This overtime has been recorded',
+                                            ])
+                                            ->required(),
+                                        select::make('dates')->multiple()->label('Dates')
+                                            ->columnSpan(2)
 
-                                        ->options(function () {
+                                            ->options(function () {
 
-                                            $options     = [];
-                                            $year        = 2024;
-                                            $month       = 12;
-                                            $daysInMonth = Carbon::create($year, $month)->daysInMonth;
-                                            for ($day = 1; $day <= $daysInMonth; $day++) {
-                                                $date           = Carbon::create($year, $month, $day)->format('Y-m-d');
-                                                $options[$date] = $date;
-                                            }
-                                            return $options;
-                                        })
-                                        ->live()
-                                        ->afterStateUpdated(function ($get, $set, $state) {
-                                            foreach ($state as $date) {
-                                                $set('attendances_dates', array_map(function ($date) use ($get, $set) {
-                                                    $employeeId     = $get('employee_id');
-                                                    $attendanceData = employeeAttendances($employeeId, $date, $date);
-                                                    $approvedTime   = array_values($attendanceData)[0]['periods'][0]['attendances']['checkout']['lastcheckout']['approved_overtime'] ?? null;
-                                                    // $set('total_hours', $approvedTime);
-                                                    return [
-                                                        'attendance_date' => $date,
-
-                                                        'total_hours'     => $approvedTime,
-
-                                                    ];
-                                                }, $state));
-                                            }
-                                        })->maxItems(4),
-                                    Repeater::make('attendances_dates')
-                                        ->label('')
-                                        ->addable(false)
-                                        ->minItems(1)->deletable()
-                                        ->defaultItems(4)
-                                        ->columnSpan(4)->grid(2)
-                                        ->schema([
-                                            Grid::make()->columns(4)->schema([
-                                                DatePicker::make('attendance_date')
-                                                    ->label('Date')
-                                                    ->required()
-                                                    ->live()
-                                                    ->afterStateUpdated(function ($get, $set, $state) {
-                                                        $employeeId     = $get('../../employee_id');
-                                                        $attendanceData = employeeAttendances($employeeId, $state, $state);
+                                                $options     = [];
+                                                $year        = 2024;
+                                                $month       = 12;
+                                                $daysInMonth = Carbon::create($year, $month)->daysInMonth;
+                                                for ($day = 1; $day <= $daysInMonth; $day++) {
+                                                    $date           = Carbon::create($year, $month, $day)->format('Y-m-d');
+                                                    $options[$date] = $date;
+                                                }
+                                                return $options;
+                                            })
+                                            ->live()
+                                            ->afterStateUpdated(function ($get, $set, $state) {
+                                                foreach ($state as $date) {
+                                                    $set('attendances_dates', array_map(function ($date) use ($get, $set) {
+                                                        $employeeId     = $get('employee_id');
+                                                        $attendanceData = employeeAttendances($employeeId, $date, $date);
                                                         $approvedTime   = array_values($attendanceData)[0]['periods'][0]['attendances']['checkout']['lastcheckout']['approved_overtime'] ?? null;
-                                                        $set('total_hours', $approvedTime);
-                                                    })
-                                                    ->disabled()
-                                                    ->dehydrated(),
-                                                TextInput::make('total_hours')
-                                                    ->label('Total Hours')
-                                                // ->numeric()
-                                                    ->required()
-                                                // ->minValue(0.5)
-                                                // ->disabled()
-                                                // ->dehydrated()
-                                                ,
-                                            ]),
-                                        ]),
+                                                        // $set('total_hours', $approvedTime);
+                                                        return [
+                                                            'attendance_date' => $date,
 
-                                ]),
+                                                            'total_hours'     => $approvedTime,
+
+                                                        ];
+                                                    }, $state));
+                                                }
+                                            })->maxItems(4),
+                                        Repeater::make('attendances_dates')
+                                            ->label('')
+                                            ->addable(false)
+                                            ->minItems(1)->deletable()
+                                            ->defaultItems(4)
+                                            ->columnSpan(4)->grid(2)
+                                            ->schema([
+                                                Grid::make()->columns(4)->schema([
+                                                    DatePicker::make('attendance_date')
+                                                        ->label('Date')
+                                                        ->required()
+                                                        ->live()
+                                                        ->afterStateUpdated(function ($get, $set, $state) {
+                                                            $employeeId     = $get('../../employee_id');
+                                                            $attendanceData = employeeAttendances($employeeId, $state, $state);
+                                                            $approvedTime   = array_values($attendanceData)[0]['periods'][0]['attendances']['checkout']['lastcheckout']['approved_overtime'] ?? null;
+                                                            $set('total_hours', $approvedTime);
+                                                        })
+                                                        ->disabled()
+                                                        ->dehydrated(),
+                                                    TextInput::make('total_hours')
+                                                        ->label('Total Hours')
+                                                        // ->numeric()
+                                                        ->required()
+                                                    // ->minValue(0.5)
+                                                    // ->disabled()
+                                                    // ->dehydrated()
+                                                    ,
+                                                ]),
+                                            ]),
+
+                                    ]),
                                 Grid::make()->columns(2)->schema([
                                     TextInput::make('notes')
                                         ->label('Notes')->columnSpanFull()
@@ -490,7 +495,7 @@ class EmployeeOvertimeResource extends Resource
                 TrashedFilter::make()->visible(fn(): bool => isSuperAdmin()),
                 SelectFilter::make('branch_id')
                     ->label('Branch')->multiple()
-                    ->options(Branch::where('active', 1)->get()->pluck('name', 'id')),
+                    ->options(Branch::where('active', 1)->forBranchManager('id')->get()->pluck('name', 'id')),
                 SelectFilter::make('type')->label('Type')->options(EmployeeOvertime::getTypes()),
                 SelectFilter::make('approved')
                     ->label('Status')->multiple()
@@ -540,9 +545,9 @@ class EmployeeOvertimeResource extends Resource
                             TextInput::make('hours')->default($record->hours),
                         ];
                     })->action(function ($record, $data) {
-                    // dd($data['hours'],$data,$record);
-                    return $record->update(['hours' => $data['hours']]);
-                }),
+                        // dd($data['hours'],$data,$record);
+                        return $record->update(['hours' => $data['hours']]);
+                    }),
                 Action::make('Approve')
                     ->databaseTransaction()
                     ->label(function ($record) {
@@ -559,12 +564,12 @@ class EmployeeOvertimeResource extends Resource
                             return 'heroicon-o-check-badge';
                         }
                     })->color(function ($record) {
-                    if ($record->approved == 1) {
-                        return 'gray';
-                    } else {
-                        return 'info';
-                    }
-                })
+                        if ($record->approved == 1) {
+                            return 'gray';
+                        } else {
+                            return 'info';
+                        }
+                    })
                     ->button()
                     ->requiresConfirmation()
                     ->size(Size::Small)
@@ -638,12 +643,12 @@ class EmployeeOvertimeResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return static::getModel()::forBranchManager()->count();
     }
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        return parent::getEloquentQuery()->forBranchManager()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

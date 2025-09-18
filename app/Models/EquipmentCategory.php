@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Traits\Scopes\BranchScope;
 use Illuminate\Database\Eloquent\Model;
 
 class EquipmentCategory extends Model
 {
+    use BranchScope;
     protected $table = 'hr_equipment_categories';
 
     protected $fillable = [

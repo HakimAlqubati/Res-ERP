@@ -4,6 +4,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Builder;
 use App\Traits\DynamicConnection;
+use App\Traits\Scopes\BranchScope;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
@@ -27,7 +28,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
     SoftDeletes,
     HasPanelShield,
     DynamicConnection,
-    \OwenIt\Auditing\Auditable;
+    \OwenIt\Auditing\Auditable,BranchScope;
 
     /**
      * The attributes that are mass assignable.
@@ -250,11 +251,11 @@ class User extends Authenticatable implements FilamentUser, Auditable
     {
         // dd(auth()->check());
         if (auth()->check()) {
-            if (isBranchManager()) {
-                static::addGlobalScope('active', function (Builder $builder) {
-                    $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
-                });
-            }
+            // if (isBranchManager()) {
+            //     static::addGlobalScope('active', function (Builder $builder) {
+            //         $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
+            //     });
+            // }
         }
     }
 

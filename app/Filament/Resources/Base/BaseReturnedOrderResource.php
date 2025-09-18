@@ -334,7 +334,7 @@ abstract class BaseReturnedOrderResource extends Resource
     }
     public static function getNavigationBadge(): ?string
     {
-        return self::getModel()::count();
+        return self::getModel()::forBranchManager()->count();
     }
     public static function getRecordSubNavigation(Page $page): array
     {

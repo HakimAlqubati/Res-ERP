@@ -2,6 +2,8 @@
 
 namespace App\Filament\Clusters\HRServiceRequestCluster\Resources;
 
+use Illuminate\Database\Eloquent\Builder;
+
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Wizard;
@@ -414,7 +416,7 @@ class EquipmentResource extends Resource
         if (auth()->user()->is_branch_manager) {
             return static::getModel()::where('branch_id', auth()->user()->branch->id)->count();
         }
-        return static::getModel()::count();
+        return static::getModel()::forBranchManager()->count();
     }
 
     public static function generateEquipmentCode(?int $typeId): string
@@ -448,5 +450,10 @@ class EquipmentResource extends Resource
             // إعادة الكود الكامل بالشكل: CATEGORYPREFIX + TYPECODE + 3 أرقام
             return $prefix . '-' . str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT);
         });
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return static::getModel()::query()->forBranchManager();
     }
 }

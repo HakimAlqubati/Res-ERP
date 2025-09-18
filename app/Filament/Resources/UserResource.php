@@ -173,6 +173,7 @@ class UserResource extends Resource
                     ->multiple()
                     ->label(__('lang.branch'))->options(
                         Branch::withAllTypes()
+                            ->forBranchManager('id')
                             ->pluck('name', 'id')->toArray()
                     ),
             ])
@@ -209,7 +210,7 @@ class UserResource extends Resource
                                     ->default(fn($record) => $record->branch_id)
                                     ->options(
                                         fn() => Branch::active()
-
+                                            ->forBranchManager('id')
                                             ->pluck('name', 'id')
                                     )
                                     ->required(),
@@ -303,12 +304,13 @@ class UserResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return static::getModel()::forBranchManager()->count();
     }
 
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
+            ->forBranchManager()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ])->withMax('loginHistories as last_login_at', 'created_at');

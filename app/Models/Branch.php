@@ -9,6 +9,7 @@ use App\Models\Branch\Traits\BranchRelations;
 use App\Models\Branch\Traits\BranchScopes;
 use App\Models\Branch\Traits\BranchAggregates;
 use App\Traits\DynamicConnection;
+use App\Traits\Scopes\BranchScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -22,7 +23,7 @@ class Branch extends Model implements HasMedia, Auditable
         SoftDeletes,
         DynamicConnection,
         InteractsWithMedia,
-        \OwenIt\Auditing\Auditable;
+        \OwenIt\Auditing\Auditable,BranchScope;
 
     // 🧩 اجمع كل الـTraits هنا
     use BranchConstants,

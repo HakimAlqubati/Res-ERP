@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use App\Traits\DynamicConnection;
+use App\Traits\Scopes\BranchScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
@@ -12,7 +13,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class ServiceRequest extends Model implements Auditable, HasMedia
 {
-    use HasFactory, DynamicConnection, \OwenIt\Auditing\Auditable, InteractsWithMedia;
+    use HasFactory, DynamicConnection, \OwenIt\Auditing\Auditable, InteractsWithMedia,BranchScope;
     protected $table = 'hr_service_requests';
 
     // Fillable fields

@@ -734,7 +734,7 @@ class EmployeeResource extends Resource
             ->filters([
 
                 TrashedFilter::make()
-                    ->visible(fn(): bool => (isSystemManager() || isSuperAdmin())),
+                    ->visible(fn(): bool => (isSystemManager() || isSuperAdmin() || isBranchManager())),
                 SelectFilter::make('branch_id')
                     ->searchable()
                     ->multiple()
@@ -746,7 +746,7 @@ class EmployeeResource extends Resource
                     ->options(getNationalities()),
                 SelectFilter::make('active')
 
-                    ->options([1 => 'Active', 0 => 'Inactive'])
+                    ->options([1 => 'Active', 0 => 'Inactive'])->default(1)
                     ->label('Active'),
                 SelectFilter::make('employee_type')
                     ->label('Role type')
@@ -1005,13 +1005,14 @@ class EmployeeResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return static::getModel()::forBranchManager()->count();
     }
 
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
             // ->where('role_id',8)
+            ->forBranchManager()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
@@ -1162,5 +1163,20 @@ class EmployeeResource extends Resource
 
 
         ];
+    }
+    public static function canForceDelete(Model $record): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
     }
 }

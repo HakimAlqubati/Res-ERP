@@ -109,4 +109,11 @@ class EquipmentCategoryResource extends Resource
     {
         return self::getModel()::count();
     }
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager()  || isMaintenanceManager()) {
+            return true;
+        }
+        return false;
+    }
 }

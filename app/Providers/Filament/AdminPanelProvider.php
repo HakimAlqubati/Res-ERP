@@ -32,7 +32,7 @@ use App\Filament\Clusters\SettingsCluster;
 use App\Filament\Clusters\SettingsCluster\Resources\NotificationSettingResource;
 use App\Filament\Clusters\SupplierCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
-use App\Filament\Pages\CustomLogin; 
+use App\Filament\Pages\CustomLogin;
 use App\Filament\Pages\Dashboard as PagesDashboard;
 use App\Filament\Pages\EmployeeRecords;
 use App\Filament\Pages\InventoryReportLinks;
@@ -158,7 +158,7 @@ class AdminPanelProvider extends PanelProvider
                 if (
                     ($currentTenant && is_array($currentTenant->modules) && in_array(CustomTenantModel::MODULE_HR, $currentTenant->modules))
                     ||
-                    is_null($currentTenant)
+                    is_null($currentTenant) && 1 < 0
 
                 ) {
                     $group =  array_merge(

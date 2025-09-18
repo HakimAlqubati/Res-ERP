@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\Scopes\BranchScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PayrollRun extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes,BranchScope;
 
     protected $table = 'hr_payroll_runs';
 

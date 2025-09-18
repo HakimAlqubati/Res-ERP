@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Scopes\BranchScope;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,7 +11,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class ReturnedOrder extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable,BranchScope;
 
     const STATUS_CREATED  = 'created';
     const STATUS_APPROVED = 'approved';

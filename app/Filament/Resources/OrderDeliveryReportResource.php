@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Filament\Resources;
+use Illuminate\Database\Eloquent\Builder;
 
 use Filament\Pages\Enums\SubNavigationPosition;
 use App\Filament\Resources\OrderDeliveryReportResource\Pages\DeliveryAndInvoicingReportPage;
@@ -53,5 +54,10 @@ class OrderDeliveryReportResource extends Resource
                 ->openUrlInNewTab()
                 ->sort(2),
         ];
+    }
+
+      public static function getEloquentQuery(): Builder
+    {
+        return static::getModel()::query()->forBranchManager();
     }
 }
