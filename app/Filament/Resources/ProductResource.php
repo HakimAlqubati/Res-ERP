@@ -837,7 +837,7 @@ class ProductResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label(__('lang.is_manufacturing')),
                 TextColumn::make('category.name')->searchable()->label(__('lang.category'))->alignCenter(true)
-                    ->searchable(isIndividual: false, isGlobal: true)->toggleable(),
+                    ->searchable(isIndividual: false, isGlobal: false)->toggleable(),
                 CheckboxColumn::make('active')->label('Active?')
                     ->sortable()->label(__('lang.active'))->toggleable()->alignCenter(true)
                     ->updateStateUsing(function (Product $record, $state) {

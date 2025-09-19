@@ -304,17 +304,40 @@ class AdminPanelProvider extends PanelProvider
                 //         'sm' => 2,
                 //     ]),
             ])
-            
+
             ->assets([
                 Css::make('main', '')
             ])
             ->spa()
-            ->databaseNotifications()->globalSearch(false)
+            ->databaseNotifications()
+            ->globalSearch(false)
+            // ->databaseNotificationsPolling()
             ->databaseTransactions()
             ->renderHook(
-              PanelsRenderHook::GLOBAL_SEARCH_AFTER,
-              fn (): string => view('filament.partials.fullscreen-toggle')->render(),
-          )
+                PanelsRenderHook::GLOBAL_SEARCH_AFTER,
+                fn(): string =>
+                view('filament.partials.fullscreen-toggle')->render()
+                //     view('filament.partials.topbar-quick-links')->render(),
+                // view('filament.partials.topbar-quick-hints')->render(),
+            )
+            ->renderHook(
+                PanelsRenderHook::GLOBAL_SEARCH_AFTER,
+                fn(): string =>
+                view('filament.partials.topbar-quick-links')->render(),
+                // view('filament.partials.topbar-quick-hints')->render(),
+            )
+            // ->renderHook(
+            //     PanelsRenderHook::GLOBAL_SEARCH_AFTER,
+            //     fn(): string =>
+            //     // view('filament.partials.topbar-quick-links')->render(),
+            //     view('filament.partials.topbar-quick-hints')->render(),
+            // )
+            // ->renderHook(
+            //     PanelsRenderHook::TOPBAR_LOGO_AFTER,
+            //     fn(): string =>
+            //     // view('filament.partials.topbar-quick-links')->render(),
+            //     view('filament.partials.topbar-inventory-reports-link')->render(),
+            // )
             // ->renderHook( name: 'panels::topbar.start', hook: fn (): View => view('livewire.credits'), )
         ;
     }

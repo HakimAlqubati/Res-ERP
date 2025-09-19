@@ -3,11 +3,12 @@
     <div x-show="!is" x-cloak>
         <x-filament::icon-button
             icon="heroicon-o-arrows-pointing-out"
-            color="gray"
+            color="primary"
             size="sm"
             label="Fullscreen"
             tooltip="Fullscreen"
             x-on:click="toggle"
+            class="pulse"
         />
     </div>
 
@@ -15,11 +16,12 @@
     <div x-show="is" x-cloak>
         <x-filament::icon-button
             icon="heroicon-o-arrows-pointing-in"
-            color="gray"
+            color="primary"
             size="sm"
             label="Exit Fullscreen"
             tooltip="Exit Fullscreen"
             x-on:click="toggle"
+            class="pulse"
         />
     </div>
 </div>
@@ -57,4 +59,21 @@
             }))
         })
     </script>
+
+    <style>
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.9;
+            }
+        }
+
+        .pulse {
+            animation: pulse 1.8s infinite ease-in-out;
+        }
+    </style>
 @endonce
