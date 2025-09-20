@@ -111,6 +111,7 @@ class InVsOutResellerReportService
             if (!$smallestUnit) {
                 continue; // تجاهل المنتج لو ما عنده وحدة معرفة
             }
+            $this->smallestUnit[$productId] = $smallestUnit;
 
             $smallestPackageSize = $smallestUnit->package_size;
             $unitName = $smallestUnit->unit->name;
@@ -276,54 +277,52 @@ class InVsOutResellerReportService
 
         return $final;
     }
-
     public function getFinalComparison(array $filters = [])
     {
-        $inData = collect($this->getInData($filters))->keyBy('product_id');
-        $outData = collect($this->getOutData($filters))->keyBy('product_id');
+        // رجّع البيانات مع مفتاح productId-storeId
+        $inData  = collect($this->getInData($filters))->keyBy(fn($row) => $row['product_id'] . '-' . ($row['store_id'] ?? $filters['store_id'] ?? ''));
+        $outData = collect($this->getOutData($filters))->keyBy(fn($row) => $row['product_id'] . '-' . ($row['store_id'] ?? $filters['store_id'] ?? ''));
 
-        $allProductIds = $inData->keys()->merge($outData->keys())->unique();
-
-        // dd($inData, $outData);
+        $allKeys = $inData->keys()->merge($outData->keys())->unique();
 
         $finalResult = [];
 
-        foreach ($allProductIds as $productId) {
-            $in = $inData->get($productId);
-            $out = $outData->get($productId);
+        foreach ($allKeys as $key) {
+            [$pId, $storeId] = explode('-', $key);
+
+            $in  = $inData->get($key);
+            $out = $outData->get($key);
+
+            $smallestUnit = $this->smallestUnit[$key] ?? $this->getSmallestUnitPrice($pId);
 
             $productName = $in['product_name'] ?? $out['product_name'] ?? '';
             $productCode = $in['product_code'] ?? $out['product_code'] ?? '';
-            $unitName = $in['unit_name'] ?? $out['unit_name'] ?? '';
+            $unitName    = $in['unit_name'] ?? $out['unit_name'] ?? '';
 
-            $inQty = $in['qty'] ?? 0;
-            $outQty = $out['qty'] ?? 0;
-
-            $inPrice = $in['price'] ?? 0;
+            $inQty    = $in['qty'] ?? 0;
+            $outQty   = $out['qty'] ?? 0;
+            $inPrice  = $in['price'] ?? 0;
             $outPrice = $out['price'] ?? 0;
 
-            // dd($filters);
             $currentQty = 0;
-            if (!empty($filters['store_id'])) {
-                $smallestUnit = $this->smallestUnit[$productId] ?? null;
-                if ($smallestUnit) {
-                    $currentQty = MultiProductsInventoryService::getRemainingQty(
-                        $productId,
-                        $smallestUnit->unit_id, // نحاول نمرر unit_id
-                        $filters['store_id']
-                    );
-                }
+            if ($smallestUnit) {
+                $currentQty = MultiProductsInventoryService::getRemainingQty(
+                    $pId,
+                    $smallestUnit->unit_id,
+                    $storeId
+                );
             }
+
             $storeName = $in['store_name'] ?? $out['store_name'] ?? null;
 
-            // dd($currentQty,$this->smallestUnit  );
             $finalResult[] = [
-                'product_id'   => $productId,
+                'product_id'   => (int) $pId,
                 'product_code' => $productCode,
                 'product_name' => $productName,
+                'store_id'     => (int) $storeId,
+                'store_name'   => $storeName,
                 'unit_name'    => $unitName,
 
-                'store_name' => $storeName,
                 'in_qty'       => round($inQty, 2),
                 'out_qty'      => round($outQty, 2),
                 'difference'   => round($inQty - $outQty, 2),
