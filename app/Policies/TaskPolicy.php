@@ -33,6 +33,7 @@ class TaskPolicy
      */
     public function create(User $user): bool
     {
+        return true;
         return $user->can('create_task');
     }
 

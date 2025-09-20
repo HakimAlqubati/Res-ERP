@@ -314,8 +314,39 @@ class TaskResource extends Resource
                                         Select::make('requr_pattern_order_day')->label('')->options(getDays())->default('Saturday'),
                                     ]),
                                 ]),
+                                Fieldset::make()->columnSpanFull()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'weekly'))->schema([
+                                    Grid::make()->columnSpanFull()->columns(2)->schema([
+                                        TextInput::make('requr_pattern_week_recur_every')->minValue(1)->maxValue(5)->numeric()->label('Recur every')->helperText('Week(s) on:')->required(),
+                                        ToggleButtons::make('requr_pattern_weekly_days')->label('')->inline()->options(getDays())->multiple(),
+                                    ]),
+                                ]),
+                                Fieldset::make()->columnSpanFull()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'monthly'))->schema([
+                                    Grid::make()
+                                        ->columnSpanFull()
+                                        ->columns(3)->schema([
+                                            Radio::make('requr_pattern_monthly_status')->label('')
+                                                ->columnSpan(1)
+                                                ->options([
+                                                    'day' => 'Day',
+                                                    'the' => 'The',
+                                                ])->live()->default('day'),
+                                            Grid::make()->columnSpanFull()->columns(2)->columnSpan(2)->visible(fn(Get $get): bool => ($get('requr_pattern_monthly_status') == 'day'))->schema([
+                                                TextInput::make('requr_pattern_the_day_of_every')->default(15)->numeric()->label('')->helperText('Of every'),
+                                                TextInput::make('requr_pattern_months')->label('')->default(1)->numeric()->helperText('Month(s)'),
+                                            ]),
+                                            Grid::make()->columnSpanFull()->columns(2)->visible(fn(Get $get): bool => ($get('requr_pattern_monthly_status') == 'the'))->columnSpan(2)->schema([
+                                                Select::make('requr_pattern_order_name')->label('')->options([
+                                                    'first' => 'first',
+                                                    'second' => 'second',
+                                                    'third' => 'third',
+                                                    'fourth' => 'fourth',
+                                                    'fifth' => 'fifth'
+                                                ])->default('first'),
+                                                Select::make('requr_pattern_order_day')->label('')->options(getDays())->default('Saturday'),
+                                            ]),
+                                        ]),
+                                ]),
                             ]),
-                        ]),
                     ]),
 
                     Textarea::make('description')
@@ -324,7 +355,7 @@ class TaskResource extends Resource
                         ->maxLength(65535)
                         ->columnSpanFull(),
 
-                    Grid::make()->visible(fn(Get $get): bool => !$get('is_daily'))->columns(2)->schema([
+                    Grid::make()->columnSpanFull()->visible(fn(Get $get): bool => !$get('is_daily'))->columns(2)->schema([
                         DatePicker::make('due_date')->label('Due date')->required(false)
                             ->native(false)
                             ->displayFormat('d/m/Y')->disabled(function ($record) {
@@ -353,7 +384,7 @@ class TaskResource extends Resource
                     Hidden::make('created_by')->default(auth()->user()->id),
                     Hidden::make('updated_by')->default(auth()->user()->id),
 
-                    Fieldset::make('task_rating')->relationship('task_rating')
+                    Fieldset::make('task_rating')->columnSpanFull()->relationship('task_rating')
                         // ->hiddenOn('create')
                         ->hidden(function ($record) {
                             if (isset($record)) {
@@ -390,7 +421,7 @@ class TaskResource extends Resource
                         ])->hidden(),
 
                     FileUpload::make('file_path')
-                        ->label('Add photos')
+                        ->label('Add photos')->columnSpanFull()
                         ->disk('public')
                         ->directory('tasks')
                         ->visibility('public')

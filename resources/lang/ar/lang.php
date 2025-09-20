@@ -226,4 +226,6 @@ return [
     'active'   => 'نشِط',
     'normal'   => 'عادي',
     'no_data'   => 'لا توجد بيانات',
+    'cancel' => 'إلغاء',
+    'cancel_reason' => 'سبب الالغاء',
 ];
