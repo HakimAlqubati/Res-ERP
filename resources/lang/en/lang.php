@@ -211,7 +211,7 @@ return [
     'reseller'                                    => 'Reseller',
     'account_manager'                             => 'Account Manager',
     'delivery_orders'                             => 'Delivery Orders',
-    'selling_price'                               => 'Selling Price',
+    'selling_price'                               => 'Selling Price (for resellers only)',
     'customized_categories'                       => 'Customized Categories',
     'reseller_sale'                               => 'Reseller Sale Invoice',
     'reseller_sales'                              => 'Reseller Sales',

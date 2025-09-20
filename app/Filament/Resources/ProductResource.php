@@ -245,52 +245,25 @@ class ProductResource extends Resource
                                         )
                                         // ->searchable()
                                         ->reactive()
-                                        ->afterStateUpdatedJs(<<<'JS'
-                                        // احصل على سعر الوحدة من الكاش:
-                                        const map = $get('unitPricesCache') ?? {};
-                                        const price = Number(map?.[$state]?.price ?? 0);
-                                        $set('price', price);
-                                
-                                        // معطيات أخرى من نفس صف الـ Repeater:
-                                        const qty   = Number($get('quantity') ?? 0);
-                                        const waste = Number($get('qty_waste_percentage') ?? 0);
-                                
-                                        // حساب الإجمالي:
-                                        const total = +(price * qty).toFixed(8);
-                                        $set('total_price', total);
-                                
-                                        // دوال مساعدة (مطابقة لدوال PHP على قد ما نقدر)
-                                        const calcAfterWaste = (val, w) => +(val * (1 - (w / 100))).toFixed(8);
-                                
-                                        $set('total_price_after_waste', calcAfterWaste(total, waste));
-                                        $set('quantity_after_waste',    calcAfterWaste(qty,   waste));
-                                
-                                        // لو تحتاج تحدث إجمالي نهائي يعتمد على كل العناصر:
-                                        const items = $get('../../productItems') ?? [];
-                                        // بإمكانك هنا إعادة حساب أي حقل تجميعي على مستوى الأعلى
-                                        // مثال: مجموع Net Price لكل العناصر:
-                                        const sumNet = +(items.reduce((s, it) => s + Number(it?.total_price_after_waste ?? 0), 0)).toFixed(8);
-                                        // لو عندك حقل أعلى اسمه final_price:
-                                         $set('../../final_price', sumNet);
-                                      JS)
-                                        // ->afterStateUpdated(function (Set $set, $state, $get) {
-                                        //     $unitPrice = UnitPrice::where(
-                                        //         'product_id',
-                                        //         $get('product_id')
-                                        //     )->where('unit_id', $state)->first() ?? null;
-                                        //     $set('price', ($unitPrice->price ?? 0));
-                                        //     $total = ((float) ($unitPrice->price ?? 0)) * ((float) $get('quantity'));
-                                        //     $set('total_price', $total);
-                                        //     // if ($get('qty_waste_percentage') <= 0) {
-                                        //     //     $set('total_price_after_waste', $total);
-                                        //     // } else {
-                                        //     // }
-                                        //     // $set('total_price_after_waste', $total);
-                                        //     $set('total_price_after_waste', ProductItem::calculateTotalPriceAfterWaste($total ?? 0, $get('qty_waste_percentage') ?? 0));
-                                        //     // $set('package_size', $unitPrice->package_size ?? 0);
-                                        //     $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($get('quantity') ?? 0, $get('qty_waste_percentage') ?? 0));
-                                        //     static::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
-                                        // })
+                                        
+                                        ->afterStateUpdated(function (Set $set, $state, $get) {
+                                            $unitPrice = UnitPrice::where(
+                                                'product_id',
+                                                $get('product_id')
+                                            )->where('unit_id', $state)->first() ?? null;
+                                            $set('price', ($unitPrice->price ?? 0));
+                                            $total = ((float) ($unitPrice->price ?? 0)) * ((float) $get('quantity'));
+                                            $set('total_price', $total);
+                                            // if ($get('qty_waste_percentage') <= 0) {
+                                            //     $set('total_price_after_waste', $total);
+                                            // } else {
+                                            // }
+                                            // $set('total_price_after_waste', $total);
+                                            $set('total_price_after_waste', ProductItem::calculateTotalPriceAfterWaste($total ?? 0, $get('qty_waste_percentage') ?? 0));
+                                            // $set('package_size', $unitPrice->package_size ?? 0);
+                                            $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($get('quantity') ?? 0, $get('qty_waste_percentage') ?? 0));
+                                            static::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
+                                        })
                                         ->columnSpan(1),
                                     // TextInput::make('package_size')->numeric()->default(1)->required()
                                     // ->label(__('lang.package_size'))->readOnly(),
