@@ -314,6 +314,13 @@ class AdminPanelProvider extends PanelProvider
             // ->databaseNotificationsPolling()
             ->databaseTransactions()
             ->renderHook(
+                PanelsRenderHook::TOPBAR_LOGO_AFTER,
+                fn(): string =>
+                view('filament.partials.current-time')->render()
+                //     view('filament.partials.topbar-quick-links')->render(),
+                // view('filament.partials.topbar-quick-hints')->render(),
+            )
+            ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_AFTER,
                 fn(): string =>
                 view('filament.partials.fullscreen-toggle')->render()
