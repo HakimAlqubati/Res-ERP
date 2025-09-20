@@ -12,35 +12,49 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('hr_employee_advance_installments', function (Blueprint $table) {
-            // رقم القسط
-            $table->unsignedInteger('sequence')->after('application_id');
+            if (!Schema::hasColumn('hr_employee_advance_installments', 'sequence')) {
+                $table->unsignedInteger('sequence')->after('application_id');
+            }
 
-            // حالة القسط
-            $table->enum('status', ['scheduled', 'paid', 'skipped', 'cancelled'])
-                  ->default('scheduled')
-                  ->after('due_date');
+            if (!Schema::hasColumn('hr_employee_advance_installments', 'status')) {
+                $table->enum('status', ['scheduled', 'paid', 'skipped', 'cancelled'])
+                    ->default('scheduled')
+                    ->after('due_date');
+            }
 
-            // الربط مع الراتب الذي خصم القسط
-            $table->unsignedBigInteger('paid_payroll_id')->nullable()->after('paid_date');
+            if (!Schema::hasColumn('hr_employee_advance_installments', 'paid_payroll_id')) {
+                $table->unsignedBigInteger('paid_payroll_id')->nullable()->after('paid_date');
+                $table->foreign('paid_payroll_id')->references('id')->on('hr_payrolls')->nullOnDelete();
+            }
 
-            // FK للربط مع جدول الرواتب
-            $table->foreign('paid_payroll_id')->references('id')->on('hr_payrolls')->nullOnDelete();
-
-            // فهرس للتسلسل داخل نفس السلفة
-            $table->unique(['application_id', 'sequence']);
+            // الفهرس الفريد
+            if (!Schema::hasColumn('hr_employee_advance_installments', 'sequence')) {
+                $table->unsignedInteger('sequence')->after('application_id');
+                $table->unique(['application_id', 'sequence']);
+            }
         });
     }
+
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-      
         Schema::table('hr_employee_advance_installments', function (Blueprint $table) {
-            $table->dropUnique(['application_id', 'sequence']);
-            $table->dropForeign(['paid_payroll_id']);
-            $table->dropColumn(['sequence', 'status', 'paid_payroll_id']);
+            if (Schema::hasColumn('hr_employee_advance_installments', 'sequence')) {
+                $table->dropUnique(['application_id', 'sequence']);
+                $table->dropColumn('sequence');
+            }
+
+            if (Schema::hasColumn('hr_employee_advance_installments', 'status')) {
+                $table->dropColumn('status');
+            }
+
+            if (Schema::hasColumn('hr_employee_advance_installments', 'paid_payroll_id')) {
+                $table->dropForeign(['paid_payroll_id']);
+                $table->dropColumn('paid_payroll_id');
+            }
         });
     }
 };
