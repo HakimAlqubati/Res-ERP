@@ -50,6 +50,7 @@ class InventoryDashboardService
         // ✅ MANUFACTURING (Chocolate)
         $manufacturingOrders = StockSupplyOrder::with('details')
             ->whereDate('created_at', '>=', $startOfMonth)
+            ->where('store_id', 9)
             ->whereHas('store.branches', function ($q) {
                 $q->where('type', Branch::TYPE_CENTRAL_KITCHEN);
             });
