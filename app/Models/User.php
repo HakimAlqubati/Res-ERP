@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -22,13 +23,14 @@ class User extends Authenticatable implements FilamentUser, Auditable
 
 {
     use HasApiTokens,
-    HasFactory,
-    Notifiable,
-    HasRoles,
-    SoftDeletes,
-    HasPanelShield,
-    DynamicConnection,
-    \OwenIt\Auditing\Auditable,BranchScope;
+        HasFactory,
+        Notifiable,
+        HasRoles,
+        SoftDeletes,
+        HasPanelShield,
+        DynamicConnection,
+        \OwenIt\Auditing\Auditable,
+        BranchScope;
 
     /**
      * The attributes that are mass assignable.
@@ -134,7 +136,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
             if (env('APP_ENV') == 'local') {
                 return Storage::disk('public')->url($this->avatar);
             }
-            return url('/') .  Storage::disk('public')->url($this->avatar); 
+            return url('/') .  Storage::disk('public')->url($this->avatar);
         }
 
         // Ensure the default image exists on the local storage
@@ -145,7 +147,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
             return Storage::disk('public')->url($defaultAvatarPath);
         }
         // If file is not found, return a fallback URL
-         return asset('imgs/avatar.png');
+        return asset('imgs/avatar.png');
     }
     public function getAvatarImageAttribute_old()
     {
@@ -168,6 +170,11 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
     public function isBranchManager()
     {
+        // dd(
+        //     $this->id,
+        //     auth()->user()->roles,
+        //     auth()->user()->roles->pluck('id')->toArray()
+        // );
         return in_array(7, $this->roles->pluck('id')->toArray());
 
         if (getCurrentRole() == 7) {
@@ -240,8 +247,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
         return false;
     }
 
-    public function getIsBranchManagerAttribute()
-    {}
+    public function getIsBranchManagerAttribute() {}
     // public function canAccessFilament(): bool
     // {
     //     return true;

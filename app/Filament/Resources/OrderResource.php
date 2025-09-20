@@ -37,7 +37,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\UnitPrice;
-use App\Models\User; 
+use App\Models\User;
 use Closure;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
@@ -466,7 +466,8 @@ class OrderResource extends Resource
             ->whereHas('orderDetails')
             ->whereHas('branch', function ($query) {
                 $query->where('type', '!=', Branch::TYPE_RESELLER); // غيّر "warehouse" لنوع الفرع الذي تريده
-            })->forBranchManager()
+            })
+            ->forBranchManager()
             ->count();
     }
 
@@ -494,12 +495,14 @@ class OrderResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        return Order::query()
+            ->forBranchManager()
             ->where('is_purchased', 0)
             ->whereHas('orderDetails')
             ->whereHas('branch', function ($query) {
                 $query->where('type', '!=', Branch::TYPE_RESELLER); // غيّر "warehouse" لنوع الفرع الذي تريده
-            })->forBranchManager()
+            })
+
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

@@ -15,6 +15,7 @@ trait BranchScope
      */
     public function scopeForBranchManager(Builder $query, string $branchColumn = 'branch_id'): Builder
     {
+        // dd(isBranchManager());
         if (auth()->check() && isBranchManager()) {
             return $query->where($branchColumn, auth()->user()->branch_id);
         }
