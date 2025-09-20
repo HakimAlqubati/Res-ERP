@@ -274,44 +274,17 @@ class TaskResource extends Resource
                                 }),
 
                         ]),
-                        Fieldset::make('requrrence_pattern')->label('Recurrence pattern')->schema([
-                            Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'daily'))->schema([
-                                Grid::make()->columns(2)->schema([
-                                    Radio::make('requr_pattern_set_days')->label('')
-                                        ->options([
-                                            'specific_days' => 'Every',
-                                            'every_day' => 'Every weekday',
-                                        ])->live(),
-                                    TextInput::make('requr_pattern_day_recurrence_each')->minValue(1)->maxValue(7)->numeric()->hidden(fn(Get $get): bool => ($get('requr_pattern_set_days') == 'every_day'))->label('Day(s)')->required(),
-                                ]),
-                            ]),
-                            Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'weekly'))->schema([
-                                Grid::make()->columns(2)->schema([
-                                    TextInput::make('requr_pattern_week_recur_every')->minValue(1)->maxValue(5)->numeric()->label('Recur every')->helperText('Week(s) on:')->required(),
-                                    ToggleButtons::make('requr_pattern_weekly_days')->label('')->inline()->options(getDays())->multiple(),
-                                ]),
-                            ]),
-                            Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'monthly'))->schema([
-                                Grid::make()->columns(3)->schema([
-                                    Radio::make('requr_pattern_monthly_status')->label('')
-                                        ->columnSpan(1)
-                                        ->options([
-                                            'day' => 'Day',
-                                            'the' => 'The',
-                                        ])->live()->default('day'),
-                                    Grid::make()->columns(2)->columnSpan(2)->visible(fn(Get $get): bool => ($get('requr_pattern_monthly_status') == 'day'))->schema([
-                                        TextInput::make('requr_pattern_the_day_of_every')->default(15)->numeric()->label('')->helperText('Of every'),
-                                        TextInput::make('requr_pattern_months')->label('')->default(1)->numeric()->helperText('Month(s)'),
-                                    ]),
-                                    Grid::make()->columns(2)->visible(fn(Get $get): bool => ($get('requr_pattern_monthly_status') == 'the'))->columnSpan(2)->schema([
-                                        Select::make('requr_pattern_order_name')->label('')->options([
-                                            'first' => 'first',
-                                            'second' => 'second',
-                                            'third' => 'third',
-                                            'fourth' => 'fourth',
-                                            'fifth' => 'fifth'
-                                        ])->default('first'),
-                                        Select::make('requr_pattern_order_day')->label('')->options(getDays())->default('Saturday'),
+                        Fieldset::make('requrrence_pattern')
+                            ->columnSpanFull()
+                            ->label('Recurrence pattern')->schema([
+                                Fieldset::make()->columnSpanFull()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'daily'))->schema([
+                                    Grid::make()->columnSpanFull()->columns(2)->schema([
+                                        Radio::make('requr_pattern_set_days')->label('')
+                                            ->options([
+                                                'specific_days' => 'Every',
+                                                'every_day' => 'Every weekday',
+                                            ])->live(),
+                                        TextInput::make('requr_pattern_day_recurrence_each')->minValue(1)->maxValue(7)->numeric()->hidden(fn(Get $get): bool => ($get('requr_pattern_set_days') == 'every_day'))->label('Day(s)')->required(),
                                     ]),
                                 ]),
                                 Fieldset::make()->columnSpanFull()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'weekly'))->schema([
@@ -347,130 +320,129 @@ class TaskResource extends Resource
                                         ]),
                                 ]),
                             ]),
-                        ]),
+                    ]),
 
-                        Textarea::make('description')
-                            // ->required()
-                            ->disabledOn('edit')
-                            ->maxLength(65535)
-                            ->columnSpanFull(),
+                    Textarea::make('description')
+                        // ->required()
+                        ->disabledOn('edit')
+                        ->maxLength(65535)
+                        ->columnSpanFull(),
 
-                        Grid::make()->columnSpanFull()->visible(fn(Get $get): bool => !$get('is_daily'))->columns(2)->schema([
-                            DatePicker::make('due_date')->label('Due date')->required(false)
-                                ->native(false)
-                                ->displayFormat('d/m/Y')->disabled(function ($record) {
-                                    if (isset($record, auth()->user()->employee)) {
-                                        if ($record->assigned_to == auth()->user()->employee->id) {
-                                            return true;
-                                        }
-                                    }
-                                    return false;
-                                })
-                                // ->minDate(now()->toDateString())
-                                ->helperText('Set due date for this task'),
-                            Select::make('task_status')->options(
-                                [
-                                    Task::STATUS_NEW => Task::STATUS_NEW,
-                                    // Task::STATUS_PENDING => Task::STATUS_PENDING,
-                                    Task::STATUS_IN_PROGRESS => Task::STATUS_IN_PROGRESS,
-                                    Task::STATUS_CLOSED => Task::STATUS_CLOSED,
-                                    Task::STATUS_REJECTED => Task::STATUS_REJECTED,
-                                ]
-                            )->default(Task::STATUS_NEW)
-                                ->disabledOn('create')
-                                ->disabled(),
-
-                        ]),
-                        Hidden::make('created_by')->default(auth()->user()->id),
-                        Hidden::make('updated_by')->default(auth()->user()->id),
-
-                        Fieldset::make('task_rating')->columnSpanFull()->relationship('task_rating')
-                            // ->hiddenOn('create')
-                            ->hidden(function ($record) {
-                                if (isset($record)) {
-                                    if ($record->task_status != Task::STATUS_CLOSED) {
+                    Grid::make()->columnSpanFull()->visible(fn(Get $get): bool => !$get('is_daily'))->columns(2)->schema([
+                        DatePicker::make('due_date')->label('Due date')->required(false)
+                            ->native(false)
+                            ->displayFormat('d/m/Y')->disabled(function ($record) {
+                                if (isset($record, auth()->user()->employee)) {
+                                    if ($record->assigned_to == auth()->user()->employee->id) {
                                         return true;
                                     }
                                 }
+                                return false;
                             })
-                            ->disabled(function ($record) {
-                                if (isset($record)) {
-                                    if (($record->assigned_to == auth()?->user()?->id) || ($record->assigned_to == auth()->user()?->employee?->id)) {
-                                        return true;
-                                    }
-                                    return false;
-                                }
-                            })
-                            ->visibleOn('edit')
-                            ->label('')->schema([
-                                // Rating::make('rating_value')
-                                //     ->theme(RatingTheme::HalfStars)
-                                //     ->label('')->theme(RatingTheme::Simple)->stars(10)->size('lg')
-                                //     ->helperText(function ($record) {
-
-                                //         if (is_null($record?->rating_value)) {
-                                //             return 'Rate this from 0 to 10';
-                                //         } else {
-                                //             return "Your rating:" . $record->rating_value . "/10";
-                                //         }
-                                //     })
-                                //     ->live()
-                                //     ->afterStateUpdated(function (?string $state, ?string $old, $component) {
-                                //         $component->helperText("Your rating: $state/10");
-                                //     }),
-                            ])->hidden(),
-
-                        FileUpload::make('file_path')
-                            ->label('Add photos')->columnSpanFull()
-                            ->disk('public')
-                            ->directory('tasks')
-                            ->visibility('public')
-                            ->columnSpanFull()
-                            ->imagePreviewHeight('250')
-                            ->image()
-                            // ->resize(5)
-                            ->loadingIndicatorPosition('left')
-                            // ->panelAspectRatio('2:1')
-                            ->panelLayout('integrated')
-                            ->removeUploadedFileButtonPosition('right')
-                            ->uploadButtonPosition('left')
-                            ->uploadProgressIndicatorPosition('left')
-                            ->multiple()
-                            ->panelLayout('grid')
-                            ->reorderable()
-                            ->openable()
-                            ->downloadable()
-                            ->hiddenOn('create')
-                            ->previewable()
-                            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                return (string) str($file->getClientOriginalName())->prepend('task-');
-                            }),
-
-                        Hidden::make('created_by')->default(auth()->user()->id),
-                        Hidden::make('updated_by')->default(auth()->user()->id),
-                        Repeater::make('steps')
-                            ->itemLabel('Steps')
-                            ->columnSpanFull()
-                            ->relationship('steps')
-                            ->columns(1)
-                            ->hiddenOn('edit')
-                            ->schema([
-                                TextInput::make('title')
-                                    ->required()
-                                    ->live(onBlur: true),
-                            ])
-                            ->collapseAllAction(
-                                fn(Action $action) => $action->label('Collapse all steps'),
-                            )
-                            ->orderColumn('order')
-                            ->reorderable()
-                            ->reorderableWithDragAndDrop()
-                            ->reorderableWithButtons()
-                            ->cloneable()
-                            ->collapsible()
-                            ->itemLabel(fn(array $state): ?string => $state['name'] ?? null),
+                            // ->minDate(now()->toDateString())
+                            ->helperText('Set due date for this task'),
+                        Select::make('task_status')->options(
+                            [
+                                Task::STATUS_NEW => Task::STATUS_NEW,
+                                // Task::STATUS_PENDING => Task::STATUS_PENDING,
+                                Task::STATUS_IN_PROGRESS => Task::STATUS_IN_PROGRESS,
+                                Task::STATUS_CLOSED => Task::STATUS_CLOSED,
+                                Task::STATUS_REJECTED => Task::STATUS_REJECTED,
+                            ]
+                        )->default(Task::STATUS_NEW)
+                            ->disabledOn('create')
+                            ->disabled(),
 
                     ]),
+                    Hidden::make('created_by')->default(auth()->user()->id),
+                    Hidden::make('updated_by')->default(auth()->user()->id),
+
+                    Fieldset::make('task_rating')->columnSpanFull()->relationship('task_rating')
+                        // ->hiddenOn('create')
+                        ->hidden(function ($record) {
+                            if (isset($record)) {
+                                if ($record->task_status != Task::STATUS_CLOSED) {
+                                    return true;
+                                }
+                            }
+                        })
+                        ->disabled(function ($record) {
+                            if (isset($record)) {
+                                if (($record->assigned_to == auth()?->user()?->id) || ($record->assigned_to == auth()->user()?->employee?->id)) {
+                                    return true;
+                                }
+                                return false;
+                            }
+                        })
+                        ->visibleOn('edit')
+                        ->label('')->schema([
+                            // Rating::make('rating_value')
+                            //     ->theme(RatingTheme::HalfStars)
+                            //     ->label('')->theme(RatingTheme::Simple)->stars(10)->size('lg')
+                            //     ->helperText(function ($record) {
+
+                            //         if (is_null($record?->rating_value)) {
+                            //             return 'Rate this from 0 to 10';
+                            //         } else {
+                            //             return "Your rating:" . $record->rating_value . "/10";
+                            //         }
+                            //     })
+                            //     ->live()
+                            //     ->afterStateUpdated(function (?string $state, ?string $old, $component) {
+                            //         $component->helperText("Your rating: $state/10");
+                            //     }),
+                        ])->hidden(),
+
+                    FileUpload::make('file_path')
+                        ->label('Add photos')->columnSpanFull()
+                        ->disk('public')
+                        ->directory('tasks')
+                        ->visibility('public')
+                        ->columnSpanFull()
+                        ->imagePreviewHeight('250')
+                        ->image()
+                        // ->resize(5)
+                        ->loadingIndicatorPosition('left')
+                        // ->panelAspectRatio('2:1')
+                        ->panelLayout('integrated')
+                        ->removeUploadedFileButtonPosition('right')
+                        ->uploadButtonPosition('left')
+                        ->uploadProgressIndicatorPosition('left')
+                        ->multiple()
+                        ->panelLayout('grid')
+                        ->reorderable()
+                        ->openable()
+                        ->downloadable()
+                        ->hiddenOn('create')
+                        ->previewable()
+                        ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                            return (string) str($file->getClientOriginalName())->prepend('task-');
+                        }),
+
+                    Hidden::make('created_by')->default(auth()->user()->id),
+                    Hidden::make('updated_by')->default(auth()->user()->id),
+                    Repeater::make('steps')
+                        ->itemLabel('Steps')
+                        ->columnSpanFull()
+                        ->relationship('steps')
+                        ->columns(1)
+                        ->hiddenOn('edit')
+                        ->schema([
+                            TextInput::make('title')
+                                ->required()
+                                ->live(onBlur: true),
+                        ])
+                        ->collapseAllAction(
+                            fn(Action $action) => $action->label('Collapse all steps'),
+                        )
+                        ->orderColumn('order')
+                        ->reorderable()
+                        ->reorderableWithDragAndDrop()
+                        ->reorderableWithButtons()
+                        ->cloneable()
+                        ->collapsible()
+                        ->itemLabel(fn(array $state): ?string => $state['name'] ?? null),
+
                 ]),
             ]);
     }
