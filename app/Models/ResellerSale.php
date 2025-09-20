@@ -16,7 +16,13 @@ class ResellerSale extends Model
         'total_amount',
         'note',
         'created_by',
+        'is_cancelled',
+        'cancel_reason',
     ];
+
+    protected $appends = [
+    'item_count',
+];
 
     public function branch()
     {
@@ -72,5 +78,10 @@ class ResellerSale extends Model
         static::retrieved(function (ResellerSale $sale) {
             $sale->ensureTotalAmountIsCorrect();
         });
+    }
+
+    public function getItemCountAttribute(): int
+    {
+        return $this->items()->count();
     }
 }

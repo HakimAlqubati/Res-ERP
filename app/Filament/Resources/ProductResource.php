@@ -84,7 +84,7 @@ class ProductResource extends Resource
 {
     protected static ?string $model                               = Product::class;
     protected static ?string $cluster                             = ProductUnitCluster::class;
-    protected static string | \BackedEnum | null $navigationIcon                      =Heroicon::Cube;
+    protected static string | \BackedEnum | null $navigationIcon                      = Heroicon::Cube;
     protected static ?string $recordTitleAttribute                = 'name';
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 1;
@@ -245,7 +245,7 @@ class ProductResource extends Resource
                                         )
                                         // ->searchable()
                                         ->reactive()
-                                        
+
                                         ->afterStateUpdated(function (Set $set, $state, $get) {
                                             $unitPrice = UnitPrice::where(
                                                 'product_id',
@@ -635,6 +635,7 @@ class ProductResource extends Resource
                                             }
                                             $res = round($packageSize * $finalPrice, 8);
                                             $set('price', $res);
+                                            $set('selling_price', $res);
                                         }),
                                     TextInput::make('package_size')
                                         ->numeric()->default(1)->required()
@@ -660,6 +661,7 @@ class ProductResource extends Resource
                                             }
                                             $res = round($state * $finalPrice, 8);
                                             $set('price', $res);
+                                            $set('selling_price', $res);
                                         })
                                         ->extraInputAttributes(function (callable $get, $livewire, $record) {
                                             return static::isProductLocked($livewire->form->getRecord(), $record)
@@ -685,11 +687,16 @@ class ProductResource extends Resource
                                         ->minValue(1)
                                         ->label(__('lang.selling_price'))
                                         ->default(function ($record, $livewire) {
-                                            return 0;
-                                            // يمكن تعديل هذا الحساب حسب منطقك إن كان هناك ربط بالهامش أو غيره
                                             $finalPrice = $livewire->form->getRecord()->final_price ?? 0;
-                                            return $finalPrice > 0 ? round($finalPrice * 1.2, 2) : null;
-                                        }),
+                                            return $finalPrice;
+                                        })
+                                        // ->default(function ($record, $livewire) {
+                                        //     return 0;
+                                        //     // يمكن تعديل هذا الحساب حسب منطقك إن كان هناك ربط بالهامش أو غيره
+                                        //     $finalPrice = $livewire->form->getRecord()->final_price ?? 0;
+                                        //     return $finalPrice > 0 ? round($finalPrice * 1.2, 2) : null;
+                                        // })
+                                        ,
 
                                 ])->orderColumn('order')
                                 ->reorderable()
@@ -1077,7 +1084,7 @@ class ProductResource extends Resource
             $markup      = 1;
             return array_merge($unit, [
                 'price'         => round($basePrice, 4),
-                'selling_price' => round($basePrice * (1 + $markup), 4),
+                'selling_price' => round($basePrice, 4),
             ]);
         }, $units);
 

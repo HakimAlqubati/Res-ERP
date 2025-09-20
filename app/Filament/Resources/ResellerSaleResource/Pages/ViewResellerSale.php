@@ -4,10 +4,10 @@ namespace App\Filament\Resources\ResellerSaleResource\Pages;
 
 use Filament\Actions\DeleteAction;
 use App\Filament\Resources\ResellerSaleResource;
-use Filament\Actions;
-use Filament\Resources\Pages\EditRecord;
+use Filament\Actions; 
+use Filament\Resources\Pages\ViewRecord;
 
-class EditResellerSale extends EditRecord
+class ViewResellerSale extends ViewRecord
 {
     protected static string $resource = ResellerSaleResource::class;
 
@@ -17,9 +17,5 @@ class EditResellerSale extends EditRecord
             // DeleteAction::make(),
         ];
     }
-
-    protected function getRedirectUrl(): string
-    {
-        return $this->getResource()::getUrl('index');
-    }
+ 
 }

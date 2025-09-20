@@ -244,4 +244,6 @@ return [
     'active'   => 'Active',
     'normal'   => 'Normal',
     'no_data'   => 'No data',
+    'cancel' => 'Cancel',
+    'cancel_reason' => 'Cancel Reason',
 ];

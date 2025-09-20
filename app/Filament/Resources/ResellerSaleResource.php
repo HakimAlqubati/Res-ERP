@@ -22,9 +22,11 @@ use App\Filament\Resources\ResellerSaleResource\Pages\PrintResellerInvoice;
 use App\Filament\Clusters\ResellersCluster;
 use App\Filament\Resources\ResellerSaleResource\Pages;
 use App\Models\Branch;
+use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Models\ResellerSale;
 use App\Models\UnitPrice;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -36,6 +38,7 @@ use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
 
@@ -63,7 +66,7 @@ class ResellerSaleResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make(__('lang.reseller_sale_info'))->schema([
+                Fieldset::make(__('lang.reseller_sale_info'))->columnSpanFull()->schema([
                     Grid::make(2)->columnSpanFull()->schema([
                         Select::make('branch_id')
                             ->label(__('lang.reseller'))
@@ -90,7 +93,7 @@ class ResellerSaleResource extends Resource
                     ->label(__('lang.items'))
                     ->relationship()
                     ->defaultItems(1)->columnSpanFull()
-                    ->columns(6)
+                    ->columns(8)
                     ->disabledOn('edit')
                     ->columnSpanFull()
                     ->schema([
@@ -138,7 +141,7 @@ class ResellerSaleResource extends Resource
                             ->reactive()
 
                             ->searchable()
-                            ->required(),
+                            ->required()->columnSpan(3),
 
                         Select::make('unit_id')
                             ->label(__('lang.unit'))
@@ -167,7 +170,7 @@ class ResellerSaleResource extends Resource
                                 $set('package_size', $unitPrice->package_size ?? 0);
                             })
                             ->searchable()
-                            ->required(),
+                            ->required()->columnSpan(1),
 
                         TextInput::make('package_size')
                             ->label(__('lang.package_size'))
@@ -232,8 +235,13 @@ class ResellerSaleResource extends Resource
             ->columns([
                 TextColumn::make('id')->sortable()->searchable()->toggleable()->alignCenter(),
                 TextColumn::make('branch.name')->label(__('lang.reseller'))->toggleable(),
-                TextColumn::make('store.name')->label(__('lang.store'))->toggleable(),
+                TextColumn::make('store.name')->label(__('lang.store'))->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('sale_date')->date('Y-m-d')->toggleable(),
+                TextColumn::make('item_count')
+                    ->label(__('lang.item_counts'))
+                    ->alignCenter()
+                    ->toggleable(),
+
                 TextColumn::make('total_amount')
                     ->label(__('lang.total_amount'))
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state)),
@@ -251,8 +259,49 @@ class ResellerSaleResource extends Resource
                 //
             ])
             ->recordActions([
+
+                // ✅ زر الإلغاء الجديد
+                Action::make('cancel')->button()
+                    ->label(__('lang.cancel'))
+                    ->icon('heroicon-o-backspace')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->schema([
+                        Textarea::make('cancel_reason')->columnSpanFull()
+                            ->label(__('lang.cancel_reason'))
+                            ->required(),
+                    ])
+                    ->hidden(fn(ResellerSale $record): bool => (bool) $record->is_cancelled) // يخفيه لو كان ملغي
+                    ->action(function (array $data, ResellerSale $record) {
+                        try {
+                            DB::transaction(function () use ($data, $record) {
+                                InventoryTransaction::where('transactionable_id', $record->id)
+                                    ->where('transactionable_type', ResellerSale::class)
+                                    ->delete();
+
+                                $record->is_cancelled = true;
+                                $record->cancel_reason =  $data['cancel_reason'];
+                                $record->save();
+                            });
+
+                            Notification::make()
+                                ->title(__('done'))
+                                ->success()
+                                ->send();
+                        } catch (Throwable $e) {
+                            report($e);
+
+                            Notification::make()
+                                ->title(__('lang.error'))
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+
                 Action::make('print_invoice')
                     ->label('Print')
+                    ->hidden(fn($record) => $record->is_cancelled)
                     ->icon('heroicon-o-printer')
                     ->url(
                         fn(ResellerSale $record) =>
@@ -260,7 +309,7 @@ class ResellerSaleResource extends Resource
                     )->button()
                     ->openUrlInNewTab(),
 
-                EditAction::make(),
+                ViewAction::make(),
                 Action::make('add_payment')
                     ->label(__('lang.add_payment')) // استخدم مفتاح ترجمة إن وجد
                     ->icon('heroicon-o-banknotes')
@@ -325,7 +374,7 @@ class ResellerSaleResource extends Resource
                                 ->danger()
                                 ->send();
                         }
-                    }),
+                    })->hidden(fn($record) => $record->is_cancelled),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -346,7 +395,8 @@ class ResellerSaleResource extends Resource
         return [
             'index'  => ListResellerSales::route('/'),
             'create' => CreateResellerSale::route('/create'),
-            'edit'   => EditResellerSale::route('/{record}/edit'),
+            // 'edit'   => EditResellerSale::route('/{record}/edit'),
+            'view'   => EditResellerSale::route('/{record}'),
             'print'  => PrintResellerInvoice::route('/{record}/print'),
         ];
     }
@@ -368,5 +418,14 @@ class ResellerSaleResource extends Resource
             CreateResellerSale::class,
             EditResellerSale::class,
         ]);
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return false;
+    }
+    public static function canDelete(Model $record): bool
+    {
+        return false;
     }
 }

@@ -40,16 +40,16 @@ class ReportProductQuantitiesForResellerResource extends Resource
      */
     public static function getLabel(): ?string
     {
-        return 'Delevery Order Report';
+        return 'Delivery Order Report';
     }
     public static function getNavigationLabel(): string
     {
-        return 'Delevery Order Report';
+        return 'Delivery Order Report';
     }
 
     public static function getPluralLabel(): ?string
     {
-        return 'Delevery Order Report';
+        return 'Delivery Order Report';
     }
 
     public static function getPages(): array
