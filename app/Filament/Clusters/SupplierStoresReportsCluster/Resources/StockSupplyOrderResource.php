@@ -40,6 +40,7 @@ use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -120,7 +121,7 @@ class StockSupplyOrderResource extends Resource
                                     if (! $product) return [];
 
                                     return $product->supplyUnitPrices
-                                    ->pluck('unit.name','unit_id')?->toArray() ?? [];
+                                        ->pluck('unit.name', 'unit_id')?->toArray() ?? [];
                                 })
                                 ->searchable()
                                 ->reactive()
@@ -129,7 +130,7 @@ class StockSupplyOrderResource extends Resource
                                         'product_id',
                                         $get('product_id')
                                     )
-                                        
+
                                         ->where('unit_id', $state)->first();
                                     $set('price', $unitPrice->price);
 
@@ -196,6 +197,29 @@ class StockSupplyOrderResource extends Resource
                     ->options(
                         Store::active()->get()->pluck('name', 'id')->toArray()
                     ),
+                Filter::make('date_range')
+                    ->schema([
+                        DatePicker::make('from')->label('From Date'),
+                        DatePicker::make('to')->label('To Date'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when($data['from'], fn($q, $date) => $q->whereDate('order_date', '>=', $date))
+                            ->when($data['to'], fn($q, $date) => $q->whereDate('order_date', '<=', $date));
+                    })
+                    ->label('Date Between')
+                    ->indicateUsing(function (array $data): ?string {
+                        if ($data['from'] && $data['to']) {
+                            return "From {$data['from']} to {$data['to']}";
+                        }
+                        if ($data['from']) {
+                            return "From {$data['from']}";
+                        }
+                        if ($data['to']) {
+                            return "Until {$data['to']}";
+                        }
+                        return null;
+                    }),
             ], FiltersLayout::AboveContent)
             ->recordActions([
                 ActionGroup::make([
