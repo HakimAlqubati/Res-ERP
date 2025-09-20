@@ -10,10 +10,10 @@
         }
     </style>
     <div class="flex justify-end mb-4">
-        <button id="printReport"
+        {{-- <button id="printReport"
             class="px-6 py-2 font-semibold rounded-md border border-blue-600 bg-blue-500 hover:bg-blue-700 transition duration-300 shadow-md">
             🖨️ Print
-        </button>
+        </button> --}}
     </div>
 
     {{ $this->getTableFiltersForm() }}
