@@ -28,7 +28,9 @@ class InventoryDashboardService
             ->count();
 
         $invoicesQuery = PurchaseInvoice::query()
-            ->whereDate('date', '>=', $startOfMonth);
+            ->whereBetween('date', [$startDate, $today])
+            
+            ;
         $invoicesCount = $invoicesQuery->count();
         $invoicesTotal = $invoicesQuery->with('details')->get()
             ->sum(fn($invoice) => $invoice->total_amount);
