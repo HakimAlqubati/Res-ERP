@@ -14,12 +14,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('hr_salary_transactions', function (Blueprint $table) {
-            // 🟢 حذف القديم
-            $table->dropUnique('hr_salary_transactions_emp_ym_type_sub_payroll_unique');
+            // 🟢 حذف الاندكس الموجود
+            $table->dropUnique('hr_salary_transactions_employee_year_month_unique');
         });
 
         Schema::table('hr_salary_transactions', function (Blueprint $table) {
-            // 🟢 إعادة إنشاء UNIQUE جديد بنفس الأعمدة
+            // 🟢 إنشاء UNIQUE جديد بالأعمدة المطلوبة
             $table->unique(
                 ['employee_id', 'year', 'month', 'type', 'sub_type', 'payroll_id', 'operation'],
                 'hr_salary_transactions_emp_ym_type_sub_operation_payroll_unique'
@@ -27,18 +27,14 @@ return new class extends Migration
         });
     }
 
-
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('hr_salary_transactions', function (Blueprint $table) {
             $table->dropUnique('hr_salary_transactions_emp_ym_type_sub_operation_payroll_unique');
 
             $table->unique(
-                ['employee_id', 'year', 'month', 'type', 'sub_type', 'payroll_id'],
-                'hr_salary_transactions_emp_ym_type_sub_payroll_unique'
+                ['employee_id', 'year', 'month', 'type', 'payroll_id'],
+                'hr_salary_transactions_employee_year_month_unique'
             );
         });
     }
