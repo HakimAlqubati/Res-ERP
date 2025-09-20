@@ -347,129 +347,130 @@ class TaskResource extends Resource
                                         ]),
                                 ]),
                             ]),
-                    ]),
+                        ]),
 
-                    Textarea::make('description')
-                        // ->required()
-                        ->disabledOn('edit')
-                        ->maxLength(65535)
-                        ->columnSpanFull(),
+                        Textarea::make('description')
+                            // ->required()
+                            ->disabledOn('edit')
+                            ->maxLength(65535)
+                            ->columnSpanFull(),
 
-                    Grid::make()->columnSpanFull()->visible(fn(Get $get): bool => !$get('is_daily'))->columns(2)->schema([
-                        DatePicker::make('due_date')->label('Due date')->required(false)
-                            ->native(false)
-                            ->displayFormat('d/m/Y')->disabled(function ($record) {
-                                if (isset($record, auth()->user()->employee)) {
-                                    if ($record->assigned_to == auth()->user()->employee->id) {
+                        Grid::make()->columnSpanFull()->visible(fn(Get $get): bool => !$get('is_daily'))->columns(2)->schema([
+                            DatePicker::make('due_date')->label('Due date')->required(false)
+                                ->native(false)
+                                ->displayFormat('d/m/Y')->disabled(function ($record) {
+                                    if (isset($record, auth()->user()->employee)) {
+                                        if ($record->assigned_to == auth()->user()->employee->id) {
+                                            return true;
+                                        }
+                                    }
+                                    return false;
+                                })
+                                // ->minDate(now()->toDateString())
+                                ->helperText('Set due date for this task'),
+                            Select::make('task_status')->options(
+                                [
+                                    Task::STATUS_NEW => Task::STATUS_NEW,
+                                    // Task::STATUS_PENDING => Task::STATUS_PENDING,
+                                    Task::STATUS_IN_PROGRESS => Task::STATUS_IN_PROGRESS,
+                                    Task::STATUS_CLOSED => Task::STATUS_CLOSED,
+                                    Task::STATUS_REJECTED => Task::STATUS_REJECTED,
+                                ]
+                            )->default(Task::STATUS_NEW)
+                                ->disabledOn('create')
+                                ->disabled(),
+
+                        ]),
+                        Hidden::make('created_by')->default(auth()->user()->id),
+                        Hidden::make('updated_by')->default(auth()->user()->id),
+
+                        Fieldset::make('task_rating')->columnSpanFull()->relationship('task_rating')
+                            // ->hiddenOn('create')
+                            ->hidden(function ($record) {
+                                if (isset($record)) {
+                                    if ($record->task_status != Task::STATUS_CLOSED) {
                                         return true;
                                     }
                                 }
-                                return false;
                             })
-                            // ->minDate(now()->toDateString())
-                            ->helperText('Set due date for this task'),
-                        Select::make('task_status')->options(
-                            [
-                                Task::STATUS_NEW => Task::STATUS_NEW,
-                                // Task::STATUS_PENDING => Task::STATUS_PENDING,
-                                Task::STATUS_IN_PROGRESS => Task::STATUS_IN_PROGRESS,
-                                Task::STATUS_CLOSED => Task::STATUS_CLOSED,
-                                Task::STATUS_REJECTED => Task::STATUS_REJECTED,
-                            ]
-                        )->default(Task::STATUS_NEW)
-                            ->disabledOn('create')
-                            ->disabled(),
+                            ->disabled(function ($record) {
+                                if (isset($record)) {
+                                    if (($record->assigned_to == auth()?->user()?->id) || ($record->assigned_to == auth()->user()?->employee?->id)) {
+                                        return true;
+                                    }
+                                    return false;
+                                }
+                            })
+                            ->visibleOn('edit')
+                            ->label('')->schema([
+                                // Rating::make('rating_value')
+                                //     ->theme(RatingTheme::HalfStars)
+                                //     ->label('')->theme(RatingTheme::Simple)->stars(10)->size('lg')
+                                //     ->helperText(function ($record) {
+
+                                //         if (is_null($record?->rating_value)) {
+                                //             return 'Rate this from 0 to 10';
+                                //         } else {
+                                //             return "Your rating:" . $record->rating_value . "/10";
+                                //         }
+                                //     })
+                                //     ->live()
+                                //     ->afterStateUpdated(function (?string $state, ?string $old, $component) {
+                                //         $component->helperText("Your rating: $state/10");
+                                //     }),
+                            ])->hidden(),
+
+                        FileUpload::make('file_path')
+                            ->label('Add photos')->columnSpanFull()
+                            ->disk('public')
+                            ->directory('tasks')
+                            ->visibility('public')
+                            ->columnSpanFull()
+                            ->imagePreviewHeight('250')
+                            ->image()
+                            // ->resize(5)
+                            ->loadingIndicatorPosition('left')
+                            // ->panelAspectRatio('2:1')
+                            ->panelLayout('integrated')
+                            ->removeUploadedFileButtonPosition('right')
+                            ->uploadButtonPosition('left')
+                            ->uploadProgressIndicatorPosition('left')
+                            ->multiple()
+                            ->panelLayout('grid')
+                            ->reorderable()
+                            ->openable()
+                            ->downloadable()
+                            ->hiddenOn('create')
+                            ->previewable()
+                            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                return (string) str($file->getClientOriginalName())->prepend('task-');
+                            }),
+
+                        Hidden::make('created_by')->default(auth()->user()->id),
+                        Hidden::make('updated_by')->default(auth()->user()->id),
+                        Repeater::make('steps')
+                            ->itemLabel('Steps')
+                            ->columnSpanFull()
+                            ->relationship('steps')
+                            ->columns(1)
+                            ->hiddenOn('edit')
+                            ->schema([
+                                TextInput::make('title')
+                                    ->required()
+                                    ->live(onBlur: true),
+                            ])
+                            ->collapseAllAction(
+                                fn(Action $action) => $action->label('Collapse all steps'),
+                            )
+                            ->orderColumn('order')
+                            ->reorderable()
+                            ->reorderableWithDragAndDrop()
+                            ->reorderableWithButtons()
+                            ->cloneable()
+                            ->collapsible()
+                            ->itemLabel(fn(array $state): ?string => $state['name'] ?? null),
 
                     ]),
-                    Hidden::make('created_by')->default(auth()->user()->id),
-                    Hidden::make('updated_by')->default(auth()->user()->id),
-
-                    Fieldset::make('task_rating')->columnSpanFull()->relationship('task_rating')
-                        // ->hiddenOn('create')
-                        ->hidden(function ($record) {
-                            if (isset($record)) {
-                                if ($record->task_status != Task::STATUS_CLOSED) {
-                                    return true;
-                                }
-                            }
-                        })
-                        ->disabled(function ($record) {
-                            if (isset($record)) {
-                                if (($record->assigned_to == auth()?->user()?->id) || ($record->assigned_to == auth()->user()?->employee?->id)) {
-                                    return true;
-                                }
-                                return false;
-                            }
-                        })
-                        ->visibleOn('edit')
-                        ->label('')->schema([
-                            // Rating::make('rating_value')
-                            //     ->theme(RatingTheme::HalfStars)
-                            //     ->label('')->theme(RatingTheme::Simple)->stars(10)->size('lg')
-                            //     ->helperText(function ($record) {
-
-                            //         if (is_null($record?->rating_value)) {
-                            //             return 'Rate this from 0 to 10';
-                            //         } else {
-                            //             return "Your rating:" . $record->rating_value . "/10";
-                            //         }
-                            //     })
-                            //     ->live()
-                            //     ->afterStateUpdated(function (?string $state, ?string $old, $component) {
-                            //         $component->helperText("Your rating: $state/10");
-                            //     }),
-                        ])->hidden(),
-
-                    FileUpload::make('file_path')
-                        ->label('Add photos')->columnSpanFull()
-                        ->disk('public')
-                        ->directory('tasks')
-                        ->visibility('public')
-                        ->columnSpanFull()
-                        ->imagePreviewHeight('250')
-                        ->image()
-                        // ->resize(5)
-                        ->loadingIndicatorPosition('left')
-                        // ->panelAspectRatio('2:1')
-                        ->panelLayout('integrated')
-                        ->removeUploadedFileButtonPosition('right')
-                        ->uploadButtonPosition('left')
-                        ->uploadProgressIndicatorPosition('left')
-                        ->multiple()
-                        ->panelLayout('grid')
-                        ->reorderable()
-                        ->openable()
-                        ->downloadable()
-                        ->hiddenOn('create')
-                        ->previewable()
-                        ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                            return (string) str($file->getClientOriginalName())->prepend('task-');
-                        }),
-
-                    Hidden::make('created_by')->default(auth()->user()->id),
-                    Hidden::make('updated_by')->default(auth()->user()->id),
-                    Repeater::make('steps')
-                        ->itemLabel('Steps')
-                        ->columnSpanFull()
-                        ->relationship('steps')
-                        ->columns(1)
-                        ->hiddenOn('edit')
-                        ->schema([
-                            TextInput::make('title')
-                                ->required()
-                                ->live(onBlur: true),
-                        ])
-                        ->collapseAllAction(
-                            fn(Action $action) => $action->label('Collapse all steps'),
-                        )
-                        ->orderColumn('order')
-                        ->reorderable()
-                        ->reorderableWithDragAndDrop()
-                        ->reorderableWithButtons()
-                        ->cloneable()
-                        ->collapsible()
-                        ->itemLabel(fn(array $state): ?string => $state['name'] ?? null),
-
                 ]),
             ]);
     }
