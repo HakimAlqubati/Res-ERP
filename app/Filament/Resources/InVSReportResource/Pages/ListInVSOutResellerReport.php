@@ -65,7 +65,7 @@ class ListInVSOutResellerReport extends ListRecords
             'reportData' => $data,
             'store'      => $store,
             'toDate'     => $toDate,
-            'product_id' => $filters['product_id'],
+            'product_id' => $filters['product_id'] ?? null,
             'totals'     => $totals,
         ];
     }
