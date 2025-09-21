@@ -9,4 +9,5 @@ return [
     'manager_abel_show_orders' => 'Manager Able to Show Orders',
     'customized_manufacturing_categories' => 'Customized manufacturing categories',
     'remaining_quantity' => 'Remaining Quantity',
+    'qty_in_stock' => 'Qty in Stock',
 ];

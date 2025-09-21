@@ -108,6 +108,12 @@ Route::middleware(['auth:api'])
         // Route::get('tasks/{task}/logs', [TaskLogController::class, 'index']);
     });
 
+Route::prefix('hr')
+    ->middleware('auth:api')
+    ->group(function () {
+
+        Route::get('/employees/{id}/leaveBalances', [EmployeeController::class, 'leaveBalances']);
+    });
 Route::prefix('aws/employee-liveness')->group(function () {
     // بدء جلسة التحقق (startSession)
     Route::post('/start-session', [EmployeeLivenessController::class, 'startSession']);

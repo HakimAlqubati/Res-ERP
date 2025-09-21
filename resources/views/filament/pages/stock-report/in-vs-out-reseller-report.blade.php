@@ -19,7 +19,9 @@
         <table class="w-full text-sm text-left border reports table-striped" id="reportContent">
             <thead class="fixed-header" style="top:64px;">
                 <tr class="header_report">
-                    <th colspan="6" class="text-left text-xl font-bold px-4 py-2">
+
+
+                    <th colspan="{{ empty($store) ? 7 : 6 }}" class="text-left text-xl font-bold px-4 py-2">
                         ({{ $store ?? 'All' }}) To Date {{ $toDate }}
                     </th>
                 </tr>

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Api\HR;
 
 use App\Http\Controllers\Controller;
@@ -25,5 +26,28 @@ class EmployeeController extends Controller
             });
 
         return response()->json($employees);
+    }
+
+    public function leaveBalances($id)
+    {
+        $employee = Employee::with('leaveTypes')->findOrFail($id);
+
+        return response()->json([
+            'employee' => [
+                'id'   => $employee->id,
+                'name' => $employee->name,
+                'leave_balances' => $employee->leaveTypes->map(function ($leaveType) {
+                    return [
+                        'leave_type_id'   => $leaveType->id,
+                        'leave_type_name' => $leaveType->name,
+                        'balance'         => $leaveType->pivot->balance,
+                        'year'            => $leaveType->pivot->year,
+                        'month'           => $leaveType->pivot->month,
+                        'type'            => $leaveType->type,
+                        'is_paid'         => $leaveType->is_paid,
+                    ];
+                }),
+            ]
+        ]);
     }
 }

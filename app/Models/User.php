@@ -31,8 +31,9 @@ class User extends Authenticatable implements FilamentUser, Auditable
         SoftDeletes,
         HasPanelShield,
         DynamicConnection,
-        \OwenIt\Auditing\Auditable,
-        BranchScope;
+        \OwenIt\Auditing\Auditable
+        , BranchScope
+        ;
 
     /**
      * The attributes that are mass assignable.

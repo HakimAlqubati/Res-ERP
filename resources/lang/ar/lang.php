@@ -228,4 +228,6 @@ return [
     'no_data'   => 'لا توجد بيانات',
     'cancel' => 'إلغاء',
     'cancel_reason' => 'سبب الالغاء',
+    'cancelled' => 'ملغي',
+    'is_cancelled' => 'ملغي؟',
 ];

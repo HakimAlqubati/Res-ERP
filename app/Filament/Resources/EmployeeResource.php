@@ -137,7 +137,8 @@ class EmployeeResource extends Resource
                                                 TextInput::make('email')
                                                     ->email()
                                                     ->required()
-                                                    ->unique(table: 'users', column: 'email', ignoreRecord: true),
+                                                    // ->unique(table: 'users', column: 'email', ignoreRecord: true)
+                                                    ->unique(column: 'email', ignoreRecord: true),
 
                                                 TextInput::make('phone_number')
                                                     ->unique(ignoreRecord: true)
@@ -858,7 +859,7 @@ class EmployeeResource extends Resource
                                 ->danger()
                                 ->send();
                         }
-                    })  ,
+                    }),
 
                 // Action::make('add_face_images')
                 //     ->label('Add Face Images')

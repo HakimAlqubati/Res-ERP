@@ -573,33 +573,33 @@ class Employee extends Model implements Auditable
                 // $builder->where('id', auth()->user()->employee->id); // Add your default query here
             });
         }
-        static::updating(function ($employee) {
-            if ($employee->is_ceo) {
-                // Unset the previous default store
-                Employee::where('is_ceo', true)
-                    ->where('id', '!=', $employee->id)
-                    ->update(['is_ceo' => false]);
-            }
+        // static::updating(function ($employee) {
+        //     if ($employee->is_ceo) {
+        //         // Unset the previous default store
+        //         Employee::where('is_ceo', true)
+        //             ->where('id', '!=', $employee->id)
+        //             ->update(['is_ceo' => false]);
+        //     }
 
-            // Check if the 'branch_id' attribute is being updated
-            if ($employee->isDirty('branch_id')) {
-                // Log the branch change in the EmployeeBranchLog table
-                EmployeeBranchLog::create([
-                    'employee_id' => $employee->id,
-                    'branch_id'   => $employee->branch_id,
-                    'start_at'    => now(),        // Set the start time of the new branch
-                    'end_at'      => null,         // End time is null because this is the current branch
-                    'created_by'  => auth()->id(), // Who made the change
-                ]);
+        //     // Check if the 'branch_id' attribute is being updated
+        //     if ($employee->isDirty('branch_id')) {
+        //         // Log the branch change in the EmployeeBranchLog table
+        //         EmployeeBranchLog::create([
+        //             'employee_id' => $employee->id,
+        //             'branch_id'   => $employee->branch_id,
+        //             'start_at'    => now(),        // Set the start time of the new branch
+        //             'end_at'      => null,         // End time is null because this is the current branch
+        //             'created_by'  => auth()->id(), // Who made the change
+        //         ]);
 
-                // Optionally, you could handle the previous branch log (if you want to mark the previous branch as ended)
-                $previousBranchLog = $employee->branchLogs()->whereNull('end_at')->latest()->first();
-                if ($previousBranchLog) {
-                    // Update the previous branch log with the 'end_at' timestamp
-                    $previousBranchLog->update(['end_at' => now()]);
-                }
-            }
-        });
+        //         // Optionally, you could handle the previous branch log (if you want to mark the previous branch as ended)
+        //         $previousBranchLog = $employee->branchLogs()->whereNull('end_at')->latest()->first();
+        //         if ($previousBranchLog) {
+        //             // Update the previous branch log with the 'end_at' timestamp
+        //             $previousBranchLog->update(['end_at' => now()]);
+        //         }
+        //     }
+        // });
         // 👇 New logic: after creating employee, create user
         static::created(function ($employee) {
             // فقط إذا لم يكن هناك user مرتبط
@@ -850,5 +850,11 @@ class Employee extends Model implements Auditable
                 throw $e;
             }
         });
+    }
+
+    public function leaveTypes()
+    {
+        return $this->belongsToMany(LeaveType::class, 'hr_leave_balances', 'employee_id', 'leave_type_id')
+            ->withPivot(['year', 'month', 'balance']); // ترجع الرصيد مع السنة والشهر
     }
 }

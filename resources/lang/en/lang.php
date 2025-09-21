@@ -246,4 +246,6 @@ return [
     'no_data'   => 'No data',
     'cancel' => 'Cancel',
     'cancel_reason' => 'Cancel Reason',
+    'cancelled' => 'Cancelled',
+    'is_cancelled' => 'Is Cancelled?',
 ];

@@ -93,7 +93,7 @@ class ResellerSaleResource extends Resource
                     ->label(__('lang.items'))
                     ->relationship()
                     ->defaultItems(1)->columnSpanFull()
-                    ->columns(8)
+                    ->columns(9)
                     ->disabledOn('edit')
                     ->columnSpanFull()
                     ->schema([
@@ -169,13 +169,15 @@ class ResellerSaleResource extends Resource
                                 $set('total_price', $total ?? 0);
                                 $set('package_size', $unitPrice->package_size ?? 0);
                             })
-                            ->searchable()
+                            ->searchable()->placeholder('Select')
                             ->required()->columnSpan(1),
 
                         TextInput::make('package_size')
                             ->label(__('lang.package_size'))
                             ->numeric()->type('number')->readOnly()
                             ->required(),
+
+                        TextInput::make('quantity')->label(__('stock.qty_in_stock'))->disabled(),
 
                         TextInput::make('quantity')
                             ->label(__('lang.quantity'))
@@ -245,6 +247,14 @@ class ResellerSaleResource extends Resource
                 TextColumn::make('total_amount')
                     ->label(__('lang.total_amount'))
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state)),
+                TextColumn::make('is_cancelled')
+                    ->label(__('lang.is_cancelled'))
+                    ->formatStateUsing(fn($state) => $state ? '❌ ' . __('lang.cancelled') : '✅ Active')
+                    ->badge()
+                    ->color(fn($state) => $state ? 'danger' : 'success')
+                    ->alignCenter()
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('total_paid')
                     ->label(__('lang.paid'))
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
