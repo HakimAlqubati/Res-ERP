@@ -8,11 +8,13 @@ use App\Traits\DynamicConnection;
 use App\Traits\Scopes\BranchScope;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Notifications\Notification;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Passport\HasApiTokens;
 use OwenIt\Auditing\Contracts\Auditable;
@@ -350,5 +352,44 @@ class User extends Authenticatable implements FilamentUser, Auditable
     {
 
         return $this->isAttendance() ?? false;
+    }
+
+
+    public function createLinkedEmployee(array $data = []): ?Employee
+    {
+        return DB::transaction(function () use ($data) {
+            try {
+                // إنشاء الموظف الجديد مرتبط باليوزر
+                $employee = Employee::create([
+                    'name'        => $this->name,             // من اليوزر
+                    'email'       => $this->email,            // من اليوزر
+                    'phone_number' => $this->phone_number,     // من اليوزر
+                    'branch_id'   => $this->branch_id,        // من اليوزر
+                    'user_id'     => $this->id,               // الربط
+                    'active'      => 1,
+                    'employee_no' => (Employee::withTrashed()->max('id') ?? 0) + 1,
+                    'join_date'   => now(),
+                    'job_title'   => $data['job_title'] ?? 'New Employee',
+                ]);
+
+                Notification::make()
+                    ->title('Employee Created')
+                    ->body("Employee {$employee->name} has been created and linked successfully.")
+                    ->success()
+                    ->send();
+
+                return $employee;
+            } catch (\Throwable $e) {
+                DB::rollBack();
+
+                Notification::make()
+                    ->title('Error')
+                    ->body('Failed to create employee: ' . $e->getMessage())
+                    ->danger()
+                    ->send();
+
+                throw $e;
+            }
+        });
     }
 }

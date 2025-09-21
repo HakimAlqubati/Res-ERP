@@ -815,7 +815,7 @@ class Employee extends Model implements Auditable
                     'phone_number' => $data['phone_number'] ?? $this->phone_number,
                     'password'     => bcrypt($data['password'] ?? '123456'),
                     'branch_id'    => $this->branch_id,
-                    'user_type'    => $this->employee_type,
+                    'user_type'    => 4,
                     'nationality'  => $this->nationality,
                     'gender'       => $this->gender,
                     'owner_id'     => $managerUserId,
@@ -831,6 +831,7 @@ class Employee extends Model implements Auditable
 
                 $user = User::create($userData);
 
+                $user->assignRole(8);
                 $this->update(['user_id' => $user->id]);
 
                 // إرسال ايميل (اختياري)

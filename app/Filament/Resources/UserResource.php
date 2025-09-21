@@ -182,6 +182,28 @@ class UserResource extends Resource
                     EditAction::make(),
                     DeleteAction::make(),
                     RestoreAction::make(),
+                    Action::make('createEmployee')
+                        ->label('Create Employee')
+                        ->icon('heroicon-o-user-plus')
+                        ->color('success')
+                        ->visible(fn(User $record) => ! $record->has_employee) // فقط اللي ما عنده موظف
+                        ->schema([
+                            Fieldset::make()->columnSpanFull()->columns(2)->schema([
+
+                                TextInput::make('name')
+                                    ->label('Full Name')
+                                    ->default(fn($record) => $record->name)
+                                    ->disabled(), // غير قابل للتعديل
+                                TextInput::make('job_title')
+                                    ->label('Job Title')
+                                    ->required(),
+                            ])
+                        ])
+                        ->action(function (User $record, array $data) {
+                            $record->createLinkedEmployee($data);
+                        }),
+
+
                     Action::make('quickEdit')
                         ->label('Quick Edit')
                         ->icon('heroicon-o-pencil-square')
