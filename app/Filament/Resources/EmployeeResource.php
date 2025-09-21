@@ -858,7 +858,7 @@ class EmployeeResource extends Resource
                                 ->danger()
                                 ->send();
                         }
-                    })->hidden(),
+                    })  ,
 
                 // Action::make('add_face_images')
                 //     ->label('Add Face Images')
