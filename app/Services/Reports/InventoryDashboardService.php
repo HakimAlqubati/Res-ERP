@@ -37,6 +37,10 @@ class InventoryDashboardService
         $branchOrders = Order::with('branch')
             ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
             ->whereDate('created_at', '>=', $startOfMonth)
+            ->whereHas('branch', function ($query) {
+                // $query->branches();
+                $query->whereIn('type',[Branch::TYPE_BRANCH,Branch::TYPE_CENTRAL_KITCHEN]);
+            })
             ->get()
             ->groupBy(fn($order) => $order->branch?->name ?? 'Unknown Branch')
             ->map(function ($orders, $branchName) {
