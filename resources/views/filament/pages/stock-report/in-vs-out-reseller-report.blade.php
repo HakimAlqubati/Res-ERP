@@ -1,8 +1,101 @@
 <x-filament::page>
 
     <style>
+        table {
+            /* border-collapse: collapse; */
+            width: 100%;
+            border-collapse: inherit;
+            border-spacing: initial;
+        }
+
         .text-center {
-            text-align: center !important;
+            text-align: center;
+        }
+
+        /* Print-specific styles */
+        @media print {
+
+            /* Hide everything except the table */
+            body * {
+                visibility: hidden;
+            }
+
+            #report-table,
+            #report-table * {
+                visibility: visible;
+            }
+
+            #report-table {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+            }
+
+            /* Add borders and spacing for printed tables */
+            table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+
+            th,
+            td {
+                border: 1px solid #000;
+                padding: 10px;
+                font-size: 12px;
+                /* Adjust font size for better readability */
+                color: #000;
+                /* Black text for headers */
+            }
+
+            th {
+                background-color: #ddd;
+                /* Light gray background for table headers */
+
+            }
+
+            td {
+                background-color: #fff;
+                /* White background for cells */
+            }
+
+        }
+
+        .btn-print,
+        .btn-primary {
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .btn-print {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .btn-print:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        .btn-print i,
+        .btn-primary i {
+            margin-right: 8px;
         }
     </style>
     <div class="flex justify-end mb-4">
@@ -16,7 +109,7 @@
 
     {{-- @if (!empty($store)) --}}
     @if (!empty($reportData))
-        <table class="w-full text-sm text-left border reports table-striped" id="reportContent">
+        <table class="w-full text-sm text-left border pretty reports table-striped" id="reportContent">
             <thead class="fixed-header" style="top:64px;">
                 <tr class="header_report">
 
@@ -54,6 +147,18 @@
                                 class="border px-4 py-1 text-center">{{ $row['in_price'] }}</td> --}}
                     </tr>
                 @endforeach
+                @if (!empty($totals))
+                    <tr class="bg-gray-100 font-bold">
+                        @if (empty($store))
+                            <td class="border px-4 py-1 text-center">Total</td>
+                        @endif
+                        <td class="border px-4 py-1 text-center" colspan="3">Total</td>
+                        
+                        <td class="border px-4 py-1 text-center">{{ $totals['in_qty'] }}</td>
+                        <td class="border px-4 py-1 text-center">{{ $totals['out_qty'] }}</td>
+                        <td class="border px-4 py-1 text-center">{{ $totals['current_qty'] }}</td>
+                    </tr>
+                @endif
             </tbody>
         </table>
     @else

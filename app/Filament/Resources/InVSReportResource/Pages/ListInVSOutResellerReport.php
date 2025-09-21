@@ -23,6 +23,8 @@ class ListInVSOutResellerReport extends ListRecords
     {
         $storeState = $this->getTable()->getFilters()['store_id']->getState();
         $storeId = is_array($storeState) ? ($storeState['value'] ?? null) : $storeState;
+        $productState = $this->getTable()->getFilters()['product_id']->getState();
+        $productId = is_array($productState) ? ($productState['value'] ?? null) : $productState;
 
         $dateState = $this->getTable()->getFilters()['date_range']->getState();
         $fromDate = $dateState['from_date'] ?? null;
@@ -42,16 +44,29 @@ class ListInVSOutResellerReport extends ListRecords
         if (filled($storeId)) {
             $filters['store_id'] = (int) $storeId;
         }
-
+        if (filled($productId)) {
+            $filters['product_id'] = (int) $productId;
+        }
         $reportService = new InVsOutResellerReportService();
         $data = $reportService->getFinalComparison($filters);
 
         $store = filled($storeId) ? (Store::find($storeId)?->name) : null;
 
+        $totals = null;
+        if (filled($productId)) {
+            $totals = [
+                'in_qty'      => collect($data)->sum('in_qty'),
+                'out_qty'     => collect($data)->sum('out_qty'),
+                'current_qty' => collect($data)->sum('current_qty'),
+            ];
+        }
+
         return [
             'reportData' => $data,
             'store'      => $store,
             'toDate'     => $toDate,
+            'product_id' => $filters['product_id'],
+            'totals'     => $totals,
         ];
     }
 }

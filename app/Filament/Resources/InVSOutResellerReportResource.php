@@ -8,6 +8,7 @@ use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Clusters\ResellersCluster;
 use App\Filament\Resources\InVSReportResource\Pages;
 use App\Filament\Resources\InVSReportResource\Pages\ListInVSOutResellerReport;
+use App\Models\Product;
 use App\Models\StockSupplyOrder;
 use App\Models\Store;
 use Carbon\Carbon;
@@ -78,7 +79,46 @@ class InVSOutResellerReportResource extends Resource
                                 $q->resellers(); // scopeResellers
                             })
                             ->get()->pluck('name', 'id')->toArray()
+                    ),
+                SelectFilter::make("product_id")
+                    ->label(__('Product'))
+                    ->searchable()
+                    ->preload()
+                    ->selectablePlaceholder(false)
+                    ->placeholder('Choose')
+                    ->options(
+                        Product::query()
+                            ->active()
+                            ->manufacturingCategory()
+                            ->orderBy('name')
+                            ->get()
+                            ->mapWithKeys(fn($product) => [
+                                $product->id => "{$product->code} - {$product->name}"
+                            ])
+                            ->toArray()
                     )
+                    // ✅ البحث بالـ code أو name
+                    ->getSearchResultsUsing(function (string $search) {
+                        return Product::query()
+                            ->active()
+                            ->manufacturingCategory()
+                            ->where(function ($q) use ($search) {
+                                $q->where('name', 'like', "%{$search}%")
+                                    ->orWhere('code', 'like', "%{$search}%");
+                            })
+                            ->limit(50)
+                            ->get()
+                            ->mapWithKeys(fn($product) => [
+                                $product->id => "{$product->code} - {$product->name}"
+                            ])
+                            ->toArray();
+                    })
+                    // ✅ عرض النص المختار بنفس الشكل code - name
+                    ->getOptionLabelUsing(
+                        fn($value): ?string =>
+                        Product::find($value)?->code . ' - ' . Product::find($value)?->name
+                    )
+
 
             ], FiltersLayout::AboveContent);
     }
