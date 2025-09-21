@@ -827,3 +827,7 @@ Route::get('/admin/transactions/print/{payroll_id}', function ($payroll_id) {
         'total'        => formatMoneyWithCurrency($total),
     ]);
 })->name('transactions.print');
+
+Route::get('/test-pusher', function () {
+    return view('test-pusher');
+});

@@ -13,18 +13,25 @@ use App\Filament\Clusters\SettingsCluster;
 use App\Filament\Clusters\SettingsCluster\Resources\NotificationSettingResource\Pages;
 use App\Filament\Clusters\SettingsCluster\Resources\NotificationSettingResource\RelationManagers;
 use App\Models\NotificationSetting;
+use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Notifications\Notification;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Fieldset;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Log;
 
 class NotificationSettingResource extends Resource
 {
@@ -96,6 +103,25 @@ class NotificationSettingResource extends Resource
             ])
             ->recordActions([
                 EditAction::make(),
+                Action::make('testNotify')
+                    ->schema([Fieldset::make()->columnSpanFull()->schema([
+                        TextInput::make('message')->columnSpanFull()->helperText('Type Message'),
+                    ])])
+                    ->action(function ($data) {
+                        $recipient = auth()->user();
+
+                        $recipient = User::where('email', 'wm555213@gmailcom')->first();
+                        Notification::make()
+                            ->title('Saved successfully')
+                            ->body('sdf')
+                            ->send()
+                            ->broadcast($recipient)
+                            ->sendToDatabase($recipient, isEventDispatched: true)
+                        ;
+                        event(new \App\Events\MyEvent($data['message']));
+
+                        Log::info('notifycation', [$recipient]);
+                    })
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

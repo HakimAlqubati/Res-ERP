@@ -312,7 +312,7 @@ class AdminPanelProvider extends PanelProvider
             ->databaseNotifications()
             ->globalSearch(false)
             // ->databaseNotificationsPolling()
-            ->databaseTransactions()
+            ->databaseTransactions() 
             ->renderHook(
                 PanelsRenderHook::TOPBAR_LOGO_AFTER,
                 fn(): string =>
