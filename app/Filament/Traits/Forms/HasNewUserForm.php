@@ -74,7 +74,9 @@ trait HasNewUserForm
                             })
                             ->searchable()
                             ->options(function () {
-                                return Branch::selectable()
+                                // return Branch::selectable()
+                                return Branch::query()
+                                ->whereIn('type',[Branch::TYPE_BRANCH,Branch::TYPE_CENTRAL_KITCHEN,Branch::TYPE_RESELLER,Branch::TYPE_POPUP])
                                     ->select('id', 'name')
                                     ->forBranchManager('id')
                                     ->get()
