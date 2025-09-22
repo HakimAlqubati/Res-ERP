@@ -46,10 +46,10 @@ class TestController4 extends Controller
         if ($request->has('id')) {
             $where[] = 'o.id = ' . (int) $request->id;
         }
-
+    
         $where[] = ' o.deleted_at is null ';
 
-        // ✅ NEW: استبعد أوامر الفروع من نوع RESELLER
+           // ✅ NEW: استبعد أوامر الفروع من نوع RESELLER
         // $where[] = "EXISTS (
         //     SELECT 1
         //     FROM branches br
@@ -302,20 +302,16 @@ AND (
                 JOIN orders o ON od.order_id = o.id
                 ";
 
-                if (!empty($customCategories)) {
+                if (count($customCategories) > 0) {
                     $categoryIds = implode(',', $customCategories);
-                    $query .= " AND (
-                    (o.customer_id != {$user->id} AND c.is_manafacturing = 1 AND c.id IN ($categoryIds)) 
-                    OR
-                    (o.customer_id = {$user->id} AND (c.is_manafacturing = 1 OR c.is_manafacturing = 0))
-                )";
-                } else {
-                    $query .= " AND (
-                    (o.customer_id != {$user->id} AND c.is_manafacturing = 1) 
-                    OR
-                    (o.customer_id = {$user->id} AND (c.is_manafacturing = 1 OR c.is_manafacturing = 0))
-                )";
+                    // $query .= " and c.id IN ($categoryIds) ";
                 }
+                $query .= " AND (
+                     (o.customer_id != {$user->id} AND c.is_manafacturing = 1 and c.id IN ($categoryIds)) 
+                    OR
+                    (o.customer_id = {$user->id} AND (c.is_manafacturing = 1 OR c.is_manafacturing = 0))
+                     )
+                 ";
             }
         }
         if (isStoreManager() && !isBranchManager()) {
