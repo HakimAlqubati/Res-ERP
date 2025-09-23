@@ -86,20 +86,20 @@ class OrderDetailsRelationManager extends RelationManager
 
                         return $remainingQty;
                     }),
-                TextColumn::make('price')->label(__('lang.unit_price'))
-                    ->summarize(Sum::make()->query(function (\Illuminate\Database\Query\Builder $query) {
-                        return $query->select('price');
-                    }))->sortable()
-                    ->alignCenter(true)
-                    ->formatStateUsing(function ($state) {
-                        return formatMoneyWithCurrency($state);
-                    })
-                    ->hidden(fn(): bool => isStoreManager()),
-                TextColumn::make('total_unit_price')->label(__('lang.total'))->alignCenter(true)
-                    ->summarize(Sum::make())->hidden(fn(): bool => isStoreManager())
-                    ->formatStateUsing(function ($state) {
-                        return formatMoneyWithCurrency($state);
-                    }),
+                // TextColumn::make('price')->label(__('lang.unit_price'))
+                //     ->summarize(Sum::make()->query(function (\Illuminate\Database\Query\Builder $query) {
+                //         return $query->select('price');
+                //     }))->sortable()
+                //     ->alignCenter(true)
+                //     ->formatStateUsing(function ($state) {
+                //         return formatMoneyWithCurrency($state);
+                //     })
+                //     ->hidden(fn(): bool => isStoreManager()),
+                // TextColumn::make('total_unit_price')->label(__('lang.total'))->alignCenter(true)
+                //     ->summarize(Sum::make())->hidden(fn(): bool => isStoreManager())
+                //     ->formatStateUsing(function ($state) {
+                //         return formatMoneyWithCurrency($state);
+                //     }),
                 // Tables\Columns\TextColumn::make('total_price_with_currency')->label(__('lang.total'))->alignCenter(true)
                 //     ->hidden(fn(): bool => isStoreManager()),
             ])
