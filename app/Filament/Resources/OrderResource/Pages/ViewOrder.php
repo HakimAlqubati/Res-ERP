@@ -16,7 +16,7 @@ class ViewOrder extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            EditAction::make(),
+            // EditAction::make(),
             Action::make('Export to Excel')->label(__('lang.export_excel'))
                 ->action('exportToExcel'),
             Action::make('Export to PDF')->label(__('lang.export_pdf'))

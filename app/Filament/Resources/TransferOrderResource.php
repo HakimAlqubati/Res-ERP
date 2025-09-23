@@ -151,7 +151,7 @@ class TransferOrderResource extends Resource
             'index' => ListTransferOrders::route('/'),
             'create' => CreateOrder::route('/create'),
             'view' => ViewOrder::route('/{record}'),
-            'edit' => EditOrder::route('/{record}/edit'),
+            // 'edit' => EditOrder::route('/{record}/edit'),
         ];
     }
 
