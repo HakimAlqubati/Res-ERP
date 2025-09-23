@@ -28,7 +28,7 @@ use App\Models\City;
 use App\Models\Country;
 use App\Models\District;
 use App\Models\Store;
-use App\Models\User; 
+use App\Models\User;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
@@ -224,7 +224,7 @@ class BranchResource extends Resource
                                         ->reactive()
                                         ->required(false),
                                     Textarea::make('address')->label(__('lang.address'))->columnSpanFull(),
-                                    
+
 
                                 ]),
 
@@ -274,7 +274,7 @@ class BranchResource extends Resource
     }
 
     public static function table(Table $table): Table
-    { 
+    {
         return $table->striped()
             ->columns([
                 TextColumn::make('id')->label(__('lang.branch_id'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
@@ -439,7 +439,9 @@ class BranchResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::branches()->forBranchManager('id')->count();
+        return static::getModel()::branches()
+            ->forBranchManager('id')
+            ->count();
     }
 
     public static function getRelations(): array

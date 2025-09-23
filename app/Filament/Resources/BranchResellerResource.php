@@ -262,11 +262,11 @@ class BranchResellerResource extends Resource
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->sortable(),
 
-            ])
+            ])->deferFilters(false)
             ->filters([
                 TrashedFilter::make(),
-                SelectFilter::make('branch_id')
-                    ->label('Branch')
+                SelectFilter::make('id')->multiple()
+                    ->label('Reseller')->searchable()
                     ->options(Branch::resellers()->active()->pluck('name', 'id')),
                 SelectFilter::make('active')
                     ->options([

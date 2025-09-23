@@ -231,7 +231,8 @@ class Product extends Model implements Auditable
         $prefix = $category->code_starts_with;
 
         // Get latest product with this prefix
-        $lastProduct = static::where('category_id', $categoryId)
+        $lastProduct = static::withTrashed()
+            ->where('category_id', $categoryId)
             ->where('code', 'like', $prefix . '%')
             ->orderBy('code', 'desc')
             ->first();

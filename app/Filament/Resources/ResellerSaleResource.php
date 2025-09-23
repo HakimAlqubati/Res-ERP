@@ -26,6 +26,7 @@ use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Models\ResellerSale;
 use App\Models\UnitPrice;
+use App\Services\MultiProductsInventoryService;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
@@ -156,11 +157,31 @@ class ResellerSaleResource extends Resource
                             ->searchable()
                             ->reactive()
                             ->afterStateUpdated(function (Set $set, $state, $get) {
+
+                                $productId = $get('product_id');
+                                $storeId = Branch::find($get('../../branch_id'))?->store_id;
+                                $unitId = $state;
+
+                                if (!$unitId || !$productId || !$storeId) {
+                                    $set('qty_in_stock', 0);
+                                    return;
+                                }
+
+                                $service = new MultiProductsInventoryService(
+                                    null,
+                                    $productId,
+                                    $unitId,
+                                    $storeId
+                                );
+
+                                $remainingQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
+                                $set('qty_in_stock', $remainingQty);
+
                                 $unitPrice = UnitPrice::where(
                                     'product_id',
                                     $get('product_id')
                                 )
-                                    ->supplyOutUnitPrices()
+                                    // ->supplyOutUnitPrices()
                                     ->where('unit_id', $state)->first();
                                 $unitSellingPrice = round($unitPrice?->selling_price, 2) ?? 0;
                                 $set('unit_price', $unitSellingPrice ?? 0);
@@ -177,7 +198,9 @@ class ResellerSaleResource extends Resource
                             ->numeric()->type('number')->readOnly()
                             ->required(),
 
-                        TextInput::make('quantity')->label(__('stock.qty_in_stock'))->disabled(),
+                        TextInput::make('qty_in_stock')
+                            ->default(0)
+                            ->label(__('stock.qty_in_stock'))->disabled(),
 
                         TextInput::make('quantity')
                             ->label(__('lang.quantity'))

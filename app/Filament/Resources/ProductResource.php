@@ -790,7 +790,7 @@ class ProductResource extends Resource
                     ->label(__('lang.code'))->copyable()->sortable()
                     ->searchable(isIndividual: false, isGlobal: true),
 
-                TextColumn::make('name')->copyable()
+                TextColumn::make('name')
                     ->label(__('lang.name'))
                     ->toggleable()
 

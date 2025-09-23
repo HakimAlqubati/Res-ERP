@@ -26,7 +26,7 @@ trait BranchAggregates
 
     public function getTotalSalesAttribute(): float
     {
-        return (float) $this->resellerSaleItems()->sum('total_price');
+        return (float) $this->resellerSaleItems()->where('is_cancelled', 0)->sum('total_price');
     }
 
     public function getTotalPaidAttribute(): float
@@ -45,6 +45,6 @@ trait BranchAggregates
         return (float) $this->orders()
             ->with('orderDetails') // تقليل N+1
             ->get()
-            ->sum(fn ($order) => $order->total_amount);
+            ->sum(fn($order) => $order->total_amount);
     }
 }
