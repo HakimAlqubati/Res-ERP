@@ -12,7 +12,9 @@ use App\Http\Controllers\Api\HR\ImageRecognize\LivenessController;
 use App\Http\Controllers\API\HR\PayrollSimulationController;
 use App\Http\Controllers\AWS\EmployeeLivenessController;
 use App\Http\Controllers\Api\HR\RunPayrollController;
+use App\Http\Controllers\Api\HR\TaskCommentController;
 use App\Http\Controllers\Api\HR\TaskController;
+use App\Http\Controllers\Api\HR\TaskLogController;
 use App\Http\Controllers\Api\HR\TaskStepController;
 use App\Models\EmployeeFaceData;
 use App\Services\HR\SalaryHelpers\WeeklyLeaveCalculator;
@@ -83,13 +85,18 @@ Route::middleware(['auth:api'])
         Route::put('tasks/{task}', [TaskController::class, 'update']);
         Route::delete('tasks/{task}', [TaskController::class, 'destroy']);
 
+
+        Route::get('tasks/statuses', [TaskController::class, 'getStatuses']);
+        Route::get('tasks/statusesColors', [TaskController::class, 'getStatusColors']);
+        Route::get('tasks/{task}/nextStatuses', [TaskController::class, 'getNextStatuses']);
+
         // Transitions
         Route::post('tasks/{task}/move', [TaskController::class, 'move']);      // انتقال الحالة
         Route::post('tasks/{task}/reject', [TaskController::class, 'reject']);  // رفض
 
         // Comments
-        // Route::get('tasks/{task}/comments', [TaskCommentController::class, 'index']);
-        // Route::post('tasks/{task}/comments', [TaskCommentController::class, 'store']);
+        Route::get('tasks/{task}/comments', [TaskCommentController::class, 'index']);
+        Route::post('tasks/{task}/comments', [TaskCommentController::class, 'store']);
 
         // Attachments
         // Route::get('tasks/{task}/attachments', [TaskAttachmentController::class, 'index']);
@@ -105,7 +112,7 @@ Route::middleware(['auth:api'])
         // Route::post('tasks/{task}/rating', [TaskRatingController::class, 'store']);
 
         // Logs
-        // Route::get('tasks/{task}/logs', [TaskLogController::class, 'index']);
+        Route::get('tasks/{task}/logs', [TaskLogController::class, 'index']);
     });
 
 Route::prefix('hr')

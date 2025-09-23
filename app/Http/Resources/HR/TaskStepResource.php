@@ -9,6 +9,12 @@ class TaskStepResource extends JsonResource
 {
     public function toArray($request)
     {
-        return [];
+        return [
+            'step_id' => $this->id,
+            'task_id' => $this->morphable_id,
+            'title' => $this->title,
+            'order' => $this->order,
+            'done' => $this->done,
+        ];
     }
 }

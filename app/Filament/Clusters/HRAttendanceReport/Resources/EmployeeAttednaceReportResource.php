@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Clusters\HRAttendanceReport\Resources;
 
 use Filament\Pages\Enums\SubNavigationPosition;
@@ -36,39 +37,33 @@ class EmployeeAttednaceReportResource extends Resource
     }
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 2;
-public static function form(Schema $schema): Schema    {
-        return $schema
-            ->components([
-                //
-            ]);
-    }
-
+   
     public static function table(Table $table): Table
     {
         $currentMonthData = getEndOfMonthDate(Carbon::now()->year, Carbon::now()->month);
 
         return $table->deferFilters(false)
             ->emptyStateHeading('No data')
-            ->columns([])
+           
             ->filters([
                 SelectFilter::make('employee_id')->label('Employee')
-                ->options(function ($search = null) {
-                    return Employee::query()
-                        ->where('active', 1)
-                        ->forBranchManager()
-                        // ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
-                        ->limit(20)
-                        ->get()
-                        ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
-                })
-                ->getSearchResultsUsing(function ($search = null) {
-                    return Employee::query()
-                        ->where('active', 1)
-                        ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
-                        ->limit(20)
-                        ->get()
-                        ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
-                })
+                    ->options(function ($search = null) {
+                        return Employee::query()
+                            ->where('active', 1)
+                            ->forBranchManager()
+                            // ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
+                            ->limit(20)
+                            ->get()
+                            ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
+                    })
+                    ->getSearchResultsUsing(function ($search = null) {
+                        return Employee::query()
+                            ->where('active', 1)
+                            ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
+                            ->limit(20)
+                            ->get()
+                            ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
+                    })
 
                     ->hidden(fn() => isStuff() || isMaintenanceManager())
                     ->searchable(),

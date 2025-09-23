@@ -31,9 +31,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
         SoftDeletes,
         HasPanelShield,
         DynamicConnection,
-        \OwenIt\Auditing\Auditable
-        , BranchScope
-        ;
+        \OwenIt\Auditing\Auditable,
+        BranchScope;
 
     /**
      * The attributes that are mass assignable.
@@ -98,7 +97,11 @@ class User extends Authenticatable implements FilamentUser, Auditable
         'email_verified_at' => 'datetime',
     ];
 
-    protected $appends                = ['managed_stores_ids', 'is_attendance'];
+    protected $appends                = [
+        'managed_stores_ids',
+        'is_attendance',
+        'avatar_image'
+    ];
     public static $filamentUserColumn = 'is_filament_user'; // The name of a boolean column in your database.
 
     public static $filamentAdminColumn = 'is_filament_admin'; // The name of a boolean column in your database.
@@ -130,7 +133,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
 
     public function getAvatarImageAttribute()
-    {
+    { 
         // Check if avatar is set and exists on S3
         // if ($this->avatar && Storage::disk('s3')->exists($this->avatar)) {
         //     return Storage::disk('s3')->url($this->avatar);
