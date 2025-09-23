@@ -135,16 +135,16 @@ class DeliveredResellerOrdersResource extends Resource
                     ->label('Manager')
                     ->sortable(),
                 TextColumn::make('item_count')->label(__('lang.item_counts'))->alignCenter(true),
-                TextColumn::make('total_amount')
-                    ->label('Total Amount')
-                    ->numeric()->alignCenter()
-                    ->sortable()
-                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state)),
-                TextColumn::make('total_returned_amount')
-                    ->label('Total Returned')
-                    ->numeric()->alignCenter()
-                    ->sortable()
-                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state)),
+                // TextColumn::make('total_amount')
+                //     ->label('Total Amount')
+                //     ->numeric()->alignCenter()
+                //     ->sortable()
+                //     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))->hidden(),
+                // TextColumn::make('total_returned_amount')
+                //     ->label('Total Returned')
+                //     ->numeric()->alignCenter()
+                //     ->sortable()
+                //     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state)),
                 TextColumn::make('total_paid')
                     ->alignCenter()
                     ->formatStateUsing(function ($state) {

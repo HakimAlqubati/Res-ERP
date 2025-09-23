@@ -26,6 +26,7 @@ class OrderDeliveryReportResource extends Resource
     protected static ?string $cluster = ResellersCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
+    protected static bool $shouldRegisterNavigation = false;
 
 
     public static function getPages(): array

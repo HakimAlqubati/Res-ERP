@@ -45,10 +45,10 @@ class OrderDetailsRelationManager extends RelationManager
         return $table->striped()
             ->columns([
                 TextColumn::make('id')->label(__('lang.id'))->alignCenter(true)->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: true)->copyable(),
                 // Tables\Columns\TextColumn::make('ordered_product.name')->label(__('lang.ordered_product')),
                 // Tables\Columns\TextColumn::make('product.name')->label(__('lang.product_approved_by_store')),
-                TextColumn::make('product.code')->label(__('lang.product_code'))->alignCenter(true)->searchable(),
+                TextColumn::make('product.code')->label(__('lang.product_code'))->alignCenter(true)->searchable()->copyable(),
                 TextColumn::make('product_id')->label(__('lang.product_id'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('product.name')->label(__('lang.product')),
                 // Tables\Columns\TextColumn::make('product.code')->label(__('lang.product_code')),

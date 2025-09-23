@@ -247,10 +247,10 @@ class BranchResellerResource extends Resource
                 //     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                 //     ->sortable(),
 
-                TextColumn::make('total_orders_amount')
-                    ->label('DO Total')
-                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
-                    ->sortable(),
+                // TextColumn::make('total_orders_amount')
+                //     ->label('DO Total')
+                //     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
+                //     ->sortable(),
 
                 TextColumn::make('total_sales')
                     ->label('Total Sales')->toggleable()
