@@ -286,6 +286,19 @@ class SettingResource extends Resource
                                                 ->helperText('Toggle to show or hide the camera switch button in the mobile app.')
                                                 ->inline(false)
                                                 ->default(false),
+
+                                            Toggle::make('show_camera_screen')
+                                                ->label('Show Camera Screen')
+                                                ->helperText('Toggle to show or hide the camera screen button in the mobile app.')
+                                                ->inline(false)
+                                                ->default(true),
+
+                                            Toggle::make('show_keypad_screen')
+                                                ->label('Show Keypad Screen')
+                                                ->helperText('Toggle to show or hide the attendance keypad screen button.')
+                                                ->inline(false)
+                                                ->default(true),
+
                                             TextInput::make('face_raw_min')
                                                 ->label('Face Raw Min')
                                                 ->numeric()
