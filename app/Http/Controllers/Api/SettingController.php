@@ -18,8 +18,8 @@ class SettingController extends Controller
             'faceRawIdeal' => (float) Setting::getSetting('face_raw_ideal', 0.22),
             'faceRawMax' => (float) Setting::getSetting('face_raw_max', 0.50),
             'cropScale' => (float) Setting::getSetting('crop_scale', 0.7),  
-            'showKeypadScreen' => (float) Setting::getSetting('show_keypad_screen', true),
-            'showCameraScreen' => (float) Setting::getSetting('show_camera_screen', true),
+            'showKeypadScreen' => (bool) Setting::getSetting('show_keypad_screen', true),
+            'showCameraScreen' => (bool) Setting::getSetting('show_camera_screen', true),
             'updatedAt' => now()->toIso8601String(),
         ]);
     }
