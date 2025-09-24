@@ -12,6 +12,7 @@ use App\Filament\Clusters\SettingsCluster\Resources\NotificationSettingResource\
 use App\Filament\Clusters\SettingsCluster;
 use App\Filament\Clusters\SettingsCluster\Resources\NotificationSettingResource\Pages;
 use App\Filament\Clusters\SettingsCluster\Resources\NotificationSettingResource\RelationManagers;
+use App\Filament\Clusters\SettingsCluster\Resources\Tables\NotificationSettingTable;
 use App\Models\NotificationSetting;
 use App\Models\User;
 use Filament\Actions\Action;
@@ -80,54 +81,7 @@ class NotificationSettingResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('type')
-                    ->label('Type')
-                    ->sortable()
-                    ->searchable(),
-
-                TextColumn::make('frequency')
-                    ->label('Frequency')
-                    ->sortable(),
-
-                TextColumn::make('daily_time')
-                    ->label('Daily Time')
-                    ->sortable(),
-
-                ToggleColumn::make('active')
-                    ->label('Active'),
-            ])
-            ->filters([
-                //
-            ])
-            ->recordActions([
-                EditAction::make(),
-                Action::make('testNotify')
-                    ->schema([Fieldset::make()->columnSpanFull()->schema([
-                        TextInput::make('message')->columnSpanFull()->helperText('Type Message'),
-                    ])])
-                    ->action(function ($data) {
-                        $recipient = auth()->user();
-
-                        $recipient = User::where('email', 'wm555213@gmailcom')->first();
-                        Notification::make()
-                            ->title('Saved successfully')
-                            ->body('sdf')
-                            ->send()
-                            ->broadcast($recipient)
-                            ->sendToDatabase($recipient, isEventDispatched: true)
-                        ;
-                        event(new \App\Events\MyEvent($data['message']));
-
-                        Log::info('notifycation', [$recipient]);
-                    })
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
-            ]);
+        return NotificationSettingTable::configure($table);
     }
 
     public static function getRelations(): array

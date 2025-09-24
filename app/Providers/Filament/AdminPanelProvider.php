@@ -340,6 +340,12 @@ class AdminPanelProvider extends PanelProvider
                 view('filament.partials.topbar-quick-hints')->render(),
             )
             // ->renderHook(
+            //     PanelsRenderHook::GLOBAL_SEARCH_AFTER,
+            //     fn(): string =>
+            //     // view('filament.partials.topbar-quick-links')->render(),
+            //     view('filament.partials.topbar-notification-bell')->render(),
+            // )
+            // ->renderHook(
             //     PanelsRenderHook::TOPBAR_LOGO_AFTER,
             //     fn(): string =>
             //     // view('filament.partials.topbar-quick-links')->render(),

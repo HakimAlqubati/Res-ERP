@@ -344,6 +344,27 @@
         }
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
+
+    <script>
+        // Enable pusher logging - don't include this in production
+        Pusher.logToConsole = true;
+
+        // إعداد Pusher
+        var pusher = new Pusher('ff551e5dba18d083602f', {
+            cluster: 'ap1'
+        });
+
+        // اشترك بالقناة الخاصة للموظف
+        var channel = pusher.subscribe('attendance-report');
+
+        // استمع للحدث
+        channel.bind('attendance-updated', function(data) {
+            console.log("📩 استلمت:", data);
+            @this.refreshData();
+        });
+    </script>
+
 
 
 
