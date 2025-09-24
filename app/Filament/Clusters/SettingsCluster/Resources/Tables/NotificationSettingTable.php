@@ -64,7 +64,7 @@ class NotificationSettingTable
                         Notification::make()
                             ->title('Saved successfully')
                             ->body($data['message'])
-                            ->send()
+                            ->send() 
                             ->broadcast($recipient)
                             ->sendToDatabase($recipient, isEventDispatched: true)
                         ;

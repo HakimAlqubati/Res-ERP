@@ -296,4 +296,10 @@ class TenantResource extends Resource
             throw $th;
         }
     }
+
+
+    public static function canCreate(): bool
+    {
+        return false;
+    }
 }
