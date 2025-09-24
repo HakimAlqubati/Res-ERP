@@ -220,3 +220,15 @@ Route::get('/testLeave', function () {
 
     return response()->json($result);
 });
+
+
+Route::get('/test-google-upload', function () {
+    try {
+        $folder = env('GOOGLE_DRIVE_FOLDER_ID', ''); // ضع هنا معرف المجلد الذي تريد الرفع إليه
+
+        Storage::disk('google')->put("{$folder}/test.txt", 'Hello from Laravel inside folder ✅');
+        return '✅ File uploaded to Google Drive successfully.';
+    } catch (\Throwable $e) {
+        return '❌ Error: ' . $e->getMessage();
+    }
+});
