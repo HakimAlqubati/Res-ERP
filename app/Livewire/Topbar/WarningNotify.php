@@ -24,11 +24,16 @@ class WarningNotify extends Component
         $this->rotateEvery = $rotateEvery;
 
         // Load from config or default demo warnings
-        $this->warnings = config('workbench.warnings', [
-            ['id'=>101,'title'=>'Speed bump ahead','detail'=>'Suppliers road: today’s delivery is delayed.','time'=>'10 minutes ago','level'=>'warning'],
-            ['id'=>102,'title'=>'Low stock','detail'=>'Ginger stock is below minimum level.','time'=>'1 hour ago','level'=>'critical'],
-            ['id'=>103,'title'=>'Expiry alert','detail'=>'Product: Fresh milk, expires in 3 days.','time'=>'Today','level'=>'info'],
-        ]);
+        $this->warnings = config('workbench.warnings',
+        [
+            
+        ]
+        //  [
+        //     ['id'=>101,'title'=>'Speed bump ahead','detail'=>'Suppliers road: today’s delivery is delayed.','time'=>'10 minutes ago','level'=>'warning'],
+        //     ['id'=>102,'title'=>'Low stock','detail'=>'Ginger stock is below minimum level.','time'=>'1 hour ago','level'=>'critical'],
+        //     ['id'=>103,'title'=>'Expiry alert','detail'=>'Product: Fresh milk, expires in 3 days.','time'=>'Today','level'=>'info'],
+        // ]
+    );
 
         $this->warnings = array_values(array_filter($this->warnings));
         $this->startIndex = count($this->warnings) ? random_int(0, count($this->warnings) - 1) : 0;

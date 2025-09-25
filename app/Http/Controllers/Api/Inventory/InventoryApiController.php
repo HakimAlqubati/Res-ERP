@@ -38,7 +38,7 @@ class InventoryApiController extends Controller
             ->all();
 
             
-            $productIds = Product::select('id')->get()->pluck('id')->toArray();
+            // $productIds = Product::select('id')->get()->pluck('id')->toArray();
             // dd($productIds);
         $filters = new InventoryFiltersDTO(
             storeId: $storeId, // إجباري
