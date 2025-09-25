@@ -237,6 +237,7 @@ Route::get('/app/settings', [SettingController::class, 'show']);
  
 require base_path('routes/custom_api_route_hr.php');
 require base_path('routes/custom_route.php');
+require base_path('routes/custom_api_route_inventory.php');
 
 // Route::get('/stores', fn() => \App\Models\Store::select('id', 'name')->get());
 // Route::get('/products', fn() => \App\Models\Product::select('id', 'name')->get());
