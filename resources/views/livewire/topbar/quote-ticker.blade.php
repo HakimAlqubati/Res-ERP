@@ -14,7 +14,7 @@
                 border-top-right-radius: 10px;
                 border-bottom-left-radius: 10px;
                 font-weight: 900;
-                font-size: 0.8rem;
+                font-size: 0.9rem;
                 letter-spacing: 0.5px;
                 color: #0d7c66;
                 box-shadow: 0 0 4px rgba(13,124,102,0.6),
