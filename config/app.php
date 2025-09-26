@@ -136,5 +136,7 @@ return [
         // 'PDF' => niklasravnsborg\LaravelPdf\Facades\Pdf::class
         // 'PDF' => Barryvdh\DomPDF\Facade::class,
         // 'PDF' => Mccarlosen\LaravelMpdf\Facades\LaravelMpdf::class
+        'Warnings' => App\Facades\Warnings::class,
+
     ])->toArray(),
 ];

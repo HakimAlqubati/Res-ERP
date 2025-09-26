@@ -1,8 +1,11 @@
 <?php
 
+use App\Enums\Warnings\WarningLevel;
+use App\Facades\Warnings;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Response;
 use App\Filament\Pages\AttendanecEmployee2;
+use App\Filament\Resources\ProductResource;
 use App\Http\Controllers\Api\HR\SalarySlipController;
 use App\Http\Controllers\AWS\EmployeeLivenessController;
 use App\Http\Controllers\EmployeeAWSController;
@@ -33,6 +36,8 @@ use App\Models\Supplier;
 use App\Models\Task;
 use App\Models\UnitPrice;
 use App\Models\User;
+use App\Notifications\WarningNotification;
+use App\Services\Warnings\WarningPayload;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -836,4 +841,43 @@ Route::get('/pusher2', function () {
     event(new \App\Events\AttendanceUpdated(
         '2025-09-18'
     ));
+});
+
+
+Route::get('/createNotifi', function () {
+    $user = auth()->user();
+
+    Warnings::send(
+        auth()->user(),
+        WarningPayload::make(
+            'انخفاض المخزون',
+            'الكمية أقل من الحد الأدنى',
+            WarningLevel::Critical
+        )
+            ->ctx(['product_id' => 12, 'store_id' => 3])
+            // ->url(route('products.view', 12))
+            ->scope('lowstock-12-3')
+            ->expires(now()->addHours(6))
+    );
+
+    // $products = [
+    //     ['id' => 10, 'name' => 'Sugar',  'remaining' => 3, 'min' => 10],
+    //     ['id' => 15, 'name' => 'Rice',   'remaining' => 8, 'min' => 20],
+    //     ['id' => 22, 'name' => 'Coffee', 'remaining' => 1, 'min' => 5],
+    // ];
+
+    // $user->notify(new WarningNotification(
+    //     title: 'Low Stock Alert',
+    //     detail: $products, // << مصفوفة منتجات
+    //     level: 'warning',
+    //     context: ['store_id' => 1],
+    //     // link: route('filament.resources.products.index', ['filter' => 'low-stock'])
+    // ));
+    // $user->notify(new WarningNotification(
+    //     title: 'WOW',
+    //     detail: 'WOWOWOWOWOWOWO',
+    //     level: 'critical',
+    //     context: ['purchase_invoice' => 120, 'store_id' => 1],
+    //     // link: route(ProductResource::getUrl(), 5)
+    // ));
 });

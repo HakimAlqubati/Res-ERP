@@ -10,36 +10,39 @@ class WarningNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    /**
-     * Create a new notification instance.
-     */
     public function __construct(
         public string $title,
-        public string $detail,
+        public string|array $detail,
         public string $level = 'warning', // warning | critical | info
-        public ?array $context = null,    // معلومات إضافية: product_id, store_id, ...
-        public ?string $link = null       // رابط للتنقّل السريع
+        public ?array $context = null,    // product_id, store_id, ...
+        public ?string $link = null,
+        public ?string $scopeKey = null,  // مفتاح لمنع التكرار
+        public ?string $expiresAt = null, // تاريخ انتهاء بصيغة ISO8601
+        public string $status = 'active'  // active | resolved
     ) {}
 
-    /**
-     * Get the notification's delivery channels.
-     */
     public function via($notifiable): array
     {
         return ['database'];
     }
 
-    /**
-     * Get the array representation of the notification for database storage.
-     */
     public function toDatabase($notifiable): array
     {
         return [
-            'title'   => $this->title,
-            'detail'  => $this->detail,
-            'level'   => $this->level,
-            'context' => $this->context,
-            'link'    => $this->link,
+            'title'      => $this->title,
+            'detail'     => $this->detail,
+            'level'      => $this->level,
+            'context'    => $this->context,
+            'link'       => $this->link,
+            'scope_key'  => $this->scopeKey,
+            'expires_at' => $this->expiresAt,
+            'status'     => $this->status,
         ];
+    }
+
+    // لو حبيت تمنع تكرار نفس التحذير:
+    public function id(): string
+    {
+        return 'warn:' . sha1(($this->scopeKey ?? $this->title) . '|' . $this->level);
     }
 }

@@ -16,12 +16,18 @@ class ListMinimumProductQtyReports extends ListRecords
     }
     protected function getViewData(): array
     {
-        $inventoryService = new MultiProductsInventoryService(storeId: 0);
+        $inventoryService = new MultiProductsInventoryService(
+            storeId: 1,
+            categoryId: null,
+            productId: null,
+            unitId: 'all',
+            filterOnlyAvailable: false
+        );
         $lowStockProducts = $inventoryService->getProductsBelowMinimumQuantityًWithPagination();
-        // dd(
-        //     $lowStockProducts
-        //     , $lowStockProducts->links()
-        // );
+        dd(
+            $lowStockProducts
+            , $lowStockProducts->links()
+        );
         return ['reportData' => $lowStockProducts];
     }
 }

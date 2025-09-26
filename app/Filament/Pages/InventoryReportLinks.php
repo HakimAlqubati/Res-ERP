@@ -15,6 +15,7 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransa
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionTruckingReportResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryWithUsageReportResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\ManufacturingInventoryReportResource;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\MinimumProductQtyReportResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReportResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentSummaryReportResource;
 use App\Filament\Resources\InVSReportResource;
@@ -107,6 +108,12 @@ class InventoryReportLinks extends Page
                 'icon'        => 'heroicon-o-presentation-chart-bar',
                 'url'         => StockAdjustmentSummaryReportResource::getUrl(),
             ],
+            // [
+            //     'title'       => MinimumProductQtyReportResource::getPluralLabel(),
+            //     'description' => '',
+            //     'icon'        => 'heroicon-o-presentation-chart-bar',
+            //     'url'         => MinimumProductQtyReportResource::getUrl(),
+            // ],
             //     [
             //         'title'       => 'Stock Cost Report',
             //         'description' => 'Analyze stock cost in a specific store.',
