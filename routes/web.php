@@ -2,6 +2,7 @@
 
 use App\Enums\Warnings\WarningLevel;
 use App\Facades\Warnings;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\MinimumProductQtyReportResource;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Response;
 use App\Filament\Pages\AttendanecEmployee2;
@@ -32,6 +33,7 @@ use App\Models\OrderDetails;
 use App\Models\Product;
 use App\Models\PurchaseInvoice;
 use App\Models\PurchaseInvoiceDetail;
+use App\Models\Store;
 use App\Models\Supplier;
 use App\Models\Task;
 use App\Models\UnitPrice;
@@ -846,16 +848,18 @@ Route::get('/pusher2', function () {
 
 Route::get('/createNotifi', function () {
     $user = auth()->user();
-
+    $store  = Store::query()->DefaultStore();
+    $storekeeper = $store->storekeeper;
+    dd($store, $storekeeper);
     Warnings::send(
         auth()->user(),
         WarningPayload::make(
-            'انخفاض المخزون',
-            'الكمية أقل من الحد الأدنى',
-            WarningLevel::Critical
+            'Inventory Low',
+            'Inventory qty is lower ',
+            WarningLevel::Warning
         )
             ->ctx(['product_id' => 12, 'store_id' => 3])
-            // ->url(route('products.view', 12))
+            ->url(MinimumProductQtyReportResource::getUrl())
             ->scope('lowstock-12-3')
             ->expires(now()->addHours(6))
     );

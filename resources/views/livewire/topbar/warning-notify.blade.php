@@ -121,11 +121,16 @@
                                  </div>
 
                                  <div class="flex items-center gap-2">
+                                     {{-- {{ dd($w) }} --}}
                                      <span class="text-[11px] text-gray-500">{{ $w['time'] ?? '' }}</span>
-                                     <x-filament::button size="xs" color="gray" outlined
-                                         x-on:click="$el.closest('.relative').querySelector('[data-details]').classList.toggle('hidden')">
-                                         Details
-                                     </x-filament::button>
+                                     @if (!empty($w['link']))
+                                         <x-filament::button size="xs" color="primary" tag="a"
+                                             :href="$w['link']" target="_blank">
+                                             Open
+                                         </x-filament::button>
+                                     @endif
+
+
                                  </div>
                              </div>
 

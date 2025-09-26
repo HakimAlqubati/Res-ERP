@@ -44,8 +44,12 @@ final class WarningPayload
         return $this;
     }
 
-    public function deterministicId(): string
+    public function deterministicId(int $userId): string
     {
+        $base = ($this->scopeKey ?: $this->title) . '|' . $this->level->value . '|' . $userId;
+        return 'w:' . md5($base);
+        return (string) \Illuminate\Support\Str::ulid();
+
         $base = ($this->scopeKey ?: $this->title) . '|' . $this->level->value;
         return 'w:' . md5($base);
     }

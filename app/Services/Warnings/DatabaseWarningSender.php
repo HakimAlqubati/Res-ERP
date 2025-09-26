@@ -20,7 +20,7 @@ final class DatabaseWarningSender implements WarningSender
             // dd($payload->deterministicId());
             DB::table('notifications')->updateOrInsert(
                 [
-                    'id'              => $payload->deterministicId(),
+                    'id'              => $payload->deterministicId($u->id),
                     'notifiable_type' => get_class($u),
                     'notifiable_id'   => $u->getAuthIdentifier(),
                 ],

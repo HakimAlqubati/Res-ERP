@@ -1,4 +1,9 @@
 <x-filament::page>
+    <style>
+        .fi-tabs {
+            display: none !important;
+        }
+    </style>
     {{ $this->getTableFiltersForm() }}
     @if (isset($product) && $product != null)
         <table class="w-full text-sm text-left pretty table-striped">
@@ -8,12 +13,14 @@
                     <th colspan="1" class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
                         {{ $product->name }}
                     </th>
-                    <th colspan="2" class="no_border_right_left" style="text-align: center; vertical-align: middle;border:none;">
+                    <th colspan="2" class="no_border_right_left"
+                        style="text-align: center; vertical-align: middle;border:none;">
                         <h3>({{ 'Inventory Movement Report' }})</h3>
                     </th>
                     <th colspan="1" style="text-align: center; vertical-align: middle;border:none;"
                         class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">
-                        <img class="circle-image logo-left" src="{{ url('/') . '/storage/logo/default.png' }}" alt="">
+                        <img class="circle-image logo-left" src="{{ url('/') . '/storage/logo/default.png' }}"
+                            alt="">
                     </th>
                 </tr>
                 <tr>

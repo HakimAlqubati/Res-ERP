@@ -1,11 +1,14 @@
 <x-filament::page>
     {{ $this->getTableFiltersForm() }}
 
-    @if (!empty($reportData) && count($reportData) > 0)
+    @if (!empty($reportData) && count($reportData) > 0 && !is_null ($store))
         <table class="w-full text-sm text-left pretty table-striped reports" id="report-table">
             <thead>
                 <tr class="header_report">
-                    <th colspan="3" class="no_border_right">
+                    <th colspan="1" class="no_border_right">
+                        <h3>{{ __('Store:( ') . $store . ' )' }}</h3>
+                    </th>
+                    <th colspan="3" class="no_border_right_left">
                         <h3>{{ __('Inventory Minimum Stock Report') }}</h3>
                     </th>
                     <th colspan="2" class="no_border_left"
@@ -24,7 +27,7 @@
             <tbody>
                 @foreach ($reportData as $data)
                     <tr>
-                        <td>
+                        <td title="{{ $data['product_id'] }}">
                             <strong>{{ $data['product_code'] }}</strong>
                         </td>
                         <td>
@@ -48,7 +51,7 @@
         </table>
         <div class="mb-4 text-sm text-gray-700">
 
-            {{ $reportData->links('vendor.pagination.tailwind') }}
+            {{-- {{ $reportData->links('vendor.pagination.tailwind') }} --}}
 
             {{-- links  --}}
 

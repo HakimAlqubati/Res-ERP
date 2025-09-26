@@ -64,11 +64,13 @@ final class WarningNotify extends Component
             $level = $data['level'] ?? 'warning';
 
 
-            return [ 
+            return [
                 'id'     => (string) $n->id,
                 'title'  => $data['title']  ?? 'Warning',
                 'detail' => $data['detail'] ?? '',
                 'time'   => $this->humanTime($n->created_at),
+                'link' => $data['link'] ?? ($data['url'] ?? null),
+
                 'level'  => in_array($level, ['critical', 'warning', 'info'], true) ? $level : 'warning',
                 // لو تبغى الرابط أو سياق إضافي فيما بعد:
                 // 'link'   => $data['link']   ?? null,
