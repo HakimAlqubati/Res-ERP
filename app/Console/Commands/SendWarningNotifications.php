@@ -58,7 +58,7 @@ class SendWarningNotifications extends Command
                 $tenantsFail += $f;
                 $ok++;
             } catch (\Throwable $e) {
-                $this->error("   failed: " . $e->getMessage());
+                $this->error('   failed: ' . $e->getMessage());
                 $fail++;
             } finally {
                 $this->leaveTenantContext($originalDb);
@@ -93,22 +93,21 @@ class SendWarningNotifications extends Command
             return [0, 0];
         }
 
-        // بناء قائمة المستخدمين عبر الدالة المطلوبة (Tenant-aware)
-        $users = $this->getTenantAdminsFromHelper();
+        // جلب المستخدمين وفق الأدوار المطلوبة من قاعدة الاتصال الحالية
+        $users = $this->getTenantRecipients();
 
         // إضافة storekeeper إن وجد
         if ($store->storekeeper instanceof User) {
             $users->push($store->storekeeper);
         }
 
-        // تشذيب وتحويل وتوحيد
+        // تشذيب وتوحيد
         $users = $this->uniqueUsers($users);
 
-        // تطبيق فلتر --user إن تم تمريره
+        // تطبيق فلتر --user إن تم تمريره (ID أو Email)
         if ($target = $this->option('user')) {
             $targetId = is_numeric($target) ? (int) $target : $target;
             $users = $users->filter(function (User $u) use ($targetId) {
-                // دعم التمرير كـ ID أو Email
                 return $u->id === $targetId || $u->email === $targetId;
             })->values();
         }
@@ -127,8 +126,8 @@ class SendWarningNotifications extends Command
             'store_id' => $store->id,
         ]);
 
-        // الرسالة
-        $payloadFactory = static function (int $storeId): WarningPayload {
+        // مصنع البايلود
+        $payloadFactory = static function (int $storeId) : WarningPayload {
             return WarningPayload::make(
                 'Inventory Low',
                 'Inventory qty is lower',
@@ -159,55 +158,21 @@ class SendWarningNotifications extends Command
     }
 
     /**
-     * نداء آمن لـ getAdminsToNotify() ويضمن تحويل النتيجة إلى
-     * Collection<User> من قاعدة التينانت الحالية فقط.
+     * يجلب مستلمي التنبيه من قاعدة الاتصال الحالية
+     * وفق شرط الأدوار (roles.id IN [1,3]).
      *
      * @return \Illuminate\Support\Collection<\App\Models\User>
      */
-    protected function getTenantAdminsFromHelper(): Collection
+    protected function getTenantRecipients(): Collection
     {
-        $raw = [];
+        // ملاحظة: نفترض وجود علاقة roles() في موديل User
+        // ولا يوجد $connection ثابت يجبره على السنترال.
+        $query = User::query()
+            ->whereHas('roles', function ($q) {
+                $q->whereIn('id', [1, 3]);
+            });
 
-        try {
-            // الدالة المطلوبة. مهما رجّعت، سنتعامل معه.
-            $raw = getAdminsToNotify();
-        } catch (\Throwable $e) {
-            $this->warn('getAdminsToNotify() threw: ' . $e->getMessage());
-            $raw = [];
-        }
-
-        $items = collect($raw);
-
-        // نحاول تحويل كل عنصر إلى User من اتصال التينانت الحالي
-        $users = $items->map(function ($item) {
-            if ($item instanceof User) {
-                return $item;
-            }
-
-            if (is_int($item) || (is_string($item) && ctype_digit($item))) {
-                return User::find((int) $item);
-            }
-
-            if (is_string($item) && str_contains($item, '@')) {
-                return User::query()->where('email', $item)->first();
-            }
-
-            if (is_array($item)) {
-                if (isset($item['id'])) {
-                    return User::find((int) $item['id']);
-                }
-                if (isset($item['email'])) {
-                    return User::query()->where('email', $item['email'])->first();
-                }
-            }
-
-            return null;
-        })
-        ->filter()
-        ->values();
-
-        // إزالة التكرارات بالـ id
-        return $users->unique(fn(User $u) => $u->id)->values();
+        return $query->get()->values();
     }
 
     /**
