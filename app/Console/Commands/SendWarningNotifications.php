@@ -93,40 +93,63 @@ class SendWarningNotifications extends Command
             return [0, 0];
         }
 
-        // بناء قائمة المستخدمين
-        $users = collect(getAdminsToNotify());
+        // بناء قائمة المستخدمين عبر الدالة المطلوبة (Tenant-aware)
+        $users = $this->getTenantAdminsFromHelper();
 
+        // إضافة storekeeper إن وجد
         if ($store->storekeeper instanceof User) {
             $users->push($store->storekeeper);
         }
 
-        // تشذيب
+        // تشذيب وتحويل وتوحيد
         $users = $this->uniqueUsers($users);
+
+        // تطبيق فلتر --user إن تم تمريره
+        if ($target = $this->option('user')) {
+            $targetId = is_numeric($target) ? (int) $target : $target;
+            $users = $users->filter(function (User $u) use ($targetId) {
+                // دعم التمرير كـ ID أو Email
+                return $u->id === $targetId || $u->email === $targetId;
+            })->values();
+        }
+
+        if ($users->isEmpty()) {
+            $this->warn('No users to notify on this connection.');
+            return [0, 0];
+        }
+
+        // تحديد حد الإرسال
+        $limit = (int) $this->option('limit') ?: 100;
+        $users = $users->take(max(1, $limit));
 
         // رابط التقرير
         $reportUrl = MinimumProductQtyReportResource::getUrl('index', [
             'store_id' => $store->id,
         ]);
 
+        // الرسالة
+        $payloadFactory = static function (int $storeId): WarningPayload {
+            return WarningPayload::make(
+                'Inventory Low',
+                'Inventory qty is lower',
+                WarningLevel::Warning
+            )
+                ->ctx(['store_id' => $storeId])
+                ->scope('lowstock-12-3')
+                ->expires(now()->addHours(6));
+        };
+
         foreach ($users as $user) {
             try {
                 Warnings::send(
                     $user,
-                    WarningPayload::make(
-                        'Inventory Low',
-                        'Inventory qty is lower',
-                        WarningLevel::Warning
-                    )
-                        ->ctx(['store_id' => $store->id])
-                        ->scope('lowstock-12-3')
-                        ->url($reportUrl)
-                        ->expires(now()->addHours(6))
+                    $payloadFactory($store->id)->url($reportUrl)
                 );
                 $sent++;
             } catch (\Throwable $e) {
                 $failed++;
                 AppLog::write('Stock is low', AppLog::LEVEL_WARNING, 'inventory', [
-                    'store_id' => $store?->id, // صححنا idate -> id
+                    'store_id' => $store?->id,
                     'error'    => $e->getMessage(),
                 ]);
             }
@@ -136,23 +159,98 @@ class SendWarningNotifications extends Command
     }
 
     /**
-     * توحيد المستخدمين على أساس id وإزالة nulls.
+     * نداء آمن لـ getAdminsToNotify() ويضمن تحويل النتيجة إلى
+     * Collection<User> من قاعدة التينانت الحالية فقط.
+     *
+     * @return \Illuminate\Support\Collection<\App\Models\User>
+     */
+    protected function getTenantAdminsFromHelper(): Collection
+    {
+        $raw = [];
+
+        try {
+            // الدالة المطلوبة. مهما رجّعت، سنتعامل معه.
+            $raw = getAdminsToNotify();
+        } catch (\Throwable $e) {
+            $this->warn('getAdminsToNotify() threw: ' . $e->getMessage());
+            $raw = [];
+        }
+
+        $items = collect($raw);
+
+        // نحاول تحويل كل عنصر إلى User من اتصال التينانت الحالي
+        $users = $items->map(function ($item) {
+            if ($item instanceof User) {
+                return $item;
+            }
+
+            if (is_int($item) || (is_string($item) && ctype_digit($item))) {
+                return User::find((int) $item);
+            }
+
+            if (is_string($item) && str_contains($item, '@')) {
+                return User::query()->where('email', $item)->first();
+            }
+
+            if (is_array($item)) {
+                if (isset($item['id'])) {
+                    return User::find((int) $item['id']);
+                }
+                if (isset($item['email'])) {
+                    return User::query()->where('email', $item['email'])->first();
+                }
+            }
+
+            return null;
+        })
+        ->filter()
+        ->values();
+
+        // إزالة التكرارات بالـ id
+        return $users->unique(fn(User $u) => $u->id)->values();
+    }
+
+    /**
+     * توحيد المستخدمين على أساس id وإزالة nulls وتحويل قيم غير User إلى User.
      * @param Collection<int, mixed> $users
      * @return Collection<int, User>
      */
     protected function uniqueUsers(Collection $users): Collection
     {
         return $users
+            ->map(function ($u) {
+                if ($u instanceof User) {
+                    return $u;
+                }
+
+                if (is_int($u) || (is_string($u) && ctype_digit($u))) {
+                    return User::find((int) $u);
+                }
+
+                if (is_string($u) && str_contains($u, '@')) {
+                    return User::query()->where('email', $u)->first();
+                }
+
+                if (is_array($u)) {
+                    if (isset($u['id'])) {
+                        return User::find((int) $u['id']);
+                    }
+                    if (isset($u['email'])) {
+                        return User::query()->where('email', $u['email'])->first();
+                    }
+                }
+
+                return null;
+            })
             ->filter()
-            ->unique(fn($u) => $u instanceof User ? $u->id : $u)
-            ->map(fn($u) => $u instanceof User ? $u : User::find($u))
-            ->filter()
+            ->unique(fn(User $u) => $u->id)
             ->values();
     }
 
     /**
      * دخول سياق التينانت: يفضّل makeCurrent() من Spatie،
-     * ولو ما توفّر، يحاول switchTo() إن كنت معرفه بنفسك.
+     * ولو ما توفّر، يحاول switchTo() إن كنت معرفه بنفسك،
+     * وإلا نحرك اتصال mysql يدويًا.
      */
     protected function enterTenantContext(CustomTenantModel $tenant, ?string $fallbackDb = null): void
     {
@@ -166,7 +264,7 @@ class SendWarningNotifications extends Command
             return;
         }
 
-        // آخر الحلول: تعديل اتصال mysql مباشرة (بسيط وآمن قدر الإمكان)
+        // آخر الحلول: تعديل اتصال mysql مباشرة
         if ($tenant->database) {
             config(['database.connections.mysql.database' => $tenant->database]);
             DB::purge('mysql');
