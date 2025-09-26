@@ -167,7 +167,7 @@
                      <x-filament::card class="text-center py-10">
                          <x-filament::icon icon="heroicon-o-bell-slash" class="h-8 w-8 text-gray-400 mx-auto" />
                          <div class="mt-2 text-sm font-medium">No Warnings</div>
-                         <div class="text-xs text-gray-500">هدوء قبل العاصفة… اغتنمه.</div>
+                         {{-- <div class="text-xs text-gray-500">هدوء قبل العاصفة… اغتنمه.</div> --}}
                      </x-filament::card>
                  @endforelse
              </div>
