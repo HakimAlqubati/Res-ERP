@@ -84,7 +84,10 @@ class SendWarningNotifications extends Command
         $failed = 0;
 
         // متجر افتراضي
-        $store = Store::query()->DefaultStore();
+        $store = Store::query()
+            ->defaultStore()          // scopeDefaultStore
+            ->with('storekeeper')
+            ->first();
         if (!$store) {
             $this->warn('No default store. Neat.');
             return [0, 0];
@@ -93,7 +96,7 @@ class SendWarningNotifications extends Command
         // بناء قائمة المستخدمين
         $users = collect(getAdminsToNotify());
 
-        if ($store->storekeeper && $store->storekeeper instanceof User) {
+        if ($store->storekeeper instanceof User) {
             $users->push($store->storekeeper);
         }
 
