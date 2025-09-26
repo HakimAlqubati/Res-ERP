@@ -31,13 +31,17 @@ class SendWarningNotifications extends Command
         $this->info('=== CENTRAL DB ===');
         [$s, $f] = $this->runOnce();
         $this->info("Central: sent={$s}, failed={$f}");
-        $totalSent += $s; $totalFail += $f;
+        $totalSent += $s;
+        $totalFail += $f;
 
         // 2) TENANTS
         $this->info('=== TENANTS ===');
         $originalDb = config('database.connections.mysql.database');
 
-        $ok = 0; $fail = 0; $tenantsSent = 0; $tenantsFail = 0;
+        $ok = 0;
+        $fail = 0;
+        $tenantsSent = 0;
+        $tenantsFail = 0;
 
         foreach (CustomTenantModel::all() as $tenant) {
             $db = $tenant->database ?: 'unknown';
@@ -48,7 +52,8 @@ class SendWarningNotifications extends Command
                 CustomTenantModel::switchTo($db);
 
                 [$s, $f] = $this->runOnce();
-                $tenantsSent += $s; $tenantsFail += $f;
+                $tenantsSent += $s;
+                $tenantsFail += $f;
                 $ok++;
             } catch (\Throwable $e) {
                 $this->error("   failed: " . $e->getMessage());
@@ -62,7 +67,8 @@ class SendWarningNotifications extends Command
         }
 
         $this->info("Tenants: ok={$ok}, failed={$fail}, sent={$tenantsSent}, failed_items={$tenantsFail}");
-        $totalSent += $tenantsSent; $totalFail += $tenantsFail;
+        $totalSent += $tenantsSent;
+        $totalFail += $tenantsFail;
 
         $this->info("TOTAL: sent={$totalSent}, failed_items={$totalFail}");
         return $totalFail > 0 ? self::FAILURE : self::SUCCESS;
@@ -87,7 +93,7 @@ class SendWarningNotifications extends Command
         // بناء قائمة المستخدمين
         $users = collect(getAdminsToNotify());
 
-        if ($store->storekeeper instanceof User) {
+        if ($store->storekeeper && $store->storekeeper instanceof User) {
             $users->push($store->storekeeper);
         }
 
