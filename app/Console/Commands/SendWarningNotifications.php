@@ -102,7 +102,7 @@ class SendWarningNotifications extends Command
         }
 
         // تشذيب وتوحيد
-        $users = $this->uniqueUsers($users);
+        // $users = $this->uniqueUsers($users);
 
         // تطبيق فلتر --user إن تم تمريره (ID أو Email)
         if ($target = $this->option('user')) {
