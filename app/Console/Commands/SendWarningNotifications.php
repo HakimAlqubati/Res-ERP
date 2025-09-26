@@ -12,6 +12,8 @@ use App\Models\CustomTenantModel;
 use App\Services\Warnings\WarningPayload;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Spatie\Multitenancy\Models\Tenant as SpatieTenant;
 
 class SendWarningNotifications extends Command
 {
@@ -27,29 +29,29 @@ class SendWarningNotifications extends Command
         $totalSent = 0;
         $totalFail = 0;
 
-        // 1) CENTRAL
+        // === CENTRAL ===
         $this->info('=== CENTRAL DB ===');
+        $this->leaveTenantContext(); // تأكيد أننا على السنترال
         [$s, $f] = $this->runOnce();
         $this->info("Central: sent={$s}, failed={$f}");
         $totalSent += $s;
         $totalFail += $f;
 
-        // 2) TENANTS
+        // === TENANTS ===
         $this->info('=== TENANTS ===');
-        $originalDb = config('database.connections.mysql.database');
-
         $ok = 0;
         $fail = 0;
         $tenantsSent = 0;
         $tenantsFail = 0;
 
-        foreach (CustomTenantModel::all() as $tenant) {
+        $originalDb = config('database.connections.mysql.database');
+
+        foreach (CustomTenantModel::query()->cursor() as $tenant) {
             $db = $tenant->database ?: 'unknown';
             $this->line("-> Tenant [{$tenant->id}] ({$db})");
 
             try {
-                // بدّل الاتصال لقاعدة هذا التينانت
-                CustomTenantModel::switchTo($db);
+                $this->enterTenantContext($tenant, $originalDb);
 
                 [$s, $f] = $this->runOnce();
                 $tenantsSent += $s;
@@ -59,10 +61,7 @@ class SendWarningNotifications extends Command
                 $this->error("   failed: " . $e->getMessage());
                 $fail++;
             } finally {
-                // ارجع للسنترال بعد كل تينانت
-                if ($originalDb) {
-                    CustomTenantModel::switchTo($originalDb);
-                }
+                $this->leaveTenantContext($originalDb);
             }
         }
 
@@ -83,12 +82,13 @@ class SendWarningNotifications extends Command
         $sent = 0;
         $failed = 0;
 
-        // متجر افتراضي
+        // متجر افتراضي (موديل) مع علاقة storekeeper
         $store = Store::query()
-            ->defaultStore()          // scopeDefaultStore
+            ->defaultStore()
             ->with('storekeeper')
             ->first();
-        if (!$store) {
+
+        if (!$store instanceof Store) {
             $this->warn('No default store. Neat.');
             return [0, 0];
         }
@@ -145,10 +145,46 @@ class SendWarningNotifications extends Command
         return $users
             ->filter()
             ->unique(fn($u) => $u instanceof User ? $u->id : $u)
-            ->map(function ($u) {
-                return $u instanceof User ? $u : User::find($u);
-            })
+            ->map(fn($u) => $u instanceof User ? $u : User::find($u))
             ->filter()
             ->values();
+    }
+
+    /**
+     * دخول سياق التينانت: يفضّل makeCurrent() من Spatie،
+     * ولو ما توفّر، يحاول switchTo() إن كنت معرفه بنفسك.
+     */
+    protected function enterTenantContext(CustomTenantModel $tenant, ?string $fallbackDb = null): void
+    {
+        if (method_exists($tenant, 'makeCurrent')) {
+            $tenant->makeCurrent(); // يفعّل SwitchTenantDatabaseTask
+            return;
+        }
+
+        if (method_exists(CustomTenantModel::class, 'switchTo')) {
+            CustomTenantModel::switchTo($tenant->database);
+            return;
+        }
+
+        // آخر الحلول: تعديل اتصال mysql مباشرة (بسيط وآمن قدر الإمكان)
+        if ($tenant->database) {
+            config(['database.connections.mysql.database' => $tenant->database]);
+            DB::purge('mysql');
+            DB::reconnect('mysql');
+        }
+    }
+
+    /**
+     * الخروج من سياق التينانت والعودة للسنترال.
+     */
+    protected function leaveTenantContext(?string $fallbackDb = null): void
+    {
+        if (class_exists(SpatieTenant::class) && method_exists(SpatieTenant::class, 'forgetCurrent')) {
+            SpatieTenant::forgetCurrent();
+        } elseif ($fallbackDb) {
+            config(['database.connections.mysql.database' => $fallbackDb]);
+            DB::purge('mysql');
+            DB::reconnect('mysql');
+        }
     }
 }
