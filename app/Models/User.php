@@ -30,7 +30,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
         HasRoles,
         SoftDeletes,
         HasPanelShield,
-        DynamicConnection,
+        // DynamicConnection,
         \OwenIt\Auditing\Auditable,
         BranchScope;
 
