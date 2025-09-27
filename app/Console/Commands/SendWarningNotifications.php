@@ -53,7 +53,7 @@ class SendWarningNotifications extends Command
 
             try {
                 $this->enterTenantContext($tenant, $originalDb);
-                // $this->setTenantBaseUrl($tenant);   // يضبط الـ app.url على دومين التينانت
+                $this->setTenantBaseUrl($tenant);   // يضبط الـ app.url على دومين التينانت
 
                 [$s, $f] = $this->runOnce();
                 $tenantsSent += $s;
