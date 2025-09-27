@@ -850,13 +850,13 @@ Route::get('/createNotifi', function () {
     $user = auth()->user();
     $store  = Store::query()->DefaultStore();
     $storekeeper = $store->storekeeper;
-    dd($store, $storekeeper);
+    // dd($store, $storekeeper);
     Warnings::send(
         auth()->user(),
         WarningPayload::make(
             'Inventory Low',
             'Inventory qty is lower ',
-            WarningLevel::Warning
+            WarningLevel::Info
         )
             ->ctx(['product_id' => 12, 'store_id' => 3])
             ->url(MinimumProductQtyReportResource::getUrl())
@@ -884,4 +884,9 @@ Route::get('/createNotifi', function () {
     //     context: ['purchase_invoice' => 120, 'store_id' => 1],
     //     // link: route(ProductResource::getUrl(), 5)
     // ));
+});
+
+
+Route::get('/testUrl', function () {
+    dd(url('/'));
 });
