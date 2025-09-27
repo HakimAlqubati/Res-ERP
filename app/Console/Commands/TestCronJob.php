@@ -30,7 +30,5 @@ class TestCronJob extends Command
     public function handle()
     {
         AppLog::write('Hi Hakim from cron job');
-        // Log::info('Hi Hakim');
-
     }
 }
