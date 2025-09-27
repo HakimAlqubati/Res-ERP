@@ -52,6 +52,7 @@ class SendWarningNotifications extends Command
 
             try {
                 $this->enterTenantContext($tenant, $originalDb);
+                $this->setTenantBaseUrl($tenant);   // يضبط الـ app.url على دومين التينانت
 
                 [$s, $f] = $this->runOnce();
                 $tenantsSent += $s;
@@ -127,7 +128,7 @@ class SendWarningNotifications extends Command
         ]);
 
         // مصنع البايلود
-        $payloadFactory = static function (int $storeId) : WarningPayload {
+        $payloadFactory = static function (int $storeId): WarningPayload {
             return WarningPayload::make(
                 'Inventory Low',
                 'Inventory qty is lower',
@@ -249,5 +250,14 @@ class SendWarningNotifications extends Command
             DB::purge('mysql');
             DB::reconnect('mysql');
         }
+    }
+
+    protected function setTenantBaseUrl(CustomTenantModel $tenant): void
+    {
+        $host = $tenant->domain; // خذ الدومين من الحقل
+        $url = str_starts_with($host, 'http') ? $host : 'https://' . $host;
+
+        config(['app.url' => $url]);
+        app('url')->forceRootUrl($url);
     }
 }
