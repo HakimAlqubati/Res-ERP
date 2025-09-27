@@ -888,5 +888,5 @@ Route::get('/createNotifi', function () {
 
 
 Route::get('/testUrl', function () {
-    dd(url('/'));
+    dd(url('/'),MinimumProductQtyReportResource::getUrl());
 });
