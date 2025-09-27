@@ -38,6 +38,7 @@ class Product extends Model implements Auditable
         'basic_price',
         'minimum_stock_qty',
         'waste_stock_percentage',
+        'sku'
     ];
     protected $auditInclude = [
         'name',
@@ -51,6 +52,7 @@ class Product extends Model implements Auditable
         'basic_price',
         'minimum_stock_qty',
         'waste_stock_percentage',
+        'sku',
     ];
     protected $appends = ['unit_prices_count', 'product_items_count', 'is_manufacturing', 'formatted_unit_prices', 'display_name'];
 
