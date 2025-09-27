@@ -20,7 +20,7 @@
                 box-shadow: 0 0 4px rgba(13,124,102,0.6),
                             0 0 8px rgba(13,124,102,0.4);
                 transition: box-shadow 0.3s ease-in-out;
-                background: #fff;
+                /* background: #fff; */
             "
         ></span>
     </div>
