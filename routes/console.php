@@ -27,5 +27,5 @@ use Illuminate\Support\Facades\Mail;
  
 // Schedule::call(function () {})->everyTwoMinutes();
 Schedule::command('tenant:backup')
-    ->everyMinute();
-Schedule::command('test:cron')->everyMinute();
+    ->everySixHours();
+Schedule::command('test:cron')->everyThreeHours();
