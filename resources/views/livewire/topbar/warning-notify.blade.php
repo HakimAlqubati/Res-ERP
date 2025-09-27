@@ -168,12 +168,12 @@
                      <x-filament::button color="gray" x-on:click="$dispatch('close-modal', { id: 'warnings-modal' })">
                          Close
                      </x-filament::button>
-                     <x-filament::button color="gray" outlined>
+                     {{-- <x-filament::button color="gray" outlined>
                          Mark all as read
                      </x-filament::button>
                      <x-filament::button color="danger">
                          Clear all
-                     </x-filament::button>
+                     </x-filament::button> --}}
                  </div>
              </div>
 
