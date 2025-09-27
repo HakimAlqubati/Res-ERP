@@ -1,28 +1,17 @@
  <div>
      {{-- زر التحذير مع العدّاد واللمبة --}}
      {{-- زر التحذير مع العدّاد واللمبة --}}
-     <x-filament::icon-button icon="heroicon-o-exclamation-triangle" tooltip="Warning Notifications" size="lg"
-         color="danger" x-on:click="$dispatch('open-modal', { id: 'warnings-modal' })" class="relative" label="">
+     @php
+         $count = isset($warnings) ? count($warnings) : 0;
+         $badge = $count > 99 ? '99+' : ($count ?: '');
+     @endphp
 
-         @if (count($warnings ?? []))
-             <span
-                 class="pointer-events-none absolute inset-y-0 right-2 flex items-center text-xs font-bold text-danger-600">
-                 {{ count($warnings ?? 0) }}
-             </span>
+     <div class="warn-badge inline-block" data-count="{{ $badge }}">
+         <x-filament::icon-button icon="heroicon-o-exclamation-triangle" tooltip="Warning Notifications" size="lg"
+             color="danger" x-on:click="$dispatch('open-modal', { id: 'warnings-modal' })" class="warning-flash"
+             label="" />
+     </div>
 
-             <span
-                 class="pointer-events-none absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full
-                   bg-danger-600 text-white text-[10px] flex items-center justify-center font-bold">
-                 {{ count($warnings ?? []) }}
-             </span>
-
-             <span class="pointer-events-none absolute -bottom-1 -left-1 flex h-3 w-3">
-                 <span
-                     class="animate-ping absolute inline-flex h-full w-full rounded-full bg-danger-500 opacity-75"></span>
-                 <span class="relative inline-flex rounded-full h-3 w-3 bg-danger-600"></span>
-             </span>
-         @endif
-     </x-filament::icon-button>
 
 
 
@@ -193,9 +182,99 @@
 
 
      <style>
-         svg {
-             /* height: 180px;
-            width: 180px; */
+         /* وميض للمثلث فقط (الأيقونة) */ 
+       
+         /* حاوية لضبط تموضع البادج */
+         .warn-badge {
+             position: relative;
+         }
+
+         /* البادج الاحترافي عبر ::after */
+         .warn-badge::after {
+             content: attr(data-count);
+             position: absolute;
+             top: -6px;
+             /* اضبطها حسب حجم الزر */
+             right: -6px;
+             /* اضبطها حسب حجم الزر */
+             min-width: 20px;
+             height: 20px;
+             padding: 0 6px;
+             /* يتكيّف مع خانتين/ثلاث */
+             display: grid;
+             place-items: center;
+             border-radius: 999px;
+             font-weight: 700;
+             font-size: 11px;
+             line-height: 1;
+             color: #fff;
+
+             /* تدرّج وعمق للّون */
+             background: linear-gradient(180deg, #ef4444, #dc2626);
+             box-shadow: 0 4px 12px rgba(0, 0, 0, .25);
+             border: 2px solid #fff;
+             /* حلقة بيضاء أنيقة حول البادج */
+
+             /* لمعان زجاجي خفيف */
+             -webkit-backdrop-filter: saturate(140%) blur(2px);
+             backdrop-filter: saturate(140%) blur(2px);
+
+             /* نُخفيه تلقائياً إن ما فيه رقم */
+             opacity: 1;
+         }
+
+         /* إخفاء البادج إذا لا يوجد رقم */
+         .warn-badge[data-count=""],
+         .warn-badge:not([data-count]) {}
+
+         .warn-badge[data-count=""]::after,
+         .warn-badge:not([data-count])::after {
+             display: none;
+         }
+
+         /* لو تبغى نَبض خفيف للبادج نفسه (اختياري) */
+         /*
+@keyframes badge-pop {
+  0%, 100% { transform: translate(0,0) scale(1); }
+  50% { transform: translate(0,-1px) scale(1.05); }
+}
+.warn-badge::after { animation: badge-pop 1.8s ease-in-out infinite; }
+*/
+         @keyframes badge-glow {
+
+             0%,
+             100% {
+                 box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.0);
+             }
+
+             50% {
+                 box-shadow:
+                     0 0 10px 4px rgba(220, 38, 38, 0.7),
+                     0 0 20px 8px rgba(220, 38, 38, 0.4);
+             }
+         }
+
+         .warn-badge::after {
+             content: attr(data-count);
+             position: absolute;
+             top: -6px;
+             right: -6px;
+             min-width: 20px;
+             height: 20px;
+             padding: 0 6px;
+             display: grid;
+             place-items: center;
+             border-radius: 999px;
+             font-weight: 700;
+             font-size: 11px;
+             line-height: 1;
+             color: #fff;
+
+             background: linear-gradient(180deg, #ef4444, #dc2626);
+             border: 2px solid #fff;
+
+             /* التوهج المتحرك */
+             animation: badge-glow 1.2s ease-in-out infinite;
          }
      </style>
  </div>

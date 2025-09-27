@@ -325,11 +325,11 @@ class AdminPanelProvider extends PanelProvider
             //     fn(): string =>
             //     view('filament.partials.quote-ticker')->render() 
             // )
-            // ->renderHook(
-            //     PanelsRenderHook::TOPBAR_LOGO_AFTER,
-            //     fn(): string =>
-            //     view('filament.partials.warning-notify')->render() 
-            // )
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_LOGO_AFTER,
+                fn(): string =>
+                view('filament.partials.warning-notify')->render() 
+            )
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_AFTER,
                 fn(): string =>
