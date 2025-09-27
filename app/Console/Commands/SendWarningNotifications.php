@@ -13,6 +13,7 @@ use App\Services\Warnings\WarningPayload;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 use Spatie\Multitenancy\Models\Tenant as SpatieTenant;
 
 class SendWarningNotifications extends Command
@@ -52,7 +53,7 @@ class SendWarningNotifications extends Command
 
             try {
                 $this->enterTenantContext($tenant, $originalDb);
-                $this->setTenantBaseUrl($tenant);   // يضبط الـ app.url على دومين التينانت
+                // $this->setTenantBaseUrl($tenant);   // يضبط الـ app.url على دومين التينانت
 
                 [$s, $f] = $this->runOnce();
                 $tenantsSent += $s;
@@ -126,6 +127,7 @@ class SendWarningNotifications extends Command
         $reportUrl = MinimumProductQtyReportResource::getUrl('index', [
             'store_id' => $store->id,
         ]);
+
 
         // مصنع البايلود
         $payloadFactory = static function (int $storeId): WarningPayload {
@@ -254,10 +256,11 @@ class SendWarningNotifications extends Command
 
     protected function setTenantBaseUrl(CustomTenantModel $tenant): void
     {
-        $host = $tenant->domain; // خذ الدومين من الحقل
-        $url = 'https://' . $host;
+        $host = preg_replace('#^https?://#', '', (string) $tenant->domain);
+        $url  = 'https://' . rtrim($host, '/');
 
         config(['app.url' => $url]);
         app('url')->forceRootUrl($url);
+        URL::forceScheme('https'); // ← مهم جداً
     }
 }
