@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\AppLog;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -28,6 +29,7 @@ class TestCronJob extends Command
      */
     public function handle()
     {
+        AppLog::write('Hi Hakim from cron job');
         // Log::info('Hi Hakim');
 
     }
