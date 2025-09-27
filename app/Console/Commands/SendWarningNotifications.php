@@ -255,7 +255,7 @@ class SendWarningNotifications extends Command
     protected function setTenantBaseUrl(CustomTenantModel $tenant): void
     {
         $host = $tenant->domain; // خذ الدومين من الحقل
-        $url = str_starts_with($host, 'http') ? $host : 'https://' . $host;
+        $url = 'https://' . $host;
 
         config(['app.url' => $url]);
         app('url')->forceRootUrl($url);
