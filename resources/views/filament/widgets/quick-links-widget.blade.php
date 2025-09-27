@@ -96,13 +96,13 @@
                     <a href="{{ route('filament.admin.resources.users.index') }}" class="quick-link">
                         <x-heroicon-o-user />
                         <div class="label">{{ __('Users') }}</div>
-                        <div class="badge">{{ \App\Models\User::count() }}</div>
+                        <div class="badge">{{ \App\Models\User::forBranchManager()->count() }}</div>
                     </a>
 
                     <a href="{{ route('filament.admin.resources.branches.index') }}" class="quick-link">
                         <x-heroicon-o-building-office-2 />
                         <div class="label">{{ __('Branches') }}</div>
-                        <div class="badge">{{ \App\Models\Branch::count() }}</div>
+                        <div class="badge">{{ \App\Models\Branch::forBranchManager('id')->count() }}</div>
                     </a>
 
                     <a href="{{ route('filament.admin.area-management.resources.countries.index') }}"
@@ -175,7 +175,7 @@
                         <a href="{{ route('filament.admin.h-r.resources.employees.index') }}" class="quick-link">
                             <x-heroicon-o-user-group />
                             <div class="label">{{ __('Employees') }}</div>
-                            <div class="badge">{{ \App\Models\Employee::active()->count() }}</div>
+                            <div class="badge">{{ \App\Models\Employee::active()->forBranchManager()->count() }}</div>
                         </a>
 
                         <a href="{{ route('filament.admin.h-r-attenance.resources.attendnaces.index') }}"

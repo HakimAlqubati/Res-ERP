@@ -320,11 +320,11 @@ class AdminPanelProvider extends PanelProvider
                 //     view('filament.partials.topbar-quick-links')->render(),
                 // view('filament.partials.topbar-quick-hints')->render(),
             )
-            // ->renderHook(
-            //     PanelsRenderHook::TOPBAR_LOGO_AFTER,
-            //     fn(): string =>
-            //     view('filament.partials.quote-ticker')->render() 
-            // )
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_LOGO_AFTER,
+                fn(): string =>
+                view('filament.partials.quote-ticker')->render() 
+            )
             ->renderHook(
                 PanelsRenderHook::TOPBAR_LOGO_AFTER,
                 fn(): string =>

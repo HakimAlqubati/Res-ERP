@@ -741,7 +741,7 @@ class EmployeeResource extends Resource
                 SelectFilter::make('branch_id')
                     ->searchable()
                     ->multiple()
-                    ->label(__('lang.branch'))->options(Branch::where('active', 1)->get()->pluck('name', 'id')->toArray()),
+                    ->label(__('lang.branch'))->options(Branch::active()->forBranchManager('id')->get()->pluck('name', 'id')->toArray()),
                 SelectFilter::make('nationality')
                     ->searchable()
                     ->multiple()
@@ -908,25 +908,25 @@ class EmployeeResource extends Resource
                         ->url(fn($record) => CheckInstallments::getUrl(['employeeId' => $record->id]))
 
                         ->openUrlInNewTab(),
-                    Action::make('view_shifts')
-                        ->label('View Shifts')
-                        ->icon('heroicon-o-clock')
-                        ->color('info')
-                        ->modalHeading('Work Periods')
-                        ->modalSubmitAction(false) // No submit button
-                        ->modalCancelActionLabel('Close')
-                        ->action(fn() => null) // No backend action
-                        ->modalContent(function ($record) {
-                            $periods = $record->periods;
+                    // Action::make('view_shifts')
+                    //     ->label('View Shifts')
+                    //     ->icon('heroicon-o-clock')
+                    //     ->color('info')
+                    //     ->modalHeading('Work Periods')
+                    //     ->modalSubmitAction(false) // No submit button
+                    //     ->modalCancelActionLabel('Close')
+                    //     ->action(fn() => null) // No backend action
+                    //     ->modalContent(function ($record) {
+                    //         $periods = $record->periods;
 
-                            if ($periods->isEmpty()) {
-                                return view('components.employee.no-periods');
-                            }
+                    //         if ($periods->isEmpty()) {
+                    //             return view('components.employee.no-periods');
+                    //         }
 
-                            return view('components.employee.periods-preview', [
-                                'periods' => $periods,
-                            ]);
-                        }),
+                    //         return view('components.employee.periods-preview', [
+                    //             'periods' => $periods,
+                    //         ]);
+                    //     }),
                     // Add the Change Branch action
                     Action::make('changeBranch')->icon('heroicon-o-arrow-path-rounded-square')
                         ->label('Change Branch') // Label for the action button

@@ -39,6 +39,8 @@ use App\Models\Task;
 use App\Models\UnitPrice;
 use App\Models\User;
 use App\Notifications\WarningNotification;
+use App\Services\Warnings\Handlers\MissedCheckinHandler;
+use App\Services\Warnings\Support\HierarchyRepository;
 use App\Services\Warnings\WarningPayload;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -888,5 +890,37 @@ Route::get('/createNotifi', function () {
 
 
 Route::get('/testUrl', function () {
-    dd(url('/'),MinimumProductQtyReportResource::getUrl());
+    dd(url('/'), MinimumProductQtyReportResource::getUrl());
+});
+
+
+Route::get('/testMissedCheckin', function (
+    MissedCheckinHandler $handler,
+    HierarchyRepository $repo
+) {
+   $out = [];
+
+    foreach ($repo->supervisors() as $sup) {
+        $supData = [
+            'id'          => $sup->id,
+            'employee_no' => $sup->employee_no,
+            'name'        => $sup->name,
+            'branch'      => $sup->branch?->name,
+            'subordinates'=> [],
+        ];
+
+        foreach ($repo->subordinatesOf($sup) as $emp) {
+            $supData['subordinates'][] = [
+                'id'          => $emp->id,
+                'employee_no' => $emp->employee_no,
+                'name'        => $emp->name,
+                'branch'      => $emp->branch?->name,
+            ];
+        }
+
+        $out[] = $supData;
+    }
+
+    return response()->json($out, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+
 });
