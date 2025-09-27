@@ -31,7 +31,10 @@ class SendWarningNotifications extends Command
 
         // TENANTS
         $this->info('=== TENANTS ===');
-        $ok = 0; $fail = 0; $tenantsSent = 0; $tenantsFail = 0;
+        $ok = 0;
+        $fail = 0;
+        $tenantsSent = 0;
+        $tenantsFail = 0;
         $originalDb = config('database.connections.mysql.database');
 
         foreach (CustomTenantModel::query()->cursor() as $tenant) {
@@ -42,7 +45,8 @@ class SendWarningNotifications extends Command
                 $this->setTenantBaseUrl($tenant);
 
                 [$s, $f] = $this->runOnce();
-                $tenantsSent += $s; $tenantsFail += $f;
+                $tenantsSent += $s;
+                $tenantsFail += $f;
                 $ok++;
             } catch (\Throwable $e) {
                 $this->error('   failed: ' . $e->getMessage());
@@ -66,7 +70,8 @@ class SendWarningNotifications extends Command
      */
     protected function runOnce(): array
     {
-        $totalSent = 0; $totalFail = 0;
+        $totalSent = 0;
+        $totalFail = 0;
 
         foreach (config('notifications.handlers', []) as $handlerClass) {
             /** @var \App\Services\Warnings\Contracts\WarningHandler $handler */
@@ -79,7 +84,8 @@ class SendWarningNotifications extends Command
             ]);
 
             [$s, $f] = $handler->handle(); // كل Handler يرجّع [sent, failed]
-            $totalSent += $s; $totalFail += $f;
+            $totalSent += $s;
+            $totalFail += $f;
         }
 
         return [$totalSent, $totalFail];
@@ -100,7 +106,8 @@ class SendWarningNotifications extends Command
 
         if ($tenant->database) {
             config(['database.connections.mysql.database' => $tenant->database]);
-            DB::purge('mysql'); DB::reconnect('mysql');
+            DB::purge('mysql');
+            DB::reconnect('mysql');
         }
     }
 
@@ -111,7 +118,8 @@ class SendWarningNotifications extends Command
             SpatieTenant::forgetCurrent();
         } elseif ($fallbackDb) {
             config(['database.connections.mysql.database' => $fallbackDb]);
-            DB::purge('mysql'); DB::reconnect('mysql');
+            DB::purge('mysql');
+            DB::reconnect('mysql');
         }
     }
 
@@ -119,20 +127,18 @@ class SendWarningNotifications extends Command
     protected function setTenantBaseUrl(CustomTenantModel $tenant): void
     {
         $domain = trim((string) $tenant->domain);
+
         if ($domain === '') {
             $this->warn("Tenant {$tenant->id} has no domain; skipping app.url override.");
             return;
         }
 
-        $hasScheme = str_starts_with($domain, 'http://') || str_starts_with($domain, 'https://');
-        $scheme = config('app.force_https', false) ? 'https://' : 'http://';
-        $host = $hasScheme ? preg_replace('#^https?://#', '', $domain) : $domain;
-        $url  = rtrim(($hasScheme ? (str_starts_with($domain, 'https://') ? 'https://' : 'http://') : $scheme) . $host, '/');
+        // شيل أي بروتوكول موجود وخليها https دائمًا
+        $host = preg_replace('#^https?://#', '', $domain);
+        $url  = 'https://' . rtrim($host, '/');
 
         config(['app.url' => $url]);
         app('url')->forceRootUrl($url);
-        if (str_starts_with($url, 'https://') || config('app.force_https', false)) {
-            URL::forceScheme('https');
-        }
+        \Illuminate\Support\Facades\URL::forceScheme('https');
     }
 }
