@@ -1,4 +1,9 @@
 <x-filament::page>
+    <style>
+         .fi-tabs {
+                display: none !important;
+            }
+    </style>
     {{ $this->getTableFiltersForm() }}
 
     @if (!empty($reportData) && count($reportData) > 0 && !is_null ($store))
