@@ -95,8 +95,9 @@ class EquipmentResource extends Resource
                                 Fieldset::make()->columnSpanFull()->label('Set Branch & Area')->columns(2)->schema([
 
                                     Select::make('branch_id')
-                                        ->label('Branch')
+                                        ->label('Branch')->searchable()
                                         ->options(Branch::selectable()
+                                            ->forBranchManager('id')
                                             ->select('id', 'name')
                                             ->get()
                                             ->pluck('name', 'id'))

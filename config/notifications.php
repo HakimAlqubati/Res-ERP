@@ -6,5 +6,7 @@ return [
         // لاحقًا: أضف أنواعًا أخرى هنا فقط
         \App\Services\Warnings\Handlers\MissedCheckinHandler::class,
         // \App\Services\Warnings\Handlers\ExpiredDocumentHandler::class,
+        \App\Services\Warnings\Handlers\MaintenanceDueHandler::class, // جديد
+
     ],
 ];

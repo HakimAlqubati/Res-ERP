@@ -41,6 +41,7 @@ use App\Models\User;
 use App\Notifications\WarningNotification;
 use App\Services\Warnings\Handlers\MissedCheckinHandler;
 use App\Services\Warnings\Support\HierarchyRepository;
+use App\Services\Warnings\Support\MaintenanceRepository;
 use App\Services\Warnings\WarningPayload;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -923,4 +924,47 @@ Route::get('/testMissedCheckin', function (
 
     return response()->json($out, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
+});
+
+
+
+Route::get('/testMaintenanceDue', function (MaintenanceRepository $repo) {
+    $filters = [
+        'branch_id'      => request('branch_id'),      // ?branch_id=1
+        'branch_area_id' => request('branch_area_id'), // ?branch_area_id=5
+        'status'         => request('status'),         // ?status=Active
+    ];
+    $days = (int) (request('days') ?? 7);
+
+    $format = function($eq, $overdue = false) {
+        $next = $eq->next_service_date ? \Carbon\Carbon::parse($eq->next_service_date) : null;
+        return [
+            'id'                => $eq->id,
+            'asset_tag'         => $eq->asset_tag,
+            'name'              => $eq->name,
+            'type'              => $eq->type?->name,
+            'branch'            => $eq->branch?->name,
+            'status'            => $eq->status,
+            'last_serviced'     => $eq->last_serviced,
+            'next_service_date' => $eq->next_service_date,
+            'overdue'           => $overdue,
+            'days_until_due'    => $next ? now()->diffInDays($next, false) : null,
+        ];
+    };
+
+    $overdue = [];
+    foreach ($repo->overdue($filters) as $eq) {
+        $overdue[] = $format($eq, true);
+    }
+
+    $dueSoon = [];
+    foreach ($repo->dueWithin($days, $filters) as $eq) {
+        $dueSoon[] = $format($eq, false);
+    }
+
+    return response()->json([
+        'overdue'  => $overdue,
+        'dueSoon'  => $dueSoon,
+        'params'   => ['days' => $days] + array_filter($filters),
+    ], 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 });
