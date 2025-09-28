@@ -10,6 +10,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -856,5 +857,48 @@ class Employee extends Model implements Auditable
     {
         return $this->belongsToMany(LeaveType::class, 'hr_leave_balances', 'employee_id', 'leave_type_id')
             ->withPivot(['year', 'month', 'balance']); // ترجع الرصيد مع السنة والشهر
+    }
+
+
+    public function periodsOnDate(Carbon|string $date): Collection
+    {
+        $d = $date instanceof Carbon ? $date->copy() : Carbon::parse($date);
+
+        // 0=Sunday .. 6=Saturday (Carbon::dayOfWeek)
+        $dow = $d->dayOfWeek;
+
+        // dd($this);
+        // نجيب روابط EmployeePeriod مع WorkPeriod ومع أيام الفترة (EmployeePeriodDay)
+        $workPeriods = $this->employeePeriods()
+            ->with(['workPeriod', 'days'])
+            ->where(function ($q) use ($d) {
+                // تاريخ التفعيل (start_date/end_date) على مستوى EmployeePeriod (لو عندك أعمدة)
+                $q->whereNull('start_date')->orWhere('start_date', '<=', $d->toDateString());
+            })
+            ->where(function ($q) use ($d) {
+                $q->whereNull('end_date')->orWhere('end_date', '>=', $d->toDateString());
+            })
+            ->whereHas('days', function ($q) use ($dow, $d) {
+                // يوم الأسبوع + صلاحية يومية اختيارية (لو عندك start_date/end_date على مستوى اليوم)
+                // $q->where('day_of_week', $dow)
+                //     ->where(function ($qq) use ($d) {
+                //         $qq->whereNull('start_date')->orWhere('start_date', '<=', $d->toDateString());
+                //     })
+                //     ->where(function ($qq) use ($d) {
+                //         $qq->whereNull('end_date')->orWhere('end_date', '>=', $d->toDateString());
+                //     })
+                //     ;
+            })
+            ->get();
+            // dd($workPeriods);
+        return $workPeriods;
+    }
+
+    /**
+     * تبسيط: هل هذا اليوم عمل للموظف؟ (اعتمادًا على periodsOnDate)
+     */
+    public function isWorkingDay(Carbon|string $date): bool
+    {
+        return $this->periodsOnDate($date)->isNotEmpty();
     }
 }

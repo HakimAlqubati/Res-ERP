@@ -927,6 +927,20 @@ Route::get('/testMissedCheckin', function (
 });
 
 
+Route::get('/testMissedCheckinDigest', function (\Illuminate\Http\Request $req, MissedCheckinHandler $handler) {
+    $handler->setOptions([
+        'date'          => $req->input('date', now()->toDateString()),
+        'grace'         => (int)$req->input('grace', 15),
+        'branch_id'     => $req->input('branch_id'),
+        'department_id' => $req->input('department_id'),
+        'supervisor_ids'=> $req->input('supervisor_ids') ? explode(',', $req->input('supervisor_ids')) : null,
+    ]);
+
+    $data = $handler->handle();
+
+    return response()->json($data, 200, [], JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE);
+});
+
 
 Route::get('/testMaintenanceDue', function (MaintenanceRepository $repo) {
     $filters = [

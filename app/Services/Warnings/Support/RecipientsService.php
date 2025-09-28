@@ -62,4 +62,19 @@ final class RecipientsService
             return $u->id === $needle || $u->email === $needle;
         })->values();
     }
+
+
+
+    public function matchesOptionUser(User $user, string|int $needle): bool
+    {
+        // لو رقم → عاملها كـ id
+        if (is_numeric($needle)) {
+            return (int)$user->id === (int)$needle;
+        }
+
+        // لو نص → قارن email أو الاسم (case-insensitive)
+        $n = mb_strtolower((string) $needle);
+        return $n === mb_strtolower((string) $user->email)
+            || $n === mb_strtolower((string) $user->name);
+    }
 }

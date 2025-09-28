@@ -14,7 +14,7 @@ final class HierarchyRepository
     public function supervisors(array $filters = []): LazyCollection
     {
         $q = Employee::query()
-            ->active()
+            ->active() 
             ->whereHas('subordinates', fn($sq) => $sq->active());
 
         if (!empty($filters['branch_id'])) {
@@ -26,6 +26,7 @@ final class HierarchyRepository
         if (!empty($filters['only_ids']) && is_array($filters['only_ids'])) {
             $q->whereIn('id', $filters['only_ids']);
         }
+        // dd($q->get()->toArray());
 
         return $q->orderBy('id')->cursor();
     }
@@ -35,6 +36,7 @@ final class HierarchyRepository
      */
     public function subordinatesOf(Employee $supervisor): LazyCollection
     {
+        // dd($supervisor->subordinates);
         return $supervisor->subordinates()
             ->active()
             ->orderBy('id')
