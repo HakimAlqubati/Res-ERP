@@ -16,6 +16,9 @@ use App\Http\Controllers\Api\HR\TaskCommentController;
 use App\Http\Controllers\Api\HR\TaskController;
 use App\Http\Controllers\Api\HR\TaskLogController;
 use App\Http\Controllers\Api\HR\TaskStepController;
+use App\Http\Controllers\Api\V1\EquipmentController;
+use App\Http\Controllers\Api\V1\EquipmentLogController;
+use App\Http\Controllers\Api\V1\MaintenanceController;
 use App\Models\EmployeeFaceData;
 use App\Services\HR\SalaryHelpers\WeeklyLeaveCalculator;
 use Carbon\CarbonImmutable;
@@ -127,6 +130,26 @@ Route::prefix('aws/employee-liveness')->group(function () {
 
     // التحقق من نتيجة الجلسة (checkSession)
     Route::get('/check-session', [EmployeeLivenessController::class, 'checkSession']);
+});
+
+
+Route::prefix('v1')->middleware(['auth:api'])->group(function () {
+    // Equipments
+    Route::apiResource('equipments', EquipmentController::class);
+    Route::post('equipments/{equipment}/service', [EquipmentController::class, 'service']);
+    Route::post('equipments/{equipment}/move', [EquipmentController::class, 'move']);
+    Route::post('equipments/{equipment}/retire', [EquipmentController::class, 'retire']);
+    Route::post('equipments/{equipment}/media', [EquipmentController::class, 'uploadMedia']);
+
+    // Logs
+    Route::get('equipmentLogs', [EquipmentLogController::class, 'index']);
+    Route::get('equipments/{equipment}/logs', [EquipmentLogController::class, 'byEquipment']);
+    Route::post('equipments/{equipment}/logs', [EquipmentLogController::class, 'store']);
+
+    // Maintenance
+    Route::get('maintenance/overdue', [MaintenanceController::class, 'overdue']);
+    Route::get('maintenance/due-soon', [MaintenanceController::class, 'dueSoon']);
+    Route::get('maintenance/summary', [MaintenanceController::class, 'summary']);
 });
 
 Route::get('employees/simple-list', [EmployeeController::class, 'simpleList']);

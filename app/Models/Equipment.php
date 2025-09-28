@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HR\Maintenance\HasEquipmentLogs;
 use App\Traits\Scopes\BranchScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +14,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Equipment extends Model implements Auditable, HasMedia
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, InteractsWithMedia,BranchScope;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, InteractsWithMedia,BranchScope,HasEquipmentLogs;
 
     // Relationship with EquipmentLog
     public function logs()
