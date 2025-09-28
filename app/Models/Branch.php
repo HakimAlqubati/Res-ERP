@@ -23,7 +23,8 @@ class Branch extends Model implements HasMedia, Auditable
         SoftDeletes,
         DynamicConnection,
         InteractsWithMedia,
-        \OwenIt\Auditing\Auditable,BranchScope;
+        \OwenIt\Auditing\Auditable,
+        BranchScope;
 
     // 🧩 اجمع كل الـTraits هنا
     use BranchConstants,
@@ -88,10 +89,11 @@ class Branch extends Model implements HasMedia, Auditable
     {
         $data = parent::toArray();
 
+        $data['areas'] = $this->areas->makeHidden(['created_at', 'updated_at']);
         // توافق خلفي (إن كان مستهلك API قديم يعتمد هذا الاسم)
         $data['is_central_kitchen']    = (int) $this->is_kitchen;
         $data['customized_categories'] = $this->customized_categories;
-        $data['is_expired'] = $this->is_expired; 
+        $data['is_expired'] = $this->is_expired;
         // ✅ فرض الوسم مع الاسم عند كون الفرع منتهيًا
         if ($this->is_expired) {
             // استخدم ترجمة إن أحببت: __('lang.expired')

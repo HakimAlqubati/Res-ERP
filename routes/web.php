@@ -899,7 +899,7 @@ Route::get('/testMissedCheckin', function (
     MissedCheckinHandler $handler,
     HierarchyRepository $repo
 ) {
-   $out = [];
+    $out = [];
 
     foreach ($repo->supervisors() as $sup) {
         $supData = [
@@ -907,7 +907,7 @@ Route::get('/testMissedCheckin', function (
             'employee_no' => $sup->employee_no,
             'name'        => $sup->name,
             'branch'      => $sup->branch?->name,
-            'subordinates'=> [],
+            'subordinates' => [],
         ];
 
         foreach ($repo->subordinatesOf($sup) as $emp) {
@@ -923,7 +923,6 @@ Route::get('/testMissedCheckin', function (
     }
 
     return response()->json($out, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-
 });
 
 
@@ -933,12 +932,12 @@ Route::get('/testMissedCheckinDigest', function (\Illuminate\Http\Request $req, 
         'grace'         => (int)$req->input('grace', 15),
         'branch_id'     => $req->input('branch_id'),
         'department_id' => $req->input('department_id'),
-        'supervisor_ids'=> $req->input('supervisor_ids') ? explode(',', $req->input('supervisor_ids')) : null,
+        'supervisor_ids' => $req->input('supervisor_ids') ? explode(',', $req->input('supervisor_ids')) : null,
     ]);
 
     $data = $handler->handle();
 
-    return response()->json($data, 200, [], JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE);
+    return response()->json($data, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 });
 
 
@@ -950,7 +949,7 @@ Route::get('/testMaintenanceDue', function (MaintenanceRepository $repo) {
     ];
     $days = (int) (request('days') ?? 7);
 
-    $format = function($eq, $overdue = false) {
+    $format = function ($eq, $overdue = false) {
         $next = $eq->next_service_date ? \Carbon\Carbon::parse($eq->next_service_date) : null;
         return [
             'id'                => $eq->id,
@@ -982,3 +981,4 @@ Route::get('/testMaintenanceDue', function (MaintenanceRepository $repo) {
         'params'   => ['days' => $days] + array_filter($filters),
     ], 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 });
+require base_path('routes/api_docs.php');

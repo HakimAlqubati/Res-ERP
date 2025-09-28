@@ -19,7 +19,7 @@ class UpdateEquipmentRequest extends FormRequest
             'status' => ['sometimes','in:Active,Under Maintenance,Retired'],
             'type_id' => ['sometimes','integer','exists:hr_equipment_types,id'],
             'branch_id' => ['sometimes','nullable','integer','exists:branches,id'],
-            'branch_area_id' => ['sometimes','nullable','integer'],
+            'branch_area_id' => ['nullable', 'exists:branch_areas,id'],
             'purchase_price' => ['sometimes','nullable','numeric','min:0'],
             'purchase_date' => ['sometimes','nullable','date'],
             'warranty_years' => ['sometimes','nullable','integer','min:0','max:20'],

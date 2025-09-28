@@ -141,6 +141,9 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
     Route::post('equipments/{equipment}/retire', [EquipmentController::class, 'retire']);
     Route::post('equipments/{equipment}/media', [EquipmentController::class, 'uploadMedia']);
 
+    Route::get('equipmentsTypes', [EquipmentController::class, 'equipmentTypes']);
+    Route::get('equipmentsCategories', [EquipmentController::class, 'equipmentCategories']);
+
     // Logs
     Route::get('equipmentLogs', [EquipmentLogController::class, 'index']);
     Route::get('equipments/{equipment}/logs', [EquipmentLogController::class, 'byEquipment']);

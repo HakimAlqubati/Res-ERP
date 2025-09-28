@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\HR\Maintenance\EquipmentResource;
+use App\Http\Resources\HR\Maintenance\EquipmentResource;
 use Illuminate\Http\Request;
 
 class MaintenanceController extends Controller
