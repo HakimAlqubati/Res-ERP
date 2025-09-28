@@ -151,7 +151,7 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
 
     // Maintenance
     Route::get('maintenance/overdue', [MaintenanceController::class, 'overdue']);
-    Route::get('maintenance/due-soon', [MaintenanceController::class, 'dueSoon']);
+    Route::get('maintenance/dueSoon', [MaintenanceController::class, 'dueSoon']);
     Route::get('maintenance/summary', [MaintenanceController::class, 'summary']);
 });
 
