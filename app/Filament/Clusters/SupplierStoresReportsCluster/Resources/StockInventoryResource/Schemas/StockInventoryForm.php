@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Schemas;
 
+use App\Models\AppLog;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Store;
@@ -10,7 +11,7 @@ use App\Services\Stock\StockInventory\InventoryProductCacheService;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Select; 
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Fieldset;
@@ -88,55 +89,85 @@ class StockInventoryForm
                                     ->options(Category::pluck('name', 'id'))
                                     ->live()
                                     ->afterStateUpdated(function (callable $set, callable $get, $state) {
-                                        if (! $state) {
-                                            return;
-                                        }
 
-                                        $products = Product::where('category_id', $state)
-                                            ->where('active', 1)
-                                            ->get();
 
-                                        $storeId = $get('store_id');
+                                        try {
 
-                                        $details = $products->map(function ($product) use ($storeId) {
-                                            $unitPrices = $product->supplyOutUnitPrices ?? collect();
-                                            $rowCache   = [];
-
-                                            $firstUnit  = $unitPrices->first();
-                                            $firstUnitId = $firstUnit?->unit_id ?? null;
-
-                                            foreach ($unitPrices as $unitPrice) {
-                                                $unitId = $unitPrice->unit_id;
-                                                $service = new MultiProductsInventoryService(
-                                                    null,
-                                                    $product->id,
-                                                    $unitId,
-                                                    $storeId
-                                                );
-                                                $remainingQty = $service->getInventoryForProduct($product->id)[0]['remaining_qty'] ?? 0;
-
-                                                $rowCache[$unitId] = [
-                                                    'package_size'  => $unitPrice->package_size ?? 0,
-                                                    'remaining_qty' => $remainingQty,
-                                                ];
+                                            if (! $state) {
+                                                return;
                                             }
 
-                                            return [
-                                                'product_id'        => $product->id,
-                                                'unit_id'           => $firstUnitId,
-                                                'package_size'      => $rowCache[$firstUnitId]['package_size'] ?? 0,
-                                                'system_quantity'   => $rowCache[$firstUnitId]['remaining_qty'] ?? 0,
-                                                'physical_quantity' => $rowCache[$firstUnitId]['remaining_qty'] ?? 0,
-                                                'difference'        => 0,
-                                                'rowInventoryCache' => $rowCache, // ✅ كاش لكل الوحدات
-                                                'rowUnitsCache'     => $unitPrices->pluck('unit.name', 'unit_id')->toArray(), // ✅ كاش أسماء الوحدات
-                                            ];
-                                        })->toArray();
+                                            $started = microtime(true);
+                                            $products = Product::where('category_id', $state)
+                                                ->where('active', 1)
+                                                ->limit(150)
+                                                ->get();
 
-                                        $set('details', $details);
+                                            $storeId = $get('store_id');
 
+                                            $details = $products->map(function ($product) use ($storeId) {
+                                                $unitPrices = $product->supplyOutUnitPrices ?? collect();
+                                                $rowCache   = [];
 
-                                        // $set('details', $details);
+                                                $firstUnit  = $unitPrices->first();
+                                                $firstUnitId = $firstUnit?->unit_id ?? null;
+
+                                                foreach ($unitPrices as $unitPrice) {
+                                                    $unitId = $unitPrice->unit_id;
+                                                    $service = new MultiProductsInventoryService(
+                                                        null,
+                                                        $product->id,
+                                                        $unitId,
+                                                        $storeId
+                                                    );
+                                                    $remainingQty = $service->getInventoryForProduct($product->id)[0]['remaining_qty'] ?? 0;
+
+                                                    $rowCache[$unitId] = [
+                                                        'package_size'  => $unitPrice->package_size ?? 0,
+                                                        'remaining_qty' => $remainingQty,
+                                                    ];
+                                                }
+
+                                                return [
+                                                    'product_id'        => $product->id,
+                                                    'unit_id'           => $firstUnitId,
+                                                    'package_size'      => $rowCache[$firstUnitId]['package_size'] ?? 0,
+                                                    'system_quantity'   => $rowCache[$firstUnitId]['remaining_qty'] ?? 0,
+                                                    'physical_quantity' => $rowCache[$firstUnitId]['remaining_qty'] ?? 0,
+                                                    'difference'        => 0,
+                                                    'rowInventoryCache' => $rowCache, // ✅ كاش لكل الوحدات
+                                                    'rowUnitsCache'     => $unitPrices->pluck('unit.name', 'unit_id')->toArray(), // ✅ كاش أسماء الوحدات
+                                                ];
+                                            })->toArray();
+
+                                            // ⚠️ مؤقتًا: قص العدد الظاهر لتخفيف الـDOM أثناء التشخيص
+                                            $details = array_slice($details, 0, 50);
+
+                                            $set('details', $details);
+
+                                            $elapsed = round((microtime(true) - $started) * 1000);
+                                            AppLog::write(
+                                                message: 'StockInventory category fill',
+                                                level: AppLog::LEVEL_INFO,
+                                                context: 'StockInventory',
+                                                extra: [
+                                                    'category_id' => $state,
+                                                    'products'    => $products->count(),
+                                                    'rows_set'    => count($details),
+                                                    'ms'          => $elapsed,
+                                                ]
+                                            );
+                                        } catch (\Throwable $e) {
+                                            AppLog::write(
+                                                message: $e->getMessage(),
+                                                level: AppLog::LEVEL_ERROR,
+                                                context: 'StockInventory',
+                                                extra: [
+                                                    'category_id' => $state,
+                                                    'trace'       => $e->getTraceAsString(),
+                                                ]
+                                            );
+                                        }
                                     }) :
                                     Toggle::make('edit_enabled')
                                     ->label('Edit')
