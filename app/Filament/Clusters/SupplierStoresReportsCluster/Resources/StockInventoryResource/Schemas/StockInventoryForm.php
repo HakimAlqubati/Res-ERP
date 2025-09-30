@@ -142,7 +142,7 @@ class StockInventoryForm
                                             })->toArray();
 
                                             // ⚠️ مؤقتًا: قص العدد الظاهر لتخفيف الـDOM أثناء التشخيص
-                                            $details = array_slice($details, 51, 100);
+                                            // $details = array_slice($details, 51, 100);
 
                                             $set('details', $details);
 
