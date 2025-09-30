@@ -98,6 +98,7 @@ class StockInventoryForm
                                             }
 
                                             $started = microtime(true);
+                                            ini_set('memory_limit', '512M'); 
                                             $products = Product::where('category_id', $state)
                                                 ->where('active', 1)
                                                 ->limit(150)
