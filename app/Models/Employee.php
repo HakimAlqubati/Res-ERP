@@ -800,7 +800,7 @@ class Employee extends Model implements Auditable
 
     public function createLinkedUser(array $data = []): ?User
     {
-        if ($this->user_id) {
+        if ($this->has_user) {
             return $this->user; // عنده يوزر بالفعل
         }
 
@@ -890,7 +890,7 @@ class Employee extends Model implements Auditable
                 //     ;
             })
             ->get();
-            // dd($workPeriods);
+        // dd($workPeriods);
         return $workPeriods;
     }
 
