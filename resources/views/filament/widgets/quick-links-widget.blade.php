@@ -17,8 +17,8 @@
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                width: 168px;
-                height: 168px;
+                width: 145px;
+                height: 145px;
                 gap: .5rem;
                 text-align: center;
                 border-radius: 1rem;
@@ -87,134 +87,136 @@
                     grid-template-columns: repeat(6, minmax(0, 1fr));
                 }
             }
+
+            .fi-fieldset {
+                padding: 0px;
+                padding-top: 10px;
+                padding-bottom: 20px;
+            }
         </style>
 
-        <x-filament::card>
-            {{-- General Section --}}
-            <x-filament::fieldset label="{{ __('General') }}">
-                <div class="tile-grid grid-3">
-                    <a href="{{ route('filament.admin.resources.users.index') }}" class="quick-link">
-                        <x-heroicon-o-user />
-                        <div class="label">{{ __('Users') }}</div>
-                        <div class="badge">{{ \App\Models\User::forBranchManager()->count() }}</div>
+        {{-- <x-filament::card> --}}
+        {{-- General Section --}}
+        <x-filament::fieldset label="{{ __('General') }}">
+            <div class="tile-grid grid-3">
+                <a href="{{ route('filament.admin.resources.users.index') }}" class="quick-link">
+                    <x-heroicon-o-user />
+                    <div class="label">{{ __('Users') }}</div>
+                    <div class="badge">{{ \App\Models\User::forBranchManager()->count() }}</div>
+                </a>
+
+                <a href="{{ route('filament.admin.resources.branches.index') }}" class="quick-link">
+                    <x-heroicon-o-building-office-2 />
+                    <div class="label">{{ __('Branches') }}</div>
+                    <div class="badge">{{ \App\Models\Branch::forBranchManager('id')->count() }}</div>
+                </a>
+
+                <a href="{{ route('filament.admin.area-management.resources.countries.index') }}" class="quick-link">
+                    <x-heroicon-o-globe-alt />
+                    <div class="label">{{ __('Area Management') }}</div>
+                    <div class="badge">{{ \App\Models\Country::count() }}</div>
+                </a>
+            </div>
+        </x-filament::fieldset>
+        {{-- Inventory Section --}}
+        @if (
+            ($currentTenant &&
+                is_array($currentTenant->modules) &&
+                in_array(CustomTenantModel::MODULE_STOCK, $currentTenant->modules)) ||
+                is_null($currentTenant))
+            <x-filament::fieldset label="{{ __('Inventory Management') }}">
+                <div class="tile-grid grid-6">
+                    <a href="{{ route('filament.admin.main-orders') }}" class="quick-link">
+                        <x-heroicon-m-sparkles />
+                        <div class="label">{{ __('Orders') }}</div>
+                        <div class="badge">{{ \App\Models\Order::count() }}</div>
                     </a>
 
-                    <a href="{{ route('filament.admin.resources.branches.index') }}" class="quick-link">
-                        <x-heroicon-o-building-office-2 />
-                        <div class="label">{{ __('Branches') }}</div>
-                        <div class="badge">{{ \App\Models\Branch::forBranchManager('id')->count() }}</div>
+                    <a href="{{ route('filament.admin.product-unit.resources.products.index') }}" class="quick-link">
+                        <x-heroicon-o-cube />
+                        <div class="label">{{ __('Products') }}</div>
+                        <div class="badge">{{ \App\Models\Product::active()->count() }}</div>
                     </a>
 
-                    <a href="{{ route('filament.admin.area-management.resources.countries.index') }}"
+                    <a href="{{ route('filament.admin.supplier') }}" class="quick-link">
+                        <x-heroicon-o-building-storefront />
+                        <div class="label">{{ __('Suppliers') }}</div>
+                        <div class="badge">{{ \App\Models\Supplier::count() }}</div>
+                    </a>
+
+                    <a href="{{ route('filament.admin.supplier-stores-reports.resources.stores.index') }}"
                         class="quick-link">
-                        <x-heroicon-o-globe-alt />
-                        <div class="label">{{ __('Area Management') }}</div>
-                        <div class="badge">{{ \App\Models\Country::count() }}</div>
+                        <x-heroicon-o-home-modern />
+                        <div class="label">{{ __('Stores') }}</div>
+                        <div class="badge">{{ \App\Models\Store::count() }}</div>
+                    </a>
+
+                    <a href="{{ route('filament.admin.supplier.resources.purchase-invoices.index') }}"
+                        class="quick-link">
+                        <x-heroicon-o-receipt-percent />
+                        <div class="label">{{ __('Purchases') }}</div>
+                        <div class="badge">{{ \App\Models\PurchaseInvoice::count() }}</div>
+                    </a>
+
+                    <a href="{{ route('filament.admin.inventory-report.resources.inventory-report.index') }}"
+                        class="quick-link">
+                        <x-heroicon-o-newspaper />
+                        <div class="label">{{ __('Inventory') }}</div>
                     </a>
                 </div>
             </x-filament::fieldset>
-            {{-- Inventory Section --}}
-            @if (
-                ($currentTenant &&
-                    is_array($currentTenant->modules) &&
-                    in_array(CustomTenantModel::MODULE_STOCK, $currentTenant->modules)) ||
-                    is_null($currentTenant))
-                <x-filament::fieldset label="{{ __('Inventory Management') }}">
-                    <div class="tile-grid grid-6">
-                        <a href="{{ route('filament.admin.main-orders') }}" class="quick-link">
-                            <x-heroicon-m-sparkles />
-                            <div class="label">{{ __('Orders') }}</div>
-                            <div class="badge">{{ \App\Models\Order::count() }}</div>
-                        </a>
+        @endif
 
-                        <a href="{{ route('filament.admin.product-unit.resources.products.index') }}"
-                            class="quick-link">
-                            <x-heroicon-o-cube />
-                            <div class="label">{{ __('Products') }}</div>
-                            <div class="badge">{{ \App\Models\Product::active()->count() }}</div>
-                        </a>
+        {{-- HR Section --}}
+        @if (
+            ($currentTenant &&
+                is_array($currentTenant->modules) &&
+                in_array(CustomTenantModel::MODULE_HR, $currentTenant->modules)) ||
+                is_null($currentTenant))
+            {{-- Human Resources --}}
+            <x-filament::fieldset label="{{ __('Human Resources') }}">
+                <div class="tile-grid grid-6">
+                    <a href="{{ route('filament.admin.h-r.resources.employees.index') }}" class="quick-link">
+                        <x-heroicon-o-user-group />
+                        <div class="label">{{ __('Employees') }}</div>
+                        <div class="badge">{{ \App\Models\Employee::active()->forBranchManager()->count() }}</div>
+                    </a>
 
-                        <a href="{{ route('filament.admin.supplier') }}" class="quick-link">
-                            <x-heroicon-o-building-storefront />
-                            <div class="label">{{ __('Suppliers') }}</div>
-                            <div class="badge">{{ \App\Models\Supplier::count() }}</div>
-                        </a>
+                    <a href="{{ route('filament.admin.h-r-attenance.resources.attendnaces.index') }}"
+                        class="quick-link">
+                        <x-heroicon-o-calendar-days />
+                        <div class="label">{{ __('Attendance') }}</div>
+                        <div class="badge">{{ \App\Models\Attendance::count() }}</div>
+                    </a>
 
-                        <a href="{{ route('filament.admin.supplier-stores-reports.resources.stores.index') }}"
-                            class="quick-link">
-                            <x-heroicon-o-home-modern />
-                            <div class="label">{{ __('Stores') }}</div>
-                            <div class="badge">{{ \App\Models\Store::count() }}</div>
-                        </a>
+                    <a href="{{ route('filament.admin.resources.departments.index') }}" class="quick-link">
+                        <x-heroicon-o-building-office-2 />
+                        <div class="label">{{ __('Departments') }}</div>
+                        <div class="badge">{{ \App\Models\Department::count() }}</div>
+                    </a>
 
-                        <a href="{{ route('filament.admin.supplier.resources.purchase-invoices.index') }}"
-                            class="quick-link">
-                            <x-heroicon-o-receipt-percent />
-                            <div class="label">{{ __('Purchases') }}</div>
-                            <div class="badge">{{ \App\Models\PurchaseInvoice::count() }}</div>
-                        </a>
+                    <a href="{{ route('filament.admin.h-r-tasks-system.resources.tasks.index') }}" class="quick-link">
+                        <x-heroicon-o-pencil-square />
+                        <div class="label">{{ __('Tasks') }}</div>
+                        <div class="badge">{{ \App\Models\Task::count() }}</div>
+                    </a>
 
-                        <a href="{{ route('filament.admin.inventory-report.resources.inventory-report.index') }}"
-                            class="quick-link">
-                            <x-heroicon-o-newspaper />
-                            <div class="label">{{ __('Inventory') }}</div>
-                        </a>
-                    </div>
-                </x-filament::fieldset>
-            @endif
+                    <a href="{{ route('filament.admin.h-r-circular.resources.circulars.index') }}" class="quick-link">
+                        <x-heroicon-o-building-office-2 />
+                        <div class="label">{{ __('Engagement') }}</div>
+                        <div class="badge">{{ \App\Models\Circular::count() }}</div>
+                    </a>
 
-            {{-- HR Section --}}
-            @if (
-                ($currentTenant &&
-                    is_array($currentTenant->modules) &&
-                    in_array(CustomTenantModel::MODULE_HR, $currentTenant->modules)) ||
-                    is_null($currentTenant))
-                {{-- Human Resources --}}
-                <x-filament::fieldset label="{{ __('Human Resources') }}">
-                    <div class="tile-grid grid-6">
-                        <a href="{{ route('filament.admin.h-r.resources.employees.index') }}" class="quick-link">
-                            <x-heroicon-o-user-group />
-                            <div class="label">{{ __('Employees') }}</div>
-                            <div class="badge">{{ \App\Models\Employee::active()->forBranchManager()->count() }}</div>
-                        </a>
+                    <a href="{{ route('filament.admin.h-r-salary.resources.month-salaries.index') }}"
+                        class="quick-link">
+                        <x-heroicon-o-banknotes />
+                        <div class="label">{{ __('Payroll') }}</div>
+                        <div class="badge">{{ \App\Models\MonthSalary::count() }}</div>
+                    </a>
+                </div>
+            </x-filament::fieldset>
+        @endif
 
-                        <a href="{{ route('filament.admin.h-r-attenance.resources.attendnaces.index') }}"
-                            class="quick-link">
-                            <x-heroicon-o-calendar-days />
-                            <div class="label">{{ __('Attendance') }}</div>
-                            <div class="badge">{{ \App\Models\Attendance::count() }}</div>
-                        </a>
-
-                        <a href="{{ route('filament.admin.resources.departments.index') }}" class="quick-link">
-                            <x-heroicon-o-building-office-2 />
-                            <div class="label">{{ __('Departments') }}</div>
-                            <div class="badge">{{ \App\Models\Department::count() }}</div>
-                        </a>
-
-                        <a href="{{ route('filament.admin.h-r-tasks-system.resources.tasks.index') }}"
-                            class="quick-link">
-                            <x-heroicon-o-pencil-square />
-                            <div class="label">{{ __('Tasks') }}</div>
-                            <div class="badge">{{ \App\Models\Task::count() }}</div>
-                        </a>
-
-                        <a href="{{ route('filament.admin.h-r-circular.resources.circulars.index') }}"
-                            class="quick-link">
-                            <x-heroicon-o-building-office-2 />
-                            <div class="label">{{ __('Engagement') }}</div>
-                            <div class="badge">{{ \App\Models\Circular::count() }}</div>
-                        </a>
-
-                        <a href="{{ route('filament.admin.h-r-salary.resources.month-salaries.index') }}"
-                            class="quick-link">
-                            <x-heroicon-o-banknotes />
-                            <div class="label">{{ __('Payroll') }}</div>
-                            <div class="badge">{{ \App\Models\MonthSalary::count() }}</div>
-                        </a>
-                    </div>
-                </x-filament::fieldset>
-            @endif
-
-        </x-filament::card>
+        {{-- </x-filament::card> --}}
     </div>
 </x-filament::widget>
