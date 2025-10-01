@@ -1,18 +1,25 @@
 <x-filament::page>
     <style>
-         .fi-tabs {
-                display: none !important;
-            }
+        table {
+            /* border-collapse: collapse; */
+            width: 100%;
+            border-collapse: inherit;
+            border-spacing: initial;
+        }
+
+        .fi-tabs {
+            display: none !important;
+        }
     </style>
     {{ $this->getTableFiltersForm() }}
 
-    @if (!empty($reportData) && count($reportData) > 0 && !is_null ($store))
+    @if (!empty($reportData) && count($reportData) > 0 && !is_null($store))
         <table class="w-full text-sm text-left pretty table-striped reports" id="report-table">
-            <thead>
+            <thead class="fixed-header">
                 <tr class="header_report">
-                    <th colspan="1" class="no_border_right">
+                    <th colspan="2" class="no_border_right">
                         <h3>{{ __('Store:( ') . $store . ' )' }}</h3>
-                    </th>
+                     </th>
                     <th colspan="3" class="no_border_right_left">
                         <h3>{{ __('Inventory Minimum Stock Report') }}</h3>
                     </th>
@@ -22,6 +29,7 @@
                     </th>
                 </tr>
                 <tr>
+                    <th>{{ '' }}</th>
                     <th>{{ __('lang.product_code') }}</th>
                     <th>{{ __('lang.product') }}</th>
                     <th>{{ __('lang.unit_name') }}</th>
@@ -32,6 +40,9 @@
             <tbody>
                 @foreach ($reportData as $data)
                     <tr>
+                        <td>
+                            {{ $loop->iteration }}
+                        </td>
                         <td title="{{ $data['product_id'] }}">
                             <strong>{{ $data['product_code'] }}</strong>
                         </td>

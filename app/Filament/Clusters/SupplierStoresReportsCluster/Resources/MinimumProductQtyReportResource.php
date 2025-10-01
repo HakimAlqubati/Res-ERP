@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
+
 use Illuminate\Database\Eloquent\Builder;
 
 use Filament\Pages\Enums\SubNavigationPosition;
@@ -11,7 +12,9 @@ use App\Models\Product;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\MinimumProductQtyReportResource\Pages;
+use App\Models\Category;
 use App\Models\Store;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 
 class MinimumProductQtyReportResource extends Resource
@@ -51,7 +54,20 @@ class MinimumProductQtyReportResource extends Resource
                     })->options(
                         Store::active()->get()->pluck('name', 'id')->toArray()
                     ),
-            ])
+                SelectFilter::make("store_id")->placeholder('Select Store')
+                    ->label(__('lang.store'))->searchable()
+                    ->default(fn() => request()->get('store_id'))
+                    ->query(function (Builder $q, $data) {
+                        return $q;
+                    })->options(
+                        Store::active()->get()->pluck('name', 'id')->toArray()
+                    ),
+                SelectFilter::make("category_id")
+                    ->label(__('lang.category'))->searchable()
+                    ->query(function (Builder $q, $data) {
+                        return $q;
+                    })->options(Category::active()->get()->pluck('name', 'id')),
+            ], FiltersLayout::AboveContent)
             ->recordActions([]);
     }
 

@@ -20,6 +20,7 @@ class MultiProductsInventoryService
     public $categoryId;
     public $filterOnlyAvailable;
     public $productIds = [];
+    public $isActive = false;
 
     public function __construct(
         $categoryId = null,
@@ -56,6 +57,9 @@ class MultiProductsInventoryService
         // Fetch all products or filter by category if provided
         $query = Product::query();
 
+        if ($this->isActive) {
+            $query->where('active', true);
+        }
         if ($this->categoryId) {
             $query->where('category_id', $this->categoryId);
         }
@@ -70,6 +74,7 @@ class MultiProductsInventoryService
             $report = $this->getInventoryForProduct($product->id);
             $reportArr[] = $this->getInventoryForProduct($product->id);
         }
+        // dd($products, $report, $reportArr);
         return [
             'report' => $reportArr,
             'reportData' => $report,
@@ -81,6 +86,9 @@ class MultiProductsInventoryService
     public function getInventoryReportWithPagination($perPage = 15)
     {
         $query = Product::query();
+        if ($this->isActive) {
+            $query->where('active', true);
+        }
 
         if ($this->categoryId) {
             $query->where('category_id', $this->categoryId);
@@ -216,18 +224,18 @@ class MultiProductsInventoryService
         $totalBaseOut = $queryOut->sum(DB::raw('IFNULL(base_quantity, quantity * package_size)'));
 
         $remainingBaseQty = $totalBaseIn - $totalBaseOut;
-         $remainingBaseQty = round($remainingBaseQty,4);
+        $remainingBaseQty = round($remainingBaseQty, 4);
         $remQty = $totalIn - $totalOut;
-        
+
         $unitPrices = $this->getProductUnitPrices($productId);
         $product = Product::find($productId);
         $result = [];
 
-       $baseUnitPrice = $product->supplyOutUnitPrices()
-                            ->orderBy('package_size', 'asc')
-                            ->first();
-  
-        
+        $baseUnitPrice = $product->supplyOutUnitPrices()
+            ->orderBy('package_size', 'asc')
+            ->first();
+
+
         foreach ($unitPrices as $unitPrice) {
 
             if ($unitPrice['package_size'] <= 0) continue;
@@ -235,16 +243,16 @@ class MultiProductsInventoryService
             $remainingQty = round($remQty / $packageSize, 4);
             $allowsFraction = $unitPrice['is_fractional'];
 
-            $remainingBaseQty = round($remainingBaseQty/$packageSize,4);
+            $remainingBaseQty = round($remainingBaseQty / $packageSize, 4);
 
-            $remainingQty = round($remainingQty,4);
+            $remainingQty = round($remainingQty, 4);
             // if ($allowsFraction) {
             //     $remainingQty = round($remainingQty,4);
             // } else {
-                
+
             //     $remainingQty = floor($remainingQty); // نقرب للأقرب عدد صحيح
             // }
-             
+
             // نحاول نجيب السعر من المخزون حسب الوحدة
             $unitId = $unitPrice['unit_id'];
 
@@ -354,8 +362,12 @@ class MultiProductsInventoryService
 
 
 
-    public function getProductsBelowMinimumQuantityًWithPagination($perPage = 15)
+    public function getProductsBelowMinimumQuantityًWithPagination($perPage = 15, $active = false)
     {
+        if ($active) {
+            $this->isActive = true;
+        }
+        // dd('sdf',$this->storeId);
         $inventory = $this->getInventoryReport()['report'];
 
         $lowStockProducts = [];
