@@ -32,6 +32,7 @@ use App\Filament\Clusters\MainOrdersCluster;
 use App\Filament\Clusters\OrderCluster;
 use App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Resources\OrderResource\RelationManagers;
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\Branch;
 use App\Models\Order;
 use App\Models\Product;
@@ -211,6 +212,7 @@ class OrderResource extends Resource
             ->extremePaginationLinks()
 
             ->columns([
+                SoftDeleteColumn::make(),
                 TextColumn::make('id')->label(__('lang.order_id'))
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->copyable()->alignCenter(true)

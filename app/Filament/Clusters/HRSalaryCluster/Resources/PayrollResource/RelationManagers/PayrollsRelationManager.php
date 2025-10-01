@@ -17,6 +17,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
 
 class PayrollsRelationManager extends RelationManager
 {
@@ -71,11 +72,12 @@ class PayrollsRelationManager extends RelationManager
             ])
 
             ->actions([
-                Action::make('salarySlipPdf')->button()
-                    ->label('Salary Slip PDF')
-                    ->icon('heroicon-o-document-arrow-down')
-                    ->color('primary')
-                    ->action(fn(Payroll $record) => $this->downloadSalarySlip($record)),
+                // Action::make('salarySlipPdf')
+                //     ->label('Salary Slip PDF')
+                //     ->icon('heroicon-o-document-arrow-down')
+                //     ->color('primary')
+                //     ->url(fn(Payroll $record) => route('payrolls.salary-slip', $record))
+                //     ->openUrlInNewTab(),
                 // Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
                 // ✅ Export transactions (no route)
@@ -112,6 +114,18 @@ class PayrollsRelationManager extends RelationManager
      */
     protected function downloadSalarySlip(Payroll $record)
     {
+
+        $data = [
+            'title' => 'تجربة PDF',
+            'content' => 'هذا نص تجريبي للتأكد من أن مكتبة laravel-mpdf تعمل بشكل صحيح 🎉',
+            'date' => now()->format('Y-m-d H:i:s'),
+        ];
+
+        $pdf = Pdf::loadView('pdf.test', $data);
+
+        // تنزيل ملف
+        return $pdf->download('test.pdf');
+
         // 1) جهّز البيانات عبر خدمة الـ SalarySlip
         /** @var SalarySlipService $service */
         $service = app(SalarySlipService::class);
@@ -122,22 +136,21 @@ class PayrollsRelationManager extends RelationManager
             month: (int) $record->month
         );
 
-    
-        // 2) ابنِ الـ HTML من نفس القالب القديم
-        $html = view('export.reports.hr.salaries.salary-slip', $payload)->render();
 
-        // 3) حوّل إلى PDF (barryvdh/laravel-dompdf)
-        $pdf = app('dompdf.wrapper');
-        $pdf->loadHTML($html)->setPaper('A4', 'portrait');
+        // 2) ابنِ الـ HTML من نفس القالب القديم
+
+        $pdf = PDF::loadView('export.reports.hr.salaries.salary-slip', $payload, [], [
+            'format'        => 'A4',
+            'default_font'  => 'dejavusans',
+        ]);
+        // فعّل العلامة المائية من داخل mPDF بدل CSS
+        $mpdf = $pdf->getMpdf(); // متاحة في الحزمة
+        $mpdf->SetWatermarkImage(public_path('storage/logo/default.png'), 0.06); // الشفافية/الحجم
+        // $mpdf->showWatermarkImage = true;
 
         $safeName = preg_replace('/[^A-Za-z0-9_\-]+/', '_', $payload['employee']?->name ?? 'Employee');
-        $filename = sprintf('SalarySlip-%s-%04d-%02d.pdf', $safeName, (int) $record->year, (int) $record->month);
+        $filename = sprintf('SalarySlip-%s-%04d-%02d.pdf', $safeName, (int)$record->year, (int)$record->month);
 
-        // 4) رجّع Response تحميل مباشر (بدون راوت)
-        return response()->streamDownload(
-            fn() => print($pdf->output()),
-            $filename,
-            ['Content-Type' => 'application/pdf']
-        );
+        return $pdf->download($filename);
     }
 }

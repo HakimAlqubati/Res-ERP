@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Salary Slip</title>
 </head>
+
 <body>
     <div class="salary-slip">
         <header>
@@ -22,24 +24,25 @@
             <p class="month">{{ $monthName }}</p>
         </header>
 
+        {{-- {{ dd($employee?->employee_no,$branch?->name) }} --}}
         <section class="employee-info">
             <table class="employee-info-table">
                 <tr>
                     <td><strong>Name:</strong></td>
-                    <td>{{ $employee?->name }}</td>
+                    <td>{{ $employee['name'] ?? '' }}</td>
                     <td><strong>Job:</strong></td>
-                    <td>{{ $employee?->job_title }}</td>
+                    <td>{{ $employee['job_title'] ?? '' }}</td>
                 </tr>
                 <tr>
                     <td><strong>ID No:</strong></td>
-                    <td>{{ $employee?->employee_no }}</td>
+                    <td>{{ $employee['employee_no'] ?? '' }}</td>
                     <td><strong>Branch:</strong></td>
-                    <td>{{ $branch?->name }}</td>
+                    {{-- <td>{{ $branch?->name }}</td> --}}
                 </tr>
             </table>
         </section>
 
-        <section class="earnings-deductions">
+        {{-- <section class="earnings-deductions">
             <table>
                 <thead>
                     <tr>
@@ -87,9 +90,9 @@
                     </tr>
                 </tbody>
             </table>
-        </section>
+        </section> --}}
 
-        <footer>
+        {{-- <footer>
             <table style="width: 100%;">
                 <tr>
                     <td style="width: 50%">
@@ -110,29 +113,31 @@
                     </td>
                 </tr>
             </table>
-        </footer>
+        </footer> --}}
     </div>
 </body>
+
 </html>
 
 <style>
     /* ---------- Theme tokens ---------- */
-    :root{
+    :root {
         --bg: #f8fafc;
         --card: #ffffff;
         --text: #111827;
         --muted: #6b7280;
         --line: #e5e7eb;
-        --line-strong:#d1d5db;
+        --line-strong: #d1d5db;
         --head: #0f172a;
-        --accent:#2563eb;
-        --accent-weak:#eff6ff;
-        --success:#065f46;
-        --danger:#b91c1c;
+        --accent: #2563eb;
+        --accent-weak: #eff6ff;
+        --success: #065f46;
+        --danger: #b91c1c;
     }
 
     /* ---------- Page base ---------- */
-    html, body {
+    html,
+    body {
         background-color: var(--bg);
         color: var(--text);
         -webkit-font-smoothing: antialiased;
@@ -155,23 +160,25 @@
         width: 700px;
         background: var(--card);
         border: 1px solid var(--line);
-        border-radius: 16px;            /* تحسين الحواف */
-        box-shadow: 0 10px 30px rgba(2,6,23,.06); /* ظل أنعم */
+        border-radius: 16px;
+        /* تحسين الحواف */
+        box-shadow: 0 10px 30px rgba(2, 6, 23, .06);
+        /* ظل أنعم */
         overflow: hidden;
         position: relative;
     }
 
     /* علامة مائية خفيفة (لا تغيّر الهيكل) */
-    .salary-slip::after{
-        content:"";
-        position:absolute;
-        inset:0;
-        background-image:url("{{ url('/') . '/storage/logo/default.png' }}");
-        background-repeat:no-repeat;
+    .salary-slip::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: url("{{ url('/') . '/storage/logo/default.png' }}");
+        background-repeat: no-repeat;
         background-position: 96% 88%;
         background-size: 120px;
-        opacity:.04;
-        pointer-events:none;
+        opacity: .04;
+        pointer-events: none;
     }
 
     /* ---------- Header ---------- */
@@ -179,8 +186,10 @@
         text-align: center;
         border-bottom: 1px solid var(--line);
         position: relative;
-        padding: 18px 18px 10px;        /* مسافات متوازنة */
-        background: linear-gradient(180deg,#fff 0%,#fbfdff 100%); /* تدرّج رقيق */
+        padding: 18px 18px 10px;
+        /* مسافات متوازنة */
+        background: linear-gradient(180deg, #fff 0%, #fbfdff 100%);
+        /* تدرّج رقيق */
     }
 
     .company-info {
@@ -198,7 +207,8 @@
     .company-info img {
         width: 80px;
         height: auto;
-        border: 1px solid var(--line);  /* إطار خفيف للشعار */
+        border: 1px solid var(--line);
+        /* إطار خفيف للشعار */
         border-radius: 10px;
         background: #fff;
         padding: 4px;
@@ -268,13 +278,15 @@
         margin: 16px 0;
         background: #fff;
         border: 1px solid var(--line);
-        border-radius: 12px;        /* زوايا أنعم */
+        border-radius: 12px;
+        /* زوايا أنعم */
         overflow: hidden;
     }
 
     .employee-info-table td {
         border: 1px solid var(--line);
-        padding: 8px 10px;          /* راحة في القراءة */
+        padding: 8px 10px;
+        /* راحة في القراءة */
         text-align: left;
         font-size: 14px;
     }
@@ -292,7 +304,8 @@
     }
 
     .earnings-deductions th {
-        background-color: #fbfdff;          /* رأس أفتح */
+        background-color: #fbfdff;
+        /* رأس أفتح */
         border-bottom: 1px solid #eaf1ff;
         text-align: left;
         font-weight: 800;
@@ -300,20 +313,25 @@
         letter-spacing: .2px;
     }
 
-    .earnings-deductions tbody tr:nth-child(even){
-        background: #fcfcfd;                 /* زيبرا */
+    .earnings-deductions tbody tr:nth-child(even) {
+        background: #fcfcfd;
+        /* زيبرا */
     }
 
     .earnings-deductions td {
-        text-align: right;                   /* كما هو */
-        font-variant-numeric: tabular-nums;  /* محاذاة أرقام */
+        text-align: right;
+        /* كما هو */
+        font-variant-numeric: tabular-nums;
+        /* محاذاة أرقام */
     }
-    .earnings-deductions td:first-child{
-        text-align: left;                    /* الوصف يسار */
+
+    .earnings-deductions td:first-child {
+        text-align: left;
+        /* الوصف يسار */
     }
 
     /* صف الإجمالي */
-    .earnings-deductions tr:last-child th{
+    .earnings-deductions tr:last-child th {
         background: #f2f6ff;
         border-top: 2px solid #dbeafe;
         border-bottom: 2px solid #dbeafe;
@@ -352,20 +370,38 @@
     }
 
     /* ---------- Print (A4) ---------- */
-    @page{
+    @page {
         size: A4;
         margin: 14mm;
     }
-    @media print{
-        html, body { background:#fff; }
-        body { padding: 0; }
+
+    @media print {
+
+        html,
+        body {
+            background: #fff;
+        }
+
+        body {
+            padding: 0;
+        }
+
         .salary-slip {
             border: 1px solid #ddd;
             border-radius: 0;
             box-shadow: none;
         }
-        .salary-slip::after { opacity: .06; }
-        .company-info img { filter: grayscale(0); }
-        a[href]:after { content: ""; }
+
+        .salary-slip::after {
+            opacity: .06;
+        }
+
+        .company-info img {
+            filter: grayscale(0);
+        }
+
+        a[href]:after {
+            content: "";
+        }
     }
 </style>

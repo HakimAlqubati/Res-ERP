@@ -600,6 +600,7 @@ class EmployeeResource extends Resource
     {
         return $table->striped()->deferFilters(false)
             ->paginated([10, 25, 50, 100])
+            
             ->defaultSort('id', 'desc')
             ->columns([
                 SoftDeleteColumn::make(),

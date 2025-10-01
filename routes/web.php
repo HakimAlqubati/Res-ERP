@@ -16,6 +16,7 @@ use App\Http\Controllers\ImageController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\MigrateDataController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PayrollPdfController;
 use App\Http\Controllers\Reports\OrderDeliveryReportController;
 use App\Http\Controllers\Reports\OrderSalesPaymentsReportController;
 use App\Http\Controllers\SalaryReportController;
@@ -43,6 +44,7 @@ use App\Services\Warnings\Handlers\MissedCheckinHandler;
 use App\Services\Warnings\Support\HierarchyRepository;
 use App\Services\Warnings\Support\MaintenanceRepository;
 use App\Services\Warnings\WarningPayload;
+use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -982,3 +984,23 @@ Route::get('/testMaintenanceDue', function (MaintenanceRepository $repo) {
     ], 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 });
 require base_path('routes/api_docs.php');
+
+
+Route::get('/payrolls/{payroll}/salary-slip', [PayrollPdfController::class, 'show'])
+    ->name('payrolls.salary-slip');
+
+Route::get('/test_pdf', function () {
+    $data = [
+        'title' => 'تجربة PDF',
+        'content' => 'هذا نص تجريبي للتأكد من أن مكتبة laravel-mpdf تعمل بشكل صحيح 🎉',
+        'date' => now()->format('Y-m-d H:i:s'),
+    ];
+
+    $pdf = Pdf::loadView('pdf.test', $data);
+
+    // تنزيل ملف
+    return $pdf->download('test.pdf');
+
+    // أو للعرض مباشرة في المتصفح
+    // return $pdf->stream('test.pdf');
+});
