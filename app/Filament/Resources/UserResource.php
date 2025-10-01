@@ -22,6 +22,7 @@ use App\Filament\Resources\UserResource\Pages\ListUsers;
 use App\Filament\Resources\UserResource\Pages\CreateUser;
 use App\Filament\Resources\UserResource\Pages\EditUser;
 use App\Filament\Resources\UserResource\Pages;
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Filament\Traits\Forms\HasAttendanceForm;
 use App\Filament\Traits\Forms\HasEmployeeExistingForm;
 use App\Filament\Traits\Forms\HasNewUserForm;
@@ -107,6 +108,7 @@ class UserResource extends Resource
             ->striped()
             ->defaultSort('id', 'desc')
             ->columns([
+                 SoftDeleteColumn::make(),
                 TextColumn::make('id')
                     ->sortable()->searchable()
 

@@ -7,6 +7,7 @@ use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\Pages;
 use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\RelationManagers;
 use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\RelationManagers\PayrollsRelationManager;
 use App\Filament\Pages\RunPayroll;
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\Branch;
 use App\Models\Payroll;
 use App\Models\PayrollRun;
@@ -130,6 +131,7 @@ class PayrollResource extends Resource
     {
         return $table
             ->columns([
+                 SoftDeleteColumn::make(),
                 TextColumn::make('name')
                     ->label('Name')->searchable()->sortable(),
                 TextColumn::make('branch.name')
@@ -154,7 +156,9 @@ class PayrollResource extends Resource
                         'warning' => PayrollRun::STATUS_PENDING,   // أصفر
                         'info'    => PayrollRun::STATUS_COMPLETED, // أزرق
                         'success' => PayrollRun::STATUS_APPROVED,  // أخضر
-                    ])
+                    ]),
+                   
+            
             ])
             ->filters([
                 SelectFilter::make('branch_id')->label('Branch')

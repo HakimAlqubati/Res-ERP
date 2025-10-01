@@ -31,6 +31,7 @@ use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodHistoriesRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodRelationManager;
 use App\Filament\Resources\EmployeeResource\Pages;
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\Allowance;
 use App\Models\Branch;
 use App\Models\Deduction;
@@ -601,6 +602,7 @@ class EmployeeResource extends Resource
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
             ->columns([
+                SoftDeleteColumn::make(),
                 TextColumn::make('id')->label('ID')->alignCenter()->toggleable(isToggledHiddenByDefault: true),
                 // TextColumn::make('avatar_image')->copyable()->label('avatar_image')->alignCenter()->toggleable(isToggledHiddenByDefault: true),
                 ImageColumn::make('avatar_image')->label('')
@@ -708,13 +710,17 @@ class EmployeeResource extends Resource
                 ToggleColumn::make('active')->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('has_user')->boolean()
                     ->trueIcon('heroicon-o-check-badge')
-                    ->falseIcon('heroicon-o-x-mark')
+                    ->falseIcon(
+                        Heroicon::XMark
+                    )
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->url(function ($record) {
                         if ($record->user) {
                             return url('admin/users/' . $record?->user_id . '/edit');
                         }
-                    })->openUrlInNewTab(),
+                    })->openUrlInNewTab()
+                    ->tooltip('Make Sure If Liked User Is Not Soft Deleted')
+                    ->alignCenter(),
                 TextColumn::make('rfid')
                     ->label('RFID')
                     ->searchable()
