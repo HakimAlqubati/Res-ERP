@@ -325,7 +325,7 @@ class Employee extends Model implements Auditable
 
     public function getHasUserAttribute()
     {
-        if ($this->user()->exists()) {
+        if ($this->has('user')) {
             return true;
         }
         return false;
