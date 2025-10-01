@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Filament\Clusters\HRTasksSystem\Resources;
+
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Schemas\Schema;
@@ -74,10 +75,16 @@ class DailyTasksSettingUpResource extends Resource
                             ->required()
                             ->default(auth()->user()->id)
                             ->columnSpan(1)
-                            ->options(User::select('name', 'id')
-                            ->active()->forBranchManager()
-                            ->get()->pluck('name', 'id'))->searchable()
-                            ->selectablePlaceholder(false),
+                            ->options(
+                                User::select('name', 'id')
+                                    ->forBranchManager()
+                                    // ->active()
+                                    ->get()
+                                    ->pluck('name', 'id')
+                            )
+                            ->searchable()
+                        // ->selectablePlaceholder(false)
+                        ,
                         Select::make('assigned_to')
                             ->label('Assign to')
                             ->required()

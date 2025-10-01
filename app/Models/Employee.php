@@ -646,7 +646,7 @@ class Employee extends Model implements Auditable
                 // $user->assignRole(8);
 
                 // إرسال بريد إلكتروني 
-                Mail::to($user->email)->send(new MailableEmployee($employee->name, $user->email,));
+                // Mail::to($user->email)->send(new MailableEmployee($employee->name, $user->email,));
             }
         });
     }
@@ -837,9 +837,9 @@ class Employee extends Model implements Auditable
 
                 // إرسال ايميل (اختياري)
                 if (!empty($user->email)) {
-                    Mail::to($user->email)->send(
-                        new MailableEmployee($this->name, $user->email)
-                    );
+                    // Mail::to($user->email)->send(
+                    //     new MailableEmployee($this->name, $user->email)
+                    // );
                 }
 
                 return $user;

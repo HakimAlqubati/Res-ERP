@@ -81,7 +81,7 @@ trait EmployeeModelBootable
                 // $user->assignRole(8);
 
                 // إرسال بريد إلكتروني 
-                Mail::to($user->email)->send(new MailableEmployee($employee->name, $user->email,));
+                // Mail::to($user->email)->send(new MailableEmployee($employee->name, $user->email,));
             }
         });
     }
