@@ -59,9 +59,9 @@ class EditEmployee extends EditRecord
             if ($employee->avatar && Storage::disk('public')->exists($employee->avatar)) {
                 $user->avatar = $employee->avatar;
             }
-            if ($employee->avatar && Storage::disk('s3')->exists($employee->avatar)) {
-                $user->avatar = $employee->avatar;
-            }
+            // if ($employee->avatar && Storage::disk('s3')->exists($employee->avatar)) {
+            //     $user->avatar = $employee->avatar;
+            // }
 
             // Save changes to the user model
             $user->save();
