@@ -821,7 +821,7 @@ class EmployeeResource extends Resource
                     ->label('Create User')
                     ->icon('heroicon-o-user-plus')
                     ->color('success')
-                    ->visible(fn($record) =>  !$record->has('user'))
+                    ->visible(fn($record) =>  !$record->has_user)
                     ->form(fn($record) => static::createUserForm($record))
                     ->action(function (array $data, $record) {
                         $user = $record->createLinkedUser($data);
