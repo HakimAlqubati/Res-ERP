@@ -628,9 +628,9 @@ class Employee extends Model implements Auditable
                 ];
 
                 // إذا كان لديه avatar نضيفه
-                if ($employee->avatar && Storage::disk('s3')->exists($employee->avatar)) {
-                    $userData['avatar'] = $employee->avatar;
-                }
+                // if ($employee->avatar && Storage::disk('s3')->exists($employee->avatar)) {
+                //     $userData['avatar'] = $employee->avatar;
+                // }
                 if ($employee->avatar && Storage::disk('public')->exists($employee->avatar)) {
                     $userData['avatar'] = $employee->avatar;
                 }
