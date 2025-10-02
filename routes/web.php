@@ -1004,3 +1004,8 @@ Route::get('/test_pdf', function () {
     // أو للعرض مباشرة في المتصفح
     // return $pdf->stream('test.pdf');
 });
+
+Route::get('/_debugCheck', fn () => [
+    'env'   => app()->environment(),
+    'debug' => config('app.debug'),
+]);
