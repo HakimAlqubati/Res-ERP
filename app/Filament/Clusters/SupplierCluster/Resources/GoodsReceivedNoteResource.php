@@ -368,7 +368,17 @@ class GoodsReceivedNoteResource extends Resource
                                 DB::rollBack();
                                 showWarningNotifiMessage($e->getMessage());
                             }
-                        })->hidden()
+                        })->hidden(),
+                    Action::make('restore')
+                    ->label('Restore')
+                    ->icon('heroicon-o-refresh')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->action(function ($record) {
+                        $record->restore();
+                        showSuccessNotifiMessage('Record restored successfully.');
+                    })
+                    ->visible(fn($record) => $record->trashed()),
                 ]),
                 Action::make('Approve')
                     ->label(fn($record): string =>  $record->status == GoodsReceivedNote::STATUS_APPROVED ? 'Approved' : 'Approve')
