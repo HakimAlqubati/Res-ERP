@@ -108,7 +108,8 @@ class UserResource extends Resource
             ->striped()
             ->defaultSort('id', 'desc')
             ->columns([
-                 SoftDeleteColumn::make(),
+                 SoftDeleteColumn
+                 ::make(),
                 TextColumn::make('id')
                     ->sortable()->searchable()
 

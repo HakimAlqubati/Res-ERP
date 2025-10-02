@@ -91,6 +91,10 @@ class EmployeeResource extends Resource
     protected static ?string $cluster                             = HRCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 1;
+        protected static ?string $recordTitleAttribute = 'name';
+
+    protected static bool $isGloballySearchable = true;
+
     public static function getNavigationLabel(): string
     {
         return __('lang.employees');
@@ -600,7 +604,7 @@ class EmployeeResource extends Resource
     {
         return $table->striped()->deferFilters(false)
             ->paginated([10, 25, 50, 100])
-            
+
             ->defaultSort('id', 'desc')
             ->columns([
                 SoftDeleteColumn::make(),
@@ -613,7 +617,7 @@ class EmployeeResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Employee No.')->alignCenter()
                     ->sortable()->searchable()
-                    ->searchable(isIndividual: false, isGlobal: false),
+                    ->searchable(isIndividual: false, isGlobal: true),
 
                 TextColumn::make('name')
                     ->sortable()->searchable()

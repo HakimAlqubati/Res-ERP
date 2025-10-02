@@ -51,10 +51,10 @@ class StoreResource extends Resource
         return __('lang.stores');
     }
 
-    public static function getRecordTitleAttribute(): ?string
-    {
-        return __('lang.stores');
-    }
+    // public static function getRecordTitleAttribute(): ?string
+    // {
+    //     return __('lang.stores');
+    // }
 
 
     public static function form(Schema $schema): Schema

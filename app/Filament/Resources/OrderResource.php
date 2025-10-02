@@ -510,10 +510,10 @@ class OrderResource extends Resource
             ]);
     }
 
-    public static function getGlobalSearchResultTitle(Model $record): string
-    {
-        return $record->id;
-    }
+    // public static function getGlobalSearchResultTitle(Model $record): string
+    // {
+    //     return $record->id;
+    // }
 
 
     public static function canDelete(Model $record): bool

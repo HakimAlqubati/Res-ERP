@@ -42,10 +42,10 @@ class ProductResource extends Resource
         return __('lang.products');
     }
 
-    public static function getRecordTitleAttribute(): ?string
-    {
-        return __('lang.products');
-    }
+    // public static function getRecordTitleAttribute(): ?string
+    // {
+    //     return __('lang.products');
+    // }
 
     public static function form(Schema $schema): Schema
     {

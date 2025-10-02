@@ -212,11 +212,11 @@ class RoleResource extends Resource
         return Utils::isScopedToTenant();
     }
 
-    public static function canGloballySearch(): bool
-    {
-        return false;
-        return Utils::isResourceGloballySearchable() && count(static::getGloballySearchableAttributes()) && static::canViewAny();
-    }
+    // public static function canGloballySearch(): bool
+    // {
+    //     return false;
+    //     return Utils::isResourceGloballySearchable() && count(static::getGloballySearchableAttributes()) && static::canViewAny();
+    // }
 
     public static function getResourceEntitiesSchema(): ?array
     {

@@ -40,6 +40,7 @@ class TransferOrderResource extends Resource
     protected static string | \BackedEnum | null $navigationIcon = Heroicon::CheckCircle;
     // protected static ?string $navigationGroup = 'Orders';
     protected static ?string $recordTitleAttribute = 'orders.id';
+    protected static bool $isGloballySearchable = false;
 
     protected static ?string $label = 'Transfers';
     protected static ?string $navigationLabel = 'Transfers list';
@@ -160,15 +161,15 @@ class TransferOrderResource extends Resource
         return 'sort';
     }
 
-    protected function getTableRecordActionUsing(): ?Closure
-    {
-        return null;
-    }
+    // protected function getTableRecordActionUsing(): ?Closure
+    // {
+    //     return null;
+    // }
 
-    public function isTableSearchable(): bool
-    {
-        return true;
-    }
+    // public function isTableSearchable(): bool
+    // {
+    //     return true;
+    // }
 
 
     public static function canCreate(): bool
