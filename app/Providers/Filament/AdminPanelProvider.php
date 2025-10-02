@@ -310,7 +310,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->spa()
             ->databaseNotifications()
-            ->globalSearch()
+            ->globalSearch(false)
             // ->databaseNotificationsPolling()
             ->databaseTransactions()
             ->renderHook(
