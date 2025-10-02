@@ -236,6 +236,7 @@ class GoodsReceivedNoteResource extends Resource
                     ->searchable()->alignCenter(true)->toggleable(),
                 TextColumn::make('grn_date')->label('Date')->date()->toggleable(),
                 TextColumn::make('store.name')->label('Store')->searchable()->toggleable(),
+                TextColumn::make('supplier.name')->label('Supplier')->searchable()->toggleable(),
                 // TextColumn::make('status')->label('Status')->badge()->toggleable(),
                 TextColumn::make('details_count')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: false),
