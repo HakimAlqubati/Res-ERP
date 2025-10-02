@@ -133,7 +133,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
 
     public function getAvatarImageAttribute()
-    { 
+    {
         // Check if avatar is set and exists on S3
         // if ($this->avatar && Storage::disk('s3')->exists($this->avatar)) {
         //     return Storage::disk('s3')->url($this->avatar);
@@ -190,6 +190,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
     public function isFinanceManager()
     {
+        return in_array(16, $this->roles->pluck('id')->toArray());
         if (getCurrentRole() == 16) {
             return true;
         }

@@ -550,7 +550,7 @@ class PurchaseInvoiceResource extends Resource
         return static::getModel()::count();
     }
     public static function canCreate(): bool
-    {
+    { 
         // if (settingWithDefault('purchase_invoice_from_grn_only', false)) {
         //     return false;
         // }
