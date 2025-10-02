@@ -261,7 +261,7 @@ class GoodsReceivedNoteResource extends Resource
                     ->label('Cancelled')->toggleable(isToggledHiddenByDefault: true)->boolean()->alignCenter(),
             ])
             ->filters([
-                //
+                Tables\Filters\TrashedFilter::make(), // Add soft delete filter
             ])
             ->recordActions([
                 EditAction::make()
