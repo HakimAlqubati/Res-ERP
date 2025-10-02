@@ -93,8 +93,8 @@ final class LowStockHandler implements WarningHandler
     private function buildPayload(string $tenantId, int $storeId): WarningPayload
     {
         return WarningPayload::make(
-            'Inventory Low',
-            'Inventory qty is lower',
+            '',
+            'Low stock alert',
             WarningLevel::Warning
         )
         ->ctx(['tenant_id' => $tenantId, 'store_id' => $storeId])

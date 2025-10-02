@@ -1,7 +1,7 @@
-<div x-data="qt({ quotes: @js($quotes ?? []), i: {{ $startIndex ?? 0 }}, every: {{ $rotateEvery ?? 20 }} })"
+<div x-data="qt({ quotes: @js($quotes ?? []), i: {{ $startIndex ?? 0 }}, every: {{ $rotateEvery ?? 86400 }} })"
     class="ms-2 hidden md:flex items-center text-xs text-gray-500 max-w-[260px] space-x-1" title="">
     <div class="overflow-hidden max-w-full">
-        <span x-ref="t" x-text="q()" class="inline-block whitespace-nowrap transition-opacity duration-20"
+        <span x-ref="t" x-text="q()" class="inline-block whitespace-nowrap transition-opacity duration-86400"
             style="
                 padding: 3px 14px;
                 border: 2px solid #0d7c66;
@@ -37,12 +37,12 @@
     function qt({
         quotes,
         i = 0,
-        every = 20
+        every = 86400
     }) {
         return {
             quotes,
             i,
-            every: 20,
+            every: 86400,
             q() {
                 return this.quotes?.[this.i] ?? '';
             },

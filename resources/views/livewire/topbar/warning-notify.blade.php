@@ -113,23 +113,27 @@
                                      {{-- {{ dd($w) }} --}}
                                      <span class="text-[11px] text-gray-500">{{ $w['time'] ?? '' }}</span>
                                      @if (!empty($w['link']))
-                                         <x-filament::button size="xs" color="primary" tag="a"
-                                             :href="$w['link']" target="_blank">
-                                             Open
-                                         </x-filament::button>
+                                         {{-- <x-filament::button size="xs" color="primary" tag="a"
+                                                :href="$w['link']" target="_blank">
+                                                Open
+                                            </x-filament::button> --}}
                                      @endif
 
 
                                  </div>
                              </div>
-
                              @php
-                                 // كان: $detail = $data['detail'];
                                  $detail = $w['detail'] ?? '';
+                                 $link = $w['link'] ?? null;
                              @endphp
 
                              @if (is_array($detail))
                                  <div data-details class="hidden mt-2">
+                                     @if ($link)
+                                         <a href="{{ $link }}" target="_blank" rel="noopener"
+                                             class="wb-desc-link block" title="Open">
+                                     @endif
+
                                      <ul class="text-xs space-y-1">
                                          @foreach ($detail as $p)
                                              <li class="flex items-center justify-between gap-2">
@@ -142,12 +146,25 @@
                                              </li>
                                          @endforeach
                                      </ul>
+
+                                     @if ($link)
+                                         </a>
+                                     @endif
                                  </div>
                              @else
-                                 <p data-details class="hidden mt-2 text-xs text-gray-600 dark:text-gray-300">
-                                     {{ $detail }}
-                                 </p>
+                                 @if ($link)
+                                     <a data-details href="{{ $link }}" target="_blank" rel="noopener"
+                                         class="hidden mt-2 text-xs text-gray-600 dark:text-gray-300 wb-desc-link"
+                                         title="Open">
+                                         {{ $detail }}
+                                     </a>
+                                 @else
+                                     <p data-details class="hidden mt-2 text-xs text-gray-600 dark:text-gray-300">
+                                         {{ $detail }}
+                                     </p>
+                                 @endif
                              @endif
+
 
 
                          </x-filament::section>
@@ -182,8 +199,8 @@
 
 
      <style>
-         /* وميض للمثلث فقط (الأيقونة) */ 
-       
+         /* وميض للمثلث فقط (الأيقونة) */
+
          /* حاوية لضبط تموضع البادج */
          .warn-badge {
              position: relative;
@@ -275,6 +292,38 @@
 
              /* التوهج المتحرك */
              animation: badge-glow 1.2s ease-in-out infinite;
+         }
+
+         .wb-desc-link {
+             display: inline-block;
+             padding: 0.35rem 0.75rem;
+             /* مسافة داخلية */
+             border-radius: 0.5rem;
+             /* زوايا ناعمة */
+             font-size: 0.75rem;
+             /* حجم صغير مثل باقي النص */
+             font-weight: 500;
+             line-height: 1.25rem;
+             color: #fff;
+             /* لون النص أبيض */
+             background: linear-gradient(180deg, #3b82f6, #2563eb);
+             /* أزرق */
+             border: 1px solid #1d4ed8;
+             text-decoration: none;
+             cursor: pointer;
+             transition: all 0.2s ease-in-out;
+             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+         }
+
+         .wb-desc-link:hover {
+             background: linear-gradient(180deg, #2563eb, #1d4ed8);
+             transform: translateY(-1px);
+             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+         }
+
+         .wb-desc-link:active {
+             transform: translateY(0);
+             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
          }
      </style>
  </div>
