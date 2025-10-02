@@ -108,6 +108,55 @@ class StockAdjustmentByCategoryReportService
                 'final_total_price' => formatMoneyWithCurrency($finalTotalPrice),
             ]);
         }
+
+        // ✅ إذا "ما في" adjustmentType: نحسب Final Net Total بإشارة النوع
+        $signedTotals = $adjustments->reduce(function ($carry, $item) {
+            $unit = $item->inventoryTransaction?->price ?? 0;
+            $qty  = $item->quantity ?? 0;
+            $line = $unit * $qty;
+
+            $sign = self::signForAdjustmentType($item->adjustment_type);
+
+            if ($sign > 0) {
+                $carry['increase'] += $line;
+            } elseif ($sign < 0) {
+                $carry['decrease'] += $line; // نتركه موجب هنا ثم نوقّعه عند العرض
+            } else {
+                $carry['other'] += $line;    // لأنواع غير معروفة
+            }
+
+            return $carry;
+        }, ['increase' => 0.0, 'decrease' => 0.0, 'other' => 0.0]);
+
+        $net = $signedTotals['increase'] - $signedTotals['decrease'] + $signedTotals['other'];
+
+        // نضيف سطر تلخيصي واضح والقيم موقّعة كما طلبت
+        $result->push([
+            'final_total_price'   => formatMoneyWithCurrency($net),                      // الصافي (increase - decrease + other)
+            'increase_total'      => formatMoneyWithCurrency($signedTotals['increase']), // موجب
+            'decrease_total'      => formatMoneyWithCurrency(-1 * $signedTotals['decrease']), // سالب
+            'other_total'         => $signedTotals['other'] === 0 ? null : formatMoneyWithCurrency($signedTotals['other']),
+        ]);
         return $result;
+    }
+
+    /**
+     * إرجاع إشارة النوع: increase = +1, decrease = -1, غير ذلك = 0
+     */
+    protected static function signForAdjustmentType(?string $type): int
+    {
+        $t = strtolower((string) $type);
+
+        // غطّيت تسميات شائعة محتملة. عدّل حسب نظامك/Enums لديك.
+        $positive = ['increase', 'increment', 'in', 'plus', 'gain', 'addition', 'add'];
+        $negative = ['decrease', 'decrement', 'out', 'minus', 'loss', 'write_off', 'writeoff', 'shrinkage'];
+
+        if (in_array($t, $positive, true)) {
+            return 1;
+        }
+        if (in_array($t, $negative, true)) {
+            return -1;
+        }
+        return 0;
     }
 }
