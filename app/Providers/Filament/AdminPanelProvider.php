@@ -254,7 +254,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 // Widgets\AccountWidget::class,
-                // Widgets\FilamentInfoWidget::class,
+                // Widgets\FilamentInfoWidget::class, 
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -312,7 +312,7 @@ class AdminPanelProvider extends PanelProvider
             ->databaseNotifications()
             ->globalSearch(false)
             // ->databaseNotificationsPolling()
-            ->databaseTransactions() 
+            ->databaseTransactions()
             ->renderHook(
                 PanelsRenderHook::TOPBAR_LOGO_AFTER,
                 fn(): string =>
@@ -323,12 +323,12 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::TOPBAR_LOGO_AFTER,
                 fn(): string =>
-                view('filament.partials.quote-ticker')->render() 
+                view('filament.partials.quote-ticker')->render()
             )
             ->renderHook(
                 PanelsRenderHook::TOPBAR_LOGO_AFTER,
                 fn(): string =>
-                view('filament.partials.warning-notify')->render() 
+                view('filament.partials.warning-notify')->render()
             )
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_AFTER,
@@ -349,6 +349,11 @@ class AdminPanelProvider extends PanelProvider
                 // view('filament.partials.topbar-quick-links')->render(),
                 view('filament.partials.topbar-quick-hints')->render(),
             )
+            ->renderHook(
+                PanelsRenderHook::SIDEBAR_START, // بداية الشريط الجانبي
+                fn(): string => view('filament.partials.sidebar-search')->render()
+            )
+
             // ->renderHook(
             //     PanelsRenderHook::GLOBAL_SEARCH_AFTER,
             //     fn(): string =>
