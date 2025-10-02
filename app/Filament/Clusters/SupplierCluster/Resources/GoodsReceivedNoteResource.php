@@ -23,6 +23,7 @@ use App\Filament\Clusters\SupplierCluster;
 use App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource\Pages;
 use App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource\RelationManagers;
 use App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource\RelationManagers\GrnDetailsRelationManager;
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\GoodsReceivedNote;
 use App\Models\Product;
 use App\Models\Store;
@@ -223,6 +224,7 @@ class GoodsReceivedNoteResource extends Resource
             ->striped()
             ->defaultSort('created_at', 'desc')
             ->columns([
+                SoftDeleteColumn::make(),
                 TextColumn::make('id')
                     ->sortable()->alignCenter(true)
                     ->label('ID')->toggleable()
