@@ -371,7 +371,7 @@ class GoodsReceivedNoteResource extends Resource
                         })->hidden(),
                     Action::make('restore')
                     ->label('Restore')
-                    ->icon('heroicon-o-refresh')
+                    ->icon(Heroicon::ArrowPath)
                     ->color('success')
                     ->requiresConfirmation()
                     ->action(function ($record) {
