@@ -10,7 +10,7 @@
         "bezhansalleh/filament-shield": "4.0.0-beta2",
         "calebporzio/sushi": "^2.4",
         "carlos-meneses/laravel-mpdf": "^2.1",
-        "filament/filament": "^4.0",
+        "filament/filament": "^4.1",
         "filament/forms": "^4.0",
         "filament/infolists": "^4.0",
         "filament/notifications": "^4.0",
