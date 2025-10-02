@@ -14,7 +14,7 @@ use Filament\Actions\EditAction;
 use Filament\Notifications\Notification;
 use Throwable;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\RestoreBulkAction; 
+use Filament\Actions\RestoreBulkAction;
 use App\Filament\Resources\PurchaseInvoiceResource\Pages\CreatePurchaseInvoice;
 use App\Filament\Resources\PurchaseInvoiceResource\Pages\EditPurchaseInvoice;
 use App\Filament\Resources\PurchaseInvoiceResource\Pages\ViewPurchaseInvoice;
@@ -42,7 +42,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle; 
+use Filament\Forms\Components\Toggle;
 use Filament\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
@@ -71,6 +71,10 @@ class PurchaseInvoiceResource extends Resource
     protected static ?string $cluster = SupplierCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
+
+    protected static ?string $recordTitleAttribute = 'invoice_no';
+    protected static bool $isGloballySearchable = true;
+
     public static function getPluralLabel(): ?string
     {
         return __('lang.purchase_invoice');
@@ -222,7 +226,7 @@ class PurchaseInvoiceResource extends Resource
                                     if (! $product) return [];
 
                                     return $product->supplyUnitPrices
-                                    ->pluck('unit.name','unit_id')?->toArray() ?? [];
+                                        ->pluck('unit.name', 'unit_id')?->toArray() ?? [];
                                 })
                                 ->searchable()
                                 ->reactive()
@@ -230,7 +234,7 @@ class PurchaseInvoiceResource extends Resource
                                     $unitPrice = UnitPrice::where(
                                         'product_id',
                                         $get('product_id')
-                                    ) 
+                                    )
                                         ->where('unit_id', $state)->first();
                                     $set('price', $unitPrice->price ?? 0);
                                     $total = round(((float) ($unitPrice->price ?? 0)) * ((float) $get('quantity')), 2) ?? 0;
@@ -550,7 +554,7 @@ class PurchaseInvoiceResource extends Resource
         return static::getModel()::count();
     }
     public static function canCreate(): bool
-    { 
+    {
         // if (settingWithDefault('purchase_invoice_from_grn_only', false)) {
         //     return false;
         // }

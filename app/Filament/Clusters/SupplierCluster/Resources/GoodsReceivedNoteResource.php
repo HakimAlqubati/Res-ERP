@@ -59,6 +59,8 @@ class GoodsReceivedNoteResource extends Resource
     protected static ?string $cluster = SupplierCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
+    protected static ?string $recordTitleAttribute = 'grn_number';
+    protected static bool $isGloballySearchable = true;
 
     public static function getNavigationLabel(): string
     {
@@ -370,15 +372,15 @@ class GoodsReceivedNoteResource extends Resource
                             }
                         })->hidden(),
                     Action::make('restore')
-                    ->label('Restore')
-                    ->icon(Heroicon::ArrowPath)
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->action(function ($record) {
-                        $record->restore();
-                        showSuccessNotifiMessage('Record restored successfully.');
-                    })
-                    ->visible(fn($record) => $record->trashed()),
+                        ->label('Restore')
+                        ->icon(Heroicon::ArrowPath)
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->action(function ($record) {
+                            $record->restore();
+                            showSuccessNotifiMessage('Record restored successfully.');
+                        })
+                        ->visible(fn($record) => $record->trashed()),
                 ]),
                 Action::make('Approve')
                     ->label(fn($record): string =>  $record->status == GoodsReceivedNote::STATUS_APPROVED ? 'Approved' : 'Approve')
