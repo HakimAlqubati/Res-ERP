@@ -155,6 +155,25 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
     Route::get('maintenance/summary', [MaintenanceController::class, 'summary']);
 });
 
+Route::prefix('v1')->middleware(['auth:api'])->group(function () {
+    // Service Requests
+    Route::apiResource('serviceRequests', \App\Http\Controllers\Api\V1\ServiceRequestController::class);
+    Route::post('serviceRequests/{serviceRequest}/assign', [\App\Http\Controllers\Api\V1\ServiceRequestController::class, 'assign']);
+    Route::post('serviceRequests/{serviceRequest}/status', [\App\Http\Controllers\Api\V1\ServiceRequestController::class, 'changeStatus']);
+    Route::post('serviceRequests/{serviceRequest}/accept', [\App\Http\Controllers\Api\V1\ServiceRequestController::class, 'accept']);
+    Route::post('serviceRequests/{serviceRequest}/equipment', [\App\Http\Controllers\Api\V1\ServiceRequestController::class, 'attachEquipment']);
+    Route::delete('serviceRequests/{serviceRequest}/equipment', [\App\Http\Controllers\Api\V1\ServiceRequestController::class, 'detachEquipment']);
+    Route::post('serviceRequests/{serviceRequest}/media', [\App\Http\Controllers\Api\V1\ServiceRequestController::class, 'uploadMedia']);
+
+    // Comments
+    Route::get('serviceRequests/{serviceRequest}/comments', [\App\Http\Controllers\Api\V1\ServiceRequestController::class, 'comments']);
+    Route::post('serviceRequests/{serviceRequest}/comments', [\App\Http\Controllers\Api\V1\ServiceRequestController::class, 'addComment']);
+
+    // Logs
+    Route::get('serviceRequests/{serviceRequest}/logs', [\App\Http\Controllers\Api\V1\ServiceRequestController::class, 'logs']);
+});
+
+
 Route::get('employees/simple-list', [EmployeeController::class, 'simpleList']);
 
 Route::post('/face-images', [FaceImageController::class, 'store']);
