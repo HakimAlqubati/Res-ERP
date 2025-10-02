@@ -349,10 +349,10 @@ class AdminPanelProvider extends PanelProvider
                 // view('filament.partials.topbar-quick-links')->render(),
                 view('filament.partials.topbar-quick-hints')->render(),
             )
-            // ->renderHook(
-            //     PanelsRenderHook::SIDEBAR_START, // بداية الشريط الجانبي
-            //     fn(): string => view('filament.partials.sidebar-search')->render()
-            // )
+            ->renderHook(
+                PanelsRenderHook::SIDEBAR_START, // بداية الشريط الجانبي
+                fn(): string => view('filament.partials.sidebar-search')->render()
+            )
 
             // ->renderHook(
             //     PanelsRenderHook::GLOBAL_SEARCH_AFTER,

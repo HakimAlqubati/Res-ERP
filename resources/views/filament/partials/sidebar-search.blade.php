@@ -1,5 +1,6 @@
 {{-- Search input that filters sidebar navigation items in place --}}
-<div class="p-3 border-b border-gray-200 dark:border-gray-800" x-data="wbSidebarFilter()">
+<div class="p-3 border-b border-gray-200 dark:border-gray-800 " x-show="$store.sidebar.isOpen"
+    x-data="wbSidebarFilter()" style="">
     <div class="relative" dir="auto" style="text-align: center;">
         <input style="padding: 0px 20px 0px 20px;width: 80%;border: 1px solid;border-radius: 5px;" x-model="q"
             x-on:input.debounce.150ms="filter()" type="text" placeholder="Search in menu..."
