@@ -91,45 +91,46 @@ class S3ImageService
         $employeeName = "{$employee->name}-{$employee->id}";
 
         // try {
-            // Index face in Rekognition
-            $result = $rekognitionClient->indexFaces([
-                'CollectionId' => 'emps', // Your Rekognition Collection ID
-                'Image' => [
-                    'S3Object' => [
-                        'Bucket' => env('AWS_BUCKET'),
-                        'Name' => $imageName, // Path of the employee's avatar in S3
-                    ],
+        // Index face in Rekognition
+        $result = $rekognitionClient->indexFaces([
+            'CollectionId' => 'emps', // Your Rekognition Collection ID
+            'Image' => [
+                'S3Object' => [
+                    'Bucket' => env('AWS_BUCKET'),
+                    'Name' => $imageName, // Path of the employee's avatar in S3
                 ],
-                'ExternalImageId' => $externalImageId, // Associate Rekognition with Employee ID
-                'DetectionAttributes' => ['DEFAULT'],
-            ]);
+            ],
+            'ExternalImageId' => $externalImageId, // Associate Rekognition with Employee ID
+            'DetectionAttributes' => ['DEFAULT'],
+        ]);
 
-            // Log the result for verification
-            Log::info('Indexed face for employee', ['result' => $result, 'employee_id' => $employee->id]);
+        // Log the result for verification
+        Log::info('Indexed face for employee', ['result' => $result, 'employee_id' => $employee->id]);
 
-            // Extract the Rekognition FaceId
-            $faceId = $result['FaceRecords'][0]['Face']['FaceId'] ?? null;
+        // Extract the Rekognition FaceId
+        $faceId = $result['FaceRecords'][0]['Face']['FaceId'] ?? null;
 
-            if (!$faceId) {
-                return response()->json(['success' => false, 'message' => 'No face detected for this image'], 400);
-            }
+        if (!$faceId) {
+            return response()->json(['success' => false, 'message' => 'No face detected for this image'], 400);
+        }
 
-            // dd($faceId,$employeeName);
-            // Store metadata in DynamoDB
-            $dynamoDbClient->putItem([
-                'TableName' => 'face_recognition',
-                'Item' => [
-                    'RekognitionId' => ['S' => $faceId],
-                    'Name' => ['S' => $employeeName],
-                    'AvatarUrl' => ['S' => "s3://emps/{$imageName}"],
-                ],
-            ]);
+        // dd($faceId,$employeeName);
+        // Store metadata in DynamoDB
+        $dynamoDbClient->putItem([
+            'TableName' => 'face_recognition',
+            'Item' => [
+                'RekognitionId' => ['S' => $faceId],
+                'Name' => ['S' => $employeeName],
+                'AvatarUrl' => ['S' => "s3://emps/{$imageName}"],
+                'baseUrl' => ['S' => url('/')], 
+            ],
+        ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => "Indexed and stored data for {$employeeName} successfully.\n",
-                'face_id' => $faceId,
-            ]);
+        return response()->json([
+            'success' => true,
+            'message' => "Indexed and stored data for {$employeeName} successfully.\n",
+            'face_id' => $faceId,
+        ]);
         // } catch (Exception $e) {
         //     return response()->json(['error' => "Failed to index employee image: {$e->getMessage()}"], 500);
         // }
