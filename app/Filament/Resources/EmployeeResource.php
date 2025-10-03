@@ -206,7 +206,7 @@ class EmployeeResource extends Resource
                                                 ->imageEditor()
 
                                                 ->circleCropper()
-                                                ->disk('public')
+                                                ->disk('s3')
                                                 // ->directory('employees')
                                                 ->visibility('public')
                                                 ->imageEditorAspectRatios([
