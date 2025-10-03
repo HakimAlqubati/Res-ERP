@@ -9,7 +9,7 @@ class EmployeeRecognitionRepository
 {
     public function __construct(
         protected DynamoDbClient $dynamo,
-        protected string $table = 'workbenchemps_recognition',
+        protected string $table = 'face_recognition',
     ) {}
 
     /**
