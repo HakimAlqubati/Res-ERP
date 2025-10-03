@@ -35,6 +35,6 @@ return [
         ],
     ],
    'python' => [
-        'base_url' => env('PYTHON_BASE_URL', 'http://47.130.152.211:5000'),
+        'base_url' => env('PYTHON_BASE_URL', 'http://18.143.198.215:5000'),
     ],
 ];
