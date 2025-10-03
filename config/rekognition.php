@@ -3,7 +3,7 @@
 return [
     'region'               => env('AWS_DEFAULT_REGION', 'us-east-1'),
     'bucket'               => env('AWS_BUCKET'),
-    'collection_id'        => env('REKOGNITION_COLLECTION', 'workbenchemps2'),
+    'collection_id'        => env('REKOGNITION_COLLECTION', 'emps'),
     'face_match_threshold' => (float) env('REKOGNITION_THRESHOLD', 90),
     'max_faces'            => (int) env('REKOGNITION_MAX_FACES', 1),
 
