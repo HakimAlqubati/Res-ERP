@@ -34,7 +34,7 @@ use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class RoleResource extends Resource
- implements HasShieldPermissions
+implements HasShieldPermissions
 {
     protected static ?string $recordTitleAttribute = 'name';
 
@@ -205,6 +205,9 @@ class RoleResource extends Resource
             ? strval(static::getEloquentQuery()->count())
             : null;
     }
+
+    protected static bool $isGloballySearchable = false;
+
 
     public static function isScopedToTenant(): bool
     {

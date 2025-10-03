@@ -90,10 +90,10 @@ class S3ImageService
         $externalImageId = pathinfo($imageName, PATHINFO_FILENAME);
         $employeeName = "{$employee->name}-{$employee->id}";
 
-        try {
+        // try {
             // Index face in Rekognition
             $result = $rekognitionClient->indexFaces([
-                'CollectionId' => 'workbenchemps2', // Your Rekognition Collection ID
+                'CollectionId' => 'emps', // Your Rekognition Collection ID
                 'Image' => [
                     'S3Object' => [
                         'Bucket' => env('AWS_BUCKET'),
@@ -114,13 +114,14 @@ class S3ImageService
                 return response()->json(['success' => false, 'message' => 'No face detected for this image'], 400);
             }
 
+            // dd($faceId,$employeeName);
             // Store metadata in DynamoDB
             $dynamoDbClient->putItem([
-                'TableName' => 'workbenchemps_recognition',
+                'TableName' => 'face_recognition',
                 'Item' => [
                     'RekognitionId' => ['S' => $faceId],
                     'Name' => ['S' => $employeeName],
-                    'AvatarUrl' => ['S' => "s3://workbenchemps2/{$imageName}"],
+                    'AvatarUrl' => ['S' => "s3://emps/{$imageName}"],
                 ],
             ]);
 
@@ -129,8 +130,8 @@ class S3ImageService
                 'message' => "Indexed and stored data for {$employeeName} successfully.\n",
                 'face_id' => $faceId,
             ]);
-        } catch (Exception $e) {
-            return response()->json(['error' => "Failed to index employee image: {$e->getMessage()}"], 500);
-        }
+        // } catch (Exception $e) {
+        //     return response()->json(['error' => "Failed to index employee image: {$e->getMessage()}"], 500);
+        // }
     }
 }

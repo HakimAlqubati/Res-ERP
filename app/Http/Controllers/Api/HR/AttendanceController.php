@@ -252,7 +252,7 @@ class AttendanceController extends Controller
 
             // ✅ استدعاء البحث عن الوجه
             $result = $rekognitionClient->searchFacesByImage([
-                'CollectionId'       => 'workbenchemps2',
+                'CollectionId'       => 'emps',
                 'Image'              => [
                     'S3Object' => [
                         'Bucket' => env('AWS_BUCKET'),
@@ -286,7 +286,7 @@ class AttendanceController extends Controller
                 ]);
 
                 $dynamoResult = $dynamoDbClient->getItem([
-                    'TableName' => 'workbenchemps_recognition',
+                    'TableName' => 'face_recognition',
                     'Key'       => [
                         'RekognitionId' => ['S' => $rekognitionId],
                     ],
