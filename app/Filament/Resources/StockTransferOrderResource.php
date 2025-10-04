@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Resources;
 
 use Filament\Pages\Enums\SubNavigationPosition;
@@ -255,7 +256,8 @@ class StockTransferOrderResource extends Resource
     {
         return $table->defaultSort('id', 'desc')->striped()
             ->columns([
-                TextColumn::make('id')->label('ID')->sortable()->searchable()->alignCenter(true)->toggleable(),
+                TextColumn::make('id')->label('ID')->sortable()->searchable()->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('fromStore.name')->label('From')->sortable()->searchable()->alignCenter(true)->toggleable(),
                 TextColumn::make('toStore.name')->label('To')->sortable()->searchable()->alignCenter(true)->toggleable(),
                 TextColumn::make('date')->date()->sortable()->searchable()->alignCenter(true)->toggleable(),
@@ -267,12 +269,13 @@ class StockTransferOrderResource extends Resource
                 }),
                 TextColumn::make('created_at')->dateTime()->sortable()->searchable()->alignCenter(true)->toggleable(),
                 TextColumn::make('details_count')->alignCenter(true)->toggleable(),
+                TextColumn::make('creator.name')->alignCenter(false)->toggleable(),
             ])
             ->filters([
                 //
             ])
             ->recordActions([
-                EditAction::make() ->visible(fn($record): bool => $record->status === StockTransferOrder::STATUS_CREATED),
+                EditAction::make()->visible(fn($record): bool => $record->status === StockTransferOrder::STATUS_CREATED),
 
                 Action::make('reject')->button()
                     ->label('Reject')
@@ -351,5 +354,13 @@ class StockTransferOrderResource extends Resource
             'edit'   => EditStockTransferOrder::route('/{record}/edit'),
             'view'   => ViewStockTransferOrder::route('/{record}'),
         ];
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return StockTransferOrder::query()
+            
+            // ->forBranchManager()
+            ->count();
     }
 }
