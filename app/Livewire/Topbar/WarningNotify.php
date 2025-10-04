@@ -10,6 +10,7 @@ final class WarningNotify extends Component
 {
     /** @var array<int, array{id:string,title:string,detail:string,time:string,level:string}> */
     public array $warnings = [];
+    protected $listeners = ['warnings:refresh' => 'refreshWarnings'];
 
     /** عرض ثابت لمنع التمدد */
     public int $width = 260;
@@ -38,6 +39,7 @@ final class WarningNotify extends Component
     }
 
     /** إعادة الجلب من قاعدة البيانات */
+    #[On('warnings:refresh')]
     public function refreshWarnings(): void
     {
         $user = Auth::user();

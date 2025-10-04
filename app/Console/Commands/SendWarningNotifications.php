@@ -28,7 +28,9 @@ class SendWarningNotifications extends Command
         [$sT, $fT] = $runner->runOnTenants($options);
         $this->info("Tenants: sent={$sT}, failed_items={$fT}");
 
-        $this->info("TOTAL: sent=" . ($sC+$sT) . ", failed_items=" . ($fC+$fT));
-        return ($fC+$fT) > 0 ? self::FAILURE : self::SUCCESS;
+        $this->info("TOTAL: sent=" . ($sC + $sT) . ", failed_items=" . ($fC + $fT));
+        event(new \App\Events\WarningNotificationsUpdated([]));
+
+        return ($fC + $fT) > 0 ? self::FAILURE : self::SUCCESS;
     }
 }

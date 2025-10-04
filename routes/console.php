@@ -29,3 +29,4 @@ use Illuminate\Support\Facades\Mail;
 Schedule::command('tenant:backup')
     ->everySixHours();
 // Schedule::command('test:cron')->everyThreeHours();
+// Schedule::command('notifications:warning')->everyMinute();

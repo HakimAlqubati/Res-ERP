@@ -9,22 +9,39 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 
 class MyEvent implements ShouldBroadcast
 {
-  use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets, SerializesModels;
 
-  public $message;
+    public $message;
+    public array $payload = [];
 
-  public function __construct($message)
-  {
-      $this->message = $message;
-  }
+    /**
+     * $payload مثال:
+     * [
+     *   'count' => 7,
+     *   'items' => [
+     *      ['level' => 'critical', 'title' => 'Stock below min', 'detail' => '...', 'time' => '2025-10-04 03:12', 'link' => '...'],
+     *      ...
+     *   ]
+     * ]
+     */
 
-  public function broadcastOn()
-  {
-      return ['my-channel'];
-  }
 
-  public function broadcastAs()
-  {
-      return 'my-event';
-  }
+    public function __construct($message)
+    {
+        $this->message = $message;
+    }
+
+    public function broadcastOn()
+    {
+        return ['my-channel'];
+    }
+
+    public function broadcastAs()
+    {
+        return 'my-event';
+    }
+    public function broadcastWith(): array
+    {
+        return $this->payload;
+    }
 }

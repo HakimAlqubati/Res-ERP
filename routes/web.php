@@ -843,7 +843,11 @@ Route::get('/admin/transactions/print/{payroll_id}', function ($payroll_id) {
 Route::get('/test-pusher', function () {
     return view('test-pusher');
 });
-
+Route::get('/pusher1', function () {
+    event(new \App\Events\MyEvent(
+        'hi'
+    ));
+}); 
 Route::get('/pusher2', function () {
     event(new \App\Events\AttendanceUpdated(
         '2025-09-18'

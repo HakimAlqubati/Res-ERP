@@ -326,4 +326,26 @@
              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
          }
      </style>
+
+     <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
+
+     <script>
+         // Enable pusher logging - don't include this in production
+         Pusher.logToConsole = true;
+
+         var pusher = new Pusher('ff551e5dba18d083602f', {
+             cluster: 'ap1'
+         });
+
+         const channel = pusher.subscribe('warnings');
+         channel.bind('warnings.updated', function(data) {
+             document.getElementById('warn-audio').play();
+
+             window.Livewire?.dispatch?.('warnings:refresh'); // Livewire v3
+         });
+     </script>
+
+     <audio id="warn-audio" src="/audio/warning.mp3" preload="auto"></audio>
+
+
  </div>
