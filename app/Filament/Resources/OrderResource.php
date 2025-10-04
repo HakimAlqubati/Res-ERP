@@ -58,6 +58,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\Summarizers\Summarizer;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -312,7 +313,7 @@ class OrderResource extends Resource
                     }),
                 TrashedFilter::make(),
 
-            ])
+            ], FiltersLayout::Modal)->filtersFormColumns(3)
             ->recordActions([
                 Action::make('cancel')
                     ->label('Cancel')->hidden(fn($record): bool => $record->cancelled)

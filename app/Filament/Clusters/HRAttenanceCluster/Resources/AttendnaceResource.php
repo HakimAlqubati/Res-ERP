@@ -194,9 +194,10 @@ class AttendnaceResource extends Resource
                 TextColumn::make('attendance_type')->alignCenter(true),
                 IconColumn::make('accepted')
                     ->label('Is Accepted?')
-                    ->alignCenter(true)->toggleable(isToggledHiddenByDefault:true)->boolean(),
+                    ->alignCenter(true)->toggleable(isToggledHiddenByDefault: true)->boolean(),
 
             ])
+            ->filtersFormColumns(3)
             ->filters([
                 TrashedFilter::make(),
                 SelectFilter::make('accepted')->searchable()->label('Rejected')->options([
@@ -277,7 +278,7 @@ class AttendnaceResource extends Resource
                 SelectFilter::make('status')
                     ->label('Status')
                     ->options(Attendance::getStatuses()),
-            ])
+            ], FiltersLayout::Modal)
             ->recordActions([
 
                 Action::make('fixCheckout')->visible(fn($record): bool => (isSuperAdmin() && $record->check_type == Attendance::CHECKTYPE_CHECKOUT))

@@ -84,7 +84,7 @@ class EmployeeTable
                 TextColumn::make('name')
                     ->sortable()->searchable()
                     ->label('Full name')->wrap(false)
-                    ->color('primary')->words(3)
+                    ->color('primary')->words(3)->limit(15)
                     ->weight(FontWeight::Bold)->tooltip(fn($state) => $state)
                     ->searchable(isIndividual: false, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: false),
