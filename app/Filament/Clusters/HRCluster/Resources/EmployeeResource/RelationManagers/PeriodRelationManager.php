@@ -102,12 +102,10 @@ class PeriodRelationManager extends RelationManager
                     ->label('Start Date')
                     // ->date()
                     ->getStateUsing(function ($record) {
-                        
+
                         $employeePeriod = EmployeePeriod::find($record->pivot->id);
 
-                        // dd($period,$record);
-                        // $employeePeriod = \App\Models\EmployeePeriod::find($record->pivot->id);
-                        // dd($employeePeriod,$record);
+                     
                         return $employeePeriod?->start_date;
                     }),
 
@@ -169,12 +167,7 @@ class PeriodRelationManager extends RelationManager
                                             ->pluck('name', 'id');
                                     }
                                 )
-                                //     ->default(function () {
-                                //     return $this->ownerRecord?->periods?->plucK('id')?->toArray();
-                                // })
-                                // ->disabled(function(){
-                                //     return [1,2,3,4];
-                                // })
+                               
                                 ->helperText('Select the employee\'s work periods.')->required(),
                             Fieldset::make()->schema([
                                 CheckboxList::make('period_days')
@@ -191,18 +184,7 @@ class PeriodRelationManager extends RelationManager
                     ->databaseTransaction()
                     ->action(function ($data) {
                         DB::beginTransaction();
-                        $employee = $this->ownerRecord;
-                        // $employeeHistories = $employee->periodHistories->select('period_id', 'start_date', 'end_date') ?? null;
-                        // foreach ($employeeHistories as $history) {
-                        //     if (isset($history['end_date']) && $history['end_date'] == $data['end_date']) {
-                        //         Notification::make()
-                        //             ->title('Validation Error')
-                        //             ->body('Cannot start period on ended period date')
-                        //             ->warning()
-                        //             ->send();
-                        //         return;
-                        //     }
-                        // }
+                        $employee = $this->ownerRecord; 
                         try {
 
                             $selectedPeriodsWithDates = [];
@@ -334,18 +316,7 @@ class PeriodRelationManager extends RelationManager
                     ->action(function ($record) {
 
                         try {
-
-                            // Update the end_date in hr_employee_period_histories
-                            // Validate the employee's last attendance
-                            // $lastAttendance = $this->ownerRecord->attendances()->latest('id')->first();
-                            // if ($lastAttendance && $lastAttendance->check_type === Attendance::CHECKTYPE_CHECKIN) {
-                            //     Notification::make()
-                            //         ->title('Validation Error')
-                            //         ->body('The employee has a pending check-out. You cannot add new work periods until the check-out is recorded.')
-                            //         ->warning()
-                            //         ->send();
-                            //     return;
-                            // }
+ 
                             DB::transaction(function () use ($record) {
                                 $period = EmployeePeriod::find($record->pivot_id);
 
@@ -645,49 +616,4 @@ class PeriodRelationManager extends RelationManager
         }
         return false;
     }
-
-
-    // private function isInternalPeriodsOverlappingWithDates($selectedPeriodsWithDates)
-    // {
-    //     // $selectedPeriodsWithDates = [
-    //     //     ['period_id' => 1, 'start_date' => '2024-01-01', 'end_date' => '2024-01-10'],
-    //     //     ['period_id' => 2, 'start_date' => '2024-01-05', 'end_date' => '2024-01-15'],
-    //     //     ...
-    //     // ];
-    //     $periods = \App\Models\WorkPeriod::whereIn('id', array_column($selectedPeriodsWithDates, 'period_id'))->get()->keyBy('id');
-
-    //     // dd($selectedPeriodsWithDates, $periods);
-    //     $count = count($selectedPeriodsWithDates);
-    //     for ($i = 0; $i < $count; $i++) {
-    //         for ($j = $i + 1; $j < $count; $j++) {
-    //             $a = $selectedPeriodsWithDates[$i];
-    //             $b = $selectedPeriodsWithDates[$j];
-
-    //             $periodA = $periods[$a['period_id']];
-    //             $periodB = $periods[$b['period_id']];
-
-    //             // تحقق من تداخل أوقات الشيفت
-    //             $timesOverlap = (
-    //                 ($periodA->start_at <= $periodB->end_at) &&
-    //                 ($periodB->start_at <= $periodA->end_at)
-    //             );
-
-    //             // تحقق من تداخل تواريخ الفترات (null end_date تعني مفتوحة)
-    //             $aEnd         = $a['end_date'] ?? null;
-    //             $bEnd         = $b['end_date'] ?? null;
-    //             $datesOverlap =
-    //                 // الحالة العامة: تواريخ متقاطعة
-    //                 (
-    //                     ($aEnd === null || $b['start_date'] <= $aEnd) &&
-    //                     ($bEnd === null || $a['start_date'] <= $bEnd)
-    //                 );
-
-    //             if ($timesOverlap && $datesOverlap) {
-    //                 // يوجد تداخل كامل
-    //                 return true;
-    //             }
-    //         }
-    //     }
-    //     return false;
-    // }
 }
