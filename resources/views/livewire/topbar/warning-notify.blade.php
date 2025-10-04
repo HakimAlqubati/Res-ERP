@@ -339,7 +339,7 @@
 
          const channel = pusher.subscribe('warnings');
          channel.bind('warnings.updated', function(data) {
-             document.getElementById('warn-audio').play();
+            //  document.getElementById('warn-audio').play();
 
              window.Livewire?.dispatch?.('warnings:refresh'); // Livewire v3
          });
