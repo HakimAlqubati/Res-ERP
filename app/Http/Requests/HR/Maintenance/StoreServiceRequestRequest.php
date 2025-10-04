@@ -14,12 +14,12 @@ class StoreServiceRequestRequest extends FormRequest
             'description'    => ['required','string','max:2000'],
             'branch_id'      => ['required','integer','exists:branches,id'],
             'branch_area_id' => ['nullable','integer','exists:branch_areas,id'],
-            'assigned_to'    => ['nullable','integer','exists:employees,id'],
+            'assigned_to'    => ['nullable','integer','exists:hr_employees,id'],
             'urgency'        => ['required','in:High,Medium,Low'],
             'impact'         => ['required','in:High,Medium,Low'],
             'status'         => ['nullable','in:New,Pending,In progress,Closed'],
-            'equipment_id'   => ['nullable','integer','exists:equipments,id'],
-            'accepted'       => ['boolean'],
+            'equipment_id'   => ['nullable','integer','exists:hr_equipment,id'],
+            // 'accepted'       => ['boolean'],
         ];
     }
 

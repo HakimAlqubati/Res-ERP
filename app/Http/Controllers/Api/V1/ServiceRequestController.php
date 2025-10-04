@@ -55,7 +55,7 @@ class ServiceRequestController extends Controller
     {
         
         
-        dd('sdf');
+        // dd('sdf');
         try {
             $data = $req->validated();
             $data['created_by'] = auth()->id();
@@ -66,6 +66,7 @@ class ServiceRequestController extends Controller
                     'action'      => 'created',
                     'description' => 'Service request created',
                     'user_id'     => auth()->id(),
+                    'created_by'     => auth()->id(),
                 ]);
                 // إلى سجل الجهاز (لو مرتبط)
                 $sr->logToEquipment(\App\Models\EquipmentLog::ACTION_SERVICED, 'Service request created');
