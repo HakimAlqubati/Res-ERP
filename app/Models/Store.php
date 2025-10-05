@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class Store extends Model implements Auditable
@@ -126,5 +127,23 @@ class Store extends Model implements Auditable
     public function orders()
     {
         return $this->belongsToMany(Order::class, 'order_store');
+    }
+
+    public function purchaseInvoices()
+    {
+        return $this->hasMany(\App\Models\PurchaseInvoice::class);
+    }
+
+    /**
+     * يعرِض فقط المخازن التي لديها مشتريات (Purchase Invoices) غير محذوفة.
+     */
+    public function scopeHasPurchases($query)
+    {
+        return $query->whereExists(function ($sub) {
+            $sub->select(DB::raw(1))
+                ->from('purchase_invoices as pi')
+                ->whereColumn('pi.store_id', 'stores.id')
+                ->whereNull('pi.deleted_at'); // تجاهُل المحذوفة سوفت
+        });
     }
 }

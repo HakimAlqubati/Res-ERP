@@ -14,17 +14,17 @@ use Filament\Actions\EditAction;
 use Filament\Notifications\Notification;
 use Throwable;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\RestoreBulkAction;  
+use Filament\Actions\RestoreBulkAction;
 use App\Models\InventoryTransaction;
-use App\Models\PaymentMethod; 
+use App\Models\PaymentMethod;
 use App\Models\PurchaseInvoice;
 use App\Models\Store;
-use App\Models\Supplier; 
-use Filament\Forms\Components\DatePicker; 
-use Filament\Forms\Components\Textarea; 
+use App\Models\Supplier;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Textarea;
 use Filament\Support\Colors\Color;
-use Filament\Support\Enums\FontWeight; 
-use Filament\Tables\Table; 
+use Filament\Support\Enums\FontWeight;
+use Filament\Tables\Table;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\Summarizers\Summarizer;
@@ -139,7 +139,15 @@ class PurchaseInvoiceTable
                     ->options(Supplier::get()->pluck('name', 'id'))->searchable(),
                 SelectFilter::make('store_id')
                     ->label('Store')->multiple()
-                    ->options(Store::active()->get()->pluck('name', 'id'))->searchable(),
+                    ->options(function () {
+                        return \App\Models\Store::query()
+                            ->active()
+                            ->withManagedStores()   // يبقى كما هو عندك لو عند المستخدم قيود إدارة
+                            ->hasPurchases()        // السكوب الجديد
+                            ->orderBy('name')
+                            ->pluck('name', 'id')
+                            ->toArray();
+                    })->searchable(),
                 Filter::make('date_range')
                     ->schema([
                         DatePicker::make('from')->label('From Date'),
