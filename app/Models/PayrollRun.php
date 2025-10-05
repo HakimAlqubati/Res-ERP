@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PayrollRun extends Model
 {
-    use SoftDeletes,BranchScope;
+    use SoftDeletes, BranchScope;
 
     protected $table = 'hr_payroll_runs';
 
@@ -28,7 +28,12 @@ class PayrollRun extends Model
         'total_deductions',
         'created_by',
         'approved_by',
-        'approved_at'
+        'approved_at',
+        'pay_date',
+    ];
+
+    protected $casts = [ 
+        'pay_date' => 'date',
     ];
     const STATUS_PENDING   = 'pending';
     const STATUS_COMPLETED = 'completed';

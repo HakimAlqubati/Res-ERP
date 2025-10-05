@@ -39,7 +39,7 @@ class CreatePayroll extends CreateRecord
 
         // Clean transient fields if present
         unset($data['note_that'], $data['month_choice']);
-
+ 
         return $data;
     }
 
@@ -62,6 +62,7 @@ class CreatePayroll extends CreateRecord
                 year: (int) $data['year'],
                 month: (int) $data['month'],
                 overwriteExisting: false,
+                payDate: $data['pay_date'] ?? null,
             );
 
             $result = $service->runAndPersist($dto);

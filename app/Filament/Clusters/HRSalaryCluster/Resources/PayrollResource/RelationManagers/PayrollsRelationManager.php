@@ -12,6 +12,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -81,9 +82,18 @@ class PayrollsRelationManager extends RelationManager
                 // Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
                 // ✅ Export transactions (no route)
+                Action::make('printSalarySlip')
+                    ->label('Print Salary Slip')->button()
+                    ->color('primary')
+                    ->icon(Heroicon::Printer)
+                    ->url(fn(Payroll $record) => route('salarySlip.print', [
+                        'payroll_id' => $record->id,
+                    ]))
+                    ->openUrlInNewTab(),
+
                 Action::make('exportTransactions')->button()
                     ->label('Print Transactions')
-                    // ->icon('heroicon-o-print')
+                    ->icon(Heroicon::Printer)
                     ->color('success')
                     // ->tooltip('Export all salary transactions for this payroll as CSV')
                     // ->url(fn(\App\Models\Payroll $record) => route('salary.report', [

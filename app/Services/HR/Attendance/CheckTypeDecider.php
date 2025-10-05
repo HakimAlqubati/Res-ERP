@@ -48,14 +48,14 @@ class CheckTypeDecider
                 if ($typeHidden) {
                     $typeHidden = false;
                     $message    = 'please specify type ';
-                    Attendance::storeNotAccepted($employee, $date, $time, $day, $message, $closestPeriod->id, Attendance::ATTENDANCE_TYPE_RFID);
+                    // Attendance::storeNotAccepted($employee, $date, $time, $day, $message, $closestPeriod->id, Attendance::ATTENDANCE_TYPE_RFID);
                     return $message;
                 } elseif (! $typeHidden && $manualType !== '') {
                     $typeHidden = true;
                     return $manualType;
                 } else {
                     $message = 'please specify type also';
-                    Attendance::storeNotAccepted($employee, $date, $time, $day, $message, $closestPeriod->id, Attendance::ATTENDANCE_TYPE_RFID);
+                    // Attendance::storeNotAccepted($employee, $date, $time, $day, $message, $closestPeriod->id, Attendance::ATTENDANCE_TYPE_RFID);
                     return $message;
                 }
             }

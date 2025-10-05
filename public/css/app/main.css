@@ -285,6 +285,10 @@ html::-webkit-scrollbar {
     width: 253px !important;
 }
 
+/***
+primary - main color #0d7c66;
+
+*/
 .reports tbody tr:nth-child(even) {
     background-color: #0d7c66;
     color: white;
@@ -445,6 +449,7 @@ tbody:last-of-type tr .fixed_footer {
     z-index: 10;
     /* Keep above table body */
 }
-.text-center{
+
+.text-center {
     text-align: center !important;
 }

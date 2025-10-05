@@ -10,6 +10,7 @@ final class RunPayrollData
         public readonly int $year,
         public readonly int $month,
         public readonly bool $overwriteExisting = false, // optional flag
+        public readonly ?string $payDate = null,
     ) {}
 
     public static function fromArray(array $data): self
@@ -19,6 +20,9 @@ final class RunPayrollData
             year: (int) $data['year'],
             month: (int) $data['month'],
             overwriteExisting: (bool) ($data['overwrite_existing'] ?? false),
+            payDate: isset($data['pay_date'])
+                ? \Carbon\Carbon::parse($data['pay_date'])->toDateString()
+                : null,
         );
     }
 }

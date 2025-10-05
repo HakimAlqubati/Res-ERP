@@ -108,6 +108,10 @@ class PayrollRunService
             $monthName = Carbon::create($input->year, $input->month, 1)->format('F Y');
             $run->name = "Payroll {$monthName} - $branch->name";
 
+            // ← هنا نثبت pay_date
+            $run->pay_date = $input->payDate
+                ? Carbon::parse($input->payDate)->toDateString()
+                : now()->toDateString(); // افتراضي اليوم لو ما انرسل
             // اترك currency/fx_rate كما هي إن لم تكن موجودة في الـ DTO
             $run->total_gross       = 0;
             $run->total_net         = 0;
@@ -115,6 +119,9 @@ class PayrollRunService
             $run->total_deductions  = 0;
             $run->save();
         } else {
+            if (is_null($run->pay_date) && $input->payDate) {
+                $run->pay_date = Carbon::parse($input->payDate)->toDateString();
+            }
             $run->period_start_date = $periodStart->toDateString();
             $run->period_end_date   = $periodEnd->toDateString();
 

@@ -60,7 +60,7 @@ class CheckInHandler
         // dd($currentTimeBound->format('Y-m-d'),$diff);
         if (! $this->isWithinAllowedBeforePeriod($nearestPeriod, $date, $checkTimeStr) && $periodStartTime !== '00:00:00') {
             $message = __('notifications.attendance_out_of_range_before_period');
-            Attendance::storeNotAccepted($employee, $date, $checkTimeStr, $day, $message, $nearestPeriod->id, $attendanceData['attendance_type']);
+            // Attendance::storeNotAccepted($employee, $date, $checkTimeStr, $day, $message, $nearestPeriod->id, $attendanceData['attendance_type']);
             return $message;
         }
  
@@ -71,7 +71,7 @@ class CheckInHandler
         ) {
             // dd('sf',$checkTimeStr, $periodStartTime, $diff,$type);
             $message = __('notifications.you_cannot_attendance_before') . ' ' . $diff . ' ' . __('notifications.hours');
-            Attendance::storeNotAccepted($employee, $date, $checkTimeStr, $day, $message, $nearestPeriod->id, $attendanceData['attendance_type']);
+            // Attendance::storeNotAccepted($employee, $date, $checkTimeStr, $day, $message, $nearestPeriod->id, $attendanceData['attendance_type']);
             return $message;
         }
 

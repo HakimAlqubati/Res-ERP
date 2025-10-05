@@ -190,7 +190,7 @@ class AttendanceHandler
 
                     $message = __('notifications.you_dont_have_periods_today') . ' (' . $day . '-' . date('Y-m-d', strtotime($dateTime)) . ') ';
                     if ($closestPeriod) {
-                        Attendance::storeNotAccepted($employee, $this->date, $time, $day, $message, $closestPeriod->id, Attendance::ATTENDANCE_TYPE_RFID);
+                        // Attendance::storeNotAccepted($employee, $this->date, $time, $day, $message, $closestPeriod->id, Attendance::ATTENDANCE_TYPE_RFID);
                     }
                     return
                         [
@@ -200,7 +200,7 @@ class AttendanceHandler
                 }
                 if ($this->validator->isTimeOutOfAllowedRange($closestPeriod, $time)) {
                     $message = __('notifications.cannot_check_in_because_adjust');
-                    Attendance::storeNotAccepted($employee, $this->date, $time, $day, $message, $closestPeriod->id, Attendance::ATTENDANCE_TYPE_RFID);
+                    // Attendance::storeNotAccepted($employee, $this->date, $time, $day, $message, $closestPeriod->id, Attendance::ATTENDANCE_TYPE_RFID);
                     return [
                         'success' => false,
                         'message' => $message,

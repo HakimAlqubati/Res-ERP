@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Str;
 use App\Enums\Warnings\WarningLevel;
 use App\Facades\Warnings;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\MinimumProductQtyReportResource;
@@ -31,6 +32,7 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Order;
 use App\Models\OrderDetails;
+use App\Models\Payroll;
 use App\Models\Product;
 use App\Models\PurchaseInvoice;
 use App\Models\PurchaseInvoiceDetail;
@@ -838,7 +840,62 @@ Route::get('/admin/transactions/print/{payroll_id}', function ($payroll_id) {
         'transactions' => $transactions,
         'total'        => formatMoneyWithCurrency($total),
     ]);
-})->name('transactions.print');
+})->name('transactions.print')->middleware('auth:web');
+
+
+// routes/web.php
+
+
+Route::get('/admin/salary-slip/print/{payroll_id}', function (string $payroll_id) {
+    /** @var \App\Models\Payroll $payroll */
+    $payroll = Payroll::with([
+        'employee',            // تأكد أن العلاقة موجودة
+        'employee.department', // إن وُجدت
+        'employee.position',   // إن وُجدت
+         'transactions',
+    ])->findOrFail($payroll_id);
+
+    // dd($payroll);
+    // ترتيب الحركات حسب التاريخ
+    $transactions = $payroll->transactions()->orderBy('date')->get();
+
+    // تقسيم الحركات
+    $earnings = $transactions->filter(fn($t) => $t->operation === '+');
+    $deductions = $transactions->filter(fn($t) => $t->operation === '-');
+
+    // مساهمات صاحب العمل (لا تؤثر في صافي راتب الموظف، تُعرض فقط)
+    $employerContrib = $transactions->filter(function ($t) {
+        return ($t->type ?? null) === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value;
+    });
+
+    // المجاميع
+    $gross = $earnings->sum('amount');                 // إجمالي الاستحقاقات
+    $totalDeductions = $deductions->sum('amount');     // إجمالي الاستقطاعات
+    $net = max($gross - $totalDeductions, 0);          // الصافي لا ينزل عن الصفر
+    $totalEmployer = $employerContrib->sum('amount');  // مجموع مساهمة جهة العمل (للإظهار فقط)
+
+    // دالة مساعدة اختيارية لتحويل أرقام لكلمة (إن وجدت لديك)
+    $amountInWords = function (float $value) {
+        if (function_exists('number_to_words')) {
+            return 'sdf';
+            // return number_to_words($value); // إن كان لديك هيلبر جاهز
+        }
+        return ''; // اتركه فارغًا إن لم تتوفر
+    };
+
+    return view('reports.hr.payroll.salary-slip', [
+        'payroll'         => $payroll,
+        'transactions'    => $transactions,
+        'earnings'        => $earnings,
+        'deductions'      => $deductions,
+        'employerContrib' => $employerContrib,
+        'gross'           => $gross,
+        'totalDeductions' => $totalDeductions,
+        'net'             => $net,
+        'totalEmployer'   => $totalEmployer,
+        'amountInWords'   => $amountInWords($net),
+    ]);
+})->name('salarySlip.print')->middleware('auth:web');
 
 Route::get('/test-pusher', function () {
     return view('test-pusher');
@@ -847,7 +904,7 @@ Route::get('/pusher1', function () {
     event(new \App\Events\MyEvent(
         'hi'
     ));
-}); 
+});
 Route::get('/pusher2', function () {
     event(new \App\Events\AttendanceUpdated(
         '2025-09-18'
@@ -1009,7 +1066,7 @@ Route::get('/test_pdf', function () {
     // return $pdf->stream('test.pdf');
 });
 
-Route::get('/_debugCheck', fn () => [
+Route::get('/_debugCheck', fn() => [
     'env'   => app()->environment(),
     'debug' => config('app.debug'),
 ]);
