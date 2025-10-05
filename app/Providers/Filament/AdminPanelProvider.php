@@ -355,6 +355,11 @@ class AdminPanelProvider extends PanelProvider
             )
 
             // ->renderHook(
+            //     PanelsRenderHook::USER_MENU_BEFORE,
+            //     fn() => view('filament.partials.change-password-menu')
+            // )
+
+            // ->renderHook(
             //     PanelsRenderHook::GLOBAL_SEARCH_AFTER,
             //     fn(): string =>
             //     // view('filament.partials.topbar-quick-links')->render(),
