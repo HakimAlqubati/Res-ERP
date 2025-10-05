@@ -22,7 +22,7 @@ class ServiceRequestController extends Controller
             ->when($req->input('filter.search'), function ($x, $v) {
                 $x->where(function ($q) use ($v) {
                     $q->where('description', 'like', "%{$v}%")
-                      ->orWhere('id', $v);
+                        ->orWhere('id', $v);
                 });
             })
             ->when($req->input('filter.status'), fn($x, $v) => $x->where('status', $v))
@@ -47,14 +47,14 @@ class ServiceRequestController extends Controller
     public function show(ServiceRequest $serviceRequest)
     {
         return new ServiceRequestResource(
-            $serviceRequest->load(['branch','branchArea','assignedTo','equipment'])
+            $serviceRequest->load(['branch', 'branchArea', 'assignedTo', 'equipment'])
         );
     }
 
     public function store(StoreServiceRequestRequest $req)
     {
-        
-        
+
+
         // dd('sdf');
         try {
             $data = $req->validated();
@@ -70,7 +70,7 @@ class ServiceRequestController extends Controller
                 ]);
                 // إلى سجل الجهاز (لو مرتبط)
                 $sr->logToEquipment(\App\Models\EquipmentLog::ACTION_SERVICED, 'Service request created');
-                return $sr->load(['branch','branchArea','assignedTo','equipment']);
+                return $sr->load(['branch', 'branchArea', 'assignedTo', 'equipment']);
             });
 
             return response()->json([
@@ -78,11 +78,10 @@ class ServiceRequestController extends Controller
                 'message' => 'Service request created successfully',
                 'data'    => new ServiceRequestResource($sr),
             ], 201);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json(['success'=>false,'message'=>'Validation failed','errors'=>$e->errors()], 422);
+            return response()->json(['success' => false, 'message' => 'Validation failed', 'errors' => $e->errors()], 422);
         } catch (\Throwable $e) {
-            return response()->json(['success'=>false,'message'=>'Operation failed','error'=>app()->hasDebugModeEnabled()? $e->getMessage():null], 500);
+            return response()->json(['success' => false, 'message' => 'Operation failed', 'error' => app()->hasDebugModeEnabled() ? $e->getMessage() : null], 500);
         }
     }
 
@@ -100,7 +99,7 @@ class ServiceRequestController extends Controller
                     'user_id'     => auth()->id(),
                 ]);
                 $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, 'Service request updated');
-                return $serviceRequest->load(['branch','branchArea','assignedTo','equipment']);
+                return $serviceRequest->load(['branch', 'branchArea', 'assignedTo', 'equipment']);
             });
 
             return response()->json([
@@ -108,11 +107,10 @@ class ServiceRequestController extends Controller
                 'message' => 'Service request updated successfully',
                 'data'    => new ServiceRequestResource($sr),
             ]);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json(['success'=>false,'message'=>'Validation failed','errors'=>$e->errors()], 422);
+            return response()->json(['success' => false, 'message' => 'Validation failed', 'errors' => $e->errors()], 422);
         } catch (\Throwable $e) {
-            return response()->json(['success'=>false,'message'=>'Operation failed','error'=>app()->hasDebugModeEnabled()? $e->getMessage():null], 500);
+            return response()->json(['success' => false, 'message' => 'Operation failed', 'error' => app()->hasDebugModeEnabled() ? $e->getMessage() : null], 500);
         }
     }
 
@@ -127,12 +125,12 @@ class ServiceRequestController extends Controller
     public function assign(Request $req, ServiceRequest $serviceRequest)
     {
         $data = $req->validate([
-            'assigned_to' => ['required','integer','exists:employees,id'],
-            'note'        => ['nullable','string','max:1000'],
+            'assigned_to' => ['required', 'integer', 'exists:employees,id'],
+            'note'        => ['nullable', 'string', 'max:1000'],
         ]);
 
         $sr = DB::transaction(function () use ($serviceRequest, $data) {
-            $serviceRequest->update(['assigned_to'=>$data['assigned_to']]);
+            $serviceRequest->update(['assigned_to' => $data['assigned_to']]);
             $serviceRequest->logs()->create([
                 'action'      => 'assigned',
                 'description' => $data['note'] ?? 'Assigned',
@@ -142,29 +140,29 @@ class ServiceRequestController extends Controller
             return $serviceRequest->load('assignedTo');
         });
 
-        return response()->json(['success'=>true,'message'=>'Assigned successfully','data'=>new ServiceRequestResource($sr)]);
+        return response()->json(['success' => true, 'message' => 'Assigned successfully', 'data' => new ServiceRequestResource($sr)]);
     }
 
     public function changeStatus(Request $req, ServiceRequest $serviceRequest)
     {
         $data = $req->validate([
-            'status' => ['required','in:'.
+            'status' => ['required', 'in:' .
                 implode(',', array_keys(\App\Models\ServiceRequest::STATUS_LABELS))],
-            'note'   => ['nullable','string','max:1000'],
+            'note'   => ['nullable', 'string', 'max:1000'],
         ]);
 
         $sr = DB::transaction(function () use ($serviceRequest, $data) {
-            $serviceRequest->update(['status'=>$data['status']]);
+            $serviceRequest->update(['status' => $data['status']]);
             $serviceRequest->logs()->create([
                 'action'      => 'status_changed',
-                'description' => 'Status: '.$data['status'].($data['note'] ? " - {$data['note']}" : ''),
+                'description' => 'Status: ' . $data['status'] . ($data['note'] ? " - {$data['note']}" : ''),
                 'user_id'     => auth()->id(),
             ]);
-            $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, 'Status changed: '.$data['status']);
+            $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, 'Status changed: ' . $data['status']);
             return $serviceRequest;
         });
 
-        return response()->json(['success'=>true,'message'=>'Status updated','data'=>new ServiceRequestResource($sr)]);
+        return response()->json(['success' => true, 'message' => 'Status updated', 'data' => new ServiceRequestResource($sr)]);
     }
 
     public function accept(Request $req, ServiceRequest $serviceRequest)
@@ -175,34 +173,38 @@ class ServiceRequestController extends Controller
             'description' => 'Request accepted',
             'user_id'     => auth()->id(),
         ]);
-        return response()->json(['success'=>true,'message'=>'Accepted','data'=>new ServiceRequestResource($serviceRequest)]);
+        return response()->json(['success' => true, 'message' => 'Accepted', 'data' => new ServiceRequestResource($serviceRequest)]);
     }
 
     public function attachEquipment(Request $req, ServiceRequest $serviceRequest)
     {
-        $data = $req->validate(['equipment_id' => ['required','integer','exists:equipments,id']]);
-        $serviceRequest->update(['equipment_id'=>$data['equipment_id']]);
+        $data = $req->validate(['equipment_id' => ['required', 'integer', 'exists:equipments,id']]);
+        $serviceRequest->update(['equipment_id' => $data['equipment_id']]);
         $serviceRequest->logs()->create([
-            'action'=>'equipment_attached','description'=>'Equipment attached','user_id'=>auth()->id(),
+            'action' => 'equipment_attached',
+            'description' => 'Equipment attached',
+            'user_id' => auth()->id(),
         ]);
         $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, 'Request linked');
-        return response()->json(['success'=>true,'message'=>'Equipment attached','data'=>new ServiceRequestResource($serviceRequest->load('equipment'))]);
+        return response()->json(['success' => true, 'message' => 'Equipment attached', 'data' => new ServiceRequestResource($serviceRequest->load('equipment'))]);
     }
 
     public function detachEquipment(ServiceRequest $serviceRequest)
     {
-        $serviceRequest->update(['equipment_id'=>null]);
+        $serviceRequest->update(['equipment_id' => null]);
         $serviceRequest->logs()->create([
-            'action'=>'equipment_detached','description'=>'Equipment detached','user_id'=>auth()->id(),
+            'action' => 'equipment_detached',
+            'description' => 'Equipment detached',
+            'user_id' => auth()->id(),
         ]);
-        return response()->json(['success'=>true,'message'=>'Equipment detached','data'=>new ServiceRequestResource($serviceRequest)]);
+        return response()->json(['success' => true, 'message' => 'Equipment detached', 'data' => new ServiceRequestResource($serviceRequest)]);
     }
 
     public function uploadMedia(Request $req, ServiceRequest $serviceRequest)
     {
-        $req->validate(['file' => ['required','file','max:10240']]); // 10MB
+        $req->validate(['file' => ['required', 'file', 'max:10240']]); // 10MB
         $media = $serviceRequest->addMediaFromRequest('file')->toMediaCollection('attachments');
-        return response()->json(['data'=>['id'=>$media->id,'url'=>$media->getUrl()]]);
+        return response()->json(['data' => ['id' => $media->id, 'url' => $media->getUrl()]]);
     }
 
     // --- Comments & Logs ---
@@ -216,13 +218,16 @@ class ServiceRequestController extends Controller
 
     public function addComment(Request $req, ServiceRequest $serviceRequest)
     {
-        $data = $req->validate(['comment'=>['required','string','max:2000']]);
+        $data = $req->validate(['comment' => ['required', 'string', 'max:2000']]);
         $comment = $serviceRequest->comments()->create([
             'comment' => $data['comment'],
             'user_id' => auth()->id(),
         ]);
         $serviceRequest->logs()->create([
-            'action'=>'commented','description'=>mb_strimwidth($data['comment'],0,120,'…'),'user_id'=>auth()->id(),
+            'action' => 'commented',
+            'description' => mb_strimwidth($data['comment'], 0, 120, '…'),
+            'user_id' => auth()->id(),
+            'created_by' => auth()->id(),
         ]);
         return new ServiceRequestCommentResource($comment->load('user'));
     }
@@ -231,6 +236,13 @@ class ServiceRequestController extends Controller
     {
         $per = min((int)$req->input('per_page', 15), 100);
         $logs = $serviceRequest->logs()->latest()->paginate($per);
-        return response()->json(['data'=>$logs]);
+        return response()->json(['data' => $logs]);
+    }
+
+    public function statuses()
+    {
+        return response()->json([
+            'data' => \App\Models\ServiceRequest::STATUS_LABELS,
+        ]);
     }
 }

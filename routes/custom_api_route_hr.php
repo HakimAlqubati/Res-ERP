@@ -171,6 +171,7 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
 
     // Logs
     Route::get('serviceRequests/{serviceRequest}/logs', [\App\Http\Controllers\Api\V1\ServiceRequestController::class, 'logs']);
+    Route::get('serviceRequestsStatuses', [\App\Http\Controllers\Api\V1\ServiceRequestController::class, 'statuses']);
 });
 
 
