@@ -182,7 +182,15 @@
                 border-color: var(--line-print) !important;
             }
         }
+
+        @media print {
+            button {
+                display: none !important;
+            }
+        }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
 </head>
 
 <body>
@@ -192,11 +200,10 @@
             <!-- Header strip -->
             <div class="head">
                 <div class="logoBox">
-                    <img style="display: inline-block;width:80px;"
-                        src="{{ asset('/storage/logo/default.png') }}">
+                    <img style="display: inline-block;width:80px;" src="{{ asset('/storage/logo/default.png') }}">
                 </div>
                 <div class="center">
-                    <div class="comp">{{settingWithDefault('company_name','Company Name')}}</div>
+                    <div class="comp">{{ settingWithDefault('company_name', 'Company Name') }}</div>
                     <div class="addr">
                         {{ settingWithDefault('address', 'Company Address') }}
                     </div>
@@ -206,6 +213,24 @@
                         src="{{ asset('/storage/' . setting('company_logo') . '') }}">
                 </div>
             </div>
+
+            <!-- ✅ زر الطباعة -->
+            <div style="text-align:right; margin-top:12px;">
+                <button onclick="downloadPDF()"
+                    style="
+        background:#0d7c66;
+        color:#fff;
+        border:none;
+        padding:8px 16px;
+        border-radius:6px;
+        cursor:pointer;
+        font-weight:600;
+        font-size:13px;
+    ">
+                    ⬇️ Download PDF
+                </button>
+            </div>
+
 
             <h2 class="title">SALARY SLIP</h2>
             <p class="month">
@@ -303,6 +328,30 @@
 
         </div>
     </div>
+
+    <script>
+        function downloadPDF() {
+            const element = document.querySelector('.wrap');
+            const opt = {
+                margin: 0.5,
+                filename: 'salary-slip.pdf',
+                image: {
+                    type: 'jpeg',
+                    quality: 0.98
+                },
+                html2canvas: {
+                    scale: 2
+                },
+                jsPDF: {
+                    unit: 'in',
+                    format: 'a4',
+                    orientation: 'portrait'
+                }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+
 </body>
 
 </html>

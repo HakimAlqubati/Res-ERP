@@ -17,7 +17,8 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;  
 use App\Models\InventoryTransaction;
 use App\Models\PaymentMethod; 
-use App\Models\PurchaseInvoice; 
+use App\Models\PurchaseInvoice;
+use App\Models\Store;
 use App\Models\Supplier; 
 use Filament\Forms\Components\DatePicker; 
 use Filament\Forms\Components\Textarea; 
@@ -136,6 +137,9 @@ class PurchaseInvoiceTable
                 SelectFilter::make('supplier_id')
                     ->label('Supplier')
                     ->options(Supplier::get()->pluck('name', 'id'))->searchable(),
+                SelectFilter::make('store_id')
+                    ->label('Store')
+                    ->options(Store::active()->get()->pluck('name', 'id'))->searchable(),
                 Filter::make('date_range')
                     ->schema([
                         DatePicker::make('from')->label('From Date'),

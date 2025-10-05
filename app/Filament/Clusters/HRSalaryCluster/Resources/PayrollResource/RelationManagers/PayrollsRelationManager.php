@@ -2,6 +2,8 @@
 
 namespace App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\RelationManagers;
 
+use Illuminate\Support\Str;
+
 use App\Models\Payroll;
 use App\Models\SalaryTransaction;
 use App\Services\HR\SalaryHelpers\SalarySlipService;
@@ -82,6 +84,8 @@ class PayrollsRelationManager extends RelationManager
                 // Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
                 // ✅ Export transactions (no route)
+
+                
                 Action::make('printSalarySlip')
                     ->label('Print Salary Slip')->button()
                     ->color('primary')
