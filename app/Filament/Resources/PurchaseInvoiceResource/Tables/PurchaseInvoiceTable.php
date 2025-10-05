@@ -138,7 +138,7 @@ class PurchaseInvoiceTable
                     ->label('Supplier')
                     ->options(Supplier::get()->pluck('name', 'id'))->searchable(),
                 SelectFilter::make('store_id')
-                    ->label('Store')
+                    ->label('Store')->multiple()
                     ->options(Store::active()->get()->pluck('name', 'id'))->searchable(),
                 Filter::make('date_range')
                     ->schema([
