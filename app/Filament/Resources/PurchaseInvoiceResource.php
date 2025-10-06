@@ -143,11 +143,23 @@ class PurchaseInvoiceResource extends Resource
     }
 
 
+    
+    public static function getGlobalSearchResultTitle(Model $record): string
+    {
+        return 'Purchase Invoice #' . $record->id;
+    }
+
+
     public static function canEdit(Model $record): bool
     {
         if (isSuperVisor()) {
             return false;
         }
         return static::can('update', $record);
+    }
+
+      public static function getGlobalSearchResultsLimit(): int
+    {
+        return 15;
     }
 }

@@ -467,6 +467,12 @@ class GoodsReceivedNoteResource extends Resource
         return false;
     }
 
+    
+    public static function getGlobalSearchResultTitle(Model $record): string
+    {
+        return 'GRN #' . $record->id;
+    }
+
     public static function canDeleteAny(): bool
     {
         return false;
@@ -474,5 +480,10 @@ class GoodsReceivedNoteResource extends Resource
             return true;
         }
         return false;
+    }
+
+      public static function getGlobalSearchResultsLimit(): int
+    {
+        return 15;
     }
 }

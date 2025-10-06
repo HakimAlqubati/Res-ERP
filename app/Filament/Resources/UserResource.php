@@ -150,4 +150,9 @@ class UserResource extends Resource
     {
         return true;
     }
+
+      public static function getGlobalSearchResultsLimit(): int
+    {
+        return 15;
+    }
 }

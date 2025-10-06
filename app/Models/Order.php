@@ -535,4 +535,6 @@ class Order extends Model implements Auditable
     {
         return $this->returns->sum(fn($returnedOrder) => $returnedOrder->total_amount);
     }
+
+    
 }

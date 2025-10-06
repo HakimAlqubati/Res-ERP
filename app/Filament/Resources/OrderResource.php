@@ -516,6 +516,11 @@ class OrderResource extends Resource
     //     return $record->id;
     // }
 
+    public static function getGlobalSearchResultTitle(Model $record): string
+    {
+        return 'Order #' . $record->id;
+    }
+
 
     public static function canDelete(Model $record): bool
     {
@@ -543,5 +548,10 @@ class OrderResource extends Resource
             return true;
         }
         return false;
+    }
+
+    public static function getGlobalSearchResultsLimit(): int
+    {
+        return 15;
     }
 }

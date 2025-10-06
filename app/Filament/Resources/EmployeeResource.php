@@ -3,9 +3,9 @@
 namespace App\Filament\Resources;
 
 use Filament\Pages\Enums\SubNavigationPosition;
-use Filament\Schemas\Schema; 
-use Filament\Schemas\Components\Fieldset; 
-use Throwable; 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Throwable;
 use App\Filament\Resources\EmployeeResource\Pages\ListEmployees;
 use App\Filament\Resources\EmployeeResource\Pages\CreateEmployee;
 use App\Filament\Resources\EmployeeResource\Pages\EditEmployee;
@@ -18,24 +18,24 @@ use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodRelationManager;
 use App\Filament\Resources\EmployeeResource\Pages;
 use App\Filament\Resources\EmployeeResource\Schemas\EmployeeForm;
-use App\Filament\Resources\EmployeeResource\Tables\EmployeeTable; 
-use App\Models\Employee; 
-use Filament\Forms\Components\FileUpload; 
+use App\Filament\Resources\EmployeeResource\Tables\EmployeeTable;
+use App\Models\Employee;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
-use Filament\Resources\Resource; 
+use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
-use Filament\Support\RawJs; 
+use Filament\Support\RawJs;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log; 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile; 
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 // use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
@@ -287,5 +287,10 @@ class EmployeeResource extends Resource
             return true;
         }
         return false;
+    }
+
+    public static function getGlobalSearchResultsLimit(): int
+    {
+        return 15;
     }
 }

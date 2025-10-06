@@ -354,6 +354,7 @@ class AdminPanelProvider extends PanelProvider
                 fn(): string => view('filament.partials.sidebar-search')->render()
             )
 
+        
             // ->renderHook(
             //     PanelsRenderHook::USER_MENU_BEFORE,
             //     fn() => view('filament.partials.change-password-menu')

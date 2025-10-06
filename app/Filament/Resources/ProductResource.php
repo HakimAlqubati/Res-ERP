@@ -3,23 +3,23 @@
 namespace App\Filament\Resources;
 
 use Filament\Pages\Enums\SubNavigationPosition;
-use Filament\Schemas\Schema;  
+use Filament\Schemas\Schema;
 use App\Filament\Resources\ProductResource\Pages\ManageProducts;
 use App\Filament\Resources\ProductResource\Pages\CreateProduct;
 use App\Filament\Resources\ProductResource\Pages\EditProduct;
 use App\Filament\Resources\ProductResource\Pages\ViewProduct;
-use App\Filament\Resources\ProductResource\RelationManagers\ProductPriceHistoriesRelationManager; 
-use App\Filament\Clusters\ProductUnitCluster; 
+use App\Filament\Resources\ProductResource\RelationManagers\ProductPriceHistoriesRelationManager;
+use App\Filament\Clusters\ProductUnitCluster;
 use App\Filament\Resources\ProductResource\Schema\ProductsSchema;
 use App\Filament\Resources\ProductResource\Tables\ProductsTable;
-use App\Models\Product; 
+use App\Models\Product;
 use Filament\Pages\Page;
-use Filament\Resources\Resource; 
+use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletingScope; 
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 // use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
@@ -49,7 +49,7 @@ class ProductResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-      return ProductsSchema::configure($schema);
+        return ProductsSchema::configure($schema);
     }
 
     public static function table(Table $table): Table
@@ -95,8 +95,14 @@ class ProductResource extends Resource
     }
     public static function getGlobalSearchResultTitle(Model $record): string
     {
-        return $record->name;
+        return $record->code.' - '.$record->name;
     }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name', 'code'];
+    }
+
 
     public static function getEloquentQuery(): Builder
     {
@@ -108,7 +114,7 @@ class ProductResource extends Resource
         return $query;
     }
 
-   
+
 
     public static function canEdit(Model $record): bool
     {
@@ -116,5 +122,11 @@ class ProductResource extends Resource
             return true;
         }
         return false;
+    }
+
+    
+    public static function getGlobalSearchResultsLimit(): int
+    {
+        return 20;
     }
 }
