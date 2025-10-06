@@ -31,6 +31,7 @@ use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -265,7 +266,7 @@ class DeliveredResellerOrdersResource extends Resource
                 SelectFilter::make('branch_id')
                     ->label('Reseller')->searchable()
                     ->options(Branch::active()->resellers()->get(['id', 'name'])->pluck('name', 'id')),
-            ])
+            ],FiltersLayout::AboveContent)
             ->defaultSort('id', 'desc');
     }
 
