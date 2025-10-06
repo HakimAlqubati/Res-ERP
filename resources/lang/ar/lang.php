@@ -193,6 +193,7 @@ return [
     'reseller' => 'نقطة بيع',
     'account_manager' => 'مدير الحساب',
     'delivery_orders' => 'اوامر التسليم',
+    'delivery_order' => 'أمر تسليم',
     'selling_price' => 'سعر البيع',
     'customized_categories' => 'فئات مخصصة',
     'reseller_sale' => 'فاتورة مبيعات موزّع',
