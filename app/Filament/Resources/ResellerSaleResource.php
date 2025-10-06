@@ -37,6 +37,7 @@ use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -289,7 +290,7 @@ class ResellerSaleResource extends Resource
                     ->toggleable(),
             ])
             ->filters([
-                //
+                TrashedFilter::make()
             ])
             ->recordActions([
 

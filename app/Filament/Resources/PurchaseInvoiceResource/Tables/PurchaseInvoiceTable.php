@@ -147,7 +147,7 @@ class PurchaseInvoiceTable
                             ->orderBy('name')
                             ->pluck('name', 'id')
                             ->toArray();
-                    })->searchable(),
+                    })  ->searchable(),
                 Filter::make('date_range')
                     ->schema([
                         DatePicker::make('from')->label('From Date'),
