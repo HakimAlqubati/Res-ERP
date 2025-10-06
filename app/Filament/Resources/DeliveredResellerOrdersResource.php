@@ -22,6 +22,7 @@ use App\Models\Branch;
 use App\Models\DeliveredResellerOrders;
 use App\Models\Order;
 use App\Models\Store;
+use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
@@ -122,6 +123,8 @@ class DeliveredResellerOrdersResource extends Resource
                                             ->label('Status')
                                             ->required()
                                             ->options(\App\Models\Order::getStatusLabels())
+                                            ->disabled()
+                                            ->dehydrated()
                                             ->default(\App\Models\Order::ORDERED),
 
                                     ]),
@@ -357,27 +360,57 @@ class DeliveredResellerOrdersResource extends Resource
                         );
                     }),
 
+                EditAction::make()->label(__('Edit'))
+                    ->icon(Heroicon::Pencil)
+                    ->color(Color::Green)->button()
+                    // ->requiresConfirmation()
+                    ->visible(fn(Order $record): bool => !in_array($record->status, [
+                        Order::DELEVIRED,
+                        Order::READY_FOR_DELEVIRY
+                    ])),
                 Action::make('approve')
                     ->label(__('Approve'))
                     ->icon(Heroicon::CheckCircle)
-                    ->color(Color::Green)->button()
+                    ->color(Color::Green)
+                    ->button()
                     ->requiresConfirmation()
-                    ->visible(fn(Order $record): bool => $record->status !== Order::DELEVIRED)
-                    ->action(function (Order $record) {
-
+                    ->visible(fn(Order $record): bool => ! in_array($record->status, [
+                        Order::DELEVIRED,
+                        Order::READY_FOR_DELEVIRY,
+                    ], true))
+                    ->databaseTransaction()
+                    ->action(function (Order $record): void {
                         try {
-                            DB::beginTransaction();
-                            //code...
-                            // Update status to delivered
-                            $record->update([
+                            // نغلق السجل لمنع التحديث المتوازي
+                            $order = Order::query()
+                                ->whereKey($record->getKey())
+                                ->lockForUpdate()
+                                ->firstOrFail();
+
+                            // تحقق من الحالة
+                            if (in_array($order->status, [Order::DELEVIRED, Order::READY_FOR_DELEVIRY], true)) {
+                                throw new \Exception(__('The order is already processed.'));
+                            }
+
+                            // التحديث
+                            $order->update([
                                 'status' => Order::READY_FOR_DELEVIRY,
                             ]);
 
-                            showSuccessNotifiMessage('Done');
-                            DB::commit();
-                        } catch (\Exception $e) {
-                            showWarningNotifiMessage('Error occurred. Please try again.');
-                            DB::rollBack();
+                            // رسالة النجاح
+                            \Filament\Notifications\Notification::make()
+                                ->title(__('Order approved successfully'))
+                                ->success()
+                                ->send();
+                        } catch (\Throwable $e) {
+                            // نعرض الخطأ للمستخدم
+                            \Filament\Notifications\Notification::make()
+                                ->title(__('Error occurred'))
+                                ->body($e->getMessage()) // تعرض تفاصيل الخطأ إن أردت
+                                ->danger()
+                                ->send();
+
+                            // نرمي الاستثناء مجددًا عشان يرجع rollback من Filament
                             throw $e;
                         }
                     }),

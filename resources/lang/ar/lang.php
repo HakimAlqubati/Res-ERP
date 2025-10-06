@@ -231,4 +231,5 @@ return [
     'cancel_reason' => 'سبب الالغاء',
     'cancelled' => 'ملغي',
     'is_cancelled' => 'ملغي؟',
+    'final_total' => 'الإجمالي النهائي',
 ];

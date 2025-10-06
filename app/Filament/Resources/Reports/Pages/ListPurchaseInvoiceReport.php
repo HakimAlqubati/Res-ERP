@@ -56,12 +56,15 @@ class ListPurchaseInvoiceReport extends ListRecords
             $categoryIds,
             $perPage 
         );
+
+        // dd($purchaseInvoiceData);
  
 
         return [
             'purchase_invoice_data' => $purchaseInvoiceData,
             'total_amount' => $purchaseInvoiceData['total_amount'],
             'show_invoice_no' => $showInvoiceNo,
+            'final_total_amount' => $purchaseInvoiceData['final_total_amount'],
         ];
     }
 

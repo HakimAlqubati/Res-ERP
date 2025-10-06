@@ -249,4 +249,5 @@ return [
     'cancel_reason' => 'Cancel Reason',
     'cancelled' => 'Cancelled',
     'is_cancelled' => 'Is Cancelled?',
+    'final_total' => 'Final Total',
 ];

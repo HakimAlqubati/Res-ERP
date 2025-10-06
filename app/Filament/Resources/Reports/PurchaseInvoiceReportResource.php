@@ -115,13 +115,7 @@ class PurchaseInvoiceReportResource extends Resource
                     ),
                 Filter::make('show_invoice_no')
                     ->toggle()
-                    ->label(__('lang.show_invoice_no')),
-                // Toggle::make('show_invoice_no')
-                //     ->label(__('lang.show_invoice_no'))
-                //     ->default(false)
-                //     ->onColor('success')
-                //     ->offColor('danger')
-                //     ->inline(),
+                    ->label(__('lang.show_invoice_no')), 
                 SelectFilter::make("category_id")
                     ->label(__('lang.category'))
                     ->multiple()
