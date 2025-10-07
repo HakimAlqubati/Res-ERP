@@ -7,6 +7,7 @@ use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationRes
 use App\Filament\Pages\AttendanecEmployee2 as AttendanecEmployee;
 use App\Models\AdvanceRequest;
 use App\Models\ApplicationTransaction;
+use App\Models\AppLog;
 use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\Employee;
@@ -201,7 +202,7 @@ class EmployeeApplicationResource extends Resource
     }
 
     public static function table(Table $table): Table
-    {  
+    {
         return $table->defaultSort('id', 'desc')
             ->paginated([10, 25, 50, 100])
             ->striped()
@@ -560,7 +561,7 @@ class EmployeeApplicationResource extends Resource
                     }
                 } catch (Exception $e) {
                     DB::rollBack();
-                    Log::error('Error approving attendance request: ' . $e->getMessage());
+                    AppLog::write('Error approving attendance request: ' . $e->getMessage(), AppLog::LEVEL_ERROR);
                     return Notification::make()->warning()->body($e->getMessage())->send();
                     // Handle the exception (log it, return an error message, etc.)
                     // Optionally, you could return a user-friendly error message
@@ -1329,7 +1330,7 @@ class EmployeeApplicationResource extends Resource
                 // })
 
                 ->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
-                    Log::info('data', [$data]);
+
                     $data['application_type_id']   = 2;
                     $data['application_type_name'] = EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST];
 

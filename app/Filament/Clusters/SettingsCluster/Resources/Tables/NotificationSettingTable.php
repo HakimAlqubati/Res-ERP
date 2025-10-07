@@ -70,8 +70,7 @@ class NotificationSettingTable
                         ;
                         // event(new \App\Events\MyEvent($data['message']));
 
-                        Log::info('notifycation', [$recipient]);
-                    })
+                     })
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

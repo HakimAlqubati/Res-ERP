@@ -6,6 +6,7 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Grid;
 use App\Models\Allowance;
+use App\Models\AppLog;
 use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\CustomTenantModel;
@@ -529,8 +530,8 @@ if (!function_exists('settingWithDefault')) {
 if (!function_exists('getNationalities')) {
     function getNationalities(): array
     {
-        $path = file_exists(storage_path('app/data/nationalities.json')) 
-            ? storage_path('app/data/nationalities.json') 
+        $path = file_exists(storage_path('app/data/nationalities.json'))
+            ? storage_path('app/data/nationalities.json')
             : public_path('data/nationalities.json');
 
         $nationalities = [];
@@ -550,8 +551,8 @@ if (!function_exists('getNationalities')) {
 if (!function_exists('getNationalitiesAsCountries')) {
     function getNationalitiesAsCountries(): array
     {
-        $path = file_exists(storage_path('app/data/nationalities.json')) 
-            ? storage_path('app/data/nationalities.json') 
+        $path = file_exists(storage_path('app/data/nationalities.json'))
+            ? storage_path('app/data/nationalities.json')
             : public_path('data/nationalities.json');;
 
         $nationalities = [];
@@ -659,16 +660,14 @@ if (!function_exists('toTopic')) {
                 ->withNotification($data);
             $messaging->send($message);
         } catch (Exception $e) {
-            Log::debug('when send to Topic');
-            Log::debug($e->getMessage());
+
+            AppLog::write('when send to Topic: ' . $e->getMessage(), AppLog::LEVEL_ERROR);
         }
     }
 }
 if (!function_exists('toToken')) {
     function toToken($deviceToken, $data)
-    {
-        Log::debug($deviceToken);
-        Log::debug($data);
+    { 
         try {
             $factory = (new Factory())
                 ->withServiceAccount(storage_path('app/public/firebase/google-services.json'));
@@ -678,8 +677,8 @@ if (!function_exists('toToken')) {
 
             $messaging->send($message);
         } catch (Exception $e) {
-            Log::debug('when send to token');
-            Log::debug($e->getMessage());
+            AppLog::write('when send to token: ' . $e->getMessage(), AppLog::LEVEL_ERROR);
+         
         }
     }
 }
@@ -714,7 +713,7 @@ if (!function_exists('sendNotification')) {
                     'payload' => $data
                 ]
             ]);
-            Log::info($response);
+
             return $response;
         } catch (Exception $e) {
             $response = json_encode([
@@ -723,7 +722,8 @@ if (!function_exists('sendNotification')) {
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            Log::error($response);
+            AppLog::write('Failed to send notification: ' . $e->getMessage(), AppLog::LEVEL_ERROR);
+            
             return $response;
         }
     }
@@ -881,19 +881,19 @@ if (!function_exists('formatMoneyWithCurrency')) {
         return $currencySymbol . ' ' . number_format((float) $amount, 2, '.', ',');
     }
 }
- if (!function_exists('formatQunantity')) {
+if (!function_exists('formatQunantity')) {
     function formatQunantity($qty)
     {
         return number_format((float) $qty, 4, '.', ',');
     }
 }
- if (!function_exists('formatQuantity2')) {
+if (!function_exists('formatQuantity2')) {
     function formatQuantity2($qty)
     {
         return number_format((float) $qty, 2, '.', ',');
     }
 }
- 
+
 if (!function_exists('print_html_table')) {
     /**
      * طباعة جدول HTML بسيط مع تلوين صفوف اختياري.
@@ -928,7 +928,7 @@ if (!function_exists('print_html_table')) {
         }
 
         // دوال مساعدة بسيطة
-        $attrs = function(array $arr) {
+        $attrs = function (array $arr) {
             $out = [];
             foreach ($arr as $k => $v) {
                 if ($v === null || $v === '') continue;
@@ -946,7 +946,7 @@ if (!function_exists('print_html_table')) {
         $html  = "<table border='1' cellpadding='5' cellspacing='0' style='border-collapse:collapse;width:100%;font-family:Tahoma,Arial;font-size:13px;'>";
         $html .= "<tr><th>#</th>";
         foreach ($columns as $c) {
-            $html .= "<th>".$escape($c)."</th>";
+            $html .= "<th>" . $escape($c) . "</th>";
         }
         $html .= "</tr>";
 
@@ -965,10 +965,10 @@ if (!function_exists('print_html_table')) {
                 }
             }
 
-            $html .= "<tr".$attrs(['style' => $rowStyle]).">";
-            $html .= "<td>".($i+1)."</td>";
+            $html .= "<tr" . $attrs(['style' => $rowStyle]) . ">";
+            $html .= "<td>" . ($i + 1) . "</td>";
             foreach ($columns as $c) {
-                $html .= "<td>".$escape($row[$c] ?? '')."</td>";
+                $html .= "<td>" . $escape($row[$c] ?? '') . "</td>";
             }
             $html .= "</tr>";
         }

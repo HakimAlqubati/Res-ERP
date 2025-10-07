@@ -82,7 +82,6 @@ class CreateMonthSalary extends CreateRecord
                 //     dd(count($calculateSalary['details']['deducation_details']['general_deducation_employer']),$calculateSalary['details']['deducation_details']['general_deducation_employer'][0]['name']);
                 // }
                 if ($calculateSalary === 'no_periods') {
-                    Log::warning("No periods found for employee ID: {$employee->id}");
                     DB::rollBack();
                     continue;
                 }
@@ -228,7 +227,8 @@ class CreateMonthSalary extends CreateRecord
                 DB::rollBack();
                 $this->record->delete();
                 // showWarningNotifiMessage('ERROR',$e->getMessage());
-                Log::error("Transaction failed for employee ID: {$employee->id}", ['exception' => $e->getMessage()]);
+
+                // Log::error("Transaction failed for employee ID: {$employee->id}", ['exception' => $e->getMessage()]);
             }
         }
     }

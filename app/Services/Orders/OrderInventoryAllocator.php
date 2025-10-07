@@ -47,9 +47,6 @@ class OrderInventoryAllocator
 
             // Step 2: Validation
             if ($totalAvailable < $requiredQty) {
-                Log::error("\u274C Insufficient total stock across stores for product", [$orderDetail->product?->name, $orderDetail->unit?->name]);
-                Log::info('total_available', [$totalAvailable]);
-                Log::info('required_qty', [$requiredQty]);
                 throw new Exception("\u274C Insufficient total stock across stores for product {$orderDetail->product?->name}");
             }
 

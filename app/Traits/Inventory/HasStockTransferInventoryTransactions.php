@@ -15,8 +15,7 @@ trait HasStockTransferInventoryTransactions
 {
     public function createInventoryTransactionsFromTransfer(): void
     {
-        Log::info('in_trait', []);
-        foreach ($this->details as $detail) {
+         foreach ($this->details as $detail) {
             $productName = $detail->product->name . ' ' . $detail->product->code ?? "Unknown Product";
             $storeName = $this->fromStore->name ?? "Unknown Store";
             // Check if quantity is available before proceeding
@@ -44,8 +43,7 @@ trait HasStockTransferInventoryTransactions
 
                 throw new Exception("Cannot transfer product '{$productName}': insufficient stock in '{$storeName}'.");
             }
-            Log::info('allocation', [$allocations]);
-        }
+         }
     }
 
     private function processFifoTransferAllocation($allocations, $detail)

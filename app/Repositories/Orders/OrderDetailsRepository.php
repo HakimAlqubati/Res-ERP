@@ -67,9 +67,7 @@ class OrderDetailsRepository implements OrderDetailsRepositoryInterface
 
                         case 'update':
 
-                            Log::info('updatingOrderDetail', [
-                                'orderDetailData' => $orderDetailData,
-                            ]);
+                         
                             // $unitId = $orderDetail->unit_id;
                             // if (isset($orderDetailData['unit_id']) && !is_null($orderDetailData['unit_id'])) {
                             //     $unitId = $orderDetailData['unit_id'];
@@ -141,11 +139,7 @@ class OrderDetailsRepository implements OrderDetailsRepositoryInterface
             return response()->json($responses);
         } catch (Exception $e) {
             DB::rollBack();
-            Log::critical("Transaction failed in updateWithFifo", [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'request_data' => $request->all()
-            ]);
+        
 
             return response()->json([
                 'success' => false,

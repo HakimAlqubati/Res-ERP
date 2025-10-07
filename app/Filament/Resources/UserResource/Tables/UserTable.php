@@ -240,8 +240,7 @@ class UserTable
                                 showSuccessNotifiMessage('Done');
                             } catch (Exception $e) {
                                 // Log the exception for debugging
-                                Log::error('Error clearing login attempts', ['exception' => $e]);
-
+ 
                                 showWarningNotifiMessage('Faild', $e->getMessage());
                             }
                         })->requiresConfirmation()->hidden(),

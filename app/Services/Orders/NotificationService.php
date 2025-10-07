@@ -26,12 +26,7 @@ class NotificationService
             try {
                 sendNotification($token, $title, $body, $data);
             } catch (Exception $e) {
-                Log::error("FCM Notification failed: " . $e->getMessage(), [
-                    'token' => $token,
-                    'title' => $title,
-                    'body' => $body,
-                    'data' => $data,
-                ]);
+              
             }
         }
     }

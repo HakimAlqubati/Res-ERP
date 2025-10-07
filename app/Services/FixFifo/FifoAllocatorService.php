@@ -29,16 +29,14 @@ class FifoAllocatorService
             return [];
 
             // خيار 2: لو تحب تسجل رسالة خطأ:
-            Log::warning("⛔ Product not found for product_id: {$productId}");
-            return [];
+             return [];
         }
 
 
         $storeId = defaultManufacturingStore($product)->id;
 
         // if (! $store) {
-        //     Log::warning("⛔ Default manufacturing store not found for product_id: {$productId}");
-        //     return [];
+         //     return [];
         // }
 
         // $storeId = $store->id;
@@ -237,8 +235,7 @@ class FifoAllocatorService
         foreach ($unitPrices as $unitId => $unitPrice) {
 
             $newPrice = ($supplyPrice / $supplyPackageSize) * $unitPrice->package_size;
-            // Log::info('newprice', [$newPrice]);
-            // Log::info('unitid', [$unitId]);
+         
             $unitPrice->update([
                 'price' => $newPrice,
                 'date' => $date,

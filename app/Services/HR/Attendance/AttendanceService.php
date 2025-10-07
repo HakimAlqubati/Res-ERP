@@ -39,8 +39,7 @@ class AttendanceService
             ];
         }
 
-        Log::alert('zxc', [$employee, $formData, $formData['date_time']]);
-        return $this->handler->handleEmployeeAttendance(
+         return $this->handler->handleEmployeeAttendance(
             $employee,
             $formData,
             $attendanceType,

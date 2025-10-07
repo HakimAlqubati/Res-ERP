@@ -246,8 +246,7 @@ class ProductsTable
                                 }
 
                                 if ($failed > 0) {
-                                    Log::warning("⚠️ بعض الصفوف فشلت في الاستيراد.", $import->getFailedRows());
-                                    showWarningNotifiMessage("⚠️ تم استيراد بعض العناصر. راجع السجل للأخطاء.");
+                                     showWarningNotifiMessage("⚠️ تم استيراد بعض العناصر. راجع السجل للأخطاء.");
                                 }
 
                                 if ($imported === 0 && $failed === 0) {
@@ -280,8 +279,7 @@ class ProductsTable
                                 $result[] = "⚠️ لم يتم تحديث أي مكوّن للمنتج {$record->name}. تأكد من أن المنتج مركب أو أن هناك أسعار متاحة.";
                             }
                         }
-                        Log::info('Update Component Prices Results:', $result);
-                    })->hidden(),
+                     })->hidden(),
                 BulkAction::make('updateComponentPricesNew')
                     ->label('Update Price')
                     ->icon('heroicon-o-currency-dollar')->button()

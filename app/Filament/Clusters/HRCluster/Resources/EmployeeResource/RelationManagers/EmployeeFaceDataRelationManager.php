@@ -1,6 +1,7 @@
 <?php
 namespace App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers;
 
+use App\Models\AppLog;
 use Exception;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
@@ -88,8 +89,7 @@ class EmployeeFaceDataRelationManager extends RelationManager
                         'detector_backend'  => 'opencv',
                         'enforce_detection' => false,
                     ]);
-                Log::info('result_embedding', [$response]);
-
+ 
                 if ($response->ok()) {
 
                     showSuccessNotifiMessage('done');
@@ -101,8 +101,8 @@ class EmployeeFaceDataRelationManager extends RelationManager
                     }
                 }
             } catch (Exception $e) {
-                Log::error('face_embeddings', [$e->getMessage()]);
-                showWarningNotifiMessage($e->getMessage());
+            AppLog::write('face_embeddings: ' . $e->getMessage(), AppLog::LEVEL_ERROR);
+                 showWarningNotifiMessage($e->getMessage());
                 continue;
             }
         }

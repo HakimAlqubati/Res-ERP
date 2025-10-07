@@ -44,8 +44,7 @@ class FifoMethodService
 
             $productName = $targetUnit->product->name ?? 'Unknown Product';
             $unitName    = $targetUnit->unit->name ?? 'Unknown Unit';
-            Log::info("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName (unit: $unitName)");
-            throw new Exception("❌ Requested quantity ($requestedQty'-'$unitName) exceeds available inventory ($inventoryRemainingQty) for product: $productName");
+             throw new Exception("❌ Requested quantity ($requestedQty'-'$unitName) exceeds available inventory ($inventoryRemainingQty) for product: $productName");
         }
 
         $allocations = [];

@@ -20,18 +20,15 @@ class PurchaseInvoiceDetailObserver
     //         ->pluck('parent_product_id')
     //         ->unique();
 
-    //     Log::info('[🔄 PurchaseInvoiceDetailObserver] Parent Products:', [
-    //         'parent_ids' => $parentProducts,
+     //         'parent_ids' => $parentProducts,
     //         'base_product_id' => $purchaseInvoiceDetail->product_id,
     //     ]);
 
     //     foreach ($parentProducts as $parentProductId) {
     //         try {
     //             $count = ProductCostingService::updateComponentPricesForProduct($parentProductId);
-    //             Log::info("✅ [Invoice #{$purchaseInvoiceDetail->purchaseInvoice->id}] Updated prices for {$count} components of composite product ID {$parentProductId}");
-    //         } catch (\Throwable $e) {
-    //             Log::error("❌ Error updating costing for composite product {$parentProductId}: {$e->getMessage()}");
-    //         }
+     //         } catch (\Throwable $e) {
+     //         }
     //     }
     // }
 }

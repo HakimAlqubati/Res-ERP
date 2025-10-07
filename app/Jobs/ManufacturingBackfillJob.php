@@ -23,7 +23,6 @@ class ManufacturingBackfillJob implements ShouldQueue
 
     public function handle(): void
     {
-        Log::info('sdf',['sdf']);
-        app(ManufacturingBackfillService::class)->handleFromSimulation($this->storeId);
+         app(ManufacturingBackfillService::class)->handleFromSimulation($this->storeId);
     }
 }

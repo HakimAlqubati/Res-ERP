@@ -20,12 +20,12 @@ trait InventoryBootEvents
             $product = $transaction->product ?? $transaction->product()->with('supplyOutUnitPrices')->first();
 
             if (! $product || ! $transaction->unit_id || ! $transaction->quantity) {
-                Log::warning('InventoryTransaction creation skipped due to missing data', [
-                    'product'    => $product ? $product->id : null,
-                    'product_id' => $transaction->product_id ?? null,
-                    'unit_id'    => $transaction->unit_id ?? null,
-                    'quantity'   => $transaction->quantity ?? null,
-                ]);
+                // Log::warning('InventoryTransaction creation skipped due to missing data', [
+                //     'product'    => $product ? $product->id : null,
+                //     'product_id' => $transaction->product_id ?? null,
+                //     'unit_id'    => $transaction->unit_id ?? null,
+                //     'quantity'   => $transaction->quantity ?? null,
+                // ]);
                 return;
             }
 
@@ -40,10 +40,10 @@ trait InventoryBootEvents
                 ->first();
 
             if (! $currentUnitPrice || ! $baseUnitPrice) {
-                Log::warning("Missing unit price mapping", [
-                    'product_id' => $transaction->product_id,
-                    'unit_id'    => $transaction->unit_id,
-                ]);
+                // Log::warning("Missing unit price mapping", [
+                //     'product_id' => $transaction->product_id,
+                //     'unit_id'    => $transaction->unit_id,
+                // ]);
                 return;
             }
 
