@@ -223,6 +223,8 @@ class GoodsReceivedNoteResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->paginated([10, 25, 50, 100])
+
             ->striped()
             ->defaultSort('created_at', 'desc')
             ->columns([
@@ -467,7 +469,7 @@ class GoodsReceivedNoteResource extends Resource
         return false;
     }
 
-    
+
     public static function getGlobalSearchResultTitle(Model $record): string
     {
         return 'GRN #' . $record->id;
@@ -482,7 +484,7 @@ class GoodsReceivedNoteResource extends Resource
         return false;
     }
 
-      public static function getGlobalSearchResultsLimit(): int
+    public static function getGlobalSearchResultsLimit(): int
     {
         return 15;
     }

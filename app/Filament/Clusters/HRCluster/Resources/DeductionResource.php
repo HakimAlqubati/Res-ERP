@@ -108,24 +108,23 @@ class DeductionResource extends Resource
                                 // ->rangePadding([10, 20])
                                 // ->tooltips()
                                 ->tooltips(RawJs::make(<<<'JS'
-                                    `%${$value.toFixed(0)}`
-                                JS))
+                            `%${$value.toFixed(1)}`
+                        JS))
                                 ->pips()
                                 ->pipsFilter(RawJs::make(<<<'JS'
-                                    ($value % 50) === 0
-                                        ? 1
-                                        : ($value % 10) === 0
-                                            ? 2
-                                            : ($value % 25) === 0
-                                                ? 0
-                                                : -1
-                                JS))
-
+                            ($value % 50) === 0
+                                ? 1
+                                : ($value % 10) === 0
+                                    ? 2
+                                    : ($value % 25) === 0
+                                        ? 0
+                                        : -1
+                        JS))
                                 ->fillTrack()
                                 ->required()
                                 ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'))
                                 ->minValue(0)
-                                ->step(1)
+                                ->step(0.1)
                                 ->maxValue(100)
                                 ->default(0)
                                 ->rtl(),

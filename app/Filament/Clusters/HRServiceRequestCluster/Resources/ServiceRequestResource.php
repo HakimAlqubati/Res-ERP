@@ -81,7 +81,12 @@ class ServiceRequestResource extends Resource
                                             }
                                         })
                                         ->options(Branch::active()
-                                            ->selectable()
+                                            ->whereIn('type', [
+                                                Branch::TYPE_BRANCH,
+                                                Branch::TYPE_CENTRAL_KITCHEN,
+                                                Branch::TYPE_POPUP,
+                                                Branch::TYPE_HQ
+                                            ])
                                             ->select('name', 'id')->pluck('name', 'id'))
                                         ->default(function () {
                                             if (isStuff()) {

@@ -67,27 +67,27 @@ class AllowanceResource extends Resource
                         ->suffixIcon('heroicon-o-calculator')
                         ->suffixIconColor('success'),
 
-                    Slider::make('percentage')->hintIcon(Heroicon::PercentBadge)
-                        ->label('Percentage') 
+                    Slider::make('percentage')
+                        ->hintIcon(Heroicon::PercentBadge)
+                        ->label('Percentage')
                         ->tooltips(RawJs::make(<<<'JS'
-                                    `%${$value.toFixed(0)}`
-                                JS))
-                        ->pips()
-                        ->pipsFilter(RawJs::make(<<<'JS'
-                                    ($value % 50) === 0
-                                        ? 1
-                                        : ($value % 10) === 0
-                                            ? 2
-                                            : ($value % 25) === 0
-                                                ? 0
-                                                : -1
-                                JS))
-
+                            `%${$value.toFixed(1)}`
+                        JS))
+                                            ->pips()
+                                            ->pipsFilter(RawJs::make(<<<'JS'
+                            ($value % 50) === 0
+                                ? 1
+                                : ($value % 10) === 0
+                                    ? 2
+                                    : ($value % 25) === 0
+                                        ? 0
+                                        : -1
+                        JS))
                         ->fillTrack()
                         ->required()
                         ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'))
                         ->minValue(0)
-                        ->step(1)
+                        ->step(0.1) // ✅ يسمح بالقيم الكسرية مثل 0.1 أو 25.5
                         ->maxValue(100)
                         ->default(0)
                         ->rtl(),

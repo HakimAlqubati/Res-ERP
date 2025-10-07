@@ -50,6 +50,8 @@ use Filament\Forms\Components\ToggleButtons;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Icons\Heroicon;
@@ -118,330 +120,359 @@ class TaskResource extends Resource
             ->components([
                 Fieldset::make()->columnSpanFull()->schema([
 
-                    Grid::make()->columnSpanFull()->columns(7)->schema([
-                        TextInput::make('title')
-                            ->required()
-                            ->disabledOn('edit')
-                            ->autofocus()
-                            ->columnSpan(2)
-                            ->maxLength(255),
-                        Select::make('assigned_by')
-                            ->label('Assign by')
-                            ->disabledOn('edit')
-                            ->required()
-                            ->default(auth()->user()->id)
-                            ->columnSpan(2)
-                            ->options(User::select('name', 'id')
-                                // ->whereIn('user_type',[1,2,3])
-                                ->get()->pluck('name', 'id'))->searchable()
-                            ->selectablePlaceholder(false),
-                        // Select Role to assign task
-                        Select::make('role')
-                            ->label('Select Role')
+
+                    Wizard::make()->columnSpanFull()->skippable(true)->schema([
+                        Step::make('Basic')->columnSpanFull()->schema([
+                            Grid::make()->columnSpanFull()->columns(7)->schema([
+                                TextInput::make('title')
+                                    ->required()
+                                    ->disabledOn('edit')
+                                    ->autofocus()
+                                    ->columnSpan(2)
+                                    ->maxLength(255),
+                                Select::make('assigned_by')
+                                    ->label('Assign by')
+                                    ->disabledOn('edit')
+                                    ->required()
+                                    ->default(auth()->user()->id)
+                                    ->columnSpan(2)
+                                    ->options(User::select('name', 'id')
+                                        // ->active()
+                                        // ->whereIn('user_type',[1,2,3])
+                                        ->get()->pluck('name', 'id'))->searchable()
+                                    ->selectablePlaceholder(false),
+                                // Select Role to assign task
+                                Select::make('role')
+                                    ->label('Select Role')
+                                    ->hiddenOn('edit')
+                                    ->options(function () {
+                                        return UserType::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id');
+                                        // Fetch all available roles (assuming you have a Role model)
+                                        return Role::pluck('name', 'id')->toArray();
+                                    })->live()
+                                    ->afterStateUpdated(function (Get $get, Set $set, $state) {
+
+                                        $employees = Employee::where('employee_type', $state)->active()->pluck('id')->toArray();
+
+                                        $set('assigned_to_multi', $employees); // Populate the 'assigned_to' field with these users
+                                        // // After role is selected, fetch users assigned to that role
+                                        // $users = \App\Models\User::whereHas('roles', function ($q) use ($state) {
+                                        //     $q->where('id', $state); // Filter users by the selected role
+                                        // })->get(['name', 'id'])->pluck('id')->toArray();
+                                        // // dd($users, $state);
+                                        // $set('assigned_to_multi', $users); // Populate the 'assigned_to' field with these users
+                                    }),
+
+
+                                // Forms\Components\Select::make('assigned_to')
+                                //     ->hidden(fn($get): bool =>  !is_null($get('role')))
+                                //     ->label('Assign to')
+                                //     ->disabledOn('edit')
+                                //     ->required()
+                                //     ->columnSpan(2)
+                                //     ->options(Employee::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))->searchable()
+                                //     ->selectablePlaceholder(false),
+                                Toggle::make('is_daily')->live()->default(0)->label('Scheduled task?')
+                                    ->disabledOn('edit')->inline(false)
+                                    ->hidden(fn(): bool => isStuff()),
+                                Select::make('assigned_to')
+                                    ->options(Employee::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))->searchable()
+                                    ->label('Assign to')
+                                    ->columnSpan(2)
+                                    ->required()
+                                    ->disabled()
+                                    ->hiddenOn('create'),
+                                // The assigned_to field that will populate with users based on the selected role
+                                Select::make('assigned_to_multi')
+                                    ->label('Assign to')
+                                    ->columnSpanFull()
+                                    ->required()
+                                    ->options(Employee::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))->searchable()
+                                    ->multiple()  // Allow multiple users to be selected
+                                    ->searchable()
+                                    ->hidden(fn() => isStuff())
+                                    ->hiddenOn('edit'),
+
+                            ]),
+                        ]),
+                        Step::make('Details')->columnSpanFull()
                             ->hiddenOn('edit')
-                            ->options(function () {
-                                return UserType::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id');
-                                // Fetch all available roles (assuming you have a Role model)
-                                return Role::pluck('name', 'id')->toArray();
-                            })->live()
-                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                            ->visible(
+                                fn(Get $get): bool => $get('is_daily')
+                            )->schema([
+                                Fieldset::make()->columnSpanFull()
+                                    ->label('Set schedule task type and start date of scheduele task')->schema([
+                                        Grid::make()->columnSpanFull()->columns(4)->schema([
+                                            ToggleButtons::make('schedule_type')
+                                                ->label('')
+                                                ->columnSpan(2)
+                                                ->inline()
+                                                ->default(DailyTasksSettingUp::TYPE_SCHEDULE_DAILY)
+                                                ->options(DailyTasksSettingUp::getScheduleTypes())
+                                                ->live()
+                                                ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                                    if ($state == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                                        $set('end_date', date('Y-m-d', strtotime('+1 months')));
+                                                        $set('recur_count', 1);
+                                                    } elseif ($state == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
+                                                        $set('end_date', date('Y-m-d', strtotime('+2 weeks')));
+                                                        $set('recur_count', 2);
+                                                    } elseif ($state == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+                                                        $set('end_date', date('Y-m-d', strtotime('+9 days')));
+                                                        $set('recur_count', 7);
+                                                    }
+                                                }),
+                                            Grid::make()->columnSpanFull()->columns(1)->columnSpan(1)->schema([
+                                                DatePicker::make('start_date')
+                                                    ->default(date('Y-m-d', strtotime('+1 days')))
+                                                    ->columnSpan(1)
+                                                    ->minDate(date('Y-m-d'))->live()
+                                                    ->native(false)
+                                                    ->displayFormat('d/m/Y')
+                                                    ->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
 
-                                $employees = Employee::where('employee_type', $state)->pluck('id')->toArray();
+                                                        $date1 = new DateTime($state);
+                                                        $date2 = new DateTime($get('end_date'));
 
-                                $set('assigned_to_multi', $employees); // Populate the 'assigned_to' field with these users
-                                // // After role is selected, fetch users assigned to that role
-                                // $users = \App\Models\User::whereHas('roles', function ($q) use ($state) {
-                                //     $q->where('id', $state); // Filter users by the selected role
-                                // })->get(['name', 'id'])->pluck('id')->toArray();
-                                // // dd($users, $state);
-                                // $set('assigned_to_multi', $users); // Populate the 'assigned_to' field with these users
-                            }),
+                                                        $interval = $date1->diff($date2);
+
+                                                        if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+
+                                                            $set('recur_count', $interval->days + 2);
+                                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
+                                                            $weeks = floor($interval->days / 7);
+                                                            $set('recur_count', $weeks);
+                                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                                            $months = ($interval->y * 12) + $interval->m;
+                                                            $set('recur_count', $months);
+                                                        }
+                                                    }),
+                                                TextInput::make('recur_count')
+                                                    ->default(7)
+                                                    ->label(function (Get $get) {
+                                                        if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+                                                            return 'Number of days';
+                                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
+                                                            return 'Number of weeks';
+                                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                                            return 'Number of months';
+                                                        }
+                                                    })->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                                        if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+                                                            $state += 1;
+                                                            // $state= (integer) $state;
+                                                            $set('end_date', date('Y-m-d', strtotime("+$state days")));
+                                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
+                                                            $set('end_date', date('Y-m-d', strtotime("+$state weeks")));
+                                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                                            $set('end_date', date('Y-m-d', strtotime("+$state months")));
+                                                        }
+                                                    })->required(),
+                                            ]),
+                                            DatePicker::make('end_date')
+                                                ->native(false)
+                                                ->displayFormat('d/m/Y')
+
+                                                ->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1)
+                                                // ->minDate(date('Y-m-d'))
+                                                ->minDate(fn(Get $get) => $get('start_date') ?? date('Y-m-d')) // Dynamically set minDate based on start_date
+                                                ->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
+
+                                                    $date1 = new DateTime($get('start_date'));
+                                                    $date2 = new DateTime($state);
+
+                                                    $interval = $date1->diff($date2);
+
+                                                    if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+
+                                                        $set('recur_count', $interval->days + 2);
+                                                    } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
+                                                        $weeks = floor($interval->days / 7);
+                                                        $set('recur_count', $weeks);
+                                                    } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                                        $months = ($interval->y * 12) + $interval->m;
+                                                        $set('recur_count', $months);
+                                                    }
+                                                }),
+
+                                        ]),
+                                        Fieldset::make('requrrence_pattern')
+                                            ->columnSpanFull()
+                                            ->label('Recurrence pattern')->schema([
+                                                Fieldset::make()->columnSpanFull()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'daily'))->schema([
+                                                    Grid::make()->columnSpanFull()->columns(2)->schema([
+                                                        Radio::make('requr_pattern_set_days')->label('')
+                                                            ->options([
+                                                                'specific_days' => 'Every',
+                                                                'every_day' => 'Every weekday',
+                                                            ])->live(),
+                                                        TextInput::make('requr_pattern_day_recurrence_each')->minValue(1)->maxValue(7)->numeric()->hidden(fn(Get $get): bool => ($get('requr_pattern_set_days') == 'every_day'))->label('Day(s)')->required(),
+                                                    ]),
+                                                ]),
+                                                Fieldset::make()->columnSpanFull()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'weekly'))->schema([
+                                                    Grid::make()->columnSpanFull()->columns(2)->schema([
+                                                        TextInput::make('requr_pattern_week_recur_every')->minValue(1)->maxValue(5)->numeric()->label('Recur every')->helperText('Week(s) on:')->required(),
+                                                        ToggleButtons::make('requr_pattern_weekly_days')->label('')->inline()->options(getDays())->multiple(),
+                                                    ]),
+                                                ]),
+                                                Fieldset::make()->columnSpanFull()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'monthly'))->schema([
+                                                    Grid::make()
+                                                        ->columnSpanFull()
+                                                        ->columns(3)->schema([
+                                                            Radio::make('requr_pattern_monthly_status')->label('')
+                                                                ->columnSpan(1)
+                                                                ->options([
+                                                                    'day' => 'Day',
+                                                                    'the' => 'The',
+                                                                ])->live()->default('day'),
+                                                            Grid::make()->columnSpanFull()->columns(2)->columnSpan(2)->visible(fn(Get $get): bool => ($get('requr_pattern_monthly_status') == 'day'))->schema([
+                                                                TextInput::make('requr_pattern_the_day_of_every')->default(15)->numeric()->label('')->helperText('Of every'),
+                                                                TextInput::make('requr_pattern_months')->label('')->default(1)->numeric()->helperText('Month(s)'),
+                                                            ]),
+                                                            Grid::make()->columnSpanFull()->columns(2)->visible(fn(Get $get): bool => ($get('requr_pattern_monthly_status') == 'the'))->columnSpan(2)->schema([
+                                                                Select::make('requr_pattern_order_name')->label('')->options([
+                                                                    'first' => 'first',
+                                                                    'second' => 'second',
+                                                                    'third' => 'third',
+                                                                    'fourth' => 'fourth',
+                                                                    'fifth' => 'fifth'
+                                                                ])->default('first'),
+                                                                Select::make('requr_pattern_order_day')->label('')->options(getDays())->default('Saturday'),
+                                                            ]),
+                                                        ]),
+                                                ]),
+                                            ]),
+                                    ]),
+
+                            ]),
+                        Step::make('Steps')->columnSpanFull()->schema([
 
 
-                        // Forms\Components\Select::make('assigned_to')
-                        //     ->hidden(fn($get): bool =>  !is_null($get('role')))
-                        //     ->label('Assign to')
-                        //     ->disabledOn('edit')
-                        //     ->required()
-                        //     ->columnSpan(2)
-                        //     ->options(Employee::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))->searchable()
-                        //     ->selectablePlaceholder(false),
-                        Toggle::make('is_daily')->live()->default(0)->label('Scheduled task?')
-                            ->disabledOn('edit')->inline(false)
-                            ->hidden(fn(): bool => isStuff()),
-                        // The assigned_to field that will populate with users based on the selected role
-                        Select::make('assigned_to_multi')
-                            ->label('Assign to')
-                            ->columnSpanFull()
-                            ->required()
-                            ->options(Employee::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))->searchable()
-                            ->multiple()  // Allow multiple users to be selected
-                            ->searchable()->hidden(fn() => isStuff()),
+                            Textarea::make('description')
+                                // ->required()
+                                ->disabledOn('edit')
+                                ->maxLength(65535)
+                                ->columnSpanFull(),
 
-                    ]),
-                    Fieldset::make()->columnSpanFull()->hiddenOn('edit')->visible(fn(Get $get): bool => $get('is_daily'))->label('Set schedule task type and start date of scheduele task')->schema([
-                        Grid::make()->columnSpanFull()->columns(4)->schema([
-                            ToggleButtons::make('schedule_type')
-                                ->label('')
-                                ->columnSpan(2)
-                                ->inline()
-                                ->default(DailyTasksSettingUp::TYPE_SCHEDULE_DAILY)
-                                ->options(DailyTasksSettingUp::getScheduleTypes())
-                                ->live()
-                                ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                    if ($state == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
-                                        $set('end_date', date('Y-m-d', strtotime('+1 months')));
-                                        $set('recur_count', 1);
-                                    } elseif ($state == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
-                                        $set('end_date', date('Y-m-d', strtotime('+2 weeks')));
-                                        $set('recur_count', 2);
-                                    } elseif ($state == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
-                                        $set('end_date', date('Y-m-d', strtotime('+9 days')));
-                                        $set('recur_count', 7);
-                                    }
-                                }),
-                            Grid::make()->columnSpanFull()->columns(1)->columnSpan(1)->schema([
-                                DatePicker::make('start_date')
-                                    ->default(date('Y-m-d', strtotime('+1 days')))
-                                    ->columnSpan(1)
-                                    ->minDate(date('Y-m-d'))->live()
+                            Grid::make()->columnSpanFull()->visible(fn(Get $get): bool => !$get('is_daily'))->columns(2)->schema([
+                                DatePicker::make('due_date')->label('Due date')->required(false)
                                     ->native(false)
                                     ->displayFormat('d/m/Y')
-                                    ->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
-
-                                        $date1 = new DateTime($state);
-                                        $date2 = new DateTime($get('end_date'));
-
-                                        $interval = $date1->diff($date2);
-
-                                        if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
-
-                                            $set('recur_count', $interval->days + 2);
-                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
-                                            $weeks = floor($interval->days / 7);
-                                            $set('recur_count', $weeks);
-                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
-                                            $months = ($interval->y * 12) + $interval->m;
-                                            $set('recur_count', $months);
+                                    ->disabled(function ($record) {
+                                        if (isset($record, auth()->user()->employee)) {
+                                            if ($record->assigned_to == auth()->user()->employee->id) {
+                                                return true;
+                                            }
                                         }
-                                    }),
-                                TextInput::make('recur_count')
-                                    ->default(7)
-                                    ->label(function (Get $get) {
-                                        if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
-                                            return 'Number of days';
-                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
-                                            return 'Number of weeks';
-                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
-                                            return 'Number of months';
-                                        }
-                                    })->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                        if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
-                                            $state += 1;
-                                            // $state= (integer) $state;
-                                            $set('end_date', date('Y-m-d', strtotime("+$state days")));
-                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
-                                            $set('end_date', date('Y-m-d', strtotime("+$state weeks")));
-                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
-                                            $set('end_date', date('Y-m-d', strtotime("+$state months")));
-                                        }
-                                    })->required(),
+                                        return false;
+                                    })
+                                    // ->minDate(now()->toDateString())
+                                    ->helperText('Set due date for this task'),
+                                Select::make('task_status')->options(
+                                    [
+                                        Task::STATUS_NEW => Task::STATUS_NEW,
+                                        // Task::STATUS_PENDING => Task::STATUS_PENDING,
+                                        Task::STATUS_IN_PROGRESS => Task::STATUS_IN_PROGRESS,
+                                        Task::STATUS_CLOSED => Task::STATUS_CLOSED,
+                                        Task::STATUS_REJECTED => Task::STATUS_REJECTED,
+                                    ]
+                                )->default(Task::STATUS_NEW)
+                                    ->disabledOn('create')
+                                    ->disabled(),
+
                             ]),
-                            DatePicker::make('end_date')
-                                ->native(false)
-                                ->displayFormat('d/m/Y')
+                            Hidden::make('created_by')->default(auth()->user()->id),
+                            Hidden::make('updated_by')->default(auth()->user()->id),
 
-                                ->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1)
-                                // ->minDate(date('Y-m-d'))
-                                ->minDate(fn(Get $get) => $get('start_date') ?? date('Y-m-d')) // Dynamically set minDate based on start_date
-                                ->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
-
-                                    $date1 = new DateTime($get('start_date'));
-                                    $date2 = new DateTime($state);
-
-                                    $interval = $date1->diff($date2);
-
-                                    if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
-
-                                        $set('recur_count', $interval->days + 2);
-                                    } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
-                                        $weeks = floor($interval->days / 7);
-                                        $set('recur_count', $weeks);
-                                    } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
-                                        $months = ($interval->y * 12) + $interval->m;
-                                        $set('recur_count', $months);
+                            Fieldset::make('task_rating')->columnSpanFull()->relationship('task_rating')
+                                // ->hiddenOn('create')
+                                ->hidden(function ($record) {
+                                    if (isset($record)) {
+                                        if ($record->task_status != Task::STATUS_CLOSED) {
+                                            return true;
+                                        }
                                     }
+                                })
+                                ->disabled(function ($record) {
+                                    if (isset($record)) {
+                                        if (($record->assigned_to == auth()?->user()?->id) || ($record->assigned_to == auth()->user()?->employee?->id)) {
+                                            return true;
+                                        }
+                                        return false;
+                                    }
+                                })
+                                ->visibleOn('edit')
+                                ->label('')->schema([
+                                    // Rating::make('rating_value')
+                                    //     ->theme(RatingTheme::HalfStars)
+                                    //     ->label('')->theme(RatingTheme::Simple)->stars(10)->size('lg')
+                                    //     ->helperText(function ($record) {
+
+                                    //         if (is_null($record?->rating_value)) {
+                                    //             return 'Rate this from 0 to 10';
+                                    //         } else {
+                                    //             return "Your rating:" . $record->rating_value . "/10";
+                                    //         }
+                                    //     })
+                                    //     ->live()
+                                    //     ->afterStateUpdated(function (?string $state, ?string $old, $component) {
+                                    //         $component->helperText("Your rating: $state/10");
+                                    //     }),
+                                ])->hidden(),
+
+                            FileUpload::make('file_path')
+                                ->label('Add photos')->columnSpanFull()
+                                ->disk('public')
+                                ->directory('tasks')
+                                ->visibility('public')
+                                ->columnSpanFull()
+                                ->imagePreviewHeight('250')
+                                ->image()
+                                // ->resize(5)
+                                ->loadingIndicatorPosition('left')
+                                // ->panelAspectRatio('2:1')
+                                ->panelLayout('integrated')
+                                ->removeUploadedFileButtonPosition('right')
+                                ->uploadButtonPosition('left')
+                                ->uploadProgressIndicatorPosition('left')
+                                ->multiple()
+                                ->panelLayout('grid')
+                                ->reorderable()
+                                ->openable()
+                                ->downloadable()
+                                ->hiddenOn('create')
+                                ->previewable()
+                                ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                    return (string) str($file->getClientOriginalName())->prepend('task-');
                                 }),
 
+                            Hidden::make('created_by')->default(auth()->user()->id),
+                            Hidden::make('updated_by')->default(auth()->user()->id),
+                            Repeater::make('steps')
+                                ->itemLabel('Steps')
+                                ->columnSpanFull()
+                                ->relationship('steps')
+                                ->columns(1)
+                                ->hiddenOn('edit')
+                                ->schema([
+                                    TextInput::make('title')
+                                        ->required()
+                                        ->live(onBlur: true),
+                                ])
+                                ->collapseAllAction(
+                                    fn(Action $action) => $action->label('Collapse all steps'),
+                                )
+                                ->orderColumn('order')
+                                ->reorderable()
+                                ->reorderableWithDragAndDrop()
+                                ->reorderableWithButtons()
+                                ->cloneable()
+                                ->collapsible()
+                                ->itemLabel(fn(array $state): ?string => $state['name'] ?? null),
+
+
                         ]),
-                        Fieldset::make('requrrence_pattern')
-                            ->columnSpanFull()
-                            ->label('Recurrence pattern')->schema([
-                                Fieldset::make()->columnSpanFull()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'daily'))->schema([
-                                    Grid::make()->columnSpanFull()->columns(2)->schema([
-                                        Radio::make('requr_pattern_set_days')->label('')
-                                            ->options([
-                                                'specific_days' => 'Every',
-                                                'every_day' => 'Every weekday',
-                                            ])->live(),
-                                        TextInput::make('requr_pattern_day_recurrence_each')->minValue(1)->maxValue(7)->numeric()->hidden(fn(Get $get): bool => ($get('requr_pattern_set_days') == 'every_day'))->label('Day(s)')->required(),
-                                    ]),
-                                ]),
-                                Fieldset::make()->columnSpanFull()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'weekly'))->schema([
-                                    Grid::make()->columnSpanFull()->columns(2)->schema([
-                                        TextInput::make('requr_pattern_week_recur_every')->minValue(1)->maxValue(5)->numeric()->label('Recur every')->helperText('Week(s) on:')->required(),
-                                        ToggleButtons::make('requr_pattern_weekly_days')->label('')->inline()->options(getDays())->multiple(),
-                                    ]),
-                                ]),
-                                Fieldset::make()->columnSpanFull()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'monthly'))->schema([
-                                    Grid::make()
-                                        ->columnSpanFull()
-                                        ->columns(3)->schema([
-                                            Radio::make('requr_pattern_monthly_status')->label('')
-                                                ->columnSpan(1)
-                                                ->options([
-                                                    'day' => 'Day',
-                                                    'the' => 'The',
-                                                ])->live()->default('day'),
-                                            Grid::make()->columnSpanFull()->columns(2)->columnSpan(2)->visible(fn(Get $get): bool => ($get('requr_pattern_monthly_status') == 'day'))->schema([
-                                                TextInput::make('requr_pattern_the_day_of_every')->default(15)->numeric()->label('')->helperText('Of every'),
-                                                TextInput::make('requr_pattern_months')->label('')->default(1)->numeric()->helperText('Month(s)'),
-                                            ]),
-                                            Grid::make()->columnSpanFull()->columns(2)->visible(fn(Get $get): bool => ($get('requr_pattern_monthly_status') == 'the'))->columnSpan(2)->schema([
-                                                Select::make('requr_pattern_order_name')->label('')->options([
-                                                    'first' => 'first',
-                                                    'second' => 'second',
-                                                    'third' => 'third',
-                                                    'fourth' => 'fourth',
-                                                    'fifth' => 'fifth'
-                                                ])->default('first'),
-                                                Select::make('requr_pattern_order_day')->label('')->options(getDays())->default('Saturday'),
-                                            ]),
-                                        ]),
-                                ]),
-                            ]),
-                    ]),
-
-                    Textarea::make('description')
-                        // ->required()
-                        ->disabledOn('edit')
-                        ->maxLength(65535)
-                        ->columnSpanFull(),
-
-                    Grid::make()->columnSpanFull()->visible(fn(Get $get): bool => !$get('is_daily'))->columns(2)->schema([
-                        DatePicker::make('due_date')->label('Due date')->required(false)
-                            ->native(false)
-                            ->displayFormat('d/m/Y')->disabled(function ($record) {
-                                if (isset($record, auth()->user()->employee)) {
-                                    if ($record->assigned_to == auth()->user()->employee->id) {
-                                        return true;
-                                    }
-                                }
-                                return false;
-                            })
-                            // ->minDate(now()->toDateString())
-                            ->helperText('Set due date for this task'),
-                        Select::make('task_status')->options(
-                            [
-                                Task::STATUS_NEW => Task::STATUS_NEW,
-                                // Task::STATUS_PENDING => Task::STATUS_PENDING,
-                                Task::STATUS_IN_PROGRESS => Task::STATUS_IN_PROGRESS,
-                                Task::STATUS_CLOSED => Task::STATUS_CLOSED,
-                                Task::STATUS_REJECTED => Task::STATUS_REJECTED,
-                            ]
-                        )->default(Task::STATUS_NEW)
-                            ->disabledOn('create')
-                            ->disabled(),
-
-                    ]),
-                    Hidden::make('created_by')->default(auth()->user()->id),
-                    Hidden::make('updated_by')->default(auth()->user()->id),
-
-                    Fieldset::make('task_rating')->columnSpanFull()->relationship('task_rating')
-                        // ->hiddenOn('create')
-                        ->hidden(function ($record) {
-                            if (isset($record)) {
-                                if ($record->task_status != Task::STATUS_CLOSED) {
-                                    return true;
-                                }
-                            }
-                        })
-                        ->disabled(function ($record) {
-                            if (isset($record)) {
-                                if (($record->assigned_to == auth()?->user()?->id) || ($record->assigned_to == auth()->user()?->employee?->id)) {
-                                    return true;
-                                }
-                                return false;
-                            }
-                        })
-                        ->visibleOn('edit')
-                        ->label('')->schema([
-                            // Rating::make('rating_value')
-                            //     ->theme(RatingTheme::HalfStars)
-                            //     ->label('')->theme(RatingTheme::Simple)->stars(10)->size('lg')
-                            //     ->helperText(function ($record) {
-
-                            //         if (is_null($record?->rating_value)) {
-                            //             return 'Rate this from 0 to 10';
-                            //         } else {
-                            //             return "Your rating:" . $record->rating_value . "/10";
-                            //         }
-                            //     })
-                            //     ->live()
-                            //     ->afterStateUpdated(function (?string $state, ?string $old, $component) {
-                            //         $component->helperText("Your rating: $state/10");
-                            //     }),
-                        ])->hidden(),
-
-                    FileUpload::make('file_path')
-                        ->label('Add photos')->columnSpanFull()
-                        ->disk('public')
-                        ->directory('tasks')
-                        ->visibility('public')
-                        ->columnSpanFull()
-                        ->imagePreviewHeight('250')
-                        ->image()
-                        // ->resize(5)
-                        ->loadingIndicatorPosition('left')
-                        // ->panelAspectRatio('2:1')
-                        ->panelLayout('integrated')
-                        ->removeUploadedFileButtonPosition('right')
-                        ->uploadButtonPosition('left')
-                        ->uploadProgressIndicatorPosition('left')
-                        ->multiple()
-                        ->panelLayout('grid')
-                        ->reorderable()
-                        ->openable()
-                        ->downloadable()
-                        ->hiddenOn('create')
-                        ->previewable()
-                        ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                            return (string) str($file->getClientOriginalName())->prepend('task-');
-                        }),
-
-                    Hidden::make('created_by')->default(auth()->user()->id),
-                    Hidden::make('updated_by')->default(auth()->user()->id),
-                    Repeater::make('steps')
-                        ->itemLabel('Steps')
-                        ->columnSpanFull()
-                        ->relationship('steps')
-                        ->columns(1)
-                        ->hiddenOn('edit')
-                        ->schema([
-                            TextInput::make('title')
-                                ->required()
-                                ->live(onBlur: true),
-                        ])
-                        ->collapseAllAction(
-                            fn(Action $action) => $action->label('Collapse all steps'),
-                        )
-                        ->orderColumn('order')
-                        ->reorderable()
-                        ->reorderableWithDragAndDrop()
-                        ->reorderableWithButtons()
-                        ->cloneable()
-                        ->collapsible()
-                        ->itemLabel(fn(array $state): ?string => $state['name'] ?? null),
+                    ])
 
                 ]),
             ]);
@@ -1089,7 +1120,7 @@ class TaskResource extends Resource
     {
         return $page->generateNavigationItems([
             ListTasks::class,
-            // Pages\CreateTask::class,
+            Pages\CreateTask::class,
             EditTask::class,
         ]);
     }
