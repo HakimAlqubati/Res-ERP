@@ -100,7 +100,7 @@ class ProductResource extends Resource
 
     public static function getGloballySearchableAttributes(): array
     {
-        return ['name', 'code'];
+        return ['name', 'code','id'];
     }
 
 
@@ -127,6 +127,6 @@ class ProductResource extends Resource
     
     public static function getGlobalSearchResultsLimit(): int
     {
-        return 20;
+        return 15;
     }
 }
