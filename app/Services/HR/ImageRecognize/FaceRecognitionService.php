@@ -27,8 +27,7 @@ class FaceRecognitionService
         // 2) تأكيد الحجم > 0
         $sizeInBytes = Storage::disk('s3')->size($path);
         if ($sizeInBytes <= 0) {
-            Log::warning('S3 object is empty', ['path' => $path]);
-            return EmployeeMatch::notFound();
+             return EmployeeMatch::notFound();
         }
 
         // 3) البحث عبر Rekognition
@@ -46,8 +45,7 @@ class FaceRecognitionService
             'FaceMatchThreshold' => (float) $this->config['face_match_threshold'],
             'MaxFaces'           => (int) $this->config['max_faces'],
         ]);
-
-        Log::info('rekognition_result_new_service', [$result]);
+ 
 
         $matches = $result['FaceMatches'] ?? [];
         // dd($matches);   
@@ -89,10 +87,7 @@ class FaceRecognitionService
             //'Metadata'    => ['source' => 'identifyEmployee'],
         ]);
 
-        Log::info('S3 Upload Info', [
-            'file' => $path,
-            'mime' => $file->getMimeType(),
-        ]);
+     
 
         return $path;
     }
