@@ -52,7 +52,7 @@ class BulkPricingAdjustmentService
                 $report['unit_prices'] = UnitPrice::whereIn('product_id', $productIdsToUpdate)
                     ->where('unit_id', $unitId)
 
-                    ->update(['price' => $newPrice]);
+                    ->update(['price' => $newPrice,'selling_price' => $newPrice]);
 
                 // 2. تحديث جدول حركات المخزون
                 $report['inventory_transactions'] = DB::table('inventory_transactions')
