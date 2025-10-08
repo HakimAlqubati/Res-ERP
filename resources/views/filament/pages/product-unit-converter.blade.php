@@ -7,8 +7,11 @@
 
         {{-- This renders the form actions (buttons) defined in getFormActions() --}}
         {{-- It's crucial for Filament to properly manage the submit button --}}
-        <x-filament-panels::form.actions
-            :actions="$this->getFormActions()"
-        />
+
+        <button  type="submit">
+            Submit
+        </button>
+
+        {{-- <button :actions="$this->getFormActions()"> Submit Conversion</button> --}}
     </form>
 </x-filament-panels::page>

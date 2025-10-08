@@ -37,9 +37,7 @@ class ProductUnitConversionService // Suggesting a name that indicates its purpo
         int $toUnitId,
         float $fromPackageSize,
         float $toPackageSize
-    ): void {
-        Log::info("Attempting to migrate product #{$productId} unit from {$fromUnitId} (pkg: {$fromPackageSize}) to {$toUnitId} (pkg: {$toPackageSize}).");
-
+    ): void { 
         try {
             DB::transaction(function () use ($productId, $fromUnitId, $toUnitId, $fromPackageSize, $toPackageSize) {
                 $tablesToUpdate = [
@@ -65,13 +63,13 @@ class ProductUnitConversionService // Suggesting a name that indicates its purpo
                             'package_size' => $toPackageSize,
                         ]);
 
-                    Log::info("Updated {$updatedRows} rows in '{$tableName}' for product #{$productId}.");
+                    // Log::info("Updated {$updatedRows} rows in '{$tableName}' for product #{$productId}.");
                 }
 
-                Log::info("✅ Successfully migrated unit_id and package_size for product #{$productId} from unit {$fromUnitId} (pkg {$fromPackageSize}) to unit {$toUnitId} (pkg {$toPackageSize}).");
+                // Log::info("✅ Successfully migrated unit_id and package_size for product #{$productId} from unit {$fromUnitId} (pkg {$fromPackageSize}) to unit {$toUnitId} (pkg {$toPackageSize}).");
             });
         } catch (Exception $e) {
-            Log::error("❌ Failed to migrate unit_id and package_size for product #{$productId}. Error: " . $e->getMessage());
+            // Log::error("❌ Failed to migrate unit_id and package_size for product #{$productId}. Error: " . $e->getMessage());
             // Re-throw the exception to ensure the calling code knows it failed
             throw $e;
         }
