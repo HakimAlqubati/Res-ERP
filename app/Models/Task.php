@@ -13,11 +13,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use OwenIt\Auditing\Contracts\Auditable;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Task extends Model implements Auditable
+class Task extends Model implements Auditable, HasMedia
 {
-    use SoftDeletes, DynamicConnection, \OwenIt\Auditing\Auditable,BranchScope;
+    use SoftDeletes, DynamicConnection, \OwenIt\Auditing\Auditable, BranchScope, InteractsWithMedia;
 
     protected $table = 'hr_tasks';
 
@@ -75,6 +78,9 @@ class Task extends Model implements Auditable
     ];
 
 
+    protected $appends = [
+        'photos_full_urls',
+    ];
     /**
      * Get possible next statuses based on the current status
      *
@@ -427,5 +433,34 @@ class Task extends Model implements Auditable
         }
 
         return 0; // If there are no steps, progress is 0%
+    }
+
+    /**
+     * Attribute: photos_full_urls
+     * يرجّع Array من الروابط الكاملة لكل صورة مرفقة.
+     */
+    public function getPhotosFullUrlsAttribute(): array
+    {
+        // اجلب كل الميديا في مجموعة "attachments"
+        $mediaItems = $this->getMedia('attachments');
+
+        return $mediaItems
+            ->map(function ($m) {
+                // لو الديسك خاص (مثل S3 private) يمكنك توليد رابط مؤقت
+                if (method_exists(Storage::disk($m->disk), 'temporaryUrl')) {
+                    try {
+                        return Storage::disk($m->disk)
+                            ->temporaryUrl($m->getPath(), now()->addMinutes(10));
+                    } catch (\Throwable) {
+                        return $m->getFullUrl();
+                    }
+                }
+
+                // في الحالات العادية (public disk)
+                return $m->getFullUrl();
+            })
+            ->filter()
+            ->values()
+            ->all();
     }
 }

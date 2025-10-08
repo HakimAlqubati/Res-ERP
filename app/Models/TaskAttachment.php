@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -29,5 +30,29 @@ class TaskAttachment extends Model implements Auditable
     public function task()
     {
         return $this->belongsTo(Task::class, 'task_id');
+    }
+
+    /**
+     * Automatically fill created_by / updated_by from auth user
+     */
+    protected static function booted()
+    {
+        // When creating a new record
+        static::creating(function ($model) {
+            if (auth()->check()) {
+                $userId = auth()->id();
+                if (empty($model->created_by)) {
+                    $model->created_by = $userId;
+                }
+                $model->updated_by = $userId;
+            }
+        });
+
+        // When updating an existing record
+        static::updating(function ($model) {
+            if (auth()->check()) {
+                $model->updated_by = auth()->id();
+            }
+        });
     }
 }

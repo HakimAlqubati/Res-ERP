@@ -23,6 +23,7 @@ class EmployeeApplicationController extends Controller
             ->latest()
             ->paginate(20);
 
+            // dd($apps->where('application_type_id',2)->first()->missedCheckinRequest);
         return response()->json([
             'success' => true,
             'message' => 'Applications retrieved successfully',

@@ -8,6 +8,8 @@ use App\Http\Resources\HR\TaskResource;
 use App\Models\Task;
 use App\Services\HR\Tasks\TaskService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class TaskController extends Controller
 {
@@ -98,5 +100,54 @@ class TaskController extends Controller
             'current_status' => $task->task_status,
             'next_statuses' => $task->getNextStatuses()
         ]);
+    }
+
+    public function storePhotos(Request $request, Task $task)
+    {
+        $request->validate([
+            'photos'   => 'required|array',
+            'photos.*' => 'file|image|max:5120', // 5MB
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $uploaded = [];
+
+            foreach ($request->file('photos') as $file) {
+                /** @var Media $media */
+                $media = $task->addMedia($file)->toMediaCollection('attachments');
+                $uploaded[] = [
+                    'id'        => $media->id,
+                    'name'      => $media->name,
+                    'file_name' => $media->file_name,
+                    'mime_type' => $media->mime_type,
+                    'size'      => $media->size,
+                    'url'       => $media->getFullUrl(),
+                    // 'thumb'   => $media->hasGeneratedConversion('thumb') ? $media->getFullUrl('thumb') : null,
+                    'created_at' => $media->created_at,
+                ];
+            }
+
+            // لوج اختياري
+            $task->createLog(
+                auth()->id(),
+                'Added task photos',
+                \App\Models\TaskLog::TYPE_IMAGES_ADDED,
+                ['count' => count($uploaded)]
+            );
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Photos uploaded successfully',
+                'photos'  => $uploaded,
+            ], 201);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Upload failed',
+                'error'   => app()->hasDebugModeEnabled() ? $e->getMessage() : null,
+            ], 500);
+        }
     }
 }

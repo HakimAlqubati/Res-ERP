@@ -21,6 +21,7 @@ class TaskResource extends JsonResource
             'due_date'           => optional($this->due_date)?->format('Y-m-d'),
             'branch_id'          => $this->branch_id,
             'views'              => $this->views,
+            'photos'       => $this->photos_full_urls,
             'photos_count'       => $this->photos_count,
             'step_count'         => $this->step_count,
             'progress_percentage' => $this->progress_percentage,

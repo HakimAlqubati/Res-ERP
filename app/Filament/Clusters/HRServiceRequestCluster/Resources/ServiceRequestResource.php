@@ -151,7 +151,7 @@ class ServiceRequestResource extends Resource
                                                 ->pluck('name', 'id'))
                                             ->searchable()
                                             ->hidden(fn() => request()->has('equipment_id'))
-                                            ->disabledOn('edit')
+                                            // ->disabledOn('edit')
                                             ->helperText(function (Model $record = null) {
                                                 if ($record) {
                                                     return 'To reassign, go to table page ';

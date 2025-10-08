@@ -218,6 +218,19 @@ Route::get('/testInventoryReport2', function (Request $request) {
         ]);
     });
     
+    // New route: list users, optional filter by branch_id
+    Route::get('/users', function (Request $request) {
+        $branchId = $request->query('branch_id');
+
+        $query = User::query()->select('id', 'name', 'email');
+
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
+
+        return $query->get();
+    })->middleware('auth:api');
+
 });
 Route::get('/sendFCM', [TestController3::class, 'sendFCM']);
 Route::get('productsSearch', function (\Illuminate\Http\Request $request) {

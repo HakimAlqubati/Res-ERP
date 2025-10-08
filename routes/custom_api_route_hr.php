@@ -87,7 +87,9 @@ Route::middleware(['auth:api'])
         Route::get('tasks/{task}', [TaskController::class, 'show'])->name('tasks.show')->whereNumber('task');
         Route::put('tasks/{task}', [TaskController::class, 'update']);
         Route::delete('tasks/{task}', [TaskController::class, 'destroy']);
-
+        Route::post('tasks/{task}/photos', [TaskController::class, 'storePhotos'])
+            ->name('tasks.photos.store')
+            ->whereNumber('task');
 
         Route::get('tasks/statuses', [TaskController::class, 'getStatuses']);
         Route::get('tasks/statusesColors', [TaskController::class, 'getStatusColors']);
@@ -164,6 +166,9 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
     Route::post('serviceRequests/{serviceRequest}/equipment', [\App\Http\Controllers\Api\V1\ServiceRequestController::class, 'attachEquipment']);
     Route::delete('serviceRequests/{serviceRequest}/equipment', [\App\Http\Controllers\Api\V1\ServiceRequestController::class, 'detachEquipment']);
     Route::post('serviceRequests/{serviceRequest}/media', [\App\Http\Controllers\Api\V1\ServiceRequestController::class, 'uploadMedia']);
+    // Service Request Photos
+    Route::get('serviceRequests/{serviceRequest}/photos', [\App\Http\Controllers\Api\V1\ServiceRequestController::class, 'getPhotos'])
+        ->name('serviceRequests.photos.index');
 
     // Comments
     Route::get('serviceRequests/{serviceRequest}/comments', [\App\Http\Controllers\Api\V1\ServiceRequestController::class, 'comments']);

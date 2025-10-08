@@ -19,6 +19,8 @@ class EmployeeApplicationResource extends JsonResource
 
             'leaveRequest'      => $this->leaveRequest,
             'advanceRequest'    => $this->advanceRequest,
+            'missedCheckinRequest'    => $this->missedCheckinRequest,
+            'missedCheckoutRequest'    => $this->missedCheckoutRequest,
             'createdAt'         => $this->created_at?->toDateTimeString(),
         ];
     }

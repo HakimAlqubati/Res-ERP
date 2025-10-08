@@ -12,6 +12,7 @@ use App\Models\ServiceRequestComment;
 use App\Models\ServiceRequestLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ServiceRequestController extends Controller
 {
@@ -243,6 +244,27 @@ class ServiceRequestController extends Controller
     {
         return response()->json([
             'data' => \App\Models\ServiceRequest::STATUS_LABELS,
+        ]);
+    }
+
+    public function getPhotos(ServiceRequest $serviceRequest)
+    {
+        $photos = $serviceRequest->getMedia('attachments');
+
+        $data = $photos->map(fn($m) => [
+            'id'        => $m->id,
+            'name'      => $m->name,
+            'file_name' => $m->file_name,
+            'mime_type' => $m->mime_type,
+            'size'      => $m->size,
+            'url'       => $m->getFullUrl(),
+            'created_at' => $m->created_at,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'count'   => $data->count(),
+            'data'    => $data,
         ]);
     }
 }
