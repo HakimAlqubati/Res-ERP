@@ -15,6 +15,7 @@
         "filament/infolists": "^4.0",
         "filament/notifications": "^4.0",
         "filament/schemas": "^4.0",
+        "filament/spatie-laravel-media-library-plugin": "^4.1",
         "filament/tables": "^4.0",
         "filament/widgets": "^4.0",
         "google/apiclient": "^2.18",

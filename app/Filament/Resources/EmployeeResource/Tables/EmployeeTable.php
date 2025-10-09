@@ -34,27 +34,28 @@ use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\
 use App\Filament\Resources\EmployeeResource;
 use App\Filament\Resources\EmployeeResource\Pages;
 use App\Filament\Resources\EmployeeResource\Schemas\EmployeeForm;
-use App\Filament\Tables\Columns\SoftDeleteColumn; 
-use App\Models\Branch; 
+use App\Filament\Tables\Columns\SoftDeleteColumn;
+use App\Models\Branch;
 use App\Models\Employee;
-use App\Models\EmployeeFileType; 
+use App\Models\EmployeeFileType;
 use App\Models\UserType;
 use App\Services\S3ImageService;
 use Closure;
-use Filament\Actions\Action; 
-use Filament\Forms\Components\FileUpload; 
-use Filament\Forms\Components\Select; 
-use Filament\Notifications\Notification; 
+use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
+use Filament\Notifications\Notification;
 use Filament\Support\Enums\FontWeight;
-use Filament\Support\Icons\Heroicon; 
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Table; 
-use Illuminate\Support\Facades\Log; 
+use Filament\Tables\Table;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
 
@@ -442,6 +443,34 @@ class EmployeeTable
                 DeleteBulkAction::make(),
                 // ExportBulkAction::make(),
                 RestoreBulkAction::make(),
+                BulkAction::make('activate')
+                    ->label('Activate')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->action(function (\Illuminate\Support\Collection $records) {
+                        foreach ($records as $record) {
+                            try {
+                                // activate employee
+                                $record->update(['active' => 1]);
+
+                                // if employee has linked user, restore (if trashed) and activate user
+                                if ($record->user_id) {
+                                    $user = \App\Models\User::withTrashed()->find($record->user_id);
+                                    if ($user) {
+                                        if (method_exists($user, 'trashed') && $user->trashed()) {
+                                            $user->restore();
+                                        }
+                                        $user->update(['active' => 1]);
+                                    }
+                                }
+                            } catch (\Throwable $e) {
+                                report($e);
+                            }
+                        }
+
+                        showSuccessNotifiMessage('Selected employees activated.');
+                    }),
             ]);
     }
 }

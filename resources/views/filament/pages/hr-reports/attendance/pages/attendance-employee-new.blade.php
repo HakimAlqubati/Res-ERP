@@ -93,20 +93,19 @@
         .btn-primary i {
             margin-right: 8px;
         }
+
+        .btn-refresh {
+            border: 1px solid green;
+            border-radius: 5px;
+            padding: 0px 10px 0px 10px;
+        }
     </style>
     <div class="text-right mb-4">
-        <button type="button" class="btn btn-secondary" wire:click="refreshData">
-            🔄 {{ __('Refresh') }}
-        </button>
 
-        <!-- سبينر يظهر فقط أثناء تشغيل refreshData -->
-        <div wire:loading wire:target="refreshData" class="inline-block ml-2">
-            <i class="fas fa-spinner fa-spin"></i> {{ __('') }}
-        </div>
 
-        <button type="button" class="btn btn-info" onclick="showChartModal()">
+        {{-- <button type="button" class="btn btn-info" onclick="showChartModal()">
             📊 {{ __('Show Charts') }}
-        </button>
+        </button> --}}
 
         {{-- <button onclick="printReport()" class="btn btn-print">
             &#128438; {{ __('Print Report') }}
@@ -121,8 +120,20 @@
         <table class="w-full text-sm text-left pretty reports" id="report-table">
             <thead class="fixed-header" style="top:64px;">
                 <tr class="header_report">
-                    <th colspan="4">
+                    <th colspan="2" class="">
+                        <button type="button" class="btn btn-secondary btn-refresh" wire:click="refreshData">
+                            🔄 {{ __('Refresh') }}
+                        </button>
+
+                        <!-- سبينر يظهر فقط أثناء تشغيل refreshData -->
+                        <div wire:loading wire:target="refreshData" class="inline-block ml-2">
+                            <i class="fas fa-spinner fa-spin"></i> {{ __('') }}
+                        </div>
+                    </th>
+                    <th colspan="2">
+
                         <p>({{ \App\Models\Employee::find($employee_id)?->name ?? __('lang.choose_branch') }})</p>
+
                     </th>
                     <th colspan="2" class="no_border_right_left">
                         <p>{{ __('lang.start_date') . ': ' . $start_date }}</p>

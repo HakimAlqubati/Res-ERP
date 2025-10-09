@@ -43,6 +43,7 @@ use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -56,6 +57,7 @@ use Filament\Support\Colors\Color;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -420,7 +422,7 @@ class TaskResource extends Resource
                                     //     }),
                                 ])->hidden(),
 
-                            FileUpload::make('file_path')
+                            SpatieMediaLibraryFileUpload::make('file_path')
                                 ->label('Add photos')->columnSpanFull()
                                 ->disk('public')
                                 ->directory('tasks')
@@ -486,6 +488,11 @@ class TaskResource extends Resource
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
             ->columns([
+                SpatieMediaLibraryImageColumn::make('attachments')->label('media')
+                    ->circular()->alignCenter(true)
+                     ->conversion('thumb')
+                     ->collection('attachments') 
+                    ->limit(3),
                 TextColumn::make('id')->sortable()->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('title')->sortable()->wrap()->words(4)

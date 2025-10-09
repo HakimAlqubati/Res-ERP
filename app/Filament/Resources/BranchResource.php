@@ -233,7 +233,7 @@ class BranchResource extends Resource
                         ->icon('heroicon-o-user-circle')
                         ->schema([
                             Fieldset::make()->columns(1)->schema([
-                                FileUpload::make('images')
+                                SpatieMediaLibraryFileUpload::make('images')
                                     ->disk('public')
                                     ->label('')
                                     ->directory('branches')
@@ -262,7 +262,7 @@ class BranchResource extends Resource
                                         '16:9',
                                         '4:3',
                                         '1:1',
-                                    ])->maxSize(800)
+                                    ])->maxSize(2000)
                                     ->imageEditorMode(2)
                                     ->imageEditorEmptyFillColor('#fff000')
                                     ->circleCropper()
@@ -278,10 +278,10 @@ class BranchResource extends Resource
         return $table->striped()
             ->columns([
                 TextColumn::make('id')->label(__('lang.branch_id'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
-                // SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
-                //     ->circular()->alignCenter(true)->getStateUsing(function () {
-                //         return null;
-                //     })->limit(3),
+                SpatieMediaLibraryImageColumn::make('default')->label('')->size(50)
+                    ->circular()->alignCenter(true)->getStateUsing(function () {
+                        return null;
+                    })->limit(3),
                 TextColumn::make('name')->label(__('lang.name'))->searchable(),
                 TextColumn::make('type_title')->label(__('lang.branch_type')),
                 IconColumn::make('active')->boolean()->label(__('lang.active'))->alignCenter(true),
