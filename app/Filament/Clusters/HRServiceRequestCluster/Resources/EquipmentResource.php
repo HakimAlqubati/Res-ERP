@@ -128,7 +128,7 @@ class EquipmentResource extends Resource
                                         ->nullable(),
 
                                 ]),
-                                Grid::make()->columnSpanFull()->columns(3)->schema([
+                                Grid::make()->columnSpanFull()->columns(2)->schema([
                                     TextInput::make('purchase_price')
                                         ->label('Purchase Price')
                                         ->prefixIcon('heroicon-s-currency-dollar')->prefixIconColor('primary')
@@ -136,15 +136,17 @@ class EquipmentResource extends Resource
                                         ->nullable(),
 
                                     TextInput::make('size')
-                                        ->prefixIcon('heroicon-s-ellipsis-horizontal-circle')->prefixIconColor('primary')
+                                        ->prefixIcon(
+                                            Heroicon::OutlinedArrowsUpDown
+                                        )->prefixIconColor('primary')
                                         ->label('Size')
                                         ->nullable(),
 
-                                    TextInput::make('periodic_service')
-                                        ->label('Periodic Service (Days)')
-                                        ->prefixIcon('heroicon-s-ellipsis-horizontal-circle')->prefixIconColor('primary')
-                                        ->numeric()
-                                        ->default(0),
+                                    // TextInput::make('periodic_service')
+                                    //     ->label('Periodic Service (Days)')
+                                    //     ->prefixIcon('heroicon-s-ellipsis-horizontal-circle')->prefixIconColor('primary')
+                                    //     ->numeric()
+                                    //     ->default(0),
                                 ]),
 
                                 // Forms\Components\FileUpload::make('warranty_file')
@@ -257,7 +259,7 @@ class EquipmentResource extends Resource
                         ->icon('heroicon-o-photo')
                         ->schema([
                             Fieldset::make()->columnSpanFull()->columns(1)->schema([
-                                FileUpload::make('images')
+                                SpatieMediaLibraryFileUpload::make('images')
                                     ->disk('public')
                                     ->label('')
                                     ->directory('equipments')
@@ -300,10 +302,12 @@ class EquipmentResource extends Resource
     {
         return $table->striped()->defaultSort('id', 'desc')
             ->columns([
-                // SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
-                //     ->circular()->alignCenter(true)->getStateUsing(function () {
-                //     return null;
-                // })->limit(3),
+                SpatieMediaLibraryImageColumn::make('attachments')->label('')
+                ->width(10)
+
+                    ->circular()->alignCenter(true)->getStateUsing(function () {
+                    return null;
+                })->limit(2),
                 TextColumn::make('name')->toggleable()
                     ->searchable()
                     ->sortable()->toggleable(isToggledHiddenByDefault: false),
