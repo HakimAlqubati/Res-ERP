@@ -271,7 +271,7 @@ class TenantResource extends Resource
             }
 
             // Save SQL dump
-            file_put_contents($sqlPath, $process->getOutput());
+            // file_put_contents($sqlPath, $process->getOutput());
 
             // Create ZIP archive
             $zip = new \ZipArchive;
@@ -283,7 +283,7 @@ class TenantResource extends Resource
             }
 
             // Optionally delete the .sql file after zipping
-            unlink($sqlPath);
+            // unlink($sqlPath);
 
             // Upload to Google Drive
             $googlePath = 'backups/' . $zipFileName;
