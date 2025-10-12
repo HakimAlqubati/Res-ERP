@@ -87,6 +87,15 @@ class UserTable
                     ->copyMessage('Phone number copied')
                     ->copyMessageDuration(1500),
 
+                IconColumn::make('active')
+                    ->label('Active')
+                    ->boolean()
+                    ->getStateUsing(fn($record) => $record->active ?? true) // ✅ يعامل null كـ true
+
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+
                 TextColumn::make('branch.name')->searchable()->label('Branch')
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('owner.name')->searchable()->label('Manager')
@@ -109,10 +118,15 @@ class UserTable
                     ->label(__("lang.is_blocked"))->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('last_login_at')->label('Last Login')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->filtersFormColumns(2)
             ->filters([
-                Filter::make('active')
-                    ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
-                TrashedFilter::make(),
+                TrashedFilter::make(),  
+                SelectFilter::make('active')
+                    ->label('Status')
+                    ->options([
+                        1 => 'Active',
+                        0 => 'Inactive',
+                    ]),
                 SelectFilter::make('role')
                     ->label('Filter by Role')
                     ->options(Role::query()->pluck('name', 'id')->toArray()) // Fetch roles as options
@@ -132,7 +146,7 @@ class UserTable
                             ->forBranchManager('id')
                             ->pluck('name', 'id')->toArray()
                     ),
-                ],FiltersLayout::AboveContent)
+            ], FiltersLayout::Modal)
             ->recordActions([
                 ActionGroup::make([
                     EditAction::make(),
@@ -240,7 +254,7 @@ class UserTable
                                 showSuccessNotifiMessage('Done');
                             } catch (Exception $e) {
                                 // Log the exception for debugging
- 
+
                                 showWarningNotifiMessage('Faild', $e->getMessage());
                             }
                         })->requiresConfirmation()->hidden(),

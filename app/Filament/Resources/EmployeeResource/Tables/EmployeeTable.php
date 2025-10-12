@@ -175,7 +175,13 @@ class EmployeeTable
 
                         return '(' . $state . ') docs of ' . EmployeeFileType::getCountByRequirement()['required_count'];
                     }),
-                ToggleColumn::make('active')->toggleable(isToggledHiddenByDefault: true),
+                IconColumn::make('active')
+                    ->label('Active')
+                    ->boolean()
+                    ->getStateUsing(fn($record) => $record->active ?? true) // ✅ يعامل null كـ true
+
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('has_user')->boolean()
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon(
