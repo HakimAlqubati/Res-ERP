@@ -66,6 +66,7 @@ class AttendanceCreator
         if (! in_array($checkType, [Attendance::CHECKTYPE_CHECKIN, Attendance::CHECKTYPE_CHECKOUT])) {
             return [
                 'success' => false,
+                'type_required' => true,
                 'message' => $checkType,
             ];
         }
@@ -90,6 +91,7 @@ class AttendanceCreator
         }
         return [
             'success' => true,
+            'type_required' => false,
             'data'    => $createdAttendance,
         ];
     }
@@ -162,6 +164,7 @@ class AttendanceCreator
             if (is_string($result)) {
                 return [
                     'success' => false,
+                    'type_required' => false,
                     'message' => $result,
                 ];
             }

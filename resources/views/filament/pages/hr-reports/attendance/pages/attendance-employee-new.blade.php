@@ -126,8 +126,8 @@
                         </button>
 
                         <!-- سبينر يظهر فقط أثناء تشغيل refreshData -->
-                        <div wire:loading wire:target="refreshData" class="inline-block ml-2">
-                            <i class="fas fa-spinner fa-spin"></i> {{ __('') }}
+                        <div wire:loading wire:target="refreshData" class="inline-block ml-2" style="color: #45a049 !important;">
+                            <i class="fas fa-spinner fa-spin" style="color: #45a049 !important"></i> {{ __('') }}
                         </div>
                     </th>
                     <th colspan="2">

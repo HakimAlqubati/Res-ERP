@@ -2,6 +2,8 @@
 
 namespace App\Services\HR\Attendance;
 
+use App\Models\AppLog;
+use App\Models\Attendance;
 use App\Models\Employee;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -39,11 +41,47 @@ class AttendanceService
             ];
         }
 
-         return $this->handler->handleEmployeeAttendance(
+        $res = $this->handler->handleEmployeeAttendance(
             $employee,
             $formData,
             $attendanceType,
         );
+
+        // ⬇️ لو فشل التسجيل خزّنه كسجل غير مقبول باستخدام دالة المودل (بدون تعقيد)
+        if (isset($res['success']) && $res['success'] === false) {
+            // dd('sdf');
+            $dt  = isset($formData['date_time']) ? \Carbon\Carbon::parse($formData['date_time']) : now();
+            $date = $dt->toDateString();
+            $time = $dt->format('H:i:s');
+            $day  = strtolower($dt->format('D'));
+
+            $msg  = (string) ($res['message'] ?? 'Attendance failed');
+
+            AppLog::write(
+                $msg,
+                AppLog::LEVEL_WARNING,
+                context: 'attendance',
+                extra: [
+                    'employee_id' => $employee->id,
+                    'attendance_type' => $attendanceType,
+                    'date' => $date,
+                    'time' => $time,
+                    'day'  => $day,
+                ]
+            );
+
+            // Attendance::storeNotAccepted(
+            //     $employee,
+            //     $date,
+            //     $time,
+            //     $day,
+            //     (string) ($res['message'] ?? 'Attendance failed'),
+            //     $formData['period_id'] ?? null,    // إن لم تعرف الفترة اتركها null
+            //     $attendanceType
+            // );
+        }
+
+        return $res;
 
         // TODO: Replace this with actual attendance creation logic
         return [
@@ -82,8 +120,22 @@ class AttendanceService
                     $attendanceType
                 );
                 $responses['check_in'] = $res;
+                $dt   = \Carbon\Carbon::parse($formData['check_in']);
 
                 if (!$res['success']) {
+                    AppLog::write(
+                        'Check-in failed: ' . (string)($res['message'] ?? 'Unknown error'),
+                        AppLog::LEVEL_WARNING,
+                        context: 'attendance',
+                        extra: [
+                            'attempt'          => 'checkin',
+                            'employee_id'      => $employee->id,
+                            'date_time'        => $dt->toDateTimeString(),
+                            'attendance_type'  => $attendanceType,
+                            'form_payload'     => $formData,
+                        ]
+                    );
+
                     throw new \Exception("Check-in failed: " . $res['message']);
                 }
             }
@@ -96,8 +148,22 @@ class AttendanceService
                     $attendanceType
                 );
                 $responses['check_out'] = $res;
+                $dt   = \Carbon\Carbon::parse($formData['check_out']);
 
                 if (!$res['success']) {
+                    AppLog::write(
+                        'Check-out failed: ' . (string)($res['message'] ?? 'Unknown error'),
+                        AppLog::LEVEL_WARNING,
+                        context: 'attendance',
+                        extra: [
+                            'attempt'          => 'checkout',
+                            'employee_id'      => $employee->id,
+                            'date_time'        => $dt->toDateTimeString(),
+                            'attendance_type'  => $attendanceType,
+                            'form_payload'     => $formData,
+                        ]
+                    );
+
                     throw new \Exception("Check-out failed: " . $res['message']);
                 }
             }

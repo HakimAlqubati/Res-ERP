@@ -214,6 +214,7 @@ class CheckOutHandler
 
             return [
                 'success' => true,
+                'type_required' => false,
                 'data'    => $attendanceData,
             ];
         }

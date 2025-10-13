@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\HR;
 use Exception;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
+use App\Services\HR\Attendance\AttendancePlanService;
 use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
 use App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateService;
@@ -50,6 +51,7 @@ class AttendanceController extends Controller
 
         return response()->json([
             'status'  => $result['success'],
+            'type_required' => $result['type_required'],
             'message' => $result['message'],
             'data'    => $result['data'] ?? '',
         ], $result['success'] ? 200 : 422);
@@ -78,6 +80,7 @@ class AttendanceController extends Controller
         return response()->json([
             'status'  => $result['success'],
             'message' => $result['message'],
+            
             'data'    => $result['data'] ?? '',
         ], $result['success'] ? 200 : 422);
     }
@@ -325,5 +328,22 @@ class AttendanceController extends Controller
                 'message' => 'Recognition failed: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function generate(Request $request, AttendancePlanService $service)
+    {
+        $validated = $request->validate([
+            'work_period_id' => 'required|integer|exists:hr_work_periods,id',
+            'from_date'      => 'required|date',
+            'to_date'        => 'required|date|after_or_equal:from_date',
+        ]);
+
+        $plan = $service->buildPlan(
+            $validated['work_period_id'],
+            $validated['from_date'],
+            $validated['to_date']
+        );
+
+        return response()->json($plan);
     }
 }

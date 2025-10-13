@@ -1,6 +1,7 @@
 <?php
 
 use App\Attendance\Services\AttendanceHandler;
+use App\Http\Controllers\Api\HR\AttendancePlanController;
 use App\Http\Controllers\Api\FaceImageController;
 use App\Http\Controllers\Api\HR\AttendanceController;
 use App\Http\Controllers\Api\HR\EmployeeApplicationController;
@@ -51,6 +52,9 @@ Route::prefix('hr')
         Route::get('/employeeAttendance', [AttendanceController::class, 'employeeAttendance']);
         Route::get('employeesAttendanceOnDate', [AttendanceController::class, 'employeesAttendanceOnDate']);
 
+        Route::get('/attendancePlan', [AttendanceController::class, 'generate']);
+
+        Route::post('/attendance/plan/execute', [AttendancePlanController::class, 'execute'])->middleware('auth:api');
         Route::post('/faceRecognition', [AttendanceController::class, 'identifyEmployeeFromImage']);
         Route::post('/identifyEmployee', [EmployeeIdentificationController::class, 'identify'])
             // ->name('employees.identify')

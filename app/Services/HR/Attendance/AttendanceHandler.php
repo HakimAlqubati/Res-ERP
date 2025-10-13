@@ -41,6 +41,20 @@ class AttendanceHandler
         array $data,
         $attendanceType,
     ): array {
+        // ✅ صفّر الحالة من أي استدعاء سابق
+        $this->employeeId         = 0;
+        $this->date               = '';
+        $this->targetDate         = '';
+        $this->targetDay          = '';
+        $this->nextDate           = '';
+        $this->previousDate       = '';
+        $this->realAttendanceDate = '';
+        $this->workPeriod         = null;
+        $this->day                = '';
+        $this->hasWorkPeriod      = false;      // 👈 مهم جدًا
+        $this->data               = [];
+        $this->attendanceType     = '';
+
         $this->data = $data;
         // dd($data);
         $this->attendanceType = $attendanceType;
@@ -195,6 +209,7 @@ class AttendanceHandler
                     return
                         [
                             'success' => false,
+                            'type_required' => false,
                             'message' => $message,
                         ];
                 }
@@ -203,6 +218,7 @@ class AttendanceHandler
                     // Attendance::storeNotAccepted($employee, $this->date, $time, $day, $message, $closestPeriod->id, Attendance::ATTENDANCE_TYPE_RFID);
                     return [
                         'success' => false,
+                        'type_required' => false,
                         'message' => $message,
                     ];
                 }
@@ -246,6 +262,7 @@ class AttendanceHandler
                     [
                         'success' => true,
                         'data'     => $attendanceRecord,
+                        'type_required' => false,
                         'message'  => $message,
 
                     ];
@@ -254,12 +271,14 @@ class AttendanceHandler
                 return
                     [
                         'success' => false,
+                        'type_required' => false,
                         'message' => __('notifications.sorry_no_working_hours_have_been_added_to_you_please_contact_the_administration'),
                     ];
             } else {
                 return
                     [
                         'success' => false,
+                        'type_required' => false,
                         'message' => __('notifications.there_is_no_employee_at_this_number'),
                     ];
             }
@@ -267,6 +286,7 @@ class AttendanceHandler
             // هنا لو حصل أي Exception (مثل إقفال الشهر أو غيره)
             return [
                 'success' => false,
+                'type_required' => false,
                 'message' => $e->getMessage(),
             ];
         }
