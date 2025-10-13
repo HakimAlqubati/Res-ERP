@@ -87,4 +87,8 @@ class AttendanceImagesUploadedResource extends Resource
             'index' => ListAttendanceImagesUploadeds::route('/'),
         ];
     }
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
 }
