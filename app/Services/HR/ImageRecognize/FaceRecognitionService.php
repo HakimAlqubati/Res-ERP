@@ -3,10 +3,11 @@
 namespace App\Services\HR\ImageRecognize;
 
 use App\DTOs\HR\ImageRecognize\EmployeeMatch;
+use App\Models\AttendanceImagesUploaded;
 use Aws\Rekognition\RekognitionClient;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;  
+use Illuminate\Support\Facades\Storage;
 use App\Repositories\HR\ImageRecognize\EmployeeRecognitionRepository;
 
 class FaceRecognitionService
@@ -27,7 +28,7 @@ class FaceRecognitionService
         // 2) تأكيد الحجم > 0
         $sizeInBytes = Storage::disk('s3')->size($path);
         if ($sizeInBytes <= 0) {
-             return EmployeeMatch::notFound();
+            return EmployeeMatch::notFound();
         }
 
         // 3) البحث عبر Rekognition
@@ -45,7 +46,7 @@ class FaceRecognitionService
             'FaceMatchThreshold' => (float) $this->config['face_match_threshold'],
             'MaxFaces'           => (int) $this->config['max_faces'],
         ]);
- 
+
 
         $matches = $result['FaceMatches'] ?? [];
         // dd($matches);   
@@ -70,6 +71,21 @@ class FaceRecognitionService
             return new EmployeeMatch(false, 'No mapping found', null, null, $similarity, $confidence);
         }
 
+        // ✅ 5) إنشاء سجل attendance_images_uploaded
+        try {
+            AttendanceImagesUploaded::create([
+                'img_url'     => $path,
+                'employee_id' => $employeeId,
+                'datetime'    => now(),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to save uploaded attendance image', [
+                'error' => $e->getMessage(),
+                'path'  => $path,
+            ]);
+        }
+
+
         return new EmployeeMatch(true, $name, $employeeId, $employee, $similarity, $confidence);
     }
 
@@ -77,7 +93,7 @@ class FaceRecognitionService
     {
         $prefix   = trim($this->config['upload_prefix'] ?? 'uploads', '/');
         $ext      = $file->getClientOriginalExtension();
-        $timestamp= now()->format('Ymd_His_u');
+        $timestamp = now()->format('Ymd_His_u');
         $path     = "{$prefix}/identify_face_{$timestamp}.{$ext}";
 
         Storage::disk('s3')->put($path, fopen($file->getRealPath(), 'r'), [
@@ -87,9 +103,8 @@ class FaceRecognitionService
             //'Metadata'    => ['source' => 'identifyEmployee'],
         ]);
 
-     
+
 
         return $path;
     }
 }
- 

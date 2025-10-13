@@ -29,7 +29,7 @@ class AttendanceImagesUploadedResource extends Resource
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 20;
     protected static ?string $pluralLabel = 'Attendance Images Uploaded';
-    protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = true;
 
     protected static ?string $pluralModelLabel = 'Attendance Images Uploaded';
 
