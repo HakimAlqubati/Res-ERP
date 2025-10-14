@@ -15,22 +15,7 @@ use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
-    public function login_old(Request $request)
-    {
-        $credentials = $request->only('email', 'password');
 
-        if (Auth::attempt($credentials)) {
-            $user = $request->user();
-            $token = $user->createToken('MyApp')->accessToken;
-
-            return response()->json([
-                'token' => $token,
-                'user' => UserResource::make($user)
-            ]);
-        } else {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-    }
 
     public function login(Request $request)
     {
@@ -59,6 +44,31 @@ class AuthController extends Controller
                     'error' => 'Access denied. Owner only.'
                 ], 403);
             }
+
+
+            // dd('d');
+            /**
+             * ✅ التحقق من الجهاز (اختياري)
+             * إذا أرسل التطبيق device_id نتحقق منه،
+             * وإذا لم يرسله نتجاوز الفحص بدون خطأ.
+             */
+            if ($request->filled('device_id')) {
+                $deviceId = $request->input('device_id');
+
+                // إذا لم يكن الجهاز مصرحاً للمستخدم:
+                if (! $user->hasAuthorizedDevice($deviceId)) {
+                    Auth::logout();
+
+                    return response()->json([
+                        'error' => 'Device not authorized. Please contact admin.'
+                    ], 403);
+                }
+
+                // نحدث وقت آخر دخول
+                $user->touchDeviceLogin($deviceId);
+            }
+
+
             $token = $user->createToken('MyApp')->accessToken;
 
             return response()->json([

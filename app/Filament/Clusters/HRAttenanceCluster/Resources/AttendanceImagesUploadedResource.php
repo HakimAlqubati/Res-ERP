@@ -27,7 +27,7 @@ class AttendanceImagesUploadedResource extends Resource
 
     protected static ?string $cluster = HRAttenanceCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 20;
+    protected static ?int $navigationSort = 6;
     protected static ?string $pluralLabel = 'Attendance Images Uploaded';
     protected static bool $shouldRegisterNavigation = true;
 

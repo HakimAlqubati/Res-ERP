@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use App\Models\Traits\HasUserDevices;
 use Illuminate\Database\Eloquent\Builder;
 use App\Traits\DynamicConnection;
 use App\Traits\Scopes\BranchScope;
@@ -32,7 +34,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
         HasPanelShield,
         // DynamicConnection,
         \OwenIt\Auditing\Auditable,
-        BranchScope;
+        BranchScope,HasUserDevices;
 
     /**
      * The attributes that are mass assignable.
@@ -397,4 +399,6 @@ class User extends Authenticatable implements FilamentUser, Auditable
             }
         });
     }
+
+    
 }

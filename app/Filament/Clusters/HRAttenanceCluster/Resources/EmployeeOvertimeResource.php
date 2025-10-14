@@ -81,7 +81,7 @@ class EmployeeOvertimeResource extends Resource
     {
         return isStuff() ? 'My Overtime' : 'Staff Overtime';
     }
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 5;
     public static function form(Schema $schema): Schema
     {
         return $schema
