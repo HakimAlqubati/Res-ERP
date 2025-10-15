@@ -49,7 +49,8 @@ class UserDevice extends Model
     public static function isAuthorized(int $userId, string $deviceId): bool
     {
         return static::where('user_id', $userId)
-            ->where('device_hash', static::hashOf($deviceId))
+            // ->where('device_hash', static::hashOf($deviceId))
+            ->where('device_hash', $deviceId)
             ->where('active', true)
             ->exists();
     }

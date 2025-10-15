@@ -54,7 +54,8 @@ class AuthController extends Controller
              */
             if ($request->filled('device_id')) {
                 $deviceId = $request->input('device_id');
-
+ 
+                // dd($deviceId,$user->hasAuthorizedDevice($deviceId));
                 // إذا لم يكن الجهاز مصرحاً للمستخدم:
                 if (! $user->hasAuthorizedDevice($deviceId)) {
                     Auth::logout();

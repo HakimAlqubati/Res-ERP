@@ -20,7 +20,8 @@ trait HasUserDevices
     public function hasAuthorizedDevice(string $deviceId): bool
     {
         return $this->devices()
-            ->where('device_hash', UserDevice::hashOf($deviceId))
+            // ->where('device_hash', UserDevice::hashOf($deviceId))
+            ->where('device_hash', $deviceId)
             ->where('active', true)
             ->exists();
     }
