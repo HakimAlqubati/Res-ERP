@@ -44,10 +44,10 @@ class UserDevicesTable
                 ToggleColumn::make('active')->toggleable()
                     ->label('Active')->alignCenter(),
 
-                TextColumn::make('last_login')
-                    ->label('Last Login')
-                    ->dateTime('Y-m-d H:i')
-                    ->sortable(),
+                // TextColumn::make('last_login')
+                //     ->label('Last Login')
+                //     ->dateTime('Y-m-d H:i')
+                //     ->sortable(),
 
                 TextColumn::make('notes')
                     ->label('Notes')->toggleable()

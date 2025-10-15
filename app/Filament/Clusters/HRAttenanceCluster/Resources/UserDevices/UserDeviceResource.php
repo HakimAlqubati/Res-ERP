@@ -29,7 +29,7 @@ class UserDeviceResource extends Resource
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     protected static ?int $navigationSort = 7;
-    protected static ?string $recordTitleAttribute = 'user';
+    protected static ?string $recordTitleAttribute = 'user.name';
 
     public static function form(Schema $schema): Schema
     {

@@ -46,14 +46,14 @@ class UserDeviceForm
                         ->label('Active')
                         ->inline(false),
 
-                    DateTimePicker::make('last_login')
-                        ->label('Last Login')
-                        ->seconds(false)
-                        ->displayFormat('Y-m-d H:i')
-                        ->disabled()
-                        ->hiddenOn('create')
-                        ->dehydrated(false)
-                        ->columnSpan(2),
+                    // DateTimePicker::make('last_login')
+                    //     ->label('Last Login')
+                    //     ->seconds(false)
+                    //     ->displayFormat('Y-m-d H:i')
+                    //     ->disabled()
+                    //     ->hiddenOn('create')
+                    //     ->dehydrated(false)
+                    //     ->columnSpan(2),
                 ])
                 ->columns(4)
                 ->columnSpanFull(),
