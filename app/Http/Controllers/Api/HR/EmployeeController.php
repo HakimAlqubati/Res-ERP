@@ -13,14 +13,19 @@ class EmployeeController extends Controller
     public function simpleList()
     {
         // يمكنك تصفية الموظفين الفعالين فقط حسب حاجتك
-        $employees = Employee::select('id', 'name', 'avatar')
-            ->whereNotNull('avatar')
+        $employees = Employee::select('id', 'name', 'avatar', 'branch_id')
+            ->when(request('branch_id'), function ($query, $branchId) {
+                $query->where('branch_id', $branchId);
+            })
+            // ->whereNotNull('avatar')
             ->active() // scopeActive من الموديل
             ->get()
             ->map(function ($emp) {
                 return [
                     'employee_id' => $emp->id,
                     'name'        => $emp->name,
+                    'branch_id' => $emp->branch_id,
+                    'branch' => $emp?->branch?->name,
                     'avatar_url'  => $emp->avatar_image, // accessor الموجود عندك getAvatarImageAttribute
                 ];
             });
