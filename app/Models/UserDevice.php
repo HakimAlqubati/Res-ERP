@@ -11,7 +11,14 @@ class UserDevice extends Model
     protected $table = 'hr_user_devices';
 
     protected $fillable = [
-        'user_id', 'device_hash', 'active', 'last_login', 'plat_form', 'notes',
+        'user_id',
+        'device_hash',
+        'active',
+        'last_login',
+        'plat_form',
+        'notes',
+        'branch_id',
+        'branch_area_id'
     ];
 
     protected $casts = [
@@ -87,7 +94,7 @@ class UserDevice extends Model
             ->update(['last_login' => now()]);
     }
 
-      /**
+    /**
      * Model events.
      */
     protected static function booted(): void
@@ -103,4 +110,14 @@ class UserDevice extends Model
         });
     }
 
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function branchArea()
+    {
+        return $this->belongsTo(BranchArea::class, 'branch_area_id');
+    }
 }

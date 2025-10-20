@@ -15,6 +15,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -28,10 +29,10 @@ class AttendanceImagesUploadedResource extends Resource
     protected static ?string $cluster = HRAttenanceCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 6;
-    protected static ?string $pluralLabel = 'Attendance Images Uploaded';
+    protected static ?string $pluralLabel = 'Attendance Images';
     protected static bool $shouldRegisterNavigation = true;
 
-    protected static ?string $pluralModelLabel = 'Attendance Images Uploaded';
+    protected static ?string $pluralModelLabel = 'Attendance Images';
 
     public static function table(Table $table): Table
     {
@@ -62,9 +63,9 @@ class AttendanceImagesUploadedResource extends Resource
                 Filter::make('datetime')
                     ->label(__('lang.created_at'))
                     ->schema([
-                        DatePicker::make('created_from')->label(__('lang.from'))->default(now()),
-                        DatePicker::make('created_until')->label(__('lang.to'))->default(now()),
-                    ])
+                        DatePicker::make('created_from')->label(__('lang.from'))->default(now())->columnSpan(2),
+                        DatePicker::make('created_until')->label(__('lang.to'))->default(now())->columnSpan(2),
+                    ])->columns(4)
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
                             ->when(
@@ -76,7 +77,8 @@ class AttendanceImagesUploadedResource extends Resource
                                 fn(Builder $query, $date): Builder => $query->whereDate('datetime', '<=', $date),
                             );
                     })
-            ])
+            ], FiltersLayout::AboveContent)
+            ->deferFilters(false)
         ;
     }
 

@@ -175,10 +175,11 @@ class EmployeeTable
 
                         return '(' . $state . ') docs of ' . EmployeeFileType::getCountByRequirement()['required_count'];
                     }),
-                IconColumn::make('active')
+                ToggleColumn::make('active')
                     ->label('Active')
-                    ->boolean()
-                    ->getStateUsing(fn($record) => $record->active ?? true) // ✅ يعامل null كـ true
+                    // ->boolean()
+                    // ->getStateUsing(fn($record) => $record->active ?? true)
+                    // ✅ يعامل null كـ true
 
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),

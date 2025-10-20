@@ -9,6 +9,11 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Schemas\Components\Fieldset;
+use App\Models\Branch;
+use App\Models\BranchArea;
+use App\Models\User;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Set;
 
 class UserDeviceForm
 {
@@ -16,14 +21,61 @@ class UserDeviceForm
     {
         return $schema->components([
             Fieldset::make('Device Information')
+                ->columns(4)
                 ->schema([
+
+                    Grid::make()->columnSpanFull()->columns(4)
+                        ->schema([
+                            Select::make('branch_id')
+                                ->label('Branch')
+                                ->options(fn() => Branch::active()->pluck('name', 'id')->toArray())
+                                ->searchable()
+                                ->required()
+                                ->columnSpan(2)
+                                ->reactive()
+                                ->afterStateUpdated(function (Set $set, $state) {
+                                    // clear user when branch changes
+                                    $set('user_id', null);
+                                }),
+
+                            Select::make('branch_area_id')
+                                ->label('Branch Area')
+                                ->options(function (callable $get) {
+                                    $branchId = $get('branch_id');
+                                    if (!$branchId) {
+                                        return [];
+                                    }
+                                    return BranchArea::query()
+                                        ->where('branch_id', $branchId)
+                                        ->orderBy('name')
+                                        ->pluck('name', 'id')
+                                        ->toArray();
+                                })
+                                ->searchable()
+                                ->preload()
+                                ->columnSpan(2)
+                                ->reactive()
+                                ->nullable() // اختياري
+                                ->disabled(fn(callable $get) => empty($get('branch_id'))),
+                        ]),
+
                     Select::make('user_id')
                         ->label('User')
-                        ->relationship('user', 'name')
+                        ->options(function (callable $get) {
+                            $branchId = $get('branch_id');
+                            if (!$branchId) {
+                                return [];
+                            }
+                            $query = User::query()->select('id', 'name')->where('active', 1);
+                            if ($branchId) {
+                                $query->where('branch_id', $branchId);
+                            }
+                            return $query->limit(100)->pluck('name', 'id')->toArray();
+                        })
                         ->searchable()
                         ->preload()
-                        // ->hiddenOn('create')
-                        ,
+                    // ->hiddenOn('create')
+                    ,
 
                     TextInput::make('device_hash')
                         ->label('Device Hash (SHA-256)')
@@ -55,7 +107,7 @@ class UserDeviceForm
                     //     ->dehydrated(false)
                     //     ->columnSpan(2),
                 ])
-                ->columns(4)
+
                 ->columnSpanFull(),
 
             Fieldset::make('Notes')

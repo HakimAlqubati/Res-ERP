@@ -40,7 +40,18 @@ class UserDevicesTable
                     ->copyable()
                     ->limit(20)
                     ->tooltip(fn($record) => $record->device_hash),
+                TextColumn::make('branch.name')
+                    ->label('Branch')
+                    ->sortable()
+                    ->searchable()
+                    ->toggleable(),
 
+                TextColumn::make('branchArea.name')
+                    ->label('Area')
+                    ->sortable()
+                    ->searchable()
+                    ->toggleable()
+                    ->placeholder('-'),
                 ToggleColumn::make('active')->toggleable()
                     ->label('Active')->alignCenter(),
 
@@ -52,7 +63,7 @@ class UserDevicesTable
                 TextColumn::make('notes')
                     ->label('Notes')->toggleable()
                     ->limit(40)
-                    ->wrap(),   
+                    ->wrap(),
             ])
             ->filters([])
             ->recordActions([

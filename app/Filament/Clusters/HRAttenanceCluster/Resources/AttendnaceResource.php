@@ -206,6 +206,7 @@ class AttendnaceResource extends Resource
                 ])->default(1),
                 SelectFilter::make('employee_id')->searchable()->label('Employee')->options(function (Get $get) {
                     return Employee::query()
+                        ->active()
                         ->pluck('name', 'id');
                 }),
                 SelectFilter::make('branch_id')->searchable()->label('Branch')
