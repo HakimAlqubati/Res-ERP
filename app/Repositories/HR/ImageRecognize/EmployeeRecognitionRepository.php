@@ -51,8 +51,9 @@ class EmployeeRecognitionRepository
             ->where('branch_id', $currentBranchId)
             ->whereKey($empId)
             ->first();
-
-            dd($name,$empId,$employee);
+        if (!$employee) {
+            return [null, null, null];
+        }
         return [$name, $empId, $employee];
     }
 }
