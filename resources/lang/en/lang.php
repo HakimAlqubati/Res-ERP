@@ -250,4 +250,7 @@ return [
     'cancelled' => 'Cancelled',
     'is_cancelled' => 'Is Cancelled?',
     'final_total' => 'Final Total',
+    'grn_report' => 'GRN Report',
+    'grn_number' => 'GRN No',
+    'show_grn_number' => 'Show GRN No',
 ];

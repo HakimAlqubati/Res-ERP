@@ -232,4 +232,7 @@ return [
     'cancelled' => 'ملغي',
     'is_cancelled' => 'ملغي؟',
     'final_total' => 'الإجمالي النهائي',
+    'grn_report' => 'تقرير الـGRN',
+    'grn_number' => 'رقم الـGRN',
+    'show_grn_number' => 'عرض رقم الـGRN',
 ];
