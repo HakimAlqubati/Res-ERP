@@ -66,7 +66,8 @@ class UserDeviceForm
                             if (!$branchId) {
                                 return [];
                             }
-                            $query = User::query()->select('id', 'name')->where('active', 1);
+                            $query = User::query()->select('id', 'name')
+                                ->where('active', 1)->orWhere('active', null);
                             if ($branchId) {
                                 $query->where('branch_id', $branchId);
                             }
