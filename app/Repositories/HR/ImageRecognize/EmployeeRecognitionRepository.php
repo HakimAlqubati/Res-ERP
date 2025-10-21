@@ -44,6 +44,7 @@ class EmployeeRecognitionRepository
 
         // إن لم يتوفر رقم موظف صالح نرجع الاسم والـ ID كما هو وبدون موديل
         if (!$empId) {
+            dd('1');
             return [$name, null, null];
         }
 
@@ -52,6 +53,7 @@ class EmployeeRecognitionRepository
             ->whereKey($empId)
             ->first();
         if (!$employee) {
+            dd('2');
             return [null, null, null];
         }
         return [$name, $empId, $employee];
