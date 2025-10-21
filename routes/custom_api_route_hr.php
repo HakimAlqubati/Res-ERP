@@ -58,6 +58,7 @@ Route::prefix('hr')
         Route::post('/faceRecognition', [AttendanceController::class, 'identifyEmployeeFromImage']);
         Route::post('/identifyEmployee', [EmployeeIdentificationController::class, 'identify'])
             // ->name('employees.identify')
+            ->middleware('auth:api')
         ;
         Route::post('/liveness', [LivenessController::class, 'check']);
     });
