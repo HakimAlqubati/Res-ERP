@@ -24,7 +24,7 @@ class EmployeeRecognitionRepository
             ],
             'ConsistentRead' => true,
         ]);
- 
+
         $item = $result['Item'] ?? null;
         if (!$item || empty($item['Name']['S'])) {
             return [null, null, null];
@@ -37,6 +37,7 @@ class EmployeeRecognitionRepository
 
         $employee = $empId ? Employee::find($empId) : null;
 
+        dd($employee, auth()->user()?->branch_id);
         return [$name, $empId, $employee];
     }
 }
