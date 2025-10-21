@@ -2,6 +2,7 @@
 
 namespace App\Services\Reports\CenteralKitchens;
 
+use App\Models\ResellerSale;
 use App\Models\UnitPrice;
 use App\Services\MultiProductsInventoryService;
 use Illuminate\Support\Facades\DB;
@@ -171,6 +172,7 @@ class InVsOutResellerReportService
                 'inventory_transactions.transaction_date',
                 'stores.id as store_id',
                 'stores.name as store_name',
+                'inventory_transactions.transactionable_type',
             )
             ->whereNull('inventory_transactions.deleted_at')
             ->whereNotIn('inventory_transactions.product_id', [116])
@@ -215,6 +217,7 @@ class InVsOutResellerReportService
             'inventory_transactions.store_id',
             'stores.id',
             'stores.name',
+            'inventory_transactions.transactionable_type',
 
         ];
 
@@ -240,6 +243,10 @@ class InVsOutResellerReportService
             $totalQty = 0;
             $totalCost = 0;
 
+            $totalResellerQty = 0;
+            $totalOtherQty = 0;
+
+
             $smallestUnit = $this->getSmallestUnitPrice($productId);
             $this->smallestUnit[$productId] = $smallestUnit;
             if (!$smallestUnit) {
@@ -259,6 +266,12 @@ class InVsOutResellerReportService
                 $totalQty += $convertedQty;
                 $totalCost = $entry->price / $entry->package_size;
                 $storeName = $entry->store_name;
+
+                if ($entry->transactionable_type === ResellerSale::class) {
+                    $totalResellerQty += $convertedQty;
+                } else {
+                    $totalOtherQty += $convertedQty;
+                }
             }
 
             $storeId   = $entries[0]->store_id;
@@ -272,16 +285,93 @@ class InVsOutResellerReportService
                 'qty'          => round($totalQty, 2),
                 'unit_name'    => $unitName,
                 'price'        => round($totalCost, 2),
+                'out_qty_reseller' => round($totalResellerQty, 2),
+                'out_qty_other'    => round($totalOtherQty, 2),
             ];
         }
 
+        // dd($final);
         return $final;
     }
+    // public function getFinalComparison(array $filters = [])
+    // {
+    //     // رجّع البيانات مع مفتاح productId-storeId
+    //     $inData  = collect($this->getInData($filters))->keyBy(fn($row) => $row['product_id'] . '-' . ($row['store_id'] ?? $filters['store_id'] ?? ''));
+    //     $outData = collect($this->getOutData($filters))->keyBy(fn($row) => $row['product_id'] . '-' . ($row['store_id'] ?? $filters['store_id'] ?? ''));
+
+    //     // dd($outData);
+    //     $outQtyReseller = $out['out_qty_reseller'] ?? 0;
+    //     $outQtyOther    = $out['out_qty_other'] ?? 0;
+    //     $outQtyTotal    = $outQtyReseller + $outQtyOther;
+
+
+    //     $allKeys = $inData->keys()->merge($outData->keys())->unique();
+
+    //     $finalResult = [];
+
+    //     foreach ($allKeys as $key) {
+    //         [$pId, $storeId] = explode('-', $key);
+
+    //         $in  = $inData->get($key);
+    //         $out = $outData->get($key);
+
+    //         $smallestUnit = $this->smallestUnit[$key] ?? $this->getSmallestUnitPrice($pId);
+
+    //         $productName = $in['product_name'] ?? $out['product_name'] ?? '';
+    //         $productCode = $in['product_code'] ?? $out['product_code'] ?? '';
+    //         $unitName    = $in['unit_name'] ?? $out['unit_name'] ?? '';
+
+    //         $inQty    = $in['qty'] ?? 0;
+    //         $outQty   = $out['qty'] ?? 0;
+    //         $inPrice  = $in['price'] ?? 0;
+    //         $outPrice = $out['price'] ?? 0;
+
+    //         $currentQty = 0;
+    //         if ($smallestUnit) {
+    //             $currentQty = MultiProductsInventoryService::getRemainingQty(
+    //                 $pId,
+    //                 $smallestUnit->unit_id,
+    //                 $storeId
+    //             );
+    //         }
+
+    //         $storeName = $in['store_name'] ?? $out['store_name'] ?? null;
+
+    //         $finalResult[] = [
+    //             'product_id'   => (int) $pId,
+    //             'product_code' => $productCode,
+    //             'product_name' => $productName,
+    //             'store_id'     => (int) $storeId,
+    //             'store_name'   => $storeName,
+    //             'unit_name'    => $unitName,
+
+    //             'in_qty'       => round($inQty, 2),
+    //             'out_qty'      => round($outQty, 2),
+    //             'difference'   => round($inQty - $outQty, 2),
+
+    //             'in_price'     => round($inPrice, 2),
+    //             'out_price'    => round($outPrice, 2),
+    //             'current_qty'  => round($currentQty, 2),
+
+    //             'out_qty_reseller'   => round($outQtyReseller, 2),
+    //             'out_qty_other'      => round($outQtyOther, 2),
+    //             'out_qty_total'      => round($outQtyTotal, 2),
+    //         ];
+    //     }
+    //     dd($finalResult);
+    //     return $finalResult;
+    // }
+
     public function getFinalComparison(array $filters = [])
     {
         // رجّع البيانات مع مفتاح productId-storeId
-        $inData  = collect($this->getInData($filters))->keyBy(fn($row) => $row['product_id'] . '-' . ($row['store_id'] ?? $filters['store_id'] ?? ''));
-        $outData = collect($this->getOutData($filters))->keyBy(fn($row) => $row['product_id'] . '-' . ($row['store_id'] ?? $filters['store_id'] ?? ''));
+        $inData  = collect($this->getInData($filters))
+            ->keyBy(fn($row) => $row['product_id'] . '-' . ($row['store_id'] ?? $filters['store_id'] ?? ''));
+        $outData = collect($this->getOutData($filters))
+            ->keyBy(fn($row) => $row['product_id'] . '-' . ($row['store_id'] ?? $filters['store_id'] ?? ''));
+
+        // لو تحب تفحص عنصر معيّن:
+        // dd($outData->get('1056-19'));  // مثال
 
         $allKeys = $inData->keys()->merge($outData->keys())->unique();
 
@@ -293,46 +383,58 @@ class InVsOutResellerReportService
             $in  = $inData->get($key);
             $out = $outData->get($key);
 
-            $smallestUnit = $this->smallestUnit[$key] ?? $this->getSmallestUnitPrice($pId);
+            // ملاحظة: الكاش محفوظ على مستوى product_id وليس على مستوى key
+            $smallestUnit = $this->smallestUnit[$pId] ?? $this->getSmallestUnitPrice($pId);
 
             $productName = $in['product_name'] ?? $out['product_name'] ?? '';
             $productCode = $in['product_code'] ?? $out['product_code'] ?? '';
             $unitName    = $in['unit_name'] ?? $out['unit_name'] ?? '';
 
-            $inQty    = $in['qty'] ?? 0;
-            $outQty   = $out['qty'] ?? 0;
-            $inPrice  = $in['price'] ?? 0;
-            $outPrice = $out['price'] ?? 0;
+            $inQty   = $in['qty'] ?? $in['in_qty'] ?? 0; // حسب مخرجاتك الحالية من transformInResults
+            // تقسيم الـ out:
+            $outQtyReseller = $out['out_qty_reseller'] ?? 0;
+            $outQtyOther    = $out['out_qty_other'] ?? 0;
+            $outQtyTotal    = $outQtyReseller + $outQtyOther;
+
+            $inPrice  = $in['price'] ?? $in['in_price'] ?? 0;
+            // لو كان عندك أسعار مفصولة ممكن تضيفها، لكن حاليًا نخليها كما هي:
+            $outPrice = $out['price'] ?? $out['out_price'] ?? 0;
 
             $currentQty = 0;
             if ($smallestUnit) {
-                $currentQty = MultiProductsInventoryService::getRemainingQty(
-                    $pId,
+                $currentQty = \App\Services\MultiProductsInventoryService::getRemainingQty(
+                    (int) $pId,
                     $smallestUnit->unit_id,
-                    $storeId
+                    (int) $storeId
                 );
             }
 
             $storeName = $in['store_name'] ?? $out['store_name'] ?? null;
 
             $finalResult[] = [
-                'product_id'   => (int) $pId,
-                'product_code' => $productCode,
-                'product_name' => $productName,
-                'store_id'     => (int) $storeId,
-                'store_name'   => $storeName,
-                'unit_name'    => $unitName,
+                'product_id'        => (int) $pId,
+                'product_code'      => $productCode,
+                'product_name'      => $productName,
+                'store_id'          => (int) $storeId,
+                'store_name'        => $storeName,
+                'unit_name'         => $unitName,
 
-                'in_qty'       => round($inQty, 2),
-                'out_qty'      => round($outQty, 2),
-                'difference'   => round($inQty - $outQty, 2),
+                'in_qty'            => round($inQty, 2),
 
-                'in_price'     => round($inPrice, 2),
-                'out_price'    => round($outPrice, 2),
-                'current_qty'  => round($currentQty, 2),
+                // الأعمدة الجديدة
+                'out_qty_reseller'  => round($outQtyReseller, 2),
+                'out_qty_other'     => round($outQtyOther, 2),
+                'out_qty_total'     => round($outQtyTotal, 2),
+
+                'difference'        => round(($inQty) - ($outQtyTotal), 2),
+
+                'in_price'          => round($inPrice, 2),
+                'out_price'         => round($outPrice, 2),
+                'current_qty'       => round($currentQty, 2),
             ];
         }
 
+        // dd($finalResult);
         return $finalResult;
     }
 }

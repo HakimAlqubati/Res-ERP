@@ -50,6 +50,7 @@ class ListInVSOutResellerReport extends ListRecords
         $reportService = new InVsOutResellerReportService();
         $data = $reportService->getFinalComparison($filters);
 
+        // dd($data);
         $store = filled($storeId) ? (Store::find($storeId)?->name) : null;
 
         $totals = null;

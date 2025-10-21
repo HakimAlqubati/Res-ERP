@@ -114,7 +114,7 @@
                 <tr class="header_report">
 
 
-                    <th colspan="{{ empty($store) ? 7 : 6 }}" class="text-left text-xl font-bold px-4 py-2">
+                    <th colspan="{{ empty($store) ? 8 : 7 }}" class="text-left text-xl font-bold px-4 py-2">
                         ({{ $store ?? 'All' }}) To Date {{ $toDate }}
                     </th>
                 </tr>
@@ -126,6 +126,7 @@
                     <th class="px-4 py-2">Code</th>
                     <th class="px-4 py-2">Unit</th>
                     <th class="px-4 py-2">DO Qty</th>
+                    <th class="px-4 py-2">Return Qty</th>
                     <th class="px-4 py-2">Invoice Qty</th>
                     <th class="px-4 py-2">Remaining</th>
                     {{-- <th class="px-4 py-2">Price (Est.)</th> --}}
@@ -141,24 +142,25 @@
                         <td class="border px-4 py-1 text-center">{{ $row['product_code'] }}</td>
                         <td class="border px-4 py-1 text-center">{{ $row['unit_name'] }}</td>
                         <td class="border px-4 py-1 text-center">{{ $row['in_qty'] }}</td>
-                        <td class="border px-4 py-1 text-center">{{ $row['out_qty'] }}</td>
+                        <td class="border px-4 py-1 text-center">{{ $row['out_qty_other'] }}</td>
+                        <td class="border px-4 py-1 text-center">{{ $row['out_qty_reseller'] }}</td>
                         <td class="border px-4 py-1 text-center font-semibold">{{ $row['current_qty'] }}</td>
                         {{-- <td
                                 class="border px-4 py-1 text-center">{{ $row['in_price'] }}</td> --}}
                     </tr>
                 @endforeach
-                @if (!empty($totals))
+                {{-- @if (!empty($totals))
                     <tr class="bg-gray-100 font-bold">
                         @if (empty($store))
                             <td class="border px-4 py-1 text-center">Total</td>
                         @endif
-                        <td class="border px-4 py-1 text-center" colspan="3">Total</td>
+                        <td class="border px-4 py-1 text-center" colspan="4">Total</td>
                         
                         <td class="border px-4 py-1 text-center">{{ $totals['in_qty'] }}</td>
                         <td class="border px-4 py-1 text-center">{{ $totals['out_qty'] }}</td>
                         <td class="border px-4 py-1 text-center">{{ $totals['current_qty'] }}</td>
                     </tr>
-                @endif
+                @endif --}}
             </tbody>
         </table>
     @else

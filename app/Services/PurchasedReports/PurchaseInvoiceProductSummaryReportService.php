@@ -103,7 +103,7 @@ class PurchaseInvoiceProductSummaryReportService
     public function getSmallestUnitPrice($productId)
     {
         $product = Product::find($productId);
-        if(!$product){
+        if (!$product) {
             return;
         }
         return $product->supplyOutUnitPrices()
@@ -270,6 +270,7 @@ class PurchaseInvoiceProductSummaryReportService
             $lastPrice = ($latestPrice && $latestPrice->package_size > 0)
                 ? ($latestPrice->price / $latestPrice->package_size)
                 : $purchase['price'];
+            $res = $lastPrice * $remainingQty;
             $report[] = [
                 'product_id'     => $productId,
                 'product_name'   => $purchase['product_name'],
@@ -279,7 +280,10 @@ class PurchaseInvoiceProductSummaryReportService
                 'ordered_qty'    => $orderedQty,
                 'difference'     => formatQunantity($remainingQty),
                 'unit_price'     => round($lastPrice, 2),
-                'price'          => round($lastPrice * $remainingQty, 2),
+                'unit_price_formatted'     => formatMoneyWithCurrency($lastPrice),
+                'price'          => round($res, 2),
+
+                'price_formatted' => formatMoneyWithCurrency($res),
             ];
             // }
         }
