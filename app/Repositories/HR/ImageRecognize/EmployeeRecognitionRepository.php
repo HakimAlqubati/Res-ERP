@@ -52,6 +52,7 @@ class EmployeeRecognitionRepository
             ->whereKey($empId)
             ->first();
 
+            dd($name,$empId,$employee);
         return [$name, $empId, $employee];
     }
 }
