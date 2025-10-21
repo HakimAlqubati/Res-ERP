@@ -67,6 +67,7 @@ class FaceRecognitionService
         // 4) ربط RekognitionId → DynamoDB → Employee
         [$name, $employeeId, $employee] = $this->repo->resolveByRekognitionId($rekognitionId);
 
+        dd($name,$employee,$employeeId);
         if (!$employeeId && !$name) {
             return new EmployeeMatch(false, 'No mapping found', null, null, $similarity, $confidence);
         }
