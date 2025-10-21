@@ -35,9 +35,23 @@ class EmployeeRecognitionRepository
         $empId  = trim(array_pop($parts));          // آخر جزء = ID
         $name   = trim(implode('-', $parts));
 
-        $employee = $empId ? Employee::find($empId) : null;
+        $currentBranchId = auth()->user()?->branch_id;
 
-        dd($employee, auth()->user()?->branch_id);
+        if (!$currentBranchId) {
+            abort(403, 'Branch context is required to resolve employee.');
+            // أو يمكن: throw new AuthorizationException('Branch context is required.');
+        }
+
+        // إن لم يتوفر رقم موظف صالح نرجع الاسم والـ ID كما هو وبدون موديل
+        if (!$empId) {
+            return [$name, null, null];
+        }
+
+        $employee = Employee::query()
+            ->where('branch_id', $currentBranchId)
+            ->whereKey($empId)
+            ->first();
+
         return [$name, $empId, $employee];
     }
 }
