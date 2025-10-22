@@ -59,7 +59,7 @@
         @endif
     @else
         <div class="please_select_message_div text-center">
-            <p class="text-center mt-10 text-gray-500">Please select a store.</p>
+            <p class="please_select_message_text">Please select a store.</p>
         </div>
     @endif
 

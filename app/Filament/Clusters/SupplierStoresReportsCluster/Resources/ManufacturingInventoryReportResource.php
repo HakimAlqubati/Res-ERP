@@ -39,16 +39,20 @@ class ManufacturingInventoryReportResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->filters([
+        return $table
+        ->deferFilters(false)
+        ->filters([
             SelectFilter::make('product_id')
                 ->label('Product')
                 ->searchable()
+                ->placeholder('Choose Product')
                 ->options(Product::active()->get()->mapWithKeys(fn($p) => [
                     $p->id => $p->code . ' - ' . $p->name
                 ])),
 
             SelectFilter::make('store_id')
                 ->label('Store')
+                ->placeholder('Choose Store')
                 ->searchable()
                 ->options(Store::active()->where('is_central_kitchen', 1)
                     ->pluck('name', 'id')),

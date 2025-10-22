@@ -453,3 +453,26 @@ tbody:last-of-type tr .fixed_footer {
 .text-center {
     text-align: center !important;
 }
+
+/* قيّد أيقونات الأسهم داخل الباجيناشن فقط */
+.paginator_container svg,
+.filament-tables-pagination svg,
+nav[role="navigation"] svg {
+    width: 1rem !important;
+    height: 1rem !important;
+    flex: none;
+}
+
+/* ✅ فووتر مثبت */
+tbody.sticky-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 11;
+}
+
+tbody.sticky-footer td,
+tbody.sticky-footer th {
+    background: white !important;
+    color: #0d7c66;
+    font-weight: bold;
+}

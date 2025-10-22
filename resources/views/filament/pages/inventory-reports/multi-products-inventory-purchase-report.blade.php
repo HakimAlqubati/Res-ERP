@@ -17,6 +17,9 @@
             /* لون الخلفية للتأكيد */
             z-index: 10;
         }
+           .fi-tabs {
+            display: none !important;
+        }
     </style>
     {{-- Print Button --}}
     <div class="flex justify-end mb-4">

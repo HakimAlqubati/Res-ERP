@@ -1,18 +1,23 @@
 <x-filament-panels::page>
     <style>
+      
+
         table {
             width: 100%;
             border-collapse: inherit;
             border-spacing: initial;
+            position: relative;
+            /* يساعد في طبقات z-index */
         }
 
-        tbody:last-of-type .fixed_footer {
+        thead.fixed-header {
             position: sticky;
-            bottom: 0;
-            background: white !important;
-            color: #0d7c66;
-            z-index: 10;
+            top: 64px;
+            z-index: 12;
+            background: white;
         }
+
+      
     </style>
 
     {{ $this->getTableFiltersForm() }}
@@ -24,17 +29,17 @@
         </button>
     </div>
 
-    {{-- ✅ ملاحظة بالإنجليزية --}}
     <div class="mb-3 p-3 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded">
         ⚠️ <strong>Note:</strong> The prices displayed in this report are for reference only and may not be accurate.
     </div>
 
     <table class="w-full text-sm text-left pretty reports" id="report-table">
-        <thead style="top:64px;" class="fixed-header">
+        <thead class="fixed-header">
             <tr>
                 <th colspan="4">{{ __('lang.store') }}: ({{ $grn_data['store_name'] }})</th>
-                <th colspan="{{ $show_grn_number ? '5' : '4' }}">{{ __('lang.supplier') }}:
-                    ({{ $grn_data['supplier_name'] }})</th>
+                <th colspan="{{ $show_grn_number ? '5' : '4' }}">
+                    {{ __('lang.supplier') }}: ({{ $grn_data['supplier_name'] }})
+                </th>
             </tr>
             <tr>
                 <th>{{ __('lang.product_code') }}</th>
@@ -87,21 +92,17 @@
         </tbody>
 
         @if (!isStoreManager())
-            <tbody>
-                <tr class="fixed_footer">
+            <tbody class="sticky-footer">
+                <tr>
                     <td colspan="{{ $show_grn_number ? '8' : '7' }}">{{ __('lang.total') }}</td>
                     <td>{{ $total_amount }}</td>
                 </tr>
-                <tr class="fixed_footer">
+                <tr>
                     <td colspan="{{ $show_grn_number ? '8' : '7' }}">{{ __('lang.final_total') }}</td>
                     <td>{{ $final_total_amount }}</td>
                 </tr>
             </tbody>
         @endif
-
-        <tr>
-            <td colspan="100%"></td>
-        </tr>
     </table>
 
     <div class="mt-4">

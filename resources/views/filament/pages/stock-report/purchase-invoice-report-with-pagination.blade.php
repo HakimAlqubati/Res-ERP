@@ -17,8 +17,6 @@
             /* لون الخلفية للتأكيد */
             z-index: 10;
         }
-
-     
     </style>
     {{ $this->getTableFiltersForm() }}
     <div class="flex justify-end mb-4">
@@ -95,22 +93,22 @@
         </tbody>
 
         @if (!isStoreManager())
-            <tbody>
-                <tr class="fixed_footer">
+            <tbody class="sticky-footer">
+                <tr>
                     <td colspan="{{ $show_invoice_no ? '8' : '7' }}"> {{ __('lang.total') }}
                     </td>
                     {{-- <td> {{ formatMoneyWithCurrency($sum_unit_price) }} </td> --}}
                     <td> {{ $total_amount }}
                     </td>
                 </tr>
-                <tr class="fixed_footer">
+                <tr>
                     <td colspan="{{ $show_invoice_no ? '8' : '7' }}"> {{ __('lang.final_total') }}
                     </td>
                     {{-- <td> {{ formatMoneyWithCurrency($sum_unit_price) }} </td> --}}
                     <td> {{ $final_total_amount }}
                     </td>
                 </tr>
-               
+
             </tbody>
         @endif
 

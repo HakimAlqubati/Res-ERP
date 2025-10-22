@@ -95,8 +95,8 @@
             </div>
         @endif
     @else
-        <div class="text-center mt-10">
-            <h2 class="text-gray-500 text-lg">Please select a store to begin.</h2>
+        <div class="text-center mt-10 please_select_message_div">
+            <h2 class="please_select_message_text">Please select a store to begin.</h2>
         </div>
     @endif
 
