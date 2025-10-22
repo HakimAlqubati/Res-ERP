@@ -1,8 +1,17 @@
 <x-filament-panels::page>
     <style>
-        table { width: 100%; border-collapse: inherit; border-spacing: initial; }
+        table {
+            width: 100%;
+            border-collapse: inherit;
+            border-spacing: initial;
+        }
+
         tbody:last-of-type .fixed_footer {
-            position: sticky; bottom: 0; background: white !important; color: #0d7c66; z-index: 10;
+            position: sticky;
+            bottom: 0;
+            background: white !important;
+            color: #0d7c66;
+            z-index: 10;
         }
     </style>
 
@@ -15,11 +24,17 @@
         </button>
     </div>
 
+    {{-- ✅ ملاحظة بالإنجليزية --}}
+    <div class="mb-3 p-3 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 rounded">
+        ⚠️ <strong>Note:</strong> The prices displayed in this report are for reference only and may not be accurate.
+    </div>
+
     <table class="w-full text-sm text-left pretty reports" id="report-table">
         <thead style="top:64px;" class="fixed-header">
             <tr>
                 <th colspan="4">{{ __('lang.store') }}: ({{ $grn_data['store_name'] }})</th>
-                <th colspan="{{ $show_grn_number ? '5' : '4' }}">{{ __('lang.supplier') }}: ({{ $grn_data['supplier_name'] }})</th>
+                <th colspan="{{ $show_grn_number ? '5' : '4' }}">{{ __('lang.supplier') }}:
+                    ({{ $grn_data['supplier_name'] }})</th>
             </tr>
             <tr>
                 <th>{{ __('lang.product_code') }}</th>
@@ -46,9 +61,9 @@
             @foreach ($grn_data['results'] as $row)
                 @php
                     $unit_price = $row->unit_price;
-                    $sub_total  = $row->unit_price * $row->quantity;
+                    $sub_total = $row->unit_price * $row->quantity;
                     $total_sub_total += $sub_total;
-                    $sum_unit_price  += $unit_price;
+                    $sum_unit_price += $unit_price;
                 @endphp
                 <tr>
                     <td>{{ $row->product_code }}</td>
@@ -84,7 +99,9 @@
             </tbody>
         @endif
 
-        <tr><td colspan="100%"></td></tr>
+        <tr>
+            <td colspan="100%"></td>
+        </tr>
     </table>
 
     <div class="mt-4">
@@ -99,7 +116,9 @@
 <script>
     function exportTableToExcel(tableId, filename = 'grn_report.xlsx') {
         const table = document.getElementById(tableId);
-        const workbook = XLSX.utils.table_to_book(table, { sheet: "Report" });
+        const workbook = XLSX.utils.table_to_book(table, {
+            sheet: "Report"
+        });
         XLSX.writeFile(workbook, filename);
     }
 </script>
