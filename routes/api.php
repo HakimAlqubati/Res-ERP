@@ -248,6 +248,7 @@ Route::get('branchConsumptionReport/topProducts', [BranchConsumptionController::
 
 Route::get('/app/settings', [SettingController::class, 'show']);
  
+require base_path('routes/ocr.php');
 require base_path('routes/custom_api_route_hr.php');
 require base_path('routes/custom_route.php');
 require base_path('routes/custom_api_route_inventory.php');
