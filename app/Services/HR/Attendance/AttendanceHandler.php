@@ -58,7 +58,7 @@ class AttendanceHandler
         $this->data = $data;
         // dd($data);
         $this->attendanceType = $attendanceType;
-        try {
+        // try {
             $dateTime = $data['date_time']; // مفترض "Y-m-d H:i:s"
             $dt = CarbonImmutable::parse($dateTime);
 
@@ -109,8 +109,7 @@ class AttendanceHandler
                         $time,
                         $latstCheckIn->id
                     );
-                    if (!$isClosed) {
-                        dd($latstCheckIn);
+                    if (!$isClosed) { 
                         $this->workPeriod = $latstCheckIn->period;
                         if ($this->workPeriod) {
                             $this->hasWorkPeriod = true;
@@ -283,14 +282,14 @@ class AttendanceHandler
                         'message' => __('notifications.there_is_no_employee_at_this_number'),
                     ];
             }
-        } catch (\Exception $e) {
-            // هنا لو حصل أي Exception (مثل إقفال الشهر أو غيره)
-            return [
-                'success' => false,
-                'type_required' => false,
-                'message' => $e->getMessage(),
-            ];
-        }
+        // } catch (\Exception $e) {
+        //     // هنا لو حصل أي Exception (مثل إقفال الشهر أو غيره)
+        //     return [
+        //         'success' => false,
+        //         'type_required' => false,
+        //         'message' => $e->getMessage(),
+        //     ];
+        // }
     }
 
 
