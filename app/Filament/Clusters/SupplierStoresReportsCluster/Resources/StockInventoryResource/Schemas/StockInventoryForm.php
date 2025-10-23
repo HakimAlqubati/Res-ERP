@@ -38,7 +38,7 @@ class StockInventoryForm
                                 Select::make('store_id')->label(__('lang.store'))
                                     ->default(getDefaultStore())
                                     ->disabledOn('edit')
-                                    ->live()
+                                    ->reactive()
                                     ->options(
                                         Store::active()
                                             ->withManagedStores()
@@ -87,7 +87,7 @@ class StockInventoryForm
                                     Select::make('category_id')->visibleOn('create')
                                     ->label('Category')
                                     ->options(Category::pluck('name', 'id'))
-                                    ->live()
+                                    ->reactive()
                                     ->afterStateUpdated(function (callable $set, callable $get, $state) {
 
 
@@ -173,7 +173,7 @@ class StockInventoryForm
                                     Toggle::make('edit_enabled')
                                     ->label('Edit')
                                     ->inline(false)
-                                    ->default(false)->live()
+                                    ->default(false)->reactive()
                                     ->helperText('Enable this option to allow editing inventory details')
                                     ->dehydrated()
                                     ->columnSpan(1),
