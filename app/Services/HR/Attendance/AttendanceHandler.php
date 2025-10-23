@@ -110,6 +110,7 @@ class AttendanceHandler
                         $latstCheckIn->id
                     );
                     if (!$isClosed) {
+                        dd($latstCheckIn);
                         $this->workPeriod = $latstCheckIn->period;
                         if ($this->workPeriod) {
                             $this->hasWorkPeriod = true;
