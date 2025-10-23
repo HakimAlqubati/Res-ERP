@@ -39,6 +39,7 @@ class CheckOutHandler
         if (
             $checkTime->format('H:i:s') >= '00:00:00' &&
             $checkTime->format('H:i:s') <= $windowEnd &&
+            $checkinRecord &&
             $checkinRecord->period->day_and_night
         ) {
             $dateModified = Carbon::parse($date)->addDay()->toDateString();
