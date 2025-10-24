@@ -62,6 +62,10 @@ class CheckTypeDecider
 
             return Attendance::CHECKTYPE_CHECKIN;
         }
+        // if ($attendanceCount == 1 && $existAttendance[0]['check_type'] == Attendance::CHECKTYPE_CHECKOUT) {
+        //     return Attendance::CHECKTYPE_CHECKIN;
+        // }
+        // dd($attendanceCount,$existAttendance,$attendanceCollection);
         // فردي أو زوجي
         return $attendanceCount % 2 === 0
             ? Attendance::CHECKTYPE_CHECKIN

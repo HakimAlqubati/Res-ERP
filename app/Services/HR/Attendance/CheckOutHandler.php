@@ -65,7 +65,10 @@ class CheckOutHandler
             $previousCheckDate = $date;
             $previousCheckId   = $checkinRecord->id;
             $previousDayName   = Carbon::parse($checkinRecord->check_date)->format('l');
-        } elseif ($previousRecord) {
+        } elseif (
+            $previousRecord && is_array($previousRecord)
+            && isset($previousRecord['in_previous'])
+        ) {
             $previousCheckDate                      = $previousRecord['in_previous']->check_date;
             $previousDayName                        = $previousRecord['previous_day_name'];
             $checkinTime                            = Carbon::parse($previousCheckDate . ' ' . $previousRecord['in_previous']->check_time);
