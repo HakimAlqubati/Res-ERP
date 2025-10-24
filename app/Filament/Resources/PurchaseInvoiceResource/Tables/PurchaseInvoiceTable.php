@@ -147,7 +147,13 @@ class PurchaseInvoiceTable
                             ->orderBy('name')
                             ->pluck('name', 'id')
                             ->toArray();
-                    })  ->searchable(),
+                    })->searchable(),
+                SelectFilter::make('has_attachment')
+                    ->label('Has Attachment')
+                    ->options([
+                        '1' => 'With Attachment',
+                        '0' => 'Without Attachment',
+                    ]),
                 Filter::make('date_range')
                     ->schema([
                         DatePicker::make('from')->label('From Date'),
