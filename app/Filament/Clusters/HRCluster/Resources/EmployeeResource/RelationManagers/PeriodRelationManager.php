@@ -215,12 +215,12 @@ class PeriodRelationManager extends RelationManager
                             // Validate the employee's last attendance
                             $lastAttendance = $this->ownerRecord->attendances()->latest('id')->first();
                             if ($lastAttendance && $lastAttendance->check_type === Attendance::CHECKTYPE_CHECKIN) {
-                                Notification::make()
-                                    ->title('Validation Error')
-                                    ->body('The employee has a pending check-out. You cannot add new work periods until the check-out is recorded.')
-                                    ->warning()
-                                    ->send();
-                                return;
+                                // Notification::make()
+                                //     ->title('Validation Error')
+                                //     ->body('The employee has a pending check-out. You cannot add new work periods until the check-out is recorded.')
+                                //     ->warning()
+                                //     ->send();
+                                // return;
                             }
 
                             // Insert new periods into hr_employee_periods table

@@ -39,6 +39,7 @@ class CheckOutHandler
         if (
             $checkTime->format('H:i:s') >= '00:00:00' &&
             $checkTime->format('H:i:s') <= $windowEnd &&
+            $checkinRecord &&
             $checkinRecord->period->day_and_night
         ) {
             $dateModified = Carbon::parse($date)->addDay()->toDateString();
@@ -64,7 +65,10 @@ class CheckOutHandler
             $previousCheckDate = $date;
             $previousCheckId   = $checkinRecord->id;
             $previousDayName   = Carbon::parse($checkinRecord->check_date)->format('l');
-        } elseif ($previousRecord) {
+        } elseif (
+            $previousRecord && is_array($previousRecord)
+            && isset($previousRecord['in_previous'])
+        ) {
             $previousCheckDate                      = $previousRecord['in_previous']->check_date;
             $previousDayName                        = $previousRecord['previous_day_name'];
             $checkinTime                            = Carbon::parse($previousCheckDate . ' ' . $previousRecord['in_previous']->check_time);
@@ -73,6 +77,44 @@ class CheckOutHandler
             $attendanceData['check_date']           = $previousCheckDate;
             $attendanceData['day']                  = $previousDayName;
         } else {
+            // تفريغ الحقول الزمنية لعدم توفر Check-in
+            $attendanceData['actual_duration_hourly']       = $attendanceData['actual_duration_hourly'] ?? '00:00';
+            $attendanceData['total_actual_duration_hourly'] = $attendanceData['total_actual_duration_hourly'] ?? '00:00';
+            $attendanceData['supposed_duration_hourly']     = $nearestPeriod?->supposed_duration;
+            $attendanceData['checkinrecord_id']             = null;
+            $attendanceData['delay_minutes']                = 0;
+
+            // $checkTime تم تعيينه مسبقًا إلى $bounds['currentTimeObj']
+            // $endTime محسوب مسبقًا حسب start/end والفترة الليلية
+            if ($nearestPeriod->day_and_night) {
+                if ($checkTime->equalTo($endTime)) {
+                    $attendanceData['status'] = Attendance::STATUS_ON_TIME;
+                    $attendanceData['late_departure_minutes']  = 0;
+                    $attendanceData['early_departure_minutes'] = 0;
+                } elseif ($checkTime->greaterThan($endTime)) {
+                    $attendanceData['status'] = Attendance::STATUS_LATE_DEPARTURE;
+                    $attendanceData['late_departure_minutes']  = $endTime->diffInMinutes($checkTime);
+                    $attendanceData['early_departure_minutes'] = 0;
+                } else {
+                    $attendanceData['status'] = Attendance::STATUS_EARLY_DEPARTURE;
+                    $attendanceData['early_departure_minutes'] = $checkTime->diffInMinutes($endTime);
+                    $attendanceData['late_departure_minutes']  = 0;
+                }
+            } else {
+                if ($checkTime->gt($endTime)) {
+                    $attendanceData['status'] = Attendance::STATUS_LATE_DEPARTURE;
+                    $attendanceData['late_departure_minutes']  = $endTime->diffInMinutes($checkTime);
+                    $attendanceData['early_departure_minutes'] = 0;
+                } elseif ($checkTime->lt($endTime)) {
+                    $attendanceData['status'] = Attendance::STATUS_EARLY_DEPARTURE;
+                    $attendanceData['early_departure_minutes'] = $checkTime->diffInMinutes($endTime);
+                    $attendanceData['late_departure_minutes']  = 0;
+                } else {
+                    $attendanceData['status'] = Attendance::STATUS_ON_TIME;
+                    $attendanceData['late_departure_minutes']  = 0;
+                    $attendanceData['early_departure_minutes'] = 0;
+                }
+            }
             return $attendanceData;
         }
 
