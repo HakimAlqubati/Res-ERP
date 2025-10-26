@@ -76,6 +76,7 @@ class AnalyzeExpenseService
             }
 
             $result    = $this->client->analyzeExpense($params);
+        // dd($result['ExpenseDocuments'][0]['LineItemGroups'][0]['LineItems']);
             $documents = $result['ExpenseDocuments'] ?? [];
 
             $parsed = [];

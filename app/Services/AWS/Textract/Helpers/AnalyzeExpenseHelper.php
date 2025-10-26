@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\AWS\Textract\Helpers;
 
 use App\Models\Product;
+use App\Models\Supplier;
 use App\Models\Unit;
 use App\Models\UnitPrice;
 
@@ -34,6 +35,13 @@ class AnalyzeExpenseHelper
 
             if ($type && $value && in_array($type, $wanted, true)) {
                 $map[$type] = $value;
+            }
+        }
+
+        if (!empty($map['VENDOR_NAME'])) {
+            $vendorId = $this->lookupVendorIdByName((string) $map['VENDOR_NAME']);
+            if ($vendorId !== null) {
+                $map['VENDOR_ID'] = $vendorId;
             }
         }
         return $map;
@@ -115,7 +123,7 @@ class AnalyzeExpenseHelper
                                     }
                                 }
                             }
-                          
+
                             break;
 
                         case 'EXPENSE_ROW':
@@ -146,7 +154,7 @@ class AnalyzeExpenseHelper
                         $row['unit_id'] = $candidate['id'];
                     }
                 }
- 
+
                 // ✨ إضافة: البحث عن منتج مقارب جدًا في قاعدة البيانات
                 // if (!empty($row['product'])) {
                 // يمكنك تعديل (0.80) لرفع/خفض حساسية التطابق، و(25) لعدد المرشحين من الداتابيس
@@ -178,38 +186,7 @@ class AnalyzeExpenseHelper
 
     /* ===================== Unit Resolver (exact + fuzzy) ===================== */
 
-    /** يحوّل قيمة خام للوحدة (مثل "PC") إلى label من جدول الوحدات باستخدام مرادفات وتشابه. */
-    private function resolveUnitName(?string $raw, string $context, array $units): ?string
-    {
-        $raw = ParseUtils::n($raw);
-        if ($raw === '') {
-            return $this->detectUnitByContext($context, $units)['label'] ?? null;
-        }
-
-        // 1) محاولات مباشرة: مرادفات + توكنات محتملة
-        $tokenCandidates = ParseUtils::expandAliases([$raw]);
-        $tokenCandidates = array_unique(array_merge(
-            $tokenCandidates,
-            ParseUtils::tokenizePotentialUoms($raw)
-        ));
-
-        // 2) طابق مباشرة عبر خصائص الوحدة
-        foreach ($tokenCandidates as $tok) {
-            foreach ($units as $u) {
-                if ($this->matchesAny($tok, $u)) {
-                    return $u['label'];
-                }
-            }
-        }
-
-        // 3) Fuzzy على الاسم/الكود
-        $best = $this->fuzzyMatchTokenAgainstUnits($raw, $units);
-        if ($best !== null) return $best['label'];
-
-        // 4) جرب من النص المحيط
-        $ctxGuess = $this->detectUnitByContext($context, $units);
-        return $ctxGuess['label'] ?? null;
-    }
+   
 
     /** استنتاج الوحدة من وصف البند العام. */
     private function detectUnitByContext(string $text, array $units): ?array
@@ -358,5 +335,49 @@ class AnalyzeExpenseHelper
             return $candidates[0];
         }
         return null;
+    }
+
+    /**
+     * يبحث عن المورّد بالاسم بجزء من النص (LIKE %...%)
+     * ويرجّع id أو null إن لم يُعثر عليه.
+     */
+    private function lookupVendorIdByName(string $vendorName): ?int
+    {
+        // تنظيف بسيط للنص: إزالة مسافات زائدة ورموز لا لزوم لها
+        $name = trim(preg_replace('/\s+/', ' ', $vendorName));
+        if ($name === '') return null;
+
+        // تأمين محارف % و _ كي لا تُعامل كمحارف خاصة في LIKE
+        $escaped = addcslashes($name, '%_');
+
+        // البحث: نحاول أولًا تطابقًا أقرب (الأقصر اسمًا أولًا إن تعددت النتائج)
+        $query = Supplier::query()
+            ->where(function ($q) use ($escaped) {
+                // مثال: "%AL GHALIA SDN BHD%"
+                $q->where('name', 'LIKE', "%{$escaped}%");
+            })
+            ->orderByRaw('CHAR_LENGTH(name) asc')  // الأقصر غالبًا الأكثر تحديدًا
+            ->limit(1);
+
+        $id = $query->value('id');
+
+        // إن لم نجد، جرّب تفكيك الاسم إلى كلمات والبحث بأكثر كلمة تميّزًا
+        if ($id === null) {
+            $tokens = preg_split('/\s+/u', $name) ?: [];
+            // استبعد الكلمات القصيرة جدًا (مثل Sdn, Bhd, LLC, Co, Ltd)
+            $tokens = array_values(array_filter($tokens, fn($t) => mb_strlen($t, 'UTF-8') >= 3));
+            // رتّب تنازليًا بحسب الطول (الأطول أولًا)
+            usort($tokens, fn($a, $b) => mb_strlen($b, 'UTF-8') <=> mb_strlen($a, 'UTF-8'));
+
+            foreach ($tokens as $tok) {
+                $tokEsc = addcslashes($tok, '%_');
+                $id = Supplier::where('name', 'LIKE', "%{$tokEsc}%")
+                    ->orderByRaw('CHAR_LENGTH(name) asc')
+                    ->value('id');
+                if ($id !== null) break;
+            }
+        }
+
+        return $id !== null ? (int) $id : null;
     }
 }

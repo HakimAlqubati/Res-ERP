@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\AWS\Textract;
 
 use App\Http\Controllers\Controller;
+use App\Models\Product;
 use App\Services\AWS\Textract\AnalyzeExpenseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -12,7 +13,12 @@ class OcrController extends Controller
     public function __construct(private AnalyzeExpenseService $svc) {}
 
     public function __invoke(Request $request)
-    { 
+    {
+        //         $arabicProducts = Product::where('name', 'REGEXP', '^[\p{Arabic}0-9\s]+$')->get();
+        // ;
+
+
+        // dd($arabicProducts->pluck('name')->toArray());
         // التحقق من الملف (نفس قواعدك السابقة)
         $request->validate([
             'file' => 'required|file|max:30720', // 30MB

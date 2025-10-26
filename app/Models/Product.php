@@ -369,9 +369,9 @@ class Product extends Model implements Auditable
             if (preg_match('/^\d+$/u', $t))  return false;
             return true;
         }));
-
+        
         if (empty($tokens)) return null;
-
+        
         // 2) اسحب مرشحين يحتوي اسمهم على بعض التوكنز (OR) + حد أعلى
         $q = static::query()->select(['id', 'name', 'code']);
         $q->where(function ($qq) use ($tokens) {
@@ -380,6 +380,7 @@ class Product extends Model implements Auditable
             }
         });
         $candidates = $q->limit($limit)->get();
+        // dd($raw,$clean,$tokens,$candidates->pluck('name')->toArray(),$candidates->first());
 
         if ($candidates->isEmpty()) return null;
 

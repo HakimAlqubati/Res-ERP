@@ -122,6 +122,19 @@ class PurchaseInvoiceForm
                                     $result = $service->analyze($file);
 
                                     if (!empty($result['documents'][0]['line_items'])) {
+
+                                        if (!empty($result['documents'][0]['summary']['INVOICE_RECEIPT_ID'])) {
+                                            $set('invoice_no', $result['documents'][0]['summary']['INVOICE_RECEIPT_ID']);
+                                        }
+                                        if (!empty($result['documents'][0]['summary']['VENDOR_ID'])) {
+                                            $set('supplier_id', $result['documents'][0]['summary']['VENDOR_ID']);
+                                        }
+                                        if (!empty($result['documents'][0]['summary']['INVOICE_RECEIPT_DATE'])) {
+                                            $date = $result['documents'][0]['summary']['INVOICE_RECEIPT_DATE'];
+                                            $date = date('Y-m-d', strtotime(str_replace('/', '-', $date)));
+                                            // dd($date);
+                                            $set('date', $date);
+                                        }
                                         $items = [];
 
                                         foreach ($result['documents'][0]['line_items'] as $item) {
