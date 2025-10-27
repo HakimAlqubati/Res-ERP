@@ -25,6 +25,7 @@ class EquipmentController extends Controller
             ->when($req->input('filter.type_id'), fn($x, $v) => $x->where('type_id', $v))
             ->when($req->input('filter.category_id'), fn($x, $v) => $x->whereHas('type', fn($qq) => $qq->where('category_id', $v)))
             ->when($req->input('filter.branch_id'), fn($x, $v) => $x->where('branch_id', $v))
+            ->when($req->input('filter.qr_code'), fn($x, $v) => $x->where('qr_code', $v))
             ->when($req->input('filter.branch_area_id'), fn($x, $v) => $x->where('branch_area_id', $v));
 
         // sort

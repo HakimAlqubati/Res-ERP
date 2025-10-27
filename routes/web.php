@@ -20,6 +20,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PayrollPdfController;
 use App\Http\Controllers\Reports\OrderDeliveryReportController;
 use App\Http\Controllers\Reports\OrderSalesPaymentsReportController;
+use App\Http\Controllers\Reports\PurchaseGrnReportController;
 use App\Http\Controllers\SalaryReportController;
 use App\Http\Controllers\SearchByCameraController;
 use App\Http\Controllers\TestController2;
@@ -1070,3 +1071,8 @@ Route::get('/_debugCheck', fn() => [
     'env'   => app()->environment(),
     'debug' => config('app.debug'),
 ]);
+
+
+
+Route::get('/reports/purchase-grn', [PurchaseGrnReportController::class, 'index'])
+    ->name('reports.purchase-grn');

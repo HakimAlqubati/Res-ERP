@@ -130,6 +130,7 @@ Route::prefix('hr')
     ->group(function () {
 
         Route::get('/employees/{id}/leaveBalances', [EmployeeController::class, 'leaveBalances']);
+        Route::get('/employees/leaveBalances', [EmployeeController::class, 'leaveBalancesAll']);
     });
 Route::prefix('aws/employee-liveness')->group(function () {
     // بدء جلسة التحقق (startSession)

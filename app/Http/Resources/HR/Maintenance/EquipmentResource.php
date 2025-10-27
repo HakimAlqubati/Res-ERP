@@ -11,6 +11,7 @@ class EquipmentResource extends JsonResource {
     public function toArray($request){
         return [
             'id' => $this->id,
+            'qr_code' => $this->qr_code,
             'asset_tag' => $this->asset_tag,
             'name' => $this->name,
             'make' => $this->make,

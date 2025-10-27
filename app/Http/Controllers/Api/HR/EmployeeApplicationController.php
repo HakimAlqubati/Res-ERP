@@ -21,6 +21,8 @@ class EmployeeApplicationController extends Controller
     {
         $apps = EmployeeApplicationV2::with(['employee', 'leaveRequest', 'advanceRequest'])
             ->latest()
+            ->forBranchManager()
+            ->forEmployee()
             ->paginate(20);
 
             // dd($apps->where('application_type_id',2)->first()->missedCheckinRequest);

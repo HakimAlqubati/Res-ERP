@@ -79,7 +79,12 @@ class TaskController extends Controller
     public function getStatuses()
     {
         return response()->json([
-            'statuses' => Task::getStatuses()
+            'statuses' =>  [
+                Task::STATUS_NEW,   
+                Task::STATUS_IN_PROGRESS,
+                Task::STATUS_CLOSED,
+                Task::STATUS_REJECTED,
+            ]
         ]);
     }
     public function getStatusColors()
