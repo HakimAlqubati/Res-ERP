@@ -1,11 +1,11 @@
 {{-- resources/views/reports/purchase-grn.blade.php --}}
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="utf-8">
-    <title>تقرير الربط بين فواتير الشراء و GRN</title>
+    <title>Purchase Invoice & GRN Link Report</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    {{-- إن كنت تستخدم Tailwind في المشروع سيُطبق تلقائياً، وإلا التصميم بسيط --}}
+    {{-- If Tailwind is included in your project, styling will automatically apply --}}
     <style>
         :root { --fg:#111827; --muted:#6B7280; --soft:#F9FAFB; --border:#E5E7EB; --accent:#2563EB; }
         * { box-sizing:border-box; }
@@ -30,70 +30,70 @@
 <body>
 <div class="container">
     <div class="header">
-        <div class="title">تقرير الربط بين فواتير الشراء و إشعارات الاستلام (GRN)</div>
-        <div class="note">يعتمد على البيانات الحالية بدون فلاتر</div>
+        <div class="title">Purchase Invoices & GRN Link Report</div>
+        <div class="note">Based on current data (no filters applied)</div>
     </div>
 
     <div class="grid">
         <div class="card">
-            <h3>الفواتير (Purchase Invoices)</h3>
+            <h3>Purchase Invoices</h3>
             <div class="kpis">
                 <div class="kpi">
-                    <div class="label">إجمالي الفواتير</div>
+                    <div class="label">Total Invoices</div>
                     <div class="value">{{ number_format($invoices['total']) }}</div>
                 </div>
                 <div class="kpi">
-                    <div class="label">مرتبطة بـ GRN</div>
+                    <div class="label">Linked to GRN</div>
                     <div class="value">{{ number_format($invoices['linked']) }}</div>
                 </div>
                 <div class="kpi">
-                    <div class="label">غير مرتبطة</div>
+                    <div class="label">Not Linked</div>
                     <div class="value">{{ number_format($invoices['unlinked']) }}</div>
                 </div>
                 <div class="kpi">
-                    <div class="label">نسبة الارتباط</div>
+                    <div class="label">Linked Percentage</div>
                     <div class="value pct">{{ number_format($invoices['pct_linked'], 2) }}%</div>
                 </div>
             </div>
         </div>
 
         <div class="card">
-            <h3>إشعارات الاستلام (GRN)</h3>
+            <h3>Goods Received Notes (GRN)</h3>
             <div class="kpis">
                 <div class="kpi">
-                    <div class="label">إجمالي GRN</div>
+                    <div class="label">Total GRN</div>
                     <div class="value">{{ number_format($grn['total']) }}</div>
                 </div>
                 <div class="kpi">
-                    <div class="label">مرتبطة بفاتورة</div>
+                    <div class="label">Linked to Invoice</div>
                     <div class="value">{{ number_format($grn['linked']) }}</div>
                 </div>
                 <div class="kpi">
-                    <div class="label">غير مرتبطة</div>
+                    <div class="label">Not Linked</div>
                     <div class="value">{{ number_format($grn['unlinked']) }}</div>
                 </div>
                 <div class="kpi">
-                    <div class="label">نسبة الارتباط</div>
+                    <div class="label">Linked Percentage</div>
                     <div class="value pct">{{ number_format($grn['pct_linked'], 2) }}%</div>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- جدول مختصر موحّد (اختياري) --}}
+    {{-- Combined summary table (optional) --}}
     <table>
         <thead>
         <tr>
-            <th>النوع</th>
-            <th>الإجمالي</th>
-            <th>مرتبطة</th>
-            <th>غير مرتبطة</th>
-            <th>نسبة الارتباط</th>
+            <th>Type</th>
+            <th>Total</th>
+            <th>Linked</th>
+            <th>Not Linked</th>
+            <th>Linked %</th>
         </tr>
         </thead>
         <tbody>
         <tr>
-            <td>الفواتير</td>
+            <td>Purchase Invoices</td>
             <td>{{ number_format($invoices['total']) }}</td>
             <td>{{ number_format($invoices['linked']) }}</td>
             <td>{{ number_format($invoices['unlinked']) }}</td>

@@ -1075,4 +1075,4 @@ Route::get('/_debugCheck', fn() => [
 
 
 Route::get('/reports/purchase-grn', [PurchaseGrnReportController::class, 'index'])
-    ->name('reports.purchase-grn');
+    ->name('reports.purchase-grn')->middleware('auth:web');
