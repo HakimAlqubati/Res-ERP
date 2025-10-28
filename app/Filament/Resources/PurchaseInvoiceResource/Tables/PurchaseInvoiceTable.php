@@ -148,12 +148,15 @@ class PurchaseInvoiceTable
                             ->pluck('name', 'id')
                             ->toArray();
                     })->searchable(),
-                SelectFilter::make('has_attachment')
+
+                Filter::make('with_attachment')
                     ->label('Has Attachment')
-                    ->options([
-                        '1' => 'With Attachment',
-                        '0' => 'Without Attachment',
-                    ]),
+                    ->query(
+                        fn(Builder $query) =>
+                        $query->whereNotNull('attachment')->where('attachment', '!=', '')
+                    )
+                    ->indicateUsing(fn() => 'With attachment'),
+
                 Filter::make('date_range')
                     ->schema([
                         DatePicker::make('from')->label('From Date'),
