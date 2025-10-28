@@ -46,10 +46,10 @@ class TestController4 extends Controller
         if ($request->has('id')) {
             $where[] = 'o.id = ' . (int) $request->id;
         }
-    
+
         $where[] = ' o.deleted_at is null ';
 
-           // ✅ NEW: استبعد أوامر الفروع من نوع RESELLER
+        // ✅ NEW: استبعد أوامر الفروع من نوع RESELLER
         // $where[] = "EXISTS (
         //     SELECT 1
         //     FROM branches br
@@ -252,6 +252,16 @@ class TestController4 extends Controller
         //     }
         // }
 
+        $otherBranchesCategories = Branch::centralKitchens()
+            ->where('id', '!=', auth()->user()?->branch?->id)
+            ->with('categories:id')
+            ->get()
+            ->pluck('categories')
+            ->flatten()
+            ->pluck('id')
+            ->unique()
+            ->toArray();
+
         $query = "
         SELECT
             od.id,
@@ -275,22 +285,14 @@ class TestController4 extends Controller
             JOIN categories c ON p.category_id = c.id
             JOIN orders o ON od.order_id = o.id
             
-AND (
-    (o.customer_id != {$user->id} AND c.is_manafacturing = 1)
-    OR
-    (o.customer_id = {$user->id} AND (c.is_manafacturing = 1 OR c.is_manafacturing = 0))
-)
-";
+            AND (
+                (o.customer_id != {$user->id} AND c.is_manafacturing = 1)
+                OR
+                (o.customer_id = {$user->id} AND (c.is_manafacturing = 1 OR c.is_manafacturing = 0))
+            )
+            ";
 
-                $otherBranchesCategories = Branch::centralKitchens()
-                    ->where('id', '!=', auth()->user()?->branch?->id)
-                    ->with('categories:id')
-                    ->get()
-                    ->pluck('categories')
-                    ->flatten()
-                    ->pluck('id')
-                    ->unique()
-                    ->toArray();
+
                 if (count($otherBranchesCategories)) {
                     $otherBranchesCategoriesStr = implode(',', $otherBranchesCategories);
                     $query .= " and c.id NOT IN ($otherBranchesCategoriesStr) ";
@@ -304,14 +306,40 @@ AND (
 
                 if (count($customCategories) > 0) {
                     $categoryIds = implode(',', $customCategories);
-                    // $query .= " and c.id IN ($categoryIds) ";
+
+                    $query .= " AND (
+        -- 1) المستخدم ليس صاحب الطلب لكن المنتج مخصص له (فئة ضمن فئات فرعه)
+        (o.customer_id != {$user->id} AND c.id IN ($categoryIds))
+        OR
+        -- 2) المستخدم هو صاحب الطلب نفسه (يسمح بكل الفئات)
+        (o.customer_id = {$user->id})
+        OR
+        -- 3) باقي الحالات: فقط التصنيعية المخصصة له (ضمن فئات فرعه)
+        (o.customer_id != {$user->id} AND c.is_manafacturing = 1 AND c.id IN ($categoryIds))
+    )";
+                } else {
+
+
+
+                    // لا يوجد فئات مخصصة لهذا الفرع
+                    // في هذه الحالة نكتفي بالسماح للمالك فقط والفئات التصنيعية العامة
+                    $query .= " AND (
+                        (o.customer_id = {$user->id})
+                        OR
+                        (o.customer_id != {$user->id} AND c.is_manafacturing = 1)
+                    )";
+                    if (count($otherBranchesCategories)) {
+                        $otherBranchesCategoriesStr = implode(',', $otherBranchesCategories);
+                        $query .= " and c.id NOT IN ($otherBranchesCategoriesStr) ";
+                    }
                 }
-                $query .= " AND (
-                     (o.customer_id != {$user->id} AND c.is_manafacturing = 1 and c.id IN ($categoryIds)) 
-                    OR
-                    (o.customer_id = {$user->id} AND (c.is_manafacturing = 1 OR c.is_manafacturing = 0))
-                     )
-                 ";
+
+                // $query .= " AND (
+                //      (o.customer_id != {$user->id} AND c.is_manafacturing = 1 and c.id IN ($categoryIds)) 
+                //     OR
+                //     (o.customer_id = {$user->id} AND (c.is_manafacturing = 1 OR c.is_manafacturing = 0))
+                //      )
+                //  ";
             }
         }
         if (isStoreManager() && !isBranchManager()) {

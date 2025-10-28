@@ -136,6 +136,16 @@ class ProductsTable
                 TextColumn::make('minimum_stock_qty')
                     ->label('Min. Qty')->sortable()
                     ->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
+                // TextColumn::make('default_store')
+                //     ->label('Default Store')
+                //     ->alignCenter(true)
+                //     ->getStateUsing(function (Model $record) {
+                //         // dd('sdf');
+                //         $store = defaultManufacturingStore($record);
+                //         return $store->name ?? '-';
+                //         return $record->defaultManufacturingStore->name ?? '-';
+                //     }) 
+                //     ,
                 TextColumn::make('formatted_unit_prices')
                     ->label('Unit Prices')->toggleable(isToggledHiddenByDefault: false)
                     ->limit(50)->tooltip(fn($state) => $state)
