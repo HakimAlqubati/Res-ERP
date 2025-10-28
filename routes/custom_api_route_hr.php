@@ -289,3 +289,15 @@ Route::get('/test-google-upload', function () {
         return '❌ Error: ' . $e->getMessage();
     }
 });
+
+
+use App\Http\Controllers\Api\HR\LeaveTypeController;
+
+Route::prefix('hr')
+    ->middleware('auth:api') // drop if you want it public
+    ->group(function () {
+        Route::get('/leaveTypes', [LeaveTypeController::class, 'index']);                 // list + filters + pagination
+        Route::get('/leaveTypes/{leaveType}', [LeaveTypeController::class, 'show']);      // single
+        Route::get('/leaveTypes-weekly', [LeaveTypeController::class, 'weekly']);         // first active weekly/monthly
+        Route::get('/leaveTypes-monthly-days-sum', [LeaveTypeController::class, 'monthlyDaysSum']); // sum with default=4
+    });
