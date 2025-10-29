@@ -11,7 +11,7 @@ use App\Models\UnitPrice;
 
 class AnalyzeExpenseHelper
 {
-    public function __construct() {} // لا كاش هنا
+    public function __construct() {}
 
     /* ===================== Summary ===================== */
 
@@ -57,9 +57,8 @@ class AnalyzeExpenseHelper
         foreach (($doc['LineItemGroups'] ?? []) as $group) {
             foreach (($group['LineItems'] ?? []) as $li) {
 
-                // نضيف الحقول الجديدة من البداية
                 $row = [
-                    'is_existing'            => false, // بوليان في بداية الـ object
+                    'is_existing'            => false,
                     'product'                => null,
                     'quantity'               => null,
                     'unit_price'             => null,
@@ -69,10 +68,12 @@ class AnalyzeExpenseHelper
                     'unit_id'                => null,
                     'package_size'           => null,
 
-                    // الحقول الجديدة الخاصة بالمطابقة مع المنتجات الموجودة
                     'existing_product_id'    => null,
                     'existing_product_code'  => null,
                     'existing_product_name'  => null,
+
+                    // القائمة المطلوبة للوحدات المرتبطة عبر UnitPrice
+                    'available_units'        => [],
                 ];
 
                 $textBucket = [];
@@ -106,36 +107,30 @@ class AnalyzeExpenseHelper
                         case 'MEASURE':
                         case 'UNIT_OF_MEASURE':
                             $textBucket[]     = $val;
-                            // إن لم تُحسم الوحدة بعد، جرّب استنتاجها من النص العام
                             if ($row['unit_name'] === null && !empty($textBucket)) {
                                 $candidate = $this->detectUnitByContext(implode(' ', $textBucket), $units);
                                 if ($candidate !== null) {
                                     $row['unit_name'] = $candidate['label'];
-                                    $row['unit_id']   = $candidate['id']; // ⬅️ جديد
+                                    $row['unit_id']   = $candidate['id'];
                                 }
                             } else {
-                                // حتى لو حصلنا على unit_name سابقًا، حاول جلب id من النص العام لتوحيد المرجع
                                 if ($row['unit_id'] === null && !empty($textBucket)) {
                                     $candidate = $this->detectUnitByContext(implode(' ', $textBucket), $units);
                                     if ($candidate !== null) {
-                                        $row['unit_id'] = $candidate['id']; // ⬅️ جديد
-                                        // لا نغيّر unit_name إن كان مضبوطًا
+                                        $row['unit_id'] = $candidate['id'];
                                     }
                                 }
                             }
-
                             break;
 
                         case 'EXPENSE_ROW':
                         case 'OTHER':
                             $textBucket[] = $val;
 
-                            // التقط الاسم العربي مباشرة عند غياب ITEM
                             if ($row['product'] === null && preg_match('/\p{Arabic}/u', $val)) {
-                                $row['product'] = $val; // بدون تطبيع
+                                $row['product'] = $val;
                             }
 
-                            // إن لم نجد منتجًا صريحًا، حاول اختيار أفضل اسم من النصوص
                             if ($row['product'] === null && $textBucket) {
                                 $row['product'] = $this->pickBestProduct($textBucket);
                             }
@@ -151,27 +146,104 @@ class AnalyzeExpenseHelper
                     $candidate = $this->detectUnitByContext(implode(' ', $textBucket), $units);
                     if ($candidate !== null) {
                         $row['unit_name'] = $candidate['label'];
-                        $row['unit_id'] = $candidate['id'];
+                        $row['unit_id']   = $candidate['id'];
                     }
                 }
 
-                // ✨ إضافة: البحث عن منتج مقارب جدًا في قاعدة البيانات
-                // if (!empty($row['product'])) {
-                // يمكنك تعديل (0.80) لرفع/خفض حساسية التطابق، و(25) لعدد المرشحين من الداتابيس
-                $match = Product::bestNameMatch((string) $row['product']); // returns Product|null
+                // مطابقة المنتج
+                $match = !empty($row['product']) ? Product::bestNameMatch((string) $row['product']) : null;
 
                 if ($match instanceof \App\Models\Product) {
                     $row['is_existing']           = true;
                     $row['existing_product_id']   = $match->id;
                     $row['existing_product_code'] = $match->code;
                     $row['existing_product_name'] = $match->name;
+
+                    // ⬇️ إحضار الوحدات المرتبطة عبر UnitPrice وإرفاقها مع السطر
+                    $unitPrices = $match->unitPrices()
+                        ->with('unit')
+                        ->forOperations() // يمكنك تبديلها بـ usableInManufacturing/forSupply/forOut حسب السياق
+                        ->orderByRaw('COALESCE(package_size, 999999) ASC')
+                        ->get(['id', 'unit_id', 'product_id', 'price', 'package_size', 'usage_scope', 'selling_price', 'show_in_invoices', 'use_in_orders'])
+                        ->map(function (UnitPrice $up) {
+                            return [
+                                'unit_price_id'    => (int) $up->id,
+                                'unit_id'          => (int) $up->unit_id,
+                                'unit_name'        => (string) optional($up->unit)->name,
+                                'price'            => (float) $up->price,
+                                'selling_price'    => (float) ($up->selling_price ?? 0),
+                                'package_size'     => $up->package_size === null ? null : (float) $up->package_size,
+                                'usage_scope'      => (string) $up->usage_scope,
+                                'show_in_invoices' => (int) ($up->show_in_invoices ?? 0),
+                                'use_in_orders'    => (int) ($up->use_in_orders ?? 0),
+                            ];
+                        })
+                        ->values();
+
+                    // ... بعد:
+                    $row['available_units'] = $unitPrices->all();
+
+                    // ✅ تمييز ما إذا كانت وحدة الفاتورة ضمن الوحدات المتاحة
+                    $row['unit_in_available']      = false;
+                    $row['matched_unit_price_id']  = null;
+                    $row['matched_unit_details']   = null;
+                    $row['unit_match_confidence']  = null;
+
+                    // لدينا حالتان: نملك unit_id، أو فقط label/اسم وحدة
+                    $unitIdFromInvoice   = $row['unit_id'];    // قد يكون null
+                    $unitLabelFromInvoice = $row['unit_name'];  // قد يكون null
+
+                    dd($unitLabelFromInvoice);
+                    $available = collect($row['available_units']);
+
+                    if ($unitIdFromInvoice) {
+                        // مطابقة مباشرة بالـ unit_id
+                        $match = $available->firstWhere('unit_id', (int)$unitIdFromInvoice);
+                        if ($match) {
+                            $row['unit_in_available']     = true;
+                            $row['matched_unit_price_id'] = (int)$match['unit_price_id'];
+                            $row['matched_unit_details']  = $match;
+                            $row['unit_match_confidence'] = 1.0; // مطابق ID صريح
+                        }
+                    }
+
+                    // إن لم نجد و لدينا label من الفاتورة، جرّب مطابقة اسمية (تطبيع خفيف)
+                    if (!$row['unit_in_available'] && $unitLabelFromInvoice) {
+                        $norm = fn($s) => strtoupper(preg_replace('/[^A-Z]/', '', (string)$s));
+                        $target = $norm($unitLabelFromInvoice);
+
+                        // طابق على unit_name ومرادفات شائعة في available_units
+                        $match = $available->first(function ($u) use ($target, $norm) {
+                            $candidates = array_filter([
+                                $norm($u['unit_name'] ?? ''),
+                                $norm($u['usage_scope'] ?? ''), // ليس اسم وحدة لكنه قد يساعد نادرًا
+                            ]);
+                            foreach ($candidates as $c) {
+                                // تطابق قوي أو تشابه مرتفع
+                                similar_text($target, $c, $p);
+                                $lev = levenshtein($target, $c);
+                                if ($target === $c || $p >= 90 || ($lev <= 1 && max(strlen($target), strlen($c)) <= 5)) {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        });
+
+                        if ($match) {
+                            $row['unit_in_available']     = true;
+                            $row['matched_unit_price_id'] = (int)$match['unit_price_id'];
+                            $row['matched_unit_details']  = $match;
+                            $row['unit_match_confidence'] = 0.8; // مطابق اسمي/تقريبي
+                        }
+                    }
                 }
+
+                // إن كان لدينا match + unit_id، حاول إيجاد package_size المناسب لهذه الوحدة
                 if ($row['is_existing'] && $row['existing_product_id'] && $row['unit_id']) {
                     $row['package_size'] = UnitPrice::where('product_id', $row['existing_product_id'])
                         ->where('unit_id', $row['unit_id'])
                         ->value('package_size');
                 }
-                // }
 
                 // لا نضيف صفوفًا فارغة
                 if ($row['product'] !== null || $row['price'] !== null) {
@@ -183,10 +255,7 @@ class AnalyzeExpenseHelper
         return $rows;
     }
 
-
     /* ===================== Unit Resolver (exact + fuzzy) ===================== */
-
-   
 
     /** استنتاج الوحدة من وصف البند العام. */
     private function detectUnitByContext(string $text, array $units): ?array
@@ -292,7 +361,6 @@ class AnalyzeExpenseHelper
                     $tokens[] = $nameVariant;
                 }
 
-                // ملاحظة: يمكن إضافة /u لاحقاً للأسماء غير اللاتينية
                 $pattern = '/\b(' . implode('|', $tokens) . ')\b/i';
 
                 $nCode = ParseUtils::n($u->code ?? '');
@@ -343,30 +411,23 @@ class AnalyzeExpenseHelper
      */
     private function lookupVendorIdByName(string $vendorName): ?int
     {
-        // تنظيف بسيط للنص: إزالة مسافات زائدة ورموز لا لزوم لها
         $name = trim(preg_replace('/\s+/', ' ', $vendorName));
         if ($name === '') return null;
 
-        // تأمين محارف % و _ كي لا تُعامل كمحارف خاصة في LIKE
         $escaped = addcslashes($name, '%_');
 
-        // البحث: نحاول أولًا تطابقًا أقرب (الأقصر اسمًا أولًا إن تعددت النتائج)
         $query = Supplier::query()
             ->where(function ($q) use ($escaped) {
-                // مثال: "%AL GHALIA SDN BHD%"
                 $q->where('name', 'LIKE', "%{$escaped}%");
             })
-            ->orderByRaw('CHAR_LENGTH(name) asc')  // الأقصر غالبًا الأكثر تحديدًا
+            ->orderByRaw('CHAR_LENGTH(name) asc')
             ->limit(1);
 
         $id = $query->value('id');
 
-        // إن لم نجد، جرّب تفكيك الاسم إلى كلمات والبحث بأكثر كلمة تميّزًا
         if ($id === null) {
             $tokens = preg_split('/\s+/u', $name) ?: [];
-            // استبعد الكلمات القصيرة جدًا (مثل Sdn, Bhd, LLC, Co, Ltd)
             $tokens = array_values(array_filter($tokens, fn($t) => mb_strlen($t, 'UTF-8') >= 3));
-            // رتّب تنازليًا بحسب الطول (الأطول أولًا)
             usort($tokens, fn($a, $b) => mb_strlen($b, 'UTF-8') <=> mb_strlen($a, 'UTF-8'));
 
             foreach ($tokens as $tok) {

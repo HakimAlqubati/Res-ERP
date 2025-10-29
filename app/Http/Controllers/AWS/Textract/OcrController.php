@@ -29,7 +29,7 @@ class OcrController extends Controller
 
             return response()->json([
                 'success'   => true,
-                'message'   => 'تم تحليل المستند باستخدام AnalyzeExpense.',
+                'message'   => 'The document was analyzed using AnalyzeExpense.',
                 'mime'      => $out['mime'],
                 'documents' => $out['documents'],
                 // 'raw' => ... (للتصحيح عند الحاجة)

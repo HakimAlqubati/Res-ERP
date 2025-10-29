@@ -23,9 +23,8 @@ class AnalyzeExpenseService
         ?AnalyzeExpenseHelper $helper = null
     ) {
         // Base config
-        $this->region          = (string) config('services.textract.region', env('AWS_DEFAULT_REGION', 'me-central-1'));
-        $this->bucket          = config('filesystems.disks.s3.bucket', env('AWS_BUCKET'));
-
+        $this->region = (string) config('services.textract.region', env('AWS_DEFAULT_REGION', 'me-central-1'));
+        $this->bucket = config('filesystems.disks.s3.bucket', env('AWS_BUCKET'));
 
         // AWS client
         $this->client = $client ?: new TextractClient([
@@ -76,7 +75,6 @@ class AnalyzeExpenseService
             }
 
             $result    = $this->client->analyzeExpense($params);
-        // dd($result['ExpenseDocuments'][0]['LineItemGroups'][0]['LineItems']);
             $documents = $result['ExpenseDocuments'] ?? [];
 
             $parsed = [];
@@ -96,8 +94,12 @@ class AnalyzeExpenseService
                 try {
                     Storage::disk('s3')->delete($s3TempKey);
                 } catch (Throwable $e) {
+                    // ignore cleanup failures
                 }
             }
         }
     }
 }
+ 
+ 
+ 
