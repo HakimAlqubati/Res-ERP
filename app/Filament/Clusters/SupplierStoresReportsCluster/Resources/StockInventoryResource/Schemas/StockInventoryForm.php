@@ -344,7 +344,8 @@ class StockInventoryForm
                                 TextInput::make('physical_quantity')
                                     // ->default(0)
                                     ->numeric()
-                                    ->live(onBlur: true)
+                                    ->reactive()
+                                    // ->live(onBlur: true)
                                     ->afterStateUpdatedJs(<<<'JS'
                                     const sys = Number($get('system_quantity') ?? 0);
                                     const ph  = Number($state ?? 0);
