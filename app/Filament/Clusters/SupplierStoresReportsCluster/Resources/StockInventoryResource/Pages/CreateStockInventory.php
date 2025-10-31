@@ -13,7 +13,8 @@ use Illuminate\Database\Eloquent\Model;
 class CreateStockInventory extends CreateRecord
 {
     protected static string $resource = StockInventoryResource::class; 
-   
+       protected static bool $canCreateAnother = false;
+
     public function getInventoryRowData($productId, $unitId, $storeId): array
     {
         $service = new \App\Services\MultiProductsInventoryService(null, $productId, $unitId, $storeId);
