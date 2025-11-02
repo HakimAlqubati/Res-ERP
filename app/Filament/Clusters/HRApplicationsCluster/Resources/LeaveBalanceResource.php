@@ -225,7 +225,14 @@ class LeaveBalanceResource extends Resource
                 Action::make('editBalance')->visible(fn(): bool => isSuperAdmin())->button()
                     ->schema(function ($record) {
                         return [
-                            TextInput::make('balance', $record->balance)->default($record->balance),
+                            TextInput::make('balance', $record->balance)->default($record->balance)
+                                ->maxValue($record->leaveType?->count_days ?? 0)
+                                ->rules([
+                                    'required',
+                                    'numeric',
+                                    'max:' . ($record->leaveType?->count_days ?? 0),
+                                ])
+                                ->helperText('Max: ' . ($record->leaveType?->count_days ?? 0)),
                         ];
                     })->action(function ($record, $data) {
                         DB::beginTransaction();
