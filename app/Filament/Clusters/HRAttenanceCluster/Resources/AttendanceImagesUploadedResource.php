@@ -85,11 +85,11 @@ class AttendanceImagesUploadedResource extends Resource
                     ->options(function () {
                         return \App\Models\Employee::orderBy('name')
                             ->active()
-                            ->forBranch('branch_id')
-
+                            // ->forBranch('branch_id')
+                            ->forBranchManager()
                             ->pluck('name', 'id')->toArray();
                     })
-            ], FiltersLayout::Modal)
+            ], FiltersLayout::Modal)->filtersFormColumns(3)
             ->deferFilters(false)
         ;
     }
