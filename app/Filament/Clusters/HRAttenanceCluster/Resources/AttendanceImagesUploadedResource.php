@@ -17,6 +17,7 @@ use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -76,8 +77,19 @@ class AttendanceImagesUploadedResource extends Resource
                                 $data['created_until'],
                                 fn(Builder $query, $date): Builder => $query->whereDate('datetime', '<=', $date),
                             );
+                    }),
+                SelectFilter::make('employee_id')->label('Employee')
+                    ->searchable()
+                    ->preload()
+                    ->multiple()
+                    ->options(function () {
+                        return \App\Models\Employee::orderBy('name')
+                            ->active()
+                            ->forBranch('branch_id')
+
+                            ->pluck('name', 'id')->toArray();
                     })
-            ], FiltersLayout::AboveContent)
+            ], FiltersLayout::Modal)
             ->deferFilters(false)
         ;
     }
