@@ -37,6 +37,9 @@ use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -289,9 +292,41 @@ class ResellerSaleResource extends Resource
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->toggleable(),
             ])
+            ->deferFilters(false)
             ->filters([
-                TrashedFilter::make()
-            ])
+                TrashedFilter::make(),
+                SelectFilter::make('branch_id')
+                    ->label(__('lang.reseller'))->multiple()
+                    ->options(
+                        Branch::resellers()->active()->pluck('name', 'id')
+                    )
+                    ->preload()
+                    ->searchable(),
+                Filter::make('date_range')
+                    ->schema([
+                        DatePicker::make('from')->label('From Date'),
+                        DatePicker::make('to')->label('To Date'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when($data['from'], fn($q, $date) => $q->whereDate('sale_date', '>=', $date))
+                            ->when($data['to'], fn($q, $date) => $q->whereDate('sale_date', '<=', $date));
+                    })
+                    ->label('Date Between')
+                    ->indicateUsing(function (array $data): ?string {
+                        if ($data['from'] && $data['to']) {
+                            return "From {$data['from']} to {$data['to']}";
+                        }
+                        if ($data['from']) {
+                            return "From {$data['from']}";
+                        }
+                        if ($data['to']) {
+                            return "Until {$data['to']}";
+                        }
+                        return null;
+                    }),
+
+            ], FiltersLayout::Modal)->filtersFormColumns(3)
             ->recordActions([
 
                 // ✅ زر الإلغاء الجديد
