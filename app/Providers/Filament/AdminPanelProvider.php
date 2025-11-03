@@ -143,12 +143,12 @@ class AdminPanelProvider extends PanelProvider
                 $group =  array_merge(
                     $group,
                     [
-                        NavigationGroup::make(__('lang.user_and_roles'))
+                        NavigationGroup::make(__('lang.user_and_roles'))->collapsed(1)
                             ->items(array_merge(
                                 (isSuperAdmin() || isSystemManager() || isBranchManager()) ?   UserResource::getNavigationItems() : [],
                                 // isSuperAdmin() || isSystemManager() ? RoleResource::getNavigationItems() : []
                             )),
-                        NavigationGroup::make(__('lang.branches'))
+                        NavigationGroup::make(__('lang.branches'))->collapsed(1)
                             ->items(array_merge(
                                 (isSuperAdmin() || isSystemManager() || isBranchManager()) ? BranchResource::getNavigationItems() : [],
                                 //  ProductResource::getNavigationItems(),
@@ -178,7 +178,7 @@ class AdminPanelProvider extends PanelProvider
                 $group =  array_merge(
                     $group,
                     [
-                        NavigationGroup::make('System settings')
+                        NavigationGroup::make('System settings')->collapsed(1)
                             ->items(array_merge(
                                 (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? SettingResource::getNavigationItems() : [],
                                 ((isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) &&
