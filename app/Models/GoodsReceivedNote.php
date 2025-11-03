@@ -208,9 +208,15 @@ class GoodsReceivedNote extends Model implements Auditable
 
     public function getTotalAmountAttribute(): float
     {
-        // Sum all detail total_amount values
-        return $this->grnDetails->sum(function ($detail) {
-            return $detail->quantity * $detail->price;
-        });
+        return max(0.0, (float) $this->grnDetails->sum(function ($detail) {
+            $priceFromUnit = optional(
+                $detail->product->unitPrices
+                    // لو تبي تقييد الأسعار بالـ scope المناسب، استعمل فلترة هنا إن احتجت
+                    ->firstWhere('unit_id', $detail->unit_id)
+            )->price;
+
+            $price = $priceFromUnit ?? ($detail->price ?? 0);
+            return (float) $detail->quantity * (float) $price;
+        }));
     }
 }
