@@ -43,7 +43,11 @@ use Filament\Support\Enums\FontWeight;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\Summarizers\Summarizer;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -223,7 +227,7 @@ class GoodsReceivedNoteResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->paginated([10, 25, 50, 100])
+            ->paginated([10, 25, 50, 100, 150])
 
             ->striped()
             ->defaultSort('created_at', 'desc')
@@ -246,6 +250,25 @@ class GoodsReceivedNoteResource extends Resource
                 // TextColumn::make('status')->label('Status')->badge()->toggleable(),
                 TextColumn::make('details_count')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('details_count')->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('total_amount')
+                    ->label(__('lang.total_amount'))
+                    ->alignCenter(true)
+                    ->formatStateUsing(function ($state) {
+                        return formatMoneyWithCurrency($state);
+                    })
+                    ->summarize(
+                        Summarizer::make()
+                            ->using(function (Table $table) {
+                                $total  = $table->getRecords()->sum(fn($record) => $record->total_amount);
+                                if (is_numeric($total)) {
+                                    return formatMoneyWithCurrency($total);
+                                }
+                                return $total;
+                            })
+                    )
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('updated_at')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->sortable(),
@@ -267,8 +290,47 @@ class GoodsReceivedNoteResource extends Resource
                     ->label('Cancelled')->toggleable(isToggledHiddenByDefault: true)->boolean()->alignCenter(),
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make(), // Add soft delete filter
-            ])
+                Tables\Filters\TrashedFilter::make(),
+
+                SelectFilter::make('supplier_id')
+                    ->label('Supplier')
+                    ->options(Supplier::get()->pluck('name', 'id'))->searchable(),
+                SelectFilter::make('store_id')
+                    ->label('Store')->multiple()
+                    ->options(function () {
+                        return \App\Models\Store::query()
+                            ->active()
+                            ->withManagedStores()   // يبقى كما هو عندك لو عند المستخدم قيود إدارة
+                            ->hasPurchases()        // السكوب الجديد
+                            ->orderBy('name')
+                            ->pluck('name', 'id')
+                            ->toArray();
+                    })->searchable(),
+                Filter::make('date_range')
+                    ->schema([
+                        DatePicker::make('from')->label('From Date'),
+                        DatePicker::make('to')->label('To Date'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when($data['from'], fn($q, $date) => $q->whereDate('grn_date', '>=', $date))
+                            ->when($data['to'], fn($q, $date) => $q->whereDate('grn_date', '<=', $date));
+                    })
+                    ->label('Date Between')
+                    ->indicateUsing(function (array $data): ?string {
+                        if ($data['from'] && $data['to']) {
+                            return "From {$data['from']} to {$data['to']}";
+                        }
+                        if ($data['from']) {
+                            return "From {$data['from']}";
+                        }
+                        if ($data['to']) {
+                            return "Until {$data['to']}";
+                        }
+                        return null;
+                    }),
+            ], FiltersLayout::Modal)
+            ->filtersFormColumns(4)
             ->recordActions([
                 EditAction::make()
                     ->visible(fn($record): bool => $record->status == GoodsReceivedNote::STATUS_CREATED),

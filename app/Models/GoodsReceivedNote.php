@@ -205,4 +205,12 @@ class GoodsReceivedNote extends Model implements Auditable
     {
         return $this->cancelGoodsReceivedNote($grn, $reason);
     }
+
+    public function getTotalAmountAttribute(): float
+    {
+        // Sum all detail total_amount values
+        return $this->grnDetails->sum(function ($detail) {
+            return $detail->quantity * $detail->price;
+        });
+    }
 }
