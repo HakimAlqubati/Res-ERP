@@ -349,4 +349,95 @@ class Product extends Model implements Auditable
 
         return $query;
     }
+
+    /**
+     * ---
+     * start for textract
+     */
+    // App\Models\Product.php
+
+    public static function bestNameMatch(string $raw, int $limit = 20): ?self
+    {
+        $raw = trim($raw);
+        if ($raw === '') return null;
+
+        // 1) نظّف النص وطلّع توكنز مفيدة (بدون أرقام خالصة وبدون توكن <= 2 حروف)
+        $clean = mb_strtolower(preg_replace('/[^\p{L}\p{N}\s\-()]+/u', ' ', $raw), 'UTF-8');
+        $tokens = preg_split('/[\s,\-()]+/u', $clean, -1, PREG_SPLIT_NO_EMPTY);
+        $tokens = array_values(array_filter($tokens, function ($t) {
+            if (mb_strlen($t, 'UTF-8') <= 2) return false;
+            if (preg_match('/^\d+$/u', $t))  return false;
+            return true;
+        }));
+        
+        if (empty($tokens)) return null;
+        
+        // 2) اسحب مرشحين يحتوي اسمهم على بعض التوكنز (OR) + حد أعلى
+        $q = static::query()->select(['id', 'name', 'code']);
+        $q->where(function ($qq) use ($tokens) {
+            foreach ($tokens as $t) {
+                $qq->orWhere('name', 'LIKE', "%{$t}%");
+            }
+        });
+        $candidates = $q->limit($limit)->get();
+        // dd($raw,$clean,$tokens,$candidates->pluck('name')->toArray(),$candidates->first());
+
+        if ($candidates->isEmpty()) return null;
+
+        // 3) احسب “درجة” تشابه لكل مرشح واختر الأعلى
+        $scoreFn = function (string $name) use ($tokens, $clean): float {
+            $nameN = mb_strtolower($name, 'UTF-8');
+            $hits  = 0;
+            foreach ($tokens as $t) {
+                if (mb_strpos($nameN, $t) !== false) $hits++;
+            }
+            $coverage = $hits / max(count($tokens), 1); // 0..1
+            // similar_text أسرع من levenshtein لاسم قصير
+            $sim = 0;
+            similar_text($clean, mb_strtolower($name, 'UTF-8'), $sim);
+            return 0.6 * $coverage + 0.4 * ($sim / 100.0);
+        };
+
+        $best = null;
+        $bestScore = 0.0;
+        foreach ($candidates as $cand) {
+            $s = $scoreFn($cand->name);
+            if ($s > $bestScore) {
+                $bestScore = $s;
+                $best = $cand;
+            }
+        }
+
+        // ضع عتبة بسيطة لتجنّب التطابقات السيئة
+        return ($bestScore >= 0.35) ? $best : null;
+    }
+
+
+    public static function findByNameFragment(string $fragment, int $limit = 5)
+    {
+        $fragment = trim($fragment);
+        if ($fragment === '') {
+            return collect(); // لا ترجع شيء لو الإدخال فارغ
+        }
+
+        return static::query()
+            ->select(['id', 'name', 'code'])
+            ->where('name', 'LIKE', "%{$fragment}%")
+            ->orderBy('name')
+            ->limit($limit)
+            ->get()
+            ->map(function ($row) {
+                return (object) [
+                    'id'   => (int) $row->id,
+                    'name' => (string) $row->name,
+                    'code' => (string) $row->code,
+                ];
+            })->first();
+    }
+
+
+    /**
+     * ---
+     * end for textract
+     */
 }

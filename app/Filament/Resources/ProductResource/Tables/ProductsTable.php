@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Resources\ProductResource\Tables;
 
 use Illuminate\Database\Eloquent\Builder;
@@ -45,7 +46,7 @@ class ProductsTable
     public static function configure(Table $table): Table
     {
         return $table->striped()
-            ->paginated([10, 25, 50, 100])
+            ->paginated([10, 25, 50, 100, 150, 200])
             ->defaultSort('id', 'desc')
             ->headerActions([
                 Action::make('import_items_quantities')
@@ -256,7 +257,7 @@ class ProductsTable
                                 }
 
                                 if ($failed > 0) {
-                                     showWarningNotifiMessage("⚠️ تم استيراد بعض العناصر. راجع السجل للأخطاء.");
+                                    showWarningNotifiMessage("⚠️ تم استيراد بعض العناصر. راجع السجل للأخطاء.");
                                 }
 
                                 if ($imported === 0 && $failed === 0) {
@@ -289,7 +290,7 @@ class ProductsTable
                                 $result[] = "⚠️ لم يتم تحديث أي مكوّن للمنتج {$record->name}. تأكد من أن المنتج مركب أو أن هناك أسعار متاحة.";
                             }
                         }
-                     })->hidden(),
+                    })->hidden(),
                 BulkAction::make('updateComponentPricesNew')
                     ->label('Update Price')
                     ->icon('heroicon-o-currency-dollar')->button()

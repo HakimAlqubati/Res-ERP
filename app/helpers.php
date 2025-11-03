@@ -667,7 +667,7 @@ if (!function_exists('toTopic')) {
 }
 if (!function_exists('toToken')) {
     function toToken($deviceToken, $data)
-    { 
+    {
         try {
             $factory = (new Factory())
                 ->withServiceAccount(storage_path('app/public/firebase/google-services.json'));
@@ -678,7 +678,6 @@ if (!function_exists('toToken')) {
             $messaging->send($message);
         } catch (Exception $e) {
             AppLog::write('when send to token: ' . $e->getMessage(), AppLog::LEVEL_ERROR);
-         
         }
     }
 }
@@ -723,7 +722,7 @@ if (!function_exists('sendNotification')) {
                 'trace' => $e->getTraceAsString()
             ]);
             AppLog::write('Failed to send notification: ' . $e->getMessage(), AppLog::LEVEL_ERROR);
-            
+
             return $response;
         }
     }
@@ -1084,5 +1083,53 @@ if (! function_exists('parse_laravel_log')) {
         // usort($entries, fn($a,$b)=> strcmp($b['datetime'],$a['datetime']));
 
         return $entries;
+    }
+}
+
+
+
+/**
+ * تنظيف UTF-8 عميق للمصفوفات/الكائنات/السلاسل للتأكد من أن json_encode لا يفشل.
+ */
+if (!function_exists('utf8_sanitize_deep')) {
+    function utf8_sanitize_deep($value)
+    {
+        // دالة مساعدة لتحويل نص إلى UTF-8 صالح مع إزالة محارف التحكم
+        $sanitizeString = function (string $s): string {
+            // أزل محارف التحكم الخفية (عدا \n\r\t إن رغبت بالإبقاء عليها)
+            $s = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $s) ?? '';
+            // لو الترميز غير UTF-8، حوّله
+            if (!mb_detect_encoding($s, 'UTF-8', true)) {
+                $s = mb_convert_encoding($s, 'UTF-8', 'auto');
+            }
+            // ضمان أخير: تجاهل أي بايتات مكسورة
+            $s = @iconv('UTF-8', 'UTF-8//IGNORE', $s) ?: $s;
+            return $s;
+        };
+
+        if (is_string($value)) {
+            return $sanitizeString($value);
+        }
+
+        if (is_array($value)) {
+            $clean = [];
+            foreach ($value as $k => $v) {
+                $ck = is_string($k) ? $sanitizeString($k) : $k;
+                $clean[$ck] = utf8_sanitize_deep($v);
+            }
+            return $clean;
+        }
+
+        if (is_object($value)) {
+            // كائنات AWS\Result ونحوها: حوّل لمصفوفة إن أمكن
+            if (method_exists($value, 'toArray')) {
+                return utf8_sanitize_deep($value->toArray());
+            }
+            // الكائنات العادية: حوّل لمصفوفة ثم نظّف
+            return utf8_sanitize_deep((array) $value);
+        }
+
+        // الأنواع الأخرى (int/bool/null/float)
+        return $value;
     }
 }

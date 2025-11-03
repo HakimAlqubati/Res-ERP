@@ -70,7 +70,7 @@ class UnitPrice extends Model implements Auditable
             'price' => $this->price,
             'package_size' => $this->package_size,
             'order' => $this->order,
-            'usage_scope'=> $this->usage_scope,
+            'usage_scope' => $this->usage_scope,
             'show_in_invoices' => $this->show_in_invoices,
             'use_in_orders' => $this->use_in_orders,
         ];
@@ -98,8 +98,8 @@ class UnitPrice extends Model implements Auditable
         //     // UnitPriceSyncService::syncPackageSizeForProduct($unitPrice->product_id);
         // });
     }
- 
-   
+
+
     public function scopeUsableInManufacturing($query)
     {
         return $query->whereIn('usage_scope', [
@@ -159,5 +159,12 @@ class UnitPrice extends Model implements Auditable
             self::USAGE_SUPPLY_ONLY,
             self::USAGE_OUT_ONLY,
         ]);
+    }
+
+    public static function getPackageSize(int $productId, int $unitId): ?float
+    {
+        return self::where('product_id', $productId)
+            ->where('unit_id', $unitId)
+            ->value('package_size');
     }
 }
