@@ -30,6 +30,7 @@ use App\Services\MultiProductsInventoryService;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -98,7 +99,17 @@ class ResellerSaleResource extends Resource
                     ->label(__('lang.items'))
                     ->relationship()
                     ->defaultItems(1)->columnSpanFull()
-                    ->columns(9)
+                    ->columns(15)
+                    // ->table([
+                    //     TableColumn::make(__('lang.product'))
+                    //         ->width('3fr'),
+                    //     TableColumn::make(__('lang.unit'))->width('50'),
+                    //     TableColumn::make('P.Size'),
+                    //     TableColumn::make(__('stock.qty_in_stock')),
+                    //     TableColumn::make(__('lang.quantity')),
+                    //     TableColumn::make(__('lang.unit_price')),
+                    //     TableColumn::make(__('lang.total_price')),
+                    // ])
                     ->disabledOn('edit')
                     ->columnSpanFull()
                     ->schema([
@@ -146,7 +157,7 @@ class ResellerSaleResource extends Resource
                             ->reactive()
 
                             ->searchable()
-                            ->required()->columnSpan(3),
+                            ->required()->columnSpan(4),
 
                         Select::make('unit_id')
                             ->label(__('lang.unit'))
@@ -195,15 +206,16 @@ class ResellerSaleResource extends Resource
                                 $set('package_size', $unitPrice->package_size ?? 0);
                             })
                             ->searchable()->placeholder('Select')
-                            ->required()->columnSpan(1),
+                            ->required()->columnSpan(2),
 
                         TextInput::make('package_size')
-                            ->label(__('lang.package_size'))
+                            // ->label(__('lang.package_size'))
+                            ->label('P.Size')
                             ->numeric()->type('number')->readOnly()
-                            ->required(),
+                            ->required()->columnSpan(1),
 
                         TextInput::make('qty_in_stock')
-                            ->default(0)
+                            ->default(0)->columnSpan(2)
                             ->label(__('stock.qty_in_stock'))->disabled(),
 
                         TextInput::make('quantity')
@@ -234,7 +246,7 @@ class ResellerSaleResource extends Resource
                                 }
 
                                 $set('total_price', round($qty * $unitPrice, 2));
-                            }),
+                            })->columnSpan(2),
 
                         TextInput::make('unit_price')
                             ->label(__('lang.unit_price'))
@@ -245,13 +257,13 @@ class ResellerSaleResource extends Resource
                                 $qty       = (float) ($get('quantity') ?? 0);
                                 $unitPrice = (float) ($state ?? 0);
                                 $set('total_price', round($qty * $unitPrice, 2));
-                            }),
+                            })->columnSpan(2),
 
                         TextInput::make('total_price')
                             ->label(__('lang.total_price'))
                             ->numeric()
                             ->dehydrated()
-                            ->readOnly()->disabled(),
+                            ->readOnly()->disabled()->columnSpan(2),
 
                     ]),
             ]);
