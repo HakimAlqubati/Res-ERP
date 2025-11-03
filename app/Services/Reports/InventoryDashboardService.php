@@ -99,14 +99,6 @@ class InventoryDashboardService
                         'month_to_date' => formatMoneyWithCurrency($monthToDateValue),
                     ],
                 ],
-                'chocolate2' => [
-                    'items_made' => $itemsMade,
-                    'value'      => [
-                        'today'         => formatMoneyWithCurrency($todayValue),
-                        'yesterday'     => formatMoneyWithCurrency($yesterdayValue),
-                        'month_to_date' => formatMoneyWithCurrency($monthToDateValue),
-                    ],
-                ],
             ] : [],
         ];
     }
