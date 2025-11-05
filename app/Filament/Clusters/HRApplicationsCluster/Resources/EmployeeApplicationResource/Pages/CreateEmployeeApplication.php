@@ -176,20 +176,20 @@ class CreateEmployeeApplication extends CreateRecord
 
             case EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST:
                 $data = $this->data['leaveRequest'] ?? null;
-                if ($data) {
-                    $this->record->leaveRequest()->create([
-                        'application_id'       => $this->record->id,
-                        'start_date'           => $data['detail_from_date'],
-                        'end_date'             => $data['detail_to_date'],
-                        'days_count'           => $data['detail_days_count'] ?? null,
-                        'leave_type'        => $data['detail_leave_type_id'] ?? null,
-                        'employee_id'          => $this->record->employee_id,
-                        'application_type_id'  => EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST,
-                        'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST],
-                        'year'                 => $data['detail_year'] ?? now()->year,
-                        'month'                => $data['detail_month'] ?? now()->month,
-                    ]);
-                }
+                // if ($data) {
+                //     $this->record->leaveRequest()->create([
+                //         'application_id'       => $this->record->id,
+                //         'start_date'           => $data['detail_from_date'],
+                //         'end_date'             => $data['detail_to_date'],
+                //         'days_count'           => $data['detail_days_count'] ?? null,
+                //         'leave_type'        => $data['detail_leave_type_id'] ?? null,
+                //         'employee_id'          => $this->record->employee_id,
+                //         'application_type_id'  => EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST,
+                //         'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST],
+                //         'year'                 => $data['detail_year'] ?? now()->year,
+                //         'month'                => $data['detail_month'] ?? now()->month,
+                //     ]);
+                // }
                 break;
 
             case EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST:
