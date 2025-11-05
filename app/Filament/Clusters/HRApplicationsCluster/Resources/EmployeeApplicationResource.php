@@ -1074,7 +1074,19 @@ class EmployeeApplicationResource extends Resource
                     // app(MonthClosureService::class)->ensureMonthIsOpen($date);
                     return $data;
                 })
-                ->schema(
+                ->saveRelationshipsUsing(static function ($record, $state) {
+                    $data =  $state;
+                    $data['application_type_id']   = EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST;
+                    $data['application_type_name'] = \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_NAMES[\App\Models\EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST];
+                    $data['employee_id'] = $data['employee_id'] ?? $record->employee_id;
+                    $data['leave_type']  = $data['detail_leave_type_id'] ?? null;
+                    $data['start_date']  = $data['detail_from_date'] ?? null;
+                    $data['end_date']    = $data['detail_to_date'] ?? null;
+                    $data['year']        = $data['detail_year'] ?? now()->year;
+                    $data['month']       = $data['detail_month'] ?? now()->month;
+                    $data['days_count']  = $data['detail_days_count'];
+                    return $data;
+                })->schema(
 
                     [
                         Grid::make()->columns(4)->schema([
@@ -1197,6 +1209,26 @@ class EmployeeApplicationResource extends Resource
                     // dd($data);
                     return $data;
                 })
+                ->saveRelationshipsUsing(function (\Illuminate\Database\Eloquent\Model $record, array $state): void {
+                    $payload = [
+                        'application_id'                => $record->id,
+                        'employee_id'                   => $state['employee_id'] ?? $record->employee_id,
+                        'advance_amount'                => $state['detail_advance_amount'] ?? null,
+                        'monthly_deduction_amount'      => $state['detail_monthly_deduction_amount'] ?? null,
+                        'deduction_starts_from'         => $state['detail_deduction_starts_from'] ?? null,
+                        'deduction_ends_at'             => $state['detail_deduction_ends_at'] ?? null,
+                        'number_of_months_of_deduction' => $state['detail_number_of_months_of_deduction'] ?? null,
+                        'date'                          => $state['detail_date'] ?? null,
+                        'reason'                        => $state['reason'] ?? null,
+                        'application_type_id'           => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST,
+                        'application_type_name'         => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_NAMES[\App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST],
+                    ];
+
+                    // تحقق من إغلاق/فتح الشهر إن لزم
+                    // app(\App\Services\HR\MonthClosure\MonthClosureService::class)->ensureMonthIsOpen($payload['date']);
+
+                    $record->advanceRequest()->updateOrCreate([], $payload);
+                })
                 ->label('')->schema([
                     Grid::make()->columns(3)->columnSpanFull()->schema([
                         DatePicker::make('detail_date')
@@ -1298,7 +1330,18 @@ class EmployeeApplicationResource extends Resource
                     app(MonthClosureService::class)->ensureMonthIsOpen($date);
                     return $data;
                 })
+                ->saveRelationshipsUsing(function (\Illuminate\Database\Eloquent\Model $record, array $state): void {
+                    $payload = [
+                        'application_id'        => $record->id,
+                        'employee_id'           => $state['employee_id'] ?? $record->employee_id,
+                        'date'                  => $state['detail_date'] ?? null,
+                        'time'                  => $state['detail_time'] ?? null,
+                        'application_type_id'   => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
+                        'application_type_name' => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_NAMES[\App\Models\EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST],
+                    ];
 
+                    $record->missedCheckoutRequest()->updateOrCreate([], $payload);
+                })
                 ->columns(count($form))->schema(
                     $form
                 ),
@@ -1313,22 +1356,24 @@ class EmployeeApplicationResource extends Resource
                 ->label('')
                 ->relationship('missedCheckinRequest')
 
-                // ->mutateRelationshipDataBeforeSaveUsing(function ($data) {
-                //     dd($data);
-                // })
-                // ->mutateRelationshipDataBeforeCreateUsing(function (array $data, \Filament\Schemas\Components\Utilities\Get $get) {
+                ->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
+                    $data['application_type_id']   = \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST;
+                    $data['application_type_name'] = \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_NAMES[\App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST];
+                    $data['employee_id']           = $get('employee_id');
+                    return $data;
+                })
+                ->saveRelationshipsUsing(function (\Illuminate\Database\Eloquent\Model $record, array $state): void {
+                    $payload = [
+                        'application_id'        => $record->id,
+                        'employee_id'           => $state['employee_id'] ?? $record->employee_id,
+                        'date'                  => $state['date'] ?? null,
+                        'time'                  => $state['time'] ?? null,
+                        'application_type_id'   => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST,
+                        'application_type_name' => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_NAMES[\App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST],
+                    ];
 
-                //     // dd( $get('employee_id'));
-                //     $data['application_type_id']   = EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST;
-                //     $data['application_type_name'] = EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST];
-                //     $data['employee_id']           = $get('employee_id');
-
-                //     return $data;
-                // })
-                // ->saveRelationshipsBeforeChildrenUsing(function ($data) {
-                // dd($data);
-                // })
-
+                    $record->missedCheckinRequest()->updateOrCreate([], $payload);
+                })
                 ->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
 
                     $data['application_type_id']   = 2;
