@@ -53,7 +53,7 @@ class InventoryDashboardService
 
         // ✅ MANUFACTURING — كل المخازن المرتبطة بفروع تصنيعية
         $manufacturingBase = StockSupplyOrder::with(['details', 'store'])
-            // ->whereDate('created_at', '>=', $startOfMonth)
+            ->whereDate('created_at', '>=', $startOfMonth)
             ->whereHas('store.branches', function ($q) {
                 $q->where('type', Branch::TYPE_CENTRAL_KITCHEN);
             });
