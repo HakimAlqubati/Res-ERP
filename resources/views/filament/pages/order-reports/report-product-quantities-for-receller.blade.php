@@ -112,7 +112,7 @@
                         $total_quantity += $data?->quantity ?? 0;
                     @endphp
                     <tr>
-                        <td>{{ $data->branch }}</td>
+                            <td>{{ $data->branch }}</td>
                         <td> {{ $data?->code }} </td>
                         <td> {{ $data?->product }} </td>
                         <td> {{ $data?->unit }} </td>

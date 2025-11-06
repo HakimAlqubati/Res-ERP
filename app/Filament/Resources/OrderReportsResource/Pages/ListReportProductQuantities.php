@@ -22,7 +22,7 @@ use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf  as PDF;
 class ListReportProductQuantities extends ListRecords
 {
     protected static string $resource = ReportProductQuantitiesResource::class;
- 
+
     protected string $view = 'filament.pages.order-reports.report-product-quantities';
 
     public function getTableRecordKey(Model|array $record): string
@@ -47,18 +47,27 @@ class ListReportProductQuantities extends ListRecords
     protected function getViewData(): array
     {
         $repo = app(ProductRepository::class);
-        $branch_id = $this->getTable()->getFilters()['branch_id']->getState()['value'] ?? null;
+        $branchIds = $this->getTable()->getFilters()['branch_id']->getState()['values'];
         $start_date = $this->getTable()->getFilters()['date']->getState()['start_date'];
         $end_date = $this->getTable()->getFilters()['date']->getState()['end_date'];
         $product_id = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
-        $data = $repo->getReportDataFromTransactionsV2($product_id, $start_date, $end_date, $branch_id);
- 
-         return [
-        'report_data' => $data,
-        'product_id' => $product_id,
-        'start_date' => $start_date,
-        'end_date' => $end_date, 
-       ];
+        if (count($branchIds) <= 0) {
+            $branchIds = Branch::whereIn('type', [
+                Branch::TYPE_BRANCH,
+                Branch::TYPE_CENTRAL_KITCHEN,
+                Branch::TYPE_POPUP
+            ])
+                ->activePopups()
+                ->active()->pluck('id');
+        }
+        $data = $repo->getReportDataFromTransactionsV2($product_id, $start_date, $end_date, $branchIds);
+
+        return [
+            'report_data' => $data,
+            'product_id' => $product_id,
+            'start_date' => $start_date,
+            'end_date' => $end_date,
+        ];
         return [];
     }
 

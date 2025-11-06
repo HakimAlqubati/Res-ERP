@@ -94,7 +94,7 @@ class ReportProductQuantitiesForResellerResource extends Resource
                     }),
                 SelectFilter::make('branch_id')
                     ->label('Reseller')->searchable()
-                    ->placeholder('all')
+                    ->placeholder('all')->multiple()
                     ->options(Branch::whereIn('type', [
                         Branch::TYPE_RESELLER
                     ])

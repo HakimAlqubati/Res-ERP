@@ -48,31 +48,31 @@ class ListReportProductQuantitiesForReseller extends ListRecords
     protected function getViewData(): array
     {
         $repo = app(ProductRepository::class);
-        $branch_id = $this->getTable()->getFilters()['branch_id']->getState()['value'];
+        $branchIds = $this->getTable()->getFilters()['branch_id']->getState()['values'];
 
-        $branch_id = $branch_id == '' || $branch_id == null ? 'all' : $branch_id;
+
 
         $start_date = $this->getTable()->getFilters()['date']->getState()['start_date'];
         $end_date = $this->getTable()->getFilters()['date']->getState()['end_date'];
         $product_id = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
 
-        $branch = null; 
-        if ($branch_id === 'all') {
-            $branch = __('lang.all');
-        } elseif (is_numeric($branch_id)) {
-            $branch = Branch::find($branch_id)?->name;
+        if (count($branchIds) <= 0) {
+            $branchIds = Branch::whereIn('type', [
+                Branch::TYPE_RESELLER
+            ])
+                ->active()->pluck('id');
         }
+        $branch = null;
+
 
         $data = [];
-        if ($branch_id) {
-            $data = $repo->getReportDataFromTransactionsV2($product_id, $start_date, $end_date, $branch_id);
-        }
-       
+        $data = $repo->getReportDataFromTransactionsV2($product_id, $start_date, $end_date, $branchIds);
+
+
         return [
             'report_data' => $data,
             'product_id'  => $product_id,
             'start_date'  => $start_date,
-            'branch_id'   => $branch_id,
             'end_date'    => $end_date,
             'branch'      => $branch,
         ];

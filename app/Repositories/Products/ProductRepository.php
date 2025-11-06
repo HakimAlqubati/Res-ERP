@@ -423,33 +423,24 @@ class ProductRepository implements ProductRepositoryInterface
 
 
 
-    public function getReportDataFromTransactionsV2($productParam, $from_date, $to_date, $branch_id)
+    public function getReportDataFromTransactionsV2($productParam, $from_date, $to_date, $branchIds)
     {
         $from = $from_date ? Carbon::parse($from_date)->startOfDay() : null;
         $to   = $to_date   ? Carbon::parse($to_date)->endOfDay()   : null;
         $fromStr = $from ? $from->toDateTimeString() : null;
         $toStr   = $to   ? $to->toDateTimeString()   : null;
 
-        // 1) تحديد فروع الموزعين
-        if ($branch_id === 'all' || $branch_id === null || (is_array($branch_id) && in_array('all', $branch_id, true))) {
-            $branchIds = DB::table('branches')
-                // ->where('type', Branch::TYPE_RESELLER)
-                ->pluck('id')
-                ->all();
-        } else {
-            $branchIds = is_array($branch_id) ? $branch_id : [$branch_id];
-        }
 
-        // dd($branchIds);
         // 2) استخراج store_ids المرتبطة بالفروع
         $storeIds = DB::table('branches')
-            ->when($branchIds, fn($q) => $q->whereIn('id', $branchIds))
+            // ->when($branchIds, fn($q) => $q->whereIn('id', $branchIds))
+            ->whereIn('id', $branchIds)
             ->pluck('store_id')
             ->filter()
             ->unique()
             ->values()
             ->all();
-
+ 
         if (empty($storeIds)) {
             return [];
         }

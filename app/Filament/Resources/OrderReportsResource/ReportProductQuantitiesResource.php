@@ -87,7 +87,7 @@ class ReportProductQuantitiesResource extends Resource
                             ]);
                     }),
                 SelectFilter::make('branch_id')
-                    ->label('Branch')->searchable()
+                    ->label('Branch')->searchable()->multiple()
                     ->options(Branch::whereIn('type', [
                         Branch::TYPE_BRANCH,
                         Branch::TYPE_CENTRAL_KITCHEN,
