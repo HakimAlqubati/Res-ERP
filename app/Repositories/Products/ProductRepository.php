@@ -423,55 +423,56 @@ class ProductRepository implements ProductRepositoryInterface
 
 
 
-  public function getReportDataFromTransactionsV2($productParam, $from_date, $to_date, $branch_id)
-{
-    $from = $from_date ? Carbon::parse($from_date)->startOfDay() : null;
-    $to   = $to_date   ? Carbon::parse($to_date)->endOfDay()   : null;
-    $fromStr = $from ? $from->toDateTimeString() : null;
-    $toStr   = $to   ? $to->toDateTimeString()   : null;
+    public function getReportDataFromTransactionsV2($productParam, $from_date, $to_date, $branch_id)
+    {
+        $from = $from_date ? Carbon::parse($from_date)->startOfDay() : null;
+        $to   = $to_date   ? Carbon::parse($to_date)->endOfDay()   : null;
+        $fromStr = $from ? $from->toDateTimeString() : null;
+        $toStr   = $to   ? $to->toDateTimeString()   : null;
 
-    // 1) تحديد فروع الموزعين
-    if ($branch_id === 'all' || $branch_id === null || (is_array($branch_id) && in_array('all', $branch_id, true))) {
-        $branchIds = DB::table('branches')
-            ->where('type', Branch::TYPE_RESELLER)
-            ->pluck('id')
+        // 1) تحديد فروع الموزعين
+        if ($branch_id === 'all' || $branch_id === null || (is_array($branch_id) && in_array('all', $branch_id, true))) {
+            $branchIds = DB::table('branches')
+                // ->where('type', Branch::TYPE_RESELLER)
+                ->pluck('id')
+                ->all();
+        } else {
+            $branchIds = is_array($branch_id) ? $branch_id : [$branch_id];
+        }
+
+        // dd($branchIds);
+        // 2) استخراج store_ids المرتبطة بالفروع
+        $storeIds = DB::table('branches')
+            ->when($branchIds, fn($q) => $q->whereIn('id', $branchIds))
+            ->pluck('store_id')
+            ->filter()
+            ->unique()
+            ->values()
             ->all();
-    } else {
-        $branchIds = is_array($branch_id) ? $branch_id : [$branch_id];
-    }
 
-    // 2) استخراج store_ids المرتبطة بالفروع
-    $storeIds = DB::table('branches')
-        ->when($branchIds, fn($q) => $q->whereIn('id', $branchIds))
-        ->pluck('store_id')
-        ->filter()
-        ->unique()
-        ->values()
-        ->all();
+        if (empty($storeIds)) {
+            return [];
+        }
 
-    if (empty($storeIds)) {
-        return [];
-    }
+        // 3) تجهيز فلتر المنتج
+        $productId = null;
+        if ($productParam !== null && $productParam !== '') {
+            $productId = is_numeric($productParam)
+                ? (int) $productParam
+                : DB::table('products')->where('code', trim((string)$productParam))->value('id');
+        }
 
-    // 3) تجهيز فلتر المنتج
-    $productId = null;
-    if ($productParam !== null && $productParam !== '') {
-        $productId = is_numeric($productParam)
-            ? (int) $productParam
-            : DB::table('products')->where('code', trim((string)$productParam))->value('id');
-    }
+        $productFilterSql = '';
+        $productBindings  = [];
+        if ($productId) {
+            $productFilterSql = "AND it_in.product_id = ?";
+            $productBindings  = [$productId];
+        }
 
-    $productFilterSql = '';
-    $productBindings  = [];
-    if ($productId) {
-        $productFilterSql = "AND it_in.product_id = ?";
-        $productBindings  = [$productId];
-    }
+        // 4) SQL مع اسم الموزع لكل صف
+        $placeholdersStores = implode(',', array_fill(0, count($storeIds), '?'));
 
-    // 4) SQL مع اسم الموزع لكل صف
-    $placeholdersStores = implode(',', array_fill(0, count($storeIds), '?'));
-
-    $sql = "
+        $sql = "
         SELECT 
             t.branch_name,
             t.unit_id,
@@ -562,35 +563,35 @@ class ProductRepository implements ProductRepositoryInterface
         ORDER BY t.branch_name, t.unit_id, t.package_size
     ";
 
-    $bindings = array_merge(
-        [$toStr, $toStr],            // لقيد it_out
-        $storeIds,                   // المخازن
-        $productBindings,            // المنتج
-        [$fromStr, $fromStr, $toStr, $toStr] // قيد it_in
-    );
+        $bindings = array_merge(
+            [$toStr, $toStr],            // لقيد it_out
+            $storeIds,                   // المخازن
+            $productBindings,            // المنتج
+            [$fromStr, $fromStr, $toStr, $toStr] // قيد it_in
+        );
 
-    $rows = collect(DB::select($sql, $bindings));
+        $rows = collect(DB::select($sql, $bindings));
 
-    $final = [];
-    foreach ($rows as $r) {
-        if (($r->remaining_qty_unit ?? 0) <= 0) {
-            continue;
+        $final = [];
+        foreach ($rows as $r) {
+            if (($r->remaining_qty_unit ?? 0) <= 0) {
+                continue;
+            }
+            $obj               = new \stdClass();
+            $obj->code         = $r->product_code ?? '';
+            $obj->product      = $r->product_name ?? '';
+            $obj->branch       = $r->branch_name ?? '';   // <— اسم الموزع/الفرع
+            $obj->package_size = (float)($r->package_size ?? 1);
+            $obj->unit         = $r->unit_name ?? '';
+            $obj->quantity     = formatQunantity((float)($r->remaining_qty_unit ?? 0));
+            $obj->in_quantity  = formatQunantity((float)($r->in_qty_base ?? 0));
+            $obj->out_quantity = formatQunantity((float)($r->out_qty_base ?? 0));
+            $obj->price        = formatMoneyWithCurrency((float)($r->unit_price ?? 0));
+            $final[]           = $obj;
         }
-        $obj               = new \stdClass();
-        $obj->code         = $r->product_code ?? '';
-        $obj->product      = $r->product_name ?? '';
-        $obj->branch       = $r->branch_name ?? '';   // <— اسم الموزع/الفرع
-        $obj->package_size = (float)($r->package_size ?? 1);
-        $obj->unit         = $r->unit_name ?? '';
-        $obj->quantity     = formatQunantity((float)($r->remaining_qty_unit ?? 0));
-        $obj->in_quantity  = formatQunantity((float)($r->in_qty_base ?? 0));
-        $obj->out_quantity = formatQunantity((float)($r->out_qty_base ?? 0));
-        $obj->price        = formatMoneyWithCurrency((float)($r->unit_price ?? 0));
-        $final[]           = $obj;
-    }
 
-    return $final;
-}
+        return $final;
+    }
 
 
 

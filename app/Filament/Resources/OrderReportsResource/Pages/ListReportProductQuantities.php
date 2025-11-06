@@ -53,7 +53,7 @@ class ListReportProductQuantities extends ListRecords
         $product_id = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
         $data = $repo->getReportDataFromTransactionsV2($product_id, $start_date, $end_date, $branch_id);
  
-       return [
+         return [
         'report_data' => $data,
         'product_id' => $product_id,
         'start_date' => $start_date,

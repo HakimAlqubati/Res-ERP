@@ -79,13 +79,14 @@ class GoodsReceivedNoteReportService
             $query->whereIn('grn.grn_number', $grnNumbers);
         }
 
-        if (!empty($dateFilter['from'])) {
-            $query->whereDate('grn.grn_date', '>=', $dateFilter['from']);
+        if (!empty($dateFilter['start'])) {
+            $query->whereDate('grn.grn_date', '>=', $dateFilter['start']);
         }
-        if (!empty($dateFilter['to'])) {
-            $query->whereDate('grn.grn_date', '<=', $dateFilter['to']);
+        if (!empty($dateFilter['end'])) {
+            $query->whereDate('grn.grn_date', '<=', $dateFilter['end']);
         }
 
+        // dd($dateFilter);
         // نسخة لحساب الإجمالي الكلي قبل التقسيم
         $rawQuery = clone $query;
 

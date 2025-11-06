@@ -86,12 +86,13 @@
                     <br>
                     <p>{{ __('lang.end_date') . ': ' . $end_date }}</p>
                 </th>
-                <th colspan="2" style="text-align: center; vertical-align: middle;"
+                <th colspan="3" style="text-align: center; vertical-align: middle;"
                     class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">
                     <img class="circle-image" src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="">
                 </th>
             </tr>
             <tr>
+                <th>{{ __('lang.branch') }}</th>
                 <th>{{ __('lang.code') }}</th>
                 <th>{{ __('lang.product') }}</th>
                 <th>{{ __('lang.unit') }}</th>
@@ -104,6 +105,7 @@
             @foreach ($report_data as $data)
                 <tr>
 
+                    <td> {{ $data?->branch }} </td>
                     <td> {{ $data?->code }} </td>
                     <td> {{ $data?->product }} </td>
                     <td> {{ $data?->unit }} </td>

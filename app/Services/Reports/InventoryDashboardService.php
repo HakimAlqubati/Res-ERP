@@ -39,7 +39,7 @@ class InventoryDashboardService
             ->whereDate('created_at', '>=', $startOfMonth)
             ->whereHas('branch', function ($query) {
                 // $query->branches();
-                $query->whereIn('type',[Branch::TYPE_BRANCH,Branch::TYPE_CENTRAL_KITCHEN]);
+                $query->whereIn('type', [Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN]);
             })
             ->get()
             ->groupBy(fn($order) => $order->branch?->name ?? 'Unknown Branch')
@@ -51,6 +51,42 @@ class InventoryDashboardService
                 ];
             })->values();
 
+        // ✅ MANUFACTURING — كل المخازن المرتبطة بفروع تصنيعية
+        $manufacturingBase = StockSupplyOrder::with(['details', 'store'])
+            // ->whereDate('created_at', '>=', $startOfMonth)
+            ->whereHas('store.branches', function ($q) {
+                $q->where('type', Branch::TYPE_CENTRAL_KITCHEN);
+            });
+        // نجلب أوامر الشهر ثم نُجمّعها لكل مخزن
+        $manufacturingByStore = $manufacturingBase->get()
+            ->groupBy('store_id')
+            ->map(function ($orders, $storeId) use ($today, $yesterday) {
+                $storeName = optional($orders->first()->store)->name ?? 'Unknown Store';
+
+                $calcValue = function ($ordersSubset) {
+                    return $ordersSubset->sum(
+                        fn($order) => $order->details->sum(fn($d) => $d->price * $d->quantity)
+                    );
+                };
+
+                $itemsMade        = $orders->sum(fn($o) => $o->item_count);
+                $todayValue       = $calcValue($orders->filter(fn($o) => $o->created_at->isSameDay($today)));
+                $yesterdayValue   = $calcValue($orders->filter(fn($o) => $o->created_at->isSameDay($yesterday)));
+                $monthToDateValue = $calcValue($orders);
+
+                return [
+                    'store_id'    => $storeId,
+                    'store'       => $storeName,
+                    'items_made'  => $itemsMade,
+                    'value'       => [
+                        'today'         => formatMoneyWithCurrency($todayValue),
+                        'yesterday'     => formatMoneyWithCurrency($yesterdayValue),
+                        'month_to_date' => formatMoneyWithCurrency($monthToDateValue),
+                    ],
+                ];
+            })->values();
+
+            // dd($manufacturingByStore);
         // ✅ MANUFACTURING (Chocolate)
         $manufacturingOrders = StockSupplyOrder::with('details')
             ->whereDate('created_at', '>=', $startOfMonth)
@@ -91,6 +127,7 @@ class InventoryDashboardService
             'branch_orders' => $showBranchOrders ? $branchOrders->all() : [],
 
             'manufacturing' => $showManufacturing ? [
+                'stores' => $manufacturingByStore,
                 'chocolate' => [
                     'items_made' => $itemsMade,
                     'value'      => [

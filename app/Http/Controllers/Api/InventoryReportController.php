@@ -1,9 +1,11 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Models\Category;
 use App\Models\Store;
 use App\Http\Controllers\Controller;
+use App\Models\Branch;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Services\BranchOrderSupplyReportService;
@@ -103,8 +105,13 @@ class InventoryReportController extends Controller
 
         $rawData = null;
         if (! empty($productId)) {
-            $rawData = InventoryTransaction::getInventoryTrackingDataPagination($productId, 15,
-                $movementType, null, $storeId);
+            $rawData = InventoryTransaction::getInventoryTrackingDataPagination(
+                $productId,
+                15,
+                $movementType,
+                null,
+                $storeId
+            );
             $reportData = $rawData->through(function ($item) {
 
                 $item->formatted_transactionable_type = class_basename($item->transactionable_type);
@@ -112,7 +119,7 @@ class InventoryReportController extends Controller
                 $item->movement_date    = Carbon::parse($item->movement_date)->format('Y-m-d'); // force it here
                 $item->transaction_date = Carbon::parse($item->transaction_date)->format('Y-m-d');
                 $item->quantity         = formatQunantity($item->quantity);
-                $item->store = $item?->store?->name??'';
+                $item->store = $item?->store?->name ?? '';
                 return $item;
             });
         }
@@ -121,12 +128,20 @@ class InventoryReportController extends Controller
     }
     public function filters()
     {
+        $stores = Store::query()
+            // يوجد فروع تصنيعية
+            ->whereHas('branches', fn($q) => $q->where('type', Branch::TYPE_CENTRAL_KITCHEN)
+                ->whereNull('deleted_at'))
+            // لا يوجد فروع غير تصنيعية
+            ->whereDoesntHave('branches', fn($q) => $q->where('type', '!=', Branch::TYPE_CENTRAL_KITCHEN)
+                ->whereNull('deleted_at'))
+                ->orWhereDoesntHave('branches')->where('default_store',1)
+            ->get()->pluck('name', 'id')->toArray();
+
         $filters = [
 
             'categories'     => Category::active()->pluck('name', 'id')->toArray(),
-            'stores'         => Store::active()
-                ->centralKitchenStores()
-                ->pluck('name', 'id')->toArray(),
+            'stores'         => $stores,
             'movement_types' => InventoryTransaction::getMovementTypes(),
             'manufacturing_filter' => collect(\App\Enums\ProductType::cases())
                 ->mapWithKeys(fn($case) => [$case->value => $case->label()])
