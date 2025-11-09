@@ -109,7 +109,7 @@
             @endphp
                 @foreach ($report_data as $data)
                     @php
-                        $total_quantity += $data?->quantity ?? 0;
+                        $total_quantity += $data?->in_quantity ?? 0;
                     @endphp
                     <tr>
                             <td>{{ $data->branch }}</td>
@@ -117,7 +117,7 @@
                         <td> {{ $data?->product }} </td>
                         <td> {{ $data?->unit }} </td>
                         <td> {{ $data?->package_size }} </td>
-                        <td> {{ $data?->quantity }} </td>
+                        <td> {{ $data?->in_quantity }} </td>
                         {{-- <td> {{ $data?->price }} </td> --}}
 
 
