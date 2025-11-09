@@ -274,6 +274,7 @@ class ProductRepository implements ProductRepositoryInterface
 
         // 1) branch_id -> store_id(s)
         $branchIds = $branch_id ? (is_array($branch_id) ? $branch_id : [$branch_id]) : [];
+
         $storeIds = DB::table('branches')
             ->when($branchIds, fn($q) => $q->whereIn('id', $branchIds))
             ->pluck('store_id')
@@ -282,7 +283,7 @@ class ProductRepository implements ProductRepositoryInterface
             ->values()
             ->all();
 
-        if (empty($storeIds)) {
+         if (empty($storeIds)) {
             return [];
         }
 
@@ -440,7 +441,7 @@ class ProductRepository implements ProductRepositoryInterface
             ->unique()
             ->values()
             ->all();
- 
+
         if (empty($storeIds)) {
             return [];
         }
@@ -605,13 +606,16 @@ class ProductRepository implements ProductRepositoryInterface
             return response()->json(['success' => false, 'message' => 'Invalid date format. Use d-m-Y.']);
         }
 
-        if ($currnetRole == 7) {
+        if (isBranchManager()) {
             $branch_id = [getBranchId()];
         } else {
             $branch_id = explode(',', $request->input('branch_id'));
         }
 
-        // dd($branch_id);
+        if (empty(array_filter($branch_id))) {
+            // كل القيم داخل المصفوفة فارغة (مثل "", null, 0, إلخ)
+            $branch_id = Branch::select('id')->selectable()->active()->pluck('id')->toArray();
+        }
         // $dataQuantity = $this->getReportData($request, $from_date, $to_date, $branch_id);
         $dataQuantity2 = $this->getReportDataFromTransactions($request->product_id, $from_date, $to_date, $branch_id);
         return [
@@ -623,7 +627,7 @@ class ProductRepository implements ProductRepositoryInterface
     }
     public function getCount($request, $from_date, $to_date, $branch_id)
     {
-        $data = DB::table('orders_details')
+         $data = DB::table('orders_details')
             ->select(
                 'products.name AS product',
                 'units.name AS unit',

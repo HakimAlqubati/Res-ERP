@@ -93,10 +93,10 @@ class EmployeeApplicationV2 extends Model implements Auditable
         self::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => 'Missed check-out',
     ];
     const APPLICATION_TYPE_FILTERS = [
-        self::APPLICATION_TYPE_LEAVE_REQUEST => '?activeTab=Leave+request',
-        self::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => '?activeTab=Missed+check-in',
-        self::APPLICATION_TYPE_ADVANCE_REQUEST => '?activeTab=Advance+request',
-        self::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => '?activeTab=Missed+check-out',
+        self::APPLICATION_TYPE_LEAVE_REQUEST => '?tab=Leave+request',
+        self::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => '?tab=Missed+check-in',
+        self::APPLICATION_TYPE_ADVANCE_REQUEST => '?tab=Advance+request',
+        self::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => '?tab=Missed+check-out',
     ];
 
     // Constants for status

@@ -3,7 +3,9 @@
 namespace App\Filament\Clusters\HRApplicationsCluster\Resources;
 
 use App\Filament\Clusters\HRApplicationsCluster;
+use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource\Form\EmployeeApplicationForm;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource\Pages;
+use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource\Table\EmployeeApplicationTable;
 use App\Filament\Pages\AttendanecEmployee2 as AttendanecEmployee;
 use App\Models\AdvanceRequest;
 use App\Models\ApplicationTransaction;
@@ -52,18 +54,19 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Filters\TrashedFilter;
 
 class EmployeeApplicationResource extends Resource
 {
     protected static ?string $model = EmployeeApplicationV2::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::PencilSquare;
     protected ?bool $hasDatabaseTransactions = true;
 
-    protected static ?string $cluster                             = HRApplicationsCluster::class;
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort                         = 0;
+    // protected static ?string $cluster                             = HRApplicationsCluster::class;
+    // protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    // protected static ?int $navigationSort                         = 0;
     protected static ?string $label                               = 'Request';
     protected static ?string $pluralLabel                         = 'Requests';
 
@@ -71,406 +74,11 @@ class EmployeeApplicationResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->components([
-                Fieldset::make()->columnSpanFull()->label('')->columns(2)->schema([
-                    Select::make('employee_id')
-                        ->label('Employee')
-                        ->searchable()
-                        ->required()
-                        ->live()
-                        // ->afterStateUpdated(function ($get, $set, $state) {
-                        //     $employee = Employee::find($state);
-                        //     $set('basic_salary', $employee?->salary);
-                        // })
-                        ->disabled(function () {
-                            if (isStuff() || isFinanceManager()) {
-                                return true;
-                            }
-                            return false;
-                        })
-                        ->default(function () {
-                            if (isStuff() || isFinanceManager()) {
-                                return auth()->user()->employee->id;
-                            }
-                        })
-                        ->options(Employee::select('name', 'id')
-                            ->active()->forBranchManager()
-                            ->get()->plucK('name', 'id')),
-
-                    DatePicker::make('application_date')
-                        ->label('Request date')
-                        ->default(date('Y-m-d'))
-                        ->live()
-                        ->disabled()
-                        ->dehydrated()
-                        ->afterStateUpdated(function ($set, $get, $state) {
-                            // Create a DateTime object
-                            $dateTime = new DateTime($state);
-
-                            // Get the year and month
-                            $year  = $dateTime->format('Y'); // Year (e.g., 2024)
-                            $month = $dateTime->format('m'); // Month (e.g., 12)
-
-                            $set('leaveRequest.detail_year', $year);
-                            $set('leaveRequest.detail_month', $month);
-                            $set('leaveRequest.detail_from_date', $get('application_date'));
-                            $set('missedCheckinRequest.date', $get('application_date'));
-                            $set('missedCheckoutRequest.detail_date', $get('application_date'));
-                            $set('leaveRequest.detail_to_date', $get('application_date'));
-                            $set('leaveRequest.detail_days_count', 1);
-                        })
-                        ->required(),
-
-                    ToggleButtons::make('application_type_id')
-                        ->columnSpan(2)
-                        ->label('Request type')
-                        ->hiddenOn('edit')
-                        ->live()->required()
-                        ->options(EmployeeApplicationV2::APPLICATION_TYPES)
-                        ->icons([
-                            EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST                => 'heroicon-o-banknotes',
-                            EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST                  => 'heroicon-o-clock',
-                            EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => 'heroicon-o-finger-print',
-                            EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST  => 'heroicon-o-finger-print',
-                        ])->inline()
-                        ->colors([
-                            EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST  => 'info',
-                            EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST                  => 'warning',
-                            EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => 'success',
-                            EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST                => 'danger',
-                        ])
-                        ->afterStateUpdated(function ($set, $get) {
-                            // Create a DateTime object
-                            $dateTime = new DateTime($get('application_date'));
-
-                            // Get the year and month
-                            $year  = $dateTime->format('Y'); // Year (e.g., 2024)
-                            $month = $dateTime->format('m'); // Month (e.g., 12)
-
-                            $set('leaveRequest.detail_year', $year);
-                            $set('leaveRequest.detail_month', $month);
-                            $set('leaveRequest.detail_from_date', $get('application_date'));
-                            $set('leaveRequest.detail_to_date', $get('application_date'));
-                            $set('leaveRequest.detail_days_count', 1);
-                            $set('missedCheckinRequest.date', $get('application_date'));
-                            $set('missedCheckoutRequest.detail_date', $get('application_date'));
-                            $set('missedCheckinRequest.time', now()->toTimeString());
-                            $set('missedCheckoutRequest.detail_time', now()->toTimeString());
-                        }),
-                ]),
-                Fieldset::make('')->columnSpanFull()
-                    ->label(fn(Get $get): string => EmployeeApplicationV2::APPLICATION_TYPES[$get('application_type_id')])
-
-                    ->columns(1)
-                    ->visible(fn(Get $get): bool => is_numeric($get('application_type_id')))
-
-                    ->schema(function ($get, $set) {
-
-                        $schema = [];
-                        if (
-                            $get('application_type_id') == EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST
-                        ) {
-                            return self::attendanceRequestForm();
-                        }
-                        if (
-                            $get('application_type_id') == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST
-                        ) {
-                            return self::departureRequestForm($set, $get);
-                        }
-                        if ($get('application_type_id') == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST) {
-                            return self::advanceRequestForm($set, $get);
-                        }
-                        if ($get('application_type_id') == EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST) {
-                            return self::leaveRequestForm($set, $get);
-                        }
-
-                        return [
-                            Fieldset::make()->columns(count($schema))->schema(
-                                $schema
-                            ),
-                        ];
-                    }),
-                Fieldset::make()->columnSpanFull()->label('')->schema([
-                    Textarea::make('notes') // Add the new details field
-                        ->label('Notes')
-                        ->placeholder('Notes...')
-                        // ->rows(5)
-                        ->columnSpanFull(),
-                ]),
-            ]);
+        return EmployeeApplicationForm::configure($schema);
     }
 
-    public static function table(Table $table): Table
-    {
-        return $table->defaultSort('id', 'desc')
-            ->paginated([10, 25, 50, 100])
-            ->striped()
-            ->columns([
-                TextColumn::make('id')
-                    ->sortable()
-                    ->searchable(),
-                TextColumn::make('employee.name')
-                    ->sortable()->limit(20)
-                    ->searchable(),
-                TextColumn::make('createdBy.name')->limit(20)
-                    ->sortable()
-                    ->searchable(),
-                TextColumn::make('application_date')->label('Request date')
-                    ->sortable(),
-                // TextColumn::make('approvedBy.name')->label('Approved by')
-                //     ->sortable(),
-                // TextColumn::make('approved_at')->label('Approved at')
-                //     ->sortable()
-                // ,
-
-                TextColumn::make('status')->label('Status')->alignCenter(true)
-                    ->badge()
-                    ->icon('heroicon-m-check-badge')
-                    ->color(fn(string $state): string    => match ($state) {
-                        EmployeeApplicationV2::STATUS_PENDING  => 'warning',
-                        EmployeeApplicationV2::STATUS_REJECTED => 'danger',
-                        EmployeeApplicationV2::STATUS_APPROVED => 'success',
-                    })
-                    ->toggleable(isToggledHiddenByDefault: false),
-            ])
-            ->filters([
-                TrashedFilter::make(),
-                SelectFilter::make('status')->options([
-                    EmployeeApplicationV2::STATUS_PENDING  => EmployeeApplicationV2::STATUS_PENDING,
-                    EmployeeApplicationV2::STATUS_REJECTED => EmployeeApplicationV2::STATUS_REJECTED,
-                    EmployeeApplicationV2::STATUS_APPROVED => EmployeeApplicationV2::STATUS_APPROVED,
-                ]),
-                SelectFilter::make('branch_id')
-                    ->label('Branch')
-                    ->options(Branch::select('name', 'id')->selectable()->forBranchManager('id')->pluck('name', 'id')),
-            ])
-            ->recordActions([
-                RestoreAction::make(),
-                DeleteAction::make()->using(function ($record) {
-
-                    $details = null;
-                    switch ($record->application_type_id) {
-
-                        case EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST:
-                            $record->load([
-                                'leaveRequest',
-                            ]);
-                            DB::beginTransaction();
-                            try {
-                                $details = $record->leaveRequest;
-                                // dd($details);
-                                if (! is_null($details)) {
-                                    $fromDate     = Carbon::parse($details->start_date);
-                                    $toDate       = Carbon::parse($details->end_date);
-                                    $remaning     = $fromDate->diffInDays($toDate) + 1;
-                                    $leaveBalance = LeaveBalance::where('leave_type_id', $details->leave_type)->where('employee_id', $record->employee_id)
-                                        ->where('year', $details->year)
-                                        ->where('month', $details->month)
-                                        ->first();
-
-                                    if (! is_null($leaveBalance)) {
-                                        $leaveBalance->update([
-                                            'balance' => $remaning + $leaveBalance?->balance,
-                                        ]);
-                                    }
-                                    $record->delete();
-                                    DB::commit();
-                                    showSuccessNotifiMessage('done');
-                                }
-                            } catch (Exception $th) {
-                                DB::rollBack();
-                                throw $th;
-                                return Notification::make()->title($th->getMessage())->warning()->send();
-                            }
-                            break;
-                        case EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST:
-                            $record->load([
-                                'advanceRequest',
-                            ]);
-                            DB::beginTransaction();
-                            try {
-                                //code...
-                                $record->delete();
-                                $record->advanceInstallments()->delete();
-                                $record->advanceRequest()->delete();
-                                showSuccessNotifiMessage('Done');
-                                DB::commit();
-                            } catch (Exception $th) {
-                                showWarningNotifiMessage($th->getMessage());
-                                throw $th;
-                                DB::rollBack();
-                            }
-                            break;
-                        case EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST:
-                            $record->load([
-                                'missedCheckinRequest',
-                            ]);
-                            DB::beginTransaction();
-                            try {
-                                //code...
-                                $record->delete();
-                                $record->missedCheckinRequest()->delete();
-                                showSuccessNotifiMessage('Done');
-                                DB::commit();
-                            } catch (Exception $th) {
-                                showWarningNotifiMessage($th->getMessage());
-                                throw $th;
-                                DB::rollBack();
-                            }
-                            break;
-                        case EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST:
-                            $record->load([
-                                'missedCheckoutRequest',
-                            ]);
-                            // dd('sd', $record);
-                            DB::beginTransaction();
-                            try {
-                                //code...
-                                $record->delete();
-                                $record->missedCheckoutRequest()->delete();
-                                showSuccessNotifiMessage('Done');
-                                DB::commit();
-                            } catch (Exception $th) {
-                                showWarningNotifiMessage($th->getMessage());
-                                throw $th;
-                                DB::rollBack();
-                            }
-
-                            break;
-
-                        default:
-                            # code...
-                            break;
-                    }
-                }),
-                ForceDeleteAction::make()->using(function ($record) {
-                    DB::beginTransaction();
-                    try {
-                        $transaction = ApplicationTransaction::where('application_id', $record->id)->whereIn('transaction_type_id', [1, 2, 3, 4])->first();
-                        $record->forceDelete();
-                        if ($transaction) {
-                            $transaction->forceDelete();
-                        }
-                        DB::commit();
-                    } catch (Exception $th) {
-                        DB::rollBack();
-                        return Notification::make()->title($th->getMessage())->warning()->send();
-                        //throw $th;
-                    }
-                }),
-
-                static::approveDepartureRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }),
-                static::rejectDepartureRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }),
-
-                static::approveAdvanceRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }),
-                static::rejectAdvanceRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }),
-
-                static::approveLeaveRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }),
-                static::rejectLeaveRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }),
-
-                static::approveAttendanceRequest()->hidden(function ($record) {
-                    // return false;
-                    if (isstuff() || isFinanceManager()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }),
-
-                static::rejectAttendanceRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }),
-                static::AttendanceRequestDetails()
-                    ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST)),
-
-                static::LeaveRequesttDetails()
-                    ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST)),
-                static::departureRequesttDetails()
-                    ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST)),
-
-                static::advancedRequestDetails()
-                    ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST)),
-
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    ForceDeleteBulkAction::make(),
-                    RestoreBulkAction::make(),
-                ]),
-            ]);
+    public static function table(Table $table): Table {
+        return EmployeeApplicationTable::configure($table);
     }
 
     public static function getRelations(): array
@@ -530,7 +138,7 @@ class EmployeeApplicationResource extends Resource
         return false;
     }
 
-    private static function approveDepartureRequest(): Action
+    public static function approveDepartureRequest(): Action
     {
         return Action::make('approveDepartureRequest')->label('Approve')->button()
             ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST))
@@ -597,7 +205,7 @@ class EmployeeApplicationResource extends Resource
         ;
     }
 
-    private static function rejectDepartureRequest(): Action
+    public static function rejectDepartureRequest(): Action
     {
         return Action::make('rejectDepartureRequest')->label('Reject')->button()
             ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST))
@@ -617,7 +225,7 @@ class EmployeeApplicationResource extends Resource
                 ];
             });
     }
-    private static function approveAdvanceRequest(): Action
+    public static function approveAdvanceRequest(): Action
     {
         return Action::make('approveAdvanceRequest')->label('Approve')->button()
             ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST))
@@ -721,7 +329,7 @@ class EmployeeApplicationResource extends Resource
         ;
     }
 
-    private static function rejectAdvanceRequest(): Action
+    public static function rejectAdvanceRequest(): Action
     {
         return Action::make('rejectAdvanceRequest')->label('Reject')->button()
             ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST))
@@ -742,7 +350,7 @@ class EmployeeApplicationResource extends Resource
             });
     }
 
-    private static function approveLeaveRequest(): Action
+    public static function approveLeaveRequest(): Action
     {
         return Action::make('approveLeaveRequest')->label('Approve')->button()
             ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST))
@@ -807,7 +415,7 @@ class EmployeeApplicationResource extends Resource
         ;
     }
 
-    private static function rejectLeaveRequest(): Action
+    public static function rejectLeaveRequest(): Action
     {
         return Action::make('rejectLeaveRequest')->label('Reject')->button()
             ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST))
@@ -828,7 +436,7 @@ class EmployeeApplicationResource extends Resource
             });
     }
 
-    private static function approveAttendanceRequest(): Action
+    public static function approveAttendanceRequest(): Action
     {
         return Action::make('approveAttendanceRequest')->label('Approve')->button()
             ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST))
@@ -875,7 +483,7 @@ class EmployeeApplicationResource extends Resource
                 ];
             });
     }
-    private static function departureRequesttDetails(): Action
+    public static function departureRequesttDetails(): Action
     {
         return Action::make('departureRequesttDetails')->label('Details')->button()
             ->color('info')
@@ -910,7 +518,7 @@ class EmployeeApplicationResource extends Resource
             ->modalCancelAction(false)
         ;
     }
-    private static function AttendanceRequestDetails(): Action
+    public static function AttendanceRequestDetails(): Action
     {
         return Action::make('AttendanceRequestDetails')->label('Details')->button()
             ->color('info')
@@ -930,7 +538,7 @@ class EmployeeApplicationResource extends Resource
             ->modalCancelAction(false)
         ;
     }
-    private static function LeaveRequesttDetails(): Action
+    public static function LeaveRequesttDetails(): Action
     {
         return Action::make('LeaveRequesttDetails')->label('Details')->button()
             ->color('info')
@@ -966,7 +574,7 @@ class EmployeeApplicationResource extends Resource
             ->modalCancelAction(false)
         ;
     }
-    private static function advancedRequestDetails(): Action
+    public static function advancedRequestDetails(): Action
     {
         return Action::make('advancedRequestDetails')->label('Details')->button()
             ->color('info')
@@ -1004,7 +612,7 @@ class EmployeeApplicationResource extends Resource
         ;
     }
 
-    private static function rejectAttendanceRequest(): Action
+    public static function rejectAttendanceRequest(): Action
     {
         return Action::make('rejectAttendanceRequest')->label('Reject')->button()
             ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST))

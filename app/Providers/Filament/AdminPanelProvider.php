@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Clusters\AreaManagementCluster;
 use App\Filament\Clusters\HRApplicationsCluster;
+use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource;
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttendanceReport;
 use App\Filament\Clusters\HRCircularCluster;
@@ -111,7 +112,7 @@ class AdminPanelProvider extends PanelProvider
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ? HRTaskReport::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager() || isMaintenanceManager()) ? HRCircularCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ? HRSalaryCluster::getNavigationItems() : [],
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff() || isFinanceManager()) ? HRApplicationsCluster::getNavigationItems() : [],
+                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff() || isFinanceManager()) ? EmployeeApplicationResource::getNavigationItems() : [],
                             // (isSuperAdmin() || isSystemManager()) ? MonthClosureResource::getNavigationItems() : [],
                         ));
                 }
