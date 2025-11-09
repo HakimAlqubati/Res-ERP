@@ -235,4 +235,5 @@ return [
     'grn_report' => 'تقرير الـGRN',
     'grn_number' => 'رقم الـGRN',
     'show_grn_number' => 'عرض رقم الـGRN',
+    'employee' => 'الموظف',
 ];

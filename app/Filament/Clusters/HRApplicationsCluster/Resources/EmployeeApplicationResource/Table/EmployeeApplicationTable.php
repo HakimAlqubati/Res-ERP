@@ -22,6 +22,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Filament\Tables\Filters\TrashedFilter;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource;
+use App\Models\Employee;
+use Filament\Tables\Enums\FiltersLayout;
+
 class EmployeeApplicationTable
 {
     public static function configure($table)
@@ -57,6 +60,7 @@ class EmployeeApplicationTable
                     })
                     ->toggleable(isToggledHiddenByDefault: false),
             ])
+            
             ->filters([
                 TrashedFilter::make(),
                 SelectFilter::make('status')->options([
@@ -64,10 +68,12 @@ class EmployeeApplicationTable
                     EmployeeApplicationV2::STATUS_REJECTED => EmployeeApplicationV2::STATUS_REJECTED,
                     EmployeeApplicationV2::STATUS_APPROVED => EmployeeApplicationV2::STATUS_APPROVED,
                 ]),
+                SelectFilter::make('employee_id')->label(__('lang.employee'))->searchable()
+                    ->options(Employee::query()->forBranchManager()->select('name', 'id')->pluck('name', 'id')),
                 SelectFilter::make('branch_id')
                     ->label('Branch')
                     ->options(Branch::select('name', 'id')->selectable()->forBranchManager('id')->pluck('name', 'id')),
-            ])
+            ], FiltersLayout::Modal)
             ->recordActions([
                 RestoreAction::make(),
                 DeleteAction::make()->using(function ($record) {

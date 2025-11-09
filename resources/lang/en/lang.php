@@ -253,4 +253,5 @@ return [
     'grn_report' => 'GRN Report',
     'grn_number' => 'GRN No',
     'show_grn_number' => 'Show GRN No',
+    'employee' => 'Employee',
 ];
