@@ -455,7 +455,9 @@ class DeliveredResellerOrdersResource extends Resource
                         ]);
                         showSuccessNotifiMessage('Done');
                     })
-                    ->visible(fn($record) => $record->status === Order::DELEVIRED),
+                    ->visible(fn($record) => $record->status === Order::DELEVIRED)
+                    ->hidden()
+                    ,
             ])
             ->filters([
                 SelectFilter::make('branch_id')
