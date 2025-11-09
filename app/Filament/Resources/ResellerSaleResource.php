@@ -139,6 +139,20 @@ class ResellerSaleResource extends Resource
 
                                     $quantity = (float) $get('quantity') ?: 1;
                                     $set('total_price', round($unitSellingPrice * $quantity, 2));
+
+                                    $storeId = Branch::find($get('../../branch_id'))?->store_id;
+
+
+                                    $service = new MultiProductsInventoryService(
+                                        null,
+                                        $state,
+                                        $firstUnitId,
+                                        $storeId
+                                    );
+
+                                    $remainingQty = $service->getInventoryForProduct($state)[0]['remaining_qty'] ?? 0;
+                                    // dd($remainingQty);
+                                    $set('qty_in_stock', $remainingQty);
                                 }
                             })
                             ->options(function (callable $get) {
@@ -190,6 +204,7 @@ class ResellerSaleResource extends Resource
                                 );
 
                                 $remainingQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
+                                // dd($remainingQty);
                                 $set('qty_in_stock', $remainingQty);
 
                                 $unitPrice = UnitPrice::where(
@@ -216,7 +231,7 @@ class ResellerSaleResource extends Resource
 
                         TextInput::make('qty_in_stock')
                             ->default(0)->columnSpan(2)
-                            ->label(__('stock.qty_in_stock'))->disabled(),
+                            ->label(__('stock.qty_in_stock'))->readOnly(),
 
                         TextInput::make('quantity')
                             ->label(__('lang.quantity'))
