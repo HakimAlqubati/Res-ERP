@@ -36,6 +36,8 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
@@ -72,215 +74,228 @@ class ResellerSaleResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make(__('lang.reseller_sale_info'))->columnSpanFull()->schema([
-                    Grid::make(2)->columnSpanFull()->schema([
-                        Select::make('branch_id')
-                            ->label(__('lang.reseller'))
-                            ->options(
-                                Branch::resellers()->active()->pluck('name', 'id')
-                            )
-                            ->disabledOn('edit')
-                            ->required()->preload()
-                            ->searchable(),
+                Wizard::make()->columnSpanFull()->schema([
 
-                        DatePicker::make('sale_date')
-                            ->label(__('lang.sale_date'))
-                            ->disabledOn('edit')
-                            ->default(now())
-                            ->required(),
-                    ]),
+                    Step::make(__('lang.reseller_sale_info'))->columnSpanFull()->schema([
 
-                    Textarea::make('note')
-                        ->label(__('lang.note'))
-                        ->columnSpanFull(),
-                ]),
-
-                Repeater::make('items')
-                    ->label(__('lang.items'))
-                    ->relationship()
-                    ->defaultItems(1)->columnSpanFull()
-                    ->columns(15)
-                    // ->table([
-                    //     TableColumn::make(__('lang.product'))
-                    //         ->width('3fr'),
-                    //     TableColumn::make(__('lang.unit'))->width('50'),
-                    //     TableColumn::make('P.Size'),
-                    //     TableColumn::make(__('stock.qty_in_stock')),
-                    //     TableColumn::make(__('lang.quantity')),
-                    //     TableColumn::make(__('lang.unit_price')),
-                    //     TableColumn::make(__('lang.total_price')),
-                    // ])
-                    ->disabledOn('edit')
-                    ->columnSpanFull()
-                    ->schema([
-                        Select::make('product_id')
-                            ->label(__('lang.product'))
-                            ->afterStateUpdated(function ($set, $state, $get) {
-                                $set('unit_id', null); // reset old
-
-                                if (! $state) {
-                                    return;
-                                }
-
-                                $product = Product::find($state);
-                                if (! $product) {
-                                    return;
-                                }
-
-                                $unitPrices = $product->unitPrices->pluck('unit.name', 'unit_id');
-                                if ($unitPrices->isNotEmpty()) {
-                                    $firstUnitId = $unitPrices->keys()->first();
-                                    $set('unit_id', $firstUnitId);
-
-                                    $unitPrice        = $product->unitPrices->firstWhere('unit_id', $firstUnitId);
-                                    $unitSellingPrice = round($unitPrice?->selling_price ?? 0, 2);
-                                    $set('unit_price', $unitSellingPrice);
-                                    $set('package_size', $unitPrice?->package_size ?? 0);
-
-                                    $quantity = (float) $get('quantity') ?: 1;
-                                    $set('total_price', round($unitSellingPrice * $quantity, 2));
-
-                                    $storeId = Branch::find($get('../../branch_id'))?->store_id;
-
-
-                                    $service = new MultiProductsInventoryService(
-                                        null,
-                                        $state,
-                                        $firstUnitId,
-                                        $storeId
-                                    );
-
-                                    $remainingQty = $service->getInventoryForProduct($state)[0]['remaining_qty'] ?? 0;
-                                    // dd($remainingQty);
-                                    $set('qty_in_stock', $remainingQty);
-                                }
-                            })
-                            ->options(function (callable $get) {
-                                $storeId = Branch::find($get('../../branch_id'))?->store_id;
-
-                                if (! $storeId) {
-                                    return [];
-                                }
-
-                                return Product::whereHas('inventoryTransactions', function ($q) use ($storeId) {
-                                    $q->where('store_id', $storeId);
-                                })
-                                    ->get()
-                                    ->pluck('name', 'id');
-                            })->preload()
-                            ->reactive()
-
-                            ->searchable()
-                            ->required()->columnSpan(4),
-
-                        Select::make('unit_id')
-                            ->label(__('lang.unit'))
-                            ->options(function (callable $get) {
-                                $product = Product::find($get('product_id'));
-                                if (! $product) {
-                                    return [];
-                                }
-
-                                return $product->unitPrices->pluck('unit.name', 'unit_id')->toArray();
-                            })
-                            ->searchable()
-                            ->reactive()
-                            ->afterStateUpdated(function (Set $set, $state, $get) {
-
-                                $productId = $get('product_id');
-                                $storeId = Branch::find($get('../../branch_id'))?->store_id;
-                                $unitId = $state;
-
-                                if (!$unitId || !$productId || !$storeId) {
-                                    $set('qty_in_stock', 0);
-                                    return;
-                                }
-
-                                $service = new MultiProductsInventoryService(
-                                    null,
-                                    $productId,
-                                    $unitId,
-                                    $storeId
-                                );
-
-                                $remainingQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
-                                // dd($remainingQty);
-                                $set('qty_in_stock', $remainingQty);
-
-                                $unitPrice = UnitPrice::where(
-                                    'product_id',
-                                    $get('product_id')
+                        Grid::make(2)->columnSpanFull()->schema([
+                            Select::make('branch_id')
+                                ->label(__('lang.reseller'))
+                                ->options(
+                                    Branch::resellers()->active()->pluck('name', 'id')
                                 )
-                                    // ->supplyOutUnitPrices()
-                                    ->where('unit_id', $state)->first();
-                                $unitSellingPrice = round($unitPrice?->selling_price, 2) ?? 0;
-                                $set('unit_price', $unitSellingPrice ?? 0);
-                                $total = round(((float) ($unitSellingPrice ?? 0)) * ((float) $get('quantity')), 2) ?? 0;
+                                ->disabledOn('edit')
+                                ->required()->preload()
+                                ->searchable(),
 
-                                $set('total_price', $total ?? 0);
-                                $set('package_size', $unitPrice->package_size ?? 0);
-                            })
-                            ->searchable()->placeholder('Select')
-                            ->required()->columnSpan(2),
+                            DatePicker::make('sale_date')
+                                ->label(__('lang.sale_date'))
+                                ->disabledOn('edit')
+                                ->default(now())
+                                ->required(),
+                        ]),
 
-                        TextInput::make('package_size')
-                            // ->label(__('lang.package_size'))
-                            ->label('P.Size')
-                            ->numeric()->type('number')->readOnly()
-                            ->required()->columnSpan(1),
+                        Textarea::make('note')
+                            ->label(__('lang.note'))
+                            ->columnSpanFull(),
 
-                        TextInput::make('qty_in_stock')
-                            ->default(0)->columnSpan(2)
-                            ->label(__('stock.qty_in_stock'))->readOnly(),
 
-                        TextInput::make('quantity')
-                            ->label(__('lang.quantity'))
-                            ->disabledOn('edit')
-                            ->default(1)
-                            ->numeric()
-                            ->minValue(0.1)
-                            ->required()
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(function ($set, $state,   $get) {
-                                $qty = (float) ($state ?? 0);
 
-                                // فضّل قيمة unit_price المدخلة يدويًا أولًا
-                                $unitPrice = (float) ($get('unit_price') ?? 0);
-
-                                // إن لم تكن موجودة استخدم السعر الافتراضي من UnitPrice
-                                if ($unitPrice <= 0) {
-                                    $unitPrice = (float) (UnitPrice::query()
-                                        ->where('product_id', $get('product_id'))
-                                        ->where('unit_id', $get('unit_id'))
-                                        ->value('selling_price') ?? 0);
-
-                                    // اختياري: تعبئة الحقل للمستخدم
-                                    if ($unitPrice > 0) {
-                                        $set('unit_price', $unitPrice);
-                                    }
-                                }
-
-                                $set('total_price', round($qty * $unitPrice, 2));
-                            })->columnSpan(2),
-
-                        TextInput::make('unit_price')
-                            ->label(__('lang.unit_price'))
-                            ->numeric()
-                            ->required()
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(function ($set, $state,   $get) {
-                                $qty       = (float) ($get('quantity') ?? 0);
-                                $unitPrice = (float) ($state ?? 0);
-                                $set('total_price', round($qty * $unitPrice, 2));
-                            })->columnSpan(2),
-
-                        TextInput::make('total_price')
-                            ->label(__('lang.total_price'))
-                            ->numeric()
-                            ->dehydrated()
-                            ->readOnly()->disabled()->columnSpan(2),
 
                     ]),
+                    Step::make(__('lang.items'))->columnSpanFull()->schema([
+                        Repeater::make('items')
+                            ->label(__('lang.items'))
+                            ->relationship()
+                            ->defaultItems(1)->columnSpanFull()
+                            ->columns(15)
+
+                            ->disabledOn('edit')
+                            ->columnSpanFull()
+                            ->table([
+                                TableColumn::make(__('lang.product'))->width(200),
+                                TableColumn::make(__('lang.unit'))->width(190),
+                                TableColumn::make('P.Size')->width(100),
+                                TableColumn::make(__('stock.qty_in_stock'))->width(100),
+                                TableColumn::make(__('lang.quantity'))->width(100),
+                                TableColumn::make(__('lang.unit_price'))->width(100),
+                                TableColumn::make(__('lang.total_price'))->width(100),
+                            ])
+                            ->schema([
+                                Select::make('product_id')
+                                    ->label(__('lang.product'))
+                                    ->afterStateUpdated(function ($set, $state, $get) {
+                                        $set('unit_id', null); // reset old
+
+                                        if (! $state) {
+                                            return;
+                                        }
+
+                                        $product = Product::find($state);
+                                        if (! $product) {
+                                            return;
+                                        }
+
+                                        $unitPrices = $product->unitPrices->pluck('unit.name', 'unit_id');
+                                        if ($unitPrices->isNotEmpty()) {
+                                            $firstUnitId = $unitPrices->keys()->first();
+                                            $set('unit_id', $firstUnitId);
+
+                                            $unitPrice        = $product->unitPrices->firstWhere('unit_id', $firstUnitId);
+                                            $unitSellingPrice = round($unitPrice?->selling_price ?? 0, 2);
+                                            $set('unit_price', $unitSellingPrice);
+                                            $set('package_size', $unitPrice?->package_size ?? 0);
+
+                                            $quantity = (float) $get('quantity') ?: 1;
+                                            $set('total_price', round($unitSellingPrice * $quantity, 2));
+
+                                            $storeId = Branch::find($get('../../branch_id'))?->store_id;
+
+
+                                            $service = new MultiProductsInventoryService(
+                                                null,
+                                                $state,
+                                                $firstUnitId,
+                                                $storeId
+                                            );
+
+                                            $remainingQty = $service->getInventoryForProduct($state)[0]['remaining_qty'] ?? 0;
+                                            // dd($remainingQty);
+                                            $set('qty_in_stock', $remainingQty);
+                                        }
+                                    })
+                                    ->options(function (callable $get) {
+                                        $storeId = Branch::find($get('../../branch_id'))?->store_id;
+
+                                        if (! $storeId) {
+                                            return [];
+                                        }
+
+                                        return Product::whereHas('inventoryTransactions', function ($q) use ($storeId) {
+                                            $q->where('store_id', $storeId);
+                                        })
+                                            ->get()
+                                            ->pluck('name', 'id');
+                                    })->preload()
+                                    ->reactive()
+
+                                    ->searchable()
+                                    ->required()->columnSpan(4),
+
+                                Select::make('unit_id')
+                                    ->label(__('lang.unit'))
+                                    ->options(function (callable $get) {
+                                        $product = Product::find($get('product_id'));
+                                        if (! $product) {
+                                            return [];
+                                        }
+
+                                        return $product->unitPrices->pluck('unit.name', 'unit_id')->toArray();
+                                    })
+                                    ->searchable()
+                                    ->reactive()
+                                    ->afterStateUpdated(function (Set $set, $state, $get) {
+
+                                        $productId = $get('product_id');
+                                        $storeId = Branch::find($get('../../branch_id'))?->store_id;
+                                        $unitId = $state;
+
+                                        if (!$unitId || !$productId || !$storeId) {
+                                            $set('qty_in_stock', 0);
+                                            return;
+                                        }
+
+                                        $service = new MultiProductsInventoryService(
+                                            null,
+                                            $productId,
+                                            $unitId,
+                                            $storeId
+                                        );
+
+                                        $remainingQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
+                                        // dd($remainingQty);
+                                        $set('qty_in_stock', $remainingQty);
+
+                                        $unitPrice = UnitPrice::where(
+                                            'product_id',
+                                            $get('product_id')
+                                        )
+                                            // ->supplyOutUnitPrices()
+                                            ->where('unit_id', $state)->first();
+                                        $unitSellingPrice = round($unitPrice?->selling_price, 2) ?? 0;
+                                        $set('unit_price', $unitSellingPrice ?? 0);
+                                        $total = round(((float) ($unitSellingPrice ?? 0)) * ((float) $get('quantity')), 2) ?? 0;
+
+                                        $set('total_price', $total ?? 0);
+                                        $set('package_size', $unitPrice->package_size ?? 0);
+                                    })
+                                    ->searchable()->placeholder('Select')
+                                    ->required()->columnSpan(2),
+
+                                TextInput::make('package_size')
+                                    // ->label(__('lang.package_size'))
+                                    ->label('P.Size')
+                                    ->numeric()->type('number')->readOnly()
+                                    ->required()->columnSpan(1),
+
+                                TextInput::make('qty_in_stock')
+                                    ->default(0)->columnSpan(2)
+                                    ->label(__('stock.qty_in_stock'))->readOnly(),
+
+                                TextInput::make('quantity')
+                                    ->label(__('lang.quantity'))
+                                    ->disabledOn('edit')
+                                    ->default(1)
+                                    ->numeric()
+                                    ->minValue(0.1)
+                                    ->required()
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(function ($set, $state,   $get) {
+                                        $qty = (float) ($state ?? 0);
+
+                                        // فضّل قيمة unit_price المدخلة يدويًا أولًا
+                                        $unitPrice = (float) ($get('unit_price') ?? 0);
+
+                                        // إن لم تكن موجودة استخدم السعر الافتراضي من UnitPrice
+                                        if ($unitPrice <= 0) {
+                                            $unitPrice = (float) (UnitPrice::query()
+                                                ->where('product_id', $get('product_id'))
+                                                ->where('unit_id', $get('unit_id'))
+                                                ->value('selling_price') ?? 0);
+
+                                            // اختياري: تعبئة الحقل للمستخدم
+                                            if ($unitPrice > 0) {
+                                                $set('unit_price', $unitPrice);
+                                            }
+                                        }
+
+                                        $set('total_price', round($qty * $unitPrice, 2));
+                                    })->columnSpan(2),
+
+                                TextInput::make('unit_price')
+                                    ->label(__('lang.unit_price'))
+                                    ->numeric()
+                                    ->required()
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(function ($set, $state,   $get) {
+                                        $qty       = (float) ($get('quantity') ?? 0);
+                                        $unitPrice = (float) ($state ?? 0);
+                                        $set('total_price', round($qty * $unitPrice, 2));
+                                    })->columnSpan(2),
+
+                                TextInput::make('total_price')
+                                    ->label(__('lang.total_price'))
+                                    ->numeric()
+                                    ->dehydrated()
+                                    ->readOnly()->disabled()->columnSpan(2),
+
+                            ]),
+
+                    ])
+
+                ])
+                    ->skippable(),
+
             ]);
     }
 
