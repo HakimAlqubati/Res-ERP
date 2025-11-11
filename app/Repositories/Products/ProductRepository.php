@@ -420,7 +420,7 @@ class ProductRepository implements ProductRepositoryInterface
 
         return $final;
     }
-
+// 
 
 
   public function getReportDataFromTransactionsV2($productParam, $from_date, $to_date, $branch_id)
