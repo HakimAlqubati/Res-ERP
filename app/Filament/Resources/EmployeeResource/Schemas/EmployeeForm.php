@@ -22,6 +22,7 @@ use Closure;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Slider;
 use Filament\Forms\Components\Textarea;
@@ -328,6 +329,11 @@ class EmployeeForm
                                 ->relationship() // Define the relationship with the `files` table
                                 ->columns(2)
                                 ->defaultItems(0)
+                                ->table([
+                                    TableColumn::make(__('File Type'))->width('16rem'),
+                                    TableColumn::make(__('Attachment'))->alignCenter()->width('16rem'),
+                                    TableColumn::make(__('Fields'))->alignCenter()->width('10rem'),
+                                ])
                                 ->schema([
                                     Fieldset::make('File Details')->columnSpanFull()->schema([
                                         Grid::make()->columns(2)->columnSpanFull()->schema([
@@ -451,6 +457,11 @@ class EmployeeForm
                                                     ->required()
                                                     ->placeholder('Enter bank account number'),
                                             ])
+                                            ->table([
+                                                TableColumn::make(__('Bank'))->width('16rem'),
+                                                TableColumn::make(__('Account No.'))->alignCenter()->width('16rem'),
+                                            ])
+
                                             ->collapsed()
                                             ->minItems(0)         // Set the minimum number of items
                                             // Optional: set the maximum number of items
@@ -475,60 +486,14 @@ class EmployeeForm
                                     Fieldset::make()->columns(2)->label('Finance')->columnSpanFull()
                                         ->disabled(fn(): bool => isBranchManager())
                                         ->schema([
-                                            // Repeater::make('Monthly deductions')
-                                            //     ->defaultItems(0)
-                                            //     ->relationship('deductions')
-                                            //     ->schema([
-
-                                            //         Select::make('deduction_id')
-                                            //             ->label('Deducation')
-                                            //             ->options(
-                                            //                 Deduction::where('active', 1)
-                                            //                     ->where('is_penalty', 0)
-                                            //                     ->where('is_specific', 1)
-                                            //                     ->get()->pluck('name', 'id')
-                                            //             )
-                                            //             ->required(),
-                                            //         Toggle::make('is_percentage')->live()->default(true)
-                                            //         // ->helperText('Set allowance as a salary percentage or fixed amount')
-                                            //         ,
-                                            //         TextInput::make('amount')->visible(fn(Get $get): bool => ! $get('is_percentage'))->numeric()
-                                            //             ->suffixIcon('heroicon-o-calculator')
-                                            //             ->suffixIconColor('success'),
-
-                                            //         Slider::make('percentage')->hintIcon(Heroicon::PercentBadge)
-                                            //             ->label('Percentage')
-                                            //             ->tooltips(RawJs::make(<<<'JS'
-                                            //                 `%${$value.toFixed(0)}`
-                                            //             JS))
-                                            //                                     ->pips()
-                                            //                                     ->pipsFilter(RawJs::make(<<<'JS'
-                                            //                 ($value % 50) === 0
-                                            //                     ? 1
-                                            //                     : ($value % 10) === 0
-                                            //                         ? 2
-                                            //                         : ($value % 25) === 0
-                                            //                             ? 0
-                                            //                             : -1
-                                            //             JS))
-
-                                            //             ->fillTrack()
-                                            //             ->required()
-                                            //             ->visible(fn(Get $get): bool => $get('is_percentage'))
-                                            //             ->minValue(0)
-                                            //             ->step(1)
-                                            //             ->maxValue(100)
-                                            //             ->default(0)
-                                            //             ->rtl(),
-                                            //         // TextInput::make('percentage')
-                                            //         //     ->visible(fn(Get $get): bool => $get('is_percentage'))
-                                            //         //     ->numeric()
-                                            //         //     ->suffixIcon('heroicon-o-percent-badge')
-                                            //         //     ->suffixIconColor('success'),
-
-                                            //     ]),
                                             Repeater::make('Monthly allowances')
                                                 ->defaultItems(0)
+                                                ->table([
+                                                    TableColumn::make(__('Allowance'))->width('20rem'),
+                                                    TableColumn::make(__('Type'))->alignCenter()->width('10rem'),
+                                                    TableColumn::make(__('Amount / %'))->alignCenter()->width('12rem'),
+                                                ])
+
                                                 ->relationship('allowances')
                                                 ->schema([
 
@@ -576,6 +541,11 @@ class EmployeeForm
                                                 ]),
                                             Repeater::make('Monthly bonus')
                                                 ->defaultItems(0)
+                                                ->table([
+                                                    TableColumn::make(__('Monthly Bonus'))->width('20rem'),
+                                                    TableColumn::make(__('Amount'))->alignCenter()->width('12rem'),
+                                                ])
+
                                                 ->label('Monthly bonus')
                                                 ->relationship('monthlyIncentives')
                                                 ->schema([

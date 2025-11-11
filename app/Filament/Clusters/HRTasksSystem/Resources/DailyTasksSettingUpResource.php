@@ -27,6 +27,7 @@ use App\Models\User;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -236,6 +237,9 @@ class DailyTasksSettingUpResource extends Resource
                                 ->columnSpanFull()
                                 ->relationship('steps')
                                 ->columns(1)
+                                ->table([
+                                    TableColumn::make('Title')
+                                ])
                                 ->schema([
                                     TextInput::make('title')
                                         ->required()

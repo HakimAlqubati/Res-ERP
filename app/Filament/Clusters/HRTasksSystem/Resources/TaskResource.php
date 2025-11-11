@@ -42,6 +42,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
@@ -456,6 +457,9 @@ class TaskResource extends Resource
                                 ->relationship('steps')
                                 ->columns(1)
                                 ->hiddenOn('edit')
+                                ->table([
+                                    TableColumn::make('Title'),
+                                ])
                                 ->schema([
                                     TextInput::make('title')
                                         ->required()
