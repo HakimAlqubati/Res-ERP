@@ -33,6 +33,7 @@ use App\Models\UnitPrice;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -205,6 +206,12 @@ class GoodsReceivedNoteResource extends Resource
                                         ->formatStateUsing(fn($state) => round((float) $state, 2)),
 
 
+                                ])
+                                ->table([
+                                    TableColumn::make(__('Product'))->width('24rem'),
+                                    TableColumn::make(__('Unit'))->alignCenter()->width('18rem'),
+                                    TableColumn::make(__('lang.psize'))->alignCenter()->width('10rem'),
+                                    TableColumn::make(__('Qty'))->alignCenter()->width('10rem'),
                                 ])
                                 ->createItemButtonLabel('Add Item')
                                 ->collapsible()

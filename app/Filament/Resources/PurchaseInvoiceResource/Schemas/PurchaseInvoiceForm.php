@@ -1,29 +1,32 @@
-<?php 
+<?php
+
 namespace App\Filament\Resources\PurchaseInvoiceResource\Schemas;
 
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Utilities\Set; 
-use App\Models\Product; 
+use Filament\Schemas\Components\Utilities\Set;
+use App\Models\Product;
 use App\Models\Store;
-use App\Models\Supplier; 
-use App\Models\UnitPrice; 
-use Filament\Forms\Components\DatePicker; 
+use App\Models\Supplier;
+use App\Models\UnitPrice;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle; 
+use Filament\Forms\Components\Toggle;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 
-class PurchaseInvoiceForm {
-        public static function configure(Schema $schema): Schema
+class PurchaseInvoiceForm
 {
-      return $schema
+    public static function configure(Schema $schema): Schema
+    {
+        return $schema
             ->components([
                 Fieldset::make()->columnSpanFull()->schema([
                     Grid::make()->columnSpanFull()->columns(4)->schema([
@@ -102,6 +105,16 @@ class PurchaseInvoiceForm {
                         ->createItemButtonLabel(__('lang.add_item'))
                         ->columns(9)
                         ->defaultItems(1)
+                        ->table([
+                            TableColumn::make(__('Product'))->width('24rem'),
+                            TableColumn::make(__('Unit'))->alignCenter()->width('18rem'),
+                            TableColumn::make(__('lang.psize'))->alignCenter()->width('8rem'),
+                            TableColumn::make(__('Qty'))->alignCenter()->width('8rem'),
+                            TableColumn::make(__('Price'))->alignCenter()->width('10rem'),
+                            TableColumn::make(__('Total'))->alignCenter()->width('10rem'),
+                            TableColumn::make(__('Waste %'))->alignCenter()->width('8rem'),
+                        ])
+
                         ->deletable(function ($record) {
                             if (is_null($record)) {
                                 return true;
@@ -222,5 +235,5 @@ class PurchaseInvoiceForm {
                         ])
                 ])
             ]);
-}
+    }
 }

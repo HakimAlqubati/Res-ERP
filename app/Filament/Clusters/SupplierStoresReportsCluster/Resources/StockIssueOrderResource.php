@@ -34,6 +34,7 @@ use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -139,7 +140,7 @@ class StockIssueOrderResource extends Resource
                                         $unitPrice = UnitPrice::where(
                                             'product_id',
                                             $get('product_id')
-                                        ) 
+                                        )
                                             ->where('unit_id', $state)->first();
                                         if ($unitPrice) {
 
@@ -188,6 +189,13 @@ class StockIssueOrderResource extends Resource
 
 
 
+                            ])
+                            ->table([
+                                TableColumn::make(__('Product'))->width('24rem'),
+                                TableColumn::make(__('Unit'))->alignCenter()->width('18rem'),
+                                TableColumn::make(__('Package Size'))->alignCenter()->width('8rem'),
+                                TableColumn::make(__('Quantity'))->alignCenter()->width('10rem'),
+                                TableColumn::make(__('Remaining Qty'))->alignCenter()->width('10rem'),
                             ])
                             ->minItems(1)
                             ->label('Issued Items')

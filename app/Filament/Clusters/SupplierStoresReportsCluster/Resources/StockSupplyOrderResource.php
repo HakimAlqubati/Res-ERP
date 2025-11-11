@@ -29,6 +29,7 @@ use App\Models\UnitPrice;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -68,6 +69,7 @@ class StockSupplyOrderResource extends Resource
 
                     Select::make('store_id')
                         ->default(getDefaultStore())
+                        ->label(__('lang.store'))
                         ->options(
                             Store::active()
                                 ->withManagedStores()
@@ -159,6 +161,14 @@ class StockSupplyOrderResource extends Resource
                                 ->columnSpan(1),
 
                         ])
+                        ->table([
+                            TableColumn::make(__('Product'))->width('24rem'),
+                            TableColumn::make(__('Unit'))->alignCenter()->width('15rem'),
+                            TableColumn::make(__('lang.psize'))->alignCenter()->width('8rem'),
+                            TableColumn::make(__('Quantity'))->alignCenter()->width('10rem'),
+                            TableColumn::make(__('Waste %'))->alignCenter()->width('8rem'),
+                         ])
+
                         ->minItems(1)
                         ->label('Order Details')
                         ->columns(7),

@@ -26,6 +26,7 @@ use App\Models\UnitPrice;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -243,6 +244,16 @@ class StockTransferOrderResource extends Resource
                                 Textarea::make('notes')->label('Notes')->columnSpanFull(),
 
                             ])
+
+                            ->table([
+                                TableColumn::make(__('Product'))->width('24rem'),
+                                TableColumn::make(__('Unit'))->alignCenter()->width('18rem'),
+                                TableColumn::make(__('lang.psize'))->alignCenter()->width('8rem'),
+                                TableColumn::make(__('Qty'))->alignCenter()->width('10rem'),
+                                TableColumn::make(__('Remain'))->alignCenter()->width('10rem'),
+                                TableColumn::make(__('Notes'))->width('28rem'),
+                            ])
+
                             ->minItems(1)
                             ->defaultItems(0)
                             ->columns(7)
@@ -359,7 +370,7 @@ class StockTransferOrderResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return StockTransferOrder::query()
-            
+
             // ->forBranchManager()
             ->count();
     }

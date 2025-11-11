@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\ProductResource\Schema;
 
 
- use App\Filament\Resources\ProductResource;
+use App\Filament\Resources\ProductResource;
 use App\Models\Category;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
@@ -19,6 +19,7 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -107,6 +108,16 @@ class ProductsSchema
                         ->schema([
                             Repeater::make('productItems')
                                 ->relationship('productItems')
+
+                                ->table([
+                                    TableColumn::make(__('Product'))->width('24rem'),
+                                    TableColumn::make(__('Unit'))->alignCenter()->width('18rem'),
+                                    TableColumn::make(__('Qty'))->alignCenter()->width('8rem'),
+                                    TableColumn::make(__('Price'))->alignCenter()->width('10rem'),
+                                    TableColumn::make(__('Total'))->alignCenter()->width('10rem'),
+                                    TableColumn::make(__('Waste %'))->alignCenter()->width('8rem'),
+                                    TableColumn::make(__('Net'))->alignCenter()->width('10rem'),
+                                ])
 
                                 ->label('Product Items')
                                 ->schema([
@@ -295,7 +306,12 @@ class ProductsSchema
                                 ->columnSpanFull()->minItems(1)
                                 ->collapsible()->defaultItems(0)
                                 ->relationship('allUnitPrices')
-
+                                ->table([
+                                    TableColumn::make(__('lang.unit'))->alignCenter()->width('14rem'),
+                                    TableColumn::make(__('lang.price'))->alignCenter()->width('18rem'),
+                                    TableColumn::make(__('lang.psize'))->alignCenter()->width('10rem'),
+                                    TableColumn::make(__('Usage'))->alignCenter()->width('12rem'),
+                                ])
                                 ->rules(function (Get $get, callable $livewire) {
                                     return [
                                         function (string $attribute, $value, Closure $fail) use ($get) {
@@ -501,6 +517,13 @@ class ProductsSchema
                                     }
                                     return 'Please add units in order from largest to smallest.';
                                 })
+                                ->table([
+                                    TableColumn::make(__('Unit'))->alignCenter()->width('14rem'),
+                                    TableColumn::make(__('lang.package_size'))->alignCenter()->width('10rem'),
+                                    TableColumn::make(__('Price'))->alignCenter()->width('10rem'),
+                                    TableColumn::make(__('Selling'))->alignCenter()->width('12rem'),
+                                ])
+
                                 ->columnSpanFull()->minItems(1)
                                 ->collapsible()->defaultItems(0)
                                 ->relationship('allUnitPrices')

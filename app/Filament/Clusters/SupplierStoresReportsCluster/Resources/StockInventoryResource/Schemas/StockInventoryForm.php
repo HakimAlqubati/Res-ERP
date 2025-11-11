@@ -12,6 +12,7 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -409,6 +410,7 @@ class StockInventoryForm
                             ->dehydrated(false) // لا يرفع حالته مباشرة
                             ->columnSpanFull()
                             ->collapsible()
+                            ->maxItems(30)
                             ->collapsed(fn(): bool => $operaion === 'edit')
                             ->label('Inventory Details')
                             // ✅ عندما يتغير محتوى الصفحة الحالية، خزّنه داخل details_pages[current_page]
@@ -418,6 +420,15 @@ class StockInventoryForm
                                 $pages[$page] = (array) $state;
                                 $set('../../details_pages', $pages);
                             })
+                            ->table([
+
+                                TableColumn::make(__('Product'))->width('24rem'),
+                                TableColumn::make(__('Unit'))->alignCenter()->width('10rem'),
+                                TableColumn::make(__('lang.psize'))->alignCenter()->width('8rem'),
+                                TableColumn::make(__('System Qty'))->alignCenter()->width('10rem'),
+                                TableColumn::make(__('Physical Qty'))->alignCenter()->width('10rem'),
+                                TableColumn::make(__('Difference'))->alignCenter()->width('8rem'),
+                            ])
                             ->schema([
                                 Hidden::make('rowInventoryCache')->default([])->dehydrated(false),
                                 Hidden::make('rowUnitsCache')->default([])->dehydrated(false),
