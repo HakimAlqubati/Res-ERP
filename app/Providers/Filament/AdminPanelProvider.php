@@ -26,6 +26,7 @@ use App\Filament\Clusters\ManufacturingBranchesCluster;
 use App\Filament\Clusters\OrderCluster;
 use App\Filament\Clusters\OrderCluster\Resources\OrderResource;
 use App\Filament\Clusters\OrderReportsCluster;
+use App\Filament\Clusters\POSIntegration\POSIntegrationCluster;
 use App\Filament\Clusters\ProductUnitCluster;
 use App\Filament\Clusters\ReportOrdersCluster;
 use App\Filament\Clusters\ResellersCluster;
@@ -128,6 +129,7 @@ class AdminPanelProvider extends PanelProvider
                         ->items(array_merge(
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  MainOrdersCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  OrderReportsCluster::getNavigationItems() : [],
+                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  POSIntegrationCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  ResellersCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  ManufacturingBranchesCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  ProductUnitCluster::getNavigationItems() : [],

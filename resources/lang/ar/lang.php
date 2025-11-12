@@ -237,4 +237,5 @@ return [
     'show_grn_number' => 'عرض رقم الـGRN',
     'employee' => 'الموظف',
     'psize' => 'العبوة',
+    'pos_integration' => 'ربط مع POS',
 ];

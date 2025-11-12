@@ -255,4 +255,5 @@ return [
     'show_grn_number' => 'Show GRN No',
     'employee' => 'Employee',
     'psize' => 'P.Size',
+    'pos_integration' => 'POS Intergration',
 ];
