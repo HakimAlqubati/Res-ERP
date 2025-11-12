@@ -282,7 +282,8 @@ class AttendnaceResource extends Resource
             ], FiltersLayout::Modal)
             ->recordActions([
 
-                Action::make('fixCheckout')->visible(fn($record): bool => (isSuperAdmin() && $record->check_type == Attendance::CHECKTYPE_CHECKOUT))
+                Action::make('fixCheckout')
+                    ->visible(fn($record): bool => (isSuperAdmin() && $record->check_type == Attendance::CHECKTYPE_CHECKOUT))
                     ->button()->schema(function ($record) {
                         $checkInData = $record->checkinRecord;
 
@@ -338,7 +339,7 @@ class AttendnaceResource extends Resource
                             showWarningNotifiMessage($th->getMessage());
                             throw $th;
                         }
-                    }),
+                    })->hidden(),
                 Action::make('fixCheckin')
                     ->visible(fn($record): bool => (isSuperAdmin() && $record->check_type == Attendance::CHECKTYPE_CHECKIN))
                     ->button()
@@ -390,7 +391,7 @@ class AttendnaceResource extends Resource
                             showWarningNotifiMessage($th->getMessage());
                             throw $th;
                         }
-                    }),
+                    })->hidden(),
                 ViewAction::make(),
                 DeleteAction::make(),
                 ForceDeleteAction::make(),
