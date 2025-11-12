@@ -10,3 +10,5 @@ Route::prefix('docs/api/maintenance')
         Route::view('/equipments', 'docs.api.maintenance.equipments')
             ->name('equipments');
     });
+
+    

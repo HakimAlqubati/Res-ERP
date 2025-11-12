@@ -1046,6 +1046,7 @@ Route::get('/testMaintenanceDue', function (MaintenanceRepository $repo) {
     ], 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 });
 require base_path('routes/api_docs.php');
+require base_path('routes/web_docs.php');
 
 
 Route::get('/payrolls/{payroll}/salary-slip', [PayrollPdfController::class, 'show'])
