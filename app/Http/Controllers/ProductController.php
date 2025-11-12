@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Response;
 use App\Repositories\Products\ProductRepository;
+use App\Repositories\Products\V2\ProductRepository as V2ProductRepository;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -20,7 +21,7 @@ class ProductController extends Controller
     }
 
     public function index(Request $request)
-    { 
+    {
         return $this->productRepository->index($request);
     }
 
@@ -108,5 +109,9 @@ class ProductController extends Controller
     {
         return $this->productRepository->getProductsOrdersQuntities($request);
     }
-    
+
+    public function getProductOrderQuantitiesV2(Request $request, V2ProductRepository $repo)
+    {
+        return $repo->getProductsOrdersQuntitiesPaginated($request);
+    }
 }

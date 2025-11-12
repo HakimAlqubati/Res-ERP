@@ -154,6 +154,7 @@ class EmployeeApplicationResource extends Resource
                     $validated = [
                         'employee_id' => $employee->id,
                         'date_time' => $data['request_check_date'] . ' ' . $data['request_check_time'],
+                        'type' => Attendance::CHECKTYPE_CHECKOUT
                     ];
                     $result = app(AttendanceService::class)->handle($validated);
                     if ($result) {
@@ -453,6 +454,7 @@ class EmployeeApplicationResource extends Resource
                     $validated = [
                         'employee_id' => $employee->id,
                         'date_time' => $data['request_check_date'] . ' ' . $data['request_check_time'],
+                        'type' => Attendance::CHECKTYPE_CHECKIN
                     ];
                     $result = app(AttendanceService::class)->handle($validated);
                     if ($result) {
