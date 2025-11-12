@@ -123,7 +123,7 @@ class CategoryResource extends Resource
                     ->tooltip('Used to auto-generate product codes')
                     ->alignCenter(true)->toggleable(),
                 TextColumn::make('branch_names')
-                    ->label('Customized for Branches') 
+                    ->label('Customized for Branches')
                     ->limit(50)
                     ->toggleable(isToggledHiddenByDefault: true),
                 // Tables\Columns\TextColumn::make('waste_stock_percentage')
@@ -178,6 +178,7 @@ class CategoryResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
+            ->notForPos()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

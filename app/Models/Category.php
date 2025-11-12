@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
+
 use Arcanedev\Support\Providers\Concerns\HasTranslations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -24,6 +26,7 @@ class Category extends Model implements Auditable
         'is_manafacturing',
         'code_starts_with',
         'waste_stock_percentage',
+        'for_pos',
     ];
     protected $auditInclude = [
         'name',
@@ -33,6 +36,11 @@ class Category extends Model implements Auditable
         'is_manafacturing',
         'code_starts_with',
         'waste_stock_percentage',
+        'for_pos',
+    ];
+
+    protected $casts = [
+        'for_pos'            => 'boolean', // NEW 
     ];
 
     public function products()
@@ -69,5 +77,19 @@ class Category extends Model implements Auditable
     public function getBranchNamesAttribute(): string
     {
         return $this->branches->pluck('name')->implode(', ');
+    }
+
+    /** Scope: categories to show in POS */
+    public function scopeForPos(Builder $q)
+    {
+        return $q->where('for_pos', true);
+    }
+
+    /** 
+     * Scope: categories not shown in POS
+     */
+    public function scopeNotForPos(Builder $query)
+    {
+        return $query->where('for_pos', false);
     }
 }

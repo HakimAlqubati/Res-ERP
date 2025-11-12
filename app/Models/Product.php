@@ -38,7 +38,8 @@ class Product extends Model implements Auditable
         'basic_price',
         'minimum_stock_qty',
         'waste_stock_percentage',
-        'sku'
+        'sku',
+        'type',
     ];
     protected $auditInclude = [
         'name',
@@ -53,9 +54,18 @@ class Product extends Model implements Auditable
         'minimum_stock_qty',
         'waste_stock_percentage',
         'sku',
+        'type',
     ];
     protected $appends = ['unit_prices_count', 'product_items_count', 'is_manufacturing', 'formatted_unit_prices', 'display_name'];
 
+    public const TYPE_RAW           = 'raw';
+    public const TYPE_SEMI_FINISHED = 'semi_finished';
+    public const TYPE_FINISHED_POS  = 'finished_pos';
+
+    protected $casts = [
+        // ... كاستاتك الموجودة
+        'type' => 'string',
+    ];
     /**
      * Scope to filter products with at least 2 unit prices.
      *
@@ -348,5 +358,38 @@ class Product extends Model implements Auditable
         }
 
         return $query;
+    }
+
+    /** Scope: by type */
+    public function scopeType(Builder $q, string|array $type)
+    {
+        return is_array($type) ? $q->whereIn('type', $type) : $q->where('type', $type);
+    }
+
+    /** Scope: POS products only */
+    public function scopePos(Builder $q)
+    {
+        return $q->where('type', self::TYPE_FINISHED_POS);
+    }
+
+    /** Scope: raw materials only */
+    public function scopeRaw(Builder $q)
+    {
+        return $q->where('type', self::TYPE_RAW);
+    }
+
+    /** Scope: semi-finished only */
+    public function scopeSemiFinished(Builder $q)
+    {
+        return $q->where('type', self::TYPE_SEMI_FINISHED);
+    }
+
+    /** Scope: raw + semi-finished */
+    public function scopeRawOrSemiFinished(Builder $q)
+    {
+        return $q->whereIn('type', [
+            self::TYPE_RAW,
+            self::TYPE_SEMI_FINISHED,
+        ]);
     }
 }

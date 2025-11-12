@@ -95,19 +95,19 @@ class ProductResource extends Resource
     }
     public static function getGlobalSearchResultTitle(Model $record): string
     {
-        return $record->code.' - '.$record->name;
+        return $record->code . ' - ' . $record->name;
     }
 
     public static function getGloballySearchableAttributes(): array
     {
-        return ['name', 'code','id'];
+        return ['name', 'code', 'id'];
     }
 
 
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery()
-            ->withoutGlobalScopes([
+            ->rawOrSemiFinished()->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
         // $query->withMinimumUnitPrices();
@@ -124,7 +124,7 @@ class ProductResource extends Resource
         return false;
     }
 
-    
+
     public static function getGlobalSearchResultsLimit(): int
     {
         return 15;
