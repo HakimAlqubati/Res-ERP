@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\DB;
 
 class ProductRepository
 {
+    public   $totalQty = 0;
+    public   $totalPrice = 0;
+    public $product = '';
+    public $unit;
     /**
      * جلب كميات الطلبات للمنتجات مع دعم الفلترة والتقسيم إلى صفحات (Pagination)
      */
@@ -21,7 +25,7 @@ class ProductRepository
             'product_id' => 'nullable|integer',
             'from_date'  => 'nullable|string',
             'to_date'    => 'nullable|string',
-            'branch_id'  => 'nullable|integer|integer',  // IDs مفصولة بفواصل
+            'branch_id'  => 'nullable|string', // IDs مفصولة بفواصل
             'page'       => 'nullable|integer|min:1',
             'per_page'   => 'nullable|integer|min:1|max:200',
         ]);
@@ -44,8 +48,11 @@ class ProductRepository
         // ✅ تحديد الفروع
         if (function_exists('isBranchManager') && isBranchManager()) {
             $branch_id = [function_exists('getBranchId') ? getBranchId() : null];
+            $branch_param_sent = false; // المدير لا يرسل branch_id يدوياً عادة
         } else {
-            $branch_id = explode(',', (string) $request->input('branch_id', ''));
+            $branch_param      = (string) $request->input('branch_id', '');
+            $branch_id         = explode(',', $branch_param);
+            $branch_param_sent = trim($branch_param) !== '';
         }
 
         if (empty(array_filter($branch_id))) {
@@ -56,8 +63,8 @@ class ProductRepository
         $perPage = (int) $request->input('per_page', 15);
         $page    = (int) $request->input('page', 1);
 
-        // ✅ الاستعلام الرئيسي
-        $query = DB::table('orders_details')
+        // ✅ الاستعلام الرئيسي (مجمّع على مستوى الفرع)
+        $baseQuery = DB::table('orders_details')
             ->select(
                 'orders.branch_id',
                 'products.name AS product',
@@ -82,9 +89,9 @@ class ProductRepository
             ->orderBy('orders.branch_id');
 
         // ✅ تنفيذ الـ pagination
-        $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+        $paginator = (clone $baseQuery)->paginate($perPage, ['*'], 'page', $page);
 
-        // ✅ تنسيق البيانات
+        // ✅ تنسيق بيانات العناصر
         $collection = $paginator->getCollection()->map(function ($item) {
             if (function_exists('formatQunantity')) {
                 $item->quantity = formatQunantity($item->quantity);
@@ -96,10 +103,50 @@ class ProductRepository
         });
         $paginator->setCollection($collection);
 
+        // =========================
+        // ✅ حساب الإجمالي (dataTotal)
+        // الشرط: تم إرسال فلترة بالمنتج والفرع (branch_id مُمرّر من الطلب)
+        // =========================
+        $dataTotal = [];
+        $this->totalQty   = 0;
+        $this->totalPrice = 0;
+        $this->product    = '';
+        $this->unit       = null;
+
+        if ($request->filled('product_id') && $branch_param_sent) {
+            // نجلب نفس نتائج الاستعلام بدون pagination ونجمعها
+            $rows = (clone $baseQuery)->get();
+
+            foreach ($rows as $row) {
+                $this->totalQty   += (float) $row->quantity;
+                $this->totalPrice += (float) $row->total_price;
+
+                // نأخذ اسم المنتج/الوحدة من أول صف فعلي
+                if ($this->product === '' && !empty($row->product)) {
+                    $this->product = $row->product;
+                }
+                if ($this->unit === null && !empty($row->unit)) {
+                    $this->unit = $row->unit;
+                }
+            }
+
+            // تنسيق الإخراج
+            $totalQtyOut   = function_exists('formatQunantity') ? formatQunantity($this->totalQty) : $this->totalQty;
+            $totalPriceOut = function_exists('formatMoneyWithCurrency') ? formatMoneyWithCurrency($this->totalPrice) : $this->totalPrice;
+
+            $dataTotal = [
+                'product'     => $this->product,
+                'unit'        => $this->unit,
+                'total_qty'   => $totalQtyOut,
+                'total_price' => $totalPriceOut,
+            ];
+        }
+
         // ✅ تجهيز الإخراج بصيغة API واضحة
         return response()->json([
             'success'   => true,
             'data'      => $paginator->items(),
+            'dataTotal' => $dataTotal,
             'meta'      => [
                 'current_page' => $paginator->currentPage(),
                 'per_page'     => $paginator->perPage(),
@@ -115,6 +162,7 @@ class ProductRepository
             ],
         ]);
     }
+
 
     /**
      * مثال على دالة أخرى لاحقًا لو أردت استخدام مصدر بيانات آخر مثل Transactions
