@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\POSIntegration\Resources\PosImportData\Tables;
 
 use App\Imports\PosImportDataImport;
 use App\Models\Branch;
+use App\Models\Store;
 use App\Models\Unit;
 use Filament\Actions\Action;
 use Filament\Tables;
@@ -28,7 +29,7 @@ class PosImportDataTable
 {
     public static function configure(Table $table): Table
     {
-        return $table
+        return $table->defaultSort('id','desc')
             ->headerActions([
                 Action::make('import_items_quantities')
                     ->label('Import Quantities')
@@ -52,12 +53,12 @@ class PosImportDataTable
                             ->directory('product_items_imports'),
 
                         // 2) بيانات رأس الاستيراد
-                        Select::make('branch_id')
-                            ->label('Branch')
-                            ->options(fn () => Branch::query()->orderBy('name')->pluck('name', 'id'))
-                            ->searchable()
-                            ->preload()
-                            ->required(),
+                        Select::make('branch_id')->columnSpanFull()->label(__('lang.branch'))->searchable()
+                            ->options(
+                                Branch::query()
+                                    ->branches()
+                                    ->pluck('name', 'id')
+                            ),
 
                         DatePicker::make('date')
                             ->label('Import Date')
@@ -67,7 +68,7 @@ class PosImportDataTable
                         // 3) وحدة افتراضية في حال لم تُذكر في الملف
                         Select::make('default_unit_id')
                             ->label('Default Unit (optional)')
-                            ->options(fn () => Unit::query()->orderBy('name')->pluck('name', 'id'))
+                            ->options(fn() => Unit::query()->orderBy('name')->pluck('name', 'id'))
                             ->searchable()
                             ->preload()
                             ->native(false),
@@ -84,10 +85,10 @@ class PosImportDataTable
 
                         // تهيئة المستورد مع رأس الاستيراد
                         $import = new PosImportDataImport(
-                            branchId:     (int) $data['branch_id'],
-                            createdBy:    auth()->id(),
-                            date:         $data['date'],
-                            notes:        $data['notes'] ?? null,
+                            branchId: (int) $data['branch_id'],
+                            createdBy: auth()->id(),
+                            date: $data['date'],
+                            notes: $data['notes'] ?? null,
                             defaultUnitId: $data['default_unit_id'] ?? null,
                         );
 
@@ -155,7 +156,7 @@ class PosImportDataTable
             ])
 
             ->recordActions([
-                EditAction::make(),
+                // EditAction::make(),
             ])
 
             ->toolbarActions([

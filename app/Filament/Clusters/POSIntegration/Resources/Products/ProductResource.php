@@ -31,6 +31,21 @@ class ProductResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name';
 
+    public static function getNavigationLabel(): string
+    {
+        return __('lang.menu_items');
+    }
+
+    public static function getLabel(): ?string
+    {
+        return __('lang.menu_items');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('lang.menu_item');
+    }
+
     public static function form(Schema $schema): Schema
     {
         return ProductForm::configure($schema);
@@ -78,5 +93,10 @@ class ProductResource extends Resource
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+    }
+    public static function getNavigationBadge(): ?string
+    {
+        
+        return static::getModel()::pos()->count();
     }
 }

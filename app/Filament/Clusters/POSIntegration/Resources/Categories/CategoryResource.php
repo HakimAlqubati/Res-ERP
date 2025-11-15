@@ -29,6 +29,22 @@ class CategoryResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name';
 
+    public static function getNavigationLabel(): string
+    {
+        return __('lang.menu_categories');
+    }
+
+    public static function getLabel(): ?string
+    {
+        return __('lang.menu_categories');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('lang.menu_category');
+    }
+
+
     public static function form(Schema $schema): Schema
     {
         return CategoryForm::configure($schema);
@@ -69,5 +85,9 @@ class CategoryResource extends Resource
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+    }
+        public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::forPos()->count();
     }
 }

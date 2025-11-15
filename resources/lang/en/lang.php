@@ -254,6 +254,10 @@ return [
     'grn_number' => 'GRN No',
     'show_grn_number' => 'Show GRN No',
     'employee' => 'Employee',
-    'psize' => 'P.Size',
-    'pos_integration' => 'POS Intergration',
+    'psize' => 'Pack Size',
+    'pos_integration' => 'POS Integration',
+    'menu_categories' => 'Menu Categories',
+    'menu_category' => 'Menu Category',
+    'menu_items' => 'Menu Items',
+    'menu_item' => 'Menu Item',
 ];

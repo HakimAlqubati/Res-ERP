@@ -115,7 +115,7 @@ class ResellerSaleResource extends Resource
                             ->table([
                                 TableColumn::make(__('lang.product'))->width(200),
                                 TableColumn::make(__('lang.unit'))->width(190),
-                                TableColumn::make('P.Size')->width(100),
+                                TableColumn::make(__('lang.psize'))->width(100),
                                 TableColumn::make(__('stock.qty_in_stock'))->width(100),
                                 TableColumn::make(__('lang.quantity'))->width(100),
                                 TableColumn::make(__('lang.unit_price'))->width(100),

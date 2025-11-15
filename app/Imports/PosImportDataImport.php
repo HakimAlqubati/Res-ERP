@@ -2,19 +2,24 @@
 
 namespace App\Imports;
 
+use App\Models\Branch;
 use App\Models\PosImportData;
 use App\Models\PosImportDataDetail;
 use App\Models\Product;
 use App\Models\Unit;
+use App\Models\PosSale;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB; // <<< مهم للـ transaction
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
+use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
+use Maatwebsite\Excel\Events\AfterImport;
 
-class PosImportDataImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFailure
+class PosImportDataImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFailure, WithEvents
 {
     use SkipsFailures;
 
@@ -24,15 +29,6 @@ class PosImportDataImport implements ToModel, WithHeadingRow, WithValidation, Sk
     /** @var int */
     protected int $successCount = 0;
 
-    /**
-     * الثوابت الأساسية تُمرر عبر الـ constructor وتستخدم لإنشاء رأس الاستيراد
-     *
-     * @param  int         $branchId
-     * @param  int         $createdBy
-     * @param  string      $date        // 'Y-m-d'
-     * @param  string|null $notes
-     * @param  int|null    $defaultUnitId  // في حال لم يذكر في الملف
-     */
     public function __construct(
         protected int $branchId,
         protected int $createdBy,
@@ -55,32 +51,26 @@ class PosImportDataImport implements ToModel, WithHeadingRow, WithValidation, Sk
     public function model(array $row)
     {
         try {
-            // قراءة مرنة لرؤوس الأعمدة
             $name  = $this->firstFilled($row, ['product', 'item', 'name', 'product_name']);
             $qty   = $this->firstFilled($row, ['qty', 'quantity', 'qty_total', 'grand_total_qty']);
             $unitN = $this->firstFilled($row, ['unit', 'uom']);
 
-            // سطور فارغة / غير مكتملة
             if (!$name || (!is_numeric($qty) && $qty !== 0 && $qty !== '0')) {
                 return null;
             }
 
             $qty = (float) $qty;
             if ($qty == 0.0) {
-                // لا فائدة من تخزين كمية صفر
                 return null;
             }
 
-            // ابحث عن المنتج بالاسم (تعديلها حسب منطقك: بالاسم/الكود…)
             $product = Product::where('name', trim($name))->first();
 
             if (!$product) {
-                // لو المنتج غير موجود نتجاوز السطر
                 Log::warning('POS Import: product not found', ['name' => $name]);
                 return null;
             }
 
-            // تحديد الوحدة:
             $unitId = $this->resolveUnitId($unitN, $product);
 
             if (!$unitId) {
@@ -88,7 +78,6 @@ class PosImportDataImport implements ToModel, WithHeadingRow, WithValidation, Sk
                 return null;
             }
 
-            // إنشاء بند التفاصيل
             PosImportDataDetail::create([
                 'pos_import_data_id' => $this->header->id,
                 'product_id'         => $product->id,
@@ -104,16 +93,11 @@ class PosImportDataImport implements ToModel, WithHeadingRow, WithValidation, Sk
             ]);
         }
 
-        // نعيد null لأننا ندير الإنشاء يدوياً
         return null;
     }
 
-    /**
-     * قواعد التحقق على مستوى الأعمدة
-     */
     public function rules(): array
     {
-        // لأننا نقرأ رؤوس مرنة، نجعلها "أحيانًا" حسب ما وُجد في الملف
         return [
             '*.qty'      => 'nullable|numeric',
             '*.quantity' => 'nullable|numeric',
@@ -140,11 +124,168 @@ class PosImportDataImport implements ToModel, WithHeadingRow, WithValidation, Sk
         return $this->successCount;
     }
 
-    // ======== Helpers ========
+    // ================== أحداث الاستيراد ==================
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterImport::class => function (AfterImport $event) {
+                $this->createPosSaleFromImportHeader();
+            },
+        ];
+    }
 
     /**
-     * أرجع أول قيمة غير فارغة لعدة مفاتيح محتمَلة
+     * ينشئ سند PosSale + البنود من تفاصيل الاستيراد،
+     * ثم ينشئ حركات المخزون من البنود.
      */
+    protected function createPosSaleFromImportHeader(): void
+    {
+        try {
+            $header = $this->header;
+
+            if (! $header) {
+                return;
+            }
+
+            // جلب الفرع + المخزن المرتبط به
+            /** @var Branch|null $branch */
+            $branch = Branch::find($header->branch_id);
+            if (! $branch) {
+                return;
+            }
+
+            $storeId = $branch->store_id;
+             if (is_null($storeId)) {
+                // لا يوجد مخزن مربوط بهذا الفرع
+                return;
+            }
+
+            // نحمل العلاقات مرة واحدة
+            $header->loadMissing([
+                'details.product.unitPrices', // يفترض أن PosImportDataDetail لديه علاقة product()، و Product لديه unitPrices()
+            ]);
+
+            // لو لا يوجد تفاصيل، لا نكمل
+            if ($header->details->isEmpty()) {
+                return;
+            }
+            Log::info('mmm', [$header->details]);
+
+            // نعمل كل شيء داخل Transaction
+            $sale = DB::transaction(function () use ($header, $storeId): ?PosSale {
+
+                // 1) إنشاء السند كـ DRAFT بإجماليات صفرية
+                $sale = PosSale::create([
+                    'branch_id'       => $header->branch_id,
+                    'store_id'        => $storeId,
+                    'sale_date'       => $header->date, // أو now() حسب منطقك
+                    'status'          => PosSale::STATUS_DRAFT,
+                    'total_quantity'  => 0,
+                    'total_amount'    => 0,
+                    'cancelled'       => false,
+                    'cancel_reason'   => null,
+                    'notes'           => $header->notes,
+                    'created_by'      => $header->created_by,
+                    'updated_by'      => $header->created_by,
+                ]);
+
+                // 2) إنشاء البنود من تفاصيل الاستيراد
+                foreach ($header->details as $detail) {
+                    $product = $detail->product;
+
+                    if (! $product) {
+                        continue;
+                    }
+
+                    $unitId = $detail->unit_id;
+                    $lineQty = (float) $detail->quantity;
+
+                    if ($lineQty <= 0) {
+                        continue;
+                    }
+
+                    // جلب سعر الوحدة
+                    $unitPrice = $product->unitPrices()
+                        ->where('unit_id', $unitId)
+                        ->first();
+
+                    $unitPriceValue = (float) ($unitPrice?->price ?? 0);
+                    $packageSize    = (float) ($unitPrice?->package_size ?? 1);
+
+                    $lineTotal = $lineQty * $unitPriceValue;
+
+                    Log::info('zzz', [$product]);
+                    foreach ($product->productItems as $productItem) {
+
+                        $childProduct = $productItem->product;
+
+                        // إذا كان الـ item غير مربوط بمنتج لأي سبب، نتجاوزه
+                        if (! $childProduct) {
+                            continue;
+                        }
+
+                        $unitId = $productItem->unit_id;
+
+                        // جلب سعر الوحدة من UnitPrice الخاصة بالمنتج الطفل بهذا الـ unit_id
+                        $unitPrice = $childProduct->unitPrices()
+                            ->where('unit_id', $unitId)
+                            ->first();
+
+                        $unitPriceValue = (float) ($unitPrice?->price ?? 0);
+                        $packageSize    = (float) ($unitPrice?->package_size ?? $productItem->package_size ?? 1);
+
+                        // الكمية = كمية الـ item * كمية البيع المدخلة من المستخدم
+                        $lineQty   = (float) $productItem->quantity * $lineQty;
+                        $lineTotal = $lineQty * $unitPriceValue;
+
+                        // إنشاء البند عبر العلاقة items()
+                        $sale->items()->create([
+                            'product_id'   => $childProduct->id,
+                            'unit_id'      => $unitId,
+                            'quantity'     => $lineQty,
+                            'price'        => $unitPriceValue,
+                            'total_price'  => $lineTotal,
+                            'package_size' => $packageSize,
+                            'notes'        => "Auto from Product {$product->name} (Test POS)",
+                        ]);
+                    }
+                }
+
+                // تحميل البنود وإعادة حساب الإجماليات
+                $sale->loadMissing('items');
+                $sale->recalculateTotals();
+
+                // تحويل الحالة إلى مكتملة
+                $sale->status     = PosSale::STATUS_COMPLETED;
+                $sale->updated_by = $header->created_by;
+                $sale->save();
+
+                // (اختياري) ربط رأس الاستيراد بالسند
+                if ($sale && $header->isFillable('pos_sale_id')) {
+                    $header->update([
+                        'pos_sale_id' => $sale->id,
+                    ]);
+                }
+
+                return $sale;
+            });
+
+            // 3) بعد نجاح الـ Transaction، ننشئ حركات المخزون من البنود
+            if ($sale) {
+                $sale->refresh();
+                $sale->createInventoryTransactionsFromItems();
+            }
+        } catch (\Throwable $e) {
+            Log::error('Create PosSale from POS Import failed', [
+                'header_id' => $this->header?->id,
+                'message'   => $e->getMessage(),
+            ]);
+        }
+    }
+
+    // ======== Helpers ========
+
     protected function firstFilled(array $row, array $keys): ?string
     {
         foreach ($keys as $k) {
@@ -155,12 +296,6 @@ class PosImportDataImport implements ToModel, WithHeadingRow, WithValidation, Sk
         return null;
     }
 
-    /**
-     * يحل الوحدة بالترتيب:
-     * 1) إن وُجد اسم وحدة في الملف → بالاسم
-     * 2) إن وُجد defaultUnitId في المُنشئ
-     * 3) إن كان للمنتج عمود unit_id (افتراضي)
-     */
     protected function resolveUnitId(?string $unitName, Product $product): ?int
     {
         if ($unitName) {
@@ -174,7 +309,6 @@ class PosImportDataImport implements ToModel, WithHeadingRow, WithValidation, Sk
             return $this->defaultUnitId;
         }
 
-        // إن كان لديك products.unit_id كوحدة افتراضية
         if (isset($product->unit_id) && $product->unit_id) {
             return (int) $product->unit_id;
         }
