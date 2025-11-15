@@ -31,6 +31,7 @@ class ListGoodsReceivedNoteReport extends ListRecords
         $categoryIds = $this->getTable()->getFilters()['category_id']->getState()['values'] ?? [];
         $dateRange   = $this->getTable()->getFilters()['date']->getState() ?? [];
 
+        // dd($dateRange);
         $data = (new GoodsReceivedNoteReportService())->getGrnDataWithPagination(
             $productsIds,
             $storeId,

@@ -78,12 +78,14 @@ class GoodsReceivedNoteReportService
         if (count($grnNumbers) > 0) {
             $query->whereIn('grn.grn_number', $grnNumbers);
         }
-
+// dd($dateFilter);
         if (!empty($dateFilter['start'])) {
-            $query->whereDate('grn.created_at', '>=', $dateFilter['start']);
+            // dd($dateFilter['start']);
+            $query->whereDate('grn.grn_date', '>=', $dateFilter['start']);
         }
         if (!empty($dateFilter['end'])) {
-            $query->whereDate('grn.created_at', '<=', $dateFilter['end']);
+            // dd($dateFilter['end']);
+            $query->whereDate('grn.grn_date', '<=', $dateFilter['end']);
         }
 
         // dd($dateFilter);
