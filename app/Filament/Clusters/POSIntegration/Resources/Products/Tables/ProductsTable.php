@@ -20,6 +20,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\CheckboxColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -96,6 +97,10 @@ class ProductsTable
             ])
             ->filters([
                 TrashedFilter::make(),
+                SelectFilter::make('category_id')
+                    ->searchable()
+                    ->multiple()
+                    ->label(__('lang.category'))->relationship('category', 'name'),
             ])
             ->recordActions([
                 Action::make('testPos')->button()
@@ -149,7 +154,7 @@ class ProductsTable
             /** @var Store $store */
             $store = Store::query()->findOrFail($data['store_id']);
 
-             // 3) تحديد الفرع من المستخدم الحالي
+            // 3) تحديد الفرع من المستخدم الحالي
             $user     = Auth::user();
             $branchId = optional($user->branch)->id ?? $user->branch_id ?? null;
 

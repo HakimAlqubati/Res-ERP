@@ -16,11 +16,15 @@ class CategoriesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->paginated([10, 25, 50, 100])
+
             ->columns([
                 TextColumn::make('id')
                     ->sortable()->label(__('lang.id'))
                     ->searchable(isIndividual: true, isGlobal: false)->searchable(),
-                TextColumn::make('name')->label(__('lang.name'))
+                TextColumn::make('name')->label(__('lang.name'))->sortable()
+                    ->searchable(isIndividual: true, isGlobal: false),
+                TextColumn::make('parent.name')->label(__('lang.parent_category'))->sortable()
                     ->searchable(isIndividual: true, isGlobal: false),
                 // Tables\Columns\TextColumn::make('code')->label(__('lang.code'))
                 //     ->searchable(isIndividual: true, isGlobal: false),

@@ -242,5 +242,6 @@ return [
   'menu_category'   => 'فئة القائمة',
   'menu_items'      => 'عناصر القائمة',
   'menu_item'       => 'عنصر القائمة',
-
+  'total_cost' => 'اجمالي الكلفة',
+  'parent_category' => 'الفئة الاب',
 ];

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Analytics\BranchConsumptionAnalysisController;
+use App\Http\Controllers\Api\ItemSalesImportController;
 use App\Http\Controllers\Api\ProductPriceHistoryController;
 use App\Http\Controllers\Api\Reports\PurchaseInventoryReportController;
 use App\Http\Controllers\CopyOrderOutToBranchStoreController;
@@ -248,3 +249,5 @@ Route::get('employeesAttendanceOnDateToTest', [\App\Http\Controllers\Api\HR\Atte
 Route::get('stockPosition', [PurchaseInventoryReportController::class, 'index']);
 
 Route::get('/copyOutToIn', [CopyOutToInApiController::class, 'handle']);
+
+Route::post('itemSalesImport', ItemSalesImportController::class);

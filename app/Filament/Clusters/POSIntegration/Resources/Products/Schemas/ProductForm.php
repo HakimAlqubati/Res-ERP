@@ -2,7 +2,7 @@
 
 namespace App\Filament\Clusters\POSIntegration\Resources\Products\Schemas;
 
- use App\Filament\Resources\ProductResource\Support\ProductResourceActions as PRA;
+use App\Filament\Resources\ProductResource\Support\ProductResourceActions as PRA;
 use App\Models\Category;
 use App\Models\InventoryTransaction;
 use App\Models\OrderDetails;
@@ -44,6 +44,7 @@ class ProductForm
                     ->label(__('lang.code'))
                     ->content(fn($record) => $record?->code ?? '-')
                     ->visibleOn('edit'),
+                    TextInput::make('note_only')->label('Note for Items')->columnSpanFull()->default('Use for Manufactured Items Only')->disabled()
             ]),
             Wizard::make()->skippable()
                 ->columnSpanFull()
@@ -98,6 +99,7 @@ class ProductForm
                     Step::make('products')
                         ->visible(fn($get): bool => ($get('category_id') !== null && Category::find($get('category_id'))->for_pos))
                         ->label('Items')
+
                         ->schema([
                             Repeater::make('productItems')
                                 ->relationship('productItems')
@@ -282,9 +284,10 @@ class ProductForm
                                 ->afterStateUpdated(function (Set $set, $get) {
                                     PRA::updateFinalPriceEachUnit($set, $get, $get('productItems'), true);
                                 })
-                                ->columns(9)                         // Adjusts how fields are laid out in each row
+                                ->minItems(0)
+                                ->columns(9)
+                                // Adjusts how fields are laid out in each row
                                 ->createItemButtonLabel('Add Item'), // Custom button label
-                            // ->minItems(1)
 
                         ]),
 
@@ -306,7 +309,7 @@ class ProductForm
                                     TableColumn::make(__('Unit'))->alignCenter()->width('14rem'),
                                     TableColumn::make(__('lang.package_size'))->alignCenter()->width('10rem'),
                                     TableColumn::make(__('Price'))->alignCenter()->width('10rem'),
-                                    TableColumn::make(__('Selling'))->alignCenter()->width('12rem'),
+                                    // TableColumn::make(__('Selling'))->alignCenter()->width('12rem'),
                                 ])
 
                                 ->columnSpanFull()->minItems(1)
@@ -422,7 +425,7 @@ class ProductForm
                                         ->label(__('lang.price')),
                                     TextInput::make('selling_price')
                                         ->numeric()
-                                        ->minValue(1)
+                                        ->minValue(1)->hidden()
                                         ->label(__('lang.selling_price'))
                                         ->default(function ($record, $livewire) {
                                             $finalPrice = $livewire->form->getRecord()->final_price ?? 0;

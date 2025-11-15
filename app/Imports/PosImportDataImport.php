@@ -156,7 +156,7 @@ class PosImportDataImport implements ToModel, WithHeadingRow, WithValidation, Sk
             }
 
             $storeId = $branch->store_id;
-             if (is_null($storeId)) {
+            if (is_null($storeId)) {
                 // لا يوجد مخزن مربوط بهذا الفرع
                 return;
             }
@@ -170,7 +170,7 @@ class PosImportDataImport implements ToModel, WithHeadingRow, WithValidation, Sk
             if ($header->details->isEmpty()) {
                 return;
             }
- 
+
             // نعمل كل شيء داخل Transaction
             $sale = DB::transaction(function () use ($header, $storeId): ?PosSale {
 
@@ -214,7 +214,6 @@ class PosImportDataImport implements ToModel, WithHeadingRow, WithValidation, Sk
 
                     $lineTotal = $lineQty * $unitPriceValue;
 
-                    Log::info('zzz', [$product]);
                     foreach ($product->productItems as $productItem) {
 
                         $childProduct = $productItem->product;

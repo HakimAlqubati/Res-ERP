@@ -32,6 +32,7 @@ class PosImportDataResource extends Resource
 
     protected static ?string $label = 'POS Import Data';
     protected static ?string $pluralLabel = 'POS Import Data';
+    protected static bool $shouldRegisterNavigation = false;
 
     // public static function form(Schema $schema): Schema
     // {

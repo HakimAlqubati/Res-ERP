@@ -262,3 +262,5 @@ require base_path('routes/custom_api_route_inventory.php');
     // return response()->json(['message' => 'تم الحفظ بنجاح']);
     // (اكتب الكود حسب منطقك)
 // });
+
+

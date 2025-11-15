@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Arcanedev\Support\Providers\Concerns\HasTranslations;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Traits\Localizable;
 use OwenIt\Auditing\Contracts\Auditable;
@@ -27,6 +29,7 @@ class Category extends Model implements Auditable
         'code_starts_with',
         'waste_stock_percentage',
         'for_pos',
+        'parent_id',
     ];
     protected $auditInclude = [
         'name',
@@ -37,6 +40,7 @@ class Category extends Model implements Auditable
         'code_starts_with',
         'waste_stock_percentage',
         'for_pos',
+        'parent_id',
     ];
 
     protected $casts = [
@@ -48,12 +52,32 @@ class Category extends Model implements Auditable
         return $this->hasMany(Product::class);
     }
 
+    /**
+     * Get the parent category.
+     */
+    public function parent(): BelongsTo
+    {
+        // Self-referencing relationship: a category belongs to a parent category
+        return $this->belongsTo(Category::class, 'parent_id');
+    }
+
+    /**
+     * Get the children categories.
+     */
+    public function children(): HasMany
+    {
+        // Self-referencing relationship: a category has many child categories
+        return $this->hasMany(Category::class, 'parent_id');
+    }
+
     public function toArray()
     {
         return [
             'category_id' => $this->id,
             'category_name' => $this->name,
             'is_manafacturing' => $this->is_manafacturing,
+            'parent_id' => $this->parent_id,
+            'parent_name' => $this->parent->name ?? null,
             'products' => $this->products,
         ];
     }
@@ -91,5 +115,13 @@ class Category extends Model implements Auditable
     public function scopeNotForPos(Builder $query)
     {
         return $query->where('for_pos', false);
+    }
+
+    /**
+     * Scope: Only root categories (categories that do not have a parent)
+     */
+    public function scopeRoot(Builder $query)
+    {
+        return $query->whereNull('parent_id');
     }
 }

@@ -260,4 +260,6 @@ return [
     'menu_category' => 'Menu Category',
     'menu_items' => 'Menu Items',
     'menu_item' => 'Menu Item',
+    'total_cost' => 'Total Cost',
+    'parent_category' => 'Parent Category',
 ];

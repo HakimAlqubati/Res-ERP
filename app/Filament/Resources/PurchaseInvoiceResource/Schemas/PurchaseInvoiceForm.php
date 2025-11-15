@@ -19,10 +19,13 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
+use Filament\Support\Colors\Color;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
-
 
 class PurchaseInvoiceForm
 {
@@ -31,6 +34,7 @@ class PurchaseInvoiceForm
         return $schema
             ->components([
                 Fieldset::make()->columnSpanFull()->schema([
+
                     Grid::make()->columnSpanFull()->columns(4)->schema([
                         TextInput::make('invoice_no')
                             ->label(__('lang.invoice_no'))
@@ -44,7 +48,9 @@ class PurchaseInvoiceForm
                                     return true;
                                 }
                                 return false;
-                            }),
+                            })
+                            ->suffixIconColor('primary')
+                            ->suffixIcon(Heroicon::NumberedList),
                         DatePicker::make('date')
                             ->required()
                             ->placeholder('Select date')
@@ -61,7 +67,7 @@ class PurchaseInvoiceForm
 
 
                     ]),
-                    Grid::make()->columnSpanFull()->columns(3)->schema([
+                    Grid::make()->columnSpanFull()->columns(4)->schema([
                         Select::make('supplier_id')->label(__('lang.supplier'))
                             ->getSearchResultsUsing(fn(string $search): array => Supplier::where('name', 'like', "%{$search}%")->limit(10)->pluck('name', 'id')->toArray())
                             ->getOptionLabelUsing(fn($value): ?string => Supplier::find($value)?->name)
@@ -84,7 +90,38 @@ class PurchaseInvoiceForm
                             ->label('Payment Method')
                             ->relationship('paymentMethod', 'name')
                             ->searchable()
-                            ->preload()
+                            ->suffixIconColor('primary')
+                            ->suffixIcon(Heroicon::Banknotes)
+                            ->preload(),
+                        TextInput::make('total_amount')
+                            ->label(__('lang.total_amount'))
+                            ->numeric()
+                            // ->readOnly()            // نقرأه فقط من الـ repeater
+                            ->default(0)
+                            ->dehydrated()
+                            ->suffixIconColor('primary')
+                            ->rule(function (callable $get) {
+                                return function (string $attribute, $value, \Closure $fail) use ($get) {
+                                    // جمع كل total_price من الريبيتر
+                                    $rows = $get('units') ?? [];
+                                    $sum  = collect($rows)->sum(fn($row) => (float) ($row['total_price'] ?? 0));
+
+                                    // توحيد الدقة لأربع منازل عشرية
+                                    $expected = round($sum, 4);
+                                    $current  = round((float) $value, 4);
+
+                                    if ($current !== $expected) {
+                                        $fail(__(
+                                            'The invoice total (:total) does not match the sum of item totals (:sum).',
+                                            [
+                                                'total' => $current,
+                                                'sum'   => $expected,
+                                            ]
+                                        ));
+                                    }
+                                };
+                            })
+                            ->suffixIcon(Heroicon::Banknotes)->columnSpan(1),
                     ]),
                     Textarea::make('cancel_reason')->label('Cancel Reason')
                         ->placeholder('Cancel Reason')->hiddenOn('create')
@@ -166,7 +203,10 @@ class PurchaseInvoiceForm
                                         }
 
                                         $set('units', $items);
-
+                                        $total = collect($items)->sum(function ($row) {
+                                            return (float)($row['total_price'] ?? 0);
+                                        });
+                                        $set('total_amount', $total);
 
                                         \Filament\Notifications\Notification::make()
                                             ->title('✅ تم تحليل الفاتورة بنجاح')
@@ -198,12 +238,12 @@ class PurchaseInvoiceForm
                         ->defaultItems(1)
                         ->table([
                             TableColumn::make(__('Product'))->width('24rem'),
-                            TableColumn::make(__('Unit'))->alignCenter()->width('18rem'),
+                            TableColumn::make(__('Unit'))->alignCenter()->width('12rem'),
                             TableColumn::make(__('lang.psize'))->alignCenter()->width('8rem'),
                             TableColumn::make(__('Qty'))->alignCenter()->width('8rem'),
                             TableColumn::make(__('Price'))->alignCenter()->width('10rem'),
                             TableColumn::make(__('Total'))->alignCenter()->width('10rem'),
-                            TableColumn::make(__('Waste %'))->alignCenter()->width('8rem'),
+                            TableColumn::make(__('Waste %'))->alignCenter()->width('12rem'),
                         ])
 
                         ->deletable(function ($record) {
@@ -216,6 +256,7 @@ class PurchaseInvoiceForm
                         ->collapsible()
                         ->relationship('purchaseInvoiceDetails')
                         ->label(__('lang.purchase_invoice_details'))
+
                         ->schema([
                             Select::make('product_id')
                                 ->label(__('lang.product'))
@@ -247,10 +288,27 @@ class PurchaseInvoiceForm
                                 })
                                 ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->code . ' - ' . Product::find($value)?->name)
                                 ->reactive()
-                                ->afterStateUpdated(function ($set, $state) {
+                                ->afterStateUpdated(function ($set, $state, callable $get) {
                                     $set('unit_id', null);
                                     $product = Product::find($state);
                                     $set('waste_stock_percentage', $product?->waste_stock_percentage);
+
+                                    if ($product && $product->supplyUnitPrices->isNotEmpty()) {
+                                        $firstUnitPrice = $product->supplyUnitPrices->first();
+
+                                        // تعيين أول وحدة بشكل تلقائي
+                                        $set('unit_id', $firstUnitPrice->unit_id);
+                                        $set('price', $firstUnitPrice->price ?? 0);
+                                        $set('package_size', $firstUnitPrice->package_size ?? 0);
+
+                                        // حساب التوتال بناءً على الكمية الحالية (أو 1 افتراضياً)
+                                        $quantity = (float)($get('quantity') ?? 1);
+                                        $total = round($quantity * (float)($firstUnitPrice->price ?? 0), 2);
+                                        $set('total_price', $total);
+                                    }
+
+                                    // تحديث إجمالي الفاتورة
+                                    self::recalculateTotalAmount($set, $get);
                                 })
                                 ->searchable()->columnSpan(2)
                                 ->required(),
@@ -277,6 +335,8 @@ class PurchaseInvoiceForm
 
                                     $set('total_price', $total ?? 0);
                                     $set('package_size',  $unitPrice->package_size ?? 0);
+
+                                    self::recalculateTotalAmount($set, $get);
                                 })->columnSpan(2)->required(),
                             TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
                                 ->label(__('lang.package_size')),
@@ -292,6 +352,7 @@ class PurchaseInvoiceForm
                                 ->afterStateUpdated(function (Set $set, $state, $get) {
                                     $total = round(((float) $state) * ((float)$get('price') ?? 0), 2);
                                     $set('total_price', $total);
+                                    self::recalculateTotalAmount($set, $get);
                                 })->columnSpan(1)->required(),
                             TextInput::make('price')
                                 ->label(__('lang.price'))
@@ -304,6 +365,8 @@ class PurchaseInvoiceForm
                                 ->afterStateUpdated(function (Set $set, $state, $get) {
                                     $total = round(((float) $state) * ((float)$get('quantity')), 2);
                                     $set('total_price', $total);
+
+                                    self::recalculateTotalAmount($set, $get);
                                 })->columnSpan(1)->required(),
                             TextInput::make('total_price')->minValue(1)->label('Total Price')
                                 ->numeric()
@@ -324,7 +387,31 @@ class PurchaseInvoiceForm
 
 
                         ])
+                    // ->afterStateUpdated(function (Set $set, $state, callable $get) {
+                    //     self::recalculateTotalAmount($set, $get);
+                    // })
                 ])
             ]);
+    }
+
+    /**
+     * Recalculate invoice total_amount from repeater units.
+     *
+     * @param \Filament\Schemas\Components\Utilities\Set $set
+     * @param callable $get
+     * @return void
+     */
+    protected static function recalculateTotalAmount(Set $set, callable $get): void
+    {
+        $rows = $get('../../units') ?? [];
+
+        // dd($rows);
+        $total = collect($rows)->sum(function ($row) {
+            return (float)($row['total_price'] ?? 0);
+        });
+
+        // dd($total);
+        $total = round($total, 4);
+        $set('../../total_amount', $total);
     }
 }

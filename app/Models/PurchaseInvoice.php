@@ -30,6 +30,7 @@ class PurchaseInvoice extends Model implements Auditable
         'cancel_reason',
         'payment_method_id',
         'created_by',
+        'total_amount',
     ];
     protected $auditInclude = [
         'date',
@@ -42,6 +43,11 @@ class PurchaseInvoice extends Model implements Auditable
         'cancel_reason',
         'cancelled_by',
         'created_by',
+        'total_amount',
+    ];
+
+    protected $casts = [
+        'total_amount' => 'decimal:4',
     ];
     protected $appends = [
         'has_attachment',

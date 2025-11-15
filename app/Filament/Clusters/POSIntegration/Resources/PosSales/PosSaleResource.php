@@ -7,6 +7,7 @@ use App\Filament\Clusters\POSIntegration\Resources\PosSales\Pages\CreatePosSale;
 use App\Filament\Clusters\POSIntegration\Resources\PosSales\Pages\EditPosSale;
 use App\Filament\Clusters\POSIntegration\Resources\PosSales\Pages\ListPosSales;
 use App\Filament\Clusters\POSIntegration\Resources\PosSales\Pages\ViewPosSale;
+use App\Filament\Clusters\POSIntegration\Resources\PosSales\RelationManagers\ItemsRelationManager;
 use App\Filament\Clusters\POSIntegration\Resources\PosSales\Schemas\PosSaleForm;
 use App\Filament\Clusters\POSIntegration\Resources\PosSales\Schemas\PosSaleInfolist;
 use App\Filament\Clusters\POSIntegration\Resources\PosSales\Tables\PosSalesTable;
@@ -49,7 +50,7 @@ class PosSaleResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            ItemsRelationManager::class,
         ];
     }
 
@@ -59,16 +60,17 @@ class PosSaleResource extends Resource
             'index' => ListPosSales::route('/'),
             'create' => CreatePosSale::route('/create'),
             'view' => ViewPosSale::route('/{record}'),
-            'edit' => EditPosSale::route('/{record}/edit'),
+            // 'edit' => EditPosSale::route('/{record}/edit'),
         ];
     }
 
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
         return parent::getRecordRouteBindingEloquentQuery()
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ]);
+            // ->withoutGlobalScopes([
+            //     SoftDeletingScope::class,
+            // ])
+            ;
     }
     public static function getNavigationBadge(): ?string
     {
