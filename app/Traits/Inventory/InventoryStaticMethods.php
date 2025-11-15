@@ -33,7 +33,7 @@ trait InventoryStaticMethods
         if (! empty($transactionableType)) {
             $query->where('transactionable_type', $transactionableType);
         }
-        return $query->orderBy('id', 'asc')
+        return $query->orderBy('id', 'desc')
             ->paginate($perPage);
     }
 
