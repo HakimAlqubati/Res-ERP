@@ -19,6 +19,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 
@@ -97,10 +99,99 @@ class PurchaseInvoiceForm
                         // ->enableDownload()
                         ->directory('purchase-invoices')->visible(fn($get): bool => $get('has_attachment'))
                         ->columnSpanFull()
-                        ->acceptedFileTypes(['application/pdf'])
+                        // ->acceptedFileTypes(['application/pdf'])
                         ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                             return (string) str($file->getClientOriginalName())->prepend('purchase-invoice-');
-                        })->hiddenOn('view'),
+                        })
+                        ->live()
+
+                        ->afterStateUpdated(function ($state, callable $set) {
+                            if (!$state) return;
+
+                            try {
+                                $service = new \App\Services\AWS\Textract\AnalyzeExpenseService();
+
+                                if ($state instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                                    $file = new \Illuminate\Http\UploadedFile(
+                                        $state->getRealPath(),
+                                        $state->getClientOriginalName(),
+                                        $state->getMimeType(),
+                                        $state->getError(),
+                                        true
+                                    );
+
+                                    $result = $service->analyze($file);
+
+                                    if (!empty($result['documents'][0]['line_items'])) {
+
+                                        if (!empty($result['documents'][0]['summary']['INVOICE_RECEIPT_ID'])) {
+                                            $set('invoice_no', $result['documents'][0]['summary']['INVOICE_RECEIPT_ID']);
+                                        }
+                                        if (!empty($result['documents'][0]['summary']['VENDOR_ID'])) {
+                                            $set('supplier_id', $result['documents'][0]['summary']['VENDOR_ID']);
+                                        }
+                                        if (!empty($result['documents'][0]['summary']['INVOICE_RECEIPT_DATE'])) {
+                                            $date = $result['documents'][0]['summary']['INVOICE_RECEIPT_DATE'];
+                                            $date = date('Y-m-d', strtotime(str_replace('/', '-', $date)));
+                                            // dd($date);
+                                            $set('date', $date);
+                                        }
+                                        $items = [];
+
+                                        foreach ($result['documents'][0]['line_items'] as $item) {
+                                            // 1) استخراج اسم الوحدة من الاستجابة
+                                            $unitName = trim((string)($item['unit_name'] ?? ''));
+
+                                            // 2) محاولة إيجاد الـ ID للوحدة (حسب الاسم، أو الرمز إن لزم)
+                                            $unitId = null;
+                                            if ($unitName !== '') {
+                                                $unitId = \App\Models\Unit::query()
+                                                    ->where('name', 'like', $unitName)           // تطابق مباشر
+                                                    ->orWhere('name', 'like', "%{$unitName}%")   // تطابق جزئي
+                                                    ->orWhere('code', 'like', $unitName)         // لو عندك code للوحدة
+                                                    ->orWhere('code', 'like', "%{$unitName}%")
+                                                    ->value('id');
+                                            }
+
+                                            // 3) بناء عنصر الريبيتر بقيم نهائية (بدون Closures)
+                                            $items[] = [
+                                                'product_id'              => $item['existing_product_id'] ?? null,
+                                                'unit_id'                 => $unitId,                                    // ← قيمة رقمية أو null
+                                                'package_size'            => (float)($item['package_size'] ?? 0),
+                                                'quantity'                => (float)($item['quantity'] ?? 1),
+                                                'price'                   => (float)($item['unit_price'] ?? 0),
+                                                'total_price'             => (float)($item['price'] ?? 0),
+                                                'waste_stock_percentage'  => 0,
+                                            ];
+                                        }
+
+                                        $set('units', $items);
+
+
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('✅ تم تحليل الفاتورة بنجاح')
+                                            ->body('تم استيراد المنتجات تلقائيًا من المرفق.')
+                                            ->success()
+                                            ->send();
+                                    } else {
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('⚠️ لم يتم العثور على عناصر')
+                                            ->body('لم يتمكن النظام من استخراج بنود من الفاتورة.')
+                                            ->warning()
+                                            ->send();
+                                    }
+                                }
+                            } catch (\Throwable $e) {
+                                Log::error('faild_file', [$e->getMessage()]);
+                                \Filament\Notifications\Notification::make()
+                                    ->title('❌ فشل تحليل الملف')
+                                    ->body($e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+
+                        ->hiddenOn('view'),
                     Repeater::make('units')->columnSpanFull()->hiddenOn(['view', 'edit'])
                         ->createItemButtonLabel(__('lang.add_item'))
                         ->columns(9)

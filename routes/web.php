@@ -21,6 +21,7 @@ use App\Http\Controllers\PayrollPdfController;
 use App\Http\Controllers\Reports\OrderDeliveryReportController;
 use App\Http\Controllers\Reports\OrderSalesPaymentsReportController;
 use App\Http\Controllers\Reports\PurchaseGrnReportController;
+use App\Http\Controllers\Reports\PurchaseInvoicePrintController;
 use App\Http\Controllers\SalaryReportController;
 use App\Http\Controllers\SearchByCameraController;
 use App\Http\Controllers\TestController2;
@@ -1077,3 +1078,7 @@ Route::get('/_debugCheck', fn() => [
 
 Route::get('/reports/purchase-grn', [PurchaseGrnReportController::class, 'index'])
     ->name('reports.purchase-grn')->middleware('auth:web');
+Route::middleware(['web', 'auth'])->group(function () {
+    Route::get('/admin/purchase-invoices/{purchaseInvoice}/print', [PurchaseInvoicePrintController::class, 'show'])
+        ->name('purchase-invoices.print');
+});
