@@ -170,8 +170,7 @@ class PosImportDataImport implements ToModel, WithHeadingRow, WithValidation, Sk
             if ($header->details->isEmpty()) {
                 return;
             }
-            Log::info('mmm', [$header->details]);
-
+ 
             // نعمل كل شيء داخل Transaction
             $sale = DB::transaction(function () use ($header, $storeId): ?PosSale {
 

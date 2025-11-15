@@ -193,7 +193,7 @@ class AnalyzeExpenseHelper
                     $unitIdFromInvoice   = $row['unit_id'];    // قد يكون null
                     $unitLabelFromInvoice = $row['unit_name'];  // قد يكون null
 
-                    dd($unitLabelFromInvoice);
+                    // dd($unitLabelFromInvoice);
                     $available = collect($row['available_units']);
 
                     if ($unitIdFromInvoice) {
