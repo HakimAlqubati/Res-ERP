@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource\Table;
 
+use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource\Pages\ListEmployeeApplications;
 
 use App\Models\ApplicationTransaction;
 use App\Models\Branch;
@@ -27,40 +28,153 @@ use Filament\Tables\Enums\FiltersLayout;
 
 class EmployeeApplicationTable
 {
-    public static function configure($table)
+    public static function configure($table, ?string $activeTab = null)
     {
+
+
+        $activeTab ??= EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST];
+
+
+        // الأعمدة المشتركة بين جميع الطلبات:
+        $columns = [
+            TextColumn::make('id')
+                ->sortable()
+                ->searchable(),
+
+            TextColumn::make('employee.name')
+                ->sortable()
+                ->limit(20)
+                ->searchable(),
+
+            TextColumn::make('createdBy.name')
+                ->limit(20)
+                ->sortable()
+                ->toggleable(isToggledHiddenByDefault: true)
+                ->searchable(),
+
+            TextColumn::make('application_date')->toggleable(isToggledHiddenByDefault:true)
+                ->label('Request date')
+                ->sortable(),
+
+            // TextColumn::make('application_type_name')
+            //     ->label('Request Type')
+            //     ->badge()
+            //     ->sortable(),
+
+            TextColumn::make('status')
+                ->label('Status')
+                ->alignCenter(true)
+                ->badge()
+                ->icon('heroicon-m-check-badge')
+                ->color(fn(string $state): string => match ($state) {
+                    EmployeeApplicationV2::STATUS_PENDING  => 'warning',
+                    EmployeeApplicationV2::STATUS_REJECTED => 'danger',
+                    EmployeeApplicationV2::STATUS_APPROVED => 'success',
+                }),
+        ];
+
+        // dd($activeTab,EmployeeApplicationV2::APPLICATION_TYPE_NAMES[1]);
+        // أعمدة خاصة بإجازات (Leave request)
+        if ($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[1]) {
+            // dd(true);
+            $columns[] = TextColumn::make('leave_type_name')
+                ->label('Leave Type');
+
+            $columns[] = TextColumn::make('detail_from_date')
+                ->label('From')
+                ->date();
+
+            $columns[] = TextColumn::make('detail_to_date')
+                ->label('To')
+                ->date();
+
+            $columns[] = TextColumn::make('detail_days_count')
+                ->label('Days')->alignCenter()
+                ->numeric();
+        }
+
+        // أعمدة خاصة بسلف الموظف (Advance request)
+        if ($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[3]) {
+            $columns[] = TextColumn::make('detail_advance_amount')
+                ->label('Advance amount')
+                ->money('sar');
+
+            $columns[] = TextColumn::make('detail_monthly_deduction_amount')
+                ->label('Monthly deduction')
+                ->money('sar');
+
+            $columns[] = TextColumn::make('detail_deduction_starts_from')
+                ->label('Deduction starts')
+                ->date();
+
+            $columns[] = TextColumn::make('detail_deduction_ends_at')
+                ->label('Deduction ends')
+                ->date();
+
+            $columns[] = TextColumn::make('detail_number_of_months_of_deduction')
+                ->label('Months');
+        }
+
+        // أعمدة خاصة بطلب بصمة الحضور (Missed check-in)
+        if ($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[2]) {
+            $columns[] = TextColumn::make('detail_date')
+                ->label('Date');
+
+            $columns[] = TextColumn::make('detail_time')
+
+
+                ->label('Time');
+        }
+
+        // أعمدة خاصة بطلب بصمة الانصراف (Missed check-out)
+        if ($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[4]) {
+            $columns[] = TextColumn::make('detail_date')
+                ->label('Date');
+
+            $columns[] = TextColumn::make('detail_time')
+                ->label('Time');
+        }
         return $table->defaultSort('id', 'desc')
             ->paginated([10, 25, 50, 100])
             ->striped()
-            ->columns([
-                TextColumn::make('id')
-                    ->sortable()
-                    ->searchable(),
-                TextColumn::make('employee.name')
-                    ->sortable()->limit(20)
-                    ->searchable(),
-                TextColumn::make('createdBy.name')->limit(20)
-                    ->sortable()
-                    ->searchable(),
-                TextColumn::make('application_date')->label('Request date')
-                    ->sortable(),
-                // TextColumn::make('approvedBy.name')->label('Approved by')
-                //     ->sortable(),
-                // TextColumn::make('approved_at')->label('Approved at')
-                //     ->sortable()
-                // ,
+            ->columns($columns)
+            // ->columns([
+            //     TextColumn::make('id')
+            //         ->sortable()
+            //         ->searchable(),
+            //     TextColumn::make('employee.name')
+            //         ->sortable()->limit(20)
+            //         ->searchable(),
+            //     TextColumn::make('createdBy.name')->limit(20)
+            //         ->sortable()->toggleable(isToggledHiddenByDefault: true)
+            //         ->searchable(),
+            //     TextColumn::make('application_date')->label('Request date')
+            //         ->sortable(),
+            //     // TextColumn::make('approvedBy.name')->label('Approved by')
+            //     //     ->sortable(),
+            //     // TextColumn::make('approved_at')->label('Approved at')
+            //     //     ->sortable()
+            //     // ,
 
-                TextColumn::make('status')->label('Status')->alignCenter(true)
-                    ->badge()
-                    ->icon('heroicon-m-check-badge')
-                    ->color(fn(string $state): string    => match ($state) {
-                        EmployeeApplicationV2::STATUS_PENDING  => 'warning',
-                        EmployeeApplicationV2::STATUS_REJECTED => 'danger',
-                        EmployeeApplicationV2::STATUS_APPROVED => 'success',
-                    })
-                    ->toggleable(isToggledHiddenByDefault: false),
-            ])
-            
+            //     TextColumn::make('status')->label('Status')->alignCenter(true)
+            //         ->badge()
+            //         ->icon('heroicon-m-check-badge')
+            //         ->color(fn(string $state): string    => match ($state) {
+            //             EmployeeApplicationV2::STATUS_PENDING  => 'warning',
+            //             EmployeeApplicationV2::STATUS_REJECTED => 'danger',
+            //             EmployeeApplicationV2::STATUS_APPROVED => 'success',
+            //         })
+            //         ->toggleable(isToggledHiddenByDefault: false),
+            //     TextColumn::make('application_type_id')
+            //         ->label('Request Type')
+            //         ->badge()
+            //         ->formatStateUsing(function ($state) {
+            //             return \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_NAMES[$state] ?? 'Unknown';
+            //         })
+            //         ->sortable()
+            //         ->toggleable(isToggledHiddenByDefault: false),
+            // ])
+
             ->filters([
                 TrashedFilter::make(),
                 SelectFilter::make('status')->options([
