@@ -41,12 +41,14 @@ class AttendanceService
             ];
         }
 
+        if (isset($formData['attendance_type'])) {
+            $attendanceType  = $formData['attendance_type'];
+        }
         $res = $this->handler->handleEmployeeAttendance(
             $employee,
             $formData,
             $attendanceType,
         );
-
         // ⬇️ لو فشل التسجيل خزّنه كسجل غير مقبول باستخدام دالة المودل (بدون تعقيد)
         if (isset($res['success']) && $res['success'] === false) {
             // dd('sdf');

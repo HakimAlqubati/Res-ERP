@@ -148,6 +148,11 @@ class AttendnaceResource extends Resource
             ->defaultSort('id', 'desc')
             ->striped()
             ->columns([
+                TextColumn::make('id')
+                    ->label('#')
+                    ->sortable()->toggleable(isToggledHiddenByDefault: true)
+                    ->alignCenter()
+                    ->searchable(),
                 TextColumn::make('employee.name')
                     ->label('Employee')
                     ->sortable()
@@ -156,6 +161,9 @@ class AttendnaceResource extends Resource
                 TextColumn::make('check_type')
                     ->label('Type')
                     ->sortable(),
+                TextColumn::make('checkinRecord.id')
+                    ->label('CheckIn.ID')->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable()->alignCenter(),
                 TextColumn::make('period.name')
                     ->label('Period')
                     ->tooltip(function ($record) {
@@ -165,6 +173,9 @@ class AttendnaceResource extends Resource
                 TextColumn::make('check_date')
                     ->label('Check Date')
                     ->sortable(),
+                TextColumn::make('real_check_date')
+                    ->label('Real Check Date')
+                    ->sortable()->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('check_time')
                     ->label('Check Time'),

@@ -15,7 +15,7 @@ class AttendanceCreator
         AttendanceValidator $validator,
         protected CheckInHandler $checkInHandler,
         protected CheckOutHandler $checkOutHandler,
-        protected CheckTypeDecider $checkTypeDecider
+        protected CheckTypeDecider $checkTypeDecider,
     ) {
         $this->validator = $validator;
     }
@@ -28,8 +28,12 @@ class AttendanceCreator
         string $day,
         array $existAttendance,
         ?string $realAttendanceDate = null,
-        $data
+        $data,
+        $attendanceType = null
     ) {
+        if (!is_null($attendanceType)) {
+            $this->attendanceType = $attendanceType;
+        }
         if (isset($existAttendance['in_previous'])) {
             if ($existAttendance['in_previous']['check_type'] == Attendance::CHECKTYPE_CHECKIN) {
 
@@ -49,19 +53,24 @@ class AttendanceCreator
                 }
             }
         }
-        $typeHidden = true;
-        // تحديد نوع الحضور عبر CheckTypeDecider
-        $checkType = $this->checkTypeDecider->decide(
-            $employee,
-            $closestPeriod,
-            $date,
-            $time,
-            $day,
-            $existAttendance,
-            $typeHidden,     // أو false حسب ما تريده هنا (يمكن تمريره كمرجع)
-            $data['type'] ?? null // أو قيمة `checkin/checkout` اليدوية إن وجدت
-        );
-
+        // dd($data,$date);
+        if (!is_null($this->attendanceType) && $this->attendanceType == Attendance::ATTENDANCE_TYPE_REQUEST) {
+            $checkType = $data['type'];
+        } else {
+            $typeHidden = true;
+            // تحديد نوع الحضور عبر CheckTypeDecider
+            $checkType = $this->checkTypeDecider->decide(
+                $employee,
+                $closestPeriod,
+                $date,
+                $time,
+                $day,
+                $existAttendance,
+                $typeHidden,     // أو false حسب ما تريده هنا (يمكن تمريره كمرجع)
+                $data['type'] ?? null // أو قيمة `checkin/checkout` اليدوية إن وجدت
+            );
+        }
+        // dd($checkType,$this->attendanceType);
         // إذا كانت النتيجة رسالة نصية بدل نوع صالح
         if (! in_array($checkType, [Attendance::CHECKTYPE_CHECKIN, Attendance::CHECKTYPE_CHECKOUT])) {
             return [

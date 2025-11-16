@@ -154,9 +154,11 @@ class EmployeeApplicationResource extends Resource
                     $validated = [
                         'employee_id' => $employee->id,
                         'date_time' => $data['request_check_date'] . ' ' . $data['request_check_time'],
-                        'type' => Attendance::CHECKTYPE_CHECKOUT
+                        'type' => Attendance::CHECKTYPE_CHECKOUT,
+                        'attendance_type' => Attendance::ATTENDANCE_TYPE_REQUEST
                     ];
                     $result = app(AttendanceService::class)->handle($validated);
+                    // dd($result);
                     if ($result) {
                         $record->update([
                             'status'      => EmployeeApplicationV2::STATUS_APPROVED,
@@ -454,7 +456,8 @@ class EmployeeApplicationResource extends Resource
                     $validated = [
                         'employee_id' => $employee->id,
                         'date_time' => $data['request_check_date'] . ' ' . $data['request_check_time'],
-                        'type' => Attendance::CHECKTYPE_CHECKIN
+                        'type' => Attendance::CHECKTYPE_CHECKIN,
+                        'attendance_type' => Attendance::ATTENDANCE_TYPE_REQUEST
                     ];
                     $result = app(AttendanceService::class)->handle($validated);
                     if ($result) {

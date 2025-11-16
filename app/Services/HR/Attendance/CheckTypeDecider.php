@@ -29,6 +29,7 @@ class CheckTypeDecider
             $allowedTimeBeforePeriod = Carbon::createFromFormat('H:i:s', $closestPeriod->start_at)
                 ->subHours((int) Setting::getSetting('hours_count_after_period_before'))
                 ->format('H:i:s');
+            // dd($allowedTimeBeforePeriod);
 
             if (
                 $closestPeriod->start_at === '00:00:00' &&
@@ -39,7 +40,7 @@ class CheckTypeDecider
             } else {
                 $diff = $this->isWithinPreEndAllowance($time, $date, $closestPeriod);
             }
-
+            // dd($manualType,$diff);
             if ($diff) {
 
                 if ($manualType !== null && $manualType !== '') {
@@ -85,6 +86,7 @@ class CheckTypeDecider
         }
 
         $diffWithEndPeriod = $currentDateTime->diffInHours($periodEndDateTime);
+        // dd($diffWithEndPeriod,$currentDateTime,$periodEndDateTime,Setting::getSetting('pre_end_hours_for_check_in_out'));
         return $diffWithEndPeriod <= Setting::getSetting('pre_end_hours_for_check_in_out');
     }
 }
