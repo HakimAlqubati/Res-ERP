@@ -25,6 +25,8 @@ class EmployeeApplicationV2 extends Model implements Auditable
         'detailed_advance_application',
         'detailed_missed_checkin_application',
         'DetailedMissedCheckoutApplication',
+        'leave_type_name',      // جديد
+        'leave_type_id',
 
     ];
 
@@ -351,28 +353,39 @@ class EmployeeApplicationV2 extends Model implements Auditable
         }
     }
 
-
     public function getDetailTimeAttribute()
     {
-        if (in_array($this->application_type_id, [2, 4])) {
-            // Decode the details JSON to an associative array
-            $details = json_decode($this->details, true);
-            // Return the detail_time if it exists
-            return $details['detail_time'] ?? null;
+        if ($this->application_type_id == 2) {
+            return $this->missedCheckinRequest?->time;
+        }
+
+        if ($this->application_type_id == 4) {
+            return $this->missedCheckoutRequest?->time;
         }
 
         return null;
     }
+
     public function getDetailDateAttribute()
     {
-        if (in_array($this->application_type_id, [2, 3, 4])) {
-            // Decode the details JSON to an associative array
+        if ($this->application_type_id == 2) {
+            return $this->missedCheckinRequest?->date;
+        }
+
+        if ($this->application_type_id == 3) {
             $details = json_decode($this->details, true);
-            // Return the detail_date if it exists
             return $details['detail_date'] ?? null;
         }
+
+        if ($this->application_type_id == 4) {
+            return $this->missedCheckoutRequest?->date;
+        }
+
         return null;
     }
+
+
+
     public function getDetailMonthlyDeductionAmountAttribute()
     {
         if ($this->application_type_id == 3) {
@@ -419,32 +432,43 @@ class EmployeeApplicationV2 extends Model implements Auditable
     public function getDetailFromDateAttribute()
     {
         if ($this->application_type_id == 1) {
-            $details = json_decode($this->details, true);
-            return $details['detail_from_date'] ?? null;
+            return $this->leaveRequest->start_date ?? null;
         }
         return null;
     }
     public function getDetailToDateAttribute()
     {
         if ($this->application_type_id == 1) {
-            $details = json_decode($this->details, true);
-            return $details['detail_to_date'] ?? null;
+            return $this->leaveRequest->end_date ?? null;
         }
         return null;
     }
-    public function getDetailLeaveTypeIdAttribute()
+
+
+
+    public function getLeaveTypeModelAttribute()
     {
-        if ($this->application_type_id == 1) {
-            $details = json_decode($this->details, true);
-            return $details['detail_leave_type_id'] ?? null;
+        // نتحقق أن الطلب من نوع إجازة
+        if ($this->application_type_id != self::APPLICATION_TYPE_LEAVE_REQUEST) {
+            return null;
         }
-        return null;
+
+        return $this->leaveRequest?->leaveType;
+    }
+
+    public function getLeaveTypeNameAttribute()
+    {
+        if ($this->application_type_id != self::APPLICATION_TYPE_LEAVE_REQUEST) {
+            return null;
+        }
+
+        // dd($this->leaveRequest->leaveType);        // إذا كان عندك عمود name في جدول hr_leave_types
+        return $this->leaveRequest?->leaveType?->name;
     }
     public function getDetailDaysCountAttribute()
     {
         if ($this->application_type_id == 1) {
-            $details = json_decode($this->details, true);
-            return $details['detail_days_count'] ?? null;
+            return $this->leaveRequest->days_count ?? null;
         }
         return null;
     }
