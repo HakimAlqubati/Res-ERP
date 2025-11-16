@@ -38,4 +38,20 @@ class LeaveRequest extends Model implements Auditable
         'month',
         'days_count',
     ];
+
+    /**
+     * الطلب الأب (EmployeeApplicationV2)
+     */
+    public function application()
+    {
+        return $this->belongsTo(EmployeeApplicationV2::class, 'application_id');
+    }
+
+    /**
+     * نوع الإجازة (LeaveType)
+     */
+    public function leaveType()
+    {
+        return $this->belongsTo(LeaveType::class, 'leave_type');
+    }
 }
