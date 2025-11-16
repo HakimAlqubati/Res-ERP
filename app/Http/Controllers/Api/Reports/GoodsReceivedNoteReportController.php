@@ -73,7 +73,7 @@ class GoodsReceivedNoteReportController extends Controller
         }
 
         $showGrnNumber = filter_var($request->query('show_grn_number', false), FILTER_VALIDATE_BOOLEAN);
-
+// dd($dateRange);
         // Fetch data via your existing service
         $service = new GoodsReceivedNoteReportService();
         $data    = $service->getGrnDataWithPagination(

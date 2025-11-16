@@ -98,6 +98,7 @@ class ServiceRequestController extends Controller
                     'action'      => 'updated',
                     'description' => 'Service request updated',
                     'user_id'     => auth()->id(),
+                    'created_by' => auth()->id(),
                 ]);
                 $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, 'Service request updated');
                 return $serviceRequest->load(['branch', 'branchArea', 'assignedTo', 'equipment']);
