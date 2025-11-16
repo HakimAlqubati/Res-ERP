@@ -124,4 +124,12 @@ class LeaveType extends Model implements Auditable
             ->where('active', 1)->first()
         ;
     }
+
+    /**
+     * جميع طلبات الإجازات التي تستخدم هذا النوع
+     */
+    public function leaveRequests()
+    {
+        return $this->hasMany(LeaveRequest::class, 'leave_type_id');
+    }
 }

@@ -86,7 +86,7 @@ class GoodsReceivedNoteReportService
         if (!empty($dateFilter['end'])) {
             // dd($dateFilter['end']);
             $query->whereDate('grn.grn_date', '<=', $dateFilter['end']);
-        }
+        }   
 
         // dd($dateFilter);
         // نسخة لحساب الإجمالي الكلي قبل التقسيم
