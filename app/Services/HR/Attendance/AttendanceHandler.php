@@ -234,6 +234,7 @@ class AttendanceHandler
                     $this->data,
                     $this->attendanceType
                 );
+                // dd($attendanceData);
                 if (is_array($attendanceData) && isset($attendanceData['success']) && $attendanceData['success'] === false) {
                     return $attendanceData;
                 }

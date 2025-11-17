@@ -24,16 +24,19 @@ class ListEmployeeAttednaceReports extends ListRecords
         // حالياً فارغة
         // لاحقاً ضع هنا منطق إعادة جلب البيانات
     }
-  
+
     public function showDetails($date, $employeeId, $periodId)
     {
 
         $attendanceFetcher      = new AttendanceFetcher(new EmployeePeriodHistoryService());
         $attendanceDetails      = $attendanceFetcher->getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
-        $this->modalData        = $attendanceDetails->toArray();
+         $this->modalData = [
+            'data' => $attendanceDetails->toArray(),
+            'date' => $date,
+        ];
+        // dd($this->modalData);
         $this->showDetailsModal = true;
         $this->dispatch('open-modal', id: 'attendance-details');
-
     }
 
     protected function getViewData(): array
