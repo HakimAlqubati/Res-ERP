@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\UserResource\Pages;
+namespace App\Filament\Resources\UserResource\Tables;
 
 
 use Filament\Pages\Enums\SubNavigationPosition;

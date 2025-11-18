@@ -7,7 +7,7 @@ use Filament\Schemas\Schema;
 use App\Filament\Resources\UserResource\Pages\ListUsers;
 use App\Filament\Resources\UserResource\Pages\CreateUser;
 use App\Filament\Resources\UserResource\Pages\EditUser; 
-use App\Filament\Resources\UserResource\Pages\UserTable; 
+use App\Filament\Resources\UserResource\Tables\UserTable; 
 use App\Filament\Traits\Forms\HasAttendanceForm;
 use App\Filament\Traits\Forms\HasEmployeeExistingForm;
 use App\Filament\Traits\Forms\HasNewUserForm; 
