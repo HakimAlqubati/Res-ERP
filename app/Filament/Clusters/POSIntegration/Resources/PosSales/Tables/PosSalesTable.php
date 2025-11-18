@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\POSIntegration\Resources\PosSales\Tables;
 
 use App\Imports\PosImportDataImport;
+use App\Imports\PosSaleFromExcelImport;
 use App\Models\Branch;
 use App\Models\PosSale;
 use App\Models\Unit;
@@ -118,7 +119,7 @@ class PosSalesTable
             ])
             ->headerActions([
                 Action::make('import_items_quantities')
-                    ->label('Import Quantities')
+                    ->label(__('lang.import'))
                     ->icon('heroicon-o-arrow-up-tray')
                     ->color('info')
                     ->modalHeading('Import Items Quantities from Excel')
@@ -169,13 +170,14 @@ class PosSalesTable
                         // مسار الملف على القرص العام
                         $fullPath = Storage::disk('public')->path($data['file']);
 
+                        $branchId = $data['branch_id'];
+                        $storeId = Branch::find($branchId)->store->id;
                         // تهيئة المستورد مع رأس الاستيراد
-                        $import = new PosImportDataImport(
+                        $import = new PosSaleFromExcelImport(
                             branchId: (int) $data['branch_id'],
-                            createdBy: auth()->id(),
-                            date: $data['date'],
-                            notes: $data['notes'] ?? null,
-                            defaultUnitId: $data['default_unit_id'] ?? null,
+                            storeId: $storeId,
+                            saleDate: $data['date'],
+                            userId: auth()->user()->id,
                         );
 
                         try {

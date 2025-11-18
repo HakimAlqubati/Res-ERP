@@ -244,4 +244,7 @@ return [
   'menu_item'       => 'عنصر القائمة',
   'total_cost' => 'اجمالي الكلفة',
   'parent_category' => 'الفئة الاب',
+  'pos' => 'نقاط البيع',
+  'import' => 'استيراد',
+  'product_items_count' => 'عدد المكونات',
 ];

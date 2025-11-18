@@ -28,7 +28,6 @@ class PosSaleForm
     {
         return $schema
             ->components([
-
                 /*
                 |--------------------------------------------------------------------------
                 | Sale Header
@@ -41,7 +40,7 @@ class PosSaleForm
                         DatePicker::make('sale_date')
                             ->label('Sale Date')
                             ->required()
-                             ->default(now()),
+                            ->default(now()),
 
                         Select::make('branch_id')
                             ->label('Branch')
@@ -123,6 +122,8 @@ class PosSaleForm
                                     ->options(function () {
                                         return Product::query()
                                             ->where('active', 1)
+                                            ->pos()
+                                            ->whereHas('productItems')
                                             ->orderBy('name')
                                             ->get()
                                             ->mapWithKeys(fn($product) => [

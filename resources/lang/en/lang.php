@@ -261,4 +261,7 @@ return [
     'menu_item' => 'Menu Item',
     'total_cost' => 'Total Cost',
     'parent_category' => 'Parent Category',
+    'pos' => 'POS',
+    'import' => 'Import',
+    'product_items_count' => 'Items Count',
 ];

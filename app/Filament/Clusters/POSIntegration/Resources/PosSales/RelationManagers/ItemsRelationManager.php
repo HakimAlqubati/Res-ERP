@@ -17,15 +17,15 @@ class ItemsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->paginated([10, 25, 50, 100, 200])
+            ->defaultPaginationPageOption(100)
             ->columns([
                 TextColumn::make('product.name'),
                 TextColumn::make('unit.name'),
                 TextColumn::make('package_size'),
                 TextColumn::make('quantity'),
             ])
-            ->recordActions([
-                
-            ])
+            ->recordActions([])
             ->headerActions([
                 CreateAction::make(),
             ]);

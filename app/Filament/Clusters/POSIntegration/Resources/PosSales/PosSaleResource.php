@@ -14,11 +14,12 @@ use App\Filament\Clusters\POSIntegration\Resources\PosSales\Tables\PosSalesTable
 use App\Models\PosSale;
 use BackedEnum;
 use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
+ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class PosSaleResource extends Resource
@@ -26,6 +27,26 @@ class PosSaleResource extends Resource
     protected static ?string $model = PosSale::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::ShoppingCart;
+
+    public static function getLabel(): ?string
+    {
+        return __('lang.pos');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('lang.pos');
+    }
+
+    public static function getPluralLabel(): ?string
+    {
+        return __('lang.pos');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('lang.pos');
+    }
 
     protected static ?string $cluster = POSIntegrationCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
@@ -64,13 +85,23 @@ class PosSaleResource extends Resource
         ];
     }
 
+    public static function getRecordSubNavigation(Page $page): array
+    {
+        return $page->generateNavigationItems([
+            ListPosSales::class,
+            CreatePosSale::class,
+            ViewPosSale::class,
+           
+         ]);
+    }
+
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
         return parent::getRecordRouteBindingEloquentQuery()
             // ->withoutGlobalScopes([
             //     SoftDeletingScope::class,
             // ])
-            ;
+        ;
     }
     public static function getNavigationBadge(): ?string
     {

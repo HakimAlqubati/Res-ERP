@@ -44,7 +44,7 @@ class ProductForm
                     ->label(__('lang.code'))
                     ->content(fn($record) => $record?->code ?? '-')
                     ->visibleOn('edit'),
-                    TextInput::make('note_only')->label('Note for Items')->columnSpanFull()->default('Use for Manufactured Items Only')->disabled()
+                TextInput::make('note_only')->label('Note for Items')->columnSpanFull()->default('Use for Manufactured Items Only')->disabled()
             ]),
             Wizard::make()->skippable()
                 ->columnSpanFull()
@@ -63,7 +63,8 @@ class ProductForm
                                 ->afterStateUpdated(function ($set, $state) {
                                     $set('code', Product::generateProductCode($state));
                                 }),
-                            TextInput::make('code')->required()
+                            TextInput::make('code')
+                                ->required(false)
                                 ->unique(ignoreRecord: true)
                                 ->label(__('lang.code'))
                                 ->readOnly()

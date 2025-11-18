@@ -22,4 +22,12 @@ class EditProduct extends EditRecord
             RestoreAction::make(),
         ];
     }
+
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        if ($this->record->minimum_stock_qty <= 0) {
+            $data['minimum_stock_qty'] = 0;
+        }
+        return $data;
+    }
 }

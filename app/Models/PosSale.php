@@ -261,15 +261,23 @@ class PosSale extends Model implements Auditable
             $fifoService = new FifoMethodService($this);
 
             foreach ($this->items as $item) {
-                // نطلب من الخدمة تخصيص كميات FIFO
-                $allocations = $fifoService->getAllocateFifo(
-                    $item->product_id,
-                    $item->unit_id,
-                    $item->quantity
-                );
 
-                // ننشئ حركات المخزون بناء على الـ allocations
-                self::moveFromInventoryForPos($allocations, $item, $this);
+                $productItems = $item?->product?->productItems;
+                if (!$productItems) {
+                    return;
+                }
+                foreach ($productItems as  $productItem) {
+
+                    // نطلب من الخدمة تخصيص كميات FIFO
+                    $allocations = $fifoService->getAllocateFifo(
+                        $productItem->product_id,
+                        $productItem->unit_id,
+                        $productItem->quantity
+                    );
+
+                    // ننشئ حركات المخزون بناء على الـ allocations
+                    self::moveFromInventoryForPos($allocations, $productItem, $this);
+                }
             }
 
             DB::commit();
