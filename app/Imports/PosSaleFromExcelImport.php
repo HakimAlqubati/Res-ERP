@@ -106,7 +106,7 @@ class PosSaleFromExcelImport implements ToCollection
             $price = (float) $unitPrice->price;
             $total = $quantity * $price;
 
-            // إنشاء سطر POS
+            // إنشاء سطر POS 
             PosSaleItem::create([
                 'pos_sale_id'  => $this->sale->id,
                 'product_id'   => $product->id,
