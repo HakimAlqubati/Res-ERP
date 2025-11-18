@@ -88,6 +88,7 @@ class InventoryTransactionPurchaseReportResource extends Resource
                     }),
                 SelectFilter::make('manufacturing_filter')
                     ->label('Product Type')
+                    ->placeholder('Select product type')
                     ->options(
                         collect(ProductType::cases())
                             ->mapWithKeys(fn($case) => [$case->value => $case->label()])

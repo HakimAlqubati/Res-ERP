@@ -226,7 +226,6 @@ return [
     'quantity'                                    => 'Quantity',
     'unit_price'                                  => 'Unit Price',
     'total_price'                                 => 'Total Price',
-    'package_size'                                => 'Package Size',
     'total_amount'                                => 'Total Amount',
     'add_payment'                                 => 'Add Payment',
     'amount'                                      => 'Amount',
@@ -239,7 +238,7 @@ return [
     'manufacturing_branches'                      => 'Manufacturing branches',
     'manufacturing_branch'                        => 'Manufacturing branch',
     'please_select_a_receller'                    => 'Please select a receller',
-    
+
     'expired'  => 'Expired',
     'upcoming' => 'Upcoming',
     'active'   => 'Active',
@@ -254,5 +253,5 @@ return [
     'grn_number' => 'GRN No',
     'show_grn_number' => 'Show GRN No',
     'employee' => 'Employee',
-    'psize' => 'P.Size',
+    'psize' => 'Pack Size',
 ];

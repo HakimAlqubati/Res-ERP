@@ -3,11 +3,11 @@
     <div class="mb-6 p-6 rounded-lg shadow bg-white border border-gray-200">
         <h2 class="text-2xl font-bold mb-4 text-primary-700">🧾 Returned Order #{{ $order->id }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
-            <p><span class="font-semibold">📅 Date:</span> {{ $order->returned_date->format('Y-m-d') }}</p>
-            <p><span class="font-semibold">🏢 Branch:</span> {{ $order->branch->name ?? '-' }}</p>
-            <p><span class="font-semibold">🏬 Store:</span> {{ $order->store->name ?? '-' }}</p>
-            <p><span class="font-semibold">🧑‍💼 Created By:</span> {{ $order->creator->name ?? '-' }}</p>
-            <p><span class="font-semibold">✅ Approved By:</span> {{ $order->approver->name ?? '-' }}</p>
+            <p><span class="font-semibold"> Date:</span> {{ $order->returned_date->format('Y-m-d') }}</p>
+            <p><span class="font-semibold"> Branch:</span> {{ $order->branch->name ?? '-' }}</p>
+            <p><span class="font-semibold"> Store:</span> {{ $order->store->name ?? '-' }}</p>
+            <p><span class="font-semibold"> Created By:</span> {{ $order->creator->name ?? '-' }}</p>
+            <p><span class="font-semibold"> Approved By:</span> {{ $order->approver->name ?? '-' }}</p>
         </div>
     </div>
 
@@ -21,7 +21,7 @@
                     <th class="px-4 py-2 border-r"> Product</th>
                     <th class="px-4 py-2 border-r"> Unit</th>
                     <th class="px-4 py-2 border-r"> Quantity</th>
-                    <th class="px-4 py-2">📝 Notes</th>
+                    <th class="px-4 py-2"> Notes</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">

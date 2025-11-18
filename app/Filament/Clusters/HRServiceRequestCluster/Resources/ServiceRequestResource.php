@@ -314,38 +314,40 @@ class ServiceRequestResource extends Resource
                             return [
                                 Select::make('status')->default(function ($record) {
                                     return $record->status;
-                                })->columnSpanFull()
-                                    ->disableOptionWhen(fn(string $value): bool => ($value === ServiceRequest::STATUS_NEW))
+                                })
+                                    ->columnSpanFull()
+                                    // ->disableOptionWhen(fn(string $value): bool => ($value === ServiceRequest::STATUS_NEW))
 
-                                    ->disabled(function ($record) {
-                                        if ($record->status == ServiceRequest::STATUS_NEW) {
-                                            if ($record->created_by == auth()->user()->id) {
-                                                return false;
-                                            }
-                                        }
-                                        if (isset(auth()->user()?->employee)) {
-                                            if ($record->assigned_to == auth()->user()?->employee?->id) {
-                                                return false;
-                                            }
-                                        }
-                                        // if($record->status == S)
-                                        return true;
-                                        // Get the logs for the status change
-                                        $statusChangeLogs = $record->logs->where('log_type', ServiceRequestLog::LOG_TYPE_STATUS_CHANGED);
+                                    // ->disabled(function ($record) {
+                                    //     if ($record->status == ServiceRequest::STATUS_NEW) {
+                                    //         if ($record->created_by == auth()->user()->id) {
+                                    //             return false;
+                                    //         }
+                                    //     }
+                                    //     if (isset(auth()->user()?->employee)) {
+                                    //         if ($record->assigned_to == auth()->user()?->employee?->id) {
+                                    //             return false;
+                                    //         }
+                                    //     }
+                                    //     // if($record->status == S)
+                                    //     return true;
+                                    //     // Get the logs for the status change
+                                    //     $statusChangeLogs = $record->logs->where('log_type', ServiceRequestLog::LOG_TYPE_STATUS_CHANGED);
 
-                                        // Check if there are any logs and get the last one
-                                        if ($statusChangeLogs->isNotEmpty()) {
-                                            $lastLog = $statusChangeLogs->last();
+                                    //     // Check if there are any logs and get the last one
+                                    //     if ($statusChangeLogs->isNotEmpty()) {
+                                    //         $lastLog = $statusChangeLogs->last();
 
-                                            // Check if the last log's created_by matches the current user
-                                            if ($record->status == ServiceRequest::STATUS_PENDING) {
-                                                return $lastLog->created_by == auth()->user()->id;
-                                            }
-                                        }
+                                    //         // Check if the last log's created_by matches the current user
+                                    //         if ($record->status == ServiceRequest::STATUS_PENDING) {
+                                    //             return $lastLog->created_by == auth()->user()->id;
+                                    //         }
+                                    //     }
 
-                                        // If there are no logs, do not disable the field
-                                        return false;
-                                    })
+                                    //     // If there are no logs, do not disable the field
+                                    //     return false;
+                                    // })
+                                    // ->dehydrated()
                                     ->options(
                                         [
                                             ServiceRequest::STATUS_NEW         => 'New',
