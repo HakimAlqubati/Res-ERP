@@ -465,6 +465,15 @@ class EmployeeApplicationV2 extends Model implements Auditable
         // dd($this->leaveRequest->leaveType);        // إذا كان عندك عمود name في جدول hr_leave_types
         return $this->leaveRequest?->leaveType?->name;
     }
+    public function getLeaveTypeIdAttribute()
+    {
+        if ($this->application_type_id != self::APPLICATION_TYPE_LEAVE_REQUEST) {
+            return null;
+        }
+
+        // dd($this->leaveRequest->leaveType);        // إذا كان عندك عمود name في جدول hr_leave_types
+        return $this->leaveRequest?->leaveType?->id;
+    }
     public function getDetailDaysCountAttribute()
     {
         if ($this->application_type_id == 1) {
