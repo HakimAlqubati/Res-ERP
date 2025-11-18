@@ -396,9 +396,7 @@ class EmployeeApplicationTable
                     }
                     return false;
                 }),
-                EmployeeApplicationResource::AttendanceRequestDetails()
-                    ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST)),
-
+             
                 EmployeeApplicationResource::LeaveRequesttDetails()
                     ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST)),
                 EmployeeApplicationResource::departureRequesttDetails()

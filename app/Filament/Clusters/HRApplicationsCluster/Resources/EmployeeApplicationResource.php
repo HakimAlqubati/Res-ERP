@@ -629,26 +629,7 @@ class EmployeeApplicationResource extends Resource
             ->modalCancelAction(false)
         ;
     }
-    public static function AttendanceRequestDetails(): Action
-    {
-        return Action::make('AttendanceRequestDetails')->label('Details')->button()
-            ->color('info')
-            ->icon('heroicon-m-newspaper')
-
-            ->disabledForm()
-            ->schema(function ($record) {
-                $details = $record->missedCheckinRequest;
-                return [
-                    Fieldset::make()->label('Request data')->columns(2)->schema([
-                        DatePicker::make('request_check_date')->default($details->date)->label('Date'),
-                        TimePicker::make('request_check_time')->default($details->time)->label('Time'),
-                    ]),
-                ];
-            })
-            ->modalSubmitAction(false)
-            ->modalCancelAction(false)
-        ;
-    }
+   
     public static function LeaveRequesttDetails(): Action
     {
         return Action::make('LeaveRequesttDetails')->label('Details')->button()
