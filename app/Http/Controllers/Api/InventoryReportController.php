@@ -140,7 +140,9 @@ class InventoryReportController extends Controller
 
         $filters = [
 
-            'categories'     => Category::active()->pluck('name', 'id')->toArray(),
+            'categories'     => Category::where('active',1)
+            ->notForPos()
+            ->pluck('name', 'id')->toArray(),
             'stores'         => $stores,
             'movement_types' => InventoryTransaction::getMovementTypes(),
             'manufacturing_filter' => collect(\App\Enums\ProductType::cases())
