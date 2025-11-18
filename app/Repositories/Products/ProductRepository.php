@@ -90,6 +90,7 @@ class ProductRepository implements ProductRepositoryInterface
         //     return is_numeric($binding) ? $binding : "'{$binding}'";
         // })->toArray());
 
+        $query->whereNot('type',Product::TYPE_FINISHED_POS);
         // dd($sql);
         $products = $query->get();
 

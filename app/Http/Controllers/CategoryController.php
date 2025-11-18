@@ -16,8 +16,8 @@ class CategoryController extends Controller
      */
     public function index(Request $request)
     {
-        $categories = Category::active()
-            // ->where('is_manafacturing', false)
+        $categories = Category::where('active', 1)
+            ->notForPos()
             ->get();
         return CategoryResource::collection($categories);
     }
