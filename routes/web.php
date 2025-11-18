@@ -854,7 +854,7 @@ Route::get('/admin/salary-slip/print/{payroll_id}', function (string $payroll_id
         'employee',            // تأكد أن العلاقة موجودة
         'employee.department', // إن وُجدت
         'employee.position',   // إن وُجدت
-         'transactions',
+        'transactions',
     ])->findOrFail($payroll_id);
 
     // dd($payroll);
