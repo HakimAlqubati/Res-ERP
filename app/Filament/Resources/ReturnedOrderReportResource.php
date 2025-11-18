@@ -40,12 +40,13 @@ class ReturnedOrderReportResource extends Resource
         return $table
             ->filters([
                 SelectFilter::make("branch_id")
-                    ->label(__('lang.branch'))
+                    ->label(__('lang.branch'))->searchable()
                     ->options(Branch::whereIn('type', [Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN])->active()
                         ->get()->pluck('name', 'id')),
                 Filter::make('date')
                     ->schema([
-                        DatePicker::make('start_date')->default(now()->firstOfMonth())
+                        DatePicker::make('start_date')
+                        ->default(now()->firstOfYear())
                             ->label(__('lang.start_date')),
                         DatePicker::make('end_date')->default(now()->endOfMonth())
                             ->label(__('lang.end_date')),

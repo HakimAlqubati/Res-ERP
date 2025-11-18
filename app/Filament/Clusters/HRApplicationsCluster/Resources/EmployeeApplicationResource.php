@@ -77,7 +77,8 @@ class EmployeeApplicationResource extends Resource
         return EmployeeApplicationForm::configure($schema);
     }
 
-    public static function table(Table $table): Table {
+    public static function table(Table $table): Table
+    {
         return EmployeeApplicationTable::configure($table);
     }
 
@@ -137,11 +138,39 @@ class EmployeeApplicationResource extends Resource
         }
         return false;
     }
-
     public static function approveDepartureRequest(): Action
     {
-        return Action::make('approveDepartureRequest')->label('Approve')->button()
-            ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST))
+        return Action::make('approveDepartureRequest')
+            ->label('Approve')
+            ->button()
+            ->visible(
+                fn($record): bool =>
+                $record->status == EmployeeApplicationV2::STATUS_PENDING
+                    && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST
+            )
+
+            // ✅ ملاحظة (Note) تظهر كـ Tooltip عندما يكون الزر Disabled
+            ->tooltip(function ($record) {
+                $hasCheckin = Attendance::query()
+                    ->where('employee_id', $record?->employee_id)
+                    ->where('check_date', $record?->detail_date)
+                    ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+                    ->exists();
+
+                return $hasCheckin
+                    ? null
+                    : 'There is no check-in, so you cannot approve this request.';
+            })
+
+            // ✅ تعطيل زر الـ Action في حالة عدم وجود Check-in
+            ->disabled(function ($record): bool {
+                return ! Attendance::query()
+                    ->where('employee_id', $record?->employee_id)
+                    ->where('check_date', $record?->detail_date)
+                    ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+                    ->exists();
+            })
+
             ->color('success')
             ->icon('heroicon-o-check')
             ->databaseTransaction()
@@ -149,14 +178,17 @@ class EmployeeApplicationResource extends Resource
                 DB::beginTransaction();
                 try {
                     $employee = $record->employee;
-                    $data['request_check_date'];
-                    $data['request_check_time'];
+
+                    // باقي الكود كما هو...
                     $validated = [
-                        'employee_id' => $employee->id,
-                        'date_time' => $data['request_check_date'] . ' ' . $data['request_check_time'],
-                        'type' => Attendance::CHECKTYPE_CHECKOUT
+                        'employee_id'      => $employee->id,
+                        'date_time'        => $data['request_check_date'] . ' ' . $data['request_check_time'],
+                        'type'             => Attendance::CHECKTYPE_CHECKOUT,
+                        'attendance_type'  => Attendance::ATTENDANCE_TYPE_REQUEST,
                     ];
+
                     $result = app(AttendanceService::class)->handle($validated);
+
                     if ($result) {
                         $record->update([
                             'status'      => EmployeeApplicationV2::STATUS_APPROVED,
@@ -172,39 +204,115 @@ class EmployeeApplicationResource extends Resource
                     DB::rollBack();
                     AppLog::write('Error approving attendance request: ' . $e->getMessage(), AppLog::LEVEL_ERROR);
                     return Notification::make()->warning()->body($e->getMessage())->send();
-                    // Handle the exception (log it, return an error message, etc.)
-                    // Optionally, you could return a user-friendly error message
-                    throw new Exception($e->getMessage());
-                    throw new Exception('There was an error processing the attendance request. Please try again later.');
                 }
             })
-            // ->disabledForm()
             ->schema(function ($record) {
-
                 $attendance = Attendance::where('employee_id', $record?->employee_id)
                     ->where('check_date', $record?->detail_date)
                     ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
                     ->first();
 
                 return [
-                    Fieldset::make()->disabled()->label('Attendance data')->columns(3)->schema([
-                        TextInput::make('employee')->default($record?->employee?->name),
-                        DatePicker::make('check_date')->default($attendance?->check_date),
-                        TimePicker::make('check_time')->default($attendance?->check_time),
-                        TextInput::make('period_title')->label('Period')->default($attendance?->period?->name),
-                        TextInput::make('start_at')->default($attendance?->period?->start_at),
-                        TextInput::make('end_at')->default($attendance?->period?->end_at),
-                        Hidden::make('period')->default($attendance?->period),
-                    ]),
-                    Fieldset::make()->disabled(false)->label('Request data')->columns(2)->schema([
-                        DatePicker::make('request_check_date')->default($record?->missedCheckoutRequest?->date)->label('Date'),
-                        TimePicker::make('request_check_time')->default($record?->missedCheckoutRequest?->time)->label('Time'),
-                    ]),
+                    Fieldset::make()
+                        ->disabled()
+                        ->label('Attendance data')
+                        ->columns(3)
+                        ->schema([
+                            TextInput::make('employee')->default($record?->employee?->name),
+                            DatePicker::make('check_date')->default($attendance?->check_date),
+                            TimePicker::make('check_time')->default($attendance?->check_time),
+                            TextInput::make('period_title')->label('Period')->default($attendance?->period?->name),
+                            TextInput::make('start_at')->default($attendance?->period?->start_at),
+                            TextInput::make('end_at')->default($attendance?->period?->end_at),
+                            Hidden::make('period')->default($attendance?->period),
+                        ]),
 
+                    Fieldset::make()
+                        ->disabled(false)
+                        ->label('Request data')
+                        ->columns(2)
+                        ->schema([
+                            DatePicker::make('request_check_date')
+                                ->default($record?->missedCheckoutRequest?->date)
+                                ->label('Date'),
+                            TimePicker::make('request_check_time')
+                                ->default($record?->missedCheckoutRequest?->time)
+                                ->label('Time'),
+                        ]),
                 ];
-            })
-        ;
+            });
     }
+
+
+    // public static function approveDepartureRequest(): Action
+    // {
+    //     return Action::make('approveDepartureRequest')->label('Approve')->button()
+    //         ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST))
+    //         ->color('success')
+    //         ->icon('heroicon-o-check')
+    //         ->databaseTransaction()
+    //         ->action(function ($record, $data) {
+    //             DB::beginTransaction();
+    //             try {
+    //                 $employee = $record->employee;
+    //                 $data['request_check_date'];
+    //                 $data['request_check_time'];
+    //                 $validated = [
+    //                     'employee_id' => $employee->id,
+    //                     'date_time' => $data['request_check_date'] . ' ' . $data['request_check_time'],
+    //                     'type' => Attendance::CHECKTYPE_CHECKOUT,
+    //                     'attendance_type' => Attendance::ATTENDANCE_TYPE_REQUEST
+    //                 ];
+    //                 $result = app(AttendanceService::class)->handle($validated);
+    //                 // dd($result);
+    //                 if ($result) {
+    //                     $record->update([
+    //                         'status'      => EmployeeApplicationV2::STATUS_APPROVED,
+    //                         'approved_by' => auth()->user()->id,
+    //                         'approved_at' => now(),
+    //                     ]);
+    //                     DB::commit();
+    //                     showSuccessNotifiMessage('Done');
+    //                 } else {
+    //                     showWarningNotifiMessage('Faild');
+    //                 }
+    //             } catch (Exception $e) {
+    //                 DB::rollBack();
+    //                 AppLog::write('Error approving attendance request: ' . $e->getMessage(), AppLog::LEVEL_ERROR);
+    //                 return Notification::make()->warning()->body($e->getMessage())->send();
+    //                 // Handle the exception (log it, return an error message, etc.)
+    //                 // Optionally, you could return a user-friendly error message
+    //                 throw new Exception($e->getMessage());
+    //                 throw new Exception('There was an error processing the attendance request. Please try again later.');
+    //             }
+    //         })
+    //         // ->disabledForm()
+    //         ->schema(function ($record) {
+
+    //             $attendance = Attendance::where('employee_id', $record?->employee_id)
+    //                 ->where('check_date', $record?->detail_date)
+    //                 ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+    //                 ->first();
+
+    //             return [
+    //                 Fieldset::make()->disabled()->label('Attendance data')->columns(3)->schema([
+    //                     TextInput::make('employee')->default($record?->employee?->name),
+    //                     DatePicker::make('check_date')->default($attendance?->check_date),
+    //                     TimePicker::make('check_time')->default($attendance?->check_time),
+    //                     TextInput::make('period_title')->label('Period')->default($attendance?->period?->name),
+    //                     TextInput::make('start_at')->default($attendance?->period?->start_at),
+    //                     TextInput::make('end_at')->default($attendance?->period?->end_at),
+    //                     Hidden::make('period')->default($attendance?->period),
+    //                 ]),
+    //                 Fieldset::make()->disabled(false)->label('Request data')->columns(2)->schema([
+    //                     DatePicker::make('request_check_date')->default($record?->missedCheckoutRequest?->date)->label('Date'),
+    //                     TimePicker::make('request_check_time')->default($record?->missedCheckoutRequest?->time)->label('Time'),
+    //                 ]),
+
+    //             ];
+    //         })
+    //     ;
+    // }
 
     public static function rejectDepartureRequest(): Action
     {
@@ -454,7 +562,8 @@ class EmployeeApplicationResource extends Resource
                     $validated = [
                         'employee_id' => $employee->id,
                         'date_time' => $data['request_check_date'] . ' ' . $data['request_check_time'],
-                        'type' => Attendance::CHECKTYPE_CHECKIN
+                        'type' => Attendance::CHECKTYPE_CHECKIN,
+                        'attendance_type' => Attendance::ATTENDANCE_TYPE_REQUEST
                     ];
                     $result = app(AttendanceService::class)->handle($validated);
                     if ($result) {
@@ -520,26 +629,7 @@ class EmployeeApplicationResource extends Resource
             ->modalCancelAction(false)
         ;
     }
-    public static function AttendanceRequestDetails(): Action
-    {
-        return Action::make('AttendanceRequestDetails')->label('Details')->button()
-            ->color('info')
-            ->icon('heroicon-m-newspaper')
-
-            ->disabledForm()
-            ->schema(function ($record) {
-                $details = $record->missedCheckinRequest;
-                return [
-                    Fieldset::make()->label('Request data')->columns(2)->schema([
-                        DatePicker::make('request_check_date')->default($details->date)->label('Date'),
-                        TimePicker::make('request_check_time')->default($details->time)->label('Time'),
-                    ]),
-                ];
-            })
-            ->modalSubmitAction(false)
-            ->modalCancelAction(false)
-        ;
-    }
+   
     public static function LeaveRequesttDetails(): Action
     {
         return Action::make('LeaveRequesttDetails')->label('Details')->button()

@@ -38,6 +38,7 @@ use App\Filament\Pages\CustomLogin;
 use App\Filament\Pages\Dashboard as PagesDashboard;
 use App\Filament\Pages\EmployeeRecords;
 use App\Filament\Pages\InventoryReportLinks;
+use App\Filament\Resources\AppLogs\AppLogResource;
 use App\Filament\Resources\ApprovalResource;
 use App\Filament\Resources\BranchResource;
 use App\Filament\Resources\MonthClosureResource;
@@ -209,6 +210,10 @@ class AdminPanelProvider extends PanelProvider
                                 (isSuperAdmin() && ((count(explode('.', request()->getHost())) == 1 && env('APP_ENV') == 'local')
                                     || (count(explode('.', request()->getHost())) == 2 && env('APP_ENV') == 'production')
                                 )) ? TenantResource::getNavigationItems() : [],
+                            )),
+                        NavigationGroup::make('AppLogs')
+                            ->items(array_merge(
+                                AppLogResource::getNavigationItems()
                             ))
                     ]
                 );
@@ -357,7 +362,7 @@ class AdminPanelProvider extends PanelProvider
                 fn(): string => view('filament.partials.sidebar-search')->render()
             )
 
-        
+
             // ->renderHook(
             //     PanelsRenderHook::USER_MENU_BEFORE,
             //     fn() => view('filament.partials.change-password-menu')

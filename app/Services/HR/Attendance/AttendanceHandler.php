@@ -73,15 +73,9 @@ class AttendanceHandler
 
 
             // app(MonthClosureService::class)->ensureMonthIsOpen($date);
-
             if ($employee) {
 
-                // $latstCheckIn = Attendance::where('employee_id', $this->employeeId)->with('period')
-                //     ->where('accepted', 1)
-                //     ->select('id', 'check_type', 'period_id', 'check_date', 'check_time')
-                //     ->latest('id')->where('check_date', '>=', $this->previousDate)
-                //     ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
-                //     ->first();
+
 
                 $openCheckIn = Attendance::where('employee_id', $this->employeeId)
                     ->where('accepted', 1)
@@ -98,8 +92,6 @@ class AttendanceHandler
 
                 $latstCheckIn = $openCheckIn;
 
-
-                // dd($latstCheckIn,$openCheckIn);
                 if ($latstCheckIn) {
                     $isClosed =    Attendance::isCheckinClosed(
                         $this->employeeId,
@@ -194,7 +186,7 @@ class AttendanceHandler
                 //     'targetDate: ' . $this->targetDate,
                 //     $closestPeriod ?  $this->periodHelper->hasWorkPeriodForDate($employee->id, $closestPeriod->id, $this->date, $day) : false
                 // );
-
+                // dd($closestPeriod);
                 if ($closestPeriod) {
                     $this->hasWorkPeriod = $this->periodHelper->hasWorkPeriodForDate($employee->id, $closestPeriod->id, $this->date, $day);
                 }
@@ -230,7 +222,6 @@ class AttendanceHandler
                     $this->date = $existAttendance['in_previous']->check_date;
                 }
 
-                // dd($existAttendance);
 
                 $attendanceData = $this->attendanceCreator->handleOrCreateAttendance(
                     $employee,
@@ -240,7 +231,8 @@ class AttendanceHandler
                     $day,
                     $existAttendance,
                     $this->realAttendanceDate,
-                    $this->data
+                    $this->data,
+                    $this->attendanceType
                 );
                 // dd($attendanceData);
                 if (is_array($attendanceData) && isset($attendanceData['success']) && $attendanceData['success'] === false) {
