@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\POSIntegration\Resources\PosSales\Tables;
 
 use App\Imports\PosImportDataImport;
 use App\Models\Branch;
+use App\Models\PosSale;
 use App\Models\Unit;
 use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
@@ -54,7 +55,7 @@ class PosSalesTable
                     ->label('Store')
                     ->sortable()
                     ->searchable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 BadgeColumn::make('status')->alignCenter()
                     ->label('Status')
@@ -111,6 +112,8 @@ class PosSalesTable
             ->recordActions([
 
                 ViewAction::make(),
+                self::approveAction(),
+
                 // EditAction::make(),
             ])
             ->headerActions([
@@ -193,5 +196,38 @@ class PosSalesTable
                     RestoreBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public static function approveAction(): Action
+    {
+        return Action::make('approve')
+            ->label('Approve')
+            ->button()
+            ->icon('heroicon-o-check')
+            ->color('success')
+            ->requiresConfirmation()
+            ->modalHeading('Approve POS Sale')
+            ->modalDescription('Are you sure you want to approve this POS sale? This will finalize it and create inventory movements.')
+            ->visible(fn(PosSale $record) => $record->is_draft) // يظهر فقط لو السند Draft
+            ->action(function (PosSale $record): void {
+                // لو حاب تتأكد مرة ثانية:
+                if (! $record->is_draft) {
+                    showWarningNotifiMessage('This sale is not in draft status.');
+                    return;
+                }
+
+                // إعادة حساب الإجماليات من البنود
+                $record->recalculateTotals();
+
+                // تغيير الحالة إلى مكتملة
+                $record->status = PosSale::STATUS_COMPLETED;
+                $record->save();
+
+                // createInventoryTransactionsFromItems تُستدعى تلقائياً من الـ booted عند تغيير الـ status إلى COMPLETED
+                // لكن لو حاب تفرض استدعاءها هنا صراحة:
+                // $record->createInventoryTransactionsFromItems();
+
+                showSuccessNotifiMessage('Sale approved and inventory updated successfully.');
+            });
     }
 }

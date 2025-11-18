@@ -23,6 +23,9 @@ class ItemsRelationManager extends RelationManager
                 TextColumn::make('package_size'),
                 TextColumn::make('quantity'),
             ])
+            ->recordActions([
+                
+            ])
             ->headerActions([
                 CreateAction::make(),
             ]);
