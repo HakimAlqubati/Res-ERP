@@ -141,6 +141,8 @@ class GoodsReceivedNoteResource extends Resource
                                         ->searchable()
                                         ->options(function () {
                                             return Product::active()
+                                                ->whereNot('type', Product::TYPE_FINISHED_POS)
+
                                                 ->unmanufacturingCategory()
                                                 ->orderBy('id', 'asc')
                                                 ->limit(10)
@@ -151,6 +153,8 @@ class GoodsReceivedNoteResource extends Resource
                                         })
                                         ->getSearchResultsUsing(function (string $search): array {
                                             return Product::where('active', 1)
+                                                ->whereNot('type', Product::TYPE_FINISHED_POS)
+
                                                 ->where(function ($query) use ($search) {
                                                     $query->where('name', 'like', "%{$search}%")
                                                         ->orWhere('code', 'like', "%{$search}%");

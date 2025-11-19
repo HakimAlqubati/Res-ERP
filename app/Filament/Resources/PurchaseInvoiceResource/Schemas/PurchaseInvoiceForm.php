@@ -265,6 +265,7 @@ class PurchaseInvoiceForm
                                 ->disabledOn('edit')
                                 ->options(function () {
                                     return Product::where('active', 1)
+                                        ->whereNot('type', Product::TYPE_FINISHED_POS)
                                         ->unmanufacturingCategory()
                                         ->orderBy('id', 'asc')
                                         ->get(['id', 'code', 'name', 'active'])
@@ -275,6 +276,8 @@ class PurchaseInvoiceForm
                                 })
                                 ->getSearchResultsUsing(function (string $search): array {
                                     return Product::where('active', 1)
+                                        ->whereNot('type', Product::TYPE_FINISHED_POS)
+
                                         ->where(function ($query) use ($search) {
                                             $query->where('name', 'like', "%{$search}%")
                                                 ->orWhere('code', 'like', "%{$search}%");
