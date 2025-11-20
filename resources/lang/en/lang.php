@@ -264,4 +264,8 @@ return [
     'pos' => 'POS',
     'import' => 'Import',
     'product_items_count' => 'Items Count',
+    'account' => 'Account',
+    'debit' => 'Debit',
+    'credit' => 'Credit',
+    'line_description' => 'Line Description',
 ];

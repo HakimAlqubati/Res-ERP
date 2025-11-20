@@ -17,4 +17,6 @@ return [
     'resellers' => 'Resellers',
     'manufacturing_branches' => 'Manufacturing Branches',
     'manufacturing_branch' => 'Manufacturing Branch',
+    'finance_formatting' => 'Accounts',
+    'accounting_system' => 'Accounting System',
 ];

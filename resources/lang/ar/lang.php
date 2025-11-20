@@ -247,4 +247,8 @@ return [
   'pos' => 'نقاط البيع',
   'import' => 'استيراد',
   'product_items_count' => 'عدد المكونات',
+  'account' => 'الحساب',
+  'debit' => 'مدين',
+  'credit' => 'دائن',
+  'line_description' => 'وصف القيد',
 ];
