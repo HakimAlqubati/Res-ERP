@@ -247,4 +247,5 @@ return [
   'pos' => 'نقاط البيع',
   'import' => 'استيراد',
   'product_items_count' => 'عدد المكونات',
+  'pos_sale' => 'بيع',
 ];

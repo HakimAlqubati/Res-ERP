@@ -264,4 +264,6 @@ return [
     'pos' => 'POS',
     'import' => 'Import',
     'product_items_count' => 'Items Count',
+    'pos_sale' => 'Sale',
+
 ];
