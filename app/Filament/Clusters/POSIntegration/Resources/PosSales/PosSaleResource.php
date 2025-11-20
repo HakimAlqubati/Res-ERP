@@ -35,7 +35,7 @@ class PosSaleResource extends Resource
 
     public static function getModelLabel(): string
     {
-        return __('lang.pos_sale');
+        return __('lang.pos');
     }
 
     public static function getPluralLabel(): ?string
