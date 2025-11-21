@@ -1,0 +1,165 @@
+<?php
+
+namespace App\Filament\Resources\FinancialTransactions\Tables;
+
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\DeleteAction;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\BadgeColumn;
+ use App\Models\FinancialTransaction;
+use App\Models\FinancialCategory;
+use App\Models\Branch;
+use Filament\Forms\Components\DatePicker;
+use Illuminate\Database\Eloquent\Builder;
+
+class FinancialTransactionsTable
+{
+    public static function configure(Table $table): Table
+    {
+        return $table
+            ->columns([
+                TextColumn::make('transaction_date')
+                    ->label('Date')
+                    ->date()
+                    ->sortable()
+                    ->searchable(),
+
+                TextColumn::make('category.name')
+                    ->label('Category')
+                    ->searchable()
+                    ->sortable(),
+
+                BadgeColumn::make('type')
+                    ->label('Type')
+                    ->colors([
+                        'success' => FinancialTransaction::TYPE_INCOME,
+                        'danger' => FinancialTransaction::TYPE_EXPENSE,
+                    ])
+                    ->formatStateUsing(fn ($state) => FinancialTransaction::TYPES[$state] ?? $state)
+                    ->sortable(),
+
+                TextColumn::make('amount')
+                    ->label('Amount')
+                    // ->money(getDefaultCurrency())
+                    ->sortable()
+                    ->formatStateUsing(fn($state)=> formatMoneyWithCurrency($state))
+                    ->summarize([
+                        \Filament\Tables\Columns\Summarizers\Sum::make() ->label('')
+                                            ->formatStateUsing(fn($state)=> formatMoneyWithCurrency($state))
+,
+                    ]),
+
+                TextColumn::make('branch.name')
+                    ->label('Branch')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
+
+                BadgeColumn::make('status')
+                    ->label('Status')
+                    ->colors([
+                        'success' => FinancialTransaction::STATUS_PAID,
+                        'warning' => FinancialTransaction::STATUS_PENDING,
+                        'danger' => FinancialTransaction::STATUS_OVERDUE,
+                    ])
+                    ->formatStateUsing(fn ($state) => FinancialTransaction::STATUSES[$state] ?? $state)
+                    ->sortable(),
+
+                TextColumn::make('paymentMethod.name')
+                    ->label('Payment Method')
+                    ->toggleable()
+                    ->sortable(),
+
+                TextColumn::make('description')
+                    ->label('Description')
+                    ->limit(50)
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('reference_type')
+                    ->label('Reference')
+                    ->formatStateUsing(fn ($state, $record) => $state ? class_basename($state) . ' #' . $record->reference_id : '-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('creator.name')
+                    ->label('Created By')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('created_at')
+                    ->label('Created At')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                SelectFilter::make('type')
+                    ->options(FinancialTransaction::TYPES)
+                    ->label('Type'),
+
+                SelectFilter::make('category_id')
+                    ->label('Category')
+                    ->relationship('category', 'name')
+                    ->searchable()
+                    ->preload(),
+
+                SelectFilter::make('branch_id')
+                    ->label('Branch')
+                    ->relationship('branch', 'name')
+                    ->searchable()
+                    ->preload(),
+
+                SelectFilter::make('status')
+                    ->options(FinancialTransaction::STATUSES)
+                    ->label('Status'),
+
+                Filter::make('transaction_date')
+                    ->form([
+                        DatePicker::make('from')
+                            ->label('From Date'),
+                        DatePicker::make('until')
+                            ->label('Until Date'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['from'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('transaction_date', '>=', $date),
+                            )
+                            ->when(
+                                $data['until'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('transaction_date', '<=', $date),
+                            );
+                    }),
+
+                TrashedFilter::make(),
+            ])
+            ->recordActions([
+                EditAction::make()
+                    ->hidden(fn ($record) => $record->reference_type !== null),
+                DeleteAction::make()
+                    ->hidden(fn ($record) => $record->reference_type !== null),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
+                        ->action(function ($records) {
+                            $records->each(function ($record) {
+                                if ($record->reference_type === null) {
+                                    $record->delete();
+                                }
+                            });
+                        }),
+                    ForceDeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
+                ]),
+            ])
+            ->defaultSort('transaction_date', 'desc');
+    }
+}

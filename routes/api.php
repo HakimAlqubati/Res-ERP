@@ -153,6 +153,18 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/filters', [App\Http\Controllers\Api\InventoryReportController::class, 'filters']);
         Route::get('/productTracking', [App\Http\Controllers\Api\InventoryReportController::class, 'productTracking']);
     });
+
+    // Financial Category Reporting Routes
+    Route::prefix('financial')->group(function () {
+        Route::prefix('categories')->group(function () {
+            Route::get('report', [App\Http\Controllers\Api\Financial\FinancialCategoryReportController::class, 'report']);
+            Route::get('statistics', [App\Http\Controllers\Api\Financial\FinancialCategoryReportController::class, 'statistics']);
+            Route::get('summary', [App\Http\Controllers\Api\Financial\FinancialCategoryReportController::class, 'summary']);
+            Route::get('trends', [App\Http\Controllers\Api\Financial\FinancialCategoryReportController::class, 'trends']);
+            Route::get('comparison', [App\Http\Controllers\Api\Financial\FinancialCategoryReportController::class, 'comparison']);
+            Route::get('{id}/details', [App\Http\Controllers\Api\Financial\FinancialCategoryReportController::class, 'categoryDetails']);
+        });
+    });
 });
 
 Route::middleware('auth:api')->group(function () {

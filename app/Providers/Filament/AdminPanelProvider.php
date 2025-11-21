@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Clusters\AccountantCluster;
 use App\Filament\Clusters\AreaManagementCluster;
 use App\Filament\Clusters\HRApplicationsCluster;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource;
@@ -41,6 +42,8 @@ use App\Filament\Pages\InventoryReportLinks;
 use App\Filament\Resources\AppLogs\AppLogResource;
 use App\Filament\Resources\ApprovalResource;
 use App\Filament\Resources\BranchResource;
+use App\Filament\Resources\FinancialCategories\FinancialCategoryResource;
+use App\Filament\Resources\FinancialTransactions\FinancialTransactionResource;
 use App\Filament\Resources\MonthClosureResource;
 use App\Filament\Resources\ProductResource;
 use App\Filament\Resources\SettingResource;
@@ -147,6 +150,11 @@ class AdminPanelProvider extends PanelProvider
                 $group =  array_merge(
                     $group,
                     [
+                        NavigationGroup::make(__('menu.financial_system'))
+                            ->items(array_merge(
+                                (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? FinancialCategoryResource::getNavigationItems() : [],
+                                (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? FinancialTransactionResource::getNavigationItems() : [],
+                            )),
                         NavigationGroup::make(__('lang.user_and_roles'))->collapsed(1)
                             ->items(array_merge(
                                 (isSuperAdmin() || isSystemManager() || isBranchManager()) ?   UserResource::getNavigationItems() : [],
