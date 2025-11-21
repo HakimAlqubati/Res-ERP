@@ -13,15 +13,15 @@ use Filament\Tables\Table;
 class FinancialStatisticsReportResource extends Resource
 {
     protected static ?string $model = FinancialCategory::class; // We might not need a specific model if it's a pure report, but Resource requires one.
-    
+
     protected static ?string $slug = 'financial-statistics-report';
-    
+
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-presentation-chart-line';
-    
+
     protected static ?string $cluster = FinancialReportsCluster::class;
-    
+
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-     
+
     protected static ?int $navigationSort = 2;
 
     public static function getLabel(): ?string
@@ -47,13 +47,17 @@ class FinancialStatisticsReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListFinancialStatisticsReport::route('/'),
-            'custom-page' => CustomPage::route('/custom-page'),
+            // 'index' => ListFinancialStatisticsReport::route('/'),
+            'index' => CustomPage::route('/'),
         ];
     }
 
     public static function canViewAny(): bool
     {
         return isSuperAdmin() || isSystemManager() || isFinanceManager();
+    }
+    public static function getNavigationBadge(): ?string
+    {
+        return __('Report');
     }
 }
