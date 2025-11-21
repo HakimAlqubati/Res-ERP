@@ -33,6 +33,8 @@ use App\Models\Employee;
 use App\Models\EmployeeOvertime;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
+use Filament\Support\Enums\IconPosition;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Model;
 
 class EmployeeOvertimeTable
@@ -75,10 +77,14 @@ class EmployeeOvertimeTable
 
                 TextColumn::make('hours')
                     ->label('Hours')
-                    ->sortable()->toggleable(isToggledHiddenByDefault: false)
-                    ->summarize(Sum::make()->query(function (\Illuminate\Database\Query\Builder $query) {
-                        return $query->select('hours');
-                    })),
+                    ->sortable()->toggleable(isToggledHiddenByDefault: false)->alignCenter()
+                    ->summarize(Sum::make()
+                        ->label('')
+                        ->query(function (\Illuminate\Database\Query\Builder $query) {
+                            return $query->select('hours');
+                        }))
+                    // ->icon(Heroicon::Clock)
+                    ->iconPosition(IconPosition::After),
 
                 IconColumn::make('approved')->toggleable(isToggledHiddenByDefault: false)
                     ->boolean()->alignCenter(true)
@@ -145,15 +151,15 @@ class EmployeeOvertimeTable
             ], FiltersLayout::AboveContent)
             ->recordActions([
                 // Tables\Actions\EditAction::make(),
-                Action::make('Edit')->visible(fn(): bool => (isSuperAdmin() || isBranchManager()))
-                    ->schema(function ($record) {
-                        return [
-                            TextInput::make('hours')->default($record->hours),
-                        ];
-                    })->action(function ($record, $data) {
-                        // dd($data['hours'],$data,$record);
-                        return $record->update(['hours' => $data['hours']]);
-                    }),
+                // Action::make('Edit')->visible(fn(): bool => (isSuperAdmin() || isBranchManager()))
+                //     ->schema(function ($record) {
+                //         return [
+                //             TextInput::make('hours')->default($record->hours),
+                //         ];
+                //     })->action(function ($record, $data) {
+                //         // dd($data['hours'],$data,$record);
+                //         return $record->update(['hours' => $data['hours']]);
+                //     }),
                 Action::make('Approve')
                     ->databaseTransaction()
                     ->label(function ($record) {
