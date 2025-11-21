@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\FinancialReportsCluster\Resources;
 
 use App\Filament\Clusters\FinancialReportsCluster;
+use App\Filament\Clusters\FinancialReportsCluster\Resources\FinancialStatisticsReportResource\Pages\CustomPage;
 use App\Filament\Clusters\FinancialReportsCluster\Resources\FinancialStatisticsReportResource\Pages\ListFinancialStatisticsReport;
 use App\Models\FinancialCategory; // Using FinancialCategory as a dummy model base, or could use a different one if more appropriate
 use Filament\Pages\Enums\SubNavigationPosition;
@@ -40,19 +41,15 @@ class FinancialStatisticsReportResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table; // Filters will be handled in the page class or view if needed, similar to the category report
+        return $table;
     }
 
     public static function getPages(): array
     {
         return [
             'index' => ListFinancialStatisticsReport::route('/'),
+            'custom-page' => CustomPage::route('/custom-page'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return __('Stats');
     }
 
     public static function canViewAny(): bool
