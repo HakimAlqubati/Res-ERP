@@ -19,4 +19,5 @@ return [
     'manufacturing_branch' => 'Manufacturing Branch',
     'financial_system' => 'Financial System',
     'financial_categories' => 'Financial Categories',
+    'financial_reports' => 'Financial Reports',
 ];

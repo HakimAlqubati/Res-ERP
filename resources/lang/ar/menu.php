@@ -18,4 +18,5 @@ return [
     'manufacturing_branch' => 'فرع تصنيعي',
     'financial_system' => 'النظام المالي',
     'financial_categories' => 'التصنيفات المالية',
+    'financial_reports' => 'التقارير المالية',
 ];
