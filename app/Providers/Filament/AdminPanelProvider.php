@@ -153,7 +153,7 @@ class AdminPanelProvider extends PanelProvider
                     [
                         NavigationGroup::make(__('menu.financial_system'))
                             ->items(array_merge(
-                                (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? FinancialCategoryResource::getNavigationItems() : [],
+                                // (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? FinancialCategoryResource::getNavigationItems() : [],
                                 (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? FinancialTransactionResource::getNavigationItems() : [],
                                 (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? FinancialReportsCluster::getNavigationItems() : [],
                             )),
