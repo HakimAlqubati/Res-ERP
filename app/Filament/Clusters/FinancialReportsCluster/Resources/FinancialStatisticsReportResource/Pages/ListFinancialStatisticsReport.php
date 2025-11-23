@@ -34,38 +34,38 @@ class ListFinancialStatisticsReport extends ListRecords implements HasForms, Has
         parent::mount();
 
         // Initialize default filters
-        // $this->filters = [
-        //     'start_date' => now()->startOfMonth()->format('Y-m-d'),
-        //     'end_date' => now()->endOfMonth()->format('Y-m-d'),
-        //     'branch_id' => null,
-        // ];
+        $this->filters = [
+            'start_date' => now()->startOfMonth()->format('Y-m-d'),
+            'end_date' => now()->endOfMonth()->format('Y-m-d'),
+            'branch_id' => null,
+        ];
 
-        // $this->generateReport();
+        $this->generateReport();
     }
 
     public function table(Table $table): Table
     {
         return $table
             ->deferFilters(false)
-            // ->filters([
-            //     SelectFilter::make('branch_id')
-            //         ->label(__('Branch'))
-            //         ->searchable()
-            //         ->options(Branch::active()->branches()->get()->pluck('name', 'id')),
+            ->filters([
+                SelectFilter::make('branch_id')
+                    ->label(__('Branch'))
+                    ->searchable()
+                    ->options(Branch::active()->branches()->get()->pluck('name', 'id')),
 
-            //     Filter::make('date_range')
-            //         ->label(__('Date Range'))
-            //         ->schema([
-            //             DatePicker::make('start_date')
-            //                 ->label(__('Start Date'))
-            //                 ->default(fn() => now()->startOfMonth()->format('Y-m-d')),
-            //             DatePicker::make('end_date')
-            //                 ->label(__('End Date'))
-            //                 ->default(fn() => now()->endOfMonth()->format('Y-m-d')),
-            //         ])
-            //         ->columnSpan(2),
-            // ], FiltersLayout::AboveContent)
-            ;
+                Filter::make('date_range')
+                    ->label(__('Date Range'))
+                    ->schema([
+                        DatePicker::make('start_date')
+                            ->label(__('Start Date'))
+                            ->default(fn() => now()->startOfMonth()->format('Y-m-d')),
+                        DatePicker::make('end_date')
+                            ->label(__('End Date'))
+                            ->default(fn() => now()->endOfMonth()->format('Y-m-d')),
+                    ])
+                    ->columnSpan(2),
+            ], FiltersLayout::AboveContent)
+        ;
     }
 
     public function getTableFiltersFormWidth(): string
@@ -132,7 +132,7 @@ class ListFinancialStatisticsReport extends ListRecords implements HasForms, Has
 
     protected function getViewData(): array
     {
-         return [
+        return [
             'reportData' => $this->reportData,
             'filters' => $this->filters,
         ];

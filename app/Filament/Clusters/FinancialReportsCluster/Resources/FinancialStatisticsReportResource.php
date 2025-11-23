@@ -47,8 +47,8 @@ class FinancialStatisticsReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            // 'index' => ListFinancialStatisticsReport::route('/'),
-            'index' => CustomPage::route('/'),
+            'index' => ListFinancialStatisticsReport::route('/'),
+            // 'index' => CustomPage::route('/'),
         ];
     }
 
