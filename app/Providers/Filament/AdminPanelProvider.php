@@ -155,7 +155,7 @@ class AdminPanelProvider extends PanelProvider
                             ->items(array_merge(
                                 // (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? FinancialCategoryResource::getNavigationItems() : [],
                                 // (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? FinancialTransactionResource::getNavigationItems() : [],
-                                (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? FinancialReportsCluster::getNavigationItems() : [],
+                                // (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? FinancialReportsCluster::getNavigationItems() : [],
                             )),
                         NavigationGroup::make(__('lang.user_and_roles'))->collapsed(1)
                             ->items(array_merge(
