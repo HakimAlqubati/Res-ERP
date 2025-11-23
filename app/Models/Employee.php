@@ -461,10 +461,8 @@ class Employee extends Model implements Auditable
                 ->accepted()
                 ->orderBy('id')
                 ->get();
-            // dd($employee->periods, $date, $period->id, $attendances);
 
             $arr[] = $attendances;
-            // dd($attendances);
             $totalMinutes = 0;
             $checkInTime  = null;
             $checkOutTime = null; // To store checkout time
@@ -472,6 +470,7 @@ class Employee extends Model implements Auditable
             // Loop through attendances to calculate total minutes worked
             for ($i = 0; $i < $attendances->count(); $i++) {
                 $checkIn = $attendances[$i];
+
 
                 if (count($attendances) > 0) {
                     // dd($attendances);
@@ -507,8 +506,7 @@ class Employee extends Model implements Auditable
             // Convert the supposed duration string "HH:MM" to total minutes
             list($hours, $minutes)   = explode(':', $period->supposed_duration);
             $supposedDurationMinutes = ($hours * 60) + $minutes; // Convert to total minutes
-
-            if ($totalMinutes > ($supposedDurationMinutes + Attendance::getMinutesByConstant(Setting::getSetting('period_allowed_to_calculate_overtime')))) {
+            if ($totalMinutes >= ($supposedDurationMinutes + Attendance::getMinutesByConstant(Setting::getSetting('period_allowed_to_calculate_overtime')))) {
                 // Calculate the overtime minutes
                 $overtimeMinutes = $totalMinutes - $supposedDurationMinutes;
 

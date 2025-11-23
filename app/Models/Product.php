@@ -415,7 +415,7 @@ class Product extends Model implements Auditable
         if (empty($tokens)) return null;
 
         // 2) اسحب مرشحين يحتوي اسمهم على بعض التوكنز (OR) + حد أعلى
-        $q = static::query()->select(['id', 'name', 'code']);
+        $q = static::query()->select(['id', 'name', 'code'])->where('type', self::TYPE_RAW);
         $q->where(function ($qq) use ($tokens) {
             foreach ($tokens as $t) {
                 $qq->orWhere('name', 'LIKE', "%{$t}%");

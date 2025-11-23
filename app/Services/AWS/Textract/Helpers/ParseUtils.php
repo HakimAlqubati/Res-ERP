@@ -31,6 +31,10 @@ final class ParseUtils
     /** يستخرج توكنات مرشّحة كوحدات (أحرف فقط، حتى 6) من النص */
     public static function tokenizePotentialUoms(string $text): array
     {
+        // فصل الأرقام عن الحروف (مثلاً 5KG تصبح 5 KG) لضمان التقاط الوحدة
+        $text = preg_replace('/(\d)([\p{L}])/u', '$1 $2', $text);
+        $text = preg_replace('/([\p{L}])(\d)/u', '$1 $2', $text);
+
         preg_match_all('/\b[[:alpha:]]{1,6}\b/u', $text, $m);
         $tokens = array_map(static fn($t) => strtoupper($t), $m[0] ?? []);
         return array_values(array_unique($tokens));
