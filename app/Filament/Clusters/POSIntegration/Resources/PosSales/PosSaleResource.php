@@ -85,15 +85,14 @@ class PosSaleResource extends Resource
         ];
     }
 
-    public static function getRecordSubNavigation(Page $page): array
-    {
-        return $page->generateNavigationItems([
-            ListPosSales::class,
-            CreatePosSale::class,
-            ViewPosSale::class,
-           
-         ]);
-    }
+    // public static function getRecordSubNavigation(Page $page): array
+    // {
+    //     return $page->generateNavigationItems([
+    //         ListPosSales::class,
+    //         CreatePosSale::class,
+    //         ViewPosSale::class,
+    //      ]);
+    // }
 
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
