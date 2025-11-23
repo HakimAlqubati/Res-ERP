@@ -77,7 +77,6 @@ class AnalyzeExpenseHelper
                 ];
 
                 $textBucket = [];
-
                 foreach (($li['LineItemExpenseFields'] ?? []) as $f) {
                     $type = $f['Type']['Text'] ?? null;
                     $val  = $f['ValueDetection']['Text'] ?? null;
