@@ -69,16 +69,41 @@ class FinancialTransactionForm
                                     ->native(false)
                                     ->columnSpan(1),
 
-                                TextInput::make('month')
+                                Select::make('month')
                                     ->label('Month')
-                                    ->disabled()
-                                    ->dehydrated(false) // Don't send to DB, let model handle it
+                                    ->options([
+                                        1 => 'January',
+                                        2 => 'February',
+                                        3 => 'March',
+                                        4 => 'April',
+                                        5 => 'May',
+                                        6 => 'June',
+                                        7 => 'July',
+                                        8 => 'August',
+                                        9 => 'September',
+                                        10 => 'October',
+                                        11 => 'November',
+                                        12 => 'December',
+                                    ])
+                                    ->required()
+                                    ->default(now()->month)
+                                    ->native(false)
                                     ->columnSpan(1),
 
-                                TextInput::make('year')
+                                Select::make('year')
                                     ->label('Year')
-                                    ->disabled()
-                                    ->dehydrated(false)
+                                    ->options(function () {
+                                        $currentYear = now()->year;
+                                        $years = [];
+                                        for ($i = 0; $i < 4; $i++) {
+                                            $year = $currentYear - $i;
+                                            $years[$year] = $year;
+                                        }
+                                        return $years;
+                                    })
+                                    ->required()
+                                    ->default(now()->year)
+                                    ->native(false)
                                     ->columnSpan(1),
 
                                 DatePicker::make('due_date')

@@ -23,6 +23,7 @@ class FinancialCategory extends Model
         'type',
         'is_system',
         'is_visible',
+        'description',
     ];
 
     protected $casts = [

@@ -34,6 +34,11 @@ class FinancialCategoryForm
                                     ->native(false)
                                     ->columnSpan(1),
 
+                                TextInput::make('description')
+                                    ->label('Description')
+                                    ->maxLength(255)
+                                    ->columnSpan(1),
+
 
 
                                 Toggle::make('is_visible')
