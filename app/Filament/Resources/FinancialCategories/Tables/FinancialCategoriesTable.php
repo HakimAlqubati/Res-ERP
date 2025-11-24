@@ -21,7 +21,7 @@ class FinancialCategoriesTable
 {
     public static function configure(Table $table): Table
     {
-        return $table
+        return $table->striped()->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('name')
                     ->label('Category Name')
@@ -34,13 +34,10 @@ class FinancialCategoriesTable
                         'success' => FinancialCategory::TYPE_INCOME,
                         'danger' => FinancialCategory::TYPE_EXPENSE,
                     ])
-                    ->formatStateUsing(fn ($state) => FinancialCategory::TYPES[$state] ?? $state)
+                    ->formatStateUsing(fn($state) => FinancialCategory::TYPES[$state] ?? $state)
                     ->sortable(),
 
-                IconColumn::make('is_system')
-                    ->label('System')
-                    ->boolean()->alignCenter()
-                    ->sortable(),
+
 
                 IconColumn::make('is_visible')
                     ->label('Visible')
@@ -63,11 +60,7 @@ class FinancialCategoriesTable
                     ->options(FinancialCategory::TYPES)
                     ->label('Type'),
 
-                TernaryFilter::make('is_system')
-                    ->label('System Category')
-                    ->placeholder('All categories')
-                    ->trueLabel('System only')
-                    ->falseLabel('Custom only'),
+
 
                 TernaryFilter::make('is_visible')
                     ->label('Visible for Manual Entry')
@@ -78,10 +71,8 @@ class FinancialCategoriesTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                EditAction::make()
-                    ->hidden(fn ($record) => $record->is_system === true),
-                DeleteAction::make()
-                    ->hidden(fn ($record) => $record->is_system === true),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -96,7 +87,6 @@ class FinancialCategoriesTable
                     ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),
                 ]),
-            ])
-            ->defaultSort('name', 'asc');
+            ]);
     }
 }

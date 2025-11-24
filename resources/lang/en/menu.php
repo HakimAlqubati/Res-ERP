@@ -1,4 +1,4 @@
-<?php 
+<?php
 return [
     'order_ms' => 'Orders management system',
     'inventory_ms' => 'Inventory Management',
@@ -6,7 +6,7 @@ return [
     'hr_ms' => 'People & Collaboration',
     'supply_and_inventory' => 'Supply & Inventory',
     'stores_cluster' => 'Stores',
-    'area_management'=> 'Geo Management',
+    'area_management' => 'Geo Management',
     'inventory_management' => 'Inventory Management',
     'settings' => 'Settings',
     'leave_management' => 'Leave Management',
@@ -17,7 +17,7 @@ return [
     'resellers' => 'Resellers',
     'manufacturing_branches' => 'Manufacturing Branches',
     'manufacturing_branch' => 'Manufacturing Branch',
-    'financial_system' => 'Financial System',
+    'financial_system' => 'Financial Management',
     'financial_categories' => 'Financial Categories',
     'financial_reports' => 'Financial Reports',
 ];

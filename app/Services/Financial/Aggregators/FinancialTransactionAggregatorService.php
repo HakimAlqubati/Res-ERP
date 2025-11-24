@@ -113,12 +113,13 @@ class FinancialTransactionAggregatorService
     {
         $query = FinancialTransaction::query()
             ->select(
-                DB::raw('DATE_FORMAT(transaction_date, "%Y-%m") as month'),
+                DB::raw('CONCAT(year, "-", LPAD(month, 2, "0")) as month'),
                 'type',
                 DB::raw('SUM(amount) as total'),
                 DB::raw('COUNT(*) as count')
             )
-            ->groupBy('month', 'type')
+            ->groupBy('year', 'month', 'type')
+            ->orderBy('year')
             ->orderBy('month');
 
         $this->filter->applyToTransactionQuery($query);

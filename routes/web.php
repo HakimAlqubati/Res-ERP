@@ -721,7 +721,7 @@ Route::get('/reports/order-delivery', [OrderDeliveryReportController::class, 'in
 
 Route::get('/reports/sales-payments', [OrderSalesPaymentsReportController::class, 'index'])
     ->name('reports.sales-payments');
-
+    
 Route::get('/routes-list', function () {
     $routes = collect(Route::getRoutes())->map(function ($route) {
         return [

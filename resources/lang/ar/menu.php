@@ -16,7 +16,7 @@ return [
     'resellers' => 'نقاط البيع',
     'manufacturing_branches' => 'الفروع التصنيعية',
     'manufacturing_branch' => 'فرع تصنيعي',
-    'financial_system' => 'النظام المالي',
-    'financial_categories' => 'التصنيفات المالية',
+    'financial_system' => 'الإدارة المالية',
+    'financial_categories' => 'دليل الحسابات',
     'financial_reports' => 'التقارير المالية',
 ];

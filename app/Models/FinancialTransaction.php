@@ -42,7 +42,11 @@ class FinancialTransaction extends Model
         'reference_type',
         'reference_id',
         'created_by',
+        'month',
+        'year',
     ];
+
+   
 
     protected $casts = [
         'amount' => 'decimal:2',

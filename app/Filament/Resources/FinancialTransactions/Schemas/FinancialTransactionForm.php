@@ -69,9 +69,21 @@ class FinancialTransactionForm
                                     ->native(false)
                                     ->columnSpan(1),
 
+                                TextInput::make('month')
+                                    ->label('Month')
+                                    ->disabled()
+                                    ->dehydrated(false) // Don't send to DB, let model handle it
+                                    ->columnSpan(1),
+
+                                TextInput::make('year')
+                                    ->label('Year')
+                                    ->disabled()
+                                    ->dehydrated(false)
+                                    ->columnSpan(1),
+
                                 DatePicker::make('due_date')
                                     ->label('Due Date')
-                                    ->visible(fn (Get $get) => $get('status') !== FinancialTransaction::STATUS_PAID)
+                                    ->visible(fn(Get $get) => $get('status') !== FinancialTransaction::STATUS_PAID)
                                     ->native(false)
                                     ->columnSpan(1),
 

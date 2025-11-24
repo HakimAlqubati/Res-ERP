@@ -18,7 +18,7 @@ class FinancialCategoryForm
             ->components([
                 Section::make()->columnSpanFull()
                     ->schema([
-                        Grid::make(2)
+                        Grid::make(3)
                             ->schema([
                                 TextInput::make('name')
                                     ->label('Category Name')
@@ -34,17 +34,12 @@ class FinancialCategoryForm
                                     ->native(false)
                                     ->columnSpan(1),
 
-                                Toggle::make('is_system')
-                                    ->label('System Category')
-                                    ->helperText('System categories are automatically created by the system')
-                                    ->disabled(fn($record) => $record?->is_system === true)
-                                    ->default(false)
-                                    ->columnSpan(1),
+
 
                                 Toggle::make('is_visible')
                                     ->label('Visible for Manual Entry')
-                                    ->helperText('If disabled, this category will not appear in manual transaction forms')
-                                    ->default(true)
+                                    // ->helperText('If disabled, this category will not appear in manual transaction forms')
+                                    ->default(true)->inline(false)
                                     ->columnSpan(1),
                             ]),
                     ]),

@@ -14,23 +14,34 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
- use App\Models\FinancialTransaction;
+use App\Models\FinancialTransaction;
 use App\Models\FinancialCategory;
 use App\Models\Branch;
 use Filament\Forms\Components\DatePicker;
+use Filament\Tables\Enums\FiltersLayout;
 use Illuminate\Database\Eloquent\Builder;
 
 class FinancialTransactionsTable
 {
     public static function configure(Table $table): Table
     {
-        return $table
+        return $table->striped()->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('transaction_date')
                     ->label('Date')
                     ->date()
                     ->sortable()
                     ->searchable(),
+
+                TextColumn::make('month')
+                    ->label('Month')
+                    ->sortable()->alignCenter()
+                    ->toggleable(),
+
+                TextColumn::make('year')
+                    ->label('Year')
+                    ->sortable()->alignCenter()
+                    ->toggleable(),
 
                 TextColumn::make('category.name')
                     ->label('Category')
@@ -43,18 +54,17 @@ class FinancialTransactionsTable
                         'success' => FinancialTransaction::TYPE_INCOME,
                         'danger' => FinancialTransaction::TYPE_EXPENSE,
                     ])
-                    ->formatStateUsing(fn ($state) => FinancialTransaction::TYPES[$state] ?? $state)
+                    ->formatStateUsing(fn($state) => FinancialTransaction::TYPES[$state] ?? $state)
                     ->sortable(),
 
                 TextColumn::make('amount')
                     ->label('Amount')
                     // ->money(getDefaultCurrency())
                     ->sortable()
-                    ->formatStateUsing(fn($state)=> formatMoneyWithCurrency($state))
+                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->summarize([
-                        \Filament\Tables\Columns\Summarizers\Sum::make() ->label('')
-                                            ->formatStateUsing(fn($state)=> formatMoneyWithCurrency($state))
-,
+                        \Filament\Tables\Columns\Summarizers\Sum::make()->label('')
+                            ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state)),
                     ]),
 
                 TextColumn::make('branch.name')
@@ -70,7 +80,7 @@ class FinancialTransactionsTable
                         'warning' => FinancialTransaction::STATUS_PENDING,
                         'danger' => FinancialTransaction::STATUS_OVERDUE,
                     ])
-                    ->formatStateUsing(fn ($state) => FinancialTransaction::STATUSES[$state] ?? $state)
+                    ->formatStateUsing(fn($state) => FinancialTransaction::STATUSES[$state] ?? $state)
                     ->sortable(),
 
                 TextColumn::make('paymentMethod.name')
@@ -85,7 +95,7 @@ class FinancialTransactionsTable
 
                 TextColumn::make('reference_type')
                     ->label('Reference')
-                    ->formatStateUsing(fn ($state, $record) => $state ? class_basename($state) . ' #' . $record->reference_id : '-')
+                    ->formatStateUsing(fn($state, $record) => $state ? class_basename($state) . ' #' . $record->reference_id : '-')
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('creator.name')
@@ -130,21 +140,22 @@ class FinancialTransactionsTable
                         return $query
                             ->when(
                                 $data['from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('transaction_date', '>=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('transaction_date', '>=', $date),
                             )
                             ->when(
                                 $data['until'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('transaction_date', '<=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('transaction_date', '<=', $date),
                             );
                     }),
 
                 TrashedFilter::make(),
-            ])
+            ], FiltersLayout::Modal)
+            ->filtersFormColumns(4)
             ->recordActions([
                 EditAction::make()
-                    ->hidden(fn ($record) => $record->reference_type !== null),
+                    ->hidden(fn($record) => $record->reference_type !== null),
                 DeleteAction::make()
-                    ->hidden(fn ($record) => $record->reference_type !== null),
+                    ->hidden(fn($record) => $record->reference_type !== null),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -159,7 +170,6 @@ class FinancialTransactionsTable
                     ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),
                 ]),
-            ])
-            ->defaultSort('transaction_date', 'desc');
+            ]);
     }
 }

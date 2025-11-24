@@ -11,9 +11,9 @@ use Filament\Resources\Pages\ListRecords;
 class ListFinancialCategoryReport extends ListRecords
 {
     use HasBackButtonAction;
-    
+
     protected static string $resource = FinancialCategoryReportResource::class;
-    
+
     protected string $view = 'filament.pages.financial-reports.financial-category-report';
 
     public $perPage = 15;
