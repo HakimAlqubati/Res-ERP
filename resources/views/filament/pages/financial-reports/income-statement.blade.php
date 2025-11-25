@@ -296,16 +296,15 @@
         @if (isset($report) && !empty($report))
         {{-- Header --}}
         <div class="report-header">
-            <h1 class="report-title">{{ __('Income Statement') }}</h1>
+            <h1 class="report-title">{{ __('P\L Report') }}</h1>
             <p class="report-subtitle">
                 @if($startDate && $endDate)
-                {{ __('For the Period from') }} {{ \Carbon\Carbon::parse($startDate)->format('F d, Y') }}
+                {{ __('From ') }} {{ \Carbon\Carbon::parse($startDate)->format('F d, Y') }}
                 {{ __('to') }} {{ \Carbon\Carbon::parse($endDate)->format('F d, Y') }}
                 @else
                 {{ __('All Time Records') }}
                 @endif
             </p>
-            <p class="report-meta">{{ __('Date Generated:') }} {{ now()->format('F d, Y') }}</p>
         </div>
 
         {{-- Report Table --}}
