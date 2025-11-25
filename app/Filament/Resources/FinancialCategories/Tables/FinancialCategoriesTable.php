@@ -16,6 +16,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\IconColumn;
 use App\Models\FinancialCategory;
+use Filament\Tables\Enums\FiltersLayout;
 
 class FinancialCategoriesTable
 {
@@ -59,13 +60,30 @@ class FinancialCategoriesTable
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-            ])
+            ])->deferFilters(false)
+            ->filtersFormColumns(4)
             ->filters([
                 SelectFilter::make('type')
                     ->options(FinancialCategory::TYPES)
                     ->label('Type'),
 
-
+                SelectFilter::make('parent_only')
+                    ->label('Show Parent Categories Only')
+                    ->placeholder('All categories')
+                    ->options([
+                        'parents_only' => 'Parents only',
+                        'all_categories' => 'All categories',
+                    ])
+                    ->default('parents_only')
+                    ->query(function ($query, $state) {
+                        $state = $state['value'] ?? null;
+                        if ($state === 'parents_only') {
+                            return $query->whereNull('parent_id');
+                        } elseif ($state === 'all_categories') {
+                            return $query;
+                        }
+                        return $query;
+                    }),
 
                 TernaryFilter::make('is_visible')
                     ->label('Visible for Manual Entry')
@@ -74,7 +92,7 @@ class FinancialCategoriesTable
                     ->falseLabel('Hidden only'),
 
                 TrashedFilter::make(),
-            ])
+            ], FiltersLayout::Modal)
             ->recordActions([
                 EditAction::make(),
                 DeleteAction::make(),
