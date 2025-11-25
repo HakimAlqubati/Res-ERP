@@ -9,17 +9,22 @@ use Spatie\Multitenancy\TenantFinder\TenantFinder;
 class CustomTenantFinder extends TenantFinder
 {
     public function findForRequest(Request $request): ?IsTenant
-    {
-        
-        // Implement your custom logic to identify the tenant
+    {    // Implement your custom logic to identify the tenant
         // For example, using a subdomain:
         $host = $request->getHost();
-        
-        // $subdomain = explode('.', $host)[0];
-        // $subdomain ='tenant1.'. $host;
         $subdomain = $host;
-        // dd($subdomain);
-        // dd(app(IsTenant::class)::where('domain', $subdomain)->first());
-        return app(IsTenant::class)::where('domain', $subdomain)->first();
+        $centralDomain = env('CENTRAL_DOMAIN', 'localhost');
+        // dd($centralDomain,$host,$host === $centralDomain);
+        if ($host === $centralDomain) {
+            return null;
+        }
+        $tenant = app(IsTenant::class)::where('domain', $subdomain)
+            ->where('active', 1)
+            ->first();
+        if ($tenant) {
+            return $tenant;
+        }
+        abort(403, 'This tenant is inactive.');
+        return $tenant;
     }
 }
