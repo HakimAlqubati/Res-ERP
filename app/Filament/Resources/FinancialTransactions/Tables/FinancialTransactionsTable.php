@@ -26,6 +26,8 @@ class FinancialTransactionsTable
     public static function configure(Table $table): Table
     {
         return $table->striped()->defaultSort('id', 'desc')
+            ->paginated([10, 25, 50, 100])
+
             ->columns([
                 TextColumn::make('transaction_date')
                     ->label('Date')

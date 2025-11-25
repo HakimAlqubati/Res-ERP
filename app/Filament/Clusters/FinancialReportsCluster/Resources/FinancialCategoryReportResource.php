@@ -90,18 +90,7 @@ class FinancialCategoryReportResource extends Resource
                         return $q;
                     }),
                 
-                Filter::make('options')
-                    ->label(__('Options'))
-                    ->schema([
-                        Toggle::make('show_system_categories')
-                            ->label(__('Show System Categories'))
-                            ->inline(false)
-                            ->default(fn () => request()->get('show_system_categories') ?? true),
-                        Toggle::make('show_hidden_categories')
-                            ->label(__('Show Hidden Categories'))
-                            ->inline(false)
-                            ->default(fn () => request()->get('show_hidden_categories') ?? false),
-                    ]),
+               
             ], FiltersLayout::AboveContent);
     }
 

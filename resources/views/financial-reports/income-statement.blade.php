@@ -84,24 +84,45 @@
                     </tr>
 
                     @foreach($report['expenses']['details'] as $expense)
+                    {{-- Parent Category Row --}}
                     <tr class="report-line">
                         <td class="py-3 pl-8 text-gray-700">
-                            <div class="text-sm">{{ $expense['category_name'] }}</div>
+                            <div class="text-sm font-semibold">{{ $expense['category_name'] }}</div>
                             @if(!empty($expense['category_description']))
                             <div class="text-xs text-gray-500 mt-0.5 italic">{{ $expense['category_description'] }}</div>
                             @endif
                         </td>
-                        <td class="py-3 pr-4 text-sm text-right text-gray-900 tabular-nums">
-                            {{ number_format($expense['amount'], 2) }}
+                        <td class="py-3 pr-4 text-sm text-right font-semibold text-gray-900 tabular-nums">
+                            {{ $expense['amount_formatted'] ?? number_format($expense['amount'], 2) }}
                         </td>
                     </tr>
+
+                    {{-- Children Categories (if any) --}}
+                    @if(!empty($expense['children']))
+                    @foreach($expense['children'] as $child)
+                    <tr class="border-b border-gray-100">
+                        <td class="py-2 pl-16 text-gray-600">
+                            <div class="text-sm flex items-center">
+                                <span class="text-gray-400 mr-2">└─</span>
+                                <span>{{ $child['category_name'] }}</span>
+                            </div>
+                            @if(!empty($child['category_description']))
+                            <div class="text-xs text-gray-400 mt-0.5 italic ml-6">{{ $child['category_description'] }}</div>
+                            @endif
+                        </td>
+                        <td class="py-2 pr-4 text-sm text-right text-gray-600 tabular-nums">
+                            {{ $child['amount_formatted'] ?? number_format($child['amount'], 2) }}
+                        </td>
+                    </tr>
+                    @endforeach
+                    @endif
                     @endforeach
 
                     <!-- Total Expenses -->
                     <tr class="report-line-bold">
                         <td class="py-3 pl-8 text-sm font-semibold text-gray-900">Total Operating Expenses</td>
                         <td class="py-3 pr-4 text-sm text-right font-bold text-gray-900 tabular-nums">
-                            {{ number_format($report['expenses']['total'], 2) }}
+                            {{ $report['expenses']['total_formatted'] }}
                         </td>
                     </tr>
 
@@ -114,7 +135,7 @@
                     <tr class="report-line-double bg-gray-50">
                         <td class="py-4 pl-8 text-base font-bold text-gray-900 uppercase tracking-wide">Net Profit (Loss)</td>
                         <td class="py-4 pr-4 text-base text-right font-bold tabular-nums {{ $report['net_profit'] >= 0 ? 'text-green-700' : 'text-red-700' }}">
-                            {{ number_format($report['net_profit'], 2) }}
+                            {{ $report['net_profit_formatted'] }}
                         </td>
                     </tr>
                 </tbody>

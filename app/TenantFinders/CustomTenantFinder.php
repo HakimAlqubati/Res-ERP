@@ -14,8 +14,8 @@ class CustomTenantFinder extends TenantFinder
         $host = $request->getHost();
         $subdomain = $host;
         $centralDomain = env('CENTRAL_DOMAIN', 'localhost');
-        // dd($centralDomain,$host,$host === $centralDomain);
-        if ($host === $centralDomain) {
+        // dd($centralDomain, $host, $host === $centralDomain);
+        if ($host === $centralDomain || $host === '127.0.0.1') {
             return null;
         }
         $tenant = app(IsTenant::class)::where('domain', $subdomain)

@@ -13,6 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        return;
         $categories = [
             [
                 'name' => 'Salaries',
@@ -56,6 +57,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        return; 
         // We don't necessarily want to delete the categories or clear descriptions on rollback 
         // as they might have been edited by the user.
         // But strictly speaking, we could set descriptions to null.

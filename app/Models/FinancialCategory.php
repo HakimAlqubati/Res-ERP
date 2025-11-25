@@ -21,6 +21,7 @@ class FinancialCategory extends Model
     protected $fillable = [
         'name',
         'type',
+        'parent_id',
         'is_system',
         'is_visible',
         'description',
@@ -32,6 +33,16 @@ class FinancialCategory extends Model
     ];
 
     // Relationships
+    public function parent()
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(self::class, 'parent_id');
+    }
+
     public function transactions()
     {
         return $this->hasMany(FinancialTransaction::class, 'category_id');

@@ -39,6 +39,13 @@ class FinancialCategoryForm
                                     ->maxLength(255)
                                     ->columnSpan(1),
 
+                                Select::make('parent_id')
+                                    ->label('Parent Category')
+                                    ->relationship('parent', 'name', fn($query, $record) => $record ? $query->where('id', '!=', $record->id) : $query)
+                                    ->searchable()
+                                    ->preload()
+                                    ->columnSpan(1),
+
 
 
                                 Toggle::make('is_visible')

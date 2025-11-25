@@ -14,6 +14,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        return;
         // Disable foreign key checks to allow truncation
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 

@@ -28,6 +28,11 @@ class FinancialCategoriesTable
                     ->searchable()
                     ->sortable(),
 
+                TextColumn::make('parent.name')
+                    ->label('Parent Category')
+                    ->searchable()
+                    ->sortable(),
+
                 BadgeColumn::make('type')
                     ->label('Type')->alignCenter()
                     ->colors([

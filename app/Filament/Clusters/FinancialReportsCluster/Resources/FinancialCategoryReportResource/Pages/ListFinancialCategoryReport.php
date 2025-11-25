@@ -25,13 +25,10 @@ class ListFinancialCategoryReport extends ListRecords
         $branchId = $this->getTable()->getFilters()['branch_id']->getState()['value'] ?? null;
         $dateRange = $this->getTable()->getFilters()['date_range']->getState() ?? [];
         $status = $this->getTable()->getFilters()['status']->getState()['value'] ?? null;
-        $options = $this->getTable()->getFilters()['options']->getState() ?? [];
-
+        
         $startDate = $dateRange['start_date'] ?? now()->startOfMonth()->format('Y-m-d');
         $endDate = $dateRange['end_date'] ?? now()->endOfMonth()->format('Y-m-d');
-        $showSystemCategories = $options['show_system_categories'] ?? true;
-        $showHiddenCategories = $options['show_hidden_categories'] ?? false;
-
+       
         // Build filter parameters
         $filterParams = array_filter([
             'type' => $type,
@@ -39,8 +36,7 @@ class ListFinancialCategoryReport extends ListRecords
             'start_date' => $startDate,
             'end_date' => $endDate,
             'status' => $status,
-            'is_visible' => !$showHiddenCategories ? true : null,
-        ]);
+         ]);
 
         // Create filter and service
         $filter = new FinancialCategoryReportFilter($filterParams);
@@ -58,8 +54,7 @@ class ListFinancialCategoryReport extends ListRecords
                 'start_date' => $startDate,
                 'end_date' => $endDate,
                 'status' => $status,
-                'show_system_categories' => $showSystemCategories,
-                'show_hidden_categories' => $showHiddenCategories,
+                
             ],
         ];
     }
