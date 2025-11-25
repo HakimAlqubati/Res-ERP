@@ -24,7 +24,7 @@ class CustomTenantFinder extends TenantFinder
         if ($tenant) {
             return $tenant;
         }
-        abort(403, 'This tenant account is inactive.');
+        abort(403, 'This tenant is inactive.');
         return $tenant;
     }
 }
