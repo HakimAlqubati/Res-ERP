@@ -19,6 +19,7 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResour
 use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResource\Pages;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResource\RelationManagers;
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Imports\InventoryTransactionsImport;
 use App\Models\Inventory;
 use App\Models\InventoryTransaction;
@@ -97,6 +98,7 @@ class InventoryResource extends Resource
             ])
             ->columns([
 
+                SoftDeleteColumn::make(),
                 TextColumn::make('id')->sortable()
                     ->label('ID')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('product.code')
@@ -158,7 +160,7 @@ class InventoryResource extends Resource
                     ->label('Source Price')->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->alignCenter(),
-                    TextColumn::make('created_at'),
+                TextColumn::make('created_at'),
 
 
             ])

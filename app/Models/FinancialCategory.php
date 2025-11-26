@@ -20,11 +20,13 @@ class FinancialCategory extends Model
 
     protected $fillable = [
         'name',
+        'code',
         'type',
         'parent_id',
         'is_system',
         'is_visible',
         'description',
+        'code',
     ];
 
     protected $casts = [
@@ -67,5 +69,15 @@ class FinancialCategory extends Model
     public function scopeSystem($query)
     {
         return $query->where('is_system', true);
+    }
+
+    public function scopeByCode($query, $code)
+    {
+        return $query->where('code', $code);
+    }
+
+    public static function findByCode($code)
+    {
+        return self::byCode($code)->first();
     }
 }

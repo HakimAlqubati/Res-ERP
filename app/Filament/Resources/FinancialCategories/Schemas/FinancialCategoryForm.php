@@ -27,6 +27,13 @@ class FinancialCategoryForm
                                     ->unique(ignoreRecord: true)
                                     ->columnSpan(1),
 
+                                Select::make('code')
+                                    ->label('System Code')
+                                    ->options(\App\Enums\FinancialCategoryCode::getOptions())
+                                    ->searchable()
+                                    ->helperText('Select a system code for integration (optional)')
+                                    ->columnSpan(1),
+
                                 Select::make('type')
                                     ->label('Type')
                                     ->options(FinancialCategory::TYPES)
