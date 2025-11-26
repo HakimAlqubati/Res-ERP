@@ -94,7 +94,21 @@ class FinancialReportService
 
         $totalExpenses = $expenses->sum('amount');
 
-        // 3. Net Profit
+        // 3. Get specific category amounts for Gross Profit calculation
+        $transfers = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::TRANSFERS);
+        $directPurchase = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::DIRECT_PURCHASE);
+        $closingStock = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::CLOSING_STOCK);
+
+        // 4. Calculate Gross Profit: ((Transfers + Direct Purchase) - Closing Stock) ÷ Sales
+        $grossProfitRatio = 0;
+        $grossProfitValue = 0;
+
+        if ($totalRevenue > 0) {
+            $grossProfitValue = ($transfers + $directPurchase) - $closingStock;
+            $grossProfitRatio = ($grossProfitValue / $totalRevenue);
+        }
+
+        // 5. Net Profit
         $netProfit = $totalRevenue - $totalExpenses;
 
         return [
@@ -102,6 +116,22 @@ class FinancialReportService
                 'total' => (float) $totalRevenue,
                 'total_formatted' => formatMoneyWithCurrency($totalRevenue),
                 'details' => [],
+            ],
+            'cost_of_goods_sold' => [
+                'transfers' => (float) $transfers,
+                'transfers_formatted' => formatMoneyWithCurrency($transfers),
+                'direct_purchase' => (float) $directPurchase,
+                'direct_purchase_formatted' => formatMoneyWithCurrency($directPurchase),
+                'closing_stock' => (float) $closingStock,
+                'closing_stock_formatted' => formatMoneyWithCurrency($closingStock),
+                'total' => (float) $grossProfitValue,
+                'total_formatted' => formatMoneyWithCurrency($grossProfitValue),
+            ],
+            'gross_profit' => [
+                'value' => (float) $grossProfitValue,
+                'value_formatted' => formatMoneyWithCurrency($grossProfitValue),
+                'ratio' => (float) $grossProfitRatio,
+                'ratio_formatted' => number_format($grossProfitRatio, 2) . '%',
             ],
             'expenses' => [
                 'total' => (float) $totalExpenses,
@@ -111,5 +141,27 @@ class FinancialReportService
             'net_profit' => (float) $netProfit,
             'net_profit_formatted' => formatMoneyWithCurrency($netProfit),
         ];
+    }
+
+    /**
+     * Get total amount for a specific financial category by code.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $categoryCode
+     * @return float
+     */
+    private function getAmountByCode($query, string $categoryCode): float
+    {
+        $category = \App\Models\FinancialCategory::findByCode($categoryCode);
+
+        if (!$category) {
+            return 0.0;
+        }
+
+        $clonedQuery = clone $query;
+
+        return (float) $clonedQuery
+            ->where('category_id', $category->id)
+            ->sum('amount');
     }
 }

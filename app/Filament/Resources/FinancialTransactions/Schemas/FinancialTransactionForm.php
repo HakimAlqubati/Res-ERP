@@ -116,7 +116,7 @@ class FinancialTransactionForm
                                     ->label('Branch')
                                     ->options(Branch::active()->pluck('name', 'id'))
                                     ->searchable()
-                                    ->nullable()
+                                    ->required()
                                     ->columnSpan(1),
 
                                 Select::make('payment_method_id')

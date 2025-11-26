@@ -16,6 +16,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\IconColumn;
 use App\Models\FinancialCategory;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Enums\FiltersLayout;
 
 class FinancialCategoriesTable
@@ -28,6 +29,14 @@ class FinancialCategoriesTable
                     ->label('Category Name')
                     ->searchable()
                     ->sortable(),
+
+                TextColumn::make('code')
+                    ->label('System Code')
+                    ->searchable()
+                    ->sortable()
+                    ->badge()
+                    ->color('info')
+                    ->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('parent.name')
                     ->label('Parent Category')
@@ -45,9 +54,9 @@ class FinancialCategoriesTable
 
 
 
-                IconColumn::make('is_visible')
+                ToggleColumn::make('is_visible')
                     ->label('Visible')
-                    ->boolean()->alignCenter()
+                    ->alignCenter()
                     ->sortable(),
 
                 TextColumn::make('transactions_count')
@@ -85,11 +94,13 @@ class FinancialCategoriesTable
                         return $query;
                     }),
 
-                TernaryFilter::make('is_visible')
+                SelectFilter::make('is_visible')
                     ->label('Visible for Manual Entry')
-                    ->placeholder('All categories')
-                    ->trueLabel('Visible only')
-                    ->falseLabel('Hidden only'),
+                    ->options([
+                        1 => 'Visible',
+                        0 => 'Hidden',
+                    ])
+                    ->default(1),
 
                 TrashedFilter::make(),
             ], FiltersLayout::Modal)

@@ -296,7 +296,7 @@
         @if (isset($report) && !empty($report))
         {{-- Header --}}
         <div class="report-header">
-            <h1 class="report-title">{{ __('P\L Report') }}</h1>
+            <h1 class="report-title">{{ __('Gross Profit Report') }}</h1>
             <p class="report-subtitle">
                 @if($startDate && $endDate)
                 {{ __('From ') }} {{ \Carbon\Carbon::parse($startDate)->format('F d, Y') }}
@@ -311,9 +311,9 @@
         <table class="report-table">
             <tbody>
                 {{-- Revenue Section --}}
-                <tr>
+                <!-- <tr>
                     <td colspan="2" class="section-header">{{ __('Revenue') }}</td>
-                </tr>
+                </tr> -->
                 <tr class="table-row">
                     <td class="row-label">{{ __('Total Sales Revenue') }}</td>
                     <td class="row-value revenue-amount">
@@ -322,9 +322,9 @@
                 </tr>
 
                 {{-- Expenses Section --}}
-                <tr>
-                    <td colspan="2" class="section-header">{{ __('Operating Expenses') }}</td>
-                </tr>
+                <!-- <tr>
+                    <td colspan="2" class="section-header">{{ __('Expenses') }}</td>
+                </tr> -->
 
                 @foreach($report['expenses']['details'] as $expense)
                 <tr class="table-row">
@@ -356,21 +356,16 @@
                 @endif
                 @endforeach
 
-                {{-- Total Expenses --}}
-                <tr class="total-row">
-                    <td class="total-label">{{ __('Total Expenses') }}</td>
-                    <td class="total-value expense-amount">
-                        ({{ $report['expenses']['total_formatted'] ?? number_format($report['expenses']['total'], 2) }})
-                    </td>
-                </tr>
+
             </tbody>
         </table>
 
-        {{-- Net Profit --}}
+        {{-- Gross Profit --}}
         <div class="net-profit-section">
-            <div class="net-profit-label">{{ __('Net Profit / (Loss)') }}</div>
-            <div class="net-profit-amount {{ $report['net_profit'] >= 0 ? 'profit-positive' : 'profit-negative' }}">
-                {{ $report['net_profit_formatted'] ?? number_format($report['net_profit'], 2) }}
+            <div class="net-profit-label">{{ __('Gross Profit') }}</div>
+            <div class="net-profit-amount {{ ($report['gross_profit']['value'] ?? 0) >= 0 ? 'profit-positive' : 'profit-negative' }}">
+                {{ $report['gross_profit']['value_formatted'] ?? number_format($report['gross_profit']['value'] ?? 0, 2) }}
+                <span style="font-size: 1rem; margin-left: 1rem; opacity: 0.8;">({{ $report['gross_profit']['ratio_formatted'] ?? '0.00%' }})</span>
             </div>
         </div>
 
