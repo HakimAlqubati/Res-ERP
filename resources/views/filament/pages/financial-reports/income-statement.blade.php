@@ -305,6 +305,11 @@
                 {{ __('All Time Records') }}
                 @endif
             </p>
+            @if(isset($branchName) && $branchName)
+            <p class="report-subtitle" style="font-weight: 600; margin-top: 0.25rem;">
+                {{ __('Branch') }}: {{ $branchName }}
+            </p>
+            @endif
         </div>
 
         {{-- Report Table --}}

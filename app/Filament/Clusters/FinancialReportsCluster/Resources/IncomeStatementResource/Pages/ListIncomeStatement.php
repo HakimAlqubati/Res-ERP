@@ -42,11 +42,18 @@ class ListIncomeStatement extends ListRecords
         $service = new FinancialReportService();
         $report = $service->getIncomeStatement($dto);
 
+        $branchName = null;
+        if ($branchId) {
+            $branch = \App\Models\Branch::find($branchId);
+            $branchName = $branch ? $branch->name : null;
+        }
+
         return [
             'report' => $report,
             'startDate' => $startDate,
             'endDate' => $endDate,
             'branchId' => $branchId,
+            'branchName' => $branchName,
         ];
     }
 }
