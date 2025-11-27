@@ -29,6 +29,7 @@ use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages\
 use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages\ViewAttendnace;
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages;
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\Employee;
@@ -148,6 +149,7 @@ class AttendnaceResource extends Resource
             ->defaultSort('id', 'desc')
             ->striped()
             ->columns([
+                SoftDeleteColumn::make(),
                 TextColumn::make('id')
                     ->label('#')
                     ->sortable()->toggleable(isToggledHiddenByDefault: true)
