@@ -689,5 +689,18 @@
         },
         "active": true,
         "order": 56
+    },
+    {
+        "code": "TN",
+        "name": {
+            "en": "Tunisian",
+            "ar": "تونسي"
+        },
+        "country": {
+            "en": "Tunisia",
+            "ar": "تونس"
+        },
+        "active": true,
+        "order": 57
     }
 ]
