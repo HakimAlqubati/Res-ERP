@@ -64,7 +64,7 @@ class AttendanceImagesUploadedResource extends Resource
                 Filter::make('datetime')
                     ->label(__('lang.created_at'))
                     ->schema([
-                        DatePicker::make('created_from')->label(__('lang.from'))->default(now())->columnSpan(2),
+                        DatePicker::make('created_from')->label(__('lang.from'))->default(now()->subMonth(1))->columnSpan(2),
                         DatePicker::make('created_until')->label(__('lang.to'))->default(now())->columnSpan(2),
                     ])->columns(4)
                     ->query(function (Builder $query, array $data): Builder {
