@@ -188,10 +188,9 @@ class HelperFunctions
         // Default the supposed duration if null
         $supposedDuration = $supposedDuration ?? '00:00:00';
 
-
+ 
         $approvedOvertimeParsed = convertToFormattedTime($approvedOvertime);
-        // dd($approvedOvertimeParsed);
-        if (!\Carbon\Carbon::parse($approvedOvertimeParsed)->lt(\Carbon\Carbon::parse($supposedDuration))) {
+         if (!\Carbon\Carbon::parse($approvedOvertimeParsed)->lt(\Carbon\Carbon::parse($supposedDuration))) {
             // dd(\Carbon\Carbon::parse($supposedDuration), \Carbon\Carbon::parse($approvedOvertimeParsed));
             return [
                 'formatted' => '0 h 0m',

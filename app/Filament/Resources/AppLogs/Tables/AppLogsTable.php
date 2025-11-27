@@ -20,9 +20,9 @@ class AppLogsTable
     public static function configure(Table $table): Table
     {
         return $table
-        ->defaultSort('id','desc')
-        ->striped()->deferFilters(false)
-            ->paginated([10, 25, 50, 100,150])
+            ->defaultSort('id', 'desc')
+            ->striped()->deferFilters(false)
+            ->paginated([10, 25, 50, 100, 150])
 
             ->columns([
                 TextColumn::make('id')
@@ -114,26 +114,55 @@ class AppLogsTable
             ->label('Extra')
             ->icon('heroicon-o-code-bracket-square')
             ->color('gray')
-            // ->visible(fn(AppLog $record) => ! empty($record->extra))
             ->modalHeading('Extra Data')
             ->modalWidth('2xl')
             ->modalSubmitAction(false)
             ->modalCancelAction(false)
             ->modalContent(function (AppLog $record) {
                 if (empty($record->extra)) {
-                    return 'No extra data.';
+                    return new HtmlString('<h1>No extra data.</h1>');
                 }
 
+                // 1. فك تشفير بيانات extra
+                $extraData = $record->extra;
+
+                $employeeName = null;
+
+                // 2. التحقق مما إذا كانت البيانات تحتوي على employee_id
+                if (isset($extraData['employee_id'])) {
+                    // 3. البحث عن الموظف باستخدام employee_id
+                    // تأكد من استبدال 'App\Models\Employee' بالمسار الصحيح لموديل الموظفين لديك إذا كان مختلفًا
+                    $employee = \App\Models\Employee::find($extraData['employee_id']);
+
+                    if ($employee) {
+                        // 4. الحصول على اسم الموظف
+                        $employeeName = $employee->name;
+                    }
+                }
+
+                // 5. تهيئة بيانات JSON للعرض
                 $json = json_encode(
-                    $record->extra,
+                    $extraData,
                     JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
                 );
 
-                return new HtmlString(
-                    '<pre class="text-xs whitespace-pre-wrap bg-gray-50 dark:bg-gray-900 p-4 rounded-lg overflow-auto max-h-[500px]">'
-                        . e($json)
-                        . '</pre>'
-                );
+                // 6. بناء محتوى المودال، بما في ذلك اسم الموظف إذا وجد
+                $content = '';
+
+                if ($employeeName) {
+                    $content .= '<div class="mb-4 p-3 bg-green-100 dark:bg-green-900 rounded-lg">';
+                    $content .= '<p class="text-sm font-semibold text-green-800 dark:text-green-200">';
+                    $content .= 'Employee ID: ' . $extraData['employee_id'] . ' &bull; ';
+                    $content .= 'Employee Name: ' . e($employeeName);
+                    $content .= '</p>';
+                    $content .= '</div>';
+                }
+
+                $content .= '<pre class="text-xs whitespace-pre-wrap bg-gray-50 dark:bg-gray-900 p-4 rounded-lg overflow-auto max-h-[500px]">';
+                $content .= e($json);
+                $content .= '</pre>';
+
+                return new HtmlString($content);
             });
     }
     public static function contextFilter(): SelectFilter
