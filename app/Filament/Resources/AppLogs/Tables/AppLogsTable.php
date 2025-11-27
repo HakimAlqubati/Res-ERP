@@ -120,7 +120,7 @@ class AppLogsTable
             ->modalCancelAction(false)
             ->modalContent(function (AppLog $record) {
                 if (empty($record->extra)) {
-                    return 'No extra data.';
+                    return new HtmlString('<h1>No extra data.</h1>');
                 }
 
                 // 1. فك تشفير بيانات extra
@@ -164,7 +164,7 @@ class AppLogsTable
 
                 return new HtmlString($content);
             });
-    }   
+    }
     public static function contextFilter(): SelectFilter
     {
         return SelectFilter::make('context')
