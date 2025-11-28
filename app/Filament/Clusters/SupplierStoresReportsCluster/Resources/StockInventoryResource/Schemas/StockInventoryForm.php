@@ -227,7 +227,7 @@ class StockInventoryForm
                                 Select::make('store_id')->label(__('lang.store'))
                                     ->default(getDefaultStore())
                                     ->disabledOn('edit')
-                                    ->reactive()
+                                    ->reactive()->searchable()
                                     ->options(
                                         Store::active()
                                             ->withManagedStores()

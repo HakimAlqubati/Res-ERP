@@ -22,6 +22,8 @@ use App\Observers\StockTransferOrderObserver;
 use App\Observers\TaskObserver;
 use App\Observers\TenantObserver;
 use App\Observers\UserObserver;
+use App\Models\StockInventory;
+use App\Observers\StockInventoryObserver;
 use BezhanSalleh\FilamentLanguageSwitch\LanguageSwitch;
 use Filament\Livewire\DatabaseNotifications;
 use Filament\Notifications\Livewire\Notifications;
@@ -58,6 +60,7 @@ class AppServiceProvider extends ServiceProvider
         CustomTenantModel::observe(TenantObserver::class);
         InventoryTransaction::observe(InventoryTransactionObserver::class);
         StockTransferOrder::observe(StockTransferOrderObserver::class);
+        StockInventory::observe(StockInventoryObserver::class);
 
         // PurchaseInvoiceDetail::observe(PurchaseInvoiceDetailObserver::class);
 
@@ -102,7 +105,7 @@ class AppServiceProvider extends ServiceProvider
                     $options['sharedFolderId'] = $config['sharedFolderId'];
                 }
 
-                
+
                 $client = new \Google\Client();
                 $client->setClientId($config['clientId']);
                 $client->setClientSecret($config['clientSecret']);

@@ -314,7 +314,9 @@ class MultiProductsInventoryService
             if (is_array($this->unitId)) {
                 $query->whereIn('unit_id', $this->unitId);
             } else {
-                $query->where('unit_id', $this->unitId);
+                if (isset($this->unitId) && is_numeric($this->unitId)) {
+                    $query->where('unit_id', $this->unitId);
+                }
             }
         }
 

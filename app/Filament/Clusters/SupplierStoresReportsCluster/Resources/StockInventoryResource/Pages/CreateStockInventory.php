@@ -65,12 +65,21 @@ class CreateStockInventory extends CreateRecord
 
         $pages      = (array) ($this->data['details_pages'] ?? []);
         $merged = [];
-        foreach ($pages as $i => $rows) {
-            $merged = array_merge($merged, $rows);
+        if ($this->data['total_pages'] > 0) {
+
+            foreach ($pages as $i => $rows) {
+                $merged = array_merge($merged, $rows);
+            }
+        } else {
+            foreach ($this->data['page_details'] as $key => $value) {
+                // dd($value);
+                // $merged = array_merge($merged, $value);
+                $merged[] = $value;
+            }
         }
         $data['details'] = $merged;
         // $this->extraDetails = Arr::get($this->data, 'details', []);
-        // dd($this->data, $pages,$merged);
+        // dd($this->data, $pages, $merged, $data);
 
         return $data;
     }

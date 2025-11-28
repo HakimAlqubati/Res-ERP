@@ -137,7 +137,7 @@ class DetailsRelationManager extends RelationManager
                                     }),
                                 Select::make('store_id')
                                     ->label(__('lang.store'))
-                                   
+
                                     ->default(function () {
                                         return $this->ownerRecord->store_id ?? null;
                                     })
