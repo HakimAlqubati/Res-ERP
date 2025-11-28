@@ -44,8 +44,10 @@
 
         .report-table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
             background: white;
+            overflow: hidden;
         }
 
         .section-header {
@@ -58,54 +60,73 @@
             border-bottom: 2px solid #e5e7eb;
         }
 
-        .table-row {
-            border-bottom: 1px solid #f3f4f6;
-        }
 
-        .table-row:hover {
+        .table-row:nth-child(even) {
             background-color: #f9fafb;
         }
 
+        .table-row:hover {
+            background-color: #eff6ff;
+            transform: translateX(2px);
+            /* box-shadow: inset 4px 0 0 #3b82f6; */
+        }
+
         .row-label {
-            /* padding: 0.65rem 0 0.65rem 1rem; */
+            padding: 0.5rem 0.5rem 0.5rem 0.5rem;
             font-size: 0.875rem;
-            color: #374151;
-            font-weight: 500;
+            color: #1f2937;
+            font-weight: 600;
+            border-bottom: 0.5px solid #1c8237ff;
+
         }
 
         .row-value {
-            /* padding: 0.65rem 1rem 0.65rem 0; */
+            padding: 0.5rem 1.25rem 0.5rem 0.5rem;
             text-align: right;
-            font-size: 0.875rem;
-            font-weight: 600;
+            font-size: 0.9rem;
+            font-weight: 700;
             font-variant-numeric: tabular-nums;
-            color: #1f2937;
+            color: #0f172a;
+            letter-spacing: 0.01em;
+            border-bottom: 0.5px solid #1c8237ff;
+
         }
 
         .child-row {
-            background-color: #fafafa;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            transition: all 0.2s ease;
+        }
+
+        .child-row:hover {
+            background-color: #e7f0ff;
+            transform: translateX(4px);
         }
 
         .child-label {
-            padding: 0.5rem 0 0.5rem 2.5rem;
-            font-size: 0.8rem;
-            color: #6b7280;
-        }
-
-        .child-value {
-            padding: 0.5rem 1rem 0.5rem 0;
-            text-align: right;
-            font-size: 0.8rem;
+            padding: 0.75rem 1rem 0.75rem 3rem;
+            font-size: 0.8125rem;
             color: #6b7280;
             font-weight: 500;
         }
 
+        .child-value {
+            padding: 0.75rem 1.25rem 0.75rem 1rem;
+            text-align: right;
+            font-size: 0.8125rem;
+            color: #4b5563;
+            font-weight: 600;
+        }
+
         .revenue-amount {
-            color: #059669;
+            background: linear-gradient(90deg, transparent, #f0fdf4 100%);
+            font-weight: 700;
         }
 
         .expense-amount {
             color: #dc2626;
+            background: linear-gradient(90deg, transparent, #fef2f2 100%);
+            font-weight: 700;
         }
 
         .total-row {
@@ -148,7 +169,7 @@
         }
 
         .net-profit-amount {
-            font-size: 1.5rem;
+            font-size: 1.0rem;
             font-weight: 800;
             font-variant-numeric: tabular-nums;
         }
@@ -308,6 +329,10 @@
             @if(isset($branchName) && $branchName)
             <p class="report-subtitle" style="font-weight: 600; margin-top: 0.25rem;">
                 {{ __('Branch') }}: {{ $branchName }}
+            </p>
+            @else
+            <p class="report-subtitle" style="font-weight: 600; margin-top: 0.25rem;">
+                {{ __('Branch') }}: {{ __('All') }}
             </p>
             @endif
         </div>

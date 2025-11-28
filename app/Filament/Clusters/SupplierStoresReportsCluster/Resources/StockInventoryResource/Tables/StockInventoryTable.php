@@ -30,13 +30,14 @@ use App\Models\Store;
 use App\Services\MultiProductsInventoryService;
 use App\Services\Stock\StockInventory\InventoryProductCacheService;
 use Filament\Facades\Filament;
-use Filament\Forms\Components\DatePicker; 
+use Filament\Forms\Components\DatePicker;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder; 
+use Illuminate\Database\Eloquent\Builder;
 
 class StockInventoryTable
 {
@@ -56,9 +57,22 @@ class StockInventoryTable
                 TextColumn::make('responsibleUser.name')->sortable()->label('Responsible')->toggleable(),
                 IconColumn::make('finalized')->sortable()->label('Finalized')->boolean()->alignCenter(true)->toggleable(),
 
-            ])
+            ])->deferFilters(false)->filtersFormColumns(4)
             ->filters([
                 TrashedFilter::make(),
+                SelectFilter::make('store_id')
+                    ->options(function () {
+                        return Store::whereIn('id', function ($query) {
+                            $query->select('store_id')
+                                ->from('stock_inventories')
+                                ->whereNotNull('store_id')
+                                ->distinct();
+                        })
+                            ->pluck('name', 'id')
+                            ->toArray();
+                    })
+                    ->label('Store')
+                    ->searchable(),
                 Filter::make('inventory_date_range')
                     ->schema([
                         DatePicker::make('from')->label('From Date'),
@@ -69,7 +83,8 @@ class StockInventoryTable
                             ->when($data['from'], fn($q, $date) => $q->whereDate('inventory_date', '>=', $date))
                             ->when($data['to'], fn($q, $date) => $q->whereDate('inventory_date', '<=', $date));
                     }),
-            ], FiltersLayout::AboveContent)
+            ], FiltersLayout::Modal)
+
             ->recordActions([
                 EditAction::make()
                     ->label('Finalize')
