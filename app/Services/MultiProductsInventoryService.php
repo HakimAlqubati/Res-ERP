@@ -320,7 +320,6 @@ class MultiProductsInventoryService
             }
         }
 
-        // dd($query);
         $productUnitPrices = $query->get(['unit_id', 'order', 'price', 'package_size', 'minimum_quantity']);
         // Find the highest order value to determine the last unit
         $maxOrder = $productUnitPrices->max('order');
