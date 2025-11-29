@@ -114,7 +114,7 @@ class FinancialTransactionForm
 
                                 Select::make('branch_id')
                                     ->label('Branch')
-                                    ->options(Branch::active()->pluck('name', 'id'))
+                                    ->options(Branch::pluck('name', 'id'))
                                     ->searchable()
                                     ->required()
                                     ->columnSpan(1),

@@ -35,8 +35,8 @@ class FinancialTransactionsTable
     public static function configure(Table $table): Table
     {
 
-    //     $i = (new FinancialTransactionsFromExcelImport(branchId: 1))->parseDate(45963);
-    //  dd($i);
+        //     $i = (new FinancialTransactionsFromExcelImport(branchId: 1))->parseDate(45963);
+        //  dd($i);
         return $table->striped()->defaultSort('id', 'desc')
             ->paginated([10, 25, 50, 100])
             ->headerActions([
@@ -69,10 +69,6 @@ class FinancialTransactionsTable
                                     ->pluck('name', 'id')
                             )->required(),
 
-                        DatePicker::make('date')
-                            ->label('Import Date')
-                            ->default(now())
-                            ->required(),
 
 
                     ])
@@ -83,9 +79,7 @@ class FinancialTransactionsTable
                         $branchId = $data['branch_id'];
                         // تهيئة المستورد مع رأس الاستيراد
                         $import = new FinancialTransactionsFromExcelImport(
-                            branchId: (int) $branchId,
-                            paymentMethodId: null, // يمكن إضافة حقل في النموذج لطريقة الدفع
-                            userId: auth()->id(),
+                            branchId: (int) $branchId
                         );
 
                         try {

@@ -16,12 +16,8 @@ class FinancialTransactionsFromExcelImport implements ToCollection
     protected int $skippedRows = 0;
 
     public function __construct(
-        protected int $branchId,
-        protected ?int $paymentMethodId = null,
-        protected ?int $userId = null,
-    ) {
-        $this->userId = $this->userId ?: Auth::id();
-    }
+        protected int $branchId
+    ) {}
 
     /**
      * Import financial transactions from Excel
@@ -88,8 +84,7 @@ class FinancialTransactionsFromExcelImport implements ToCollection
                 'transaction_date' => $transactionDate,
                 'status' => FinancialTransaction::STATUS_PAID,
                 'description' => "Sales transaction imported from Excel for date: " . $transactionDate->format('Y-m-d'),
-                'payment_method_id' => $this->paymentMethodId,
-                'created_by' => $this->userId,
+                'created_by' => auth()->id(),
                 'month' => $transactionDate->month,
                 'year' => $transactionDate->year,
             ]);
