@@ -209,8 +209,11 @@ class GoodsReceivedNote extends Model implements Auditable
     public function getTotalAmountAttribute(): float
     {
         return max(0.0, (float) $this->grnDetails->sum(function ($detail) {
+            if (!$detail->product?->unitPrices) {
+                dd($detail->product);
+            }
             $priceFromUnit = optional(
-                $detail->product->unitPrices
+                $detail->product?->unitPrices
                     // لو تبي تقييد الأسعار بالـ scope المناسب، استعمل فلترة هنا إن احتجت
                     ->firstWhere('unit_id', $detail->unit_id)
             )->price;
