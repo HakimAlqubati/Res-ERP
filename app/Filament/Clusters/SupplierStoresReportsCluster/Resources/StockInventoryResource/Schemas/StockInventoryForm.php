@@ -227,7 +227,7 @@ class StockInventoryForm
                                 Select::make('store_id')->label(__('lang.store'))
                                     ->default(getDefaultStore())
                                     ->disabledOn('edit')
-                                    ->reactive()
+                                    ->reactive()->searchable()
                                     ->options(
                                         Store::active()
                                             ->withManagedStores()
@@ -277,8 +277,8 @@ class StockInventoryForm
                                 // اختيار التصنيف يُجهّز المسبح ويحسب الصفحات ويحمّل الصفحة 1
                                 $operaion == 'create'
                                     ? Select::make('category_id')->visibleOn('create')
-                                    ->label('Category')
-                                    ->options(Category::pluck('name', 'id'))
+                                    ->label('Category')->searchable()
+                                    ->options(Category::active()->notForPos()->pluck('name', 'id'))
                                     ->reactive()
                                     ->afterStateUpdated(function (callable $set, callable $get, $state) use ($loadPage) {
                                         try {

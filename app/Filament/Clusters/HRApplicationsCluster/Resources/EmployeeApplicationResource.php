@@ -18,6 +18,7 @@ use App\Models\EmployeeApplicationV2;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
 use App\Services\HR\Attendance\AttendanceService;
+use App\Services\HR\v2\Attendance\AttendanceServiceV2;
 use App\Services\HR\MonthClosure\MonthClosureService;
 use Carbon\Carbon;
 use DateTime;
@@ -187,7 +188,7 @@ class EmployeeApplicationResource extends Resource
                         'attendance_type'  => Attendance::ATTENDANCE_TYPE_REQUEST,
                     ];
 
-                    $result = app(AttendanceService::class)->handle($validated);
+                    $result = app(AttendanceServiceV2::class)->handle($validated);
 
                     if ($result) {
                         $record->update([
@@ -565,7 +566,7 @@ class EmployeeApplicationResource extends Resource
                         'type' => Attendance::CHECKTYPE_CHECKIN,
                         'attendance_type' => Attendance::ATTENDANCE_TYPE_REQUEST
                     ];
-                    $result = app(AttendanceService::class)->handle($validated);
+                    $result = app(AttendanceServiceV2::class)->handle($validated);
                     if ($result) {
                         $record->update([
                             'status'      => EmployeeApplicationV2::STATUS_APPROVED,
@@ -629,7 +630,7 @@ class EmployeeApplicationResource extends Resource
             ->modalCancelAction(false)
         ;
     }
-   
+
     public static function LeaveRequesttDetails(): Action
     {
         return Action::make('LeaveRequesttDetails')->label('Details')->button()
