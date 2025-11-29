@@ -15,11 +15,7 @@ return new class extends Migration
     {
         return;
         $categories = [
-            [
-                'name' => 'Salaries',
-                'type' => 'expense',
-                'description' => 'Employee salaries and wages',
-            ],
+           
             [
                 'name' => 'Rent',
                 'type' => 'expense',

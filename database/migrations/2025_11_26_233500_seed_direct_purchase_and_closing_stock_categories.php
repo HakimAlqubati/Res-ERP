@@ -15,6 +15,16 @@ return new class extends Migration
     {
         // Create Direct Purchase category
         FinancialCategory::firstOrCreate(
+            ['code' => FinancialCategoryCode::TRANSFERS],
+            [
+                'name' => 'Transfers',
+                'type' => FinancialCategory::TYPE_EXPENSE,
+                'description' => 'Transfers ofbranches',
+                'is_system' => true,
+                'is_visible' => true,
+            ]
+        );
+        FinancialCategory::firstOrCreate(
             ['code' => FinancialCategoryCode::DIRECT_PURCHASE],
             [
                 'name' => 'Direct Purchase',
@@ -23,6 +33,16 @@ return new class extends Migration
                 'is_system' => true,
                 'is_visible' => true,
             ]
+        );
+        FinancialCategory::firstOrCreate(
+            ['code' => FinancialCategoryCode::SALES],
+            [
+                'name' => 'Branch Sales',
+                'type' => 'income',
+                'description' => 'Revenue from branch sales',
+                'is_system' => true,
+                'is_visible' => true,
+            ],
         );
 
         // Create Closing Stock category
@@ -33,7 +53,7 @@ return new class extends Migration
                 'type' => FinancialCategory::TYPE_EXPENSE,
                 'description' => '',
                 'is_system' => true,
-                'is_visible' => false,
+                'is_visible' => true,
             ]
         );
     }
