@@ -119,12 +119,12 @@ class FinancialTransactionForm
                                     ->required()
                                     ->columnSpan(1),
 
-                                Select::make('payment_method_id')
-                                    ->label('Payment Method')
-                                    ->options(PaymentMethod::active()->pluck('name', 'id'))
-                                    ->searchable()
-                                    ->nullable()
-                                    ->columnSpan(1),
+                                // Select::make('payment_method_id')
+                                //     ->label('Payment Method')
+                                //     ->options(PaymentMethod::active()->pluck('name', 'id'))
+                                //     ->searchable()
+                                //     ->nullable()
+                                //     ->columnSpan(1),
 
                                 Textarea::make('description')
                                     ->label('Description')
