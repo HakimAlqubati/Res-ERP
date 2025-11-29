@@ -83,11 +83,12 @@ class FinancialTransactionsTable
                         'danger' => FinancialTransaction::STATUS_OVERDUE,
                     ])
                     ->formatStateUsing(fn($state) => FinancialTransaction::STATUSES[$state] ?? $state)
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('paymentMethod.name')
                     ->label('Payment Method')
-                    ->toggleable()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
 
                 TextColumn::make('description')

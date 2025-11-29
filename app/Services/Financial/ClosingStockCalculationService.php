@@ -10,6 +10,7 @@ use App\Models\StockInventory;
 use App\Models\Branch;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\PurchasedReports\PurchaseInvoiceProductSummaryReportService;
 
 class ClosingStockCalculationService
 {
@@ -36,8 +37,8 @@ class ClosingStockCalculationService
             $productId = $detail->product_id;
             $storeId = $inventory->store_id;
 
-            // Calculate value for this product using FIFO
-            $productValue = $this->calculateProductValueFifo($productId, $storeId, $physicalQty);
+            // Calculate value for this product using Latest Purchase Price
+            $productValue = $this->calculateProductValueLatestPrice($productId, $physicalQty);
             $totalValue += $productValue;
         }
 
@@ -45,66 +46,25 @@ class ClosingStockCalculationService
     }
 
     /**
-     * Calculate value for a single product using FIFO logic.
+     * Calculate value for a single product using Latest Purchase Price logic.
      *
      * @param int $productId
-     * @param int $storeId
      * @param float $quantity
      * @return float
      */
-    private function calculateProductValueFifo(int $productId, int $storeId, float $quantity): float
+    private function calculateProductValueLatestPrice(int $productId, float $quantity): float
     {
-        // Get inbound transactions (purchases, transfers in, adjustments in)
-        // Ordered by date DESC (newest first) because we assume remaining stock is from the latest batches
-        $inboundTransactions = InventoryTransaction::where('product_id', $productId)
-            ->where('store_id', $storeId)
-            ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
-            ->orderBy('transaction_date', 'desc')
-            ->orderBy('id', 'desc')
-            ->get();
+        $reportService = new PurchaseInvoiceProductSummaryReportService();
+        $latestPrice = $reportService->getLatestPurchasePrice($productId);
 
-        $remainingQtyToValue = $quantity;
-        $value = 0.0;
-
-        foreach ($inboundTransactions as $transaction) {
-            if ($remainingQtyToValue <= 0) {
-                break;
-            }
-
-            $trxQty = (float) $transaction->quantity;
-            $trxPrice = (float) $transaction->price; // Price per unit
-
-            // If price is 0 or null, try to get from product cost or last purchase price
-            if ($trxPrice <= 0) {
-                // Fallback: This might need adjustment based on business rules
-                // For now, we'll skip or use 0, but ideally we should look up product cost
-                // Let's try to get it from the product if available, or just use 0
-                // $trxPrice = $transaction->product->cost_price ?? 0;
-            }
-
-            $qtyToTake = min($remainingQtyToValue, $trxQty);
-
-            $value += $qtyToTake * $trxPrice;
-            $remainingQtyToValue -= $qtyToTake;
+        if ($latestPrice && $latestPrice->package_size > 0) {
+            $unitPrice = $latestPrice->price / $latestPrice->package_size;
+        } else {
+            // Fallback if no price found: 0
+            $unitPrice = 0;
         }
 
-        // If there is still quantity remaining (more stock than recorded history), 
-        // value it at the average cost of the last transaction or product cost
-        if ($remainingQtyToValue > 0) {
-            // Fallback price: use the price of the last found transaction, or 0
-            $lastPrice = 0;
-            if ($inboundTransactions->isNotEmpty()) {
-                $lastPrice = (float) $inboundTransactions->first()->price;
-            }
-
-            // If still 0, maybe check product cost?
-            // $product = \App\Models\Product::find($productId);
-            // $lastPrice = $product->cost_price ?? 0;
-
-            $value += $remainingQtyToValue * $lastPrice;
-        }
-
-        return $value;
+        return $quantity * $unitPrice;
     }
 
     /**

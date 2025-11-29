@@ -231,6 +231,9 @@ class MultiProductsInventoryService
         $product = Product::find($productId);
         $result = [];
 
+        if (!$product) {
+            return $result;
+        }
         $baseUnitPrice = $product->supplyOutUnitPrices()
             ->orderBy('package_size', 'asc')
             ->first();
@@ -304,6 +307,19 @@ class MultiProductsInventoryService
 
     public function getProductUnitPrices($productId)
     {
+        // 1. التحقق من أن الآيدي موجود
+        if (!$productId) {
+            return collect(); // إرجاع كولكشن فارغ لتجنب الخطأ
+        }
+
+        // 2. البحث عن المنتج أولاً
+        $product = Product::find($productId);
+
+        // 3. إذا لم يتم العثور على المنتج، نرجع كولكشن فارغ
+        if (!$product) {
+            return collect();
+        }
+
         $query = Product::find($productId)
 
             ?->reportUnitPrices()

@@ -136,7 +136,7 @@ class InventoryResource extends Resource
 
 
                 TextColumn::make('notes')
-                    ->label('Notes'),
+                    ->label('Notes')->limit(50)->tooltip(fn($state) => $state),
                 TextColumn::make('transactionable_id')
                     ->label('Transaction ID')->searchable(isIndividual: true)
                     ->sortable()->alignCenter(true)
@@ -246,11 +246,13 @@ class InventoryResource extends Resource
                     ->get(['id', 'name'])
                     ->pluck('name', 'id')
 
-                    ->toArray())
+                    ->toArray())->searchable()
                     ->label(__('lang.store')),
                 TrashedFilter::make(),
 
-            ], FiltersLayout::AboveContent)
+            ], FiltersLayout::Modal)
+            ->filtersFormColumns(4)
+            ->deferFilters(false)
             ->recordActions([
                 // Tables\Actions\EditAction::make(),
 
