@@ -44,8 +44,9 @@ class FinancialTransactionsTable
                     ->label(__('lang.import'))
                     ->icon('heroicon-o-arrow-up-tray')
                     ->color('info')
-                    ->modalHeading('Import Items Quantities from Excel')
+                    ->modalHeading('Import Branch Sales from Excel')
                     ->modalWidth('lg')
+                    ->modalIcon('heroicon-o-arrow-up-tray')
                     ->schema([
                         // 1) ملف الإكسل
                         FileUpload::make('file')
@@ -65,7 +66,7 @@ class FinancialTransactionsTable
                         Select::make('branch_id')->columnSpanFull()->label(__('lang.branch'))->searchable()
                             ->options(
                                 Branch::query()
-                                    ->branches()
+                                    ->active()
                                     ->pluck('name', 'id')
                             )->required(),
 
