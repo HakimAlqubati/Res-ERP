@@ -425,8 +425,8 @@ class StockInventoryForm
                                 TableColumn::make(__('Product'))->width('24rem'),
                                 TableColumn::make(__('Unit'))->alignCenter()->width('10rem'),
                                 TableColumn::make(__('lang.psize'))->alignCenter()->width('8rem'),
-                                TableColumn::make(__('System Qty'))->alignCenter()->width('10rem'),
                                 TableColumn::make(__('Physical Qty'))->alignCenter()->width('10rem'),
+                                TableColumn::make(__('System Qty'))->alignCenter()->width('10rem'),
                                 TableColumn::make(__('Difference'))->alignCenter()->width('8rem'),
                             ])
                             ->schema([
