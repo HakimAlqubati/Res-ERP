@@ -35,11 +35,11 @@ class OrderObserver
 
             // Sync to financial transactions if it's a transfer (not reseller)
             // Ensure branch is loaded
-            $order->loadMissing('branch');
+            // $order->loadMissing('branch');
 
-            if ($order->branch && $order->branch->type !== \App\Models\Branch::TYPE_RESELLER) {
-                $this->syncService->syncOrder($order);
-            }
+            // if ($order->branch && $order->branch->type !== \App\Models\Branch::TYPE_RESELLER) {
+            //     $this->syncService->syncOrder($order);
+            // }
         }
     }
 }
