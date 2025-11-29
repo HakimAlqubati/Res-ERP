@@ -2,12 +2,15 @@
 
 namespace App\Filament\Resources\FinancialTransactions\Tables;
 
+use App\Enums\FinancialCategoryCode;
+use App\Imports\FinancialTransactionsFromExcelImport;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\DeleteAction;
+use Filament\Actions\Action;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
@@ -17,17 +20,85 @@ use Filament\Tables\Columns\BadgeColumn;
 use App\Models\FinancialTransaction;
 use App\Models\FinancialCategory;
 use App\Models\Branch;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Tables\Enums\FiltersLayout;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
+use Throwable;
 
 class FinancialTransactionsTable
 {
     public static function configure(Table $table): Table
     {
+
+    //     $i = (new FinancialTransactionsFromExcelImport(branchId: 1))->parseDate(45963);
+    //  dd($i);
         return $table->striped()->defaultSort('id', 'desc')
             ->paginated([10, 25, 50, 100])
+            ->headerActions([
+                Action::make('import_items_quantities')
+                    ->label(__('lang.import'))
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->color('info')
+                    ->modalHeading('Import Items Quantities from Excel')
+                    ->modalWidth('lg')
+                    ->schema([
+                        // 1) ملف الإكسل
+                        FileUpload::make('file')
+                            ->label('Upload Excel file')
+                            ->required()
+                            // ->acceptedFileTypes([
+                            //     'application/vnd.ms-excel',
+                            //     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                            //     '.xls',
+                            //     '.xlsx',
+                            //     '.csv',
+                            // ])
+                            ->disk('public')
+                            ->directory('product_items_imports'),
 
+                        // 2) بيانات رأس الاستيراد
+                        Select::make('branch_id')->columnSpanFull()->label(__('lang.branch'))->searchable()
+                            ->options(
+                                Branch::query()
+                                    ->branches()
+                                    ->pluck('name', 'id')
+                            )->required(),
+
+                        DatePicker::make('date')
+                            ->label('Import Date')
+                            ->default(now())
+                            ->required(),
+
+
+                    ])
+                    ->action(function (array $data) {
+                        // مسار الملف على القرص العام
+                        $fullPath = Storage::disk('public')->path($data['file']);
+
+                        $branchId = $data['branch_id'];
+                        // تهيئة المستورد مع رأس الاستيراد
+                        $import = new FinancialTransactionsFromExcelImport(
+                            branchId: (int) $branchId,
+                            paymentMethodId: null, // يمكن إضافة حقل في النموذج لطريقة الدفع
+                            userId: auth()->id(),
+                        );
+
+                        try {
+                            Excel::import($import, $fullPath);
+
+                            $count = $import->getSuccessfulImportsCount();
+                            showSuccessNotifiMessage("Imported successfully. Lines: {$count}");
+                        } catch (Throwable $e) {
+                            showWarningNotifiMessage("❌ Import failed: " . $e->getMessage());
+                        }
+                    })
+                    ->requiresConfirmation(),
+            ])
             ->columns([
                 TextColumn::make('transaction_date')
                     ->label('Date')
@@ -155,10 +226,11 @@ class FinancialTransactionsTable
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
             ->recordActions([
-                EditAction::make()
-                    ->hidden(fn($record) => $record->reference_type !== null),
-                DeleteAction::make()
-                    ->hidden(fn($record) => $record->reference_type !== null),
+                // EditAction::make()
+                //     ->hidden(fn($record) => $record->reference_type !== null),
+                ViewAction::make(),
+                // DeleteAction::make()
+                //     ->hidden(fn($record) => $record->reference_type !== null),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

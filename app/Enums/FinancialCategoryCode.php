@@ -13,7 +13,7 @@ class FinancialCategoryCode
     {
         return [
             self::TRANSFERS => 'Transfers',
-            self::SALES => 'Sales Revenue',
+            self::SALES => 'sales',
             self::CLOSING_STOCK => 'Closing Stock',
             self::DIRECT_PURCHASE => 'Direct Purchase',
         ];

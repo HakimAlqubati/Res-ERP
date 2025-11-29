@@ -5,6 +5,7 @@ namespace App\Filament\Resources\FinancialTransactions;
 use App\Filament\Resources\FinancialTransactions\Pages\CreateFinancialTransaction;
 use App\Filament\Resources\FinancialTransactions\Pages\EditFinancialTransaction;
 use App\Filament\Resources\FinancialTransactions\Pages\ListFinancialTransactions;
+use App\Filament\Resources\FinancialTransactions\Pages\ViewFinancialTransaction;
 use App\Filament\Resources\FinancialTransactions\Schemas\FinancialTransactionForm;
 use App\Filament\Resources\FinancialTransactions\Tables\FinancialTransactionsTable;
 use App\Models\FinancialTransaction;
@@ -46,7 +47,8 @@ class FinancialTransactionResource extends Resource
         return [
             'index' => ListFinancialTransactions::route('/'),
             'create' => CreateFinancialTransaction::route('/create'),
-            'edit' => EditFinancialTransaction::route('/{record}/edit'),
+            'vie' => ViewFinancialTransaction::route('/{record}'),
+            // 'edit' => EditFinancialTransaction::route('/{record}/edit'),
         ];
     }
 
