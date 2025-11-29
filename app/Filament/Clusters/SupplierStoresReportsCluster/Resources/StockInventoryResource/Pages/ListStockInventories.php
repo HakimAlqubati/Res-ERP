@@ -25,7 +25,9 @@ class ListStockInventories extends ListRecords
                 ->label('Print Stocktake Template')
                 ->schema([
                     Select::make('category_id')->label('Category')->columnSpanFull()
-                        ->options(Category::active()->pluck('name', 'id'))
+                        ->options(Category::active()
+                            ->notForPos()
+                            ->pluck('name', 'id'))
                         ->placeholder('All Categories')->searchable()
                 ])
                 ->action(function ($data) {
