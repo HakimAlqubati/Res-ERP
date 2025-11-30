@@ -35,7 +35,7 @@ class PurchaseInvoiceForm
             ->components([
                 Fieldset::make()->columnSpanFull()->schema([
 
-                    Grid::make()->columnSpanFull()->columns(4)->schema([
+                    Grid::make()->columnSpanFull()->columns(3)->schema([
                         TextInput::make('invoice_no')
                             ->label(__('lang.invoice_no'))
                             ->required(fn(): bool => settingWithDefault('purchase_invoice_no_required_and_disabled_on_edit', false))
@@ -58,9 +58,7 @@ class PurchaseInvoiceForm
                             ->format('Y-m-d')
                             ->disabledOn('edit')
                             ->format('Y-m-d'),
-                        Toggle::make('has_attachment')
-                            ->label('Has Attachment')
-                            ->inline(false)->live(),
+                       
                         Toggle::make('has_description')
                             ->label('Has Description')->inline(false)
                             ->live(),
@@ -134,8 +132,8 @@ class PurchaseInvoiceForm
                         ->label(__('lang.attachment'))
                         // ->enableOpen()
                         // ->enableDownload()
-                        ->directory('purchase-invoices')->visible(fn($get): bool => $get('has_attachment'))
-                        ->columnSpanFull()
+                        ->directory('purchase-invoices')
+                         ->columnSpanFull()
                         // ->acceptedFileTypes(['application/pdf'])
                         ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                             return (string) str($file->getClientOriginalName())->prepend('purchase-invoice-');

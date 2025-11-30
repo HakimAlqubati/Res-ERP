@@ -100,14 +100,20 @@ class FinancialReportService
         $closingStock = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::CLOSING_STOCK);
 
         // 4. Calculate Gross Profit: ((Transfers + Direct Purchase) - Closing Stock) ÷ Sales
-        $grossProfitRatio = 0;
-        $grossProfitValue = 0;
+        // 1. حساب تكلفة البضاعة المباعة (للعرض في التقرير فقط)
+        // COGS = (Transfers + Direct Purchase) - Closing Stock
+        $costOfGoodsSold = ($transfers + $directPurchase) - $closingStock;
 
+        // 2. حساب إجمالي الربح بناءً على معادلة الصورة المرفقة
+        // Equation: Sales + Closing Stock - Transfers - Direct Purchase
+        $grossProfitValue = ($totalRevenue + $closingStock) - $directPurchase - $transfers;
+
+        // dd($grossProfitValue,$totalRevenue,$closingStock,$directPurchase,$transfers);
+        // 3. حساب نسبة الربح (Gross Profit Ratio)
+        $grossProfitRatio = 0;
         if ($totalRevenue > 0) {
-            $grossProfitValue = ($transfers + $directPurchase) - $closingStock;
             $grossProfitRatio = ($grossProfitValue / $totalRevenue);
         }
-
         // 5. Net Profit
         $netProfit = $totalRevenue - $totalExpenses;
 
@@ -124,8 +130,12 @@ class FinancialReportService
                 'direct_purchase_formatted' => formatMoneyWithCurrency($directPurchase),
                 'closing_stock' => (float) $closingStock,
                 'closing_stock_formatted' => formatMoneyWithCurrency($closingStock),
-                'total' => (float) $grossProfitValue,
-                'total_formatted' => formatMoneyWithCurrency($grossProfitValue),
+                // 'total' => (float) $grossProfitValue,
+                // 'total_formatted' => formatMoneyWithCurrency($grossProfitValue),
+
+                'total' => (float) $costOfGoodsSold,
+                'total_formatted' => formatMoneyWithCurrency($costOfGoodsSold),
+
             ],
             'gross_profit' => [
                 'value' => (float) $grossProfitValue,
