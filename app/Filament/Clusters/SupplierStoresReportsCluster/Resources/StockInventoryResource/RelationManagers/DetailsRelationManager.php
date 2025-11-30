@@ -28,6 +28,7 @@ use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -116,45 +117,61 @@ class DetailsRelationManager extends RelationManager
                             'system_quantity' => $record->system_quantity,
                             'physical_quantity' => $record->physical_quantity,
                             'package_size' => $record->package_size,
+                            'is_adjustmented' => $record->is_adjustmented,
                         ])->toArray();
 
                         return [
                             Repeater::make('items')
                                 ->label(__('Products'))
+                                ->table([
+                                    TableColumn::make(__('lang.product'))->width('35%'),
+                                    TableColumn::make(__('lang.unit'))->width('10%'),
+                                    TableColumn::make(__('lang.system_quantity'))->width('15%'),
+                                    TableColumn::make(__('lang.physical_quantity'))
+                                        ->alignCenter(true)
+                                        ->width('15%'),
+                                    TableColumn::make(__('lang.difference'))->width('15%'),
+                                ])->columnSpanFull()
                                 ->schema([
-                                    Grid::make()->columns(5)->schema([
-                                        Hidden::make('id'),
-                                        TextInput::make('product_name')
-                                            ->label(__('Product'))
-                                            ->disabled()
-                                            ->columnSpan(2),
-                                        TextInput::make('unit_name')
-                                            ->label(__('Unit'))
-                                            ->disabled(),
-                                        TextInput::make('system_quantity')
-                                            ->label(__('System Qty'))
-                                            ->disabled(),
-                                        TextInput::make('physical_quantity')
-                                            ->label(__('Physical Qty'))
-                                            ->numeric()
-                                            ->required()
-                                            ->minValue(0)
-                                            ->live()
-                                            ->afterStateUpdated(function ($state, callable $get, callable $set) {
-                                                $systemQty = $get('system_quantity') ?? 0;
-                                                $set('difference', $state - $systemQty);
-                                            }),
-                                    ]),
-                                    Grid::make()->columns(2)->schema([
-                                        TextInput::make('difference')
-                                            ->label(__('Difference'))
-                                            ->disabled()
-                                            ->dehydrated(false)
-                                            ->default(fn($get) => ($get('physical_quantity') ?? 0) - ($get('system_quantity') ?? 0)),
-                                        TextInput::make('id')
-                                            ->hidden()
-                                            ->dehydrated(),
-                                    ]),
+                                    Hidden::make('id'),
+                                    Hidden::make('is_adjustmented'),
+                                    TextInput::make('product_name')
+                                        ->label(__('Product'))
+                                        ->disabled()
+                                        ->columnSpan(2),
+                                    TextInput::make('unit_name')
+                                        ->label(__('Unit'))
+                                        ->extraInputAttributes(['class' => 'text-center'])
+
+                                        ->disabled(),
+                                    TextInput::make('system_quantity')
+                                        ->label(__('System Qty'))
+                                        ->extraInputAttributes(['class' => 'text-center'])
+
+                                        ->disabled(),
+                                    TextInput::make('physical_quantity')
+                                        ->label(__('Physical Qty'))
+                                        ->extraInputAttributes(['class' => 'text-center'])
+                                        ->numeric()
+                                        ->required()
+                                        ->minValue(0)
+                                        ->live()
+                                        ->disabled(fn($get) => $get('is_adjustmented'))
+                                        ->afterStateUpdated(function ($state, callable $get, callable $set) {
+                                            $systemQty = $get('system_quantity') ?? 0;
+                                            $diff = $state - $systemQty;
+                                            $diff = round($diff, 4);
+                                            $set('difference', $diff);
+                                        }),
+                                    TextInput::make('difference')
+                                        ->extraInputAttributes(['class' => 'text-center'])
+
+                                        ->label(__('Difference'))
+                                        ->disabled()
+                                        ->dehydrated(false)
+                                        ->default(fn($get) => ($get('physical_quantity') ?? 0) - ($get('system_quantity') ?? 0)),
+
+
                                 ])
                                 ->default($defaultValues)
                                 ->addable(false)
@@ -167,7 +184,9 @@ class DetailsRelationManager extends RelationManager
                         DB::beginTransaction();
                         try {
                             foreach ($data['items'] as $item) {
-                                // dd($item);
+                                if ($item['is_adjustmented']) {
+                                    continue;
+                                }
                                 $record = $records->firstWhere('id', $item['id']);
                                 if ($record) {
                                     $record->update([

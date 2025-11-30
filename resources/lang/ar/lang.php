@@ -248,4 +248,8 @@ return [
   'import' => 'استيراد',
   'product_items_count' => 'عدد المكونات',
   'pos_sale' => 'بيع',
+  'is_adjustment' => 'تم تعديله؟',
+  'physical_quantity' => 'الكمية الفعلية',
+  'system_quantity' => 'الكمية بالنظام',
+  'difference' => 'الفرق',
 ];

@@ -265,5 +265,9 @@ return [
     'import' => 'Import',
     'product_items_count' => 'Items Count',
     'pos_sale' => 'Sale',
+    'is_adjustment' => 'Is Adjustment',
 
+    'physical_quantity' => 'Physical Quantity',
+    'system_quantity' => 'System Quantity',
+    'difference' => 'Difference',
 ];
