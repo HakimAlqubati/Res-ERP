@@ -19,7 +19,7 @@ class AttendanceCalculator
             $ctx->status = Attendance::STATUS_EARLY_ARRIVAL;
         } else {
             // Late or On Time
-            $diff = $checkTime->diffInMinutes($shiftStart);
+            $diff = $checkTime->diffInMinutes($shiftStart, true);
             if ($diff > 0) {
                 $ctx->delayMinutes = $diff;
                 $ctx->status = Attendance::STATUS_LATE_ARRIVAL;
@@ -45,12 +45,12 @@ class AttendanceCalculator
             // If check-in was "00:00:00" based (legacy issue), we might need fixing.
             // Assuming standard Y-m-d H:i:s format in DB for now or handling it via Carbon.
 
-             $ctx->actualMinutes = $checkInTime->diffInMinutes($checkTime);
+            $ctx->actualMinutes = $checkInTime->diffInMinutes($checkTime);
         }
 
         if ($checkTime->gt($shiftEnd)) {
             // Late Departure (Overtime?)
-            $ctx->lateDepartureMinutes = $checkTime->diffInMinutes($shiftEnd);
+            $ctx->lateDepartureMinutes = $checkTime->diffInMinutes($shiftEnd, true);
             $ctx->status = Attendance::STATUS_LATE_DEPARTURE;
         } elseif ($checkTime->lt($shiftEnd)) {
             // Early Departure
