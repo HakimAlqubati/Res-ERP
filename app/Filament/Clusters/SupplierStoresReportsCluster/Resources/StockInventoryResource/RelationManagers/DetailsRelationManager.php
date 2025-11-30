@@ -26,6 +26,7 @@ use App\Models\Store;
 use App\Services\MultiProductsInventoryService;
 use Filament\Actions\Action;
 use Filament\Forms;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
@@ -97,31 +98,101 @@ class DetailsRelationManager extends RelationManager
                 // Tables\Actions\CreateAction::make(),
             ])
             ->recordActions([
-                 Action::make('editPhysicalQty')
-                    ->label(__('Edit Qty'))
-                    ->icon('heroicon-o-pencil')
-                    ->schema([
-                        TextInput::make('physical_quantity')
-                            ->label(__('Physical Quantity'))
-                            ->numeric()
-                            ->required()
-                            ->minValue(0),
-                    ])
-                    ->action(function ($record, array $data) {
-                        $record->update([
-                            'physical_quantity' => $data['physical_quantity'],
-                            'difference' => $data['physical_quantity'] - $record->system_quantity,
-                        ]);
 
-                        Notification::make()
-                            ->title(__('Updated Successfully'))
-                            ->success()
-                            ->send();
-                    }),
                 // Tables\Actions\DeleteAction::make(),
             ])
 
             ->toolbarActions([
+                BulkAction::make('editPhysicalQuantity')
+                    ->label(__('Edit Physical Quantity'))
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('info')
+                    ->schema(function (Collection $records) {
+                        // dd($records);
+                        $defaultValues = $records->map(fn($record) => [
+                            'id' => $record->id,
+                            'product_name' => $record->product ? "{$record->product->code}-{$record->product->name}" : 'N/A',
+                            'unit_name' => $record->unit?->name ?? 'N/A',
+                            'system_quantity' => $record->system_quantity,
+                            'physical_quantity' => $record->physical_quantity,
+                            'package_size' => $record->package_size,
+                        ])->toArray();
+
+                        return [
+                            Repeater::make('items')
+                                ->label(__('Products'))
+                                ->schema([
+                                    Grid::make()->columns(5)->schema([
+                                        Hidden::make('id'),
+                                        TextInput::make('product_name')
+                                            ->label(__('Product'))
+                                            ->disabled()
+                                            ->columnSpan(2),
+                                        TextInput::make('unit_name')
+                                            ->label(__('Unit'))
+                                            ->disabled(),
+                                        TextInput::make('system_quantity')
+                                            ->label(__('System Qty'))
+                                            ->disabled(),
+                                        TextInput::make('physical_quantity')
+                                            ->label(__('Physical Qty'))
+                                            ->numeric()
+                                            ->required()
+                                            ->minValue(0)
+                                            ->live()
+                                            ->afterStateUpdated(function ($state, callable $get, callable $set) {
+                                                $systemQty = $get('system_quantity') ?? 0;
+                                                $set('difference', $state - $systemQty);
+                                            }),
+                                    ]),
+                                    Grid::make()->columns(2)->schema([
+                                        TextInput::make('difference')
+                                            ->label(__('Difference'))
+                                            ->disabled()
+                                            ->dehydrated(false)
+                                            ->default(fn($get) => ($get('physical_quantity') ?? 0) - ($get('system_quantity') ?? 0)),
+                                        TextInput::make('id')
+                                            ->hidden()
+                                            ->dehydrated(),
+                                    ]),
+                                ])
+                                ->default($defaultValues)
+                                ->addable(false)
+                                ->deletable(false)
+                                ->reorderable(false)
+                                ->columnSpanFull(),
+                        ];
+                    })
+                    ->action(function (Collection $records, array $data) {
+                        DB::beginTransaction();
+                        try {
+                            foreach ($data['items'] as $item) {
+                                // dd($item);
+                                $record = $records->firstWhere('id', $item['id']);
+                                if ($record) {
+                                    $record->update([
+                                        'physical_quantity' => $item['physical_quantity'],
+                                        'difference' => $item['physical_quantity'] - $record->system_quantity,
+                                    ]);
+                                }
+                            }
+
+                            DB::commit();
+                            Notification::make()
+                                ->title(__('Updated Successfully'))
+                                ->body(__('Physical quantities have been updated'))
+                                ->success()
+                                ->send();
+                        } catch (\Throwable $th) {
+                            DB::rollBack();
+                            Notification::make()
+                                ->title(__('Error'))
+                                ->body($th->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    })
+                    ->deselectRecordsAfterCompletion(),
                 BulkAction::make('createStockAdjustment')
                     ->schema(function (Collection $records) {
 
