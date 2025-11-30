@@ -24,12 +24,14 @@ use App\Models\StockSupplyOrder;
 use App\Models\StockSupplyOrderDetail;
 use App\Models\Store;
 use App\Services\MultiProductsInventoryService;
+use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
+use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -95,7 +97,27 @@ class DetailsRelationManager extends RelationManager
                 // Tables\Actions\CreateAction::make(),
             ])
             ->recordActions([
-                // Tables\Actions\EditAction::make(),
+                 Action::make('editPhysicalQty')
+                    ->label(__('Edit Qty'))
+                    ->icon('heroicon-o-pencil')
+                    ->schema([
+                        TextInput::make('physical_quantity')
+                            ->label(__('Physical Quantity'))
+                            ->numeric()
+                            ->required()
+                            ->minValue(0),
+                    ])
+                    ->action(function ($record, array $data) {
+                        $record->update([
+                            'physical_quantity' => $data['physical_quantity'],
+                            'difference' => $data['physical_quantity'] - $record->system_quantity,
+                        ]);
+
+                        Notification::make()
+                            ->title(__('Updated Successfully'))
+                            ->success()
+                            ->send();
+                    }),
                 // Tables\Actions\DeleteAction::make(),
             ])
 
