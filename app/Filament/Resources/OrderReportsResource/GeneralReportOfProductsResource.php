@@ -90,7 +90,7 @@ class GeneralReportOfProductsResource extends Resource
     public static function processReportData($start_date, $end_date, $branch_id)
     {   // جلب المخزن المرتبط بالفرع
         $storeId = Branch::where('id', $branch_id)->value('store_id');
-        $categories = Category::where('active', 1)->pluck('name', 'id');
+        $categories = Category::where('active', 1)->notForPos()->pluck('name', 'id');
 
         $final_result['data'] = [];
         $grand_total_amount = 0.0;   // مجموع remaining_value عبر كل الفئات

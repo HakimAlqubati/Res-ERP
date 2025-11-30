@@ -395,18 +395,23 @@
             <div class="net-profit-label">{{ __('Gross Profit') }}</div>
             <div class="net-profit-amount {{ ($report['gross_profit']['value'] ?? 0) >= 0 ? 'profit-positive' : 'profit-negative' }}">
                 {{ $report['gross_profit']['value_formatted'] ?? number_format($report['gross_profit']['value'] ?? 0, 2) }}
+            </div>
+        </div>
+
+        {{-- Cross Margin --}}
+        <div class="net-profit-section">
+            <div class="net-profit-label">{{ __('Cross Margin') }}</div>
+            <div class="net-profit-amount {{ ($report['cross_margin']['value'] ?? 0) >= 0 ? 'profit-positive' : 'profit-negative' }}">
+                <!-- {{ $report['cross_margin']['value_formatted'] ?? number_format($report['cross_margin']['value'] ?? 0, 2) }} -->
                 <span style="font-size: 1rem; margin-left: 1rem; opacity: 0.8;">({{ $report['gross_profit']['ratio_formatted'] ?? '0.00%' }})</span>
             </div>
         </div>
 
-        {{-- Signatures --}}
-        <div class="signatures">
-            <div class="signature-box">
-                <p class="signature-label">{{ __('Prepared By') }}</p>
-            </div>
-            <div class="signature-box">
-                <p class="signature-label">{{ __('Approved By') }}</p>
-            </div>
+        {{-- Generated On --}}
+        <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; text-align: center;">
+            <p style="font-size: 0.75rem; color: #94a3b8;">
+                {{ __('Generated on') }} {{ \Carbon\Carbon::now()->format('F d, Y - h:i A') }}
+            </p>
         </div>
         @else
         <div class="empty-state">
