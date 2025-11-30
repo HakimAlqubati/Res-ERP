@@ -45,7 +45,7 @@ class AttendanceCalculator
             // If check-in was "00:00:00" based (legacy issue), we might need fixing.
             // Assuming standard Y-m-d H:i:s format in DB for now or handling it via Carbon.
 
-            $ctx->actualMinutes = $checkInTime->diffInMinutes($checkTime);
+             $ctx->actualMinutes = $checkInTime->diffInMinutes($checkTime);
         }
 
         if ($checkTime->gt($shiftEnd)) {

@@ -44,7 +44,6 @@ class AttendanceHandlerV2
 
         // 4. Persist (Save to DB)
         $record = $this->persist($ctx);
-
         // 5. Update Durations (Post-creation logic)
         $this->updateDurations($record);
 
@@ -124,11 +123,6 @@ class AttendanceHandlerV2
 
         if ($ctx->checkType === Attendance::CHECKTYPE_CHECKOUT && $ctx->lastAction) {
             $data['checkinrecord_id'] = $ctx->lastAction->id;
-
-            // Format duration as H:i
-            $h = floor($ctx->actualMinutes / 60);
-            $m = $ctx->actualMinutes % 60;
-            $data['actual_duration_hourly'] = sprintf('%02d:%02d', $h, $m);
         }
 
         return Attendance::create($data);
@@ -144,19 +138,40 @@ class AttendanceHandlerV2
             $record->supposed_duration_hourly = $period->supposed_duration;
         }
 
-        // 2. Total Actual Duration (Only relevant for Checkout)
+        // 2. Actual Duration for this checkout session (Only relevant for Checkout)
+        if ($record->check_type === Attendance::CHECKTYPE_CHECKOUT && $record->checkinrecord_id) {
+            // Get the check-in record
+            $checkInRecord = Attendance::find($record->checkinrecord_id);
+
+            if ($checkInRecord) {
+                // Calculate duration between check-in and check-out
+                $checkInTime = Carbon::parse($checkInRecord->real_check_date . ' ' . $checkInRecord->check_time);
+                $checkOutTime = Carbon::parse($record->real_check_date . ' ' . $record->check_time);
+
+                $actualMinutes = $checkInTime->diffInMinutes($checkOutTime);
+
+                // Format duration as H:i
+                $h = floor($actualMinutes / 60);
+                $m = $actualMinutes % 60;
+                // dd($actualMinutes, $h, $m,$checkInTime,$checkOutTime);
+                $record->actual_duration_hourly = sprintf('%02d:%02d', $h, $m);
+            }
+        }
+        // 3. Total Actual Duration (Only relevant for Checkout)
         if ($record->check_type === Attendance::CHECKTYPE_CHECKOUT) {
             // Calculate total for the day
             $totalMinutes = 0;
 
-            // Fetch all checkouts for this employee/period/date
+            // Fetch all OTHER checkouts for this employee/period/date (excluding current record)
             $checkouts = Attendance::where('employee_id', $record->employee_id)
                 ->where('period_id', $record->period_id)
                 ->where('check_date', $record->check_date)
                 ->where('check_type', Attendance::CHECKTYPE_CHECKOUT)
                 ->where('accepted', 1)
+                ->where('id', '!=', $record->id) // Exclude current record
                 ->get();
 
+            // Add durations from other checkouts
             foreach ($checkouts as $checkout) {
                 if ($checkout->actual_duration_hourly) {
                     $parts = explode(':', $checkout->actual_duration_hourly);
@@ -166,11 +181,20 @@ class AttendanceHandlerV2
                 }
             }
 
+            // Add current record's actual duration to the total
+            if ($record->actual_duration_hourly) {
+                $parts = explode(':', $record->actual_duration_hourly);
+                if (count($parts) >= 2) {
+                    $totalMinutes += ((int)$parts[0] * 60) + (int)$parts[1];
+                }
+            }
+
             $h = floor($totalMinutes / 60);
             $m = $totalMinutes % 60;
             $record->total_actual_duration_hourly = sprintf('%02d:%02d', $h, $m);
         }
 
+        // dd($record);
         $record->save();
     }
 }
