@@ -403,7 +403,7 @@
             <div class="net-profit-label">{{ __('Cross Margin') }}</div>
             <div class="net-profit-amount {{ ($report['cross_margin']['value'] ?? 0) >= 0 ? 'profit-positive' : 'profit-negative' }}">
                 <!-- {{ $report['cross_margin']['value_formatted'] ?? number_format($report['cross_margin']['value'] ?? 0, 2) }} -->
-                <span style="font-size: 1rem; margin-left: 1rem; opacity: 0.8;">({{ $report['gross_profit']['ratio_formatted'] ?? '0.00%' }})</span>
+                <span style="font-size: 1rem; margin-left: 1rem; opacity: 0.8;"> {{ $report['gross_profit']['ratio_formatted'] ?? '0.00%' }} </span>
             </div>
         </div>
 
