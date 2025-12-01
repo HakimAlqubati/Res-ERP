@@ -64,7 +64,6 @@
             border-radius: 5px;
             padding: 0px 10px 0px 10px;
             min-width: 150px;
-            margin-top: 5px;
         }
 
         .btn-refresh {
@@ -72,6 +71,7 @@
             border-radius: 5px;
             padding: 0px 10px 0px 10px;
             min-width: 150px;
+            margin-top: 5px;
 
         }
 
@@ -85,9 +85,9 @@
             transform: scale(1.05);
         }
 
-         
 
-        .btn-print i, 
+
+        .btn-print i,
     </style>
     <div class="text-right mb-4">
 
@@ -108,11 +108,11 @@
         <thead class="fixed-header" style="top:64px;">
             <tr class="header_report">
                 <th colspan="2" class="">
-                    <button type="button" class="btn btn-secondary btn-refresh" wire:click="refreshData">
-                        🔄 {{ __('Refresh') }}
-                    </button>
                     <button onclick="exportToExcel()" class="btn btn-primary">
                         &#128200; {{ __('To Excel') }}
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-refresh" wire:click="refreshData">
+                        🔄 {{ __('Refresh') }}
                     </button>
 
                     <!-- سبينر يظهر فقط أثناء تشغيل refreshData -->
