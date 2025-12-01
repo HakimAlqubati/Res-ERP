@@ -35,15 +35,18 @@ class AttendanceHandlerV2
         // 2. Determine Check Type (CheckIn vs CheckOut)
         $this->determineCheckType($ctx);
 
+        // dd($ctx);
         // 3. Calculate Logic (Delays, Overtime, etc.)
         if ($ctx->checkType === Attendance::CHECKTYPE_CHECKIN) {
             $this->calculator->calculateCheckIn($ctx);
         } else {
             $this->calculator->calculateCheckOut($ctx);
         }
+        // dd($ctx, $ctx->checkType);
 
         // 4. Persist (Save to DB)
         $record = $this->persist($ctx);
+        // dd($record);
         // 5. Update Durations (Post-creation logic)
         $this->updateDurations($record);
 
@@ -81,19 +84,17 @@ class AttendanceHandlerV2
 
     private function findOpenCheckIn(AttendanceContext $ctx)
     {
-        // Find the last check-in for this employee & period that doesn't have a checkout
+        // حماية: لا يمكن البحث بدون تحديد وردية
+        if (!$ctx->workPeriod || !$ctx->shiftDate) {
+            return null;
+        }
+
         return Attendance::where('employee_id', $ctx->employee->id)
-            ->where('period_id', $ctx->workPeriod->id)
+            ->where('period_id', $ctx->workPeriod->id) // نفس الوردية حصراً
+            ->where('check_date', $ctx->shiftDate)     // نفس التاريخ المنطقي حصراً
             ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
             ->where('accepted', 1)
-            // Ensure it matches the "Shift Date" logic roughly
-            // Or just take the very last one? 
-            // Better to constrain by date range to avoid closing very old shifts
-            ->whereBetween('check_date', [
-                Carbon::parse($ctx->shiftDate)->subDay()->toDateString(),
-                Carbon::parse($ctx->shiftDate)->addDay()->toDateString()
-            ])
-            ->whereDoesntHave('checkout') // Assuming relation exists
+            ->whereDoesntHave('checkout')
             ->latest('id')
             ->first();
     }
@@ -149,14 +150,16 @@ class AttendanceHandlerV2
                 $checkOutTime = Carbon::parse($record->real_check_date . ' ' . $record->check_time);
 
                 $actualMinutes = $checkInTime->diffInMinutes($checkOutTime);
-
+                // dd($actualMinutes, $checkInTime, $checkOutTime);
                 // Format duration as H:i
                 $h = floor($actualMinutes / 60);
                 $m = $actualMinutes % 60;
+                // dd($actualMinutes, $h, $m, $checkInTime, $checkOutTime);
                 // dd($actualMinutes, $h, $m,$checkInTime,$checkOutTime);
                 $record->actual_duration_hourly = sprintf('%02d:%02d', $h, $m);
             }
         }
+        // dd($record);
         // 3. Total Actual Duration (Only relevant for Checkout)
         if ($record->check_type === Attendance::CHECKTYPE_CHECKOUT) {
             // Calculate total for the day
@@ -180,9 +183,9 @@ class AttendanceHandlerV2
                     }
                 }
             }
-
             // Add current record's actual duration to the total
             if ($record->actual_duration_hourly) {
+                // dd($record->actual_duration_hourly);
                 $parts = explode(':', $record->actual_duration_hourly);
                 if (count($parts) >= 2) {
                     $totalMinutes += ((int)$parts[0] * 60) + (int)$parts[1];
@@ -191,9 +194,17 @@ class AttendanceHandlerV2
 
             $h = floor($totalMinutes / 60);
             $m = $totalMinutes % 60;
+            // dd($h, $m, $totalMinutes, $record);
             $record->total_actual_duration_hourly = sprintf('%02d:%02d', $h, $m);
         }
 
+        // dd(
+        //     $checkInTime,
+        //     $checkOutTime,
+        //     $actualMinutes,
+        //     $record->actual_duration_hourly,
+        //     $record
+        // );
         // dd($record);
         $record->save();
     }

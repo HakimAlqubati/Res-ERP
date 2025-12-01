@@ -15,9 +15,21 @@ return [
     'you_cannot_attendance_before'                                                    => 'You can not checkin before',
     'hours'                                                                           => 'Hours',
     'cannot_check_in_because_adjust'                                                  => 'You cannot check in right now. Please contact your manager to adjust your shift.',
-    'attendance_out_of_range_before_period' => 
-    'You cannot check in at this time. You are outside the allowed period before your shift starts. Please try again during the permitted time before your shift.'
-    ,
+    'attendance_out_of_range_before_period' =>
+    'You cannot check in at this time. You are outside the allowed period before your shift starts. Please try again during the permitted time before your shift.',
     'attendance_success' => 'Attendance success'
+    /*
+    |--------------------------------------------------------------------------
+    | Attendance Notifications
+    |--------------------------------------------------------------------------
+    */,
+    'attendance_already_completed_for_date' => 'Attendance for this date (:date) is already completed.',
+    'you_are_already_checked_in'            => 'You are already checked in.',
+    'cannot_checkout_without_checkin'       => 'Cannot check out without a prior check-in record.',
+
+    'check_in_success'  => 'Checked in successfully.',
+    'check_out_success' => 'Checked out successfully.',
+
+    'you_dont_have_periods_today' => 'You do not have any work shifts scheduled for today.',
 
 ];
