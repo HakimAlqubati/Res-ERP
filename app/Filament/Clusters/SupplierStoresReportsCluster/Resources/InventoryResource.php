@@ -31,6 +31,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -127,7 +128,9 @@ class InventoryResource extends Resource
                 TextColumn::make('package_size')->alignCenter(true)
                     ->label('Package Size'),
                 TextColumn::make('price')
-                    ->label('Price')->toggleable(isToggledHiddenByDefault: true),
+                    ->label('Price')->sortable()
+                    ->summarize(Sum::make())
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('movement_date')
                     ->label('Movement Date')->date('Y-m-d')
                     ->sortable(),
@@ -248,6 +251,27 @@ class InventoryResource extends Resource
 
                     ->toArray())->searchable()
                     ->label(__('lang.store')),
+
+                Filter::make('movement_date')
+                    ->form([
+                        Forms\Components\DatePicker::make('from')
+                            ->label(__('From Date')),
+                        Forms\Components\DatePicker::make('until')
+                            ->label(__('Until Date')),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['from'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('movement_date', '>=', $date),
+                            )
+                            ->when(
+                                $data['until'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('movement_date', '<=', $date),
+                            );
+                    })
+                    ->label(__('Movement Date')),
+
                 TrashedFilter::make(),
 
             ], FiltersLayout::Modal)
