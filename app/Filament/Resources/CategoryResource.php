@@ -172,7 +172,7 @@ class CategoryResource extends Resource
     }
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return static::getModel()::notForPos()->count();
     }
 
     public static function getEloquentQuery(): Builder

@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Filament\Resources\CategoryResource\Pages;
+use Filament\Schemas\Components\Tabs\Tab;
 
 use Filament\Actions\CreateAction;
 use App\Filament\Resources\CategoryResource;
@@ -18,5 +19,19 @@ class ManageCategories extends ManageRecords
         ];
     }
 
-   
+    public function getTabs(): array
+    {
+        return [
+          
+            'active' => Tab::make(__('Active'))
+                ->modifyQueryUsing(fn($query) => $query->where('active', 1))
+                ->badge(fn() => \App\Models\Category::notForPos()->where('active', 1)->count())
+                ->badgeColor('success'),
+
+            'inactive' => Tab::make(__('Inactive'))
+                ->modifyQueryUsing(fn($query) => $query->where('active', 0))
+                ->badge(fn() => \App\Models\Category::notForPos()->where('active', 0)->count())
+                ->badgeColor('danger'),
+        ];
+    }
 }
