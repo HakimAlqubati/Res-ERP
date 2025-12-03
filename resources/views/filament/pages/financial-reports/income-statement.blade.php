@@ -312,6 +312,7 @@
             </div>
         </div>
     </div>
+    @if(isset($branchName) && $branchName)
 
     <div class="report-container">
         @if (isset($report) && !empty($report))
@@ -419,4 +420,10 @@
         </div>
         @endif
     </div>
+    @else
+       <div class="please_select_message_div text-center">
+            <h1 class="please_select_message_text">{{ __('Please select a branch to generate the report.') }}
+            </h1>
+        </div>
+    @endif
 </x-filament::page>

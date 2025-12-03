@@ -16,9 +16,16 @@ class FinancialReportService
             $query->whereBetween('transaction_date', [$dto->startDate, $dto->endDate]);
         }
 
-        if ($dto->branchId) {
-            $query->where('branch_id', $dto->branchId);
-        }
+        // 1. إذا كان التقرير مطلوباً لفرع معين
+        // if ($dto->branchId) {
+        $query->where('transactable_type', \App\Models\Branch::class)
+            ->where('transactable_id', $dto->branchId);
+        // }
+        // 2. إما إذا كان التقرير مطلوباً لمخزن معين (مثل المطبخ المركزي)
+        // elseif (!empty($dto->storeId)) {
+        //     $query->where('transactable_type', \App\Models\Store::class)
+        //         ->where('transactable_id', $dto->storeId);
+        // }
 
         // Clone query for different aggregations
         $revenueQuery = clone $query;

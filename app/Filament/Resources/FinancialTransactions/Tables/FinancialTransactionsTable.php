@@ -20,10 +20,12 @@ use Filament\Tables\Columns\BadgeColumn;
 use App\Models\FinancialTransaction;
 use App\Models\FinancialCategory;
 use App\Models\Branch;
+use App\Models\Store;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Tables\Enums\FiltersLayout;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
@@ -135,8 +137,25 @@ class FinancialTransactionsTable
                             ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state)),
                     ]),
 
-                TextColumn::make('branch.name')
-                    ->label('Branch')
+                // TextColumn::make('branch.name')
+                //     ->label('Branch')
+                //     ->searchable()
+                //     ->sortable()
+                //     ->toggleable(),
+
+                TextColumn::make('transactable.name')
+                    ->label(__('Entity')) // الاسم: الجهة
+                    ->description(fn(FinancialTransaction $record) => class_basename($record->transactable_type)) // يوضح هل هو Branch أم Store
+                    ->icon(fn(FinancialTransaction $record) => match ($record->transactable_type) {
+                        'App\\Models\\Store' => 'heroicon-o-building-storefront', // أيقونة للمخزن
+                        'App\\Models\\Branch' => 'heroicon-o-building-office',    // أيقونة للفرع
+                        default => 'heroicon-o-question-mark-circle',
+                    })
+                    ->iconColor(fn(FinancialTransaction $record) => match ($record->transactable_type) {
+                        'App\\Models\\Store' => 'warning',
+                        'App\\Models\\Branch' => 'primary',
+                        default => 'gray',
+                    })
                     ->searchable()
                     ->sortable()
                     ->toggleable(),
@@ -163,9 +182,18 @@ class FinancialTransactionsTable
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('reference_type')
-                    ->label('Reference')
-                    ->formatStateUsing(fn($state, $record) => $state ? class_basename($state) . ' #' . $record->reference_id : '-')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->label('Reference Type')
+                    ->formatStateUsing(fn($state) => $state ? class_basename($state) : '-')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
+
+                TextColumn::make('reference_id')
+                    ->label('Reference ID')
+                    ->formatStateUsing(fn($state) => $state ?? '-')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
 
                 TextColumn::make('creator.name')
                     ->label('Created By')
@@ -188,11 +216,73 @@ class FinancialTransactionsTable
                     ->searchable()
                     ->preload(),
 
-                SelectFilter::make('branch_id')
-                    ->label('Branch')
-                    ->relationship('branch', 'name')
-                    ->searchable()
-                    ->preload(),
+                // SelectFilter::make('branch_id')
+                //     ->label('Branch')
+                //     ->relationship('branch', 'name')
+                //     ->searchable()
+                //     ->preload(),
+
+
+
+                // ... داخل مصفوفة ->filters([ ... ])
+
+                Filter::make('entity_filter')
+                    ->label('Filter by Entity')
+                    ->schema([
+                        // 1. اختيار النوع (فرع أم مخزن)
+                        Select::make('transactable_type')
+                            ->label(__('Entity Type'))
+                            ->options([
+                                Branch::class => __('Branch'), // أو 'فرع'
+                                Store::class => __('Store'),   // أو 'مخزن'
+                            ])
+                            ->live() // يجعل الحقل التالي يتحدث بناء على هذا الاختيار
+                            ->afterStateUpdated(fn(Select $component) => $component->getContainer()->getComponent('entity_id_field')->state(null)),
+
+                        // 2. اختيار الاسم (يتم تحميله ديناميكياً)
+                        Select::make('transactable_id')
+                            ->key('entity_id_field') // مفتاح للتحكم به
+                            ->label(__('Entity Name'))
+                            ->searchable()
+                            ->preload()
+                            ->disabled(fn(Get $get) => ! $get('transactable_type')) // معطل حتى يتم اختيار النوع
+                            ->options(function (Get $get) {
+                                $type = $get('transactable_type');
+
+                                if (! $type) {
+                                    return [];
+                                }
+
+                                // جلب البيانات بناءً على النوع المختار
+                                return $type::query()
+                                    ->pluck('name', 'id');
+                            }),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['transactable_type'],
+                                fn(Builder $query, $type) => $query->where('transactable_type', $type)
+                            )
+                            ->when(
+                                $data['transactable_id'],
+                                fn(Builder $query, $id) => $query->where('transactable_id', $id)
+                            );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        // (اختياري) لعرض بادج فوق الجدول يوضح الفلتر النشط
+                        $indicators = [];
+                        if ($data['transactable_type'] ?? null) {
+                            $indicators[] = __('Type') . ': ' . class_basename($data['transactable_type']);
+                        }
+                        if ($data['transactable_id'] ?? null) {
+                            // نحتاج لجلب الاسم للعرض
+                            $modelClass = $data['transactable_type'];
+                            $name = $modelClass::find($data['transactable_id'])?->name;
+                            $indicators[] = __('Name') . ': ' . $name;
+                        }
+                        return $indicators;
+                    }),
 
                 SelectFilter::make('status')
                     ->options(FinancialTransaction::STATUSES)

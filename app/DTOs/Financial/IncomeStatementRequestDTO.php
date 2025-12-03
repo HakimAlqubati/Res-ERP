@@ -10,6 +10,7 @@ class IncomeStatementRequestDTO
         public readonly ?string $startDate,
         public readonly ?string $endDate,
         public readonly ?int $branchId,
+        public ?int $storeId = null,
     ) {}
 
     public static function fromRequest(Request $request): self
@@ -27,6 +28,7 @@ class IncomeStatementRequestDTO
             'start_date' => $this->startDate,
             'end_date' => $this->endDate,
             'branch_id' => $this->branchId,
+            'store_id' => $this->storeId,
         ];
     }
 }

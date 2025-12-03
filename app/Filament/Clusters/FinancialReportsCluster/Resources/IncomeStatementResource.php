@@ -5,11 +5,15 @@ namespace App\Filament\Clusters\FinancialReportsCluster\Resources;
 use App\Filament\Clusters\FinancialReportsCluster;
 use App\Filament\Clusters\FinancialReportsCluster\Resources\IncomeStatementResource\Pages;
 use App\Models\FinancialTransaction;
+use App\Models\Branch;
+use App\Models\Store;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Utilities\Get;
 
 class IncomeStatementResource extends Resource
 {
@@ -61,9 +65,24 @@ class IncomeStatementResource extends Resource
                     ]),
                 Tables\Filters\SelectFilter::make('branch_id')
                     ->label(__('Branch'))
-                    ->relationship('branch', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()->placeholder(__('Choose Branch'))
+                    ->options(function () {
+                        return Branch::query()
+                            ->limit(2) // العدد الذي تريده
+                            ->pluck('name', 'id');
+                    })
+
+                    // 2. عند الكتابة في البحث: ابحث في جدول الفروع بالكامل
+                    ->getSearchResultsUsing(function (string $search) {
+                        return Branch::query()
+                            ->where('name', 'like', "%{$search}%")
+                            ->limit(50) // حدد عدد نتائج البحث
+                            ->pluck('name', 'id');
+                    })
+
+                    // 3. عند اختيار قيمة (للحفاظ على الاسم ظاهراً بعد الاختيار)
+                    ->getOptionLabelUsing(fn($value) => Branch::find($value)?->name),
             ])
             ->actions([
                 // No actions

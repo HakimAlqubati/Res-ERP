@@ -8,6 +8,7 @@ use App\Models\FinancialTransaction;
 use App\Models\InventoryTransaction;
 use App\Models\StockInventory;
 use App\Models\Branch;
+use App\Models\Store;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\PurchasedReports\PurchaseInvoiceProductSummaryReportService;
@@ -87,20 +88,33 @@ class ClosingStockCalculationService
                 return null;
             }
 
-            // 3. Determine Branch
-            // Try to find a branch associated with this store
-            $branch = Branch::where('store_id', $inventory->store_id)->first();
-            $branchId = $branch ? $branch->id : null;
+            // 3. Determine the "Transactable" Entity (Branch OR Store) 🔥 التغيير الجوهري هنا
+
+            // نحاول إيجاد فرع مرتبط بهذا المخزن
+            $linkedBranch = Branch::where('store_id', $inventory->store_id)->first();
+
+            if ($linkedBranch) {
+                // ✅ الحالة الأولى: يوجد فرع مرتبط، نربط المعاملة بالفرع
+                $transactableType = Branch::class;
+                $transactableId = $linkedBranch->id;
+                $entityName = $linkedBranch->name; // للتوضيح في الوصف
+            } else {
+                // ✅ الحالة الثانية: لا يوجد فرع، نربط المعاملة بالمخزن مباشرة
+                $transactableType = Store::class;
+                $transactableId = $inventory->store_id;
+                $entityName = $inventory->store->name ?? 'Unknown Store';
+            }
 
             // 4. Create Transaction
             return FinancialTransaction::create([
-                'branch_id' => $branchId,
+                'transactable_type' => $transactableType,
+                'transactable_id'   => $transactableId,
                 'category_id' => $category->id,
                 'amount' => $amount,
                 'type' => FinancialCategory::TYPE_EXPENSE, // As defined in migration
                 'transaction_date' => $inventory->inventory_date,
                 'status' => FinancialTransaction::STATUS_PAID, // It's an accounting entry, effectively "paid"/realized
-                'description' => "Closing Stock - Inventory #{$inventory->id} - Store: " . ($inventory->store->name ?? 'N/A'),
+                'description'       => "Closing Stock - Inventory #{$inventory->id} {$entityName}",
                 'created_by' => auth()->id() ?? $inventory->created_by,
                 'reference_type' => StockInventory::class,
                 'reference_id' => $inventory->id,

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class FinancialTransaction extends Model
@@ -44,9 +45,11 @@ class FinancialTransaction extends Model
         'created_by',
         'month',
         'year',
+        'transactable_type',
+        'transactable_id',
     ];
 
-   
+
 
     protected $casts = [
         'amount' => 'decimal:2',
@@ -58,6 +61,11 @@ class FinancialTransaction extends Model
     public function branch()
     {
         return $this->belongsTo(Branch::class);
+    }
+
+    public function transactable(): MorphTo
+    {
+        return $this->morphTo();
     }
 
     public function category()
@@ -107,9 +115,28 @@ class FinancialTransaction extends Model
         return $query->where('status', self::STATUS_OVERDUE);
     }
 
+    // public function scopeByBranch($query, $branchId)
+    // {
+    //     return $query->where('branch_id', $branchId);
+    // }
+
+    // ✅ تحديث السكوب ليدعم الطريقة الجديدة والقديمة
     public function scopeByBranch($query, $branchId)
     {
-        return $query->where('branch_id', $branchId);
+        return $query->where(function ($q) use ($branchId) {
+            // الطريقة الجديدة
+            $q->where('transactable_type', Branch::class)
+                ->where('transactable_id', $branchId)
+                // الطريقة القديمة (لضمان عدم كسر التقارير القديمة حتى تنتهي الهجرة)
+                ->orWhere('branch_id', $branchId);
+        });
+    }
+
+    // ✅ سكوب جديد للمخازن
+    public function scopeByStore($query, $storeId)
+    {
+        return $query->where('transactable_type', Store::class)
+            ->where('transactable_id', $storeId);
     }
 
     public function scopeByDateRange($query, $startDate, $endDate)
