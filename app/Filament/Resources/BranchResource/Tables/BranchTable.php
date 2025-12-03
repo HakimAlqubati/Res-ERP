@@ -49,13 +49,10 @@ class BranchTable
                     // ->limit(100)
                     ->words(5)->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('user.name')->label(__('lang.branch_manager')),
+                TextColumn::make('user.name')->label(__('lang.branch_manager'))->toggleable(),
                 TextColumn::make('category_names')->label(__('stock.customized_manufacturing_categories'))->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('user.email')->label('Email')->copyable(),
-                TextColumn::make('total_quantity')->label(__('lang.quantity'))
-                    ->action(function ($record) {
-                        redirect('admin/branch-store-report?tableFilters[branch_id][value]=' . $record->id);
-                    })->hidden(),
+                TextColumn::make('user.email')->label('Email')->copyable()->toggleable(),
+ 
                 TextColumn::make('start_date')
                     ->label(__('lang.start_date'))
                     ->dateTime('Y-m-d')
