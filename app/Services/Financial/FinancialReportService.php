@@ -112,7 +112,7 @@ class FinancialReportService
         // 3. حساب نسبة الربح (Gross Profit Ratio)
         $grossProfitRatio = 0;
         if ($totalRevenue > 0) {
-            $grossProfitRatio = ($grossProfitValue / $totalRevenue);
+            $grossProfitRatio = ($grossProfitValue / $totalRevenue) * 100;
         }
         // 5. Net Profit
         $netProfit = $totalRevenue - $totalExpenses;
@@ -141,7 +141,7 @@ class FinancialReportService
                 'value' => (float) $grossProfitValue,
                 'value_formatted' => formatMoneyWithCurrency($grossProfitValue),
                 'ratio' => (float) $grossProfitRatio,
-                'ratio_formatted' => number_format($grossProfitRatio, 2) . '%',
+                'ratio_formatted' => number_format(($grossProfitRatio), 2) . '%',
             ],
             'expenses' => [
                 'total' => (float) $totalExpenses,
