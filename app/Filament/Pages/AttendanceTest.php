@@ -12,22 +12,28 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
-use Filament\Pages\BasePage;
+use Filament\Pages\Page;
 use Filament\Support\Enums\IconSize;
 
-class AttendanceTest extends BasePage implements HasForms
+class AttendanceTest extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static ?string $navigationIcon = 'heroicon-o-finger-print';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-arrows-right-left';
+    // protected static string | \UnitEnum | null $navigationGroup = 'Inventory Management';
 
     protected static ?string $navigationLabel = 'Attendance Test';
 
     protected static ?string $title = 'Attendance Management (V2)';
 
-    protected string $view = 'filament.pages.attendance-test';
+    protected   string $view = 'filament.pages.attendance-test';
 
     public ?array $data = [];
+
+    public function mount(): void
+    {
+        $this->form->fill();
+    }
 
     public function form(Schema $schema): Schema
     {
