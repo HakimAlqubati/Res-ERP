@@ -59,9 +59,9 @@ class InventoryTransaction extends Model implements Auditable
         'transactionable_type',
         'waste_stock_percentage',
         'source_transaction_id',
-    'remaining_quantity',
+        'remaining_quantity',
     ];
-    protected $appends = ['movement_type_title', 'formatted_transactionable_type'];
+    protected $appends = ['movement_type_title', 'formatted_transactionable_type', 'total_price'];
 
     // Constant movement types
     const MOVEMENT_OUT = 'out';

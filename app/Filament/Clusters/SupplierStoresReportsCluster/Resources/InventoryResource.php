@@ -32,6 +32,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Columns\Summarizers\Summarizer;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -131,6 +132,18 @@ class InventoryResource extends Resource
                     ->label('Price')->sortable()
                     ->summarize(Sum::make())
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('total_price')
+                    ->label('Total Price')->sortable()
+                    ->summarize(
+                        Summarizer::make()
+                            ->using(function (Table $table) {
+                                $total  = $table->getRecords()->sum(fn($record) => $record->total_price);
+                                if (is_numeric($total)) {
+                                    return formatMoneyWithCurrency($total);
+                                }
+                                return $total;
+                            })
+                    )->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('movement_date')
                     ->label('Movement Date')->date('Y-m-d')
                     ->sortable(),
