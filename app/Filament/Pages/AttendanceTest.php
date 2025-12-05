@@ -39,19 +39,22 @@ class AttendanceTest extends Page implements HasForms
     {
         return $schema
             ->components([
-                TextInput::make('employee_id')
-                    ->label('Employee ID')
-                    ->placeholder('Enter Employee ID')
-                    ->numeric()
+                Select::make('employee_id')
+                    ->label('Employee')
+                    ->options(
+                        Employee::query()
+                            ->orderBy('name')
+                            ->get()
+                            ->mapWithKeys(function ($employee) {
+                                return [$employee->id => $employee->name . ' - ' . $employee->rfid];
+                            })
+                            ->toArray()
+                    )
+                    ->searchable()
+                    ->preload(3)
                     ->required()
-                    ->autofocus()
-                    ->extraInputAttributes(['autocomplete' => 'off']),
-
-                TextInput::make('rfid')
-                    ->label('RFID Code')
-                    ->placeholder('Enter RFID Code')
-                    ->required()
-                    ->extraInputAttributes(['autocomplete' => 'off']),
+                    ->placeholder('Search for employee...')
+                    ->native(false),
 
                 Select::make('type')
                     ->label('Type')
@@ -68,17 +71,6 @@ class AttendanceTest extends Page implements HasForms
                     ->seconds(false)
                     ->native(false)
                     ->displayFormat('Y-m-d H:i')
-                    ->hidden(fn() => !isSuperAdmin()),
-
-                Select::make('attendance_type')
-                    ->label('Attendance Type')
-                    ->options([
-                        'rfid' => 'RFID',
-                        'manual' => 'Manual',
-                        'biometric' => 'Biometric',
-                    ])
-                    ->default('rfid')
-                    ->native(false)
                     ->hidden(fn() => !isSuperAdmin()),
             ])
             ->statePath('data');

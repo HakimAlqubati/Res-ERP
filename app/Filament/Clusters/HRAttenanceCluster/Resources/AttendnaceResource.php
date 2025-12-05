@@ -150,6 +150,20 @@ class AttendnaceResource extends Resource
             ->striped()
             ->columns([
                 SoftDeleteColumn::make(),
+                // TextColumn::make('accepted')
+                //     ->label('')
+                //     ->formatStateUsing(fn($state) => $state ? 'Accepted' : 'Not Accepted')
+                //     ->badge()
+                //     ->colors([
+                //         'danger' => fn($state) => blank($state),
+                //         'success' => fn($state) => filled($state),
+                //     ]),
+                IconColumn::make('accepted')
+                    ->label('Appr')
+                    ->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: false)
+                    ->boolean(),
+
                 TextColumn::make('id')
                     ->label('#')
                     ->sortable()->toggleable(isToggledHiddenByDefault: true)
@@ -205,9 +219,6 @@ class AttendnaceResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->summarize(Sum::make()->query(fn(\Illuminate\Database\Query\Builder $query) => $query->where('early_departure_minutes', '>', 20))),
                 TextColumn::make('attendance_type')->alignCenter(true),
-                IconColumn::make('accepted')
-                    ->label('Is Accepted?')
-                    ->alignCenter(true)->toggleable(isToggledHiddenByDefault: true)->boolean(),
 
             ])
             ->filtersFormColumns(3)

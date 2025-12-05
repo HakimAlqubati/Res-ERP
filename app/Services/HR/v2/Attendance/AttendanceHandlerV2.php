@@ -5,6 +5,7 @@ namespace App\Services\HR\v2\Attendance;
 use App\Models\Attendance;
 use App\Models\Employee;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class AttendanceHandlerV2
 {
@@ -19,6 +20,9 @@ class AttendanceHandlerV2
         $shiftInfo = $this->shiftResolver->resolve($ctx->employee, $ctx->requestTime);
 
         if (!$shiftInfo) {
+            // Store rejected attendance record
+            $this->storeRejectedRecord($ctx, __('notifications.you_dont_have_periods_today'));
+
             return [
                 'success' => false,
                 'message' => __('notifications.you_dont_have_periods_today'),
@@ -207,5 +211,53 @@ class AttendanceHandlerV2
         // );
         // dd($record);
         $record->save();
+    }
+
+    /**
+     * Store a rejected attendance record with accepted = 0
+     */
+    private function storeRejectedRecord(AttendanceContext $ctx, string $message): void
+    {
+        try {
+            $date = $ctx->requestTime->toDateString();
+            $time = $ctx->requestTime->toTimeString();
+            $day = $ctx->requestTime->format('l');
+
+            // Try to get period for this day
+            $period = $ctx->employee->periods()
+                ->whereJsonContains('days', $day)
+                ->first();
+
+            // If no period found for this day, use any period from employee
+            if (!$period) {
+                $period = $ctx->employee->periods()->first();
+            }
+
+            // If still no period, we cannot create the record
+            if (!$period) {
+                Log::warning('Cannot store rejected attendance - employee has no periods', [
+                    'employee_id' => $ctx->employee->id,
+                    'message' => $message
+                ]);
+                return;
+            }
+
+            Attendance::storeNotAccepted(
+                $ctx->employee,
+                $date,
+                $time,
+                $day,
+                $message,
+                $period->id,
+                $ctx->attendanceType
+            );
+        } catch (\Throwable $e) {
+            // If storing rejected record fails, just log it
+            Log::error('Failed to store rejected attendance in handler', [
+                'error' => $e->getMessage(),
+                'employee_id' => $ctx->employee->id,
+                'message' => $message
+            ]);
+        }
     }
 }

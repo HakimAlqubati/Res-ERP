@@ -2,6 +2,7 @@
 
 namespace App\Services\HR\v2\Attendance;
 
+use App\Models\Attendance;
 use App\Models\Employee;
 use App\Services\HR\v2\Attendance\Validators\AttendanceBusinessValidator;
 use Carbon\Carbon;
@@ -35,16 +36,37 @@ class AttendanceServiceV2
 
         // تشغيل الفالديشن المخصص
         // سيقوم برمي Exception ويوقف الكود تلقائياً إذا فشل
-        $this->validator->validate($employee, $requestTime, $type);
+        try {
+            $this->validator->validate($employee, $requestTime, $type);
+        } catch (\Throwable $e) {
+            // Store rejected attendance record
+            $this->storeRejectedAttendance($employee, $requestTime, $e->getMessage(), $payload);
+
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }
 
         // 3. Atomic Lock to prevent race conditions
         // Lock key based on employee ID
         $lockKey = 'attendance_lock_' . $employee->id;
 
         // Try to acquire lock for 5 seconds, wait up to 10 seconds
-        return Cache::lock($lockKey, 10)->block(5, function () use ($employee, $payload) {
-            return $this->processAttendance($employee, $payload);
-        });
+        try {
+            return Cache::lock($lockKey, 10)->block(5, function () use ($employee, $payload) {
+                return $this->processAttendance($employee, $payload);
+            });
+        } catch (\Throwable $e) {
+            // Store rejected attendance if lock fails
+            $requestTime = isset($payload['date_time']) ? Carbon::parse($payload['date_time']) : Carbon::now();
+            $this->storeRejectedAttendance($employee, $requestTime, 'Failed to acquire lock: ' . $e->getMessage(), $payload);
+
+            return [
+                'success' => false,
+                'message' => 'System busy, please try again.',
+            ];
+        }
     }
 
     protected function processAttendance(Employee $employee, array $payload): array
@@ -70,6 +92,11 @@ class AttendanceServiceV2
             return $result;
         } catch (\Throwable $e) {
             DB::rollBack();
+
+            // Store rejected attendance record
+            $requestTime = isset($payload['date_time']) ? Carbon::parse($payload['date_time']) : Carbon::now();
+            $this->storeRejectedAttendance($employee, $requestTime, 'System Error: ' . $e->getMessage(), $payload);
+
             Log::error('Attendance V2 Error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -80,6 +107,55 @@ class AttendanceServiceV2
                 'success' => false,
                 'message' => 'System Error: ' . $e->getMessage(),
             ];
+        }
+    }
+
+    /**
+     * Store a rejected attendance record with accepted = 0
+     */
+    protected function storeRejectedAttendance(Employee $employee, Carbon $requestTime, string $message, array $payload): void
+    {
+        try {
+            $date = $requestTime->toDateString();
+            $time = $requestTime->toTimeString();
+            $day = $requestTime->format('l');
+            $attendanceType = $payload['attendance_type'] ?? 'rfid';
+
+            // Try to get period for this day
+            $period = $employee->periods()
+                ->whereJsonContains('days', $day)
+                ->first();
+
+            // If no period found for this day, use any period from employee
+            if (!$period) {
+                $period = $employee->periods()->first();
+            }
+
+            // If still no period, we cannot create the record
+            if (!$period) {
+                Log::warning('Cannot store rejected attendance - employee has no periods', [
+                    'employee_id' => $employee->id,
+                    'message' => $message
+                ]);
+                return;
+            }
+
+            Attendance::storeNotAccepted(
+                $employee,
+                $date,
+                $time,
+                $day,
+                $message,
+                $period->id,
+                $attendanceType
+            );
+        } catch (\Throwable $e) {
+            // If storing rejected record fails, just log it
+            Log::error('Failed to store rejected attendance', [
+                'error' => $e->getMessage(),
+                'employee_id' => $employee->id,
+                'message' => $message
+            ]);
         }
     }
 
