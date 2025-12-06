@@ -48,7 +48,7 @@ class FinancialCategoryReportFilter
 
         // Type filter
         if ($this->type) {
-            $query->where('type', $this->type);
+            $query->where('financial_transactions.type', $this->type);
         }
 
         // Category filter
@@ -91,7 +91,7 @@ class FinancialCategoryReportFilter
     {
         // Type filter
         if ($this->type) {
-            $query->where('type', $this->type);
+            $query->where('financial_categories.type', $this->type);
         }
 
         // Category IDs filter

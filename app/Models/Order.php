@@ -17,7 +17,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class Order extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, OrderScopes,BranchScope;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, OrderScopes, BranchScope;
 
     public const ORDERED = 'ordered';
     public const PROCESSING = 'processing';
@@ -258,11 +258,6 @@ class Order extends Model implements Auditable
                     if ($order->branch && $order->branch->store && $order->branch->store->active) {
                         self::receiveIntoBranchStore($allocations, $detail);
                     }
-                    // if (!$branchStoreId || !$order->branch->store->active) {
-                    //     self::moveFromInventory($allocations, $detail);
-                    // } else if ($branchStoreId && $order->branch->store->active) {
-                    //     self::createStockTransferOrder($allocations, $detail);
-                    // }
                 }
 
                 // ✅ New logic: Update costing for composite (manufacturing) product when a component product is affected
@@ -317,8 +312,8 @@ class Order extends Model implements Auditable
                 'unit_id'              => $alloc['target_unit_id'],
                 'package_size'         => $alloc['target_unit_package_size'],
                 'price'                => $alloc['price_based_on_unit'],
-                'movement_date'        => $order->order_date ?? now(),
-                'transaction_date'     => $order->order_date ?? now(),
+                'movement_date'        => $order->transfer_date ?? now(),
+                'transaction_date'     => $order->transfer_date ?? now(),
                 'store_id'             => $alloc['store_id'],
                 'notes' => $alloc['notes'],
 
@@ -345,8 +340,8 @@ class Order extends Model implements Auditable
                 'unit_id'              => $alloc['target_unit_id'],
                 'package_size'         => $alloc['target_unit_package_size'],
                 'price'                => $alloc['price_based_on_unit'],
-                'movement_date'        => $order->order_date ?? now(),
-                'transaction_date'     => $order->order_date ?? now(),
+                'movement_date'        => $order->transfer_date ?? now(),
+                'transaction_date'     => $order->transfer_date ?? now(),
                 'store_id'             => $targetStoreId,
                 'notes'                => $alloc['notes'],
                 'transactionable_id'   => $detail->order_id,
@@ -535,6 +530,4 @@ class Order extends Model implements Auditable
     {
         return $this->returns->sum(fn($returnedOrder) => $returnedOrder->total_amount);
     }
-
-    
 }
