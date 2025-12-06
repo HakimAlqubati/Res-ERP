@@ -87,7 +87,9 @@ class TransferOrderResource extends Resource
 
                 TextColumn::make('item_count')->label(__('lang.item_counts'))->alignCenter(true),
                 TextColumn::make('total_amount')->label(__('lang.total_amount'))->alignCenter(true)
-                    ->hidden(fn(): bool => isStoreManager()),
+                    ->hidden(fn(): bool => isStoreManager())
+                    ->formatStateUsing(fn($state): string => formatMoneyWithCurrency($state))
+                    ,
                 TextColumn::make('transfer_date')
                     ->label(__('lang.transfer_date'))
                     ->sortable(),
