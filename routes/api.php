@@ -264,6 +264,7 @@ require base_path('routes/ocr.php');
 require base_path('routes/custom_api_route_hr.php');
 require base_path('routes/custom_route.php');
 require base_path('routes/custom_api_route_inventory.php');
+require base_path('routes/custom_api_test.php');
 
 Route::post('/v2/attendance/test', function (Request $request) {
     $service = app(\App\Services\HR\v2\Attendance\AttendanceServiceV2::class);
