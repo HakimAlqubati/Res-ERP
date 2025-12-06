@@ -10,6 +10,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Components\Fieldset;
 
 class IncomeStatementResource extends Resource
 {
@@ -49,21 +50,39 @@ class IncomeStatementResource extends Resource
             ->deferFilters(false)
             ->filtersFormColumns(3)
             ->filters([
-                Tables\Filters\Filter::make('date_range')
-                    ->label(__('Date Range'))
-                    ->form([
-                        \Filament\Forms\Components\DatePicker::make('start_date')
-                            ->label(__('Start Date'))
-                            ->default(now()->startOfYear()),
-                        \Filament\Forms\Components\DatePicker::make('end_date')
-                            ->label(__('End Date'))
-                            ->default(now()->endOfYear()),
-                    ]),
-                Tables\Filters\SelectFilter::make('branch_id')
-                    ->label(__('Branch'))
-                    ->relationship('branch', 'name')
-                    ->searchable()
-                    ->preload(),
+                     Tables\Filters\Filter::make('date_range')
+                        ->label(__('Date Range'))
+                        ->schema([
+                            \Filament\Forms\Components\DatePicker::make('start_date')
+                                ->label(__('From'))
+                                ->displayFormat('Y-m-d')
+                                ->format('Y-m-d')
+                                ->default(now()->subMonth()->startOfMonth())
+                                ->live()
+                                ->afterStateUpdated(function ($get,  $set, ?string $state) {
+                                    if (! $state) return;
+                                    $date = \Carbon\Carbon::parse($state);
+                                    $set('end_date', $date->endOfMonth()->format('Y-m-d'));
+                                }),
+                            \Filament\Forms\Components\DatePicker::make('end_date')
+                                ->label(__('To'))
+                                ->displayFormat('Y-m-d')
+                                ->format('Y-m-d')
+                                ->default(now()->subMonth()->endOfMonth())
+                                ->live()
+                                ->afterStateUpdated(function ($get,  $set, ?string $state) {
+                                    if (! $state) return;
+                                    $date = \Carbon\Carbon::parse($state);
+                                    $set('start_date', $date->startOfMonth()->format('Y-m-d'));
+                                }),
+                        ]),
+                    Tables\Filters\SelectFilter::make('branch_id')
+                        ->label(__('Branch'))
+                        ->relationship('branch', 'name', fn($query) => $query->where('active', true)->where('type', 'branch'))
+                        ->searchable()
+                        ->preload(),
+
+              
             ])
             ->actions([
                 // No actions

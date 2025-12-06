@@ -263,54 +263,9 @@
         }
     </style>
 
-    {{-- Filters Button --}}
-    <div class="no-print mb-6" x-data="{ showFilters: false }">
-        <button
-            @click="showFilters = !showFilters"
-            type="button"
-            class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-            <span x-text="showFilters ? '{{ __('Hide') }}' : '{{ __('Show') }}'"></span>
-        </button>
-
-        {{-- Filters Modal --}}
-        <div
-            x-show="showFilters"
-            x-cloak
-            @click.self="showFilters = false"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-            style="display: none;">
-            <div
-                @click.stop
-                class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
-                x-transition:enter="transition ease-out duration-200"
-                x-transition:enter-start="opacity-0 scale-95"
-                x-transition:enter-end="opacity-100 scale-100"
-                x-transition:leave="transition ease-in duration-150"
-                x-transition:leave-start="opacity-100 scale-100"
-                x-transition:leave-end="opacity-0 scale-95">
-                {{-- Modal Header --}}
-                <div class="flex items-center justify-between p-4 border-b">
-                    <button
-                        @click="showFilters = false"
-                        type="button"
-                        class="text-gray-400 hover:text-gray-600 focus:outline-none">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-
-                {{-- Modal Body --}}
-                <div class="p-6">
-                    {{ $this->getTableFiltersForm() }}
-                </div>
-
-
-            </div>
-        </div>
+    {{-- Filters Form --}}
+    <div class="no-print mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        {{ $this->getTableFiltersForm() }}
     </div>
 
     <div class="report-container">
@@ -320,8 +275,8 @@
             <h1 class="report-title">{{ __('Gross Profit Report') }}</h1>
             <p class="report-subtitle">
                 @if($startDate && $endDate)
-                {{ __('From ') }} {{ \Carbon\Carbon::parse($startDate)->format('F d, Y') }}
-                {{ __('to') }} {{ \Carbon\Carbon::parse($endDate)->format('F d, Y') }}
+                {{ __('From ') }} {{ \Carbon\Carbon::parse($startDate)->format('d F, Y') }}
+                {{ __('to') }} {{ \Carbon\Carbon::parse($endDate)->format('d F, Y') }}
                 @else
                 {{ __('All Time Records') }}
                 @endif
@@ -410,7 +365,7 @@
         {{-- Generated On --}}
         <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; text-align: center;">
             <p style="font-size: 0.75rem; color: #94a3b8;">
-                {{ __('Generated on') }} {{ \Carbon\Carbon::now()->format('F d, Y - h:i A') }}
+                {{ __('Generated on') }} {{ \Carbon\Carbon::now()->format('d F, Y - h:i A') }}
             </p>
         </div>
         @else
