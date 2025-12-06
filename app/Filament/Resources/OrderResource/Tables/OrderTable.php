@@ -80,6 +80,13 @@ class OrderTable
                 )->label(__('lang.total_amount'))->alignCenter(true)
                     ->numeric()
                     ->hidden(fn(): bool => isStoreManager())
+                    ->state(function (Order $record, OrderCostAnalysisService $service) {
+                        if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
+                            $analysis = $service->getOrderValues($record->id);
+                            return $analysis['total_cost_from_inventory_transactions'] ?? $record->total_amount;
+                        } 
+                        return $record->total_amount;
+                    })
                     ->formatStateUsing(function ($state) {
                         return formatMoneyWithCurrency($state);
                     })
@@ -92,7 +99,8 @@ class OrderTable
                                 }
                                 return $total;
                             })
-                    ),
+                    )
+                    ,
                 TextColumn::make('created_at')
                     ->formatStateUsing(function ($state) {
                         return date('Y-m-d', strtotime($state)) . ' ' . date('H:i:s', strtotime($state));
