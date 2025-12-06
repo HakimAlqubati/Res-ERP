@@ -53,7 +53,7 @@ class FixInventoryMovementDates extends Command
             $affected = InventoryTransaction::query()
                 ->join('orders', 'inventory_transactions.transactionable_id', '=', 'orders.id')
                 ->where('inventory_transactions.transactionable_type', Order::class)
-                ->where('inventory_transactions.movement_type', InventoryTransaction::MOVEMENT_OUT)
+                ->where('inventory_transactions.movement_type', InventoryTransaction::MOVEMENT_IN)
                 ->whereNotNull('orders.transfer_date')
                 // Only update if dates are different to avoid unnecessary writes
                 ->where(function ($query) {
