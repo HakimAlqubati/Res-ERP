@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
@@ -6,10 +6,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/debug-inventory-sql', function () {
     // 1. إعدادات التجربة (ضع نفس القيم التي تسبب المشكلة)
     // ==========================================
-    $storeId    = 1;      // غير هذا الرقم
-    $categoryId = 5;      // غير هذا الرقم
-    $fromDate   = '2023-01-01';
-    $toDate     = '2023-12-31';
+    $storeId    = 10;      // غير هذا الرقم
+    $categoryId = 7;      // غير هذا الرقم
+    $fromDate   = '2025-11-01 00:00:00';
+    $toDate     = '2025-11-03 23:59:59';
     // ==========================================
 
     // تفعيل تسجيل الاستعلامات لرؤية الـ SQL الخام
@@ -30,18 +30,21 @@ Route::get('/debug-inventory-sql', function () {
     // 3. استدعاء الدالة الخاصة بك
     // افترض أن الدالة موجودة في كلاس اسمه InventoryService أو Controller
     // سأقوم بمحاكاة استدعاء الدالة هنا مباشرة لغرض الفحص
-    
+
     // (قم باستدعاء دالتك هنا، مثال:)
     // $controller = new \App\Http\Controllers\YourController();
     // $results = $controller->runSourceBalanceByCategorySQL($storeId, $categoryId, $fromDate, $toDate);
-    
+
     // *ملاحظة:* إذا لم تستطع استدعاء الكلاس، يمكنك نسخ كود الدالة ولصقه هنا مؤقتاً للتجربة
-    
+
     // ... لنفترض أننا نفذنا الكود وحصلنا على النتائج في $results ...
     // سأضع مصفوفة فارغة هنا كمثال حتى تقوم أنت بوضع استدعاء دالتك
-    $results = "قم بوضع استدعاء دالتك هنا في الكود"; 
+    $results = "قم بوضع استدعاء دالتك هنا في الكود";
 
 
+    // Fix: Invoke the method from the class instance using the helper function app()
+    $results = app(\App\Filament\Resources\OrderReportsResource\Pages\GeneralReportProductDetails::class)
+        ->runSourceBalanceByCategorySQL($storeId, $categoryId, $fromDate, $toDate);
     // 4. جلب الاستعلام الذي تم تنفيذه
     $queryLog = DB::getQueryLog();
     $lastQuery = end($queryLog);
