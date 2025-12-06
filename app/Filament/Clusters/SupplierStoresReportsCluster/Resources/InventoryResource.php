@@ -265,6 +265,33 @@ class InventoryResource extends Resource
                     ->toArray())->searchable()
                     ->label(__('lang.store')),
 
+                SelectFilter::make('transactionable_type')
+                    ->label('Transaction Type')
+                    ->options([
+                        'App\Models\Order' => 'Order',
+                        'App\Models\PurchaseInvoice' => 'Purchase Invoice',
+                        'App\Models\StockAdjustmentDetail' => 'Stock Adjustment Detail',
+                        'App\Models\StockIssueOrder' => 'Stock Issue Order',
+                        'App\Models\StockOutReversal' => 'Stock Out Reversal',
+                        'App\Models\ResellerSaleItem' => 'Reseller Sale Item',
+                        'App\Models\PosSale' => 'Pos Sale',
+                        'App\Models\GoodsReceivedNote' => 'Goods Received Note',
+                    ])
+                    ->searchable(),
+
+                Filter::make('transactionable_id_filter')
+                    ->form([
+                        Forms\Components\TextInput::make('transactionable_id')
+                            ->label('Transaction ID')
+                            ->numeric(),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['transactionable_id'],
+                            fn(Builder $query, $id): Builder => $query->where('transactionable_id', $id)
+                        );
+                    }),
+
                 Filter::make('movement_date')
                     ->form([
                         Forms\Components\DatePicker::make('from')
@@ -289,7 +316,7 @@ class InventoryResource extends Resource
 
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
-            ->deferFilters(false)
+            ->deferFilters(true)
             ->recordActions([
                 // Tables\Actions\EditAction::make(),
 
