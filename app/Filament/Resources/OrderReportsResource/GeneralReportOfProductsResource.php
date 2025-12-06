@@ -115,6 +115,7 @@ class GeneralReportOfProductsResource extends Resource
 
             foreach ($rows as $r) {
                 $r = (object)$r;
+                dd($r);
                 // نأخذ فقط السطور ذات الرصيد الإيجابي (نفس ما عملته في التفاصيل)
                 $qty = (float) ($r->remaining_qty ?? 0);
                 if ($qty <= 0) {
