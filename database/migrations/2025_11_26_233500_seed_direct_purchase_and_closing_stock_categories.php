@@ -19,7 +19,7 @@ return new class extends Migration
             [
                 'name' => 'Transfers',
                 'type' => FinancialCategory::TYPE_EXPENSE,
-                'description' => 'Transfers ofbranches',
+                'description' => 'Transfers of branches',
                 'is_system' => true,
                 'is_visible' => true,
             ]
