@@ -16,30 +16,29 @@ use niklasravnsborg\LaravelPdf\Facades\Pdf;
 
 class GeneralReportProductDetails extends Page
 {
-    protected static string $resource = GeneralReportOfProductsResource::class;
+  protected static string $resource = GeneralReportOfProductsResource::class;
 
-    public string $start_date;
-    public string $end_date;
-    public $category_id;
-    public $branch_id;
-    public $storeId;
-    function __construct()
-    {
-        $this->start_date  = $_GET['start_date'] ?? '';
-        $this->end_date = $_GET['end_date'] ?? '';
-        $this->category_id = $_GET['category_id'] ?? '';
-        $this->branch_id = $_GET['branch_id'] ?? '';
-        $this->storeId = $_GET['storeId'] ?? '';
-    }
-    protected string $view = 'filament.pages.order-reports.general-report-product-details';
+  public string $start_date;
+  public string $end_date;
+  public $category_id;
+  public $branch_id;
+  public $storeId;
+  function __construct()
+  {
+    $this->start_date  = $_GET['start_date'] ?? '';
+    $this->end_date = $_GET['end_date'] ?? '';
+    $this->category_id = $_GET['category_id'] ?? '';
+    $this->branch_id = $_GET['branch_id'] ?? '';
+    $this->storeId = $_GET['storeId'] ?? '';
+  }
+  protected string $view = 'filament.pages.order-reports.general-report-product-details';
 
-    public function runSourceBalanceByCategorySQL(int $storeId, int $categoryId, string $fromDate, string $toDate): array
-    {  
-        $locale = app()->getLocale();
-        // اسم المنتج مع دعم JSON locales
-        $nameExpr = "IF(JSON_VALID(p.name), REPLACE(JSON_EXTRACT(p.name, '$.\"{$locale}\"'), '\"', ''), p.name)";
-
-        $sql = <<<SQL
+  public function runSourceBalanceByCategorySQL(int $storeId, int $categoryId, string $fromDate, string $toDate): array
+  {
+    $locale = app()->getLocale();
+    // اسم المنتج مع دعم JSON locales
+    $nameExpr = "IF(JSON_VALID(p.name), JSON_UNQUOTE(JSON_EXTRACT(p.name, '$.\"{$locale}\"')), p.name)";
+    $sql = <<<SQL
 SELECT
   t.product_id,
   t.product_code,
@@ -137,173 +136,173 @@ ORDER BY
 t.product_id
 SQL;
 
-        return DB::select($sql, [
-            'store_id'    => $storeId,
-            'category_id' => $categoryId,
-            'from_date'   => $fromDate,
-            'to_date'     => $toDate,
-            'order_morph'  => 'App\\Models\\Order',
-            'supply_morph' => 'App\\Models\\StockSupplyOrder'
-        ]);
+    return DB::select($sql, [
+      'store_id'    => $storeId,
+      'category_id' => $categoryId,
+      'from_date'   => $fromDate,
+      'to_date'     => $toDate,
+      'order_morph'  => 'App\\Models\\Order',
+      'supply_morph' => 'App\\Models\\StockSupplyOrder'
+    ]);
+  }
+
+
+  protected function getViewData(): array
+  {
+    $report_data['data'] = [];
+    $total_price = 0;
+    $total_quantity = 0;
+    $report_data = $this->getReportDetails($this->start_date, $this->end_date, $this->branch_id, $this->category_id);
+
+    if (isset($report_data['total_price'])) {
+      $total_price = $report_data['total_price'];
+    }
+    if (isset($report_data['total_quantity'])) {
+      $total_quantity = $report_data['total_quantity'];
+    }
+    return [
+      'report_data' => $report_data['data'],
+      'start_date' => $this->start_date,
+      'end_date' => $this->end_date,
+      'category' => Category::find($this->category_id)?->name,
+      'branch' => Branch::find($this->branch_id)?->name,
+      'total_quantity' =>  $total_quantity,
+      'total_price' =>  $total_price
+    ];
+  }
+
+  public static function getNavigationLabel(): string
+  {
+    return __('lang.report_details');
+  }
+
+
+
+  protected function getLayoutData(): array
+  {
+    return [
+      'breadcrumbs' => $this->getBreadcrumbs(),
+      'title' => __('lang.report_details'),
+      'maxContentWidth' => $this->getMaxContentWidth(),
+    ];
+  }
+
+
+  public function getReportDetails($start_date, $end_date, $branch_id, $category_id)
+  {
+    $IN  = InventoryTransaction::MOVEMENT_IN  ?? 'in';
+    $OUT = InventoryTransaction::MOVEMENT_OUT ?? 'out';
+
+    // فرع -> متجر
+    $storeId = Branch::where('id', $branch_id)->value('store_id');
+
+    if (! $storeId) {
+      return [
+        'data' => [],
+        'total_price' => getDefaultCurrency() . ' ' . number_format(0, 2),
+        'total_quantity' => number_format(0, 2),
+      ];
     }
 
+    $this->storeId = $storeId;
+    $from = Carbon::parse($start_date)->startOfDay();
+    $to   = Carbon::parse($end_date)->endOfDay();
+    $rows = $this->runSourceBalanceByCategorySQL($storeId, $category_id, $from, $to);
 
-    protected function getViewData(): array
-    {
-        $report_data['data'] = [];
-        $total_price = 0;
-        $total_quantity = 0;
-        $report_data = $this->getReportDetails($this->start_date, $this->end_date, $this->branch_id, $this->category_id);
+    // dd($rows);
+    // print_html_table($rows, [
+    //     'column' => 'movement_type',
+    //     'value'  => 'in',
+    //     'color'  => '#ECFDF5',   // خلفية
+    //     'text'   => '#065F46',   // (اختياري) لون النص
+    // ]);
 
-        if (isset($report_data['total_price'])) {
-            $total_price = $report_data['total_price'];
-        }
-        if (isset($report_data['total_quantity'])) {
-            $total_quantity = $report_data['total_quantity'];
-        }
-        return [
-            'report_data' => $report_data['data'],
-            'start_date' => $this->start_date,
-            'end_date' => $this->end_date,
-            'category' => Category::find($this->category_id)?->name,
-            'branch' => Branch::find($this->branch_id)?->name,
-            'total_quantity' =>  $total_quantity,
-            'total_price' =>  $total_price
-        ];
+
+
+
+
+    $final = [];
+    $totalAmount = 0.0;
+    $totalQty = 0.0;
+
+    foreach ($rows as $r) {
+      $r = (object)$r;
+      // dd($r,gettype($r));
+      // $inQtyBase       = (float) $r->remaining_qty;
+      $netBase         = (float) $r->remaining_qty;
+      if ($netBase <= 0) {
+        continue;
+      }
+      // $inCostSumBase   = (float) $r->in_cost_sum_base;
+
+      // $avgInCostPerBase = $inQtyBase > 0 ? ($inCostSumBase / $inQtyBase) : 0.0; // سعر الوحدة (قاعدة)
+      // $amountBase       = $netBase * $avgInCostPerBase; // قيمة الصافي
+
+      $amountBase = $r->remaining_value;
+      $obj = new stdClass();
+      $obj->category_id  = (int) $category_id;
+      $obj->product_id   = $r->product_id;
+      $obj->product_name = $r->product_name;
+      $obj->product_code = $r->product_code;
+      $obj->package_size = $r->package_size; // لا نعتمد package_size هنا (الأسعار بالقاعدة)
+      $obj->unit_name    = $r->unit_name ?? ''; // اسم وحدة الدخول إن وُجد عبر od/u
+      $obj->unit_id      = $r->unit_id ?? '';               // إن أردتها، إنضم بوحدة محددة
+
+      // الكمية بالصافي (قاعدة)
+      $obj->quantity =  formatQunantity($netBase);
+
+      // السعر (نفس طريقتك: متوسط تكلفة الدخول) × الكمية = amount
+      $obj->price  = formatMoney($amountBase, getDefaultCurrency());
+      $obj->amount = number_format($amountBase, 2);
+      $obj->symbol = getDefaultCurrency();
+
+      $obj->unit_price = formatMoneyWithCurrency($r->unit_price);
+      $totalAmount += $amountBase;
+      $totalQty    += $netBase ?? 0;
+
+      $final[] = $obj;
     }
 
-    public static function getNavigationLabel(): string
-    {
-        return __('lang.report_details');
-    }
+    return [
+      'data'           => $final,
+      'total_price'    => getDefaultCurrency() . ' ' . number_format($totalAmount, 2),
+      'total_quantity' => formatQunantity($totalQty),
+    ];
+  }
 
 
+  public function goBack()
+  {
+    return back();
+  }
 
-    protected function getLayoutData(): array
-    {
-        return [
-            'breadcrumbs' => $this->getBreadcrumbs(),
-            'title' => __('lang.report_details'),
-            'maxContentWidth' => $this->getMaxContentWidth(),
-        ];
-    }
+  protected function getActions(): array
+  {
+    return [];
+    return  [Action::make('Export to PDF')->label(__('lang.export_pdf'))
+      ->action('exportToPdf')
+      ->color('success'),];
+  }
 
+  public function exportToPdf()
+  {
+    $data = $this->getViewData();
 
-    public function getReportDetails($start_date, $end_date, $branch_id, $category_id)
-    {
-        $IN  = InventoryTransaction::MOVEMENT_IN  ?? 'in';
-        $OUT = InventoryTransaction::MOVEMENT_OUT ?? 'out';
+    $data = [
+      'report_data' => $data['report_data'],
+      'start_date' => $this->start_date,
+      'end_date' => $this->end_date,
+      'category' => Category::find($this->category_id)?->name,
+      'branch' => Branch::find($this->branch_id)?->name,
+      'total_quantity' =>  $data['total_quantity'],
+      'total_price' =>  $data['total_price']
+    ];
 
-        // فرع -> متجر
-        $storeId = Branch::where('id', $branch_id)->value('store_id');
+    $pdf = Pdf::loadView('export.reports.general-report-product-details', $data);
 
-        if (! $storeId) {
-            return [
-                'data' => [],
-                'total_price' => getDefaultCurrency() . ' ' . number_format(0, 2),
-                'total_quantity' => number_format(0, 2),
-            ];
-        }
-
-        $this->storeId = $storeId;
-        $from = Carbon::parse($start_date)->startOfDay();
-        $to   = Carbon::parse($end_date)->endOfDay();
-        $rows = $this->runSourceBalanceByCategorySQL($storeId, $category_id, $from, $to);
-
-        // dd($rows);
-        // print_html_table($rows, [
-        //     'column' => 'movement_type',
-        //     'value'  => 'in',
-        //     'color'  => '#ECFDF5',   // خلفية
-        //     'text'   => '#065F46',   // (اختياري) لون النص
-        // ]);
-
-
-
-
-
-        $final = [];
-        $totalAmount = 0.0;
-        $totalQty = 0.0;
-
-        foreach ($rows as $r) {
-            $r = (object)$r;
-            // dd($r,gettype($r));
-            // $inQtyBase       = (float) $r->remaining_qty;
-            $netBase         = (float) $r->remaining_qty;
-            if($netBase<=0){
-                continue;
-            }
-            // $inCostSumBase   = (float) $r->in_cost_sum_base;
-
-            // $avgInCostPerBase = $inQtyBase > 0 ? ($inCostSumBase / $inQtyBase) : 0.0; // سعر الوحدة (قاعدة)
-            // $amountBase       = $netBase * $avgInCostPerBase; // قيمة الصافي
-
-            $amountBase = $r->remaining_value;
-            $obj = new stdClass();
-            $obj->category_id  = (int) $category_id;
-            $obj->product_id   = $r->product_id;
-            $obj->product_name = $r->product_name;
-            $obj->product_code = $r->product_code;
-            $obj->package_size = $r->package_size; // لا نعتمد package_size هنا (الأسعار بالقاعدة)
-            $obj->unit_name    = $r->unit_name ?? ''; // اسم وحدة الدخول إن وُجد عبر od/u
-            $obj->unit_id      = $r->unit_id ?? '';               // إن أردتها، إنضم بوحدة محددة
-
-            // الكمية بالصافي (قاعدة)
-            $obj->quantity =  formatQunantity($netBase);
-
-            // السعر (نفس طريقتك: متوسط تكلفة الدخول) × الكمية = amount
-            $obj->price  = formatMoney($amountBase, getDefaultCurrency());
-            $obj->amount = number_format($amountBase, 2);
-            $obj->symbol = getDefaultCurrency();
-
-            $obj->unit_price = formatMoneyWithCurrency($r->unit_price);
-            $totalAmount += $amountBase;
-            $totalQty    += $netBase ?? 0;
-
-            $final[] = $obj;
-        }
-
-        return [
-            'data'           => $final,
-            'total_price'    => getDefaultCurrency() . ' ' . number_format($totalAmount, 2),
-            'total_quantity' => formatQunantity($totalQty),
-        ];
-    }
-
-
-    public function goBack()
-    {
-        return back();
-    }
-
-    protected function getActions(): array
-    {
-        return [];
-        return  [Action::make('Export to PDF')->label(__('lang.export_pdf'))
-            ->action('exportToPdf')
-            ->color('success'),];
-    }
-
-    public function exportToPdf()
-    {
-        $data = $this->getViewData();
-
-        $data = [
-            'report_data' => $data['report_data'],
-            'start_date' => $this->start_date,
-            'end_date' => $this->end_date,
-            'category' => Category::find($this->category_id)?->name,
-            'branch' => Branch::find($this->branch_id)?->name,
-            'total_quantity' =>  $data['total_quantity'],
-            'total_price' =>  $data['total_price']
-        ];
-
-        $pdf = Pdf::loadView('export.reports.general-report-product-details', $data);
-
-        return response()
-            ->streamDownload(function () use ($pdf) {
-                $pdf->stream("general-report-product-details" . '.pdf');
-            }, "general-report-product-details" . '.pdf');
-    }
+    return response()
+      ->streamDownload(function () use ($pdf) {
+        $pdf->stream("general-report-product-details" . '.pdf');
+      }, "general-report-product-details" . '.pdf');
+  }
 }
