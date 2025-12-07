@@ -61,4 +61,12 @@ class FinancialCategoryResource extends Resource
     {
         return static::getModel()::count();
     }
+
+    public static function canAccess(): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
 }

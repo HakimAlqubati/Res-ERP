@@ -61,4 +61,11 @@ class FinancialStatisticsReportResource extends Resource
     {
         return __('Report');
     }
+    public static function canAccess(): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
 }

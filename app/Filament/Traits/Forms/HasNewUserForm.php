@@ -62,7 +62,7 @@ trait HasNewUserForm
                             ->nullable(),
                         Select::make('branch_id')
                             ->label('Branch')
-                            ->required()
+                            // ->required()
                             ->visible(function (Get $get) {
                                 $roles = $get('roles') ?? [];
                                 return ! in_array(5, $roles);

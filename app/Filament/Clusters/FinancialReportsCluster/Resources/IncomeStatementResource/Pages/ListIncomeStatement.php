@@ -28,8 +28,11 @@ class ListIncomeStatement extends ListRecords
         $branchId = $filters['branch_id']->getState()['value'] ?? null;
 
         // Defaults if not set
-        $startDate = $dateRange['start_date'] ?? now()->startOfYear()->format('Y-m-d');
-        $endDate = $dateRange['end_date'] ?? now()->endOfYear()->format('Y-m-d');
+        $selectedMonth = $dateRange['month'] ?? now()->format('F Y');
+        $date = \Carbon\Carbon::parse($selectedMonth);
+
+        $startDate = $date->copy()->startOfMonth()->format('Y-m-d');
+        $endDate = $date->copy()->endOfMonth()->format('Y-m-d');
 
         // Create DTO
         $dto = new IncomeStatementRequestDTO(

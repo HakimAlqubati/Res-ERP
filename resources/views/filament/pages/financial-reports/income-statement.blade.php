@@ -300,7 +300,12 @@
                     <td colspan="2" class="section-header">{{ __('Revenue') }}</td>
                 </tr> -->
                 <tr class="table-row">
-                    <td class="row-label">{{ __('Total Sales Revenue') }}</td>
+                    <td class="row-label">
+                        <div style="font-weight: 600;">{{ __('Total Sales Revenue') }}</div>
+                         <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 0rem;">
+                            {{ 'Imported From POS' }}
+                        </div>
+                     </td>
                     <td class="row-value revenue-amount">
                         {{ $report['revenue']['total_formatted'] ?? number_format($report['revenue']['total'], 2) }}
                     </td>

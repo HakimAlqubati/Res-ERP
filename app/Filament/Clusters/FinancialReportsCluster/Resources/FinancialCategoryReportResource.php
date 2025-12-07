@@ -19,15 +19,15 @@ use Illuminate\Database\Eloquent\Builder;
 class FinancialCategoryReportResource extends Resource
 {
     protected static ?string $model = FinancialCategory::class;
-    
+
     protected static ?string $slug = 'financial-category-report';
-    
+
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-chart-bar';
-    
+
     protected static ?string $cluster = FinancialReportsCluster::class;
-    
+
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-     
+
     protected static ?int $navigationSort = 1;
 
     public static function getLabel(): ?string
@@ -58,7 +58,7 @@ class FinancialCategoryReportResource extends Resource
                     ->query(function (Builder $q, $data) {
                         return $q;
                     }),
-                
+
                 SelectFilter::make('branch_id')
                     ->label(__('Branch'))
                     ->searchable()
@@ -66,19 +66,19 @@ class FinancialCategoryReportResource extends Resource
                         return $q;
                     })
                     ->options(Branch::active()->branches()->get()->pluck('name', 'id')),
-                
+
                 Filter::make('date_range')
                     ->label(__('Date Range'))
                     ->schema([
                         DatePicker::make('start_date')
                             ->label(__('Start Date'))
-                            ->default(fn () => request()->get('start_date') ?? now()->startOfMonth()->format('Y-m-d')),
+                            ->default(fn() => request()->get('start_date') ?? now()->startOfMonth()->format('Y-m-d')),
                         DatePicker::make('end_date')
                             ->label(__('End Date'))
-                            ->default(fn () => request()->get('end_date') ?? now()->endOfMonth()->format('Y-m-d')),
+                            ->default(fn() => request()->get('end_date') ?? now()->endOfMonth()->format('Y-m-d')),
                     ])
                     ->columnSpan(2),
-                
+
                 SelectFilter::make('status')
                     ->label(__('Transaction Status'))
                     ->options([
@@ -89,8 +89,8 @@ class FinancialCategoryReportResource extends Resource
                     ->query(function (Builder $q, $data) {
                         return $q;
                     }),
-                
-               
+
+
             ], FiltersLayout::AboveContent);
     }
 
@@ -109,5 +109,12 @@ class FinancialCategoryReportResource extends Resource
     public static function canViewAny(): bool
     {
         return isSuperAdmin() || isSystemManager() || isFinanceManager();
+    }
+    public static function canAccess(): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
     }
 }
