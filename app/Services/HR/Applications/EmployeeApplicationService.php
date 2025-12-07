@@ -124,7 +124,60 @@ class EmployeeApplicationService
 
     public function approveApplication(int $id, int $userId)
     {
-        $record = EmployeeApplicationV2::findOrFail($id);
+        $record = EmployeeApplicationV2::with(['missedCheckinRequest', 'missedCheckoutRequest'])->findOrFail($id);
+
+        switch ($record->application_type_id) {
+            case EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST:
+                $details = $record->missedCheckinRequest;
+                if (!$details) {
+                    throw new \Exception('Missing attendance details');
+                }
+
+                $validated = [
+                    'employee_id'     => $record->employee_id,
+                    'date_time'       => $details->date . ' ' . $details->time,
+                    'type'            => \App\Models\Attendance::CHECKTYPE_CHECKIN,
+                    'attendance_type' => \App\Models\Attendance::ATTENDANCE_TYPE_REQUEST,
+                ];
+
+                $result = app(\App\Services\HR\v2\Attendance\AttendanceServiceV2::class)->handle($validated);
+
+                if (!$result['success']) {
+                    throw new \Exception($result['message'] ?? 'Failed to create attendance record');
+                }
+                break;
+
+            case EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST:
+                $details = $record->missedCheckoutRequest;
+                if (!$details) {
+                    throw new \Exception('Missing departure details');
+                }
+
+                // Check for existing Check-in
+                $hasCheckin = \App\Models\Attendance::query()
+                    ->where('employee_id', $record->employee_id)
+                    ->where('check_date', $details->date)
+                    ->where('check_type', \App\Models\Attendance::CHECKTYPE_CHECKIN)
+                    ->exists();
+
+                if (!$hasCheckin) {
+                    throw new \Exception('There is no check-in, so you cannot approve this request.');
+                }
+
+                $validated = [
+                    'employee_id'     => $record->employee_id,
+                    'date_time'       => $details->date . ' ' . $details->time,
+                    'type'            => \App\Models\Attendance::CHECKTYPE_CHECKOUT,
+                    'attendance_type' => \App\Models\Attendance::ATTENDANCE_TYPE_REQUEST,
+                ];
+
+                $result = app(\App\Services\HR\v2\Attendance\AttendanceServiceV2::class)->handle($validated);
+
+                if (!$result['success']) {
+                    throw new \Exception($result['message'] ?? 'Failed to create departure record');
+                }
+                break;
+        }
 
         $record->update([
             'status'      => EmployeeApplicationV2::STATUS_APPROVED,
