@@ -104,7 +104,7 @@ FROM (
    AND it_out.movement_type = 'out'
    AND it_out.store_id = it_in.store_id
    AND it_out.deleted_at IS  NULL
-   and it_out.transactionable_type != :supply_morph
+   and it_out.transactionable_type = :returned_orders
 
   LEFT JOIN units AS u
     ON u.id = it_in.unit_id
@@ -142,7 +142,7 @@ SQL;
       'from_date'   => $fromDate,
       'to_date'     => $toDate,
       'order_morph'  => 'App\\Models\\Order',
-      'supply_morph' => 'App\\Models\\StockSupplyOrder'
+      'returned_orders' => 'App\\Models\\ReturnedOrder'
     ]);
   }
 
