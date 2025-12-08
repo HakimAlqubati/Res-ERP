@@ -90,7 +90,7 @@ class ProductRepository implements ProductRepositoryInterface
         //     return is_numeric($binding) ? $binding : "'{$binding}'";
         // })->toArray());
 
-        $query->whereNot('type',Product::TYPE_FINISHED_POS);
+        $query->whereNot('type', Product::TYPE_FINISHED_POS);
         // dd($sql);
         $products = $query->get();
 
@@ -284,7 +284,7 @@ class ProductRepository implements ProductRepositoryInterface
             ->values()
             ->all();
 
-         if (empty($storeIds)) {
+        if (empty($storeIds)) {
             return [];
         }
 
@@ -422,7 +422,7 @@ class ProductRepository implements ProductRepositoryInterface
 
         return $final;
     }
-// 
+    // 
 
 
     public function getReportDataFromTransactionsV2($productParam, $from_date, $to_date, $branchIds)
@@ -628,7 +628,7 @@ class ProductRepository implements ProductRepositoryInterface
     }
     public function getCount($request, $from_date, $to_date, $branch_id)
     {
-         $data = DB::table('orders_details')
+        $data = DB::table('orders_details')
             ->select(
                 'products.name AS product',
                 'units.name AS unit',

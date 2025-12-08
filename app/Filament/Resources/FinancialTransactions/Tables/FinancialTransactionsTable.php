@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\FinancialTransactions\Tables;
 
 use App\Enums\FinancialCategoryCode;
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Imports\FinancialTransactionsFromExcelImport;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -95,6 +96,7 @@ class FinancialTransactionsTable
                     ->requiresConfirmation(),
             ])
             ->columns([
+                SoftDeleteColumn::make(),
                 TextColumn::make('transaction_date')
                     ->label('Date')
                     ->date()

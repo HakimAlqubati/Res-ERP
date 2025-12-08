@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Branch;
 use Illuminate\Console\Command;
 use App\Models\InventoryTransaction;
 use App\Models\Order;
@@ -49,12 +50,18 @@ class FixInventoryMovementDates extends Command
     private function runUpdate()
     {
         try {
+            $storeIds = [];
+            $storeIds = Branch::branches()->whereNotNull('store_id')->pluck('store_id')->toArray();
+            if (empty($storeIds)) {
+                $this->error("No stores found with a valid store_id.");
+                return;
+            }
             // Query Builder approach for Model Query
             $affected = InventoryTransaction::query()
                 ->join('orders', 'inventory_transactions.transactionable_id', '=', 'orders.id')
                 ->where('inventory_transactions.transactionable_type', Order::class)
                 ->where('inventory_transactions.movement_type', InventoryTransaction::MOVEMENT_IN)
-                ->where('inventory_transactions.store_id',10)
+                ->whereIn('inventory_transactions.store_id', $storeIds)
                 ->whereNotNull('orders.transfer_date')
                 // Only update if dates are different to avoid unnecessary writes
                 ->where(function ($query) {

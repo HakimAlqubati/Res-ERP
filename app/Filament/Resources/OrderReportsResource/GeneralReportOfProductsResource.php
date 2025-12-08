@@ -71,7 +71,13 @@ class GeneralReportOfProductsResource extends Resource
                 Filter::make('date')
                     ->schema([
                         DatePicker::make('start_date')
-                            ->label(__('lang.start_date')),
+                            ->label(__('lang.start_date'))
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                if ($state) {
+                                    $set('end_date', Carbon::parse($state)->endOfMonth()->format('Y-m-d'));
+                                }
+                            }),
                         DatePicker::make('end_date')
                             ->label(__('lang.end_date')),
                     ])
@@ -99,16 +105,16 @@ class GeneralReportOfProductsResource extends Resource
         $from = Carbon::parse($start_date)->startOfDay();
         $to   = Carbon::parse($end_date)->endOfDay();
 
-        
+
         foreach ($categories as $cat_id => $cat_name) {
- 
+
             // 3) جلب صفوف المنتجات داخل الفئة بنفس منطق runSourceBalanceByCategorySQL
             $rows = app(GeneralReportProductDetails::class)->runSourceBalanceByCategorySQL(
                 (int)$storeId,
                 (int)$cat_id,
                 $from,
-                $to 
-            ); 
+                $to
+            );
             // 4) تجميع كميات وقيم الفئة
             $cat_qty   = 0.0; // مجموع remaining_qty (بالوحدة المُدخلة لكل منتج)
             $cat_amount = 0.0; // مجموع remaining_value
@@ -141,7 +147,7 @@ class GeneralReportOfProductsResource extends Resource
             $grand_total_amount += $cat_amount;
 
             $final_result['data'][] = $obj;
-        }  
+        }
 
         $final_result['total_price']    = formatMoneyWithCurrency($grand_total_amount);
         $final_result['total_quantity'] = formatQunantity($grand_total_qty);
