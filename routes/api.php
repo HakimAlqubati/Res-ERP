@@ -275,13 +275,54 @@ Route::post('/v2/attendance/test', function (Request $request) {
 // Route::get('/stores', fn() => \App\Models\Store::select('id', 'name')->get());
 // Route::get('/products', fn() => \App\Models\Product::select('id', 'name')->get());
 // Route::post('/stock-inventory', function(\Illuminate\Http\Request $request) {
-    // من هنا تحفظ البيانات في جدول StockInventory وتعيد رسالة نجاح
-    // return response()->json(['message' => 'تم الحفظ بنجاح']);
-    // (اكتب الكود حسب منطقك)
+// من هنا تحفظ البيانات في جدول StockInventory وتعيد رسالة نجاح
+// return response()->json(['message' => 'تم الحفظ بنجاح']);
+// (اكتب الكود حسب منطقك)
 // });
 
 
-Route::get('/testBranchStoreIds',function(){
-$storeIds = Branch::branches()->whereNotNull('store_id')->pluck('store_id')->toArray();
-return $storeIds;
+Route::get('/testBranchStoreIds', function () {
+    $storeIds = Branch::branches()->whereNotNull('store_id')->pluck('store_id')->toArray();
+    return $storeIds;
+});
+
+Route::get('/fixInventoryMovementDates', function () {
+    $storeIds = Branch::branches()->whereNotNull('store_id')->pluck('store_id')->toArray();
+
+    if (empty($storeIds)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'No stores found with a valid store_id.',
+            'affected' => 0,
+        ]);
+    }
+
+    try {
+        $affected = \App\Models\InventoryTransaction::query()
+            ->join('orders', 'inventory_transactions.transactionable_id', '=', 'orders.id')
+            ->where('inventory_transactions.transactionable_type', Order::class)
+            ->where('inventory_transactions.movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
+            ->whereIn('inventory_transactions.store_id', $storeIds)
+            ->whereNotNull('orders.transfer_date')
+            ->where(function ($query) {
+                $query->whereColumn('inventory_transactions.movement_date', '!=', 'orders.transfer_date')
+                    ->orWhereColumn('inventory_transactions.transaction_date', '!=', 'orders.transfer_date');
+            })
+            ->update([
+                'inventory_transactions.movement_date'    => DB::raw('orders.transfer_date'),
+                'inventory_transactions.transaction_date' => DB::raw('orders.transfer_date'),
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Updated {$affected} inventory transaction rows.",
+            'affected' => $affected,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage(),
+            'affected' => 0,
+        ], 500);
+    }
 });
