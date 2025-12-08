@@ -279,3 +279,9 @@ Route::post('/v2/attendance/test', function (Request $request) {
     // return response()->json(['message' => 'تم الحفظ بنجاح']);
     // (اكتب الكود حسب منطقك)
 // });
+
+
+Route::get('/testBranchStoreIds',function(){
+$storeIds = Branch::branches()->whereNotNull('store_id')->pluck('store_id')->toArray();
+return $storeIds;
+});
