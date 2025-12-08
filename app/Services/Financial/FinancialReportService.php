@@ -10,7 +10,7 @@ class FinancialReportService
 {
     public function getIncomeStatement(IncomeStatementRequestDTO $dto): array
     {
-        $query = FinancialTransaction::query();
+        $query = FinancialTransaction::query()->whereNotNull('branch_id');
 
         if ($dto->startDate && $dto->endDate) {
             $query->whereBetween('transaction_date', [$dto->startDate, $dto->endDate]);

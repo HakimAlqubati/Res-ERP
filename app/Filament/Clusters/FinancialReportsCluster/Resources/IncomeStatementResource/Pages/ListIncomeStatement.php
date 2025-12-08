@@ -38,7 +38,7 @@ class ListIncomeStatement extends ListRecords
         $dto = new IncomeStatementRequestDTO(
             startDate: $startDate,
             endDate: $endDate,
-            branchId: $branchId
+            branchId: $branchId ? (int) $branchId : null
         );
 
         // Use service to generate report
