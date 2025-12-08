@@ -71,7 +71,8 @@ class AttendanceTest extends Page implements HasForms
                     ->seconds(false)
                     ->native(false)
                     ->displayFormat('Y-m-d H:i')
-                    ->hidden(fn() => !isSuperAdmin()),
+                    // ->hidden(fn() => !isSuperAdmin())
+                    ,
             ])
             ->statePath('data');
     }
