@@ -84,7 +84,7 @@ class OrderTable
                         if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
                             $analysis = $service->getOrderValues($record->id);
                             return $analysis['total_cost_from_inventory_transactions'] ?? $record->total_amount;
-                        } 
+                        }
                         return $record->total_amount;
                     })
                     ->formatStateUsing(function ($state) {
@@ -93,14 +93,20 @@ class OrderTable
                     ->summarize(
                         Summarizer::make()
                             ->using(function (Table $table) {
-                                $total  = $table->getRecords()->sum(fn($record) => $record->total_amount);
+                                $service = app(OrderCostAnalysisService::class);
+                                $total = $table->getRecords()->sum(function ($record) use ($service) {
+                                    if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
+                                        $analysis = $service->getOrderValues($record->id);
+                                        return $analysis['total_cost_from_inventory_transactions'] ?? $record->total_amount;
+                                    }
+                                    return $record->total_amount;
+                                });
                                 if (is_numeric($total)) {
                                     return formatMoneyWithCurrency($total);
                                 }
                                 return $total;
                             })
-                    )
-                    ,
+                    ),
                 TextColumn::make('created_at')
                     ->formatStateUsing(function ($state) {
                         return date('Y-m-d', strtotime($state)) . ' ' . date('H:i:s', strtotime($state));
