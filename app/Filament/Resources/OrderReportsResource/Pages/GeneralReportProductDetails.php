@@ -79,12 +79,12 @@ FROM (
       0
     ) / COALESCE(it_in.package_size, 1.0) AS remaining_qty_unit,
 
-    -- CASE 
-    --   WHEN it_in.price IS NULL OR it_in.price = 0 
-    --   THEN COALESCE(up.price, 0)
-    --   ELSE it_in.price
-    -- END AS unit_price,
-    COALESCE(it_in.price, 0) AS unit_price,
+    CASE 
+      WHEN it_in.price IS NULL OR it_in.price = 0 
+      THEN COALESCE(up.price, 0)
+      ELSE it_in.price
+    END AS unit_price,
+    -- COALESCE(it_in.price, 0) AS unit_price,
 
     (
       GREATEST(
@@ -93,12 +93,12 @@ FROM (
         0
       ) / COALESCE(it_in.package_size, 1.0)
     ) *
-    -- CASE 
-    --   WHEN it_in.price IS NULL OR it_in.price = 0 
-    --   THEN COALESCE(up.price, 0)
-    --   ELSE it_in.price
-    -- END AS remaining_value
-    COALESCE(it_in.price, 0) AS remaining_value
+    CASE 
+      WHEN it_in.price IS NULL OR it_in.price = 0 
+      THEN COALESCE(up.price, 0)
+      ELSE it_in.price
+    END AS remaining_value
+    -- COALESCE(it_in.price, 0) AS remaining_value
 
   FROM inventory_transactions AS it_in
   LEFT JOIN inventory_transactions AS it_out
@@ -111,9 +111,9 @@ FROM (
   LEFT JOIN units AS u
     ON u.id = it_in.unit_id
 
-  -- LEFT JOIN unit_prices AS up
-  --   ON up.product_id = it_in.product_id
-  --  AND up.unit_id    = it_in.unit_id
+  LEFT JOIN unit_prices AS up
+    ON up.product_id = it_in.product_id
+   AND up.unit_id    = it_in.unit_id
 
   INNER JOIN products AS p
     ON p.id = it_in.product_id
@@ -129,7 +129,7 @@ FROM (
     it_in.id, it_in.product_id, p.code, p.name,
     it_in.unit_id, u.name,
     it_in.package_size, it_in.quantity, it_in.price
-    -- , up.price
+    , up.price
     , it_in.movement_date
 ) AS t
 GROUP BY

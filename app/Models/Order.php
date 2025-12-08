@@ -128,9 +128,18 @@ class Order extends Model implements Auditable
     public function getTotalAmountAttribute()
     {
         return $this->orderDetails?->sum(function ($detail) {
-            return $detail->price * $detail->available_quantity;
+            $price = $detail->price;
+
+            // إذا كان السعر صفر أو فارغ، اجلب من unit_prices
+            if (empty($price) || $price == 0) {
+                $unitPrice = UnitPrice::where('product_id', $detail->product_id)
+                    ->where('unit_id', $detail->unit_id)
+                    ->first();
+                $price = $unitPrice?->price ?? 0;
+            }
+
+            return $price * $detail->available_quantity;
         });
-        // return $this->orderDetails?->sum('price');
     }
     public function store()
     {

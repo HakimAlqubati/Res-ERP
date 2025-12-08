@@ -66,7 +66,13 @@ class OrderCostAnalysisService
             // الحركة الصادرة تمثل التكلفة المحققة (COGS) من المخزن المركزي
             ->where('movement_type', InventoryTransaction::MOVEMENT_IN);
 
-        $inventoryCost = $inventoryCostQuery->sum(DB::raw('quantity * price'));
+        // حساب التكلفة مع استخدام unit_prices كبديل إذا كان السعر صفر أو فارغ
+        $inventoryCost = (clone $inventoryCostQuery)
+            ->leftJoin('unit_prices', function ($join) {
+                $join->on('inventory_transactions.product_id', '=', 'unit_prices.product_id')
+                    ->on('inventory_transactions.unit_id', '=', 'unit_prices.unit_id');
+            })
+            ->sum(DB::raw('inventory_transactions.quantity * COALESCE(NULLIF(inventory_transactions.price, 0), unit_prices.price, 0)'));
 
         // 3.2 التحقق من وجود حركات مخزون صادرة
         if ($inventoryCost == 0 && $inventoryCostQuery->doesntExist()) {
