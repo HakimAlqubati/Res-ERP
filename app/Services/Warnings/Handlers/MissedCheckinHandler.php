@@ -245,53 +245,66 @@ final class MissedCheckinHandler implements WarningHandler
             }
 
             /**
-             * (3) إرسال إشعار للمشرف — إشعار منفصل لكل موظف لديه مخالفات
+             * (3) إرسال إشعار واحد للمشرف يحتوي على جميع الموظفين المتغيبين
              */
-            foreach ($missedByEmp as $empId => $bundle) {
-                $empInfo = $bundle['employee'] ?? null;
-                $periods = $bundle['periods']  ?? [];
+            if (!empty($missedByEmp)) {
+                $employeesList = [];
+                foreach ($missedByEmp as $empId => $bundle) {
+                    $empInfo = $bundle['employee'] ?? null;
+                    $periods = $bundle['periods']  ?? [];
 
-                if (!$empInfo || empty($periods)) {
-                    continue;
+                    if (!$empInfo || empty($periods)) {
+                        continue;
+                    }
+
+                    $employeesList[] = [
+                        'employee' => $empInfo,
+                        'periods'  => $periods,
+                    ];
                 }
 
-                $title = 'Missed Check-in (Employee)';
-                $body  = "Employee {$empInfo['name']} missed check-in on {$date->toDateString()} (grace {$grace}m).";
+                if (!empty($employeesList)) {
+                    $employeeCount = count($employeesList);
+                    $employeeNames = collect($employeesList)->pluck('employee.name')->implode(', ');
 
-                $payload = WarningPayload::make($title, $body, WarningLevel::Warning)
-                    ->ctx([
-                        'tenant_id'  => $tenantId,
-                        'date'       => $date->toDateString(),
-                        'grace'      => $grace,
-                        'supervisor' => [
-                            'id'     => $sup->id,
-                            'name'   => $sup->name,
-                            'branch' => $sup->branch?->name,
-                        ],
-                        'employee'   => $empInfo,
-                        'periods'    => $periods, // جميع فترات اليوم للموظف
-                    ])
-                    // منع تكرار إشعار نفس (tenant/supervisor/employee/date)
-                    ->scope("missedcheckin:tenant-{$tenantId}:sup-{$sup->id}:emp-{$empId}:date-{$date->toDateString()}")
-                    ->expires(now()->addHours(6));
+                    $title = "Missed Check-in ({$employeeCount} Employees)";
+                    $body  = "The following employees missed check-in on {$date->toDateString()} (grace {$grace}m): {$employeeNames}";
 
-                try {
-                    Warnings::send($supUser, $payload);
-                    $sent++;
-                } catch (\Throwable $e) {
-                    $failed++;
-                    AppLog::write(
-                        'Failed to send per-employee missed check-in warning to supervisor',
-                        AppLog::LEVEL_WARNING,
-                        'attendance',
-                        [
-                            'tenant_id'     => $tenantId,
-                            'supervisor_id' => $sup->id,
-                            'employee_id'   => $empId,
-                            'date'          => $date->toDateString(),
-                            'error'         => $e->getMessage(),
-                        ]
-                    );
+                    $payload = WarningPayload::make($title, $body, WarningLevel::Warning)
+                        ->ctx([
+                            'tenant_id'  => $tenantId,
+                            'date'       => $date->toDateString(),
+                            'grace'      => $grace,
+                            'supervisor' => [
+                                'id'     => $sup->id,
+                                'name'   => $sup->name,
+                                'branch' => $sup->branch?->name,
+                            ],
+                            'employees'  => $employeesList, // جميع الموظفين مع فتراتهم
+                            'employee_count' => $employeeCount,
+                        ])
+                        // منع تكرار إشعار نفس (tenant/supervisor/date)
+                        ->scope("missedcheckin:tenant-{$tenantId}:sup-{$sup->id}:date-{$date->toDateString()}")
+                        ->expires(now()->addHours(6));
+
+                    try {
+                        Warnings::send($supUser, $payload);
+                        $sent++;
+                    } catch (\Throwable $e) {
+                        $failed++;
+                        AppLog::write(
+                            'Failed to send missed check-in warning to supervisor',
+                            AppLog::LEVEL_WARNING,
+                            'attendance',
+                            [
+                                'tenant_id'      => $tenantId,
+                                'supervisor_id'  => $sup->id,
+                                'employee_count' => $employeeCount,
+                                'date'           => $date->toDateString(),
+                                'error'          => $e->getMessage(),
+                            ]
+                        );
+                    }
                 }
             }
         }

@@ -235,7 +235,7 @@ class EmployeeForm
                             Fieldset::make('Employeement')->label('Employeement')->columnSpanFull()
                                 ->schema([
                                     Grid::make()->columns(4)->columnSpanFull()->schema([
-                                        TextInput::make('employee_no')->default((Employee::withTrashed()->latest()->first()?->id) + 1)->disabled()->columnSpan(1)->label('Employee number')->unique(ignoreRecord: true),
+                                        TextInput::make('employee_no')->default((Employee::withTrashed()->latest()->first()?->id) + 1)->disabled(false)->columnSpan(1)->label('Employee number')->unique(ignoreRecord: true),
                                         TextInput::make('job_title')->columnSpan(1)->required(),
                                         Select::make('position_id')->columnSpan(1)->label('Position type')
                                             ->searchable()
