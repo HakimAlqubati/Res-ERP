@@ -305,6 +305,11 @@ class Order extends Model implements Auditable
         static::saved(function (Order $order) {
             if (in_array($order->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
                 app(CopyOrderOutToBranchStoreService::class)->handleForOrder($order);
+
+                // Create Financial Transaction for Transfers (only for non-reseller branches)
+                if ($order->branch && $order->branch->type !== Branch::TYPE_RESELLER) {
+                    app(\App\Services\Financial\TransferFinancialSyncService::class)->syncOrder($order);
+                }
             }
         });
     }
