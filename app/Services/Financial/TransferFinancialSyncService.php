@@ -191,7 +191,6 @@ class TransferFinancialSyncService
                 'message' => 'Transaction created successfully.',
             ];
         } catch (\Exception $e) {
-            Log::error("Failed to sync transfer order {$order->id}: " . $e->getMessage());
             return [
                 'success' => false,
                 'status' => 'error',
