@@ -271,11 +271,11 @@
     <div class="report-container">
         @if (isset($report) && !empty($report))
         {{-- Header --}}
-        <div class="report-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="report-header" style="display: flex; justify-content: space-between;">
             {{-- Company Logo (Left) --}}
             <div style="flex: 0 0 80px;">
                 <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt="Company Logo"
-                    style="height: 60px; width: auto; object-fit: contain; border-radius: 50%;">
+                    style="height: 60px; width: auto; object-fit: contain; border-radius: 0%;">
             </div>
 
             {{-- Title (Center) --}}
