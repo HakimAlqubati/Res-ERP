@@ -286,6 +286,39 @@ Route::get('/testBranchStoreIds', function () {
     return $storeIds;
 });
 
+// Fix Closing Stock transactions: change type from expense to income
+Route::get('/fixClosingStockTransactionType', function () {
+    try {
+        $closingStockCategory = \App\Models\FinancialCategory::findByCode(\App\Enums\FinancialCategoryCode::CLOSING_STOCK);
+
+        if (!$closingStockCategory) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Closing Stock category not found.',
+                'affected' => 0,
+            ], 404);
+        }
+
+        // Include soft-deleted records with withTrashed()
+        $affected = \App\Models\FinancialTransaction::withTrashed()
+            ->where('category_id', $closingStockCategory->id)
+            ->where('type', \App\Models\FinancialCategory::TYPE_EXPENSE)
+            ->update(['type' => \App\Models\FinancialCategory::TYPE_INCOME]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully updated {$affected} closing stock transactions from expense to income.",
+            'affected' => $affected,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage(),
+            'affected' => 0,
+        ], 500);
+    }
+});
+
 Route::get('/fixInventoryMovementDates', function () {
     $storeIds = Branch::branches()->whereNotNull('store_id')->pluck('store_id')->toArray();
 

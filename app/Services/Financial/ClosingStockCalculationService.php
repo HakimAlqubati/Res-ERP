@@ -97,7 +97,7 @@ class ClosingStockCalculationService
                 'branch_id' => $branchId,
                 'category_id' => $category->id,
                 'amount' => $amount,
-                'type' => FinancialCategory::TYPE_EXPENSE, // As defined in migration
+                'type' => FinancialCategory::TYPE_INCOME, // Closing stock reduces COGS, so it's treated as income/credit
                 'transaction_date' => $inventory->inventory_date,
                 'status' => FinancialTransaction::STATUS_PAID, // It's an accounting entry, effectively "paid"/realized
                 'description' => "Closing Stock - Inventory #{$inventory->id} - Store: " . ($inventory->store->name ?? 'N/A'),
