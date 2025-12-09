@@ -271,25 +271,40 @@
     <div class="report-container">
         @if (isset($report) && !empty($report))
         {{-- Header --}}
-        <div class="report-header">
-            <h1 class="report-title">{{ __('Gross Profit Report') }}</h1>
-            <p class="report-subtitle">
-                @if($startDate && $endDate)
-                {{ __('From ') }} {{ \Carbon\Carbon::parse($startDate)->format('d F, Y') }}
-                {{ __('to') }} {{ \Carbon\Carbon::parse($endDate)->format('d F, Y') }}
+        <div class="report-header" style="display: flex; justify-content: space-between; align-items: center;">
+            {{-- Company Logo (Left) --}}
+            <div style="flex: 0 0 80px;">
+                <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt="Company Logo"
+                    style="height: 60px; width: auto; object-fit: contain; border-radius: 50%;">
+            </div>
+
+            {{-- Title (Center) --}}
+            <div style="flex: 1; text-align: center;">
+                <h1 class="report-title">{{ __('Gross Profit Report') }}</h1>
+                <p class="report-subtitle">
+                    @if($startDate && $endDate)
+                    {{ __('From ') }} {{ \Carbon\Carbon::parse($startDate)->format('d F, Y') }}
+                    {{ __('to') }} {{ \Carbon\Carbon::parse($endDate)->format('d F, Y') }}
+                    @else
+                    {{ __('All Time Records') }}
+                    @endif
+                </p>
+                @if(isset($branchName) && $branchName)
+                <p class="report-subtitle" style="font-weight: 600; margin-top: 0.25rem;">
+                    {{ __('Branch') }}: {{ $branchName }}
+                </p>
                 @else
-                {{ __('All Time Records') }}
+                <p class="report-subtitle" style="font-weight: 600; margin-top: 0.25rem;">
+                    {{ __('Branch') }}: {{ __('All') }}
+                </p>
                 @endif
-            </p>
-            @if(isset($branchName) && $branchName)
-            <p class="report-subtitle" style="font-weight: 600; margin-top: 0.25rem;">
-                {{ __('Branch') }}: {{ $branchName }}
-            </p>
-            @else
-            <p class="report-subtitle" style="font-weight: 600; margin-top: 0.25rem;">
-                {{ __('Branch') }}: {{ __('All') }}
-            </p>
-            @endif
+            </div>
+
+            {{-- System Logo (Right) --}}
+            <div style="flex: 0 0 80px; text-align: right;">
+                <img src="{{ url('/') . '/storage/workbench.png' }}" alt="System Logo"
+                    style="height: 60px; width: auto; object-fit: contain;">
+            </div>
         </div>
 
         {{-- Report Table --}}
@@ -302,10 +317,10 @@
                 <tr class="table-row">
                     <td class="row-label">
                         <div style="font-weight: 600;">{{ __('Total Sales Revenue') }}</div>
-                         <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 0rem;">
+                        <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 0rem;">
                             {{ 'Imported From POS' }}
                         </div>
-                     </td>
+                    </td>
                     <td class="row-value revenue-amount">
                         {{ $report['revenue']['total_formatted'] ?? number_format($report['revenue']['total'], 2) }}
                     </td>
