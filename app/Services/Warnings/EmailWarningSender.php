@@ -42,8 +42,8 @@ final class EmailWarningSender implements WarningSender
                     continue;
                 }
 
-                // Queue the email for better performance
-                Mail::to($user->email)->queue(new WarningMail($payload, $user));
+                // Send email immediately (use queue() for production with queue worker)
+                Mail::to($user->email)->send(new WarningMail($payload, $user));
             } catch (\Throwable $e) {
                 Log::error('Failed to send warning email', [
                     'user_id' => $user->id ?? null,

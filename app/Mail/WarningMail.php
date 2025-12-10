@@ -18,6 +18,7 @@ class WarningMail extends Mailable implements ShouldQueue
 
     public array $data;
     public string $userName;
+    public ?Authenticatable $user;
 
     /**
      * Create a new message instance.
@@ -26,6 +27,7 @@ class WarningMail extends Mailable implements ShouldQueue
         public WarningPayload $payload,
         ?Authenticatable $user = null
     ) {
+        $this->user = $user;
         $this->data = $payload->toDatabaseArray();
         $this->userName = $user?->name ?? 'User';
     }
