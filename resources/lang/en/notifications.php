@@ -32,4 +32,7 @@ return [
 
     'you_dont_have_periods_today' => 'You do not have any work shifts scheduled for today.',
 
+    // Cannot auto-checkin near shift end
+    'cannot_auto_checkin_near_shift_end' => 'Cannot auto-checkin near shift end without prior records. Please manually select the operation type (checkin/checkout).',
+
 ];

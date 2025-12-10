@@ -5,6 +5,7 @@ namespace App\Services\HR\v2\Attendance;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Services\HR\v2\Attendance\Validators\AttendanceBusinessValidator;
+use App\Services\HR\v2\Attendance\Validators\TypeRequiredException;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +39,15 @@ class AttendanceServiceV2
         // سيقوم برمي Exception ويوقف الكود تلقائياً إذا فشل
         try {
             $this->validator->validate($employee, $requestTime, $type);
+        } catch (TypeRequiredException $e) {
+            // حالة خاصة: طلب قرب نهاية الشيفت بدون سجلات - يتطلب تحديد النوع
+            $this->storeRejectedAttendance($employee, $requestTime, $e->getMessage(), $payload);
+
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+                'type_required' => true,
+            ];
         } catch (\Throwable $e) {
             // Store rejected attendance record
             $this->storeRejectedAttendance($employee, $requestTime, $e->getMessage(), $payload);

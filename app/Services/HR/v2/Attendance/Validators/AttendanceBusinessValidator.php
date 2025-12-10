@@ -4,12 +4,14 @@ namespace App\Services\HR\v2\Attendance\Validators;
 
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Models\Setting;
 use App\Services\HR\v2\Attendance\ShiftResolver;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 
 class AttendanceBusinessValidator
 {
+
     public function __construct(
         protected ShiftResolver $shiftResolver
     ) {}
@@ -18,6 +20,7 @@ class AttendanceBusinessValidator
      * الحارس الرئيسي: يقوم بفحص جميع قواعد العمل.
      *
      * @throws ValidationException
+     * @throws TypeRequiredException
      */
     public function validate(Employee $employee, Carbon $requestTime, ?string $requestType = null): void
     {
@@ -74,6 +77,43 @@ class AttendanceBusinessValidator
             $this->throwError(
                 'missing_checkin',
                 __('notifications.cannot_checkout_without_checkin')
+            );
+        }
+
+        // القاعدة 4: طلب قرب نهاية الشيفت بدون سجل دخول - يتطلب تحديد النوع صراحة
+        // هذه القاعدة تمنع تسجيل دخول تلقائي في نهاية الدوام بدون سجلات سابقة
+        if (!$checkInRecord && $requestType === null) {
+            $this->validateNearShiftEndWithoutRecords($employee, $requestTime);
+        }
+    }
+
+    /**
+     * التحقق من الطلبات القريبة من نهاية الشيفت بدون سجلات
+     * 
+     * @throws TypeRequiredException
+     */
+    protected function validateNearShiftEndWithoutRecords(Employee $employee, Carbon $requestTime): void
+    {
+        // جلب الوردية المحتملة لهذا الوقت
+        $shiftInfo = $this->shiftResolver->resolve($employee, $requestTime);
+
+        if (!$shiftInfo || !isset($shiftInfo['bounds'])) {
+            return; // لا توجد وردية، سيتم التعامل معها في مكان آخر
+        }
+
+        $bounds = $shiftInfo['bounds'];
+
+        // استخدام الإعداد الموجود (بالساعات) وتحويله لدقائق
+        $hoursBeforePeriod = (int) Setting::getSetting('pre_end_hours_for_check_in_out', 1);
+        $thresholdMinutes = $hoursBeforePeriod * 60;
+
+        // حساب وقت العتبة (نهاية الشيفت - threshold دقيقة)
+        $thresholdTime = $bounds['end']->copy()->subMinutes($thresholdMinutes);
+
+        // إذا كان الوقت الحالي بعد العتبة (قريب من نهاية أو بعد نهاية الشيفت)
+        if ($requestTime->gte($thresholdTime)) {
+            throw new TypeRequiredException(
+                __('notifications.cannot_auto_checkin_near_shift_end')
             );
         }
     }
