@@ -2,8 +2,8 @@
      {{-- زر التحذير مع العدّاد واللمبة --}}
      {{-- زر التحذير مع العدّاد واللمبة --}}
      @php
-         $count = isset($warnings) ? count($warnings) : 0;
-         $badge = $count > 99 ? '99+' : ($count ?: '');
+     $count = isset($warnings) ? count($warnings) : 0;
+     $badge = $count > 99 ? '99+' : ($count ?: '');
      @endphp
 
      <div class="warn-badge inline-block" data-count="{{ $badge }}">
@@ -18,13 +18,13 @@
      {{-- المودال --}}
      <x-filament::modal id="warnings-modal" width="3xl" alignment="center">
          @php
-             $items = $warnings ?? [];
-             $total = count($items);
-             $countCritical = collect($items)->where('level', 'critical')->count();
-             $countWarning = collect($items)->where('level', 'warning')->count();
-             $countInfo = collect($items)
-                 ->whereNotIn('level', ['critical', 'warning'])
-                 ->count();
+         $items = $warnings ?? [];
+         $total = count($items);
+         $countCritical = collect($items)->where('level', 'critical')->count();
+         $countWarning = collect($items)->where('level', 'warning')->count();
+         $countInfo = collect($items)
+         ->whereNotIn('level', ['critical', 'warning'])
+         ->count();
          @endphp
 
          <div x-data="{ level: 'all' }" class="space-y-4">
@@ -73,108 +73,120 @@
              {{-- القائمة --}}
              <div class="space-y-2 max-h-[65vh] overflow-y-auto">
                  @forelse ($items as $w)
-                     @php
-                         $lvl = $w['level'] ?? 'info';
-                         $barColor =
-                             $lvl === 'critical'
-                                 ? 'bg-danger-500'
-                                 : ($lvl === 'warning'
-                                     ? 'bg-warning-500'
-                                     : 'bg-gray-300');
+                 @php
+                 $lvl = $w['level'] ?? 'info';
+                 $barColor =
+                 $lvl === 'critical'
+                 ? 'bg-danger-500'
+                 : ($lvl === 'warning'
+                 ? 'bg-warning-500'
+                 : 'bg-gray-300');
 
-                         $dotColor =
-                             $lvl === 'critical'
-                                 ? 'bg-danger-600'
-                                 : ($lvl === 'warning'
-                                     ? 'bg-warning-600'
-                                     : 'bg-gray-400');
+                 $dotColor =
+                 $lvl === 'critical'
+                 ? 'bg-danger-600'
+                 : ($lvl === 'warning'
+                 ? 'bg-warning-600'
+                 : 'bg-gray-400');
 
-                         $badgeColor = $lvl === 'critical' ? 'danger' : ($lvl === 'warning' ? 'warning' : 'gray');
-                     @endphp
+                 $badgeColor = $lvl === 'critical' ? 'danger' : ($lvl === 'warning' ? 'warning' : 'gray');
+                 @endphp
 
-                     <div x-show="level==='all' || level==='{{ $lvl }}'" x-transition.opacity
-                         class="relative rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition overflow-hidden p-3 ps-4">
+                 <div x-show="level==='all' || level==='{{ $lvl }}'" x-transition.opacity
+                     class="relative rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition overflow-hidden p-3 ps-4">
 
-                         <span class="absolute inset-y-0 start-0 w-1 {{ $barColor }}"></span>
+                     <span class="absolute inset-y-0 start-0 w-1 {{ $barColor }}"></span>
 
-                         <x-filament::section class="p-3 ps-4" style="margin: 5px; width: 100%">
-                             <div class="flex items-start justify-between gap-3">
-                                 <div class="flex items-center gap-2">
-                                     <span class="h-2.5 w-2.5 rounded-full {{ $dotColor }}"></span>
-                                     <div class="font-medium text-sm">
-                                         {{ $w['title'] ?? 'Untitled' }}
-                                     </div>
-                                     <x-filament::badge size="xs" :color="$badgeColor">
-                                         {{ ucfirst($lvl) }}
-                                     </x-filament::badge>
+                     <x-filament::section class="p-3 ps-4" style="margin: 5px; width: 100%">
+                         <div class="flex items-start justify-between gap-3">
+                             <div class="flex items-center gap-2">
+                                 <span class="h-2.5 w-2.5 rounded-full {{ $dotColor }}"></span>
+                                 <div class="font-medium text-sm">
+                                     {{ $w['title'] ?? 'Untitled' }}
                                  </div>
-
-                                 <div class="flex items-center gap-2">
-                                     {{-- {{ dd($w) }} --}}
-                                     <span class="text-[11px] text-gray-500">{{ $w['time'] ?? '' }}</span>
-                                     @if (!empty($w['link']))
-                                         {{-- <x-filament::button size="xs" color="primary" tag="a"
-                                                :href="$w['link']" target="_blank">
-                                                Open
-                                            </x-filament::button> --}}
-                                     @endif
-
-
-                                 </div>
+                                 <x-filament::badge size="xs" :color="$badgeColor">
+                                     {{ ucfirst($lvl) }}
+                                 </x-filament::badge>
                              </div>
-                             @php
-                                 $detail = $w['detail'] ?? '';
-                                 $link = $w['link'] ?? null;
-                             @endphp
 
-                             @if (is_array($detail))
-                                 <div data-details class="hidden mt-2">
-                                     @if ($link)
-                                         <a href="{{ $link }}" target="_blank" rel="noopener"
-                                             class="wb-desc-link block" title="Open">
-                                     @endif
+                             <div class="flex items-center gap-2">
+                                 {{-- {{ dd($w) }} --}}
+                                 <span class="text-[11px] text-gray-500">{{ $w['time'] ?? '' }}</span>
 
-                                     <ul class="text-xs space-y-1">
-                                         @foreach ($detail as $p)
-                                             <li class="flex items-center justify-between gap-2">
-                                                 <span class="truncate">
-                                                     {{ $p['name'] ?? '#' . ($p['id'] ?? '?') }}
-                                                 </span>
-                                                 <span class="shrink-0 tabular-nums">
-                                                     {{ $p['remaining'] ?? 0 }} / {{ $p['min'] ?? 0 }}
-                                                 </span>
-                                             </li>
-                                         @endforeach
-                                     </ul>
-
-                                     @if ($link)
-                                         </a>
-                                     @endif
-                                 </div>
-                             @else
-                                 @if ($link)
-                                     <a data-details href="{{ $link }}" target="_blank" rel="noopener"
-                                         class="hidden mt-2 text-xs text-gray-600 dark:text-gray-300 wb-desc-link"
-                                         title="Open">
-                                         {{ $detail }}
-                                     </a>
-                                 @else
-                                     <p data-details class="hidden mt-2 text-xs text-gray-600 dark:text-gray-300">
-                                         {{ $detail }}
-                                     </p>
+                                 {{-- View Details Button - only for notifications without external link --}}
+                                 @if (empty($w['link']))
+                                 <x-filament::button
+                                     size="xs"
+                                     color="gray"
+                                     tag="a"
+                                     :href="route('filament.admin.pages.notification-details.{id}', ['id' => $w['id']])">
+                                     {{ __('View') }}
+                                 </x-filament::button>
                                  @endif
+
+                                 @if (!empty($w['link']) && 1>2)
+                                 <x-filament::button size="xs" color="primary" tag="a"
+                                     :href="$w['link']" target="_blank">
+                                     {{ __('Open Link') }}
+                                 </x-filament::button>
+                                 @endif
+
+
+                             </div>
+                         </div>
+                         @php
+                         $detail = $w['detail'] ?? '';
+                         $link = $w['link'] ?? null;
+                         @endphp
+
+                         @if (is_array($detail))
+                         <div data-details class="hidden mt-2">
+                             @if ($link)
+                             <a href="{{ $link }}" target="_blank" rel="noopener"
+                                 class="wb-desc-link block" title="Open">
+                                 @endif
+
+                                 <ul class="text-xs space-y-1">
+                                     @foreach ($detail as $p)
+                                     <li class="flex items-center justify-between gap-2">
+                                         <span class="truncate">
+                                             {{ $p['name'] ?? '#' . ($p['id'] ?? '?') }}
+                                         </span>
+                                         <span class="shrink-0 tabular-nums">
+                                             {{ $p['remaining'] ?? 0 }} / {{ $p['min'] ?? 0 }}
+                                         </span>
+                                     </li>
+                                     @endforeach
+                                 </ul>
+
+                                 @if ($link)
+                             </a>
                              @endif
+                         </div>
+                         @else
+                         @if ($link)
+                         <a data-details href="{{ $link }}" target="_blank" rel="noopener"
+                             class="hidden mt-2 text-xs text-gray-600 dark:text-gray-300 wb-desc-link"
+                             title="Open">
+                             {{ $detail }}
+                         </a>
+                         @else
+                         <p data-details class="hidden mt-2 text-xs text-gray-600 dark:text-gray-300">
+                             {{ $detail }}
+                         </p>
+                         @endif
+                         @endif
 
 
 
-                         </x-filament::section>
-                     </div>
+                     </x-filament::section>
+                 </div>
                  @empty
-                     <x-filament::card class="text-center py-10">
-                         <x-filament::icon icon="heroicon-o-bell-slash" class="h-8 w-8 text-gray-400 mx-auto" />
-                         <div class="mt-2 text-sm font-medium">No Warnings</div>
-                         {{-- <div class="text-xs text-gray-500">هدوء قبل العاصفة… اغتنمه.</div> --}}
-                     </x-filament::card>
+                 <x-filament::card class="text-center py-10">
+                     <x-filament::icon icon="heroicon-o-bell-slash" class="h-8 w-8 text-gray-400 mx-auto" />
+                     <div class="mt-2 text-sm font-medium">No Warnings</div>
+                     {{-- <div class="text-xs text-gray-500">هدوء قبل العاصفة… اغتنمه.</div> --}}
+                 </x-filament::card>
                  @endforelse
              </div>
 
@@ -339,7 +351,7 @@
 
          const channel = pusher.subscribe('warnings');
          channel.bind('warnings.updated', function(data) {
-            //  document.getElementById('warn-audio').play();
+             //  document.getElementById('warn-audio').play();
 
              window.Livewire?.dispatch?.('warnings:refresh'); // Livewire v3
          });
