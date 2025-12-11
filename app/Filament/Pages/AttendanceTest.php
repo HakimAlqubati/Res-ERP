@@ -89,7 +89,7 @@ class AttendanceTest extends Page implements HasForms
             $result = $attendanceService->handle($data);
 
             // إرسال رد الخدمة كإشعار
-            if ($result['success']) {
+            if ($result['status']) {
                 Notification::make()
                     ->title('Attendance Recorded Successfully')
                     ->body($result['message'] ?? 'Your attendance has been recorded successfully')
