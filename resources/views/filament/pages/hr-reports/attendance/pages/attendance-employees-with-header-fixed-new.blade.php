@@ -69,6 +69,7 @@
         }
     </style>
 
+    @if (!empty($branch_id))
     <div class="text-right mb-4">
         <button onclick="printReport()" class="btn btn-print">
             &#128438; {{ __('Print Report') }}
@@ -141,72 +142,72 @@
         </thead>
         <tbody id="report-body">
             @forelse($employees as $employeeData)
-                @php
-                    $emp = $employeeData['employee'];
-                    $att = $employeeData['attendance_report'][$date] ?? [];
-                    $periods = $att['periods'] ?? [];
-                    $status = $att['day_status'] ?? null;
-                @endphp
+            @php
+            $emp = $employeeData['employee'];
+            $att = $employeeData['attendance_report'][$date] ?? [];
+            $periods = $att['periods'] ?? [];
+            $status = $att['day_status'] ?? null;
+            @endphp
 
-                <tr>
-                    <td>
-                        <strong>{{ $emp['name'] }}</strong>
-                    </td>
-                    @if ($status === 'leave')
-                        <td colspan="9" class="text-center text-gray-500 font-bold">
-                            {{ $att['leave_type'] ?? __('Leave') }}
-                        </td>
-                    @elseif(empty($periods))
-                        <td colspan="9" class="text-center text-gray-500 font-bold">
-                            {{ __('No work period / Absent') }}
-                        </td>
-                    @else
-                        <td colspan="9" style="padding:0;">
-                            <table style="width:100%; border:none;">
+            <tr>
+                <td>
+                    <strong>{{ $emp['name'] }}</strong>
+                </td>
+                @if ($status === 'leave')
+                <td colspan="9" class="text-center text-gray-500 font-bold">
+                    {{ $att['leave_type'] ?? __('Leave') }}
+                </td>
+                @elseif(empty($periods))
+                <td colspan="9" class="text-center text-gray-500 font-bold">
+                    {{ __('No work period / Absent') }}
+                </td>
+                @else
+                <td colspan="9" style="padding:0;">
+                    <table style="width:100%; border:none;">
 
-                                @foreach ($periods as $item)
-                                    @php
-                                        $checkin = $item['attendances']['checkin']['0'] ?? null;
-                                        $checkout = $item['attendances']['checkout']['0'] ?? null;
-                                        $lastcheckout = $item['attendances']['checkout']['lastcheckout'] ?? null;
-                                    @endphp
-                                    <tr>
-                                        @if ($item['final_status'] == 'absent')
-                                       <td colspan="7">{{'Absent'}} </td>
-                                        @else
-                                            <td
-                                                class="internal_cell">{{ $item['start_time'] ?? '-' }}</td>
-                                            <td
-                                                class="internal_cell">{{ $item['end_time'] ?? '-' }}</td>
-                                            <td
-                                                class="internal_cell">{{ $checkin['check_time'] ?? '-' }}</td>
-                                            <td
-                                                class="internal_cell">{{ $checkin['status'] ?? '-' }}</td>
-                                            <td
-                                                class="internal_cell">{{ $lastcheckout['check_time'] ?? '-' }}</td>
-                                            <td
-                                                class="internal_cell">{{ $checkout['status'] ?? '-' }}</td>
+                        @foreach ($periods as $item)
+                        @php
+                        $checkin = $item['attendances']['checkin']['0'] ?? null;
+                        $checkout = $item['attendances']['checkout']['0'] ?? null;
+                        $lastcheckout = $item['attendances']['checkout']['lastcheckout'] ?? null;
+                        @endphp
+                        <tr>
+                            @if ($item['final_status'] == 'absent')
+                            <td colspan="7">{{'Absent'}} </td>
+                            @else
+                            <td
+                                class="internal_cell">{{ $item['start_time'] ?? '-' }}</td>
+                            <td
+                                class="internal_cell">{{ $item['end_time'] ?? '-' }}</td>
+                            <td
+                                class="internal_cell">{{ $checkin['check_time'] ?? '-' }}</td>
+                            <td
+                                class="internal_cell">{{ $checkin['status'] ?? '-' }}</td>
+                            <td
+                                class="internal_cell">{{ $lastcheckout['check_time'] ?? '-' }}</td>
+                            <td
+                                class="internal_cell">{{ $checkout['status'] ?? '-' }}</td>
 
-                                            <td
-                                                class="internal_cell">{{ $lastcheckout['supposed_duration_hourly'] ?? '-' }}</td>
-                                            <td
-                                                class="internal_cell">{{ $lastcheckout['actual_duration_hourly'] ?? '-' }}</td>
-                                            <td
-                                                class="internal_cell">{{ $lastcheckout['approved_overtime'] ?? '-' }}</td>
-                                        @endif
-                                    </tr>
-                                @endforeach
+                            <td
+                                class="internal_cell">{{ $lastcheckout['supposed_duration_hourly'] ?? '-' }}</td>
+                            <td
+                                class="internal_cell">{{ $lastcheckout['actual_duration_hourly'] ?? '-' }}</td>
+                            <td
+                                class="internal_cell">{{ $lastcheckout['approved_overtime'] ?? '-' }}</td>
+                            @endif
+                        </tr>
+                        @endforeach
 
-                            </table>
-                        </td>
-                    @endif
-                </tr>
+                    </table>
+                </td>
+                @endif
+            </tr>
             @empty
-                <tr>
-                    <td colspan="10" class="text-center">
-                        {{ __('No attendance data found for the selected date.') }}
-                    </td>
-                </tr>
+            <tr>
+                <td colspan="10" class="text-center">
+                    {{ __('No attendance data found for the selected date.') }}
+                </td>
+            </tr>
             @endforelse
         </tbody>
         {{-- يمكنك إضافة tfoot للمجاميع إذا أردت --}}
@@ -254,4 +255,9 @@
         }
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    @else
+    <div class="please_select_message_div" style="text-align: center;">
+        <h1 class="please_select_message_text">{{ __('Please select a Branch') }}</h1>
+    </div>
+    @endif
 </x-filament-panels::page>

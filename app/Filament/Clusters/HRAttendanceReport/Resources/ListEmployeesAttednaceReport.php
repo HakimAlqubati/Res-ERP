@@ -66,12 +66,23 @@ class ListEmployeesAttednaceReport extends ListRecords
         $employeesPaginator = [];
         $employeeIds        = [];
 
-        if ($branch_id != '') {
-            $employeesPaginator = Employee::where('branch_id', $branch_id)->active()
-                ->select('id', 'name')
-                ->paginate(50);
-            $employeeIds = $employeesPaginator->pluck('id')->toArray();
+        // If no branch is selected, return empty data
+        if (empty($branch_id) || $branch_id == '') {
+            return [
+                'employees'     => [],
+                'report_data'   => [],
+                'branch_id'     => null,
+                'date'          => $date,
+                'totalSupposed' => $this->formatDuration(0),
+                'totalWorked'   => $this->formatDuration(0),
+                'totalApproved' => $this->formatDuration(0),
+            ];
         }
+
+        $employeesPaginator = Employee::where('branch_id', $branch_id)->active()
+            ->select('id', 'name')
+            ->paginate(50);
+        $employeeIds = $employeesPaginator->pluck('id')->toArray();
 
         $service = new EmployeesAttendanceOnDateService(new AttendanceFetcher(new EmployeePeriodHistoryService()));
         $reports = $service->fetchAttendances($employeeIds, $date);
@@ -103,7 +114,7 @@ class ListEmployeesAttednaceReport extends ListRecords
         $totalWorked   = 0;
         $totalApproved = 0;
 
-        // dd($employees);
+        // dd($employees,$report_data);
         return [
             'employees'   => $employees,
             'report_data'   => $report_data,

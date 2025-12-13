@@ -34,16 +34,16 @@ class EmployeesAttednaceReportResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->emptyStateHeading('No data')->deferFilters(false)
+            ->emptyStateHeading('Please select a branch')->deferFilters(false)
             ->filters([
-                SelectFilter::make('branch_id')->label('Branch')->options(
+                SelectFilter::make('branch_id')->label('Choose a branch')->options(
                     Branch::selectable()
                         ->forBranchManager('id')
                         ->select('id', 'name')
                         ->get()
                         ->pluck('name', 'id')
 
-                )->searchable(),
+                )->searchable()->placeholder('Please select a branch'),
                 Filter::make('filter_date')->label('')->schema([
                     DatePicker::make('date')
                         ->label('Date')->default(date('Y-m-d')),
