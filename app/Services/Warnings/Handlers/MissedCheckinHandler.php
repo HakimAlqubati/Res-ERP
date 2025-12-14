@@ -84,7 +84,16 @@ final class MissedCheckinHandler implements WarningHandler
         // جلب المشرفين (كوحدات Employee)
         /** @var \Illuminate\Support\Collection<int,\App\Models\Employee> $supervisors */
         $supervisors = collect($this->hierarchy->supervisors($filters));
+
+        // DEBUG: تسجيل معلومات التشخيص
+        AppLog::write(
+            "[MissedCheckin] Tenant: {$this->env->tenantId()}, Date: {$date->toDateString()}, Supervisors count: {$supervisors->count()}",
+            AppLog::LEVEL_INFO,
+            'attendance'
+        );
+
         if ($supervisors->isEmpty()) {
+            AppLog::write("[MissedCheckin] No supervisors found - exiting", AppLog::LEVEL_INFO, 'attendance');
             return [0, 0];
         }
 
