@@ -152,13 +152,13 @@ final class MissedCheckinHandler implements WarningHandler
                     // dd($start,$end);
                     // شرطك: لا ترسل (ولا تحسب مخالفة) إلا إذا الوقت الحالي بين بداية ونهاية الفترة
                     $now = now();
-                    if ($now->lt($start) || $now->gt($end)) {
-                        continue; // خارج نطاق الفترة: لا إرسال
-                    }
+                    // if ($now->lt($start) || $now->gt($end)) {
+                    //     continue; // خارج نطاق الفترة: لا إرسال
+                    // }
                     // لا نحكم قبل انتهاء المهلة
-                    if (now()->lessThan($deadline)) {
-                        continue;
-                    }
+                    // if (now()->lessThan($deadline)) {
+                    //     continue;
+                    // }
 
                     // يوجد checkin قبل المهلة؟ إذًا لا تُحتسب Missed
                     if ($this->probe->hasCheckinBefore($emp, $periodId, $deadline)) {
