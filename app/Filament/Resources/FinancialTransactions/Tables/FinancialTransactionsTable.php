@@ -192,8 +192,8 @@ class FinancialTransactionsTable
 
                 SelectFilter::make('branch_id')
                     ->label('Branch')
-                    ->relationship('branch', 'name')
-                    ->searchable()
+                    ->relationship('branch', 'name', fn($query) => $query->where('type', 'branch'))
+                    ->searchable()->multiple()
                     ->preload(),
 
                 SelectFilter::make('status')

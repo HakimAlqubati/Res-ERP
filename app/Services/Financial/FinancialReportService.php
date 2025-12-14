@@ -10,7 +10,12 @@ class FinancialReportService
 {
     public function getIncomeStatement(IncomeStatementRequestDTO $dto): array
     {
-        $query = FinancialTransaction::query()->whereNotNull('branch_id');
+        // Get sales category ID
+        $salesCategory = \App\Models\FinancialCategory::findByCode(\App\Enums\FinancialCategoryCode::SALES);
+        $salesCategoryId = $salesCategory?->id;
+
+        $query = FinancialTransaction::query()
+            ->whereNotNull('branch_id');
 
         if ($dto->startDate && $dto->endDate) {
             $query->whereBetween('transaction_date', [$dto->startDate, $dto->endDate]);
@@ -24,8 +29,11 @@ class FinancialReportService
         $revenueQuery = clone $query;
         $expenseQuery = clone $query;
 
-        // 1. Total Revenue
-        $totalRevenue = $revenueQuery->where('type', 'income')->sum('amount');
+        // 1. Total Revenue - filter by sales category only
+        $totalRevenue = $revenueQuery
+            ->where('type', 'income')
+            ->when($salesCategoryId, fn($q) => $q->where('category_id', $salesCategoryId))
+            ->sum('amount');
 
         // 2. Expenses Breakdown
         // 2. Expenses Breakdown (Hierarchical)
