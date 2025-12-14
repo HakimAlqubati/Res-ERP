@@ -284,7 +284,7 @@ final class MissedCheckinHandler implements WarningHandler
                             'employee_count' => $employeeCount,
                         ])
                         // منع تكرار إشعار نفس (tenant/supervisor/date)
-                        ->scope("missedcheckin:tenant-{$tenantId}:sup-{$sup->id}:date-{$date->toDateString()}")
+                        // ->scope("missedcheckin:tenant-{$tenantId}:sup-{$sup->id}:date-{$date->toDateString()}")
                         ->expires(now()->addHours(6));
 
                     try {
