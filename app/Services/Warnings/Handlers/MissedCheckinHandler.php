@@ -153,6 +153,7 @@ final class MissedCheckinHandler implements WarningHandler
                     $start = $s['start'] ?? null;
                     $end   = $s['end']   ?? ($s['period']->end ?? null);
 
+                    AppLog::write("[StartEnd Time] Employee: {$emp->name}, Start: {$start->format('Y-m-d H:i:s')}, End: {$end->format('Y-m-d H:i:s')}", AppLog::LEVEL_INFO, 'attendance');
                     // إن لم تتوفر البداية/النهاية نتجاوز هذه الفترة بحذر
                     if (!$start || !$end) {
                         continue;
