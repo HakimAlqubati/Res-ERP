@@ -90,18 +90,25 @@ final class NotificationOrchestrator
 
     private function enterTenantContext(CustomTenantModel $tenant, ?string $fallbackDb = null): void
     {
-        if (method_exists($tenant, 'makeCurrent')) {
-            $tenant->makeCurrent();
-            return;
-        }
-        if (method_exists($tenant, 'switchTo')) {
-            $tenant->switchTo($tenant->database);
-            return;
-        }
+        // تسجيل التينانت الحالي
+        Log::info("[NotificationOrchestrator] Entering tenant: {$tenant->id}, database: {$tenant->database}");
+
+        // دائماً نقوم بتبديل قاعدة البيانات في الـ config أولاً
         if ($tenant->database) {
             config(['database.connections.mysql.database' => $tenant->database]);
             DB::purge('mysql');
             DB::reconnect('mysql');
+
+            // تحقق من التبديل
+            $currentDb = config('database.connections.mysql.database');
+            Log::info("[NotificationOrchestrator] Switched to DB: {$currentDb}");
+        }
+
+        // ثم نحاول استخدام API التينانت إذا متوفر
+        if (method_exists($tenant, 'makeCurrent')) {
+            $tenant->makeCurrent();
+        } elseif (method_exists($tenant, 'switchTo')) {
+            $tenant->switchTo($tenant->database);
         }
     }
 
