@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use App\Traits\DynamicConnection;
@@ -9,7 +10,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class EmployeePeriod extends Model implements Auditable
 {
-    use HasFactory, DynamicConnection, \OwenIt\Auditing\Auditable;
+    use HasFactory, \OwenIt\Auditing\Auditable;
 
     // Define the table name if it's not the plural of the model name
     protected $table = 'hr_employee_periods';
@@ -23,15 +24,16 @@ class EmployeePeriod extends Model implements Auditable
     // Define fillable or guarded fields
     protected $fillable = [
         'employee_id',
-        'period_id', 
+        'period_id',
         'created_by',
         'updated_by',
-        'start_date','end_date',
+        'start_date',
+        'end_date',
         // Add other columns if necessary
     ];
     protected $auditInclude = [
         'employee_id',
-        'period_id', 
+        'period_id',
         'created_by',
         'updated_by',
         // Add other columns if necessary
@@ -86,8 +88,8 @@ class EmployeePeriod extends Model implements Auditable
         });
     }
 
-   
- 
+
+
     public function days()
     {
         return $this->hasMany(EmployeePeriodDay::class, 'employee_period_id');
