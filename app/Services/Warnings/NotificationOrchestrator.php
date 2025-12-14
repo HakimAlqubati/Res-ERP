@@ -39,7 +39,7 @@ final class NotificationOrchestrator
         $failed = 0;
         $originalDb = config('database.connections.mysql.database');
 
-        foreach (CustomTenantModel::query()->cursor() as $tenant) {
+        foreach (CustomTenantModel::query()->where('active', 1)->cursor() as $tenant) {
             try {
                 $this->enterTenantContext($tenant, $originalDb);
                 $this->forceHttpsUrl($tenant->domain);
