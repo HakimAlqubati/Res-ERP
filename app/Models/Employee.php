@@ -865,6 +865,16 @@ class Employee extends Model implements Auditable
         // 0=Sunday .. 6=Saturday (Carbon::dayOfWeek)
         $dow = $d->dayOfWeek;
 
+        // DEBUG: التحقق من وجود employee_periods أصلاً
+        $allPeriods = $this->employeePeriods()->count();
+        $allDays = $this->periodDays()->count();
+
+        AppLog::write(
+            "[periodsOnDate DEBUG] Employee ID: {$this->id}, All EmployeePeriods: {$allPeriods}, All PeriodDays: {$allDays}, DayOfWeek: {$dow}",
+            AppLog::LEVEL_INFO,
+            'attendance'
+        );
+
         // dd($this);
         // نجيب روابط EmployeePeriod مع WorkPeriod ومع أيام الفترة (EmployeePeriodDay)
         $workPeriods = $this->employeePeriods()
