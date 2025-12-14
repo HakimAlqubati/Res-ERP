@@ -21,8 +21,12 @@ final class WarningsServiceProvider extends ServiceProvider
             }
 
             // Email channel (disabled by default)
-            if (config('notifications.channels.email.enabled', false)) {
+            $emailEnabled = config('notifications.channels.email.enabled', false);
+            \Log::info("[WarningsServiceProvider] Email channel enabled: " . ($emailEnabled ? 'YES' : 'NO'));
+
+            if ($emailEnabled) {
                 $composite->addSender(new EmailWarningSender());
+                \Log::info("[WarningsServiceProvider] EmailWarningSender added");
             }
 
             // Future: Add more channels here
