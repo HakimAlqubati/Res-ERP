@@ -38,7 +38,7 @@ final class EmailWarningSender implements WarningSender
 
         Log::info("[EmailWarningSender] dispatchEmails called", [
             'user_count' => $userCount,
-            'payload_title' => $payload->title(),
+            'payload_title' => $payload->title,
         ]);
 
         foreach ($users as $user) {
