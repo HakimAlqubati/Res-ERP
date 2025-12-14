@@ -531,6 +531,17 @@ Route::get('/send-test-email', function () {
     // return 'Email sent!';
 });
 
+
+Route::get('/test-email', function () {
+    
+    Mail::raw('هذه رسالة تجريبية من لارافل عبر ميل تراب', function ($message) {
+        $message->to('hakimahmed123321@gmail.com')
+                ->subject('تجدربة Mailtrap');
+    });
+
+    return 'تم الإرسال! تفحص حسابك في Mailtrap.';
+});
+
 Route::get('/reportAbsentEmployees/{date}/{branchId}/{currentTime}', [TestController2::class, 'reportAbsentEmployees']);
 
 Route::get('/updateAllPeriodsToDayAndNight', [MigrateDataController::class, 'updateAllPeriodsToDayAndNight']);
