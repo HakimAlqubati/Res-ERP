@@ -137,10 +137,23 @@ final class MissedCheckinHandler implements WarningHandler
 
             // مرؤوسو المشرف
             $subs = $this->hierarchy->subordinatesOf($sup);
+            $subsCount = collect($subs)->count();
+
+            AppLog::write(
+                "[MissedCheckin] Supervisor: {$sup->name}, Subordinates count: {$subsCount}",
+                AppLog::LEVEL_INFO,
+                'attendance'
+            );
 
             foreach ($subs as $emp) {
                 // استنتاج فترات العمل مع مهلة السماح
                 $shifts = $this->shiftResolver->resolve($emp, $date, $grace);
+
+                AppLog::write(
+                    "[MissedCheckin] Employee: {$emp->name}, Shifts count: " . count($shifts),
+                    AppLog::LEVEL_INFO,
+                    'attendance'
+                );
 
                 foreach ($shifts as $s) {
                     $periodId = $s['period']->id;
@@ -184,64 +197,7 @@ final class MissedCheckinHandler implements WarningHandler
                     // TODO: ربط منطق الإجازة إن وُجد داخل نظامك
                     $onLeave = false;
 
-                    /**
-                     * (1) إشعار الموظف نفسه (اختياري)
-                     */
-                    // if (!empty($this->options['notify_employees']) && $emp->user instanceof User) {
-                    //     $empUser = $emp->user;
 
-                    //     // في وضع الاختبار، نطبق --user أيضًا على الموظف
-                    //     if (!$this->options['user'] || $this->recipients->matchesOptionUser($empUser, $this->options['user'])) {
-                    //         $empPayload = WarningPayload::make(
-                    //             'Missed Check-in',
-                    //             "You missed check-in for '{$s['period']->name}' on {$date->toDateString()} (grace {$grace}m).",
-                    //             WarningLevel::Warning
-                    //         )
-                    //             ->ctx([
-                    //                 'tenant_id'      => $tenantId,
-                    //                 'date'           => $date->toDateString(),
-                    //                 'grace'          => $grace,
-                    //                 'employee'       => [
-                    //                     'id'          => $emp->id,
-                    //                     'name'        => $emp->name,
-                    //                     'employee_no' => $emp->employee_no ?? null,
-                    //                     'branch'      => $emp->branch?->name,
-                    //                 ],
-                    //                 'period_id'      => $periodId,
-                    //                 'period_label'   => $s['period']->name ?? ('Period #' . $periodId),
-                    //                 'shift_start'    => $s['start']->format('Y-m-d H:i:s'),
-                    //                 'grace_deadline' => $deadline->format('Y-m-d H:i:s'),
-                    //                 'reason'         => 'no_checkin_before_grace',
-                    //                 'on_leave'       => $onLeave,
-                    //             ])
-                    //             // منع التكرار لنفس (tenant/emp/date/period)
-                    //             ->scope("missedcheckin:tenant-{$tenantId}:emp-{$emp->id}:date-{$date->toDateString()}:period-{$periodId}")
-                    //             // ->url($this->urls->attendanceForEmployee($emp, $date)) // إن أردت رابط الحضور
-                    //             ->expires(now()->addHours(6));
-
-                    //         try {
-                    //             Warnings::send($empUser, $empPayload);
-                    //             $sent++;
-                    //         } catch (\Throwable $e) {
-                    //             $failed++;
-                    //             AppLog::write(
-                    //                 'Failed to send missed check-in warning to employee',
-                    //                 AppLog::LEVEL_WARNING,
-                    //                 'attendance',
-                    //                 [
-                    //                     'tenant_id'   => $tenantId,
-                    //                     'employee_id' => $emp->id,
-                    //                     'date'        => $date->toDateString(),
-                    //                     'error'       => $e->getMessage(),
-                    //                 ]
-                    //             );
-                    //         }
-                    //     }
-                    // }
-
-                    /**
-                     * (2) تجميع فترات الموظف لإشعار المشرف بشكل منفصل لكل موظف
-                     */
                     $missedByEmp[$emp->id]['employee'] = [
                         'id'          => $emp->id,
                         'name'        => $emp->name,

@@ -40,7 +40,8 @@ final class LowStockHandler implements WarningHandler
 
     public function handle(): array
     {
-        $sent = 0; $failed = 0;
+        $sent = 0;
+        $failed = 0;
 
         $store = Store::query()->defaultStore()->with('storekeeper')->first();
         if (!$store instanceof Store) {
@@ -97,8 +98,8 @@ final class LowStockHandler implements WarningHandler
             'Low stock alert',
             WarningLevel::Warning
         )
-        ->ctx(['tenant_id' => $tenantId, 'store_id' => $storeId])
-        ->scope("lowstock-tenant:{$tenantId}-store:{$storeId}")
-        ->expires(now()->addHours(6));
+            ->ctx(['tenant_id' => $tenantId, 'store_id' => $storeId])
+            ->scope("lowstock-tenant:{$tenantId}-store:{$storeId}")
+            ->expires(now()->addHours(6));
     }
 }
