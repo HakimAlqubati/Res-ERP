@@ -135,12 +135,11 @@ final class MissedCheckinHandler implements WarningHandler
             // بنية: [emp_id => ['employee'=>[], 'periods'=>[...]]]
             $missedByEmp = [];
 
-            // مرؤوسو المشرف
-            $subs = $this->hierarchy->subordinatesOf($sup);
-            $subsCount = collect($subs)->count();
+            // مرؤوسو المشرف - تحويل LazyCollection إلى Collection للاستخدام المتعدد
+            $subs = collect($this->hierarchy->subordinatesOf($sup));
 
             AppLog::write(
-                "[MissedCheckin] Supervisor: {$sup->name}, Subordinates count: {$subsCount}",
+                "[MissedCheckin] Supervisor: {$sup->name}, Subordinates count: {$subs->count()}",
                 AppLog::LEVEL_INFO,
                 'attendance'
             );
