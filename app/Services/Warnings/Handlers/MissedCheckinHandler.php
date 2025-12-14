@@ -158,9 +158,15 @@ final class MissedCheckinHandler implements WarningHandler
                         continue;
                     }
 
+                    // DEBUG: طباعة الأوقات للتشخيص
+                    $now = now();
+                    AppLog::write(
+                        "[MissedCheckin Time Check] Employee: {$emp->name}, Now: {$now->format('Y-m-d H:i:s')}, Start: {$start->format('Y-m-d H:i:s')}, End: {$end->format('Y-m-d H:i:s')}",
+                        AppLog::LEVEL_INFO,
+                        'attendance'
+                    );
                     // dd($start,$end);
                     // شرطك: لا ترسل (ولا تحسب مخالفة) إلا إذا الوقت الحالي بين بداية ونهاية الفترة
-                    $now = now();
                     if ($now->lt($start) || $now->gt($end)) {
                         continue; // خارج نطاق الفترة: لا إرسال
                     }
