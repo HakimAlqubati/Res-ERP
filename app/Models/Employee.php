@@ -866,11 +866,13 @@ class Employee extends Model implements Auditable
         $dow = $d->dayOfWeek;
 
         // DEBUG: التحقق من وجود employee_periods أصلاً
+        $employeeConnection = $this->getConnection()->getDatabaseName();
+        $periodConnection = $this->employeePeriods()->getQuery()->getConnection()->getDatabaseName();
         $allPeriods = $this->employeePeriods()->count();
         $allDays = $this->periodDays()->count();
 
         AppLog::write(
-            "[periodsOnDate DEBUG] Employee ID: {$this->id}, All EmployeePeriods: {$allPeriods}, All PeriodDays: {$allDays}, DayOfWeek: {$dow}",
+            "[periodsOnDate DEBUG] Employee ID: {$this->id}, Employee DB: {$employeeConnection}, Period Query DB: {$periodConnection}, All EmployeePeriods: {$allPeriods}, All PeriodDays: {$allDays}, DayOfWeek: {$dow}",
             AppLog::LEVEL_INFO,
             'attendance'
         );
