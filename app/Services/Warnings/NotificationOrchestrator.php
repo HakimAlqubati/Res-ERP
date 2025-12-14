@@ -6,6 +6,7 @@ use App\Models\CustomTenantModel;
 use App\Services\Warnings\Contracts\WarningHandler;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Spatie\Multitenancy\Models\Tenant as SpatieTenant;
 
@@ -32,7 +33,10 @@ final class NotificationOrchestrator
     /** تشغيل على جميع التينانتات */
     public function runOnTenants(array $options = []): array
     {
-        $ok=0; $fail=0; $sent=0; $failed=0;
+        $ok = 0;
+        $fail = 0;
+        $sent = 0;
+        $failed = 0;
         $originalDb = config('database.connections.mysql.database');
 
         foreach (CustomTenantModel::query()->cursor() as $tenant) {
@@ -41,7 +45,9 @@ final class NotificationOrchestrator
                 $this->forceHttpsUrl($tenant->domain);
 
                 [$s, $f] = $this->runHandlers($options);
-                $sent += $s; $failed += $f; $ok++;
+                $sent += $s;
+                $failed += $f;
+                $ok++;
             } catch (\Throwable) {
                 $fail++;
             } finally {
@@ -55,14 +61,26 @@ final class NotificationOrchestrator
     /** تشغيل كل الهاندلرات المعرّفة في config */
     public function runHandlers(array $options = []): array
     {
-        $totalSent=0; $totalFail=0;
+        $totalSent = 0;
+        $totalFail = 0;
+
+        // تأكد من أن الـ Eloquent يستخدم الـ connection الحالي
+        // هذا ضروري لأن الـ dependencies قد تُحَل قبل تبديل الـ database
+        DB::purge('mysql');
+        DB::reconnect('mysql');
 
         foreach (config('notifications.handlers', []) as $handlerClass) {
-            /** @var WarningHandler $handler */
-            $handler = $this->app->make($handlerClass);
-            $handler->setOptions($options);
-            [$s, $f] = $handler->handle();
-            $totalSent += $s; $totalFail += $f;
+            try {
+                /** @var WarningHandler $handler */
+                $handler = $this->app->make($handlerClass);
+                $handler->setOptions($options);
+                [$s, $f] = $handler->handle();
+                $totalSent += $s;
+                $totalFail += $f;
+            } catch (\Throwable $e) {
+                Log::error("Handler {$handlerClass} failed: " . $e->getMessage());
+                $totalFail++;
+            }
         }
 
         return [$totalSent, $totalFail];
@@ -73,14 +91,17 @@ final class NotificationOrchestrator
     private function enterTenantContext(CustomTenantModel $tenant, ?string $fallbackDb = null): void
     {
         if (method_exists($tenant, 'makeCurrent')) {
-            $tenant->makeCurrent(); return;
+            $tenant->makeCurrent();
+            return;
         }
         if (method_exists($tenant, 'switchTo')) {
-            $tenant->switchTo($tenant->database); return;
+            $tenant->switchTo($tenant->database);
+            return;
         }
         if ($tenant->database) {
             config(['database.connections.mysql.database' => $tenant->database]);
-            DB::purge('mysql'); DB::reconnect('mysql');
+            DB::purge('mysql');
+            DB::reconnect('mysql');
         }
     }
 
@@ -90,7 +111,8 @@ final class NotificationOrchestrator
             SpatieTenant::forgetCurrent();
         } elseif ($fallbackDb) {
             config(['database.connections.mysql.database' => $fallbackDb]);
-            DB::purge('mysql'); DB::reconnect('mysql');
+            DB::purge('mysql');
+            DB::reconnect('mysql');
         }
     }
 
