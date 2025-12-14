@@ -813,6 +813,11 @@ Route::get('/_logs', function () {
         }));
     }
 
+    // ترتيب حسب التاريخ الأحدث أولاً
+    usort($entries, function ($a, $b) {
+        return strcmp($b['datetime'] ?? '', $a['datetime'] ?? '');
+    });
+
     return response()->json([
         'file'    => basename($path),
         'count'   => count($entries),
