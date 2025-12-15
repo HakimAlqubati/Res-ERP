@@ -196,7 +196,7 @@ class StockInventoryResource extends Resource
 
     public static function canCreate(): bool
     {
-        if (isSuperAdmin()) {
+        if (isSuperAdmin() || isSystemManager()) {
             return true;
         }
         return false;
@@ -205,7 +205,7 @@ class StockInventoryResource extends Resource
 
     public static function canEdit(Model $record): bool
     {
-        if (isSuperAdmin()) {
+        if (isSuperAdmin() || isSystemManager()) {
             return true;
         }
         return false;
