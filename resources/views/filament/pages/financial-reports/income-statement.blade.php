@@ -395,7 +395,7 @@
             </div>
             {{-- Right: Powered by AWS --}}
         </div>
-        <div style="width: 100%; display: flex; justify-content: center; margin-top: 0.5rem;">
+        <div style="width: 100%; display: flex; justify-content: flex-end; margin-top: 0.5rem;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <span style="font-size: 0.7rem; color: #6b7280;">Powered by</span>
                 <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg"
