@@ -22,6 +22,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Schema;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\View;
 
 class StockInventoryForm
 {
@@ -222,6 +223,8 @@ class StockInventoryForm
                 Fieldset::make()->label('')
                     ->columnSpanFull()
                     ->schema([
+                        // Loading Overlay - يظهر عند اختيار الفئة (داخل الفورم)
+
                         Grid::make()->columns(3)
                             ->columnSpanFull()
                             ->schema([
@@ -308,12 +311,14 @@ class StockInventoryForm
                                         Select::make('category_id')
                                             ->label('Category')->searchable()
                                             ->options(Category::active()->notForPos()->pluck('name', 'id'))
-                                            ->reactive()
+                                            ->live(onBlur: false, debounce: 100)
                                             ->afterStateUpdated(function (callable $set, callable $get, $state) use ($loadPage) {
                                                 if ($state) {
                                                     self::loadCategoryProducts($set, $get, $state, $loadPage);
                                                 }
                                             }),
+                                        View::make('filament.forms.components.loading-overlay'),
+
                                     ])
                                     : Toggle::make('edit_enabled')
                                     ->label('Edit')
