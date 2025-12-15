@@ -16,6 +16,7 @@ use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Actions;
@@ -41,6 +42,7 @@ class StockInventoryForm
             $storeId     = (int) ($get('store_id'));
             $pagesCache  = (array) ($get('details_pages') ?? []);
             $currentPage = (int) ($get('current_page') ?? 1);
+            $unitPreference = $get('unit_size_preference') ?? 'largest';
 
             // لا شيء لعرضه
             if (empty($pool) || ! $storeId) {
@@ -90,10 +92,13 @@ class StockInventoryForm
             $products = Product::with(['supplyOutUnitPrices.unit'])
                 ->whereIn('id', $slice)->get();
 
-            $rows = $products->map(function ($product) use ($storeId) {
+            $rows = $products->map(function ($product) use ($storeId, $unitPreference) {
                 $unitPrices  = $product->supplyOutUnitPrices ?? collect();
-                $firstUnit   = $unitPrices->first();
-                $firstUnitId = $firstUnit?->unit_id;
+                // اختيار الوحدة حسب تفضيل المستخدم (الأصغر أو الأكبر)
+                $selectedUnit = $unitPreference === 'smallest'
+                    ? $unitPrices->sortBy('package_size')->first()
+                    : $unitPrices->sortByDesc('package_size')->first();
+                $firstUnitId = $selectedUnit?->unit_id;
 
                 $rowUnitsCache     = $unitPrices->pluck('unit.name', 'unit_id')->toArray();
                 $rowInventoryCache = [];
@@ -217,7 +222,7 @@ class StockInventoryForm
                 Fieldset::make()->label('')
                     ->columnSpanFull()
                     ->schema([
-                        Grid::make()->columns(4)
+                        Grid::make()->columns(3)
                             ->columnSpanFull()
                             ->schema([
                                 DatePicker::make('inventory_date')
@@ -276,64 +281,43 @@ class StockInventoryForm
 
                                 // اختيار التصنيف يُجهّز المسبح ويحسب الصفحات ويحمّل الصفحة 1
                                 $operaion == 'create'
-                                    ? Select::make('category_id')->visibleOn('create')
-                                    ->label('Category')->searchable()
-                                    ->options(Category::active()->notForPos()->pluck('name', 'id'))
-                                    ->reactive()
-                                    ->afterStateUpdated(function (callable $set, callable $get, $state) use ($loadPage) {
-                                        try {
-                                            if (! $state) return;
+                                    ? Fieldset::make()
+                                    ->label('Unit Size Preference (applies to default unit after selecting category)')
+                                    ->columnSpanFull()->columns(2)->schema([
+                                        ToggleButtons::make('unit_size_preference')
+                                            ->label('Default Unit')
+                                            ->options([
+                                                'largest' => 'Largest',
+                                                'smallest' => 'Smallest',
+                                            ])
+                                            ->icons([
+                                                'largest' => 'heroicon-o-arrow-up-circle',
+                                                'smallest' => 'heroicon-o-arrow-down-circle',
+                                            ])
+                                            ->default('smallest')
+                                            ->inline()
+                                            ->reactive()
+                                            ->dehydrated(false)
+                                            ->afterStateUpdated(function (callable $set, callable $get, $state) use ($loadPage) {
+                                                $categoryId = $get('category_id');
+                                                if ($categoryId) {
+                                                    self::loadCategoryProducts($set, $get, $categoryId, $loadPage);
+                                                }
+                                            }),
 
-                                            $started = microtime(true);
-
-                                            $ids = Product::where('category_id', $state)
-                                                ->where('active', 1)
-                                                ->pluck('id')
-                                                ->toArray();
-
-                                            // صفّر كل شيء وابدأ من الصفحة 1
-                                            $set('product_ids_pool', $ids);
-                                            $set('details_pages', []);
-                                            $set('current_page', 1);
-                                            $set('page_details', []);
-
-                                            // احسب عدد الصفحات بناءً على per_page الحالي
-                                            $perPage     = max(1, (int) ($get('per_page') ?? 20));
-                                            $totalPages  = (int) ceil((count($ids) ?: 0) / $perPage);
-                                            $set('total_pages', $totalPages);
-
-                                            // حمّل الصفحة الأولى + ثبت المؤشر
-                                            $loadPage($get, $set, 1);
-                                            $set('page_selector', 1);
-
-                                            $elapsed = round((microtime(true) - $started) * 1000);
-                                            AppLog::write(
-                                                message: 'StockInventory category pool prepared (pagination)',
-                                                level: AppLog::LEVEL_INFO,
-                                                context: 'StockInventory',
-                                                extra: [
-                                                    'category_id' => $state,
-                                                    'pool'        => count($ids),
-                                                    'per_page'    => $perPage,
-                                                    'pages'       => $totalPages,
-                                                    'ms'          => $elapsed,
-                                                ]
-                                            );
-                                        } catch (\Throwable $e) {
-                                            AppLog::write(
-                                                message: $e->getMessage(),
-                                                level: AppLog::LEVEL_ERROR,
-                                                context: 'StockInventory',
-                                                extra: [
-                                                    'category_id' => $state,
-                                                    'trace'       => $e->getTraceAsString(),
-                                                ]
-                                            );
-                                        }
-                                    })
+                                        Select::make('category_id')
+                                            ->label('Category')->searchable()
+                                            ->options(Category::active()->notForPos()->pluck('name', 'id'))
+                                            ->reactive()
+                                            ->afterStateUpdated(function (callable $set, callable $get, $state) use ($loadPage) {
+                                                if ($state) {
+                                                    self::loadCategoryProducts($set, $get, $state, $loadPage);
+                                                }
+                                            }),
+                                    ])
                                     : Toggle::make('edit_enabled')
                                     ->label('Edit')
-                                    ->inline(false)
+                                    ->inline(false)->hidden()
                                     ->default(false)->reactive()
                                     ->helperText('Enable this option to allow editing inventory details')
                                     ->dehydrated()
@@ -341,7 +325,7 @@ class StockInventoryForm
                             ]),
 
                         // 🧭 شريط تحكم الصفحات (قبل الريبيتر)
-                        Grid::make()->columns(12)->columnSpanFull()->schema([
+                        Grid::make()->columns(12)->columnSpanFull()->visibleOn('create')->schema([
                             Select::make('per_page_selector')
                                 ->label('Per page')
                                 ->options([
@@ -409,7 +393,7 @@ class StockInventoryForm
                             ->statePath('page_details')
                             ->dehydrated(false) // لا يرفع حالته مباشرة
                             ->columnSpanFull()
-                            ->collapsible()
+                            ->collapsible()->visibleOn('create')
                             ->maxItems(30)
                             ->collapsed(fn(): bool => $operaion === 'edit')
                             ->label('Inventory Details')
@@ -425,8 +409,8 @@ class StockInventoryForm
                                 TableColumn::make(__('Product'))->width('24rem'),
                                 TableColumn::make(__('Unit'))->alignCenter()->width('10rem'),
                                 TableColumn::make(__('lang.psize'))->alignCenter()->width('8rem'),
-                                TableColumn::make(__('Physical Qty'))->alignCenter()->width('10rem'),
-                                TableColumn::make(__('System Qty'))->alignCenter()->width('10rem'),
+                                TableColumn::make(__('Physical Qty'))->alignCenter()->width('12rem'),
+                                TableColumn::make(__('System Qty'))->alignCenter()->width('8rem'),
                                 TableColumn::make(__('Difference'))->alignCenter()->width('8rem'),
                             ])
                             ->schema([
@@ -542,11 +526,14 @@ class StockInventoryForm
                                     ->columnSpan(2)->required(),
 
                                 TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
-                                    ->label(__('lang.package_size')),
+                                    ->label(__('lang.package_size'))
+                                    ->extraInputAttributes(['class' => 'text-center']),
 
                                 TextInput::make('physical_quantity')
                                     ->numeric()
                                     ->reactive()
+                                    ->prefixIcon('heroicon-o-pencil-square')
+                                    ->prefixIconColor('danger')
                                     ->afterStateUpdatedJs(<<<'JS'
                                         const sys = Number($get('system_quantity') ?? 0);
                                         const ph  = Number($state ?? 0);
@@ -555,15 +542,18 @@ class StockInventoryForm
                                     JS)
                                     ->minValue(0)
                                     ->label('Physical Qty')
-                                    ->required(),
+                                    ->required()
+                                    ->extraInputAttributes(['class' => 'text-center']),
 
                                 TextInput::make('system_quantity')->readOnly()
                                     ->numeric()
                                     ->label('System Qty')
-                                    ->required(),
+                                    ->required()
+                                    ->extraInputAttributes(['class' => 'text-center']),
 
                                 TextInput::make('difference')->readOnly()
-                                    ->numeric(),
+                                    ->numeric()
+                                    ->extraInputAttributes(['class' => 'text-center']),
                             ])
                             ->addActionLabel('Add Item')
                             ->columns(8),
@@ -572,5 +562,59 @@ class StockInventoryForm
                         Actions::make([])->columnSpanFull(),
                     ]),
             ]);
+    }
+
+    /**
+     * تحميل منتجات الفئة المحددة وتهيئة التقسيم والصفحات
+     */
+    private static function loadCategoryProducts(callable $set, callable $get, int $categoryId, callable $loadPage): void
+    {
+        try {
+            $started = microtime(true);
+
+            $ids = Product::where('category_id', $categoryId)
+                ->where('active', 1)
+                ->pluck('id')
+                ->toArray();
+
+            // صفّر كل شيء وابدأ من الصفحة 1
+            $set('product_ids_pool', $ids);
+            $set('details_pages', []);
+            $set('current_page', 1);
+            $set('page_details', []);
+
+            // احسب عدد الصفحات بناءً على per_page الحالي
+            $perPage    = max(1, (int) ($get('per_page') ?? 20));
+            $totalPages = (int) ceil((count($ids) ?: 0) / $perPage);
+            $set('total_pages', $totalPages);
+
+            // حمّل الصفحة الأولى + ثبت المؤشر
+            $loadPage($get, $set, 1);
+            $set('page_selector', 1);
+
+            $elapsed = round((microtime(true) - $started) * 1000);
+            AppLog::write(
+                message: 'StockInventory category pool prepared (pagination)',
+                level: AppLog::LEVEL_INFO,
+                context: 'StockInventory',
+                extra: [
+                    'category_id' => $categoryId,
+                    'pool'        => count($ids),
+                    'per_page'    => $perPage,
+                    'pages'       => $totalPages,
+                    'ms'          => $elapsed,
+                ]
+            );
+        } catch (\Throwable $e) {
+            AppLog::write(
+                message: $e->getMessage(),
+                level: AppLog::LEVEL_ERROR,
+                context: 'StockInventory',
+                extra: [
+                    'category_id' => $categoryId,
+                    'trace'       => $e->getTraceAsString(),
+                ]
+            );
+        }
     }
 }

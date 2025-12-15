@@ -33,6 +33,7 @@ class EditStockInventory extends EditRecord
         return [
             $this->getSaveFormAction()
                 ->disabled(fn() => !($this->data['edit_enabled'] ?? false))
+                ->hidden()
                 ->tooltip('Enable editing first to save changes.'),
             $this->getCancelFormAction()->hidden(),
         ];
