@@ -19,7 +19,8 @@ class ListStockInventories extends ListRecords
         return [
             CreateAction::make()
                 ->icon('heroicon-o-plus-circle')
-                ->label('New Stocktake'),
+                ->label('New Stocktake')
+                ->visible(fn(): bool => StockInventoryResource::canCreate()),
             Action::make('print')
 
                 ->label('Print Stocktake Template')

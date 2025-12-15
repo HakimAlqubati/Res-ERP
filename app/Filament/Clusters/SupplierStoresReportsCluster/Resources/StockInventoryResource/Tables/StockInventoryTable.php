@@ -21,6 +21,7 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryR
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages\EditStockInventory;
 use App\Models\UnitPrice;
 use App\Filament\Clusters\InventoryManagementCluster;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Schemas\StockInventoryForm;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\RelationManagers\DetailsRelationManager;
@@ -97,8 +98,10 @@ class StockInventoryTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                    ForceDeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->visible(fn(): bool => StockInventoryResource::canDeleteAny()),
+                    ForceDeleteBulkAction::make()
+                        ->visible(fn(): bool => StockInventoryResource::canForceDeleteAny()),
                 ]),
             ]);
     }

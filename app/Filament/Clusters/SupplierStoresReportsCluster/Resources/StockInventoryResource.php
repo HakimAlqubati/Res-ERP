@@ -3,22 +3,22 @@
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
 use Filament\Pages\Enums\SubNavigationPosition;
-use Filament\Schemas\Schema; 
+use Filament\Schemas\Schema;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages\ListStockInventories;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages\CreateStockInventory;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages\EditStockInventory;
 use App\Models\UnitPrice;
-use App\Filament\Clusters\InventoryManagementCluster; 
+use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Schemas\StockInventoryForm;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\RelationManagers\DetailsRelationManager;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Tables\StockInventoryTable;
 use App\Models\Product;
-use App\Models\StockInventory; 
-use App\Services\MultiProductsInventoryService; 
-use Filament\Facades\Filament; 
+use App\Models\StockInventory;
+use App\Services\MultiProductsInventoryService;
+use Filament\Facades\Filament;
 use Filament\Pages\Page;
 use Filament\Resources\Resource;
-use Filament\Support\Colors\Color; 
+use Filament\Support\Colors\Color;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -55,9 +55,9 @@ class StockInventoryResource extends Resource
     }
 
     public static function table(Table $table): Table
-    { 
+    {
 
-       return StockInventoryTable::configure($table);
+        return StockInventoryTable::configure($table);
     }
 
     public static function getRelations(): array
@@ -191,5 +191,23 @@ class StockInventoryResource extends Resource
         $milliseconds = round(($duration - $seconds) * 1000, 2);
         // showSuccessNotifiMessage('( '. $seconds.'Seconds ) ('. $milliseconds .' Milliseconds)');
 
+    }
+
+
+    public static function canCreate(): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
+
+
+    public static function canEdit(Model $record): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
     }
 }
