@@ -383,24 +383,28 @@
         </div>
 
         {{-- Generated On --}}
-        <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
-            {{-- Center: Formula + Generated on (stacked) --}}
-            <div style="flex: 1; text-align: center;">
-                <p style="font-size: 0.7rem; color: #6b7280; margin: 0 0 0.25rem 0; font-weight: 500;">
-                    Gross Profit = Sales + Closing Stock – Transfers – Direct Purchases
-                </p>
-                <p style="font-size: 0.7rem; color: #94a3b8; margin: 0;">
-                    {{ __('Generated on') }} {{ \Carbon\Carbon::now()->format('d F, Y - h:i A') }}
-                </p>
-            </div>
-            {{-- Right: Powered by AWS --}}
-        </div>
-        <div style="width: 100%; display: flex; justify-content: flex-end; margin-top: 0.5rem;">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="font-size: 0.7rem; color: #6b7280;">Powered by</span>
-                <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg"
-                    alt="AWS Logo"
-                    style="height: 18px; width: auto;">
+        <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+            {{-- Formula --}}
+            <p style="font-size: 0.7rem; color: #6b7280; margin: 0 0 0.5rem 0; font-weight: 500; text-align: center;">
+                Gross Profit = Sales + Closing Stock – Transfers – Direct Purchases
+            </p>
+            {{-- Generated on + Powered by AWS (same row) --}}
+            <div style="display: flex; align-items: center;">
+                {{-- Empty left space --}}
+                <div style="flex: 1;"></div>
+                {{-- Center: Generated on --}}
+                <div style="flex: 1; text-align: center;">
+                    <p style="font-size: 0.7rem; color: #6b7280; margin: 0; white-space: nowrap;">
+                        {{ __('Generated on') }} {{ \Carbon\Carbon::now()->format('d F, Y - h:i A') }}
+                    </p>
+                </div>
+                {{-- Right: Powered by AWS --}}
+                <div style="flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 0.7rem; color: #6b7280;">Powered by</span>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg"
+                        alt="AWS Logo"
+                        style="height: 18px; width: auto;">
+                </div>
             </div>
         </div>
         @else
