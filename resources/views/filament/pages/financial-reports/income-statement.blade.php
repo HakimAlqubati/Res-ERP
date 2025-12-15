@@ -164,7 +164,7 @@
             font-size: 0.9rem;
             font-weight: 700;
             color: #0f172a;
-            text-transform: uppercase;
+            /* text-transform: uppercase; */
             letter-spacing: 0.05em;
         }
 
@@ -303,7 +303,7 @@
             {{-- System Logo (Right) --}}
             <div style="flex: 0 0 80px; text-align: right;">
                 <img src="{{ url('/') . '/storage/workbench.png' }}" alt="System Logo"
-                    style="height: 60px; width: auto; object-fit: contain;">
+                    style="height: 40px; width: auto; object-fit: contain;">
             </div>
         </div>
 
@@ -383,10 +383,23 @@
         </div>
 
         {{-- Generated On --}}
-        <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; text-align: center;">
-            <p style="font-size: 0.75rem; color: #94a3b8;">
-                {{ __('Generated on') }} {{ \Carbon\Carbon::now()->format('d F, Y - h:i A') }}
-            </p>
+        <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+            {{-- Center: Formula + Generated on (stacked) --}}
+            <div style="flex: 1; text-align: center;">
+                <p style="font-size: 0.7rem; color: #6b7280; margin: 0 0 0.25rem 0; font-weight: 500;">
+                    Gross Profit = Sales + Closing Stock – Transfers – Direct Purchases
+                </p>
+                <p style="font-size: 0.7rem; color: #94a3b8; margin: 0;">
+                    {{ __('Generated on') }} {{ \Carbon\Carbon::now()->format('d F, Y - h:i A') }}
+                </p>
+            </div>
+            {{-- Right: Powered by AWS --}}
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 0.7rem; color: #6b7280;">Powered by</span>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg"
+                    alt="AWS Logo"
+                    style="height: 18px; width: auto;">
+            </div>
         </div>
         @else
         <div class="empty-state">
