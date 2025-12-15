@@ -375,7 +375,7 @@
 
         {{-- Cross Margin --}}
         <div class="net-profit-section">
-            <div class="net-profit-label">{{ __('Cross Margin') }}</div>
+            <div class="net-profit-label">{{ __('Gross Margin') }}</div>
             <div class="net-profit-amount {{ ($report['cross_margin']['value'] ?? 0) >= 0 ? 'profit-positive' : 'profit-negative' }}">
                 <!-- {{ $report['cross_margin']['value_formatted'] ?? number_format($report['cross_margin']['value'] ?? 0, 2) }} -->
                 <span style="font-size: 1rem; margin-left: 1rem; opacity: 0.8;"> {{ $report['gross_profit']['ratio_formatted'] ?? '0.00%' }} </span>
@@ -394,6 +394,8 @@
                 </p>
             </div>
             {{-- Right: Powered by AWS --}}
+        </div>
+        <div style="width: 100%; display: flex; justify-content: center; margin-top: 0.5rem;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <span style="font-size: 0.7rem; color: #6b7280;">Powered by</span>
                 <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg"
