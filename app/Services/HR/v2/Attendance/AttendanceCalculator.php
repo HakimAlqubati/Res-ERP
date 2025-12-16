@@ -11,6 +11,12 @@ class AttendanceCalculator
     public function calculateCheckIn(AttendanceContext $ctx): void
     {
         $checkTime = $ctx->requestTime;
+
+        // فحص وجود shiftBounds وقيمة start
+        if (!isset($ctx->shiftBounds['start']) || empty($ctx->shiftBounds['start'])) {
+            throw new \InvalidArgumentException('Shift start time is required.');
+        }
+
         $shiftStart = $ctx->shiftBounds['start'];
 
         if ($checkTime->lt($shiftStart)) {
@@ -32,6 +38,12 @@ class AttendanceCalculator
     public function calculateCheckOut(AttendanceContext $ctx): void
     {
         $checkTime = $ctx->requestTime;
+
+        // فحص وجود shiftBounds وقيمة end
+        if (!isset($ctx->shiftBounds['end']) || empty($ctx->shiftBounds['end'])) {
+            throw new \InvalidArgumentException('Shift end time is required.');
+        }
+
         $shiftEnd = $ctx->shiftBounds['end'];
 
         // Calculate Duration

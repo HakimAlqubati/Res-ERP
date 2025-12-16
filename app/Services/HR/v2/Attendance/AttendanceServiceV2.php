@@ -32,7 +32,19 @@ class AttendanceServiceV2
         // 2. Pre-Validation Check (قبل الدخول في الـ Lock حتى)
         // هذا يوفر موارد السيرفر إذا كان الطلب مرفوضاً مسبقاً
         // لكن نحتاج للتاريخ والنوع من الـ Payload
-        $requestTime = isset($payload['date_time']) ? Carbon::parse($payload['date_time']) : Carbon::now();
+
+        // معالجة التاريخ مع التحقق من صحة التنسيق
+        try {
+            $requestTime = isset($payload['date_time'])
+                ? Carbon::parse($payload['date_time'])
+                : Carbon::now();
+        } catch (\Carbon\Exceptions\InvalidFormatException $e) {
+            return [
+                'status' => false,
+                'message' => 'Invalid date format. Please use a valid date format like: Y-m-d H:i:s',
+            ];
+        }
+
         $type = $payload['type'] ?? null; // قد يكون null ويتم استنتاجه لاحقاً، لكن لو تم ارساله نفحصه
 
         // تشغيل الفالديشن المخصص
