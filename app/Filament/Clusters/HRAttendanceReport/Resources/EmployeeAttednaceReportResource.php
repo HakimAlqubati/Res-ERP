@@ -37,16 +37,18 @@ class EmployeeAttednaceReportResource extends Resource
     }
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 2;
-   
+
     public static function table(Table $table): Table
     {
         $currentMonthData = getEndOfMonthDate(Carbon::now()->year, Carbon::now()->month);
 
         return $table->deferFilters(false)
             ->emptyStateHeading('No data')
-           
+
             ->filters([
-                SelectFilter::make('employee_id')->label('Employee')
+                SelectFilter::make('employee_id')
+                    ->placeholder('Choose')
+                    ->label('Employee')
                     ->options(function ($search = null) {
                         return Employee::query()
                             ->where('active', 1)
