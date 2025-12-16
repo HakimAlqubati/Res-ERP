@@ -326,6 +326,47 @@
                     </td>
                 </tr>
 
+                {{-- Cost of Goods Sold Components --}}
+                @if(($report['cost_of_goods_sold']['closing_stock'] ?? 0) > 0)
+                <tr class="table-row">
+                    <td class="row-label">
+                        <div style="font-weight: 600;">{{ __('Closing Stock') }}</div>
+                        <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 0rem;">
+                            {{ __('End of Period Inventory') }}
+                        </div>
+                    </td>
+                    <td class="row-value" style="color: #059669;">
+                        {{ $report['cost_of_goods_sold']['closing_stock_formatted'] ?? number_format($report['cost_of_goods_sold']['closing_stock'] ?? 0, 2) }}
+                    </td>
+                </tr>
+                @endif
+                @if(($report['cost_of_goods_sold']['transfers'] ?? 0) > 0)
+                <tr class="table-row">
+                    <td class="row-label">
+                        <div style="font-weight: 600;">{{ __('Transfers') }}</div>
+                        <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 0rem;">
+                            {{ __('Goods Transferred to Branch') }}
+                        </div>
+                    </td>
+                    <td class="row-value expense-amount">
+                        ({{ $report['cost_of_goods_sold']['transfers_formatted'] ?? number_format($report['cost_of_goods_sold']['transfers'] ?? 0, 2) }})
+                    </td>
+                </tr>
+                @endif
+                @if(($report['cost_of_goods_sold']['direct_purchase'] ?? 0) > 0)
+                <tr class="table-row">
+                    <td class="row-label">
+                        <div style="font-weight: 600;">{{ __('Direct Purchase') }}</div>
+                        <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 0rem;">
+                            {{ __('Direct Purchases for Branch') }}
+                        </div>
+                    </td>
+                    <td class="row-value expense-amount">
+                        ({{ $report['cost_of_goods_sold']['direct_purchase_formatted'] ?? number_format($report['cost_of_goods_sold']['direct_purchase'] ?? 0, 2) }})
+                    </td>
+                </tr>
+                @endif
+
                 {{-- Expenses Section --}}
                 <!-- <tr>
                     <td colspan="2" class="section-header">{{ __('Expenses') }}</td>
