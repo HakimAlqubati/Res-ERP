@@ -26,21 +26,34 @@ class AttendanceBusinessValidator
     {
         $date = $requestTime->toDateString();
 
-        // 1. جلب السجلات
+        // 0. تحديد الوردية الحالية المناسبة للوقت المطلوب
+        $currentShift = $this->shiftResolver->resolve($employee, $requestTime);
+        $currentPeriodId = $currentShift['period']->id ?? null;
+
+        // 1. جلب السجلات لليوم الحالي
         $dailyRecords = Attendance::with('period')
             ->where('employee_id', $employee->id)
             ->where('check_date', $date)
             ->where('accepted', 1)
             ->get();
 
-        $checkInRecord = $dailyRecords->firstWhere('check_type', Attendance::CHECKTYPE_CHECKIN);
-        $checkOutRecord = $dailyRecords
+        // 2. فلترة السجلات حسب الوردية الحالية (إذا وجدت)
+        // هذا يسمح بالتعامل مع ورديات متعددة في نفس اليوم
+        if ($currentPeriodId) {
+            $shiftRecords = $dailyRecords->where('period_id', $currentPeriodId);
+        } else {
+            // إذا لم نجد وردية محددة، نستخدم كل السجلات (التصرف القديم)
+            $shiftRecords = $dailyRecords;
+        }
+
+        $checkInRecord = $shiftRecords->firstWhere('check_type', Attendance::CHECKTYPE_CHECKIN);
+        $checkOutRecord = $shiftRecords
             ->sortByDesc('check_time')
             ->firstWhere('check_type', Attendance::CHECKTYPE_CHECKOUT);
 
         // --- القواعد (Business Rules) ---
 
-        // القاعدة 1: اليوم مكتمل (دخول + خروج) -> هل نغلق الباب؟
+        // القاعدة 1: الوردية الحالية مكتملة (دخول + خروج) -> هل نغلق الباب؟
         if ($checkInRecord && $checkOutRecord) {
 
             // نحتاج لحساب حدود الوردية لنتخذ القرار
