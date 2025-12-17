@@ -2,6 +2,7 @@
 
 namespace App\Services\Warnings;
 
+use App\Models\AppLog;
 use Illuminate\Contracts\Auth\Authenticatable;
 
 /**
@@ -42,10 +43,15 @@ final class CompositeWarningSender implements WarningSender
                 $sender->send($users, $payload);
             } catch (\Throwable $e) {
                 // Log error but continue with other senders
-                \Illuminate\Support\Facades\Log::error('Warning sender failed', [
-                    'sender' => get_class($sender),
-                    'error' => $e->getMessage(),
-                ]);
+                AppLog::write(
+                    'Warning sender failed',
+                    AppLog::LEVEL_ERROR,
+                    'CompositeWarningSender',
+                    [
+                        'sender' => get_class($sender),
+                        'error' => $e->getMessage(),
+                    ]
+                );
             }
         }
     }
@@ -60,10 +66,7 @@ final class CompositeWarningSender implements WarningSender
                 $sender->sendAlwaysNew($users, $payload);
             } catch (\Throwable $e) {
                 // Log error but continue with other senders
-                \Illuminate\Support\Facades\Log::error('Warning sender (always new) failed', [
-                    'sender' => get_class($sender),
-                    'error' => $e->getMessage(),
-                ]);
+                
             }
         }
     }
