@@ -2,11 +2,11 @@
 
 namespace App\Services\Warnings;
 
+use App\Models\AppLog;
 use App\Models\CustomTenantModel;
 use App\Services\Warnings\Contracts\WarningHandler;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Spatie\Multitenancy\Models\Tenant as SpatieTenant;
 
@@ -78,7 +78,11 @@ final class NotificationOrchestrator
                 $totalSent += $s;
                 $totalFail += $f;
             } catch (\Throwable $e) {
-                Log::error("Handler {$handlerClass} failed: " . $e->getMessage());
+                AppLog::write(
+                    "Handler {$handlerClass} failed: " . $e->getMessage(),
+                    AppLog::LEVEL_ERROR,
+                    'NotificationOrchestrator'
+                );
                 $totalFail++;
             }
         }
@@ -91,7 +95,11 @@ final class NotificationOrchestrator
     private function enterTenantContext(CustomTenantModel $tenant, ?string $fallbackDb = null): void
     {
         // تسجيل التينانت الحالي
-        Log::info("[NotificationOrchestrator] Entering tenant: {$tenant->id}, database: {$tenant->database}");
+        AppLog::write(
+            "[NotificationOrchestrator] Entering tenant: {$tenant->id}, database: {$tenant->database}",
+            AppLog::LEVEL_INFO,
+            'NotificationOrchestrator'
+        );
 
         // دائماً نقوم بتبديل قاعدة البيانات في الـ config أولاً
         if ($tenant->database) {
@@ -101,7 +109,11 @@ final class NotificationOrchestrator
 
             // تحقق من التبديل
             $currentDb = config('database.connections.mysql.database');
-            Log::info("[NotificationOrchestrator] Switched to DB: {$currentDb}");
+            AppLog::write(
+                "[NotificationOrchestrator] Switched to DB: {$currentDb}",
+                AppLog::LEVEL_INFO,
+                'NotificationOrchestrator'
+            );
         }
 
         // ثم نحاول استخدام API التينانت إذا متوفر
