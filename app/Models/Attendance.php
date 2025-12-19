@@ -3,15 +3,45 @@
 namespace App\Models;
 
 use Carbon\Carbon;
- use Illuminate\Database\Eloquent\Builder;
-
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Attendance extends Model
+class Attendance extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+
+    protected $auditInclude = [
+        'employee_id',
+        'check_type',
+        'check_time',
+        'check_date',
+        'period_id',
+        'location',
+        'is_manual',
+        'notes',
+        'created_by',
+        'updated_by',
+        'day',
+        'delay_minutes',
+        'early_arrival_minutes',
+        'late_departure_minutes',
+        'early_departure_minutes',
+        'status',
+        'actual_duration_hourly',
+        'supposed_duration_hourly',
+        'branch_id',
+        'checkinrecord_id',
+        'total_actual_duration_hourly',
+        'is_from_previous_day',
+        'attendance_method',
+        'accepted',
+        'message',
+        'attendance_type',
+        'real_check_date',
+    ];
     protected $table = 'hr_attendances';
 
     const CHECKTYPE_CHECKIN        = 'checkin';

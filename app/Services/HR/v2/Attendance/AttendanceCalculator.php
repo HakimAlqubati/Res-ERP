@@ -19,16 +19,33 @@ class AttendanceCalculator
 
         $shiftStart = $ctx->shiftBounds['start'];
 
+        // جلب هامش الدقائق المسموح بها من الإعدادات (افتراضي 0 دقيقة)
+        $graceMinutes = (int) Setting::getSetting('early_attendance_minutes', 0);
+
         if ($checkTime->lt($shiftStart)) {
-            // Early Arrival
-            $ctx->earlyArrivalMinutes = $checkTime->diffInMinutes($shiftStart);
-            $ctx->status = Attendance::STATUS_EARLY_ARRIVAL;
+            // الموظف حضر قبل بداية الشيفت
+            $earlyMinutes = $checkTime->diffInMinutes($shiftStart);
+            $ctx->earlyArrivalMinutes = $earlyMinutes;
+
+            // إذا كان الفرق ضمن هامش الدقائق المسموح، يُعتبر "في الوقت"
+            if ($earlyMinutes <= $graceMinutes) {
+                $ctx->status = Attendance::STATUS_ON_TIME;
+            } else {
+                $ctx->status = Attendance::STATUS_EARLY_ARRIVAL;
+            }
         } else {
-            // Late or On Time
+            // الموظف حضر بعد بداية الشيفت أو في نفس الوقت
             $diff = $checkTime->diffInMinutes($shiftStart, true);
+
             if ($diff > 0) {
                 $ctx->delayMinutes = $diff;
-                $ctx->status = Attendance::STATUS_LATE_ARRIVAL;
+
+                // إذا كان التأخير ضمن هامش الدقائق المسموح، يُعتبر "في الوقت"
+                if ($diff <= $graceMinutes) {
+                    $ctx->status = Attendance::STATUS_ON_TIME;
+                } else {
+                    $ctx->status = Attendance::STATUS_LATE_ARRIVAL;
+                }
             } else {
                 $ctx->status = Attendance::STATUS_ON_TIME;
             }

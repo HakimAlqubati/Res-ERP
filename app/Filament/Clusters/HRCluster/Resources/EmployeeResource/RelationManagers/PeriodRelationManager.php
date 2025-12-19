@@ -105,7 +105,7 @@ class PeriodRelationManager extends RelationManager
 
                         $employeePeriod = EmployeePeriod::find($record->pivot->id);
 
-                     
+
                         return $employeePeriod?->start_date;
                     }),
 
@@ -134,10 +134,8 @@ class PeriodRelationManager extends RelationManager
                                 ->label('Choose the period duration')
                                 ->schema([
                                     DatePicker::make('start_date')->label('Start period date')
-
-                                        ->default(function ($record) {
-                                            return $this->ownerRecord->join_date ?? now()->toDateString();
-                                        })
+                                        ->default(fn() => $this->ownerRecord->join_date ?? now()->toDateString())
+                                        ->minDate(fn() => $this->ownerRecord->join_date ?? now()->toDateString())
                                         ->required(),
 
                                     DatePicker::make('end_date')->label('End period date')
@@ -167,7 +165,7 @@ class PeriodRelationManager extends RelationManager
                                             ->pluck('name', 'id');
                                     }
                                 )
-                               
+
                                 ->helperText('Select the employee\'s work periods.')->required(),
                             Fieldset::make()->schema([
                                 CheckboxList::make('period_days')
@@ -184,7 +182,7 @@ class PeriodRelationManager extends RelationManager
                     ->databaseTransaction()
                     ->action(function ($data) {
                         DB::beginTransaction();
-                        $employee = $this->ownerRecord; 
+                        $employee = $this->ownerRecord;
                         try {
 
                             $selectedPeriodsWithDates = [];
@@ -316,7 +314,7 @@ class PeriodRelationManager extends RelationManager
                     ->action(function ($record) {
 
                         try {
- 
+
                             DB::transaction(function () use ($record) {
                                 $period = EmployeePeriod::find($record->pivot_id);
 

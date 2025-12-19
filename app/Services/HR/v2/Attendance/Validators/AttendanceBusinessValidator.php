@@ -24,13 +24,19 @@ class AttendanceBusinessValidator
      */
     public function validate(Employee $employee, Carbon $requestTime, ?string $requestType = null): void
     {
-        $date = $requestTime->toDateString();
-
         // 0. تحديد الوردية الحالية المناسبة للوقت المطلوب
         $currentShift = $this->shiftResolver->resolve($employee, $requestTime);
-        $currentPeriodId = $currentShift['period']->id ?? null;
 
-        // 1. جلب السجلات لليوم الحالي
+        // التحقق من وجود الشيفت قبل الوصول لخصائصه (تجنب خطأ null access)
+        $currentPeriodId = $currentShift ? ($currentShift['period']->id ?? null) : null;
+
+        // استخدام تاريخ الشيفت المُحدد بدلاً من تاريخ الطلب
+        // هذا يصلح مشكلة: الحضور في 23:48 يوم 2-12 لشيفت يبدأ 00:00 يوم 3-12
+        // كان النظام يبحث في سجلات 2-12 ويجدها مكتملة ويرفض الطلب!
+        // الآن سيبحث في سجلات 3-12 (تاريخ الشيفت الفعلي)
+        $date = $currentShift ? ($currentShift['date'] ?? $requestTime->toDateString()) : $requestTime->toDateString();
+
+        // 1. جلب السجلات لتاريخ الشيفت
         $dailyRecords = Attendance::with('period')
             ->where('employee_id', $employee->id)
             ->where('check_date', $date)
