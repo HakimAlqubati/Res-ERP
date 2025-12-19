@@ -1102,3 +1102,6 @@ Route::middleware(['web', 'auth'])->group(function () {
 
 // Maintenance System Proposals Routes
 require __DIR__ . '/maintenance_routes.php';
+
+// Tasks System Proposals Routes
+require __DIR__ . '/tasks_routes.php';
