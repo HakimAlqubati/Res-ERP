@@ -533,10 +533,10 @@ Route::get('/send-test-email', function () {
 
 
 Route::get('/test-email', function () {
-    
+
     Mail::raw('هذه رسالة تجريبية من لارافل عبر ميل تراب', function ($message) {
         $message->to('hakimahmed123321@gmail.com')
-                ->subject('تجدربة Mailtrap');
+            ->subject('تجدربة Mailtrap');
     });
 
     return 'تم الإرسال! تفحص حسابك في Mailtrap.';
@@ -1099,3 +1099,6 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/admin/purchase-invoices/{purchaseInvoice}/print', [PurchaseInvoicePrintController::class, 'show'])
         ->name('purchase-invoices.print');
 });
+
+// Maintenance System Proposals Routes
+require __DIR__ . '/maintenance_routes.php';
