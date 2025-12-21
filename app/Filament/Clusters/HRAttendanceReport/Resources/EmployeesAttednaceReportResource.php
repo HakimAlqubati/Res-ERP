@@ -26,7 +26,22 @@ class EmployeesAttednaceReportResource extends Resource
     protected static string | \BackedEnum | null $navigationIcon = Heroicon::ChartBarSquare;
     protected static ?string $slug = 'employees-attendance-report';
     protected static ?string $cluster = HRAttendanceReport::class;
-    protected static ?string $label = 'Attendance by branch';
+
+    public static function getModelLabel(): string
+    {
+        return __('lang.attendance_by_branch');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('lang.attendance_by_branch');
+    }
+
+    public static function getPluralLabel(): string
+    {
+        return __('lang.attendance_by_branch');
+    }
+
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
 
@@ -34,19 +49,19 @@ class EmployeesAttednaceReportResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->emptyStateHeading('Please select a branch')->deferFilters(false)
+            ->emptyStateHeading(__('lang.please_select_branch'))->deferFilters(false)
             ->filters([
-                SelectFilter::make('branch_id')->label('Choose a branch')->options(
+                SelectFilter::make('branch_id')->label(__('lang.choose_a_branch'))->options(
                     Branch::selectable()
                         ->forBranchManager('id')
                         ->select('id', 'name')
                         ->get()
                         ->pluck('name', 'id')
 
-                )->searchable()->placeholder('Please select a branch'),
+                )->searchable()->placeholder(__('lang.please_select_branch')),
                 Filter::make('filter_date')->label('')->schema([
                     DatePicker::make('date')
-                        ->label('Date')->default(date('Y-m-d')),
+                        ->label(__('lang.date'))->default(date('Y-m-d')),
                 ]),
 
             ], FiltersLayout::AboveContent);

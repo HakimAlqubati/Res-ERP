@@ -29,7 +29,11 @@ class EmployeeAbsentsReportResource extends Resource
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRAttendanceReport::class;
-    protected static ?string $label = 'Absence Report';
+
+    public static function getModelLabel(): string
+    {
+        return __('lang.absence_report');
+    }
     // public static function getModelLabel(): string
     // {
     //     return isStuff() ? 'My attendance' : 'Attendance by employee';
@@ -47,53 +51,50 @@ class EmployeeAbsentsReportResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->emptyStateHeading('No data')
-            ->columns([
-
-            ])
+            ->emptyStateHeading(__('lang.no_data'))
+            ->columns([])
             ->filters([
-                SelectFilter::make('branch_id')->label('Branch')->options(Branch::where('active', 1)
-                        ->select('name', 'id')
+                SelectFilter::make('branch_id')->label(__('lang.branch'))->options(Branch::where('active', 1)
+                    ->select('name', 'id')
 
-                        ->get()->pluck('name', 'id'))
-                
+                    ->get()->pluck('name', 'id'))
+
                     ->default(function () {
                         if (isBranchManager()) {
                             return auth()->user()?->branch_id;
                         }
                     })
                     ->searchable(),
-                    Filter::make('filter_date')->label('')->schema([
-                        DatePicker::make('date')
-                            ->label('Date')->default(date('Y-m-d')),
-                        TimePicker::make('current_time')
-                            ->label('Current time')
-                            ->default(now()->timezone('Asia/Kuala_Lumpur')->format('H:i'))
-                            ->withoutSeconds()
-                            ,
-                    ]),
+                Filter::make('filter_date')->label('')->schema([
+                    DatePicker::make('date')
+                        ->label(__('lang.date'))->default(date('Y-m-d')),
+                    TimePicker::make('current_time')
+                        ->label(__('lang.current_time'))
+                        ->default(now()->timezone('Asia/Kuala_Lumpur')->format('H:i'))
+                        ->withoutSeconds(),
+                ]),
 
             ], FiltersLayout::AboveContent)
             ->recordActions([
                 EditAction::make(),
             ])
-            ;
+        ;
     }
- 
+
     public static function canCreate(): bool
     {
         return false;
     }
 
-    
+
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager() ) {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager()) {
             return true;
         }
         return false;
     }
-    
+
     public static function getPages(): array
     {
         return [
@@ -102,5 +103,4 @@ class EmployeeAbsentsReportResource extends Resource
     }
 
     protected static bool $shouldRegisterNavigation = false;
-
 }

@@ -332,9 +332,9 @@ class EmployeeForm
                                 ->columns(2)
                                 ->defaultItems(0)
                                 ->table([
-                                    TableColumn::make(__('File Type'))->width('16rem'),
-                                    TableColumn::make(__('Attachment'))->alignCenter()->width('16rem'),
-                                    TableColumn::make(__('Fields'))->alignCenter()->width('10rem'),
+                                    TableColumn::make(__('lang.file_type'))->width('16rem'),
+                                    TableColumn::make(__('lang.attachment'))->alignCenter()->width('16rem'),
+                                    TableColumn::make(__('lang.fields'))->alignCenter()->width('10rem'),
                                 ])
                                 ->schema([
                                     Fieldset::make('File Details')->label(__('lang.file_details'))->columnSpanFull()->schema([

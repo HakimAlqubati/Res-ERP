@@ -36,7 +36,11 @@ class EmployeeLeaveReportResource extends Resource
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRTaskReport::class;
-    protected static ?string $label = 'Employee leave';
+
+    public static function getModelLabel(): string
+    {
+        return __('lang.leave_report');
+    }
 
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 6;
@@ -47,12 +51,12 @@ class EmployeeLeaveReportResource extends Resource
         return $table
             ->paginated([10, 25, 50, 100])
             ->defaultPaginationPageOption(50)
-            ->emptyStateHeading('No data')->striped()
+            ->emptyStateHeading(__('lang.no_data'))->striped()
             ->columns([
-                TextColumn::make('employee_id')->label('Employee id')->searchable(isGlobal: true)->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('employee_no')->label('Emp.No.')->searchable(isGlobal: true)->alignCenter(true),
+                TextColumn::make('employee_id')->label(__('lang.id'))->searchable(isGlobal: true)->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('employee_no')->label(__('lang.employee_number'))->searchable(isGlobal: true)->alignCenter(true),
 
-                TextColumn::make('employee_name')->label('Name')->wrap(true)->limit(15),
+                TextColumn::make('employee_name')->label(__('lang.name'))->wrap(true)->limit(15),
                 TextColumn::make('request_id')->label('Advance id')->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('CountDays')->label('Count days')->alignCenter(true)
                     ->getStateUsing(function ($record) {
@@ -64,7 +68,7 @@ class EmployeeLeaveReportResource extends Resource
                             return $leave['days_count'];
                         }
                     }),
-                TextColumn::make('LeaveType')->label('Leave type')->alignCenter(true)
+                TextColumn::make('LeaveType')->label(__('lang.leave_type'))->alignCenter(true)
                     ->getStateUsing(function ($record) {
                         $employee = Employee::find($record->employee_id);
 
@@ -75,7 +79,7 @@ class EmployeeLeaveReportResource extends Resource
                             return LeaveType::find($leave['leave_type_id'])?->name ?? '';
                         }
                     }),
-                TextColumn::make('FromDate')->label('From date')->alignCenter(true)
+                TextColumn::make('FromDate')->label(__('lang.from_date'))->alignCenter(true)
                     ->getStateUsing(function ($record) {
                         $employee = Employee::find($record->employee_id);
 
@@ -86,7 +90,7 @@ class EmployeeLeaveReportResource extends Resource
                             return $leave['from_date'] ?? '';
                         }
                     }),
-                TextColumn::make('ToDate')->label('To date')->alignCenter(true)
+                TextColumn::make('ToDate')->label(__('lang.to_date'))->alignCenter(true)
                     ->getStateUsing(function ($record) {
                         $employee = Employee::find($record->employee_id);
 
@@ -102,13 +106,13 @@ class EmployeeLeaveReportResource extends Resource
 
             ])
             ->filters([
-                SelectFilter::make('hr_employees.branch_id')->placeholder('Branch')
-                    ->label('Branch')
+                SelectFilter::make('hr_employees.branch_id')->placeholder(__('lang.branch'))
+                    ->label(__('lang.branch'))
                     ->options(Branch::where('active', 1)
                         ->select('name', 'id')->get()->pluck('name', 'id'))->searchable(),
                 SelectFilter::make('hr_employees.id')
-                    ->placeholder('Employee')
-                    ->label('Employee')
+                    ->placeholder(__('lang.employee'))
+                    ->label(__('lang.employee'))
                     ->getSearchResultsUsing(fn(string $search): array => Employee::where('name', 'like', "%{$search}%")->limit(5)->pluck('name', 'id')->toArray())
                     ->getOptionLabelUsing(fn($value): ?string => Employee::find($value)?->name)
                     ->searchable(),

@@ -30,11 +30,21 @@ class EmployeeAttednaceReportResource extends Resource
     protected static string | \BackedEnum | null $navigationIcon = Heroicon::ChartBarSquare;
 
     protected static ?string $cluster = HRAttendanceReport::class;
-    protected static ?string $label   = 'Attendance by employee';
     public static function getModelLabel(): string
     {
-        return isStuff() ? 'My records' : 'Attendance by employee';
+        return isStuff() ? __('lang.my_attendance') : __('lang.attendance_by_employee');
     }
+
+    public static function getNavigationLabel(): string
+    {
+        return isStuff() ? __('lang.my_attendance') : __('lang.attendance_by_employee');
+    }
+
+    public static function getPluralLabel(): string
+    {
+        return isStuff() ? __('lang.my_attendance') : __('lang.attendance_by_employee');
+    }
+
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 2;
 
@@ -43,12 +53,12 @@ class EmployeeAttednaceReportResource extends Resource
         $currentMonthData = getEndOfMonthDate(Carbon::now()->year, Carbon::now()->month);
 
         return $table->deferFilters(false)
-            ->emptyStateHeading('No data')
+            ->emptyStateHeading(__('lang.no_data'))
 
             ->filters([
                 SelectFilter::make('employee_id')
-                    ->placeholder('Choose')
-                    ->label('Employee')
+                    ->placeholder(__('lang.choose'))
+                    ->label(__('lang.employee'))
                     ->options(function ($search = null) {
                         return Employee::query()
                             ->where('active', 1)
@@ -77,19 +87,19 @@ class EmployeeAttednaceReportResource extends Resource
                                 $endNextMonthData = getEndOfMonthDate(Carbon::parse($state)->year, Carbon::parse($state)->month);
                                 $set('end_date', $endNextMonthData['end_month']);
                             })
-                            ->label('Start Date')
+                            ->label(__('lang.start_date'))
                             ->default($currentMonthData['start_month']), // Use function for dynamic default value
 
                         DatePicker::make('end_date')
-                            ->label('End Date')
+                            ->label(__('lang.end_date'))
                             ->default($currentMonthData['end_month']), // Use function for dynamic default value
                     ]),
                 Filter::make('show_extra_fields')
-                    ->label('Show Extra')
+                    ->label(__('lang.show_extra'))
                     ->schema([
                         Toggle::make('show_day')
                             ->inline(false)
-                            ->label('Show Day'),
+                            ->label(__('lang.show_day')),
                     ]),
 
             ], FiltersLayout::AboveContent)
