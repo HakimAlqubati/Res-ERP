@@ -799,4 +799,68 @@ return [
   'overtime_date' => 'تاريخ العمل الإضافي',
   'overtime_reason' => 'سبب العمل الإضافي',
   'overtime_amount' => 'مبلغ العمل الإضافي',
+
+  // ===========================================
+  // Attendance Report Blade View
+  // ===========================================
+  'to_excel' => 'تصدير إلى Excel',
+  'refresh' => 'تحديث',
+  'shift_data' => 'بيانات الوردية',
+  'checkin_checkout_data' => 'بيانات الحضور والانصراف',
+  'work_hours_summary' => 'ملخص ساعات العمل',
+  'supposed' => 'المفترض',
+  'total_hours_worked' => 'إجمالي ساعات العمل',
+  'no_periods' => 'لا توجد فترات',
+  'total' => 'الإجمالي',
+  'please_select_employee' => 'يرجى اختيار موظف',
+  'show_details' => 'عرض التفاصيل',
+  'show_charts' => 'عرض الرسوم البيانية',
+  'print_report' => 'طباعة التقرير',
+  'check_in' => 'الحضور',
+  'check_out' => 'الانصراف',
+  'absent' => 'غائب',
+
+  // ===========================================
+  // Employee Applications / Requests
+  // ===========================================
+  'request' => 'طلب',
+  'requests' => 'الطلبات',
+  'request_date' => 'تاريخ الطلب',
+  'request_type' => 'نوع الطلب',
+  'request_data' => 'بيانات الطلب',
+  'approve' => 'موافقة',
+  'reject' => 'رفض',
+  'details' => 'التفاصيل',
+  'reason_for_rejection' => 'سبب الرفض',
+  'please_provide_reason' => 'يرجى تقديم السبب...',
+  'attendance_data' => 'بيانات الحضور',
+  'time' => 'الوقت',
+
+  // Leave Request
+  'leave_request' => 'طلب إجازة',
+  'days_count' => 'عدد الأيام',
+  'days' => 'الأيام',
+
+  // Advance Request
+  'advance_request' => 'طلب سلفة',
+  'advance_date' => 'تاريخ السلفة',
+  'advance_amount' => 'مبلغ السلفة',
+  'monthly_deduction_amount' => 'مبلغ الخصم الشهري',
+  'deduction_starts_from' => 'تاريخ بداية الخصم',
+  'deduction_ends_at' => 'تاريخ نهاية الخصم',
+  'number_of_months_of_deduction' => 'عدد أشهر الخصم',
+  'months' => 'الأشهر',
+  'monthly_deduction' => 'الخصم الشهري',
+  'deduction_starts' => 'بداية الخصم',
+  'deduction_ends' => 'نهاية الخصم',
+
+  // Attendance Fingerprint Request
+  'attendance_fingerprint_request' => 'طلب بصمة الحضور',
+  'departure_fingerprint_request' => 'طلب بصمة الانصراف',
+  'missed_checkin_request' => 'طلب بصمة حضور مفقودة',
+  'missed_checkout_request' => 'طلب بصمة انصراف مفقودة',
+  'no_checkin_cannot_approve' => 'لا يوجد حضور، لا يمكن الموافقة على هذا الطلب',
+  'approved_and_installments_created' => 'تمت الموافقة وإنشاء الأقساط',
+  'installments_already_exist' => 'الأقساط موجودة مسبقاً',
+  'missing_advance_data' => 'بيانات السلفة مفقودة',
 ];

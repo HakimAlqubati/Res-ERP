@@ -68,10 +68,21 @@ class EmployeeApplicationResource extends Resource
     // protected static ?string $cluster                             = HRApplicationsCluster::class;
     // protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     // protected static ?int $navigationSort                         = 0;
-    protected static ?string $label                               = 'Request';
-    protected static ?string $pluralLabel                         = 'Requests';
 
-    protected static ?string $pluralModelLabel = 'Requests';
+    public static function getModelLabel(): string
+    {
+        return __('lang.request');
+    }
+
+    public static function getPluralLabel(): string
+    {
+        return __('lang.requests');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('lang.requests');
+    }
 
     public static function form(Schema $schema): Schema
     {
@@ -111,12 +122,12 @@ class EmployeeApplicationResource extends Resource
 
     public static function getTitleCasePluralModelLabel(): string
     {
-        return 'Requests';
+        return __('lang.requests');
     }
 
     public static function getTitleCaseModelLabel(): string
     {
-        return 'Request';
+        return __('lang.request');
     }
 
     public static function getNavigationBadge(): ?string
@@ -142,7 +153,7 @@ class EmployeeApplicationResource extends Resource
     public static function approveDepartureRequest(): Action
     {
         return Action::make('approveDepartureRequest')
-            ->label('Approve')
+            ->label(__('lang.approve'))
             ->button()
             ->visible(
                 fn($record): bool =>
@@ -320,6 +331,7 @@ class EmployeeApplicationResource extends Resource
         return Action::make('rejectDepartureRequest')->label('Reject')->button()
             ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST))
             ->color('danger')
+            ->label(__('lang.reject'))
             ->icon('heroicon-o-x-mark')
             ->action(function ($record) {
                 $record->update([

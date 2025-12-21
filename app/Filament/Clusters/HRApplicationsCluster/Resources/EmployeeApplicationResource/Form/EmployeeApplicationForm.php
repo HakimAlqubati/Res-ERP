@@ -23,7 +23,7 @@ class EmployeeApplicationForm
             ->components([
                 Fieldset::make()->columnSpanFull()->label('')->columns(2)->schema([
                     Select::make('employee_id')
-                        ->label('Employee')
+                        ->label(__('lang.employee'))
                         ->searchable()
                         ->required()
                         ->live()
@@ -47,7 +47,7 @@ class EmployeeApplicationForm
                             ->get()->plucK('name', 'id')),
 
                     DatePicker::make('application_date')
-                        ->label('Request date')
+                        ->label(__('lang.request_date'))
                         ->default(date('Y-m-d'))
                         ->live()
                         ->disabled()
@@ -72,7 +72,7 @@ class EmployeeApplicationForm
 
                     ToggleButtons::make('application_type_id')
                         ->columnSpan(2)
-                        ->label('Request type')
+                        ->label(__('lang.request_type'))
                         ->hiddenOn('edit')
                         ->live()->required()
                         ->options(EmployeeApplicationV2::APPLICATION_TYPES)
@@ -141,8 +141,8 @@ class EmployeeApplicationForm
                     }),
                 Fieldset::make()->columnSpanFull()->label('')->schema([
                     Textarea::make('notes') // Add the new details field
-                        ->label('Notes')
-                        ->placeholder('Notes...')
+                        ->label(__('lang.notes'))
+                        ->placeholder(__('lang.notes') . '...')
                         // ->rows(5)
                         ->columnSpanFull(),
                 ]),

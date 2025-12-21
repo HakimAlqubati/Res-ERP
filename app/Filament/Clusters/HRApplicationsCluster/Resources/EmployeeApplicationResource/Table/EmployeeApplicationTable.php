@@ -42,6 +42,7 @@ class EmployeeApplicationTable
                 ->searchable(),
 
             TextColumn::make('employee.name')
+                ->label(__('lang.employee'))
                 ->sortable()
                 ->limit(20)
                 ->searchable(),
@@ -52,8 +53,8 @@ class EmployeeApplicationTable
                 ->toggleable(isToggledHiddenByDefault: true)
                 ->searchable(),
 
-            TextColumn::make('application_date')->toggleable(isToggledHiddenByDefault:true)
-                ->label('Request date')
+            TextColumn::make('application_date')->toggleable(isToggledHiddenByDefault: true)
+                ->label(__('lang.request_date'))
                 ->sortable(),
 
             // TextColumn::make('application_type_name')
@@ -62,7 +63,7 @@ class EmployeeApplicationTable
             //     ->sortable(),
 
             TextColumn::make('status')
-                ->label('Status')
+                ->label(__('lang.status'))
                 ->alignCenter(true)
                 ->badge()
                 ->icon('heroicon-m-check-badge')
@@ -78,61 +79,61 @@ class EmployeeApplicationTable
         if ($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[1]) {
             // dd(true);
             $columns[] = TextColumn::make('leave_type_name')
-                ->label('Leave Type');
+                ->label(__('lang.leave_type'));
 
             $columns[] = TextColumn::make('detail_from_date')
-                ->label('From')
+                ->label(__('lang.from'))
                 ->date();
 
             $columns[] = TextColumn::make('detail_to_date')
-                ->label('To')
+                ->label(__('lang.to'))
                 ->date();
 
             $columns[] = TextColumn::make('detail_days_count')
-                ->label('Days')->alignCenter()
+                ->label(__('lang.days'))->alignCenter()
                 ->numeric();
         }
 
         // أعمدة خاصة بسلف الموظف (Advance request)
         if ($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[3]) {
             $columns[] = TextColumn::make('detail_advance_amount')
-                ->label('Advance amount')
+                ->label(__('lang.advance_amount'))
                 ->money('sar');
 
             $columns[] = TextColumn::make('detail_monthly_deduction_amount')
-                ->label('Monthly deduction')
+                ->label(__('lang.monthly_deduction'))
                 ->money('sar');
 
             $columns[] = TextColumn::make('detail_deduction_starts_from')
-                ->label('Deduction starts')
+                ->label(__('lang.deduction_starts'))
                 ->date();
 
             $columns[] = TextColumn::make('detail_deduction_ends_at')
-                ->label('Deduction ends')
+                ->label(__('lang.deduction_ends'))
                 ->date();
 
             $columns[] = TextColumn::make('detail_number_of_months_of_deduction')
-                ->label('Months');
+                ->label(__('lang.months'));
         }
 
         // أعمدة خاصة بطلب بصمة الحضور (Missed check-in)
         if ($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[2]) {
             $columns[] = TextColumn::make('detail_date')
-                ->label('Date');
+                ->label(__('lang.date'));
 
             $columns[] = TextColumn::make('detail_time')
 
 
-                ->label('Time');
+                ->label(__('lang.time'));
         }
 
         // أعمدة خاصة بطلب بصمة الانصراف (Missed check-out)
         if ($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[4]) {
             $columns[] = TextColumn::make('detail_date')
-                ->label('Date');
+                ->label(__('lang.date'));
 
             $columns[] = TextColumn::make('detail_time')
-                ->label('Time');
+                ->label(__('lang.time'));
         }
         return $table->defaultSort('id', 'desc')
             ->paginated([10, 25, 50, 100])
@@ -185,7 +186,7 @@ class EmployeeApplicationTable
                 SelectFilter::make('employee_id')->label(__('lang.employee'))->searchable()
                     ->options(Employee::query()->forBranchManager()->select('name', 'id')->pluck('name', 'id')),
                 SelectFilter::make('branch_id')
-                    ->label('Branch')
+                    ->label(__('lang.branch'))
                     ->options(Branch::select('name', 'id')->selectable()->forBranchManager('id')->pluck('name', 'id')),
             ], FiltersLayout::Modal)
             ->recordActions([
@@ -396,7 +397,7 @@ class EmployeeApplicationTable
                     }
                     return false;
                 }),
-             
+
                 EmployeeApplicationResource::LeaveRequesttDetails()
                     ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST)),
                 EmployeeApplicationResource::departureRequesttDetails()

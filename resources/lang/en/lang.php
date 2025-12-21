@@ -817,4 +817,68 @@ return [
     'overtime_date' => 'Overtime Date',
     'overtime_reason' => 'Overtime Reason',
     'overtime_amount' => 'Overtime Amount',
+
+    // ===========================================
+    // Attendance Report Blade View
+    // ===========================================
+    'to_excel' => 'To Excel',
+    'refresh' => 'Refresh',
+    'shift_data' => 'Shift data',
+    'checkin_checkout_data' => 'Check-in and Check-out data',
+    'work_hours_summary' => 'Work Hours Summary',
+    'supposed' => 'Supposed',
+    'total_hours_worked' => 'Total Hours Worked',
+    'no_periods' => 'No periods',
+    'total' => 'Total',
+    'please_select_employee' => 'Please select an Employee',
+    'show_details' => 'Show details',
+    'show_charts' => 'Show Charts',
+    'print_report' => 'Print Report',
+    'check_in' => 'Check-in',
+    'check_out' => 'Check-out',
+    'absent' => 'Absent',
+
+    // ===========================================
+    // Employee Applications / Requests
+    // ===========================================
+    'request' => 'Request',
+    'requests' => 'Requests',
+    'request_date' => 'Request date',
+    'request_type' => 'Request type',
+    'request_data' => 'Request data',
+    'approve' => 'Approve',
+    'reject' => 'Reject',
+    'details' => 'Details',
+    'reason_for_rejection' => 'Reason for Rejection',
+    'please_provide_reason' => 'Please provide a reason...',
+    'attendance_data' => 'Attendance data',
+    'time' => 'Time',
+
+    // Leave Request
+    'leave_request' => 'Leave Request',
+    'days_count' => 'Days count',
+    'days' => 'Days',
+
+    // Advance Request
+    'advance_request' => 'Advance Request',
+    'advance_date' => 'Advance date',
+    'advance_amount' => 'Advance amount',
+    'monthly_deduction_amount' => 'Monthly deduction amount',
+    'deduction_starts_from' => 'Deduction starts from',
+    'deduction_ends_at' => 'Deduction ends at',
+    'number_of_months_of_deduction' => 'Number of months of deduction',
+    'months' => 'Months',
+    'monthly_deduction' => 'Monthly deduction',
+    'deduction_starts' => 'Deduction starts',
+    'deduction_ends' => 'Deduction ends',
+
+    // Attendance Fingerprint Request
+    'attendance_fingerprint_request' => 'Attendance Fingerprint Request',
+    'departure_fingerprint_request' => 'Departure Fingerprint Request',
+    'missed_checkin_request' => 'Missed Check-in Request',
+    'missed_checkout_request' => 'Missed Check-out Request',
+    'no_checkin_cannot_approve' => 'There is no check-in, so you cannot approve this request.',
+    'approved_and_installments_created' => 'Approved and installments created.',
+    'installments_already_exist' => 'Installments already exist.',
+    'missing_advance_data' => 'Missing advance data.',
 ];

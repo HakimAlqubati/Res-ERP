@@ -109,10 +109,10 @@
             <tr class="header_report">
                 <th colspan="2" class="">
                     <button onclick="exportToExcel()" class="btn btn-primary">
-                        &#128200; {{ __('To Excel') }}
+                        &#128200; {{ __('lang.to_excel') }}
                     </button>
                     <button type="button" class="btn btn-secondary btn-refresh" wire:click="refreshData">
-                        🔄 {{ __('Refresh') }}
+                        🔄 {{ __('lang.refresh') }}
                     </button>
 
                     <!-- سبينر يظهر فقط أثناء تشغيل refreshData -->
@@ -135,23 +135,23 @@
                 </th>
             </tr>
             <tr>
-                <th rowspan="2" style="display: {{ $show_day ? 'table-cell' : 'none' }};">{{ __('Day') }}
+                <th rowspan="2" style="display: {{ $show_day ? 'table-cell' : 'none' }};">{{ __('lang.day') }}
                 </th>
-                <th rowspan="2">{{ __('Date') }}</th>
-                <th colspan="2">{{ __('Shift data') }}</th>
-                <th colspan="4">{{ __('Check-in and Check-out data') }}</th>
-                <th colspan="3">{{ __('Work Hours Summary') }}</th>
+                <th rowspan="2">{{ __('lang.date') }}</th>
+                <th colspan="2">{{ __('lang.shift_data') }}</th>
+                <th colspan="4">{{ __('lang.checkin_checkout_data') }}</th>
+                <th colspan="3">{{ __('lang.work_hours_summary') }}</th>
             </tr>
             <tr>
-                <th class="internal_cell">{{ __('From') }}</th>
-                <th class="internal_cell">{{ __('To') }}</th>
-                <th class="internal_cell">{{ __('Check-in') }}</th>
-                <th class="internal_cell">{{ __('Status') }}</th>
-                <th class="internal_cell">{{ __('Check-out') }}</th>
-                <th class="internal_cell">{{ __('Status') }}</th>
-                <th class="internal_cell">{{ __('Supposed') }}</th>
-                <th class="internal_cell">{{ __('Total Hours Worked') }}</th>
-                <th class="internal_cell">{{ __('Approved') }}</th>
+                <th class="internal_cell">{{ __('lang.from') }}</th>
+                <th class="internal_cell">{{ __('lang.to') }}</th>
+                <th class="internal_cell">{{ __('lang.check_in') }}</th>
+                <th class="internal_cell">{{ __('lang.status') }}</th>
+                <th class="internal_cell">{{ __('lang.check_out') }}</th>
+                <th class="internal_cell">{{ __('lang.status') }}</th>
+                <th class="internal_cell">{{ __('lang.supposed') }}</th>
+                <th class="internal_cell">{{ __('lang.total_hours_worked') }}</th>
+                <th class="internal_cell">{{ __('lang.approved') }}</th>
             </tr>
         </thead>
 
@@ -225,7 +225,7 @@
 
                 @if ($period['final_status'] == 'absent')
                 <td colspan="8">
-                    Absent
+                    {{ __('lang.absent') }}
                 </td>
                 @else
                 <td>
@@ -280,7 +280,7 @@
                 @endif
                 <td>{{ $date }}</td>
                 <td colspan="9" class="text-center text-gray-500 font-bold">
-                    {{ __('No periods') }}
+                    {{ __('lang.no_periods') }}
                 </td>
             </tr>
             @endif
@@ -289,7 +289,7 @@
 
         <tfoot>
             <tr>
-                <td colspan="{{ $show_day ? 8 : 7 }}" class="text-center font-bold">{{ __('Total') }}</td>
+                <td colspan="{{ $show_day ? 8 : 7 }}" class="text-center font-bold">{{ __('lang.total') }}</td>
                 <td class="text-center">{{ $total_duration_hours }}</td>
                 <td class="text-center">{{ $total_actual_duration_hours }}</td>
                 <td class="text-center">{{ $total_approved_overtime }}</td>
@@ -298,7 +298,7 @@
     </table>
     @else
     <div class="please_select_message_div" style="text-align: center;">
-        <h1 class="please_select_message_text">{{ __('Please select an Employee') }}</h1>
+        <h1 class="please_select_message_text">{{ __('lang.please_select_employee') }}</h1>
     </div>
     @endif
 
