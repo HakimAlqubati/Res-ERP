@@ -30,10 +30,23 @@ class AttendanceImagesUploadedResource extends Resource
     protected static ?string $cluster = HRAttenanceCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 6;
-    protected static ?string $pluralLabel = 'Attendance Images';
-    protected static bool $shouldRegisterNavigation = true;
 
-    protected static ?string $pluralModelLabel = 'Attendance Images';
+    public static function getModelLabel(): string
+    {
+        return __('lang.attendance_image');
+    }
+
+    public static function getPluralLabel(): string
+    {
+        return __('lang.attendance_images');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('lang.attendance_images');
+    }
+
+    protected static bool $shouldRegisterNavigation = true;
 
     public static function table(Table $table): Table
     {
@@ -43,14 +56,14 @@ class AttendanceImagesUploadedResource extends Resource
             ->columns([
                 Stack::make([
                     ImageColumn::make('full_image_url')->circular(false)->tooltip(fn($record) => $record->employee_name)
-                        ->label('Image')
+                        ->label(__('lang.image'))
                         ->size(200)->wrap(),
-                    TextColumn::make('employee.name')->label('Employee')->default('--')->searchable()
+                    TextColumn::make('employee.name')->label(__('lang.employee'))->default('--')->searchable()
                         ->color('primary')
                         ->weight(FontWeight::Bold),
-                    TextColumn::make('datetime')->label('Date')->default('--')
+                    TextColumn::make('datetime')->label(__('lang.date'))->default('--')
                         ->date('Y-m-d'),
-                    TextColumn::make('datetime')->label('Date')->default('--')
+                    TextColumn::make('datetime')->label(__('lang.date'))->default('--')
                         ->time('H:i:s'),
                 ]),
 
@@ -78,7 +91,7 @@ class AttendanceImagesUploadedResource extends Resource
                                 fn(Builder $query, $date): Builder => $query->whereDate('datetime', '<=', $date),
                             );
                     }),
-                SelectFilter::make('employee_id')->label('Employee')
+                SelectFilter::make('employee_id')->label(__('lang.employee'))
                     ->searchable()
                     ->preload()
                     ->multiple()

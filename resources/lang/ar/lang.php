@@ -699,4 +699,104 @@ return [
   'rejected' => 'مرفوض',
   'pending' => 'قيد الانتظار',
   'select_branch' => 'اختر الفرع',
+
+  // ===========================================
+  // Work Periods / Shifts
+  // ===========================================
+  'work_shifts' => 'ورديات العمل',
+  'work_period' => 'فترة العمل',
+  'work_periods' => 'فترات العمل',
+  'start_time' => 'وقت البداية',
+  'end_time' => 'وقت النهاية',
+  'day_and_night' => 'نهاري وليلي',
+  'duration' => 'المدة',
+  'copy' => 'نسخ',
+  'bulk_delete' => 'حذف متعدد',
+  'import_from_excel' => 'استيراد من اكسل',
+  'select_excel_file' => 'اختر ملف اكسل',
+  'download_example_file' => 'تحميل ملف نموذجي',
+  'shifts_imported_successfully' => 'تم استيراد الورديات بنجاح',
+  'no_shifts_added' => 'لم تتم إضافة ورديات. يرجى مراجعة الملف.',
+  'error_importing_shifts' => 'خطأ في استيراد الورديات',
+  'cannot_delete_shifts_assigned' => 'لا يمكن الحذف: الورديات مخصصة لموظفين',
+  'deleted' => 'تم الحذف',
+  'from' => 'من',
+  'to' => 'إلى',
+
+  // ===========================================
+  // User Devices
+  // ===========================================
+  'user_devices' => 'أجهزة المستخدمين',
+  'user_device' => 'جهاز المستخدم',
+  'device_name' => 'اسم الجهاز',
+  'device_id' => 'معرف الجهاز',
+  'device_model' => 'موديل الجهاز',
+  'device_type' => 'نوع الجهاز',
+  'last_login' => 'آخر تسجيل دخول',
+  'ip_address' => 'عنوان IP',
+  'browser' => 'المتصفح',
+  'platform' => 'المنصة',
+  'is_trusted' => 'موثوق',
+
+  // ===========================================
+  // Attendance Images
+  // ===========================================
+  'attendance_images' => 'صور الحضور',
+  'attendance_image' => 'صورة الحضور',
+  'image' => 'الصورة',
+
+  // ===========================================
+  // Attendance Log
+  // ===========================================
+  'attendance_log' => 'سجل الحضور',
+  'select_date_time' => 'اختر التاريخ والوقت',
+  'check_date' => 'تاريخ التحقق',
+  'check_time' => 'وقت التحقق',
+  'day' => 'اليوم',
+  'select_employee_check_type' => 'اختر الموظف ونوع التحقق',
+  'check_type' => 'نوع التحقق',
+  'notes' => 'ملاحظات',
+  'approved' => 'موافق عليه',
+  'rejected' => 'مرفوض',
+  'period' => 'الفترة',
+  'check_in_id' => 'رقم الحضور',
+  'real_check_date' => 'تاريخ التحقق الفعلي',
+  'status' => 'الحالة',
+  'delay_minutes' => 'دقائق التأخير',
+  'late_departure_minutes' => 'دقائق المغادرة المتأخرة',
+  'early_departure_minutes' => 'دقائق المغادرة المبكرة',
+  'filter_by_month' => 'تصفية حسب الشهر',
+  'year' => 'السنة',
+  'month' => 'الشهر',
+  'select_year' => 'اختر السنة',
+  'select_month' => 'اختر الشهر',
+  'choose_date' => 'اختر التاريخ',
+  'checkin' => 'حضور',
+  'checkout' => 'انصراف',
+  'done' => 'تم',
+
+  // Months
+  'january' => 'يناير',
+  'february' => 'فبراير',
+  'march' => 'مارس',
+  'april' => 'أبريل',
+  'may' => 'مايو',
+  'june' => 'يونيو',
+  'july' => 'يوليو',
+  'august' => 'أغسطس',
+  'september' => 'سبتمبر',
+  'october' => 'أكتوبر',
+  'november' => 'نوفمبر',
+  'december' => 'ديسمبر',
+
+  // ===========================================
+  // Employee Overtime
+  // ===========================================
+  'employee_overtime' => 'العمل الإضافي للموظف',
+  'staff_overtime' => 'العمل الإضافي للموظفين',
+  'my_overtime' => 'عملي الإضافي',
+  'overtime_hours' => 'ساعات العمل الإضافي',
+  'overtime_date' => 'تاريخ العمل الإضافي',
+  'overtime_reason' => 'سبب العمل الإضافي',
+  'overtime_amount' => 'مبلغ العمل الإضافي',
 ];

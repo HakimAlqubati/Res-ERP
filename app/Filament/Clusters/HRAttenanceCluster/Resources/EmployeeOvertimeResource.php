@@ -29,19 +29,23 @@ class EmployeeOvertimeResource extends Resource
 
     protected static ?string $cluster                             = HRAttenanceCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
- 
+
     public static function getModelLabel(): string
     {
-        return isStuff() ? 'My Overtime' : 'Staff Overtime';
+        return isStuff() ? __('lang.my_overtime') : __('lang.staff_overtime');
     }
     public static function getPluralLabel(): ?string
     {
-        return isStuff() ? 'My Overtime' : 'Staff Overtime';
+        return isStuff() ? __('lang.my_overtime') : __('lang.staff_overtime');
+    }
+    public static function getNavigationLabel(): string
+    {
+        return isStuff() ? __('lang.my_overtime') : __('lang.staff_overtime');
     }
     protected static ?int $navigationSort = 5;
     public static function form(Schema $schema): Schema
     {
-      return EmployeeOvertimeForm::configure($schema);
+        return EmployeeOvertimeForm::configure($schema);
     }
 
     public static function table(Table $table): Table
@@ -60,7 +64,7 @@ class EmployeeOvertimeResource extends Resource
     {
         return [
             'index'  => Pages\ListEmployeeOvertimes::route('/'),
-            'create' => Pages\CreateEmployeeOvertime::route('/create'), 
+            'create' => Pages\CreateEmployeeOvertime::route('/create'),
         ];
     }
 
@@ -82,7 +86,7 @@ class EmployeeOvertimeResource extends Resource
         if (isSystemManager() || isSuperAdmin() || isBranchManager()) {
             return true;
         }
-        return false; 
+        return false;
     }
 
     public static function canForceDelete(Model $record): bool

@@ -62,8 +62,21 @@ class AttendnaceResource extends Resource
     protected static string | \BackedEnum | null $navigationIcon = Heroicon::Identification;
 
     protected static ?string $cluster = HRAttenanceCluster::class;
-    protected static ?string $modelLabel = 'Attendance Log';
-    protected static ?string $pluralLabel = 'Attendance Log';
+
+    public static function getModelLabel(): string
+    {
+        return __('lang.attendance_log');
+    }
+
+    public static function getPluralLabel(): string
+    {
+        return __('lang.attendance_log');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('lang.attendance_log');
+    }
 
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
@@ -71,11 +84,11 @@ class AttendnaceResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->columnSpanFull()->label('Select date & time')->schema([
+                Fieldset::make()->columnSpanFull()->label(__('lang.select_date_time'))->schema([
                     Grid::make()->columnSpanFull()->columns(3)->schema([
 
                         DatePicker::make('check_date')
-                            ->label('Check date')
+                            ->label(__('lang.check_date'))
                             ->required()
                             ->default(date('Y-m-d'))
                             ->live()
@@ -84,16 +97,16 @@ class AttendnaceResource extends Resource
                             }),
 
                         TimePicker::make('check_time')
-                            ->label('Check time')
+                            ->label(__('lang.check_time'))
                             ->default(now())
                             ->required(),
-                        TextInput::make('day')->label('Day')->disabled()->default(Carbon::parse(date('Y-m-d'))->format('l')),
+                        TextInput::make('day')->label(__('lang.day'))->disabled()->default(Carbon::parse(date('Y-m-d'))->format('l')),
                     ]),
                 ]),
 
-                Fieldset::make()->columnSpanFull()->label('Select employee and check type')->schema([
+                Fieldset::make()->columnSpanFull()->label(__('lang.select_employee_check_type'))->schema([
                     Select::make('employee_id')
-                        ->label('Employee')
+                        ->label(__('lang.employee'))
                         ->live()
                         ->searchable()
                         // ->default(auth()->user()?->employee?->id)

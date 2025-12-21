@@ -26,6 +26,21 @@ class UserDeviceResource extends Resource
 
     protected static ?string $cluster = HRAttenanceCluster::class;
 
+    public static function getModelLabel(): string
+    {
+        return __('lang.user_device');
+    }
+
+    public static function getPluralLabel(): string
+    {
+        return __('lang.user_devices');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('lang.user_devices');
+    }
+
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     protected static ?int $navigationSort = 7;
@@ -62,7 +77,7 @@ class UserDeviceResource extends Resource
             'edit' => EditUserDevice::route('/{record}/edit'),
         ];
     }
-      public static function getNavigationBadge(): ?string
+    public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
     }

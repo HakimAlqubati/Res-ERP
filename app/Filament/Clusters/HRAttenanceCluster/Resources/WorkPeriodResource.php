@@ -51,7 +51,21 @@ class WorkPeriodResource extends Resource
     protected static string | \BackedEnum | null $navigationIcon = Heroicon::Clock;
 
     protected static ?string $cluster = HRAttenanceCluster::class;
-    protected static ?string $label = 'Work shifts';
+
+    public static function getModelLabel(): string
+    {
+        return __('lang.work_period');
+    }
+
+    public static function getPluralLabel(): string
+    {
+        return __('lang.work_shifts');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('lang.work_shifts');
+    }
 
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
@@ -63,7 +77,7 @@ class WorkPeriodResource extends Resource
             Fieldset::make()->columnSpanFull()->schema([
                 Grid::make()->columns(3)->columnSpanFull()->schema([
                     TextInput::make('name')
-                        ->label('Name')
+                        ->label(__('lang.name'))
                         ->required()
                         ->columnSpan(1)
                         ->unique(ignoreRecord: true),
@@ -81,10 +95,10 @@ class WorkPeriodResource extends Resource
                         ->options(Branch::where('active', 1)
                             ->selectable()
                             ->select('name', 'id')->get()->pluck('name', 'id'))
-                        ->label('Branch')->required()
+                        ->label(__('lang.branch'))->required()
                         ->searchable(),
                     Toggle::make('active')
-                        ->label('Active')
+                        ->label(__('lang.active'))
                         ->columnSpan(1)
                         ->inline(false)
                         ->default(true),
@@ -92,10 +106,10 @@ class WorkPeriodResource extends Resource
                 ]),
 
                 Textarea::make('description')->columnSpanFull()
-                    ->label('Description'),
+                    ->label(__('lang.description')),
                 Grid::make()->columns(2)->schema([
                     TimePicker::make('start_at')
-                        ->label('Start time')
+                        ->label(__('lang.start_time'))
                         ->columnSpan(1)
                         ->required()
                         ->prefixIcon('heroicon-m-check-circle')
@@ -103,7 +117,7 @@ class WorkPeriodResource extends Resource
                         ->default('08:00:00'),
 
                     TimePicker::make('end_at')
-                        ->label('End time')
+                        ->label(__('lang.end_time'))
                         ->columnSpan(1)
                         ->required()
                         ->prefixIcon('heroicon-m-check-circle')

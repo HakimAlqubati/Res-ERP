@@ -717,4 +717,104 @@ return [
     'rejected' => 'Rejected',
     'pending' => 'Pending',
     'select_branch' => 'Select Branch',
+
+    // ===========================================
+    // Work Periods / Shifts
+    // ===========================================
+    'work_shifts' => 'Work Shifts',
+    'work_period' => 'Work Period',
+    'work_periods' => 'Work Periods',
+    'start_time' => 'Start Time',
+    'end_time' => 'End Time',
+    'day_and_night' => 'Day and Night',
+    'duration' => 'Duration',
+    'copy' => 'Copy',
+    'bulk_delete' => 'Bulk Delete',
+    'import_from_excel' => 'Import from Excel',
+    'select_excel_file' => 'Select Excel file',
+    'download_example_file' => 'Download Example File',
+    'shifts_imported_successfully' => 'Shifts imported successfully',
+    'no_shifts_added' => 'No shifts were added. Please check your file.',
+    'error_importing_shifts' => 'Error importing shifts',
+    'cannot_delete_shifts_assigned' => 'Cannot delete: shifts assigned',
+    'deleted' => 'Deleted',
+    'from' => 'From',
+    'to' => 'To',
+
+    // ===========================================
+    // User Devices
+    // ===========================================
+    'user_devices' => 'User Devices',
+    'user_device' => 'User Device',
+    'device_name' => 'Device Name',
+    'device_id' => 'Device ID',
+    'device_model' => 'Device Model',
+    'device_type' => 'Device Type',
+    'last_login' => 'Last Login',
+    'ip_address' => 'IP Address',
+    'browser' => 'Browser',
+    'platform' => 'Platform',
+    'is_trusted' => 'Trusted',
+
+    // ===========================================
+    // Attendance Images
+    // ===========================================
+    'attendance_images' => 'Attendance Images',
+    'attendance_image' => 'Attendance Image',
+    'image' => 'Image',
+
+    // ===========================================
+    // Attendance Log
+    // ===========================================
+    'attendance_log' => 'Attendance Log',
+    'select_date_time' => 'Select date & time',
+    'check_date' => 'Check date',
+    'check_time' => 'Check time',
+    'day' => 'Day',
+    'select_employee_check_type' => 'Select employee and check type',
+    'check_type' => 'Check type',
+    'notes' => 'Notes',
+    'approved' => 'Approved',
+    'rejected' => 'Rejected',
+    'period' => 'Period',
+    'check_in_id' => 'CheckIn.ID',
+    'real_check_date' => 'Real Check Date',
+    'status' => 'Status',
+    'delay_minutes' => 'Delay Minutes',
+    'late_departure_minutes' => 'Late Departure Minutes',
+    'early_departure_minutes' => 'Early Departure Minutes',
+    'filter_by_month' => 'Filter by Month',
+    'year' => 'Year',
+    'month' => 'Month',
+    'select_year' => 'Select a year',
+    'select_month' => 'Select a month',
+    'choose_date' => 'Choose date',
+    'checkin' => 'Check In',
+    'checkout' => 'Check Out',
+    'done' => 'Done',
+
+    // Months
+    'january' => 'January',
+    'february' => 'February',
+    'march' => 'March',
+    'april' => 'April',
+    'may' => 'May',
+    'june' => 'June',
+    'july' => 'July',
+    'august' => 'August',
+    'september' => 'September',
+    'october' => 'October',
+    'november' => 'November',
+    'december' => 'December',
+
+    // ===========================================
+    // Employee Overtime
+    // ===========================================
+    'employee_overtime' => 'Employee Overtime',
+    'staff_overtime' => 'Staff Overtime',
+    'my_overtime' => 'My Overtime',
+    'overtime_hours' => 'Overtime Hours',
+    'overtime_date' => 'Overtime Date',
+    'overtime_reason' => 'Overtime Reason',
+    'overtime_amount' => 'Overtime Amount',
 ];
