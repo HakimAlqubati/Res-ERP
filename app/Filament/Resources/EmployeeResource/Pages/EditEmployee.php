@@ -105,4 +105,9 @@ class EditEmployee extends EditRecord
             }
         }
     }
+
+    public function hasCombinedRelationManagerTabsWithContent(): bool
+    {
+        return true;
+    }
 }
