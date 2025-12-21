@@ -44,17 +44,17 @@ class EmployeeForm
             ->components([
 
                 Wizard::make([
-                    Step::make('Personal Data')
+                    Step::make(__('lang.personal_data'))
                         ->icon('heroicon-o-user-circle')
                         ->schema([
                             Tabs::make('')->columnSpanFull()
                                 ->tabs([
-                                    Tab::make('Personal Data')
+                                    Tab::make(__('lang.personal_data'))
                                         ->icon(Heroicon::UserCircle)
                                         ->schema([Grid::make()->columns(3)
                                             ->columnSpanFull()
                                             ->schema([
-                                                TextInput::make('name')->label('Full name')
+                                                TextInput::make('name')->label(__('lang.full_name'))
 
                                                     ->dehydrateStateUsing(fn($state) => preg_replace('/\s+/u', ' ', trim((string) $state)))
                                                     ->rules(['string'])
@@ -64,12 +64,12 @@ class EmployeeForm
 
                                                         // 1) At least two words
                                                         if (count($parts) < 2) {
-                                                            return $fail('Name must contain at least two words.');
+                                                            return $fail(__('lang.name_must_contain_two_words'));
                                                         }
 
                                                         // 2) Letters only (any language) + spaces/hyphen/apostrophe
                                                         if (!preg_match("/^[\\p{L}\\p{M}\\s'\\-]+$/u", $value)) {
-                                                            return $fail('Name may contain letters and spaces only.');
+                                                            return $fail(__('lang.name_letters_spaces_only'));
                                                         }
 
                                                         // Helper lists
@@ -82,7 +82,7 @@ class EmployeeForm
                                                         $lower = mb_strtolower(str_replace(['-', "'"], ' ', $value));
                                                         foreach ($blacklistExact as $bad) {
                                                             if ($lower === $bad || preg_match('/\\b' . preg_quote($bad, '/') . '\\b/u', $lower)) {
-                                                                return $fail('Name appears to be a placeholder or not realistic.');
+                                                                return $fail(__('lang.name_placeholder_unrealistic'));
                                                             }
                                                         }
 
@@ -94,12 +94,12 @@ class EmployeeForm
 
                                                             // Each part ≥ 2 chars
                                                             if (mb_strlen($wTrim) < 2) {
-                                                                return $fail('Each part of the name must be at least 2 characters.');
+                                                                return $fail(__('lang.each_part_min_2_chars'));
                                                             }
 
                                                             // No single-letter repetition like "dd", "aaa"
                                                             if (preg_match('/^(.)\\1{1,}$/u', $wTrim)) {
-                                                                return $fail('Name looks unrealistic (repeated letters).');
+                                                                return $fail(__('lang.name_unrealistic_repeated_letters'));
                                                             }
 
                                                             if (mb_strlen($wTrim) === 2) {
@@ -116,11 +116,11 @@ class EmployeeForm
                                                             // For Latin segments: must include a vowel
                                                             if (preg_match('/^[A-Za-z]+$/', $wTrim)) {
                                                                 if (!preg_match($latinVowels, $wTrim) && !$isShortLatinOk) {
-                                                                    return $fail('Latin parts must include at least one vowel (a, e, i, o, u, y).');
+                                                                    return $fail(__('lang.latin_parts_must_include_vowel'));
                                                                 }
                                                                 // Avoid long consonant clusters like "dkrv"
                                                                 if (preg_match('/[bcdfghjklmnpqrstvwxz]{4,}/i', $wTrim)) {
-                                                                    return $fail('Name contains unlikely consonant clusters.');
+                                                                    return $fail(__('lang.name_unlikely_consonant_clusters'));
                                                                 }
                                                             }
                                                         }
@@ -128,33 +128,35 @@ class EmployeeForm
                                                         // 7) Avoid names made mostly of 2-letter words unless there is a long core
                                                         if ($twoLetterCount >= (int) ceil(count($parts) * 0.5)) {
                                                             if (!$hasLongCore) {
-                                                                return $fail('Name is too short/unrealistic — add a longer given name or surname.');
+                                                                return $fail(__('lang.name_too_short_unrealistic'));
                                                             }
                                                         }
 
                                                         // 8) Reasonable total length
                                                         if (mb_strlen($value) < 5) {
-                                                            return $fail('Name is too short.');
+                                                            return $fail(__('lang.name_too_short'));
                                                         }
                                                     })
                                                     ->columnSpan(1)->required(),
                                                 TextInput::make('email')
+                                                    ->label(__('lang.email'))
                                                     ->email()
                                                     ->required()
                                                     // ->unique(table: 'users', column: 'email', ignoreRecord: true)
                                                     ->unique(column: 'email', ignoreRecord: true),
 
                                                 TextInput::make('phone_number')
+                                                    ->label(__('lang.phone_number'))
                                                     ->unique(ignoreRecord: true)
                                                     ->columnSpan(1)
 
                                                     // ->numeric()
                                                     ->maxLength(14)->minLength(8),
                                                 Select::make('gender')
-                                                    ->label('Gender')
+                                                    ->label(__('lang.gender'))
                                                     ->options([
-                                                        1 => 'Male',
-                                                        0 => 'Female',
+                                                        1 => __('lang.male'),
+                                                        0 => __('lang.female'),
                                                     ])
                                                     ->required(),
                                                 // TextInput::make('nationality')
@@ -170,31 +172,31 @@ class EmployeeForm
                                                 //     ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee'),
 
                                                 Select::make('nationality')
-                                                    ->label('Nationality')->live()
+                                                    ->label(__('lang.nationality'))->live()
                                                     // ->required()
                                                     ->options(getNationalities())
                                                     ->searchable(),
 
-                                                TextInput::make('mykad_number')->label('MyKad no.')->numeric()
+                                                TextInput::make('mykad_number')->label(__('lang.mykad_number'))->numeric()
                                                     ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') == setting('default_nationality'))),
 
                                                 Fieldset::make()->columnSpanFull()->label('')
                                                     ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') != setting('default_nationality')))
                                                     ->schema([
-                                                        TextInput::make('passport_no')->label('Passport no.')->numeric(),
-                                                        Toggle::make('has_employee_pass')->label('Has employement pass')->inline(false)->live(),
+                                                        TextInput::make('passport_no')->label(__('lang.passport_no'))->numeric(),
+                                                        Toggle::make('has_employee_pass')->label(__('lang.has_employee_pass'))->inline(false)->live(),
 
                                                     ]),
 
                                             ]),]),
-                                    Tab::make('Address')
+                                    Tab::make(__('lang.address'))
                                         ->icon(Heroicon::MapPin)
                                         ->schema([
-                                            Fieldset::make()->label('Employee address')->columnSpanFull()->schema([
+                                            Fieldset::make()->label(__('lang.employee_address'))->columnSpanFull()->schema([
                                                 Textarea::make('address')->label('')->columnSpanFull(),
                                             ]),
                                         ]),
-                                    Tab::make('Avatar')
+                                    Tab::make(__('lang.avatar'))
                                         ->icon(Heroicon::UserCircle)
                                         ->schema([
 
@@ -229,23 +231,23 @@ class EmployeeForm
 
                         ]),
 
-                    Step::make('Employeement')
+                    Step::make(__('lang.employment'))
                         ->icon(Heroicon::Identification)
                         ->schema([
-                            Fieldset::make('Employeement')->label('Employeement')->columnSpanFull()
+                            Fieldset::make('Employeement')->label(__('lang.employment'))->columnSpanFull()
                                 ->schema([
                                     Grid::make()->columns(4)->columnSpanFull()->schema([
-                                        TextInput::make('employee_no')->default((Employee::withTrashed()->latest()->first()?->id) + 1)->disabled(false)->columnSpan(1)->label('Employee number')->unique(ignoreRecord: true),
-                                        TextInput::make('job_title')->columnSpan(1)->required(),
-                                        Select::make('position_id')->columnSpan(1)->label('Position type')
+                                        TextInput::make('employee_no')->default((Employee::withTrashed()->latest()->first()?->id) + 1)->disabled(false)->columnSpan(1)->label(__('lang.employee_number'))->unique(ignoreRecord: true),
+                                        TextInput::make('job_title')->label(__('lang.job_title'))->columnSpan(1)->required(),
+                                        Select::make('position_id')->columnSpan(1)->label(__('lang.position_type'))
                                             ->searchable()
                                             ->options(Position::where('active', 1)->select('id', 'title')->get()->pluck('title', 'id')),
-                                        Select::make('employee_type')->columnSpan(1)->label('Role type')
+                                        Select::make('employee_type')->columnSpan(1)->label(__('lang.role_type'))
                                             ->searchable()
                                             ->live()
                                             ->options(UserType::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id'))->required(),
 
-                                        Select::make('branch_id')->columnSpan(1)->label('Branch')
+                                        Select::make('branch_id')->columnSpan(1)->label(__('lang.branch'))
                                             ->searchable()
                                             ->required()
                                             // ->disabledOn('edit')
@@ -260,13 +262,13 @@ class EmployeeForm
                                                     ->get()
                                                     ->pluck('name', 'id')
                                             ),
-                                        Toggle::make('is_ceo')->label('is_ceo')
+                                        Toggle::make('is_ceo')->label(__('lang.is_ceo'))
                                             ->live()
                                             ->visible(fn($get): bool => $get('employee_type') == 1)
                                             ->default(0)->inline(false),
                                         Select::make('manager_id')
                                             ->columnSpan(1)
-                                            ->label('Manager')
+                                            ->label(__('lang.manager'))
                                             ->searchable()
                                             // ->requiredIf('is_ceo', false)
                                             ->required(fn(Get $get) => in_array((int) $get('employee_type'), [3, 4]))
@@ -293,7 +295,7 @@ class EmployeeForm
 
                                         Select::make('department_id')
                                             ->columnSpan(1)
-                                            ->label('Department')
+                                            ->label(__('lang.department'))
                                             ->searchable()
                                             ->options(function ($get) {
                                                 $branchId = $get('branch_id');
@@ -307,12 +309,12 @@ class EmployeeForm
                                             })->hidden(),
                                         DatePicker::make('join_date')
                                             ->default(now())
-                                            ->columnSpan(1)->label('Start date')->required()
+                                            ->columnSpan(1)->label(__('lang.start_date'))->required()
                                             ->maxDate(now()->toDateString()),
-                                        TextInput::make('working_hours')->label('Working hours')->numeric()->required()->default(6),
+                                        TextInput::make('working_hours')->label(__('lang.working_hours'))->numeric()->required()->default(6),
 
                                         TextInput::make('working_days')
-                                            ->label('Working Days per Month')
+                                            ->label(__('lang.working_days_per_month'))
                                             ->numeric()
                                             ->minValue(1)
                                             ->maxValue(31)
@@ -322,7 +324,7 @@ class EmployeeForm
                                     ]),
                                 ]),
                         ]),
-                    Step::make('Employee files')
+                    Step::make(__('lang.employee_files'))
                         ->icon('heroicon-o-document-plus')
                         ->schema([
                             Repeater::make('files')
@@ -335,10 +337,10 @@ class EmployeeForm
                                     TableColumn::make(__('Fields'))->alignCenter()->width('10rem'),
                                 ])
                                 ->schema([
-                                    Fieldset::make('File Details')->columnSpanFull()->schema([
+                                    Fieldset::make('File Details')->label(__('lang.file_details'))->columnSpanFull()->schema([
                                         Grid::make()->columns(2)->columnSpanFull()->schema([
                                             Select::make('file_type_id')
-                                                ->label('File Type')
+                                                ->label(__('lang.file_type'))
                                                 ->required()
                                                 ->options(
                                                     EmployeeFileType::select('id', 'name')
@@ -358,7 +360,7 @@ class EmployeeForm
                                                 }),
 
                                             FileUpload::make('attachment')
-                                                ->label('Attach File')
+                                                ->label(__('lang.attach_file'))
                                                 ->downloadable()
                                                 ->previewable()
                                                 // ->required()
@@ -367,7 +369,7 @@ class EmployeeForm
                                         ]),
                                     ]),
 
-                                    Fieldset::make('Additional Fields')->columnSpanFull()
+                                    Fieldset::make('Additional Fields')->label(__('lang.additional_fields'))->columnSpanFull()
                                         ->schema(function (Get $get) {
                                             // Fetch the dynamic fields for the current file_type_id
                                             $fileTypeId = $get('file_type_id');
@@ -411,18 +413,19 @@ class EmployeeForm
 
                         ]),
 
-                    Step::make('Finance')
+                    Step::make(__('lang.finance'))
                         ->icon('heroicon-o-banknotes')
                         ->schema([
-                            Fieldset::make()->label('Set salary data and account number')
+                            Fieldset::make()->label(__('lang.set_salary_data'))
                                 ->columnSpanFull()
                                 ->schema([
                                     Grid::make()->columns(4)->columnSpanFull()->schema([
                                         TextInput::make('salary')
+                                            ->label(__('lang.salary'))
                                             ->numeric()
                                             ->inputMode('decimal')->disabled(fn(): bool => isBranchManager()),
                                         TextInput::make('tax_identification_number')
-                                            ->label('Tax Identification Number(TIN)')->required()
+                                            ->label(__('lang.tax_identification_number'))->required()
                                             ->visible(fn($get): bool => ($get('nationality') != null && ($get('nationality') == setting('default_nationality'))
                                                 || ($get('has_employee_pass') == 1)
                                             ))
@@ -433,33 +436,33 @@ class EmployeeForm
                                         //     ->label('Bank account number')->nullable(),
                                         Toggle::make('discount_exception_if_absent')->columnSpan(1)
                                             ->disabled(fn(): bool => isBranchManager())
-                                            ->label('No salary deduction for absences')->default(0)->inline(false)
+                                            ->label(__('lang.no_salary_deduction_for_absences'))->default(0)->inline(false)
                                         // ->isInline(false)
                                         ,
                                         Toggle::make('discount_exception_if_attendance_late')->columnSpan(1)
                                             ->disabled(fn(): bool => isBranchManager())
-                                            ->label('Exempt from late attendance deduction')->default(0)->inline(false)
+                                            ->label(__('lang.exempt_from_late_attendance_deduction'))->default(0)->inline(false)
                                         // ->isInline(false)
                                         ,
 
                                         Repeater::make('bank_information')
                                             ->disabled(fn(): bool => isBranchManager())
-                                            ->label('Bank Information')
+                                            ->label(__('lang.bank_information'))
                                             ->columns(2)
 
                                             ->schema([
                                                 TextInput::make('bank')
-                                                    ->label('Bank Name')
+                                                    ->label(__('lang.bank_name'))
                                                     ->required()
-                                                    ->placeholder('Enter bank name'),
+                                                    ->placeholder(__('lang.enter_bank_name')),
                                                 TextInput::make('number')
-                                                    ->label('Bank Account Number')
+                                                    ->label(__('lang.bank_account_number'))
                                                     ->required()
-                                                    ->placeholder('Enter bank account number'),
+                                                    ->placeholder(__('lang.enter_bank_account_number')),
                                             ])
                                             ->table([
-                                                TableColumn::make(__('Bank'))->width('16rem'),
-                                                TableColumn::make(__('Account No.'))->alignCenter()->width('16rem'),
+                                                TableColumn::make(__('lang.bank'))->width('16rem'),
+                                                TableColumn::make(__('lang.account_no'))->alignCenter()->width('16rem'),
                                             ])
 
                                             ->collapsed()
@@ -468,7 +471,7 @@ class EmployeeForm
                                             ->defaultItems(0)     // Default number of items when the form loads
                                             ->columnSpan('full'), // Adjust the span as necessary
                                     ]),
-                                    Fieldset::make()->columnSpanFull()->label('Shift - RFID')->columnSpanFull()->schema([
+                                    Fieldset::make()->columnSpanFull()->label(__('lang.shift_rfid'))->columnSpanFull()->schema([
                                         Grid::make()->columns(2)->columnSpanFull()->schema([
                                             // CheckboxList::make('periods')
                                             //     ->label('Work Periods')
@@ -479,26 +482,27 @@ class EmployeeForm
 
                                             // ,
 
-                                            TextInput::make('rfid')->label('Employee RFID')
+                                            TextInput::make('rfid')->label(__('lang.employee_rfid'))
                                                 ->unique(ignoreRecord: true),
                                         ]),
                                     ]),
-                                    Fieldset::make()->columns(2)->label('Finance')->columnSpanFull()
+                                    Fieldset::make()->columns(2)->label(__('lang.finance'))->columnSpanFull()
                                         ->disabled(fn(): bool => isBranchManager())
                                         ->schema([
                                             Repeater::make('Monthly allowances')
+                                                ->label(__('lang.monthly_allowances'))
                                                 ->defaultItems(0)
                                                 ->table([
-                                                    TableColumn::make(__('Allowance'))->width('20rem'),
-                                                    TableColumn::make(__('Type'))->alignCenter()->width('10rem'),
-                                                    TableColumn::make(__('Amount / %'))->alignCenter()->width('12rem'),
+                                                    TableColumn::make(__('lang.allowance'))->width('20rem'),
+                                                    TableColumn::make(__('lang.type'))->alignCenter()->width('10rem'),
+                                                    TableColumn::make(__('lang.amount'))->alignCenter()->width('12rem'),
                                                 ])
 
                                                 ->relationship('allowances')
                                                 ->schema([
 
                                                     Select::make('allowance_id')
-                                                        ->label('Allowance')
+                                                        ->label(__('lang.allowance'))
                                                         ->options(Allowance::where('active', 1)->where('is_specific', 1)->get()->pluck('name', 'id'))
                                                         ->required(),
                                                     Toggle::make('is_percentage')->live()->default(true)
@@ -509,7 +513,7 @@ class EmployeeForm
                                                         ->suffixIconColor('success'),
 
                                                     Slider::make('percentage')->hintIcon(Heroicon::PercentBadge)
-                                                        ->label('Percentage')
+                                                        ->label(__('lang.percentage'))
                                                         ->tooltips(RawJs::make(<<<'JS'
                                                             `%${$value.toFixed(0)}`
                                                         JS))
@@ -542,16 +546,16 @@ class EmployeeForm
                                             Repeater::make('Monthly bonus')
                                                 ->defaultItems(0)
                                                 ->table([
-                                                    TableColumn::make(__('Monthly Bonus'))->width('20rem'),
-                                                    TableColumn::make(__('Amount'))->alignCenter()->width('12rem'),
+                                                    TableColumn::make(__('lang.monthly_bonus'))->width('20rem'),
+                                                    TableColumn::make(__('lang.amount'))->alignCenter()->width('12rem'),
                                                 ])
 
-                                                ->label('Monthly bonus')
+                                                ->label(__('lang.monthly_bonus'))
                                                 ->relationship('monthlyIncentives')
                                                 ->schema([
 
                                                     Select::make('monthly_incentive_id')
-                                                        ->label('Monthly bonus')
+                                                        ->label(__('lang.monthly_bonus'))
                                                         ->options(MonthlyIncentive::where('active', 1)->get()->pluck('name', 'id'))
                                                         ->required(),
                                                     TextInput::make('amount')

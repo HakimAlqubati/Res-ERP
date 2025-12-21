@@ -24,7 +24,7 @@ use App\Observers\TenantObserver;
 use App\Observers\UserObserver;
 use App\Models\StockInventory;
 use App\Observers\StockInventoryObserver;
-use BezhanSalleh\FilamentLanguageSwitch\LanguageSwitch;
+use BezhanSalleh\LanguageSwitch\LanguageSwitch;
 use Filament\Livewire\DatabaseNotifications;
 use Filament\Notifications\Livewire\Notifications;
 use Filament\Notifications\Notification as BaseNotification;
@@ -74,10 +74,10 @@ class AppServiceProvider extends ServiceProvider
 
 
         // Notifications::alignment(Alignment::Start);
-        // LanguageSwitch::configureUsing(function (LanguageSwitch $switch) {
-        //     $switch
-        //         ->locales(['ar', 'en']); // also accepts a closure
-        // });
+        LanguageSwitch::configureUsing(function (LanguageSwitch $switch) {
+            $switch
+                ->locales(['ar', 'en']); // also accepts a closure
+        });
 
         FilamentAsset::register([
             // Js::make('custom-script', __DIR__ . '/../../tune.js'),

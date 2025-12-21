@@ -252,4 +252,390 @@ return [
   'physical_quantity' => 'الكمية الفعلية',
   'system_quantity' => 'الكمية بالنظام',
   'difference' => 'الفرق',
+
+  // ===========================================
+  // HRMS - General Terms
+  // ===========================================
+  'hr_management' => 'إدارة الموارد البشرية',
+  'salary_management' => 'إدارة الرواتب',
+  'attendance_management' => 'إدارة الحضور',
+  'leave_management' => 'إدارة الإجازات',
+  'settings' => 'الإعدادات',
+
+  // ===========================================
+  // HRMS - Employee Personal Data
+  // ===========================================
+  'personal_data' => 'البيانات الشخصية',
+  'full_name' => 'الاسم الكامل',
+  'gender' => 'الجنس',
+  'male' => 'ذكر',
+  'female' => 'أنثى',
+  'nationality' => 'الجنسية',
+  'employee_address' => 'عنوان الموظف',
+  'avatar' => 'الصورة الشخصية',
+  'mykad_number' => 'رقم بطاقة الهوية',
+  'passport_no' => 'رقم جواز السفر',
+  'has_employee_pass' => 'يمتلك تصريح عمل',
+
+  // ===========================================
+  // HRMS - Employment Information
+  // ===========================================
+  'employment' => 'بيانات التوظيف',
+  'employee_no' => 'رقم الموظف',
+  'employee_number' => 'رقم الموظف',
+  'job_title' => 'المسمى الوظيفي',
+  'position' => 'المنصب',
+  'position_type' => 'نوع المنصب',
+  'role_type' => 'نوع الدور',
+  'department' => 'القسم',
+  'working_hours' => 'ساعات العمل',
+  'working_hours_per_day' => 'ساعات العمل يومياً',
+  'working_days' => 'أيام العمل',
+  'working_days_per_month' => 'أيام العمل شهرياً',
+  'is_ceo' => 'مدير تنفيذي',
+
+  // ===========================================
+  // HRMS - Employee Files
+  // ===========================================
+  'employee_files' => 'ملفات الموظف',
+  'file_type' => 'نوع الملف',
+  'attach_file' => 'إرفاق ملف',
+  'file_details' => 'تفاصيل الملف',
+  'additional_fields' => 'حقول إضافية',
+  'fields' => 'الحقول',
+  'required_docs' => 'المستندات المطلوبة',
+  'unrequired_docs' => 'المستندات غير المطلوبة',
+
+  // ===========================================
+  // HRMS - Finance & Salary
+  // ===========================================
+  'finance' => 'المالية',
+  'salary' => 'الراتب',
+  'salary_data' => 'بيانات الراتب',
+  'set_salary_data' => 'تعيين بيانات الراتب ورقم الحساب',
+  'tax_identification_number' => 'رقم التعريف الضريبي',
+  'bank_information' => 'معلومات البنك',
+  'bank_name' => 'اسم البنك',
+  'bank_account_number' => 'رقم الحساب البنكي',
+  'account_no' => 'رقم الحساب',
+  'bank' => 'البنك',
+  'enter_bank_name' => 'أدخل اسم البنك',
+  'enter_bank_account_number' => 'أدخل رقم الحساب البنكي',
+
+  // ===========================================
+  // HRMS - Allowances & Deductions
+  // ===========================================
+  'allowances' => 'البدلات',
+  'allowance' => 'بدل',
+  'monthly_allowances' => 'البدلات الشهرية',
+  'monthly_bonus' => 'المكافأة الشهرية',
+  'deductions' => 'الخصومات',
+  'deduction' => 'خصم',
+  'type' => 'النوع',
+  'percentage' => 'النسبة المئوية',
+  'amount_percentage' => 'المبلغ / النسبة',
+  'is_percentage' => 'نسبة مئوية',
+  'no_salary_deduction_for_absences' => 'بدون خصم راتب للغياب',
+  'exempt_from_late_attendance_deduction' => 'معفى من خصم التأخير',
+
+  // ===========================================
+  // HRMS - Attendance & Shifts
+  // ===========================================
+  'attendance' => 'الحضور',
+  'shift' => 'الوردية',
+  'shifts' => 'الورديات',
+  'shift_rfid' => 'الوردية - RFID',
+  'employee_rfid' => 'RFID الموظف',
+  'rfid' => 'RFID',
+  'work_periods' => 'فترات العمل',
+  'check_in' => 'تسجيل الحضور',
+  'check_out' => 'تسجيل الانصراف',
+  'late' => 'تأخير',
+  'early_leave' => 'انصراف مبكر',
+  'overtime' => 'وقت إضافي',
+  'absent' => 'غائب',
+  'present' => 'حاضر',
+
+  // ===========================================
+  // HRMS - Leave
+  // ===========================================
+  'leave' => 'إجازة',
+  'leaves' => 'الإجازات',
+  'leave_type' => 'نوع الإجازة',
+  'leave_application' => 'طلب إجازة',
+  'leave_balance' => 'رصيد الإجازات',
+  'annual_leave' => 'إجازة سنوية',
+  'sick_leave' => 'إجازة مرضية',
+  'unpaid_leave' => 'إجازة بدون راتب',
+
+  // ===========================================
+  // HRMS - User & Access
+  // ===========================================
+  'create_user' => 'إنشاء مستخدم',
+  'user_created' => 'تم إنشاء المستخدم',
+  'user_created_for' => 'تم إنشاء مستخدم جديد لـ',
+  'has_user' => 'له حساب مستخدم',
+
+  // ===========================================
+  // HRMS - Status & Actions
+  // ===========================================
+  'inactive' => 'غير فعال',
+  'activate' => 'تفعيل',
+  'deactivate' => 'إلغاء التفعيل',
+  'create' => 'إنشاء',
+  'edit' => 'تعديل',
+  'delete' => 'حذف',
+  'view' => 'عرض',
+  'save' => 'حفظ',
+  'close' => 'إغلاق',
+  'upload' => 'رفع',
+  'download' => 'تحميل',
+  'export' => 'تصدير',
+  'print' => 'طباعة',
+  'search' => 'بحث',
+  'filter' => 'تصفية',
+  'reset' => 'إعادة تعيين',
+  'restore' => 'استعادة',
+
+  // ===========================================
+  // HRMS - Export/Import Actions
+  // ===========================================
+  'export_to_excel' => 'تصدير إلى Excel',
+  'print_as_pdf' => 'طباعة كـ PDF',
+  'import_from_excel' => 'استيراد من Excel',
+  'select_excel_file' => 'اختر ملف Excel',
+  'download_example_file' => 'تحميل ملف نموذجي',
+  'employees_imported_successfully' => 'تم استيراد الموظفين بنجاح',
+  'rows_added' => 'صفوف تمت إضافتها',
+  'no_employees_added' => 'لم تتم إضافة موظفين. يرجى التحقق من الملف.',
+  'error_importing_employees' => 'خطأ في استيراد الموظفين',
+
+  // ===========================================
+  // HRMS - Employee Actions
+  // ===========================================
+  'edit_avatar' => 'تعديل الصورة',
+  'edit_employee_avatar' => 'تعديل صورة الموظف',
+  'avatar_updated' => 'تم تحديث الصورة',
+  'avatar_updated_successfully' => 'تم تحديث صورة الموظف بنجاح',
+  'change_branch' => 'تغيير الفرع',
+  'change_employee_branch' => 'تغيير فرع الموظف',
+  'select_new_branch' => 'اختر الفرع الجديد',
+  'check_advanced_installments' => 'التحقق من أقساط السلف',
+  'aws_indexing' => 'فهرسة AWS',
+  'selected_employees_activated' => 'تم تفعيل الموظفين المحددين',
+
+  // ===========================================
+  // HRMS - Notifications & Messages
+  // ===========================================
+  'success' => 'نجاح',
+  'error' => 'خطأ',
+  'warning' => 'تحذير',
+  'info' => 'معلومة',
+  'email_copied' => 'تم نسخ البريد الإلكتروني',
+  'phone_copied' => 'تم نسخ رقم الهاتف',
+  'make_sure_user_not_soft_deleted' => 'تأكد من أن المستخدم المرتبط غير محذوف',
+  'email_address_copied' => 'تم نسخ عنوان البريد الإلكتروني',
+  'phone_number_copied' => 'تم نسخ رقم الهاتف',
+
+  // ===========================================
+  // HRMS - Validation Messages
+  // ===========================================
+  'name_must_contain_two_words' => 'يجب أن يحتوي الاسم على كلمتين على الأقل',
+  'name_letters_spaces_only' => 'يجب أن يحتوي الاسم على حروف ومسافات فقط',
+  'name_placeholder_unrealistic' => 'يبدو أن الاسم وهمي أو غير واقعي',
+  'each_part_min_2_chars' => 'يجب أن يكون كل جزء من الاسم حرفين على الأقل',
+  'name_unrealistic_repeated_letters' => 'الاسم يبدو غير واقعي (حروف متكررة)',
+  'latin_parts_must_include_vowel' => 'الأجزاء اللاتينية يجب أن تحتوي على حرف علة',
+  'name_unlikely_consonant_clusters' => 'الاسم يحتوي على تجمعات ساكنة غير محتملة',
+  'name_too_short_unrealistic' => 'الاسم قصير جداً/غير واقعي - أضف اسماً أطول',
+  'name_too_short' => 'الاسم قصير جداً',
+
+  // ===========================================
+  // HRMS - Citizenship & Others
+  // ===========================================
+  'is_citizen' => 'مواطن',
+
+  // ===========================================
+  // HRMS - Clusters Navigation
+  // ===========================================
+  'hr_cluster' => 'الموارد البشرية',
+  'hr_salary_cluster' => 'الرواتب',
+  'hr_attendance_cluster' => 'الحضور والانصراف',
+  'hr_leave_cluster' => 'الإجازات',
+  'hr_applications_cluster' => 'طلبات الموظفين',
+  'hr_reports_cluster' => 'تقارير الموارد البشرية',
+  'my_records' => 'سجلاتي',
+
+  // ===========================================
+  // HRMS - Table Headers
+  // ===========================================
+  'avatar_name' => 'اسم الصورة',
+  'periods_count' => 'عدد الفترات',
+
+  // ===========================================
+  // HRMS - Payroll
+  // ===========================================
+  'payroll' => 'كشف الرواتب',
+  'month_salary' => 'راتب الشهر',
+  'penalty_deduction' => 'خصم جزائي',
+  'basic_salary' => 'الراتب الأساسي',
+  'net_salary' => 'صافي الراتب',
+  'gross_salary' => 'إجمالي الراتب',
+  'total_deductions' => 'إجمالي الخصومات',
+  'total_allowances' => 'إجمالي البدلات',
+
+  // ===========================================
+  // HRMS - Holidays
+  // ===========================================
+  'holiday' => 'عطلة',
+  'holidays' => 'العطلات',
+  'weekly_holiday' => 'عطلة أسبوعية',
+  'weekly_holidays' => 'العطلات الأسبوعية',
+
+  // ===========================================
+  // HRMS - Additional
+  // ===========================================
+  'face_images_uploaded_successfully' => 'تم رفع وفهرسة صور الوجه بنجاح',
+  'error_uploading_face_images' => 'حدث خطأ أثناء رفع صور الوجه',
+  'requests' => 'الطلبات',
+  'join_date' => 'تاريخ الانضمام',
+
+  // ===========================================
+  // Tasks Management System
+  // ===========================================
+  'tasks' => 'المهام',
+  'task' => 'مهمة',
+  'task_management' => 'إدارة المهام',
+  'my_tasks' => 'مهامي',
+  'assigned_tasks' => 'المهام المسندة',
+  'basic' => 'الأساسيات',
+  'details' => 'التفاصيل',
+  'steps' => 'الخطوات',
+  'title' => 'العنوان',
+  'assign_by' => 'تكليف من',
+  'assign_to' => 'تكليف إلى',
+  'select_role' => 'اختر الدور',
+  'scheduled_task' => 'مهمة مجدولة؟',
+  'due_date' => 'تاريخ الاستحقاق',
+  'set_due_date_helper' => 'حدد تاريخ استحقاق هذه المهمة',
+  'add_photos' => 'إضافة صور',
+  'task_rating' => 'تقييم المهمة',
+  'rate_from_0_to_10' => 'قيم من 0 إلى 10',
+  'collapse_all_steps' => 'طي جميع الخطوات',
+  'status_new' => 'جديد',
+  'status_pending' => 'قيد الانتظار',
+  'status_in_progress' => 'قيد التنفيذ',
+  'status_closed' => 'مغلق',
+  'status_rejected' => 'مرفوض',
+  'assigned_to' => 'مسند إلى',
+  'created_by' => 'أنشأ بواسطة',
+  'assigned_by' => 'كُلّف من قِبَل',
+  'time_spent' => 'الوقت المستغرق',
+  'rejection_times' => 'مرات الرفض',
+  'browse_photos' => 'تصفح الصور',
+  'task_photos' => 'صور المهمة',
+  'rating' => 'التقييم',
+  'rating_done' => 'تم التقييم',
+  'move_task' => 'نقل المهمة',
+  'reopen' => 'إعادة فتح',
+  'closed' => 'مغلق',
+  'from' => 'من',
+  'next_status' => 'الحالة التالية',
+  'comment' => 'تعليق',
+  'views' => 'المشاهدات',
+
+  // Schedule Types
+  'schedule_type_daily' => 'يومي',
+  'schedule_type_weekly' => 'أسبوعي',
+  'schedule_type_monthly' => 'شهري',
+  'number_of_days' => 'عدد الأيام',
+  'number_of_weeks' => 'عدد الأسابيع',
+  'number_of_months' => 'عدد الأشهر',
+  'recurrence_pattern' => 'نمط التكرار',
+  'every' => 'كل',
+  'every_weekday' => 'كل يوم عمل',
+  'recur_every' => 'تكرار كل',
+  'weeks_on' => 'أسبوع(أسابيع) في:',
+  'day' => 'يوم',
+  'the' => 'الـ',
+  'of_every' => 'من كل',
+  'months' => 'شهر(أشهر)',
+  'first' => 'الأول',
+  'second' => 'الثاني',
+  'third' => 'الثالث',
+  'fourth' => 'الرابع',
+  'fifth' => 'الخامس',
+
+  // ===========================================
+  // Service Requests
+  // ===========================================
+  'service_requests' => 'طلبات الصيانة',
+  'service_request' => 'طلب صيانة',
+  'basic_data' => 'البيانات الأساسية',
+  'images' => 'الصور',
+  'branch_area' => 'منطقة الفرع',
+  'equipment' => 'المعدات',
+  'description_helper' => 'وصف طلب الخدمة',
+  'to_reassign_go_to_table' => 'لإعادة التعيين، اذهب إلى صفحة الجدول',
+  'urgency' => 'الاستعجال',
+  'high' => 'عالي',
+  'medium' => 'متوسط',
+  'low' => 'منخفض',
+  'impact' => 'التأثير',
+  'to_change_status_go_to_table' => 'لتغيير الحالة، اذهب إلى صفحة الجدول',
+  'move' => 'نقل',
+  'reassign' => 'إعادة تعيين',
+  'add_comment' => 'إضافة تعليق',
+  'request_service_photos' => 'صور طلب الخدمة',
+  'images_added' => 'تمت إضافة صور',
+  'comment_added' => 'تمت إضافة تعليق',
+  'branch_area_required' => 'حقل منطقة الفرع مطلوب. ⚠ اذهب إلى الفرع لإضافة المناطق أولاً.',
+
+  // ===========================================
+  // Task Status Cluster
+  // ===========================================
+  'hr_tasks_cluster' => 'نظام المهام',
+  'hr_service_request_cluster' => 'طلبات الصيانة',
+  'maintenance' => 'الصيانة',
+
+  // ===========================================
+  // Circulars / Engagement
+  // ===========================================
+  'circulars' => 'التعميمات',
+  'circular' => 'تعميم',
+  'engagement' => 'التواصل',
+  'hr_circular_cluster' => 'التواصل',
+  'subject' => 'الموضوع',
+  'released_date' => 'تاريخ النشر',
+  'date_will_be_released' => 'التاريخ الذي سيتم النشر فيه',
+  'set_title_of_circular' => 'حدد عنوان التعميم وتاريخ النشر',
+  'set_branches_and_users' => 'حدد الفروع التي تريد إرسال التعميم إليها ومجموعة المستخدمين',
+  'group' => 'المجموعة',
+  'users_group_will_receive' => 'مجموعة المستخدمين التي ستستلم هذا التعميم',
+  'choose_branch' => 'اختر الفرع',
+  'can_choose_multiple_branches' => 'يمكنك اختيار فروع متعددة',
+  'photos' => 'الصور',
+  'close' => 'إغلاق',
+
+  // ===========================================
+  // Employee Form - Additional Fields
+  // ===========================================
+  'email' => 'البريد الإلكتروني',
+  'phone_number' => 'رقم الهاتف',
+  'job_title' => 'المسمى الوظيفي',
+  'salary' => 'الراتب',
+  'file_type' => 'نوع الملف',
+  'attachment' => 'المرفق',
+  'fields' => 'الحقول',
+  'bank' => 'البنك',
+  'account_no' => 'رقم الحساب',
+  'allowance' => 'البدل',
+  'type' => 'النوع',
+  'amount' => 'المبلغ',
+  'monthly_allowances' => 'البدلات الشهرية',
+  'is_percentage' => 'نسبة مئوية',
+  'description' => 'الوصف',
+  'active' => 'نشط',
+  'created_at' => 'تاريخ الإنشاء',
+  'updated_at' => 'تاريخ التحديث',
 ];

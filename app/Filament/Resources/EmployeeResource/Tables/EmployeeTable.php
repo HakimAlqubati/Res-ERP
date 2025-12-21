@@ -71,32 +71,32 @@ class EmployeeTable
             ->defaultSort('id', 'desc')
             ->columns([
                 SoftDeleteColumn::make(),
-                TextColumn::make('id')->label('ID')->alignCenter()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('id')->label(__('lang.id'))->alignCenter()->toggleable(isToggledHiddenByDefault: true),
                 // TextColumn::make('avatar_image')->copyable()->label('avatar_image')->alignCenter()->toggleable(isToggledHiddenByDefault: true),
                 ImageColumn::make('avatar_image')->label('')
                     ->circular(),
                 TextColumn::make('avatar')->copyable()->label('avatar name')->toggleable(isToggledHiddenByDefault: true)->hidden(),
                 TextColumn::make('employee_no')
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ->label('Employee No.')->alignCenter()
+                    ->label(__('lang.employee_no'))->alignCenter()
                     ->sortable()->searchable()
                     ->searchable(isIndividual: false, isGlobal: true),
 
                 TextColumn::make('name')
                     ->sortable()->searchable()
-                    ->label('Full name')->wrap(false)
+                    ->label(__('lang.full_name'))->wrap(false)
                     ->color('primary')->words(3)->limit(15)
                     ->weight(FontWeight::Bold)->tooltip(fn($state) => $state)
                     ->searchable(isIndividual: false, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('branch.name')
-                    ->label('Branch')
+                    ->label(__('lang.branch'))
                     ->searchable()
                     ->sortable()
                     ->wrap()
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('manager.name')
-                    ->label('Manager')
+                    ->label(__('lang.manager'))
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
 
@@ -105,22 +105,22 @@ class EmployeeTable
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->searchable(isIndividual: false, isGlobal: true)
                     ->copyable()
-                    ->copyMessage('Email address copied')
+                    ->copyMessage(__('lang.email_address_copied'))
                     ->copyMessageDuration(1500)
                     ->color('primary')
                     ->weight(FontWeight::Bold),
-                TextColumn::make('phone_number')->label('Phone')->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: false)->default('_')
+                TextColumn::make('phone_number')->label(__('lang.phone_number'))->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: false)->default('_')
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->copyable()
-                    ->copyMessage('Phone number copied')
+                    ->copyMessage(__('lang.phone_number_copied'))
                     ->copyMessageDuration(1500)
                     ->color('primary')
                     ->weight(FontWeight::Bold),
-                TextColumn::make('join_date')->sortable()->label('Start date')
+                TextColumn::make('join_date')->sortable()->label(__('lang.start_date'))
                     ->sortable()->searchable()
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->searchable(isIndividual: false, isGlobal: false),
-                TextColumn::make('salary')->sortable()->label('Salary')
+                TextColumn::make('salary')->sortable()->label(__('lang.salary'))
                     ->sortable()->searchable()
                     // ->money(fn(): string => getDefaultCurrency())
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
@@ -138,7 +138,7 @@ class EmployeeTable
 
                 ,
 
-                TextColumn::make('working_hours')->label('Working hours')->toggleable(isToggledHiddenByDefault: true)
+                TextColumn::make('working_hours')->label(__('lang.working_hours'))->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: false)->alignCenter(true)
                     ->action(function ($record) {
 
@@ -147,36 +147,36 @@ class EmployeeTable
                             'working_hours' => $hoursCount,
                         ]);
                     }),
-                TextColumn::make('working_days')->label('Working days')->toggleable(isToggledHiddenByDefault: true)
+                TextColumn::make('working_days')->label(__('lang.working_days'))->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: false)->alignCenter(true),
                 TextColumn::make('position.title')->limit(20)
-                    ->label('Position type')
+                    ->label(__('lang.position_type'))
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
                 TextColumn::make('job_title')
-                    ->label('Job title')
+                    ->label(__('lang.job_title'))
                     ->sortable()->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: false),
 
                 TextColumn::make('department.name')
-                    ->label('Department')
+                    ->label(__('lang.department'))
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
-                TextColumn::make('unrequired_documents_count')->label('Unrequired docs')->alignCenter(true)
+                TextColumn::make('unrequired_documents_count')->label(__('lang.unrequired_docs'))->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->formatStateUsing(function ($state) {
 
                         return '(' . $state . ') docs of ' . EmployeeFileType::getCountByRequirement()['unrequired_count'];
                     }),
-                TextColumn::make('required_documents_count')->label('Required docs')->alignCenter(true)
+                TextColumn::make('required_documents_count')->label(__('lang.required_docs'))->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->formatStateUsing(function ($state) {
 
                         return '(' . $state . ') docs of ' . EmployeeFileType::getCountByRequirement()['required_count'];
                     }),
                 ToggleColumn::make('active')
-                    ->label('Active')
+                    ->label(__('lang.active'))
                     // ->boolean()
                     // ->getStateUsing(fn($record) => $record->active ?? true)
                     // ✅ يعامل null كـ true
@@ -194,7 +194,7 @@ class EmployeeTable
                             return url('admin/users/' . $record?->user_id . '/edit');
                         }
                     })->openUrlInNewTab()
-                    ->tooltip('Make Sure If Liked User Is Not Soft Deleted')
+                    ->tooltip(__('lang.make_sure_user_not_soft_deleted'))
                     ->alignCenter(),
                 TextColumn::make('rfid')
                     ->label('RFID')
@@ -203,13 +203,13 @@ class EmployeeTable
                     ->copyable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('nationality')->sortable()->searchable()
-                    ->label('Nationality')
+                    ->label(__('lang.nationality'))
                     ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
                 TextColumn::make('gender_title')->sortable()
-                    ->label('Gender')
+                    ->label(__('lang.gender'))
                     ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
                 IconColumn::make('is_citizen')
-                    ->label('Is citizen')
+                    ->label(__('lang.is_citizen'))
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark')
                     ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
@@ -230,17 +230,17 @@ class EmployeeTable
                     ->options(getNationalities()),
                 SelectFilter::make('active')
 
-                    ->options([1 => 'Active', 0 => 'Inactive'])->default(1)
-                    ->label('Active'),
+                    ->options([1 => __('lang.active'), 0 => __('lang.inactive')])->default(1)
+                    ->label(__('lang.active')),
                 SelectFilter::make('employee_type')
-                    ->label('Role type')
+                    ->label(__('lang.role_type'))
                     ->options(UserType::where('active', 1)->pluck('name', 'id')->toArray())
                     ->searchable()
                     ->multiple(),
             ], FiltersLayout::AboveContent)
             ->headerActions([
                 Action::make('export_employees')
-                    ->label('Export to Excel')
+                    ->label(__('lang.export_to_excel'))
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('warning')
                     ->action(function () {
@@ -248,7 +248,7 @@ class EmployeeTable
                         return Excel::download(new EmployeesExport($data), 'employees.xlsx');
                     }),
                 Action::make('export_employees_pdf')
-                    ->label('Print as PDF')
+                    ->label(__('lang.print_as_pdf'))
                     ->icon('heroicon-o-document-text')
                     ->color('primary')
                     ->action(function () {
@@ -260,12 +260,12 @@ class EmployeeTable
                     }),
 
                 Action::make('import_employees')
-                    ->label('Import from Excel')
+                    ->label(__('lang.import_from_excel'))
                     ->icon('heroicon-o-document-arrow-up')
                     ->visible(fn(): bool => isSystemManager() || isSuperAdmin())
                     ->schema([
                         FileUpload::make('file')
-                            ->label('Select Excel file'),
+                            ->label(__('lang.select_excel_file')),
                     ])->extraModalFooterActions([
                         Action::make('downloadexcel')->label(__('Download Example File'))
                             ->icon('heroicon-o-arrow-down-on-square-stack')
@@ -299,7 +299,7 @@ class EmployeeTable
             ->recordActions([
 
                 Action::make('createUser')->button()
-                    ->label('Create User')
+                    ->label(__('lang.create_user'))
                     ->icon('heroicon-o-user-plus')
                     ->color('success')
                     ->visible(fn($record) =>  !$record->has_user)
@@ -309,8 +309,8 @@ class EmployeeTable
 
                         if ($user) {
                             Notification::make()
-                                ->title('User Created')
-                                ->body("A new user has been created for {$record->name}.")
+                                ->title(__('lang.user_created'))
+                                ->body(__('lang.user_created_for') . " {$record->name}.")
                                 ->success()
                                 ->send();
                         }
@@ -318,7 +318,7 @@ class EmployeeTable
 
 
                 Action::make('index')
-                    ->label('AWS Indexing')->button()
+                    ->label(__('lang.aws_indexing'))->button()
                     ->icon('heroicon-o-user-plus')
                     ->color('success')
                     // ->visible(fn($record): bool => $record->avatar && Storage::disk('s3')->exists($record->avatar))
@@ -366,10 +366,10 @@ class EmployeeTable
                 ActionGroup::make([
 
                     Action::make('quick_edit_avatar')
-                        ->label('Edit Avatar')
+                        ->label(__('lang.edit_avatar'))
                         ->icon('heroicon-o-camera')
                         ->color('secondary')
-                        ->modalHeading('Edit Employee Avatar')
+                        ->modalHeading(__('lang.edit_employee_avatar'))
                         ->form([
                             EmployeeResource::avatarUploadField(),
                         ])
@@ -378,12 +378,12 @@ class EmployeeTable
                                 'avatar' => $data['avatar'],
                             ]);
                             Notification::make()
-                                ->title('Avatar updated')
-                                ->body('Employee avatar updated successfully.')
+                                ->title(__('lang.avatar_updated'))
+                                ->body(__('lang.avatar_updated_successfully'))
                                 ->success()
                                 ->send();
                         }),
-                    Action::make('checkInstallments')->label('Check Advanced installments')->button()->hidden()
+                    Action::make('checkInstallments')->label(__('lang.check_advanced_installments'))->button()->hidden()
                         ->color('info')
                         ->icon('heroicon-m-banknotes')
                         ->url(fn($record) => CheckInstallments::getUrl(['employeeId' => $record->id]))
@@ -410,14 +410,14 @@ class EmployeeTable
                     //     }),
                     // Add the Change Branch action
                     Action::make('changeBranch')->icon('heroicon-o-arrow-path-rounded-square')
-                        ->label('Change Branch') // Label for the action button
+                        ->label(__('lang.change_branch')) // Label for the action button
                         ->visible(isSystemManager() || isSuperAdmin())
                         // ->icon('heroicon-o-annotation') // Icon for the button
-                        ->modalHeading('Change Employee Branch') // Modal heading
+                        ->modalHeading(__('lang.change_employee_branch')) // Modal heading
                         ->modalButton('Save')                    // Button inside the modal
                         ->schema([
                             Select::make('branch_id')
-                                ->label('Select New Branch')
+                                ->label(__('lang.select_new_branch'))
                                 ->options(Branch::all()->pluck('name', 'id')) // Assuming you have a `Branch` model with `id` and `name`
                                 ->required(),
                         ])
@@ -451,7 +451,7 @@ class EmployeeTable
                 // ExportBulkAction::make(),
                 RestoreBulkAction::make(),
                 BulkAction::make('activate')
-                    ->label('Activate')
+                    ->label(__('lang.activate'))
                     ->icon('heroicon-o-check-badge')
                     ->color('success')
                     ->requiresConfirmation()

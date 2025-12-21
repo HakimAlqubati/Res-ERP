@@ -61,7 +61,7 @@ class EmployeeResource extends Resource
 
     public static function getModelLabel(): string
     {
-        return 'Employee';
+        return __('lang.employee');
     }
     public static function getLabel(): ?string
     {
@@ -222,8 +222,8 @@ class EmployeeResource extends Resource
             DB::commit();
 
             Notification::make()
-                ->title('Success')
-                ->body('Face images uploaded and indexed successfully.')
+                ->title(__('lang.success'))
+                ->body(__('lang.face_images_uploaded_successfully'))
                 ->success()
                 ->send();
         } catch (\Throwable $th) {
@@ -235,8 +235,8 @@ class EmployeeResource extends Resource
             ]);
 
             Notification::make()
-                ->title('Error')
-                ->body('An error occurred while uploading face images.')
+                ->title(__('lang.error'))
+                ->body(__('lang.error_uploading_face_images'))
                 ->danger()
                 ->send();
         }

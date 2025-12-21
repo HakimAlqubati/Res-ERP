@@ -7,9 +7,14 @@ use Filament\Clusters\Cluster;
 class HRSalaryCluster extends Cluster
 {
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-banknotes';
-    protected static ?string $clusterBreadcrumb = 'HR';
+
+    public static function getClusterBreadcrumb(): ?string
+    {
+        return __('lang.hr_salary_cluster');
+    }
+
     public static function getNavigationLabel(): string
     {
-        return 'Payroll';
+        return __('lang.payroll');
     }
 }

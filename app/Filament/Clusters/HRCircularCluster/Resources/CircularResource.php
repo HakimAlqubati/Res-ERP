@@ -42,8 +42,15 @@ class CircularResource extends Resource
 
     protected static ?string $cluster = HRCircularCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?string $modelLabel = 'Engagement';
-    protected static ?string $pluralLabel = 'Engagement';
+    public static function getModelLabel(): string
+    {
+        return __('lang.engagement');
+    }
+
+    public static function getPluralLabel(): string
+    {
+        return __('lang.engagement');
+    }
 
     protected static ?int $navigationSort = 1;
     public static function form(Schema $schema): Schema
@@ -51,33 +58,33 @@ class CircularResource extends Resource
         return $schema
             ->components([
                 Wizard::make([
-                    Step::make('Basic data')->columnSpanFull()
+                    Step::make(__('lang.basic_data'))->columnSpanFull()
                         ->schema([
                             Fieldset::make()->columnSpanFull()->schema([
                                 Grid::make()->columnSpanFull()->columns(2)->schema([
-                                    Fieldset::make()->columnSpanFull()->label('Set title of circular & the relased date')->schema([
-                                        TextInput::make('title')->label('Subject')
+                                    Fieldset::make()->columnSpanFull()->label(__('lang.set_title_of_circular'))->schema([
+                                        TextInput::make('title')->label(__('lang.subject'))
                                             ->required()
                                             ->maxLength(255),
                                         DatePicker::make('released_date')->default(date('Y-m-d'))
-                                            ->helperText('Date that will be released')
+                                            ->helperText(__('lang.date_will_be_released'))
                                             ->required(),
                                     ]),
                                     Fieldset::make()->columnSpanFull()
                                         ->hiddenOn('view')
-                                        ->label('Set the branches that you want to send the circular & the group of users')->schema([
-                                        Select::make('group_id')->label('Group')
-                                                ->helperText('The users group that will recieve this circular')
+                                        ->label(__('lang.set_branches_and_users'))->schema([
+                                            Select::make('group_id')->label(__('lang.group'))
+                                                ->helperText(__('lang.users_group_will_receive'))
                                                 ->options(getUserTypes())
                                                 ->reactive()
                                                 ->required(),
-                                        Select::make('branch_ids')->label('Choose branch')
-                                        ->hidden(fn(Get $get):bool=> $get('group_id')==1)    
-                                        ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id'))
-                                            ->multiple()
-                                            ->required()
-                                            ->helperText('You can choose multiple branches'),
-                                    ]),
+                                            Select::make('branch_ids')->label(__('lang.choose_branch'))
+                                                ->hidden(fn(Get $get): bool => $get('group_id') == 1)
+                                                ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id'))
+                                                ->multiple()
+                                                ->required()
+                                                ->helperText(__('lang.can_choose_multiple_branches')),
+                                        ]),
 
                                 ]),
 
@@ -86,13 +93,13 @@ class CircularResource extends Resource
                                 ]),
                             ]),
                         ]),
-                    Step::make('Images')->columnSpanFull()->hiddenOn('view')
+                    Step::make(__('lang.images'))->columnSpanFull()->hiddenOn('view')
                         ->schema([
                             Fieldset::make()->columnSpanFull()->label('')->schema([
 
                                 Grid::make()->columnSpanFull()->columns(1)->schema([
                                     FileUpload::make('file_path')
-                                        ->label('Add photos')->columnSpanFull()
+                                        ->label(__('lang.add_photos'))->columnSpanFull()
                                         ->disk('public')
                                         ->directory('circulars')
                                         ->visibility('public')
@@ -101,7 +108,7 @@ class CircularResource extends Resource
                                         ->image()
                                         // ->resize(5)
                                         ->loadingIndicatorPosition('left')
-                                    // ->panelAspectRatio('2:1')
+                                        // ->panelAspectRatio('2:1')
                                         ->panelLayout('integrated')
                                         ->removeUploadedFileButtonPosition('right')
                                         ->uploadButtonPosition('left')
@@ -111,7 +118,7 @@ class CircularResource extends Resource
                                         ->reorderable()
                                         ->openable()
                                         ->downloadable()
-                                    // ->hiddenOn('create')
+                                        // ->hiddenOn('create')
                                         ->previewable()
                                         ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                                             return (string) str($file->getClientOriginalName())->prepend('circular-');
@@ -128,15 +135,15 @@ class CircularResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->striped()
-        ->defaultSort('id','desc')
-        ->paginated([10, 25, 50, 100])
+            ->defaultSort('id', 'desc')
+            ->paginated([10, 25, 50, 100])
             ->columns([
-                TextColumn::make('title')->label('Subject')->sortable(),
+                TextColumn::make('title')->label(__('lang.subject'))->sortable(),
                 // TextColumn::make('description')->limit(50),
-                TextColumn::make('group.name')->label('Group'),
+                TextColumn::make('group.name')->label(__('lang.group')),
                 TextColumn::make('released_date')->date()->sortable(),
-                TextColumn::make('createdBy.name')->label('Created by')->sortable()->toggleable(isToggledHiddenByDefault:true),
-                TextColumn::make('created_at')->date()->sortable()->toggleable(isToggledHiddenByDefault:false),
+                TextColumn::make('createdBy.name')->label(__('lang.created_by'))->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('created_at')->date()->sortable()->toggleable(isToggledHiddenByDefault: false),
             ])
             ->filters([
                 //
@@ -146,15 +153,15 @@ class CircularResource extends Resource
                     ->hidden(function ($record) {
                         return $record->photos_count <= 0 ? true : false;
                     })
-                    ->label('Browse photos')
+                    ->label(__('lang.browse_photos'))
                     ->label(function ($record) {
                         return $record->photos_count;
                     })
-                    ->modalHeading('Photos')
+                    ->modalHeading(__('lang.photos'))
                     ->modalWidth('lg') // Adjust modal size
                     ->modalSubmitAction(false)
-                    ->modalCancelActionLabel('Close')
-                // ->iconButton()
+                    ->modalCancelActionLabel(__('lang.close'))
+                    // ->iconButton()
                     ->button()
                     ->icon('heroicon-o-camera')
                     ->modalContent(function ($record) {
@@ -197,7 +204,7 @@ class CircularResource extends Resource
         return true;
     }
 
-    
+
     public static function canDelete(Model $record): bool
     {
         if (isSuperAdmin() || isSystemManager()) {
@@ -214,5 +221,4 @@ class CircularResource extends Resource
         }
         return false;
     }
-
 }

@@ -270,4 +270,390 @@ return [
     'physical_quantity' => 'Physical Quantity',
     'system_quantity' => 'System Quantity',
     'difference' => 'Difference',
+
+    // ===========================================
+    // HRMS - General Terms
+    // ===========================================
+    'hr_management' => 'HR Management',
+    'salary_management' => 'Salary Management',
+    'attendance_management' => 'Attendance Management',
+    'leave_management' => 'Leave Management',
+    'settings' => 'Settings',
+
+    // ===========================================
+    // HRMS - Employee Personal Data
+    // ===========================================
+    'personal_data' => 'Personal Data',
+    'full_name' => 'Full Name',
+    'gender' => 'Gender',
+    'male' => 'Male',
+    'female' => 'Female',
+    'nationality' => 'Nationality',
+    'employee_address' => 'Employee Address',
+    'avatar' => 'Avatar',
+    'mykad_number' => 'MyKad No.',
+    'passport_no' => 'Passport No.',
+    'has_employee_pass' => 'Has Employment Pass',
+
+    // ===========================================
+    // HRMS - Employment Information
+    // ===========================================
+    'employment' => 'Employment',
+    'employee_no' => 'Employee No.',
+    'employee_number' => 'Employee Number',
+    'job_title' => 'Job Title',
+    'position' => 'Position',
+    'position_type' => 'Position Type',
+    'role_type' => 'Role Type',
+    'department' => 'Department',
+    'working_hours' => 'Working Hours',
+    'working_hours_per_day' => 'Working Hours Per Day',
+    'working_days' => 'Working Days',
+    'working_days_per_month' => 'Working Days Per Month',
+    'is_ceo' => 'Is CEO',
+
+    // ===========================================
+    // HRMS - Employee Files
+    // ===========================================
+    'employee_files' => 'Employee Files',
+    'file_type' => 'File Type',
+    'attach_file' => 'Attach File',
+    'file_details' => 'File Details',
+    'additional_fields' => 'Additional Fields',
+    'fields' => 'Fields',
+    'required_docs' => 'Required Docs',
+    'unrequired_docs' => 'Unrequired Docs',
+
+    // ===========================================
+    // HRMS - Finance & Salary
+    // ===========================================
+    'finance' => 'Finance',
+    'salary' => 'Salary',
+    'salary_data' => 'Salary Data',
+    'set_salary_data' => 'Set Salary Data and Account Number',
+    'tax_identification_number' => 'Tax Identification Number (TIN)',
+    'bank_information' => 'Bank Information',
+    'bank_name' => 'Bank Name',
+    'bank_account_number' => 'Bank Account Number',
+    'account_no' => 'Account No.',
+    'bank' => 'Bank',
+    'enter_bank_name' => 'Enter bank name',
+    'enter_bank_account_number' => 'Enter bank account number',
+
+    // ===========================================
+    // HRMS - Allowances & Deductions
+    // ===========================================
+    'allowances' => 'Allowances',
+    'allowance' => 'Allowance',
+    'monthly_allowances' => 'Monthly Allowances',
+    'monthly_bonus' => 'Monthly Bonus',
+    'deductions' => 'Deductions',
+    'deduction' => 'Deduction',
+    'type' => 'Type',
+    'percentage' => 'Percentage',
+    'amount_percentage' => 'Amount / %',
+    'is_percentage' => 'Is Percentage',
+    'no_salary_deduction_for_absences' => 'No Salary Deduction for Absences',
+    'exempt_from_late_attendance_deduction' => 'Exempt from Late Attendance Deduction',
+
+    // ===========================================
+    // HRMS - Attendance & Shifts
+    // ===========================================
+    'attendance' => 'Attendance',
+    'shift' => 'Shift',
+    'shifts' => 'Shifts',
+    'shift_rfid' => 'Shift - RFID',
+    'employee_rfid' => 'Employee RFID',
+    'rfid' => 'RFID',
+    'work_periods' => 'Work Periods',
+    'check_in' => 'Check In',
+    'check_out' => 'Check Out',
+    'late' => 'Late',
+    'early_leave' => 'Early Leave',
+    'overtime' => 'Overtime',
+    'absent' => 'Absent',
+    'present' => 'Present',
+
+    // ===========================================
+    // HRMS - Leave
+    // ===========================================
+    'leave' => 'Leave',
+    'leaves' => 'Leaves',
+    'leave_type' => 'Leave Type',
+    'leave_application' => 'Leave Application',
+    'leave_balance' => 'Leave Balance',
+    'annual_leave' => 'Annual Leave',
+    'sick_leave' => 'Sick Leave',
+    'unpaid_leave' => 'Unpaid Leave',
+
+    // ===========================================
+    // HRMS - User & Access
+    // ===========================================
+    'create_user' => 'Create User',
+    'user_created' => 'User Created',
+    'user_created_for' => 'A new user has been created for',
+    'has_user' => 'Has User Account',
+
+    // ===========================================
+    // HRMS - Status & Actions
+    // ===========================================
+    'inactive' => 'Inactive',
+    'activate' => 'Activate',
+    'deactivate' => 'Deactivate',
+    'create' => 'Create',
+    'edit' => 'Edit',
+    'delete' => 'Delete',
+    'view' => 'View',
+    'save' => 'Save',
+    'close' => 'Close',
+    'upload' => 'Upload',
+    'download' => 'Download',
+    'export' => 'Export',
+    'print' => 'Print',
+    'search' => 'Search',
+    'filter' => 'Filter',
+    'reset' => 'Reset',
+    'restore' => 'Restore',
+
+    // ===========================================
+    // HRMS - Export/Import Actions
+    // ===========================================
+    'export_to_excel' => 'Export to Excel',
+    'print_as_pdf' => 'Print as PDF',
+    'import_from_excel' => 'Import from Excel',
+    'select_excel_file' => 'Select Excel File',
+    'download_example_file' => 'Download Example File',
+    'employees_imported_successfully' => 'Employees imported successfully',
+    'rows_added' => 'Rows added',
+    'no_employees_added' => 'No employees added. Please check the file.',
+    'error_importing_employees' => 'Error importing employees',
+
+    // ===========================================
+    // HRMS - Employee Actions
+    // ===========================================
+    'edit_avatar' => 'Edit Avatar',
+    'edit_employee_avatar' => 'Edit Employee Avatar',
+    'avatar_updated' => 'Avatar Updated',
+    'avatar_updated_successfully' => 'Employee avatar updated successfully',
+    'change_branch' => 'Change Branch',
+    'change_employee_branch' => 'Change Employee Branch',
+    'select_new_branch' => 'Select New Branch',
+    'check_advanced_installments' => 'Check Advanced Installments',
+    'aws_indexing' => 'AWS Indexing',
+    'selected_employees_activated' => 'Selected employees activated',
+
+    // ===========================================
+    // HRMS - Notifications & Messages
+    // ===========================================
+    'success' => 'Success',
+    'error' => 'Error',
+    'warning' => 'Warning',
+    'info' => 'Info',
+    'email_copied' => 'Email copied',
+    'phone_copied' => 'Phone copied',
+    'make_sure_user_not_soft_deleted' => 'Make sure linked user is not soft deleted',
+    'email_address_copied' => 'Email address copied',
+    'phone_number_copied' => 'Phone number copied',
+
+    // ===========================================
+    // HRMS - Validation Messages
+    // ===========================================
+    'name_must_contain_two_words' => 'Name must contain at least two words.',
+    'name_letters_spaces_only' => 'Name may contain letters and spaces only.',
+    'name_placeholder_unrealistic' => 'Name appears to be a placeholder or not realistic.',
+    'each_part_min_2_chars' => 'Each part of the name must be at least 2 characters.',
+    'name_unrealistic_repeated_letters' => 'Name looks unrealistic (repeated letters).',
+    'latin_parts_must_include_vowel' => 'Latin parts must include at least one vowel (a, e, i, o, u, y).',
+    'name_unlikely_consonant_clusters' => 'Name contains unlikely consonant clusters.',
+    'name_too_short_unrealistic' => 'Name is too short/unrealistic — add a longer given name or surname.',
+    'name_too_short' => 'Name is too short.',
+
+    // ===========================================
+    // HRMS - Citizenship & Others
+    // ===========================================
+    'is_citizen' => 'Is Citizen',
+
+    // ===========================================
+    // HRMS - Clusters Navigation
+    // ===========================================
+    'hr_cluster' => 'Human Resource',
+    'hr_salary_cluster' => 'Payroll',
+    'hr_attendance_cluster' => 'Attendance',
+    'hr_leave_cluster' => 'Leaves',
+    'hr_applications_cluster' => 'Employee Requests',
+    'hr_reports_cluster' => 'HR Reports',
+    'my_records' => 'My Records',
+
+    // ===========================================
+    // HRMS - Table Headers
+    // ===========================================
+    'avatar_name' => 'Avatar Name',
+    'periods_count' => 'Periods Count',
+
+    // ===========================================
+    // HRMS - Payroll
+    // ===========================================
+    'payroll' => 'Payroll',
+    'month_salary' => 'Month Salary',
+    'penalty_deduction' => 'Penalty Deduction',
+    'basic_salary' => 'Basic Salary',
+    'net_salary' => 'Net Salary',
+    'gross_salary' => 'Gross Salary',
+    'total_deductions' => 'Total Deductions',
+    'total_allowances' => 'Total Allowances',
+
+    // ===========================================
+    // HRMS - Holidays
+    // ===========================================
+    'holiday' => 'Holiday',
+    'holidays' => 'Holidays',
+    'weekly_holiday' => 'Weekly Holiday',
+    'weekly_holidays' => 'Weekly Holidays',
+
+    // ===========================================
+    // HRMS - Additional
+    // ===========================================
+    'face_images_uploaded_successfully' => 'Face images uploaded and indexed successfully.',
+    'error_uploading_face_images' => 'An error occurred while uploading face images.',
+    'requests' => 'Requests',
+    'join_date' => 'Join Date',
+
+    // ===========================================
+    // Tasks Management System
+    // ===========================================
+    'tasks' => 'Tasks',
+    'task' => 'Task',
+    'task_management' => 'Task Management',
+    'my_tasks' => 'My Tasks',
+    'assigned_tasks' => 'Assigned Tasks',
+    'basic' => 'Basic',
+    'details' => 'Details',
+    'steps' => 'Steps',
+    'title' => 'Title',
+    'assign_by' => 'Assign by',
+    'assign_to' => 'Assign to',
+    'select_role' => 'Select Role',
+    'scheduled_task' => 'Scheduled task?',
+    'due_date' => 'Due date',
+    'set_due_date_helper' => 'Set due date for this task',
+    'add_photos' => 'Add photos',
+    'task_rating' => 'Task Rating',
+    'rate_from_0_to_10' => 'Rate this from 0 to 10',
+    'collapse_all_steps' => 'Collapse all steps',
+    'status_new' => 'New',
+    'status_pending' => 'Pending',
+    'status_in_progress' => 'In Progress',
+    'status_closed' => 'Closed',
+    'status_rejected' => 'Rejected',
+    'assigned_to' => 'Assigned To',
+    'created_by' => 'Created By',
+    'assigned_by' => 'Assigned By',
+    'time_spent' => 'Time Spent',
+    'rejection_times' => 'Rejection times',
+    'browse_photos' => 'Browse photos',
+    'task_photos' => 'Task photos',
+    'rating' => 'Rating',
+    'rating_done' => 'Rating done',
+    'move_task' => 'Move task',
+    'reopen' => 'Reopen',
+    'closed' => 'Closed',
+    'from' => 'From',
+    'next_status' => 'Next Status',
+    'comment' => 'Comment',
+    'views' => 'Views',
+
+    // Schedule Types
+    'schedule_type_daily' => 'Daily',
+    'schedule_type_weekly' => 'Weekly',
+    'schedule_type_monthly' => 'Monthly',
+    'number_of_days' => 'Number of days',
+    'number_of_weeks' => 'Number of weeks',
+    'number_of_months' => 'Number of months',
+    'recurrence_pattern' => 'Recurrence pattern',
+    'every' => 'Every',
+    'every_weekday' => 'Every weekday',
+    'recur_every' => 'Recur every',
+    'weeks_on' => 'Week(s) on:',
+    'day' => 'Day',
+    'the' => 'The',
+    'of_every' => 'Of every',
+    'months' => 'Month(s)',
+    'first' => 'first',
+    'second' => 'second',
+    'third' => 'third',
+    'fourth' => 'fourth',
+    'fifth' => 'fifth',
+
+    // ===========================================
+    // Service Requests
+    // ===========================================
+    'service_requests' => 'Service Requests',
+    'service_request' => 'Service Request',
+    'basic_data' => 'Basic data',
+    'images' => 'Images',
+    'branch_area' => 'Branch area',
+    'equipment' => 'Equipment',
+    'description_helper' => 'Description of service request',
+    'to_reassign_go_to_table' => 'To reassign, go to table page',
+    'urgency' => 'Urgency',
+    'high' => 'High',
+    'medium' => 'Medium',
+    'low' => 'Low',
+    'impact' => 'Impact',
+    'to_change_status_go_to_table' => 'To change status, go to table page',
+    'move' => 'Move',
+    'reassign' => 'ReAssign',
+    'add_comment' => 'Add Comment',
+    'request_service_photos' => 'Request service photos',
+    'images_added' => 'Images added',
+    'comment_added' => 'Comment added',
+    'branch_area_required' => 'The branch area field is required. ⚠ Go to Branch to add Areas first.',
+
+    // ===========================================
+    // Task Status Cluster
+    // ===========================================
+    'hr_tasks_cluster' => 'Tasks System',
+    'hr_service_request_cluster' => 'Service Requests',
+    'maintenance' => 'Maintenance',
+
+    // ===========================================
+    // Circulars / Engagement
+    // ===========================================
+    'circulars' => 'Circulars',
+    'circular' => 'Circular',
+    'engagement' => 'Engagement',
+    'hr_circular_cluster' => 'Engagement',
+    'subject' => 'Subject',
+    'released_date' => 'Released Date',
+    'date_will_be_released' => 'Date that will be released',
+    'set_title_of_circular' => 'Set title of circular & the released date',
+    'set_branches_and_users' => 'Set the branches that you want to send the circular & the group of users',
+    'group' => 'Group',
+    'users_group_will_receive' => 'The users group that will receive this circular',
+    'choose_branch' => 'Choose branch',
+    'can_choose_multiple_branches' => 'You can choose multiple branches',
+    'photos' => 'Photos',
+    'close' => 'Close',
+
+    // ===========================================
+    // Employee Form - Additional Fields
+    // ===========================================
+    'email' => 'Email',
+    'phone_number' => 'Phone Number',
+    'job_title' => 'Job Title',
+    'salary' => 'Salary',
+    'file_type' => 'File Type',
+    'attachment' => 'Attachment',
+    'fields' => 'Fields',
+    'bank' => 'Bank',
+    'account_no' => 'Account No.',
+    'allowance' => 'Allowance',
+    'type' => 'Type',
+    'amount' => 'Amount',
+    'monthly_allowances' => 'Monthly Allowances',
+    'is_percentage' => 'Percentage',
+    'description' => 'Description',
+    'active' => 'Active',
+    'created_at' => 'Created At',
+    'updated_at' => 'Updated At',
 ];

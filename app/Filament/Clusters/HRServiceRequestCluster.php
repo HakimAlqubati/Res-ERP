@@ -7,9 +7,14 @@ use Filament\Clusters\Cluster;
 class HRServiceRequestCluster extends Cluster
 {
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-wrench-screwdriver';
-    protected static ?string $clusterBreadcrumb = 'HR';
+
+    public static function getClusterBreadcrumb(): ?string
+    {
+        return __('lang.hr_service_request_cluster');
+    }
+
     public static function getNavigationLabel(): string
     {
-        return 'Service Request';
+        return __('lang.service_requests');
     }
 }

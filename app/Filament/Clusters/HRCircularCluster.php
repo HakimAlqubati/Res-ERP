@@ -7,9 +7,14 @@ use Filament\Clusters\Cluster;
 class HRCircularCluster extends Cluster
 {
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-speaker-wave';
-    protected static ?string $clusterBreadcrumb = 'HR';
+
+    public static function getClusterBreadcrumb(): ?string
+    {
+        return __('lang.hr_circular_cluster');
+    }
+
     public static function getNavigationLabel(): string
     {
-        return 'Engagement';
+        return __('lang.engagement');
     }
 }
