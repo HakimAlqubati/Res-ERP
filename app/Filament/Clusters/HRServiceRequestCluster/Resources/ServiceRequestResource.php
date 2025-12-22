@@ -22,6 +22,7 @@ use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResour
 use App\Filament\Clusters\HRServiceRequestCluster;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\Pages;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\RelationManagers\CommentsRelationManager;
+use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\RelationManagers\CostsRelationManager;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\RelationManagers\LogsRelationManager;
 use App\Models\Branch;
 use App\Models\BranchArea;
@@ -222,7 +223,7 @@ class ServiceRequestResource extends Resource
     {
         return $table->defaultSort('id', 'desc')
             ->paginated([10, 25, 50, 100])
-
+            ->striped()
             ->columns([
                 // SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
                 //     ->circular()->alignCenter(true)->getStateUsing(function () {
@@ -289,13 +290,53 @@ class ServiceRequestResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')->label('Created At')->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('total_cost')
+                    ->label(__('Total Cost'))
+                    ->getStateUsing(fn($record) => $record->costs()->sum('amount'))
+                    ->money('MYR')
+                    ->sortable(query: function ($query, $direction) {
+                        return $query->withSum('costs', 'amount')
+                            ->orderBy('costs_sum_amount', $direction);
+                    })
+                    ->toggleable(isToggledHiddenByDefault: false),
                 // ])->from('md'),
             ])
             ->filters([
+                SelectFilter::make('status')
+                    ->label(__('Status'))
+                    ->options(ServiceRequest::STATUS_LABELS),
+                SelectFilter::make('urgency')
+                    ->label(__('Urgency'))
+                    ->options(ServiceRequest::URGENCY_LABELS),
+                SelectFilter::make('impact')
+                    ->label(__('Impact'))
+                    ->options(ServiceRequest::IMPACT_LABELS),
+                SelectFilter::make('branch_id')
+                    ->label(__('Branch'))
+                    ->searchable()
+                    ->options(fn() => Branch::active()->pluck('name', 'id')),
                 SelectFilter::make('equipment_id')
-                    ->label('Equipment')
-                    ->searchable()->options(fn() => Equipment::query()->pluck('name', 'id')),
-            ])
+                    ->label(__('Equipment'))
+                    ->searchable()
+                    ->options(fn() => Equipment::query()->pluck('name', 'id')),
+                \Filament\Tables\Filters\Filter::make('has_costs')
+                    ->label(__('Has Costs'))
+                    ->toggle()
+                    ->query(fn($query) => $query->whereHas('costs')),
+                \Filament\Tables\Filters\Filter::make('created_at')
+                    ->label(__('Created Date'))
+                    ->form([
+                        \Filament\Forms\Components\DatePicker::make('from')->label(__('From')),
+                        \Filament\Forms\Components\DatePicker::make('to')->label(__('To')),
+                    ])
+                    ->query(function ($query, array $data) {
+                        return $query
+                            ->when($data['from'], fn($q) => $q->whereDate('created_at', '>=', $data['from']))
+                            ->when($data['to'], fn($q) => $q->whereDate('created_at', '<=', $data['to']));
+                    }),
+            ], layout: \Filament\Tables\Enums\FiltersLayout::Modal)
+            ->filtersFormColumns(4)
+
             ->recordActions([
                 ActionGroup::make([
                     Action::make('Move')->button()
@@ -559,6 +600,7 @@ class ServiceRequestResource extends Resource
         return [
             CommentsRelationManager::class,
             LogsRelationManager::class,
+            CostsRelationManager::class,
         ];
     }
 

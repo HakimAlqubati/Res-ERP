@@ -2,7 +2,9 @@
 
 namespace App\Filament\Clusters;
 
+use App\Models\ServiceRequest;
 use Filament\Clusters\Cluster;
+use Filament\Support\Colors\Color;
 
 class HRServiceRequestCluster extends Cluster
 {
@@ -16,5 +18,17 @@ class HRServiceRequestCluster extends Cluster
     public static function getNavigationLabel(): string
     {
         return __('lang.service_requests');
+    }
+    public static function getNavigationBadge(): ?string
+    {
+        return ServiceRequest::count();
+    }
+
+    /**
+     * @return string | array<string> | null
+     */
+    public static function getNavigationBadgeColor(): string | array | null
+    {
+        return Color::Red;
     }
 }

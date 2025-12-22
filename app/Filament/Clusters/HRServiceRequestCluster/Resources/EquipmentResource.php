@@ -303,11 +303,11 @@ class EquipmentResource extends Resource
         return $table->striped()->defaultSort('id', 'desc')
             ->columns([
                 SpatieMediaLibraryImageColumn::make('attachments')->label('')
-                ->width(10)
+                    ->width(10)
 
                     ->circular()->alignCenter(true)->getStateUsing(function () {
-                    return null;
-                })->limit(2),
+                        return null;
+                    })->limit(2),
                 TextColumn::make('name')->toggleable()
                     ->searchable()
                     ->sortable()->toggleable(isToggledHiddenByDefault: false),
@@ -366,14 +366,46 @@ class EquipmentResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                SelectFilter::make('branch_id')
-                    ->label('Branch')
-                    ->searchable()->options(fn() => Branch::selectable()
-                        ->active()->pluck('name', 'id')),
+                SelectFilter::make('status')
+                    ->label(__('Status'))
+                    ->options(Equipment::STATUS_LABELS),
                 SelectFilter::make('type_id')
-                    ->label('Type')
-                    ->searchable()->options(fn() => EquipmentType::active()->pluck('name', 'id')),
-            ])
+                    ->label(__('Type'))
+                    ->searchable()
+                    ->options(fn() => EquipmentType::active()->pluck('name', 'id')),
+                SelectFilter::make('branch_id')
+                    ->label(__('Branch'))
+                    ->searchable()
+                    ->options(fn() => Branch::selectable()->active()->pluck('name', 'id')),
+                SelectFilter::make('branch_area_id')
+                    ->label(__('Branch Area'))
+                    ->searchable()
+                    ->options(fn() => BranchArea::pluck('name', 'id')),
+                \Filament\Tables\Filters\Filter::make('warranty_expired')
+                    ->label(__('Warranty Expired'))
+                    ->toggle()
+                    ->query(fn($query) => $query->whereDate('warranty_end_date', '<', now())),
+                \Filament\Tables\Filters\Filter::make('service_due')
+                    ->label(__('Service Due'))
+                    ->toggle()
+                    ->query(fn($query) => $query->whereDate('next_service_date', '<=', now())),
+                \Filament\Tables\Filters\Filter::make('has_costs')
+                    ->label(__('Has Costs'))
+                    ->toggle()
+                    ->query(fn($query) => $query->whereHas('costs')),
+                \Filament\Tables\Filters\Filter::make('purchase_date')
+                    ->label(__('Purchase Date'))
+                    ->form([
+                        \Filament\Forms\Components\DatePicker::make('from')->label(__('From')),
+                        \Filament\Forms\Components\DatePicker::make('to')->label(__('To')),
+                    ])
+                    ->query(function ($query, array $data) {
+                        return $query
+                            ->when($data['from'], fn($q) => $q->whereDate('purchase_date', '>=', $data['from']))
+                            ->when($data['to'], fn($q) => $q->whereDate('purchase_date', '<=', $data['to']));
+                    }),
+            ], layout: \Filament\Tables\Enums\FiltersLayout::Modal)
+            ->filtersFormColumns(4)
             ->recordActions([
                 EditAction::make(),
                 Action::make('qrCodePrint')
