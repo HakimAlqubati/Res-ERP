@@ -364,6 +364,16 @@ class EquipmentResource extends Resource
                     ->date()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                \Filament\Tables\Columns\IconColumn::make('has_purchase_cost_synced')
+                    ->label(__('Purchase Cost'))
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger')
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: false),
             ])
             ->filters([
                 SelectFilter::make('status')
@@ -412,13 +422,80 @@ class EquipmentResource extends Resource
                     ->label('Print')
                     ->button()->icon('heroicon-o-qr-code')
                     ->url(fn($record): string => route('testQRCode', ['id' => $record->id]), true),
-
+                self::getSyncPurchaseCostAction(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    /**
+     * Action لإضافة تكلفة الشراء كقيد مالي
+     */
+    public static function getSyncPurchaseCostAction(): Action
+    {
+        return Action::make('syncPurchaseCost')
+            ->label(__('Sync Purchase Cost'))
+            ->icon('heroicon-o-currency-dollar')
+            ->color('success')
+            ->button()
+            ->visible(fn($record) => !$record->has_purchase_cost_synced && $record->purchase_price > 0)
+            ->requiresConfirmation()
+            ->modalHeading(__('Sync Purchase Cost'))
+            ->modalDescription(fn($record) => __('Are you sure you want to create a financial transaction for :amount?', [
+                'amount' => number_format($record->purchase_price, 2) . ' MYR'
+            ]))
+            ->action(function ($record) {
+                self::createPurchaseCostTransaction($record);
+            });
+    }
+
+    /**
+     * إنشاء قيد مالي لتكلفة شراء المعدة
+     */
+    public static function createPurchaseCostTransaction(Equipment $equipment): void
+    {
+        // تحقق من عدم وجود تكلفة شراء مسبقة
+        if ($equipment->has_purchase_cost_synced) {
+            \Filament\Notifications\Notification::make()
+                ->warning()
+                ->title(__('Already Synced'))
+                ->body(__('This equipment already has a synced purchase cost.'))
+                ->send();
+            return;
+        }
+
+        // تحقق من وجود سعر الشراء
+        if (!$equipment->purchase_price || $equipment->purchase_price <= 0) {
+            \Filament\Notifications\Notification::make()
+                ->danger()
+                ->title(__('No Purchase Price'))
+                ->body(__('This equipment has no purchase price set.'))
+                ->send();
+            return;
+        }
+
+        // إنشاء تكلفة الشراء
+        $cost = $equipment->costs()->create([
+            'amount' => $equipment->purchase_price,
+            'description' => __('Equipment purchase cost'),
+            'cost_type' => \App\Models\MaintenanceCost::TYPE_PURCHASE,
+            'branch_id' => $equipment->branch_id,
+            'cost_date' => $equipment->purchase_date ?? now(),
+            'created_by' => auth()->id(),
+        ]);
+
+        // الـ Observer سيقوم بإنشاء الـ FinancialTransaction تلقائياً
+
+        \Filament\Notifications\Notification::make()
+            ->success()
+            ->title(__('Purchase Cost Synced'))
+            ->body(__('Financial transaction created for :amount', [
+                'amount' => number_format($equipment->purchase_price, 2) . ' MYR'
+            ]))
+            ->send();
     }
 
     public static function getRelations(): array

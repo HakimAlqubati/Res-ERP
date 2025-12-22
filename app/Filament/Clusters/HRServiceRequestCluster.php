@@ -21,6 +21,7 @@ class HRServiceRequestCluster extends Cluster
     }
     public static function getNavigationBadge(): ?string
     {
+        return null;
         return ServiceRequest::count();
     }
 

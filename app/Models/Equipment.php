@@ -177,6 +177,28 @@ class Equipment extends Model implements Auditable, HasMedia
         return $this->costs()->sum('amount');
     }
 
+    /**
+     * التحقق مما إذا تم إضافة قيد مالي لتكلفة الشراء
+     * يرجع true إذا كان هناك تكلفة شراء مزامنة مع النظام المالي
+     */
+    public function getHasPurchaseCostSyncedAttribute(): bool
+    {
+        return $this->costs()
+            ->where('cost_type', MaintenanceCost::TYPE_PURCHASE)
+            ->where('synced_to_financial', true)
+            ->exists();
+    }
+
+    /**
+     * التحقق مما إذا تم إضافة تكلفة شراء (مزامنة أو غير مزامنة)
+     */
+    public function getHasPurchaseCostAttribute(): bool
+    {
+        return $this->costs()
+            ->where('cost_type', MaintenanceCost::TYPE_PURCHASE)
+            ->exists();
+    }
+
     public function scopeStatus($query, string $status)
     {
         return $query->where('status', $status);
