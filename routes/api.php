@@ -281,6 +281,14 @@ Route::post('/v2/attendance/test', function (Request $request) {
     return $service->handle($request->all());
 })->middleware('auth:api');
 
+// Bulk attendance generation endpoint
+// توليد سجلات حضور جماعية مع أوقات عشوائية واقعية
+Route::post('/v2/attendance/bulk-generate', function (Request $request) {
+    $service = app(\App\Services\HR\v2\Attendance\BulkAttendanceGeneratorService::class);
+    return $service->generate($request->all());
+})->middleware('auth:api');
+
+
 
 // Route::get('/stores', fn() => \App\Models\Store::select('id', 'name')->get());
 // Route::get('/products', fn() => \App\Models\Product::select('id', 'name')->get());

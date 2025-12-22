@@ -86,13 +86,32 @@ class PayrollFinancialSyncService
                     ->whereIn('status', [Payroll::STATUS_APPROVED, Payroll::STATUS_PAID])
                     ->get();
 
+                // DEBUG: Log payrolls count and statuses
+                Log::info('PayrollFinancialSync Debug', [
+                    'payroll_run_id' => $payrollRun->id,
+                    'payrolls_count' => $payrolls->count(),
+                    'payroll_statuses' => $payrolls->pluck('status')->toArray(),
+                    'salary_category_id' => $salaryCategory->id,
+                ]);
+
                 $totalNetSalary = $payrolls->sum(function ($payroll) {
                     return $payroll->net_salary;
                 });
 
+                // DEBUG: Log net salary calculation
+                Log::info('PayrollFinancialSync Net Salary', [
+                    'payroll_run_id' => $payrollRun->id,
+                    'total_net_salary' => $totalNetSalary,
+                    'individual_salaries' => $payrolls->map(fn($p) => [
+                        'id' => $p->id,
+                        'net_salary' => $p->net_salary,
+                        'status' => $p->status,
+                    ])->toArray(),
+                ]);
+
                 if ($totalNetSalary > 0) {
                     // Create main salary expense transaction
-                    FinancialTransaction::create([
+                    $transaction = FinancialTransaction::create([
                         'branch_id' => $payrollRun->branch_id,
                         'category_id' => $salaryCategory->id,
                         'amount' => $totalNetSalary,
@@ -105,6 +124,15 @@ class PayrollFinancialSyncService
                         'created_by' => auth()->id() ?? $payrollRun->created_by ?? 1,
                         'month' => $payrollRun->month,
                         'year' => $payrollRun->year,
+                    ]);
+
+                    Log::info('PayrollFinancialSync Transaction Created', [
+                        'transaction_id' => $transaction->id,
+                        'amount' => $transaction->amount,
+                    ]);
+                } else {
+                    Log::warning('PayrollFinancialSync: No transaction created - totalNetSalary is 0', [
+                        'payroll_run_id' => $payrollRun->id,
                     ]);
                 }
             });

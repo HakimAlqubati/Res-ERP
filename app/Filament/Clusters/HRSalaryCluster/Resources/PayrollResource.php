@@ -189,7 +189,7 @@ class PayrollResource extends Resource
      */
     public static function approveAction(): Action
     {
-        return Action::make('approve')->button()    
+        return Action::make('approve')->button()
             ->label(__('Approve'))
             ->icon('heroicon-o-check-circle')
             ->color('success')
@@ -202,6 +202,18 @@ class PayrollResource extends Resource
                 in_array($record->status, [PayrollRun::STATUS_PENDING, PayrollRun::STATUS_COMPLETED])
             )
             ->action(function (PayrollRun $record): void {
+                // IMPORTANT: Update child Payrolls FIRST before updating PayrollRun
+                // Because the Observer on PayrollRun will trigger financial sync
+                // which needs the Payrolls to be approved
+                $record->payrolls()
+                    ->where('status', Payroll::STATUS_PENDING)
+                    ->update([
+                        'status' => Payroll::STATUS_APPROVED,
+                        'approved_by' => auth()->id(),
+                        'approved_at' => now(),
+                    ]);
+
+                // Now update the PayrollRun status (this triggers the Observer)
                 $record->update([
                     'status' => PayrollRun::STATUS_APPROVED,
                     'approved_by' => auth()->id(),
