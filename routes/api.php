@@ -164,6 +164,16 @@ Route::middleware('auth:api')->group(function () {
             Route::get('{id}/details', [App\Http\Controllers\Api\Financial\FinancialCategoryReportController::class, 'categoryDetails']);
         });
         Route::get('income-statement', [App\Http\Controllers\Api\FinancialReportController::class, 'incomeStatement']);
+
+        // Payroll Financial Sync Routes
+        Route::prefix('payroll')->group(function () {
+            Route::post('sync/{payrollRunId}', [App\Http\Controllers\Api\Financial\PayrollFinancialSyncController::class, 'syncPayrollRun']);
+            Route::post('sync/branch/{branchId}', [App\Http\Controllers\Api\Financial\PayrollFinancialSyncController::class, 'syncBranch']);
+            Route::post('sync/all', [App\Http\Controllers\Api\Financial\PayrollFinancialSyncController::class, 'syncAll']);
+            Route::get('status/{payrollRunId}', [App\Http\Controllers\Api\Financial\PayrollFinancialSyncController::class, 'getSyncStatus']);
+            Route::delete('sync/{payrollRunId}', [App\Http\Controllers\Api\Financial\PayrollFinancialSyncController::class, 'deleteSync']);
+            Route::put('sync/{payrollRunId}', [App\Http\Controllers\Api\Financial\PayrollFinancialSyncController::class, 'resync']);
+        });
     });
 });
 
