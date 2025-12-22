@@ -19,6 +19,7 @@ use Filament\Support\Enums\IconPosition;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Relation Manager لإدارة تكاليف الصيانة المرتبطة بطلب الصيانة
@@ -32,6 +33,11 @@ class CostsRelationManager extends RelationManager
    protected static string | BackedEnum | null $icon = null;
 
     protected static IconPosition $iconPosition = IconPosition::Before;
+
+     public static function getBadge(Model $ownerRecord, string $pageClass): ?string
+    {
+        return $ownerRecord->costs->count();
+    }
     public function form(Schema $schema): Schema
     {
         return $schema
