@@ -863,4 +863,26 @@ return [
   'approved_and_installments_created' => 'تمت الموافقة وإنشاء الأقساط',
   'installments_already_exist' => 'الأقساط موجودة مسبقاً',
   'missing_advance_data' => 'بيانات السلفة مفقودة',
+
+  // ===========================================
+  // Quick Links Widget / Dashboard
+  // ===========================================
+  'General' => 'عام',
+  'Users' => 'المستخدمين',
+  'Branches' => 'الفروع',
+  'Area Management' => 'إدارة المناطق',
+  'Inventory Management' => 'إدارة المخزون',
+  'Orders' => 'الطلبات',
+  'Products' => 'المنتجات',
+  'Suppliers' => 'الموردون',
+  'Stores' => 'المخازن',
+  'Purchases' => 'المشتريات',
+  'Inventory' => 'المخزون',
+  'Human Resources' => 'الموارد البشرية',
+  'Employees' => 'الموظفون',
+  'Attendance' => 'الحضور',
+  'Departments' => 'الأقسام',
+  'Tasks' => 'المهام',
+  'Engagement' => 'التفاعل',
+  'Payroll' => 'الرواتب',
 ];

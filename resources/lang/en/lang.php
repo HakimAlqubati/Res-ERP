@@ -881,4 +881,26 @@ return [
     'approved_and_installments_created' => 'Approved and installments created.',
     'installments_already_exist' => 'Installments already exist.',
     'missing_advance_data' => 'Missing advance data.',
+
+    // ===========================================
+    // Quick Links Widget / Dashboard
+    // ===========================================
+    'General' => 'General',
+    'Users' => 'Users',
+    'Branches' => 'Branches',
+    'Area Management' => 'Area Management',
+    'Inventory Management' => 'Inventory Management',
+    'Orders' => 'Orders',
+    'Products' => 'Products',
+    'Suppliers' => 'Suppliers',
+    'Stores' => 'Stores',
+    'Purchases' => 'Purchases',
+    'Inventory' => 'Inventory',
+    'Human Resources' => 'Human Resources',
+    'Employees' => 'Employees',
+    'Attendance' => 'Attendance',
+    'Departments' => 'Departments',
+    'Tasks' => 'Tasks',
+    'Engagement' => 'Engagement',
+    'Payroll' => 'Payroll',
 ];

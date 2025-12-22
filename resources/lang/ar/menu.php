@@ -13,6 +13,7 @@ return [
     'inventory_reports' => 'تقارير المخزون',
     'task_reports' => 'تقارير المهام',
     'order_reports' => 'تقارير الطلبات',
+    'branch_orders' => 'طلبات الفروع',
     'resellers' => 'نقاط البيع',
     'manufacturing_branches' => 'الفروع التصنيعية',
     'manufacturing_branch' => 'فرع تصنيعي',
