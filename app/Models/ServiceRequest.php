@@ -13,7 +13,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class ServiceRequest extends Model implements Auditable, HasMedia
 {
-    use HasFactory, DynamicConnection, \OwenIt\Auditing\Auditable, InteractsWithMedia,BranchScope;
+    use HasFactory, DynamicConnection, \OwenIt\Auditing\Auditable, InteractsWithMedia, BranchScope;
     protected $table = 'hr_service_requests';
 
     // Fillable fields
@@ -139,6 +139,22 @@ class ServiceRequest extends Model implements Auditable, HasMedia
     public function logs()
     {
         return $this->hasMany(ServiceRequestLog::class, 'service_request_id');
+    }
+
+    /**
+     * العلاقة مع تكاليف الصيانة (Polymorphic)
+     */
+    public function costs()
+    {
+        return $this->morphMany(MaintenanceCost::class, 'costable');
+    }
+
+    /**
+     * إجمالي تكاليف طلب الصيانة
+     */
+    public function getTotalCostAttribute()
+    {
+        return $this->costs()->sum('amount');
     }
 
     protected static function booted()

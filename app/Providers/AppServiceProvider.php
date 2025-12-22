@@ -62,6 +62,7 @@ class AppServiceProvider extends ServiceProvider
         StockTransferOrder::observe(StockTransferOrderObserver::class);
         StockInventory::observe(StockInventoryObserver::class);
         \App\Models\PayrollRun::observe(\App\Observers\PayrollRunObserver::class);
+        \App\Models\MaintenanceCost::observe(\App\Observers\MaintenanceCostObserver::class);
 
         // PurchaseInvoiceDetail::observe(PurchaseInvoiceDetailObserver::class);
 

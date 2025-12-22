@@ -14,7 +14,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Equipment extends Model implements Auditable, HasMedia
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, InteractsWithMedia,BranchScope,HasEquipmentLogs;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, InteractsWithMedia, BranchScope, HasEquipmentLogs;
 
     // Relationship with EquipmentLog
     public function logs()
@@ -30,7 +30,7 @@ class Equipment extends Model implements Auditable, HasMedia
             'description' => $description,
             'created_by' => $userId ?? (auth()->id() ?? null),
         ]);
-    } 
+    }
 
     protected $table = 'hr_equipment';
     /**
@@ -159,6 +159,22 @@ class Equipment extends Model implements Auditable, HasMedia
     public function branchArea()
     {
         return $this->belongsTo(BranchArea::class, 'branch_area_id');
+    }
+
+    /**
+     * العلاقة مع تكاليف الصيانة (Polymorphic)
+     */
+    public function costs()
+    {
+        return $this->morphMany(MaintenanceCost::class, 'costable');
+    }
+
+    /**
+     * إجمالي تكاليف المعدة
+     */
+    public function getTotalCostAttribute()
+    {
+        return $this->costs()->sum('amount');
     }
 
     public function scopeStatus($query, string $status)
