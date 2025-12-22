@@ -25,6 +25,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -131,7 +132,7 @@ class PayrollResource extends Resource
     {
         return $table
             ->columns([
-                 SoftDeleteColumn::make(),
+                SoftDeleteColumn::make(),
                 TextColumn::make('name')
                     ->label('Name')->searchable()->sortable(),
                 TextColumn::make('branch.name')
@@ -157,8 +158,8 @@ class PayrollResource extends Resource
                         'info'    => PayrollRun::STATUS_COMPLETED, // أزرق
                         'success' => PayrollRun::STATUS_APPROVED,  // أخضر
                     ]),
-                   
-            
+
+
             ])
             ->filters([
                 SelectFilter::make('branch_id')->label('Branch')
@@ -169,6 +170,7 @@ class PayrollResource extends Resource
             ])
             ->actions([
                 ViewAction::make(),
+                self::approveAction(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
@@ -177,6 +179,41 @@ class PayrollResource extends Resource
                 ]),
             ])
         ;
+    }
+
+    /**
+     * Approve Action for PayrollRun table.
+     * 
+     * Shows a confirmation dialog and updates status to approved.
+     * Only visible when status is pending or completed.
+     */
+    public static function approveAction(): Action
+    {
+        return Action::make('approve')->button()    
+            ->label(__('Approve'))
+            ->icon('heroicon-o-check-circle')
+            ->color('success')
+            ->requiresConfirmation()
+            ->modalHeading(__('Approve Payroll'))
+            ->modalDescription(__('Are you sure you want to approve this payroll? This will sync it with the financial system.'))
+            ->modalSubmitActionLabel(__('Yes, Approve'))
+            ->visible(
+                fn(PayrollRun $record): bool =>
+                in_array($record->status, [PayrollRun::STATUS_PENDING, PayrollRun::STATUS_COMPLETED])
+            )
+            ->action(function (PayrollRun $record): void {
+                $record->update([
+                    'status' => PayrollRun::STATUS_APPROVED,
+                    'approved_by' => auth()->id(),
+                    'approved_at' => now(),
+                ]);
+
+                \Filament\Notifications\Notification::make()
+                    ->title(__('Payroll Approved'))
+                    ->body(__('Payroll has been approved and synced with financial system.'))
+                    ->success()
+                    ->send();
+            });
     }
 
     public static function getRelations(): array
