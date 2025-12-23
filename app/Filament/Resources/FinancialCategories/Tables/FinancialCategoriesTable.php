@@ -8,6 +8,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\DeleteAction;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
@@ -18,6 +19,7 @@ use Filament\Tables\Columns\IconColumn;
 use App\Models\FinancialCategory;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Notifications\Notification;
 
 class FinancialCategoriesTable
 {
@@ -107,6 +109,25 @@ class FinancialCategoriesTable
             ->recordActions([
                 EditAction::make(),
                 DeleteAction::make(),
+                Action::make('forceDeleteTransactions')
+                    ->label(__('lang.force_delete_transactions'))
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading(__('lang.force_delete_transactions'))
+                    ->modalDescription(__('lang.confirm_force_delete_transactions'))
+                    ->modalSubmitActionLabel(__('lang.yes_delete_all'))
+                    ->visible(fn($record) => $record->transactions()->count() > 0)
+                    ->action(function ($record) {
+                        $count = $record->transactions()->count();
+                        $record->transactions()->forceDelete();
+
+                        Notification::make()
+                            ->title(__('lang.transactions_deleted_successfully'))
+                            ->body(__('lang.deleted_count_transactions', ['count' => $count]))
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
