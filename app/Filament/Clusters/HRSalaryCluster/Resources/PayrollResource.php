@@ -214,6 +214,7 @@ class PayrollResource extends Resource
                     ]);
 
                 // Now update the PayrollRun status (this triggers the Observer)
+                // Note: Installments are marked as paid in PayrollRunObserver
                 $record->update([
                     'status' => PayrollRun::STATUS_APPROVED,
                     'approved_by' => auth()->id(),

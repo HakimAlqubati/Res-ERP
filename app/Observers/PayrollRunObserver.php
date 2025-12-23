@@ -2,6 +2,8 @@
 
 namespace App\Observers;
 
+use App\Models\AdvanceRequest;
+use App\Models\EmployeeAdvanceInstallment;
 use App\Models\PayrollRun;
 use App\Services\Financial\PayrollFinancialSyncService;
 use Illuminate\Support\Facades\Log;
@@ -10,6 +12,7 @@ use Illuminate\Support\Facades\Log;
  * Observer for PayrollRun model.
  * 
  * Automatically syncs approved/completed payroll runs with the financial system.
+ * Also marks advance installments as paid when payroll is approved.
  */
 class PayrollRunObserver
 {
@@ -21,6 +24,7 @@ class PayrollRunObserver
      * Handle the PayrollRun "updated" event.
      * 
      * When status changes to approved or completed, sync with financial system.
+     * When status changes to approved, mark advance installments as paid.
      */
     public function updated(PayrollRun $payrollRun): void
     {
@@ -32,13 +36,19 @@ class PayrollRunObserver
         $newStatus = $payrollRun->status;
         $oldStatus = $payrollRun->getOriginal('status');
 
-        // Only sync when status changes TO approved or completed
+        // Only process when status changes TO approved or completed
         if (in_array($newStatus, [PayrollRun::STATUS_APPROVED, PayrollRun::STATUS_COMPLETED])) {
-            // Don't re-sync if already in one of these statuses
+            // Don't re-process if already in one of these statuses
             if (in_array($oldStatus, [PayrollRun::STATUS_APPROVED, PayrollRun::STATUS_COMPLETED])) {
                 return;
             }
 
+            // Mark advance installments as paid when status becomes APPROVED
+            if ($newStatus === PayrollRun::STATUS_APPROVED) {
+                $this->markInstallmentsAsPaid($payrollRun);
+            }
+
+            // Sync with financial system
             try {
                 $result = $this->syncService->syncPayrollRun($payrollRun->id);
 
@@ -72,6 +82,93 @@ class PayrollRunObserver
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to delete PayrollRun financial transactions', [
+                'payroll_run_id' => $payrollRun->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Mark all scheduled advance installments as paid for a PayrollRun.
+     * Also updates the related AdvanceRequest remaining_total and paid_installments.
+     */
+    protected function markInstallmentsAsPaid(PayrollRun $payrollRun): void
+    {
+        try {
+            // Get all employee IDs in this payroll run
+            $employeeIds = $payrollRun->payrolls()->pluck('employee_id')->toArray();
+
+            if (empty($employeeIds)) {
+                return;
+            }
+
+            // Get the period boundaries
+            $periodStart = sprintf('%04d-%02d-01', $payrollRun->year, $payrollRun->month);
+            $periodEnd = date('Y-m-t', strtotime($periodStart));
+
+            // Find all unpaid installments for these employees in this period
+            $installments = EmployeeAdvanceInstallment::query()
+                ->whereIn('employee_id', $employeeIds)
+                ->where('is_paid', false)
+                ->where('status', EmployeeAdvanceInstallment::STATUS_SCHEDULED)
+                ->whereBetween('due_date', [$periodStart, $periodEnd])
+                ->get();
+
+            if ($installments->isEmpty()) {
+                return;
+            }
+
+            // Group installments by advance_request_id to update AdvanceRequest later
+            $advanceRequestUpdates = [];
+
+            foreach ($installments as $installment) {
+                // Find the payroll for this employee in this run
+                $payroll = $payrollRun->payrolls()
+                    ->where('employee_id', $installment->employee_id)
+                    ->first();
+
+                // Mark installment as paid
+                $installment->markPaid(
+                    payrollId: $payroll?->id,
+                    paidById: $payrollRun->approved_by,
+                    paymentMethod: EmployeeAdvanceInstallment::PAYMENT_METHOD_PAYROLL,
+                    when: $payrollRun->approved_at ?? now()
+                );
+
+                // Collect advance_request_id for batch update
+                if ($installment->advance_request_id) {
+                    if (!isset($advanceRequestUpdates[$installment->advance_request_id])) {
+                        $advanceRequestUpdates[$installment->advance_request_id] = [
+                            'count' => 0,
+                            'amount' => 0.0,
+                        ];
+                    }
+                    $advanceRequestUpdates[$installment->advance_request_id]['count']++;
+                    $advanceRequestUpdates[$installment->advance_request_id]['amount'] += (float) $installment->installment_amount;
+                }
+            }
+
+            // Update AdvanceRequest remaining_total and paid_installments
+            foreach ($advanceRequestUpdates as $advanceRequestId => $data) {
+                $advanceRequest = AdvanceRequest::find($advanceRequestId);
+                if ($advanceRequest) {
+                    $advanceRequest->increment('paid_installments', $data['count']);
+                    $advanceRequest->decrement('remaining_total', $data['amount']);
+
+                    // Ensure remaining_total doesn't go below 0
+                    if ($advanceRequest->remaining_total < 0) {
+                        $advanceRequest->update(['remaining_total' => 0]);
+                    }
+                }
+            }
+
+            Log::info('Advance installments marked as paid for PayrollRun', [
+                'payroll_run_id' => $payrollRun->id,
+                'installments_count' => $installments->count(),
+                'advance_requests_updated' => count($advanceRequestUpdates),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to mark advance installments as paid', [
                 'payroll_run_id' => $payrollRun->id,
                 'error' => $e->getMessage(),
             ]);
