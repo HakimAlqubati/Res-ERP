@@ -389,42 +389,35 @@ class EmployeeApplicationV2 extends Model implements Auditable
     public function getDetailMonthlyDeductionAmountAttribute()
     {
         if ($this->application_type_id == 3) {
-            // Decode the details JSON to an associative array
-            $details = json_decode($this->details, true);
-            // Return the detail_monthly_deduction_amount if it exists
-            return $details['detail_monthly_deduction_amount'] ?? null;
+            return $this->advanceRequest->monthly_deduction_amount;
         }
         return null;
     }
     public function getDetailAdvanceAmountAttribute()
     {
         if ($this->application_type_id == 3) {
-            $details = json_decode($this->details, true);
-            return $details['detail_advance_amount'] ?? null;
+            return $this->advanceRequest->advance_amount;
         }
         return null;
     }
     public function getDetailDeductionStartsFromAttribute()
     {
         if ($this->application_type_id == 3) {
-            $details = json_decode($this->details, true);
-            return $details['detail_deduction_starts_from'] ?? null;
+            return $this->advanceRequest->deduction_starts_from;
         }
         return null;
     }
     public function getDetailDeductionEndsAtAttribute()
     {
         if ($this->application_type_id == 3) {
-            $details = json_decode($this->details, true);
-            return $details['detail_deduction_ends_at'] ?? null;
+            return $this->advanceRequest->deduction_ends_at;
         }
         return null;
     }
     public function getDetailNumberOfMonthsOfDeductionAttribute()
     {
         if ($this->application_type_id == 3) {
-            $details = json_decode($this->details, true);
-            return $details['detail_number_of_months_of_deduction'] ?? null;
+            return $this->advanceRequest->number_of_months_of_deduction;
         }
         return null;
     }

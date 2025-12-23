@@ -940,4 +940,36 @@ return [
   'yes_delete_all' => 'نعم، احذف الكل',
   'transactions_deleted_successfully' => 'تم حذف المعاملات بنجاح',
   'deleted_count_transactions' => 'تم حذف :count معاملة مالية',
+
+  // ===========================================
+  // Advance Report
+  // ===========================================
+  'paid_installments' => 'الأقساط المسددة',
+  'installments' => 'الأقساط',
+  'installment_details' => 'تفاصيل الأقساط',
+  'deduction_starts' => 'بداية الخصم',
+  'deduction_ends' => 'نهاية الخصم',
+  'advance_amount' => 'مبلغ السلفة',
+  'monthly_deduction' => 'الخصم الشهري',
+  'sequence' => 'التسلسل',
+  'payment_status' => 'حالة السداد',
+  'fully_paid' => 'مسدد بالكامل',
+  'partially_paid' => 'مسدد جزئياً',
+  'not_started' => 'لم يبدأ',
+  'min_amount' => 'أقل مبلغ',
+  'max_amount' => 'أعلى مبلغ',
+  'overdue' => 'متأخر',
+
+  // ===========================================
+  // Early Installment Payment
+  // ===========================================
+  'early_installment_payment' => 'سداد قسط مبكر',
+  'early_installment_payment_description' => 'اختر الأقساط المستقبلية التي تريد سدادها مع هذا الراتب. سيتم خصمها من صافي الراتب عند الموافقة.',
+  'future_installments' => 'الأقساط المستقبلية',
+  'select_installments_to_pay' => 'اختر الأقساط التي تريد سدادها:',
+  'add_to_payroll' => 'إضافة للراتب',
+  'early_installments_added' => 'تم إضافة :count قسط للراتب',
+  'no_employees_in_payroll' => 'لا يوجد موظفين في هذا الراتب',
+  'no_future_installments' => 'لا توجد أقساط مستقبلية للسداد',
+  'no_installments_selected' => 'لم يتم اختيار أي أقساط',
 ];

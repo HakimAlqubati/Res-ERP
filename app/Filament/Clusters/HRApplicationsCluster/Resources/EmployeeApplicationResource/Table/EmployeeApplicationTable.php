@@ -98,11 +98,11 @@ class EmployeeApplicationTable
         if ($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[3]) {
             $columns[] = TextColumn::make('detail_advance_amount')
                 ->label(__('lang.advance_amount'))
-                ->money('sar');
+                ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state));
 
             $columns[] = TextColumn::make('detail_monthly_deduction_amount')
                 ->label(__('lang.monthly_deduction'))
-                ->money('sar');
+                ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state));
 
             $columns[] = TextColumn::make('detail_deduction_starts_from')
                 ->label(__('lang.deduction_starts'))
@@ -113,7 +113,7 @@ class EmployeeApplicationTable
                 ->date();
 
             $columns[] = TextColumn::make('detail_number_of_months_of_deduction')
-                ->label(__('lang.months'));
+                ->label(__('lang.months'))->alignCenter();
         }
 
         // أعمدة خاصة بطلب بصمة الحضور (Missed check-in)

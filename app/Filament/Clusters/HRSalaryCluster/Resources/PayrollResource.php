@@ -8,13 +8,18 @@ use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\RelationMana
 use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\RelationManagers\PayrollsRelationManager;
 use App\Filament\Pages\RunPayroll;
 use App\Filament\Tables\Columns\SoftDeleteColumn;
+use App\Enums\HR\Payroll\SalaryTransactionType;
+use App\Models\AdvanceRequest;
 use App\Models\Branch;
+use App\Models\EmployeeAdvanceInstallment;
 use App\Models\Payroll;
 use App\Models\PayrollRun;
+use App\Models\SalaryTransaction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -168,8 +173,9 @@ class PayrollResource extends Resource
 
 
             ])
-            ->actions([
+            ->recordActions([
                 ViewAction::make(),
+                self::earlyInstallmentPaymentAction(),
                 self::approveAction(),
             ])
             ->bulkActions([
@@ -214,6 +220,7 @@ class PayrollResource extends Resource
                     ]);
 
                 // Now update the PayrollRun status (this triggers the Observer)
+                // Note: Installments are marked as paid in PayrollRunObserver
                 $record->update([
                     'status' => PayrollRun::STATUS_APPROVED,
                     'approved_by' => auth()->id(),
@@ -223,6 +230,173 @@ class PayrollResource extends Resource
                 \Filament\Notifications\Notification::make()
                     ->title(__('Payroll Approved'))
                     ->body(__('Payroll has been approved and synced with financial system.'))
+                    ->success()
+                    ->send();
+            });
+    }
+
+    /**
+     * Early Installment Payment Action for PayrollRun table.
+     * 
+     * Allows paying future advance installments while payroll is pending.
+     * Creates SalaryTransaction records that will be processed when payroll is approved.
+     */
+    public static function earlyInstallmentPaymentAction(): Action
+    {
+        return Action::make('earlyPayment')
+            ->button()
+            ->label(__('lang.early_installment_payment'))
+            ->icon('heroicon-o-banknotes')
+            ->color('warning')
+            ->visible(fn(PayrollRun $record): bool => $record->status === PayrollRun::STATUS_PENDING)
+            ->schema(function (PayrollRun $record) {
+                // Get all employee IDs in this payroll run
+                $employeeIds = $record->payrolls()->pluck('employee_id')->toArray();
+
+                if (empty($employeeIds)) {
+                    return [
+                        \Filament\Forms\Components\Placeholder::make('no_employees')
+                            ->label('')
+                            ->content(__('lang.no_employees_in_payroll')),
+                    ];
+                }
+
+                // Get the current period end date
+                $periodEnd = date('Y-m-t', strtotime(sprintf('%04d-%02d-01', $record->year, $record->month)));
+
+                // Find unpaid future installments (after current period)
+                $installments = EmployeeAdvanceInstallment::query()
+                    ->whereIn('employee_id', $employeeIds)
+                    ->where('is_paid', false)
+                    ->where('status', EmployeeAdvanceInstallment::STATUS_SCHEDULED)
+                    ->where('due_date', '>', $periodEnd)
+                    ->with(['employee:id,name,employee_no', 'advanceRequest:id,code,advance_amount'])
+                    ->orderBy('employee_id')
+                    ->orderBy('due_date')
+                    ->get();
+
+                if ($installments->isEmpty()) {
+                    return [
+                        \Filament\Forms\Components\Placeholder::make('no_installments')
+                            ->label('')
+                            ->content(__('lang.no_future_installments')),
+                    ];
+                }
+
+                // Build options for checkbox list
+                $options = $installments->mapWithKeys(function ($inst) {
+                    $label = sprintf(
+                        '%s (%s) - %s - %s - %s',
+                        $inst->employee->name ?? 'N/A',
+                        $inst->employee->employee_no ?? 'N/A',
+                        $inst->advanceRequest->code ?? 'N/A',
+                        formatMoneyWithCurrency($inst->installment_amount),
+                        $inst->due_date?->format('Y-m-d') ?? 'N/A'
+                    );
+                    return [$inst->id => $label];
+                })->toArray();
+
+                return [
+                    \Filament\Forms\Components\Placeholder::make('info')
+                        ->label('')
+                        ->content(__('lang.select_installments_to_pay')),
+                    CheckboxList::make('installment_ids')
+                        ->label(__('lang.future_installments'))
+                        ->options($options)
+                        ->required()
+                        ->columns(1)
+                        ->bulkToggleable()
+                        ->descriptions(
+                            $installments->mapWithKeys(function ($inst) {
+                                return [$inst->id => __('lang.sequence') . ': ' . $inst->sequence];
+                            })->toArray()
+                        ),
+                ];
+            })
+            ->modalHeading(__('lang.early_installment_payment'))
+            ->modalDescription(__('lang.early_installment_payment_description'))
+            ->modalSubmitActionLabel(__('lang.add_to_payroll'))
+            ->action(function (PayrollRun $record, array $data): void {
+                $installmentIds = $data['installment_ids'] ?? [];
+
+                if (empty($installmentIds)) {
+                    \Filament\Notifications\Notification::make()
+                        ->title(__('lang.error'))
+                        ->body(__('lang.no_installments_selected'))
+                        ->danger()
+                        ->send();
+                    return;
+                }
+
+                $installments = EmployeeAdvanceInstallment::whereIn('id', $installmentIds)
+                    ->with(['advanceRequest:id,code'])
+                    ->get();
+
+                $periodEnd = \Carbon\Carbon::create($record->year, $record->month, 1)->endOfMonth();
+                $createdCount = 0;
+
+                foreach ($installments as $installment) {
+                    // Find the payroll for this employee
+                    $payroll = $record->payrolls()
+                        ->where('employee_id', $installment->employee_id)
+                        ->first();
+
+                    if (!$payroll) {
+                        continue;
+                    }
+
+                    // Check if SalaryTransaction already exists for this installment
+                    $exists = SalaryTransaction::where('reference_type', EmployeeAdvanceInstallment::class)
+                        ->where('reference_id', $installment->id)
+                        ->where('payroll_run_id', $record->id)
+                        ->exists();
+
+                    if ($exists) {
+                        continue;
+                    }
+
+                    // Build description
+                    $desc = __('lang.early_installment_payment') . ' (' .
+                        ($installment->advanceRequest->code ?? 'N/A') . ', ' .
+                        __('lang.sequence') . ' ' . $installment->sequence . ', ' .
+                        __('lang.due_date') . ' ' . $installment->due_date?->format('Y-m-d') . ')';
+
+                    // Create SalaryTransaction
+                    SalaryTransaction::create([
+                        'employee_id' => $installment->employee_id,
+                        'payroll_id' => $payroll->id,
+                        'payroll_run_id' => $record->id,
+                        'date' => $periodEnd->toDateString(),
+                        'amount' => $installment->installment_amount,
+                        'currency' => SalaryTransaction::defaultCurrency(),
+                        'type' => SalaryTransactionType::TYPE_DEDUCTION->value,
+                        'sub_type' => 'early_advance_installment',
+                        'reference_type' => EmployeeAdvanceInstallment::class,
+                        'reference_id' => $installment->id,
+                        'description' => $desc,
+                        'operation' => SalaryTransaction::OPERATION_SUB,
+                        'year' => $record->year,
+                        'month' => $record->month,
+                        'created_by' => auth()->id(),
+                        'status' => SalaryTransaction::STATUS_PENDING,
+                    ]);
+
+                    // Update payroll total_deductions
+                    $payroll->increment('total_deductions', $installment->installment_amount);
+                    $payroll->decrement('net_salary', $installment->installment_amount);
+
+                    $createdCount++;
+                }
+
+                // Update PayrollRun totals
+                $record->refresh();
+                $record->total_deductions = $record->payrolls()->sum('total_deductions');
+                $record->total_net = $record->payrolls()->sum('net_salary');
+                $record->save();
+
+                \Filament\Notifications\Notification::make()
+                    ->title(__('lang.success'))
+                    ->body(__('lang.early_installments_added', ['count' => $createdCount]))
                     ->success()
                     ->send();
             });

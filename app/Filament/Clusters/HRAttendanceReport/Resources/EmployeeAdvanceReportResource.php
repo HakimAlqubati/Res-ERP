@@ -2,175 +2,260 @@
 
 namespace App\Filament\Clusters\HRAttendanceReport\Resources;
 
+use App\Filament\Clusters\HRAttendanceReport;
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Actions\Action;
-use App\Filament\Clusters\HRAttendanceReport;
 use App\Filament\Clusters\HRTaskReport;
+use App\Models\AdvanceRequest;
 use App\Models\Branch;
 use App\Models\Employee;
-use App\Models\EmployeeApplication;
 use App\Models\EmployeeApplicationV2;
-use App\Models\Task;
-use App\Models\TaskLog;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\TextInput;
-use Filament\Support\Colors\Color;
 use Filament\Resources\Resource;
-use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\DB;
 
 class EmployeeAdvanceReportResource extends Resource
 {
-    protected static ?string $model = Task::class;
-    protected static ?string $slug = 'employee-advance-report';
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $model = AdvanceRequest::class;
+    // protected static ?string $slug = 'employee-advance-report';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-banknotes';
 
-    protected static ?string $cluster = HRTaskReport::class;
-    protected static ?string $label = 'Employee advance';
-        protected static bool $shouldRegisterNavigation = false;
+    protected static ?string $cluster = HRAttendanceReport::class;
+    protected static ?string $label = 'Employee Advances';
+    protected static ?string $pluralLabel = 'Employee Advances';
 
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 5;
-    
+
     public static function table(Table $table): Table
     {
-
         return $table
             ->paginated([10, 25, 50, 100])
             ->defaultPaginationPageOption(50)
-            ->emptyStateHeading('No data')->striped()
+            ->emptyStateHeading(__('lang.no_data'))
+            ->striped()
             ->columns([
-                TextColumn::make('employee_id')->label('Employee id')->searchable(isGlobal: true)->alignCenter( true)->toggleable(isToggledHiddenByDefault:true),
-                TextColumn::make('employee_no')->label('Emp.No.')->searchable(isGlobal: true)->alignCenter(true)
-                ,
-                
-                TextColumn::make('employee_name')->label('Name')->wrap(true)->limit(15),
-                TextColumn::make('advance_id')->label('Advance id')->alignCenter(true)->toggleable(isToggledHiddenByDefault:true),
-                TextColumn::make('Amount')->label('Amount')->alignCenter(true)
-                ->getStateUsing(function($record){
-                    $employee = Employee::find($record->employee_id);
-                  $advance =  $employee->approved_advance_application->where('id',$record->advance_id)->first()?? null;
-                  
-                  if($advance){
-                        return $advance['details']['detail_advance_amount'] ?? 0;
-                    }
-                })
-                ,
-                
-                TextColumn::make('detail_number_of_months_of_deduction')->alignCenter(true)
-                ->label('#Inst.')
-                ->getStateUsing(function($record){
-                    $employee = Employee::find($record->employee_id);
-                  $advance =  $employee->approved_advance_application->where('id',$record->advance_id)->first()?? null;
-                //   dd($advance['details']); 
-                  if($advance){
-                        return $advance['details']['detail_number_of_months_of_deduction'] ?? 0;
-                    }
-                })
-                ,
-                TextColumn::make('detail_monthly_deduction_amount')
-                ->label('Inst./Amt.')
-                ->alignCenter(true)
-                ->getStateUsing(function($record){
-                    $employee = Employee::find($record->employee_id);
-                  $advance =  $employee->approved_advance_application->where('id',$record->advance_id)->first()?? null;
-                  if($advance){
-                        return $advance['details']['detail_monthly_deduction_amount'] ?? 0;
-                    }
-                })
-                ,
-                TextColumn::make('paid')->alignCenter(true)
-                ->label('#Paid')
-                ->getStateUsing(function($record){
-                  $employee = Employee::find($record->employee_id);
-                  $advance =  $employee->approved_advance_application->where('id',$record->advance_id)->first()?? null;
-                  if($advance){
-                        return $advance['paid']?? null;
-                    }
-                })
-                ,
-                TextColumn::make('Due Date')->alignCenter(true)
-                ->getStateUsing(function($record){
-                    $employee = Employee::find($record->employee_id);
-                  $advance =  $employee->approved_advance_application->where('id',$record->advance_id)->first()?? null;
-                //   dd($advance); 
-                  if($advance){
-                        return $advance['details']['detail_deduction_ends_at'] ?? 0;
-                    }
-                })
-                ,
-                
+                TextColumn::make('code')
+                    ->label(__('lang.code'))
+                    ->searchable()->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable()
+                    ->copyable(),
 
+                TextColumn::make('employee.employee_no')
+                    ->label(__('lang.employee_no'))
+                    ->searchable()
+                    ->sortable()
+                    ->alignCenter(),
+
+                TextColumn::make('employee.name')
+                    ->label(__('lang.employee'))
+                    ->searchable()
+                    ->sortable()
+                    ->wrap()
+                    ->limit(20),
+
+                TextColumn::make('advance_amount')
+                    ->label(__('lang.advance_amount'))
+                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
+                    ->sortable(),
+
+                TextColumn::make('number_of_months_of_deduction')
+                    ->label(__('lang.months'))
+                    ->alignCenter()
+                    ->sortable(),
+
+                TextColumn::make('monthly_deduction_amount')
+                    ->label(__('lang.monthly_deduction'))
+                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state)),
+
+                TextColumn::make('paid_installments')
+                    ->label(__('lang.paid_installments'))
+                    ->alignCenter()
+                    ->badge()
+                    ->color('success'),
+
+                TextColumn::make('remaining_total')
+                    ->label(__('lang.remaining'))
+                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
+                    ->alignEnd()
+                    ->color(fn($state) => $state > 0 ? 'danger' : 'success'),
+
+                TextColumn::make('deduction_starts_from')
+                    ->label(__('lang.deduction_starts'))
+                    ->date()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('deduction_ends_at')
+                    ->label(__('lang.deduction_ends'))
+                    ->date()
+                    ->sortable(),
+
+                TextColumn::make('application.status')
+                    ->label(__('lang.status'))
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'approved' => 'success',
+                        'pending' => 'warning',
+                        'rejected' => 'danger',
+                        default => 'gray',
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->deferFilters(true)
             ->filters([
-                        SelectFilter::make('hr_employees.branch_id')->placeholder('Branch')
-                        ->label('Branch')
-                        ->options(Branch::where('active', 1)
-                        ->select('name', 'id')->get()->pluck('name', 'id'))->searchable(),
-                        SelectFilter::make('hr_employees.id')
-                        ->placeholder('Employee')
-                        ->label('Employee')
-                        ->getSearchResultsUsing(fn (string $search): array => Employee::where('name', 'like', "%{$search}%")->limit(5)->pluck('name', 'id')->toArray())
-                            ->getOptionLabelUsing(fn ($value): ?string => Employee::find($value)?->name)
-                        ->searchable(),
-                        
-            ], FiltersLayout::AboveContent)
-            ->recordActions([
-                Action::make('details')->button()
-                
-                ->schema(function ($record) {
-                    // Retrieve installments for the given advance_id
-                    $installments = EmployeeApplicationV2::find($record->advance_id)->advanceInstallments;
-        
-                  
-            // Define the Repeater component
-            return [
-                Repeater::make('installments')->label('')
-                    ->schema([
-                        TextInput::make('installment_amount')
-                            
-                            ->disabled(),
+                SelectFilter::make('branch_id')
+                    ->label(__('lang.branch'))
+                    ->options(fn() => Branch::where('active', 1)->pluck('name', 'id'))
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['value'],
+                            fn(Builder $query, $value): Builder => $query->whereHas(
+                                'employee',
+                                fn(Builder $q) => $q->where('branch_id', $value)
+                            )
+                        );
+                    })
+                    ->searchable()
+                    ->preload(),
 
-                        DatePicker::make('due_date')
-                            
-                            ->disabled(),
+                SelectFilter::make('employee_id')
+                    ->label(__('lang.employee'))
+                    ->relationship('employee', 'name')
+                    ->searchable()
+                    ->preload(),
 
-                        Checkbox::make('is_paid')
-                            
-                            ->disabled()->inline(false),
+                SelectFilter::make('payment_status')
+                    ->label(__('lang.payment_status'))
+                    ->options(AdvanceRequest::getPaymentStatusOptions())
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['value'],
+                            fn(Builder $query, $value) => $query->paymentStatus($value)
+                        );
+                    }),
 
-                        DatePicker::make('paid_date')
-                            
-                            ->disabled(),
+                \Filament\Tables\Filters\Filter::make('deduction_period')
+                    ->form([
+                        DatePicker::make('deduction_from')
+                            ->label(__('lang.deduction_starts')),
+                        DatePicker::make('deduction_to')
+                            ->label(__('lang.deduction_ends')),
                     ])
-                    ->defaultItems(count($installments)) // Set default rows based on installment count
-                   
-                    ->columns(4) // Number of columns per row
-                    ->default(array_map(function ($installment) {
-                        // dd($installment['installment_amount']);
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['deduction_from'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('deduction_starts_from', '>=', $date)
+                            )
+                            ->when(
+                                $data['deduction_to'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('deduction_ends_at', '<=', $date)
+                            );
+                    })
+                    ->columns(2),
+
+                \Filament\Tables\Filters\Filter::make('amount_range')
+                    ->form([
+                        TextInput::make('min_amount')
+                            ->label(__('lang.min_amount'))
+                            ->numeric(),
+                        TextInput::make('max_amount')
+                            ->label(__('lang.max_amount'))
+                            ->numeric(),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['min_amount'],
+                                fn(Builder $query, $amount): Builder => $query->where('advance_amount', '>=', $amount)
+                            )
+                            ->when(
+                                $data['max_amount'],
+                                fn(Builder $query, $amount): Builder => $query->where('advance_amount', '<=', $amount)
+                            );
+                    })
+                    ->columns(2),
+            ], FiltersLayout::Modal)
+            ->filtersFormColumns(2)
+            ->recordActions([
+                Action::make('details')
+                    ->label(__('lang.installments'))
+                    ->button()
+                    ->icon('heroicon-o-list-bullet')
+                    ->color('info')
+                    ->schema(function ($record) {
+                        $installments = $record->installments()->orderBy('sequence')->get();
+
                         return [
-                            'installment_amount' => $installment['installment_amount'],
-                            'due_date' => $installment['due_date'],
-                            'is_paid' => (bool) $installment['is_paid'],
-                            'paid_date' => $installment['paid_date'],
+                            Repeater::make('installments')
+                                ->label('')
+                                ->table([
+                                    TableColumn::make(__('lang.sequence'))
+                                        ->width('8%'),
+                                    TableColumn::make(__('lang.amount'))
+                                        ->width('18%'),
+                                    TableColumn::make(__('lang.due_date'))
+                                        ->width('18%'),
+                                    TableColumn::make(__('lang.paid'))
+                                        ->width('10%'),
+                                    TableColumn::make(__('lang.paid_date'))
+                                        ->width('18%'),
+                                    TableColumn::make(__('lang.status'))
+                                        ->width('15%'),
+                                ])
+                                ->schema([
+                                    TextInput::make('sequence')
+                                        ->label('#')
+                                        ->extraInputAttributes(['class' => 'text-center'])
+                                        ->disabled(),
+                                    TextInput::make('installment_amount')
+                                        ->label(__('lang.amount'))
+                                        ->disabled(),
+                                    DatePicker::make('due_date')
+                                        ->label(__('lang.due_date'))
+                                        ->disabled(),
+                                    TextInput::make('is_paid')
+                                        ->label(__('lang.paid'))
+                                        ->disabled()
+                                        ->extraInputAttributes(['class' => 'text-center']),
+                                    DatePicker::make('paid_date')
+                                        ->label(__('lang.paid_date'))
+                                        ->extraInputAttributes(['class' => 'text-center'])
+                                        ->disabled(),
+                                    TextInput::make('status')
+                                        ->label(__('lang.status'))
+                                        ->extraInputAttributes(['class' => 'text-center'])
+                                        ->disabled(),
+                                ])
+                                ->defaultItems(count($installments))
+                                ->columns(6)
+                                ->default($installments->map(fn($inst) => [
+                                    'sequence' => $inst->sequence,
+                                    'installment_amount' => number_format($inst->installment_amount, 2),
+                                    'due_date' => $inst->due_date?->format('Y-m-d'),
+                                    'is_paid' => $inst->is_paid ? '✓' : '✗',
+                                    'paid_date' => $inst->paid_date?->format('Y-m-d'),
+                                    'status' => $inst->status,
+                                ])->toArray()),
                         ];
-                    }, $installments->toArray())),
-            ];
-                })->modalHeading('Installment Details')
-                ->disabledForm()->modalSubmitAction(false)->modalCancelAction(false)
+                    })
+                    ->modalHeading(__('lang.installment_details'))
+                    ->disabledForm()
+                    ->modalSubmitAction(false)
+                    ->modalCancelAction(false)
             ])
-            ;
+            ->defaultSort('created_at', 'desc');
     }
- 
+
     public static function canCreate(): bool
     {
         return false;
@@ -185,34 +270,15 @@ class EmployeeAdvanceReportResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = Employee::select(
-            'hr_employees.branch_id as branch_id','hr_employees.id as employee_id','hr_employees.employee_no as employee_no',
-            'hr_employees.name as employee_name',
-            'hr_employee_applications.id as advance_id',
-            // DB::raw('SUM(TIME_TO_SEC(hr_task_logs.total_hours_taken)) as total_spent_seconds')
-
-        )->join('hr_employee_applications',  'hr_employees.id','=','hr_employee_applications.employee_id')
-        ->where('hr_employee_applications.application_type_id',3)
-        ->where('hr_employee_applications.status',EmployeeApplicationV2::STATUS_APPROVED)
-
-        // ->where('hr_task_logs.log_type', TaskLog::TYPE_MOVED)
-        // ->whereJsonContains('hr_task_logs.details->to', Task::STATUS_CLOSED, '!=')
-        ;
-
-        $query = $query->groupBy('hr_employees.id','hr_employees.branch_id','hr_employees.employee_no','hr_employees.name','hr_employee_applications.id');
-
-        // dd($query->toSql());
-        return $query;
-        // return $query->orderBy('hr_tasks.id','desc');
-        
-
+        return AdvanceRequest::query()
+            ->with(['employee:id,name,employee_no,branch_id', 'employee.branch:id,name', 'application:id,status'])
+            ->whereHas('application', function ($query) {
+                $query->where('status', EmployeeApplicationV2::STATUS_APPROVED);
+            });
     }
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isFinanceManager()) {
-            return true;
-        }
-        return false;
+        return isSuperAdmin() || isSystemManager() || isFinanceManager();
     }
 }

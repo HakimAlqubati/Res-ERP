@@ -10,6 +10,7 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
@@ -138,7 +139,8 @@ class SalaryTransactionsTable
                         'approved' => __('Approved'),
                         'rejected' => __('Rejected'),
                     ]),
-            ])
+            ], FiltersLayout::Modal)
+            ->filtersFormColumns(4)
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make()->visible(fn($record) => $record->status === SalaryTransaction::STATUS_PENDING),

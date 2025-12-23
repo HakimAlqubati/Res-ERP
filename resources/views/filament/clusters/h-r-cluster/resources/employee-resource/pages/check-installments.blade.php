@@ -25,7 +25,7 @@
                         {{ $item->due_date }}
                     </td>
                     <td>
-                        {{ $item->is_paid }}
+                        {{ $item->is_paid ? 'Paid' : 'Not Paid' }}
                     </td>
 
                 </tr>
