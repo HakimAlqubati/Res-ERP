@@ -111,28 +111,7 @@ class FinancialCategoriesTable
                 EditAction::make(),
                 DeleteAction::make(),
                 ActionGroup::make([
-                    Action::make('forceDeleteTransactions')
-                        ->label(__('lang.force_delete_transactions'))
-                        ->icon('heroicon-o-trash')
-                        ->button()
-                        ->color('danger')
-                        ->requiresConfirmation()
-                        ->modalHeading(__('lang.force_delete_transactions'))
-                        ->modalDescription(__('lang.confirm_force_delete_transactions'))
-                        ->modalSubmitActionLabel(__('lang.yes_delete_all'))
-                        ->visible(fn($record) => $record->transactions()->count() > 0 && isSuperAdmin())
-                        ->databaseTransaction()
-                        ->action(function ($record) {
-                            $count = $record->transactions()->count();
-                            $record->transactions()->forceDelete();
-
-                            Notification::make()
-                                ->title(__('lang.transactions_deleted_successfully'))
-                                ->body(__('lang.deleted_count_transactions', ['count' => $count]))
-                                ->success()
-                                ->send();
-                        }),
-
+                    static::forceDeleteTransactions(),
                 ])
             ])
             ->toolbarActions([
@@ -149,5 +128,29 @@ class FinancialCategoriesTable
                     RestoreBulkAction::make(),
                 ]),
             ]);
+    }
+    public static function forceDeleteTransactions()
+    {
+        return   Action::make('forceDeleteTransactions')
+            ->label(__('lang.force_delete_transactions'))
+            ->icon('heroicon-o-trash')
+            ->button()
+            ->color('danger')
+            ->requiresConfirmation()
+            ->modalHeading(__('lang.force_delete_transactions'))
+            ->modalDescription(__('lang.confirm_force_delete_transactions'))
+            ->modalSubmitActionLabel(__('lang.yes_delete_all'))
+            ->visible(fn($record) => $record->transactions()->count() > 0 && isSuperAdmin())
+            ->databaseTransaction()
+            ->action(function ($record) {
+                $count = $record->transactions()->count();
+                $record->transactions()->forceDelete();
+
+                Notification::make()
+                    ->title(__('lang.transactions_deleted_successfully'))
+                    ->body(__('lang.deleted_count_transactions', ['count' => $count]))
+                    ->success()
+                    ->send();
+            });
     }
 }
