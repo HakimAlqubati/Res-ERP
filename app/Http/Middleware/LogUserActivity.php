@@ -4,53 +4,81 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Activitylog\Facades\Activity;
 
 class LogUserActivity
 {
-    public function handle(Request $request, Closure $next)
+    /**
+     * المسار الحرج: نمرر الطلب بأسرع ما يمكن
+     */
+    public function handle(Request $request, Closure $next): Response
     {
-        $response = $next($request);
+        return $next($request);
+    }
 
-        // لا تتبع إذا لم يكن المستخدم مسجلاً
+    /**
+     * المعالجة الخلفية: التسجيل يتم بعد إغلاق الاتصال مع المستخدم
+     */
+    public function terminate(Request $request, Response $response): void
+    {
+        // 1. التحقق السريع
         if (!Auth::check()) {
-            return $response;
+            return;
         }
 
-        // تجاهل طلبات livewire التلقائية التي لا تحتوي على أي calls أو updates
-        if ($request->is('livewire/update')) {
-            $components = $request->input('components', []);
-            if (
-                count($components) === 1 &&
-                empty($components[0]['updates']) &&
-                empty($components[0]['calls'])
-            ) {
-                return $response;
-            }
+        // 2. تجاهل تحديثات Livewire الفارغة (Logic Optimized)
+        if ($this->shouldIgnoreLivewire($request)) {
+            return;
         }
 
+        // 3. تجهيز البيانات (بدون تعطيل المستخدم)
         $user = Auth::user();
 
-        // حد أقصى 100 سجل لكل مستخدم
-        $maxLogsPerUser = 100;
+        // تنظيف البيانات الحساسة والثقيلة
+        $requestData = $this->prepareRequestData($request);
 
-        $existingLogs = \Spatie\Activitylog\Models\Activity::where('causer_id', $user->id)
-            ->orderBy('created_at', 'asc')
-            ->limit(100)
-            ->get();
+        // 4. تسجيل النشاط (كتابة فقط - بدون قراءة أو حذف)
+        Activity::causedBy($user)
+            ->withProperties([
+                'url' => $request->fullUrl(),
+                'method' => $request->method(),
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'request_data' => $requestData,
+            ])
+            ->tap(function (\Spatie\Activitylog\Models\Activity $activity) use ($user) {
+                $activity->user_name = $user->name; // Null safe operator not needed if Auth::check passed
+            })
+            ->log("User visited: {$request->path()}");
+    }
 
-        if ($existingLogs->count() >= $maxLogsPerUser) {
-            $logsToDelete = $existingLogs->take($existingLogs->count() - $maxLogsPerUser + 1);
-            \Spatie\Activitylog\Models\Activity::whereIn('id', $logsToDelete->pluck('id'))->delete();
+    private function shouldIgnoreLivewire(Request $request): bool
+    {
+        if (!$request->is('livewire/update')) {
+            return false;
         }
 
-        // معالجة بيانات الطلب وفك snapshot إن وُجد
-        $requestData = collect($request->except(['password', 'token', '_token']))
+        $components = $request->input('components', []);
+
+        // Early return for performance
+        if (empty($components)) return true;
+
+        return count($components) === 1 &&
+            empty($components[0]['updates']) &&
+            empty($components[0]['calls']);
+    }
+
+    private function prepareRequestData(Request $request): array
+    {
+        return collect($request->except(['password', 'password_confirmation', 'token', '_token']))
             ->map(function ($value, $key) {
+                // معالجة الـ Snapshots فقط إذا كانت ضرورية جداً
+                // ملاحظة: فك تشفير الـ Snapshot مكلف، تأكد من حاجتك له في اللوج
                 if ($key === 'components' && is_array($value)) {
                     return collect($value)->map(function ($component) {
-                        if (isset($component['snapshot'])) {
+                        if (isset($component['snapshot']) && is_string($component['snapshot'])) {
                             $decoded = json_decode($component['snapshot'], true);
                             if (json_last_error() === JSON_ERROR_NONE) {
                                 $component['snapshot'] = $decoded;
@@ -61,21 +89,5 @@ class LogUserActivity
                 }
                 return $value;
             })->toArray();
-
-        // تسجيل النشاط
-        Activity::causedBy($user)
-            ->withProperties([
-                'url' => $request->fullUrl(),
-                'method' => $request->method(),
-                'ip' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'request_data' => $requestData,
-            ])
-            ->tap(function (\Spatie\Activitylog\Models\Activity $activity) use ($user) {
-                $activity->user_name = $user?->name;
-            })
-            ->log("User visited/requested: {$request->method()} {$request->path()}");
-
-        return $response;
     }
 }
