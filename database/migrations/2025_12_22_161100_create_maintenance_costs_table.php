@@ -14,7 +14,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        return;
         Schema::create('hr_maintenance_costs', function (Blueprint $table) {
             $table->id();
 
