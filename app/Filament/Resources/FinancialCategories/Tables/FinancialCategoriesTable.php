@@ -17,6 +17,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\IconColumn;
 use App\Models\FinancialCategory;
+use Filament\Actions\ActionGroup;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Notifications\Notification;
@@ -109,25 +110,30 @@ class FinancialCategoriesTable
             ->recordActions([
                 EditAction::make(),
                 DeleteAction::make(),
-                Action::make('forceDeleteTransactions')
-                    ->label(__('lang.force_delete_transactions'))
-                    ->icon('heroicon-o-trash')
-                    ->color('danger')
-                    ->requiresConfirmation()
-                    ->modalHeading(__('lang.force_delete_transactions'))
-                    ->modalDescription(__('lang.confirm_force_delete_transactions'))
-                    ->modalSubmitActionLabel(__('lang.yes_delete_all'))
-                    ->visible(fn($record) => $record->transactions()->count() > 0 && isSuperAdmin())
-                    ->action(function ($record) {
-                        $count = $record->transactions()->count();
-                        $record->transactions()->forceDelete();
+                ActionGroup::make([
+                    Action::make('forceDeleteTransactions')
+                        ->label(__('lang.force_delete_transactions'))
+                        ->icon('heroicon-o-trash')
+                        ->button()
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading(__('lang.force_delete_transactions'))
+                        ->modalDescription(__('lang.confirm_force_delete_transactions'))
+                        ->modalSubmitActionLabel(__('lang.yes_delete_all'))
+                        ->visible(fn($record) => $record->transactions()->count() > 0 && isSuperAdmin())
+                        ->databaseTransaction()
+                        ->action(function ($record) {
+                            $count = $record->transactions()->count();
+                            $record->transactions()->forceDelete();
 
-                        Notification::make()
-                            ->title(__('lang.transactions_deleted_successfully'))
-                            ->body(__('lang.deleted_count_transactions', ['count' => $count]))
-                            ->success()
-                            ->send();
-                    }),
+                            Notification::make()
+                                ->title(__('lang.transactions_deleted_successfully'))
+                                ->body(__('lang.deleted_count_transactions', ['count' => $count]))
+                                ->success()
+                                ->send();
+                        }),
+
+                ])
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
