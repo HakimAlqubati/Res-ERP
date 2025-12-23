@@ -36,7 +36,7 @@ class EmployeeAdvanceReportResource extends Resource
 
     protected static ?string $cluster = HRTaskReport::class;
     protected static ?string $label = 'Employee advance';
-        protected static bool $shouldRegisterNavigation = false;
+        // protected static bool $shouldRegisterNavigation = false;
 
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 5;

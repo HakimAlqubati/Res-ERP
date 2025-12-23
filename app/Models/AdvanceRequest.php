@@ -40,7 +40,12 @@ class AdvanceRequest extends Model
     }
     public function installments()
     {
-        return $this->hasMany(EmployeeAdvanceInstallment::class, 'transaction_id');
+        return $this->hasMany(EmployeeAdvanceInstallment::class, 'advance_request_id');
+    }
+
+    public function application()
+    {
+        return $this->belongsTo(EmployeeApplicationV2::class, 'application_id');
     }
     // at top of AdvanceRequest.php
     public static function createInstallments(
@@ -48,14 +53,21 @@ class AdvanceRequest extends Model
         $totalAmount,
         $numberOfMonths,
         string|\DateTimeInterface $startMonth,
-        $applicationId
+        $applicationId,
+        ?int $advanceRequestId = null
     ) {
         if ($numberOfMonths <= 0 || $totalAmount <= 0) return;
 
-        DB::transaction(function () use ($employeeId, $totalAmount, $numberOfMonths, $startMonth, $applicationId) {
+        DB::transaction(function () use ($employeeId, $totalAmount, $numberOfMonths, $startMonth, $applicationId, $advanceRequestId) {
             // prevent duplicates for same application
             if (EmployeeAdvanceInstallment::where('application_id', $applicationId)->exists()) {
                 return;
+            }
+
+            // Get the advance_request_id if not provided
+            if (!$advanceRequestId) {
+                $advanceRequest = static::where('application_id', $applicationId)->first();
+                $advanceRequestId = $advanceRequest?->id;
             }
 
             $base = floor(($totalAmount / $numberOfMonths) * 100) / 100;   // 2-dec
@@ -66,15 +78,20 @@ class AdvanceRequest extends Model
 
             for ($i = 0; $i < $numberOfMonths; $i++) {
                 $slice = ($i === $numberOfMonths - 1) ? $last : $base;
+                $dueDate = (clone $cursor)->endOfMonth();
 
                 EmployeeAdvanceInstallment::create([
                     'employee_id'        => $employeeId,
                     'application_id'     => $applicationId,
-                    'sequence'           => $i + 1, // NEW
+                    'advance_request_id' => $advanceRequestId,
+                    'sequence'           => $i + 1,
                     'installment_amount' => $slice,
-                    'due_date'           => (clone $cursor)->endOfMonth()->toDateString(), 
+                    'original_amount'    => $slice,
+                    'due_date'           => $dueDate->toDateString(),
+                    'year'               => $dueDate->year,
+                    'month'              => $dueDate->month,
                     'is_paid'            => false,
-                    // 'paid_payroll_id' stays null until deduction happens
+                    'status'             => EmployeeAdvanceInstallment::STATUS_SCHEDULED,
                 ]);
 
                 $cursor->addMonth();
@@ -89,7 +106,7 @@ class AdvanceRequest extends Model
             if (empty($model->code)) {
                 $model->code = static::nextCode(); // يولد كود فريد
             }
-           
+
             if (is_null($model->remaining_total)) {
                 $model->remaining_total = (float) $model->advance_amount;
             }
