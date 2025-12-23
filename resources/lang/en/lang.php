@@ -977,4 +977,17 @@ return [
     'min_amount' => 'Minimum Amount',
     'max_amount' => 'Maximum Amount',
     'overdue' => 'Overdue',
+
+    // ===========================================
+    // Early Installment Payment
+    // ===========================================
+    'early_installment_payment' => 'Early Installment Payment',
+    'early_installment_payment_description' => 'Select future installments you want to pay with this payroll. They will be deducted from net salary upon approval.',
+    'future_installments' => 'Future Installments',
+    'select_installments_to_pay' => 'Select installments to pay:',
+    'add_to_payroll' => 'Add to Payroll',
+    'early_installments_added' => ':count installment(s) added to payroll',
+    'no_employees_in_payroll' => 'No employees in this payroll',
+    'no_future_installments' => 'No future installments available for payment',
+    'no_installments_selected' => 'No installments selected',
 ];
