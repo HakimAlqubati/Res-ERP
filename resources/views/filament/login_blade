@@ -1,4 +1,4 @@
-<x-filament-panels::page.simple>
+<!-- <x-filament-panels::page.simple>
     <div class="min-h-screen flex items-center justify-center px-4]">
         <div class="w-full max-w-7xl flex flex-col md:flex-row items-center justify-center gap-12">
 
@@ -186,4 +186,4 @@
             filter: drop-shadow(0 20px 25px rgba(0, 0, 0, 0.5));
         }
     </style>
-</x-filament-panels::page.simple>
+</x-filament-panels::page.simple> -->
