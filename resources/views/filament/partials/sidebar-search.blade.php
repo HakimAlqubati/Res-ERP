@@ -2,17 +2,16 @@
 <div class="p-3 border-b border-gray-200 dark:border-gray-800 " x-show="$store.sidebar.isOpen" x-data="wbSidebarFilter()"
     style="">
     <div class="relative" dir="auto" style="text-align: center;">
-        <input style="padding: 0px 10px 0px 10px;width: 95%;border: 1px solid;border-radius: 5px;" x-model="q"
-            x-on:input.debounce.150ms="filter()" type="text" placeholder="Search in menu..."
+        <input style="padding: 0px 10px 0px 10px;width: 95%;border: 1px solid #0d7c66;border-radius: 5px;direction: {{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }};text-align: {{ app()->getLocale() === 'ar' ? 'right' : 'left' }};" x-model="q"
+            x-on:input.debounce.150ms="filter()" type="text" placeholder="{{ __('hrms.search_in_menu') }} 🔍"
             class="w-full rounded-lg border border-gray-300 dark:border-gray-700 focus:border-primary-600 focus:ring-2 focus:ring-primary-600/20 text-sm px-3 py-2"
-            aria-label="Sidebar search" />
+            aria-label="{{ __('hrms.search_in_menu') }} " />
     </div>
 
     {{-- No-results hint --}}
     <p x-show="noResults" class="mt-2 text-xs text-gray-500" style="padding: 0px 20px 0px 20px;
     background: #f8d7da;    
-    " x-cloak>No matching
-        items.</p>
+    " x-cloak>{{ __('hrms.no_matching_items') }}</p>
 </div>
 
 <script>

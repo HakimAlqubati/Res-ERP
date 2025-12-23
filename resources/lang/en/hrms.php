@@ -300,4 +300,10 @@ return [
     'shift_rfid' => 'Shift - RFID',
     'my_records' => 'My Records',
     'requests' => 'Requests',
+
+    // ===========================================
+    // Sidebar Search
+    // ===========================================
+    'search_in_menu' => 'Search in menu',
+    'no_matching_items' => 'No matching items.',
 ];

@@ -2,89 +2,100 @@
     {{-- "Fullscreen" button --}}
     <div x-show="!is" x-cloak>
         <x-filament::icon-button icon="heroicon-o-arrows-pointing-out" color="primary" size="sm" label="Fullscreen"
-            tooltip="Fullscreen" x-on:click="toggle" class="pulse" />
+            tooltip="Fullscreen (Alt+Enter)" x-on:click="toggle" class="pulse" />
     </div>
 
     {{-- "Exit Fullscreen" button --}}
     <div x-show="is" x-cloak>
         <x-filament::icon-button icon="heroicon-o-arrows-pointing-in" color="primary" size="sm"
-            label="Exit Fullscreen" tooltip="Exit Fullscreen" x-on:click="toggle" class="pulse" />
+            label="Exit Fullscreen" tooltip="Exit Fullscreen (Alt+Enter)" x-on:click="toggle" class="pulse" />
     </div>
 </div>
 
 @once
-    <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('filamentFullscreen', () => ({
-                is: !!document.fullscreenElement,
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('filamentFullscreen', () => ({
+            is: !!document.fullscreenElement,
 
-                init() {
-                    // Update state on entering/exiting fullscreen
-                    document.addEventListener('fullscreenchange', () => {
-                        this.is = !!document.fullscreenElement;
-                    });
-                },
+            init() {
+                // Update state on entering/exiting fullscreen
+                document.addEventListener('fullscreenchange', () => {
+                    this.is = !!document.fullscreenElement;
+                });
 
-                async toggle() {
-                    try {
-                        if (!document.fullscreenElement) {
-                            const el = document.documentElement;
-                            (el.requestFullscreen ||
-                                el.webkitRequestFullscreen ||
-                                el.msRequestFullscreen)
-                            .call(el);
-                        } else {
-                            const exit = document.exitFullscreen ||
-                                document.webkitExitFullscreen ||
-                                document.msExitFullscreen;
-                            if (exit) exit.call(document);
-                        }
-                    } catch (e) {
-                        console.error('Fullscreen toggle failed', e);
+                // ========== Keyboard Shortcut: Alt + Enter ==========
+                document.addEventListener('keydown', (e) => {
+                    // Alt + Enter to toggle fullscreen
+                    if (e.altKey && e.key === 'Enter') {
+                        e.preventDefault();
+                        this.toggle();
                     }
-                },
-            }))
-        })
-    </script>
+                    // Escape to exit fullscreen (backup)
+                    if (e.key === 'Escape' && this.is) {
+                        this.toggle();
+                    }
+                });
+            },
 
-    <style>
-        @keyframes pulse {
+            async toggle() {
+                try {
+                    if (!document.fullscreenElement) {
+                        const el = document.documentElement;
+                        (el.requestFullscreen ||
+                            el.webkitRequestFullscreen ||
+                            el.msRequestFullscreen)
+                        .call(el);
+                    } else {
+                        const exit = document.exitFullscreen ||
+                            document.webkitExitFullscreen ||
+                            document.msExitFullscreen;
+                        if (exit) exit.call(document);
+                    }
+                } catch (e) {
+                    console.error('Fullscreen toggle failed', e);
+                }
+            },
+        }))
+    })
+</script>
 
-            0%,
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
+<style>
+    @keyframes pulse {
 
-            50% {
-                transform: scale(1.1);
-                opacity: 0.9;
-            }
+        0%,
+        100% {
+            transform: scale(1);
+            opacity: 1;
         }
 
-        .pulse {
-            animation: pulse 4.8s infinite ease-in-out;
+        50% {
+            transform: scale(1.1);
+            opacity: 0.9;
+        }
+    }
+
+    .pulse {
+        animation: pulse 4.8s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            transform: scale(1);
+            opacity: 1;
         }
 
-        @keyframes pulse {
-
-            0%,
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-
-            40% {
-                transform: scale(1.4);
-                opacity: 0.85;
-            }
-
-            60% {
-                transform: scale(1.5);
-                opacity: 0.8;
-            }
+        40% {
+            transform: scale(1.4);
+            opacity: 0.85;
         }
 
- 
-    </style>
+        60% {
+            transform: scale(1.5);
+            opacity: 0.8;
+        }
+    }
+</style>
 @endonce
