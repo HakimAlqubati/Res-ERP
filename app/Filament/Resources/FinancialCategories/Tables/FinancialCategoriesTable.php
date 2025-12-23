@@ -8,7 +8,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\DeleteAction;
-use Filament\Tables\Actions\Action;
+use Filament\Actions\Action;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
@@ -117,7 +117,7 @@ class FinancialCategoriesTable
                     ->modalHeading(__('lang.force_delete_transactions'))
                     ->modalDescription(__('lang.confirm_force_delete_transactions'))
                     ->modalSubmitActionLabel(__('lang.yes_delete_all'))
-                    ->visible(fn($record) => $record->transactions()->count() > 0)
+                    ->visible(fn($record) => $record->transactions()->count() > 0 && isSuperAdmin())
                     ->action(function ($record) {
                         $count = $record->transactions()->count();
                         $record->transactions()->forceDelete();
