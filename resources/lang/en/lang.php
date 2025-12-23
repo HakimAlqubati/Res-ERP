@@ -953,4 +953,9 @@ return [
     'financial_categories' => 'Financial Categories',
     'financial_transaction' => 'Financial Transaction',
     'financial_transactions' => 'Financial Transactions',
+    'force_delete_transactions' => 'Force Delete Transactions',
+    'confirm_force_delete_transactions' => 'Are you sure you want to permanently delete all financial transactions related to this category? This action cannot be undone.',
+    'yes_delete_all' => 'Yes, Delete All',
+    'transactions_deleted_successfully' => 'Transactions Deleted Successfully',
+    'deleted_count_transactions' => ':count financial transaction(s) have been deleted',
 ];

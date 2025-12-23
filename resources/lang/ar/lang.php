@@ -935,4 +935,9 @@ return [
   'financial_categories' => 'الفئات المالية',
   'financial_transaction' => 'معاملة مالية',
   'financial_transactions' => 'المعاملات المالية',
+  'force_delete_transactions' => 'حذف المعاملات نهائياً',
+  'confirm_force_delete_transactions' => 'هل أنت متأكد من حذف جميع المعاملات المالية المرتبطة بهذه الفئة نهائياً؟ لا يمكن التراجع عن هذا الإجراء.',
+  'yes_delete_all' => 'نعم، احذف الكل',
+  'transactions_deleted_successfully' => 'تم حذف المعاملات بنجاح',
+  'deleted_count_transactions' => 'تم حذف :count معاملة مالية',
 ];
