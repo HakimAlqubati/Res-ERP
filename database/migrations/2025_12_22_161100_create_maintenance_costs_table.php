@@ -38,8 +38,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            // فهرس للبحث السريع
-            $table->index(['costable_type', 'costable_id']);
+            // فهرس للبحث السريع (morphs already creates index for costable)
             $table->index('cost_type');
             $table->index('synced_to_financial');
         });
