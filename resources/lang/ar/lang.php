@@ -940,4 +940,23 @@ return [
   'yes_delete_all' => 'نعم، احذف الكل',
   'transactions_deleted_successfully' => 'تم حذف المعاملات بنجاح',
   'deleted_count_transactions' => 'تم حذف :count معاملة مالية',
+
+  // ===========================================
+  // Advance Report
+  // ===========================================
+  'paid_installments' => 'الأقساط المسددة',
+  'installments' => 'الأقساط',
+  'installment_details' => 'تفاصيل الأقساط',
+  'deduction_starts' => 'بداية الخصم',
+  'deduction_ends' => 'نهاية الخصم',
+  'advance_amount' => 'مبلغ السلفة',
+  'monthly_deduction' => 'الخصم الشهري',
+  'sequence' => 'التسلسل',
+  'payment_status' => 'حالة السداد',
+  'fully_paid' => 'مسدد بالكامل',
+  'partially_paid' => 'مسدد جزئياً',
+  'not_started' => 'لم يبدأ',
+  'min_amount' => 'أقل مبلغ',
+  'max_amount' => 'أعلى مبلغ',
+  'overdue' => 'متأخر',
 ];

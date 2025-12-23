@@ -958,4 +958,23 @@ return [
     'yes_delete_all' => 'Yes, Delete All',
     'transactions_deleted_successfully' => 'Transactions Deleted Successfully',
     'deleted_count_transactions' => ':count financial transaction(s) have been deleted',
+
+    // ===========================================
+    // Advance Report
+    // ===========================================
+    'paid_installments' => 'Paid Installments',
+    'installments' => 'Installments',
+    'installment_details' => 'Installment Details',
+    'deduction_starts' => 'Deduction Starts',
+    'deduction_ends' => 'Deduction Ends',
+    'advance_amount' => 'Advance Amount',
+    'monthly_deduction' => 'Monthly Deduction',
+    'sequence' => 'Sequence',
+    'payment_status' => 'Payment Status',
+    'fully_paid' => 'Fully Paid',
+    'partially_paid' => 'Partially Paid',
+    'not_started' => 'Not Started',
+    'min_amount' => 'Minimum Amount',
+    'max_amount' => 'Maximum Amount',
+    'overdue' => 'Overdue',
 ];
