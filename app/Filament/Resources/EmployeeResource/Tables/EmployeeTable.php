@@ -383,7 +383,8 @@ class EmployeeTable
                                 ->success()
                                 ->send();
                         }),
-                    Action::make('checkInstallments')->label(__('lang.check_advanced_installments'))->button()->hidden()
+                    Action::make('checkInstallments')->label(__('lang.check_advanced_installments'))->button()
+                        // ->hidden()
                         ->color('info')
                         ->icon('heroicon-m-banknotes')
                         ->url(fn($record) => CheckInstallments::getUrl(['employeeId' => $record->id]))
