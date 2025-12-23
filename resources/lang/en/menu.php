@@ -20,4 +20,12 @@ return [
     'financial_system' => 'Financial Management',
     'financial_categories' => 'Financial Categories',
     'financial_reports' => 'Financial Reports',
+
+    // ===========================================
+    // Navigation Groups
+    // ===========================================
+    'requests_of_visits' => 'Requests of Visits',
+    'system_settings' => 'System Settings',
+    'tenants' => 'Tenants',
+    'app_logs' => 'App Logs',
 ];

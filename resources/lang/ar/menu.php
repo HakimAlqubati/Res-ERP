@@ -20,4 +20,12 @@ return [
     'financial_system' => 'الإدارة المالية',
     'financial_categories' => 'دليل الحسابات',
     'financial_reports' => 'التقارير المالية',
+
+    // ===========================================
+    // Navigation Groups
+    // ===========================================
+    'requests_of_visits' => 'طلبات الزيارات',
+    'system_settings' => 'إعدادات النظام',
+    'tenants' => 'المستأجرين',
+    'app_logs' => 'سجلات التطبيق',
 ];

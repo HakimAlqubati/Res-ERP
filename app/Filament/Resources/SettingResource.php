@@ -37,8 +37,21 @@ class SettingResource extends Resource
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-cog-6-tooth';
 
-    protected static ?string $modelLabel  = 'System Settings';
-    protected static ?string $pluralLabel = 'System Settings';
+    public static function getModelLabel(): string
+    {
+        return __('lang.system_settings');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('lang.system_settings');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('lang.system_settings');
+    }
+
     // protected static ?string $cluster = SettingsCluster::class;
     // protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     // protected static ?int $navigationSort = 1;

@@ -10,6 +10,6 @@ class InventorySettingsCluster extends Cluster
     // protected static ?string $clusterBreadcrumb = 'HR';
     public static function getNavigationLabel(): string
     {
-        return 'Supply & Inventory Settings';
+        return __('lang.supply_inventory_settings');
     }
 }

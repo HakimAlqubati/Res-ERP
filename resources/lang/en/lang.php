@@ -903,4 +903,54 @@ return [
     'Tasks' => 'Tasks',
     'Engagement' => 'Engagement',
     'Payroll' => 'Payroll',
+
+    // ===========================================
+    // Cluster Navigation Labels
+    // ===========================================
+    'payroll_settings' => 'Payroll Settings',
+    'supply_inventory_settings' => 'Supply & Inventory Settings',
+
+    // ===========================================
+    // Inventory Reports Page
+    // ===========================================
+    'inventory_reports' => 'Inventory Reports',
+    'inventory_report' => 'Inventory Report',
+    'inventory_report_desc' => 'View current stock levels.',
+    'fifo_inventory' => 'Fifo Inventory',
+    'fifo_inventory_desc' => 'Fifo inventory report.',
+    'inventory_tracking' => 'Inventory Tracking',
+    'inventory_tracking_desc' => 'Track product movement and history.',
+    'inbound_outflows' => 'Inbound → Outflows',
+    'inbound_outflows_desc' => 'Analyze inbound vs. outbound stock flows.',
+    'manufacturing_store_position' => 'Manufacturing Store Position',
+    'manufacturing_store_position_desc' => 'Report on stock position with usage data.',
+    'store_position_report' => 'Store Position Report',
+    'store_position_report_desc' => 'Detailed report on store stock positions.',
+    'stock_adjustment_report' => 'Stock Adjustment Report',
+    'stock_adjustment_report_desc' => 'View and analyze stock adjustments.',
+    'in_vs_out' => 'In VS Out',
+    'in_vs_out_desc' => 'Compare incoming vs. outgoing stock.',
+    'stock_supply_orders' => 'Stock Supply Orders',
+    'stock_supply_orders_desc' => 'Report on stock supply orders.',
+    'manufacturing_fifo_report' => 'Manufacturing Fifo Report',
+    'manufacturing_fifo_report_desc' => 'Manufacturing FIFO inventory report.',
+    'stock_adjustment_summary' => 'Stock Adjustment Summary',
+    'stock_adjustment_summary_desc' => 'Summary of adjustments by category and store.',
+
+    // ===========================================
+    // Resource Navigation Labels
+    // ===========================================
+    'system_settings' => 'System Settings',
+    'app_log' => 'App Log',
+    'app_logs' => 'App Logs',
+    'notification_setting' => 'Notification Setting',
+    'notification_settings' => 'Notification Settings',
+
+    // ===========================================
+    // Financial Resources
+    // ===========================================
+    'financial_category' => 'Financial Category',
+    'financial_categories' => 'Financial Categories',
+    'financial_transaction' => 'Financial Transaction',
+    'financial_transactions' => 'Financial Transactions',
 ];

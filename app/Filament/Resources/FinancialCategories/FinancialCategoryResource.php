@@ -24,6 +24,21 @@ class FinancialCategoryResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name';
 
+    public static function getModelLabel(): string
+    {
+        return __('lang.financial_category');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('lang.financial_categories');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('lang.financial_categories');
+    }
+
     public static function form(Schema $schema): Schema
     {
         return FinancialCategoryForm::configure($schema);

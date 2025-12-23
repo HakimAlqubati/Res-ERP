@@ -41,6 +41,22 @@ class NotificationSettingResource extends Resource
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-bell-alert';
 
     protected static ?string $slug = 'notification-settings';
+
+    public static function getModelLabel(): string
+    {
+        return __('lang.notification_setting');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('lang.notification_settings');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('lang.notification_settings');
+    }
+
     // protected static ?string $cluster = SettingsCluster::class;
     // protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     // protected static ?int $navigationSort = 2;

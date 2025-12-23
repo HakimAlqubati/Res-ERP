@@ -25,6 +25,21 @@ class FinancialTransactionResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'description';
 
+    public static function getModelLabel(): string
+    {
+        return __('lang.financial_transaction');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('lang.financial_transactions');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('lang.financial_transactions');
+    }
+
     public static function form(Schema $schema): Schema
     {
         return FinancialTransactionForm::configure($schema);

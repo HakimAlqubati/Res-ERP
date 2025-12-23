@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Pages;
 
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\FifoInventoryReportResource;
@@ -26,14 +27,17 @@ use Illuminate\Contracts\Support\Htmlable;
 class InventoryReportLinks extends Page
 {
     protected static string | \BackedEnum | null $navigationIcon  = 'heroicon-o-squares-2x2';
-    protected static ?string $navigationLabel = 'Inventory Reports';
     protected static ?string $slug            = 'inventory-reports-links';
     protected string $view             = 'filament.pages.inventory-report-links';
 
+    public static function getNavigationLabel(): string
+    {
+        return __('lang.inventory_reports');
+    }
+
     public function getTitle(): string | Htmlable
     {
-        return __('Inventory Reports');
-
+        return __('lang.inventory_reports');
     }
 
     public function getReportLinks(): array
@@ -41,70 +45,70 @@ class InventoryReportLinks extends Page
         $links = [
             // --- الروابط الأصلية ---
             [
-                'title'       => 'Inventory Report',
-                'description' => 'View current stock levels.',
+                'title'       => __('lang.inventory_report'),
+                'description' => __('lang.inventory_report_desc'),
                 'icon'        => 'heroicon-o-building-storefront',
                 'url'         => InventoryTransactionReportResource::getUrl(),
             ],
             [
-                'title'       => 'Fifo Inventory',
-                'description' => 'Fifo inventory report.',
+                'title'       => __('lang.fifo_inventory'),
+                'description' => __('lang.fifo_inventory_desc'),
                 'icon'        => 'heroicon-o-archive-box',
                 'url'         => FifoInventoryReportResource::getUrl(),
             ],
 
             // --- الروابط الجديدة ---
             [
-                'title'       => 'Inventory Tracking',
-                'description' => 'Track product movement and history.',
+                'title'       => __('lang.inventory_tracking'),
+                'description' => __('lang.inventory_tracking_desc'),
                 'icon'        => 'heroicon-o-magnifying-glass-circle',
                 'url'         => InventoryTransactionTruckingReportResource::getUrl(),
             ],
             [
-                'title'       => 'Inbound → Outflows',
-                'description' => 'Analyze inbound vs. outbound stock flows.',
+                'title'       => __('lang.inbound_outflows'),
+                'description' => __('lang.inbound_outflows_desc'),
                 'icon'        => 'heroicon-o-arrows-right-left',
                 'url'         => InboundOutflowReportResource::getUrl(),
             ],
             [
-                'title'       => 'Manufacturing Store Position',
-                'description' => 'Report on stock position with usage data.',
+                'title'       => __('lang.manufacturing_store_position'),
+                'description' => __('lang.manufacturing_store_position_desc'),
                 'icon'        => 'heroicon-o-currency-dollar',
                 'url'         => InventoryWithUsageReportResource::getUrl(),
             ],
             [
-                'title'       => 'Store Position Report',
-                'description' => 'Detailed report on store stock positions.',
+                'title'       => __('lang.store_position_report'),
+                'description' => __('lang.store_position_report_desc'),
                 'icon'        => 'heroicon-o-archive-box',
                 'url'         => InventoryTransactionPurchaseReportResource::getUrl(),
             ],
             [
-                'title'       => 'Stock Adjustment Report',
-                'description' => 'View and analyze stock adjustments.',
+                'title'       => __('lang.stock_adjustment_report'),
+                'description' => __('lang.stock_adjustment_report_desc'),
                 'icon'        => 'heroicon-o-adjustments-horizontal',
                 'url'         => StockAdjustmentReportResource::getUrl(),
             ],
             [
-                'title'       => 'In VS Out',
-                'description' => 'Compare incoming vs. outgoing stock.',
+                'title'       => __('lang.in_vs_out'),
+                'description' => __('lang.in_vs_out_desc'),
                 'icon'        => 'heroicon-o-arrows-up-down',
                 'url'         => InVSReportResource::getUrl(),
             ],
             [
-                'title'       => 'Stock Supply Orders',
-                'description' => 'Report on stock supply orders.',
+                'title'       => __('lang.stock_supply_orders'),
+                'description' => __('lang.stock_supply_orders_desc'),
                 'icon'        => 'heroicon-o-adjustments-horizontal',
                 'url'         => StockSupplyOrderReportResource::getUrl(),
             ],
             [
-                'title'       => 'Manufacturing Fifo Report',
-                'description' => '.',
+                'title'       => __('lang.manufacturing_fifo_report'),
+                'description' => __('lang.manufacturing_fifo_report_desc'),
                 'icon'        => 'heroicon-o-magnifying-glass-circle',
                 'url'         => ManufacturingInventoryReportResource::getUrl(),
             ],
             [
-                'title'       => 'Stock Adjustment Summary',
-                'description' => 'Summary of adjustments by category and store.',
+                'title'       => __('lang.stock_adjustment_summary'),
+                'description' => __('lang.stock_adjustment_summary_desc'),
                 'icon'        => 'heroicon-o-presentation-chart-bar',
                 'url'         => StockAdjustmentSummaryReportResource::getUrl(),
             ],

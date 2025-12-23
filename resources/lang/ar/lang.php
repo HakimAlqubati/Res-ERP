@@ -885,4 +885,54 @@ return [
   'Tasks' => 'المهام',
   'Engagement' => 'التفاعل',
   'Payroll' => 'الرواتب',
+
+  // ===========================================
+  // Cluster Navigation Labels
+  // ===========================================
+  'payroll_settings' => 'إعدادات الرواتب',
+  'supply_inventory_settings' => 'إعدادات التوريد والمخزون',
+
+  // ===========================================
+  // Inventory Reports Page
+  // ===========================================
+  'inventory_reports' => 'تقارير المخزون',
+  'inventory_report' => 'تقرير المخزون',
+  'inventory_report_desc' => 'عرض مستويات المخزون الحالية.',
+  'fifo_inventory' => 'مخزون FIFO',
+  'fifo_inventory_desc' => 'تقرير مخزون FIFO.',
+  'inventory_tracking' => 'تتبع المخزون',
+  'inventory_tracking_desc' => 'تتبع حركة المنتج وتاريخه.',
+  'inbound_outflows' => 'الوارد ← الصادر',
+  'inbound_outflows_desc' => 'تحليل تدفقات المخزون الواردة مقابل الصادرة.',
+  'manufacturing_store_position' => 'موقف مخزن التصنيع',
+  'manufacturing_store_position_desc' => 'تقرير عن موقف المخزون مع بيانات الاستخدام.',
+  'store_position_report' => 'تقرير موقف المخزن',
+  'store_position_report_desc' => 'تقرير مفصل عن مواقف مخزون المخزن.',
+  'stock_adjustment_report' => 'تقرير تسوية المخزون',
+  'stock_adjustment_report_desc' => 'عرض وتحليل تسويات المخزون.',
+  'in_vs_out' => 'الوارد مقابل الصادر',
+  'in_vs_out_desc' => 'مقارنة المخزون الوارد مقابل الصادر.',
+  'stock_supply_orders' => 'أوامر توريد المخزون',
+  'stock_supply_orders_desc' => 'تقرير أوامر توريد المخزون.',
+  'manufacturing_fifo_report' => 'تقرير FIFO للتصنيع',
+  'manufacturing_fifo_report_desc' => 'تقرير FIFO لمخزون التصنيع.',
+  'stock_adjustment_summary' => 'ملخص تسوية المخزون',
+  'stock_adjustment_summary_desc' => 'ملخص التسويات حسب الفئة والمخزن.',
+
+  // ===========================================
+  // Resource Navigation Labels
+  // ===========================================
+  'system_settings' => 'إعدادات النظام',
+  'app_log' => 'سجل التطبيق',
+  'app_logs' => 'سجلات التطبيق',
+  'notification_setting' => 'إعداد الإشعارات',
+  'notification_settings' => 'إعدادات الإشعارات',
+
+  // ===========================================
+  // Financial Resources
+  // ===========================================
+  'financial_category' => 'فئة مالية',
+  'financial_categories' => 'الفئات المالية',
+  'financial_transaction' => 'معاملة مالية',
+  'financial_transactions' => 'المعاملات المالية',
 ];

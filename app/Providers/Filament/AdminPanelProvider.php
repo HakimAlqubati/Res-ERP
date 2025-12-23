@@ -192,7 +192,7 @@ class AdminPanelProvider extends PanelProvider
                 $group =  array_merge(
                     $group,
                     [
-                        NavigationGroup::make('System settings')->collapsed(1)
+                        NavigationGroup::make(__('menu.system_settings'))->collapsed(1)
                             ->items(array_merge(
                                 (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? SettingResource::getNavigationItems() : [],
                                 ((isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) &&
