@@ -22,6 +22,7 @@ use App\Models\Deduction;
 use Filament\Forms;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Slider;
 use Filament\Forms\Components\TextInput;
@@ -68,6 +69,17 @@ class DeductionResource extends Resource
                             ->hidden()
                             ->required(),
                         TextInput::make('description')->columnSpan(4),
+
+                        // Financial Category Link - للربط مع النظام المالي
+                        Select::make('financial_category_id')
+                            ->label(__('Financial Category'))
+                            ->relationship('financialCategory', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->placeholder(__('Select to create financial transaction'))
+                            ->helperText(__('If selected, a separate financial transaction will be created when payroll is processed'))
+                            ->hidden(fn($get): bool => ($get('is_penalty') || $get('is_specific')))
+                            ->columnSpan(2),
                     ]),
                 Fieldset::make()->columnSpanFull()->label('')->columns(6)->schema([
                     Toggle::make('is_penalty')
@@ -173,6 +185,11 @@ class DeductionResource extends Resource
                         ->label('Tax Brackets')->columnSpanFull()
                         ->relationship('brackets')
                         ->visible(fn($get): bool => $get('has_brackets'))->columnSpanFull()->columns(3)
+                        ->table([
+                            TableColumn::make(__('Minimum Amount')),
+                            TableColumn::make(__('Maximum Amount')),
+                            TableColumn::make(__('Percentage')),
+                        ])
                         ->schema([
                             TextInput::make('min_amount')
                                 ->minValue(0)->maxValue(10000000000000)
@@ -219,6 +236,12 @@ class DeductionResource extends Resource
                         }
                         return $record->amount ?? 0;
                     }),
+                TextColumn::make('financialCategory.name')
+                    ->label(__('Financial Category'))
+                    ->placeholder('-')
+                    ->badge()
+                    ->color('info')
+                    ->toggleable(isToggledHiddenByDefault: false),
                 ToggleColumn::make('active')->disabled(fn(): bool => isBranchManager()),
             ])
             ->filters([

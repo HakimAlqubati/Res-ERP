@@ -409,6 +409,9 @@ class EmployeeApplicationResource extends Resource
                         $adv->saveQuietly();
                     }
 
+                    // Create financial transaction for the advance payment
+                    $adv->createFinancialTransaction();
+
                     DB::commit();
                     Notification::make()->success()->title('Approved and installments created.')->send();
                 } catch (\Throwable $th) {
@@ -973,7 +976,7 @@ class EmployeeApplicationResource extends Resource
                                     $res = $advancedAmount / $state;
 
                                     $set('detail_number_of_months_of_deduction', $res);
-                                    $toMonth = Carbon::now()->addMonths(($res - 2))->endOfMonth()->format('Y-m-d');
+                                    $toMonth = Carbon::now()->addMonths(($res - 1))->endOfMonth()->format('Y-m-d');
                                     $set('detail_deduction_ends_at', $toMonth);
                                 }
                             }),

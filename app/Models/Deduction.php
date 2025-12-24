@@ -29,8 +29,26 @@ class Deduction extends Model
         'has_brackets',
         'applied_by',
         'employer_percentage',
-        'employer_amount'
+        'employer_amount',
+        'financial_category_id',  // للربط مع الفئة المالية
     ];
+
+    /**
+     * Get the financial category associated with this deduction.
+     * If set, a separate financial transaction will be created when payroll is processed.
+     */
+    public function financialCategory()
+    {
+        return $this->belongsTo(FinancialCategory::class);
+    }
+
+    /**
+     * Check if this deduction should create a financial transaction.
+     */
+    public function hasFinancialCategory(): bool
+    {
+        return !is_null($this->financial_category_id);
+    }
 
     // Add constants for the 'condition_applied' enum values
     const CONDITION_ALL = 'all';
@@ -107,7 +125,7 @@ class Deduction extends Model
         $salary *= 12;
         $tax = 0;
         $previousBracketMax = 0;
- 
+
         // Loop through each tax bracket and calculate the tax for each applicable range
         foreach ($brackets as $bracket) {
             // If the salary exceeds the current bracket's max_amount, calculate the tax for the full range
@@ -127,9 +145,9 @@ class Deduction extends Model
             'monthly_tax' => $monthlyTax,
         ];
     }
-  
 
-    
+
+
     /**
      * Scope a query to only include penalty deductions.
      *

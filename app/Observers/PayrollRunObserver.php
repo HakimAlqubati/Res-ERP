@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Enums\HR\Payroll\SalaryTransactionSubType;
 use App\Models\AdvanceRequest;
 use App\Models\EmployeeAdvanceInstallment;
 use App\Models\PayrollRun;
@@ -103,33 +104,30 @@ class PayrollRunObserver
                 return;
             }
 
-            // Get the period boundaries
+            // Get the period boundaries (for reference/logging)
             $periodStart = sprintf('%04d-%02d-01', $payrollRun->year, $payrollRun->month);
             $periodEnd = date('Y-m-t', strtotime($periodStart));
 
-            // 1. Find all unpaid installments for these employees in current period
-            $currentPeriodInstallments = EmployeeAdvanceInstallment::query()
-                ->whereIn('employee_id', $employeeIds)
-                ->where('is_paid', false)
-                ->where('status', EmployeeAdvanceInstallment::STATUS_SCHEDULED)
-                ->whereBetween('due_date', [$periodStart, $periodEnd])
-                ->get();
-
-            // 2. Find early installments added via SalaryTransaction
-            $earlyInstallmentIds = \App\Models\SalaryTransaction::query()
+            // Find ALL installments linked via SalaryTransaction in this payroll run
+            // This includes both:
+            // - ADVANCE_INSTALLMENT: قسط الشهر الحالي
+            // - EARLY_ADVANCE_INSTALLMENT: قسط مبكر (شهر قادم)
+            $installmentIds = \App\Models\SalaryTransaction::query()
                 ->where('payroll_run_id', $payrollRun->id)
                 ->where('reference_type', EmployeeAdvanceInstallment::class)
-                ->where('sub_type', 'early_advance_installment')
+                ->whereIn('sub_type', [
+                    SalaryTransactionSubType::ADVANCE_INSTALLMENT->value,
+                    SalaryTransactionSubType::EARLY_ADVANCE_INSTALLMENT->value,
+                ])
                 ->pluck('reference_id')
+                ->filter() // remove nulls
+                ->unique()
                 ->toArray();
 
-            $earlyInstallments = EmployeeAdvanceInstallment::query()
-                ->whereIn('id', $earlyInstallmentIds)
+            $allInstallments = EmployeeAdvanceInstallment::query()
+                ->whereIn('id', $installmentIds)
                 ->where('is_paid', false)
                 ->get();
-
-            // Merge both collections
-            $allInstallments = $currentPeriodInstallments->merge($earlyInstallments)->unique('id');
 
             if ($allInstallments->isEmpty()) {
                 return;
@@ -181,9 +179,8 @@ class PayrollRunObserver
 
             Log::info('Advance installments marked as paid for PayrollRun', [
                 'payroll_run_id' => $payrollRun->id,
-                'current_period_count' => $currentPeriodInstallments->count(),
-                'early_installments_count' => $earlyInstallments->count(),
-                'total_marked' => $allInstallments->count(),
+                'period' => $periodStart . ' to ' . $periodEnd,
+                'installments_marked' => $allInstallments->count(),
                 'advance_requests_updated' => count($advanceRequestUpdates),
             ]);
         } catch (\Exception $e) {

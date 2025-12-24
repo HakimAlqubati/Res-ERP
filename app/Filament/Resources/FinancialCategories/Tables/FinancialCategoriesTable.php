@@ -29,9 +29,17 @@ class FinancialCategoriesTable
         return $table->striped()->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('name')
-                    ->label('Category Name')
+                    ->label('Name')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('description')
+                    ->label('Description')
+                    ->searchable()
+                    ->limit(40)
+                    // ->wrap()
+                    ->tooltip(fn($state) => $state)
+                    ->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('code')
                     ->label('System Code')
@@ -44,7 +52,8 @@ class FinancialCategoriesTable
                 TextColumn::make('parent.name')
                     ->label('Parent Category')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
 
                 BadgeColumn::make('type')
                     ->label('Type')->alignCenter()
@@ -53,19 +62,22 @@ class FinancialCategoriesTable
                         'danger' => FinancialCategory::TYPE_EXPENSE,
                     ])
                     ->formatStateUsing(fn($state) => FinancialCategory::TYPES[$state] ?? $state)
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
 
 
 
                 ToggleColumn::make('is_visible')
                     ->label('Visible')
                     ->alignCenter()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('transactions_count')
                     ->label('Transactions')->alignCenter()
                     ->counts('transactions')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('created_at')
                     ->label('Created At')->alignCenter()
