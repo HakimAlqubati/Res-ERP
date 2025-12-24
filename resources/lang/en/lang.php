@@ -990,4 +990,21 @@ return [
     'no_employees_in_payroll' => 'No employees in this payroll',
     'no_future_installments' => 'No future installments available for payment',
     'no_installments_selected' => 'No installments selected',
+
+    // ===========================================
+    // Advance Request Approval Form
+    // ===========================================
+    'employee_info' => 'Employee Information',
+    'advance_date' => 'Advance Date',
+    'advance_details' => 'Advance Details',
+    'advance_amount' => 'Advance Amount',
+    'monthly_deduction' => 'Monthly Deduction',
+    'deduction_schedule' => 'Deduction Schedule',
+    'starts_from' => 'Starts From',
+    'ends_at' => 'Ends At',
+    'number_of_months' => 'Number of Months',
+    'reason' => 'Reason',
+    'additional_notes' => 'Additional Notes',
+    'financial_category' => 'Financial Category',
+    'select_to_create_financial_transaction' => 'Select to create financial transaction',
 ];

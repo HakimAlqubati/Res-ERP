@@ -90,6 +90,10 @@ class PayrollCalculationService
                 'rate'           => $txn['rate']        ?? null,
                 'multiplier'     => $txn['multiplier']  ?? null,
 
+                // Notes and effective percentage for bracket deductions
+                'notes'                => $txn['notes']                ?? null,
+                'effective_percentage' => $txn['effective_percentage'] ?? null,
+
                 // ربط الـ reference من transaction (مثل ربط القسط بـ SalaryTransaction)
                 'reference_type' => $txn['reference_type'] ?? null,
                 'reference_id'   => $txn['reference_id']   ?? null,

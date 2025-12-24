@@ -53,6 +53,8 @@ class SalaryTransaction extends Model
         'reference_id',
         'reference_type',
         'description',
+        'notes',
+        'effective_percentage',
         'created_by',
         'status',
         'operation',

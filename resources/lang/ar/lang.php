@@ -972,4 +972,21 @@ return [
   'no_employees_in_payroll' => 'لا يوجد موظفين في هذا الراتب',
   'no_future_installments' => 'لا توجد أقساط مستقبلية للسداد',
   'no_installments_selected' => 'لم يتم اختيار أي أقساط',
+
+  // ===========================================
+  // Advance Request Approval Form
+  // ===========================================
+  'employee_info' => 'معلومات الموظف',
+  'advance_date' => 'تاريخ السلفة',
+  'advance_details' => 'تفاصيل السلفة',
+  'advance_amount' => 'مبلغ السلفة',
+  'monthly_deduction' => 'القسط الشهري',
+  'deduction_schedule' => 'جدول السداد',
+  'starts_from' => 'يبدأ من',
+  'ends_at' => 'ينتهي في',
+  'number_of_months' => 'عدد الأشهر',
+  'reason' => 'السبب',
+  'additional_notes' => 'ملاحظات إضافية',
+  'financial_category' => 'الفئة المالية',
+  'select_to_create_financial_transaction' => 'اختر لإنشاء معاملة مالية',
 ];
