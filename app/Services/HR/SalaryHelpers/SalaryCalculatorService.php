@@ -534,49 +534,66 @@ class SalaryCalculatorService
     public function calculateDeductions(array $deductions, float $basicSalary): array
     {
         $finalDeductions = [];
-        $totalDeductions = 0.0; // Initialize total deductions
+        $totalDeductions = 0.0;
 
         foreach ($deductions as $deduction) {
-            if ($deduction->is_percentage) {
-                // Calculate the deduction based on the percentage
+            $deductionAmount = 0.0;
+            $employerAmount = 0.0;
+            $effectivePercentage = null;
+            $notes = null;
+            $appliedBrackets = null;
+
+            // Calculate employee deduction
+            if (isset($deduction->has_brackets) && $deduction->has_brackets && $deduction->brackets->isNotEmpty()) {
+                // Bracket-based calculation (e.g., progressive tax)
+                $taxResult = $deduction->calculateTax($basicSalary);
+                $deductionAmount = $taxResult['monthly_tax'] ?? 0;
+                $effectivePercentage = $taxResult['effective_percentage'] ?? null;
+                $notes = $taxResult['notes'] ?? null;
+                $appliedBrackets = $taxResult['applied_brackets'] ?? null;
+            } elseif ($deduction->is_percentage) {
+                // Percentage-based calculation
                 $deductionAmount = ($basicSalary * $deduction->percentage) / 100;
+                $effectivePercentage = $deduction->percentage;
+                $notes = sprintf(
+                    "Flat rate deduction: %.2f%% of %.2f = %.2f",
+                    $deduction->percentage,
+                    $basicSalary,
+                    $deductionAmount
+                );
             } else {
-                // Use the fixed amount directly
+                // Fixed amount
                 $deductionAmount = (float) $deduction->amount;
+                $notes = sprintf("Fixed amount deduction: %.2f", $deductionAmount);
             }
 
+            // Calculate employer contribution
             if ($deduction->employer_percentage > 0) {
                 $employerAmount = ($basicSalary * $deduction->employer_percentage) / 100;
             } elseif ($deduction->employer_amount > 0) {
                 $employerAmount = (float) $deduction->employer_amount;
-            } else {
-                $employerAmount = 0.0;
             }
 
-
-            if (isset($deduction->has_brackets) && $deduction->has_brackets && isset($deduction->brackets)) {
-
-                $deductionAmount = $deduction->calculateTax($basicSalary)['monthly_tax'] ?? 0;
-            }
-            // Add to total deductions
             $totalDeductions += $deductionAmount;
 
-            $deduction = $deduction->toArray();
-            // Store the result
+            $deductionArray = $deduction->toArray();
+
             $finalDeductions[] = [
-                'id' => $deduction['id'],
-                'name' => $deduction['name'],
-                'deduction_amount' => $deductionAmount,   // employee
-                'employer_deduction_amount' => $employerAmount, // employer
-                'deduction_amount' => $deductionAmount,
-                'is_percentage' => $deduction['is_percentage'],
-                'amount_value' => $deduction['amount'],
-                'percentage_value' => $deduction['percentage'],
-                'applied_by' => $deduction['applied_by'],
+                'id' => $deductionArray['id'],
+                'name' => $deductionArray['name'],
+                'deduction_amount' => $this->round($deductionAmount),
+                'employer_deduction_amount' => $this->round($employerAmount),
+                'is_percentage' => $deductionArray['is_percentage'],
+                'amount_value' => $deductionArray['amount'],
+                'percentage_value' => $deductionArray['percentage'],
+                'applied_by' => $deductionArray['applied_by'],
+                'has_brackets' => $deductionArray['has_brackets'] ?? false,
+                'effective_percentage' => $effectivePercentage,
+                'notes' => $notes,
+                'applied_brackets' => $appliedBrackets,
             ];
         }
 
-        // Add the total deductions to the result
         $finalDeductions['result'] = $totalDeductions;
 
         return $finalDeductions;
@@ -752,8 +769,12 @@ class SalaryCalculatorService
                 'amount'       => $this->round($amount),
                 'operation'    => '-',
                 'description'  => $ded['name'] ?? 'General deduction',
+                'notes'        => $ded['notes'] ?? null,
+                'effective_percentage' => $ded['effective_percentage'] ?? null,
                 'deduction_id' => $ded['id'] ?? null,
                 'applied_by'   => $ded['applied_by'] ?? null,
+                'reference_type' => Deduction::class,
+                'reference_id' => $ded['id'] ?? null,
             ];
         }
 

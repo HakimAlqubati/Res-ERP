@@ -112,37 +112,82 @@ class Deduction extends Model
     /**
      * Calculate the tax based on the provided salary.
      *
-     * @param float $salary The salary amount to calculate tax for.
-     * @return array The tax amount as an array ['yearly' => x, 'monthly' => y].
+     * @param float $salary The monthly salary amount to calculate tax for.
+     * @return array Detailed tax calculation including brackets applied.
      */
-
-
     public function calculateTax(float $salary): array
     {
-        // Retrieve the tax brackets from the database and sort by 'min_amount'
         $brackets = $this->brackets()->orderBy('min_amount')->get();
 
-        $salary *= 12;
+        $annualSalary = $salary * 12;
         $tax = 0;
-        $previousBracketMax = 0;
+        $appliedBrackets = [];
+        $currentBracket = null;
 
-        // Loop through each tax bracket and calculate the tax for each applicable range
         foreach ($brackets as $bracket) {
-            // If the salary exceeds the current bracket's max_amount, calculate the tax for the full range
-            if ($salary > $bracket['max_amount']) {
-                $tax += ($bracket['max_amount'] - $bracket['min_amount']) * ($bracket['percentage'] / 100);
+            $bracketMin = (float) $bracket['min_amount'];
+            $bracketMax = (float) $bracket['max_amount'];
+            $bracketPercentage = (float) $bracket['percentage'];
+
+            if ($annualSalary <= $bracketMin) {
+                continue;
+            }
+
+            if ($annualSalary > $bracketMax) {
+                $taxableInBracket = $bracketMax - $bracketMin;
+                $taxFromBracket = $taxableInBracket * ($bracketPercentage / 100);
             } else {
-                // Calculate tax for the remaining amount within the bracket
-                $tax += ($salary - $bracket['min_amount']) * ($bracket['percentage'] / 100);
-                break; // No need to continue once the salary is fully taxed
+                $taxableInBracket = $annualSalary - $bracketMin;
+                $taxFromBracket = $taxableInBracket * ($bracketPercentage / 100);
+                // This is the bracket where salary falls
+                $currentBracket = [
+                    'min' => $bracketMin,
+                    'max' => $bracketMax,
+                    'percentage' => $bracketPercentage,
+                ];
+            }
+
+            $tax += $taxFromBracket;
+
+            if ($taxFromBracket > 0) {
+                $appliedBrackets[] = [
+                    'min' => $bracketMin,
+                    'max' => $bracketMax,
+                    'percentage' => $bracketPercentage,
+                    'taxable_amount' => round($taxableInBracket, 2),
+                    'tax_amount' => round($taxFromBracket, 2),
+                ];
+            }
+
+            if ($annualSalary <= $bracketMax) {
+                break;
             }
         }
 
-        // Return both the total tax and the monthly tax deduction (divide by 12 for monthly)
+        $effectivePercentage = $annualSalary > 0 ? round(($tax / $annualSalary) * 100, 4) : 0;
         $monthlyTax = round($tax / 12, 2);
+
+        // Simple, concise notes - only the essential info
+        if ($currentBracket) {
+            $notes = sprintf(
+                "Effective rate: %.2f%% (Bracket: %.0f-%.0f @ %.1f%%)",
+                $effectivePercentage,
+                $currentBracket['min'],
+                $currentBracket['max'],
+                $currentBracket['percentage']
+            );
+        } else {
+            $notes = sprintf("Effective rate: %.2f%%", $effectivePercentage);
+        }
+
         return [
             'total_tax' => round($tax, 2),
             'monthly_tax' => $monthlyTax,
+            'effective_percentage' => $effectivePercentage,
+            'applied_brackets' => $appliedBrackets,
+            'notes' => $notes,
+            'annual_salary' => $annualSalary,
+            'current_bracket' => $currentBracket,
         ];
     }
 

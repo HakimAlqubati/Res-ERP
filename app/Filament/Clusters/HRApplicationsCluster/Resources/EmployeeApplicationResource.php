@@ -426,6 +426,8 @@ class EmployeeApplicationResource extends Resource
             ->schema(function ($record) {
 
                 $details = $record->advanceRequest;
+                $employee = $record->employee;
+                $currency = $employee?->currency ?? getDefaultCurrency();
 
                 $detailDate             = $details?->date;
                 $monthlyDeductionAmount = $details?->monthly_deduction_amount;
@@ -435,20 +437,59 @@ class EmployeeApplicationResource extends Resource
                 $deductionEndsAt           = $details?->deduction_ends_at;
                 $numberOfMonthsOfDeduction = $details?->number_of_months_of_deduction;
                 $notes                     = $record?->notes;
-                return [
-                    Fieldset::make()->label('Request data')->columns(3)->schema([
-                        TextInput::make('employee')->default($record?->employee?->name),
-                        DatePicker::make('date')->default($detailDate)->label('Advance date'),
-                        TextInput::make('advance_amount')->default($advanceAmount),
-                        TextInput::make('deductionStartsFrom')->label('Deducation starts from')->default($deductionStartsFrom),
-                        TextInput::make('deductionEndsAt')->label('Deducation ends at')->default($deductionEndsAt),
-                        TextInput::make('numberOfMonthsOfDeduction')->label('Number of months of deduction')->default($numberOfMonthsOfDeduction),
-                        TextInput::make('monthlyDeductionAmount')->label('Monthly deduction amount')->default($monthlyDeductionAmount),
+                $reason                    = $details?->reason;
 
+                return [
+                    // Employee Info
+                    Fieldset::make()->label(__('lang.employee_info'))->columns(2)->schema([
+                        TextInput::make('employee')
+                            ->label(__('lang.employee'))
+                            ->default($employee?->name)
+                            ->prefixIcon('heroicon-o-user'),
+                        DatePicker::make('date')
+                            ->label(__('lang.advance_date'))
+                            ->default($detailDate)
+                            ->prefixIcon('heroicon-o-calendar'),
                     ]),
-                    Fieldset::make()->label('Notes')->columns(2)->schema([
-                        TextInput::make('test')->label('Notes')->columnSpanFull()->default($notes),
+
+                    // Advance Amount Details
+                    Fieldset::make()->label(__('lang.advance_details'))->columns(2)->schema([
+                        TextInput::make('advance_amount')
+                            ->label(__('lang.advance_amount'))
+                            ->default(number_format($advanceAmount, 2))
+                            ->suffix($currency)
+                            ->prefixIcon('heroicon-o-banknotes'),
+                        TextInput::make('monthlyDeductionAmount')
+                            ->label(__('lang.monthly_deduction'))
+                            ->default(number_format($monthlyDeductionAmount, 2))
+                            ->suffix($currency)
+                            ->prefixIcon('heroicon-o-calculator'),
                     ]),
+
+                    // Deduction Schedule
+                    Fieldset::make()->label(__('lang.deduction_schedule'))->columns(3)->schema([
+                        TextInput::make('deductionStartsFrom')
+                            ->label(__('lang.starts_from'))
+                            ->default($deductionStartsFrom)
+                            ->prefixIcon('heroicon-o-play'),
+                        TextInput::make('deductionEndsAt')
+                            ->label(__('lang.ends_at'))
+                            ->default($deductionEndsAt)
+                            ->prefixIcon('heroicon-o-stop'),
+                        TextInput::make('numberOfMonthsOfDeduction')
+                            ->label(__('lang.number_of_months'))
+                            ->default($numberOfMonthsOfDeduction)
+                            ->suffix(__('lang.months'))
+                            ->prefixIcon('heroicon-o-clock'),
+                    ]),
+
+
+                    Textarea::make('notes')
+                        ->label(__('lang.additional_notes'))
+                        ->default($notes)
+                        ->rows(2)
+                        ->columnSpanFull(),
+
                 ];
             })
         ;
@@ -689,6 +730,10 @@ class EmployeeApplicationResource extends Resource
             ->icon('heroicon-m-newspaper')
 
             ->disabledForm()
+            ->modalIcon('heroicon-m-newspaper')
+            ->modalHeading('Advance Request Details')
+            ->modalWidth('xl')
+            
             ->schema(function ($record) {
                 $advanceDetails = $record->advanceRequest;
                 // dd($record,$advanceDetails);

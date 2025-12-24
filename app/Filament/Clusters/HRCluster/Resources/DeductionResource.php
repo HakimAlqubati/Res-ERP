@@ -192,12 +192,12 @@ class DeductionResource extends Resource
                         ])
                         ->schema([
                             TextInput::make('min_amount')
-                                ->minValue(0)->maxValue(10000000000000)
+                                ->minValue(0)->maxValue(9999999999999.99)
                                 ->label('Minimum Amount')->required()->numeric(),
                             TextInput::make('max_amount')
                                 ->minValue(0)
                                 ->maxValue(
-                                    10000000000000
+                                    9999999999999.99
                                 )->label('Maximum Amount')->required()->numeric()->minValue(0),
                             TextInput::make('percentage')->label('Percentage')
                                 ->required()->numeric()->suffix(' %')->maxValue(100),
