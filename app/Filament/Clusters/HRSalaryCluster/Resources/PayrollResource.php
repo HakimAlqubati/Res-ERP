@@ -82,7 +82,7 @@ class PayrollResource extends Resource
                         ->default('Employees who have not had their work periods added, will not appear on the payroll.'),
                     Select::make('branch_id')->label('Choose branch')
                         ->disabledOn('view')->searchable()
-                        ->options(Branch::selectable()
+                        ->options(Branch::branches()
                             ->forBranchManager('id')
                             ->select('id', 'name')
                             ->get()
@@ -265,14 +265,14 @@ class PayrollResource extends Resource
                 // Get the current period end date
                 $periodEnd = date('Y-m-t', strtotime(sprintf('%04d-%02d-01', $record->year, $record->month)));
 
-                // Find unpaid future installments (after current period)
-                // excludes installments already scheduled for early payment in other payroll runs
+                // Find all unpaid installments for employees in this payroll
+                // Includes: overdue + current period + future installments
+                // Excludes: already scheduled in other payroll runs
                 $installments = EmployeeAdvanceInstallment::query()
                     ->whereIn('employee_id', $employeeIds)
                     ->unpaid()
                     ->scheduled()
-                    ->where('due_date', '>', $periodEnd)
-                    ->availableForEarlyPayment($record->id) // استثناء المجدولة في رواتب أخرى
+                    ->availableForEarlyPayment() // استثناء أي قسط له SalaryTransaction
                     ->with(['employee:id,name,employee_no', 'advanceRequest:id,code,advance_amount'])
                     ->orderBy('employee_id')
                     ->orderBy('due_date')
@@ -349,12 +349,11 @@ class PayrollResource extends Resource
                     }
 
                     // Check if SalaryTransaction already exists for this installment
-                    $exists = SalaryTransaction::where('reference_type', EmployeeAdvanceInstallment::class)
+                    $existingTx = SalaryTransaction::where('reference_type', EmployeeAdvanceInstallment::class)
                         ->where('reference_id', $installment->id)
-                        ->where('payroll_run_id', $record->id)
-                        ->exists();
+                        ->first();
 
-                    if ($exists) {
+                    if ($existingTx) {
                         continue;
                     }
 
@@ -364,31 +363,36 @@ class PayrollResource extends Resource
                         __('lang.sequence') . ' ' . $installment->sequence . ', ' .
                         __('lang.due_date') . ' ' . $installment->due_date?->format('Y-m-d') . ')';
 
-                    // Create SalaryTransaction
-                    SalaryTransaction::create([
-                        'employee_id' => $installment->employee_id,
-                        'payroll_id' => $payroll->id,
-                        'payroll_run_id' => $record->id,
-                        'date' => $periodEnd->toDateString(),
-                        'amount' => $installment->installment_amount,
-                        'currency' => SalaryTransaction::defaultCurrency(),
-                        'type' => SalaryTransactionType::TYPE_DEDUCTION->value,
-                        'sub_type' => SalaryTransactionSubType::EARLY_ADVANCE_INSTALLMENT->value,
-                        'reference_type' => EmployeeAdvanceInstallment::class,
-                        'reference_id' => $installment->id,
-                        'description' => $desc,
-                        'operation' => SalaryTransaction::OPERATION_SUB,
-                        'year' => $record->year,
-                        'month' => $record->month,
-                        'created_by' => auth()->id(),
-                        'status' => SalaryTransaction::STATUS_PENDING,
-                    ]);
+                    try {
+                        // Create SalaryTransaction
+                        SalaryTransaction::create([
+                            'employee_id' => $installment->employee_id,
+                            'payroll_id' => $payroll->id,
+                            'payroll_run_id' => $record->id,
+                            'date' => $periodEnd->toDateString(),
+                            'amount' => $installment->installment_amount,
+                            'currency' => SalaryTransaction::defaultCurrency(),
+                            'type' => SalaryTransactionType::TYPE_DEDUCTION->value,
+                            'sub_type' => SalaryTransactionSubType::EARLY_ADVANCE_INSTALLMENT->value,
+                            'reference_type' => EmployeeAdvanceInstallment::class,
+                            'reference_id' => $installment->id,
+                            'description' => $desc,
+                            'operation' => SalaryTransaction::OPERATION_SUB,
+                            'year' => $record->year,
+                            'month' => $record->month,
+                            'created_by' => auth()->id(),
+                            'status' => SalaryTransaction::STATUS_PENDING,
+                        ]);
 
-                    // Update payroll total_deductions
-                    $payroll->increment('total_deductions', $installment->installment_amount);
-                    $payroll->decrement('net_salary', $installment->installment_amount);
+                        // Update payroll total_deductions
+                        $payroll->increment('total_deductions', $installment->installment_amount);
+                        $payroll->decrement('net_salary', $installment->installment_amount);
 
-                    $createdCount++;
+                        $createdCount++;
+                    } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+                        // سجل مكرر - تخطي
+                        continue;
+                    }
                 }
 
                 // Update PayrollRun totals

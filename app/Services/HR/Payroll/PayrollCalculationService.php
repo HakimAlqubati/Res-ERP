@@ -89,6 +89,10 @@ class PayrollCalculationService
                 'qty'            => $txn['qty']         ?? null,
                 'rate'           => $txn['rate']        ?? null,
                 'multiplier'     => $txn['multiplier']  ?? null,
+
+                // ربط الـ reference من transaction (مثل ربط القسط بـ SalaryTransaction)
+                'reference_type' => $txn['reference_type'] ?? null,
+                'reference_id'   => $txn['reference_id']   ?? null,
             ];
 
             $payload = [
