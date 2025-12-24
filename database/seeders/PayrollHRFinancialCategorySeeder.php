@@ -25,28 +25,12 @@ class PayrollHRFinancialCategorySeeder extends Seeder
         $categories = [
             // ==================== PAYROLL CATEGORIES ====================
             [
-                'name' => 'Payroll Salaries',
+                'name' => 'Net Salaries',
                 'code' => FinancialCategoryCode::PAYROLL_SALARIES,
                 'type' => FinancialCategory::TYPE_EXPENSE,
                 'is_system' => true,
                 'is_visible' => false,
-                'description' => 'Net employee salaries from payroll runs',
-            ],
-            [
-                'name' => 'Payroll Allowances',
-                'code' => FinancialCategoryCode::PAYROLL_ALLOWANCES,
-                'type' => FinancialCategory::TYPE_EXPENSE,
-                'is_system' => true,
-                'is_visible' => false,
-                'description' => 'Employee allowances and benefits',
-            ],
-            [
-                'name' => 'Payroll Incentives',
-                'code' => FinancialCategoryCode::PAYROLL_INCENTIVES,
-                'type' => FinancialCategory::TYPE_EXPENSE,
-                'is_system' => true,
-                'is_visible' => false,
-                'description' => 'Monthly incentives and bonuses',
+                'description' => 'Net employee salaries (includes base salary, allowances, incentives minus internal deductions)',
             ],
             [
                 'name' => 'Employee Advances',
@@ -54,8 +38,9 @@ class PayrollHRFinancialCategorySeeder extends Seeder
                 'type' => FinancialCategory::TYPE_EXPENSE,
                 'is_system' => true,
                 'is_visible' => false,
-                'description' => 'Employee advance payments',
+                'description' => 'Employee advance payments (loans)',
             ],
+           
 
             // ==================== MAINTENANCE CATEGORIES ====================
             [

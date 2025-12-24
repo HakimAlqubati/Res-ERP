@@ -11,10 +11,10 @@ class FinancialCategoryCode
     const CLOSING_STOCK = 'closing_stock';
 
     // Payroll related codes
-    const PAYROLL_SALARIES = 'payroll_salaries';
-    const PAYROLL_ALLOWANCES = 'payroll_allowances';
-    const PAYROLL_INCENTIVES = 'payroll_incentives';
-    const PAYROLL_ADVANCES = 'payroll_advances';
+    const PAYROLL_SALARIES = 'payroll_salaries';     // صافي الرواتب
+    const PAYROLL_ADVANCES = 'payroll_advances';     // صرف السلف
+    const PAYROLL_TAX = 'payroll_tax';               // الضرائب المحتجزة
+    const PAYROLL_INSURANCE = 'payroll_insurance';   // التأمينات (SOCSO/EPF)
 
     // Maintenance related codes
     const MAINTENANCE_REPAIR = 'maintenance_repair';
@@ -37,9 +37,9 @@ class FinancialCategoryCode
     {
         return [
             self::PAYROLL_SALARIES,
-            self::PAYROLL_ALLOWANCES,
-            self::PAYROLL_INCENTIVES,
             self::PAYROLL_ADVANCES,
+            self::PAYROLL_TAX,
+            self::PAYROLL_INSURANCE,
         ];
     }
 

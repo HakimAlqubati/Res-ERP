@@ -22,6 +22,7 @@ use App\Models\Deduction;
 use Filament\Forms;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Slider;
 use Filament\Forms\Components\TextInput;
@@ -173,6 +174,11 @@ class DeductionResource extends Resource
                         ->label('Tax Brackets')->columnSpanFull()
                         ->relationship('brackets')
                         ->visible(fn($get): bool => $get('has_brackets'))->columnSpanFull()->columns(3)
+                        ->table([
+                            TableColumn::make(__('Minimum Amount')),
+                            TableColumn::make(__('Maximum Amount')),
+                            TableColumn::make(__('Percentage')),
+                        ])
                         ->schema([
                             TextInput::make('min_amount')
                                 ->minValue(0)->maxValue(10000000000000)
