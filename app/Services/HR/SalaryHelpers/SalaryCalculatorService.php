@@ -794,15 +794,16 @@ class SalaryCalculatorService
 
                 $tx[] = [
                     'type'          => SalaryTransactionType::TYPE_DEDUCTION,
-                    'sub_type'      => 'advance_installment',
+                    'sub_type'      => SalaryTransactionSubType::ADVANCE_INSTALLMENT->value,
                     'amount'        => $this->round((float)$adv['amount']),
                     'operation'     => '-',
                     'description'   => $desc,
-                    // helpful references for persistence layer
-                    'reference_type' => AdvanceRequest::class,
-                    'reference_id'   => $adv['advance_request_id'] ?? null,
-                    'application_id' => $adv['application_id'] ?? null,
-                    'installment_id' => $adv['installment_id'] ?? null,
+                    // ربط مباشر بالقسط وليس السلفة
+                    'reference_type' => EmployeeAdvanceInstallment::class,
+                    'reference_id'   => $adv['installment_id'] ?? null,
+                    // معلومات إضافية للتتبع
+                    'application_id'     => $adv['application_id'] ?? null,
+                    'advance_request_id' => $adv['advance_request_id'] ?? null,
                 ];
             }
         }

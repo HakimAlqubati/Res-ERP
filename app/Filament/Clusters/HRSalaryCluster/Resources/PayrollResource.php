@@ -9,6 +9,7 @@ use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\RelationMana
 use App\Filament\Pages\RunPayroll;
 use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Enums\HR\Payroll\SalaryTransactionType;
+use App\Enums\HR\Payroll\SalaryTransactionSubType;
 use App\Models\AdvanceRequest;
 use App\Models\Branch;
 use App\Models\EmployeeAdvanceInstallment;
@@ -265,11 +266,13 @@ class PayrollResource extends Resource
                 $periodEnd = date('Y-m-t', strtotime(sprintf('%04d-%02d-01', $record->year, $record->month)));
 
                 // Find unpaid future installments (after current period)
+                // excludes installments already scheduled for early payment in other payroll runs
                 $installments = EmployeeAdvanceInstallment::query()
                     ->whereIn('employee_id', $employeeIds)
-                    ->where('is_paid', false)
-                    ->where('status', EmployeeAdvanceInstallment::STATUS_SCHEDULED)
+                    ->unpaid()
+                    ->scheduled()
                     ->where('due_date', '>', $periodEnd)
+                    ->availableForEarlyPayment($record->id) // استثناء المجدولة في رواتب أخرى
                     ->with(['employee:id,name,employee_no', 'advanceRequest:id,code,advance_amount'])
                     ->orderBy('employee_id')
                     ->orderBy('due_date')
@@ -370,7 +373,7 @@ class PayrollResource extends Resource
                         'amount' => $installment->installment_amount,
                         'currency' => SalaryTransaction::defaultCurrency(),
                         'type' => SalaryTransactionType::TYPE_DEDUCTION->value,
-                        'sub_type' => 'early_advance_installment',
+                        'sub_type' => SalaryTransactionSubType::EARLY_ADVANCE_INSTALLMENT->value,
                         'reference_type' => EmployeeAdvanceInstallment::class,
                         'reference_id' => $installment->id,
                         'description' => $desc,

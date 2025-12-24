@@ -138,6 +138,24 @@ class EmployeeAdvanceInstallment extends Model
         return $query->where('status', self::STATUS_SCHEDULED);
     }
 
+    /**
+     * Scope: الأقساط المتاحة للسداد المبكر
+     * تستثني الأقساط التي تم جدولتها للسداد المبكر في أي راتب
+     */
+    public function scopeAvailableForEarlyPayment($query, ?int $excludePayrollRunId = null)
+    {
+        return $query->whereNotIn('id', function ($subQuery) use ($excludePayrollRunId) {
+            $subQuery->select('reference_id')
+                ->from('hr_salary_transactions')
+                ->where('reference_type', static::class)
+                ->where('sub_type', \App\Enums\HR\Payroll\SalaryTransactionSubType::EARLY_ADVANCE_INSTALLMENT->value)
+                ->when($excludePayrollRunId, function ($q) use ($excludePayrollRunId) {
+                    // استثناء الأقساط المجدولة في نفس الراتب (لإعادة التعديل)
+                    $q->where('payroll_run_id', '!=', $excludePayrollRunId);
+                });
+        });
+    }
+
     // ===================== Helper Methods =====================
 
     /**
