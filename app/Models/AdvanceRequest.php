@@ -264,6 +264,55 @@ class AdvanceRequest extends Model
                 $model->paid_installments = 0;
             }
         });
+
+        // NOTE: Financial transaction is created on approval, not on creation.
+        // See EmployeeApplicationResource::approveAdvanceRequest()
+    }
+
+    /**
+     * Create a financial transaction for this advance payment.
+     */
+    public function createFinancialTransaction(): void
+    {
+        $advanceCategory = \App\Models\FinancialCategory::findByCode(
+            \App\Enums\FinancialCategoryCode::PAYROLL_ADVANCES
+        );
+
+        if (!$advanceCategory) {
+            \Illuminate\Support\Facades\Log::warning('AdvanceRequest: Advance financial category not found');
+            return;
+        }
+
+        // Check if transaction already exists
+        $exists = \App\Models\FinancialTransaction::where('reference_type', self::class)
+            ->where('reference_id', $this->id)
+            ->exists();
+
+        if ($exists) {
+            return;
+        }
+
+        $branchId = $this->employee?->branch_id ?? 1;
+
+        \App\Models\FinancialTransaction::create([
+            'branch_id' => $branchId,
+            'category_id' => $advanceCategory->id,
+            'amount' => $this->advance_amount,
+            'type' => \App\Models\FinancialTransaction::TYPE_EXPENSE,
+            'transaction_date' => $this->date ?? now(),
+            'status' => \App\Models\FinancialTransaction::STATUS_PAID,
+            'description' => "Employee Advance: {$this->employee?->name} - {$this->code}",
+            'reference_type' => self::class,
+            'reference_id' => $this->id,
+            'created_by' => auth()->id() ?? 1,
+            'month' => now()->month,
+            'year' => now()->year,
+        ]);
+
+        \Illuminate\Support\Facades\Log::info('AdvanceRequest: Financial transaction created', [
+            'advance_request_id' => $this->id,
+            'amount' => $this->advance_amount,
+        ]);
     }
 
     // ===================== Code Generation =====================

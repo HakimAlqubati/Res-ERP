@@ -3,11 +3,15 @@
 namespace App\Services\Financial;
 
 use App\Enums\FinancialCategoryCode;
+use App\Enums\HR\Payroll\SalaryTransactionType;
 use App\Models\Branch;
+use App\Models\Deduction;
 use App\Models\Payroll;
 use App\Models\PayrollRun;
+use App\Models\SalaryTransaction;
 use App\Models\FinancialCategory;
 use App\Models\FinancialTransaction;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -135,6 +139,9 @@ class PayrollFinancialSyncService
                         'payroll_run_id' => $payrollRun->id,
                     ]);
                 }
+
+                // === NEW: Create financial transactions for linked deductions ===
+                $this->syncLinkedDeductions($payrollRun, $payrolls);
             });
 
             return [
@@ -313,5 +320,66 @@ class PayrollFinancialSyncService
             'total_amount' => $transactions->sum('amount'),
             'transactions' => $transactions->toArray(),
         ];
+    }
+
+    /**
+     * Sync deductions that are linked to financial categories.
+     * Creates separate financial transactions for each linked deduction type.
+     *
+     * @param PayrollRun $payrollRun
+     * @param Collection $payrolls
+     * @return void
+     */
+    protected function syncLinkedDeductions(PayrollRun $payrollRun, Collection $payrolls): void
+    {
+        // Get all salary transactions for deductions in this payroll run
+        $payrollIds = $payrolls->pluck('id')->toArray();
+
+        // Get deductions that have a financial_category_id
+        $linkedDeductions = Deduction::whereNotNull('financial_category_id')
+            ->with('financialCategory')
+            ->get();
+
+        if ($linkedDeductions->isEmpty()) {
+            Log::info('PayrollFinancialSync: No linked deductions found');
+            return;
+        }
+
+        foreach ($linkedDeductions as $deduction) {
+            // Get all salary transactions for this deduction in this payroll run
+            $deductionTransactions = SalaryTransaction::whereIn('payroll_id', $payrollIds)
+                ->where('reference_type', Deduction::class)
+                ->where('reference_id', $deduction->id)
+                ->where('type', SalaryTransactionType::TYPE_DEDUCTION->value)
+                ->get();
+
+            $totalAmount = $deductionTransactions->sum('amount');
+
+            if ($totalAmount > 0 && $deduction->financialCategory) {
+                // Create financial transaction for this deduction
+                FinancialTransaction::create([
+                    'branch_id' => $payrollRun->branch_id,
+                    'category_id' => $deduction->financialCategory->id,
+                    'amount' => $totalAmount,
+                    'type' => FinancialTransaction::TYPE_EXPENSE,
+                    'transaction_date' => $payrollRun->pay_date ?? now(),
+                    'status' => FinancialTransaction::STATUS_PAID,
+                    'description' => "{$deduction->name} - Payroll: {$payrollRun->name} ({$payrollRun->year}/{$payrollRun->month})",
+                    'reference_type' => PayrollRun::class,
+                    'reference_id' => $payrollRun->id,
+                    'created_by' => auth()->id() ?? $payrollRun->created_by ?? 1,
+                    'month' => $payrollRun->month,
+                    'year' => $payrollRun->year,
+                ]);
+
+                Log::info('PayrollFinancialSync: Deduction transaction created', [
+                    'deduction_id' => $deduction->id,
+                    'deduction_name' => $deduction->name,
+                    'category_id' => $deduction->financialCategory->id,
+                    'amount' => $totalAmount,
+                    'payroll_run_id' => $payrollRun->id,
+                ]);
+            }
+        }
     }
 }

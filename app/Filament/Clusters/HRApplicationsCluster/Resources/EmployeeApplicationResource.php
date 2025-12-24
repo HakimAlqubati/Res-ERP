@@ -409,6 +409,9 @@ class EmployeeApplicationResource extends Resource
                         $adv->saveQuietly();
                     }
 
+                    // Create financial transaction for the advance payment
+                    $adv->createFinancialTransaction();
+
                     DB::commit();
                     Notification::make()->success()->title('Approved and installments created.')->send();
                 } catch (\Throwable $th) {

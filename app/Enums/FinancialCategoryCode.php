@@ -13,8 +13,6 @@ class FinancialCategoryCode
     // Payroll related codes
     const PAYROLL_SALARIES = 'payroll_salaries';     // صافي الرواتب
     const PAYROLL_ADVANCES = 'payroll_advances';     // صرف السلف
-    const PAYROLL_TAX = 'payroll_tax';               // الضرائب المحتجزة
-    const PAYROLL_INSURANCE = 'payroll_insurance';   // التأمينات (SOCSO/EPF)
 
     // Maintenance related codes
     const MAINTENANCE_REPAIR = 'maintenance_repair';
@@ -38,8 +36,6 @@ class FinancialCategoryCode
         return [
             self::PAYROLL_SALARIES,
             self::PAYROLL_ADVANCES,
-            self::PAYROLL_TAX,
-            self::PAYROLL_INSURANCE,
         ];
     }
 
