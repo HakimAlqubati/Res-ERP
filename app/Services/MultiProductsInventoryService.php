@@ -512,4 +512,10 @@ class MultiProductsInventoryService
 
         return $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0.0;
     }
+
+    public static function quickReport(int $storeId, int $productId,?int $unitId = null): array
+    {
+        return (new self(null, $productId, $unitId, $storeId))
+            ->getInventoryReport();
+    }
 }

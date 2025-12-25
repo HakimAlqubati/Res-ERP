@@ -11,8 +11,16 @@ class QuickLinksWidget extends Widget
 
     protected int|string|array $columnSpan = 'full';
 
+    /**
+     * Toggle to show/hide count badges
+     * Set to false to improve performance
+     */
+    public bool $showCounts = true;
+
     public function render(): View
     {
-        return view($this->view);
+        return view($this->view, [
+            'showCounts' => $this->showCounts,
+        ]);
     }
 }
