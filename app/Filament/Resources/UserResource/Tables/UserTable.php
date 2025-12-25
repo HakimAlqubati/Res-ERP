@@ -120,7 +120,25 @@ class UserTable
                 TextColumn::make('activities_count')
                     ->label(__('lang.activities_count'))
                     ->counts('activities')
-                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('last_activity')
+                    ->label(__('lang.last_activity'))
+                    ->formatStateUsing(function ($state) {
+                        if (!$state) {
+                            return '-';
+                        }
+                        $date = \Carbon\Carbon::parse($state);
+                        if ($date->isToday()) {
+                            return $date->format('h:i A');
+                        } elseif ($date->isYesterday()) {
+                            return 'Yesterday ' . $date->format('h:i A');
+                        } else {
+                            if ($date->year === now()->year) {
+                                return $date->format('M d, h:i A');
+                            }
+                            return $date->format('M d, Y h:i A');
+                        }
+                    })
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filtersFormColumns(2)

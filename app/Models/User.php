@@ -421,4 +421,14 @@ class User extends Authenticatable implements FilamentUser, Auditable
     {
         return $this->activities()->count();
     }
+
+    /**
+     * Get the last activity date/time for this user.
+     *
+     * @return \Carbon\Carbon|null
+     */
+    public function getLastActivityAttribute()
+    {
+        return $this->activities()->latest('created_at')->first()?->created_at;
+    }
 }
