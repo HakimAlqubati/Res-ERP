@@ -7,7 +7,7 @@ use App\Models\InventoryTransaction;
 use App\Models\PurchaseInvoice;
 use App\Models\UnitPrice;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+
 use Exception;
 
 class PurchaseInvoiceInventoryMigrationService
@@ -19,15 +19,11 @@ class PurchaseInvoiceInventoryMigrationService
      */
     public static function migrateInventoryTransactions()
     {
-        Log::info('Starting inventory transactions migration...');
-
         // Retrieve all purchase invoice details
         $purchaseDetails = PurchaseInvoiceDetail::with('purchaseInvoice.store')->get();
         foreach ($purchaseDetails as $detail) {
             self::migrateTransactionForDetail($detail);
         }
-
-        Log::info('Inventory transactions migration completed.');
     }
 
     /**
@@ -76,10 +72,6 @@ class PurchaseInvoiceInventoryMigrationService
                 'transactionable_id' => $detail->purchase_invoice_id,
                 'transactionable_type' => PurchaseInvoice::class,
             ]);
-
-            // DB::commit(); // Commit transaction if successful
-
-            Log::info("Inventory transaction created for Purchase Invoice ID: {$detail->purchase_invoice_id}, Product ID: {$detail->product_id}");
         }
         // } catch (Exception $e) {
         //     DB::rollBack(); // Rollback transaction on error
@@ -95,13 +87,11 @@ class PurchaseInvoiceInventoryMigrationService
      */
     public static function updatePackageSizeInPurchaseDetails()
     {
-        Log::info('Starting package_size update for purchase_invoice_details...');
-
         // Retrieve all purchase invoice details
         $purchaseDetails = PurchaseInvoiceDetail::all();
 
         foreach ($purchaseDetails as $detail) {
-            DB::beginTransaction(); // Start transaction for each update
+            DB::beginTransaction();
 
             try {
                 // Find the matching unit price for the product and unit
@@ -110,21 +100,13 @@ class PurchaseInvoiceInventoryMigrationService
                     ->first();
 
                 if ($unitPrice) {
-                    // Update package_size in purchase_invoice_details
                     $detail->update(['package_size' => $unitPrice->package_size]);
-
-                    Log::info("Updated package_size for Purchase Invoice Detail ID: {$detail->id} to {$unitPrice->package_size}");
-                } else {
-                    Log::warning("No matching unit price found for Purchase Invoice Detail ID: {$detail->id}, Product ID: {$detail->product_id}, Unit ID: {$detail->unit_id}");
                 }
 
-                DB::commit(); // Commit transaction
+                DB::commit();
             } catch (Exception $e) {
-                DB::rollBack(); // Rollback on error
-                Log::error("Error updating package_size for Purchase Invoice Detail ID: {$detail->id}. Error: " . $e->getMessage());
+                DB::rollBack();
             }
         }
-
-        Log::info('Package_size update for purchase_invoice_details completed.');
     }
 }

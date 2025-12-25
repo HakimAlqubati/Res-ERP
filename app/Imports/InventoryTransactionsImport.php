@@ -10,7 +10,7 @@ use App\Models\Unit;
 use App\Models\UnitPrice;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
@@ -33,7 +33,6 @@ class InventoryTransactionsImport implements ToCollection, WithHeadingRow
                 $product = Product::find($productId);
 
                 if (!$product || !$unit) {
-                    Log::warning("Missing product or unit: Product ID {$productId}, Unit: {$unitName}");
                     continue;
                 }
 
@@ -47,7 +46,7 @@ class InventoryTransactionsImport implements ToCollection, WithHeadingRow
                         fn($q) =>
                         $q->where('categories.id', $category->id)
                     )->first();
-                    
+
 
                     if (($customizedBranch && $category->is_manafacturing) || ($customizedBranch)) {
                         $storeId = $customizedBranch->store_id;
@@ -76,12 +75,8 @@ class InventoryTransactionsImport implements ToCollection, WithHeadingRow
                 ]);
             }
             DB::commit();
-            Log::info('✅ All inventory transactions imported successfully.');
         } catch (Throwable $e) {
             DB::rollBack();
-            Log::error('❌ Failed to import inventory transactions: ' . $e->getMessage(), [
-                'exception' => $e
-            ]);
         }
     }
 }

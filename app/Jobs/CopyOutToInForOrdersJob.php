@@ -10,7 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+
 use Spatie\Multitenancy\Models\Tenant;
 
 class CopyOutToInForOrdersJob implements ShouldQueue
@@ -38,12 +38,8 @@ class CopyOutToInForOrdersJob implements ShouldQueue
             $tenant = Tenant::find($this->tenantId);
             if ($tenant) {
                 $tenant->makeCurrent();
-            } else {
-                Log::warning('Tenant not found for job', ['tenant_id' => $this->tenantId]);
             }
         }
-
-        Log::info('Job start: CopyOutToIn', ['tenant_id' => $this->tenantId, 'branch_id' => $this->branchId]);
 
         Order::select(['id', 'branch_id', 'created_at'])
             ->with(['branch:id,store_id', 'branch.store:id'])
@@ -95,7 +91,5 @@ class CopyOutToInForOrdersJob implements ShouldQueue
                     });
                 }
             });
-
-        Log::info('Job done: CopyOutToIn', ['tenant_id' => $this->tenantId, 'branch_id' => $this->branchId]);
     }
 }

@@ -8,7 +8,7 @@ use App\Models\Order;
 use App\Models\OrderDetails;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
@@ -26,19 +26,14 @@ class OrdersImport implements ToCollection, WithHeadingRow, SkipsOnFailure
     {
         DB::beginTransaction();
         if ($rows->isEmpty()) {
-            Log::warning('❗ No rows found!');
             return;
         }
-
-        Log::info('checking rows', [$rows]);
-        Log::info('Row Keys:', array_keys($rows->toArray()));
 
         try {
             foreach ($rows as $row) {
                 $row = $row->toArray();
 
                 $rowType = strtolower(trim($row['row_type'] ?? ''));
-                Log::info('sdfdsf', [$rowType]);
                 if ($rowType === 'header') {
                     $this->currentOrder = Order::create([
                         'id' => $row['order_id'],
@@ -71,7 +66,6 @@ class OrdersImport implements ToCollection, WithHeadingRow, SkipsOnFailure
             $this->successCount++;
         } catch (Throwable $e) {
             DB::rollBack();
-            Log::error("❌ Failed to import orders: " . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
         }
     }
 

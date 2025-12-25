@@ -6,7 +6,7 @@ use Exception;
 use App\Models\Product;
 use App\Models\UnitPrice;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+
 
 class ProductMigrationService
 {
@@ -19,18 +19,12 @@ class ProductMigrationService
      */
     public static function updatePackageSizeAndOrder()
     {
-        Log::info('Starting package_size and order update for all products...');
-
         // Retrieve all products that have unit prices
         $products = Product::whereHas('unitPrices')->with('unitPrices')->get();
-       
-        // Log::info('DDDD', [$products]);
-        // dd(count($products));
+
         foreach ($products as $product) {
             self::updatePackageSizeAndOrderForProduct($product);
         }
-
-        Log::info('Completed package_size and order update for all products.');
     }
 
     /**
@@ -47,7 +41,6 @@ class ProductMigrationService
             $unitPrices = $product->unitPrices()->orderBy('price', 'asc')->get();
 
             if ($unitPrices->isEmpty()) {
-                Log::warning("No unit prices found for Product ID: {$product->id}");
                 DB::rollBack();
                 return;
             }
@@ -60,16 +53,14 @@ class ProductMigrationService
                 $packageSize = ($firstUnitPrice > 0) ? round($unitPrice->price / $firstUnitPrice, 2) : 1;
 
                 $unitPrice->update([
-                    'order' => $index + 1, // Order starts from 1
+                    'order' => $index + 1,
                     'package_size' => $packageSize,
                 ]);
             }
 
             DB::commit();
-            Log::info("Updated package_size and order for Product ID: {$product->id}");
         } catch (Exception $e) {
             DB::rollBack();
-            Log::error("Error updating package_size and order for Product ID: {$product->id}. Error: {$e->getMessage()}");
         }
     }
 }
