@@ -4,7 +4,7 @@ namespace App\Observers;
 
 use App\Models\MaintenanceCost;
 use App\Services\Financial\MaintenanceFinancialSyncService;
-use Illuminate\Support\Facades\Log;
+
 
 /**
  * Observer لنموذج MaintenanceCost
@@ -31,19 +31,8 @@ class MaintenanceCostObserver
 
         try {
             $result = $this->syncService->syncMaintenanceCost($cost->id);
-
-            if ($result['success'] && ($result['status'] ?? '') === 'synced') {
-                Log::info('MaintenanceCost auto-synced to financial system', [
-                    'maintenance_cost_id' => $cost->id,
-                    'amount' => $cost->amount,
-                    'cost_type' => $cost->cost_type,
-                ]);
-            }
         } catch (\Exception $e) {
-            Log::error('Failed to auto-sync MaintenanceCost to financial system', [
-                'maintenance_cost_id' => $cost->id,
-                'error' => $e->getMessage(),
-            ]);
+            // Silent fail
         }
     }
 
@@ -56,15 +45,8 @@ class MaintenanceCostObserver
     {
         try {
             $this->syncService->deleteFinancialTransaction($cost->id);
-
-            Log::info('MaintenanceCost financial transaction deleted', [
-                'maintenance_cost_id' => $cost->id,
-            ]);
         } catch (\Exception $e) {
-            Log::error('Failed to delete MaintenanceCost financial transaction', [
-                'maintenance_cost_id' => $cost->id,
-                'error' => $e->getMessage(),
-            ]);
+            // Silent fail
         }
     }
 }

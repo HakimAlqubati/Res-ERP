@@ -13,7 +13,7 @@ use App\Models\FinancialCategory;
 use App\Models\FinancialTransaction;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+
 
 /**
  * Service for syncing payroll data with financial transactions.
@@ -90,28 +90,13 @@ class PayrollFinancialSyncService
                     ->whereIn('status', [Payroll::STATUS_APPROVED, Payroll::STATUS_PAID])
                     ->get();
 
-                // DEBUG: Log payrolls count and statuses
-                Log::info('PayrollFinancialSync Debug', [
-                    'payroll_run_id' => $payrollRun->id,
-                    'payrolls_count' => $payrolls->count(),
-                    'payroll_statuses' => $payrolls->pluck('status')->toArray(),
-                    'salary_category_id' => $salaryCategory->id,
-                ]);
+
 
                 $totalNetSalary = $payrolls->sum(function ($payroll) {
                     return $payroll->net_salary;
                 });
 
-                // DEBUG: Log net salary calculation
-                Log::info('PayrollFinancialSync Net Salary', [
-                    'payroll_run_id' => $payrollRun->id,
-                    'total_net_salary' => $totalNetSalary,
-                    'individual_salaries' => $payrolls->map(fn($p) => [
-                        'id' => $p->id,
-                        'net_salary' => $p->net_salary,
-                        'status' => $p->status,
-                    ])->toArray(),
-                ]);
+
 
                 if ($totalNetSalary > 0) {
                     // Create main salary expense transaction
@@ -128,15 +113,6 @@ class PayrollFinancialSyncService
                         'created_by' => auth()->id() ?? $payrollRun->created_by ?? 1,
                         'month' => $payrollRun->month,
                         'year' => $payrollRun->year,
-                    ]);
-
-                    Log::info('PayrollFinancialSync Transaction Created', [
-                        'transaction_id' => $transaction->id,
-                        'amount' => $transaction->amount,
-                    ]);
-                } else {
-                    Log::warning('PayrollFinancialSync: No transaction created - totalNetSalary is 0', [
-                        'payroll_run_id' => $payrollRun->id,
                     ]);
                 }
 
@@ -155,10 +131,7 @@ class PayrollFinancialSyncService
                 'errors' => 0,
             ];
         } catch (\Exception $e) {
-            Log::error('PayrollFinancialSync Error', [
-                'payroll_run_id' => $payrollRunId,
-                'error' => $e->getMessage(),
-            ]);
+
 
             return [
                 'success' => false,
@@ -341,7 +314,6 @@ class PayrollFinancialSyncService
             ->get();
 
         if ($linkedDeductions->isEmpty()) {
-            Log::info('PayrollFinancialSync: No linked deductions found');
             return;
         }
 
@@ -370,14 +342,6 @@ class PayrollFinancialSyncService
                     'created_by' => auth()->id() ?? $payrollRun->created_by ?? 1,
                     'month' => $payrollRun->month,
                     'year' => $payrollRun->year,
-                ]);
-
-                Log::info('PayrollFinancialSync: Deduction transaction created', [
-                    'deduction_id' => $deduction->id,
-                    'deduction_name' => $deduction->name,
-                    'category_id' => $deduction->financialCategory->id,
-                    'amount' => $totalAmount,
-                    'payroll_run_id' => $payrollRun->id,
                 ]);
             }
         }

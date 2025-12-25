@@ -3,7 +3,7 @@
 namespace App\Observers;
 
 use App\Models\StockTransferOrder;
-use Illuminate\Support\Facades\Log;
+
 
 class StockTransferOrderObserver
 {
@@ -17,7 +17,6 @@ class StockTransferOrderObserver
      */
     public function updated(StockTransferOrder $order): void
     {
-        Log::info('in_observer', [$order]);
         // الحالة تغيرت من شيء آخر إلى approved؟
         if (
             $order->isDirty('status') &&

@@ -7,7 +7,7 @@ use App\Models\AdvanceRequest;
 use App\Models\EmployeeAdvanceInstallment;
 use App\Models\PayrollRun;
 use App\Services\Financial\PayrollFinancialSyncService;
-use Illuminate\Support\Facades\Log;
+
 
 /**
  * Observer for PayrollRun model.
@@ -52,18 +52,8 @@ class PayrollRunObserver
             // Sync with financial system
             try {
                 $result = $this->syncService->syncPayrollRun($payrollRun->id);
-
-                if ($result['success'] && ($result['status'] ?? '') === 'synced') {
-                    Log::info('PayrollRun synced to financial system', [
-                        'payroll_run_id' => $payrollRun->id,
-                        'status' => $newStatus,
-                    ]);
-                }
             } catch (\Exception $e) {
-                Log::error('Failed to sync PayrollRun to financial system', [
-                    'payroll_run_id' => $payrollRun->id,
-                    'error' => $e->getMessage(),
-                ]);
+                // Silent fail - error already handled by syncService
             }
         }
     }
@@ -77,15 +67,8 @@ class PayrollRunObserver
     {
         try {
             $this->syncService->deletePayrollRunTransactions($payrollRun->id);
-
-            Log::info('PayrollRun financial transactions deleted', [
-                'payroll_run_id' => $payrollRun->id,
-            ]);
         } catch (\Exception $e) {
-            Log::error('Failed to delete PayrollRun financial transactions', [
-                'payroll_run_id' => $payrollRun->id,
-                'error' => $e->getMessage(),
-            ]);
+            // Silent fail
         }
     }
 
@@ -176,18 +159,8 @@ class PayrollRunObserver
                     }
                 }
             }
-
-            Log::info('Advance installments marked as paid for PayrollRun', [
-                'payroll_run_id' => $payrollRun->id,
-                'period' => $periodStart . ' to ' . $periodEnd,
-                'installments_marked' => $allInstallments->count(),
-                'advance_requests_updated' => count($advanceRequestUpdates),
-            ]);
         } catch (\Exception $e) {
-            Log::error('Failed to mark advance installments as paid', [
-                'payroll_run_id' => $payrollRun->id,
-                'error' => $e->getMessage(),
-            ]);
+            // Silent fail
         }
     }
 }

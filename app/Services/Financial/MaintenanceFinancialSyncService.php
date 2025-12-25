@@ -7,7 +7,7 @@ use App\Models\MaintenanceCost;
 use App\Models\FinancialCategory;
 use App\Models\FinancialTransaction;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+
 
 /**
  * خدمة مزامنة تكاليف الصيانة مع النظام المالي
@@ -89,12 +89,6 @@ class MaintenanceFinancialSyncService
                 $cost->markAsSynced();
             });
 
-            Log::info('MaintenanceCost synced to financial system', [
-                'maintenance_cost_id' => $cost->id,
-                'amount' => $cost->amount,
-                'cost_type' => $cost->cost_type,
-            ]);
-
             return [
                 'success' => true,
                 'status' => 'synced',
@@ -103,11 +97,6 @@ class MaintenanceFinancialSyncService
                 'amount' => $cost->amount,
             ];
         } catch (\Exception $e) {
-            Log::error('MaintenanceFinancialSync Error', [
-                'maintenance_cost_id' => $maintenanceCostId,
-                'error' => $e->getMessage(),
-            ]);
-
             return [
                 'success' => false,
                 'status' => 'error',
