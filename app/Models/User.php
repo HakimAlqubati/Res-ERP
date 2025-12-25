@@ -34,7 +34,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
         HasPanelShield,
         // DynamicConnection,
         \OwenIt\Auditing\Auditable,
-        BranchScope,HasUserDevices;
+        BranchScope,
+        HasUserDevices;
 
     /**
      * The attributes that are mass assignable.
@@ -400,5 +401,24 @@ class User extends Authenticatable implements FilamentUser, Auditable
         });
     }
 
-    
+    /**
+     * Get all activities (logs) created by this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function activities()
+    {
+        return $this->hasMany(\Spatie\Activitylog\Models\Activity::class, 'causer_id')
+            ->where('causer_type', static::class);
+    }
+
+    /**
+     * Get the count of activities for this user.
+     *
+     * @return int
+     */
+    public function getActivitiesCountAttribute()
+    {
+        return $this->activities()->count();
+    }
 }

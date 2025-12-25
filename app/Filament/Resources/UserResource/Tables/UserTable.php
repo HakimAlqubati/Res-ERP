@@ -117,10 +117,15 @@ class UserTable
                     ->boolean()->alignCenter(true)
                     ->label(__("lang.is_blocked"))->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('last_login_at')->label('Last Login')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('activities_count')
+                    ->label(__('lang.activities_count'))
+                    ->counts('activities')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filtersFormColumns(2)
             ->filters([
-                TrashedFilter::make(),  
+                TrashedFilter::make(),
                 SelectFilter::make('active')
                     ->label('Status')
                     ->options([

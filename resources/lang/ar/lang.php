@@ -167,6 +167,7 @@ return [
   'no' => 'لا',
   'allow_login' => 'إزالة الحظر',
   'is_blocked' => 'محظور من تسجيل الدخول',
+  'activities_count' => 'عدد الأنشطة',
   'branch_type' => 'نوع',
   'branch' => 'الفرع',
   'central_kitchen' => 'المطبخ المركزي',
