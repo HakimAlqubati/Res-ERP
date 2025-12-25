@@ -14,7 +14,7 @@ use App\Models\StockSupplyOrder;
 use App\Models\UnitPrice;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -35,7 +35,6 @@ class RebuildInventoryFromSources
     public function handle(): void
     {
         DB::beginTransaction();
-        Log::info('✅ Starting inventory rebuild in chronological order.');
 
         try {
             ProductPriceHistory::truncate();
@@ -117,10 +116,8 @@ class RebuildInventoryFromSources
             }
 
             DB::commit();
-            Log::info('✅ Inventory rebuilt successfully in chronological order.');
         } catch (Exception $e) {
             DB::rollBack();
-            Log::error('❌ Failed to rebuild inventory: ' . $e->getMessage());
         }
     }
 

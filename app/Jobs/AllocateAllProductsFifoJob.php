@@ -9,7 +9,7 @@ use App\Services\FixFifo\FifoAllocatorService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+
 
 class AllocateAllProductsFifoJob implements ShouldQueue
 {
@@ -28,7 +28,7 @@ class AllocateAllProductsFifoJob implements ShouldQueue
      */
     public function handle(): void
     {
-        
+
 
         $productIds = DB::table('orders_details as od')
             ->join('orders as o', 'od.order_id', '=', 'o.id')
@@ -69,15 +69,8 @@ class AllocateAllProductsFifoJob implements ShouldQueue
             try {
                 FifoAllocationSaver::save($allocations, $productId);
             } catch (Throwable $e) {
-                Log::error("❌ Error allocating product_id={$productId}", [
-                    'error' => $e->getMessage(),
-                ]);
-
-                Log::error("❌ Error allocating product_id={$productId}", [
-                    'error' => $e->getMessage(),
-                ]);
+                // Silent fail
             }
         }
-        Log::info('🎉 FIFO allocation completed for all products.');
     }
 }

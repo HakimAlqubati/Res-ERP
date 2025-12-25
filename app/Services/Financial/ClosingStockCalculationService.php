@@ -9,7 +9,7 @@ use App\Models\InventoryTransaction;
 use App\Models\StockInventory;
 use App\Models\Branch;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+
 use App\Services\PurchasedReports\PurchaseInvoiceProductSummaryReportService;
 
 class ClosingStockCalculationService
@@ -83,7 +83,6 @@ class ClosingStockCalculationService
             $category = FinancialCategory::findByCode(FinancialCategoryCode::CLOSING_STOCK);
 
             if (!$category) {
-                Log::error("Closing Stock Category not found with code: " . FinancialCategoryCode::CLOSING_STOCK);
                 return null;
             }
 
@@ -108,7 +107,6 @@ class ClosingStockCalculationService
                 'year' => \Carbon\Carbon::parse($inventory->inventory_date)->year,
             ]);
         } catch (\Exception $e) {
-            Log::error("Failed to create closing stock transaction for inventory #{$inventory->id}: " . $e->getMessage());
             return null;
         }
     }

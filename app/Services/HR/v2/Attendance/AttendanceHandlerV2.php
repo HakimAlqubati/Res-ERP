@@ -5,7 +5,7 @@ namespace App\Services\HR\v2\Attendance;
 use App\Models\Attendance;
 use App\Models\Employee;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
+
 
 class AttendanceHandlerV2
 {
@@ -235,10 +235,6 @@ class AttendanceHandlerV2
 
             // If still no period, we cannot create the record
             if (!$period) {
-                Log::warning('Cannot store rejected attendance - employee has no periods', [
-                    'employee_id' => $ctx->employee->id,
-                    'message' => $message
-                ]);
                 return;
             }
 
@@ -252,12 +248,7 @@ class AttendanceHandlerV2
                 $ctx->attendanceType
             );
         } catch (\Throwable $e) {
-            // If storing rejected record fails, just log it
-            Log::error('Failed to store rejected attendance in handler', [
-                'error' => $e->getMessage(),
-                'employee_id' => $ctx->employee->id,
-                'message' => $message
-            ]);
+            // Silent fail
         }
     }
 }
