@@ -20,7 +20,9 @@ class FinancialHRReportController extends Controller
      */
     public function index()
     {
-        abort_unless(Auth::check(), 403, 'غير مصرح لك بالدخول');
+        if (!Auth::check()) {
+            return redirect('/admin/login');
+        }
 
         $data = $this->reportService->getReportData();
 

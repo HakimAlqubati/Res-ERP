@@ -6,405 +6,225 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $meta['title'] }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#0d7c66',
+                            light: '#10a37f',
+                            dark: '#095c4c'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --primary: #0d7c66;
-            --primary-light: #10a37f;
-            --primary-dark: #095c4c;
-            --bg-dark: #0a1f1c;
-            --bg-card: rgba(13, 124, 102, 0.08);
-            --text-light: #e0e0e0;
-            --text-muted: #94a3b8;
-            --success: #4ade80;
-            --danger: #f87171;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
             font-family: 'Tajawal', sans-serif;
-            background: linear-gradient(135deg, var(--bg-dark) 0%, #0f2922 50%, #1a3d35 100%);
-            min-height: 100vh;
-            color: var(--text-light);
         }
 
-        /* Fixed Header */
-        .fixed-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            background: linear-gradient(135deg, var(--bg-dark) 0%, #0f2922 100%);
-            border-bottom: 1px solid rgba(13, 124, 102, 0.2);
-            padding: 20px 20px 0;
+        .animate-fade-in {
+            animation: fade-in 0.3s ease;
         }
 
-        .fixed-header .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .header h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 5px;
-        }
-
-        .header p {
-            font-size: 1rem;
-            color: var(--text-muted);
-        }
-
-        /* Tabs in Fixed Header */
-        .tabs {
-            display: flex;
-            gap: 10px;
-            padding-bottom: 0;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 14px 20px;
-            background: rgba(13, 124, 102, 0.1);
-            border: 1px solid rgba(13, 124, 102, 0.2);
-            border-bottom: none;
-            border-radius: 12px 12px 0 0;
-            color: var(--text-muted);
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .tab-btn:hover {
-            background: rgba(13, 124, 102, 0.2);
-        }
-
-        .tab-btn.active {
-            background: var(--bg-card);
-            color: #fff;
-            border-color: rgba(13, 124, 102, 0.3);
-        }
-
-        .tab-btn.active.success {
-            border-top: 3px solid var(--success);
-        }
-
-        .tab-btn.active.danger {
-            border-top: 3px solid var(--danger);
-        }
-
-        .tab-btn.active.primary {
-            border-top: 3px solid var(--primary-light);
-        }
-
-        .tab-btn .icon {
-            font-size: 1rem;
-        }
-
-        .count-badge {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 3px 8px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-        }
-
-        /* Main Content with padding for fixed header */
-        .main-content {
-            padding: 200px 20px 40px;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        /* Tab Content */
-        .tab-content {
-            display: none;
-            background: var(--bg-card);
-            border: 1px solid rgba(13, 124, 102, 0.2);
-            border-radius: 0 0 20px 20px;
-            padding: 30px;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
+        @keyframes fade-in {
             from {
                 opacity: 0;
+                transform: translateY(10px);
             }
 
             to {
                 opacity: 1;
+                transform: translateY(0);
             }
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th {
-            text-align: right;
-            padding: 15px;
-            background: rgba(13, 124, 102, 0.15);
-            font-weight: 600;
-            color: #fff;
-        }
-
-        th:first-child {
-            border-radius: 0 8px 0 0;
-        }
-
-        th:last-child {
-            border-radius: 8px 0 0 0;
-        }
-
-        td {
-            padding: 15px;
-            border-bottom: 1px solid rgba(13, 124, 102, 0.1);
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        tr:hover td {
-            background: rgba(13, 124, 102, 0.08);
-        }
-
-        .item-name {
-            font-weight: 500;
-            color: #fff;
-        }
-
-        .item-reason {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-        }
-
-        .rule-box {
-            background: linear-gradient(135deg, rgba(13, 124, 102, 0.25) 0%, rgba(9, 92, 76, 0.25) 100%);
-            border: 1px solid rgba(13, 124, 102, 0.4);
-            border-radius: 16px;
-            padding: 25px;
-            text-align: center;
-            margin-top: 30px;
-        }
-
-        .rule-box h3 {
-            font-size: 1.2rem;
-            color: var(--primary-light);
-            margin-bottom: 10px;
-        }
-
-        .rule-box p {
-            font-size: 1.1rem;
-            color: #fff;
-            line-height: 1.8;
-        }
-
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            padding-top: 30px;
-            border-top: 1px solid rgba(13, 124, 102, 0.2);
-            color: #64748b;
-            font-size: 0.9rem;
-        }
-
-        .footer-logo {
-            width: 40px;
-            height: auto;
-            margin-bottom: 10px;
-            opacity: 0.8;
-        }
-
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--primary-light);
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: color 0.3s;
-            margin-bottom: 15px;
-        }
-
-        .back-link:hover {
-            color: var(--success);
-        }
-
-        @media (max-width: 640px) {
-            .fixed-header {
-                padding: 15px 15px 0;
+        @media (max-width: 900px) {
+            aside {
+                position: relative !important;
+                width: 100% !important;
+                height: auto !important;
             }
 
-            .header h1 {
-                font-size: 1.5rem;
+            main {
+                margin-right: 0 !important;
+                max-width: 100% !important;
             }
 
-            .main-content {
-                padding-top: 250px;
-            }
-
-            .tabs {
+            .layout {
                 flex-direction: column;
-                gap: 5px;
-            }
-
-            .tab-btn {
-                border-radius: 10px;
-                border: 1px solid rgba(13, 124, 102, 0.2);
-                padding: 12px;
-                font-size: 0.9rem;
-            }
-
-            .tab-content {
-                border-radius: 12px;
-                margin-top: 10px;
-                padding: 20px;
-            }
-
-            th,
-            td {
-                padding: 12px 10px;
-                font-size: 0.9rem;
             }
         }
     </style>
 </head>
 
-<body>
+<body class="bg-gradient-to-br from-[#0a1f1c] via-[#0f2922] to-[#1a3d35] min-h-screen text-gray-200">
 
-    {{-- Fixed Header with Tabs --}}
-    <div class="fixed-header">
-        <div class="container">
-            <a href="{{ url('/admin') }}" class="back-link">→ {{ $labels['backLink'] }}</a>
+    @php
+    $tabs = [
+    'required' => [
+    'title' => $labels['requiredTitle'],
+    'icon' => '✓',
+    'items' => $requiredItems,
+    'columns' => ['name' => $labels['itemColumn'], 'reason' => $labels['reasonColumn']],
+    ],
+    'notRequired' => [
+    'title' => $labels['notRequiredTitle'],
+    'icon' => '✗',
+    'items' => $notRequiredItems,
+    'columns' => ['name' => $labels['itemColumn'], 'reason' => $labels['reasonColumn']],
+    ],
+    'categories' => [
+    'title' => $labels['categoriesTitle'],
+    'icon' => '📂',
+    'items' => $financialCategories,
+    'columns' => ['name' => $labels['itemColumn'], 'type' => $labels['typeColumn']],
+    ],
+    ];
+    @endphp
 
-            <div class="header">
-                <h1>{{ $meta['title'] }}</h1>
-                <p>{{ $meta['description'] }}</p>
+    <div class="layout flex min-h-screen">
+
+        {{-- Sidebar --}}
+        <aside class="w-72 bg-[#0a1f1c]/95 border-l border-primary/20 p-6 fixed top-0 right-0 h-screen overflow-y-auto z-50">
+            <a href="{{ url('/admin') }}" class="inline-flex items-center gap-2 text-primary-light hover:text-green-400 text-sm mb-5 transition-colors">
+                → {{ $labels['backLink'] }}
+            </a>
+
+            <div class="text-center mb-8 pb-5 border-b border-primary/20">
+                <h1 class="text-xl font-bold text-white mb-2">{{ $meta['title'] }}</h1>
+                <p class="text-sm text-gray-400">{{ $meta['description'] }}</p>
             </div>
 
-            <div class="tabs">
-                <button class="tab-btn success active" onclick="showTab('required')">
-                    <span class="icon">✓</span>
-                    {{ $labels['requiredTitle'] }}
-                    <span class="count-badge">{{ count($requiredItems) }}</span>
+            <div class="flex flex-col gap-3">
+                @foreach($tabs as $id => $tab)
+                <button onclick="showTab('{{ $id }}', this)" class="tab-btn w-full p-4 bg-primary/10 border border-primary/20 rounded-xl text-gray-400 font-semibold cursor-pointer transition-all hover:bg-primary/20 hover:-translate-x-1 flex items-center gap-3 text-right {{ $loop->first ? 'active border-r-4 border-r-primary-light text-white' : '' }}">
+                    <span class="text-lg w-6 text-center">{{ $tab['icon'] }}</span>
+                    <span class="flex-1">{{ $tab['title'] }}</span>
+                    <span class="bg-white/15 px-2.5 py-1 rounded-full text-xs">{{ count($tab['items']) }}</span>
                 </button>
-                <button class="tab-btn danger" onclick="showTab('notRequired')">
-                    <span class="icon">✗</span>
-                    {{ $labels['notRequiredTitle'] }}
-                    <span class="count-badge">{{ count($notRequiredItems) }}</span>
-                </button>
-                <button class="tab-btn primary" onclick="showTab('categories')">
-                    <span class="icon">📂</span>
-                    {{ $labels['categoriesTitle'] }}
-                    <span class="count-badge">{{ count($financialCategories) }}</span>
+                @endforeach
+            </div>
+
+            <div class="absolute bottom-5 left-5 right-5 text-center pt-5 border-t border-primary/20">
+                <img src="{{ asset('workbench.png') }}" alt="Logo" class="w-9 h-auto mx-auto mb-2 opacity-80">
+                <span class="text-gray-500 text-xs">{{ $meta['brand'] }}</span>
+            </div>
+        </aside>
+
+        {{-- Main Content --}}
+        <main class="flex-1 mr-72 p-10 overflow-y-auto h-screen">
+
+            @foreach($tabs as $id => $tab)
+            <div id="{{ $id }}" class="tab-content {{ $loop->first ? 'block' : 'hidden' }} bg-primary/10 border border-primary/20 rounded-2xl p-8 animate-fade-in">
+                <div class="mb-6 pb-4 border-b border-primary/20">
+                    <h2 class="text-2xl font-bold text-primary-light flex items-center gap-3">
+                        {{ $tab['icon'] }} {{ $tab['title'] }}
+                    </h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr>
+                                @foreach($tab['columns'] as $col)
+                                <th class="text-right p-4 bg-primary/95 font-semibold text-white sticky -top-10 z-10 {{ $loop->first ? 'rounded-tr-lg' : 'rounded-tl-lg' }}">{{ $col }}</th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($tab['items'] as $item)
+                            <tr class="hover:bg-primary/10 transition-colors">
+                                @foreach($tab['columns'] as $key => $label)
+                                <td class="p-4 border-b border-primary/10 {{ $loop->first ? 'font-medium text-white' : 'text-gray-400 text-sm' }}">{{ $item[$key] }}</td>
+                                @endforeach
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endforeach
+
+            {{-- Golden Rule --}}
+            <div class="mt-8 bg-gradient-to-br from-primary/25 to-primary-dark/25 border border-primary/40 rounded-2xl p-6 text-center">
+                <h3 class="text-lg text-primary-light mb-3">📌 {{ $labels['goldenRuleTitle'] }}</h3>
+                <p class="text-lg text-white leading-relaxed">{{ $goldenRule }}</p>
+            </div>
+
+            {{-- Export Button --}}
+            <div class="mt-8 text-center">
+                <button onclick="exportToExcel()" class="inline-flex items-center gap-3 px-8 py-4 bg-primary hover:bg-primary-light text-white font-semibold rounded-xl transition-all hover:scale-105 shadow-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    تصدير إلى Excel
                 </button>
             </div>
-        </div>
+
+        </main>
     </div>
 
-    {{-- Main Content --}}
-    <div class="main-content">
-
-        {{-- Tab: Required Items --}}
-        <div id="required" class="tab-content active">
-            <table>
-                <thead>
-                    <tr>
-                        <th>{{ $labels['itemColumn'] }}</th>
-                        <th>{{ $labels['reasonColumn'] }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($requiredItems as $item)
-                    <tr>
-                        <td class="item-name">{{ $item['name'] }}</td>
-                        <td class="item-reason">{{ $item['reason'] }}</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-
-        {{-- Tab: Not Required Items --}}
-        <div id="notRequired" class="tab-content">
-            <table>
-                <thead>
-                    <tr>
-                        <th>{{ $labels['itemColumn'] }}</th>
-                        <th>{{ $labels['reasonColumn'] }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($notRequiredItems as $item)
-                    <tr>
-                        <td class="item-name">{{ $item['name'] }}</td>
-                        <td class="item-reason">{{ $item['reason'] }}</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-
-        {{-- Tab: Financial Categories --}}
-        <div id="categories" class="tab-content">
-            <table>
-                <thead>
-                    <tr>
-                        <th>{{ $labels['itemColumn'] }}</th>
-                        <th>{{ $labels['typeColumn'] }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($financialCategories as $category)
-                    <tr>
-                        <td class="item-name">{{ $category['name'] }}</td>
-                        <td class="item-reason">{{ $category['type'] }}</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-
-        {{-- Golden Rule --}}
-        <div class="rule-box">
-            <h3>📌 {{ $labels['goldenRuleTitle'] }}</h3>
-            <p>{{ $goldenRule }}</p>
-        </div>
-
-        <div class="footer">
-            <img src="{{ asset('workbench.png') }}" alt="Logo" class="footer-logo">
-            <div>{{ $meta['copyright'] }} © {{ date('Y') }} | {{ $meta['brand'] }}</div>
-        </div>
-
-    </div>
-
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script>
-        function showTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
+        function showTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(c => {
+                c.classList.add('hidden');
+                c.classList.remove('block');
+            });
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('active', 'border-r-4', 'border-r-primary-light', 'text-white');
+                b.classList.add('text-gray-400');
+            });
+            document.getElementById(tabId).classList.remove('hidden');
+            document.getElementById(tabId).classList.add('block');
+            btn.classList.add('active', 'border-r-4', 'border-r-primary-light', 'text-white');
+            btn.classList.remove('text-gray-400');
+        }
+
+        function exportToExcel() {
+            const wb = XLSX.utils.book_new();
+
+            // Tab 1: Required Items
+            const requiredData = [
+                ['{{ $labels["itemColumn"] }}', '{{ $labels["reasonColumn"] }}'],
+                @foreach($requiredItems as $item)['{{ $item["name"] }}', '{{ $item["reason"] }}'],
+                @endforeach
+            ];
+            const ws1 = XLSX.utils.aoa_to_sheet(requiredData);
+            XLSX.utils.book_append_sheet(wb, ws1, '{{ $labels["requiredTitle"] }}'.substring(0, 31));
+
+            // Tab 2: Not Required Items
+            const notRequiredData = [
+                ['{{ $labels["itemColumn"] }}', '{{ $labels["reasonColumn"] }}'],
+                @foreach($notRequiredItems as $item)['{{ $item["name"] }}', '{{ $item["reason"] }}'],
+                @endforeach
+            ];
+            const ws2 = XLSX.utils.aoa_to_sheet(notRequiredData);
+            XLSX.utils.book_append_sheet(wb, ws2, '{{ $labels["notRequiredTitle"] }}'.substring(0, 31));
+
+            // Tab 3: Financial Categories
+            const categoriesData = [
+                ['{{ $labels["itemColumn"] }}', '{{ $labels["typeColumn"] }}'],
+                @foreach($financialCategories as $category)['{{ $category["name"] }}', '{{ $category["type"] }}'],
+                @endforeach
+            ];
+            const ws3 = XLSX.utils.aoa_to_sheet(categoriesData);
+            XLSX.utils.book_append_sheet(wb, ws3, '{{ $labels["categoriesTitle"] }}'.substring(0, 31));
+
+            // Golden Rule Sheet
+            const goldenRuleData = [
+                ['{{ $labels["goldenRuleTitle"] }}'],
+                ['{{ $goldenRule }}'],
+            ];
+            const ws4 = XLSX.utils.aoa_to_sheet(goldenRuleData);
+            XLSX.utils.book_append_sheet(wb, ws4, 'القاعدة الذهبية');
+
+            // Export
+            XLSX.writeFile(wb, 'تقرير_بنود_الراتب_والتسجيل_المالي.xlsx');
         }
     </script>
 </body>
