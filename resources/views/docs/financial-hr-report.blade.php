@@ -109,11 +109,7 @@
                 </button>
                 @endforeach
             </div>
-
-            <div class="absolute bottom-5 left-5 right-5 text-center pt-5 border-t border-primary/20">
-                <img src="{{ asset('workbench.png') }}" alt="Logo" class="w-9 h-auto mx-auto mb-2 opacity-80">
-                <span class="text-gray-500 text-xs">{{ $meta['brand'] }}</span>
-            </div>
+ 
         </aside>
 
         {{-- Main Content --}}
