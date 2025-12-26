@@ -9,7 +9,7 @@ use App\Models\Product;
 use App\Models\Unit;
 use App\Models\UnitPrice;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -125,13 +125,7 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
             $this->successCount++;
             // DB::commit();
         } catch (Exception $e) {
-            Log::channel('single')->error('❌ Import Error', [
-                'row' => $row,
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            // DB::rollBack();
-            Log::error("Failed to import row: " . json_encode($row) . ' - ' . $e->getMessage());
+            // Silent fail
         }
 
         return null; // we're handling manually

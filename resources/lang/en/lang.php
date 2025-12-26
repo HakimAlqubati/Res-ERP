@@ -184,6 +184,8 @@ return [
     'no'                                          => 'no',
     'allow_login'                                 => 'Allow Login',
     'is_blocked'                                  => 'Blocked Login',
+    'activities_count'                            => 'Activities Count',
+    'last_activity'                               => 'Last Activity',
     'branch_type'                                 => 'Branch Type',
     'branch'                                      => 'Branch',
     'central_kitchen'                             => 'Manufacturing Branch',

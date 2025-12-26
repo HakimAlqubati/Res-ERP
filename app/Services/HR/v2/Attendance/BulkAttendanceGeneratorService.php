@@ -6,7 +6,7 @@ use App\Models\Employee;
 use App\Models\WorkPeriod;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+
 use Illuminate\Support\Facades\Validator;
 
 /**
@@ -103,16 +103,6 @@ class BulkAttendanceGeneratorService
                 );
             });
         } catch (\Throwable $e) {
-            // ========== إصلاح: تسجيل الاستثناءات للتتبع ==========
-            Log::error('BulkAttendanceGenerator: Transaction failed', [
-                'employee_id' => $employee->id,
-                'work_period_id' => $workPeriod->id,
-                'from_date' => $fromDate->toDateString(),
-                'to_date' => $toDate->toDateString(),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
             return [
                 'status' => false,
                 'message' => 'Failed to generate attendance records: ' . $e->getMessage(),
@@ -266,32 +256,14 @@ class BulkAttendanceGeneratorService
             $workDays = json_decode($workDays, true);
         }
 
-        // ========== تسجيل للتتبع: أيام العمل الأصلية ==========
-        Log::info('BulkAttendanceGenerator: Starting generation', [
-            'employee_id' => $employee->id,
-            'employee_name' => $employee->name,
-            'work_period_id' => $workPeriod->id,
-            'work_period_name' => $workPeriod->name,
-            'from_date' => $fromDate->toDateString(),
-            'to_date' => $toDate->toDateString(),
-            'raw_work_days' => $workDays,
-        ]);
+
 
         // ========== إصلاح: تطبيع أيام العمل ==========
         $normalizedWorkDays = $this->normalizeDays($workDays);
 
-        Log::info('BulkAttendanceGenerator: Normalized work days', [
-            'original' => $workDays,
-            'normalized' => $normalizedWorkDays,
-        ]);
 
-        // ========== إصلاح: التحقق من وجود أيام عمل ==========
+
         if (empty($normalizedWorkDays)) {
-            Log::warning('BulkAttendanceGenerator: No work days defined for period', [
-                'work_period_id' => $workPeriod->id,
-                'work_period_name' => $workPeriod->name,
-            ]);
-
             return [
                 'days_processed' => 0,
                 'successful_checkins' => 0,
@@ -368,11 +340,6 @@ class BulkAttendanceGeneratorService
                     'time' => null,
                     'reason' => $exceptionMessage,
                 ];
-                Log::error('BulkAttendanceGenerator: Checkin exception', [
-                    'employee_id' => $employee->id,
-                    'date' => $currentDate->toDateString(),
-                    'error' => $e->getMessage(),
-                ]);
             }
 
             // ========== معالجة تسجيل الانصراف (Check-out) ==========
@@ -427,11 +394,6 @@ class BulkAttendanceGeneratorService
                     'time' => null,
                     'reason' => $exceptionMessage,
                 ];
-                Log::error('BulkAttendanceGenerator: Checkout exception', [
-                    'employee_id' => $employee->id,
-                    'date' => $currentDate->toDateString(),
-                    'error' => $e->getMessage(),
-                ]);
             }
 
             // إضافة نتيجة اليوم إلى details
@@ -441,15 +403,7 @@ class BulkAttendanceGeneratorService
             $currentDate->addDay();
         }
 
-        // ========== تسجيل ملخص العملية ==========
-        Log::info('BulkAttendanceGenerator: Generation completed', [
-            'employee_id' => $employee->id,
-            'days_processed' => $daysProcessed,
-            'successful_checkins' => $successfulCheckins,
-            'successful_checkouts' => $successfulCheckouts,
-            'failed_records' => $failedRecords,
-            'details_count' => count($details),
-        ]);
+
 
         // ========== تحسين: بناء ملخص أسباب الفشل ==========
         $failuresSummary = $this->buildFailuresSummary($failureReasons);

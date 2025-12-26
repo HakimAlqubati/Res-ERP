@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+
 use Illuminate\Support\Facades\Storage;
 use OwenIt\Auditing\Contracts\Auditable;
 use Spatie\MediaLibrary\HasMedia;
@@ -246,13 +246,6 @@ class Task extends Model implements Auditable, HasMedia
 
             return $task;
         } catch (Exception $e) {
-            // Rollback the transaction if something goes wrong
-            // DB::rollBack();
-
-            // Log the error or handle it as needed
-            Log::error('Task creation failed: ' . $e->getMessage());
-
-            // Optionally, you could throw the exception again or return null
             return null; // Indicate failure
         }
     }

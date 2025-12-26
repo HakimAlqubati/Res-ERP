@@ -95,29 +95,35 @@ $currentTenant = CustomTenantModel::find($currentTenant->id);
             }
         </style>
 
-        {{-- <x-filament::card> --}}
         {{-- General Section --}}
         <x-filament::fieldset label="{{ __('lang.General') }}">
             <div class="tile-grid grid-3">
                 <a href="{{ route('filament.admin.resources.users.index') }}" class="quick-link">
                     <x-heroicon-o-user />
                     <div class="label">{{ __('lang.Users') }}</div>
+                    @if($showCounts)
                     <div class="badge">{{ \App\Models\User::forBranchManager()->count() }}</div>
+                    @endif
                 </a>
 
                 <a href="{{ route('filament.admin.resources.branches.index') }}" class="quick-link">
                     <x-heroicon-o-building-office-2 />
                     <div class="label">{{ __('lang.Branches') }}</div>
+                    @if($showCounts)
                     <div class="badge">{{ \App\Models\Branch::forBranchManager('id')->count() }}</div>
+                    @endif
                 </a>
 
                 <a href="{{ route('filament.admin.area-management.resources.countries.index') }}" class="quick-link">
                     <x-heroicon-o-globe-alt />
                     <div class="label">{{ __('lang.Area Management') }}</div>
+                    @if($showCounts)
                     <div class="badge">{{ \App\Models\Country::count() }}</div>
+                    @endif
                 </a>
             </div>
         </x-filament::fieldset>
+
         {{-- Inventory Section --}}
         @if (
         ($currentTenant &&
@@ -129,33 +135,43 @@ $currentTenant = CustomTenantModel::find($currentTenant->id);
                 <a href="{{ route('filament.admin.main-orders') }}" class="quick-link">
                     <x-heroicon-m-sparkles />
                     <div class="label">{{ __('lang.Orders') }}</div>
+                    @if($showCounts)
                     <div class="badge">{{ \App\Models\Order::count() }}</div>
+                    @endif
                 </a>
 
                 <a href="{{ route('filament.admin.product-unit.resources.products.index') }}" class="quick-link">
                     <x-heroicon-o-cube />
                     <div class="label">{{ __('lang.Products') }}</div>
+                    @if($showCounts)
                     <div class="badge">{{ \App\Models\Product::active()->count() }}</div>
+                    @endif
                 </a>
 
                 <a href="{{ route('filament.admin.supplier') }}" class="quick-link">
                     <x-heroicon-o-building-storefront />
                     <div class="label">{{ __('lang.Suppliers') }}</div>
+                    @if($showCounts)
                     <div class="badge">{{ \App\Models\Supplier::count() }}</div>
+                    @endif
                 </a>
 
                 <a href="{{ route('filament.admin.supplier-stores-reports.resources.stores.index') }}"
                     class="quick-link">
                     <x-heroicon-o-home-modern />
                     <div class="label">{{ __('lang.Stores') }}</div>
+                    @if($showCounts)
                     <div class="badge">{{ \App\Models\Store::count() }}</div>
+                    @endif
                 </a>
 
                 <a href="{{ route('filament.admin.supplier.resources.purchase-invoices.index') }}"
                     class="quick-link">
                     <x-heroicon-o-receipt-percent />
                     <div class="label">{{ __('lang.Purchases') }}</div>
+                    @if($showCounts)
                     <div class="badge">{{ \App\Models\PurchaseInvoice::count() }}</div>
+                    @endif
                 </a>
 
                 <a href="{{ route('filament.admin.inventory-report.resources.inventory-report.index') }}"
@@ -179,44 +195,54 @@ $currentTenant = CustomTenantModel::find($currentTenant->id);
                 <a href="{{ route('filament.admin.h-r.resources.employees.index') }}" class="quick-link">
                     <x-heroicon-o-user-group />
                     <div class="label">{{ __('lang.Employees') }}</div>
+                    @if($showCounts)
                     <div class="badge">{{ \App\Models\Employee::active()->forBranchManager()->count() }}</div>
+                    @endif
                 </a>
 
                 <a href="{{ route('filament.admin.h-r-attenance.resources.attendnaces.index') }}"
                     class="quick-link">
                     <x-heroicon-o-calendar-days />
                     <div class="label">{{ __('lang.Attendance') }}</div>
+                    @if($showCounts)
                     <div class="badge">{{ \App\Models\Attendance::count() }}</div>
+                    @endif
                 </a>
 
                 <a href="{{ route('filament.admin.resources.departments.index') }}" class="quick-link">
                     <x-heroicon-o-building-office-2 />
                     <div class="label">{{ __('lang.Departments') }}</div>
+                    @if($showCounts)
                     <div class="badge">{{ \App\Models\Department::count() }}</div>
+                    @endif
                 </a>
 
                 <a href="{{ route('filament.admin.h-r-tasks-system.resources.tasks.index') }}" class="quick-link">
                     <x-heroicon-o-pencil-square />
                     <div class="label">{{ __('lang.Tasks') }}</div>
+                    @if($showCounts)
                     <div class="badge">{{ \App\Models\Task::count() }}</div>
+                    @endif
                 </a>
 
                 <a href="{{ route('filament.admin.h-r-circular.resources.circulars.index') }}" class="quick-link">
                     <x-heroicon-o-building-office-2 />
                     <div class="label">{{ __('lang.Engagement') }}</div>
+                    @if($showCounts)
                     <div class="badge">{{ \App\Models\Circular::count() }}</div>
+                    @endif
                 </a>
 
                 <a href="{{ route('filament.admin.h-r-salary.resources.month-salaries.index') }}"
                     class="quick-link">
                     <x-heroicon-o-banknotes />
                     <div class="label">{{ __('lang.Payroll') }}</div>
+                    @if($showCounts)
                     <div class="badge">{{ \App\Models\MonthSalary::count() }}</div>
+                    @endif
                 </a>
             </div>
         </x-filament::fieldset>
         @endif
-
-        {{-- </x-filament::card> --}}
     </div>
 </x-filament::widget>

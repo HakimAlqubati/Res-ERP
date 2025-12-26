@@ -5,7 +5,7 @@ namespace App\Imports;
 use Exception;
 use App\Models\Employee;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
+
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
@@ -48,7 +48,6 @@ class EmployeeImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
                 'join_date' => $joinDate,
             ]);
         } catch (Exception $e) {
-            Log::error('Error processing row: ' . json_encode($row) . ' - ' . $e->getMessage());
             return null; // Skip row with error
         }
     }

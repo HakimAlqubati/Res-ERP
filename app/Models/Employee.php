@@ -842,10 +842,6 @@ class Employee extends Model implements Auditable
 
                 return $user;
             } catch (\Throwable $e) {
-                Log::error('Failed to create user for employee', [
-                    'employee_id' => $this->id,
-                    'error'       => $e->getMessage(),
-                ]);
                 throw $e;
             }
         });

@@ -9,7 +9,7 @@ use App\Services\HR\v2\Attendance\Validators\TypeRequiredException;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+
 
 class AttendanceServiceV2
 {
@@ -119,12 +119,6 @@ class AttendanceServiceV2
             $requestTime = isset($payload['date_time']) ? Carbon::parse($payload['date_time']) : Carbon::now();
             $this->storeRejectedAttendance($employee, $requestTime, 'System Error: ' . $e->getMessage(), $payload);
 
-            Log::error('Attendance V2 Error', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'payload' => $payload
-            ]);
-
             return [
                 'status' => false,
                 'message' => 'System Error: ' . $e->getMessage(),
@@ -155,10 +149,6 @@ class AttendanceServiceV2
 
             // If still no period, we cannot create the record
             if (!$period) {
-                Log::warning('Cannot store rejected attendance - employee has no periods', [
-                    'employee_id' => $employee->id,
-                    'message' => $message
-                ]);
                 return;
             }
 
@@ -172,12 +162,7 @@ class AttendanceServiceV2
                 $attendanceType
             );
         } catch (\Throwable $e) {
-            // If storing rejected record fails, just log it
-            Log::error('Failed to store rejected attendance', [
-                'error' => $e->getMessage(),
-                'employee_id' => $employee->id,
-                'message' => $message
-            ]);
+            // Silent fail
         }
     }
 

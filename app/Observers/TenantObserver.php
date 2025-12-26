@@ -7,7 +7,7 @@ use App\Models\CustomTenantModel as Tenant;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
+
 
 class TenantObserver
 {
@@ -84,7 +84,6 @@ class TenantObserver
                 'model_id' => 2, // ID of the manager user
             ],
         ]);
-
     }
 
     public static function createDatabase($tenant)
@@ -117,12 +116,8 @@ class TenantObserver
             // DB::commit();
         } catch (Exception $e) {
             $tenant->update(['database_created' => false]);
-            // Log or handle the error if needed
-            Log::error('Database creation failed for tenant ID: ' . $tenant->id . '. Error: ' . $e->getMessage());
             DB::statement("DROP DATABASE IF EXISTS `$tenant->database`");
-            // DB::rollBack();
             throw $e;
-            // return $e->getMessage();
         }
     }
 }

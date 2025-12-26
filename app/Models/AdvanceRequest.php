@@ -279,7 +279,6 @@ class AdvanceRequest extends Model
         );
 
         if (!$advanceCategory) {
-            \Illuminate\Support\Facades\Log::warning('AdvanceRequest: Advance financial category not found');
             return;
         }
 
@@ -307,11 +306,6 @@ class AdvanceRequest extends Model
             'created_by' => auth()->id() ?? 1,
             'month' => now()->month,
             'year' => now()->year,
-        ]);
-
-        \Illuminate\Support\Facades\Log::info('AdvanceRequest: Financial transaction created', [
-            'advance_request_id' => $this->id,
-            'amount' => $this->advance_amount,
         ]);
     }
 

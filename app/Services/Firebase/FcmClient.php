@@ -7,7 +7,7 @@ use App\Models\User;
 use App\Notifications\FcmNotification;
 use Google\Client as GoogleClient;
 use GuzzleHttp\Client as HttpClient;
-use Illuminate\Support\Facades\Log;
+
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 
@@ -29,14 +29,11 @@ class FcmClient
         // Fetch the OAuth 2.0 access token
         try {
             $tokenResponse = $this->googleClient->fetchAccessTokenWithAssertion();
-            Log::info('Access Token Response:', $tokenResponse);
             $accessToken = $tokenResponse['access_token'] ?? null;
             if (!$accessToken) {
-                Log::error('Failed to retrieve access token', $tokenResponse);
                 throw new Exception('Failed to retrieve access token');
             }
         } catch (Exception $e) {
-            Log::error('Error fetching access token: ' . $e->getMessage());
             return ['error' => 'Could not fetch access token'];
         }
     }

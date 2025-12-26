@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Jobs;
 
 use App\Models\EmployeeFaceData;
@@ -10,7 +11,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
+
 
 class GenerateFaceEmbeddingJob implements ShouldQueue
 {
@@ -34,7 +35,6 @@ class GenerateFaceEmbeddingJob implements ShouldQueue
             $record?->update([
                 'response_message' => 'Record missing or image URL not found.',
             ]);
-            Log::warning("FaceData record missing or image URL is null. ID: {$this->faceDataId}");
             return;
         }
 
@@ -54,9 +54,6 @@ class GenerateFaceEmbeddingJob implements ShouldQueue
                 $record->update([
                     'response_message' => 'DeepFace error: ' . $responseJson['error'],
                 ]);
-                Log::warning("DeepFace API error for record ID: {$this->faceDataId}", [
-                    'error' => $responseJson['error'],
-                ]);
                 return;
             }
 
@@ -64,7 +61,6 @@ class GenerateFaceEmbeddingJob implements ShouldQueue
                 $record->update([
                     'response_message' => 'API call failed with status: ' . $response->status(),
                 ]);
-                Log::warning("Face API call failed. ID: {$this->faceDataId}, Status: {$response->status()}");
                 return;
             }
 
@@ -77,7 +73,6 @@ class GenerateFaceEmbeddingJob implements ShouldQueue
                 $record->update([
                     'response_message' => 'Embedding missing from response.',
                 ]);
-                Log::warning("Embedding missing for record ID: {$this->faceDataId}");
                 return;
             }
 
@@ -86,7 +81,6 @@ class GenerateFaceEmbeddingJob implements ShouldQueue
                 $record->update([
                     'response_message' => 'Face confidence missing in response.',
                 ]);
-                Log::warning("Confidence missing for record ID: {$this->faceDataId}");
                 return;
             }
 
@@ -95,7 +89,6 @@ class GenerateFaceEmbeddingJob implements ShouldQueue
                 $record->update([
                     'response_message' => 'Face confidence too low (Confidence: ' . $confidence . ')',
                 ]);
-                Log::warning("Low face confidence for record ID: {$this->faceDataId}, Value: {$confidence}");
                 return;
             }
 
@@ -115,12 +108,6 @@ class GenerateFaceEmbeddingJob implements ShouldQueue
             $record?->update([
                 'response_message' => 'Job error: ' . $e->getMessage(),
             ]);
-
-            Log::error("Embedding Job Error (ID: {$this->faceDataId})", [
-                'message' => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
-            ]);
         }
     }
-
 }
