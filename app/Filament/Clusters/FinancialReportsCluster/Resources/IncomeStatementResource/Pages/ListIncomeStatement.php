@@ -5,13 +5,12 @@ namespace App\Filament\Clusters\FinancialReportsCluster\Resources\IncomeStatemen
 use App\Filament\Clusters\FinancialReportsCluster\Resources\IncomeStatementResource;
 use App\DTOs\Financial\IncomeStatementRequestDTO;
 use App\Services\Financial\FinancialReportService;
+use App\Services\Financial\MultiBranchFinancialReportService;
 use Filament\Resources\Pages\ListRecords;
 
 class ListIncomeStatement extends ListRecords
 {
     protected static string $resource = IncomeStatementResource::class;
-
-    protected string $view = 'filament.pages.financial-reports.income-statement';
 
     protected function getHeaderActions(): array
     {
@@ -20,12 +19,26 @@ class ListIncomeStatement extends ListRecords
         ];
     }
 
+    public function getView(): string
+    {
+        $filters = $this->getTable()->getFilters();
+        $reportType = $filters['report_type']->getState()['type'] ?? 'single';
+
+        if ($reportType === 'comparison') {
+            return 'filament.pages.financial-reports.income-statement-comparison';
+        }
+
+        return 'filament.pages.financial-reports.income-statement';
+    }
+
     protected function getViewData(): array
     {
         $filters = $this->getTable()->getFilters();
 
+        $reportType = $filters['report_type']->getState()['type'] ?? 'single';
         $dateRange = $filters['date_range']->getState() ?? [];
-        $branchId = $filters['branch_id']->getState()['value'] ?? null;
+        $branchId = isset($filters['branch_id']) ? ($filters['branch_id']->getState()['value'] ?? null) : null;
+        $branchIds = isset($filters['branch_ids']) ? ($filters['branch_ids']->getState()['values'] ?? $filters['branch_ids']->getState()['ids'] ?? []) : [];
 
         // Defaults if not set
         $selectedMonth = $dateRange['month'] ?? now()->format('F Y');
@@ -34,18 +47,33 @@ class ListIncomeStatement extends ListRecords
         $startDate = $date->copy()->startOfMonth()->format('Y-m-d');
         $endDate = $date->copy()->endOfMonth()->format('Y-m-d');
 
-        // Create DTO
+        // Comparison Mode - Multiple Branches
+        if ($reportType === 'comparison' && !empty($branchIds)) {
+            $service = new MultiBranchFinancialReportService();
+            $comparisonData = $service->getComparisonTable(
+                array_map('intval', $branchIds),
+                $startDate,
+                $endDate
+            );
+
+            return [
+                'reportType' => 'comparison',
+                'comparisonData' => $comparisonData,
+                'startDate' => $startDate,
+                'endDate' => $endDate,
+            ];
+        }
+
+        // Single Branch Mode (Original Behavior)
         $dto = new IncomeStatementRequestDTO(
             startDate: $startDate,
             endDate: $endDate,
             branchId: $branchId ? (int) $branchId : null
         );
 
-        // Use service to generate report
         $service = new FinancialReportService();
         $report = $service->getIncomeStatement($dto);
 
-        // dd($report);
         $branchName = null;
         if ($branchId) {
             $branch = \App\Models\Branch::find($branchId);
@@ -53,6 +81,7 @@ class ListIncomeStatement extends ListRecords
         }
 
         return [
+            'reportType' => 'single',
             'report' => $report,
             'startDate' => $startDate,
             'endDate' => $endDate,
