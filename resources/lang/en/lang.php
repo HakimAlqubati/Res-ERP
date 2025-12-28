@@ -787,7 +787,7 @@ return [
     'early_departure_minutes' => 'Early Departure Minutes',
     'filter_by_month' => 'Filter by Month',
     'year' => 'Year',
-    'month' => 'Month',
+    'month_label' => 'Month',
     'select_year' => 'Select a year',
     'select_month' => 'Select a month',
     'choose_date' => 'Choose date',

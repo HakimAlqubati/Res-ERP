@@ -12,6 +12,8 @@ use App\Models\PayrollRun;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Pages\Page;
@@ -65,6 +67,7 @@ class PayrollResource extends Resource
             ->columns(PayrollTable::getColumns())
             ->filters(PayrollTable::getFilters())
             ->recordActions([
+                RestoreAction::make()->button()->color('success'),
                 ViewAction::make(),
                 PayrollActions::earlyInstallmentPaymentAction(),
                 PayrollActions::approveAction(),
@@ -73,6 +76,7 @@ class PayrollResource extends Resource
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                     ForceDeleteBulkAction::make(),
+                    RestoreBulkAction::make()
                 ]),
             ]);
     }

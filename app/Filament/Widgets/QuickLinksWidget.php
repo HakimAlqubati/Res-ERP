@@ -15,7 +15,7 @@ class QuickLinksWidget extends Widget
      * Toggle to show/hide count badges
      * Set to false to improve performance
      */
-    public bool $showCounts = true;
+    public bool $showCounts = false;
 
     public function render(): View
     {

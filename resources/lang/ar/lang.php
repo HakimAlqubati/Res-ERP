@@ -769,7 +769,7 @@ return [
   'early_departure_minutes' => 'دقائق المغادرة المبكرة',
   'filter_by_month' => 'تصفية حسب الشهر',
   'year' => 'السنة',
-  'month' => 'الشهر',
+  'month_label' => 'الشهر',
   'select_year' => 'اختر السنة',
   'select_month' => 'اختر الشهر',
   'choose_date' => 'اختر التاريخ',
