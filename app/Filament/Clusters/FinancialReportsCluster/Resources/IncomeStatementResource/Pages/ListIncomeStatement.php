@@ -25,7 +25,7 @@ class ListIncomeStatement extends ListRecords
         $reportType = $filters['report_type']->getState()['type'] ?? 'single';
 
         if ($reportType === 'comparison') {
-            return 'filament.pages.financial-reports.income-statement-comparison';
+            return 'filament.pages.financial-reports.income-statement-multiple-branches';
         }
 
         return 'filament.pages.financial-reports.income-statement';
@@ -35,10 +35,12 @@ class ListIncomeStatement extends ListRecords
     {
         $filters = $this->getTable()->getFilters();
 
-        $reportType = $filters['report_type']->getState()['type'] ?? 'single';
+        $reportTypeState = $filters['report_type']->getState() ?? [];
+        $reportType = $reportTypeState['type'] ?? 'single';
+        $branchId = $reportTypeState['branch_id'] ?? null;
+        $branchIds = $reportTypeState['branch_ids'] ?? [];
+
         $dateRange = $filters['date_range']->getState() ?? [];
-        $branchId = isset($filters['branch_id']) ? ($filters['branch_id']->getState()['value'] ?? null) : null;
-        $branchIds = isset($filters['branch_ids']) ? ($filters['branch_ids']->getState()['values'] ?? $filters['branch_ids']->getState()['ids'] ?? []) : [];
 
         // Defaults if not set
         $selectedMonth = $dateRange['month'] ?? now()->format('F Y');

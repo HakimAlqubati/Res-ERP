@@ -51,15 +51,16 @@ class IncomeStatementResource extends Resource
             ->deferFilters(false)
             ->filtersFormColumns(4)
             ->filters([
-                // Report Type Filter
+                // Report Type + Branch Selection Filter (combined for reactivity)
                 Tables\Filters\Filter::make('report_type')
                     ->label(__('Report Type'))
+                    ->columnSpan(2)
                     ->form([
                         \Filament\Forms\Components\ToggleButtons::make('type')
                             ->label(__('Report Type'))
                             ->options([
                                 'single' => __('Single Branch'),
-                                'comparison' => __('Branch Comparison'),
+                                'comparison' => __('Multiple Branches'),
                             ])
                             ->default('single')
                             ->inline()
@@ -72,6 +73,23 @@ class IncomeStatementResource extends Resource
                                 'comparison' => 'success',
                             ])
                             ->live(),
+
+                        // Single Branch (shown when type is 'single')
+                        \Filament\Forms\Components\Select::make('branch_id')
+                            ->label(__('Branch'))
+                            ->options(fn() => Branch::where('active', true)->where('type', 'branch')->pluck('name', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->visible(fn($get) => $get('type') === 'single'),
+
+                        // Multiple Branches (shown when type is 'comparison')
+                        \Filament\Forms\Components\Select::make('branch_ids')
+                            ->label(__('Select Branches'))
+                            ->multiple()
+                            ->options(fn() => Branch::where('active', true)->where('type', 'branch')->pluck('name', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->visible(fn($get) => $get('type') === 'comparison'),
                     ]),
 
                 // Date Range Filter
@@ -84,23 +102,6 @@ class IncomeStatementResource extends Resource
                             ->default(now()->format('F Y'))
                             ->required(),
                     ]),
-
-                // Single Branch Filter (hidden when report_type is 'comparison')
-                Tables\Filters\SelectFilter::make('branch_id')
-                    ->label(__('Branch'))
-                    ->relationship('branch', 'name', fn($query) => $query->where('active', true)->where('type', 'branch'))
-                    ->searchable()
-                    ->preload()
-                    ->visible(fn($livewire) => ($livewire->getTableFilterState('report_type')['type'] ?? 'single') === 'single'),
-
-                // Multi-Branch Filter (hidden when report_type is 'single')
-                Tables\Filters\SelectFilter::make('branch_ids')
-                    ->label(__('Select Branches'))
-                    ->multiple()
-                    ->options(fn() => Branch::where('active', true)->where('type', 'branch')->pluck('name', 'id'))
-                    ->searchable()
-                    ->preload()
-                    ->visible(fn($livewire) => ($livewire->getTableFilterState('report_type')['type'] ?? 'single') === 'comparison'),
             ])
             ->actions([
                 // No actions
