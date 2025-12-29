@@ -1009,4 +1009,5 @@ return [
     'additional_notes' => 'Additional Notes',
     'financial_category' => 'Financial Category',
     'select_to_create_financial_transaction' => 'Select to create financial transaction',
+    'status_already_changed_recently' => 'This status was already changed recently. Please wait before trying again.',
 ];
