@@ -294,11 +294,11 @@ class DetailsRelationManager extends RelationManager
                                             ->options($records->pluck('unit.name', 'unit_id')->toArray()),
                                         TextInput::make('quantity')
                                             ->numeric()
-                                            ->minValue(0)
+                                            // ->minValue(0)
                                             // ->maxValue(99999)
                                             ->rules([
                                                 'numeric',
-                                                'min:0',
+                                                // 'min:0',
                                                 'max:99999',
                                             ])
                                             ->required(),
