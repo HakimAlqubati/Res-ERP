@@ -55,7 +55,7 @@ class IncomeStatementResource extends Resource
                 Tables\Filters\Filter::make('report_type')
                     ->label(__('Report Type'))
                     ->columnSpan(2)
-                    ->form([
+                    ->schema([
                         \Filament\Forms\Components\ToggleButtons::make('type')
                             ->label(__('Report Type'))
                             ->options([
@@ -80,6 +80,7 @@ class IncomeStatementResource extends Resource
                             ->options(fn() => Branch::where('active', true)->where('type', 'branch')->pluck('name', 'id'))
                             ->searchable()
                             ->preload()
+                            ->placeholder(__('All'))
                             ->visible(fn($get) => $get('type') === 'single'),
 
                         // Multiple Branches (shown when type is 'comparison')

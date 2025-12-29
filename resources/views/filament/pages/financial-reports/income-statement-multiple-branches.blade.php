@@ -166,6 +166,91 @@
                 padding: 0.5rem;
             }
         }
+
+        /* Dark Mode Styles */
+        .dark .comparison-container {
+            background: #1e293b;
+            border-color: #334155;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .dark .comparison-header {
+            border-bottom-color: #475569;
+        }
+
+        .dark .comparison-title {
+            color: #f1f5f9;
+        }
+
+        .dark .comparison-subtitle {
+            color: #94a3b8;
+        }
+
+        .dark .comparison-table td {
+            border-color: #475569;
+            color: #e2e8f0;
+            background-color: #1e293b;
+        }
+
+        .dark .comparison-table td:first-child {
+            color: #f1f5f9;
+            background: #0f172a;
+        }
+
+        .dark .comparison-table tr:nth-child(even) td {
+            background-color: #334155;
+        }
+
+        .dark .comparison-table tr:nth-child(even) td:first-child {
+            background-color: #1e293b;
+        }
+
+        .dark .comparison-table tr:hover td {
+            background-color: #3b4f6b !important;
+        }
+
+        .dark .comparison-table .total-column {
+            background: linear-gradient(90deg, transparent, #064e3b 100%) !important;
+            color: #10b981;
+        }
+
+        .dark .comparison-table .gross-profit-row td {
+            background: #064e3b !important;
+            border-top-color: #10b981;
+            border-bottom-color: #10b981;
+        }
+
+        .dark .comparison-table .gross-profit-row td.positive {
+            color: #34d399;
+        }
+
+        .dark .comparison-table .gross-profit-row td.negative {
+            color: #f87171;
+        }
+
+        .dark .comparison-table .net-profit-row td {
+            background: #422006 !important;
+            border-top-color: #f59e0b;
+        }
+
+        .dark .empty-state {
+            background: #1e293b;
+            border-color: #475569;
+        }
+
+        .dark .empty-text {
+            color: #94a3b8;
+        }
+
+        .dark .info-badge {
+            background: #1e3a5f;
+            border-color: #3b82f6;
+            color: #93c5fd;
+        }
+
+        .dark .please_select_message_text {
+            color: #94a3b8;
+        }
     </style>
 
     {{-- Filters Form --}}
