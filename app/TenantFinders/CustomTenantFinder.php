@@ -13,19 +13,17 @@ class CustomTenantFinder extends TenantFinder
         // For example, using a subdomain:
         $host = $request->getHost();
         $subdomain = $host;
-        $centralDomain = env('CENTRAL_DOMAIN', 'nltworkbench.com');
+        $centralDomain = env('CENTRAL_DOMAIN', 'localhost');
         // dd($centralDomain, $host, $host === $centralDomain);
         if ($host === $centralDomain || $host === '127.0.0.1') {
             return null;
         }
-        // dd($host , $centralDomain);
         $tenant = app(IsTenant::class)::where('domain', $subdomain)
             ->where('active', 1)
             ->first();
         if ($tenant) {
             return $tenant;
         }
-        // dd($tenant);
         abort(403, 'This tenant is inactive.');
         return $tenant;
     }
