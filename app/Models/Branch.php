@@ -21,7 +21,7 @@ class Branch extends Model implements HasMedia, Auditable
 {
     use HasFactory,
         SoftDeletes,
-        DynamicConnection,
+        // DynamicConnection,
         InteractsWithMedia,
         \OwenIt\Auditing\Auditable,
         BranchScope;
