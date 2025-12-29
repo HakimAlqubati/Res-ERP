@@ -261,6 +261,129 @@
         [x-cloak] {
             display: none !important;
         }
+
+        /* Dark Mode Styles */
+        .dark .report-container {
+            background: #1e293b;
+            border-color: #334155;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .dark .report-header {
+            border-bottom-color: #475569;
+        }
+
+        .dark .report-title {
+            color: #f1f5f9;
+        }
+
+        .dark .report-subtitle {
+            color: #94a3b8;
+        }
+
+        .dark .section-header {
+            color: #f1f5f9;
+            border-bottom-color: #475569;
+        }
+
+        .dark .table-row {
+            background-color: #1e293b;
+        }
+
+        .dark .table-row:nth-child(even) {
+            background-color: #334155;
+        }
+
+        .dark .table-row:hover {
+            background-color: #3b4f6b;
+        }
+
+        .dark .row-label {
+            color: #f1f5f9;
+            border-bottom-color: #10b981;
+        }
+
+        .dark .row-value {
+            color: #e2e8f0;
+            border-bottom-color: #10b981;
+        }
+
+        .dark .child-row {
+            background-color: #0f172a;
+            border-bottom-color: #334155;
+        }
+
+        .dark .child-row:hover {
+            background-color: #1e3a5f;
+        }
+
+        .dark .child-label {
+            color: #94a3b8;
+        }
+
+        .dark .child-value {
+            color: #cbd5e1;
+        }
+
+        .dark .revenue-amount {
+            background: linear-gradient(90deg, transparent, #064e3b 100%);
+            color: #34d399;
+        }
+
+        .dark .expense-amount {
+            color: #f87171;
+            background: linear-gradient(90deg, transparent, #450a0a 100%);
+        }
+
+        .dark .total-row {
+            background-color: #0f172a;
+            border-top-color: #475569;
+            border-bottom-color: #475569;
+        }
+
+        .dark .total-label,
+        .dark .total-value {
+            color: #f1f5f9;
+        }
+
+        .dark .net-profit-section {
+            border-top-color: #475569;
+            border-bottom-color: #475569;
+            background-color: #0f172a;
+        }
+
+        .dark .net-profit-label {
+            color: #f1f5f9;
+        }
+
+        .dark .profit-positive {
+            color: #34d399;
+        }
+
+        .dark .profit-negative {
+            color: #f87171;
+        }
+
+        .dark .signatures {
+            border-top-color: #475569;
+        }
+
+        .dark .signature-box {
+            border-top-color: #475569;
+        }
+
+        .dark .signature-label {
+            color: #64748b;
+        }
+
+        .dark .empty-state {
+            background: #1e293b;
+            border-color: #475569;
+        }
+
+        .dark .empty-text {
+            color: #94a3b8;
+        }
     </style>
 
     {{-- Filters Form --}}
@@ -340,7 +463,7 @@
                     </td>
                 </tr>
                 @endif
-            
+
                 @if(($report['cost_of_goods_sold']['direct_purchase'] ?? 0) > 0)
                 <tr class="table-row">
                     <td class="row-label">
