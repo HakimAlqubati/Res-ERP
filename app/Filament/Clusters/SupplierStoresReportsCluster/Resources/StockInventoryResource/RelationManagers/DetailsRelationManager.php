@@ -109,7 +109,6 @@ class DetailsRelationManager extends RelationManager
                     ->icon('heroicon-o-pencil-square')
                     ->color('info')
                     ->schema(function (Collection $records) {
-                        // dd($records);
                         $defaultValues = $records->map(fn($record) => [
                             'id' => $record->id,
                             'product_name' => $record->product ? "{$record->product->code}-{$record->product->name}" : 'N/A',
@@ -236,7 +235,6 @@ class DetailsRelationManager extends RelationManager
                                         $details = $get('stock_adjustment_details') ?? [];
                                         $reason = is_numeric($state) ? StockAdjustmentReason::find((int) $state) : null;
                                         $reasonName = $reason?->name ?? '';
-                                        // dd($details);
                                         foreach ($details as $index => $item) {
                                             $productId = $item['product_id'] ?? null;
                                             $product = is_numeric($productId) ? Product::find((int) $productId) : null;
@@ -323,7 +321,6 @@ class DetailsRelationManager extends RelationManager
                         ];
                     })
                     ->action(function (Collection $records, $data) {
-                        dd($data['stock_adjustment_details'][0]['quantity']);
                         DB::beginTransaction();
                         try {
 
