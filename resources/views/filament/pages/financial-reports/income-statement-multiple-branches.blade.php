@@ -95,7 +95,7 @@
         .comparison-table .total-column {
             background: linear-gradient(90deg, transparent, #f0fdf4 100%) !important;
             font-weight: 700;
-            color: #047857;
+            color: #000000;
         }
 
         .comparison-table .gross-profit-row td {
