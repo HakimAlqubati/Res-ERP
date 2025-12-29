@@ -13,7 +13,7 @@ class CustomTenantFinder extends TenantFinder
         // For example, using a subdomain:
         $host = $request->getHost();
         $subdomain = $host;
-        $centralDomain = env('CENTRAL_DOMAIN', 'localhost');
+        $centralDomain = env('CENTRAL_DOMAIN', 'nltworkbench.com');
         // dd($centralDomain, $host, $host === $centralDomain);
         if ($host === $centralDomain || $host === '127.0.0.1') {
             return null;
