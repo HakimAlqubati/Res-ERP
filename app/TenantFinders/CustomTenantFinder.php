@@ -18,7 +18,7 @@ class CustomTenantFinder extends TenantFinder
         if ($host === $centralDomain || $host === '127.0.0.1') {
             return null;
         }
-        dd($host);
+        dd($host , $centralDomain);
         $tenant = app(IsTenant::class)::where('domain', $subdomain)
             ->where('active', 1)
             ->first();
