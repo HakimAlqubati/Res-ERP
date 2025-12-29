@@ -66,7 +66,53 @@ class PayrollRunObserver
     public function deleted(PayrollRun $payrollRun): void
     {
         try {
+            // 1. حذف المعاملات المالية
             $this->syncService->deletePayrollRunTransactions($payrollRun->id);
+
+            // 2. حذف حركات الراتب
+            $payrollRun->transactions()->delete();
+
+            // 3. حذف كشوفات الرواتب
+            $payrollRun->payrolls()->delete();
+        } catch (\Exception $e) {
+            // Silent fail
+        }
+    }
+
+    /**
+     * Handle the PayrollRun "forceDeleted" event.
+     * 
+     * Permanently delete all related data when payroll run is force deleted.
+     */
+    public function forceDeleted(PayrollRun $payrollRun): void
+    {
+        try {
+            // 1. حذف المعاملات المالية نهائياً
+            $this->syncService->deletePayrollRunTransactions($payrollRun->id);
+
+            // 2. حذف حركات الراتب نهائياً (بما في ذلك المحذوفة مسبقاً)
+            $payrollRun->transactions()->withTrashed()->forceDelete();
+
+            // 3. حذف كشوفات الرواتب نهائياً (بما في ذلك المحذوفة مسبقاً)
+            $payrollRun->payrolls()->withTrashed()->forceDelete();
+        } catch (\Exception $e) {
+            // Silent fail
+        }
+    }
+
+    /**
+     * Handle the PayrollRun "restored" event.
+     * 
+     * Restore all related data when payroll run is restored.
+     */
+    public function restored(PayrollRun $payrollRun): void
+    {
+        try {
+            // 1. استعادة حركات الراتب
+            $payrollRun->transactions()->onlyTrashed()->restore();
+
+            // 2. استعادة كشوفات الرواتب
+            $payrollRun->payrolls()->onlyTrashed()->restore();
         } catch (\Exception $e) {
             // Silent fail
         }

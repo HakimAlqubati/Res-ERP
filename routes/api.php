@@ -164,6 +164,7 @@ Route::middleware('auth:api')->group(function () {
             Route::get('{id}/details', [App\Http\Controllers\Api\Financial\FinancialCategoryReportController::class, 'categoryDetails']);
         });
         Route::get('income-statement', [App\Http\Controllers\Api\FinancialReportController::class, 'incomeStatement']);
+        Route::get('income-statement/multi-branch', [App\Http\Controllers\Api\FinancialReportController::class, 'multiBranchIncomeStatement']);
 
         // Payroll Financial Sync Routes
         Route::prefix('payroll')->group(function () {

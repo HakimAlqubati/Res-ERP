@@ -295,9 +295,17 @@ class DetailsRelationManager extends RelationManager
                                             ->required()
                                             ->options($records->pluck('unit.name', 'unit_id')->toArray()),
                                         TextInput::make('quantity')
+                                            ->numeric()
                                             ->minValue(0)
+                                            // ->maxValue(99999)
+                                            ->rules([
+                                                'numeric',
+                                                'min:0',
+                                                'max:99999',
+                                            ])
                                             ->required(),
                                         TextInput::make('package_size')
+                                            ->readOnly()
                                             ->required(),
 
                                     ]),
@@ -315,6 +323,7 @@ class DetailsRelationManager extends RelationManager
                         ];
                     })
                     ->action(function (Collection $records, $data) {
+                        dd($data['stock_adjustment_details'][0]['quantity']);
                         DB::beginTransaction();
                         try {
 

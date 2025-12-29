@@ -42,23 +42,6 @@
                 transform: translateY(0);
             }
         }
-
-        @media (max-width: 900px) {
-            aside {
-                position: relative !important;
-                width: 100% !important;
-                height: auto !important;
-            }
-
-            main {
-                margin-right: 0 !important;
-                max-width: 100% !important;
-            }
-
-            .layout {
-                flex-direction: column;
-            }
-        }
     </style>
 </head>
 
@@ -68,18 +51,21 @@
     $tabs = [
     'required' => [
     'title' => $labels['requiredTitle'],
+    'shortTitle' => 'تحتاج تسجيل',
     'icon' => '✓',
     'items' => $requiredItems,
     'columns' => ['name' => $labels['itemColumn'], 'reason' => $labels['reasonColumn']],
     ],
     'notRequired' => [
     'title' => $labels['notRequiredTitle'],
+    'shortTitle' => 'لا تحتاج تسجيل',
     'icon' => '✗',
     'items' => $notRequiredItems,
     'columns' => ['name' => $labels['itemColumn'], 'reason' => $labels['reasonColumn']],
     ],
     'categories' => [
     'title' => $labels['categoriesTitle'],
+    'shortTitle' => 'الفئات المالية',
     'icon' => '📂',
     'items' => $financialCategories,
     'columns' => ['name' => $labels['itemColumn'], 'type' => $labels['typeColumn']],
@@ -87,10 +73,20 @@
     ];
     @endphp
 
-    <div class="layout flex min-h-screen">
+    {{-- Mobile Header (visible on mobile only) --}}
+    <header class="lg:hidden sticky top-0 z-50 bg-[#0a1f1c]/95 backdrop-blur-md border-b border-primary/20 p-4">
+        <div class="flex items-center justify-between">
+            <a href="{{ url('/admin') }}" class="text-primary-light text-sm">← {{ $labels['backLink'] }}</a>
+            <img src="{{ asset('workbench.png') }}" alt="Logo" class="w-8 h-auto opacity-80">
+        </div>
+        <h1 class="text-lg font-bold text-white mt-3 text-center">{{ $meta['title'] }}</h1>
+        <p class="text-xs text-gray-400 text-center mt-1">{{ $meta['description'] }}</p>
+    </header>
 
-        {{-- Sidebar --}}
-        <aside class="w-72 bg-[#0a1f1c]/95 border-l border-primary/20 p-6 fixed top-0 right-0 h-screen overflow-y-auto z-50">
+    <div class="flex flex-col lg:flex-row min-h-screen">
+
+        {{-- Sidebar (hidden on mobile, visible on desktop) --}}
+        <aside class="hidden lg:block w-72 bg-[#0a1f1c]/95 border-l border-primary/20 p-6 fixed top-0 right-0 h-screen overflow-y-auto z-50">
             <a href="{{ url('/admin') }}" class="inline-flex items-center gap-2 text-primary-light hover:text-green-400 text-sm mb-5 transition-colors">
                 → {{ $labels['backLink'] }}
             </a>
@@ -104,8 +100,8 @@
                 @foreach($tabs as $id => $tab)
                 <button onclick="showTab('{{ $id }}', this)" class="tab-btn w-full p-4 bg-primary/10 border border-primary/20 rounded-xl text-gray-400 font-semibold cursor-pointer transition-all hover:bg-primary/20 hover:-translate-x-1 flex items-center gap-3 text-right {{ $loop->first ? 'active border-r-4 border-r-primary-light text-white' : '' }}">
                     <span class="text-lg w-6 text-center">{{ $tab['icon'] }}</span>
-                    <span class="flex-1">{{ $tab['title'] }}</span>
-                    <span class="bg-white/15 px-2.5 py-1 rounded-full text-xs">{{ count($tab['items']) }}</span>
+                    <span class="flex-1 text-sm">{{ $tab['title'] }}</span>
+                    <span class="bg-white/15 px-2 py-0.5 rounded-full text-xs">{{ count($tab['items']) }}</span>
                 </button>
                 @endforeach
             </div>
@@ -116,17 +112,34 @@
             </div>
         </aside>
 
+        {{-- Mobile Tabs (visible on mobile only) --}}
+        <div class="lg:hidden sticky top-[120px] z-40 bg-[#0a1f1c]/95 backdrop-blur-md px-3 py-3 border-b border-primary/20">
+            <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                @foreach($tabs as $id => $tab)
+                <button onclick="showTab('{{ $id }}', this)" class="tab-btn-mobile flex-shrink-0 px-4 py-2.5 bg-primary/10 border border-primary/20 rounded-full text-gray-400 font-medium text-sm whitespace-nowrap transition-all {{ $loop->first ? 'active bg-primary/30 text-white border-primary-light' : '' }}">
+                    <span>{{ $tab['icon'] }}</span>
+                    <span>{{ $tab['shortTitle'] }}</span>
+                    <span class="bg-white/15 px-1.5 py-0.5 rounded-full text-xs mr-1">{{ count($tab['items']) }}</span>
+                </button>
+                @endforeach
+            </div>
+        </div>
+
         {{-- Main Content --}}
-        <main class="flex-1 mr-72 p-10 overflow-y-auto h-screen">
+        <main class="flex-1 lg:mr-72 p-4 lg:p-10 overflow-y-auto">
 
             @foreach($tabs as $id => $tab)
-            <div id="{{ $id }}" class="tab-content {{ $loop->first ? 'block' : 'hidden' }} bg-primary/10 border border-primary/20 rounded-2xl p-8 animate-fade-in">
-                <div class="mb-6 pb-4 border-b border-primary/20">
-                    <h2 class="text-2xl font-bold text-primary-light flex items-center gap-3">
+            <div id="{{ $id }}" class="tab-content {{ $loop->first ? 'block' : 'hidden' }} bg-primary/10 border border-primary/20 rounded-2xl p-4 lg:p-8 animate-fade-in mb-4 lg:mb-0">
+
+                {{-- Header --}}
+                <div class="mb-4 lg:mb-6 pb-3 lg:pb-4 border-b border-primary/20">
+                    <h2 class="text-lg lg:text-2xl font-bold text-primary-light flex items-center gap-2 lg:gap-3">
                         {{ $tab['icon'] }} {{ $tab['title'] }}
                     </h2>
                 </div>
-                <div class="overflow-x-auto">
+
+                {{-- Desktop Table --}}
+                <div class="hidden lg:block overflow-x-auto">
                     <table class="w-full">
                         <thead>
                             <tr>
@@ -146,19 +159,34 @@
                         </tbody>
                     </table>
                 </div>
+
+                {{-- Mobile Cards --}}
+                <div class="lg:hidden space-y-3">
+                    @foreach($tab['items'] as $item)
+                    <div class="bg-primary/5 border border-primary/15 rounded-xl p-4">
+                        @foreach($tab['columns'] as $key => $label)
+                        <div class="{{ !$loop->first ? 'mt-2 pt-2 border-t border-primary/10' : '' }}">
+                            <span class="text-xs text-gray-500 block mb-1">{{ $label }}</span>
+                            <span class="{{ $loop->first ? 'font-medium text-white text-sm' : 'text-gray-400 text-xs leading-relaxed' }}">{{ $item[$key] }}</span>
+                        </div>
+                        @endforeach
+                    </div>
+                    @endforeach
+                </div>
+
             </div>
             @endforeach
 
             {{-- Golden Rule --}}
-            <div class="mt-8 bg-gradient-to-br from-primary/25 to-primary-dark/25 border border-primary/40 rounded-2xl p-6 text-center">
-                <h3 class="text-lg text-primary-light mb-3">📌 {{ $labels['goldenRuleTitle'] }}</h3>
-                <p class="text-lg text-white leading-relaxed">{{ $goldenRule }}</p>
+            <div class="mt-4 lg:mt-8 bg-gradient-to-br from-primary/25 to-primary-dark/25 border border-primary/40 rounded-2xl p-4 lg:p-6 text-center">
+                <h3 class="text-base lg:text-lg text-primary-light mb-2 lg:mb-3">📌 {{ $labels['goldenRuleTitle'] }}</h3>
+                <p class="text-sm lg:text-lg text-white leading-relaxed">{{ $goldenRule }}</p>
             </div>
 
             {{-- Export Button --}}
-            <div class="mt-8 text-center">
-                <button onclick="exportToExcel()" class="inline-flex items-center gap-3 px-8 py-4 bg-primary hover:bg-primary-light text-white font-semibold rounded-xl transition-all hover:scale-105 shadow-lg">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="mt-4 lg:mt-8 text-center pb-8">
+                <button onclick="exportToExcel()" class="inline-flex items-center gap-2 lg:gap-3 px-6 lg:px-8 py-3 lg:py-4 bg-primary hover:bg-primary-light text-white font-semibold rounded-xl transition-all hover:scale-105 shadow-lg text-sm lg:text-base">
+                    <svg class="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                     </svg>
                     تصدير إلى Excel
@@ -171,59 +199,70 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script>
         function showTab(tabId, btn) {
+            // Hide all tabs
             document.querySelectorAll('.tab-content').forEach(c => {
                 c.classList.add('hidden');
                 c.classList.remove('block');
             });
+
+            // Desktop buttons
             document.querySelectorAll('.tab-btn').forEach(b => {
                 b.classList.remove('active', 'border-r-4', 'border-r-primary-light', 'text-white');
                 b.classList.add('text-gray-400');
             });
+
+            // Mobile buttons
+            document.querySelectorAll('.tab-btn-mobile').forEach(b => {
+                b.classList.remove('active', 'bg-primary/30', 'text-white', 'border-primary-light');
+                b.classList.add('text-gray-400', 'bg-primary/10');
+            });
+
+            // Show selected tab
             document.getElementById(tabId).classList.remove('hidden');
             document.getElementById(tabId).classList.add('block');
-            btn.classList.add('active', 'border-r-4', 'border-r-primary-light', 'text-white');
-            btn.classList.remove('text-gray-400');
+
+            // Activate button
+            if (btn.classList.contains('tab-btn')) {
+                btn.classList.add('active', 'border-r-4', 'border-r-primary-light', 'text-white');
+                btn.classList.remove('text-gray-400');
+                // Also update mobile version
+                document.querySelectorAll('.tab-btn-mobile').forEach((b, i) => {
+                    if (b.getAttribute('onclick').includes(tabId)) {
+                        b.classList.add('active', 'bg-primary/30', 'text-white', 'border-primary-light');
+                        b.classList.remove('text-gray-400', 'bg-primary/10');
+                    }
+                });
+            } else {
+                btn.classList.add('active', 'bg-primary/30', 'text-white', 'border-primary-light');
+                btn.classList.remove('text-gray-400', 'bg-primary/10');
+                // Also update desktop version
+                document.querySelectorAll('.tab-btn').forEach((b, i) => {
+                    if (b.getAttribute('onclick').includes(tabId)) {
+                        b.classList.add('active', 'border-r-4', 'border-r-primary-light', 'text-white');
+                        b.classList.remove('text-gray-400');
+                    }
+                });
+            }
         }
 
         function exportToExcel() {
             const wb = XLSX.utils.book_new();
-
-            // Tab 1: Required Items
             const requiredData = [
-                ['{{ $labels["itemColumn"] }}', '{{ $labels["reasonColumn"] }}'],
-                @foreach($requiredItems as $item)['{{ $item["name"] }}', '{{ $item["reason"] }}'],
-                @endforeach
+                ['{{ $labels["itemColumn"] }}', '{{ $labels["reasonColumn"] }}'], @foreach($requiredItems as $item)['{{ $item["name"] }}', '{{ $item["reason"] }}'], @endforeach
             ];
-            const ws1 = XLSX.utils.aoa_to_sheet(requiredData);
-            XLSX.utils.book_append_sheet(wb, ws1, '{{ $labels["requiredTitle"] }}'.substring(0, 31));
-
-            // Tab 2: Not Required Items
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(requiredData), '{{ $labels["requiredTitle"] }}'.substring(0, 31));
             const notRequiredData = [
-                ['{{ $labels["itemColumn"] }}', '{{ $labels["reasonColumn"] }}'],
-                @foreach($notRequiredItems as $item)['{{ $item["name"] }}', '{{ $item["reason"] }}'],
-                @endforeach
+                ['{{ $labels["itemColumn"] }}', '{{ $labels["reasonColumn"] }}'], @foreach($notRequiredItems as $item)['{{ $item["name"] }}', '{{ $item["reason"] }}'], @endforeach
             ];
-            const ws2 = XLSX.utils.aoa_to_sheet(notRequiredData);
-            XLSX.utils.book_append_sheet(wb, ws2, '{{ $labels["notRequiredTitle"] }}'.substring(0, 31));
-
-            // Tab 3: Financial Categories
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(notRequiredData), '{{ $labels["notRequiredTitle"] }}'.substring(0, 31));
             const categoriesData = [
-                ['{{ $labels["itemColumn"] }}', '{{ $labels["typeColumn"] }}'],
-                @foreach($financialCategories as $category)['{{ $category["name"] }}', '{{ $category["type"] }}'],
-                @endforeach
+                ['{{ $labels["itemColumn"] }}', '{{ $labels["typeColumn"] }}'], @foreach($financialCategories as $category)['{{ $category["name"] }}', '{{ $category["type"] }}'], @endforeach
             ];
-            const ws3 = XLSX.utils.aoa_to_sheet(categoriesData);
-            XLSX.utils.book_append_sheet(wb, ws3, '{{ $labels["categoriesTitle"] }}'.substring(0, 31));
-
-            // Golden Rule Sheet
-            const goldenRuleData = [
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(categoriesData), '{{ $labels["categoriesTitle"] }}'.substring(0, 31));
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
                 ['{{ $labels["goldenRuleTitle"] }}'],
-                ['{{ $goldenRule }}'],
-            ];
-            const ws4 = XLSX.utils.aoa_to_sheet(goldenRuleData);
-            XLSX.utils.book_append_sheet(wb, ws4, 'القاعدة الذهبية');
-
-            // Export
+                ['{{ $goldenRule }}']
+            ]), 'القاعدة الذهبية');
             XLSX.writeFile(wb, 'تقرير_بنود_الراتب_والتسجيل_المالي.xlsx');
         }
     </script>

@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\FinancialReportsCluster\Resources;
 
 use App\Filament\Clusters\FinancialReportsCluster;
 use App\Filament\Clusters\FinancialReportsCluster\Resources\IncomeStatementResource\Pages;
+use App\Models\Branch;
 use App\Models\FinancialTransaction;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -48,8 +49,50 @@ class IncomeStatementResource extends Resource
                 // Custom view used
             ])
             ->deferFilters(false)
-            ->filtersFormColumns(3)
+            ->filtersFormColumns(4)
             ->filters([
+                // Report Type + Branch Selection Filter (combined for reactivity)
+                Tables\Filters\Filter::make('report_type')
+                    ->label(__('Report Type'))
+                    ->columnSpan(2)
+                    ->form([
+                        \Filament\Forms\Components\ToggleButtons::make('type')
+                            ->label(__('Report Type'))
+                            ->options([
+                                'single' => __('Single Branch'),
+                                'comparison' => __('Multiple Branches'),
+                            ])
+                            ->default('single')
+                            ->inline()
+                            ->icons([
+                                'single' => 'heroicon-o-building-office',
+                                'comparison' => 'heroicon-o-chart-bar',
+                            ])
+                            ->colors([
+                                'single' => 'primary',
+                                'comparison' => 'success',
+                            ])
+                            ->live(),
+
+                        // Single Branch (shown when type is 'single')
+                        \Filament\Forms\Components\Select::make('branch_id')
+                            ->label(__('Branch'))
+                            ->options(fn() => Branch::where('active', true)->where('type', 'branch')->pluck('name', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->visible(fn($get) => $get('type') === 'single'),
+
+                        // Multiple Branches (shown when type is 'comparison')
+                        \Filament\Forms\Components\Select::make('branch_ids')
+                            ->label(__('Select Branches'))
+                            ->multiple()
+                            ->options(fn() => Branch::where('active', true)->where('type', 'branch')->pluck('name', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->visible(fn($get) => $get('type') === 'comparison'),
+                    ]),
+
+                // Date Range Filter
                 Tables\Filters\Filter::make('date_range')
                     ->label(__('Date Range'))
                     ->form([
@@ -59,19 +102,12 @@ class IncomeStatementResource extends Resource
                             ->default(now()->format('F Y'))
                             ->required(),
                     ]),
-                Tables\Filters\SelectFilter::make('branch_id')
-                    ->label(__('Branch'))
-                    ->relationship('branch', 'name', fn($query) => $query->where('active', true)->where('type', 'branch'))
-                    ->searchable()
-                    ->preload(),
-
-
             ])
             ->actions([
                 // No actions
             ])
             ->bulkActions([
-                // No bulk actions
+                // No bulk actions  
             ]);
     }
 

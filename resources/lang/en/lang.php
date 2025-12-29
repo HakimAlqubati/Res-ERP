@@ -787,7 +787,7 @@ return [
     'early_departure_minutes' => 'Early Departure Minutes',
     'filter_by_month' => 'Filter by Month',
     'year' => 'Year',
-    'month' => 'Month',
+    'month_label' => 'Month',
     'select_year' => 'Select a year',
     'select_month' => 'Select a month',
     'choose_date' => 'Choose date',
@@ -1009,4 +1009,5 @@ return [
     'additional_notes' => 'Additional Notes',
     'financial_category' => 'Financial Category',
     'select_to_create_financial_transaction' => 'Select to create financial transaction',
+    'status_already_changed_recently' => 'This status was already changed recently. Please wait before trying again.',
 ];

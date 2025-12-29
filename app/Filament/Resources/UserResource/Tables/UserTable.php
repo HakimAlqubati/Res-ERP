@@ -78,7 +78,7 @@ class UserTable
                     ->copyMessage('Email address copied')
                     ->copyMessageDuration(1500)
                     ->sortable()->searchable()
-                    ->searchable(isIndividual: true, isGlobal: false)
+                    ->searchable(isIndividual: true, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('phone_number')->label('Phone')->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: true)

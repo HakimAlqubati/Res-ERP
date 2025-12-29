@@ -10,6 +10,7 @@ use Filament\Tables;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class LogsRelationManager extends RelationManager
@@ -70,5 +71,10 @@ class LogsRelationManager extends RelationManager
                         ->whereRaw("message NOT LIKE '%Updated fields%'");
                 });
         });
+    }
+
+     public static function getBadge(Model $ownerRecord, string $pageClass): ?string
+    {
+        return $ownerRecord->logs->count();
     }
 }

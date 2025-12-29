@@ -27,7 +27,7 @@ class PosImportDataResource extends Resource
     protected static ?string $cluster = POSIntegrationCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 1;
-    protected static ?string $recordTitleAttribute = 'branch';
+    protected static bool $isGloballySearchable = false;
 
 
     protected static ?string $label = 'POS Import Data';
