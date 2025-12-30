@@ -122,7 +122,7 @@ Route::get('/totestpdf/{empId}/{startMonth}/{endMonth}', function ($employeeId, 
 });
 Route::get('/to_test_salary_slip/{empId}/{sid}', [TestController2::class, 'to_test_salary_slip']);
 Route::get('/to_test_schedule_task/{date}', [TestController::class, 'to_test_schedule_task']);
- Route::get('/to_test_calculate_auto_leave/{yearMonth}/{empId}', [TestController2::class, 'to_test_calculate_auto_leave']);
+Route::get('/to_test_calculate_auto_leave/{yearMonth}/{empId}', [TestController2::class, 'to_test_calculate_auto_leave']);
 Route::get('/to_test_calculate_auto_leave_by_branch/{yearMonth}/{branchId}', [TestController2::class, 'to_test_calculate_auto_leave_by_branch']);
 Route::get('/to_test_make_leaves_applications_based_on_branch/{yearMonth}/{branchId}', [TestController2::class, 'to_test_make_leaves_applications_based_on_branch']);
 Route::get('/to_test_calculate_salary_with_attendances_deducations/{empId}/{date}', [TestController2::class, 'to_test_calculate_salary_with_attendances_deducations']);
@@ -132,7 +132,7 @@ Route::get('/to_get_employee_attendance_period_details', [TestController2::class
 Route::get('/to_get_multi_employees_attendances', [TestController2::class, 'to_get_multi_employees_attendances']);
 
 Route::get('/to_test_inventory/{product}/{unit}', [TestController2::class, 'testInventory']);
- Route::get('/toviewrepeated', function () {
+Route::get('/toviewrepeated', function () {
     /**
      * order IDs
      * (71,82,84,86,89,90,91,92,95,103,104,106,107,110,111,112,115)
@@ -538,7 +538,7 @@ Route::get('/test-email', function () {
 
 Route::get('/reportAbsentEmployees/{date}/{branchId}/{currentTime}', [TestController2::class, 'reportAbsentEmployees']);
 
- 
+
 Route::get('/addAWSEmployee', [EmployeeAWSController::class, 'addEmployee']);
 Route::get('/indexImages', [EmployeeImageAwsIndexesController::class, 'indexImages']);
 
@@ -870,16 +870,17 @@ Route::get('/admin/salary-slip/print/{payroll_id}', function (string $payroll_id
     // dd($payroll);
     // ترتيب الحركات حسب التاريخ
     $transactions = $payroll->transactions()->orderBy('date')->get();
-
     // تقسيم الحركات
     $earnings = $transactions->filter(fn($t) => $t->operation === '+');
     $deductions = $transactions->filter(fn($t) => $t->operation === '-');
 
     // مساهمات صاحب العمل (لا تؤثر في صافي راتب الموظف، تُعرض فقط)
     $employerContrib = $transactions->filter(function ($t) {
-        return ($t->type ?? null) === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value;
+        // return ($t->type ?? null) === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value;
+        return true;
     });
 
+ 
     // المجاميع
     $gross = $earnings->sum('amount');                 // إجمالي الاستحقاقات
     $totalDeductions = $deductions->sum('amount');     // إجمالي الاستقطاعات

@@ -161,6 +161,7 @@ trait EmployeeRelationships
     public function attendancesByDate($date)
     {
         return $this->hasMany(Attendance::class)
+            ->accepted()
             ->where('deleted_at', null)
             ->where('check_date', $date);
     }
