@@ -912,13 +912,13 @@ if (!function_exists('calculateYearlyTax')) {
 
             // Use the tax brackets to determine the tax rate
             $taxPercentage = 0;
-            foreach (Employee::TAX_BRACKETS as $bracket) {
-                [$min, $max, $percentage] = $bracket;
-                if ($yearlySalary >= $min && $yearlySalary <= $max) {
-                    $taxPercentage = $percentage;
-                    break;
-                }
-            }
+            // foreach (Employee::TAX_BRACKETS as $bracket) {
+            //     [$min, $max, $percentage] = $bracket;
+            //     if ($yearlySalary >= $min && $yearlySalary <= $max) {
+            //         $taxPercentage = $percentage;
+            //         break;
+            //     }
+            // }
             // dd($taxPercentage,$yearlySalary);
 
             // Calculate the yearly tax deduction

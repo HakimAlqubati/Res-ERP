@@ -122,8 +122,7 @@ Route::get('/totestpdf/{empId}/{startMonth}/{endMonth}', function ($employeeId, 
 });
 Route::get('/to_test_salary_slip/{empId}/{sid}', [TestController2::class, 'to_test_salary_slip']);
 Route::get('/to_test_schedule_task/{date}', [TestController::class, 'to_test_schedule_task']);
-Route::get('/to_test_calculate_salary/{empId}/{date}', [TestController2::class, 'to_test_calculate_salary']);
-Route::get('/to_test_calculate_auto_leave/{yearMonth}/{empId}', [TestController2::class, 'to_test_calculate_auto_leave']);
+ Route::get('/to_test_calculate_auto_leave/{yearMonth}/{empId}', [TestController2::class, 'to_test_calculate_auto_leave']);
 Route::get('/to_test_calculate_auto_leave_by_branch/{yearMonth}/{branchId}', [TestController2::class, 'to_test_calculate_auto_leave_by_branch']);
 Route::get('/to_test_make_leaves_applications_based_on_branch/{yearMonth}/{branchId}', [TestController2::class, 'to_test_make_leaves_applications_based_on_branch']);
 Route::get('/to_test_calculate_salary_with_attendances_deducations/{empId}/{date}', [TestController2::class, 'to_test_calculate_salary_with_attendances_deducations']);

@@ -99,21 +99,7 @@ class Employee extends Model implements Auditable
     public const TYPE_ACTION_EMPLOYEE_PERIOD_LOG_ADDED   = 'added';
     public const TYPE_ACTION_EMPLOYEE_PERIOD_LOG_REMOVED = 'removed';
 
-    // Tax brackets for nationality 'MY'
-    public const TAX_BRACKETS = [
-        [0, 5000, 0],
-        [5001, 20000, 1],
-        [20001, 35000, 3],
-        [35001, 50000, 8],
-        [50001, 70000, 13],
-        [70001, 100000, 21],
-        [100001, 250000, 24],
-        [250001, 400000, 25],
-        [400001, 600000, 26],
-        [600001, 1000000, 28],
-        [1000001, 2000000, 30],
-        [2000001, PHP_INT_MAX, 32],
-    ];
+  
 
     // ─────────────────────────────────────────────────────────────
     // Scopes
@@ -135,18 +121,6 @@ class Employee extends Model implements Auditable
         return $query->where('active', true);
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Boot Method
-    // ─────────────────────────────────────────────────────────────
-
-    protected static function booted()
-    {
-        if (isBranchManager()) {
-            // Scoping for branch managers if needed
-        } elseif (isStuff()) {
-            static::addGlobalScope(function (Builder $builder) {
-                // Scoping for staff if needed
-            });
-        }
-    }
+ 
+   
 }

@@ -125,25 +125,7 @@ trait EmployeeAccessorsTrait
         return false;
     }
 
-    public function getTaxPercentageAttribute()
-    {
-        if ($this->nationality !== 'MY') {
-            return 0;
-        }
-
-        $salary = $this->salary;
-
-        foreach (self::TAX_BRACKETS as $bracket) {
-            [$min, $max, $percentage] = $bracket;
-
-            if ($salary >= $min && $salary <= $max) {
-                return $percentage;
-            }
-        }
-
-        return 0;
-    }
-
+  
     public function getIsCitizenAttribute()
     {
         $defaultNationality = setting('default_nationality');
