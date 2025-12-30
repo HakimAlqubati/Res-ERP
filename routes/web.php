@@ -133,8 +133,7 @@ Route::get('/to_get_employee_attendance_period_details', [TestController2::class
 Route::get('/to_get_multi_employees_attendances', [TestController2::class, 'to_get_multi_employees_attendances']);
 
 Route::get('/to_test_inventory/{product}/{unit}', [TestController2::class, 'testInventory']);
-Route::get('/migrateEmployeePeriodHistory', [MigrateDataController::class, 'migrateEmployeePeriodHistory']);
-Route::get('/toviewrepeated', function () {
+ Route::get('/toviewrepeated', function () {
     /**
      * order IDs
      * (71,82,84,86,89,90,91,92,95,103,104,106,107,110,111,112,115)
@@ -516,10 +515,6 @@ Route::get('/attendanceSecret__', AttendanecEmployee2::class)
 Route::get('get_employees_attendnaces/{check_date}', [MigrateDataController::class, 'get_employees_attendnaces']);
 Route::get('get_employees_without_attendances/{check_date}', [MigrateDataController::class, 'get_employees_without_attendances']);
 
-Route::get('/migrateAdvanceRequest', [MigrateDataController::class, 'migrateAdvanceRequest']);
-Route::get('/migrateMissedCheckinRequest', [MigrateDataController::class, 'migrateMissedCheckinRequest']);
-Route::get('/migrateMissedCheckoutRequest', [MigrateDataController::class, 'migrateMissedCheckoutRequest']);
-Route::get('/migrateLeaveRequest', [MigrateDataController::class, 'migrateLeaveRequest']);
 Route::get('/send-test-email', function () {
 
     // $sampleEmployees = [
@@ -544,8 +539,7 @@ Route::get('/test-email', function () {
 
 Route::get('/reportAbsentEmployees/{date}/{branchId}/{currentTime}', [TestController2::class, 'reportAbsentEmployees']);
 
-Route::get('/updateAllPeriodsToDayAndNight', [MigrateDataController::class, 'updateAllPeriodsToDayAndNight']);
-
+ 
 Route::get('/addAWSEmployee', [EmployeeAWSController::class, 'addEmployee']);
 Route::get('/indexImages', [EmployeeImageAwsIndexesController::class, 'indexImages']);
 

@@ -21,11 +21,7 @@ class EmployeeApplicationV2 extends Model implements Auditable
     use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope;
 
     protected $appends = [
-        'detailed_leave_request',
-        'detailed_advance_application',
-        'detailed_missed_checkin_application',
-        'DetailedMissedCheckoutApplication',
-        'leave_type_name',      // جديد
+         'leave_type_name',      // جديد
         'leave_type_id',
 
     ];
@@ -237,121 +233,9 @@ class EmployeeApplicationV2 extends Model implements Auditable
         return $this->hasOne(AdvanceRequest::class, 'application_id');
     }
 
-    public function getDetailedLeaveRequestAttribute()
-    {
-        $details = $this->details; // Assuming `details` is the column where JSON data is stored
 
-        // Decode the JSON string into an array
-        $detailsArray = json_decode($details, true);
-
-        // Check if decoding was successful and return a detailed array
-        if (is_array($detailsArray)) {
-            return [
-                'id' => $this->id,
-                'leave_type_id' => $detailsArray['detail_leave_type_id'] ?? null,
-                'from_date' => isset($detailsArray['detail_from_date'])
-                    ? Carbon::parse($detailsArray['detail_from_date'])->format('Y-m-d')
-                    : null,
-                'to_date' => isset($detailsArray['detail_to_date'])
-                    ? Carbon::parse($detailsArray['detail_to_date'])->format('Y-m-d')
-                    : null,
-                'days_count' => $detailsArray['detail_days_count'] ?? null,
-                'year' => $detailsArray['detail_year'] ?? null,
-                'month' => $detailsArray['detail_month'] ?? null,
-            ];
-        }
-
-        // If decoding fails, return null or an empty array
-        return [];
-    }
-
-    public function getDetailedAdvanceApplicationAttribute()
-    {
-        $details = $this->details; // Assuming `details` is the name of the column
-
-        // Decode the JSON string into an array
-        $detailsArray = json_decode($details, true);
-
-        // Check if decoding was successful and return a detailed array
-        if (is_array($detailsArray)) {
-
-            return [
-                'id' => $this->id,
-                'advance_amount' => isset($detailsArray['detail_advance_amount'])
-                    ? number_format($detailsArray['detail_advance_amount'], 2)
-                    : null,
-                'monthly_deduction_amount' => isset($detailsArray['detail_monthly_deduction_amount'])
-                    ? number_format($detailsArray['detail_monthly_deduction_amount'], 2)
-                    : null,
-                'deduction_ends_at' => isset($detailsArray['detail_deduction_ends_at'])
-                    ? Carbon::parse($detailsArray['detail_deduction_ends_at'])->format('Y-m-d')
-                    : null,
-                'number_of_months_of_deduction' => $detailsArray['detail_number_of_months_of_deduction'] ?? null,
-                'date' => isset($detailsArray['detail_date'])
-                    ? Carbon::parse($detailsArray['detail_date'])->format('Y-m-d')
-                    : null,
-                'deduction_starts_from' => isset($detailsArray['detail_deduction_starts_from'])
-                    ? Carbon::parse($detailsArray['detail_deduction_starts_from'])->format('Y-m-d')
-                    : null,
-            ];
-        }
-
-        // If decoding fails, return null or an empty array
-        return [];
-    }
-    public function getDetailedMissedCheckinApplicationAttribute()
-    {
-        if ($this->application_type_id == 2) {
-            $details = $this->details; // Assuming `details` is the name of the column
-
-            // Decode the JSON string into an array
-            $detailsArray = json_decode($details, true);
-
-            // Check if decoding was successful and return a detailed array
-            if (is_array($detailsArray)) {
-
-                return [
-                    'id' => $this->id,
-                    'date' => isset($detailsArray['detail_date'])
-                        ? ($detailsArray['detail_date'])
-                        : null,
-                    'time' => isset($detailsArray['detail_time'])
-                        ? ($detailsArray['detail_time'])
-                        : null,
-                ];
-            }
-
-            // If decoding fails, return null or an empty array
-            return [];
-        }
-    }
-    public function getDetailedMissedCheckoutApplicationAttribute()
-    {
-        if ($this->application_type_id == 4) {
-
-            $details = $this->details; // Assuming `details` is the name of the column
-
-            // Decode the JSON string into an array
-            $detailsArray = json_decode($details, true);
-
-            // Check if decoding was successful and return a detailed array
-            if (is_array($detailsArray)) {
-
-                return [
-                    'id' => $this->id,
-                    'date' => isset($detailsArray['detail_date'])
-                        ? ($detailsArray['detail_date'])
-                        : null,
-                    'time' => isset($detailsArray['detail_time'])
-                        ? ($detailsArray['detail_time'])
-                        : null,
-                ];
-            }
-
-            // If decoding fails, return null or an empty array
-            return [];
-        }
-    }
+   
+  
 
     public function getDetailTimeAttribute()
     {
