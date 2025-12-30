@@ -303,7 +303,7 @@ class EmployeeTable
                     ->icon('heroicon-o-user-plus')
                     ->color('success')
                     ->visible(fn($record) =>  !$record->has_user)
-                    ->form(fn($record) => static::createUserForm($record))
+                    ->form(fn($record) => EmployeeResource::createUserForm($record))
                     ->action(function (array $data, $record) {
                         $user = $record->createLinkedUser($data);
 

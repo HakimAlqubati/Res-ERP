@@ -3,6 +3,9 @@
 namespace App\Observers;
 
 use App\Models\Employee;
+use App\Models\User;
+use Exception;
+use Illuminate\Support\Facades\Storage;
 
 class EmployeeObserver
 {
@@ -11,7 +14,42 @@ class EmployeeObserver
      */
     public function created(Employee $employee): void
     {
-        //
+        // فقط إذا لم يكن هناك user مرتبط
+        if (!$employee->user_id) {
+
+            $existingUser = User::where('email', $employee->email)->first();
+            if ($existingUser) {
+                throw new Exception("The email {$employee->email} is already used by another user.");
+            }
+
+            // الحصول على user_id الخاص بالمدير
+            $managerUserId = Employee::find($employee->manager_id)?->user_id;
+
+            // إعداد البيانات الأساسية
+            $userData = [
+                'name'          => $employee->name,
+                'email'         => $employee->email,
+                'branch_id'     => $employee->branch_id,
+                'phone_number'  => $employee->phone_number,
+                'user_type'     => $employee?->employee_type,
+                'nationality'   => $employee?->nationality,
+                'gender'        => $employee->gender,
+                'password'      => bcrypt('123456'),
+                'owner_id'      => $managerUserId,
+            ];
+
+            // إذا كان لديه avatar نضيفه
+            if ($employee->avatar && Storage::disk('public')->exists($employee->avatar)) {
+                $userData['avatar'] = $employee->avatar;
+            }
+
+            // إنشاء اليوزر
+            $user = User::create($userData);
+
+            // ربط user_id بالموظف
+            $employee->user_id = $user->id;
+            $employee->save();
+        }
     }
 
     /**
@@ -21,25 +59,35 @@ class EmployeeObserver
     {
         // Access the related user model
         $user = $employee->user;
-
-        if($user){
-
+        if ($user) {
+            $managerUserId = Employee::find($employee->manager_id)?->user_id;
+            $user->owner_id = $managerUserId;
             // Check if 'email' or 'phone_number' changed
-            if ($employee->isDirty('email')) {
-                $user->email = $employee->email;
-            }
-            if ($employee->isDirty('phone_number')) {
-                $user->phone_number = $employee->phone_number;
-            }
-    
-            if ($user->isDirty('name')) {
-                $employee->name = $user->name;
-            }
-     
-            // if ($user->isDirty('branch_id')) {
-            //     $employee->branch_id = $user->branch_id;
+            // if ($employee->isDirty('email')) {
+            $user->email = $employee->email;
             // }
-     
+            // if ($employee->isDirty('phone_number')) {
+            $user->phone_number = $employee?->phone_number;
+
+
+            $user->name = $employee->name;
+            $user->branch_id = $employee?->branch_id;
+
+
+            $user->gender = $employee?->gender;
+
+            if (!is_null($employee?->nationality)) {
+                $user->nationality = $employee->nationality;
+            }
+            $user->user_type = $employee?->employee_type;
+
+            if ($employee->avatar && Storage::disk('public')->exists($employee->avatar)) {
+                $user->avatar = $employee->avatar;
+            }
+            // if ($employee->avatar && Storage::disk('s3')->exists($employee->avatar)) {
+            //     $user->avatar = $employee->avatar;
+            // }
+
             // Save changes to the user model
             $user->save();
         }
