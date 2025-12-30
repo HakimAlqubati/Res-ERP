@@ -190,7 +190,7 @@
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    
+
 </head>
 
 <body>
@@ -268,50 +268,51 @@
                 </thead>
                 <tbody>
                     @php
-                        $earn = $earnings ?? collect();
-                        $ded = $deductions ?? collect();
-                        $rows = max($earn->count(), $ded->count());
+                    $earn = $earnings ?? collect();
+                    $ded = $deductions ?? collect();
+                    // $rows = max($earn->count(), $ded->count());
+                    $rows = $transactions->count();
                     @endphp
 
                     @for ($i = 0; $i < $rows; $i++)
                         @php
-                            $e = $earn->get($i);
-                            $d = $ded->get($i);
-                            $eDesc =
-                                $e?->description ?:
-                                (isset($e)
-                                    ? ucfirst(str_replace('_', ' ', $e->sub_type ?? ($e->type ?? '')))
-                                    : '');
-                            $dDesc =
-                                $d?->description ?:
-                                (isset($d)
-                                    ? ucfirst(str_replace('_', ' ', $d->sub_type ?? ($d->type ?? '')))
-                                    : '');
+                        $e=$earn->get($i);
+                        $d = $ded->get($i);
+                        $eDesc =
+                        $e?->description ?:
+                        (isset($e)
+                        ? ucfirst(str_replace('_', ' ', $e->sub_type ?? ($e->type ?? '')))
+                        : '');
+                        $dDesc =
+                        $d?->description ?:
+                        (isset($d)
+                        ? ucfirst(str_replace('_', ' ', $d->sub_type ?? ($d->type ?? '')))
+                        : '');
                         @endphp
                         <tr>
                             <td>
                                 @if ($e && $d)
-                                    {{ $eDesc }}
+                                {{ $eDesc }}
                                 @elseif($e)
-                                    {{ $eDesc }}
+                                {{ $eDesc }}
                                 @elseif($d)
-                                    {{ $dDesc }}
+                                {{ $dDesc }}
                                 @else
-                                    &nbsp;
+                                &nbsp;
                                 @endif
                             </td>
                             <td class="right">
                                 @if ($e)
-                                    {{ formatMoneyWithCurrency($e->amount) }}
+                                {{ formatMoneyWithCurrency($e->amount) }}
                                 @endif
                             </td>
                             <td class="right">
                                 @if ($d)
-                                    {{ formatMoneyWithCurrency($d->amount) }}
+                                {{ formatMoneyWithCurrency($d->amount) }}
                                 @endif
                             </td>
                         </tr>
-                    @endfor
+                        @endfor
                 </tbody>
                 <tfoot>
                     <tr>

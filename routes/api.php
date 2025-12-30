@@ -378,3 +378,8 @@ Route::get('/fixInventoryMovementDates', function () {
         ], 500);
     }
 });
+
+Route::get('/testEnv', function () {
+    // dd('sdf');
+    dd(env('APP_ENV'));
+});
