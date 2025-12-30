@@ -99,7 +99,7 @@ class Employee extends Model implements Auditable
     public const TYPE_ACTION_EMPLOYEE_PERIOD_LOG_ADDED   = 'added';
     public const TYPE_ACTION_EMPLOYEE_PERIOD_LOG_REMOVED = 'removed';
 
-  
+
 
     // ─────────────────────────────────────────────────────────────
     // Scopes
@@ -120,7 +120,4 @@ class Employee extends Model implements Auditable
     {
         return $query->where('active', true);
     }
-
- 
-   
 }
