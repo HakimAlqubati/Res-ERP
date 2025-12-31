@@ -11,7 +11,6 @@ class CopyOrderOutToBranchStoreService
 {
     public function handle(?int $branchId = null): void
     {
-        Log::info('Starting_CopyOrderOutToBranchStoreService...', ['timestamp' => now()]);
         Order::with(['branch.store'])
             ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
             ->whereNull('deleted_at')
@@ -58,17 +57,14 @@ class CopyOrderOutToBranchStoreService
                     });
                 }
             });
-        Log::info('Finished_CopyOrderOutToBranchStoreService', ['ts' => now()]);
     }
 
     public function handleForOrder(Order $order): void
     {
-        Log::info('Copying transactions for Order #' . $order->id, ['timestamp' => now()]);
 
         $store = $order->branch?->store;
 
         if (! $store) {
-            Log::warning('No store found for Branch of Order #' . $order->id);
             return;
         }
 
