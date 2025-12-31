@@ -47,7 +47,11 @@ class InVsOutReportService
 
 
 
-        if (isset($filters['to_date'])) {
+        if (isset($filters['from_date']) && isset($filters['to_date'])) {
+            $query->whereBetween('inventory_transactions.movement_date', [$filters['from_date'], $filters['to_date']]);
+        } elseif (isset($filters['from_date'])) {
+            $query->whereDate('inventory_transactions.movement_date', '>=', $filters['from_date']);
+        } elseif (isset($filters['to_date'])) {
             $query->whereDate('inventory_transactions.movement_date', '<=', $filters['to_date']);
         }
 
@@ -108,7 +112,7 @@ class InVsOutReportService
                 $multiplier = $entry->package_size / $smallestPackageSize;
                 $convertedQty = $entry->qty * $multiplier;
                 $totalQty += $convertedQty;
-                $totalCost = $entry->price / $entry->package_size;
+                $totalCost += $entry->price / $entry->package_size;
             }
 
             $final[] = [
@@ -272,7 +276,7 @@ class InVsOutReportService
                     );
                 }
             }
-         
+
             // dd($currentQty,$this->smallestUnit  );
             $finalResult[] = [
                 'product_id'   => $productId,
