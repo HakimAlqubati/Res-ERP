@@ -14,7 +14,7 @@ use App\Models\Order;
 use App\Models\OrderDetails;
 use App\Models\Store;
 use App\Models\UnitPrice;
-use App\Models\User; 
+use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -242,7 +242,7 @@ class OrderRepository implements OrderRepositoryInterface
                 $orderId = $pendingOrderId;
                 $orderStatus = $order->status; // Could be PENDING_APPROVAL or ORDERED
             } else {
-                
+
                 $order = Order::create([
                     'status' => $orderStatus,
                     'customer_id' => $customerId,
@@ -451,6 +451,14 @@ class OrderRepository implements OrderRepositoryInterface
                     'message' => "Order not found with $id id",
                 ], 404);
             }
+
+            if ($order->status === $request->status) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order is already in this status',
+                ], 422);
+            }
+
 
             // Validate the request data
             $validatedData = $request->validate([

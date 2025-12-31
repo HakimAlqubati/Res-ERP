@@ -290,21 +290,29 @@ class Order extends Model implements Auditable
 
 
             if ($order->isDirty('status')) {
-                OrderLog::create([
-                    'order_id'   => $order->id,
-                    'created_by' => auth()->id() ?? null,
-                    'log_type'   => 'change_status',
-                    'message'    => 'Order status changed from ' .
-                        $order->getOriginal('status') .
-                        ' to ' . $order->status,
-                    'new_status' => $order->status,
-                ]);
+                $exists = OrderLog::where('order_id', $order->id)
+                    ->where('new_status', $order->status)
+                    ->where('log_type', 'change_status')
+                    ->where('created_at', '>=', now()->subSeconds(60))
+                    ->exists();
+
+                if (!$exists) {
+                    OrderLog::create([
+                        'order_id'   => $order->id,
+                        'created_by' => auth()->id() ?? null,
+                        'log_type'   => 'change_status',
+                        'message'    => 'Order status changed from ' .
+                            $order->getOriginal('status') .
+                            ' to ' . $order->status,
+                        'new_status' => $order->status,
+                    ]);
+                }
             }
         });
 
         static::saved(function (Order $order) {
             if (in_array($order->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
-                app(CopyOrderOutToBranchStoreService::class)->handleForOrder($order);
+                // app(CopyOrderOutToBranchStoreService::class)->handleForOrder($order);
 
                 // Create Financial Transaction for Transfers (only for non-reseller branches)
                 if ($order->branch && $order->branch->type !== Branch::TYPE_RESELLER) {

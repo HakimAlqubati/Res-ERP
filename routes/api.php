@@ -57,6 +57,9 @@ Route::get('/products', [ProductController::class, 'index'])->middleware('lastSe
 Route::get('/orders/{order}/pdf', [OrderController::class, 'generate']);
 
 Route::middleware(['auth:api', 'lastSeen'])->group(function () {
+    // Test Race Condition
+    Route::get('/test-race/{orderId}', [\App\Http\Controllers\TestController9::class, 'testRaceCondition']);
+
     Route::get('/report_products', [ProductController::class, 'reportProducts']);
     Route::get('/user', [AuthController::class, 'getCurrnetUser']);
     Route::apiResource('products', ProductController::class);
