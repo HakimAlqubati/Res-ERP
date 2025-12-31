@@ -109,10 +109,13 @@ class DetailsRelationManager extends RelationManager
                     ->icon('heroicon-o-pencil-square')
                     ->color('info')
                     ->schema(function (Collection $records) {
+                        $storeId = $this->ownerRecord->store_id ?? null;
                         $defaultValues = $records->map(fn($record) => [
                             'id' => $record->id,
+                            'product_id' => $record->product_id,
+                            'store_id' => $storeId,
                             'product_name' => $record->product ? "{$record->product->code}-{$record->product->name}" : 'N/A',
-                            'unit_name' => $record->unit?->name ?? 'N/A',
+                            'unit_id' => $record->unit_id,
                             'system_quantity' => $record->system_quantity,
                             'physical_quantity' => $record->physical_quantity,
                             'package_size' => $record->package_size,
@@ -134,15 +137,51 @@ class DetailsRelationManager extends RelationManager
                                 ->schema([
                                     Hidden::make('id'),
                                     Hidden::make('is_adjustmented'),
+                                    Hidden::make('product_id'),
+                                    Hidden::make('store_id'),
                                     TextInput::make('product_name')
                                         ->label(__('Product'))
                                         ->disabled()
                                         ->columnSpan(2),
-                                    TextInput::make('unit_name')
+                                    Select::make('unit_id')
                                         ->label(__('Unit'))
-                                        ->extraInputAttributes(['class' => 'text-center'])
+                                        ->options(function (callable $get) {
+                                            $productId = $get('product_id');
+                                            if (!$productId) {
+                                                return [];
+                                            }
+                                            $product = Product::find($productId);
+                                            if (!$product) {
+                                                return [];
+                                            }
+                                            return $product->units()->pluck('units.name', 'units.id')->toArray();
+                                        })
+                                        ->disabled(fn($get) => $get('is_adjustmented'))
+                                        ->live()
+                                        ->afterStateUpdated(function ($state, callable $get, callable $set) {
+                                            $productId = $get('product_id');
+                                            $storeId = $get('store_id');
 
-                                        ->disabled(),
+                                            if (!$productId || !$storeId || !$state) {
+                                                return;
+                                            }
+                                            
+                                            $report = MultiProductsInventoryService::quickReport(
+                                                (int) $storeId,
+                                                (int) $productId,
+                                                (int) $state
+                                            );
+                                            
+                                            $systemQty = $report[0][0]['remaining_qty'] ?? 0;
+                                            $set('system_quantity', $systemQty);
+                                            // dd($productId,$storeId,$state,$report,$systemQty);
+
+                                            // Recalculate difference
+                                            $physicalQty = $get('physical_quantity') ?? 0;
+                                            $diff = round($physicalQty - $systemQty, 4);
+                                            $set('difference', $diff);
+                                        })
+                                        ->required(),
                                     TextInput::make('system_quantity')
                                         ->label(__('System Qty'))
                                         ->extraInputAttributes(['class' => 'text-center'])
@@ -190,6 +229,7 @@ class DetailsRelationManager extends RelationManager
                                 if ($record) {
                                     $record->update([
                                         'physical_quantity' => $item['physical_quantity'],
+                                        'unit_id' => $item['unit_id'],
                                         'difference' => $item['physical_quantity'] - $record->system_quantity,
                                     ]);
                                 }
