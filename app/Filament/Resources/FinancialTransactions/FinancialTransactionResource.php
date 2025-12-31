@@ -77,8 +77,9 @@ class FinancialTransactionResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return static::getModel()::count(); // Global Scope will filter automatically
     }
+
     public static function canAccess(): bool
     {
         if (isSuperAdmin()) {

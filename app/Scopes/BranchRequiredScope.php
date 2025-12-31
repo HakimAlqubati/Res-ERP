@@ -1,0 +1,19 @@
+<?php
+
+namespace App\Scopes;
+
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Scope;
+
+class BranchRequiredScope implements Scope
+{
+    /**
+     * Apply the scope to a given Eloquent query builder.
+     * Filters out records that don't have a branch_id.
+     */
+    public function apply(Builder $builder, Model $model): void
+    {
+        $builder->whereNotNull('branch_id');
+    }
+}
