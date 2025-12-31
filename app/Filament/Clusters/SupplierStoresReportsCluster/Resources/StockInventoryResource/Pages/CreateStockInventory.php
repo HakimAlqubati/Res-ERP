@@ -61,25 +61,29 @@ class CreateStockInventory extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        // جمع كل الصفحات من الكاش
+        $pages       = (array) ($this->data['details_pages'] ?? []);
+        $currentPage = (int) ($this->data['current_page'] ?? 1);
+        $pageDetails = (array) ($this->data['page_details'] ?? []);
 
+        // ✅ دمج الصفحة الحالية في الـ cache قبل الحفظ
+        // هذا يضمن حفظ التعديلات على physical_quantity حتى لو لم يتنقل المستخدم بين الصفحات
+        if (!empty($pageDetails)) {
+            $pages[$currentPage] = $pageDetails;
+        }
 
-        $pages      = (array) ($this->data['details_pages'] ?? []);
+        // ترتيب الصفحات ودمجها
+        ksort($pages);
         $merged = [];
-        if ($this->data['total_pages'] > 0) {
-
-            foreach ($pages as $i => $rows) {
-                $merged = array_merge($merged, $rows);
-            }
-        } else {
-            foreach ($this->data['page_details'] as $key => $value) {
-                // dd($value);
-                // $merged = array_merge($merged, $value);
-                $merged[] = $value;
+        foreach ($pages as $rows) {
+            foreach ((array) $rows as $row) {
+                // نظّف حقول الواجهة قبل الحفظ
+                unset($row['rowInventoryCache'], $row['rowUnitsCache']);
+                $merged[] = $row;
             }
         }
+
         $data['details'] = $merged;
-        // $this->extraDetails = Arr::get($this->data, 'details', []);
-        // dd($this->data, $pages, $merged, $data);
 
         return $data;
     }
