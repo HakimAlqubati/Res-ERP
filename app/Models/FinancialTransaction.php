@@ -10,10 +10,10 @@ class FinancialTransaction extends Model
 {
     use SoftDeletes;
 
-    protected static function booted(): void
-    {
-        static::addGlobalScope(new BranchRequiredScope);
-    }
+    // protected static function booted(): void
+    // {
+    //     static::addGlobalScope(new BranchRequiredScope);
+    // }
 
     // Constants for transaction types
     const TYPE_INCOME = 'income';
