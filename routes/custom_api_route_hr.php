@@ -42,9 +42,9 @@ Route::prefix('hr/payroll')
 
 Route::prefix('hr')
     ->group(function () {
-        Route::post('/attendance/store', [AttendanceController::class, 'store'])->middleware('auth:api');
-        Route::post('/attendance/storeInOut', [AttendanceController::class, 'storeInOut'])->middleware('auth:api');
-        Route::post('/attendance/storeBulk', [AttendanceController::class, 'storeBulk'])->middleware('auth:api');
+        // Route::post('/attendance/store', [AttendanceController::class, 'store'])->middleware('auth:api');
+        // Route::post('/attendance/storeInOut', [AttendanceController::class, 'storeInOut'])->middleware('auth:api');
+        // Route::post('/attendance/storeBulk', [AttendanceController::class, 'storeBulk'])->middleware('auth:api');
         // يمكنك إضافة المزيد لاحقًا مثل:
         // Route::get('/employee/{id}', [EmployeeController::class, 'show']);
 
@@ -54,7 +54,7 @@ Route::prefix('hr')
 
         Route::get('/attendancePlan', [AttendanceController::class, 'generate']);
 
-        Route::post('/attendance/plan/execute', [AttendancePlanController::class, 'execute'])->middleware('auth:api');
+        // Route::post('/attendance/plan/execute', [AttendancePlanController::class, 'execute'])->middleware('auth:api');
         Route::post('/faceRecognition', [AttendanceController::class, 'identifyEmployeeFromImage']);
         Route::post('/identifyEmployee', [EmployeeIdentificationController::class, 'identify'])
             // ->name('employees.identify')

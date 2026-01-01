@@ -5,13 +5,22 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class EmployeePeriodDay extends Model
+use OwenIt\Auditing\Contracts\Auditable;
+
+class EmployeePeriodDay extends Model implements Auditable
 {
-    use HasFactory;
+    use HasFactory,\OwenIt\Auditing\Auditable;
 
     protected $table = 'hr_employee_period_days';
 
     protected $fillable = [
+        'employee_period_id',
+        'day_of_week',
+        'start_date',
+        'end_date',
+    ];
+
+    protected $auditInclude = [
         'employee_period_id',
         'day_of_week',
         'start_date',
