@@ -45,8 +45,8 @@ class TestController9 extends Controller
         // dd($order1);
 
         // dd($order2);    
-        // $order2->status = 'ready_for_delivery';
-        // $order2->save();
+        $order2->status = 'ready_for_delivery';
+        $order2->save();
 
         // dd($order1,$order2);
         // Step 4: Count logs after
