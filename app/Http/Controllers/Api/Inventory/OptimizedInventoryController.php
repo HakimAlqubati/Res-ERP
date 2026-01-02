@@ -15,9 +15,8 @@ use Illuminate\Http\Request;
  * Provides endpoints for inventory reporting with optimized performance
  * 
  * ═══════════════════════════════════════════════════════════════════════════════
- * الأداء:
- * - الافتراضي: Pagination (لأفضل أداء)
- * - اختياري: all=true لجلب جميع البيانات (غير مُستحسن للبيانات الكبيرة)
+ * جميع الإعدادات يتم تمريرها عبر InventoryFilterDto
+ * الافتراضي: Pagination (لأفضل أداء)
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 class OptimizedInventoryController extends Controller
@@ -30,7 +29,6 @@ class OptimizedInventoryController extends Controller
      * @queryParam store_id required int Store ID
      * @queryParam per_page optional int Items per page (default: 15)
      * @queryParam page optional int Current page number
-     * @queryParam all optional bool Set to true to get ALL data (not recommended for large datasets)
      * @queryParam category_id optional int Filter by category
      * @queryParam product_id optional int Filter by single product
      * @queryParam unit_id optional int|string Filter by unit (or 'all')
@@ -43,7 +41,6 @@ class OptimizedInventoryController extends Controller
         $validated = $request->validate([
             'store_id' => 'required|integer|exists:stores,id',
             'per_page' => 'nullable|integer|min:1|max:100',
-            'all' => 'nullable|boolean',
             'category_id' => 'nullable|integer|exists:categories,id',
             'product_id' => 'nullable|integer|exists:products,id',
             'unit_id' => 'nullable',
@@ -53,32 +50,12 @@ class OptimizedInventoryController extends Controller
             'product_ids.*' => 'integer|exists:products,id',
         ]);
 
-        $filter = new InventoryFilterDto(
-            storeId: (int) $validated['store_id'],
-            categoryId: $validated['category_id'] ?? null,
-            productId: $validated['product_id'] ?? null,
-            unitId: $validated['unit_id'] ?? 'all',
-            filterOnlyAvailable: (bool) ($validated['only_available'] ?? false),
-            isActive: (bool) ($validated['active'] ?? false),
-            productIds: $validated['product_ids'] ?? [],
-        );
-
+        // إنشاء DTO من الـ Request مباشرة - كل الإعدادات في مكان واحد
+        $filter = InventoryFilterDto::fromRequest($validated);
         $service = new OptimizedInventoryService($filter);
 
-        // إذا طُلب جميع البيانات (غير مُستحسن للأداء)
-        if ($request->boolean('all')) {
-            $report = $service->getInventoryReport();
-            return response()->json([
-                'success' => true,
-                'data' => $report['reportData'] ?? $report['report'] ?? [],
-                'pagination' => null,
-                'warning' => 'Using all=true is not recommended for large datasets',
-            ]);
-        }
-
-        // الافتراضي: Pagination (الأفضل للأداء)
-        $perPage = (int) ($validated['per_page'] ?? 15);
-        $report = $service->getInventoryReportWithPagination($perPage);
+        // الـ Service يستخدم perPage من الـ filter تلقائياً
+        $report = $service->getInventoryReport();
 
         return response()->json([
             'success' => true,
@@ -188,19 +165,12 @@ class OptimizedInventoryController extends Controller
             'per_page' => 'nullable|integer|min:1|max:100',
         ]);
 
-        $filter = new InventoryFilterDto(
-            storeId: (int) $validated['store_id'],
-            categoryId: $validated['category_id'] ?? null,
-            isActive: (bool) ($validated['active'] ?? false),
-        );
-
+        // إنشاء DTO من الـ Request مباشرة
+        $filter = InventoryFilterDto::fromRequest($validated);
         $service = new OptimizedInventoryService($filter);
-        $perPage = (int) ($validated['per_page'] ?? 15);
 
-        $lowStock = $service->getProductsBelowMinimumQuantityWithPagination(
-            $perPage,
-            (bool) ($validated['active'] ?? false)
-        );
+        // الـ Service يستخدم perPage و isActive من الـ filter
+        $lowStock = $service->getProductsBelowMinimumQuantity();
 
         return response()->json([
             'success' => true,

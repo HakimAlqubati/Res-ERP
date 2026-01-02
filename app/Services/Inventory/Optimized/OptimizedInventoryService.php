@@ -118,20 +118,23 @@ class OptimizedInventoryService
      * 
      * ═══════════════════════════════════════════════════════════════════════════
      * التحسين: الدالة الافتراضية تستخدم Pagination لضمان أفضل أداء
+     * يتم استخدام perPage من الـ DTO تلقائياً
      * ═══════════════════════════════════════════════════════════════════════════
-     * 
-     * @param int $perPage عدد العناصر في الصفحة (افتراضي: 15)
      */
-    public function getInventoryReport(int $perPage = 15): array
+    public function getInventoryReport(): array
     {
-        return $this->getInventoryReportWithPagination($perPage);
+        return $this->getInventoryReportWithPagination();
     }
 
     /**
      * تقرير المخزون مع Pagination
+     * 
+     * @note يستخدم perPage من $this->filter->perPage
      */
-    public function getInventoryReportWithPagination(int $perPage = 15): array
+    public function getInventoryReportWithPagination(): array
     {
+        $perPage = $this->filter->perPage;
+
         // الحالة 1: منتجات محددة مسبقاً
         if (!empty($this->filter->productIds)) {
             return $this->handleSpecificProducts();
@@ -170,20 +173,22 @@ class OptimizedInventoryService
 
     /**
      * الحصول على المنتجات تحت الحد الأدنى مع Pagination
+     * 
+     * @note يستخدم perPage و isActive من الـ DTO
      */
-    public function getProductsBelowMinimumQuantity(int $perPage = 15, bool $active = false): LengthAwarePaginator
+    public function getProductsBelowMinimumQuantity(): LengthAwarePaginator
     {
-        return $this->getProductsBelowMinimumQuantityWithPagination($perPage, $active);
+        return $this->getProductsBelowMinimumQuantityWithPagination();
     }
 
     /**
      * الحصول على المنتجات تحت الحد الأدنى مع Pagination
+     * 
+     * @note يستخدم perPage و isActive من الـ DTO
      */
-    public function getProductsBelowMinimumQuantityWithPagination(int $perPage = 15, bool $active = false): LengthAwarePaginator
+    public function getProductsBelowMinimumQuantityWithPagination(): LengthAwarePaginator
     {
-        if ($active) {
-            $this->setActive(true);
-        }
+        $perPage = $this->filter->perPage;
 
         // جلب الصفحة الحالية فقط
         $report = $this->handleNormalPagination($perPage);

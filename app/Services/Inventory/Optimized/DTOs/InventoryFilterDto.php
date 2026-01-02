@@ -7,6 +7,10 @@ namespace App\Services\Inventory\Optimized\DTOs;
  * 
  * Data Transfer Object للفلاتر المستخدمة في استعلامات المخزون
  * يضمن Type Safety ووضوح المدخلات
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * جميع إعدادات الاستعلام موجودة هنا - لا حاجة لتمرير parameters منفصلة
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 final class InventoryFilterDto
 {
@@ -18,6 +22,7 @@ final class InventoryFilterDto
         public readonly bool $filterOnlyAvailable = false,
         public readonly bool $isActive = false,
         public readonly array $productIds = [],
+        public readonly int $perPage = 15,  // عدد العناصر في الصفحة
     ) {}
 
     /**
@@ -28,7 +33,8 @@ final class InventoryFilterDto
         ?int $productId,
         mixed $unitId,
         ?int $storeId,
-        bool $filterOnlyAvailable = false
+        bool $filterOnlyAvailable = false,
+        int $perPage = 15
     ): self {
         return new self(
             storeId: $storeId,
@@ -36,6 +42,24 @@ final class InventoryFilterDto
             productId: $productId,
             unitId: $unitId,
             filterOnlyAvailable: $filterOnlyAvailable,
+            perPage: $perPage,
+        );
+    }
+
+    /**
+     * إنشاء DTO من Request مباشرة
+     */
+    public static function fromRequest(array $validated): self
+    {
+        return new self(
+            storeId: isset($validated['store_id']) ? (int) $validated['store_id'] : null,
+            categoryId: $validated['category_id'] ?? null,
+            productId: $validated['product_id'] ?? null,
+            unitId: $validated['unit_id'] ?? 'all',
+            filterOnlyAvailable: (bool) ($validated['only_available'] ?? false),
+            isActive: (bool) ($validated['active'] ?? false),
+            productIds: $validated['product_ids'] ?? [],
+            perPage: (int) ($validated['per_page'] ?? 15),
         );
     }
 
@@ -52,6 +76,7 @@ final class InventoryFilterDto
             filterOnlyAvailable: $this->filterOnlyAvailable,
             isActive: $this->isActive,
             productIds: $productIds,
+            perPage: $this->perPage,
         );
     }
 
@@ -68,6 +93,24 @@ final class InventoryFilterDto
             filterOnlyAvailable: $this->filterOnlyAvailable,
             isActive: $active,
             productIds: $this->productIds,
+            perPage: $this->perPage,
+        );
+    }
+
+    /**
+     * نسخة معدلة مع perPage
+     */
+    public function withPerPage(int $perPage): self
+    {
+        return new self(
+            storeId: $this->storeId,
+            categoryId: $this->categoryId,
+            productId: $this->productId,
+            unitId: $this->unitId,
+            filterOnlyAvailable: $this->filterOnlyAvailable,
+            isActive: $this->isActive,
+            productIds: $this->productIds,
+            perPage: $perPage,
         );
     }
 
