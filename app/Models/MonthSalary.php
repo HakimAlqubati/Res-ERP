@@ -62,10 +62,8 @@ class MonthSalary extends Model implements Auditable
 
     protected static function booted()
     {
-        if (isBranchManager()) {
-            static::addGlobalScope('active', function (Builder $builder) {
-                $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
-            });
-        }
+        // Branch scope logic moved to ApplyBranchScopes middleware
+        // to avoid relationship issues during model boot cycle.
+        // See: app/Http/Middleware/ApplyBranchScopes.php
     }
 }

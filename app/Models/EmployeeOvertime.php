@@ -97,12 +97,14 @@ class EmployeeOvertime extends Model implements Auditable
 
     protected static function booted()
     {
-        if (auth()->check()) {
-            if (isBranchManager()) {
-                static::addGlobalScope(function (Builder $builder) {
-                    $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
-                });
-            } elseif (isStuff()) {
+        // Branch scope logic moved to ApplyBranchScopes middleware
+        // to avoid relationship issues during model boot cycle.
+        // See: app/Http/Middleware/ApplyBranchScopes.php
+    }
+
+    public function scopeDay($query)
+    {
+        return $query->where('type', static::TYPE_BASED_ON_DAY);
                 static::addGlobalScope(function (Builder $builder) {
                     $builder->where('employee_id', auth()->user()->employee->id); // Add your default query here
                 });

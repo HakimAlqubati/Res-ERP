@@ -10,7 +10,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class Circular extends Model implements Auditable
 {
-    use SoftDeletes,DynamicConnection, \OwenIt\Auditing\Auditable;
+    use SoftDeletes, DynamicConnection, \OwenIt\Auditing\Auditable;
 
     protected $table = 'hr_circulars';
 
@@ -41,7 +41,7 @@ class Circular extends Model implements Auditable
     }
     public function createdBy()
     {
-        return $this->belongsTo(User::class,'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function getPhotosCountAttribute()
@@ -57,16 +57,10 @@ class Circular extends Model implements Auditable
     protected static function booted()
     {
 
-        if (!isSuperAdmin() && !isSystemManager()) {
 
-            static::addGlobalScope('active', function (Builder $builder) {
-                $userType = auth()->user()->user_type;
-                $branchId = auth()->user()->branch_id;
-                // dd($branchId,$userType);
-                $builder->where('group_id', $userType)
-                    ->whereJsonContains('branch_ids', (string) $branchId); // Search within the branch_ids as a JSON array
+        // Branch scope logic moved to ApplyBranchScopes middleware
+        // to avoid relationship issues during model boot cycle.
+        // See: app/Http/Middleware/ApplyBranchScopes.php
 
-            });
-        }
     }
 }

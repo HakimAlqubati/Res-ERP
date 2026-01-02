@@ -26,15 +26,7 @@ class UserType extends Model
     }
 
 
-    protected static function booted()
-    {
-        // dd(auth()->check());
-        if (auth()->check()) {
-            if (isBranchManager()) {
-                static::addGlobalScope(function (Builder $builder) {
-                    $builder->whereIn('id', [2, 3, 4]);
-                });
-            }
-        }
+    protected static function booted() {
+        
     }
 }
