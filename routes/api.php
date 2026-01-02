@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\FifoInventoryReportController;
 use App\Http\Controllers\Api\InventoryDashboardController;
+use App\Http\Controllers\Api\Inventory\OptimizedInventoryController;
 use App\Http\Controllers\Api\ManufacturingInventoryReportController;
 use App\Http\Controllers\Api\ManufacturingReportController;
 use App\Http\Controllers\Api\PurchaseInvoiceController;
@@ -140,6 +141,25 @@ Route::get('/test', function () {
 Route::get('/inventoryDashboardTest', [InventoryDashboardController::class, 'getSummary'])
     // ->middleware('auth:api')
 ;
+Route::prefix('v2/inventory')->group(function () {
+    // تقرير المخزون الكامل
+    Route::get('/report', [OptimizedInventoryController::class, 'report']);
+
+    // تقرير المخزون مع Pagination
+    Route::get('/report/paginated', [OptimizedInventoryController::class, 'reportPaginated']);
+
+    // مخزون منتج واحد
+    Route::get('/product/{productId}', [OptimizedInventoryController::class, 'productInventory']);
+
+    // الكمية المتبقية لمنتج/وحدة
+    Route::get('/remaining-qty', [OptimizedInventoryController::class, 'remainingQty']);
+
+    // المنتجات تحت الحد الأدنى
+    Route::get('/low-stock', [OptimizedInventoryController::class, 'lowStock']);
+
+    // حركات منتج (دخول/خروج)
+    Route::get('/movements/{productId}', [OptimizedInventoryController::class, 'movements']);
+});
 Route::middleware('auth:api')->group(function () {
     Route::put('updateFcmToken', [FcmController::class, 'updateDeviceToken']);
 
@@ -152,6 +172,11 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/filters', [App\Http\Controllers\Api\InventoryReportController::class, 'filters']);
         Route::get('/productTracking', [App\Http\Controllers\Api\InventoryReportController::class, 'productTracking']);
     });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // V2 Optimized Inventory Routes (OptimizedInventoryService)
+    // ═══════════════════════════════════════════════════════════════════════════
+
 
     // Financial Category Reporting Routes
     Route::prefix('financial')->group(function () {
