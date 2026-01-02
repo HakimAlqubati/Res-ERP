@@ -12,7 +12,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class EmployeeOvertime extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable,BranchScope;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope;
     protected $table = 'hr_employee_overtime';
 
     // Fillable fields for mass assignment
@@ -105,17 +105,8 @@ class EmployeeOvertime extends Model implements Auditable
     public function scopeDay($query)
     {
         return $query->where('type', static::TYPE_BASED_ON_DAY);
-                static::addGlobalScope(function (Builder $builder) {
-                    $builder->where('employee_id', auth()->user()->employee->id); // Add your default query here
-                });
-            }
-        }
     }
 
-    public function scopeDay($query)
-    {
-        return $query->where('type', static::TYPE_BASED_ON_DAY);
-    }
     public function scopeMonth($query)
     {
         return $query->where('type', static::TYPE_BASED_ON_MONTH);
