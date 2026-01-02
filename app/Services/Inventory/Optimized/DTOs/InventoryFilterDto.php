@@ -22,7 +22,8 @@ final class InventoryFilterDto
         public readonly bool $filterOnlyAvailable = false,
         public readonly bool $isActive = false,
         public readonly array $productIds = [],
-        public readonly int $perPage = 15,  // عدد العناصر في الصفحة
+        public readonly int $perPage = 15,
+        public readonly bool $includePrices = false,  // تحميل الأسعار (افتراضي: لا)
     ) {}
 
     /**
@@ -43,6 +44,7 @@ final class InventoryFilterDto
             unitId: $unitId,
             filterOnlyAvailable: $filterOnlyAvailable,
             perPage: $perPage,
+            includePrices: false,
         );
     }
 
@@ -60,6 +62,7 @@ final class InventoryFilterDto
             isActive: (bool) ($validated['active'] ?? false),
             productIds: $validated['product_ids'] ?? [],
             perPage: (int) ($validated['per_page'] ?? 15),
+            includePrices: (bool) ($validated['include_prices'] ?? false),
         );
     }
 
@@ -77,6 +80,7 @@ final class InventoryFilterDto
             isActive: $this->isActive,
             productIds: $productIds,
             perPage: $this->perPage,
+            includePrices: $this->includePrices,
         );
     }
 
@@ -94,6 +98,7 @@ final class InventoryFilterDto
             isActive: $active,
             productIds: $this->productIds,
             perPage: $this->perPage,
+            includePrices: $this->includePrices,
         );
     }
 
@@ -111,6 +116,25 @@ final class InventoryFilterDto
             isActive: $this->isActive,
             productIds: $this->productIds,
             perPage: $perPage,
+            includePrices: $this->includePrices,
+        );
+    }
+
+    /**
+     * نسخة معدلة مع تضمين الأسعار
+     */
+    public function withPrices(bool $includePrices = true): self
+    {
+        return new self(
+            storeId: $this->storeId,
+            categoryId: $this->categoryId,
+            productId: $this->productId,
+            unitId: $this->unitId,
+            filterOnlyAvailable: $this->filterOnlyAvailable,
+            isActive: $this->isActive,
+            productIds: $this->productIds,
+            perPage: $this->perPage,
+            includePrices: $includePrices,
         );
     }
 

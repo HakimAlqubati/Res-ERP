@@ -60,7 +60,11 @@ class InventoryDataLoader
         $this->loadProducts($productIds);
         $this->loadUnitPrices($productIds);
         $this->loadInventoryTotals($productIds);
-        $this->loadLastTransactionPrices($productIds);
+
+        // تحميل الأسعار فقط إذا مطلوبة (توفير استعلامين)
+        if ($this->filter->includePrices) {
+            $this->loadLastTransactionPrices($productIds);
+        }
 
         $this->isLoaded = true;
         return $this;
