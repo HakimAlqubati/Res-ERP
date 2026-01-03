@@ -30,6 +30,9 @@ class InventoryQueryBuilder
     {
         $query = Product::query();
 
+        // استثناء منتجات POS من تقارير المخزون
+        $query->where('type', '!=', Product::TYPE_FINISHED_POS);
+
         if ($this->filter->isActive) {
             $query->where('active', true);
         }
