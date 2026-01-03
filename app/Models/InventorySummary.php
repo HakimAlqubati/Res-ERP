@@ -92,8 +92,11 @@ class InventorySummary extends Model
     // دالة لاسترجاع الرصيد مع البيانات المرتبطة بسرعة عالية
     public function scopeWithDetails($query)
     {
-        // Eager Loading هو البديل الصحيح لحقول الاختصار
-        return $query->with(['product:id,name,code', 'unit:id,name', 'store:id,name']);
+        // return $query;
+        return $query->with([
+            'product' => fn($q) => $q->select('id', 'name', 'code')->without('unitPrices'),
+            
+        ]);
     }
 
     public function scopeAvailable($query)
