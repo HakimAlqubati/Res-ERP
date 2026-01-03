@@ -160,6 +160,51 @@ Route::prefix('v2/inventory')->group(function () {
     // حركات منتج (دخول/خروج)
     Route::get('/movements/{productId}', [OptimizedInventoryController::class, 'movements']);
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// V3 Inventory Summary Routes (from inventory_summary table - FAST)
+// ═══════════════════════════════════════════════════════════════════════════
+Route::prefix('v3/inventory')->group(function () {
+    // المخزون بمخزن محدد (مع pagination)
+    Route::get(
+        '/store/{storeId}',
+        fn($storeId, Request $request) =>
+        \App\Services\Inventory\Summary\InventorySummaryReportService::make()
+            ->store((int) $storeId)
+            ->paginate((int) $request->get('per_page', 50))
+    );
+
+    // المخزون المتوفر فقط بمخزن محدد
+    Route::get(
+        '/store/{storeId}/available',
+        fn($storeId) =>
+        \App\Services\Inventory\Summary\InventorySummaryReportService::make()
+            ->store((int) $storeId)
+            ->onlyAvailable()
+            ->get()
+    );
+
+    // المخزون لمنتج في مخزن محدد
+    Route::get(
+        '/store/{storeId}/product/{productId}',
+        fn($storeId, $productId) =>
+        \App\Services\Inventory\Summary\InventorySummaryReportService::make()
+            ->store((int) $storeId)
+            ->product((int) $productId)
+            ->get()
+    );
+
+    // الكمية المتبقية
+    Route::get(
+        '/remaining',
+        fn(Request $request) =>
+        \App\Services\Inventory\Summary\InventorySummaryReportService::make()
+            ->store((int) $request->get('store_id'))
+            ->product((int) $request->get('product_id'))
+            ->unit((int) $request->get('unit_id'))
+            ->remainingQty()
+    );
+});
 Route::middleware('auth:api')->group(function () {
     Route::put('updateFcmToken', [FcmController::class, 'updateDeviceToken']);
 
