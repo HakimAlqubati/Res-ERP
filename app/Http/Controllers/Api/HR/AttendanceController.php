@@ -81,7 +81,7 @@ class AttendanceController extends Controller
         return response()->json([
             'status'  => $result['success'],
             'message' => $result['message'],
-            
+
             'data'    => $result['data'] ?? '',
         ], $result['success'] ? 200 : 422);
     }
@@ -231,11 +231,7 @@ class AttendanceController extends Controller
             $sizeInBytes = Storage::disk('s3')->size($path);
             $mimeType    = $file->getMimeType();
 
-            Log::info('S3 Upload Info', [
-                'file'          => $fileName,
-                'mime'          => $mimeType,
-                's3_size_bytes' => $sizeInBytes,
-            ]);
+
 
             if ($sizeInBytes === 0) {
                 return response()->json([
@@ -267,7 +263,6 @@ class AttendanceController extends Controller
                 'MaxFaces'           => 1,
             ]);
 
-            Log::info('rekognition_result', [$result]);
             // ✅ المعالجة الافتراضية
             $employeeData = [
                 'found'         => false,
@@ -296,7 +291,6 @@ class AttendanceController extends Controller
                     ],
                 ]);
 
-                Log::info('dynamo_result', [$dynamoResult]);
                 if (! empty($dynamoResult['Item']['Name']['S'])) {
                     $nameRaw      = $dynamoResult['Item']['Name']['S'];
                     $parts        = explode('-', $nameRaw);
