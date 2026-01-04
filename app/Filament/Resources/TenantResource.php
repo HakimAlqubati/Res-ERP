@@ -14,6 +14,7 @@ use App\Filament\Resources\TenantResource\Pages\ListTenants;
 use App\Filament\Resources\TenantResource\Pages\CreateTenant;
 use App\Filament\Resources\TenantResource\Pages\EditTenant;
 use App\Filament\Resources\TenantResource\Pages;
+use App\Mail\GeneralNotificationMail;
 use App\Models\CustomTenantModel;
 use App\Observers\TenantObserver;
 use Dompdf\FrameDecorator\Text;
@@ -31,6 +32,7 @@ use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Exception\ProcessFailedException;
@@ -293,6 +295,17 @@ class TenantResource extends Resource
             return Response::download($zipPath)->deleteFileAfterSend(true);
         } catch (Throwable $th) {
             showWarningNotifiMessage($th->getMessage());
+
+            // إرسال إيميل تنبيهي عند فشل النسخ الاحتياطي
+            try {
+                Mail::to('hakimahmed123321@gmail.com')->send(new GeneralNotificationMail(
+                    '⚠️ فشل النسخ الاحتياطي - Backup Failed',
+                    "فشل النسخ الاحتياطي للمستأجر: {$record->name}\n\nتفاصيل الخطأ:\n{$th->getMessage()}\n\nالوقت: " . now()
+                ));
+            } catch (Throwable $mailException) {
+                // تجاهل خطأ إرسال الإيميل
+            }
+
             throw $th;
         }
     }
