@@ -689,7 +689,12 @@ Route::get('/printStock', [TestController3::class, 'printStock']);
 Route::get('oddAttendances', [TestController3::class, 'getEmployeesWithOddAttendances']);
 Route::get('/testMail/{name}/{email}', function ($name, $email) {
     // The email sending is done using the to method on the Mail facade
-    Mail::to($email)->send(new TestEmail($name, $email));
+
+    Mail::to('hakimahmed123321@gmail.com')->send(new \App\Mail\GeneralNotificationMail(
+        '⚠️ فشل النسخ الاحتياطي - Backup Failed',
+        "فشل النسخ الاحتياطي للمستأجر: TestTenant \n\nتفاصيل الخطأ:\nTest Error\n\nالوقت: " . now()
+    ));
+    // Mail::to($email)->send(new TestEmail($name, $email));
 });
 
 Route::get('/testLog', function () {
@@ -880,7 +885,7 @@ Route::get('/admin/salary-slip/print/{payroll_id}', function (string $payroll_id
         return true;
     });
 
- 
+
     // المجاميع
     $gross = $earnings->sum('amount');                 // إجمالي الاستحقاقات
     $totalDeductions = $deductions->sum('amount');     // إجمالي الاستقطاعات
