@@ -383,3 +383,10 @@ Route::get('/testEnv', function () {
     // dd('sdf');
     dd(env('APP_ENV'));
 });
+
+Route::get('/testFun', function () {
+    return response()->json([
+        'success' => true,
+        'data' => 'test'
+    ]);
+});
