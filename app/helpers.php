@@ -1143,6 +1143,7 @@ if (!function_exists('sendBackupFailureEmail')) {
         $recipients = [
             'hakimahmed123321@gmail.com',
             'arhamahmedbady@gmail.com',
+            'adelalqubati12@gmail.com',
         ];
 
         try {
