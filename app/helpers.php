@@ -1133,3 +1133,26 @@ if (!function_exists('utf8_sanitize_deep')) {
         return $value;
     }
 }
+
+/**
+ * إرسال إيميل تنبيهي عند فشل النسخ الاحتياطي
+ */
+if (!function_exists('sendBackupFailureEmail')) {
+    function sendBackupFailureEmail(string $tenantName, string $errorMessage): void
+    {
+        $recipients = [
+            'hakimahmed123321@gmail.com',
+            'arhamahmedbady@gmail.com',
+        ];
+
+        try {
+            \Illuminate\Support\Facades\Mail::to($recipients)
+                ->send(new \App\Mail\GeneralNotificationMail(
+                    '⚠️ فشل النسخ الاحتياطي - Backup Failed',
+                    "فشل النسخ الاحتياطي للمستأجر: {$tenantName}\n\nتفاصيل الخطأ:\n{$errorMessage}\n\nالوقت: " . now()
+                ));
+        } catch (\Throwable $e) {
+            \App\Models\AppLog::write("Failed to send backup failure email: " . $e->getMessage(), \App\Models\AppLog::LEVEL_ERROR);
+        }
+    }
+}
