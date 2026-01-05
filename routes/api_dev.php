@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Developer\DevInventoryController;
+use App\Http\Controllers\Api\Developer\DevBenchmarkController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -9,16 +10,16 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('dev')->group(function () {
+Route::prefix('dev')->middleware('auth:api')->group(function () {
 
-    // Inventory
-    Route::post('/stockSupply', [DevInventoryController::class, 'stockSupply'])->middleware('auth:api');
-    Route::post('/stockIssue', [DevInventoryController::class, 'stockIssue'])->middleware('auth:api');
-
-    // Random Purchase Invoice
-    Route::post('/randomPurchase', [DevInventoryController::class, 'randomPurchase'])->middleware('auth:api');
+    // Inventory Operations
+    Route::post('/stockSupply', [DevInventoryController::class, 'stockSupply']);
+    Route::post('/stockIssue', [DevInventoryController::class, 'stockIssue']);
+    Route::post('/randomPurchase', [DevInventoryController::class, 'randomPurchase']);
 
     // Benchmark
-    Route::post('/benchmarkSummary', [DevInventoryController::class, 'benchmarkSummary'])->middleware('auth:api');
-    Route::post('/benchmarkCompare', [DevInventoryController::class, 'benchmarkCompare'])->middleware('auth:api');
+    Route::prefix('benchmark')->group(function () {
+        Route::post('/summary', [DevBenchmarkController::class, 'summary']);
+        Route::post('/compare', [DevBenchmarkController::class, 'compare']);
+    });
 });
