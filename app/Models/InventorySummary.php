@@ -4,14 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use OwenIt\Auditing\Contracts\Auditable;
 
 /**
  * InventorySummary
  * 
  * ملخص المخزون المحسوب مسبقاً لاستعلامات سريعة
  */
-class InventorySummary extends Model
+class InventorySummary extends Model implements Auditable
 {
+    use \OwenIt\Auditing\Auditable;
     protected $table = 'inventory_summary';
 
     protected $fillable = [
@@ -95,7 +97,7 @@ class InventorySummary extends Model
         // return $query;
         return $query->with([
             'product' => fn($q) => $q->select('id', 'name', 'code')->without('unitPrices'),
-            
+
         ]);
     }
 
