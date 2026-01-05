@@ -17,4 +17,7 @@ Route::prefix('dev')->group(function () {
 
     // Random Purchase Invoice
     Route::post('/randomPurchase', [DevInventoryController::class, 'randomPurchase'])->middleware('auth:api');
+
+    // Benchmark
+    Route::post('/benchmarkSummary', [DevInventoryController::class, 'benchmarkSummary'])->middleware('auth:api');
 });

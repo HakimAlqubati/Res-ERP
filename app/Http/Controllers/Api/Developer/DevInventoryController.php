@@ -222,4 +222,68 @@ class DevInventoryController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Benchmark للتقرير الجديد InventorySummaryReportService
+     * 
+     * POST /api/dev/benchmarkSummary
+     * Body: { "store_id": 1, "count": 100 }
+     */
+    public function benchmarkSummary(Request $request): JsonResponse
+    {
+        $request->validate([
+            'store_id' => 'required|exists:stores,id',
+            'count' => 'nullable|integer|min:1|max:1000',
+        ]);
+
+        $storeId = (int) $request->store_id;
+        $count = $request->input('count', 100);
+
+        // بدء احتساب الوقت
+        $startTime = microtime(true);
+
+        // جلب منتجات عشوائية
+        $products = Product::where('active', 1)
+            ->where('type', '!=', Product::TYPE_FINISHED_POS)
+            ->inRandomOrder()
+            ->limit($count)
+            ->pluck('id')
+            ->toArray();
+
+        $productsCount = count($products);
+        $results = [];
+
+        // استخدام الـ Service الجديد لكل منتج
+        $service = new \App\Services\Inventory\Summary\InventorySummaryReportService();
+
+        foreach ($products as $productId) {
+            $data = $service::make()
+                ->store($storeId)
+                ->product($productId)
+                ->withDetails()
+                ->get();
+
+            $results[] = [
+                'product_id' => $productId,
+                'units_count' => $data->count(),
+                'total_qty' => $data->sum('remaining_qty'),
+            ];
+        }
+
+        // نهاية احتساب الوقت
+        $endTime = microtime(true);
+        $totalTimeMs = round(($endTime - $startTime) * 1000, 2);
+        $avgTimePerProduct = $productsCount > 0 ? round($totalTimeMs / $productsCount, 2) : 0;
+
+        return response()->json([
+            'success' => true,
+            'benchmark' => [
+                'products_processed' => $productsCount,
+                'total_time_ms' => $totalTimeMs,
+                'avg_time_per_product_ms' => $avgTimePerProduct,
+                'store_id' => $storeId,
+            ],
+            'sample_results' => array_slice($results, 0, 5), // أول 5 نتائج فقط
+        ]);
+    }
 }
