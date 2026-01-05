@@ -104,6 +104,7 @@ class StockIssueOrderResource extends Resource
                                     ->label('Product')->searchable()
                                     ->options(function () {
                                         return Product::where('active', 1)
+                                            ->limit(10)
                                             ->get()
                                             ->mapWithKeys(fn($product) => [
                                                 $product->id => "{$product->code} - {$product->name}"
@@ -116,14 +117,17 @@ class StockIssueOrderResource extends Resource
                                                 $query->where('name', 'like', "%{$search}%")
                                                     ->orWhere('code', 'like', "%{$search}%");
                                             })
-                                            ->limit(50)
+                                            ->limit(10)
                                             ->get()
                                             ->mapWithKeys(fn($product) => [
                                                 $product->id => "{$product->code} - {$product->name}"
                                             ])
                                             ->toArray();
                                     })
-                                    ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
+                                    ->getOptionLabelUsing(function ($value): ?string {
+                                        $product = Product::find($value);
+                                        return $product ? "{$product->code} - {$product->name}" : null;
+                                    })
                                     ->reactive()
                                     ->afterStateUpdated(fn(callable $set) => $set('unit_id', null)),
 
@@ -134,7 +138,7 @@ class StockIssueOrderResource extends Resource
 
                                         return $product?->outUnitPrices?->pluck('unit.name', 'unit_id') ?? [];
                                     })
-                                    ->searchable()
+                                    // ->searchable()
                                     ->reactive()
                                     ->afterStateUpdated(function (Set $set, $state, $get) {
                                         $unitPrice = UnitPrice::where(
