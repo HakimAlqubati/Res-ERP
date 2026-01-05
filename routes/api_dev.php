@@ -20,4 +20,5 @@ Route::prefix('dev')->group(function () {
 
     // Benchmark
     Route::post('/benchmarkSummary', [DevInventoryController::class, 'benchmarkSummary'])->middleware('auth:api');
+    Route::post('/benchmarkCompare', [DevInventoryController::class, 'benchmarkCompare'])->middleware('auth:api');
 });
