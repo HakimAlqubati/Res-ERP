@@ -129,4 +129,97 @@ class DevInventoryController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * إنشاء فاتورة مشتريات وهمية بـ 300 منتج عشوائي
+     * 
+     * POST /api/dev/randomPurchase
+     * Body: { "store_id": 1, "count": 300 }
+     */
+    public function randomPurchase(Request $request): JsonResponse
+    {
+        $request->validate([
+            'store_id' => 'required|exists:stores,id',
+            'count' => 'nullable|integer|min:1|max:500',
+        ]);
+
+        $storeId = $request->store_id;
+        $count = $request->input('count', 300);
+
+        DB::beginTransaction();
+        try {
+            // جلب منتجات عشوائية لها unitPrices
+            $products = Product::where('active', 1)
+                ->where('type', '!=', Product::TYPE_FINISHED_POS)
+                ->whereHas('unitPrices')
+                ->inRandomOrder()
+                ->limit($count)
+                ->get();
+
+            if ($products->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No products with unit prices found',
+                ], 400);
+            }
+
+            // جلب أول مورد
+            $supplierId = \App\Models\Supplier::first()?->id;
+
+            // إنشاء الفاتورة
+            $invoice = \App\Models\PurchaseInvoice::create([
+                'date' => now()->toDateString(),
+                'supplier_id' => $supplierId,
+                'store_id' => $storeId,
+                'invoice_no' => \App\Models\PurchaseInvoice::autoInvoiceNo(),
+                'description' => 'Dev: Random Purchase Invoice with ' . $products->count() . ' products',
+            ]);
+
+            $detailsCreated = 0;
+
+            foreach ($products as $product) {
+                // اختيار أول unitPrice للمنتج
+                $unitPrice = $product->unitPrices()->first();
+
+                if (!$unitPrice) {
+                    continue;
+                }
+
+                // كمية عشوائية بين 1 و 100
+                $quantity = rand(1, 100);
+
+                $invoice->details()->create([
+                    'product_id' => $product->id,
+                    'unit_id' => $unitPrice->unit_id,
+                    'quantity' => $quantity,
+                    'price' => $unitPrice->price ?? rand(10, 500),
+                    'package_size' => $unitPrice->package_size ?? 1,
+                    'waste_stock_percentage' => $product->waste_stock_percentage ?? 0,
+                ]);
+
+                $detailsCreated++;
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Purchase invoice created with {$detailsCreated} products",
+                'data' => [
+                    'invoice_id' => $invoice->id,
+                    'invoice_no' => $invoice->invoice_no,
+                    'store_id' => $storeId,
+                    'products_count' => $detailsCreated,
+                    'date' => $invoice->date,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ], 500);
+        }
+    }
 }
