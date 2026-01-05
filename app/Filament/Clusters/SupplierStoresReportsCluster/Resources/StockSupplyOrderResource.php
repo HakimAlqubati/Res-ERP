@@ -110,7 +110,10 @@ class StockSupplyOrderResource extends Resource
                                         ])
                                         ->toArray();
                                 })
-                                ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
+                                ->getOptionLabelUsing(function ($value): ?string {
+                                    $product = Product::find($value);
+                                    return $product ? "{$product->code} - {$product->name}" : null;
+                                })
                                 ->reactive()
                                 ->afterStateUpdated(function ($set, $state) {
                                     $set('unit_id', null);
