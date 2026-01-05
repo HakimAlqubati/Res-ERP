@@ -14,6 +14,8 @@ use Illuminate\Support\Collection;
  */
 class InventorySummaryReportService
 {
+    private const DEFAULT_PER_PAGE = 15;
+
     private ?int $storeId = null;
     private ?int $productId = null;
     private array $productIds = [];
@@ -93,13 +95,13 @@ class InventorySummaryReportService
     /**
      * جلب النتائج مع Pagination
      */
-    public function paginate(int $perPage = 50): LengthAwarePaginator
+    public function paginate(int $perPage = self::DEFAULT_PER_PAGE): LengthAwarePaginator
     {
         $result = $this->buildQuery()->paginate($perPage);
 
         // إخفاء unit_prices و product_items من المنتج
         $result->getCollection()->transform(function ($item) {
-          
+
             return $item;
         });
 
