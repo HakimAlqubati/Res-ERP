@@ -5,6 +5,7 @@ namespace App\Services\Inventory\Summary;
 use App\Models\InventorySummary;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
+use Illuminate\Support\Facades\DB;
 
 /**
  * InventorySummaryUpdater
@@ -106,23 +107,26 @@ class InventorySummaryUpdater
             ->orderBy('package_size', 'asc')
             ->get();
 
-        foreach ($unitPrices as $unitPrice) {
-            $summary = InventorySummary::getOrCreate(
-                $storeId,
-                $productId,
-                $unitPrice->unit_id,
-                $unitPrice->package_size
-            );
+        // ✅ تغليف العمليات في transaction لضمان تناسق البيانات
+        DB::transaction(function () use ($storeId, $productId, $unitPrices, $baseQty, $isAddition) {
+            foreach ($unitPrices as $unitPrice) {
+                $summary = InventorySummary::getOrCreate(
+                    $storeId,
+                    $productId,
+                    $unitPrice->unit_id,
+                    $unitPrice->package_size
+                );
 
-            // تحويل الكمية لهذه الوحدة
-            $convertedQty = $baseQty / $unitPrice->package_size;
+                // تحويل الكمية لهذه الوحدة
+                $convertedQty = $baseQty / $unitPrice->package_size;
 
-            if ($isAddition) {
-                $summary->addQty($convertedQty);
-            } else {
-                $summary->subtractQty($convertedQty);
+                if ($isAddition) {
+                    $summary->addQty($convertedQty);
+                } else {
+                    $summary->subtractQty($convertedQty);
+                }
             }
-        }
+        });
     }
 
     private function isValid(InventoryTransaction $transaction): bool
