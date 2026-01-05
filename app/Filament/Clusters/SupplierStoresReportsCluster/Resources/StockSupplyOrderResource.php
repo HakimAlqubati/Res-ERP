@@ -90,8 +90,8 @@ class StockSupplyOrderResource extends Resource
                                 ->label('Product')
                                 ->options(function () {
                                     return Product::where('active', 1)
-                                        ->get()
                                         ->limit(10)
+                                        ->get()
                                         ->mapWithKeys(fn($product) => [
                                             $product->id => "{$product->code} - {$product->name}"
                                         ]);
@@ -168,7 +168,7 @@ class StockSupplyOrderResource extends Resource
                             TableColumn::make(__('lang.psize'))->alignCenter()->width('8rem'),
                             TableColumn::make(__('Quantity'))->alignCenter()->width('10rem'),
                             TableColumn::make(__('Waste %'))->alignCenter()->width('8rem'),
-                         ])
+                        ])
 
                         ->minItems(1)
                         ->label('Order Details')
