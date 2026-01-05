@@ -4,6 +4,7 @@ namespace App\Services\Inventory\Summary;
 
 use App\Models\InventorySummary;
 use App\Models\InventoryTransaction;
+use App\Models\Product;
 
 /**
  * InventorySummaryUpdater
@@ -18,20 +19,15 @@ class InventorySummaryUpdater
             return;
         }
 
-        $summary = InventorySummary::getOrCreate(
+        $baseQty = $transaction->quantity * ($transaction->package_size ?? 1);
+        $isIn = $transaction->movement_type === InventoryTransaction::MOVEMENT_IN;
+
+        $this->updateAllUnits(
             $transaction->store_id,
             $transaction->product_id,
-            $transaction->unit_id,
-            $transaction->package_size ?? 1
+            $baseQty,
+            $isIn
         );
-
-        $qty = $transaction->quantity * ($transaction->package_size ?? 1);
-
-        if ($transaction->movement_type === InventoryTransaction::MOVEMENT_IN) {
-            $summary->addQty($qty);
-        } else {
-            $summary->subtractQty($qty);
-        }
     }
 
     public function onTransactionUpdated(InventoryTransaction $transaction, array $original): void
@@ -40,20 +36,33 @@ class InventorySummaryUpdater
             return;
         }
 
-        // إلغاء القيم القديمة
-        $oldQty = ($original['quantity'] ?? 0) * ($original['package_size'] ?? 1);
-        $oldSummary = InventorySummary::where('store_id', $original['store_id'] ?? $transaction->store_id)
-            ->where('product_id', $original['product_id'] ?? $transaction->product_id)
-            ->where('unit_id', $original['unit_id'] ?? $transaction->unit_id)
-            ->first();
+        // تجاهل التحديث إذا لم تتغير القيم المؤثرة على المخزون
+        $relevantFields = ['quantity', 'package_size', 'store_id', 'product_id', 'movement_type'];
+        $hasRelevantChange = false;
 
-        if ($oldSummary) {
-            if (($original['movement_type'] ?? $transaction->movement_type) === InventoryTransaction::MOVEMENT_IN) {
-                $oldSummary->subtractQty($oldQty);
-            } else {
-                $oldSummary->addQty($oldQty);
+        foreach ($relevantFields as $field) {
+            $oldValue = $original[$field] ?? null;
+            $newValue = $transaction->{$field} ?? null;
+            if ($oldValue != $newValue) {
+                $hasRelevantChange = true;
+                break;
             }
         }
+
+        if (!$hasRelevantChange) {
+            return; // لا تغيير في القيم المؤثرة، لا داعي للتحديث
+        }
+
+        // إلغاء القيم القديمة (عكس العملية)
+        $oldBaseQty = ($original['quantity'] ?? 0) * ($original['package_size'] ?? 1);
+        $oldIsIn = ($original['movement_type'] ?? $transaction->movement_type) === InventoryTransaction::MOVEMENT_IN;
+
+        $this->updateAllUnits(
+            $original['store_id'] ?? $transaction->store_id,
+            $original['product_id'] ?? $transaction->product_id,
+            $oldBaseQty,
+            !$oldIsIn // عكس العملية
+        );
 
         // تطبيق القيم الجديدة
         $this->onTransactionCreated($transaction);
@@ -65,27 +74,55 @@ class InventorySummaryUpdater
             return;
         }
 
-        $summary = InventorySummary::where('store_id', $transaction->store_id)
-            ->where('product_id', $transaction->product_id)
-            ->where('unit_id', $transaction->unit_id)
-            ->first();
+        $baseQty = $transaction->quantity * ($transaction->package_size ?? 1);
+        $isIn = $transaction->movement_type === InventoryTransaction::MOVEMENT_IN;
 
-        if (!$summary) {
-            return;
-        }
-
-        $qty = $transaction->quantity * ($transaction->package_size ?? 1);
-
-        if ($transaction->movement_type === InventoryTransaction::MOVEMENT_IN) {
-            $summary->subtractQty($qty);
-        } else {
-            $summary->addQty($qty);
-        }
+        // عكس العملية عند الحذف
+        $this->updateAllUnits(
+            $transaction->store_id,
+            $transaction->product_id,
+            $baseQty,
+            !$isIn
+        );
     }
 
     public function onTransactionRestored(InventoryTransaction $transaction): void
     {
         $this->onTransactionCreated($transaction);
+    }
+
+    /**
+     * الدالة المركزية لتحديث كل وحدات المنتج
+     */
+    private function updateAllUnits(int $storeId, int $productId, float $baseQty, bool $isAddition): void
+    {
+        $product = Product::find($productId);
+        if (!$product) {
+            return;
+        }
+
+        $unitPrices = $product->unitPrices()
+            ->where('package_size', '>', 0)
+            ->orderBy('package_size', 'asc')
+            ->get();
+
+        foreach ($unitPrices as $unitPrice) {
+            $summary = InventorySummary::getOrCreate(
+                $storeId,
+                $productId,
+                $unitPrice->unit_id,
+                $unitPrice->package_size
+            );
+
+            // تحويل الكمية لهذه الوحدة
+            $convertedQty = $baseQty / $unitPrice->package_size;
+
+            if ($isAddition) {
+                $summary->addQty($convertedQty);
+            } else {
+                $summary->subtractQty($convertedQty);
+            }
+        }
     }
 
     private function isValid(InventoryTransaction $transaction): bool

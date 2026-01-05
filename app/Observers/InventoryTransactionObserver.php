@@ -36,13 +36,14 @@ class InventoryTransactionObserver
         }
     }
 
-    public function updated(InventoryTransaction $inventoryTransaction)
-    {
-        $this->summaryUpdater->onTransactionUpdated(
-            $inventoryTransaction,
-            $inventoryTransaction->getOriginal()
-        );
-    }
+    // لا نستخدم حدث التعديل لتجنب التحديث المضاعف
+    // public function updated(InventoryTransaction $inventoryTransaction)
+    // {
+    //     $this->summaryUpdater->onTransactionUpdated(
+    //         $inventoryTransaction,
+    //         $inventoryTransaction->getOriginal()
+    //     );
+    // }
 
     public function deleted(InventoryTransaction $inventoryTransaction)
     {
