@@ -94,10 +94,9 @@ class InventorySummary extends Model implements Auditable
     // دالة لاسترجاع الرصيد مع البيانات المرتبطة بسرعة عالية
     public function scopeWithDetails($query)
     {
-        // return $query;
         return $query->with([
             'product' => fn($q) => $q->select('id', 'name', 'code')->without('unitPrices'),
-
+            'unit' => fn($q) => $q->select('id', 'name'),
         ]);
     }
 
