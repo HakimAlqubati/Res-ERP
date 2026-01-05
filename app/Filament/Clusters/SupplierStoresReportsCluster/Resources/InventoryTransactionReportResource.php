@@ -68,7 +68,7 @@ class InventoryTransactionReportResource extends Resource
                                 $query->where('name', 'like', "%{$search}%")
                                     ->orWhere('code', 'like', "%{$search}%");
                             })
-                            ->limit(50)
+                            ->limit(10)
                             ->get()
                             ->mapWithKeys(fn($product) => [
                                 $product->id => "{$product->code} - {$product->name}"
