@@ -224,20 +224,22 @@ class DevInventoryController extends Controller
     }
 
     /**
-     * Benchmark للتقرير الجديد InventorySummaryReportService
+     * Benchmark للمقارنة بين Service القديم والجديد
      * 
      * POST /api/dev/benchmarkSummary
-     * Body: { "store_id": 1, "count": 100 }
+     * Body: { "store_id": 1, "count": 100, "use_new": true }
      */
     public function benchmarkSummary(Request $request): JsonResponse
     {
         $request->validate([
             'store_id' => 'required|exists:stores,id',
             'count' => 'nullable|integer|min:1|max:1000',
+            'use_new' => 'nullable|boolean',
         ]);
 
         $storeId = (int) $request->store_id;
         $count = $request->input('count', 100);
+        $useNew = $request->input('use_new', true); // افتراضي: الجديد
 
         // بدء احتساب الوقت
         $startTime = microtime(true);
@@ -252,22 +254,39 @@ class DevInventoryController extends Controller
 
         $productsCount = count($products);
         $results = [];
-
-        // استخدام الـ Service الجديد لكل منتج
-        $service = new \App\Services\Inventory\Summary\InventorySummaryReportService();
+        $serviceName = $useNew ? 'InventorySummaryReportService (NEW)' : 'MultiProductsInventoryService (OLD)';
 
         foreach ($products as $productId) {
-            $data = $service::make()
-                ->store($storeId)
-                ->product($productId)
-                ->withDetails()
-                ->get();
+            if ($useNew) {
+                // الـ Service الجديد
+                $data = \App\Services\Inventory\Summary\InventorySummaryReportService::make()
+                    ->store($storeId)
+                    ->product($productId)
+                    ->withDetails()
+                    ->get();
 
-            $results[] = [
-                'product_id' => $productId,
-                'units_count' => $data->count(),
-                'total_qty' => $data->sum('remaining_qty'),
-            ];
+                $results[] = [
+                    'product_id' => $productId,
+                    'units_count' => $data->count(),
+                    'total_qty' => $data->sum('remaining_qty'),
+                ];
+            } else {
+                // الـ Service القديم
+                $service = new \App\Services\MultiProductsInventoryService(
+                    null,           // categoryId
+                    $productId,     // productId
+                    'all',          // unitId
+                    $storeId,       // storeId
+                    false           // filterOnlyAvailable
+                );
+                $data = $service->getInventoryForProduct($productId);
+
+                $results[] = [
+                    'product_id' => $productId,
+                    'units_count' => count($data),
+                    'total_qty' => array_sum(array_column($data, 'remaining_qty')),
+                ];
+            }
         }
 
         // نهاية احتساب الوقت
@@ -277,13 +296,14 @@ class DevInventoryController extends Controller
 
         return response()->json([
             'success' => true,
+            'service' => $serviceName,
             'benchmark' => [
                 'products_processed' => $productsCount,
                 'total_time_ms' => $totalTimeMs,
                 'avg_time_per_product_ms' => $avgTimePerProduct,
                 'store_id' => $storeId,
             ],
-            'sample_results' => array_slice($results, 0, 5), // أول 5 نتائج فقط
+            'sample_results' => array_slice($results, 0, 5),
         ]);
     }
 }
