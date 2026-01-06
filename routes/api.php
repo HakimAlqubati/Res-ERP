@@ -393,8 +393,24 @@ Route::get('/testFun', function () {
 
 // API endpoint to get month options based on settings
 Route::get('/monthOptions', function () {
+    $options = getMonthOptionsBasedOnSettings();
+    $result = [];
+
+    foreach ($options as $key => $label) {
+        // Parse the month key (e.g., "January 2026") to get year and month
+        $date = \Carbon\Carbon::parse($key);
+        $endOfMonthData = getEndOfMonthDate($date->year, $date->month);
+
+        $result[] = [
+            'key' => $key,
+            'label' => $label,
+            'start_date' => $endOfMonthData['start_month'],
+            'end_date' => $endOfMonthData['end_month'],
+        ];
+    }
+
     return response()->json([
         'success' => true,
-        'data' => getMonthOptionsBasedOnSettings(),
+        'data' => $result,
     ]);
 });
