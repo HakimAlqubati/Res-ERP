@@ -390,3 +390,11 @@ Route::get('/testFun', function () {
         'data' => 'test'
     ]);
 });
+
+// API endpoint to get month options based on settings
+Route::get('/monthOptions', function () {
+    return response()->json([
+        'success' => true,
+        'data' => getMonthOptionsBasedOnSettings(),
+    ]);
+});
