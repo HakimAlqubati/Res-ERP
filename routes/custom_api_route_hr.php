@@ -1,7 +1,5 @@
 <?php
 
-use App\Attendance\Services\AttendanceHandler;
-use App\Http\Controllers\Api\HR\AttendancePlanController;
 use App\Http\Controllers\Api\FaceImageController;
 use App\Http\Controllers\Api\HR\AttendanceController;
 use App\Http\Controllers\Api\HR\EmployeeApplicationController;

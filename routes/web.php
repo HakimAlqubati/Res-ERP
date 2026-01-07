@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Response;
 use App\Filament\Pages\AttendanecEmployee2;
 use App\Filament\Resources\ProductResource;
 use App\Http\Controllers\Api\HR\SalarySlipController;
-use App\Http\Controllers\AWS\EmployeeLivenessController;
 use App\Http\Controllers\EmployeeAWSController;
 use App\Http\Controllers\EmployeeImageAwsIndexesController;
 use App\Http\Controllers\HR\TestSalaryCalcController;

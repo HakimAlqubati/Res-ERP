@@ -17,7 +17,6 @@ use App\Models\EmployeeApplication;
 use App\Models\EmployeeApplicationV2;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
-use App\Services\HR\Attendance\AttendanceService;
 use App\Services\HR\v2\Attendance\AttendanceServiceV2;
 use App\Services\HR\MonthClosure\MonthClosureService;
 use Carbon\Carbon;
