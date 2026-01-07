@@ -277,17 +277,7 @@ require base_path('routes/custom_route.php');
 require base_path('routes/custom_api_route_inventory.php');
 require base_path('routes/custom_api_test.php');
 
-Route::post('/v2/attendance/test', function (Request $request) {
-    $service = app(\App\Services\HR\v2\Attendance\AttendanceServiceV2::class);
-    return $service->handle($request->all());
-})->middleware('auth:api');
-
-// Bulk attendance generation endpoint
-// توليد سجلات حضور جماعية مع أوقات عشوائية واقعية
-Route::post('/v2/attendance/bulk-generate', function (Request $request) {
-    $service = app(\App\Services\HR\v2\Attendance\BulkAttendanceGeneratorService::class);
-    return $service->generate($request->all());
-})->middleware('auth:api');
+// HR Attendance Module Routes (v3) - loaded via AttendanceServiceProvider
 
 
 

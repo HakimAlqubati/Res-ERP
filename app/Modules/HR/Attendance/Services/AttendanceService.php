@@ -106,14 +106,28 @@ class AttendanceService
                     return $this->processAttendance($employee, $payload);
                 });
         } catch (\Throwable $e) {
+            // Log the actual error for debugging
+            \Illuminate\Support\Facades\Log::error('Attendance Module Error', [
+                'employee_id' => $employee->id,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             $this->storeRejected->execute(
                 $employee,
                 $requestTime,
-                'Failed to acquire lock: ' . $e->getMessage(),
+                'Error: ' . $e->getMessage(),
                 $payload
             );
 
-            return AttendanceResultDTO::failure(__('System busy, please try again.'));
+            // In development, show the real error
+            $message = config('app.debug')
+                ? 'Error: ' . $e->getMessage()
+                : __('System busy, please try again.');
+
+            return AttendanceResultDTO::failure($message);
         }
     }
 

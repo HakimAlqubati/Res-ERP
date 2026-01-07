@@ -47,7 +47,13 @@ class AttendanceHandler
         $context->setShiftInfo($shiftInfo);
 
         // 2. تحديد نوع العملية (دخول/خروج)
+        // 2. تحديد نوع العملية (دخول/خروج)
         $context = $this->determineCheckType->execute($context);
+
+        // التحقق من وجود سجل دخول عند الخروج
+        if ($context->isCheckOut() && !$context->lastCheckIn) {
+            throw new \App\Modules\HR\Attendance\Exceptions\MissingCheckInException();
+        }
 
         // 3. حساب التأخير/المغادرة
         $context = $this->calculate($context);

@@ -26,6 +26,11 @@ class AttendanceCalculator
      */
     public function calculateCheckIn(AttendanceContextDTO $context): AttendanceContextDTO
     {
+        // حماية: تأكد من وجود معلومات الوردية
+        if (!$context->shiftInfo) {
+            throw new \InvalidArgumentException('Shift info is required for check-in calculation.');
+        }
+
         $checkTime = $context->requestTime;
         $shiftStart = $context->shiftInfo->start;
         $graceMinutes = $this->config->getGraceMinutes();
@@ -65,6 +70,11 @@ class AttendanceCalculator
      */
     public function calculateCheckOut(AttendanceContextDTO $context): AttendanceContextDTO
     {
+        // حماية: تأكد من وجود معلومات الوردية
+        if (!$context->shiftInfo) {
+            throw new \InvalidArgumentException('Shift info is required for check-out calculation.');
+        }
+
         $checkTime = $context->requestTime;
         $shiftEnd = $context->shiftInfo->end;
 
