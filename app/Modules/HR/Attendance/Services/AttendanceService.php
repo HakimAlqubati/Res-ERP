@@ -4,14 +4,15 @@ namespace App\Modules\HR\Attendance\Services;
 
 use App\Models\Employee;
 use App\Modules\HR\Attendance\Actions\ResolveEmployeeAction;
-use App\Modules\HR\Attendance\Actions\StoreRejectedRecordAction;
 use App\Modules\HR\Attendance\DTOs\AttendanceContextDTO;
 use App\Modules\HR\Attendance\DTOs\AttendanceResultDTO;
+use App\Modules\HR\Attendance\Events\AttendanceRejected;
 use App\Modules\HR\Attendance\Exceptions\AttendanceException;
 use App\Modules\HR\Attendance\Exceptions\TypeRequiredException;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * خدمة الحضور الرئيسية
@@ -25,7 +26,6 @@ class AttendanceService
         private ResolveEmployeeAction $resolveEmployee,
         private AttendanceValidator $validator,
         private AttendanceHandler $handler,
-        private StoreRejectedRecordAction $storeRejected,
         private AttendanceConfig $config,
     ) {}
 
@@ -82,15 +82,24 @@ class AttendanceService
             $this->validator->validate($employee, $requestTime, $payload['type'] ?? null);
             return null; // التحقق نجح
         } catch (TypeRequiredException $e) {
-            $this->storeRejected->execute($employee, $requestTime, $e->getMessage(), $payload);
+            $this->handleRejection($employee, $requestTime, $e->getMessage(), $payload);
             return AttendanceResultDTO::failure($e->getMessage(), typeRequired: true);
         } catch (AttendanceException $e) {
-            $this->storeRejected->execute($employee, $requestTime, $e->getMessage(), $payload);
+            $this->handleRejection($employee, $requestTime, $e->getMessage(), $payload);
             return AttendanceResultDTO::failure($e->getMessage());
         } catch (\Throwable $e) {
-            $this->storeRejected->execute($employee, $requestTime, $e->getMessage(), $payload);
+            $this->handleRejection($employee, $requestTime, $e->getMessage(), $payload);
             return AttendanceResultDTO::failure($e->getMessage());
         }
+    }
+
+    /**
+     * معالجة رفض تسجيل الحضور
+     */
+    private function handleRejection(Employee $employee, Carbon $requestTime, string $message, array $payload): void
+    {
+        // إطلاق حدث الرفض (يتم التعامل معه عبر Listeners)
+        AttendanceRejected::dispatch($employee, $message, $requestTime, $payload);
     }
 
     /**
@@ -107,7 +116,7 @@ class AttendanceService
                 });
         } catch (\Throwable $e) {
             // Log the actual error for debugging
-            \Illuminate\Support\Facades\Log::error('Attendance Module Error', [
+            Log::error('Attendance Module Error', [
                 'employee_id' => $employee->id,
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
@@ -115,7 +124,7 @@ class AttendanceService
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            $this->storeRejected->execute(
+            $this->handleRejection(
                 $employee,
                 $requestTime,
                 'Error: ' . $e->getMessage(),

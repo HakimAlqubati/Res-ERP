@@ -1,45 +1,42 @@
 <?php
 
-namespace App\Modules\HR\Attendance\Actions;
+namespace App\Modules\HR\Attendance\Listeners;
 
 use App\Models\Employee;
 use App\Modules\HR\Attendance\Contracts\AttendanceRepositoryInterface;
+use App\Modules\HR\Attendance\Events\AttendanceRejected;
 use Carbon\Carbon;
 
 /**
- * Action لتخزين سجل الحضور المرفوض
+ * مستمع تخزين سجل الحضور المرفوض
  * 
- * يحفظ السجلات التي فشل قبولها لأسباب مختلفة
+ * يستجيب لحدث رفض الحضور ويقوم بحفظ السجل في قاعدة البيانات
  * للمراجعة والتتبع لاحقاً
  */
-class StoreRejectedRecordAction
+class StoreRejectedAttendance
 {
     public function __construct(
         private AttendanceRepositoryInterface $repository
     ) {}
 
     /**
-     * تنفيذ العملية
+     * معالجة الحدث
      */
-    public function execute(
-        Employee $employee,
-        Carbon $requestTime,
-        string $message,
-        array $payload
-    ): void {
+    public function handle(AttendanceRejected $event): void
+    {
         try {
-            $periodId = $this->resolvePeriodId($employee, $requestTime);
+            $periodId = $this->resolvePeriodId($event->employee, $event->attemptTime);
 
             if (!$periodId) {
                 return; // لا يمكن حفظ السجل بدون وردية
             }
 
-            $attendanceType = $payload['attendance_type'] ?? 'rfid';
+            $attendanceType = $event->payload['attendance_type'] ?? 'rfid';
 
             $this->repository->createRejected(
-                $employee,
-                $requestTime,
-                $message,
+                $event->employee,
+                $event->attemptTime,
+                $event->reason,
                 $periodId,
                 $attendanceType
             );

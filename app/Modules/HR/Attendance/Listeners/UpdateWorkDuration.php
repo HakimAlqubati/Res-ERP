@@ -1,31 +1,32 @@
 <?php
 
-namespace App\Modules\HR\Attendance\Actions;
+namespace App\Modules\HR\Attendance\Listeners;
 
 use App\Models\Attendance;
 use App\Modules\HR\Attendance\Contracts\AttendanceRepositoryInterface;
 use App\Modules\HR\Attendance\Enums\CheckType;
+use App\Modules\HR\Attendance\Events\CheckOutRecorded;
 use Carbon\Carbon;
 
 /**
- * Action لتحديث مدد الحضور
+ * مستمع تحديث مدة العمل
  * 
- * يقوم بحساب:
- * 1. المدة المفترضة (من الوردية)
- * 2. المدة الفعلية (للخروج)
- * 3. إجمالي المدة الفعلية (لليوم)
+ * يستجيب لحدث تسجيل الخروج ويقوم بتحديث مدة العمل
+ * يحتوي على منطق حساب المدة المفترضة والفعلية والإجمالية
  */
-class UpdateDurationsAction
+class UpdateWorkDuration
 {
     public function __construct(
         private AttendanceRepositoryInterface $repository
     ) {}
 
     /**
-     * تنفيذ العملية
+     * معالجة الحدث
      */
-    public function execute(Attendance $record): Attendance
+    public function handle(CheckOutRecorded $event): void
     {
+        $record = $event->record;
+
         // 1. المدة المفترضة من الوردية
         $this->setSupposedDuration($record);
 
@@ -40,8 +41,6 @@ class UpdateDurationsAction
         }
 
         $record->save();
-
-        return $record;
     }
 
     /**
