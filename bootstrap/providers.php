@@ -14,4 +14,5 @@ return [
 
     // Modules
     App\Modules\HR\Attendance\Providers\AttendanceServiceProvider::class,
+    App\Modules\HR\Payroll\Providers\PayrollServiceProvider::class,
 ];
