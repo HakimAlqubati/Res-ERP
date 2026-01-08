@@ -25,18 +25,18 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
-Route::prefix('hr/payroll')
-    ->middleware('auth:api')
-    ->group(function () {
-        Route::post('simulate-salaries/by-employee-ids', [PayrollSimulationController::class, 'simulateSalariesByEmployeeIds']);
-        Route::post('/preview', [PayrollSimulationController::class, 'previewByBranchYearMonth']);
+// Route::prefix('hr/payroll')
+//     ->middleware('auth:api')
+//     ->group(function () {
+//         Route::post('simulate-salaries/by-employee-ids', [PayrollSimulationController::class, 'simulateSalariesByEmployeeIds']);
+//         Route::post('/preview', [PayrollSimulationController::class, 'previewByBranchYearMonth']);
 
-        // محاكاة الرواتب (بدون حفظ)
-        Route::post('/simulate', [RunPayrollController::class, 'simulate']);
+//         // محاكاة الرواتب (بدون حفظ)
+//         Route::post('/simulate', [RunPayrollController::class, 'simulate']);
 
-        // تشغيل وحفظ الرواتب
-        Route::post('/run', [RunPayrollController::class, 'run']);
-    });
+//         // تشغيل وحفظ الرواتب
+//         Route::post('/run', [RunPayrollController::class, 'run']);
+//     });
 
 Route::prefix('hr')
     ->group(function () {

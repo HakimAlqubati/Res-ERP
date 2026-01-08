@@ -65,6 +65,9 @@ class PayrollServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Load module routes
+        $this->loadRoutesFrom(__DIR__ . '/../routes.php');
+
         // Register Observer for PayrollRun model
         // Note: This uses the module's observer, not the original one
         // PayrollRun::observe(PayrollRunObserver::class);
