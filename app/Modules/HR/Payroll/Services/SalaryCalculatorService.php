@@ -11,8 +11,8 @@ use App\Models\Deduction;
 use App\Models\Employee;
 use InvalidArgumentException;
 use App\Models\PenaltyDeduction;
-use App\Services\HR\Payroll\SalaryMutableComponents;
-use App\Traits\HR\Payroll\ResetsState;
+use App\Modules\HR\Payroll\DTOs\SalaryMutableComponents;
+use App\Modules\HR\Payroll\Traits\ResetsState;
 
 use App\Models\AdvanceRequest; // NEW
 use App\Models\EmployeeAdvanceInstallment; // NEW
