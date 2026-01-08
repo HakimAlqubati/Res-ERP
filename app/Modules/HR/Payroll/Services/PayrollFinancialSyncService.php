@@ -13,6 +13,7 @@ use App\Models\FinancialCategory;
 use App\Models\FinancialTransaction;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use App\Modules\HR\Payroll\Contracts\PayrollFinancialSyncInterface;
 
 
 /**
@@ -21,7 +22,7 @@ use Illuminate\Support\Facades\DB;
  * This service creates financial transactions from approved/paid payroll runs,
  * enabling financial reporting and analysis of HR expenses.
  */
-class PayrollFinancialSyncService
+class PayrollFinancialSyncService implements PayrollFinancialSyncInterface
 {
     /**
      * Sync a specific payroll run to financial transactions.

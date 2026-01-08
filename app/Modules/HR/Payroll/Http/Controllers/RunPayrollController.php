@@ -5,14 +5,14 @@ namespace App\Modules\HR\Payroll\Http\Controllers;
 use App\Modules\HR\Payroll\DTOs\RunPayrollData;
 use App\Http\Controllers\Controller;
 use App\Modules\HR\Payroll\Http\Requests\RunPayrollRequest;
-use App\Modules\HR\Payroll\Services\PayrollRunService;
+use App\Modules\HR\Payroll\Contracts\PayrollRunnerInterface;
 use Illuminate\Support\Facades\Log;
 
 class RunPayrollController extends Controller
 {
 
     public function __construct(
-        private PayrollRunService $service
+        private PayrollRunnerInterface $service
     ) {}
     public function simulate(RunPayrollRequest $request)
     {

@@ -4,8 +4,9 @@ namespace App\Modules\HR\Payroll\Repositories;
 
 use App\Enums\HR\Payroll\SalaryTransactionType;
 use App\Models\SalaryTransaction;
+use App\Modules\HR\Payroll\Contracts\SalaryTransactionRepositoryInterface;
 
-class SalaryTransactionRepository
+class SalaryTransactionRepository implements SalaryTransactionRepositoryInterface
 {
     /**
      * إنشاء حركة مالية جديدة (دالة عامة)

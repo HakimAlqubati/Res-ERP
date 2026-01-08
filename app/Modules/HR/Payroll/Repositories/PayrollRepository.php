@@ -3,8 +3,9 @@
 namespace App\Modules\HR\Payroll\Repositories;
 
 use App\Models\Payroll;
+use App\Modules\HR\Payroll\Contracts\PayrollRepositoryInterface;
 
-class PayrollRepository
+class PayrollRepository implements PayrollRepositoryInterface
 {
     public function create(array $data): Payroll
     {

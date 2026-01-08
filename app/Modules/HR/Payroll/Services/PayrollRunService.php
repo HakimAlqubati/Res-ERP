@@ -13,8 +13,9 @@ use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+use App\Modules\HR\Payroll\Contracts\PayrollRunnerInterface;
 
-class PayrollRunService
+class PayrollRunService implements PayrollRunnerInterface
 {
     public function __construct(
         protected PayrollCalculationService $calculator,

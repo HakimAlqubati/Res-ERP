@@ -7,8 +7,9 @@ use App\Models\PayrollRun;
 use App\Models\Setting;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
 use Carbon\Carbon;
+use App\Modules\HR\Payroll\Contracts\PayrollSimulatorInterface;
 
-class PayrollSimulationService
+class PayrollSimulationService implements PayrollSimulatorInterface
 {
     public function __construct(
         protected AttendanceFetcher $attendanceFetcher,

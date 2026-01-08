@@ -14,6 +14,8 @@ use App\Models\PenaltyDeduction;
 use App\Modules\HR\Payroll\DTOs\SalaryMutableComponents;
 use App\Modules\HR\Payroll\Traits\ResetsState;
 
+use App\Modules\HR\Payroll\Contracts\SalaryCalculatorInterface;
+
 use App\Models\AdvanceRequest; // NEW
 use App\Models\EmployeeAdvanceInstallment; // NEW
 
@@ -25,7 +27,7 @@ use App\Models\EmployeeAdvanceInstallment; // NEW
  * - Clear separation of rate, overtime, deductions.
  * - Safe parsing of time inputs and consistent rounding.
  */
-class SalaryCalculatorService
+class SalaryCalculatorService implements SalaryCalculatorInterface
 {
     use ResetsState;
     // Defaults

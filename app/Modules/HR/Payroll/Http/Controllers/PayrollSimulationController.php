@@ -5,19 +5,16 @@ namespace App\Modules\HR\Payroll\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\PayrollRun;
-use App\Modules\HR\Payroll\Services\PayrollSimulationService;
+use App\Modules\HR\Payroll\Contracts\PayrollSimulatorInterface;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PayrollSimulationController extends Controller
 {
-    protected PayrollSimulationService $simulationService;
-
-    public function __construct(PayrollSimulationService $simulationService)
-    {
-        $this->simulationService = $simulationService;
-    }
+    public function __construct(
+        protected PayrollSimulatorInterface $simulationService
+    ) {}
 
     /**
      * محاكاة الرواتب لمجموعة موظفين
