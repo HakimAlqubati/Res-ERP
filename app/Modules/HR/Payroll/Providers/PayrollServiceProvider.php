@@ -25,6 +25,16 @@ use App\Modules\HR\Payroll\Contracts\PayrollFinancialSyncInterface;
 use App\Modules\HR\Payroll\Contracts\PayrollRepositoryInterface;
 use App\Modules\HR\Payroll\Contracts\SalaryTransactionRepositoryInterface;
 
+// Calculators
+use App\Modules\HR\Payroll\Calculators\RateCalculator;
+use App\Modules\HR\Payroll\Calculators\AttendanceDeductionCalculator;
+use App\Modules\HR\Payroll\Calculators\OvertimeCalculator;
+use App\Modules\HR\Payroll\Calculators\PenaltyCalculator;
+use App\Modules\HR\Payroll\Calculators\AllowanceCalculator;
+use App\Modules\HR\Payroll\Calculators\AdvanceInstallmentCalculator;
+use App\Modules\HR\Payroll\Calculators\GeneralDeductionCalculator;
+use App\Modules\HR\Payroll\Calculators\TransactionBuilder;
+
 class PayrollServiceProvider extends ServiceProvider
 {
     /**
@@ -32,17 +42,38 @@ class PayrollServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // ===== Calculators =====
+        $this->app->singleton(RateCalculator::class);
+        $this->app->singleton(AttendanceDeductionCalculator::class);
+        $this->app->singleton(OvertimeCalculator::class);
+        $this->app->singleton(PenaltyCalculator::class);
+        $this->app->singleton(AllowanceCalculator::class);
+        $this->app->singleton(AdvanceInstallmentCalculator::class);
+        $this->app->singleton(GeneralDeductionCalculator::class);
+        $this->app->singleton(TransactionBuilder::class);
+
         // ===== Repositories =====
         $this->app->singleton(PayrollRepositoryInterface::class, PayrollRepository::class);
         $this->app->singleton(SalaryTransactionRepositoryInterface::class, SalaryTransactionRepository::class);
-
-        // Keep concrete class bindings for backward compatibility
         $this->app->singleton(PayrollRepository::class);
         $this->app->singleton(SalaryTransactionRepository::class);
 
         // ===== Services =====
-        $this->app->singleton(SalaryCalculatorInterface::class, SalaryCalculatorService::class);
-        $this->app->singleton(SalaryCalculatorService::class);
+        $this->app->singleton(SalaryCalculatorInterface::class, function ($app) {
+            return new SalaryCalculatorService(
+                $app->make(RateCalculator::class),
+                $app->make(AttendanceDeductionCalculator::class),
+                $app->make(OvertimeCalculator::class),
+                $app->make(PenaltyCalculator::class),
+                $app->make(AllowanceCalculator::class),
+                $app->make(AdvanceInstallmentCalculator::class),
+                $app->make(GeneralDeductionCalculator::class),
+                $app->make(TransactionBuilder::class),
+            );
+        });
+        $this->app->singleton(SalaryCalculatorService::class, function ($app) {
+            return $app->make(SalaryCalculatorInterface::class);
+        });
 
         $this->app->singleton(PayrollSimulatorInterface::class, function ($app) {
             return new PayrollSimulationService(
