@@ -140,10 +140,10 @@ class EmployeeApplicationService
                     'attendance_type' => \App\Models\Attendance::ATTENDANCE_TYPE_REQUEST,
                 ];
 
-                $result = app(\App\Services\HR\v2\Attendance\AttendanceServiceV2::class)->handle($validated);
+                $result = app(\App\Modules\HR\Attendance\Services\AttendanceService::class)->handle($validated);
 
-                if (!$result['success']) {
-                    throw new \Exception($result['message'] ?? 'Failed to create attendance record');
+                if (!$result->success) {
+                    throw new \Exception($result->message ?? 'Failed to create attendance record');
                 }
                 break;
 
@@ -171,10 +171,10 @@ class EmployeeApplicationService
                     'attendance_type' => \App\Models\Attendance::ATTENDANCE_TYPE_REQUEST,
                 ];
 
-                $result = app(\App\Services\HR\v2\Attendance\AttendanceServiceV2::class)->handle($validated);
+                $result = app(\App\Modules\HR\Attendance\Services\AttendanceService::class)->handle($validated);
 
-                if (!$result['success']) {
-                    throw new \Exception($result['message'] ?? 'Failed to create departure record');
+                if (!$result->success) {
+                    throw new \Exception($result->message ?? 'Failed to create departure record');
                 }
                 break;
         }

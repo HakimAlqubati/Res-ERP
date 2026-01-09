@@ -201,7 +201,7 @@ class TransactionBuilder
                 'sub_type'     => Str::slug($pen['deduction_name'] ?? 'penalty'),
                 'amount'       => $this->round((float)$pen['amount']),
                 'operation'    => '-',
-                'description'  => $pen['description'] ?? ($pen['deduction_name'] ?? 'Penalty deduction'),
+                'description'  => $pen['deduction_name'] ?? ($pen['description'] ?? 'Penalty deduction'),
                 'reference_type' => $pen['reference_type'] ?? PenaltyDeduction::class,
                 'reference_id'   => $pen['reference_id'] ?? $pen['id'] ?? null,
                 'deduction_id'   => $pen['deduction_id'] ?? null,

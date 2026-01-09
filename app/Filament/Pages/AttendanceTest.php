@@ -4,7 +4,7 @@ namespace App\Filament\Pages;
 
 use Filament\Schemas\Schema;
 use App\Models\Employee;
-use App\Services\HR\v2\Attendance\AttendanceServiceV2;
+use App\Modules\HR\Attendance\Services\AttendanceService;
 use Carbon\Carbon;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
@@ -71,8 +71,8 @@ class AttendanceTest extends Page implements HasForms
                     ->seconds(false)
                     ->native(false)
                     ->displayFormat('Y-m-d H:i')
-                    // ->hidden(fn() => !isSuperAdmin())
-                    ,
+                // ->hidden(fn() => !isSuperAdmin())
+                ,
             ])
             ->statePath('data');
     }
@@ -83,16 +83,16 @@ class AttendanceTest extends Page implements HasForms
 
         try {
             // إنشاء instance من service
-            $attendanceService = app(AttendanceServiceV2::class);
+            $attendanceService = app(AttendanceService::class);
 
             // معالجة البيانات
             $result = $attendanceService->handle($data);
 
             // إرسال رد الخدمة كإشعار
-            if ($result['status']) {
+            if ($result->success) {
                 Notification::make()
                     ->title('Attendance Recorded Successfully')
-                    ->body($result['message'] ?? 'Your attendance has been recorded successfully')
+                    ->body($result->message ?? 'Your attendance has been recorded successfully')
                     ->success()
                     ->icon('heroicon-o-check-circle')
                     ->iconSize(IconSize::Large)
@@ -104,7 +104,7 @@ class AttendanceTest extends Page implements HasForms
             } else {
                 Notification::make()
                     ->title('Attendance Error')
-                    ->body($result['message'] ?? 'An error occurred while recording attendance')
+                    ->body($result->message ?? 'An error occurred while recording attendance')
                     ->warning()
                     ->icon('heroicon-o-exclamation-triangle')
                     ->iconSize(IconSize::Large)
