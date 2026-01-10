@@ -23,6 +23,27 @@ class RebuildInventorySummaryCommand extends Command
         $step = $this->option('step');
         $dryRun = $this->option('dry-run');
 
+        $onProgress = function (string $action, $value = null) {
+            static $bar = null;
+
+            switch ($action) {
+                case 'start':
+                    $bar = $this->output->createProgressBar($value);
+                    $bar->start();
+                    break;
+                case 'advance':
+                    if ($bar) $bar->advance();
+                    break;
+                case 'finish':
+                    if ($bar) {
+                        $bar->finish();
+                        $this->newLine();
+                    }
+                    $bar = null;
+                    break;
+            }
+        };
+
         if ($dryRun) {
             $this->info('DRY RUN - No changes will be made');
         }
@@ -41,7 +62,7 @@ class RebuildInventorySummaryCommand extends Command
         // Specific store only
         if ($storeId) {
             if (!$dryRun) {
-                $count = $service->rebuildForStoreOnly((int) $storeId);
+                $count = $service->rebuildForStoreOnly((int) $storeId, $onProgress);
                 $this->info("Rebuilt {$count} products for store {$storeId}");
             }
             return Command::SUCCESS;
@@ -52,21 +73,21 @@ class RebuildInventorySummaryCommand extends Command
             // Step 1 only: Generate empty rows
             $this->info('Step 1: Generating empty rows for all products × units × stores...');
             if (!$dryRun) {
-                $count = $service->generateEmptyRows();
+                $count = $service->generateEmptyRows($onProgress);
                 $this->info("Generated {$count} empty rows");
             }
         } elseif ($step === '2') {
             // Step 2 only: Calculate quantities
             $this->info('Step 2: Calculating quantities using OptimizedInventoryService...');
             if (!$dryRun) {
-                $count = $service->calculateQuantities();
+                $count = $service->calculateQuantities($onProgress);
                 $this->info("Updated {$count} rows with quantities");
             }
         } else {
             // Full rebuild (both steps)
             $this->info('Running full rebuild (Step 1 + Step 2)...');
             if (!$dryRun) {
-                $result = $service->rebuildAll();
+                $result = $service->rebuildAll($onProgress);
                 $this->info("Step 1: Generated {$result['generated']} rows");
                 $this->info("Step 2: Calculated {$result['calculated']} rows with inventory");
             } else {

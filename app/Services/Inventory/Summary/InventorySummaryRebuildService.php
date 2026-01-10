@@ -18,7 +18,7 @@ class InventorySummaryRebuildService
     /**
      * الخطوة 1: توليد صفوف فارغة لكل (منتج × وحدة × مخزن)
      */
-    public function generateEmptyRows(): int
+    public function generateEmptyRows(?callable $onProgress = null): int
     {
         InventorySummary::truncate();
 
@@ -31,6 +31,15 @@ class InventorySummaryRebuildService
             ->with('unitPrices:id,product_id,unit_id,package_size')
             ->select('id')
             ->get();
+
+        if ($onProgress) {
+            $total = 0;
+            $storesCount = count($stores);
+            foreach ($products as $p) {
+                $total += $p->unitPrices->count() * $storesCount;
+            }
+            $onProgress('start', $total);
+        }
 
         foreach ($products as $product) {
             foreach ($product->unitPrices as $unitPrice) {
@@ -46,6 +55,10 @@ class InventorySummaryRebuildService
                     ];
                     $count++;
 
+                    if ($onProgress) {
+                        $onProgress('advance');
+                    }
+
                     if (count($batchData) >= 1000) {
                         DB::table('inventory_summary')->insert($batchData);
                         $batchData = [];
@@ -54,8 +67,8 @@ class InventorySummaryRebuildService
             }
         }
 
-        if (!empty($batchData)) {
-            DB::table('inventory_summary')->insert($batchData);
+        if ($onProgress) {
+            $onProgress('finish');
         }
 
         return $count;
@@ -64,11 +77,15 @@ class InventorySummaryRebuildService
     /**
      * الخطوة 2: حساب الكميات
      */
-    public function calculateQuantities(): int
+    public function calculateQuantities(?callable $onProgress = null): int
     {
         $updated = 0;
 
         $summaries = InventorySummary::select('id', 'store_id', 'product_id', 'unit_id')->get();
+
+        if ($onProgress) {
+            $onProgress('start', $summaries->count());
+        }
 
         foreach ($summaries as $summary) {
             $remainingQty = OptimizedInventoryService::getRemainingQty(
@@ -83,6 +100,14 @@ class InventorySummaryRebuildService
                 ]);
                 $updated++;
             }
+
+            if ($onProgress) {
+                $onProgress('advance');
+            }
+        }
+
+        if ($onProgress) {
+            $onProgress('finish');
         }
 
         return $updated;
@@ -91,10 +116,10 @@ class InventorySummaryRebuildService
     /**
      * إعادة بناء كامل
      */
-    public function rebuildAll(): array
+    public function rebuildAll(?callable $onProgress = null): array
     {
-        $generated = $this->generateEmptyRows();
-        $calculated = $this->calculateQuantities();
+        $generated = $this->generateEmptyRows($onProgress);
+        $calculated = $this->calculateQuantities($onProgress);
 
         return [
             'generated' => $generated,
@@ -131,17 +156,29 @@ class InventorySummaryRebuildService
     /**
      * إعادة بناء لمخزن محدد
      */
-    public function rebuildForStoreOnly(int $storeId): int
+    public function rebuildForStoreOnly(int $storeId, ?callable $onProgress = null): int
     {
         $products = Product::whereHas('unitPrices')
             ->where('type', '!=', Product::TYPE_FINISHED_POS)
             ->pluck('id')
             ->toArray();
 
+        if ($onProgress) {
+            $onProgress('start', count($products));
+        }
+
         $count = 0;
         foreach ($products as $productId) {
             $this->rebuildForStore($storeId, $productId);
             $count++;
+
+            if ($onProgress) {
+                $onProgress('advance');
+            }
+        }
+
+        if ($onProgress) {
+            $onProgress('finish');
         }
 
         return $count;
