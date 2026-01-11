@@ -34,8 +34,15 @@ class StockInventoryRepository implements StockInventoryRepositoryInterface
      */
     public function getPaginated(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = $this->model->query()
-            ->with(['store', 'responsibleUser', 'creator', 'details.product', 'details.unit']);
+        $query = $this->model->query();
+
+        // Load basic relationships (always)
+        $query->with(['store', 'responsibleUser', 'creator']);
+
+        // Load details only if explicitly requested
+        if (!empty($filters['include_details']) && $filters['include_details'] == true) {
+            $query->with(['details.product', 'details.unit']);
+        }
 
         // Apply filters
         if (!empty($filters['store_id'])) {

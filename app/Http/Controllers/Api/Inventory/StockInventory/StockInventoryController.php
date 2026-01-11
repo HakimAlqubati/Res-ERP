@@ -45,6 +45,7 @@ class StockInventoryController extends Controller
                 'date_from',
                 'date_to',
                 'responsible_user_id',
+                'include_details',
                 'sort_by',
                 'sort_direction'
             ]);
