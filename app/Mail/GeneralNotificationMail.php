@@ -32,7 +32,7 @@ class GeneralNotificationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'General Notification Mail',
+            subject: $this->title,
         );
     }
 

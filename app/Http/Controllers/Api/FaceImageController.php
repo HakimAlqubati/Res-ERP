@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -25,18 +26,17 @@ class FaceImageController extends Controller
             $faceImage = FaceImage::create([
                 'user_id'  => auth()->id(), // يمكن حذفها إذا لم تستخدم المصادقة
                 'path'     => $path,
-                'score'    => $request->input('score'), 
+                'score'    => $request->input('score'),
                 'meta'     => null,
             ]);
 
-            Log::info('done',['done']);
             return response()->json([
                 'success' => true,
                 'id'      => $faceImage->id,
                 'url'     => Storage::url($path),
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::error('catchhhhh: '.$e->getMessage(), [
+            Log::error('catchhhhh: ' . $e->getMessage(), [
                 'exception' => $e,
             ]);
             // خطأ تحقق البيانات
@@ -47,7 +47,7 @@ class FaceImageController extends Controller
             ], 422);
         } catch (\Exception $e) {
             // أي خطأ آخر (حفظ الصورة، الاتصال بقاعدة البيانات...)
-            Log::error('FaceImage store error: '.$e->getMessage(), [
+            Log::error('FaceImage store error: ' . $e->getMessage(), [
                 'exception' => $e,
             ]);
             return response()->json([

@@ -1,18 +1,19 @@
 <?php
+
 namespace App\Http\Controllers\AWS;
 
 use App\Http\Controllers\Controller;
 use App\Models\LivenessSession;
-use App\Services\HR\Attendance\AttendanceService;
+use App\Services\HR\v2\Attendance\AttendanceServiceV2;
 use Aws\Rekognition\RekognitionClient;
 use Illuminate\Http\Request;
 
 class EmployeeLivenessController extends Controller
 {
 
-    protected AttendanceService $attendanceService;
+    protected AttendanceServiceV2 $attendanceService;
 
-    public function __construct(AttendanceService $attendanceService)
+    public function __construct(AttendanceServiceV2 $attendanceService)
     {
         $this->attendanceService = $attendanceService;
     }
@@ -138,7 +139,7 @@ class EmployeeLivenessController extends Controller
                 if ($employeeId && is_numeric($employeeId) && $employeeId > 0) {
                     $attendanceResult = $this->attendanceService->handle([
                         'employee_id' => $employeeId,
-                                    // يمكنك إرسال بيانات إضافية مثل 'date_time' => now() إذا أردت
+                        // يمكنك إرسال بيانات إضافية مثل 'date_time' => now() إذا أردت
                     ], 'face'); // النوع face للتمييز إن أردت
                 }
 
@@ -176,7 +177,6 @@ class EmployeeLivenessController extends Controller
                 'isLive'  => false,
                 'message' => 'فشل التحقق من الحيوية',
             ], 400);
-
         } catch (\Aws\Exception\AwsException $e) {
             // خطأ من AWS (مثلاً session غير صالح)
             return response()->json([

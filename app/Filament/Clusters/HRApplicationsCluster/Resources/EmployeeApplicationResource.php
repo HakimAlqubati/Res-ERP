@@ -17,8 +17,7 @@ use App\Models\EmployeeApplication;
 use App\Models\EmployeeApplicationV2;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
-use App\Services\HR\Attendance\AttendanceService;
-use App\Services\HR\v2\Attendance\AttendanceServiceV2;
+use App\Modules\HR\Attendance\Services\AttendanceService;
 use App\Services\HR\MonthClosure\MonthClosureService;
 use Carbon\Carbon;
 use DateTime;
@@ -199,9 +198,9 @@ class EmployeeApplicationResource extends Resource
                         'attendance_type'  => Attendance::ATTENDANCE_TYPE_REQUEST,
                     ];
 
-                    $result = app(AttendanceServiceV2::class)->handle($validated);
+                    $result = app(AttendanceService::class)->handle($validated);
 
-                    if ($result) {
+                    if ($result->success) {
                         $record->update([
                             'status'      => EmployeeApplicationV2::STATUS_APPROVED,
                             'approved_by' => auth()->user()->id,
@@ -210,7 +209,7 @@ class EmployeeApplicationResource extends Resource
                         DB::commit();
                         showSuccessNotifiMessage('Done');
                     } else {
-                        showWarningNotifiMessage('Faild');
+                        showWarningNotifiMessage($result->message);
                     }
                 } catch (Exception $e) {
                     DB::rollBack();
@@ -622,8 +621,8 @@ class EmployeeApplicationResource extends Resource
                         'type' => Attendance::CHECKTYPE_CHECKIN,
                         'attendance_type' => Attendance::ATTENDANCE_TYPE_REQUEST
                     ];
-                    $result = app(AttendanceServiceV2::class)->handle($validated);
-                    if ($result) {
+                    $result = app(AttendanceService::class)->handle($validated);
+                    if ($result->success) {
                         $record->update([
                             'status'      => EmployeeApplicationV2::STATUS_APPROVED,
                             'approved_by' => auth()->user()->id,
@@ -632,7 +631,7 @@ class EmployeeApplicationResource extends Resource
                         DB::commit();
                         showSuccessNotifiMessage('Done');
                     } else {
-                        showWarningNotifiMessage('Faild');
+                        showWarningNotifiMessage($result->message);
                     }
                 } catch (Exception $th) {
 
@@ -733,7 +732,7 @@ class EmployeeApplicationResource extends Resource
             ->modalIcon('heroicon-m-newspaper')
             ->modalHeading('Advance Request Details')
             ->modalWidth('xl')
-            
+
             ->schema(function ($record) {
                 $advanceDetails = $record->advanceRequest;
                 // dd($record,$advanceDetails);

@@ -55,8 +55,7 @@ class EmployeeImageAwsIndexesController extends Controller
                 ]);
 
                 // Log the result for verification
-                Log::info('Indexed face', ['result' => $result]);
-
+ 
                 // Extract the Rekognition FaceId
                 $faceId = $result['FaceRecords'][0]['Face']['FaceId'];
 

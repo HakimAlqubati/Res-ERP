@@ -20,6 +20,7 @@ use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -65,7 +66,10 @@ class PayrollResource extends Resource
     {
         return $table
             ->columns(PayrollTable::getColumns())
-            ->filters(PayrollTable::getFilters())
+            ->filters(
+                PayrollTable::getFilters(),
+                FiltersLayout::Modal
+            )
             ->recordActions([
                 RestoreAction::make()->button()->color('success'),
                 ViewAction::make(),

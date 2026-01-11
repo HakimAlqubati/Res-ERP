@@ -326,8 +326,7 @@ class EmployeeTable
                         $response = S3ImageService::indexEmployeeImage($record->id);
 
                         if (isset($response->original['success']) && $response->original['success']) {
-                            Log::info('Employee image indexed successfully.', ['employee_id' => $record->id]);
-                            Notification::make()
+                             Notification::make()
                                 ->title('Success')
                                 ->body($response->original['message'])
                                 ->success()

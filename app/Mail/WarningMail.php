@@ -43,12 +43,7 @@ class WarningMail extends Mailable implements ShouldQueue
             default => 'ℹ️',
         };
 
-        Log::info('Sending warning email', [
-            'user_id' => $this->user?->id ?? null,
-            'email' => $this->user?->email ?? null,
-            'title' => $this->data['title'] ?? 'System Warning',
-            'level' => $this->data['level'] ?? 'info',
-        ]);
+     
         return new Envelope(
             subject: $levelEmoji . ' ' . ($this->data['title'] ?? 'System Warning'),
         );

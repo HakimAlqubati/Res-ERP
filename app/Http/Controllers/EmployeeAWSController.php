@@ -210,8 +210,7 @@ class EmployeeAWSController extends Controller
                 'MaxFaces' => 1,
             ]);
 
-            Log::info('rekognition_result', [$result]);
-            $rekognitionId = null;
+             $rekognitionId = null;
             $name = 'No match found';
 
             // Check if there's a match
@@ -241,7 +240,7 @@ class EmployeeAWSController extends Controller
                     $name = $dynamoResult['Item']['Name']['S'];
                 }
             }
-            Log::info('namefromsearch', [$name]);
+          
             $expodedResult = explode('-', $name);
 
             $employeeId = $expodedResult[1] ?? 0;
@@ -263,11 +262,9 @@ class EmployeeAWSController extends Controller
                 $date = now()->toDateString();
                 (new AttendanecEmployee2(Attendance::ATTENDANCE_TYPE_WEBCAM))->handleCreationAttendance($employeeId, $date, $time);
 
-                Log::info('employee_data_captured', [$employee]);
-            } else {
+             } else {
 
-                Log::info('employee_data_captured', ['There is no employee']);
-            }
+             }
             // Return JSON response with the match result
             return response()->json(['status' => 'success', 'message' => "{$name}"]);
         } catch (Exception $e) {

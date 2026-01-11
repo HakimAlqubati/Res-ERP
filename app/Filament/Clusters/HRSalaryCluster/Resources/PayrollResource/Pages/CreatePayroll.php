@@ -2,10 +2,10 @@
 
 namespace App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\Pages;
 
-use App\DTOs\HR\Payroll\RunPayrollData;
+use App\Modules\HR\Payroll\DTOs\RunPayrollData;
 use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource;
 use App\Models\PayrollRun;
-use App\Services\HR\Payroll\PayrollRunService;
+use App\Modules\HR\Payroll\Contracts\PayrollRunnerInterface;
 use Carbon\Carbon;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
@@ -39,7 +39,7 @@ class CreatePayroll extends CreateRecord
 
         // Clean transient fields if present
         unset($data['note_that'], $data['month_choice']);
- 
+
         return $data;
     }
 
@@ -53,8 +53,8 @@ class CreatePayroll extends CreateRecord
         try {
             //code...
 
-            /** @var PayrollRunService $service */
-            $service = app(PayrollRunService::class);
+            /** @var PayrollRunnerInterface $service */
+            $service = app(PayrollRunnerInterface::class);
 
             // Build DTO expected by your service
             $dto = new RunPayrollData(

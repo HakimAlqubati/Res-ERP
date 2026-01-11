@@ -105,8 +105,7 @@ class S3ImageService
         ]);
 
         // Log the result for verification
-        Log::info('Indexed face for employee', ['result' => $result, 'employee_id' => $employee->id]);
-
+ 
         // Extract the Rekognition FaceId
         $faceId = $result['FaceRecords'][0]['Face']['FaceId'] ?? null;
 

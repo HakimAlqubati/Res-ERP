@@ -316,17 +316,7 @@ require base_path('routes/custom_route.php');
 require base_path('routes/custom_api_route_inventory.php');
 require base_path('routes/custom_api_test.php');
 
-Route::post('/v2/attendance/test', function (Request $request) {
-    $service = app(\App\Services\HR\v2\Attendance\AttendanceServiceV2::class);
-    return $service->handle($request->all());
-})->middleware('auth:api');
-
-// Bulk attendance generation endpoint
-// توليد سجلات حضور جماعية مع أوقات عشوائية واقعية
-Route::post('/v2/attendance/bulk-generate', function (Request $request) {
-    $service = app(\App\Services\HR\v2\Attendance\BulkAttendanceGeneratorService::class);
-    return $service->generate($request->all());
-})->middleware('auth:api');
+// HR Attendance Module Routes (v3) - loaded via AttendanceServiceProvider
 
 
 
@@ -421,4 +411,35 @@ Route::get('/fixInventoryMovementDates', function () {
 Route::get('/testEnv', function () {
     // dd('sdf');
     dd(env('APP_ENV'));
+});
+
+Route::get('/testFun', function () {
+    return response()->json([
+        'success' => true,
+        'data' => 'test'
+    ]);
+});
+
+// API endpoint to get month options based on settings
+Route::get('/monthOptions', function () {
+    $options = getMonthOptionsBasedOnSettings();
+    $result = [];
+
+    foreach ($options as $key => $label) {
+        // Parse the month key (e.g., "January 2026") to get year and month
+        $date = \Carbon\Carbon::parse($key);
+        $endOfMonthData = getEndOfMonthDate($date->year, $date->month);
+
+        $result[] = [
+            'key' => $key,
+            'label' => $label,
+            'start_date' => $endOfMonthData['start_month'],
+            'end_date' => $endOfMonthData['end_month'],
+        ];
+    }
+
+    return response()->json([
+        'success' => true,
+        'data' => $result,
+    ]);
 });

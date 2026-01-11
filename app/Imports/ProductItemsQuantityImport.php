@@ -55,11 +55,7 @@ class ProductItemsQuantityImport implements ToCollection
                     $productItem->quantity = $quantity;
                     $productItem->save();
                 } else {
-                    Log::info("لم يتم تعديل السطر لأنه لا يوجد سجل مطابق", [
-                        'parent_code' => $parentProductCode,
-                        'item_code' => $itemProductCode,
-                        'unit' => $unitName,
-                    ]);
+                   
                 }
             }
 

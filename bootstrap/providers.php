@@ -12,5 +12,7 @@ return [
     OwenIt\Auditing\AuditingServiceProvider::class,
     App\Providers\WarningsServiceProvider::class,
 
-
+    // Modules
+    App\Modules\HR\Attendance\Providers\AttendanceServiceProvider::class,
+    App\Modules\HR\Payroll\Providers\PayrollServiceProvider::class,
 ];
