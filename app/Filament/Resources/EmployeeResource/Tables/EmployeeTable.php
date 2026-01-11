@@ -317,53 +317,34 @@ class EmployeeTable
                     }),
 
 
-                Action::make('index')
-                    ->label(__('lang.aws_indexing'))->button()
-                    ->icon('heroicon-o-user-plus')
-                    ->color('success')
-                    // ->visible(fn($record): bool => $record->avatar && Storage::disk('s3')->exists($record->avatar))
-                    ->action(function ($record) {
-                        $response = S3ImageService::indexEmployeeImage($record->id);
 
-                        if (isset($response->original['success']) && $response->original['success']) {
-                             Notification::make()
-                                ->title('Success')
-                                ->body($response->original['message'])
-                                ->success()
-                                ->send();
-                        } else {
-                            Log::error('Failed to index employee image.', ['employee_id' => $record->id]);
-                            Notification::make()
-                                ->title('Error')
-                                ->body($response->original['message'] ?? 'An error occurred.')
-                                ->danger()
-                                ->send();
-                        }
-                    }),
 
-                // Action::make('add_face_images')
-                //     ->label('Add Face Images')
-                //     ->icon('heroicon-o-photo')
-                //     ->color('primary')
-                //     ->form([
-                //         FileUpload::make('images')
-                //             ->label('Face Images')
-                //             ->multiple()
-                //             ->required()->disk('public')
-                //             ->image()
-                //             ->maxSize(10240) // 10MB
-                //             ->directory('employee_faces')
-                //             ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                //                 return Str::random(15) . "." . $file->getClientOriginalExtension();
-                //             })
-                //         ,
-                //     ])
-                //     ->action(fn(array $data, $record) => static::storeFaceImages($record, $data['images']))
-                //     ->modalHeading('Upload Employee Face Images')
-                //     ->modalSubmitActionLabel('Upload')
-                //     ->modalCancelActionLabel('Cancel'),
+
                 ActionGroup::make([
+                    Action::make('index')
+                        ->label(__('lang.aws_indexing'))
+                        // ->button()
+                        ->icon('heroicon-o-user-plus')
+                        ->color('success')
+                        // ->visible(fn($record): bool => $record->avatar && Storage::disk('s3')->exists($record->avatar))
+                        ->action(function ($record) {
+                            $response = S3ImageService::indexEmployeeImage($record->id);
 
+                            if (isset($response->original['success']) && $response->original['success']) {
+                                Notification::make()
+                                    ->title('Success')
+                                    ->body($response->original['message'])
+                                    ->success()
+                                    ->send();
+                            } else {
+                                Log::error('Failed to index employee image.', ['employee_id' => $record->id]);
+                                Notification::make()
+                                    ->title('Error')
+                                    ->body($response->original['message'] ?? 'An error occurred.')
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
                     Action::make('quick_edit_avatar')
                         ->label(__('lang.edit_avatar'))
                         ->icon('heroicon-o-camera')
@@ -381,33 +362,33 @@ class EmployeeTable
                                 ->body(__('lang.avatar_updated_successfully'))
                                 ->success()
                                 ->send();
-                        }),
+                        })->hidden(),
                     Action::make('checkInstallments')->label(__('lang.check_advanced_installments'))->button()
                         // ->hidden()
                         ->color('info')
                         ->icon('heroicon-m-banknotes')
                         ->url(fn($record) => CheckInstallments::getUrl(['employeeId' => $record->id]))
 
-                        ->openUrlInNewTab(),
-                    // Action::make('view_shifts')
-                    //     ->label('View Shifts')
-                    //     ->icon('heroicon-o-clock')
-                    //     ->color('info')
-                    //     ->modalHeading('Work Periods')
-                    //     ->modalSubmitAction(false) // No submit button
-                    //     ->modalCancelActionLabel('Close')
-                    //     ->action(fn() => null) // No backend action
-                    //     ->modalContent(function ($record) {
-                    //         $periods = $record->periods;
+                        ->openUrlInNewTab()->hidden(),
+                    Action::make('view_shifts')
+                        ->label('View Shifts')
+                        ->icon('heroicon-o-clock')
+                        ->color('info')
+                        ->modalHeading('Work Periods')
+                        ->modalSubmitAction(false) // No submit button
+                        ->modalCancelActionLabel('Close')
+                        ->action(fn() => null) // No backend action
+                        ->modalContent(function ($record) {
+                            $periods = $record->periods;
 
-                    //         if ($periods->isEmpty()) {
-                    //             return view('components.employee.no-periods');
-                    //         }
+                            if ($periods->isEmpty()) {
+                                return view('components.employee.no-periods');
+                            }
 
-                    //         return view('components.employee.periods-preview', [
-                    //             'periods' => $periods,
-                    //         ]);
-                    //     }),
+                            return view('components.employee.periods-preview', [
+                                'periods' => $periods,
+                            ]);
+                        })->hidden(),
                     // Add the Change Branch action
                     Action::make('changeBranch')->icon('heroicon-o-arrow-path-rounded-square')
                         ->label(__('lang.change_branch')) // Label for the action button

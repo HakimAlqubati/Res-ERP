@@ -134,7 +134,7 @@ class PeriodRelationManager extends RelationManager
                                 ->label('Choose the period duration')
                                 ->schema([
                                     DatePicker::make('start_date')->label('Start period date')
-                                        ->default(fn() => $this->ownerRecord->join_date ?? now()->toDateString())
+                                        ->default(fn() =>  now()->toDateString())
                                         ->minDate(fn() => $this->ownerRecord->join_date ?? now()->toDateString())
                                         ->required(),
 
