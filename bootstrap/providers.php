@@ -6,6 +6,7 @@ return [
     App\Providers\AuthServiceProvider::class,
     App\Providers\Filament\AdminPanelProvider::class,
     App\Providers\InventoryServiceProvider::class,
+    App\Providers\RepositoryServiceProvider::class,
     Barryvdh\DomPDF\ServiceProvider::class,
     Maatwebsite\Excel\ExcelServiceProvider::class,
     Mccarlosen\LaravelMpdf\LaravelMpdfServiceProvider::class,
