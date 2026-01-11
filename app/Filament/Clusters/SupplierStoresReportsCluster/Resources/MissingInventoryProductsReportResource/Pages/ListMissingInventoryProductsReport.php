@@ -17,7 +17,7 @@ class ListMissingInventoryProductsReport extends ListRecords
     }
     public $perPage = 15;
     protected function getViewData(): array
-    { 
+    {
         $start = $this->getTable()->getFilters()['date_range']->getState()['start_date'];
         $end = $this->getTable()->getFilters()['date_range']->getState()['end_date'];
         $hideZero = $this->getTable()->getFilters()['options']->getState()['hide_zero'];
@@ -26,10 +26,13 @@ class ListMissingInventoryProductsReport extends ListRecords
         if ($perPage === 'all') {
             $perPage = 9999; // أو أي عدد كبير جدًا لضمان عرض الكل
         }
-        $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? 'all';
+        $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
 
-        $products = StockInventoryReportService::getProductsNotInventoriedBetween($start, $end, $perPage, $storeId, $hideZero);
-        $store = Store::find($storeId)?->name ?? 'All Stores';
+        $products = [];
+         if ($storeId) {
+            $products = StockInventoryReportService::getProductsNotInventoriedBetween($start, $end, $perPage, $storeId, $hideZero);
+        }
+        $store = Store::find($storeId)?->name;
 
         return [
             'reportData' => $products,

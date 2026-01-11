@@ -2,14 +2,13 @@
 
 namespace App\Services;
 
-use App\Models\UnitPrice;
+use App\Models\InventorySummary;
 use App\Models\Product;
+use App\Models\Store;
 use App\Models\StockInventory;
 use App\Models\StockInventoryDetail;
-use Illuminate\Support\Carbon;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
-use App\Services\MultiProductsInventoryService;
+use App\Models\UnitPrice;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class StockInventoryReportService
 {
@@ -17,75 +16,95 @@ class StockInventoryReportService
         $startDate,
         $endDate,
         $perPage = 15,
-        $storeId = 'all',
+        $storeId = null,
         $hideZero = false
-    ) {
-        // Get stock inventory IDs in the date range and store
+    ): LengthAwarePaginator {
+        // 1. جلب IDs للمخزون في النطاق الزمني والمخزن المحدد
         $inventoryQuery = StockInventory::whereBetween('inventory_date', [$startDate, $endDate]);
 
-        if (!empty($storeId) && $storeId !== 'all') {
+        if ($storeId) {
             $inventoryQuery->where('store_id', $storeId);
         }
 
         $inventoryIds = $inventoryQuery->pluck('id');
 
-        // Get product IDs that were inventoried
-        $productIdsInInventories = StockInventoryDetail::whereIn('stock_inventory_id', $inventoryIds)
+        // 2. جلب IDs المنتجات المجردة
+        $inventoriedProductIds = StockInventoryDetail::whereIn('stock_inventory_id', $inventoryIds)
             ->pluck('product_id')
             ->unique();
 
-        // Get products that were NOT inventoried
-        $productsCollection = Product::whereNotIn('id', $productIdsInInventories)->get();
+        // 3. بناء Query للمنتجات غير المجردة مع Eager Loading
+        $query = Product::query()
+            ->whereNotIn('id', $inventoriedProductIds)
+            ->with(['category:id,name']);
 
-        // Transform each product with inventory data
-        $transformed = $productsCollection->transform(function ($product) {
-            $store = defaultManufacturingStore($product);
-            $storeId = $store?->id;
+        // 4. الحصول على النتائج مع Pagination من قاعدة البيانات
+        $products = $query->paginate($perPage);
 
-            if (!$storeId) {
-                $product->remaining_qty = 0;
-                $product->remaining_qty_in_smallest_unit = 0;
-                $product->smallest_unit_name = '';
-                $product->store_name = '—';
+        // 5. جلب بيانات المخزون لكل المنتجات دفعة واحدة
+        $productIds = $products->pluck('id')->toArray();
+
+        if (empty($productIds)) {
+            return $products;
+        }
+
+        // جلب أصغر وحدة لكل منتج دفعة واحدة
+        $smallestUnits = UnitPrice::query()
+            ->select(['product_id', 'unit_id'])
+            ->whereIn('product_id', $productIds)
+            ->with('unit:id,name')
+            ->orderBy('package_size', 'asc')
+            ->get()
+            ->groupBy('product_id')
+            ->map(fn($units) => $units->first());
+
+        // جلب الكميات من InventorySummary مرة واحدة
+        $inventorySummaries = InventorySummary::query()
+            ->select(['product_id', 'unit_id', 'remaining_qty', 'store_id'])
+            ->whereIn('product_id', $productIds)
+            ->where('store_id', $storeId)
+            ->with('unit:id,name')
+            ->get()
+            ->groupBy('product_id');
+
+        // جلب اسم المخزن مرة واحدة
+        $storeName = Store::find($storeId)?->name ?? '—';
+
+        // 6. معالجة كل منتج وإضافة بيانات المخزون
+        $products->getCollection()->transform(function ($product) use ($inventorySummaries, $smallestUnits, $storeName) {
+            $summaries = $inventorySummaries->get($product->id);
+            $smallestUnit = $smallestUnits->get($product->id);
+
+            if ($summaries && $summaries->isNotEmpty()) {
+                // إذا كان هناك عدة وحدات، نستخدم أصغر وحدة
+                $summary = $summaries->first();
+
+                // إذا كانت أصغر وحدة موجودة، نحاول إيجاد السماري الخاص بها
+                if ($smallestUnit) {
+                    $matchingSummary = $summaries->firstWhere('unit_id', $smallestUnit->unit_id);
+                    if ($matchingSummary) {
+                        $summary = $matchingSummary;
+                    }
+                }
+
+                $product->remaining_qty = $summary->remaining_qty ?? 0;
+                $product->smallest_unit_name = $summary->unit?->name ?? ($smallestUnit?->unit?->name ?? '');
             } else {
-                $smallestUnit = UnitPrice::where('product_id', $product->id)
-                    ->with('unit')
-                    ->orderBy('package_size', 'asc')
-                    ->first();
-
-                $service = new MultiProductsInventoryService(
-                    null,
-                    $product->id,
-                    $smallestUnit?->unit_id,
-                    $storeId
-                );
-
-                $inventoryData = $service->getInventoryForProduct($product->id);
-                $remainingQty = $inventoryData[0]['remaining_qty'] ?? 0;
-
-                $product->remaining_qty = $remainingQty;
-                $product->store_name = $store->name ?? '—';
+                $product->remaining_qty = 0;
                 $product->smallest_unit_name = $smallestUnit?->unit?->name ?? '';
             }
+
+            $product->store_name = $storeName;
 
             return $product;
         });
 
-        // Filter out products with 0 quantity if requested
+        // 7. فلترة المنتجات بكمية صفر إذا لزم الأمر
         if ($hideZero) {
-            $transformed = $transformed->filter(fn($product) => $product->remaining_qty != 0)->values();
+            $filtered = $products->getCollection()->filter(fn($p) => $p->remaining_qty > 0);
+            $products->setCollection($filtered->values());
         }
 
-        // Manual pagination
-        $page = request('page', 1);
-        $paginated = new LengthAwarePaginator(
-            $transformed->forPage($page, $perPage),
-            $transformed->count(),
-            $perPage,
-            $page,
-            ['path' => request()->url(), 'query' => request()->query()]
-        );
-
-        return $paginated;
+        return $products;
     }
 }
