@@ -12,8 +12,7 @@ use App\Modules\HR\Attendance\Exceptions\TypeRequiredException;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-
+ 
 /**
  * خدمة الحضور الرئيسية
  * 
@@ -115,14 +114,7 @@ class AttendanceService
                     return $this->processAttendance($employee, $payload);
                 });
         } catch (\Throwable $e) {
-            // Log the actual error for debugging
-            Log::error('Attendance Module Error', [
-                'employee_id' => $employee->id,
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-            ]);
+        
 
             $this->handleRejection(
                 $employee,

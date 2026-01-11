@@ -4,8 +4,10 @@ namespace App\Modules\HR\Attendance\Services;
 
 use App\Models\Employee;
 use App\Models\WorkPeriod;
+use App\Modules\HR\Attendance\Contracts\AttendanceRepositoryInterface;
 use App\Modules\HR\Attendance\Contracts\ShiftResolverInterface;
 use App\Modules\HR\Attendance\DTOs\ShiftInfoDTO;
+use App\Modules\HR\Attendance\Enums\CheckType;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -23,36 +25,159 @@ class ShiftResolver implements ShiftResolverInterface
 
     /**
      * تحديد الوردية المناسبة للموظف في وقت معين
+     * 
+     * @param Employee $employee الموظف
+     * @param Carbon $time الوقت المطلوب
+     * @param AttendanceRepositoryInterface|null $repository للتحقق من حالة الشيفتات (اختياري)
+     * @return ShiftInfoDTO|null
      */
-    public function resolve(Employee $employee, Carbon $time): ?ShiftInfoDTO
-    {
+    public function resolve(
+        Employee $employee,
+        Carbon $time,
+        ?AttendanceRepositoryInterface $repository = null
+    ): ?ShiftInfoDTO {
         // 1. جلب جميع الورديات المحتملة حول هذا الوقت
         $candidates = $this->getCandidatePeriods($employee, $time);
 
         if ($candidates->isEmpty()) {
             return null;
         }
+        // 2. جمع جميع الشيفتات التي يقع الوقت ضمن نافذتها
+        $matchingShifts = $this->getAllMatchingShifts($candidates, $time);
 
-        // 2. البحث عن الوردية التي يقع الوقت ضمن نافذتها
+        if ($matchingShifts->isEmpty()) {
+            return null;
+        }
+
+        // 3. إذا كان هناك شيفت واحد فقط، نرجعه مباشرة
+        if ($matchingShifts->count() === 1) {
+            return $this->createShiftDTO($matchingShifts->first());
+        }
+
+        // 4. عند وجود عدة شيفتات متطابقة
+        // إذا تم توفير repository، نستخدم الاختيار الذكي
+        if ($repository) {
+            return $this->selectBestShift($matchingShifts, $employee, $repository, $time);
+        }
+
+        // إذا لم يتم توفير repository، نرجع الأول (للتوافق العكسي)
+        return $this->createShiftDTO($matchingShifts->first());
+    }
+
+    /**
+     * جمع جميع الشيفتات التي يقع الوقت ضمن نافذتها
+     */
+    private function getAllMatchingShifts(Collection $candidates, Carbon $time): Collection
+    {
+        $matchingShifts = collect();
+
         foreach ($candidates as $candidate) {
             $bounds = $this->calculateBounds($candidate['period'], $candidate['date']);
             $windowStart = $bounds['windowStart'];
             $windowEnd = $bounds['windowEnd'];
 
             if ($time->betweenIncluded($windowStart, $windowEnd)) {
-                return new ShiftInfoDTO(
-                    period: $candidate['period'],
-                    date: $candidate['date'],
-                    dayName: $candidate['day'],
-                    start: $bounds['start'],
-                    end: $bounds['end'],
-                    windowStart: $windowStart,
-                    windowEnd: $windowEnd,
-                );
+                $matchingShifts->push([
+                    'candidate' => $candidate,
+                    'bounds' => $bounds,
+                ]);
             }
         }
 
-        return null;
+        return $matchingShifts;
+    }
+
+    /**
+     * اختيار أفضل شيفت عند التعارض (الأولوية للشيفتات غير المكتملة)
+     */
+    private function selectBestShift(
+        Collection $matchingShifts,
+        Employee $employee,
+        AttendanceRepositoryInterface $repository,
+        Carbon $requestTime
+    ): ?ShiftInfoDTO {
+
+
+        // تقييم كل شيفت بناءً على حالة الاكتمال
+        $scored = $matchingShifts->map(function ($match) use ($employee, $repository, $requestTime) {
+            $candidate = $match['candidate'];
+            $bounds = $match['bounds'];
+            $date = $candidate['date'];
+            $periodId = $candidate['period']->id;
+            $shiftEnd = $bounds['end'];
+
+            // جلب سجلات هذا الشيفت المحدد
+            $records = $repository->getDailyRecords($employee->id, $date)
+                ->where('period_id', $periodId);
+
+            // الحصول على آخر سجل
+            $lastRecord = $records->sortByDesc('id')->first();
+
+            // تحديد النقاط بناءً على منطق بسيط وذكي
+            $score = $this->calculateShiftScore($lastRecord, $shiftEnd, $requestTime);
+
+
+            return [
+                'match' => $match,
+                'score' => $score,
+            ];
+        });
+
+        // اختيار الشيفت بأقل نقاط (أعلى أولوية)
+        $best = $scored->sortBy('score')->first();
+
+
+        return $this->createShiftDTO($best['match']);
+    }
+
+    /**
+     * حساب النقاط للشيفت بناءً على منطق بسيط
+     * 
+     * المنطق:
+     * - آخر سجل check-out + انتهى وقت الشيفت = مقفل (1000)
+     * - آخر سجل check-in = جاري (0)
+     * - لا توجد سجلات = لم يبدأ (1)
+     */
+    private function calculateShiftScore($lastRecord, Carbon $shiftEnd, Carbon $requestTime): int
+    {
+        // لا توجد سجلات = لم يبدأ
+        if (!$lastRecord) {
+            return 1;
+        }
+
+        // آخر سجل هو check-in = جاري (الأولوية الأولى)
+        if ($lastRecord->check_type === CheckType::CHECKIN->value) {
+            return 0;
+        }
+
+        // آخر سجل هو check-out
+        // نتحقق: هل انتهى وقت الشيفت؟
+        if ($requestTime->gt($shiftEnd)) {
+            // الوقت الحالي بعد نهاية الشيفت = مقفل
+            return 1000;
+        }
+
+        // الوقت ما زال قبل أو عند نهاية الشيفت = يمكن العودة
+        return 1;
+    }
+
+    /**
+     * إنشاء ShiftInfoDTO من بيانات الشيفت
+     */
+    private function createShiftDTO(array $match): ShiftInfoDTO
+    {
+        $candidate = $match['candidate'];
+        $bounds = $match['bounds'];
+
+        return new ShiftInfoDTO(
+            period: $candidate['period'],
+            date: $candidate['date'],
+            dayName: $candidate['day'],
+            start: $bounds['start'],
+            end: $bounds['end'],
+            windowStart: $bounds['windowStart'],
+            windowEnd: $bounds['windowEnd'],
+        );
     }
 
     /**

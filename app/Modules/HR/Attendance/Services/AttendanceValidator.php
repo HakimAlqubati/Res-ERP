@@ -40,7 +40,8 @@ class AttendanceValidator
     public function validate(Employee $employee, Carbon $requestTime, ?string $requestType = null): void
     {
         // تحديد الوردية والتاريخ المناسب
-        $shiftInfo = $this->shiftResolver->resolve($employee, $requestTime);
+        // تمرير repository لتمكين الاختيار الذكي للشيفت عند التعارض
+        $shiftInfo = $this->shiftResolver->resolve($employee, $requestTime, $this->repository);
         $date = $shiftInfo?->date ?? $requestTime->toDateString();
         $periodId = $shiftInfo?->getPeriodId();
 
@@ -52,28 +53,38 @@ class AttendanceValidator
             ? $dailyRecords->where('period_id', $periodId)
             : $dailyRecords;
 
-        $checkInRecord = $shiftRecords->firstWhere('check_type', CheckType::CHECKIN->value);
-        $checkOutRecord = $shiftRecords
-            ->sortByDesc('check_time')
-            ->firstWhere('check_type', CheckType::CHECKOUT->value);
+        // الحصول على آخر سجل لتحديد الحالة الحقيقية
+        $lastRecord = $shiftRecords->sortByDesc('id')->first();
+        $lastIsCheckIn = $lastRecord && $lastRecord->check_type === CheckType::CHECKIN->value;
+        $lastIsCheckOut = $lastRecord && $lastRecord->check_type === CheckType::CHECKOUT->value;
 
-        // القاعدة 1: الوردية مكتملة
-        if ($checkInRecord && $checkOutRecord) {
-            $this->validateShiftNotCompleted($checkInRecord, $checkOutRecord, $requestTime, $date);
+        // التحقق من وجود check-in وcheck-out عموماً
+        $hasAnyCheckIn = $shiftRecords->where('check_type', CheckType::CHECKIN->value)->isNotEmpty();
+        $hasAnyCheckOut = $shiftRecords->where('check_type', CheckType::CHECKOUT->value)->isNotEmpty();
+
+        // القاعدة 1: الوردية مكتملة (فقط إذا آخر سجل هو check-out وانتهت فترة السماحية)
+        if ($hasAnyCheckIn && $lastIsCheckOut) {
+            $checkInForValidation = $shiftRecords->firstWhere('check_type', CheckType::CHECKIN->value);
+            $checkOutForValidation = $shiftRecords
+                ->sortByDesc('check_time')
+                ->firstWhere('check_type', CheckType::CHECKOUT->value);
+
+            $this->validateShiftNotCompleted($checkInForValidation, $checkOutForValidation, $requestTime, $date);
         }
 
-        // القاعدة 2: تكرار الدخول
-        if ($requestType === CheckType::CHECKIN->value && $checkInRecord) {
+        // القاعدة 2: تكرار الدخول (فقط إذا آخر سجل هو check-in)
+        if ($requestType === CheckType::CHECKIN->value && $lastIsCheckIn) {
             throw new DuplicateCheckInException();
         }
 
-        // القاعدة 3: الخروج بدون دخول
-        if ($requestType === CheckType::CHECKOUT->value && !$checkInRecord) {
+        // القاعدة 3: الخروج بدون دخول (لا يوجد check-in أو آخر سجل هو check-out)
+        if ($requestType === CheckType::CHECKOUT->value && (!$hasAnyCheckIn || $lastIsCheckOut)) {
             throw new MissingCheckInException();
         }
 
-        // القاعدة 4: الطلب قرب نهاية الشيفت بدون سجل دخول
-        if (!$checkInRecord && $requestType === null && $shiftInfo) {
+        // القاعدة 4: الطلب قرب نهاية الشيفت بدون أي سجلات سابقة
+        // هذه القاعدة فقط للحالة التي لا يوجد فيها أي سجلات على الإطلاق
+        if (!$hasAnyCheckIn && !$hasAnyCheckOut && $requestType === null && $shiftInfo) {
             $this->validateNearShiftEnd($shiftInfo, $requestTime);
         }
     }
@@ -88,10 +99,9 @@ class AttendanceValidator
         // هل انتهت فترة السماحية؟
         $isGraceExpired = $requestTime->gt($bounds['windowEnd']);
 
-        // هل تم الخروج بعد نهاية الدوام؟
-        $isShiftCompleted = $this->isCheckoutAfterShiftEnd($checkOut, $bounds['end']);
-
-        if ($isGraceExpired || $isShiftCompleted) {
+        // السماح بدخول جديد طالما ما زلنا ضمن فترة السماحية
+        // حتى لو كان الموظف قد سجل خروج سابقاً
+        if ($isGraceExpired) {
             throw new AttendanceCompletedException($date);
         }
     }
