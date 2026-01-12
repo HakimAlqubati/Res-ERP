@@ -538,7 +538,7 @@
         <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
             {{-- Formula --}}
             <p style="font-size: 0.7rem; color: #6b7280; margin: 0 0 0.5rem 0; font-weight: 500; text-align: center;">
-                Gross Profit = Sales + Closing Stock – Transfers – Direct Purchases
+                Gross Profit = Sales + Closing Stock – Transfers – Direct Purchases({{'if applicable'}})
             </p>
             {{-- Generated on + Powered by AWS (same row) --}}
             <div style="display: flex; align-items: center;">
