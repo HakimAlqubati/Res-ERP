@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Currencies\Pages;
 use App\Filament\Resources\Currencies\CurrencyResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Support\Icons\Heroicon;
 
 class ListCurrencies extends ListRecords
 {
@@ -13,7 +14,7 @@ class ListCurrencies extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()->icon(Heroicon::OutlinedPlusCircle),
         ];
     }
 }

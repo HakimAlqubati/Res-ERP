@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Currencies\Tables;
 
+use App\ValueObjects\Money;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -16,11 +17,11 @@ class CurrenciesTable
 {
     public static function configure(Table $table): Table
     {
-        return $table
+        return $table->striped()
             ->columns([
                 TextColumn::make('currency_code')
                     ->label(__('lang.currency_code'))
-                    ->searchable()
+                    ->searchable()->alignCenter()
                     ->sortable()
                     ->weight('bold'),
 
@@ -30,13 +31,14 @@ class CurrenciesTable
                     ->sortable(),
 
                 TextColumn::make('symbol')
-                    ->label(__('lang.currency_symbol'))
+                    ->label(__('lang.currency_symbol'))->alignCenter()
                     ->sortable(),
 
                 TextColumn::make('exchange_rate')
                     ->label(__('lang.exchange_rate'))
                     ->numeric(decimalPlaces: 2)
                     ->sortable()
+                    ->formatStateUsing(fn($state)=> Money::makeInBaseCurrency($state))
                     ->alignStart(),
 
                 IconColumn::make('is_base')
