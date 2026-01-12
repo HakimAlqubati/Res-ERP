@@ -246,7 +246,7 @@
             </div>
 
             <div style="flex: 1; text-align: center;">
-                <h1 class="report-title">{{ __('lang.income_statement_report') }}</h1>
+                <h1 class="report-title">{{ __('Gross Profit Report') }}</h1>
                 <p class="report-subtitle">
                     {{ __('lang.from') }} {{ \Carbon\Carbon::parse($startDate)->format('d F, Y') }}
                     {{ __('lang.to') }} {{ \Carbon\Carbon::parse($endDate)->format('d F, Y') }}
