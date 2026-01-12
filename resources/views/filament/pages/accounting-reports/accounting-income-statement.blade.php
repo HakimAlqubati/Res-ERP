@@ -79,15 +79,15 @@
         }
 
         .td-label {
-            padding: 1.25rem 1rem;
+            /* padding: 1.25rem 1rem; */
             display: flex;
             flex-direction: column;
             gap: 0.25rem;
         }
 
         .main-label {
-            font-size: 1.1rem;
-            font-weight: 700;
+            font-size: 0.7rem;
+            /* font-weight: 700; */
             color: #1e293b;
         }
 
@@ -98,15 +98,19 @@
         }
 
         .td-value {
-            padding: 1rem 1rem;
+            padding: 0.5rem 1.25rem 0.5rem 0.5rem;
+
+            /* padding: 1rem 1rem; */
             text-align: right;
-            font-size: 1.15rem;
+            font-size: 0.7rem;
             color: #1e293b;
             font-weight: 800;
             font-variant-numeric: tabular-nums;
         }
 
         .table-row {
+            padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+
             border-bottom: 1px solid #f1f5f9;
         }
 
@@ -146,7 +150,7 @@
 
         .net-profit-label {
             font-size: 0.9rem;
-            font-weight: 700;
+            /* font-weight: 700; */
             color: #0f172a;
             letter-spacing: 0.05em;
         }
@@ -268,7 +272,7 @@
                         <!-- <span class="sub-label">{{ $item['account_code'] }}</span> -->
                     </td>
                     <td class="td-value">
-                        
+
                         {{ $item['amount_formatted'] }}
                     </td>
                 </tr>
@@ -278,9 +282,9 @@
                 </tr> -->
                 @endforelse
                 <tr class="revenue-total">
-                    <td class="td-label" style="font-weight: 700;">{{ __('lang.total_revenue') }}</td>
+                    <td class="td-label">{{ __('lang.total_revenue') }}</td>
                     <td class="td-value" style="color: #059669;">
-                        
+
                         {{ $report['revenue']['total_formatted'] }}
                     </td>
                 </tr>
@@ -291,7 +295,7 @@
                 </tr>
 
                 {{-- Expenses Section --}}
-                 
+
                 <tr style="border-top: 2px solid #10b981;">
                     <td colspan="2" style="padding:0"></td>
                 </tr>
@@ -302,7 +306,7 @@
                         <!-- <span class="sub-label">{{ $item['account_code'] }}</span> -->
                     </td>
                     <td class="td-value" style="color: #dc2626;">
-                        
+
                         ({{ $item['amount_formatted'] }})
                     </td>
                 </tr>
@@ -312,9 +316,9 @@
                 </tr> -->
                 @endforelse
                 <tr class="expense-total">
-                    <td class="td-label" style="font-weight: 700;">{{ __('lang.total_expenses') }}</td>
+                    <td class="td-label">{{ __('lang.total_expenses') }}</td>
                     <td class="td-value" style="color: #dc2626;">
-                        
+
                         ({{ $report['expenses']['total_formatted'] }})
                     </td>
                 </tr>
@@ -325,7 +329,7 @@
         <div class="net-profit-section" style="margin-top: 2rem;">
             <div class="net-profit-label">{{ __('lang.gross_profit') }}</div>
             <div class="net-profit-amount {{ $report['gross_profit']['is_profit'] ? 'profit-positive' : 'profit-negative' }}">
-                 {{ $report['gross_profit']['is_profit'] ? '' : '-' }}
+                {{ $report['gross_profit']['is_profit'] ? '' : '-' }}
                 {{ $report['gross_profit']['value_formatted'] }}
             </div>
         </div>
@@ -338,10 +342,30 @@
             </div>
         </div>
 
-        {{-- Footer --}}
-        <div style="margin-top: 3rem; border-top: 1px solid #e2e8f0; padding-top: 1rem; display: flex; justify-content: space-between;">
-            <p style="font-size: 0.75rem; color: #94a3b8;">{{ __('lang.generated_on') }} {{ now()->format('d/m/Y H:i') }}</p>
-            <p style="font-size: 0.75rem; color: #94a3b8;">Powered by Workbench</p>
+        {{-- Generated On --}}
+        <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+            {{-- Formula --}}
+            <p style="font-size: 0.75rem; color: #6b7280; margin: 0 0 0.5rem 0; font-weight: 500; text-align: center;">
+                Gross Profit = Sales + Closing Stock – Transfers – Direct Purchases
+            </p>
+            {{-- Generated on + Powered by AWS (same row) --}}
+            <div style="display: flex; align-items: center;">
+                {{-- Empty left space --}}
+                <div style="flex: 1;"></div>
+                {{-- Center: Generated on --}}
+                <div style="flex: 1; text-align: center;">
+                    <p style="font-size: 0.75rem; color: #6b7280; margin: 0; white-space: nowrap;">
+                        {{ __('lang.generated_on') }} {{ \Carbon\Carbon::now()->format('d F, Y - h:i A') }}
+                    </p>
+                </div>
+                {{-- Right: Powered by AWS --}}
+                <div style="flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 0.75rem; color: #6b7280;">{{ __('lang.powered_by') ?? 'Powered by' }}</span>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg"
+                        alt="AWS Logo"
+                        style="height: 18px; width: auto;">
+                </div>
+            </div>
         </div>
         @else
         <div class="empty-state">

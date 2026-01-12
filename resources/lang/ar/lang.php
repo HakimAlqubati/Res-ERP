@@ -1064,6 +1064,7 @@ return [
   'net_profit_loss' => 'صافي الربح / الخسارة',
   'gross_profit' => 'إجمالي الربح',
   'gross_margin' => 'هامش الربح',
+  'powered_by' => 'بدعم من',
   'no_revenue_data' => 'لا توجد بيانات إيرادات',
   'no_expense_data' => 'لا توجد بيانات مصروفات',
 ];

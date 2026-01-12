@@ -1082,6 +1082,7 @@ return [
     'net_profit_loss' => 'Net Profit / Loss',
     'gross_profit' => 'Gross Profit',
     'gross_margin' => 'Gross Margin',
+    'powered_by' => 'Powered by',
     'no_revenue_data' => 'No revenue data',
     'no_expense_data' => 'No expense data',
 ];
