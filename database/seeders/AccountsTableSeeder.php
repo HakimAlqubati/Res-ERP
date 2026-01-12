@@ -5,6 +5,9 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Account;
 use App\Models\Currency;
+use App\Models\BankAccount;
+use App\Models\CashBox;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class AccountsTableSeeder extends Seeder
@@ -14,11 +17,16 @@ class AccountsTableSeeder extends Seeder
      */
     public function run(): void
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS = 0');
+        DB::table('acc_accounts')->truncate();
+        DB::table('acc_currencies')->truncate();
+        DB::table('acc_bank_accounts')->truncate();
+        DB::table('acc_cash_boxes')->truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS = 1');
         // إضافة العملات أولاً
-        $this->seedCurrencies();
+
 
         // يفضل تفريغ الجدول قبل البدء لتجنب التكرار عند التجربة
-        // DB::table('acc_accounts')->truncate(); 
 
         // سنفترض أن ID العملة الافتراضية هو 1
         $currencyId = null;
@@ -100,6 +108,12 @@ class AccountsTableSeeder extends Seeder
         $this->createAccount('5205', 'Maint - صيانة', Account::TYPE_EXPENSE, $opex->id, $currencyId);
         $this->createAccount('5206', 'Marketing - تسويق', Account::TYPE_EXPENSE, $opex->id, $currencyId);
         $this->createAccount('5207', 'Gov Fees - رسوم حكومية', Account::TYPE_EXPENSE, $opex->id, $currencyId);
+
+
+        $this->seedCurrencies();
+
+        // إضافة البنوك والصناديق
+        $this->seedBanksAndCashBoxes();
     }
 
     /**
@@ -125,14 +139,11 @@ class AccountsTableSeeder extends Seeder
      */
     private function seedCurrencies(): void
     {
-        // حذف العملات الموجودة (إن وجدت) لتجنب التكرار
-        // DB::table('acc_currencies')->truncate();
-
         // 1. الريال اليمني - العملة الأساسية
         Currency::create([
             'currency_code' => 'YER',
             'currency_name' => 'Yemeni Rial - ريال يمني',
-            'symbol' => '﷼',
+            'symbol' => 'YER',
             'is_base' => true,
             'exchange_rate' => 1.000000, // العملة الأساسية دائماً 1
         ]);
@@ -153,6 +164,121 @@ class AccountsTableSeeder extends Seeder
             'symbol' => '$',
             'is_base' => false,
             'exchange_rate' => 535.000000, // 1 USD = 535 YER
+        ]);
+    }
+
+    /**
+     * إنشاء بنوك وصناديق تجريبية
+     */
+    private function seedBanksAndCashBoxes(): void
+    {
+        // Get currencies
+        $yer = Currency::where('currency_code', 'YER')->first();
+        $sar = Currency::where('currency_code', 'SAR')->first();
+        $usd = Currency::where('currency_code', 'USD')->first();
+
+        // Get GL accounts
+        $bankAccount = Account::where('account_code', '1103')->first();
+        $cashAccount = Account::where('account_code', '1101')->first();
+
+        if (!$bankAccount || !$cashAccount || !$yer) {
+            return;
+        }
+
+        // ==========================================
+        // 5 Bank Accounts
+        // ==========================================
+        BankAccount::create([
+            'name' => 'Al-Rajhi Corporate - الراجحي التجاري',
+            'account_number' => '123456789',
+            'iban' => 'SA0380000000123456789012',
+            'currency_id' => $yer->id,
+            'gl_account_id' => $bankAccount->id,
+            'is_active' => true,
+        ]);
+
+        BankAccount::create([
+            'name' => 'SNB Business - الأهلي التجاري',
+            'account_number' => '987654321',
+            'iban' => 'SA1010000000987654321098',
+            'currency_id' => $yer->id,
+            'gl_account_id' => $bankAccount->id,
+            'is_active' => true,
+        ]);
+
+        BankAccount::create([
+            'name' => 'CAC USD Account - بنك القاهرة دولار',
+            'account_number' => 'USD-456789',
+            'iban' => null,
+            'currency_id' => $usd ? $usd->id : $yer->id,
+            'gl_account_id' => $bankAccount->id,
+            'is_active' => true,
+        ]);
+
+        BankAccount::create([
+            'name' => 'Yemen Bank Savings - توفير اليمن',
+            'account_number' => '111222333',
+            'iban' => null,
+            'currency_id' => $yer->id,
+            'gl_account_id' => $bankAccount->id,
+            'is_active' => true,
+        ]);
+
+        BankAccount::create([
+            'name' => 'SAR Reserve - احتياطي ريال سعودي',
+            'account_number' => 'SAR-789456',
+            'iban' => 'SA5550000000789456123456',
+            'currency_id' => $sar ? $sar->id : $yer->id,
+            'gl_account_id' => $bankAccount->id,
+            'is_active' => false,
+        ]);
+
+        // ==========================================
+        // 5 Cash Boxes
+        // ==========================================
+        CashBox::create([
+            'name' => 'Main Showroom - الصندوق الرئيسي',
+            'currency_id' => $yer->id,
+            'gl_account_id' => $cashAccount->id,
+            'keeper_id' => User::where('email', 'admin@admin.com')->first()->id,
+            'max_limit' => 500000,
+            'is_active' => true,
+        ]);
+
+        CashBox::create([
+            'name' => 'POS Register #1 - نقطة البيع 1',
+            'currency_id' => $yer->id,
+            'gl_account_id' => $cashAccount->id,
+            'keeper_id' => User::where('email', 'admin@admin.com')->first()->id,
+            'max_limit' => 100000,
+            'is_active' => true,
+        ]);
+
+        CashBox::create([
+            'name' => 'Petty Cash - مصروفات نثرية',
+            'currency_id' => $yer->id,
+            'gl_account_id' => $cashAccount->id,
+            'keeper_id' => User::where('email', 'admin@admin.com')->first()->id,
+            'max_limit' => 50000,
+            'is_active' => true,
+        ]);
+
+        CashBox::create([
+            'name' => 'USD Cash Drawer - درج دولار',
+            'currency_id' => $usd ? $usd->id : $yer->id,
+            'gl_account_id' => $cashAccount->id,
+            'keeper_id' => User::where('email', 'admin@admin.com')->first()->id,
+            'max_limit' => 1000,
+            'is_active' => true,
+        ]);
+
+        CashBox::create([
+            'name' => 'Delivery Fund - صندوق التوصيل',
+            'currency_id' => $yer->id,
+            'gl_account_id' => $cashAccount->id,
+            'keeper_id' => User::where('email', 'admin@admin.com')->first()->id,
+            'max_limit' => 0,
+            'is_active' => true,
         ]);
     }
 }

@@ -27,9 +27,9 @@ class CashBoxResource extends Resource
     protected static ?string $cluster = CashBoxAndBankCluster::class;
 
     protected static ?string $recordTitleAttribute = 'name';
-   protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 1;
-   
+
     public static function form(Schema $schema): Schema
     {
         return CashBoxForm::configure($schema);
@@ -62,5 +62,9 @@ class CashBoxResource extends Resource
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+    }
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
     }
 }
