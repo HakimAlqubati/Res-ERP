@@ -23,6 +23,8 @@ class JournalEntryLine extends Model
         'cost_center_id',
         'branch_id',
         'line_description',
+        'bank_account_id',
+        'cash_box_id',
     ];
 
     protected $casts = [
@@ -48,11 +50,23 @@ class JournalEntryLine extends Model
         return $this->belongsTo(Branch::class, 'branch_id');
     }
 
+    /**
+     * Get the bank account associated with this line (if applicable)
+     */
+    public function bankAccount(): BelongsTo
+    {
+        return $this->belongsTo(BankAccount::class, 'bank_account_id');
+    }
+
+    /**
+     * Get the cash box associated with this line (if applicable)
+     */
+    public function cashBox(): BelongsTo
+    {
+        return $this->belongsTo(CashBox::class, 'cash_box_id');
+    }
+
     // Assuming CostCenter model exists (not created in this task, but referenced in migration)
-    // If it doesn't exist yet, I'll comment it out or assume it might be created later.
-    // For now, I will add the relationship assuming standard naming if it were to exist, or just leave it.
-    // Given the prompt didn't ask for CostCenter model, I'll leave the relationship method but maybe comment it if I'm unsure, 
-    // but usually it's safe to add.
     /*
     public function costCenter(): BelongsTo
     {

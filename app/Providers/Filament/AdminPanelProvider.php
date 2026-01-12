@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Clusters\AccountantCluster;
 use App\Filament\Clusters\AreaManagementCluster;
+use App\Filament\Clusters\CashBoxAndBank\CashBoxAndBankCluster;
 use App\Filament\Clusters\FinancialReportsCluster;
 use App\Filament\Clusters\FinanceFormattingCluster;
 use App\Filament\Clusters\FinanceFormattingCluster\Resources\Accounts\AccountResource;
@@ -155,6 +156,7 @@ class AdminPanelProvider extends PanelProvider
                 $group[] =   NavigationGroup::make(__('menu.accounting_system'))
                     ->items(array_merge(
                         // FinanceFormattingCluster::getNavigationItems(),
+                        CashBoxAndBankCluster::getNavigationItems(),
                         CurrencyResource::getNavigationItems(),
                         AccountResource::getNavigationItems(),
                         JournalEntryResource::getNavigationItems(),

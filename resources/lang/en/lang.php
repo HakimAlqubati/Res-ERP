@@ -69,6 +69,33 @@ return [
     'base_currency_help'                            => 'The base currency is the system\'s reference currency. Only one base currency can be set.',
     'exchange_rate_help'                            => 'Exchange rate against the base currency (1.00 for base currency)',
     'us_dollar'                                     => 'US Dollar',
+    'cash_box_and_bank_cluster'                     => 'Cash & Banks',
+
+    // ===========================================
+    // Bank Accounts
+    // ===========================================
+    'bank_account_name'                             => 'Bank Account Name',
+    'bank_account_name_placeholder'                 => 'e.g., Al-Rajhi Corporate Account',
+    'bank_account_info'                             => 'Bank Account Information',
+    'iban'                                          => 'IBAN',
+    'gl_control_account'                            => 'GL Control Account',
+    'gl_account'                                    => 'GL Account',
+    'gl_account_help'                               => 'The account in the Chart of Accounts that this bank account links to (e.g., Cash at Banks)',
+    'copied'                                        => 'Copied',
+
+    // ===========================================
+    // Cash Boxes
+    // ===========================================
+    'cash_box_name'                                 => 'Cash Box Name',
+    'cash_box_name_placeholder'                     => 'e.g., Main Showroom Fund',
+    'cash_box_info'                                 => 'Cash Box Information',
+    'keeper'                                        => 'Keeper',
+    'keeper_help'                                   => 'Employee responsible for this cash box',
+    'max_limit'                                     => 'Max Limit',
+    'max_limit_help'                                => 'Maximum allowed balance in this cash box (0 = no limit)',
+    'no_limit'                                      => 'No Limit',
+    'account_number'                                => 'Account Number',
+    'is_active'                                     => 'Active',
     'purchase_invoice_details'                    => 'Supplier invoice details',
     'purchase_invoice_report'                     => 'Purchasing',
     'export_pdf'                                  => 'Export PDF',
@@ -1026,4 +1053,5 @@ return [
     'debit' => 'Debit',
     'credit' => 'Credit',
     'line_description' => 'Line Description',
+    'currency' => 'Currency',
 ];
