@@ -35,4 +35,7 @@ return [
     // Cannot auto-checkin near shift end
     'cannot_auto_checkin_near_shift_end' => 'Cannot auto-checkin near shift end without prior records. Please manually select the operation type (checkin/checkout).',
 
+    // Duplicate timestamp
+    'duplicate_timestamp_not_allowed' => 'Please wait :seconds before recording again.',
+
 ];
