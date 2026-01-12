@@ -28,4 +28,7 @@ return [
     'system_settings' => 'إعدادات النظام',
     'tenants' => 'المستأجرين',
     'app_logs' => 'سجلات التطبيق',
+
+    'finance_formatting' => 'المعاملات المالية',
+    'accounting_system' => 'النظام المحاسبي',
 ];

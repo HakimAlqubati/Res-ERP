@@ -28,4 +28,7 @@ return [
     'system_settings' => 'System Settings',
     'tenants' => 'Tenants',
     'app_logs' => 'App Logs',
+
+    'finance_formatting' => 'Accounts',
+    'accounting_system' => 'Accounting System',
 ];

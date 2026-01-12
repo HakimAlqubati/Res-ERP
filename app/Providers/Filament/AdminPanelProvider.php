@@ -5,6 +5,8 @@ namespace App\Providers\Filament;
 use App\Filament\Clusters\AccountantCluster;
 use App\Filament\Clusters\AreaManagementCluster;
 use App\Filament\Clusters\FinancialReportsCluster;
+use App\Filament\Clusters\FinanceFormattingCluster;
+use App\Filament\Clusters\FinanceFormattingCluster\Resources\Accounts\AccountResource;
 use App\Filament\Clusters\HRApplicationsCluster;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource;
 use App\Filament\Clusters\HRAttenanceCluster;
@@ -45,6 +47,8 @@ use App\Filament\Resources\ApprovalResource;
 use App\Filament\Resources\BranchResource;
 use App\Filament\Resources\FinancialCategories\FinancialCategoryResource;
 use App\Filament\Resources\FinancialTransactions\FinancialTransactionResource;
+use App\Filament\Resources\Currencies\CurrencyResource;
+use App\Filament\Resources\JournalEntries\JournalEntryResource;
 use App\Filament\Resources\MonthClosureResource;
 use App\Filament\Resources\ProductResource;
 use App\Filament\Resources\SettingResource;
@@ -148,6 +152,14 @@ class AdminPanelProvider extends PanelProvider
                         ));
                 }
 
+                $group[] =   NavigationGroup::make(__('menu.accounting_system'))
+                    ->items(array_merge(
+                        // FinanceFormattingCluster::getNavigationItems(),
+                        CurrencyResource::getNavigationItems(),
+                        AccountResource::getNavigationItems(),
+                        JournalEntryResource::getNavigationItems(),
+                    ));
+
                 $group =  array_merge(
                     $group,
                     [
@@ -224,7 +236,8 @@ class AdminPanelProvider extends PanelProvider
                         NavigationGroup::make('AppLogs')
                             ->items(array_merge(
                                 AppLogResource::getNavigationItems()
-                            ))
+                            )),
+
                     ]
                 );
                 $menu =  $builder->items([

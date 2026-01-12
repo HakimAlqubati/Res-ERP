@@ -992,4 +992,8 @@ return [
   'financial_category' => 'الفئة المالية',
   'select_to_create_financial_transaction' => 'اختر لإنشاء معاملة مالية',
   'status_already_changed_recently' => 'تم تغيير هذه الحالة مؤخراً. يرجى الانتظار قبل المحاولة مرة أخرى.',
+  'account' => 'الحساب',
+  'debit' => 'مدين',
+  'credit' => 'دائن',
+  'line_description' => 'وصف القيد',
 ];
