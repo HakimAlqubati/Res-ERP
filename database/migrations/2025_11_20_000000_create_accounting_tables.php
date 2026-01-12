@@ -16,7 +16,8 @@ return new class extends Migration
             $table->string('currency_code'); // USD, SAR
             $table->string('currency_name'); // Saudi Riyal
             $table->string('symbol'); // ﷼
-            $table->boolean('is_default')->default(false);
+            $table->boolean('is_base')->default(false);
+            $table->decimal('exchange_rate', 12, 6)->default(1.000000); // سعر الصرف مقابل العملة الأساسية
             $table->timestamps();
             $table->softDeletes();
         });
@@ -44,6 +45,8 @@ return new class extends Migration
             $table->integer('branch_id')->nullable(); // Optional
             $table->enum('status', ['draft', 'posted'])->default('draft');
             $table->foreignId('currency_id')->nullable()->constrained('acc_currencies')->nullOnDelete();
+            $table->decimal('exchange_rate', 18, 6);
+            $table->string('entry_number')->unique();
             $table->timestamps();
             $table->softDeletes();
         });
@@ -52,8 +55,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('journal_entry_id')->constrained('acc_journal_entries')->cascadeOnDelete();
             $table->foreignId('account_id')->constrained('acc_accounts')->cascadeOnDelete();
-            $table->decimal('debit', 18, 2)->default(0);
-            $table->decimal('credit', 18, 2)->default(0);
+            $table->decimal('debit', 20, 4)->default(0);
+            $table->decimal('credit', 20, 4)->default(0);
+            $table->decimal('debit_foreign', 20, 4)->default(0);
+            $table->decimal('credit_foreign', 20, 4)->default(0);
             $table->integer('cost_center_id')->nullable(); // Optional
             $table->integer('branch_id')->nullable(); // Optional
             $table->string('line_description')->nullable();

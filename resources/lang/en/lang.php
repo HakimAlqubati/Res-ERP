@@ -53,10 +53,22 @@ return [
     'supplier'                                    => 'Supplier',
     'store'                                       => 'Store',
     'description'                                 => 'Description',
-    'product'                                     => 'Product',
-    'unit'                                        => 'Unit',
-    'price'                                       => 'Price',
-    'quantity'                                    => 'Quantity',
+    'account'                                       => 'Account',
+    'debit'                                         => 'Debit',
+    'credit'                                        => 'Credit',
+    'line_description'                              => 'Line Description',
+
+    // ===========================================
+    // Currency Management
+    // ===========================================
+    'currency_code'                                 => 'Currency Code',
+    'currency_name'                                 => 'Currency Name',
+    'currency_symbol'                               => 'Symbol',
+    'exchange_rate'                                 => 'Exchange Rate',
+    'is_base_currency'                              => 'Base Currency',
+    'base_currency_help'                            => 'The base currency is the system\'s reference currency. Only one base currency can be set.',
+    'exchange_rate_help'                            => 'Exchange rate against the base currency (1.00 for base currency)',
+    'us_dollar'                                     => 'US Dollar',
     'purchase_invoice_details'                    => 'Supplier invoice details',
     'purchase_invoice_report'                     => 'Purchasing',
     'export_pdf'                                  => 'Export PDF',

@@ -18,14 +18,18 @@ class JournalEntryLine extends Model
         'account_id',
         'debit',
         'credit',
+        'debit_foreign',
+        'credit_foreign',
         'cost_center_id',
         'branch_id',
         'line_description',
     ];
 
     protected $casts = [
-        'debit' => 'decimal:2',
-        'credit' => 'decimal:2',
+        'debit' => 'decimal:4',
+        'credit' => 'decimal:4',
+        'debit_foreign' => 'decimal:4',
+        'credit_foreign' => 'decimal:4',
     ];
 
     public function journalEntry(): BelongsTo
@@ -43,7 +47,7 @@ class JournalEntryLine extends Model
     {
         return $this->belongsTo(Branch::class, 'branch_id');
     }
-    
+
     // Assuming CostCenter model exists (not created in this task, but referenced in migration)
     // If it doesn't exist yet, I'll comment it out or assume it might be created later.
     // For now, I will add the relationship assuming standard naming if it were to exist, or just leave it.

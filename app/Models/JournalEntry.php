@@ -26,10 +26,13 @@ class JournalEntry extends Model
         'branch_id',
         'status',
         'currency_id',
+        'exchange_rate',
+        'entry_number',
     ];
 
     protected $casts = [
         'entry_date' => 'date',
+        'exchange_rate' => 'decimal:6',
     ];
 
     public function lines(): HasMany
@@ -46,5 +49,27 @@ class JournalEntry extends Model
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class, 'branch_id');
+    }
+
+    /**
+     * Boot method to protect posted entries from modification
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Prevent updating posted entries
+        static::updating(function ($entry) {
+            if ($entry->getOriginal('status') === self::STATUS_POSTED) {
+                throw new \Exception('Cannot update a posted journal entry. Please reverse it first.');
+            }
+        });
+
+        // Prevent deleting posted entries
+        static::deleting(function ($entry) {
+            if ($entry->status === self::STATUS_POSTED) {
+                throw new \Exception('Cannot delete a posted journal entry. Please reverse it first.');
+            }
+        });
     }
 }
