@@ -31,7 +31,7 @@ class JournalEntriesTableSeeder extends Seeder
         }
 
         $currencyId = null;
-        $branchId = 1; // افتراض وجود فرع رقم 1
+        $branchId = 7; // افتراض وجود فرع رقم 1
 
         DB::transaction(function () use ($accounts, $currencyId, $branchId) {
 

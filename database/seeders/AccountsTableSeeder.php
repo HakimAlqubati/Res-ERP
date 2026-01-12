@@ -189,48 +189,48 @@ class AccountsTableSeeder extends Seeder
         // 5 Bank Accounts
         // ==========================================
         BankAccount::create([
-            'name' => 'Al-Rajhi Corporate - الراجحي التجاري',
-            'account_number' => '123456789',
-            'iban' => 'SA0380000000123456789012',
+            'name' => 'Alkuraimi Islamic Bank - بنك الكريمي الإسلامي',
+            'account_number' => '1001234567',
+            'iban' => 'YE01KRBK0001234567890123',
             'currency_id' => $yer->id,
             'gl_account_id' => $bankAccount->id,
             'is_active' => true,
         ]);
 
         BankAccount::create([
-            'name' => 'SNB Business - الأهلي التجاري',
-            'account_number' => '987654321',
-            'iban' => 'SA1010000000987654321098',
+            'name' => 'Yemen International Bank - بنك اليمن الدولي',
+            'account_number' => '2009876543',
+            'iban' => 'YE02YIBS0009876543210987',
             'currency_id' => $yer->id,
             'gl_account_id' => $bankAccount->id,
             'is_active' => true,
         ]);
 
         BankAccount::create([
-            'name' => 'CAC USD Account - بنك القاهرة دولار',
-            'account_number' => 'USD-456789',
-            'iban' => null,
+            'name' => 'Tadhamon International Bank - بنك التضامن الدولي',
+            'account_number' => '3005551234',
+            'iban' => 'YE03TIBS0005551234567890',
+            'currency_id' => $yer->id,
+            'gl_account_id' => $bankAccount->id,
+            'is_active' => true,
+        ]);
+
+        BankAccount::create([
+            'name' => 'CAC Bank Yemen - بنك الكريدي أجريكول',
+            'account_number' => '4007778888',
+            'iban' => 'YE04CACB0007778888999000',
             'currency_id' => $usd ? $usd->id : $yer->id,
             'gl_account_id' => $bankAccount->id,
             'is_active' => true,
         ]);
 
         BankAccount::create([
-            'name' => 'Yemen Bank Savings - توفير اليمن',
-            'account_number' => '111222333',
-            'iban' => null,
+            'name' => 'Taiz Commercial Bank - بنك تعز التجاري',
+            'account_number' => '5003334444',
+            'iban' => 'YE05TCBS0003334444555666',
             'currency_id' => $yer->id,
             'gl_account_id' => $bankAccount->id,
             'is_active' => true,
-        ]);
-
-        BankAccount::create([
-            'name' => 'SAR Reserve - احتياطي ريال سعودي',
-            'account_number' => 'SAR-789456',
-            'iban' => 'SA5550000000789456123456',
-            'currency_id' => $sar ? $sar->id : $yer->id,
-            'gl_account_id' => $bankAccount->id,
-            'is_active' => false,
         ]);
 
         // ==========================================

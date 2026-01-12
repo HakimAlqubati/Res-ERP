@@ -1036,4 +1036,5 @@ return [
   'account_number' => 'رقم الحساب',
   'is_active' => 'نشط',
   'currency' => 'العملة',
+  'accounting_reports_cluster' => 'التقارير المحاسبية',
 ];

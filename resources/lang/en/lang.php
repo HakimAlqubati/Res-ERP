@@ -1054,4 +1054,5 @@ return [
     'credit' => 'Credit',
     'line_description' => 'Line Description',
     'currency' => 'Currency',
+    'accounting_reports_cluster' => 'Accounting Reports',
 ];
