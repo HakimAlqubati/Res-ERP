@@ -1037,4 +1037,22 @@ return [
   'is_active' => 'نشط',
   'currency' => 'العملة',
   'accounting_reports_cluster' => 'التقارير المحاسبية',
+
+  // Trial Balance
+  'trial_balance' => 'ميزان المراجعة',
+  'trial_balance_report' => 'تقرير ميزان المراجعة',
+  'show_zero_balances' => 'إظهار الأرصدة الصفرية',
+  'total_debit' => 'إجمالي المدين',
+  'total_credit' => 'إجمالي الدائن',
+  'report_is_balanced' => 'التقرير متوازن',
+  'report_out_of_balance' => 'التقرير غير متوازن',
+  'difference' => 'الفرق',
+  'all_account_types' => 'جميع أنواع الحسابات',
+  'assets' => 'الأصول',
+  'liabilities' => 'الخصوم',
+  'equity' => 'حقوق الملكية',
+  'expenses' => 'المصروفات',
+  'please_select_filters_to_generate_report' => 'الرجاء اختيار الفلاتر لإنشاء التقرير',
+  'total_accounts' => 'إجمالي الحسابات',
+  'generated_on' => 'تم إنشاؤه في',
 ];

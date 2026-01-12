@@ -1055,4 +1055,22 @@ return [
     'line_description' => 'Line Description',
     'currency' => 'Currency',
     'accounting_reports_cluster' => 'Accounting Reports',
+
+    // Trial Balance
+    'trial_balance' => 'Trial Balance',
+    'trial_balance_report' => 'Trial Balance Report',
+    'show_zero_balances' => 'Show Zero Balances',
+    'total_debit' => 'Total Debit',
+    'total_credit' => 'Total Credit',
+    'report_is_balanced' => 'Report is Balanced',
+    'report_out_of_balance' => 'Report Out of Balance',
+    'difference' => 'Difference',
+    'all_account_types' => 'All Account Types',
+    'assets' => 'Assets',
+    'liabilities' => 'Liabilities',
+    'equity' => 'Equity',
+    'expenses' => 'Expenses',
+    'please_select_filters_to_generate_report' => 'Please select filters to generate the report',
+    'total_accounts' => 'Total Accounts',
+    'generated_on' => 'Generated on',
 ];

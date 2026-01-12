@@ -3,6 +3,8 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Clusters\AccountantCluster;
+use App\Filament\Clusters\AccountingReports\AccountingReportsCluster;
+use App\Filament\Clusters\AccountingReports\Resources\TrialBalanceResource;
 use App\Filament\Clusters\AreaManagementCluster;
 use App\Filament\Clusters\CashBoxAndBank\CashBoxAndBankCluster;
 use App\Filament\Clusters\FinancialReportsCluster;
@@ -160,6 +162,7 @@ class AdminPanelProvider extends PanelProvider
                         CurrencyResource::getNavigationItems(),
                         AccountResource::getNavigationItems(),
                         JournalEntryResource::getNavigationItems(),
+                        AccountingReportsCluster::getNavigationItems(),
                     ));
 
                 $group =  array_merge(
