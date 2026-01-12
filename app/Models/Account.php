@@ -38,6 +38,33 @@ class Account extends Model
         'allow_manual_entries' => 'boolean',
     ];
 
+    /**
+     * Get account types with bilingual labels
+     * 
+     * @return array<string, string>
+     */
+    public static function getAccountTypes(): array
+    {
+        return [
+            self::TYPE_ASSET => 'أصول - Assets',
+            self::TYPE_LIABILITY => 'التزامات - Liabilities',
+            self::TYPE_EQUITY => 'حقوق الملكية - Equity',
+            self::TYPE_REVENUE => 'إيرادات - Revenue',
+            self::TYPE_EXPENSE => 'مصروفات - Expenses',
+        ];
+    }
+
+    /**
+     * Get account type label by key
+     * 
+     * @param string|null $type
+     * @return string
+     */
+    public static function getAccountTypeLabel(?string $type): string
+    {
+        return self::getAccountTypes()[$type] ?? $type ?? '';
+    }
+
     public function parent(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'parent_id');

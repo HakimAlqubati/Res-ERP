@@ -19,13 +19,7 @@ class AccountForm
                         \Filament\Forms\Components\TextInput::make('account_name')
                             ->required(),
                         \Filament\Forms\Components\Select::make('account_type')
-                            ->options([
-                                'asset' => 'Asset',
-                                'liability' => 'Liability',
-                                'equity' => 'Equity',
-                                'revenue' => 'Revenue',
-                                'expense' => 'Expense',
-                            ])
+                            ->options(\App\Models\Account::getAccountTypes())
                             ->required(),
                         \Filament\Forms\Components\Select::make('parent_id')
                             ->relationship('parent', 'account_name')

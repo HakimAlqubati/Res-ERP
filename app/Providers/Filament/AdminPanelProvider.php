@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Clusters\AreaManagementCluster;
 use App\Filament\Clusters\FinanceFormattingCluster;
+use App\Filament\Clusters\FinanceFormattingCluster\Resources\Accounts\AccountResource;
 use App\Filament\Clusters\HRApplicationsCluster;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource;
 use App\Filament\Clusters\HRAttenanceCluster;
@@ -42,6 +43,7 @@ use App\Filament\Pages\InventoryReportLinks;
 use App\Filament\Resources\AppLogs\AppLogResource;
 use App\Filament\Resources\ApprovalResource;
 use App\Filament\Resources\BranchResource;
+use App\Filament\Resources\Currencies\CurrencyResource;
 use App\Filament\Resources\JournalEntries\JournalEntryResource;
 use App\Filament\Resources\MonthClosureResource;
 use App\Filament\Resources\ProductResource;
@@ -148,7 +150,9 @@ class AdminPanelProvider extends PanelProvider
 
                 $group[] =   NavigationGroup::make(__('menu.accounting_system'))
                     ->items(array_merge(
-                        FinanceFormattingCluster::getNavigationItems(),
+                        // FinanceFormattingCluster::getNavigationItems(),
+                        CurrencyResource::getNavigationItems(),
+                        AccountResource::getNavigationItems(),
                         JournalEntryResource::getNavigationItems(),
                     ));
 

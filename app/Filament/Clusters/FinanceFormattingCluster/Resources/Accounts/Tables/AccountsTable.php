@@ -26,7 +26,8 @@ class AccountsTable
                     ->searchable()
                     ->sortable(),
                 \Filament\Tables\Columns\TextColumn::make('account_type')
-                    ->badge(),
+                    ->badge()
+                    ->formatStateUsing(fn($state) => \App\Models\Account::getAccountTypeLabel($state)),
                 \Filament\Tables\Columns\TextColumn::make('parent.account_name')
                     ->label('Parent Account'),
                 // \Filament\Tables\Columns\TextColumn::make('currency.currency_code')
@@ -39,20 +40,14 @@ class AccountsTable
             ->filters([
                 TrashedFilter::make(),
                 \Filament\Tables\Filters\SelectFilter::make('account_type')
-                    ->options([
-                        \App\Models\Account::TYPE_ASSET => 'Asset',
-                        \App\Models\Account::TYPE_LIABILITY => 'Liability',
-                        \App\Models\Account::TYPE_EQUITY => 'Equity',
-                        \App\Models\Account::TYPE_REVENUE => 'Revenue',
-                        \App\Models\Account::TYPE_EXPENSE => 'Expense',
-                    ]),
+                    ->options(\App\Models\Account::getAccountTypes()),
                 \Filament\Tables\Filters\SelectFilter::make('parent_id')
                     ->label('Parent Account')
                     ->relationship('parent', 'account_name')
                     ->searchable()
                     ->preload()
                     ->multiple(),
-                ],FiltersLayout::Modal)
+            ], FiltersLayout::Modal)
             ->recordActions([
                 EditAction::make(),
             ])

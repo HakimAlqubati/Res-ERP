@@ -22,11 +22,11 @@ class AccountResource extends Resource
 {
     protected static ?string $model = Account::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
 
-    protected static ?string $cluster = FinanceFormattingCluster::class;
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort                         = 1;
+    // protected static ?string $cluster = FinanceFormattingCluster::class;
+    // protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    // protected static ?int $navigationSort                         = 1;
     protected static ?string $recordTitleAttribute = 'account_name';
 
     public static function form(Schema $schema): Schema
