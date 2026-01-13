@@ -74,6 +74,7 @@ class UserDeviceForm
                             return $query->limit(100)->pluck('name', 'id')->toArray();
                         })
                         ->searchable()
+                        ->required()
                         ->preload()
                     // ->hiddenOn('create')
                     ,
