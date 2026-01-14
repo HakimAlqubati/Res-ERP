@@ -61,18 +61,20 @@ class EmployeeAttednaceReportResource extends Resource
                     ->label(__('lang.employee'))
                     ->options(function ($search = null) {
                         return Employee::query()
+                            ->select('id', 'name')
                             ->where('active', 1)
                             ->forBranchManager()
                             // ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
-                            ->limit(20)
+                            ->limit(10)
                             ->get()
                             ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
                     })
                     ->getSearchResultsUsing(function ($search = null) {
                         return Employee::query()
+                            ->select('id', 'name')
                             ->where('active', 1)
                             ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
-                            ->limit(20)
+                            ->limit(10)
                             ->get()
                             ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
                     })
