@@ -6,6 +6,8 @@ use Filament\Pages\Enums\SubNavigationPosition;
 use App\Filament\Resources\InVSReportResource\Pages\ListInVSReport;
 use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Resources\InVSReportResource\Pages;
+use App\Models\Category;
+use App\Models\Product;
 use App\Models\StockSupplyOrder;
 use App\Models\Store;
 use Carbon\Carbon;
@@ -69,7 +71,41 @@ class InVSReportResource extends Resource
                         return $q;
                     })->options(
                         Store::active()->get()->pluck('name', 'id')->toArray()
-                    )
+                    ),
+                SelectFilter::make("category_id")
+                    ->label(__('lang.category'))->searchable()
+                    ->query(function (Builder $q, $data) {
+                        return $q;
+                    })->options(Category::limit(10)
+                    // ->where('')
+                    ->active()->get()->pluck('name', 'id')),
+                SelectFilter::make("product_id")
+                    ->label(__('lang.product'))->searchable()
+                    // ->default($productIds)
+                    ->query(function (Builder $q, $data) {
+                        return $q;
+                    })->getSearchResultsUsing(function (string $search): array {
+                        return Product::query()
+                            ->where(function ($query) use ($search) {
+                                $query->where('name', 'like', "%{$search}%")
+                                    ->orWhere('code', 'like', "%{$search}%");
+                            })
+                            ->limit(10)
+                            ->get()
+                            ->mapWithKeys(fn($product) => [
+                                $product->id => "{$product->code} - {$product->name}"
+                            ])
+                            ->toArray();
+                    })
+                    ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
+                    ->options(function () {
+                        return Product::where('active', 1)
+                            ->limit(10)
+                            ->get()
+                            ->mapWithKeys(fn($product) => [
+                                $product->id => "{$product->code} - {$product->name}"
+                            ]);
+                    })->multiple(),
 
             ], FiltersLayout::AboveContent);
     }
