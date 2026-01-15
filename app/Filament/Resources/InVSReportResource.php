@@ -76,9 +76,9 @@ class InVSReportResource extends Resource
                     ->label(__('lang.category'))->searchable()
                     ->query(function (Builder $q, $data) {
                         return $q;
-                    })->options(Category::limit(10)
-                    // ->where('')
-                    ->active()->get()->pluck('name', 'id')),
+                    })->options(Category::query()
+                        // ->where('')
+                        ->active()->get()->pluck('name', 'id')),
                 SelectFilter::make("product_id")
                     ->label(__('lang.product'))->searchable()
                     // ->default($productIds)
