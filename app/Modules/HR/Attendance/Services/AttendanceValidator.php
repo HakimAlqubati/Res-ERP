@@ -10,6 +10,7 @@ use App\Modules\HR\Attendance\Exceptions\AttendanceCompletedException;
 use App\Modules\HR\Attendance\Exceptions\DuplicateCheckInException;
 use App\Modules\HR\Attendance\Exceptions\DuplicateTimestampException;
 use App\Modules\HR\Attendance\Exceptions\MissingCheckInException;
+use App\Modules\HR\Attendance\Exceptions\MultipleShiftsException;
 use App\Modules\HR\Attendance\Exceptions\TypeRequiredException;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -36,10 +37,10 @@ class AttendanceValidator
      * @throws MissingCheckInException
      * @throws TypeRequiredException
      */
-    public function validate(Employee $employee, Carbon $requestTime, ?string $requestType = null): void
+    public function validate(Employee $employee, Carbon $requestTime, ?string $requestType = null, ?int $periodId = null): void
     {
         // 1. تحديد الشيفت والسجلات
-        $context = $this->prepareValidationContext($employee, $requestTime);
+        $context = $this->prepareValidationContext($employee, $requestTime, $periodId);
 
         // 2. تطبيق قواعد التحقق بالترتيب
 
@@ -55,7 +56,11 @@ class AttendanceValidator
         // القاعدة 3: منع الخروج بدون دخول → رفض check-out بدون check-in
         $this->validateMissingCheckIn($requestType, $context);
 
-        // القاعدة 4: طلب تحديد النوع قرب نهاية الشيفت → يتطلب type عند الغموض
+
+        // القاعدة 4: التحقق من الورديات المتداخلة → يتطلب اختيار الوردية (قبل التحقق من نهاية الشيفت)
+        $this->validateOverlappingShifts($employee, $requestTime, $context, $periodId);
+
+        // القاعدة 5: طلب تحديد النوع قرب نهاية الشيفت → يتطلب type عند الغموض
         $this->validateNearShiftEndWithoutRecords($requestType, $context, $requestTime);
     }
 
@@ -66,10 +71,10 @@ class AttendanceValidator
     /**
      * تحضير معلومات السياق اللازمة للتحقق
      */
-    private function prepareValidationContext(Employee $employee, Carbon $requestTime): object
+    private function prepareValidationContext(Employee $employee, Carbon $requestTime, ?int $periodId = null): object
     {
-        // تحديد الوردية
-        $shiftInfo = $this->shiftResolver->resolve($employee, $requestTime, $this->repository);
+        // تحديد الوردية (مع تمرير period_id إذا كان محدداً صراحةً)
+        $shiftInfo = $this->shiftResolver->resolve($employee, $requestTime, $this->repository, $periodId);
         $date = $shiftInfo?->date ?? $requestTime->toDateString();
         $periodId = $shiftInfo?->getPeriodId();
 
@@ -222,5 +227,109 @@ class AttendanceValidator
         }
 
         return $totalSeconds . ' ' . __('notifications.second');
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // القاعدة 5: التحقق من الورديات المتداخلة
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * التحقق من وجود ورديات متداخلة تتطلب اختيار المستخدم
+     * 
+     * الشروط:
+     * - أكثر من وردية تطابق النافذة الزمنية
+     * - لا يوجد أي سجل للموظف في أي من الورديات
+     * - الوقت في منطقة الفجوة (بين نهاية الأولى وبداية الثانية)
+     * 
+     * @throws MultipleShiftsException
+     */
+    private function validateOverlappingShifts(
+        Employee $employee,
+        Carbon $requestTime,
+        object $context,
+        ?int $periodId
+    ): void {
+        // إذا تم تحديد period_id صراحةً، لا حاجة للتحقق
+        if ($periodId !== null) {
+            return;
+        }
+
+        // إذا يوجد أي سجل، لا حاجة للتحقق (الوردية محددة)
+        if ($context->hasAnyCheckIn || $context->hasAnyCheckOut) {
+            return;
+        }
+
+        // جلب جميع الورديات المطابقة
+        $matchingShifts = $this->shiftResolver->getMatchingShifts($employee, $requestTime);
+
+        // إذا وردية واحدة فقط أو أقل، لا تداخل
+        if ($matchingShifts->count() <= 1) {
+            return;
+        }
+
+        // التحقق: هل الوقت في منطقة الفجوة بين الورديتين؟
+        if ($this->isTimeInGapZone($matchingShifts, $requestTime)) {
+            throw new MultipleShiftsException(
+                $this->buildShiftOptions($matchingShifts, $requestTime)
+            );
+        }
+    }
+
+    /**
+     * التحقق: هل الوقت في منطقة الفجوة بين الورديتين؟
+     * (بعد أو عند نهاية الأولى وقبل بداية الثانية)
+     */
+    private function isTimeInGapZone(Collection $matchingShifts, Carbon $requestTime): bool
+    {
+        // ترتيب الورديات حسب وقت البداية
+        $sorted = $matchingShifts->sortBy(fn($m) => $m['bounds']['start']);
+        $shifts = $sorted->values();
+
+        // الحصول على نهاية الأولى وبداية الثانية
+        $firstEnd = $shifts[0]['bounds']['end'];
+        $secondStart = $shifts[1]['bounds']['start'];
+
+        // الوقت في الفجوة: >= نهاية الأولى و < بداية الثانية
+        return $requestTime->gte($firstEnd) && $requestTime->lt($secondStart);
+    }
+
+    /**
+     * بناء قائمة خيارات الورديات للـ exception
+     */
+    private function buildShiftOptions(Collection $matchingShifts, Carbon $requestTime): Collection
+    {
+        return $matchingShifts->map(function ($match) use ($requestTime) {
+            $period = $match['candidate']['period'];
+            $bounds = $match['bounds'];
+
+            // حساب حالة الوردية بالنسبة للوقت
+            $status = $this->getShiftStatus($bounds, $requestTime);
+
+            return [
+                'period_id' => $period->id,
+                'name' => $period->name ?? __('notifications.shift'),
+                'start' => $bounds['start']->format('H:i'),
+                'end' => $bounds['end']->format('H:i'),
+                'status' => $status,
+            ];
+        });
+    }
+
+    /**
+     * وصف حالة الوردية بالنسبة للوقت الحالي
+     */
+    private function getShiftStatus(array $bounds, Carbon $requestTime): string
+    {
+        if ($requestTime->lt($bounds['start'])) {
+            $diff = $requestTime->diffInMinutes($bounds['start']);
+            return __('notifications.starts_in_minutes', ['minutes' => $diff]);
+        }
+
+        if ($requestTime->gte($bounds['end'])) {
+            $diff = $requestTime->diffInMinutes($bounds['end']);
+            return __('notifications.ended_minutes_ago', ['minutes' => $diff]);
+        }
+
+        return __('notifications.currently_active');
     }
 }

@@ -65,6 +65,24 @@ class ShiftResolver implements ShiftResolverInterface
     }
 
     /**
+     * جلب جميع الورديات المطابقة للنافذة الزمنية
+     * 
+     * @param Employee $employee الموظف
+     * @param Carbon $time الوقت المطلوب
+     * @return Collection قائمة الورديات المطابقة (كل عنصر يحتوي على candidate و bounds)
+     */
+    public function getMatchingShifts(Employee $employee, Carbon $time): Collection
+    {
+        $candidates = $this->getCandidatePeriods($employee, $time);
+
+        if ($candidates->isEmpty()) {
+            return collect();
+        }
+
+        return $this->getAllMatchingShifts($candidates, $time);
+    }
+
+    /**
      * جمع جميع الشيفتات التي يقع الوقت ضمن نافذتها
      */
     private function getAllMatchingShifts(Collection $candidates, Carbon $time): Collection

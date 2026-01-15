@@ -46,4 +46,11 @@ return [
     // رسالة عند محاولة التسجيل في نفس اللحظة بالضبط
     'duplicate_timestamp_not_allowed' => 'يرجى الانتظار :seconds قبل التسجيل مرة أخرى.',
 
+    // رسائل الورديات المتعددة
+    'multiple_shifts_available' => 'يوجد أكثر من وردية متاحة. يرجى اختيار الوردية المطلوبة.',
+    'shift' => 'الوردية',
+    'starts_in_minutes' => 'تبدأ بعد :minutes دقيقة',
+    'ended_minutes_ago' => 'انتهت منذ :minutes دقيقة',
+    'currently_active' => 'جارية حالياً',
+
 ];
