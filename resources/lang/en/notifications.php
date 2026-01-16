@@ -38,4 +38,11 @@ return [
     // Duplicate timestamp
     'duplicate_timestamp_not_allowed' => 'Please wait :seconds before recording again.',
 
+    // Multiple shifts available
+    'multiple_shifts_available' => 'Multiple shifts are available. Please select the desired shift.',
+    'shift' => 'Shift',
+    'starts_in_minutes' => 'Starts in :minutes minutes',
+    'ended_minutes_ago' => 'Ended :minutes minutes ago',
+    'currently_active' => 'Currently active',
+
 ];

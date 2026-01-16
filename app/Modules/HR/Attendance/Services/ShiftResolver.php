@@ -65,6 +65,24 @@ class ShiftResolver implements ShiftResolverInterface
     }
 
     /**
+     * جلب جميع الورديات المطابقة للنافذة الزمنية
+     * 
+     * @param Employee $employee الموظف
+     * @param Carbon $time الوقت المطلوب
+     * @return Collection قائمة الورديات المطابقة (كل عنصر يحتوي على candidate و bounds)
+     */
+    public function getMatchingShifts(Employee $employee, Carbon $time): Collection
+    {
+        $candidates = $this->getCandidatePeriods($employee, $time);
+
+        if ($candidates->isEmpty()) {
+            return collect();
+        }
+
+        return $this->getAllMatchingShifts($candidates, $time);
+    }
+
+    /**
      * جمع جميع الشيفتات التي يقع الوقت ضمن نافذتها
      */
     private function getAllMatchingShifts(Collection $candidates, Carbon $time): Collection
@@ -134,14 +152,21 @@ class ShiftResolver implements ShiftResolverInterface
      * حساب النقاط للشيفت بناءً على منطق بسيط
      * 
      * المنطق:
+     * - آخر سجل check-in = جاري (0) - الأولوية الأولى
+     * - لا توجد سجلات + الوردية لم تنته = جديد (1)
+     * - لا توجد سجلات + الوردية انتهت = متأخر جداً (500)
      * - آخر سجل check-out + انتهى وقت الشيفت = مقفل (1000)
-     * - آخر سجل check-in = جاري (0)
-     * - لا توجد سجلات = لم يبدأ (1)
      */
     private function calculateShiftScore($lastRecord, Carbon $shiftEnd, Carbon $requestTime): int
     {
-        // لا توجد سجلات = لم يبدأ
+        // لا توجد سجلات
         if (!$lastRecord) {
+            // التحقق: هل انتهت الوردية؟
+            if ($requestTime->gte($shiftEnd)) {
+                // الوقت الحالي بعد أو عند نهاية الشيفت = متأخر جداً
+                return 500;
+            }
+            // الوردية لم تنته بعد = جديد
             return 1;
         }
 
