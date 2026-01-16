@@ -69,7 +69,7 @@ return [
     'base_currency_help'                            => 'The base currency is the system\'s reference currency. Only one base currency can be set.',
     'exchange_rate_help'                            => 'Exchange rate against the base currency (1.00 for base currency)',
     'us_dollar'                                     => 'US Dollar',
-    'cash_box_and_bank_cluster'                     => 'Cash & Banks',
+    'cash_box_and_bank_cluster'                     => 'Cash Boxes & Banks',
 
     // ===========================================
     // Bank Accounts
