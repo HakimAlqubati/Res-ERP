@@ -12,6 +12,7 @@ class AccountForm
         return $schema
             ->components([
                 Section::make()->columnSpanFull()
+                    ->columns(4)
                     ->schema([
                         \Filament\Forms\Components\TextInput::make('account_code')
                             ->required()
@@ -25,16 +26,18 @@ class AccountForm
                             ->relationship('parent', 'account_name')
                             ->searchable()
                             ->preload(),
-                        \Filament\Forms\Components\Select::make('currency_id')
-                            ->relationship('currency', 'currency_code')
-                            ->searchable()
-                            ->preload(),
+                        // Hidden for now - currency feature disabled
+                        // \Filament\Forms\Components\Select::make('currency_id')
+                        //     ->relationship('currency', 'currency_code')
+                        //     ->searchable()
+                        //     ->preload(),
                         \Filament\Forms\Components\Toggle::make('is_active')
-                            ->default(true),
-                        \Filament\Forms\Components\Toggle::make('allow_manual_entries')
-                            ->default(true),
+                            ->default(true)->inline(false),
+                        // Hidden for now - allow_manual_entries feature disabled
+                        // \Filament\Forms\Components\Toggle::make('allow_manual_entries')
+                        //     ->default(true),
                         \Filament\Forms\Components\Toggle::make('is_parent')
-                            ->default(false),
+                            ->default(false)->inline(false),
                     ])
             ]);
     }

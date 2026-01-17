@@ -15,10 +15,13 @@ class ListAccounts extends ListRecords
     {
         return [
             \Filament\Actions\Action::make('tree')
-                ->label(__('عرض الشجرة'))
+                ->label(__('Show Tree'))
                 ->icon(Heroicon::OutlinedRectangleGroup)
                 ->color('success')
-                ->url(fn() => AccountResource::getUrl('tree')),
+                // ->url(fn() => AccountResource::getUrl('tree')),
+                ->url(fn() => route('accounting.test.tree'))
+                ->openUrlInNewTab()
+                ,
             CreateAction::make()->icon(Heroicon::OutlinedPlusCircle),
         ];
     }

@@ -39,8 +39,8 @@ class CashBoxForm
                                     ->label(__('lang.gl_control_account'))
                                     ->required()
                                     ->relationship('glAccount', 'account_name', function ($query) {
-                                        return $query->where('account_type', 'asset')
-                                            ->where('allow_manual_entries', true);
+                                        return $query->where('account_type', 'asset');
+                                        // ->where('allow_manual_entries', true); // Disabled for now
                                     })
                                     ->searchable()
                                     ->preload()

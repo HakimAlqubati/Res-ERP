@@ -30,7 +30,7 @@ class AccountsTableSeeder extends Seeder
         $this->seedCurrencies();
 
         // Get MYR currency id
-        $myr = Currency::where('currency_code', 'MYR')->first();
+        $myr = Currency::where('currency_code', 'MR')->first();
         $currencyId = $myr?->id; // may be null if something wrong
 
         // ==========================================
@@ -131,7 +131,7 @@ class AccountsTableSeeder extends Seeder
     private function seedCurrencies(): void
     {
         Currency::create([
-            'currency_code' => 'MYR',
+            'currency_code' => 'MR',
             'currency_name' => 'Malaysian Ringgit - رينغت ماليزي',
             'symbol'        => 'RM',
             'is_base'       => true,
@@ -144,7 +144,7 @@ class AccountsTableSeeder extends Seeder
      */
     private function seedBanksAndCashBoxes(): void
     {
-        $myr = Currency::where('currency_code', 'MYR')->first();
+        $myr = Currency::where('currency_code', 'MR')->first();
 
         // Get GL accounts
         $bankGlAccount = Account::where('account_code', '1103')->first();
@@ -162,7 +162,7 @@ class AccountsTableSeeder extends Seeder
         // ==========================================
         BankAccount::create([
             'name'           => 'Main Bank - البنك الرئيسي',
-            'account_number' => 'MYR-0001',
+            'account_number' => 'MR-0001',
             'iban'           => null, // اختياري
             'currency_id'    => $myr->id,
             'gl_account_id'  => $bankGlAccount->id,
