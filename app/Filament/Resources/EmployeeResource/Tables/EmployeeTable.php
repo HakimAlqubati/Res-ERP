@@ -65,7 +65,7 @@ class EmployeeTable
     public static function configure(Table $table): Table
 
     {
-        return $table->striped()->deferFilters(false)
+        return $table->striped()
             ->paginated([10, 25, 50, 100])
 
             ->defaultSort('id', 'desc')
@@ -100,15 +100,19 @@ class EmployeeTable
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
 
-                TextColumn::make('email')->icon('heroicon-m-envelope')->copyable()
-                    ->sortable()->searchable()->limit(20)->default('@')->tooltip(fn($state) => $state)
+                TextColumn::make('email')
+                    ->icon('heroicon-m-envelope')
+                    ->copyable()
+                    ->sortable()->searchable()->limit(20)
+                    ->default('@')->tooltip(fn($state) => $state)
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->searchable(isIndividual: false, isGlobal: true)
                     ->copyable()
                     ->copyMessage(__('lang.email_address_copied'))
                     ->copyMessageDuration(1500)
                     ->color('primary')
-                    ->weight(FontWeight::Bold),
+                // ->weight(FontWeight::Bold)
+                ,
                 TextColumn::make('phone_number')->label(__('lang.phone_number'))->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: false)->default('_')
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->copyable()
@@ -118,13 +122,13 @@ class EmployeeTable
                     ->weight(FontWeight::Bold),
                 TextColumn::make('join_date')->sortable()->label(__('lang.start_date'))
                     ->sortable()->searchable()
-                    ->toggleable(isToggledHiddenByDefault: false)
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: false),
                 TextColumn::make('salary')->sortable()->label(__('lang.salary'))
                     ->sortable()->searchable()
                     // ->money(fn(): string => getDefaultCurrency())
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
-                    ->toggleable(isToggledHiddenByDefault: false)
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: false)->alignCenter(true),
                 TextColumn::make('periodsCount')
                     ->default(0)
@@ -214,7 +218,7 @@ class EmployeeTable
                     ->falseIcon('heroicon-o-x-mark')
                     ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
 
-            ])->deferFilters(false)
+            ])->deferFilters(true)
             ->filters([
 
                 TrashedFilter::make()
@@ -237,7 +241,8 @@ class EmployeeTable
                     ->options(UserType::where('active', 1)->pluck('name', 'id')->toArray())
                     ->searchable()
                     ->multiple(),
-            ], FiltersLayout::AboveContent)
+            ], FiltersLayout::Modal)
+            ->filtersFormColumns(4)
             ->headerActions([
                 Action::make('export_employees')
                     ->label(__('lang.export_to_excel'))
@@ -298,29 +303,30 @@ class EmployeeTable
             ])
             ->recordActions([
 
-                Action::make('createUser')->button()
-                    ->label(__('lang.create_user'))
-                    ->icon('heroicon-o-user-plus')
-                    ->color('success')
-                    ->visible(fn($record) =>  !$record->has_user)
-                    ->form(fn($record) => EmployeeResource::createUserForm($record))
-                    ->action(function (array $data, $record) {
-                        $user = $record->createLinkedUser($data);
 
-                        if ($user) {
-                            Notification::make()
-                                ->title(__('lang.user_created'))
-                                ->body(__('lang.user_created_for') . " {$record->name}.")
-                                ->success()
-                                ->send();
-                        }
-                    }),
 
 
 
 
 
                 ActionGroup::make([
+                    Action::make('createUser')
+                        ->label(__('lang.create_user'))
+                        ->icon('heroicon-o-user-plus')
+                        ->color('success')
+                        ->visible(fn($record) =>  !$record->has_user)
+                        ->schema(fn($record) => EmployeeResource::createUserForm($record))
+                        ->action(function (array $data, $record) {
+                            $user = $record->createLinkedUser($data);
+
+                            if ($user) {
+                                Notification::make()
+                                    ->title(__('lang.user_created'))
+                                    ->body(__('lang.user_created_for') . " {$record->name}.")
+                                    ->success()
+                                    ->send();
+                            }
+                        }),
                     Action::make('index')
                         ->label(__('lang.aws_indexing'))
                         // ->button()
@@ -350,7 +356,7 @@ class EmployeeTable
                         ->icon('heroicon-o-camera')
                         ->color('secondary')
                         ->modalHeading(__('lang.edit_employee_avatar'))
-                        ->form([
+                        ->schema([
                             EmployeeResource::avatarUploadField(),
                         ])
                         ->action(function (array $data, $record) {
@@ -362,7 +368,7 @@ class EmployeeTable
                                 ->body(__('lang.avatar_updated_successfully'))
                                 ->success()
                                 ->send();
-                        })->hidden(),
+                        }),
                     Action::make('checkInstallments')->label(__('lang.check_advanced_installments'))->button()
                         // ->hidden()
                         ->color('info')
