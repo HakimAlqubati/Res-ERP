@@ -155,7 +155,7 @@ class AdminPanelProvider extends PanelProvider
                         ));
                 }
 
-                $group[] =   NavigationGroup::make(__('menu.accounting_system'))
+                $group[] =   NavigationGroup::make(__('menu.financial_system'))
                     ->items(array_merge(
                         // FinanceFormattingCluster::getNavigationItems(),
                         CashBoxAndBankCluster::getNavigationItems(),
@@ -168,7 +168,7 @@ class AdminPanelProvider extends PanelProvider
                 $group =  array_merge(
                     $group,
                     [
-                        NavigationGroup::make(__('menu.financial_system'))
+                        NavigationGroup::make(__('menu.financial_system'). ' '. 'OLD')
                             ->items(array_merge(
                                 (isSuperAdmin()) ? FinancialCategoryResource::getNavigationItems() : [],
                                 (isSuperAdmin()) ? FinancialTransactionResource::getNavigationItems() : [],

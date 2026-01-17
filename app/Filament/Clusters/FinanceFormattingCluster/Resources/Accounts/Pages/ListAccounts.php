@@ -14,6 +14,11 @@ class ListAccounts extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            \Filament\Actions\Action::make('tree')
+                ->label(__('عرض الشجرة'))
+                ->icon(Heroicon::OutlinedRectangleGroup)
+                ->color('success')
+                ->url(fn() => AccountResource::getUrl('tree')),
             CreateAction::make()->icon(Heroicon::OutlinedPlusCircle),
         ];
     }

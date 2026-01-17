@@ -7,6 +7,7 @@ use App\Filament\Clusters\FinanceFormattingCluster;
 use App\Filament\Clusters\FinanceFormattingCluster\Resources\Accounts\Pages\CreateAccount;
 use App\Filament\Clusters\FinanceFormattingCluster\Resources\Accounts\Pages\EditAccount;
 use App\Filament\Clusters\FinanceFormattingCluster\Resources\Accounts\Pages\ListAccounts;
+use App\Filament\Clusters\FinanceFormattingCluster\Resources\Accounts\Pages\TreeAccount;
 use App\Filament\Clusters\FinanceFormattingCluster\Resources\Accounts\Schemas\AccountForm;
 use App\Filament\Clusters\FinanceFormattingCluster\Resources\Accounts\Tables\AccountsTable;
 use BackedEnum;
@@ -50,6 +51,7 @@ class AccountResource extends Resource
     {
         return [
             'index' => ListAccounts::route('/'),
+            'tree' => TreeAccount::route('/tree'),
             'create' => CreateAccount::route('/create'),
             'edit' => EditAccount::route('/{record}/edit'),
         ];
