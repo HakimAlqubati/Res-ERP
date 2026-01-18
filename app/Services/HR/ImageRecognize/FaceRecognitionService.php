@@ -108,16 +108,21 @@ class FaceRecognitionService
 
         // ✅ 5) إنشاء سجل attendance_images_uploaded
         try {
-            // AttendanceImagesUploaded::create([
-            //     'img_url'     => $path,
-            //     'employee_id' => $employeeId,
-            //     'datetime'    => now(),
-            // ]);
+            AttendanceImagesUploaded::create([
+                'img_url'     => $path,
+                'employee_id' => $employeeId,
+                'datetime'    => now(),
+            ]);
         } catch (\Throwable $e) {
-            // Log::error('Failed to save uploaded attendance image', [
-            //     'error' => $e->getMessage(),
-            //     'path'  => $path,
-            // ]);
+            // AppLog::write(
+            //     'Failed to save uploaded attendance image',
+            //     AppLog::LEVEL_ERROR,
+            //     'FaceRecognition',
+            //     [
+            //         'error' => $e->getMessage(),
+            //         'path'  => $path,
+            //     ]
+            // );
         }
 
 
