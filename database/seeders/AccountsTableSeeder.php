@@ -64,7 +64,7 @@ class AccountsTableSeeder extends Seeder
 
         $currLiabilities = $this->createAccount('2100', 'Cur. Liab - خصوم متداولة', Account::TYPE_LIABILITY, $liabilities->id, $currencyId, true);
         $this->createAccount('2101', 'Suppliers - الموردين', Account::TYPE_LIABILITY, $currLiabilities->id, $currencyId);
-        $this->createAccount('2102', 'VAT Payable - ضريبة مستحقة', Account::TYPE_LIABILITY, $currLiabilities->id, $currencyId);
+        $this->createAccount('2102', 'SST Payable - ضريبة مستحقة', Account::TYPE_LIABILITY, $currLiabilities->id, $currencyId);
         $this->createAccount('2103', 'Accrued Exp - مصاريف مستحقة', Account::TYPE_LIABILITY, $currLiabilities->id, $currencyId);
 
         // ==========================================

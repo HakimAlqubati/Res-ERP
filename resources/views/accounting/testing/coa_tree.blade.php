@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" class="dark">
+<html lang="ar" dir="rtl">
 
 <head>
     <meta charset="UTF-8">
@@ -10,7 +10,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
@@ -26,7 +25,7 @@
     @livewireStyles
 </head>
 
-<body class="bg-[#0c0c0c] font-cairo text-[#e0e0e0] antialiased">
+<body class="bg-gray-50 font-cairo text-gray-800 antialiased">
     <div class="min-h-screen py-10 px-4">
         <div class="max-w-4xl mx-auto">
             <header class="text-center mb-10">
@@ -34,15 +33,14 @@
                     <span>📊</span>
                     <span>دليل الحسابات</span>
                 </h1>
-                <p class="mt-4 text-[#777] text-lg">إدارة وتصفح الشجرة المحاسبية بشكل تفاعلي</p>
             </header>
 
             <main>
                 @livewire('accounting::account-tree')
             </main>
 
-            <footer class="mt-12 text-center text-[#444] text-sm">
-                &copy; {{ date('Y') }} Workbench - نظام إدارة الموارد
+            <footer class="mt-12 text-center text-gray-400 text-sm">
+                &copy; {{ date('Y') }} Workbench
             </footer>
         </div>
     </div>
