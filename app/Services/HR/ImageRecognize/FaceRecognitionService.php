@@ -3,6 +3,7 @@
 namespace App\Services\HR\ImageRecognize;
 
 use App\DTOs\HR\ImageRecognize\EmployeeMatch;
+use App\Models\AppLog;
 use App\Models\AttendanceImagesUploaded;
 use Aws\Rekognition\RekognitionClient;
 use Illuminate\Http\UploadedFile;
@@ -47,6 +48,21 @@ class FaceRecognitionService
             'MaxFaces'           => (int) $this->config['max_faces'],
         ]);
 
+        // ✅ تسجيل معلومات البحث
+        AppLog::write(
+            'Face Recognition Search',
+            AppLog::LEVEL_INFO,
+            'FaceRecognition',
+            [
+                'collection_id'        => $collectionId,
+                'bucket'               => $bucket,
+                'image_path'           => $path,
+                'face_match_threshold' => $this->config['face_match_threshold'],
+                'max_faces'            => $this->config['max_faces'],
+                'matches_count'        => count($result['FaceMatches'] ?? []),
+                'raw_matches'          => $result['FaceMatches'] ?? [],
+            ]
+        );
 
         $matches = $result['FaceMatches'] ?? [];
         // dd($matches);   
