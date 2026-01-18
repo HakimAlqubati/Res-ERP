@@ -371,6 +371,7 @@ Route::get('/fixInventoryMovementDates', function () {
 
 Route::get('/testEnv', function () {
     // dd('sdf');
+    dd(\App\Models\Employee::where('avatar', 'like', '%v0wj67L8hG1pqXq%')->first());
     dd(env('APP_ENV'));
 });
 
