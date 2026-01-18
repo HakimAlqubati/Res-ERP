@@ -23,6 +23,8 @@ class AccountsTableSeeder extends Seeder
         DB::table('acc_currencies')->truncate();
         DB::table('acc_bank_accounts')->truncate();
         DB::table('acc_cash_boxes')->truncate();
+        DB::table('acc_journal_entries')->truncate();
+        DB::table('acc_journal_entry_lines')->truncate();
 
         DB::statement('SET FOREIGN_KEY_CHECKS = 1');
 
