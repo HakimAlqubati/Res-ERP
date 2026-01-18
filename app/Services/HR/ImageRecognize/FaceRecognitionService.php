@@ -83,6 +83,21 @@ class FaceRecognitionService
         // 4) ربط RekognitionId → DynamoDB → Employee
         [$name, $employeeId, $employee] = $this->repo->resolveByRekognitionId($rekognitionId);
 
+        // ✅ تسجيل نتيجة البحث في DynamoDB
+        AppLog::write(
+            'DynamoDB Employee Lookup',
+            AppLog::LEVEL_INFO,
+            'FaceRecognition',
+            [
+                'rekognition_id' => $rekognitionId,
+                'similarity'     => $similarity,
+                'confidence'     => $confidence,
+                'employee_name'  => $name,
+                'employee_id'    => $employeeId,
+                'employee_found' => $employee ? true : false,
+            ]
+        );
+
         if (!$employee) {
             return EmployeeMatch::notFound();
         }
