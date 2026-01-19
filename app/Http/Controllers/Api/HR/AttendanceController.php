@@ -40,6 +40,7 @@ class AttendanceController extends Controller
             'attendance_type' => 'nullable|string|in:rfid,request,webcam',
         ]);
 
+        dd('sf');
         // لازم واحد منهم يكون موجود
         if (empty($validated['rfid']) && empty($validated['employee_id'])) {
             return response()->json([
