@@ -52,6 +52,7 @@ class AttendanceController extends Controller
 
         return response()->json([
             'success'  => $result['success'],
+            'status'   => $result['success'],  // للتوافق مع الـ Frontend القديم
             'type_required' => $result['type_required'] ?? false,
             'message' => $result['message'],
             'data'    => $result['data'] ?? '',
