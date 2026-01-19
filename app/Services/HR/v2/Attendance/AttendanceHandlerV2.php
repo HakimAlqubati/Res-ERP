@@ -24,7 +24,7 @@ class AttendanceHandlerV2
             $this->storeRejectedRecord($ctx, __('notifications.you_dont_have_periods_today'));
 
             return [
-                'status' => false,
+                'success' => false,
                 'message' => __('notifications.you_dont_have_periods_today'),
             ];
         }
@@ -55,7 +55,7 @@ class AttendanceHandlerV2
         $this->updateDurations($record);
 
         return [
-            'status' => true,
+            'success' => true,
             'message' => $ctx->checkType == Attendance::CHECKTYPE_CHECKIN
                 ? __('notifications.check_in_success')
                 : __('notifications.check_out_success'),
