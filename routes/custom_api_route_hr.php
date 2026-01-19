@@ -218,6 +218,7 @@ Route::get('/face-data', function () {
     Route::post('/faceRecognition', [AttendanceController::class, 'identifyEmployeeFromImage']);
 });
 
+Route::post('/v2/attendance/test', [AttendanceController::class, 'store'])->middleware('auth:api');
 
 
 
