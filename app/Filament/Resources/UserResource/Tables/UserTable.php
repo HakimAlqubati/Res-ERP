@@ -97,13 +97,15 @@ class UserTable
 
 
                 TextColumn::make('branch.name')->searchable()->label('Branch')
-                    ->toggleable(isToggledHiddenByDefault: false),
-                TextColumn::make('owner.name')->searchable()->label('Manager')
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: false)->limit(20)
+                    ->tooltip(fn($state) => $state),
+                TextColumn::make('owner.name')->searchable()
+                    ->label('Manager')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('first_role.name')->label('Role')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('roles_title')->label('Roles')->limit(20)->tooltip(fn($state) => $state)
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('has_employee')->boolean()
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark')
