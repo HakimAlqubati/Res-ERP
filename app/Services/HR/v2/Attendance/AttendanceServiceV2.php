@@ -24,7 +24,7 @@ class AttendanceServiceV2
         $employee = $this->resolveEmployee($payload);
         if (!$employee) {
             return [
-                'status' => false,
+                'success' => false,
                 'message' => 'Employee not found.',
             ];
         }
@@ -40,7 +40,7 @@ class AttendanceServiceV2
                 : Carbon::now();
         } catch (\Carbon\Exceptions\InvalidFormatException $e) {
             return [
-                'status' => false,
+                'success' => false,
                 'message' => 'Invalid date format. Please use a valid date format like: Y-m-d H:i:s',
             ];
         }
@@ -56,7 +56,7 @@ class AttendanceServiceV2
             $this->storeRejectedAttendance($employee, $requestTime, $e->getMessage(), $payload);
 
             return [
-                'status' => false,
+                'success' => false,
                 'message' => $e->getMessage(),
                 'type_required' => true,
             ];
@@ -65,7 +65,7 @@ class AttendanceServiceV2
             $this->storeRejectedAttendance($employee, $requestTime, $e->getMessage(), $payload);
 
             return [
-                'status' => false,
+                'success' => false,
                 'message' => $e->getMessage(),
             ];
         }
@@ -85,7 +85,7 @@ class AttendanceServiceV2
             $this->storeRejectedAttendance($employee, $requestTime, 'Failed to acquire lock: ' . $e->getMessage(), $payload);
 
             return [
-                'status' => false,
+                'success' => false,
                 'message' => 'System busy, please try again.',
             ];
         }
