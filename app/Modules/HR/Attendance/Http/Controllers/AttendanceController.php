@@ -39,7 +39,7 @@ class AttendanceController extends Controller
         // لازم واحد منهم يكون موجود
         if (empty($validated['rfid']) && empty($validated['employee_id'])) {
             return response()->json([
-                'status' => false,
+                'success' => false,
                 'message' => 'Either rfid or employee_id is required.',
             ], 422);
         }

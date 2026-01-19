@@ -48,7 +48,7 @@ final readonly class AttendanceResultDTO
     public function toArray(): array
     {
         return [
-            'status' => $this->success,
+            'success' => $this->success,
             'message' => $this->message,
             'data' => $this->record,
             'type_required' => $this->typeRequired,
