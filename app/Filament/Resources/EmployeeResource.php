@@ -195,7 +195,7 @@ class EmployeeResource extends Resource
             })
             // ->imagePreviewHeight('250')
             // ->resize(5)
-            ->maxSize(333)
+            ->maxSize(1000)
             ->columnSpan(2)
             ->reactive();
     }

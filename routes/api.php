@@ -410,6 +410,7 @@ Route::get('/fixInventoryMovementDates', function () {
 
 Route::get('/testEnv', function () {
     // dd('sdf');
+    dd(\App\Models\Employee::where('avatar', 'like', '%v0wj67L8hG1pqXq%')->first());
     dd(env('APP_ENV'));
 });
 
@@ -441,5 +442,158 @@ Route::get('/monthOptions', function () {
     return response()->json([
         'success' => true,
         'data' => $result,
+    ]);
+});
+
+// ========================================
+// Rekognition Sync Routes
+// ========================================
+
+/**
+ * إعادة فهرسة جميع الموظفين في Rekognition + DynamoDB
+ * GET /api/rekognition/sync-all
+ */
+Route::get('/rekognition/sync-all', function () {
+    $employees = \App\Models\Employee::whereNotNull('avatar')
+        ->where('avatar', '!=', '')
+        ->get();
+
+    $results = [
+        'total' => $employees->count(),
+        'success' => 0,
+        'failed' => 0,
+        'errors' => [],
+    ];
+
+    foreach ($employees as $employee) {
+        try {
+            $response = \App\Services\S3ImageService::indexEmployeeImage($employee->id);
+            $data = $response->getData(true);
+
+            if ($data['success'] ?? false) {
+                $results['success']++;
+            } else {
+                $results['failed']++;
+                $results['errors'][] = [
+                    'employee_id' => $employee->id,
+                    'name' => $employee->name,
+                    'message' => $data['message'] ?? 'Unknown error',
+                ];
+            }
+        } catch (\Exception $e) {
+            $results['failed']++;
+            $results['errors'][] = [
+                'employee_id' => $employee->id,
+                'name' => $employee->name,
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => "Sync completed: {$results['success']} succeeded, {$results['failed']} failed",
+        'results' => $results,
+    ]);
+});
+
+/**
+ * إعادة فهرسة موظف واحد
+ * GET /api/rekognition/sync/{employeeId}
+ */
+Route::get('/rekognition/sync/{employeeId}', function ($employeeId) {
+    $employee = \App\Models\Employee::find($employeeId);
+
+    if (!$employee) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Employee not found',
+        ], 404);
+    }
+
+    if (!$employee->avatar) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Employee has no avatar',
+        ], 400);
+    }
+
+    try {
+        $response = \App\Services\S3ImageService::indexEmployeeImage($employeeId);
+        return $response;
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage(),
+        ], 500);
+    }
+});
+
+/**
+ * عرض حالة المزامنة - مقارنة Rekognition مع DynamoDB
+ * GET /api/rekognition/status
+ */
+Route::get('/rekognition/status', function () {
+    $rekognition = new \Aws\Rekognition\RekognitionClient([
+        'region' => env('AWS_DEFAULT_REGION'),
+        'version' => 'latest',
+        'credentials' => [
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        ],
+    ]);
+
+    $dynamoDb = new \Aws\DynamoDb\DynamoDbClient([
+        'region' => env('AWS_DEFAULT_REGION'),
+        'version' => 'latest',
+        'credentials' => [
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        ],
+    ]);
+
+    // Get faces from Rekognition
+    $collectionId = config('rekognition.collection_id', 'emps');
+    $rekognitionFaces = [];
+    try {
+        $result = $rekognition->listFaces(['CollectionId' => $collectionId]);
+        $rekognitionFaces = collect($result['Faces'])->pluck('FaceId')->toArray();
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to fetch Rekognition faces: ' . $e->getMessage(),
+        ], 500);
+    }
+
+    // Get records from DynamoDB
+    $dynamoDbRecords = [];
+    try {
+        $result = $dynamoDb->scan(['TableName' => 'face_recognition']);
+        $dynamoDbRecords = collect($result['Items'])->pluck('RekognitionId.S')->toArray();
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to fetch DynamoDB records: ' . $e->getMessage(),
+        ], 500);
+    }
+
+    // Compare
+    $inRekognitionOnly = array_diff($rekognitionFaces, $dynamoDbRecords);
+    $inDynamoDbOnly = array_diff($dynamoDbRecords, $rekognitionFaces);
+    $synced = array_intersect($rekognitionFaces, $dynamoDbRecords);
+
+    return response()->json([
+        'success' => true,
+        'collection_id' => $collectionId,
+        'dynamodb_table' => 'face_recognition',
+        'summary' => [
+            'rekognition_faces' => count($rekognitionFaces),
+            'dynamodb_records' => count($dynamoDbRecords),
+            'synced' => count($synced),
+            'missing_in_dynamodb' => count($inRekognitionOnly),
+            'orphaned_in_dynamodb' => count($inDynamoDbOnly),
+        ],
+        'missing_in_dynamodb' => array_values($inRekognitionOnly),
+        'orphaned_in_dynamodb' => array_values($inDynamoDbOnly),
     ]);
 });

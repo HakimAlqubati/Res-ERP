@@ -48,6 +48,7 @@ class ListInventoryTransactionTruckingReport extends ListRecords
             );
             $reportData = $rawData->through(function ($item) {
                 $item->formatted_transactionable_type = class_basename($item->transactionable_type);
+                $item->batch_number = $item->movement_date ? \Carbon\Carbon::parse($item->movement_date)->format('Ymd') : '';
                 return $item;
             });
         }

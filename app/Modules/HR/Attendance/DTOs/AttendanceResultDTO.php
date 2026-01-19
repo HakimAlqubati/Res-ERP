@@ -64,6 +64,7 @@ final readonly class AttendanceResultDTO
     {
         $result = [
             'status' => $this->success,
+            'success' => $this->success,
             'message' => $this->message,
             'data' => $this->record,
             'type_required' => $this->typeRequired,

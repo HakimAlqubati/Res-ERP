@@ -43,7 +43,7 @@ class AttendanceController extends Controller
         // لازم واحد منهم يكون موجود
         if (empty($validated['rfid']) && empty($validated['employee_id'])) {
             return response()->json([
-                'status'  => false,
+                'success'  => false,
                 'message' => 'Either rfid or employee_id is required.',
             ], 422);
         }
@@ -51,8 +51,9 @@ class AttendanceController extends Controller
         $result = $this->attendanceService->handle($validated);
 
         return response()->json([
-            'status'  => $result['success'],
-            'type_required' => $result['type_required'],
+            'success'  => $result['success'],
+            'status'   => $result['success'],  // للتوافق مع الـ Frontend القديم
+            'type_required' => $result['type_required'] ?? false,
             'message' => $result['message'],
             'data'    => $result['data'] ?? '',
         ], $result['success'] ? 200 : 422);

@@ -31,15 +31,22 @@ class InVsOutReportService
 
             ->where('inventory_transactions.movement_type', 'in');
 
-        // ✅ تطبيق فلتر واحد فقط (حسب الموجود)
-        if (isset($filters['product_id'])) {
+        // ✅ تطبيق الفلاتر (اختيارية)
+        if (!empty($filters['category_id'])) {
+            $query->where('products.category_id', $filters['category_id']);
+        }
+
+        if (!empty($filters['product_ids']) && is_array($filters['product_ids'])) {
+            $query->whereIn('inventory_transactions.product_id', $filters['product_ids']);
+        } elseif (!empty($filters['product_id'])) {
             $query->where('inventory_transactions.product_id', $filters['product_id']);
         }
-        if (isset($filters['store_id'])) {
+
+        if (!empty($filters['store_id'])) {
             $query->where('inventory_transactions.store_id', $filters['store_id']);
         }
 
-        if (isset($filters['unit_id'])) {
+        if (!empty($filters['unit_id'])) {
             $query->where('inventory_transactions.unit_id', $filters['unit_id']);
         }
 
@@ -154,14 +161,22 @@ class InVsOutReportService
             ->whereNotIn('inventory_transactions.product_id', [116])
             ->where('inventory_transactions.movement_type', 'out');
 
-        // ✅ نفس الفلاتر
-        if (isset($filters['product_id'])) {
+        // ✅ تطبيق الفلاتر (اختيارية)
+        if (!empty($filters['category_id'])) {
+            $query->where('products.category_id', $filters['category_id']);
+        }
+
+        if (!empty($filters['product_ids']) && is_array($filters['product_ids'])) {
+            $query->whereIn('inventory_transactions.product_id', $filters['product_ids']);
+        } elseif (!empty($filters['product_id'])) {
             $query->where('inventory_transactions.product_id', $filters['product_id']);
         }
-        if (isset($filters['store_id'])) {
+
+        if (!empty($filters['store_id'])) {
             $query->where('inventory_transactions.store_id', $filters['store_id']);
         }
-        if (isset($filters['unit_id'])) {
+
+        if (!empty($filters['unit_id'])) {
             $query->where('inventory_transactions.unit_id', $filters['unit_id']);
         }
 
