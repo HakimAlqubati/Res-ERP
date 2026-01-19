@@ -14,7 +14,7 @@ class EmployeeRecognitionRepository
     ) {}
 
     /**
-     * يعيد [name, employeeId] إن وُجدت
+     * يعيد [name, employeeId, employee, isAnotherBranch] إن وُجدت
      */
     public function resolveByRekognitionId(string $rekognitionId): array
     {
@@ -41,7 +41,7 @@ class EmployeeRecognitionRepository
 
         $item = $result['Item'] ?? null;
         if (!$item || empty($item['Name']['S'])) {
-            return [null, null, null];
+            return [null, null, null, false];
         }
 
         $nameRaw = $item['Name']['S']; // مثال: "Ali-123"
@@ -53,21 +53,25 @@ class EmployeeRecognitionRepository
 
         if (!$currentBranchId) {
             abort(403, 'Branch context is required to resolve employee.');
-            // أو يمكن: throw new AuthorizationException('Branch context is required.');
         }
 
         // إن لم يتوفر رقم موظف صالح نرجع الاسم والـ ID كما هو وبدون موديل
         if (!$empId) {
-            return [$name, null, null];
+            return [$name, null, null, false];
         }
 
-        $employee = Employee::query()
-            ->where('branch_id', $currentBranchId)
-            ->whereKey($empId)
-            ->first();
-        if (!$employee) {
-            return [null, null, null];
+        // 1) البحث عن الموظف في كل الفروع للتأكد من وجوده
+        $globalEmployee = Employee::find($empId);
+
+        if (!$globalEmployee) {
+            return [null, null, null, false];
         }
-        return [$name, $empId, $employee];
+
+        // 2) التحقق من الفرع
+        if ($globalEmployee->branch_id != $currentBranchId) {
+            return [$name, $empId, null, true]; // وجدنا الموظف لكنه في فرع آخر
+        }
+
+        return [$name, $empId, $globalEmployee, false];
     }
 }
