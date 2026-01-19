@@ -100,7 +100,7 @@ class FaceRecognitionService
         );
 
         if ($isAnotherBranch) {
-            return EmployeeMatch::notFound('الموظف يوجد في فرع آخر ولا يمكنك الوصول له');
+            return EmployeeMatch::notFound('Employee belongs to another branch and cannot be accessed.');
         }
 
         if (!$employee) {
