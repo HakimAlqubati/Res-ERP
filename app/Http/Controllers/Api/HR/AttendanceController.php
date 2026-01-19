@@ -32,7 +32,6 @@ class AttendanceController extends Controller
     }
     public function store(Request $request)
     {
-        dd('sf');
         $validated = $request->validate([
             'rfid'        => 'nullable|string|max:255',
             'employee_id' => 'nullable|integer|exists:hr_employees,id',
