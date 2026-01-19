@@ -52,7 +52,7 @@ class AttendanceController extends Controller
 
         return response()->json([
             'success'  => $result['success'],
-            'type_required' => $result['type_required'],
+            'type_required' => $result['type_required'] ?? false,
             'message' => $result['message'],
             'data'    => $result['data'] ?? '',
         ], $result['success'] ? 200 : 422);
