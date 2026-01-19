@@ -32,6 +32,7 @@ class AttendanceController extends Controller
     }
     public function store(Request $request)
     {
+        dd('sf');
         $validated = $request->validate([
             'rfid'        => 'nullable|string|max:255',
             'employee_id' => 'nullable|integer|exists:hr_employees,id',
@@ -40,7 +41,6 @@ class AttendanceController extends Controller
             'attendance_type' => 'nullable|string|in:rfid,request,webcam',
         ]);
 
-        dd('sf');
         // لازم واحد منهم يكون موجود
         if (empty($validated['rfid']) && empty($validated['employee_id'])) {
             return response()->json([
