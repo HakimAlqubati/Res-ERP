@@ -19,6 +19,7 @@ use App\Models\LeaveBalance;
 use App\Models\LeaveType;
 use App\Modules\HR\Attendance\Services\AttendanceService;
 use App\Services\HR\MonthClosure\MonthClosureService;
+use App\Models\EmployeeMealRequest;
 use Carbon\Carbon;
 use DateTime;
 use Exception;
@@ -801,6 +802,107 @@ class EmployeeApplicationResource extends Resource
         return false;
     }
 
+    public static function approveMealRequest(): Action
+    {
+        return Action::make('approveMealRequest')
+            ->label(__('lang.approve'))
+            ->button()
+            ->visible(
+                fn($record): bool =>
+                $record->status == EmployeeApplicationV2::STATUS_PENDING
+                    && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST
+            )
+            ->color('success')
+            ->icon('heroicon-o-check')
+            ->databaseTransaction()
+            ->action(function ($record) {
+                $record->update([
+                    'status'      => EmployeeApplicationV2::STATUS_APPROVED,
+                    'approved_by' => auth()->id(),
+                    'approved_at' => now(),
+                ]);
+
+                if ($record->mealRequest) {
+                    $record->mealRequest->update([
+                        'status'      => 'approved',
+                        'approved_by' => auth()->id(),
+                        'approved_at' => now(),
+                    ]);
+                }
+
+                showSuccessNotifiMessage('Approved');
+            });
+    }
+
+    public static function rejectMealRequest(): Action
+    {
+        return Action::make('rejectMealRequest')
+            ->label(__('lang.reject'))
+            ->button()
+            ->visible(
+                fn($record): bool =>
+                $record->status == EmployeeApplicationV2::STATUS_PENDING
+                    && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST
+            )
+            ->color('danger')
+            ->icon('heroicon-o-x-mark')
+            ->action(function ($record, $data) {
+                $record->update([
+                    'status'      => EmployeeApplicationV2::STATUS_REJECTED,
+                    'rejected_by' => auth()->id(),
+                    'rejected_at' => now(),
+                    'rejected_reason' => $data['rejected_reason'],
+                ]);
+
+                if ($record->mealRequest) {
+                    $record->mealRequest->update([
+                        'status' => 'rejected',
+                    ]);
+                }
+
+                showSuccessNotifiMessage('Rejected');
+            })
+            ->schema([
+                Textarea::make('rejected_reason')
+                    ->label(__('lang.rejected_reason'))
+                    ->required(),
+            ]);
+    }
+
+    public static function mealRequestDetails(): Action
+    {
+        return Action::make('mealRequestDetails')
+            ->label(__('lang.details'))
+            ->button()
+            ->color('info')
+            ->icon('heroicon-m-newspaper')
+            ->visible(fn($record): bool => $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST)
+            ->disabledForm()
+            ->schema(function ($record) {
+                $mealRequest = $record->mealRequest;
+                return [
+                    Fieldset::make(__('lang.meal_details'))->columns(2)->schema([
+                        TextInput::make('employee_name')
+                            ->label(__('lang.employee'))
+                            ->default($record->employee?->name),
+                        TextInput::make('cost')
+                            ->label(__('lang.cost'))
+                            ->default($mealRequest?->cost),
+                        Textarea::make('meal_details')
+                            ->label(__('lang.meal_details'))
+                            ->default($mealRequest?->meal_details)
+                            ->columnSpanFull(),
+                        Textarea::make('notes')
+                            ->label(__('lang.notes'))
+                            ->default($mealRequest?->notes)
+                            ->columnSpanFull(),
+                    ]),
+                ];
+            })
+            ->modalSubmitAction(false)
+            ->modalCancelAction(false);
+    }
+
     public static function leaveRequestForm($set, $get)
     {
         $leaveBalances = LeaveBalance::where('employee_id', $get('employee_id'))->pluck('leave_type_id');
@@ -1163,6 +1265,75 @@ class EmployeeApplicationResource extends Resource
                             ->label('Time')->required(),
                     ]
                 ),
+        ];
+    }
+
+    public static function mealRequestForm($set, $get)
+    {
+        return [
+            Fieldset::make('mealRequest')->label('')
+                ->relationship('mealRequest')
+                ->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
+                    $data['application_type_id']   = EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST;
+                    $data['application_type_name'] = EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST];
+                    $data['employee_id']           = $get('employee_id');
+                    $data['created_by']            = auth()->id();
+                    return $data;
+                })
+                ->saveRelationshipsUsing(function (\Illuminate\Database\Eloquent\Model $record, array $state): void {
+                    $payload = [
+                        'application_id'        => $record->id,
+                        'employee_id'           => $record->employee_id,
+                        'branch_id'             => $state['_branch_id'],
+                        'meal_details'          => $state['meal_details'] ?? null,
+                        'cost'                  => $state['cost'] ?? 0,
+                        'notes'                 => $state['notes'] ?? null,
+                        'date'                  => $state['date'] ?? null,
+                        'application_type_id'   => EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST,
+                        'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST],
+                        'created_by'            => auth()->id(),
+                        'status'                => 'pending',
+                    ];
+
+                    $record->mealRequest()->updateOrCreate([], $payload);
+
+                    // Sync branch_id to the main application if it's set in the meal request
+                    if (isset($state['_branch_id'])) {
+                        $record->update(['branch_id' => $state['_branch_id']]);
+                    }
+                })
+                ->schema([
+                    Grid::make()->columns(3)->columnSpanFull()->schema([
+                        DatePicker::make('date')
+                            ->label(__('lang.date'))
+                            ->default(now())
+                            ->required(),
+
+                        Select::make('_branch_id')
+                            ->label(__('lang.branch'))
+                            ->options(Branch::where('type', Branch::TYPE_BRANCH)->pluck('name', 'id'))
+                            // ->required()
+                            ->searchable()
+                            ->live()
+                        // ->afterStateUpdated(function ($set, $state) {
+                        //     // Sync back to the parent application's branch_id if necessary
+                        //     $set('../../branch_id', $state);
+                        // })
+                        ,
+
+                        TextInput::make('cost')
+                            ->label(__('lang.cost'))
+                            ->numeric()
+                            ->required()
+                            ->prefixIcon(Heroicon::CurrencyDollar)
+                            ->default(0),
+
+                        Textarea::make('meal_details')
+                            ->label(__('lang.meal_details'))
+                            ->required()
+                            ->columnSpanFull(),
+                    ]),
+                ]),
         ];
     }
 

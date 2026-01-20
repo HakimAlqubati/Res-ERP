@@ -1026,4 +1026,14 @@ return [
     'installment_not_found' => 'Installment not found',
     'installment_deferred_success' => 'Installment deferred from :old_date to :new_date successfully',
     'advance_exceeds_salary' => 'Advance amount (:amount) exceeds employee salary (:salary)',
+
+    // ===========================================
+    // Employee Meals Request
+    // ===========================================
+    'employee_meals_request' => 'Employee Meals Request',
+    'meal_details'           => 'Meal Details',
+    'cost'                   => 'Cost',
+    'rejected_reason'        => 'Rejected Reason',
+    'approve'                => 'Approve',
+    'reject'                 => 'Reject',
 ];

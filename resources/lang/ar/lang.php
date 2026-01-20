@@ -1008,4 +1008,14 @@ return [
   'installment_not_found' => 'لم يتم العثور على القسط',
   'installment_deferred_success' => 'تم تأجيل القسط من :old_date إلى :new_date بنجاح',
   'advance_exceeds_salary' => 'مبلغ السلفة (:amount) يتجاوز راتب الموظف (:salary)',
+
+  // ===========================================
+  // Employee Meals Request
+  // ===========================================
+  'employee_meals_request' => 'طلب وجبة موظف',
+  'meal_details'           => 'تفاصيل الوجبة',
+  'cost'                   => 'التكلفة',
+  'rejected_reason'        => 'سبب الرفض',
+  'approve'                => 'موافقة',
+  'reject'                 => 'رفض',
 ];
