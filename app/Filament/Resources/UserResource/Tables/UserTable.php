@@ -8,6 +8,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Actions\DeleteAction;
@@ -108,7 +109,7 @@ class UserTable
                     ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('has_employee')->boolean()
                     ->trueIcon('heroicon-o-check-badge')
-                    ->falseIcon('heroicon-o-x-mark')
+                    ->falseIcon('heroicon-o-x-mark')->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('fcm_token')
                     ->label('FCM Token')->color(Color::Green)
@@ -145,6 +146,10 @@ class UserTable
             ])
             ->filtersFormColumns(2)
             ->filters([
+                Filter::make('me')
+                    ->label(__('lang.me'))
+                    ->toggle()
+                    ->query(fn(Builder $query) => $query->where('id', auth()->id())),
                 TrashedFilter::make(),
                 SelectFilter::make('active')
                     ->label('Status')

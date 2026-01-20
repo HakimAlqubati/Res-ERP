@@ -53,7 +53,9 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
@@ -241,6 +243,14 @@ class EmployeeTable
                     ->options(UserType::where('active', 1)->pluck('name', 'id')->toArray())
                     ->searchable()
                     ->multiple(),
+                Filter::make('me')
+                    ->label(__('lang.me'))
+                    ->toggle()
+                    ->query(fn($query) => $query->where('id', auth()->user()?->employee?->id)),
+                Filter::make('my_employees')
+                    ->label(__('lang.my_employees'))
+                    ->toggle()
+                    ->query(fn($query) => $query->where('manager_id', auth()->user()?->employee?->id)),
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
             ->headerActions([
