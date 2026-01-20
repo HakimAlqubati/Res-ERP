@@ -668,7 +668,9 @@ class EmployeeApplicationResource extends Resource
                     Fieldset::make()->disabled()->label('Attendance data')->columns(3)->schema([
                         TextInput::make('employee')->default($record?->employee?->name),
                         DatePicker::make('check_date')->default($attendance?->check_date),
-                        TimePicker::make('check_time')->default($attendance?->check_time),
+                        TimePicker::make('check_time')
+                        ->label('Check In Time')
+                        ->default($attendance?->check_time),
                         TextInput::make('period_title')->label('Period')->default($attendance?->period?->name),
                         TextInput::make('start_at')->default($attendance?->period?->start_at),
                         TextInput::make('end_at')->default($attendance?->period?->end_at),
