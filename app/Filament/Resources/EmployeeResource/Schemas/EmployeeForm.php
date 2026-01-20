@@ -257,8 +257,12 @@ class EmployeeForm
                                                 $set('manager_id', null);
                                             })
                                             ->options(
-                                                Branch::selectable()
+                                                Branch::query()
                                                     ->select('id', 'name')
+                                                    ->whereIn('type', [
+                                                        Branch::TYPE_BRANCH,
+                                                        Branch::TYPE_HQ
+                                                    ])
                                                     ->get()
                                                     ->pluck('name', 'id')
                                             ),
