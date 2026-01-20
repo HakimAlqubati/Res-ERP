@@ -81,7 +81,7 @@ class FaceRecognitionService
         }
 
         // 4) ربط RekognitionId → DynamoDB → Employee
-        [$name, $employeeId, $employee] = $this->repo->resolveByRekognitionId($rekognitionId);
+        [$name, $employeeId, $employee, $isAnotherBranch] = $this->repo->resolveByRekognitionId($rekognitionId);
 
         // ✅ تسجيل نتيجة البحث في DynamoDB
         AppLog::write(
@@ -89,14 +89,19 @@ class FaceRecognitionService
             AppLog::LEVEL_INFO,
             'FaceRecognition',
             [
-                'rekognition_id' => $rekognitionId,
-                'similarity'     => $similarity,
-                'confidence'     => $confidence,
-                'employee_name'  => $name,
-                'employee_id'    => $employeeId,
-                'employee_found' => $employee ? true : false,
+                'rekognition_id'     => $rekognitionId,
+                'similarity'         => $similarity,
+                'confidence'         => $confidence,
+                'employee_name'      => $name,
+                'employee_id'        => $employeeId,
+                'employee_found'     => $employee ? true : false,
+                'is_another_branch'  => $isAnotherBranch,
             ]
         );
+
+        if ($isAnotherBranch) {
+            return EmployeeMatch::notFound('Employee belongs to another branch and cannot be accessed.');
+        }
 
         if (!$employee) {
             return EmployeeMatch::notFound();

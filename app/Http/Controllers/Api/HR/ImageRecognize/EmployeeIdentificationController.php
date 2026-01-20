@@ -16,11 +16,11 @@ class EmployeeIdentificationController extends Controller
 
     public function identify(IdentifyEmployeeRequest $request): JsonResponse
     {
-        $file = $request->file('image'); 
+        $file = $request->file('image');
         try {
             $match = $this->service->identify($file);
 
-        
+
             return response()->json([
                 'status' => 'success',
                 'match'  => [
@@ -30,6 +30,7 @@ class EmployeeIdentificationController extends Controller
                     'employee_data' => $match->employeeData,
                     'similarity'    => $match->similarity,
                     'confidence'    => $match->confidence,
+                    'message'       => $match->message,
                 ],
             ]);
         } catch (\Throwable $e) {
@@ -40,7 +41,7 @@ class EmployeeIdentificationController extends Controller
 
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Recognition failed: '.$e->getMessage(),
+                'message' => 'Recognition failed: ' . $e->getMessage(),
             ], 500);
         }
     }

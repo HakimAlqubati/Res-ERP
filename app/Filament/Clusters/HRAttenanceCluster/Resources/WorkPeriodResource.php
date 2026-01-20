@@ -93,8 +93,10 @@ class WorkPeriodResource extends Resource
                     //     ->default(true),
                     Select::make('branch_id')
                         ->options(Branch::where('active', 1)
-                            ->selectable()
-                            ->select('name', 'id')->get()->pluck('name', 'id'))
+                            ->whereIn('type', [
+                                Branch::TYPE_BRANCH,
+                                Branch::TYPE_HQ
+                            ])->select('name', 'id')->get()->pluck('name', 'id'))
                         ->label(__('lang.branch'))->required()
                         ->searchable(),
                     Toggle::make('active')
