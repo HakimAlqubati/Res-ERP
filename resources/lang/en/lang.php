@@ -1025,4 +1025,5 @@ return [
     'defer_installment_desc' => 'The selected installment will be skipped and a new one will be created at the end of the schedule.',
     'installment_not_found' => 'Installment not found',
     'installment_deferred_success' => 'Installment deferred from :old_date to :new_date successfully',
+    'advance_exceeds_salary' => 'Advance amount (:amount) exceeds employee salary (:salary)',
 ];

@@ -1007,4 +1007,5 @@ return [
   'defer_installment_desc' => 'سيتم تخطي القسط المحدد وإنشاء قسط جديد في نهاية جدول السداد.',
   'installment_not_found' => 'لم يتم العثور على القسط',
   'installment_deferred_success' => 'تم تأجيل القسط من :old_date إلى :new_date بنجاح',
+  'advance_exceeds_salary' => 'مبلغ السلفة (:amount) يتجاوز راتب الموظف (:salary)',
 ];

@@ -10,6 +10,9 @@ use App\Models\EmployeeApplicationV2;
 use Carbon\Carbon;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use Filament\Support\Exceptions\Halt;
+use Filament\Support\Facades\FilamentView;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -17,6 +20,97 @@ class CreateEmployeeApplication extends CreateRecord
 {
     protected ?bool $hasDatabaseTransactions = true;
     protected static string $resource = EmployeeApplicationResource::class;
+
+
+    public function create(bool $another = false): void
+    {
+        if ($this->isCreating) {
+            return;
+        }
+
+        $this->isCreating = true;
+
+        $this->authorizeAccess();
+
+        if ($another) {
+            $preserveRawState = $this->preserveFormDataWhenCreatingAnother($this->form->getRawState());
+        }
+
+        try {
+            $this->beginDatabaseTransaction();
+
+            $this->callHook('beforeValidate');
+
+            $data = $this->form->getState();
+
+            $this->callHook('afterValidate');
+
+            $data = $this->mutateFormDataBeforeCreate($data);
+
+            $this->callHook('beforeCreate');
+
+            $this->record = $this->handleRecordCreation($data);
+
+            $this->form->model($this->getRecord())->saveRelationships();
+
+            $this->callHook('afterCreate');
+
+            $this->commitDatabaseTransaction();
+        } catch (Halt $exception) {
+            $exception->shouldRollbackDatabaseTransaction() ?
+                $this->rollBackDatabaseTransaction() :
+                $this->commitDatabaseTransaction();
+
+            $this->isCreating = false;
+
+            return;
+        } catch (ValidationException $exception) {
+            $this->rollBackDatabaseTransaction();
+
+            $this->isCreating = false;
+
+            throw $exception;
+        } catch (\Throwable $exception) {
+            $this->rollBackDatabaseTransaction();
+
+            $this->isCreating = false;
+
+            Notification::make()
+                ->title(__('lang.error'))
+                ->body($exception->getMessage())
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        $this->rememberData();
+
+        $this->getCreatedNotification()?->send();
+
+        if ($another) {
+            // Ensure that the form record is anonymized so that relationships aren't loaded.
+            $this->form->model($this->getRecord()::class);
+            $this->record = null;
+
+            $this->fillForm();
+
+            $this->form->rawState([
+                ...$this->form->getRawState(),
+                ...$preserveRawState,
+            ]);
+
+            $this->isCreating = false;
+
+            return;
+        }
+
+        $redirectUrl = $this->getRedirectUrl();
+
+        $this->redirect($redirectUrl, navigate: FilamentView::hasSpaMode($redirectUrl));
+    }
+
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
 
@@ -139,7 +233,7 @@ class CreateEmployeeApplication extends CreateRecord
 
         return $data;
     }
-  
+
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index') . EmployeeApplicationV2::APPLICATION_TYPE_FILTERS[$this->record->application_type_id];
