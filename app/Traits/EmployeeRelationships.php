@@ -218,4 +218,9 @@ trait EmployeeRelationships
     {
         return $this->hasMany(PenaltyDeduction::class)->where('status', 'approved');
     }
+
+    public function mealRequests()
+    {
+        return $this->hasMany(EmployeeMealRequest::class, 'employee_id');
+    }
 }
