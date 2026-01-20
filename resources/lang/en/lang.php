@@ -1014,4 +1014,15 @@ return [
     'financial_category' => 'Financial Category',
     'select_to_create_financial_transaction' => 'Select to create financial transaction',
     'status_already_changed_recently' => 'This status was already changed recently. Please wait before trying again.',
+
+    // ===========================================
+    // Installment Deferral
+    // ===========================================
+    'defer_installment' => 'Defer Installment',
+    'defer' => 'Defer',
+    'select_installment' => 'Select Installment',
+    'defer_reason_placeholder' => 'Enter deferral reason (optional)',
+    'defer_installment_desc' => 'The selected installment will be skipped and a new one will be created at the end of the schedule.',
+    'installment_not_found' => 'Installment not found',
+    'installment_deferred_success' => 'Installment deferred from :old_date to :new_date successfully',
 ];

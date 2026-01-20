@@ -996,4 +996,15 @@ return [
   'financial_category' => 'الفئة المالية',
   'select_to_create_financial_transaction' => 'اختر لإنشاء معاملة مالية',
   'status_already_changed_recently' => 'تم تغيير هذه الحالة مؤخراً. يرجى الانتظار قبل المحاولة مرة أخرى.',
+
+  // ===========================================
+  // Installment Deferral
+  // ===========================================
+  'defer_installment' => 'تأجيل قسط',
+  'defer' => 'تأجيل',
+  'select_installment' => 'اختر القسط',
+  'defer_reason_placeholder' => 'اكتب سبب التأجيل (اختياري)',
+  'defer_installment_desc' => 'سيتم تخطي القسط المحدد وإنشاء قسط جديد في نهاية جدول السداد.',
+  'installment_not_found' => 'لم يتم العثور على القسط',
+  'installment_deferred_success' => 'تم تأجيل القسط من :old_date إلى :new_date بنجاح',
 ];

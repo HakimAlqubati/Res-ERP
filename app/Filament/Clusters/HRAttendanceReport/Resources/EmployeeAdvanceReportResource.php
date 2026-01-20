@@ -9,12 +9,16 @@ use App\Filament\Clusters\HRTaskReport;
 use App\Models\AdvanceRequest;
 use App\Models\Branch;
 use App\Models\Employee;
+use App\Models\EmployeeAdvanceInstallment;
 use App\Models\EmployeeApplicationV2;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
@@ -159,7 +163,7 @@ class EmployeeAdvanceReportResource extends Resource
                             ->when(
                                 $data['deduction_to'],
                                 fn(Builder $query, $date): Builder => $query->whereDate('deduction_ends_at', '<=', $date)
-                            );
+                            );  
                     })
                     ->columns(2),
 
@@ -251,7 +255,64 @@ class EmployeeAdvanceReportResource extends Resource
                     ->modalHeading(__('lang.installment_details'))
                     ->disabledForm()
                     ->modalSubmitAction(false)
-                    ->modalCancelAction(false)
+                    ->modalCancelAction(false),
+
+                // ✅ تأجيل قسط (Skip & Reschedule)
+                Action::make('defer_installment')
+                    ->label(__('lang.defer_installment'))
+                    ->button()
+                    ->icon('heroicon-o-clock')
+                    ->color('warning')
+                    ->schema(function ($record) {
+                        $unpaidInstallments = $record->installments()
+                            ->where('is_paid', false)
+                            ->where('status', EmployeeAdvanceInstallment::STATUS_SCHEDULED)
+                            ->orderBy('sequence')
+                            ->get();
+
+                        return [
+                            Select::make('installment_id')
+                                ->label(__('lang.select_installment'))
+                                ->options(
+                                    $unpaidInstallments->mapWithKeys(fn($inst) => [
+                                        $inst->id => "#{$inst->sequence} - {$inst->due_date->format('Y-m')} (" . number_format($inst->installment_amount, 2) . ")"
+                                    ])
+                                )
+                                ->required()
+                                ->native(false),
+                            Textarea::make('reason')
+                                ->label(__('lang.reason'))
+                                ->rows(2)
+                                ->placeholder(__('lang.defer_reason_placeholder')),
+                        ];
+                    })
+                    ->action(function (array $data, $record): void {
+                        $installment = EmployeeAdvanceInstallment::find($data['installment_id']);
+
+                        if (!$installment) {
+                            Notification::make()
+                                ->title(__('lang.error'))
+                                ->body(__('lang.installment_not_found'))
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+
+                        $newInstallment = $installment->skipAndReschedule($data['reason'] ?? null);
+
+                        Notification::make()
+                            ->title(__('lang.success'))
+                            ->body(__('lang.installment_deferred_success', [
+                                'old_date' => $installment->due_date->format('Y-m'),
+                                'new_date' => $newInstallment->due_date->format('Y-m'),
+                            ]))
+                            ->success()
+                            ->send();
+                    })
+                    ->modalHeading(__('lang.defer_installment'))
+                    ->modalDescription(__('lang.defer_installment_desc'))
+                    ->modalSubmitActionLabel(__('lang.defer'))
+                    ->visible(fn($record) => $record->remaining_total > 0),
             ])
             ->defaultSort('created_at', 'desc');
     }

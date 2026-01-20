@@ -39,9 +39,11 @@ class AdvanceInstallmentCalculator
         $end = $context->periodEnd();
 
         // جلب أقساط الموظف المجدولة وغير المسددة ضمن الشهر
+        // نستبعد الأقساط المؤجلة (skipped) أو الملغاة (cancelled)
         $rows = EmployeeAdvanceInstallment::query()
             ->where('employee_id', $context->employee->id)
             ->where('is_paid', false)
+            ->where('status', EmployeeAdvanceInstallment::STATUS_SCHEDULED)
             ->whereBetween('due_date', [$start, $end])
             ->with(['application:id,employee_id'])
             ->get([
