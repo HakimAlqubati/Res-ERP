@@ -65,7 +65,7 @@ class EmployeeAttednaceReportResource extends Resource
                             ->where('active', 1)
                             ->forBranchManager()
                             // ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
-                            ->limit(10)
+                            ->limit(5)
                             ->get()
                             ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
                     })
@@ -74,7 +74,7 @@ class EmployeeAttednaceReportResource extends Resource
                             ->select('id', 'name')
                             ->where('active', 1)
                             ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
-                            ->limit(10)
+                            ->limit(5)
                             ->get()
                             ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
                     })
