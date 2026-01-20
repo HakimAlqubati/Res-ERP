@@ -274,7 +274,7 @@ class EmployeeTable
                     ])->extraModalFooterActions([
                         Action::make('downloadexcel')->label(__('Download Example File'))
                             ->icon('heroicon-o-arrow-down-on-square-stack')
-                            ->url(asset('storage/sample_file_imports/Sample import file.xlsx')) // URL to the existing file
+                            ->url(asset('data/sample_file_imports/Sample import file.xlsx')) // URL to the existing file
                             ->openUrlInNewTab(),
                     ])
                     ->color('success')
