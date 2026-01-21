@@ -45,4 +45,9 @@ return [
     'ended_minutes_ago' => 'Ended :minutes minutes ago',
     'currently_active' => 'Currently active',
 
+    // Shift conflict
+    'shift_conflict_detected' => 'Shift conflict detected. Please select the desired operation.',
+    'checkout_from_shift' => 'Check out from :shift',
+    'checkin_to_shift' => 'Check in to :shift',
+
 ];

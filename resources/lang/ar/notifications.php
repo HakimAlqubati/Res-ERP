@@ -53,4 +53,9 @@ return [
     'ended_minutes_ago' => 'انتهت منذ :minutes دقيقة',
     'currently_active' => 'جارية حالياً',
 
+    // رسائل تعارض الورديات
+    'shift_conflict_detected' => 'يوجد تعارض بين الورديات. يرجى اختيار العملية المطلوبة.',
+    'checkout_from_shift' => 'تسجيل انصراف من :shift',
+    'checkin_to_shift' => 'تسجيل دخول إلى :shift',
+
 ];
