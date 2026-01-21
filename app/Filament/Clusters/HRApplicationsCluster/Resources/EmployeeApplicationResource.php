@@ -1074,7 +1074,8 @@ class EmployeeApplicationResource extends Resource
                 ->label('Date')->required()
                 ->default('Y-m-d')->live(),
             TimePicker::make('detail_time')
-                ->label('Time')->required(),
+                ->label('Time')->required()
+                ->seconds(false),
         ];
         return [
             Fieldset::make('missedCheckoutRequest')->label('')
