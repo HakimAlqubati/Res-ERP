@@ -1,12 +1,41 @@
 <?php
 // File: routes/inventory.php
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Api\Inventory\InventoryApiController;
 use App\Http\Controllers\Api\Reports\GoodsReceivedNoteReportController;
 use App\Notifications\WarningNotification;
 
 Route::prefix('inventory')->name('inventory.')->group(function () {
     Route::get('remaining', [InventoryApiController::class, 'remaining'])->name('remaining');
+
+    // GET /api/inventory/store-categories?store_id=1
+    // Returns distinct categories linked to a store through inventory transactions
+    Route::get('store-categories', function (\Illuminate\Http\Request $request) {
+        if (!$request->filled('store_id')) {
+            return response()->json(['error' => 'store_id is required'], 400);
+        }
+
+        $storeId = (int) $request->integer('store_id');
+
+        $categories = DB::table('inventory_transactions as it')
+            ->join('products as p', 'it.product_id', '=', 'p.id')
+            ->join('categories as c', 'p.category_id', '=', 'c.id')
+            ->where('it.store_id', $storeId)
+            ->whereNull('it.deleted_at')
+            ->whereNull('p.deleted_at')
+            ->whereNull('c.deleted_at')
+            ->select('c.id as category_id', 'c.name as category_name')
+            ->distinct()
+            ->orderBy('c.name')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'store_id' => $storeId,
+            'data' => $categories,
+        ]);
+    })->name('store-categories');
 });
 
 
