@@ -1010,4 +1010,19 @@ return [
     'financial_category' => 'Financial Category',
     'select_to_create_financial_transaction' => 'Select to create financial transaction',
     'status_already_changed_recently' => 'This status was already changed recently. Please wait before trying again.',
+
+    // ===========================================
+    // Product Halal Certificate
+    // ===========================================
+    'halal_certificate' => 'Halal Certificate',
+    'shelf_life' => 'Shelf Life',
+    'shelf_life_value' => 'Value',
+    'shelf_life_unit' => 'Unit',
+    'is_halal_certified' => 'Halal Certified',
+    'halal_certificate_no' => 'Certificate No.',
+    'halal_expiry_date' => 'Certificate Expiry Date',
+    'allergen_info' => 'Allergen Information',
+    'halal_certificate_saved' => 'Halal certificate data saved successfully',
+    'week' => 'Week',
+    'year' => 'Year',
 ];

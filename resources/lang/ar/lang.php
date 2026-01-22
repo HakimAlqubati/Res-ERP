@@ -992,4 +992,19 @@ return [
   'financial_category' => 'الفئة المالية',
   'select_to_create_financial_transaction' => 'اختر لإنشاء معاملة مالية',
   'status_already_changed_recently' => 'تم تغيير هذه الحالة مؤخراً. يرجى الانتظار قبل المحاولة مرة أخرى.',
+
+  // ===========================================
+  // Product Halal Certificate
+  // ===========================================
+  'halal_certificate' => 'شهادة الحلال',
+  'shelf_life' => 'مدة الصلاحية',
+  'shelf_life_value' => 'القيمة',
+  'shelf_life_unit' => 'الوحدة',
+  'is_halal_certified' => 'حاصل على شهادة حلال',
+  'halal_certificate_no' => 'رقم الشهادة',
+  'halal_expiry_date' => 'تاريخ انتهاء الشهادة',
+  'allergen_info' => 'معلومات الحساسية',
+  'halal_certificate_saved' => 'تم حفظ بيانات شهادة الحلال بنجاح',
+  'week' => 'أسبوع',
+  'year' => 'سنة',
 ];
