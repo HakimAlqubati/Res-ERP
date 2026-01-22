@@ -1036,4 +1036,17 @@ return [
     'rejected_reason'        => 'Rejected Reason',
     'approve'                => 'Approve',
     'reject'                 => 'Reject',
+    // Product Halal Certificate
+    // ===========================================
+    'halal_certificate' => 'Halal Certificate',
+    'shelf_life' => 'Shelf Life',
+    'shelf_life_value' => 'Value',
+    'shelf_life_unit' => 'Unit',
+    'is_halal_certified' => 'Halal Certified',
+    'halal_certificate_no' => 'Certificate No.',
+    'halal_expiry_date' => 'Certificate Expiry Date',
+    'allergen_info' => 'Allergen Information',
+    'halal_certificate_saved' => 'Halal certificate data saved successfully',
+    'week' => 'Week',
+    'year' => 'Year',
 ];

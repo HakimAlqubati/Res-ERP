@@ -1018,4 +1018,17 @@ return [
   'rejected_reason'        => 'سبب الرفض',
   'approve'                => 'موافقة',
   'reject'                 => 'رفض',
+  // Product Halal Certificate
+  // ===========================================
+  'halal_certificate' => 'شهادة الحلال',
+  'shelf_life' => 'مدة الصلاحية',
+  'shelf_life_value' => 'القيمة',
+  'shelf_life_unit' => 'الوحدة',
+  'is_halal_certified' => 'حاصل على شهادة حلال',
+  'halal_certificate_no' => 'رقم الشهادة',
+  'halal_expiry_date' => 'تاريخ انتهاء الشهادة',
+  'allergen_info' => 'معلومات الحساسية',
+  'halal_certificate_saved' => 'تم حفظ بيانات شهادة الحلال بنجاح',
+  'week' => 'أسبوع',
+  'year' => 'سنة',
 ];
