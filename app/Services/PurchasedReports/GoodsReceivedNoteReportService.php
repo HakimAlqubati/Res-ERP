@@ -78,7 +78,7 @@ class GoodsReceivedNoteReportService
         if (count($grnNumbers) > 0) {
             $query->whereIn('grn.grn_number', $grnNumbers);
         }
-// dd($dateFilter);
+        // dd($dateFilter);
         if (!empty($dateFilter['start'])) {
             // dd($dateFilter['start']);
             $query->whereDate('grn.grn_date', '>=', $dateFilter['start']);
@@ -86,7 +86,7 @@ class GoodsReceivedNoteReportService
         if (!empty($dateFilter['end'])) {
             // dd($dateFilter['end']);
             $query->whereDate('grn.grn_date', '<=', $dateFilter['end']);
-        }   
+        }
 
         // dd($dateFilter);
         // نسخة لحساب الإجمالي الكلي قبل التقسيم
@@ -104,7 +104,9 @@ class GoodsReceivedNoteReportService
             // $item->unit_price الآن هو الناتج من CASE WHEN أعلاه
             $item->formatted_unit_price = formatMoneyWithCurrency($item->unit_price);
             $item->formatted_quantity   = formatQunantity($item->quantity);
-            $totalAmount += $item->unit_price * $item->quantity;
+            $item->total_price          = $item->unit_price * $item->quantity;
+            $item->formatted_total_price = formatMoneyWithCurrency($item->total_price);
+            $totalAmount += $item->total_price;
         }
 
         return [
