@@ -30,9 +30,16 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
 
         // Parse the join_date field
         try {
-            $joinDate = isset($row['join_date']) && !empty($row['join_date'])
-                ? Carbon::parse($row['join_date'])->format('Y-m-d')
-                : null;
+            $joinDate = $row['join_date'] ?? null;
+            if (!empty($joinDate)) {
+                if (is_numeric($joinDate)) {
+                    $joinDate = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($joinDate)->format('Y-m-d');
+                } else {
+                    $joinDate = Carbon::parse($joinDate)->format('Y-m-d');
+                }
+            } else {
+                $joinDate = null;
+            }
         } catch (Exception $e) {
             $errorMessage = "Row {$rowNumber}: Invalid join_date format '{$row['join_date']}' - {$e->getMessage()}";
             $this->logError('DATE_PARSE_ERROR', $errorMessage, $row, $e);
@@ -76,25 +83,36 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
             $this->processedRowsCount++;
 
             // تعطيل الـ Observer أثناء الاستيراد لتجنب إنشاء مستخدم تلقائياً
-            // استخدام updateOrCreate للتعامل مع الموظفين المكررين (تحديث إذا موجود، إنشاء إذا جديد)
-            return Employee::withoutEvents(function () use ($row, $joinDate) {
-                return Employee::updateOrCreate(
-                    // البحث بناءً على employee_no (المفتاح الفريد)
-                    ['employee_no' => $row['employee_no'] ?? null],
-                    // البيانات للتحديث أو الإنشاء
-                    [
-                        'name' => $row['name'],
-                        'phone_number' => $row['phone_number'] ?? null,
-                        'job_title' => $row['job_title'] ?? null,
-                        'email' => $row['email'] ?? null,
-                        'salary' => $row['salary'] ?? 0,
-                        'nationality' => $row['nationality'] ?? null,
-                        'has_employee_pass' => $this->parseHasEmployeePass($row['has_employee_pass'] ?? null),
-                        'gender' => $this->parseGender($row['gender'] ?? null),
-                        'branch_id' => $row['branch_id'] ?? null,
-                        'join_date' => $joinDate,
-                    ]
-                );
+            // التحقق من تكرار رقم الموظف - إذا كان مكرراً نجعله فارغاً لننشئ سجلاً جديداً
+            $employeeNo = $row['employee_no'] ?? null;
+            if ($employeeNo && Employee::where('employee_no', $employeeNo)->exists()) {
+                $employeeNo = null;
+            }
+
+            return Employee::withoutEvents(function () use ($row, $joinDate, $employeeNo) {
+                $data = [
+                    'name' => $row['name'],
+                    'phone_number' => $row['phone_number'] ?? null,
+                    'job_title' => $row['job_title'] ?? null,
+                    'email' => $row['email'] ?? null,
+                    'salary' => $row['salary'] ?? 0,
+                    'nationality' => $this->parseNationality($row['nationality'] ?? null),
+                    'has_employee_pass' => $this->parseHasEmployeePass($row['has_employee_pass'] ?? null),
+                    'gender' => $this->parseGender($row['gender'] ?? null),
+                    'branch_id' => $row['branch_id'] ?? null,
+                    'join_date' => $joinDate,
+                    'working_days' => $row['working_days'] ?? null,
+                    'working_hours' => $row['working_hours'] ?? null,
+                ];
+
+                if ($employeeNo) {
+                    return Employee::updateOrCreate(
+                        ['employee_no' => $employeeNo],
+                        $data
+                    );
+                } else {
+                    return Employee::create($data);
+                }
             });
         } catch (Exception $e) {
             $employeeName = $row['name'] ?? 'Unknown';
@@ -216,6 +234,44 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
     }
 
     /**
+     * تحويل قيمة nationality من الاسم أو الدولة إلى الكود
+     */
+    private function parseNationality($value): ?string
+    {
+        if (empty($value) || $value === null) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+        $valueLower = strtolower($value);
+
+        // 1. البحث في الجنسيات (الاسم أو الكود)
+        $nationalities = getNationalities();
+        foreach ($nationalities as $code => $name) {
+            // التحقق من الكود
+            if (strtolower($code) === $valueLower) {
+                return $code;
+            }
+            // التحقق من الاسم
+            if (strtolower($name) === $valueLower) {
+                return $code;
+            }
+        }
+
+        // 2. البحث في الدول
+        $countries = getNationalitiesAsCountries();
+        foreach ($countries as $code => $countryName) {
+            if (strtolower($countryName) === $valueLower) {
+                return $code;
+            }
+        }
+
+        // إذا لم يتم العثور على تطابق، نرجع القيمة الأصلية (قد تكون كود صحيح ولكنه غير موجود في القائمة، أو قيمة جديدة)
+        // أو يمكن إرجاع null إذا كنا نريد فقط القيم المعروفة. هنا سنرجع القيمة الأصلية.
+        return $value;
+    }
+
+    /**
      * الحصول على جميع الأخطاء المسجلة
      */
     public function getImportErrors(): array
@@ -253,6 +309,8 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
             'gender',
             'has_employee_pass',
             'join_date',
+            'working_days',
+            'working_hours',
         ];
     }
 
