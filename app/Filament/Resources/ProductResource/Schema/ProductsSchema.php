@@ -35,7 +35,7 @@ use Filament\Schemas\Schema;
 class ProductsSchema
 {
 
-    public static function configure(Schema $schema): Schema
+    public static function  configure(Schema $schema): Schema
     {
         return $schema->components([
             Fieldset::make()->columnSpanFull()->columns(2)->schema([
@@ -659,7 +659,53 @@ class ProductsSchema
                             // })
 
                         ]),
+
+                    self::productionDetailsStep(),
                 ])
         ]);
+    }
+
+    public static function productionDetailsStep(): Step
+    {
+        return Step::make('production_details')
+            ->label('Production Details')
+            ->columnSpanFull()
+            ->visible(fn($get): bool => ($get('category_id') !== null && Category::find($get('category_id'))->is_manafacturing))
+            ->schema([
+                Grid::make()
+                    ->columnSpanFull()
+                    ->schema([
+                        Fieldset::make('Production Info')
+                            ->columnSpanFull()
+                            ->relationship('halalCertificate')
+                            ->schema([
+                                Grid::make()->columns(3)
+                                    ->columnSpanFull()
+                                    ->schema([
+                                        TextInput::make('shelf_life_value')
+                                            ->label(__('lang.shelf_life_value'))
+                                            ->numeric()
+                                            ->minValue(1),
+                                        Select::make('shelf_life_unit')
+                                            ->label(__('lang.shelf_life_unit'))
+                                            ->options(\App\Models\ProductHalalCertificate::getShelfLifeUnitOptions())
+                                            ->default('month'),
+
+                                        TextInput::make('net_weight')
+                                            ->label('Net Weight')
+                                            ->placeholder('Net Weight (e.g. 500g, 1kg)'),
+                                    ]),
+
+
+
+                                Textarea::make('allergen_info')
+                                    ->label(__('lang.allergen_info'))
+                                    ->placeholder('e.g. Contains allergen from soy. May contain allergen from nuts and dairy.')
+                                    ->rows(3)
+                                    ->columnSpanFull(),
+                            ])
+                    ])
+
+            ]);
     }
 }

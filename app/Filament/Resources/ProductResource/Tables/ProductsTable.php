@@ -51,78 +51,7 @@ class ProductsTable
     /**
      * Halal Certificate Form Action
      */
-    public static function halalCertificateAction(): Action
-    {
-        return Action::make('halalCertificate')
-            ->label(__('lang.halal_certificate'))
-            ->icon('heroicon-o-document-check')
-            ->color('success')
-            ->visible(fn($record): bool => $record->is_manufacturing)
-            ->fillForm(function ($record): array {
-                $certificate = $record->halalCertificate;
-                return [
-                    'shelf_life_value' => $certificate?->shelf_life_value,
-                    'shelf_life_unit' => $certificate?->shelf_life_unit ?? 'month',
-                    'is_halal_certified' => $certificate?->is_halal_certified ?? false,
-                    'halal_certificate_no' => $certificate?->halal_certificate_no,
-                    'halal_expiry_date' => $certificate?->halal_expiry_date,
-                    'allergen_info' => $certificate?->allergen_info,
-                ];
-            })
-            ->schema([
-                Fieldset::make(__('lang.shelf_life'))
-                    ->columns(2)
-                    ->schema([
-                        TextInput::make('shelf_life_value')
-                            ->label(__('lang.shelf_life_value'))
-                            ->numeric()
-                            ->minValue(1)
-                            ->required(),
-                        Select::make('shelf_life_unit')
-                            ->label(__('lang.shelf_life_unit'))
-                            ->options(ProductHalalCertificate::getShelfLifeUnitOptions())
-                            ->default('month')
-                            ->required(),
-                    ]),
-                Fieldset::make(__('lang.halal_certificate'))
-                    ->columns(3)
-                    ->schema([
-                        Toggle::make('is_halal_certified')
-                            ->label(__('lang.is_halal_certified'))
-                            ->inline(false)
-                            ->live(),
-                        TextInput::make('halal_certificate_no')
-                            ->label(__('lang.halal_certificate_no'))
-                            ->placeholder('e.g. MS 1500')
-                            ->visible(fn($get) => $get('is_halal_certified')),
-                        \Filament\Forms\Components\DatePicker::make('halal_expiry_date')
-                            ->label(__('lang.halal_expiry_date'))
-                            ->visible(fn($get) => $get('is_halal_certified')),
-                    ]),
-                Fieldset::make(__('lang.allergen_info'))
-                    ->schema([
-                        Textarea::make('allergen_info')
-                            ->label(__('lang.allergen_info'))
-                            ->placeholder('e.g. Contains allergen from soy. May contain allergen from nuts and dairy.')
-                            ->rows(3)
-                            ->columnSpanFull(),
-                    ]),
-            ])
-            ->action(function (array $data, $record) {
-                ProductHalalCertificate::updateOrCreate(
-                    ['product_id' => $record->id],
-                    [
-                        'shelf_life_value' => $data['shelf_life_value'],
-                        'shelf_life_unit' => $data['shelf_life_unit'],
-                        'is_halal_certified' => $data['is_halal_certified'] ?? false,
-                        'halal_certificate_no' => $data['halal_certificate_no'] ?? null,
-                        'halal_expiry_date' => $data['halal_expiry_date'] ?? null,
-                        'allergen_info' => $data['allergen_info'] ?? null,
-                    ]
-                );
-                showSuccessNotifiMessage(__('lang.halal_certificate_saved'));
-            });
-    }
+
 
     public static function configure(Table $table): Table
     {
@@ -349,7 +278,7 @@ class ProductsTable
                             }
                         }),
 
-                    self::halalCertificateAction(),
+                    // self::halalCertificateAction(),
 
                     EditAction::make(),
                     DeleteAction::make(),

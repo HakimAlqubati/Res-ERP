@@ -17,16 +17,13 @@ class ProductHalalCertificate extends Model
         'product_id',
         'shelf_life_value',
         'shelf_life_unit',
-        'is_halal_certified',
-        'halal_certificate_no',
-        'halal_expiry_date',
+        'net_weight',
         'allergen_info',
     ];
 
     protected $casts = [
-        'is_halal_certified' => 'boolean',
-        'halal_expiry_date' => 'date',
         'shelf_life_value' => 'integer',
+        'net_weight' => 'string',
     ];
 
     /**
@@ -45,8 +42,8 @@ class ProductHalalCertificate extends Model
         return [
             self::UNIT_DAY => __('lang.day'),
             self::UNIT_WEEK => __('lang.week'),
-            self::UNIT_MONTH => __('lang.month'),
-            self::UNIT_YEAR => __('lang.year'),
+            self::UNIT_MONTH => __('lang.month_label'),
+            // self::UNIT_YEAR => __('lang.year'),
         ];
     }
 
@@ -71,7 +68,7 @@ class ProductHalalCertificate extends Model
             self::UNIT_DAY => $productionDate->copy()->addDays($this->shelf_life_value),
             self::UNIT_WEEK => $productionDate->copy()->addWeeks($this->shelf_life_value),
             self::UNIT_MONTH => $productionDate->copy()->addMonths($this->shelf_life_value),
-            self::UNIT_YEAR => $productionDate->copy()->addYears($this->shelf_life_value),
+            // self::UNIT_YEAR => $productionDate->copy()->addYears($this->shelf_life_value),
             default => null,
         };
     }
