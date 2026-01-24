@@ -45,4 +45,9 @@ Route::get('grn', [GoodsReceivedNoteReportController::class, 'index']);
 
 // Optional: PDF export via API (same filters as above)
 Route::get('grn.pdf', [GoodsReceivedNoteReportController::class, 'exportPdf']);
+
+Route::get('manufacturing-labels', [\App\Http\Controllers\Api\Reports\ManufacturingProductLabelReportController::class, 'getLabels']);
+Route::get('manufacturing-label-details', [\App\Http\Controllers\Api\Reports\ManufacturingProductLabelReportController::class, 'getLabelDetails']);
+
+
 // });
