@@ -45,6 +45,7 @@ use App\Filament\Resources\ApprovalResource;
 use App\Filament\Resources\BranchResource;
 use App\Filament\Resources\FinancialCategories\FinancialCategoryResource;
 use App\Filament\Resources\FinancialTransactions\FinancialTransactionResource;
+use App\Filament\Resources\HalalLabelReportResource;
 use App\Filament\Resources\MonthClosureResource;
 use App\Filament\Resources\ProductResource;
 use App\Filament\Resources\SettingResource;
@@ -138,6 +139,7 @@ class AdminPanelProvider extends PanelProvider
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  ResellersCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  ManufacturingBranchesCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  ProductUnitCluster::getNavigationItems() : [],
+                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  HalalLabelReportResource::getNavigationItems() : [],
                             //  (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  ReportOrdersCluster::getNavigationItems(): [], 
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  SupplierCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  SupplierStoresReportsCluster::getNavigationItems() : [],
