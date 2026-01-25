@@ -59,11 +59,14 @@ Route::prefix('stockAdjustments')
     ->middleware(['auth:api'])
     ->name('stockAdjustments.')
     ->group(function () {
+        Route::get('/reasons', [StockAdjustmentController::class, 'getReasons'])->name('reasons');
         Route::get('/', [StockAdjustmentController::class, 'index'])->name('index');
         Route::post('/', [StockAdjustmentController::class, 'store'])->name('store');
         Route::get('/{id}', [StockAdjustmentController::class, 'show'])->name('show')->whereNumber('id');
         Route::delete('/{id}', [StockAdjustmentController::class, 'destroy'])->name('destroy')->whereNumber('id');
     });
+
+
 
 // Reports Routes
 Route::get('grn', [GoodsReceivedNoteReportController::class, 'index']);

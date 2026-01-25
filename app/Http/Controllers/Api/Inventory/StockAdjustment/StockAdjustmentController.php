@@ -163,4 +163,27 @@ class StockAdjustmentController extends Controller
             ], $statusCode);
         }
     }
+    /**
+     * Get list of active stock adjustment reasons.
+     *
+     * @return JsonResponse
+     */
+    public function getReasons(): JsonResponse
+    {
+        try {
+            $reasons = \App\Models\StockAdjustmentReason::active()->get(['id', 'name', 'description']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Stock adjustment reasons retrieved successfully',
+                'data' => $reasons,
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve stock adjustment reasons',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }
