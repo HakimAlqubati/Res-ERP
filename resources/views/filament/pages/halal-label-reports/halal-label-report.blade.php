@@ -65,7 +65,7 @@
                     <th class="px-4 py-2">Exp. Date</th>
                     <th class="px-4 py-2">Net Weight</th>
                     <th class="px-4 py-2">Quantity</th>
-                    <th class="px-4 py-2 no-print">Actions</th>
+                    <th class="px-4 py-2"></th>
                 </tr>
             </thead>
             <tbody>
@@ -79,7 +79,7 @@
                     <td class="border px-4 py-1 text-center">{{ $row['quantity'] }} {{ $row['unit'] }}</td>
                     <td class="border px-4 py-1 text-center no-print">
                         <x-filament::button wire:click="showDetails({{ $row['product_id'] }}, '{{ $row['patch_number'] }}')"
-                            icon="heroicon-o-eye" size="sm" color="" tooltip="View Details">
+                            size="sm" color="" tooltip="View Details">
                             Details
                         </x-filament::button>
                     </td>
@@ -154,7 +154,7 @@
                     <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-2">
                         <span class="text-green-700 font-bold text-xl">حلال</span>
                     </div>
-                    <p class="text-xs font-bold text-green-700 uppercase tracking-widest">Certified Halal</p>
+                    <p class="text-xs font-bold text-green-700 uppercase tracking-widest">Halal</p>
                 </div>
             </div>
             @endif

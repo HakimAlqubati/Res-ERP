@@ -3,8 +3,9 @@
 namespace App\Filament\Resources;
 
 use Filament\Pages\Enums\SubNavigationPosition;
- use App\Filament\Clusters\InventoryReportCluster;
+use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Resources\HalalLabelReportResource\Pages\ListHalalLabelReports;
+use App\Models\Product;
 use App\Models\StockSupplyOrder;
 use App\Models\Store;
 use Carbon\Carbon;
@@ -69,8 +70,25 @@ class HalalLabelReportResource extends Resource
                         return $q;
                     })->options(
                         Store::active()->get()->pluck('name', 'id')->toArray()
+                    ),
+                SelectFilter::make("product_id")
+                    ->label(__('lang.product'))
+                    ->multiple()
+                    ->searchable()
+                    ->getSearchResultsUsing(
+                        fn(string $search): array => Product::active()
+                            ->manufacturingCategory()
+                            ->where(function (Builder $q) use ($search) {
+                                $q->where('name', 'like', "%{$search}%")
+                                    ->orWhere('code', 'like', "%{$search}%");
+                            })
+                            ->limit(10)
+                            ->get()
+                            ->pluck('display_name', 'id')
+                            ->toArray()
                     )
-
+                    ->options(Product::active()->manufacturingCategory()->limit(10)->get()->pluck('display_name', 'id')->toArray())
+                    ->getOptionLabelsUsing(fn(array $values): array => Product::whereIn('id', $values)->get()->pluck('display_name', 'id')->toArray()),
             ], FiltersLayout::AboveContent);
     }
 

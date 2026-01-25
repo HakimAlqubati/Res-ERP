@@ -31,7 +31,11 @@ class ManufacturingProductLabelReportsService
         }
 
         if (!empty($filters['product_id'])) {
-            $query->where('product_id', $filters['product_id']);
+            if (is_array($filters['product_id'])) {
+                $query->whereIn('product_id', $filters['product_id']);
+            } else {
+                $query->where('product_id', $filters['product_id']);
+            }
         }
 
         if (!empty($filters['store_id'])) {

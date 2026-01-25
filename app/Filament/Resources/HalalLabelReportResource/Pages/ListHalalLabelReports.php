@@ -27,11 +27,13 @@ class ListHalalLabelReports extends ListRecords
     protected function getViewData(): array
     {
         $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
+        $productId = $this->getTable()->getFilters()['product_id']->getState()['values'] ?? null;
         $startDate = $this->getTable()->getFilters()['date_range']->getState()['start_date'];
         $endDate = $this->getTable()->getFilters()['date_range']->getState()['end_date'];
 
         $filters = [
             'store_id' => $storeId,
+            'product_id' => $productId,
             'from_date' => $startDate,
             'to_date' => $endDate,
         ];
