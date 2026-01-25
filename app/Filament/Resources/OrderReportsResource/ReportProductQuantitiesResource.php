@@ -13,6 +13,7 @@ use App\Models\FakeModelReports\ReportProductQuantities;
 use App\Models\Order;
 use App\Models\OrderDetails;
 use App\Models\Product;
+use App\Models\Category;
 use Filament\Forms\Components\DatePicker;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
@@ -61,7 +62,7 @@ class ReportProductQuantitiesResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->deferFilters(false)
-            ->filters([ 
+            ->filters([
                 SelectFilter::make("product_id")
                     // ->multiple()
                     ->label(__('lang.product'))->searchable()
@@ -86,6 +87,11 @@ class ReportProductQuantitiesResource extends Resource
                                 $product->id => "{$product->code} - {$product->name}"
                             ]);
                     }),
+                SelectFilter::make('category_id')
+                    ->label(__('lang.category'))
+                    ->multiple()
+                    ->searchable()
+                    ->options(Category::active()->notForPos()->pluck('name', 'id')),
                 SelectFilter::make('branch_id')
                     ->label('Branch')->searchable()->multiple()
                     ->options(Branch::whereIn('type', [
@@ -102,8 +108,7 @@ class ReportProductQuantitiesResource extends Resource
                             ->label(__('lang.start_date')),
                         DatePicker::make('end_date')
                             ->label(__('lang.end_date')),
-                    ]) 
+                    ])
             ], layout: FiltersLayout::AboveContent);
     }
- 
 }

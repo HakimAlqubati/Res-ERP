@@ -234,7 +234,8 @@ class StockSupplyOrderResource extends Resource
                         }
                         return null;
                     }),
-            ], FiltersLayout::AboveContent)
+            ], FiltersLayout::Modal)
+            ->filtersFormColumns(4)
             ->recordActions([
                 ActionGroup::make([
 

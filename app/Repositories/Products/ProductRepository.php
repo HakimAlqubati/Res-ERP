@@ -425,7 +425,7 @@ class ProductRepository implements ProductRepositoryInterface
     // 
 
 
-    public function getReportDataFromTransactionsV2($productParam, $from_date, $to_date, $branchIds)
+    public function getReportDataFromTransactionsV2($productParam, $from_date, $to_date, $branchIds, $categoryIds = [])
     {
         $from = $from_date ? Carbon::parse($from_date)->startOfDay() : null;
         $to   = $to_date   ? Carbon::parse($to_date)->endOfDay()   : null;
@@ -460,6 +460,14 @@ class ProductRepository implements ProductRepositoryInterface
         if ($productId) {
             $productFilterSql = "AND it_in.product_id = ?";
             $productBindings  = [$productId];
+        }
+
+        $categoryFilterSql = '';
+        $categoryBindings = [];
+        if (!empty($categoryIds)) {
+            $catPlaceholders = implode(',', array_fill(0, count($categoryIds), '?'));
+            $categoryFilterSql = "AND p.category_id IN ($catPlaceholders)";
+            $categoryBindings = $categoryIds;
         }
 
         // 4) SQL مع اسم الموزع لكل صف
@@ -542,6 +550,7 @@ class ProductRepository implements ProductRepositoryInterface
               AND it_in.movement_type = 'in'
               AND it_in.store_id IN ($placeholdersStores)
               {$productFilterSql}
+              {$categoryFilterSql}
               AND (? IS NULL OR it_in.movement_date >= ?)
               AND (? IS NULL OR it_in.movement_date <= ?)
 
@@ -560,6 +569,7 @@ class ProductRepository implements ProductRepositoryInterface
             [$toStr, $toStr],            // لقيد it_out
             $storeIds,                   // المخازن
             $productBindings,            // المنتج
+            $categoryBindings,           // الأصناف
             [$fromStr, $fromStr, $toStr, $toStr] // قيد it_in
         );
 
