@@ -809,6 +809,7 @@ class EmployeeApplicationResource extends Resource
         return Action::make('approveMealRequest')
             ->label(__('lang.approve'))
             ->button()
+            ->requiresConfirmation()
             ->visible(
                 fn($record): bool =>
                 $record->status == EmployeeApplicationV2::STATUS_PENDING
@@ -1309,7 +1310,7 @@ class EmployeeApplicationResource extends Resource
 
 
                         Select::make('branch_id')
-                            ->label(__('lang.branch') . 'sdf')
+                            ->label(__('lang.branch'))
                             ->options(Branch::where('type', Branch::TYPE_BRANCH)->pluck('name', 'id'))
                         // ->required()
                         // ->searchable()
