@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Api\Inventory\InventoryApiController;
 use App\Http\Controllers\Api\Inventory\StockInventory\StockInventoryController;
+use App\Http\Controllers\Api\Inventory\StockAdjustment\StockAdjustmentController;
 use App\Http\Controllers\Api\Reports\GoodsReceivedNoteReportController;
 
 Route::prefix('inventory')->name('inventory.')->group(function () {
@@ -51,6 +52,17 @@ Route::prefix('stockInventories')
 
         // Additional action
         Route::post('/{id}/finalize', [StockInventoryController::class, 'finalize'])->name('finalize')->whereNumber('id');
+    });
+
+// Stock Adjustment API Routes
+Route::prefix('stockAdjustments')
+    ->middleware(['auth:api'])
+    ->name('stockAdjustments.')
+    ->group(function () {
+        Route::get('/', [StockAdjustmentController::class, 'index'])->name('index');
+        Route::post('/', [StockAdjustmentController::class, 'store'])->name('store');
+        Route::get('/{id}', [StockAdjustmentController::class, 'show'])->name('show')->whereNumber('id');
+        Route::delete('/{id}', [StockAdjustmentController::class, 'destroy'])->name('destroy')->whereNumber('id');
     });
 
 // Reports Routes
