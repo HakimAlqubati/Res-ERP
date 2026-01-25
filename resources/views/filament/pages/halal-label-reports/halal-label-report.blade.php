@@ -106,9 +106,8 @@
                     <p class="text-sm text-gray-500 mt-1">Code: <span class="font-mono font-medium text-gray-700">{{ $selectedLabelDetails['code'] }}</span></p>
                 </div>
                 @if($selectedLabelDetails['halal_logo'])
-                <div class="px-3 py-1 bg-white border border-green-200 rounded text-center">
-                    <span class="block text-green-700 font-bold text-sm">حلال</span>
-                    <span class="block text-[10px] text-green-600 font-bold uppercase tracking-wider">Halal</span>
+                <div class="px-1 py-1 bg-white border border-gray-200 rounded text-center">
+                    <img src="{{ $selectedLabelDetails['halal_logo'] }}" alt="Halal Logo" style="max-height: 100px;width: auto;">
                 </div>
                 @endif
             </div>

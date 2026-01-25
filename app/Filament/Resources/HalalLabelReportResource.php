@@ -8,6 +8,7 @@ use App\Filament\Resources\HalalLabelReportResource\Pages\ListHalalLabelReports;
 use App\Models\Product;
 use App\Models\StockSupplyOrder;
 use App\Models\Store;
+use App\Models\Branch;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Resources\Resource;
@@ -69,7 +70,12 @@ class HalalLabelReportResource extends Resource
                     ->query(function (Builder $q, $data) {
                         return $q;
                     })->options(
-                        Store::active()->get()->pluck('name', 'id')->toArray()
+                        Store::active()
+                            ->whereHas('branches', function ($q) {
+                                $q->where('type', Branch::TYPE_CENTRAL_KITCHEN);
+                            })
+                            ->pluck('name', 'id')
+                            ->toArray()
                     ),
                 SelectFilter::make("product_id")
                     ->label(__('lang.product'))

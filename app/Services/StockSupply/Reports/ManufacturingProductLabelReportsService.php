@@ -6,6 +6,7 @@ use App\Models\InventoryTransaction;
 use App\Models\StockSupplyOrder;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Storage;
 
 class ManufacturingProductLabelReportsService
 {
@@ -78,6 +79,7 @@ class ManufacturingProductLabelReportsService
                 'quantity' => $transaction->quantity,
                 'unit' => $transaction->unit?->name,
                 'store_name' => $transaction->store?->name ?? null,
+                'halal_logo' => $transaction->product->halalCertificate?->halal_logo ? Storage::url($transaction->product->halalCertificate->halal_logo) : null,
             ];
         });
     }
@@ -137,7 +139,7 @@ class ManufacturingProductLabelReportsService
             'tel' => $companyPhone,
             'country_of_origin' => $countryOfOrigin,
             'allergen_info' => $transaction->product->halalCertificate?->allergen_info,
-            'halal_logo' => true,
+            'halal_logo' => $transaction->product->halalCertificate?->halal_logo ? Storage::url($transaction->product->halalCertificate->halal_logo) : null,
         ];
     }
 }

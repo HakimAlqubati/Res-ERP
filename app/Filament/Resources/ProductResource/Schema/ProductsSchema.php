@@ -24,6 +24,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\FileUpload;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
@@ -694,6 +695,11 @@ class ProductsSchema
                                         TextInput::make('net_weight')
                                             ->label('Net Weight')
                                             ->placeholder('Net Weight (e.g. 500g, 1kg)'),
+                                        FileUpload::make('halal_logo')
+                                            ->label('Halal Logo')
+                                            ->image()
+                                            ->directory('halal-logos')
+                                            ->visibility('public'),
                                     ]),
 
 

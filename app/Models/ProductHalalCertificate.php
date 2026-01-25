@@ -19,6 +19,7 @@ class ProductHalalCertificate extends Model
         'shelf_life_unit',
         'net_weight',
         'allergen_info',
+        'halal_logo',
     ];
 
     protected $casts = [
