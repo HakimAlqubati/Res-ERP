@@ -13,6 +13,15 @@ class ListHalalLabelReports extends ListRecords
     use HasBackButtonAction;
     protected static string $resource = HalalLabelReportResource::class;
     protected string $view = 'filament.pages.halal-label-reports.halal-label-report';
+    public $selectedLabelDetails = null;
+
+    public function showDetails($productId, $batchCode)
+    {
+        $this->selectedLabelDetails = null;
+        $service = new ManufacturingProductLabelReportsService();
+        $this->selectedLabelDetails = $service->getLabelDetails($productId, $batchCode);
+        $this->dispatch('open-modal', id: 'label-details-modal');
+    }
 
 
     protected function getViewData(): array

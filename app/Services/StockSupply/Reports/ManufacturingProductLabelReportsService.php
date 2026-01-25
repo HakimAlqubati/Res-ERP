@@ -65,6 +65,7 @@ class ManufacturingProductLabelReportsService
             return [
                 'transaction_id' => $transaction->id,
                 'stock_supply_order_id' => $transaction->transactionable_id,
+                'product_id' => $transaction->product_id,
                 'product_name' => $transaction->product->name ?? null,
                 'production_date' => $productionDate ? $productionDate->toDateString() : null,
                 'expiry_date' => $expiryDate ? $expiryDate->toDateString() : null,
