@@ -93,71 +93,115 @@
     <x-filament::modal id="label-details-modal" width="2xl">
         <x-slot name="heading">
             <div class="flex items-center gap-2">
-                <span>Product Label Details</span>
+                <span class="font-bold text-lg text-gray-800">تفاصيل المنتج</span>
             </div>
         </x-slot>
 
         @if ($selectedLabelDetails)
-        <div class="space-y-6 p-4">
-            {{-- Product Header --}}
-            <div class="border-b pb-4">
-                <h2 class="text-2xl font-bold text-gray-800">Product Name: {{ $selectedLabelDetails['product_name'] }}</h2>
-                <p class="text-sm text-gray-500">Product Code: {{ $selectedLabelDetails['code'] }}</p>
+        <div class="p-4">
+            {{-- حاوية المنتج --}}
+            <div class="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50 flex justify-between items-start">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900">{{ $selectedLabelDetails['product_name'] }}</h2>
+                    <p class="text-sm text-gray-500 mt-1">Code: <span class="font-mono font-medium text-gray-700">{{ $selectedLabelDetails['code'] }}</span></p>
+                </div>
+                @if($selectedLabelDetails['halal_logo'])
+                <div class="px-3 py-1 bg-white border border-green-200 rounded text-center">
+                    <span class="block text-green-700 font-bold text-sm">حلال</span>
+                    <span class="block text-[10px] text-green-600 font-bold uppercase tracking-wider">Halal</span>
+                </div>
+                @endif
             </div>
 
-            {{-- Information Grid --}}
-            <div class="grid grid-cols-2 gap-6">
-                <div class="bg-gray-50 p-4 rounded-xl shadow-sm border border-gray-100">
-                    <p class="text-xs uppercase font-bold text-gray-400 mb-1">Batch Code</p>
-                    <p class="text-lg font-medium text-gray-900">{{ $selectedLabelDetails['batch_code'] }}</p>
-                </div>
-                <div class="bg-gray-50 p-4 rounded-xl shadow-sm border border-gray-100">
-                    <p class="text-xs uppercase font-bold text-gray-400 mb-1">Net Weight</p>
-                    <p class="text-lg font-medium text-gray-900">{{ $selectedLabelDetails['net_weight'] }}</p>
-                </div>
-                <div class="bg-blue-50 p-4 rounded-xl shadow-sm border border-blue-100">
-                    <p class="text-xs uppercase font-bold text-blue-400 mb-1">Production Date</p>
-                    <p class="text-lg font-medium text-blue-900">{{ $selectedLabelDetails['production_date'] }}</p>
-                </div>
-                <div class="bg-orange-50 p-4 rounded-xl shadow-sm border border-orange-100">
-                    <p class="text-xs uppercase font-bold text-orange-400 mb-1">Best Before</p>
-                    <p class="text-lg font-medium text-orange-900">{{ $selectedLabelDetails['best_before'] }}</p>
-                </div>
-            </div>
+            {{-- الجدول بحدود كاملة --}}
+            <div class="overflow-hidden rounded-lg border border-gray-200">
+                <table class="min-w-full text-sm border-collapse">
+                    <tbody>
+                        {{-- الصف الأول --}}
+                        <tr>
+                            <td class="w-1/4 px-4 py-3 bg-gray-100 font-bold text-gray-600 border-b border-r border-gray-200">
+                                Batch Code
+                            </td>
+                            <td class="w-1/4 px-4 py-3 text-gray-900 font-mono border-b border-r border-gray-200">
+                                {{ $selectedLabelDetails['batch_code'] }}
+                            </td>
+                            <td class="w-1/4 px-4 py-3 bg-gray-100 font-bold text-gray-600 border-b border-r border-gray-200">
+                                Net Weight
+                            </td>
+                            <td class="w-1/4 px-4 py-3 text-gray-900 border-b border-gray-200">
+                                {{ $selectedLabelDetails['net_weight'] }}
+                            </td>
+                        </tr>
 
-            {{-- Manufacturer Info --}}
-            <div class="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100">
-                <h3 class="text-sm font-bold text-indigo-900 mb-3 flex items-center gap-2">
-                    Manufacturer Information
-                </h3>
-                <div class="space-y-2 text-sm text-indigo-800">
-                    <p><span class="font-bold">Company:</span> {{ $selectedLabelDetails['manufactured_by'] }}</p>
-                    <p><span class="font-bold">Address:</span> {{ $selectedLabelDetails['address'] }}</p>
-                    <p><span class="font-bold">Telephone:</span> {{ $selectedLabelDetails['tel'] }}</p>
-                    <p><span class="font-bold">Country:</span> {{ $selectedLabelDetails['country_of_origin'] }}</p>
-                </div>
-            </div>
+                        {{-- صف التواريخ --}}
+                        <tr>
+                            <td class="px-4 py-3 bg-blue-50/50 font-bold text-gray-600 border-b border-r border-gray-200">
+                                Production Date
+                            </td>
+                            <td class="px-4 py-3 text-blue-700 font-medium border-b border-r border-gray-200">
+                                {{ $selectedLabelDetails['production_date'] }}
+                            </td>
+                            <td class="px-4 py-3 bg-orange-50/50 font-bold text-gray-600 border-b border-r border-gray-200">
+                                Best Before
+                            </td>
+                            <td class="px-4 py-3 text-orange-700 font-medium border-b border-gray-200">
+                                {{ $selectedLabelDetails['best_before'] }}
+                            </td>
+                        </tr>
 
-            {{-- Additional Details --}}
-            @if($selectedLabelDetails['allergen_info'])
-            <div class="bg-red-50 p-4 rounded-xl border border-red-100 italic">
-                <p class="text-xs font-bold text-red-600 mb-1 flex items-center gap-1">
-                    Allergen Information:
-                </p>
-                <p class="text-sm text-red-800">{{ $selectedLabelDetails['allergen_info'] }}</p>
-            </div>
-            @endif
+                        {{-- عنوان قسم المصنع --}}
+                        <tr>
+                            <td colspan="4" class="px-4 py-2 bg-gray-200 text-gray-800 font-bold text-center text-xs uppercase tracking-wider border-b border-gray-200">
+                                Manufacturer Information
+                            </td>
+                        </tr>
 
-            @if($selectedLabelDetails['halal_logo'])
-            <div class="flex justify-center pt-4">
-                <div class="flex flex-col items-center">
-                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-2">
-                        <span class="text-green-700 font-bold text-xl">حلال</span>
-                    </div>
-                    <p class="text-xs font-bold text-green-700 uppercase tracking-widest">Halal</p>
-                </div>
+                        {{-- معلومات المصنع --}}
+                        <tr>
+                            <td class="px-4 py-3 bg-gray-100 font-bold text-gray-600 border-b border-r border-gray-200">
+                                Company
+                            </td>
+                            <td colspan="3" class="px-4 py-3 text-gray-900 border-b border-gray-200">
+                                {{ $selectedLabelDetails['manufactured_by'] }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3 bg-gray-100 font-bold text-gray-600 border-b border-r border-gray-200">
+                                Address
+                            </td>
+                            <td colspan="3" class="px-4 py-3 text-gray-900 border-b border-gray-200">
+                                {{ $selectedLabelDetails['address'] }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-4 py-3 bg-gray-100 font-bold text-gray-600 border-b border-r border-gray-200">
+                                Country
+                            </td>
+                            <td class="px-4 py-3 text-gray-900 border-b border-r border-gray-200">
+                                {{ $selectedLabelDetails['country_of_origin'] }}
+                            </td>
+                            <td class="px-4 py-3 bg-gray-100 font-bold text-gray-600 border-b border-r border-gray-200">
+                                Telephone
+                            </td>
+                            <td class="px-4 py-3 text-gray-900 font-mono border-b border-gray-200">
+                                {{ $selectedLabelDetails['tel'] }}
+                            </td>
+                        </tr>
+
+                        {{-- الحساسية --}}
+                        @if($selectedLabelDetails['allergen_info'])
+                        <tr>
+                            <td class="px-4 py-3 bg-red-50 font-bold text-red-700 border-r border-red-100">
+                                Allergens
+                            </td>
+                            <td colspan="3" class="px-4 py-3 bg-red-50/30 text-red-800 italic">
+                                {{ $selectedLabelDetails['allergen_info'] }}
+                            </td>
+                        </tr>
+                        @endif
+                    </tbody>
+                </table>
             </div>
-            @endif
         </div>
         @else
         <div class="p-12 flex flex-col items-center justify-center text-gray-400">
