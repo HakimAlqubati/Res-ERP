@@ -141,6 +141,8 @@ class EmployeeApplicationTable
             $columns[] = TextColumn::make('mealRequest.meal_details')
                 ->label(__('lang.meal_details'))
                 ->limit(50);
+            $columns[] = TextColumn::make('mealRequest.branch.name')
+                ->label(__('lang.branch'));
 
             $columns[] = TextColumn::make('mealRequest.cost')
                 ->label(__('lang.cost'))

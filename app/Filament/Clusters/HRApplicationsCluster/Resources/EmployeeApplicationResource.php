@@ -670,8 +670,8 @@ class EmployeeApplicationResource extends Resource
                         TextInput::make('employee')->default($record?->employee?->name),
                         DatePicker::make('check_date')->default($attendance?->check_date),
                         TimePicker::make('check_time')
-                        ->label('Check In Time')
-                        ->default($attendance?->check_time),
+                            ->label('Check In Time')
+                            ->default($attendance?->check_time),
                         TextInput::make('period_title')->label('Period')->default($attendance?->period?->name),
                         TextInput::make('start_at')->default($attendance?->period?->start_at),
                         TextInput::make('end_at')->default($attendance?->period?->end_at),
@@ -1287,7 +1287,7 @@ class EmployeeApplicationResource extends Resource
                     $payload = [
                         'application_id'        => $record->id,
                         'employee_id'           => $record->employee_id,
-                        'branch_id'             => $state['_branch_id'],
+                        'branch_id'             => $state['branch_id'],
                         'meal_details'          => $state['meal_details'] ?? null,
                         'cost'                  => $state['cost'] ?? 0,
                         'notes'                 => $state['notes'] ?? null,
@@ -1299,11 +1299,6 @@ class EmployeeApplicationResource extends Resource
                     ];
 
                     $record->mealRequest()->updateOrCreate([], $payload);
-
-                    // Sync branch_id to the main application if it's set in the meal request
-                    if (isset($state['_branch_id'])) {
-                        $record->update(['branch_id' => $state['_branch_id']]);
-                    }
                 })
                 ->schema([
                     Grid::make()->columns(3)->columnSpanFull()->schema([
@@ -1312,12 +1307,13 @@ class EmployeeApplicationResource extends Resource
                             ->default(now())
                             ->required(),
 
-                        Select::make('_branch_id')
-                            ->label(__('lang.branch'))
+
+                        Select::make('branch_id')
+                            ->label(__('lang.branch') . 'sdf')
                             ->options(Branch::where('type', Branch::TYPE_BRANCH)->pluck('name', 'id'))
-                            // ->required()
-                            ->searchable()
-                            ->live()
+                        // ->required()
+                        // ->searchable()
+                        // ->live()
                         // ->afterStateUpdated(function ($set, $state) {
                         //     // Sync back to the parent application's branch_id if necessary
                         //     $set('../../branch_id', $state);

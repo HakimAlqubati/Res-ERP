@@ -67,14 +67,14 @@ class AttendanceTest extends Page implements HasForms
                     ])
                     ->placeholder('Optional - Auto detected')
                     ->visible(fn() => $this->showTypeField)
-                    ->required(fn() => $this->showTypeField)
+                    // ->required(fn() => $this->showTypeField)
                     ->native(false),
 
                 Select::make('period_id')
                     ->label('Select Shift')
                     ->options($this->periodOptions)
                     ->visible(fn() => $this->showPeriodField)
-                    ->required(fn() => $this->showPeriodField)
+                    // ->required(fn() => $this->showPeriodField)
                     // ->native(false)
                     ,
 
