@@ -84,14 +84,9 @@ class StoreStockInventoryRequest extends FormRequest
 
                 $actualQuantity = MultiProductsInventoryService::quickReport($storeId, $detail['product_id'], $detail['unit_id'])[0][0]['remaining_qty'];
                 $systemQuantity = (float) $detail['system_quantity'];
-                dd(
-                    $systemQuantity,
-                    $actualQuantity,
-                    $systemQuantity != $actualQuantity,
-                    $systemQuantity !== $actualQuantity
-                );
+
                 // Validate system_quantity matches actual inventory
-                if ($systemQuantity !== $actualQuantity) {
+                if ($systemQuantity != $actualQuantity) {
                     $validator->errors()->add(
                         "details.{$index}.system_quantity",
                         "Product '{$productName}' (Unit: {$unitName}): The system quantity ({$systemQuantity}) does not match the actual inventory quantity ({$actualQuantity})"

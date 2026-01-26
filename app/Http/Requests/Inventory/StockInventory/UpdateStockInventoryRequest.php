@@ -78,7 +78,7 @@ class UpdateStockInventoryRequest extends FormRequest
                 $systemQuantity = (float) $detail['system_quantity'];
 
                 // Validate system_quantity matches actual inventory
-                if ($systemQuantity !== $actualQuantity) {
+                if ($systemQuantity != $actualQuantity) {
                     $validator->errors()->add(
                         "details.{$index}.system_quantity",
                         "Product '{$productName}' (Unit: {$unitName}): The system quantity ({$systemQuantity}) does not match the actual inventory quantity ({$actualQuantity})"
