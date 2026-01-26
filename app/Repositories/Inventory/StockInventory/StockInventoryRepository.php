@@ -66,7 +66,8 @@ class StockInventoryRepository implements StockInventoryRepositoryInterface
         }
 
         // Sorting
-        $sortBy = $filters['sort_by'] ?? 'inventory_date';
+        // $sortBy = $filters['sort_by'] ?? 'inventory_date';
+        $sortBy = $filters['sort_by'] ?? 'id';
         $sortDirection = $filters['sort_direction'] ?? 'desc';
         $query->orderBy($sortBy, $sortDirection);
 

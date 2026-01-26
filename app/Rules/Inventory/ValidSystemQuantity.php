@@ -2,7 +2,7 @@
 
 namespace App\Rules\Inventory;
 
-use App\Services\Inventory\Summary\InventorySummaryReportService;
+use App\Services\MultiProductsInventoryService;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
@@ -25,11 +25,7 @@ class ValidSystemQuantity implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         // Get actual quantity from inventory summary
-        $actualQuantity = InventorySummaryReportService::make()
-            ->store($this->storeId)
-            ->product($this->productId)
-            ->unit($this->unitId)
-            ->remainingQty();
+        $actualQuantity = MultiProductsInventoryService::quickReport($this->storeId, $this->productId, $this->unitId)[0][0]['remaining_qty'];
 
         // Check if system_quantity matches actual quantity
         if ((float) $value !== (float) $actualQuantity) {

@@ -76,11 +76,7 @@ class StoreStockInventoryRequest extends FormRequest
                 $unitName = $unit?->name ?? "Unit #{$detail['unit_id']}";
 
                 // Get actual quantity from inventory summary
-                // $actualQuantity = \App\Services\Inventory\Summary\InventorySummaryReportService::make()
-                //     ->store($storeId)
-                //     ->product($detail['product_id'])
-                //     ->unit($detail['unit_id'])
-                //     ->remainingQty();
+       
 
                 $actualQuantity = MultiProductsInventoryService::quickReport($storeId, $detail['product_id'], $detail['unit_id'])[0][0]['remaining_qty'];
                 $systemQuantity = (float) $detail['system_quantity'];
