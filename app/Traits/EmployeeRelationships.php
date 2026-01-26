@@ -19,10 +19,12 @@ use App\Models\EmployeePeriodDay;
 use App\Models\EmployeePeriodHistory;
 use App\Models\Branch;
 use App\Models\Employee;
+use App\Models\EmployeeMealRequest;
 use App\Models\LeaveType;
 use App\Models\PenaltyDeduction;
 use App\Models\Position;
 use App\Models\User;
+use App\Models\UserType;
 use App\Models\WorkPeriod;
 use Carbon\Carbon;
 
@@ -222,5 +224,10 @@ trait EmployeeRelationships
     public function mealRequests()
     {
         return $this->hasMany(EmployeeMealRequest::class, 'employee_id');
+    }
+
+    public function employeeType()
+    {
+        return $this->belongsTo(UserType::class, 'employee_type');
     }
 }

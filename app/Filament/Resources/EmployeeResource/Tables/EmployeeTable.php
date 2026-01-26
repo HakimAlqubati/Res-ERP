@@ -116,8 +116,7 @@ class EmployeeTable
                     ->copyMessage(__('lang.email_address_copied'))
                     ->copyMessageDuration(1500)
                     ->color('primary')
-                ->weight(FontWeight::Bold)
-                ,
+                    ->weight(FontWeight::Bold),
                 TextColumn::make('phone_number')->label(__('lang.phone_number'))
                     ->searchable()
                     ->icon('heroicon-m-phone')
@@ -171,6 +170,10 @@ class EmployeeTable
                     ->sortable()->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: false),
+                TextColumn::make('employeeType.name')
+                    ->label(__('lang.role_type'))
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('department.name')
                     ->label(__('lang.department'))
@@ -250,6 +253,11 @@ class EmployeeTable
                     ->options(UserType::where('active', 1)->pluck('name', 'id')->toArray())
                     ->searchable()
                     ->multiple(),
+                SelectFilter::make('manager_id')
+                    ->label(__('lang.manager'))
+                    ->options(Employee::whereIn('employee_type', [1, 2])->pluck('name', 'id')->toArray())
+                    ->searchable()
+                    ->multiple(),
                 Filter::make('me')
                     ->label(__('lang.me'))
                     ->toggle()
@@ -288,13 +296,15 @@ class EmployeeTable
                     ->schema([
                         FileUpload::make('file')
                             ->label(__('lang.select_excel_file')),
-                    ])->extraModalFooterActions([
-                        Action::make('downloadexcel')->label(__('Download Example File'))
-                            ->icon('heroicon-o-arrow-down-on-square-stack')
-                            ->url(asset('data/sample_file_imports/Sample import file.xlsx')) // URL to the existing file
-                            ->openUrlInNewTab(),
                     ])
+                    // ->extraModalFooterActions([
+                    //     Action::make('downloadexcel')->label(__('Download Example File'))
+                    //         ->icon('heroicon-o-arrow-down-on-square-stack')
+                    //         ->url(asset('data/sample_file_imports/Sample import file.xlsx')) // URL to the existing file
+                    //         ->openUrlInNewTab(),
+                    // ])
                     ->color('success')
+                    // ->iconButton(Heroicon::AcademicCap)
                     ->action(function ($data) {
 
                         $file = 'public/' . $data['file'];
@@ -307,7 +317,7 @@ class EmployeeTable
 
                             // Check the result and show the appropriate notification
                             if ($import->getSuccessfulImportsCount() > 0) {
-                                showSuccessNotifiMessage("Employees imported successfully. {$import->getSuccessfulImportsCount()} rows added.");
+                                showSuccessNotifiMessage("Employees imported successfully {$import->getSuccessfulImportsCount()} rows added.");
                             } else {
                                 showWarningNotifiMessage('No employees were added. Please check your file.');
                             }

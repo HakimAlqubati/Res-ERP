@@ -7,14 +7,15 @@ use App\Models\Employee;
 use App\Models\AppLog;
 use App\Models\UserType;
 use Carbon\Carbon;
-
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterImport;
 
-class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmptyRows
+class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmptyRows, WithEvents
 {
     use SkipsErrors;
 
@@ -25,6 +26,7 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
     private $importErrors = [];
     private $lastEmployeeId = null;
     private $userTypesCache = [];
+    private $managerMappings = [];
 
     /**
      * الحصول على الرقم الوظيفي التالي
@@ -96,6 +98,10 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
             if (Employee::where('name', $row['name'])->exists()) {
                 $this->existingCount++;
                 $this->processedRowsCount++;
+
+                // حفظ اسم المدير للمراجعة في المرحلة الثانية حتى للموظفين الموجودين مسبقاً
+                $this->managerMappings[$row['name']] = $row['manager'] ?? null;
+
                 return null;
             }
 
@@ -117,7 +123,6 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
                 $this->logError('INVALID_SALARY', $errorMessage, $row);
             }
 
-            $this->successfulImportsCount++;
             $this->processedRowsCount++;
 
             // توليد رقم الموظف آلياً بشكل تصاعدي
@@ -141,7 +146,12 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
                     'employee_type' => $this->parseEmployeeType($row['roletype'] ?? null),
                 ];
 
-                return Employee::create($data);
+                $employee = Employee::create($data);
+
+                // حفظ اسم المدير للمراجعة في المرحلة الثانية
+                $this->managerMappings[$row['name']] = $row['manager'] ?? null;
+
+                return $employee;
             });
         } catch (Exception $e) {
             $employeeName = $row['name'] ?? 'Unknown';
@@ -255,7 +265,7 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
         }
 
         if (in_array($value, $femaleValues)) {
-            return 2;
+            return 0;
         }
 
         // للقيم غير المعروفة
@@ -341,6 +351,39 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
             'working_days',
             'working_hours',
             'roletype',
+            'manager',
+        ];
+    }
+
+    /**
+     * تسجيل الأحداث للقيام بعمليات بعد الاستيراد
+     */
+    public function registerEvents(): array
+    {
+        return [
+            AfterImport::class => function (AfterImport $event) {
+                // المرحلة الثانية: تحديث معرف المدير (manager_id) بناءً على الأسماء
+                foreach ($this->managerMappings as $employeeName => $managerName) {
+                    if (empty($managerName)) {
+                        continue;
+                    }
+
+                    // البحث عن الموظف الذي نريد تحديثه
+                    $employee = Employee::where('name', $employeeName)->first();
+                    if (!$employee) {
+                        continue;
+                    }
+
+                    // البحث عن المدير بالاسم
+                    $manager = Employee::where('name', $managerName)->first();
+                    if ($manager) {
+                        $employee->update(['manager_id' => $manager->id]);
+                    } else {
+                        // خيارياً: تسجيل خطأ إذا لم يتم العثور على المدير
+                        // $this->logError('MANAGER_NOT_FOUND', "Manager '{$managerName}' not found for employee '{$employeeName}'");
+                    }
+                }
+            },
         ];
     }
 
@@ -351,7 +394,7 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
 
     public function getSuccessfulImportsCount(): int
     {
-        return $this->successfulImportsCount;
+        return Employee::where('created_at', '>=', now()->subMinutes(2))->count();
     }
 
     public function getExistingCount(): int
