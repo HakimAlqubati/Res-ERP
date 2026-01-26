@@ -41,6 +41,82 @@ class StockAdjustmentService
     }
 
     /**
+     * Create adjustment from a single StockInventoryDetail
+     *
+     * @param int $detailId
+     * @param array $additionalData
+     * @return StockAdjustmentDetail
+     * @throws Exception
+     */
+    public function createFromInventoryDetail(int $detailId, array $data = []): StockAdjustmentDetail
+    {
+        return DB::transaction(function () use ($detailId, $data) {
+            $detail = \App\Models\StockInventoryDetail::with(['inventory', 'product', 'unit'])->findOrFail($detailId);
+
+            if ($detail->is_adjustmented) {
+                throw new Exception('This inventory detail has already been adjusted.');
+            }
+
+            // Update detail with latest counts if provided
+            if (isset($data['physical_quantity'])) {
+                $detail->physical_quantity = $data['physical_quantity'];
+            }
+            if (isset($data['unit_id'])) {
+                $detail->unit_id = $data['unit_id'];
+            }
+
+            // Recalculate difference
+            $detail->difference = (float) ($detail->physical_quantity ?? 0) - (float) ($detail->system_quantity ?? 0);
+            $detail->save();
+
+            $diff = (float) $detail->difference;
+
+            $type = StockAdjustmentDetail::ADJUSTMENT_TYPE_EQUAL;
+            if ($diff > 0) {
+                $type = StockAdjustmentDetail::ADJUSTMENT_TYPE_INCREASE;
+            } elseif ($diff < 0) {
+                $type = StockAdjustmentDetail::ADJUSTMENT_TYPE_DECREASE;
+            }
+
+            $adjustmentData = [
+                'product_id' => $detail->product_id,
+                'unit_id' => $detail->unit_id,
+                'package_size' => $detail->package_size,
+                'quantity' => abs($diff),
+                'adjustment_type' => $type,
+                'adjustment_date' => $detail->inventory->inventory_date ?? now(),
+                'store_id' => $detail->inventory->store_id,
+                'notes' => $data['notes'] ?? "Stock adjustment based on Stock Inventory #{$detail->stock_inventory_id}",
+                'reason_id' => $data['reason_id'] ?? null,
+                'source_id' => $detail->stock_inventory_id,
+                'source_type' => StockInventory::class,
+                'created_by' => auth()->id(),
+            ];
+
+            $adjustmentRecord = $this->repository->create($adjustmentData);
+
+            // Mark detail as adjusted
+            $detail->update(['is_adjustmented' => true]);
+
+            // Create Inventory Transaction only if there is a difference
+            if ($diff != 0) {
+                $this->createInventoryTransaction($adjustmentRecord);
+            }
+
+            // Check if all details are adjusted to finalize parent inventory
+            $inventory = $detail->inventory;
+            if ($inventory) {
+                $allAdjusted = $inventory->details()->where('is_adjustmented', false)->count() === 0;
+                if ($allAdjusted) {
+                    $inventory->update(['finalized' => true]);
+                }
+            }
+
+            return $adjustmentRecord;
+        });
+    }
+
+    /**
      * Create adjustment from StockInventory differences
      *
      * @param StockInventory $inventory
@@ -53,33 +129,9 @@ class StockAdjustmentService
             $inventory->loadMissing('details.product', 'details.unit');
 
             foreach ($inventory->details as $detail) {
-                $diff = (float) $detail->physical_quantity - (float) $detail->system_quantity;
+                if ($detail->is_adjustmented) continue;
 
-                if ($diff == 0) continue;
-
-                $type = $diff > 0 ? 'increase' : 'decrease';
-
-                $adjustmentData = [
-                    'product_id' => $detail->product_id,
-                    'unit_id' => $detail['unit_id'],
-                    'package_size' => $detail['package_size'],
-                    'quantity' => abs($diff),
-                    'adjustment_type' => $type,
-                    'adjustment_date' => $inventory->inventory_date,
-                    'store_id' => $inventory->store_id,
-                    'notes' => "Automatic adjustment from Stock Inventory #{$inventory->id}",
-                    'source_id' => $inventory->id,
-                    'source_type' => StockInventory::class,
-                    'created_by' => auth()->id() ?? $inventory->created_by,
-                ];
-
-                $adjustmentRecord = $this->repository->create($adjustmentData);
-
-                // Update detail to mark it as adjusted
-                $detail->update(['is_adjustmented' => true]);
-
-                // Create Inventory Transaction
-                $this->createInventoryTransaction($adjustmentRecord);
+                $this->createFromInventoryDetail($detail->id);
             }
         });
     }

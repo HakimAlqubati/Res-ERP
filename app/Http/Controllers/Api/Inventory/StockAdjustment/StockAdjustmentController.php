@@ -75,18 +75,18 @@ class StockAdjustmentController extends Controller
     {
         try {
             $data = $request->validate([
+                'stock_inventory_detail_id' => 'required|exists:stock_inventory_details,id',
                 'product_id' => 'required|exists:products,id',
                 'unit_id' => 'required|exists:units,id',
-                'package_size' => 'required|numeric',
-                'quantity' => 'required|numeric|min:0.001',
-                'adjustment_type' => 'required|in:increase,decrease',
-                'adjustment_date' => 'required|date',
-                'store_id' => 'required|exists:stores,id',
+                'physical_quantity' => 'required|numeric|min:0',
                 'reason_id' => 'nullable|exists:stock_adjustment_reasons,id',
                 'notes' => 'nullable|string',
             ]);
 
-            $adjustment = $this->service->createManualAdjustment($data);
+            $adjustment = $this->service->createFromInventoryDetail(
+                $data['stock_inventory_detail_id'],
+                $data
+            );
 
             return response()->json([
                 'success' => true,
@@ -98,7 +98,7 @@ class StockAdjustmentController extends Controller
                 'success' => false,
                 'message' => 'Failed to create stock adjustment',
                 'error' => $e->getMessage(),
-            ], 500);
+            ], (int) $e->getCode() ?: 500);
         }
     }
 
