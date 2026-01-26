@@ -1030,7 +1030,7 @@ return [
     // ===========================================
     // Employee Meals Request
     // ===========================================
-    'employee_meals_request' => 'Employee Meals Request',
+    'employee_meals_request' => 'Meal advance',
     'meal_details'           => 'Meal Details',
     'cost'                   => 'Cost',
     'rejected_reason'        => 'Rejected Reason',

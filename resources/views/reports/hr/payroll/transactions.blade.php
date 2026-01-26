@@ -167,7 +167,7 @@
                         <span style="color: #c0392b; font-weight: 700;">-</span>
                     @endif
                 </td>
-                <td>{{ number_format($t->amount, 2) }}</td>
+                <td>{{ formatMoneyWithCurrency($t->amount) }}</td>
                 <td>{{ $t->date?->format('Y-m-d') }}</td>
                 <td>{{ $t->description ?? '-' }}</td>
             </tr>

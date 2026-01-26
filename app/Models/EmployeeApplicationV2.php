@@ -67,9 +67,9 @@ class EmployeeApplicationV2 extends Model implements Auditable
     const APPLICATION_TYPES = [
         1 => 'Leave request',
         2 => 'Missed check-in',
-        3 => 'Advance request',
+        5 => 'Meal advance',
         4 => 'Missed check-out',
-        5 => 'Employee Meals Request',
+        3 => 'Advance request',
     ];
 
     const APPLICATION_TYPE_NAMES = [
@@ -77,7 +77,7 @@ class EmployeeApplicationV2 extends Model implements Auditable
         self::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => 'Missed check-in',
         self::APPLICATION_TYPE_ADVANCE_REQUEST => 'Advance request',
         self::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => 'Missed check-out',
-        self::APPLICATION_TYPE_MEAL_REQUEST => 'Employee Meals Request',
+        self::APPLICATION_TYPE_MEAL_REQUEST => 'Meal advance',
     ];
 
     const APPLICATION_TYPE_FILTERS = [
@@ -85,7 +85,7 @@ class EmployeeApplicationV2 extends Model implements Auditable
         self::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => '?tab=Missed+check-in',
         self::APPLICATION_TYPE_ADVANCE_REQUEST => '?tab=Advance+request',
         self::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => '?tab=Missed+check-out',
-        self::APPLICATION_TYPE_MEAL_REQUEST => '?tab=Employee+Meals+Request',
+        self::APPLICATION_TYPE_MEAL_REQUEST => '?tab=Meal+advance',
     ];
 
     // Status constants

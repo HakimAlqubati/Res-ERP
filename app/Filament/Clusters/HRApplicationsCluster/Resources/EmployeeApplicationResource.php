@@ -884,7 +884,7 @@ class EmployeeApplicationResource extends Resource
             ->schema(function ($record) {
                 $mealRequest = $record->mealRequest;
                 return [
-                    Fieldset::make(__('lang.meal_details'))->columns(2)->schema([
+                    Fieldset::make(__('lang.notes'))->columns(2)->schema([
                         TextInput::make('employee_name')
                             ->label(__('lang.employee'))
                             ->default($record->employee?->name),
@@ -892,7 +892,7 @@ class EmployeeApplicationResource extends Resource
                             ->label(__('lang.cost'))
                             ->default($mealRequest?->cost),
                         Textarea::make('meal_details')
-                            ->label(__('lang.meal_details'))
+                            ->label(__('lang.notes'))
                             ->default($mealRequest?->meal_details)
                             ->columnSpanFull(),
                         Textarea::make('notes')
@@ -1329,7 +1329,7 @@ class EmployeeApplicationResource extends Resource
                             ->default(0),
 
                         Textarea::make('meal_details')
-                            ->label(__('lang.meal_details'))
+                            ->label(__('lang.notes'))
                             ->required()
                             ->columnSpanFull(),
                     ]),
