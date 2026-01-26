@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\FifoInventoryReportController;
 use App\Http\Controllers\Api\InventoryDashboardController;
+use App\Http\Controllers\Api\Inventory\OptimizedInventoryController;
 use App\Http\Controllers\Api\ManufacturingInventoryReportController;
 use App\Http\Controllers\Api\ManufacturingReportController;
 use App\Http\Controllers\Api\PurchaseInvoiceController;
@@ -140,6 +141,39 @@ Route::get('/test', function () {
 Route::get('/inventoryDashboardTest', [InventoryDashboardController::class, 'getSummary'])
     // ->middleware('auth:api')
 ;
+Route::prefix('v2/inventory')->group(function () {
+    // تقرير المخزون الكامل
+    Route::get('/report', [OptimizedInventoryController::class, 'report']);
+
+    // تقرير المخزون مع Pagination
+    Route::get('/report/paginated', [OptimizedInventoryController::class, 'reportPaginated']);
+
+    // مخزون منتج واحد
+    Route::get('/product/{productId}', [OptimizedInventoryController::class, 'productInventory']);
+
+    // الكمية المتبقية لمنتج/وحدة
+    Route::get('/remaining-qty', [OptimizedInventoryController::class, 'remainingQty']);
+
+    // المنتجات تحت الحد الأدنى
+    Route::get('/low-stock', [OptimizedInventoryController::class, 'lowStock']);
+
+    // حركات منتج (دخول/خروج)
+    Route::get('/movements/{productId}', [OptimizedInventoryController::class, 'movements']);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// V3 Inventory Summary Routes (from inventory_summary table - FAST)
+// ═══════════════════════════════════════════════════════════════════════════
+Route::prefix('v3/inventory')->group(function () {
+    Route::get('/', [App\Http\Controllers\Api\Inventory\InventorySummaryController::class, 'index']);
+});
+
+Route::get('/testFun', function () {
+    return response()->json([
+        'success' => true,
+        'data' => 'test'
+    ]);
+});
 Route::middleware('auth:api')->group(function () {
     Route::put('updateFcmToken', [FcmController::class, 'updateDeviceToken']);
 
@@ -152,6 +186,11 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/filters', [App\Http\Controllers\Api\InventoryReportController::class, 'filters']);
         Route::get('/productTracking', [App\Http\Controllers\Api\InventoryReportController::class, 'productTracking']);
     });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // V2 Optimized Inventory Routes (OptimizedInventoryService)
+    // ═══════════════════════════════════════════════════════════════════════════
+
 
     // Financial Category Reporting Routes
     Route::prefix('financial')->group(function () {
@@ -557,4 +596,101 @@ Route::get('/rekognition/status', function () {
         'missing_in_dynamodb' => array_values($inRekognitionOnly),
         'orphaned_in_dynamodb' => array_values($inDynamoDbOnly),
     ]);
+});
+
+// ========================================
+// Temporary Employee Import API
+// ========================================
+
+/**
+ * استيراد الموظفين من ملف Excel
+ * POST /api/import-employees
+ * 
+ * @param file - ملف Excel (xlsx, xls, csv)
+ */
+Route::post('/import-employees', function (Request $request) {
+    // التحقق من وجود الملف
+    if (!$request->hasFile('file')) {
+        return response()->json([
+            'success' => false,
+            'message' => 'No file uploaded. Please upload an Excel file.',
+        ], 400);
+    }
+
+    $file = $request->file('file');
+
+    // التحقق من نوع الملف
+    $allowedExtensions = ['xlsx', 'xls', 'csv'];
+    $extension = strtolower($file->getClientOriginalExtension());
+
+    if (!in_array($extension, $allowedExtensions)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid file type. Allowed types: xlsx, xls, csv',
+        ], 400);
+    }
+
+    try {
+        $import = new \App\Imports\EmployeeImport();
+
+        \Maatwebsite\Excel\Facades\Excel::import($import, $file);
+
+        $successCount = $import->getSuccessfulImportsCount();
+        $existingCount = $import->getExistingCount();
+        $failedCount = $import->getErrorCount();
+        $totalCount = $import->getProcessedRowsCount() + $failedCount;
+
+        return response()->json([
+            'success' => true,
+            'message' => "Import completed successfully.",
+            'data' => [
+                'total_count' => $totalCount,
+                'success_count' => $successCount,
+                'existing_count' => $existingCount,
+                'failed_count' => $failedCount,
+                'has_errors' => $import->hasErrors(),
+                'errors' => $import->getImportErrors(),
+            ],
+        ]);
+    } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+        $failures = $e->failures();
+        $errorMessages = [];
+
+        foreach ($failures as $failure) {
+            $errorMessages[] = [
+                'row' => $failure->row(),
+                'attribute' => $failure->attribute(),
+                'errors' => $failure->errors(),
+            ];
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation errors during import',
+            'errors' => $errorMessages,
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Import failed: ' . $e->getMessage(),
+            'trace' => config('app.debug') ? $e->getTraceAsString() : null,
+        ], 500);
+    }
+});
+
+/**
+ * تحميل ملف Excel نموذجي للموظفين
+ * GET /api/import-employees/template
+ */
+Route::get('/import-employees/template', function () {
+    $templatePath = public_path('data/sample_file_imports/Sample import file.xlsx');
+
+    if (!file_exists($templatePath)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Template file not found.',
+        ], 404);
+    }
+
+    return response()->download($templatePath, 'employee_import_template.xlsx');
 });

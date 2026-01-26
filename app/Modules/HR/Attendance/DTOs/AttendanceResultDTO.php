@@ -16,6 +16,10 @@ final readonly class AttendanceResultDTO
         public string $message,
         public ?Attendance $record = null,
         public bool $typeRequired = false,
+        public bool $shiftSelectionRequired = false,
+        public ?array $availableShifts = null,
+        public bool $shiftConflictDetected = false,
+        public ?array $conflictOptions = null,
     ) {}
 
     /**
@@ -43,16 +47,57 @@ final readonly class AttendanceResultDTO
     }
 
     /**
+     * إنشاء نتيجة تتطلب اختيار الوردية
+     */
+    public static function shiftSelectionRequired(array $availableShifts): self
+    {
+        return new self(
+            success: false,
+            message: __('notifications.multiple_shifts_available'),
+            shiftSelectionRequired: true,
+            availableShifts: $availableShifts,
+        );
+    }
+
+    /**
+     * إنشاء نتيجة تعارض الورديات
+     */
+    public static function shiftConflictDetected(array $options): self
+    {
+        return new self(
+            success: false,
+            message: __('notifications.shift_conflict_detected'),
+            shiftConflictDetected: true,
+            conflictOptions: $options,
+        );
+    }
+
+    /**
      * تحويل إلى مصفوفة للـ API response
      */
     public function toArray(): array
     {
-        return [
+        $result = [
+            'status' => $this->success,
             'success' => $this->success,
             'message' => $this->message,
             'data' => $this->record,
             'type_required' => $this->typeRequired,
         ];
+
+        // إضافة معلومات اختيار الوردية إذا كانت مطلوبة
+        if ($this->shiftSelectionRequired) {
+            $result['shift_selection_required'] = true;
+            $result['available_shifts'] = $this->availableShifts;
+        }
+
+        // إضافة معلومات تعارض الورديات إذا وُجد
+        if ($this->shiftConflictDetected) {
+            $result['shift_conflict_detected'] = true;
+            $result['conflict_options'] = $this->conflictOptions;
+        }
+
+        return $result;
     }
 
     /**

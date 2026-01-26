@@ -8,6 +8,7 @@ use App\Enums\HR\Payroll\SalaryTransactionSubType;
 use App\Enums\HR\Payroll\SalaryTransactionType;
 use App\Models\Deduction;
 use App\Models\EmployeeAdvanceInstallment;
+use App\Models\EmployeeMealRequest;
 use App\Models\PenaltyDeduction;
 use App\Modules\HR\Payroll\DTOs\CalculationContext;
 use App\Modules\HR\Payroll\DTOs\DeductionResult;
@@ -34,6 +35,7 @@ class TransactionBuilder
         array $allowances,
         array $penalties,
         array $advanceInstallments,
+        array $mealRequests,
         array $dynamicDeductions,
         float $overtimeMultiplier = 1.5,
         array $policyHookTransactions = []
@@ -235,6 +237,20 @@ class TransactionBuilder
                 'reference_id'   => $adv['installment_id'] ?? null,
                 'application_id'     => $adv['application_id'] ?? null,
                 'advance_request_id' => $adv['advance_request_id'] ?? null,
+            ];
+        }
+
+        // 13. خصومات الوجبات
+        foreach ($mealRequests['items'] ?? [] as $mr) {
+            $tx[] = [
+                'type'           => SalaryTransactionType::TYPE_DEDUCTION,
+                'sub_type'       => 'meal-deduction',
+                'amount'         => $this->round((float)$mr['amount']),
+                'operation'      => '-',
+                'description'    => $mr['meal_details'] ?? 'Meal deduction',
+                'reference_type' => EmployeeMealRequest::class,
+                'reference_id'   => $mr['id'],
+                'date'           => $mr['date'],
             ];
         }
 

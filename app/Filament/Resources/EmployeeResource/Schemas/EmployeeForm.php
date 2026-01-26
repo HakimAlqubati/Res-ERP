@@ -322,6 +322,7 @@ class EmployeeForm
                                             ->numeric()
                                             ->minValue(1)->required()
                                             ->maxValue(31)
+                                            ->extraInputAttributes(['onkeypress' => 'return event.charCode >= 48 && event.charCode <= 57'])
                                         // ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee')
                                         ,
 

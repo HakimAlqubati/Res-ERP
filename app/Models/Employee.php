@@ -111,6 +111,7 @@ class Employee extends Model implements Auditable
         return $query->whereIn('employee_type', [1, 2, 3]);
     }
 
+    
     public function scopeForBranch($query, $branchId)
     {
         return $query->where('branch_id', $branchId);

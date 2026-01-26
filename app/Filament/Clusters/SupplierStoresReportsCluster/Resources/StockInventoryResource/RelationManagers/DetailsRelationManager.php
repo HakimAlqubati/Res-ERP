@@ -41,7 +41,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class DetailsRelationManager extends RelationManager
 {
@@ -165,13 +164,13 @@ class DetailsRelationManager extends RelationManager
                                             if (!$productId || !$storeId || !$state) {
                                                 return;
                                             }
-                                            
+
                                             $report = MultiProductsInventoryService::quickReport(
                                                 (int) $storeId,
                                                 (int) $productId,
                                                 (int) $state
                                             );
-                                            
+
                                             $systemQty = $report[0][0]['remaining_qty'] ?? 0;
                                             $set('system_quantity', $systemQty);
                                             // dd($productId,$storeId,$state,$report,$systemQty);
@@ -423,9 +422,7 @@ class DetailsRelationManager extends RelationManager
                                         abs($detail['quantity']),
                                         $data['store_id']
                                     );
-                                    Log::alert('details', [$detail]);
-                                    Log::alert('stockAdjustment', [$stockAdjustment]);
-                                    Log::alert('allocations', [$allocations]);
+
                                     self::moveFromInventory($allocations, $stockAdjustment);
                                 }
 

@@ -8,11 +8,12 @@ use App\Modules\HR\Attendance\DTOs\AttendanceContextDTO;
 use App\Modules\HR\Attendance\DTOs\AttendanceResultDTO;
 use App\Modules\HR\Attendance\Events\AttendanceRejected;
 use App\Modules\HR\Attendance\Exceptions\AttendanceException;
+use App\Modules\HR\Attendance\Exceptions\MultipleShiftsException;
+use App\Modules\HR\Attendance\Exceptions\ShiftConflictException;
 use App\Modules\HR\Attendance\Exceptions\TypeRequiredException;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 /**
  * خدمة الحضور الرئيسية
@@ -79,8 +80,21 @@ class AttendanceService
     private function validateRequest(Employee $employee, Carbon $requestTime, array $payload): ?AttendanceResultDTO
     {
         try {
-            $this->validator->validate($employee, $requestTime, $payload['type'] ?? null);
+            $this->validator->validate(
+                $employee,
+                $requestTime,
+                $payload['type'] ?? null,
+                isset($payload['period_id']) ? (int) $payload['period_id'] : null
+            );
             return null; // التحقق نجح
+        } catch (MultipleShiftsException $e) {
+            $this->handleRejection($employee, $requestTime, $e->getMessage(), $payload);
+            // لا نسجل كرفض - هذا طلب معلومات وليس خطأ
+            return AttendanceResultDTO::shiftSelectionRequired($e->getShiftsArray());
+        } catch (ShiftConflictException $e) {
+            // تسجيل كرفض لتتبع محاولات التسجيل
+            $this->handleRejection($employee, $requestTime, $e->getMessage(), $payload);
+            return AttendanceResultDTO::shiftConflictDetected($e->getOptions());
         } catch (TypeRequiredException $e) {
             $this->handleRejection($employee, $requestTime, $e->getMessage(), $payload);
             return AttendanceResultDTO::failure($e->getMessage(), typeRequired: true);
@@ -115,14 +129,7 @@ class AttendanceService
                     return $this->processAttendance($employee, $payload);
                 });
         } catch (\Throwable $e) {
-            // Log the actual error for debugging
-            Log::error('Attendance Module Error', [
-                'employee_id' => $employee->id,
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-            ]);
+
 
             $this->handleRejection(
                 $employee,

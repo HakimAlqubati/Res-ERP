@@ -4,7 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\FifoInventoryReportResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InboundOutflowReportResource;
-
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventorySummaryReportResource;
 // --- استيراد الـ Resources ---
 // تأكد من أن هذه المسارات صحيحة ومطابقة لمشروعك
 
@@ -49,6 +49,12 @@ class InventoryReportLinks extends Page
                 'description' => __('lang.inventory_report_desc'),
                 'icon'        => 'heroicon-o-building-storefront',
                 'url'         => InventoryTransactionReportResource::getUrl(),
+            ],
+            [
+                'title'       => __('lang.inventory_report') . ' NEW ',
+                'description' => __('lang.inventory_report_desc') . ' NEW ',
+                'icon'        => 'heroicon-o-building-storefront',
+                'url'         => InventorySummaryReportResource::getUrl(),
             ],
             [
                 'title'       => __('lang.fifo_inventory'),

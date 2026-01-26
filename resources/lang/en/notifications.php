@@ -35,4 +35,19 @@ return [
     // Cannot auto-checkin near shift end
     'cannot_auto_checkin_near_shift_end' => 'Cannot auto-checkin near shift end without prior records. Please manually select the operation type (checkin/checkout).',
 
+    // Duplicate timestamp
+    'duplicate_timestamp_not_allowed' => 'Please wait :seconds before recording again.',
+
+    // Multiple shifts available
+    'multiple_shifts_available' => 'Multiple shifts are available. Please select the desired shift.',
+    'shift' => 'Shift',
+    'starts_in_minutes' => 'Starts in :minutes minutes',
+    'ended_minutes_ago' => 'Ended :minutes minutes ago',
+    'currently_active' => 'Currently active',
+
+    // Shift conflict
+    'shift_conflict_detected' => 'Shift conflict detected. Please select the desired operation.',
+    'checkout_from_shift' => 'Check out from :shift',
+    'checkin_to_shift' => 'Check in to :shift',
+
 ];

@@ -31,3 +31,9 @@ Route::prefix('api/v2/hr/attendance')
         // توليد سجلات حضور جماعية
         Route::post('/bulk-generate', [AttendanceController::class, 'bulkGenerate']);
     });
+Route::prefix('api/v2/attendance')
+    ->middleware(['auth:api'])
+    ->group(function () {
+        // اختبار (للتوافق مع V2)
+        Route::post('/test', [AttendanceController::class, 'test']);
+    });

@@ -653,11 +653,11 @@
         "code": "SY",
         "name": {
             "en": "Syrian",
-            "ar": "????"
+            "ar": "سوري"
         },
         "country": {
             "en": "Syria",
-            "ar": "?????"
+            "ar": "سوريا"
         },
         "active": true,
         "order": 54
@@ -666,13 +666,13 @@
         "code": "AF",
         "name": {
             "en": "Afghan",
-            "ar": "??????",
-            "ps": "?????"
+            "ar": "أفغاني",
+            "ps": "افغان"
         },
         "country": {
             "en": "Afghanistan",
-            "ar": "?????????",
-            "ps": "?????????"
+            "ar": "أفغانستان",
+            "ps": "افغانستان"
         },
         "active": true,
         "order": 55
@@ -681,11 +681,11 @@
         "code": "EG",
         "name": {
             "en": "Egyptian",
-            "ar": "????"
+            "ar": "مصري"
         },
         "country": {
             "en": "Egypt",
-            "ar": "???"
+            "ar": "مصر"
         },
         "active": true,
         "order": 56
@@ -702,5 +702,18 @@
         },
         "active": true,
         "order": 57
+    },
+    {
+        "code": "ID",
+        "name": {
+            "en": "Indonesian",
+            "ar": "إندونيسي"
+        },
+        "country": {
+            "en": "Indonesia",
+            "ar": "إندونيسيا"
+        },
+        "active": true,
+        "order": 58
     }
 ]

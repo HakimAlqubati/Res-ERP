@@ -94,13 +94,14 @@ class AppLogsTable
                     ->toggleable(),
             ])
             ->filters([
+                static::levelFilter(),
                 static::contextFilter(),
 
             ], FiltersLayout::Modal)
             ->recordActions([
                 // ViewAction::make(),
                 static::viewExtraAction(), // استدعاء الزر الستاتيك
-            ])
+            ])->filtersFormColumns(4)
 
             ->toolbarActions([]);
     }
@@ -165,6 +166,27 @@ class AppLogsTable
                 return new HtmlString($content);
             });
     }
+
+    /**
+     * فلتر مستوى السجل (Log Level)
+     */
+    public static function levelFilter(): SelectFilter
+    {
+        return SelectFilter::make('level')
+            ->label('Level')
+            ->options([
+                AppLog::LEVEL_DEBUG     => 'Debug',
+                AppLog::LEVEL_INFO      => 'Info',
+                AppLog::LEVEL_NOTICE    => 'Notice',
+                AppLog::LEVEL_WARNING   => 'Warning',
+                AppLog::LEVEL_ERROR     => 'Error',
+                AppLog::LEVEL_CRITICAL  => 'Critical',
+                AppLog::LEVEL_ALERT     => 'Alert',
+                AppLog::LEVEL_EMERGENCY => 'Emergency',
+            ])
+            ->placeholder('All Levels');
+    }
+
     public static function contextFilter(): SelectFilter
     {
         return SelectFilter::make('context')

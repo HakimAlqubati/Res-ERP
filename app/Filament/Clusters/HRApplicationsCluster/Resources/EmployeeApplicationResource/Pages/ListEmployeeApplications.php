@@ -49,6 +49,12 @@ class ListEmployeeApplications extends ListRecords
                 ->icon('heroicon-o-clock')
                 ->badge(EmployeeApplicationV2::query()->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST)->count())
                 ->badgeColor('warning'),
+            EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST] => Tab::make()
+                ->label(__('lang.employee_meals_request'))
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST))
+                ->icon('heroicon-o-fire')
+                ->badge(EmployeeApplicationV2::query()->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST)->count())
+                ->badgeColor('warning'),
 
         ];
     }

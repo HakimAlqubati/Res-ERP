@@ -14,8 +14,9 @@ class EmployeeObserver
      */
     public function created(Employee $employee): void
     {
-        // فقط إذا لم يكن هناك user مرتبط
-        if (!$employee->user_id) {
+        // فقط إذا لم يكن هناك user مرتبط وكان لديه بريد إلكتروني
+        // تخطي إنشاء المستخدم إذا كان البريد الإلكتروني فارغاً (مثل حالة الاستيراد من Excel)
+        if (!$employee->user_id && !empty($employee->email)) {
 
             $existingUser = User::where('email', $employee->email)->first();
             if ($existingUser) {

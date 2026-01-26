@@ -13,6 +13,10 @@ return [
   'users' => 'المستخدمين',
   'roles' => 'أدوار المستخدمين',
   'all' => 'الكل',
+  'my_employees' => 'موظفيي',
+  'my_employees_only' => 'موظفيي فقط',
+  'me' => 'أنا',
+  'others' => 'آخرون',
   'choose_year' => 'اختر السنة',
   'choose_branch' => 'اختر الفرع',
   'choose_month' => 'اختر الشهر',
@@ -994,6 +998,26 @@ return [
   'status_already_changed_recently' => 'تم تغيير هذه الحالة مؤخراً. يرجى الانتظار قبل المحاولة مرة أخرى.',
 
   // ===========================================
+  // Installment Deferral
+  // ===========================================
+  'defer_installment' => 'تأجيل قسط',
+  'defer' => 'تأجيل',
+  'select_installment' => 'اختر القسط',
+  'defer_reason_placeholder' => 'اكتب سبب التأجيل (اختياري)',
+  'defer_installment_desc' => 'سيتم تخطي القسط المحدد وإنشاء قسط جديد في نهاية جدول السداد.',
+  'installment_not_found' => 'لم يتم العثور على القسط',
+  'installment_deferred_success' => 'تم تأجيل القسط من :old_date إلى :new_date بنجاح',
+  'advance_exceeds_salary' => 'مبلغ السلفة (:amount) يتجاوز راتب الموظف (:salary)',
+
+  // ===========================================
+  // Employee Meals Request
+  // ===========================================
+  'employee_meals_request' => 'طلب وجبة موظف',
+  'meal_details'           => 'تفاصيل الوجبة',
+  'cost'                   => 'التكلفة',
+  'rejected_reason'        => 'سبب الرفض',
+  'approve'                => 'موافقة',
+  'reject'                 => 'رفض',
   // Product Halal Certificate
   // ===========================================
   'halal_certificate' => 'شهادة الحلال',

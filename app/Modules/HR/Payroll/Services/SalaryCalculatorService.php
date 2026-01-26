@@ -20,6 +20,7 @@ use App\Modules\HR\Payroll\Calculators\OvertimeCalculator;
 use App\Modules\HR\Payroll\Calculators\PenaltyCalculator;
 use App\Modules\HR\Payroll\Calculators\AllowanceCalculator;
 use App\Modules\HR\Payroll\Calculators\AdvanceInstallmentCalculator;
+use App\Modules\HR\Payroll\Calculators\MealRequestCalculator;
 use App\Modules\HR\Payroll\Calculators\GeneralDeductionCalculator;
 use App\Modules\HR\Payroll\Calculators\TransactionBuilder;
 
@@ -58,6 +59,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         protected PenaltyCalculator $penaltyCalculator,
         protected AllowanceCalculator $allowanceCalculator,
         protected AdvanceInstallmentCalculator $advanceInstallmentCalculator,
+        protected MealRequestCalculator $mealRequestCalculator,
         protected GeneralDeductionCalculator $generalDeductionCalculator,
         protected TransactionBuilder $transactionBuilder,
         /** @var SalaryPolicyHookInterface[] */
@@ -149,6 +151,9 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         // 6. Calculate advance installments
         $advanceInstallments = $this->advanceInstallmentCalculator->calculate($context);
 
+        // 6b. Calculate meal requests
+        $mealRequests = $this->mealRequestCalculator->calculate($context);
+
         // Calculate totals
         $this->baseSalary = $salary;
         $this->grossSalary = $this->round(
@@ -159,6 +164,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
                 $deductions->lateDeduction +
                 $penalties['total'] +
                 $advanceInstallments['total'] +
+                $mealRequests['total'] +
                 $deductions->missingHoursDeduction
         );
         $this->netSalary = $this->round($this->grossSalary - $this->totalDeductions);
@@ -201,6 +207,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             allowances: $allowances,
             penalties: $penalties,
             advanceInstallments: $advanceInstallments,
+            mealRequests: $mealRequests,
             dynamicDeductions: $dynamicDeductions,
             overtimeMultiplier: $this->overtimeMultiplier,
             policyHookTransactions: $policyHookTransactions
@@ -261,6 +268,8 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             'penalties'              => $penalties['items'],
             'advance_installments_total' => $this->round($advanceInstallments['total']),
             'advance_installments'   => $advanceInstallments['items'],
+            'meal_requests_total'    => $this->round($mealRequests['total']),
+            'meal_requests'          => $mealRequests['items'],
         ];
     }
 

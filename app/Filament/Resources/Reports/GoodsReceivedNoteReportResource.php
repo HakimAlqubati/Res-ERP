@@ -28,7 +28,7 @@ class GoodsReceivedNoteReportResource extends Resource
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::DocumentText;
     protected static ?string $cluster = SupplierCluster::class;
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 2;
 
     public static function getLabel(): ?string
     {

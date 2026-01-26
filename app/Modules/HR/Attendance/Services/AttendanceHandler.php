@@ -38,8 +38,12 @@ class AttendanceHandler
      */
     public function handle(AttendanceContextDTO $context): AttendanceResultDTO
     {
-        // 1. تحديد الوردية
-        $shiftInfo = $this->shiftResolver->resolve($context->employee, $context->requestTime);
+        // 1. تحديد الوردية (مع تمرير repository للاختيار الذكي)
+        $shiftInfo = $this->shiftResolver->resolve(
+            $context->employee,
+            $context->requestTime,
+            $this->repository  // ✅ تمرير repository لتمكين الاختيار الذكي
+        );
 
         if (!$shiftInfo) {
             throw new NoShiftFoundException();

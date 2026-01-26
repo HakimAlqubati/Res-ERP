@@ -90,6 +90,7 @@ class StockSupplyOrderResource extends Resource
                                 ->label('Product')
                                 ->options(function () {
                                     return Product::where('active', 1)
+                                        ->limit(10)
                                         ->get()
                                         ->mapWithKeys(fn($product) => [
                                             $product->id => "{$product->code} - {$product->name}"
@@ -102,14 +103,17 @@ class StockSupplyOrderResource extends Resource
                                             $query->where('name', 'like', "%{$search}%")
                                                 ->orWhere('code', 'like', "%{$search}%");
                                         })
-                                        ->limit(50)
+                                        ->limit(10)
                                         ->get()
                                         ->mapWithKeys(fn($product) => [
                                             $product->id => "{$product->code} - {$product->name}"
                                         ])
                                         ->toArray();
                                 })
-                                ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
+                                ->getOptionLabelUsing(function ($value): ?string {
+                                    $product = Product::find($value);
+                                    return $product ? "{$product->code} - {$product->name}" : null;
+                                })
                                 ->reactive()
                                 ->afterStateUpdated(function ($set, $state) {
                                     $set('unit_id', null);
@@ -167,7 +171,7 @@ class StockSupplyOrderResource extends Resource
                             TableColumn::make(__('lang.psize'))->alignCenter()->width('8rem'),
                             TableColumn::make(__('Quantity'))->alignCenter()->width('10rem'),
                             TableColumn::make(__('Waste %'))->alignCenter()->width('8rem'),
-                         ])
+                        ])
 
                         ->minItems(1)
                         ->label('Order Details')

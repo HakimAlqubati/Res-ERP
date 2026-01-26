@@ -1,10 +1,11 @@
 <?php
-// File: routes/inventory.php
+// File: routes/custom_api_route_inventory.php
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Api\Inventory\InventoryApiController;
+use App\Http\Controllers\Api\Inventory\StockInventory\StockInventoryController;
+use App\Http\Controllers\Api\Inventory\StockAdjustment\StockAdjustmentController;
 use App\Http\Controllers\Api\Reports\GoodsReceivedNoteReportController;
-use App\Notifications\WarningNotification;
 
 Route::prefix('inventory')->name('inventory.')->group(function () {
     Route::get('remaining', [InventoryApiController::class, 'remaining'])->name('remaining');
@@ -38,12 +39,37 @@ Route::prefix('inventory')->name('inventory.')->group(function () {
     })->name('store-categories');
 });
 
+// Stock Inventory API Routes
+Route::prefix('stockInventories')
+    ->middleware(['auth:api'])
+    ->name('stockInventories.')
+    ->group(function () {
+        Route::get('/', [StockInventoryController::class, 'index'])->name('index');
+        Route::post('/', [StockInventoryController::class, 'store'])->name('store');
+        Route::get('/{id}', [StockInventoryController::class, 'show'])->name('show')->whereNumber('id');
+        Route::post('/{id}', [StockInventoryController::class, 'update'])->name('update')->whereNumber('id');
+        Route::delete('/{id}', [StockInventoryController::class, 'destroy'])->name('destroy')->whereNumber('id');
 
-// Route::prefix('reports')->group(function () {
-// GET /api/reports/grn?per_page=15&product_id[]=1&grn_number[]=GRN-001&supplier_id=5&store_id=2&category_id[]=10&date_from=2025-11-01&date_to=2025-11-03&show_grn_number=true
+        // Additional action
+        Route::post('/{id}/finalize', [StockInventoryController::class, 'finalize'])->name('finalize')->whereNumber('id');
+    });
+
+// Stock Adjustment API Routes
+Route::prefix('stockAdjustments')
+    ->middleware(['auth:api'])
+    ->name('stockAdjustments.')
+    ->group(function () {
+        Route::get('/reasons', [StockAdjustmentController::class, 'getReasons'])->name('reasons');
+        Route::get('/', [StockAdjustmentController::class, 'index'])->name('index');
+        Route::post('/', [StockAdjustmentController::class, 'store'])->name('store');
+        Route::get('/{id}', [StockAdjustmentController::class, 'show'])->name('show')->whereNumber('id');
+        Route::delete('/{id}', [StockAdjustmentController::class, 'destroy'])->name('destroy')->whereNumber('id');
+    });
+
+
+
+// Reports Routes
 Route::get('grn', [GoodsReceivedNoteReportController::class, 'index']);
-
-// Optional: PDF export via API (same filters as above)
 Route::get('grn.pdf', [GoodsReceivedNoteReportController::class, 'exportPdf']);
 
 Route::get('manufacturing-labels', [\App\Http\Controllers\Api\Reports\ManufacturingProductLabelReportController::class, 'getLabels']);
