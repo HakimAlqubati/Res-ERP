@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Inventory\StockInventory;
 
+use App\Services\MultiProductsInventoryService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreStockInventoryRequest extends FormRequest
@@ -75,14 +76,15 @@ class StoreStockInventoryRequest extends FormRequest
                 $unitName = $unit?->name ?? "Unit #{$detail['unit_id']}";
 
                 // Get actual quantity from inventory summary
-                $actualQuantity = \App\Services\Inventory\Summary\InventorySummaryReportService::make()
-                    ->store($storeId)
-                    ->product($detail['product_id'])
-                    ->unit($detail['unit_id'])
-                    ->remainingQty();
+                // $actualQuantity = \App\Services\Inventory\Summary\InventorySummaryReportService::make()
+                //     ->store($storeId)
+                //     ->product($detail['product_id'])
+                //     ->unit($detail['unit_id'])
+                //     ->remainingQty();
 
+                $actualQuantity = MultiProductsInventoryService::quickReport($storeId, $detail['product_id'], $detail['unit_id'])[0][0]['remaining_qty'];
                 $systemQuantity = (float) $detail['system_quantity'];
-
+                // dd($systemQuantity, $actualQuantity, $s);
                 // Validate system_quantity matches actual inventory
                 if ($systemQuantity !== $actualQuantity) {
                     $validator->errors()->add(
