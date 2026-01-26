@@ -5,6 +5,7 @@ namespace App\Imports;
 use Exception;
 use App\Models\Employee;
 use App\Models\AppLog;
+use App\Models\UserType;
 use Carbon\Carbon;
 
 use Maatwebsite\Excel\Concerns\ToModel;
@@ -22,6 +23,43 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
     private $processedRowsCount = 0;
     private $currentRowNumber = 1;
     private $importErrors = [];
+    private $lastEmployeeId = null;
+    private $userTypesCache = [];
+
+    /**
+     * الحصول على الرقم الوظيفي التالي
+     */
+    private function getNextEmployeeNo(): int
+    {
+        if ($this->lastEmployeeId === null) {
+            $this->lastEmployeeId = Employee::withTrashed()->latest('id')->first()?->id ?? 0;
+        }
+        $this->lastEmployeeId++;
+        return $this->lastEmployeeId;
+    }
+
+    /**
+     * تحويل الاسم إلى معرف نوع المستخدم (UserType)
+     */
+    private function parseEmployeeType($value): ?int
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+
+        if (isset($this->userTypesCache[$value])) {
+            return $this->userTypesCache[$value];
+        }
+
+        $userType = UserType::where('name', 'LIKE', "%{$value}%")->first();
+        $id = $userType ? (int) $userType->id : null;
+
+        $this->userTypesCache[$value] = $id;
+
+        return $id;
+    }
 
     public function model(array $row)
     {
@@ -82,12 +120,8 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
             $this->successfulImportsCount++;
             $this->processedRowsCount++;
 
-            // تعطيل الـ Observer أثناء الاستيراد لتجنب إنشاء مستخدم تلقائياً
-            // التحقق من تكرار رقم الموظف - إذا كان مكرراً نجعله فارغاً لننشئ سجلاً جديداً
-            $employeeNo = $row['employee_no'] ?? null;
-            if ($employeeNo && Employee::where('employee_no', $employeeNo)->exists()) {
-                $employeeNo = null;
-            }
+            // توليد رقم الموظف آلياً بشكل تصاعدي
+            $employeeNo = $this->getNextEmployeeNo();
 
             return Employee::withoutEvents(function () use ($row, $joinDate, $employeeNo) {
                 $data = [
@@ -103,16 +137,11 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
                     'join_date' => $joinDate,
                     'working_days' => $row['working_days'] ?? null,
                     'working_hours' => $row['working_hours'] ?? null,
+                    'employee_no' => $employeeNo,
+                    'employee_type' => $this->parseEmployeeType($row['roletype'] ?? null),
                 ];
 
-                if ($employeeNo) {
-                    return Employee::updateOrCreate(
-                        ['employee_no' => $employeeNo],
-                        $data
-                    );
-                } else {
-                    return Employee::create($data);
-                }
+                return Employee::create($data);
             });
         } catch (Exception $e) {
             $employeeName = $row['name'] ?? 'Unknown';
@@ -311,6 +340,7 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
             'join_date',
             'working_days',
             'working_hours',
+            'roletype',
         ];
     }
 
