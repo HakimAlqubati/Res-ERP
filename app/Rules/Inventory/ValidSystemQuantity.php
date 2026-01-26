@@ -2,7 +2,7 @@
 
 namespace App\Rules\Inventory;
 
-use App\Services\MultiProductsInventoryService;
+    use App\Services\MultiProductsInventoryService;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 

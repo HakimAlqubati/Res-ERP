@@ -19,21 +19,21 @@ class InventoryTransactionObserver
     public function created(InventoryTransaction $inventoryTransaction)
     {
         // تحديث ملخص المخزون
-        $this->summaryUpdater->onTransactionCreated($inventoryTransaction);
+        // $this->summaryUpdater->onTransactionCreated($inventoryTransaction);
 
         // ✅ تحديث أسعار المنتجات المركبة بعد إضافة حركة شراء جديدة
-        if ($inventoryTransaction->movement_type === InventoryTransaction::MOVEMENT_IN && $inventoryTransaction->transactionable_type === PurchaseInvoice::class) {
-            $parentProducts = ProductItem::where('product_id', $inventoryTransaction->product_id)
-                ->pluck('parent_product_id')
-                ->unique();
+        // if ($inventoryTransaction->movement_type === InventoryTransaction::MOVEMENT_IN && $inventoryTransaction->transactionable_type === PurchaseInvoice::class) {
+        //     $parentProducts = ProductItem::where('product_id', $inventoryTransaction->product_id)
+        //         ->pluck('parent_product_id')
+        //         ->unique();
 
-            foreach ($parentProducts as $parentProductId) {
-                try {
-                    // $count = \App\Services\ProductCostingService::updateComponentPricesForProduct($parentProductId);
-                } catch (Throwable $e) {
-                }
-            }
-        }
+        //     foreach ($parentProducts as $parentProductId) {
+        //         try {
+        //             // $count = \App\Services\ProductCostingService::updateComponentPricesForProduct($parentProductId);
+        //         } catch (Throwable $e) {
+        //         }
+        //     }
+        // }
     }
 
     // لا نستخدم حدث التعديل لتجنب التحديث المضاعف
@@ -47,11 +47,11 @@ class InventoryTransactionObserver
 
     public function deleted(InventoryTransaction $inventoryTransaction)
     {
-        $this->summaryUpdater->onTransactionDeleted($inventoryTransaction);
+        // $this->summaryUpdater->onTransactionDeleted($inventoryTransaction);
     }
 
     public function restored(InventoryTransaction $inventoryTransaction)
     {
-        $this->summaryUpdater->onTransactionRestored($inventoryTransaction);
+        // $this->summaryUpdater->onTransactionRestored($inventoryTransaction);
     }
 }
