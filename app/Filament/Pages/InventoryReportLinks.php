@@ -50,12 +50,12 @@ class InventoryReportLinks extends Page
                 'icon'        => 'heroicon-o-building-storefront',
                 'url'         => InventoryTransactionReportResource::getUrl(),
             ],
-            [
-                'title'       => __('lang.inventory_report') . ' NEW ',
-                'description' => __('lang.inventory_report_desc') . ' NEW ',
-                'icon'        => 'heroicon-o-building-storefront',
-                'url'         => InventorySummaryReportResource::getUrl(),
-            ],
+            // [
+            //     'title'       => __('lang.inventory_report') . ' NEW ',
+            //     'description' => __('lang.inventory_report_desc') . ' NEW ',
+            //     'icon'        => 'heroicon-o-building-storefront',
+            //     'url'         => InventorySummaryReportResource::getUrl(),
+            // ],
             [
                 'title'       => __('lang.fifo_inventory'),
                 'description' => __('lang.fifo_inventory_desc'),
