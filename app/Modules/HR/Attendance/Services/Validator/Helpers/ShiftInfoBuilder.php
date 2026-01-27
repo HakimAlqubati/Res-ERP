@@ -99,7 +99,7 @@ class ShiftInfoBuilder
                 }
 
                 $bounds = $match['bounds'];
-                return $requestTime->gte($bounds['start']) && $requestTime->lt($bounds['end']);
+                return $requestTime->gte($bounds['windowStart']) && $requestTime->lt($bounds['windowEnd']);
             })
             ->first();
     }

@@ -67,6 +67,9 @@ class AttendanceValidator
             // القاعدة 1: التحقق من اكتمال الشيفت
             new ShiftCompletionRule($this->shiftResolver),
 
+            // القاعدة 1.5: التحقق الصارم من اكتمال الوردية (الخروج الرسمي)
+            new Validator\Rules\StrictShiftCompletionRule($this->shiftResolver),
+
             // القاعدة 2: منع تكرار الدخول
             new DuplicateCheckInRule(),
 
