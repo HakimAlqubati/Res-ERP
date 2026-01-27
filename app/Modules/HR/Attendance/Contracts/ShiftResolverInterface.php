@@ -19,7 +19,12 @@ interface ShiftResolverInterface
      * @param Carbon $time الوقت المطلوب
      * @return ShiftInfoDTO|null معلومات الوردية أو null إذا لم توجد
      */
-    public function resolve(Employee $employee, Carbon $time): ?ShiftInfoDTO;
+    public function resolve(
+        Employee $employee,
+        Carbon $time,
+        ?AttendanceRepositoryInterface $repository = null,
+        ?int $periodId = null
+    ): ?ShiftInfoDTO;
 
     /**
      * جلب جميع الورديات المطابقة للنافذة الزمنية

@@ -40,48 +40,43 @@ class AttendanceHandler
     public function handle(AttendanceContextDTO $context): AttendanceResultDTO
     {
         // 1. تحديد الوردية
+        // 1. تحديد الوردية
         $periodId = $context->payload['period_id'] ?? null;
-        $shiftInfo = null;
 
-        if ($periodId) {
-            // بحث عن الشيفت المحدد ضمن الشيفتات المتاحة
-            $matches = $this->shiftResolver->getMatchingShifts($context->employee, $context->requestTime);
-            $match = $matches->first(fn($m) => $m['candidate']['period']->id == $periodId);
+        $shiftInfo = $this->shiftResolver->resolve(
+            $context->employee,
+            $context->requestTime,
+            $this->repository,
+            $periodId
+        );
 
-            if ($match) {
-                $c = $match['candidate'];
-                $b = $match['bounds'];
-                $shiftInfo = new ShiftInfoDTO(
-                    period: $c['period'],
-                    date: $c['date'],
-                    dayName: $c['day'],
-                    start: $b['start'],
-                    end: $b['end'],
-                    windowStart: $b['windowStart'],
-                    windowEnd: $b['windowEnd']
-                );
-            }
-        }
-
-        // إذا لم يتم تحديد شيفت أو لم يتم العثور عليه، استخدم الحل التلقائي
-        if (!$shiftInfo) {
-            $shiftInfo = $this->shiftResolver->resolve(
-                $context->employee,
-                $context->requestTime,
-                $this->repository
-            );
+        // إذا تم تحديد فترة ولم يتم العثور عليها (غير مطابقة)
+        if ($periodId && !$shiftInfo) {
+            throw new \App\Modules\HR\Attendance\Exceptions\ShiftMismatchException();
         }
 
         if (!$shiftInfo) {
             throw new NoShiftFoundException();
         }
 
+        if (!$shiftInfo) {
+            throw new NoShiftFoundException();
+        }
         $context->setShiftInfo($shiftInfo);
 
         // 2. تحديد نوع العملية (دخول/خروج)
         $requestedType = $context->getRequestedCheckType();
         if ($requestedType) {
             $context->setCheckType($requestedType);
+
+            if ($context->isCheckOut()) {
+                $lastCheckIn = $this->repository->findOpenCheckIn(
+                    $context->employee->id,
+                    $context->workPeriod->id,
+                    $context->shiftDate
+                );
+                $context->setLastCheckIn($lastCheckIn);
+            }
         } else {
             $context = $this->determineCheckType->execute($context);
         }

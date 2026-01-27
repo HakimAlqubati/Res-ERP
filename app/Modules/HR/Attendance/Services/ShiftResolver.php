@@ -2,6 +2,7 @@
 
 namespace App\Modules\HR\Attendance\Services;
 
+use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\WorkPeriod;
 use App\Modules\HR\Attendance\Contracts\AttendanceRepositoryInterface;
@@ -34,7 +35,8 @@ class ShiftResolver implements ShiftResolverInterface
     public function resolve(
         Employee $employee,
         Carbon $time,
-        ?AttendanceRepositoryInterface $repository = null
+        ?AttendanceRepositoryInterface $repository = null,
+        ?int $periodId = null
     ): ?ShiftInfoDTO {
         // 1. جلب جميع الورديات المحتملة حول هذا الوقت
         $candidates = $this->getCandidatePeriods($employee, $time);
@@ -47,6 +49,12 @@ class ShiftResolver implements ShiftResolverInterface
 
         if ($matchingShifts->isEmpty()) {
             return null;
+        }
+
+        // إذا تم تحديد شيفت معين، نبحث عنه
+        if ($periodId) {
+            $match = $matchingShifts->first(fn($m) => $m['candidate']['period']->id == $periodId);
+            return $match ? $this->createShiftDTO($match) : null;
         }
 
         // 3. إذا كان هناك شيفت واحد فقط، نرجعه مباشرة
@@ -115,7 +123,6 @@ class ShiftResolver implements ShiftResolverInterface
         Carbon $requestTime
     ): ?ShiftInfoDTO {
 
-
         // تقييم كل شيفت بناءً على حالة الاكتمال
         $scored = $matchingShifts->map(function ($match) use ($employee, $repository, $requestTime) {
             $candidate = $match['candidate'];
@@ -130,10 +137,8 @@ class ShiftResolver implements ShiftResolverInterface
 
             // الحصول على آخر سجل
             $lastRecord = $records->sortByDesc('id')->first();
-
             // تحديد النقاط بناءً على منطق بسيط وذكي
             $score = $this->calculateShiftScore($lastRecord, $shiftEnd, $requestTime);
-
 
             return [
                 'match' => $match,
@@ -143,8 +148,6 @@ class ShiftResolver implements ShiftResolverInterface
 
         // اختيار الشيفت بأقل نقاط (أعلى أولوية)
         $best = $scored->sortBy('score')->first();
-
-
         return $this->createShiftDTO($best['match']);
     }
 
