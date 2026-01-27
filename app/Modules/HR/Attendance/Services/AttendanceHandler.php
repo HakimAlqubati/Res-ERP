@@ -13,6 +13,7 @@ use App\Modules\HR\Attendance\Events\CheckInRecorded;
 use App\Modules\HR\Attendance\Events\CheckOutRecorded;
 use App\Modules\HR\Attendance\Events\LateArrivalDetected;
 use App\Modules\HR\Attendance\Exceptions\NoShiftFoundException;
+use App\Modules\HR\Attendance\DTOs\ShiftInfoDTO;
 
 /**
  * معالج عمليات الحضور
@@ -38,12 +39,38 @@ class AttendanceHandler
      */
     public function handle(AttendanceContextDTO $context): AttendanceResultDTO
     {
-        // 1. تحديد الوردية (مع تمرير repository للاختيار الذكي)
-        $shiftInfo = $this->shiftResolver->resolve(
-            $context->employee,
-            $context->requestTime,
-            $this->repository  // ✅ تمرير repository لتمكين الاختيار الذكي
-        );
+        // 1. تحديد الوردية
+        $periodId = $context->payload['period_id'] ?? null;
+        $shiftInfo = null;
+
+        if ($periodId) {
+            // بحث عن الشيفت المحدد ضمن الشيفتات المتاحة
+            $matches = $this->shiftResolver->getMatchingShifts($context->employee, $context->requestTime);
+            $match = $matches->first(fn($m) => $m['candidate']['period']->id == $periodId);
+
+            if ($match) {
+                $c = $match['candidate'];
+                $b = $match['bounds'];
+                $shiftInfo = new ShiftInfoDTO(
+                    period: $c['period'],
+                    date: $c['date'],
+                    dayName: $c['day'],
+                    start: $b['start'],
+                    end: $b['end'],
+                    windowStart: $b['windowStart'],
+                    windowEnd: $b['windowEnd']
+                );
+            }
+        }
+ 
+        // إذا لم يتم تحديد شيفت أو لم يتم العثور عليه، استخدم الحل التلقائي
+        if (!$shiftInfo) {
+            $shiftInfo = $this->shiftResolver->resolve(
+                $context->employee,
+                $context->requestTime,
+                $this->repository
+            );
+        }
 
         if (!$shiftInfo) {
             throw new NoShiftFoundException();
@@ -52,7 +79,12 @@ class AttendanceHandler
         $context->setShiftInfo($shiftInfo);
 
         // 2. تحديد نوع العملية (دخول/خروج)
-        $context = $this->determineCheckType->execute($context);
+        $requestedType = $context->getRequestedCheckType();
+        if ($requestedType) {
+            $context->setCheckType($requestedType);
+        } else {
+            $context = $this->determineCheckType->execute($context);
+        }
 
         // التحقق من وجود سجل دخول عند الخروج
         if ($context->isCheckOut() && !$context->lastCheckIn) {

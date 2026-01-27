@@ -14,6 +14,7 @@ class MissingCheckInRule implements ValidationRuleInterface
 {
     public function validate(ValidationContext $context, ?string $requestType = null, ?int $periodId = null): void
     {
+        // dd($context,$requestType);
         if ($requestType === CheckType::CHECKOUT->value && (!$context->hasAnyCheckIn || $context->lastIsCheckOut)) {
             throw new MissingCheckInException();
         }

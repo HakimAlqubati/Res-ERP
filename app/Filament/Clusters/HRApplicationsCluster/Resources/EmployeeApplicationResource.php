@@ -20,7 +20,6 @@ use App\Models\LeaveType;
 use App\Modules\HR\Attendance\Services\AttendanceService;
 use App\Services\HR\MonthClosure\MonthClosureService;
 use App\Models\EmployeeMealRequest;
-use Carbon\Carbon;
 use DateTime;
 use Exception;
 use Filament\Actions\Action;
@@ -37,9 +36,11 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\ToggleButtons;
+use App\Modules\HR\Attendance\Services\AttendanceValidator;
+use App\Modules\HR\Attendance\Exceptions\MultipleShiftsException;
+use Carbon\Carbon;
+use Filament\Forms\Components\Radio;
 use Filament\Notifications\Notification;
-use Filament\Resources\Resource;
-use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -50,6 +51,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Resources\Resource;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
@@ -64,10 +66,6 @@ class EmployeeApplicationResource extends Resource
 
     protected static string | \BackedEnum | null $navigationIcon = Heroicon::PencilSquare;
     protected ?bool $hasDatabaseTransactions = true;
-
-    // protected static ?string $cluster                             = HRApplicationsCluster::class;
-    // protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    // protected static ?int $navigationSort                         = 0;
 
     public static function getModelLabel(): string
     {
@@ -255,78 +253,7 @@ class EmployeeApplicationResource extends Resource
             });
     }
 
-
-    // public static function approveDepartureRequest(): Action
-    // {
-    //     return Action::make('approveDepartureRequest')->label('Approve')->button()
-    //         ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST))
-    //         ->color('success')
-    //         ->icon('heroicon-o-check')
-    //         ->databaseTransaction()
-    //         ->action(function ($record, $data) {
-    //             DB::beginTransaction();
-    //             try {
-    //                 $employee = $record->employee;
-    //                 $data['request_check_date'];
-    //                 $data['request_check_time'];
-    //                 $validated = [
-    //                     'employee_id' => $employee->id,
-    //                     'date_time' => $data['request_check_date'] . ' ' . $data['request_check_time'],
-    //                     'type' => Attendance::CHECKTYPE_CHECKOUT,
-    //                     'attendance_type' => Attendance::ATTENDANCE_TYPE_REQUEST
-    //                 ];
-    //                 $result = app(AttendanceService::class)->handle($validated);
-    //                 // dd($result);
-    //                 if ($result) {
-    //                     $record->update([
-    //                         'status'      => EmployeeApplicationV2::STATUS_APPROVED,
-    //                         'approved_by' => auth()->user()->id,
-    //                         'approved_at' => now(),
-    //                     ]);
-    //                     DB::commit();
-    //                     showSuccessNotifiMessage('Done');
-    //                 } else {
-    //                     showWarningNotifiMessage('Faild');
-    //                 }
-    //             } catch (Exception $e) {
-    //                 DB::rollBack();
-    //                 AppLog::write('Error approving attendance request: ' . $e->getMessage(), AppLog::LEVEL_ERROR);
-    //                 return Notification::make()->warning()->body($e->getMessage())->send();
-    //                 // Handle the exception (log it, return an error message, etc.)
-    //                 // Optionally, you could return a user-friendly error message
-    //                 throw new Exception($e->getMessage());
-    //                 throw new Exception('There was an error processing the attendance request. Please try again later.');
-    //             }
-    //         })
-    //         // ->disabledForm()
-    //         ->schema(function ($record) {
-
-    //             $attendance = Attendance::where('employee_id', $record?->employee_id)
-    //                 ->where('check_date', $record?->detail_date)
-    //                 ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
-    //                 ->first();
-
-    //             return [
-    //                 Fieldset::make()->disabled()->label('Attendance data')->columns(3)->schema([
-    //                     TextInput::make('employee')->default($record?->employee?->name),
-    //                     DatePicker::make('check_date')->default($attendance?->check_date),
-    //                     TimePicker::make('check_time')->default($attendance?->check_time),
-    //                     TextInput::make('period_title')->label('Period')->default($attendance?->period?->name),
-    //                     TextInput::make('start_at')->default($attendance?->period?->start_at),
-    //                     TextInput::make('end_at')->default($attendance?->period?->end_at),
-    //                     Hidden::make('period')->default($attendance?->period),
-    //                 ]),
-    //                 Fieldset::make()->disabled(false)->label('Request data')->columns(2)->schema([
-    //                     DatePicker::make('request_check_date')->default($record?->missedCheckoutRequest?->date)->label('Date'),
-    //                     TimePicker::make('request_check_time')->default($record?->missedCheckoutRequest?->time)->label('Time'),
-    //                 ]),
-
-    //             ];
-    //         })
-    //     ;
-    // }
-
-    public static function rejectDepartureRequest(): Action
+     public static function rejectDepartureRequest(): Action
     {
         return Action::make('rejectDepartureRequest')->label('Reject')->button()
             ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST))
@@ -523,8 +450,7 @@ class EmployeeApplicationResource extends Resource
             ->color('success')
             ->icon('heroicon-o-check')
             ->action(function ($record, $data) {
-
-                // dd($record, $data);
+ 
                 DB::beginTransaction();
                 try {
                     $record->update([
@@ -614,14 +540,18 @@ class EmployeeApplicationResource extends Resource
                 try {
 
                     $employee = $record->employee;
-                    $data['request_check_date'];
-                    $data['request_check_time'];
+
                     $validated = [
                         'employee_id' => $employee->id,
                         'date_time' => $data['request_check_date'] . ' ' . $data['request_check_time'],
-                        'type' => Attendance::CHECKTYPE_CHECKIN,
-                        'attendance_type' => Attendance::ATTENDANCE_TYPE_REQUEST
+                        'type' =>  Attendance::CHECKTYPE_CHECKIN,
+                        'attendance_type' => Attendance::ATTENDANCE_TYPE_REQUEST,
                     ];
+
+                    // Add period_id if selected
+                    if (!empty($data['period_id'])) {
+                        $validated['period_id'] = $data['period_id'];
+                    }
                     $result = app(AttendanceService::class)->handle($validated);
                     if ($result->success) {
                         $record->update([
@@ -632,22 +562,90 @@ class EmployeeApplicationResource extends Resource
                         DB::commit();
                         showSuccessNotifiMessage('Done');
                     } else {
+                        // Case: Other Failure
+                        DB::rollBack();
                         showWarningNotifiMessage($result->message);
                     }
                 } catch (Exception $th) {
-
                     DB::rollBack();
                     showWarningNotifiMessage($th->getMessage());
                     throw $th;
                 }
             })
-            ->disabledForm()
+            // ->disabledSchema()
             ->schema(function ($record) {
+                // Defines the check logic to be reused
+                $checkShiftAvailability = function (Get $get, Set $set) use ($record) {
+                    $date = $get('request_check_date');
+                    $time = $get('request_check_time');
+                    $employee = $record->employee;
+
+                    if (!$date || !$time || !$employee) {
+                        return;
+                    }
+
+                    try {
+                        $requestTime = Carbon::parse($date . ' ' . $time);
+                        // Validate using Validator directly to detect shifts
+                        app(AttendanceValidator::class)->validate(
+                            $employee,
+                            $requestTime,
+                            Attendance::CHECKTYPE_CHECKIN // Default assumption
+                        );
+
+                        // If no exception, clear shifts
+                        $set('available_shifts_data', []);
+                    } catch (MultipleShiftsException $e) {
+
+                        // Shifts detected!
+                        $set('available_shifts_data', $e->getShiftsArray());
+                    } catch (Exception $e) {
+                        // Other errors
+                        $set('available_shifts_data', []);
+                    }
+                };
+
                 return [
+                    // Hidden field to persist available shifts state
+                    Hidden::make('available_shifts_data')->default([]),
+
                     Fieldset::make()->label('Request data')->columns(2)->schema([
-                        DatePicker::make('request_check_date')->default($record?->missedCheckinRequest?->date)->label('Date'),
-                        TimePicker::make('request_check_time')->default($record?->missedCheckinRequest?->time)->label('Time'),
+                        DatePicker::make('request_check_date')
+                            ->default($record?->missedCheckinRequest?->date)
+                            ->label('Date')
+                            ->live()
+                            ->readOnly()
+                            ->afterStateUpdated($checkShiftAvailability),
+                        TimePicker::make('request_check_time')
+                            ->default($record?->missedCheckinRequest?->time)
+                            ->label('Time')
+                            ->live()
+                            ->readOnly()
+                            ->afterStateUpdated($checkShiftAvailability)
+                            ->afterStateHydrated(function ($component, $state, Get $get, Set $set) use ($checkShiftAvailability) {
+                                // Trigger check on initial load using default/hydrated values
+                                $checkShiftAvailability($get, $set);
+                            }),
                     ]),
+
+
+                    // Shift Selection
+                    Select::make('period_id')
+                        ->label('Shift')
+                        ->options(function ($get) {
+                            $shifts = $get('available_shifts_data');
+                            if (empty($shifts) || !is_array($shifts)) return [];
+
+                            return collect($shifts)->mapWithKeys(function ($shift) {
+                                return [$shift['period_id'] => $shift['name'] . ' (' . $shift['start'] . ' - ' . $shift['end'] . ')'];
+                            });
+                        })
+                        ->required(fn($get) => !empty($get('available_shifts_data')))
+                        ->visible(fn($get) => !empty($get('available_shifts_data')))
+                        ->live()
+                        ->helperText('Select a shift to proceed')
+                        ->columnSpanFull(),
+
                 ];
             });
     }
@@ -738,7 +736,6 @@ class EmployeeApplicationResource extends Resource
 
             ->schema(function ($record) {
                 $advanceDetails = $record->advanceRequest;
-                // dd($record,$advanceDetails);
                 $detailDate                = $advanceDetails->date;
                 $monthlyDeductionAmount    = $advanceDetails->monthly_deduction_amount;
                 $advanceAmount             = $advanceDetails->advance_amount;
@@ -1071,7 +1068,6 @@ class EmployeeApplicationResource extends Resource
                     $data['reason'] = $get('notes');
                     $date           = $get('detail_date') ?? now();
                     app(MonthClosureService::class)->ensureMonthIsOpen($date);
-                    // dd($data);
                     return $data;
                 })
                 ->saveRelationshipsUsing(function (\Illuminate\Database\Eloquent\Model $record, array $state): void {
@@ -1120,7 +1116,6 @@ class EmployeeApplicationResource extends Resource
                             ->live(onBlur: true)
                             ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                 $advancedAmount = $get('detail_advance_amount');
-                                // dd($advancedAmount);
                                 if ($state > 0 && $advancedAmount > 0) {
                                     $res = $advancedAmount / $state;
 
@@ -1154,7 +1149,6 @@ class EmployeeApplicationResource extends Resource
                                 if ($advancedAmount > 0 && $state > 0) {
 
                                     $res = $advancedAmount / $state;
-                                    // dd($res,$state);
                                     $set('detail_monthly_deduction_amount', round($res, 2));
                                     $state = (int) $state;
 
