@@ -21,13 +21,7 @@
         }
     </style>
 
-    {{-- Print Button --}}
-    <div class="flex justify-end mb-4">
-        <button id="printReport"
-            class="px-6 py-2 font-semibold rounded-md border border-blue-600 bg-blue-500 hover:bg-blue-700 transition duration-300 shadow-md">
-            🖨️ Print
-        </button>
-    </div>
+   
 
     {{ $this->getTableFiltersForm() }}
 
@@ -150,6 +144,7 @@
                     <div class="flex justify-between items-start">
                         <div class="text-base leading-snug mb-1 font-bold flex-1">
                             {!! nl2br(e($selectedLabelDetails['address'])) !!}
+                              
                         </div>
                         {{-- Halal Logo --}}
                         @if($selectedLabelDetails['halal_logo'])
