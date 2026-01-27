@@ -143,12 +143,33 @@ class ShiftResolver implements ShiftResolverInterface
             return [
                 'match' => $match,
                 'score' => $score,
+                'lastRecord' => $lastRecord,
             ];
         });
 
         // اختيار الشيفت بأقل نقاط (أعلى أولوية)
-        $best = $scored->sortBy('score')->first();
+        // عند تساوي النقاط، نفضل الشيفت الذي يحتوي على آخر نشاط (ID أكبر)
+        // اختيار الشيفت بأقل نقاط (أعلى أولوية)
+        // عند تساوي النقاط، نفضل الشيفت الذي يحتوي على آخر نشاط (ID أكبر)
+        $best = $scored->sort(fn($a, $b) => $this->compareShiftScores($a, $b))->first();
+
         return $this->createShiftDTO($best['match']);
+    }
+
+    /**
+     * دالة المقارنة لترتيب الشيفتات حسب الأفضلية
+     */
+    private function compareShiftScores(array $a, array $b): int
+    {
+        if ($a['score'] !== $b['score']) {
+            return $a['score'] <=> $b['score'];
+        }
+
+        // إذا تساوت النقاط، نأخذ صاح آخر نشاط (الأحدث)
+        $idA = $a['lastRecord']?->id ?? 0;
+        $idB = $b['lastRecord']?->id ?? 0;
+
+        return $idB <=> $idA; // ترتيب تنازلي حسب الـ ID
     }
 
     /**
