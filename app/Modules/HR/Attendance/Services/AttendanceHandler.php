@@ -62,7 +62,7 @@ class AttendanceHandler
                 );
             }
         }
- 
+
         // إذا لم يتم تحديد شيفت أو لم يتم العثور عليه، استخدم الحل التلقائي
         if (!$shiftInfo) {
             $shiftInfo = $this->shiftResolver->resolve(
@@ -88,7 +88,9 @@ class AttendanceHandler
 
         // التحقق من وجود سجل دخول عند الخروج
         if ($context->isCheckOut() && !$context->lastCheckIn) {
-            throw new \App\Modules\HR\Attendance\Exceptions\MissingCheckInException();
+            throw new \App\Modules\HR\Attendance\Exceptions\MissingCheckInException(
+                $shiftInfo->period->name ?? null
+            );
         }
 
         // 3. حساب التأخير/المغادرة
@@ -96,7 +98,6 @@ class AttendanceHandler
 
         // 4. حفظ السجل
         $record = $this->persist($context);
-
         // 5. إطلاق الأحداث
         $this->dispatchEvents($record, $context);
 

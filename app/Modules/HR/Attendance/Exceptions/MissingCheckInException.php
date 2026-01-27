@@ -9,10 +9,14 @@ class MissingCheckInException extends AttendanceException
 {
     protected string $errorKey = 'missing_checkin';
 
-    public function __construct(?string $message = null)
+    public function __construct(?string $periodName = null)
     {
-        parent::__construct(
-            $message ?? __('notifications.cannot_checkout_without_checkin')
-        );
+        $message = __('notifications.cannot_checkout_without_checkin');
+
+        if ($periodName) {
+            $message .= " (" . __('Period') . ": $periodName)";
+        }
+
+        parent::__construct($message);
     }
 }
