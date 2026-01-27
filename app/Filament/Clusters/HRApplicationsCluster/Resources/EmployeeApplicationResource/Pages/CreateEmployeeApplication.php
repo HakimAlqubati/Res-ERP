@@ -194,12 +194,12 @@ class CreateEmployeeApplication extends CreateRecord
             $attendances = $employee->attendancesByDate($this->data['missedCheckinRequest']['date'])->where('check_type', Attendance::CHECKTYPE_CHECKIN)->count();
 
             if ($attendances > 0) {
-                Notification::make()->body('Employee has already checked in(' . $this->data['missedCheckinRequest']['date'] . ')')->warning()->send();
+                // Notification::make()->body('Employee has already checked in(' . $this->data['missedCheckinRequest']['date'] . ')')->warning()->send();
 
                 // Throw a validation exception if an application exists
-                throw ValidationException::withMessages([
-                    'application_date' => 'Employee has already checked in today.(' . $this->data['missedCheckinRequest']['date'] . ')',
-                ]);
+                // throw ValidationException::withMessages([
+                //     'application_date' => 'Employee has already checked in today.(' . $this->data['missedCheckinRequest']['date'] . ')',
+                // ]);
             }
         }
 
