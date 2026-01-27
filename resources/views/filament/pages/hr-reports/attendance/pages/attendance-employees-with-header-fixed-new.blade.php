@@ -159,7 +159,7 @@
                 </td>
                 @elseif(empty($periods))
                 <td colspan="9" class="text-center text-gray-500 font-bold">
-                    {{ __('No work period / Absent') }}
+                    {{ __('No work period') }}
                 </td>
                 @else
                 <td colspan="9" style="padding:0;">
@@ -173,7 +173,9 @@
                         @endphp
                         <tr>
                             @if ($item['final_status'] == 'absent')
-                            <td colspan="7">{{'Absent'}} </td>
+                            <td class="internal_cell">{{ $item['start_time'] ?? '-' }}</td>
+                            <td class="internal_cell">{{ $item['end_time'] ?? '-' }}</td>
+                            <td colspan="7" class="text-center">{{ __('Absent') }}</td>
                             @else
                             <td
                                 class="internal_cell">{{ $item['start_time'] ?? '-' }}</td>
