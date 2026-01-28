@@ -65,7 +65,7 @@ class SalarySlipReport
 
         $filename = sprintf(
             'SalarySlip-%s-%s-%s.pdf',
-            $payroll->employee?->employee_no ?? '000',
+            $payroll->employee?->name ?? '000',
             $payroll->year,
             $payroll->month
         );
