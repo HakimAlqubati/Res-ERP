@@ -53,6 +53,7 @@ class Employee extends Model implements Auditable
         'manager_id',
         'is_ceo',
         'working_days',
+        'is_indexed_in_aws',
     ];
 
     protected $auditInclude = [
@@ -85,6 +86,7 @@ class Employee extends Model implements Auditable
         'working_hours',
         'manager_id',
         'working_days',
+        'is_indexed_in_aws',
     ];
 
     protected $casts = [
@@ -110,6 +112,7 @@ class Employee extends Model implements Auditable
         return;
         return $query->whereIn('employee_type', [1, 2, 3]);
     }
+
 
     public function scopeForBranch($query, $branchId)
     {

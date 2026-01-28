@@ -274,6 +274,14 @@ class Product extends Model implements Auditable
         return $this->hasMany(ProductItem::class, 'product_id');
     }
 
+    /**
+     * Relationship: has one Halal Certificate (One-to-One)
+     */
+    public function halalCertificate()
+    {
+        return $this->hasOne(ProductHalalCertificate::class);
+    }
+
     protected static function booted()
     {
         static::updating(function (Product $product) {

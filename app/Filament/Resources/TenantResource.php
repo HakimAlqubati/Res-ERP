@@ -293,6 +293,10 @@ class TenantResource extends Resource
             return Response::download($zipPath)->deleteFileAfterSend(true);
         } catch (Throwable $th) {
             showWarningNotifiMessage($th->getMessage());
+
+            // إرسال إيميل تنبيهي عند فشل النسخ الاحتياطي
+            sendBackupFailureEmail($record->name, $th->getMessage());
+
             throw $th;
         }
     }

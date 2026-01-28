@@ -42,6 +42,7 @@ class MissingInventoryProductsReportResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->striped()
+            ->deferFilters(false)
             ->columns([])
             ->filters([
                 Filter::make('date_range')
@@ -58,12 +59,15 @@ class MissingInventoryProductsReportResource extends Resource
                             ->label('End Date')
                             ->default(now()),
                     ]),
-                SelectFilter::make('store_id')->label('Store')->options(
-                    function () {
-                        return Store::active()
-                            ->get(['name', 'id'])->pluck('name', 'id')->toArray();
-                    }
-                )
+                SelectFilter::make('store_id')->label('Store')
+                    ->placeholder('Choose Store')
+                    ->options(
+                        function () {
+                            return Store::active()
+                                ->get(['name', 'id'])
+                                ->pluck('name', 'id')->toArray();
+                        }
+                    )
 
                     ->hidden(fn() => isStuff() || isMaintenanceManager())
                     ->searchable(),

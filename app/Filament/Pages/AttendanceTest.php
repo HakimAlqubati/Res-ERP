@@ -4,7 +4,7 @@ namespace App\Filament\Pages;
 
 use Filament\Schemas\Schema;
 use App\Models\Employee;
-use App\Services\HR\v2\Attendance\AttendanceServiceV2;
+use App\Modules\HR\Attendance\Services\AttendanceService;
 use Carbon\Carbon;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
@@ -29,6 +29,9 @@ class AttendanceTest extends Page implements HasForms
     protected   string $view = 'filament.pages.attendance-test';
 
     public ?array $data = [];
+    public bool $showTypeField = false;
+    public bool $showPeriodField = false;
+    public array $periodOptions = [];
 
     public function mount(): void
     {
@@ -63,16 +66,23 @@ class AttendanceTest extends Page implements HasForms
                         'checkout' => 'Check Out',
                     ])
                     ->placeholder('Optional - Auto detected')
+                    ->visible(fn() => $this->showTypeField)
+                    // ->required(fn() => $this->showTypeField)
                     ->native(false),
+
+                Select::make('period_id')
+                    ->label('Select Shift')
+                    ->options($this->periodOptions)
+                    ->visible(fn() => $this->showPeriodField)
+                    // ->required(fn() => $this->showPeriodField)
+                    // ->native(false)
+                    ,
 
                 DateTimePicker::make('date_time')
                     ->label('Date & Time')
                     ->default(now())
-                    ->seconds(false)
-                    ->native(false)
-                    ->displayFormat('Y-m-d H:i')
-                    // ->hidden(fn() => !isSuperAdmin())
-                    ,
+                // ->hidden(fn() => !isSuperAdmin())
+                ,
             ])
             ->statePath('data');
     }
@@ -83,16 +93,63 @@ class AttendanceTest extends Page implements HasForms
 
         try {
             // إنشاء instance من service
-            $attendanceService = app(AttendanceServiceV2::class);
+            $attendanceService = app(AttendanceService::class);
 
             // معالجة البيانات
             $result = $attendanceService->handle($data);
 
+            // التعامل مع حالة طلب تحديد النوع
+            if ($result->typeRequired) {
+                $this->showTypeField = true;
+
+                Notification::make()
+                    ->title('Type Selection Required')
+                    ->body($result->message ?? 'Please select the attendance type (Check-in / Check-out) manually.')
+                    ->warning()
+                    ->icon('heroicon-o-question-mark-circle')
+                    ->iconSize(IconSize::Large)
+                    ->duration(10000)
+                    ->send();
+
+                return;
+            }
+
+            // التعامل مع حالة اختيار الوردية
+            if ($result->shiftSelectionRequired) {
+                $this->showPeriodField = true;
+
+                // تحويل مصفوفة الورديات إلى خيارات للـ Select
+                $this->periodOptions = collect($result->availableShifts ?? [])
+                    ->mapWithKeys(function ($shift) {
+                        // التعامل مع المصفوفة أو الكائن
+                        $shift = (array) $shift;
+                        $label = ($shift['name'] ?? '') . ' (' . ($shift['status'] ?? '') . ')';
+                        return [$shift['period_id'] => $label];
+                    })
+                    ->toArray();
+
+                Notification::make()
+                    ->title('Shift Selection Required')
+                    ->body($result->message ?? 'Multiple shifts found. Please select one.')
+                    ->warning()
+                    ->icon('heroicon-o-clock')
+                    ->iconSize(IconSize::Large)
+                    ->duration(10000)
+                    ->send();
+
+                return;
+            }
+
             // إرسال رد الخدمة كإشعار
-            if ($result['status']) {
+            if ($result->success) {
+                // إخفاء الحقول عند النجاح
+                $this->showTypeField = false;
+                $this->showPeriodField = false;
+                $this->periodOptions = [];
+
                 Notification::make()
                     ->title('Attendance Recorded Successfully')
-                    ->body($result['message'] ?? 'Your attendance has been recorded successfully')
+                    ->body($result->message ?? 'Your attendance has been recorded successfully')
                     ->success()
                     ->icon('heroicon-o-check-circle')
                     ->iconSize(IconSize::Large)
@@ -104,7 +161,7 @@ class AttendanceTest extends Page implements HasForms
             } else {
                 Notification::make()
                     ->title('Attendance Error')
-                    ->body($result['message'] ?? 'An error occurred while recording attendance')
+                    ->body($result->message ?? 'An error occurred while recording attendance')
                     ->warning()
                     ->icon('heroicon-o-exclamation-triangle')
                     ->iconSize(IconSize::Large)

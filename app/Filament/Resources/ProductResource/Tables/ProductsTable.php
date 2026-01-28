@@ -8,6 +8,7 @@ use App\Imports\ProductImport;
 use App\Imports\ProductItemsImport;
 use App\Imports\ProductItemsQuantityImport;
 use App\Models\Product;
+use App\Models\ProductHalalCertificate;
 use App\Services\BatchProductCostingService;
 use App\Services\MigrationScripts\ProductMigrationService;
 use App\Services\ProductCostingService;
@@ -23,7 +24,12 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Schemas\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Tables\Columns\CheckboxColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -42,6 +48,10 @@ use Throwable;
 
 class ProductsTable
 {
+    /**
+     * Halal Certificate Form Action
+     */
+
 
     public static function configure(Table $table): Table
     {
@@ -267,6 +277,8 @@ class ProductsTable
                                 showWarningNotifiMessage("❌ فشل الاستيراد: " . $e->getMessage());
                             }
                         }),
+
+                    // self::halalCertificateAction(),
 
                     EditAction::make(),
                     DeleteAction::make(),

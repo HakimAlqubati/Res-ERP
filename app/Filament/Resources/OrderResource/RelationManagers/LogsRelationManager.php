@@ -47,7 +47,7 @@ class LogsRelationManager extends RelationManager
                     ->sortable(),
 
                 TextColumn::make('creator.name')
-                    ->label('Created By'),
+                    ->label('User'),
 
                 TextColumn::make('created_at')
                     ->label('Created At')

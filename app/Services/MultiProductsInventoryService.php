@@ -289,7 +289,7 @@ class MultiProductsInventoryService
                 'order' => $unitPrice['order'],
                 'package_size' => $unitPrice['package_size'],
                 'unit_name' => $unitPrice['unit_name'],
-                'remaining_qty' => $remainingQty,
+                'remaining_qty' => $remainingQty > 0 ? $remainingQty : 0,
                 'remaining_quantity_base' => $remainingBaseQty,
                 'base_unit_id' => $baseUnitPrice?->unit_id,
                 'base_unit_name' => $baseUnitPrice?->unit?->name,
@@ -513,7 +513,7 @@ class MultiProductsInventoryService
         return $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0.0;
     }
 
-    public static function quickReport(int $storeId, int $productId,?int $unitId = null): array
+    public static function quickReport(int $storeId, int $productId, ?int $unitId = null): array
     {
         return (new self(null, $productId, $unitId, $storeId))
             ->getInventoryReport();

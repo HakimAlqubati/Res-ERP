@@ -9,7 +9,7 @@ use App\Services\HR\Attendance\AttendancePlanService;
 use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
 use App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateService;
-use App\Services\HR\Attendance\AttendanceService;
+use App\Services\HR\v2\Attendance\AttendanceServiceV2;
 use Aws\DynamoDb\DynamoDbClient;
 use Aws\Rekognition\RekognitionClient;
 use Carbon\Carbon;
@@ -20,11 +20,11 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AttendanceController extends Controller
 {
-    protected AttendanceService $attendanceService;
+    protected AttendanceServiceV2 $attendanceService;
     protected $attendanceFetcher;
     protected EmployeesAttendanceOnDateService $employeesAttendanceOnDateService;
 
-    public function __construct(AttendanceService $attendanceService, EmployeesAttendanceOnDateService $employeesAttendanceOnDateService)
+    public function __construct(AttendanceServiceV2 $attendanceService, EmployeesAttendanceOnDateService $employeesAttendanceOnDateService)
     {
         $this->attendanceService = $attendanceService;
         $this->attendanceFetcher = new AttendanceFetcher(new EmployeePeriodHistoryService());
@@ -43,7 +43,7 @@ class AttendanceController extends Controller
         // لازم واحد منهم يكون موجود
         if (empty($validated['rfid']) && empty($validated['employee_id'])) {
             return response()->json([
-                'status'  => false,
+                'success'  => false,
                 'message' => 'Either rfid or employee_id is required.',
             ], 422);
         }
@@ -51,69 +51,14 @@ class AttendanceController extends Controller
         $result = $this->attendanceService->handle($validated);
 
         return response()->json([
-            'status'  => $result['success'],
-            'type_required' => $result['type_required'],
+            'success'  => $result['success'],
+            'status'   => $result['success'],  // للتوافق مع الـ Frontend القديم
+            'type_required' => $result['type_required'] ?? false,
             'message' => $result['message'],
             'data'    => $result['data'] ?? '',
         ], $result['success'] ? 200 : 422);
     }
 
-
-    public function storeInOut(Request $request)
-    {
-        $validated = $request->validate([
-            'rfid'        => 'nullable|string|max:255',
-            'employee_id' => 'nullable|integer|exists:hr_employees,id',
-            'check_in'    => 'nullable|date',
-            'check_out'   => 'nullable|date|after:check_in',
-        ]);
-
-        // لازم واحد منهم يكون موجود
-        if (empty($validated['rfid']) && empty($validated['employee_id'])) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Either rfid or employee_id is required.',
-            ], 422);
-        }
-
-        $result = $this->attendanceService->handleTwoDates($validated);
-
-        return response()->json([
-            'status'  => $result['success'],
-            'message' => $result['message'],
-            
-            'data'    => $result['data'] ?? '',
-        ], $result['success'] ? 200 : 422);
-    }
-
-    public function storeBulk(Request $request)
-    {
-        $validated = $request->validate([
-            'rfid'          => 'nullable|string|max:255',
-            'employee_id'   => 'nullable|integer|exists:hr_employees,id',
-            'check_in'      => 'nullable|date',
-            'check_out'     => 'nullable|date|after:check_in',
-            'from_date'     => 'nullable|date',
-            'to_date'       => 'nullable|date|after_or_equal:from_date',
-            'check_in_time' => 'nullable|date_format:H:i:s',
-            'check_out_time' => 'nullable|date_format:H:i:s|after:check_in_time',
-        ]);
-
-        if (empty($validated['rfid']) && empty($validated['employee_id'])) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Either rfid or employee_id is required.',
-            ], 422);
-        }
-
-        $result = $this->attendanceService->handleBulk($validated);
-
-        return response()->json([
-            'status'  => $result['success'],
-            'message' => $result['message'],
-            'data'    => $result['data'] ?? '',
-        ], $result['success'] ? 200 : 422);
-    }
 
 
     public function employeeAttendance(Request $request)
@@ -231,11 +176,7 @@ class AttendanceController extends Controller
             $sizeInBytes = Storage::disk('s3')->size($path);
             $mimeType    = $file->getMimeType();
 
-            Log::info('S3 Upload Info', [
-                'file'          => $fileName,
-                'mime'          => $mimeType,
-                's3_size_bytes' => $sizeInBytes,
-            ]);
+
 
             if ($sizeInBytes === 0) {
                 return response()->json([
@@ -267,7 +208,6 @@ class AttendanceController extends Controller
                 'MaxFaces'           => 1,
             ]);
 
-            Log::info('rekognition_result', [$result]);
             // ✅ المعالجة الافتراضية
             $employeeData = [
                 'found'         => false,
@@ -296,7 +236,6 @@ class AttendanceController extends Controller
                     ],
                 ]);
 
-                Log::info('dynamo_result', [$dynamoResult]);
                 if (! empty($dynamoResult['Item']['Name']['S'])) {
                     $nameRaw      = $dynamoResult['Item']['Name']['S'];
                     $parts        = explode('-', $nameRaw);

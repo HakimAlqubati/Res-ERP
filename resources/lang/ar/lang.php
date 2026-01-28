@@ -13,6 +13,10 @@ return [
   'users' => 'المستخدمين',
   'roles' => 'أدوار المستخدمين',
   'all' => 'الكل',
+  'my_employees' => 'موظفيي',
+  'my_employees_only' => 'موظفيي فقط',
+  'me' => 'أنا',
+  'others' => 'آخرون',
   'choose_year' => 'اختر السنة',
   'choose_branch' => 'اختر الفرع',
   'choose_month' => 'اختر الشهر',
@@ -992,4 +996,44 @@ return [
   'financial_category' => 'الفئة المالية',
   'select_to_create_financial_transaction' => 'اختر لإنشاء معاملة مالية',
   'status_already_changed_recently' => 'تم تغيير هذه الحالة مؤخراً. يرجى الانتظار قبل المحاولة مرة أخرى.',
+
+  // ===========================================
+  // Installment Deferral
+  // ===========================================
+  'defer_installment' => 'تأجيل قسط',
+  'defer' => 'تأجيل',
+  'select_installment' => 'اختر القسط',
+  'defer_reason_placeholder' => 'اكتب سبب التأجيل (اختياري)',
+  'defer_installment_desc' => 'سيتم تخطي القسط المحدد وإنشاء قسط جديد في نهاية جدول السداد.',
+  'installment_not_found' => 'لم يتم العثور على القسط',
+  'installment_deferred_success' => 'تم تأجيل القسط من :old_date إلى :new_date بنجاح',
+  'advance_exceeds_salary' => 'مبلغ السلفة (:amount) يتجاوز راتب الموظف (:salary)',
+
+  // ===========================================
+  // Employee Meals Request
+  // ===========================================
+  'employee_meals_request' => 'طلب وجبة موظف',
+  'meal_details'           => 'تفاصيل الوجبة',
+  'cost'                   => 'التكلفة',
+  'rejected_reason'        => 'سبب الرفض',
+  'approve'                => 'موافقة',
+  'reject'                 => 'رفض',
+  // Product Halal Certificate
+  // ===========================================
+  'halal_certificate' => 'شهادة الحلال',
+  'shelf_life' => 'مدة الصلاحية',
+  'shelf_life_value' => 'القيمة',
+  'shelf_life_unit' => 'الوحدة',
+  'is_halal_certified' => 'حاصل على شهادة حلال',
+  'halal_certificate_no' => 'رقم الشهادة',
+  'halal_expiry_date' => 'تاريخ انتهاء الشهادة',
+  'allergen_info' => 'معلومات الحساسية',
+  'halal_certificate_saved' => 'تم حفظ بيانات شهادة الحلال بنجاح',
+  'week' => 'أسبوع',
+  'year' => 'سنة',
+  'is_indexed_in_aws' => 'فهرست في AWS',
+  'employee_already_indexed_warning' => 'هذا الموظف مفهرس بالفعل في AWS. هل تريد إعادة الفهرسة؟',
+  'end_period_and_delete' => 'إنهاء فترة العمل وحذفها',
+  'end_period_confirmation' => 'سيتم إنهاء فترة العمل للموظف بتاريخ المحدد وحذف السجل الحالي، مع الاحتفاظ بالسجل التاريخي. هل أنت متأكد؟',
+  'deleted_successfully' => 'تم الحذف بنجاح',
 ];

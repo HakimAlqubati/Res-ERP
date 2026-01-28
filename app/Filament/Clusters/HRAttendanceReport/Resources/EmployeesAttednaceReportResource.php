@@ -52,7 +52,7 @@ class EmployeesAttednaceReportResource extends Resource
             ->emptyStateHeading(__('lang.please_select_branch'))->deferFilters(false)
             ->filters([
                 SelectFilter::make('branch_id')->label(__('lang.choose_a_branch'))->options(
-                    Branch::selectable()
+                    Branch::normal()
                         ->forBranchManager('id')
                         ->select('id', 'name')
                         ->get()

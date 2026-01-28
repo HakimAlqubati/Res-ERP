@@ -12,12 +12,12 @@
 
             <div class="mt-3 space-y-2 text-sm text-gray-700">
                 <div class="flex items-center gap-2">
-                    <x-heroicon-o-clock class="w-5 h-5 text-blue-500" />
+                    <!-- <x-heroicon-o-clock class="w-5 h-5 text-blue-500" /> -->
                     <span>{{ $period->start_at }} → {{ $period->end_at }}</span>
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <x-heroicon-o-calendar-days class="w-5 h-5 text-green-500" />
+                    <!-- <x-heroicon-o-calendar-days class="w-5 h-5 text-green-500" /> -->
                     <span>
                         {{ implode(', ', array_map('ucfirst', json_decode($period->pivot->period_days ?? '[]'))) }}
                     </span>

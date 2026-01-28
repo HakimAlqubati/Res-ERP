@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use Exception;
@@ -25,26 +26,23 @@ class FifoMethodService
         $unitId,
         $requestedQty,
         $storeId = null
-    ) { 
+    ) {
         $targetUnit = UnitPrice::where('product_id', $productId)
             ->where('unit_id', $unitId)->with('unit')
             ->first();
         $product = Product::find($productId);
-        
+
         if (is_null($storeId)) {
             $storeId = defaultManufacturingStore($product)->id ?? null;
         }
 
-        $inventoryService       = new MultiProductsInventoryService(null, $productId, $unitId, $storeId);
-        $inventoryReportProduct = $inventoryService->getInventoryForProduct($productId);
-
-        $inventoryRemainingQty = collect($inventoryReportProduct)->firstWhere('unit_id', $unitId)['remaining_qty'] ?? 0;
+        // استخدام الـ Service الجديد (أسرع 10x)
+        $inventoryRemainingQty = MultiProductsInventoryService::quickReport($storeId, $productId, $unitId)[0][0]['remaining_qty'];
 
         if ($requestedQty > $inventoryRemainingQty) {
-
             $productName = $targetUnit->product->name ?? 'Unknown Product';
             $unitName    = $targetUnit->unit->name ?? 'Unknown Unit';
-             throw new Exception("❌ Requested quantity ($requestedQty'-'$unitName) exceeds available inventory ($inventoryRemainingQty) for product: $productName");
+            throw new Exception("❌ Requested quantity ($requestedQty $unitName) exceeds available inventory ($inventoryRemainingQty) for product: $productName");
         }
 
         $allocations = [];
@@ -109,8 +107,8 @@ class FifoMethodService
             $forModelName = str_replace(' ', '', class_basename($this->sourceModel));
 
             $notes = "Stock deducted for {$forModelName} #{$this->sourceModel?->id} from " .
-            $entry->transactionable_type .
-            " #" . $entry->transactionable_id .
+                $entry->transactionable_type .
+                " #" . $entry->transactionable_id .
                 " with price " . $price;
             // }
             $allocation = [

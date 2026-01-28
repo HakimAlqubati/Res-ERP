@@ -257,8 +257,12 @@ class EmployeeForm
                                                 $set('manager_id', null);
                                             })
                                             ->options(
-                                                Branch::selectable()
+                                                Branch::query()
                                                     ->select('id', 'name')
+                                                    ->whereIn('type', [
+                                                        Branch::TYPE_BRANCH,
+                                                        Branch::TYPE_HQ
+                                                    ])
                                                     ->get()
                                                     ->pluck('name', 'id')
                                             ),
@@ -316,8 +320,9 @@ class EmployeeForm
                                         TextInput::make('working_days')
                                             ->label(__('lang.working_days_per_month'))
                                             ->numeric()
-                                            ->minValue(1)
+                                            ->minValue(1)->required()
                                             ->maxValue(31)
+                                            ->extraInputAttributes(['onkeypress' => 'return event.charCode >= 48 && event.charCode <= 57'])
                                         // ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee')
                                         ,
 

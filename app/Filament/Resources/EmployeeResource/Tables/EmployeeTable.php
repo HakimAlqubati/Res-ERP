@@ -43,6 +43,7 @@ use App\Services\S3ImageService;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
@@ -53,7 +54,9 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
@@ -65,7 +68,7 @@ class EmployeeTable
     public static function configure(Table $table): Table
 
     {
-        return $table->striped()->deferFilters(false)
+        return $table->striped()
             ->paginated([10, 25, 50, 100])
 
             ->defaultSort('id', 'desc')
@@ -100,31 +103,41 @@ class EmployeeTable
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
 
-                TextColumn::make('email')->icon('heroicon-m-envelope')->copyable()
-                    ->sortable()->searchable()->limit(20)->default('@')->tooltip(fn($state) => $state)
+                TextColumn::make('email')
+                    ->icon('heroicon-m-envelope')
+                    // ->copyable()
+                    ->sortable()->searchable()
+                    // ->limit(20)
+
+                    ->default('-')
+                    // ->tooltip(fn($state) => $state)
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->searchable(isIndividual: false, isGlobal: true)
-                    ->copyable()
+                    // ->copyable()
                     ->copyMessage(__('lang.email_address_copied'))
                     ->copyMessageDuration(1500)
                     ->color('primary')
                     ->weight(FontWeight::Bold),
-                TextColumn::make('phone_number')->label(__('lang.phone_number'))->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: false)->default('_')
+                TextColumn::make('phone_number')->label(__('lang.phone_number'))
+                    ->searchable()
+                    ->icon('heroicon-m-phone')
+                    ->searchable(isIndividual: false)
+                    ->default('_')
                     ->toggleable(isToggledHiddenByDefault: false)
-                    ->copyable()
+                    // ->copyable()
                     ->copyMessage(__('lang.phone_number_copied'))
                     ->copyMessageDuration(1500)
                     ->color('primary')
                     ->weight(FontWeight::Bold),
                 TextColumn::make('join_date')->sortable()->label(__('lang.start_date'))
                     ->sortable()->searchable()
-                    ->toggleable(isToggledHiddenByDefault: false)
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: false),
                 TextColumn::make('salary')->sortable()->label(__('lang.salary'))
                     ->sortable()->searchable()
                     // ->money(fn(): string => getDefaultCurrency())
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
-                    ->toggleable(isToggledHiddenByDefault: false)
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: false)->alignCenter(true),
                 TextColumn::make('periodsCount')
                     ->default(0)
@@ -158,6 +171,10 @@ class EmployeeTable
                     ->sortable()->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: false),
+                TextColumn::make('employeeType.name')
+                    ->label(__('lang.role_type'))
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('department.name')
                     ->label(__('lang.department'))
@@ -213,8 +230,15 @@ class EmployeeTable
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark')
                     ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
+                IconColumn::make('is_indexed_in_aws')
+                    ->label(__('lang.is_indexed_in_aws'))
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-badge')
+                    ->falseIcon('heroicon-o-x-mark')
+                    ->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true),
 
-            ])->deferFilters(false)
+            ])->deferFilters(true)
             ->filters([
 
                 TrashedFilter::make()
@@ -237,7 +261,21 @@ class EmployeeTable
                     ->options(UserType::where('active', 1)->pluck('name', 'id')->toArray())
                     ->searchable()
                     ->multiple(),
-            ], FiltersLayout::AboveContent)
+                SelectFilter::make('manager_id')
+                    ->label(__('lang.manager'))
+                    ->options(Employee::whereIn('employee_type', [1, 2])->pluck('name', 'id')->toArray())
+                    ->searchable()
+                    ->multiple(),
+                Filter::make('me')
+                    ->label(__('lang.me'))
+                    ->toggle()
+                    ->query(fn($query) => $query->where('id', auth()->user()?->employee?->id)),
+                Filter::make('my_employees')
+                    ->label(__('lang.my_employees'))
+                    ->toggle()
+                    ->query(fn($query) => $query->where('manager_id', auth()->user()?->employee?->id)),
+            ], FiltersLayout::Modal)
+            ->filtersFormColumns(4)
             ->headerActions([
                 Action::make('export_employees')
                     ->label(__('lang.export_to_excel'))
@@ -266,13 +304,15 @@ class EmployeeTable
                     ->schema([
                         FileUpload::make('file')
                             ->label(__('lang.select_excel_file')),
-                    ])->extraModalFooterActions([
-                        Action::make('downloadexcel')->label(__('Download Example File'))
-                            ->icon('heroicon-o-arrow-down-on-square-stack')
-                            ->url(asset('storage/sample_file_imports/Sample import file.xlsx')) // URL to the existing file
-                            ->openUrlInNewTab(),
                     ])
+                    // ->extraModalFooterActions([
+                    //     Action::make('downloadexcel')->label(__('Download Example File'))
+                    //         ->icon('heroicon-o-arrow-down-on-square-stack')
+                    //         ->url(asset('data/sample_file_imports/Sample import file.xlsx')) // URL to the existing file
+                    //         ->openUrlInNewTab(),
+                    // ])
                     ->color('success')
+                    // ->iconButton(Heroicon::AcademicCap)
                     ->action(function ($data) {
 
                         $file = 'public/' . $data['file'];
@@ -285,7 +325,7 @@ class EmployeeTable
 
                             // Check the result and show the appropriate notification
                             if ($import->getSuccessfulImportsCount() > 0) {
-                                showSuccessNotifiMessage("Employees imported successfully. {$import->getSuccessfulImportsCount()} rows added.");
+                                showSuccessNotifiMessage("Employees imported successfully {$import->getSuccessfulImportsCount()} rows added.");
                             } else {
                                 showWarningNotifiMessage('No employees were added. Please check your file.');
                             }
@@ -298,79 +338,63 @@ class EmployeeTable
             ])
             ->recordActions([
 
-                Action::make('createUser')->button()
-                    ->label(__('lang.create_user'))
-                    ->icon('heroicon-o-user-plus')
-                    ->color('success')
-                    ->visible(fn($record) =>  !$record->has_user)
-                    ->form(fn($record) => EmployeeResource::createUserForm($record))
-                    ->action(function (array $data, $record) {
-                        $user = $record->createLinkedUser($data);
-
-                        if ($user) {
-                            Notification::make()
-                                ->title(__('lang.user_created'))
-                                ->body(__('lang.user_created_for') . " {$record->name}.")
-                                ->success()
-                                ->send();
-                        }
-                    }),
 
 
-                Action::make('index')
-                    ->label(__('lang.aws_indexing'))->button()
-                    ->icon('heroicon-o-user-plus')
-                    ->color('success')
-                    // ->visible(fn($record): bool => $record->avatar && Storage::disk('s3')->exists($record->avatar))
-                    ->action(function ($record) {
-                        $response = S3ImageService::indexEmployeeImage($record->id);
 
-                        if (isset($response->original['success']) && $response->original['success']) {
-                            Log::info('Employee image indexed successfully.', ['employee_id' => $record->id]);
-                            Notification::make()
-                                ->title('Success')
-                                ->body($response->original['message'])
-                                ->success()
-                                ->send();
-                        } else {
-                            Log::error('Failed to index employee image.', ['employee_id' => $record->id]);
-                            Notification::make()
-                                ->title('Error')
-                                ->body($response->original['message'] ?? 'An error occurred.')
-                                ->danger()
-                                ->send();
-                        }
-                    }),
 
-                // Action::make('add_face_images')
-                //     ->label('Add Face Images')
-                //     ->icon('heroicon-o-photo')
-                //     ->color('primary')
-                //     ->form([
-                //         FileUpload::make('images')
-                //             ->label('Face Images')
-                //             ->multiple()
-                //             ->required()->disk('public')
-                //             ->image()
-                //             ->maxSize(10240) // 10MB
-                //             ->directory('employee_faces')
-                //             ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                //                 return Str::random(15) . "." . $file->getClientOriginalExtension();
-                //             })
-                //         ,
-                //     ])
-                //     ->action(fn(array $data, $record) => static::storeFaceImages($record, $data['images']))
-                //     ->modalHeading('Upload Employee Face Images')
-                //     ->modalSubmitActionLabel('Upload')
-                //     ->modalCancelActionLabel('Cancel'),
+
+
                 ActionGroup::make([
+                    Action::make('createUser')
+                        ->label(__('lang.create_user'))
+                        ->icon('heroicon-o-user-plus')
+                        ->color('success')
+                        ->visible(fn($record) =>  !$record->has_user)
+                        ->schema(fn($record) => EmployeeResource::createUserForm($record))
+                        ->action(function (array $data, $record) {
+                            $user = $record->createLinkedUser($data);
 
+                            if ($user) {
+                                Notification::make()
+                                    ->title(__('lang.user_created'))
+                                    ->body(__('lang.user_created_for') . " {$record->name}.")
+                                    ->success()
+                                    ->send();
+                            }
+                        }),
+                    Action::make('index')
+                        ->label(__('lang.aws_indexing'))
+                        // ->button()
+                        ->icon('heroicon-o-user-plus')
+                        ->color('success')
+                        ->requiresConfirmation(fn(Employee $record) => (bool) $record->is_indexed_in_aws)
+                        ->modalHeading(__('lang.warning'))
+                        ->modalDescription(__('lang.employee_already_indexed_warning'))
+                        ->modalSubmitActionLabel(__('lang.yes'))
+                        // ->visible(fn($record): bool => $record->avatar && Storage::disk('s3')->exists($record->avatar))
+                        ->action(function ($record) {
+                            $response = S3ImageService::indexEmployeeImage($record->id);
+
+                            if (isset($response->original['success']) && $response->original['success']) {
+                                Notification::make()
+                                    ->title('Success')
+                                    ->body($response->original['message'])
+                                    ->success()
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->title('Error')
+                                    ->body($response->original['message'] ?? 'An error occurred.')
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
                     Action::make('quick_edit_avatar')
                         ->label(__('lang.edit_avatar'))
                         ->icon('heroicon-o-camera')
                         ->color('secondary')
                         ->modalHeading(__('lang.edit_employee_avatar'))
-                        ->form([
+                        ->schema([
                             EmployeeResource::avatarUploadField(),
                         ])
                         ->action(function (array $data, $record) {
@@ -389,26 +413,26 @@ class EmployeeTable
                         ->icon('heroicon-m-banknotes')
                         ->url(fn($record) => CheckInstallments::getUrl(['employeeId' => $record->id]))
 
-                        ->openUrlInNewTab(),
-                    // Action::make('view_shifts')
-                    //     ->label('View Shifts')
-                    //     ->icon('heroicon-o-clock')
-                    //     ->color('info')
-                    //     ->modalHeading('Work Periods')
-                    //     ->modalSubmitAction(false) // No submit button
-                    //     ->modalCancelActionLabel('Close')
-                    //     ->action(fn() => null) // No backend action
-                    //     ->modalContent(function ($record) {
-                    //         $periods = $record->periods;
+                        ->openUrlInNewTab()->hidden(),
+                    Action::make('view_shifts')
+                        ->label('View Shifts')
+                        ->icon('heroicon-o-clock')
+                        ->color('info')
+                        ->modalHeading('Work Periods')
+                        ->modalSubmitAction(false) // No submit button
+                        ->modalCancelActionLabel('Close')
+                        ->action(fn() => null) // No backend action
+                        ->modalContent(function ($record) {
+                            $periods = $record->periods;
 
-                    //         if ($periods->isEmpty()) {
-                    //             return view('components.employee.no-periods');
-                    //         }
+                            if ($periods->isEmpty()) {
+                                return view('components.employee.no-periods');
+                            }
 
-                    //         return view('components.employee.periods-preview', [
-                    //             'periods' => $periods,
-                    //         ]);
-                    //     }),
+                            return view('components.employee.periods-preview', [
+                                'periods' => $periods,
+                            ]);
+                        })->hidden(),
                     // Add the Change Branch action
                     Action::make('changeBranch')->icon('heroicon-o-arrow-path-rounded-square')
                         ->label(__('lang.change_branch')) // Label for the action button
@@ -479,6 +503,7 @@ class EmployeeTable
 
                         showSuccessNotifiMessage('Selected employees activated.');
                     }),
+                ForceDeleteBulkAction::make()->visible(fn() => isSuperAdmin()),
             ]);
     }
 }

@@ -194,6 +194,13 @@ trait EmployeeAttendanceTrait
                     ? Employee::find($this->manager_id)?->user_id
                     : null;
 
+                // Ensure employee has email set in DB to avoid Observer crashing when syncing back to user
+                if ((empty($this->email) || $this->email !== ($data['email'] ?? '')) && !empty($data['email'])) {
+                    // Update email without triggering events? No, we need it to be in DB.
+                    // But if we update it, Observer::updated will run.
+                    // Let's create user first using data.
+                }
+
                 $userData = [
                     'name'         => $data['name'] ?? $this->name,
                     'email'        => $data['email'] ?? $this->email,

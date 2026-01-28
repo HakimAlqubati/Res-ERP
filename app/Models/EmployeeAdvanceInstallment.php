@@ -191,6 +191,51 @@ class EmployeeAdvanceInstallment extends Model
     }
 
     /**
+     * تخطي القسط وإنشاء قسط جديد في نهاية الجدول
+     * @param string|null $reason سبب التأجيل
+     * @return self القسط الجديد المُنشأ
+     */
+    public function skipAndReschedule(?string $reason = null): self
+    {
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($reason) {
+            // 1. تعليم القسط الحالي كمتخطّى
+            $this->markSkipped($reason);
+
+            // 2. جلب آخر قسط في السلفة
+            $lastInstallment = self::where('advance_request_id', $this->advance_request_id)
+                ->orderByDesc('due_date')
+                ->first();
+
+            // 3. حساب تاريخ القسط الجديد (الشهر التالي لآخر قسط)
+            $newDueDate = Carbon::parse($lastInstallment->due_date)->addMonth()->endOfMonth();
+
+            // 4. إنشاء القسط الجديد
+            $newInstallment = self::create([
+                'employee_id'        => $this->employee_id,
+                'application_id'     => $this->application_id,
+                'advance_request_id' => $this->advance_request_id,
+                'sequence'           => $lastInstallment->sequence + 1,
+                'installment_amount' => $this->installment_amount,
+                'original_amount'    => $this->original_amount,
+                'due_date'           => $newDueDate->toDateString(),
+                'year'               => $newDueDate->year,
+                'month'              => $newDueDate->month,
+                'is_paid'            => false,
+                'status'             => self::STATUS_SCHEDULED,
+                'notes'              => $reason ? "مؤجل من قسط #{$this->sequence}: {$reason}" : "مؤجل من قسط #{$this->sequence}",
+            ]);
+
+            // 5. تحديث تاريخ انتهاء السلفة
+            $advanceRequest = \App\Models\AdvanceRequest::find($this->advance_request_id);
+            if ($advanceRequest) {
+                $advanceRequest->update(['deduction_ends_at' => $newDueDate->toDateString()]);
+            }
+
+            return $newInstallment;
+        });
+    }
+
+    /**
      * إلغاء القسط
      */
     public function markCancelled(?string $reason = null, ?int $cancelledById = null): void

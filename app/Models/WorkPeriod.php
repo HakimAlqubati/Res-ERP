@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use App\Traits\Scopes\BranchScope;
@@ -11,7 +12,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class WorkPeriod extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable,BranchScope;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope;
     protected $table = 'hr_work_periods';
 
     // Define fillable fields
@@ -77,7 +78,7 @@ class WorkPeriod extends Model implements Auditable
         // Calculate the difference in total minutes
         $totalMinutes = $start->diffInMinutes($end);
 
-                                              // Convert minutes to hours with decimal (fractional hours)
+        // Convert minutes to hours with decimal (fractional hours)
         $hours   = intdiv($totalMinutes, 60); // Get whole hours
         $minutes = $totalMinutes % 60;        // Get remaining minutes
 
@@ -118,18 +119,17 @@ class WorkPeriod extends Model implements Auditable
 
     protected static function booted()
     {
-        if (isBranchManager()) {
-            static::addGlobalScope('active', function (Builder $builder) {
-                $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
-            });
-        } else if (isStuff()) {
-            // dd(auth()?->user()?->employee?->periods?->pluck('id')->toArray());
-            // static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
-            //     $builder->whereIn('id', auth()?->user()?->employee?->periods?->pluck('id')->toArray()); // Add your default query here
-            // });
-        }
+        static::creating(function ($workPeriod) {
+            if (empty($workPeriod->days)) {
+                $workPeriod->days = json_encode(['sat', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri']);
+            }
+        });
+
+        // Branch scope logic moved to ApplyBranchScopes middleware
+        // to avoid relationship issues during model boot cycle.
+        // See: app/Http/Middleware/ApplyBranchScopes.php
     }
- 
+
     // داخل WorkPeriod.php
 
     public function employeePeriodDays()
@@ -144,4 +144,9 @@ class WorkPeriod extends Model implements Auditable
         );
     }
 
+    public static function calculateDayAndNight($startAt, $endAt): bool
+    {
+        // Logic to set default based on time fields
+        return $startAt > $endAt;
+    }
 }

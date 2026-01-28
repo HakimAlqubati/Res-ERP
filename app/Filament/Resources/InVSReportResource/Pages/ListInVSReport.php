@@ -20,17 +20,20 @@ class ListInVSReport extends ListRecords
     protected function getViewData(): array
     {
         $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
+        $categoryId = $this->getTable()->getFilters()['category_id']->getState()['value'] ?? null;
+        $productIds = $this->getTable()->getFilters()['product_id']->getState()['values'] ?? [];
 
-        // $toDate = $this->getTable()->getFilters()['date']->getState()['to_date'];
         $dateState = $this->getTable()->getFilters()['date_range']->getState();
 
         $fromDate = $dateState['from_date'] ?? null;
         $toDate   = $dateState['to_date'] ?? null;
 
         $filters = [
-            'store_id'  => $storeId,
-            'from_date' => $fromDate,
-            'to_date'   => $toDate,
+            'store_id'    => $storeId,
+            'category_id' => $categoryId,
+            'product_ids' => $productIds,
+            'from_date'   => $fromDate,
+            'to_date'     => $toDate,
         ];
 
         // $filters = [

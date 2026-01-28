@@ -66,13 +66,16 @@ class PayrollRunObserver
     public function deleted(PayrollRun $payrollRun): void
     {
         try {
-            // 1. حذف المعاملات المالية
+            // 1. إرجاع أقساط السلف إلى غير مدفوعة
+            $this->revertInstallmentsToUnpaid($payrollRun);
+
+            // 2. حذف المعاملات المالية
             $this->syncService->deletePayrollRunTransactions($payrollRun->id);
 
-            // 2. حذف حركات الراتب
+            // 3. حذف حركات الراتب
             $payrollRun->transactions()->delete();
 
-            // 3. حذف كشوفات الرواتب
+            // 4. حذف كشوفات الرواتب
             $payrollRun->payrolls()->delete();
         } catch (\Exception $e) {
             // Silent fail
@@ -207,6 +210,85 @@ class PayrollRunObserver
             }
         } catch (\Exception $e) {
             // Silent fail
+        }
+    }
+
+    /**
+     * Revert all paid installments back to unpaid when PayrollRun is deleted.
+     * This is the reverse of markInstallmentsAsPaid().
+     */
+    protected function revertInstallmentsToUnpaid(PayrollRun $payrollRun): void
+    {
+        try {
+            // Find ALL installments linked via SalaryTransaction in this payroll run
+            $installmentIds = \App\Models\SalaryTransaction::query()
+                ->where('payroll_run_id', $payrollRun->id)
+                ->where('reference_type', EmployeeAdvanceInstallment::class)
+                ->whereIn('sub_type', [
+                    SalaryTransactionSubType::ADVANCE_INSTALLMENT->value,
+                    SalaryTransactionSubType::EARLY_ADVANCE_INSTALLMENT->value,
+                ])
+                ->pluck('reference_id')
+                ->filter()
+                ->unique()
+                ->toArray();
+
+            if (empty($installmentIds)) {
+                return;
+            }
+
+            // Get all installments that were marked as paid by this payroll
+            $paidInstallments = EmployeeAdvanceInstallment::query()
+                ->whereIn('id', $installmentIds)
+                ->where('is_paid', true)
+                ->get();
+
+            if ($paidInstallments->isEmpty()) {
+                return;
+            }
+
+            // Group installments by advance_request_id to update AdvanceRequest later
+            $advanceRequestUpdates = [];
+
+            foreach ($paidInstallments as $installment) {
+                // Collect advance_request_id for batch update
+                if ($installment->advance_request_id) {
+                    if (!isset($advanceRequestUpdates[$installment->advance_request_id])) {
+                        $advanceRequestUpdates[$installment->advance_request_id] = [
+                            'count' => 0,
+                            'amount' => 0.0,
+                        ];
+                    }
+                    $advanceRequestUpdates[$installment->advance_request_id]['count']++;
+                    $advanceRequestUpdates[$installment->advance_request_id]['amount'] += (float) $installment->installment_amount;
+                }
+
+                // Revert installment to unpaid
+                $installment->update([
+                    'is_paid' => false,
+                    'paid_at' => null,
+                    'paid_by' => null,
+                    'payroll_id' => null,
+                    'payment_method' => null,
+                ]);
+            }
+
+            // Update AdvanceRequest: decrement paid_installments and increment remaining_total
+            foreach ($advanceRequestUpdates as $advanceRequestId => $data) {
+                $advanceRequest = AdvanceRequest::find($advanceRequestId);
+                if ($advanceRequest) {
+                    $advanceRequest->decrement('paid_installments', $data['count']);
+                    $advanceRequest->increment('remaining_total', $data['amount']);
+
+                    // Ensure paid_installments doesn't go below 0
+                    if ($advanceRequest->paid_installments < 0) {
+                        $advanceRequest->update(['paid_installments' => 0]);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // Silent fail - log for debugging if needed
+            // \Log::error('Failed to revert installments: ' . $e->getMessage());
         }
     }
 }

@@ -61,7 +61,21 @@ class InventoryTransaction extends Model implements Auditable
         'source_transaction_id',
         'remaining_quantity',
     ];
-    protected $appends = ['movement_type_title', 'formatted_transactionable_type', 'total_price'];
+    protected $appends = ['movement_type_title', 'formatted_transactionable_type', 'total_price', 'expiry_date'];
+
+    /**
+     * Get dynamic expiry date based on movement date (production date) and product shelf life
+     */
+    public function getExpiryDateAttribute()
+    {
+        if (!$this->product || !$this->product->halalCertificate) {
+            return null;
+        }
+
+        return $this->product->halalCertificate->calculateExpiryDate(
+            \Carbon\Carbon::parse($this->movement_date)
+        );
+    }
 
     // Constant movement types
     const MOVEMENT_OUT = 'out';

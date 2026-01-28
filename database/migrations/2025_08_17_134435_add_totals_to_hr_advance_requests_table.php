@@ -12,9 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('hr_advance_requests', function (Blueprint $table) {
-            $table->string('code')->unique()->after('id'); 
-            $table->decimal('remaining_total', 12, 2)->default(0)->after('advance_amount');
-            $table->unsignedInteger('paid_installments')->default(0)->after('remaining_total');
+            if (!Schema::hasColumn('hr_advance_requests', 'code')) {
+                $table->string('code')->unique()->after('id');
+            }
+            if (!Schema::hasColumn('hr_advance_requests', 'remaining_total')) {
+                $table->decimal('remaining_total', 12, 2)->default(0)->after('advance_amount');
+            }
+            if (!Schema::hasColumn('hr_advance_requests', 'paid_installments')) {
+                $table->unsignedInteger('paid_installments')->default(0)->after('remaining_total');
+            }
         });
     }
 
@@ -24,7 +30,15 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('hr_advance_requests', function (Blueprint $table) {
-            $table->dropColumn(['code', 'remaining_total', 'paid_installments']);
+            if (Schema::hasColumn('hr_advance_requests', 'code')) {
+                $table->dropColumn('code');
+            }
+            if (Schema::hasColumn('hr_advance_requests', 'remaining_total')) {
+                $table->dropColumn('remaining_total');
+            }
+            if (Schema::hasColumn('hr_advance_requests', 'paid_installments')) {
+                $table->dropColumn('paid_installments');
+            }
         });
     }
 };

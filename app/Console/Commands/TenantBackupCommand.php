@@ -5,9 +5,7 @@ namespace App\Console\Commands;
 use App\Filament\Resources\TenantResource;
 use App\Models\AppLog;
 use App\Models\CustomTenantModel;
-use Google\Service\AdMob\App;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 
 class TenantBackupCommand extends Command
 {
@@ -30,17 +28,18 @@ class TenantBackupCommand extends Command
      */
     public function handle(): int
     {
-        // Log::info('🚀 tenant:backup started at ' . now());
-
         AppLog::write('tenant:backup started at ' . now());
         $tenants = CustomTenantModel::where('active', 1)->get();
 
         foreach ($tenants as $tenant) {
             try {
                 TenantResource::generateTenantBackup($tenant);
-                AppLog::write("Backup successful for tenant: {$tenant->name}"); 
+                AppLog::write("Backup successful for tenant: {$tenant->name}");
             } catch (\Throwable $e) {
                 AppLog::write("Backup failed for tenant: {$tenant->name}. Error: " . $e->getMessage(), AppLog::LEVEL_ERROR);
+
+                // إرسال إيميل تنبيهي عند فشل النسخ الاحتياطي
+                sendBackupFailureEmail($tenant->name, $e->getMessage());
             }
         }
         AppLog::write('tenant:backup finished at ' . now());

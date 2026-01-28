@@ -42,6 +42,12 @@ class StockInventory extends Model implements Auditable
     {
         return $this->hasMany(StockInventoryDetail::class, 'stock_inventory_id');
     }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
     protected static function boot()
     {
         parent::boot();

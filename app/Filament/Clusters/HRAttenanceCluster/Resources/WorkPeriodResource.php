@@ -27,6 +27,7 @@ use App\Filament\Clusters\HRAttenanceCluster\Resources\WorkPeriodResource\Pages;
 use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\WorkPeriod;
+use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Forms;
 use Illuminate\Database\Eloquent\Collection;
 use Filament\Forms\Components\FileUpload;
@@ -93,8 +94,10 @@ class WorkPeriodResource extends Resource
                     //     ->default(true),
                     Select::make('branch_id')
                         ->options(Branch::where('active', 1)
-                            ->selectable()
-                            ->select('name', 'id')->get()->pluck('name', 'id'))
+                            ->whereIn('type', [
+                                Branch::TYPE_BRANCH,
+                                Branch::TYPE_HQ
+                            ])->select('name', 'id')->get()->pluck('name', 'id'))
                         ->label(__('lang.branch'))->required()
                         ->searchable(),
                     Toggle::make('active')
@@ -277,6 +280,7 @@ class WorkPeriodResource extends Resource
                         // ->action(fn(Collection $records) => $records->each->delete())
                         ->deselectRecordsAfterCompletion(),
                     RestoreBulkAction::make(),
+                    ForceDeleteBulkAction::make()->visible(fn() => isSuperAdmin())
                 ]),
             ])
             ->headerActions([
@@ -286,11 +290,6 @@ class WorkPeriodResource extends Resource
                     ->schema([
                         FileUpload::make('file')
                             ->label('Select Excel file'),
-                    ])->extraModalFooterActions([
-                        Action::make('downloadexcel')->label(__('Download Example File'))
-                            ->icon('heroicon-o-arrow-down-on-square-stack')
-                            ->url(asset('storage/sample_file_imports/Sample import shifts.xlsx')) // URL to the existing file
-                            ->openUrlInNewTab()
                     ])
                     ->color('success')
                     ->action(function ($data) {
@@ -346,11 +345,7 @@ class WorkPeriodResource extends Resource
         return false;
     }
 
-    public static function calculateDayAndNight($startAt, $endAt): bool
-    {
-        // Logic to set default based on time fields
-        return $startAt > $endAt;
-    }
+
 
     public static function getEloquentQuery(): Builder
     {

@@ -31,6 +31,7 @@
         "league/flysystem-ftp": "^3.29",
         "maatwebsite/excel": "^3.1",
         "masbug/flysystem-google-drive-ext": "^2.4",
+        "mpdf/mpdf": "^8.2",
         "nwidart/laravel-modules": "^11.0",
         "owen-it/laravel-auditing": "^14.0",
         "pusher/pusher-php-server": "^7.2",

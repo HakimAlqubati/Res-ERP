@@ -81,12 +81,14 @@ class EmployeeApplicationForm
                             EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST                  => 'heroicon-o-clock',
                             EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => 'heroicon-o-finger-print',
                             EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST  => 'heroicon-o-finger-print',
+                            EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST                   => 'heroicon-o-fire',
                         ])->inline()
                         ->colors([
                             EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST  => 'info',
                             EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST                  => 'warning',
                             EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => 'success',
                             EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST                => 'danger',
+                            EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST                   => 'info',
                         ])
                         ->afterStateUpdated(function ($set, $get) {
                             // Create a DateTime object
@@ -131,6 +133,9 @@ class EmployeeApplicationForm
                         }
                         if ($get('application_type_id') == EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST) {
                             return EmployeeApplicationResource::leaveRequestForm($set, $get);
+                        }
+                        if ($get('application_type_id') == EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST) {
+                            return EmployeeApplicationResource::mealRequestForm($set, $get);
                         }
 
                         return [

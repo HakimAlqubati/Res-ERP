@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class DailyTasksSettingUp extends Model
 {
-    use HasFactory, DynamicConnection,BranchScope;
+    use HasFactory, DynamicConnection, BranchScope;
     protected $table = 'daily_tasks_setting_up';
 
     const TYPE_SCHEDULE_DAILY = 'daily';
@@ -75,18 +75,9 @@ class DailyTasksSettingUp extends Model
     protected static function booted()
     {
 
-        if (auth()->check()) {
-            if (isBranchManager()) {
-                static::addGlobalScope(function (Builder $builder) {
-                    $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
-                });
-            } else if (isFinanceManager()) {
-                static::addGlobalScope(function (Builder $builder) {
-                    $builder->where('assigned_to', auth()->user()->employee->id)
-                        ->orWhere('assigned_by', auth()->user()->id)
-                    ; // Add your default query here
-                });
-            }
-        }
+        // Branch scope logic moved to ApplyBranchScopes middleware
+        // to avoid relationship issues during model boot cycle.
+        // See: app/Http/Middleware/ApplyBranchScopes.php
+
     }
 }

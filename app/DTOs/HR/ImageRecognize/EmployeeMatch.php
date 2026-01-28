@@ -13,10 +13,11 @@ class EmployeeMatch
         public ?Employee $employeeData,
         public ?float $similarity = null,
         public ?float $confidence = null,
+        public ?string $message = null,
     ) {}
 
-    public static function notFound(): self
+    public static function notFound(?string $message = 'No match found'): self
     {
-        return new self(false, 'No match found', null, null, null, null);
+        return new self(false, 'No match found', null, null, null, null, $message);
     }
 }

@@ -253,6 +253,19 @@ class AdvanceRequest extends Model
     protected static function booted(): void
     {
         static::creating(function (AdvanceRequest $model) {
+            // ✅ Validation: مبلغ السلفة لا يتجاوز راتب الموظف
+            $employee = Employee::find($model->employee_id);
+            if ($employee && $employee->salary > 0) {
+                if ($model->advance_amount > $employee->salary) {
+                    throw new \InvalidArgumentException(
+                        __('lang.advance_exceeds_salary', [
+                            'amount' => number_format($model->advance_amount, 2),
+                            'salary' => number_format($employee->salary, 2),
+                        ])
+                    );
+                }
+            }
+
             if (empty($model->code)) {
                 $model->code = static::nextCode();
             }

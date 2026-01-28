@@ -58,6 +58,5 @@ class GrnPriceSyncService
             }
         });
 
-        Log::info("✅ Synced GRN prices from purchase invoices. Total GRNs processed: " . $grns->count());
-    }
+     }
 }

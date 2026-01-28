@@ -3,6 +3,7 @@
 namespace App\Services\HR\ImageRecognize;
 
 use App\DTOs\HR\ImageRecognize\EmployeeMatch;
+use App\Models\AppLog;
 use App\Models\AttendanceImagesUploaded;
 use Aws\Rekognition\RekognitionClient;
 use Illuminate\Http\UploadedFile;
@@ -47,6 +48,21 @@ class FaceRecognitionService
             'MaxFaces'           => (int) $this->config['max_faces'],
         ]);
 
+        // ✅ تسجيل معلومات البحث
+        AppLog::write(
+            'Face Recognition Search',
+            AppLog::LEVEL_INFO,
+            'FaceRecognition',
+            [
+                'collection_id'        => $collectionId,
+                'bucket'               => $bucket,
+                'image_path'           => $path,
+                'face_match_threshold' => $this->config['face_match_threshold'],
+                'max_faces'            => $this->config['max_faces'],
+                'matches_count'        => count($result['FaceMatches'] ?? []),
+                'raw_matches'          => $result['FaceMatches'] ?? [],
+            ]
+        );
 
         $matches = $result['FaceMatches'] ?? [];
         // dd($matches);   
@@ -65,7 +81,27 @@ class FaceRecognitionService
         }
 
         // 4) ربط RekognitionId → DynamoDB → Employee
-        [$name, $employeeId, $employee] = $this->repo->resolveByRekognitionId($rekognitionId);
+        [$name, $employeeId, $employee, $isAnotherBranch] = $this->repo->resolveByRekognitionId($rekognitionId);
+
+        // ✅ تسجيل نتيجة البحث في DynamoDB
+        AppLog::write(
+            'DynamoDB Employee Lookup',
+            AppLog::LEVEL_INFO,
+            'FaceRecognition',
+            [
+                'rekognition_id'     => $rekognitionId,
+                'similarity'         => $similarity,
+                'confidence'         => $confidence,
+                'employee_name'      => $name,
+                'employee_id'        => $employeeId,
+                'employee_found'     => $employee ? true : false,
+                'is_another_branch'  => $isAnotherBranch,
+            ]
+        );
+
+        if ($isAnotherBranch) {
+            return EmployeeMatch::notFound('Employee belongs to another branch and cannot be accessed.');
+        }
 
         if (!$employee) {
             return EmployeeMatch::notFound();
@@ -83,10 +119,15 @@ class FaceRecognitionService
                 'datetime'    => now(),
             ]);
         } catch (\Throwable $e) {
-            Log::error('Failed to save uploaded attendance image', [
-                'error' => $e->getMessage(),
-                'path'  => $path,
-            ]);
+            // AppLog::write(
+            //     'Failed to save uploaded attendance image',
+            //     AppLog::LEVEL_ERROR,
+            //     'FaceRecognition',
+            //     [
+            //         'error' => $e->getMessage(),
+            //         'path'  => $path,
+            //     ]
+            // );
         }
 
 

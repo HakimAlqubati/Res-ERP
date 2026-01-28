@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\FifoInventoryReportController;
 use App\Http\Controllers\Api\InventoryDashboardController;
+use App\Http\Controllers\Api\Inventory\OptimizedInventoryController;
 use App\Http\Controllers\Api\ManufacturingInventoryReportController;
 use App\Http\Controllers\Api\ManufacturingReportController;
 use App\Http\Controllers\Api\PurchaseInvoiceController;
@@ -140,6 +141,39 @@ Route::get('/test', function () {
 Route::get('/inventoryDashboardTest', [InventoryDashboardController::class, 'getSummary'])
     // ->middleware('auth:api')
 ;
+Route::prefix('v2/inventory')->group(function () {
+    // تقرير المخزون الكامل
+    Route::get('/report', [OptimizedInventoryController::class, 'report']);
+
+    // تقرير المخزون مع Pagination
+    Route::get('/report/paginated', [OptimizedInventoryController::class, 'reportPaginated']);
+
+    // مخزون منتج واحد
+    Route::get('/product/{productId}', [OptimizedInventoryController::class, 'productInventory']);
+
+    // الكمية المتبقية لمنتج/وحدة
+    Route::get('/remaining-qty', [OptimizedInventoryController::class, 'remainingQty']);
+
+    // المنتجات تحت الحد الأدنى
+    Route::get('/low-stock', [OptimizedInventoryController::class, 'lowStock']);
+
+    // حركات منتج (دخول/خروج)
+    Route::get('/movements/{productId}', [OptimizedInventoryController::class, 'movements']);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// V3 Inventory Summary Routes (from inventory_summary table - FAST)
+// ═══════════════════════════════════════════════════════════════════════════
+Route::prefix('v3/inventory')->group(function () {
+    Route::get('/', [App\Http\Controllers\Api\Inventory\InventorySummaryController::class, 'index']);
+});
+
+Route::get('/testFun', function () {
+    return response()->json([
+        'success' => true,
+        'data' => 'test'
+    ]);
+});
 Route::middleware('auth:api')->group(function () {
     Route::put('updateFcmToken', [FcmController::class, 'updateDeviceToken']);
 
@@ -152,6 +186,11 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/filters', [App\Http\Controllers\Api\InventoryReportController::class, 'filters']);
         Route::get('/productTracking', [App\Http\Controllers\Api\InventoryReportController::class, 'productTracking']);
     });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // V2 Optimized Inventory Routes (OptimizedInventoryService)
+    // ═══════════════════════════════════════════════════════════════════════════
+
 
     // Financial Category Reporting Routes
     Route::prefix('financial')->group(function () {
@@ -277,17 +316,7 @@ require base_path('routes/custom_route.php');
 require base_path('routes/custom_api_route_inventory.php');
 require base_path('routes/custom_api_test.php');
 
-Route::post('/v2/attendance/test', function (Request $request) {
-    $service = app(\App\Services\HR\v2\Attendance\AttendanceServiceV2::class);
-    return $service->handle($request->all());
-})->middleware('auth:api');
-
-// Bulk attendance generation endpoint
-// توليد سجلات حضور جماعية مع أوقات عشوائية واقعية
-Route::post('/v2/attendance/bulk-generate', function (Request $request) {
-    $service = app(\App\Services\HR\v2\Attendance\BulkAttendanceGeneratorService::class);
-    return $service->generate($request->all());
-})->middleware('auth:api');
+// HR Attendance Module Routes (v3) - loaded via AttendanceServiceProvider
 
 
 
@@ -381,5 +410,210 @@ Route::get('/fixInventoryMovementDates', function () {
 
 Route::get('/testEnv', function () {
     // dd('sdf');
+    dd(\App\Models\Employee::where('avatar', 'like', '%v0wj67L8hG1pqXq%')->first());
     dd(env('APP_ENV'));
+});
+
+Route::get('/testFun', function () {
+    return response()->json([
+        'success' => true,
+        'data' => 'test'
+    ]);
+});
+
+// API endpoint to get month options based on settings
+Route::get('/monthOptions', function () {
+    $options = getMonthOptionsBasedOnSettings();
+    $result = [];
+
+    foreach ($options as $key => $label) {
+        // Parse the month key (e.g., "January 2026") to get year and month
+        $date = \Carbon\Carbon::parse($key);
+        $endOfMonthData = getEndOfMonthDate($date->year, $date->month);
+
+        $result[] = [
+            'key' => $key,
+            'label' => $label,
+            'start_date' => $endOfMonthData['start_month'],
+            'end_date' => $endOfMonthData['end_month'],
+        ];
+    }
+
+    return response()->json([
+        'success' => true,
+        'data' => $result,
+    ]);
+});
+
+// ========================================
+// Rekognition Sync Routes
+// ========================================
+
+ 
+ 
+
+/**
+ * عرض حالة المزامنة - مقارنة Rekognition مع DynamoDB
+ * GET /api/rekognition/status
+ */
+Route::get('/rekognition/status', function () {
+    $rekognition = new \Aws\Rekognition\RekognitionClient([
+        'region' => env('AWS_DEFAULT_REGION'),
+        'version' => 'latest',
+        'credentials' => [
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        ],
+    ]);
+
+    $dynamoDb = new \Aws\DynamoDb\DynamoDbClient([
+        'region' => env('AWS_DEFAULT_REGION'),
+        'version' => 'latest',
+        'credentials' => [
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        ],
+    ]);
+
+    // Get faces from Rekognition
+    $collectionId = config('rekognition.collection_id', 'emps');
+    $rekognitionFaces = [];
+    try {
+        $result = $rekognition->listFaces(['CollectionId' => $collectionId]);
+        $rekognitionFaces = collect($result['Faces'])->pluck('FaceId')->toArray();
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to fetch Rekognition faces: ' . $e->getMessage(),
+        ], 500);
+    }
+
+    // Get records from DynamoDB
+    $dynamoDbRecords = [];
+    try {
+        $result = $dynamoDb->scan(['TableName' => 'face_recognition']);
+        $dynamoDbRecords = collect($result['Items'])->pluck('RekognitionId.S')->toArray();
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to fetch DynamoDB records: ' . $e->getMessage(),
+        ], 500);
+    }
+
+    // Compare
+    $inRekognitionOnly = array_diff($rekognitionFaces, $dynamoDbRecords);
+    $inDynamoDbOnly = array_diff($dynamoDbRecords, $rekognitionFaces);
+    $synced = array_intersect($rekognitionFaces, $dynamoDbRecords);
+
+    return response()->json([
+        'success' => true,
+        'collection_id' => $collectionId,
+        'dynamodb_table' => 'face_recognition',
+        'summary' => [
+            'rekognition_faces' => count($rekognitionFaces),
+            'dynamodb_records' => count($dynamoDbRecords),
+            'synced' => count($synced),
+            'missing_in_dynamodb' => count($inRekognitionOnly),
+            'orphaned_in_dynamodb' => count($inDynamoDbOnly),
+        ],
+        'missing_in_dynamodb' => array_values($inRekognitionOnly),
+        'orphaned_in_dynamodb' => array_values($inDynamoDbOnly),
+    ]);
+});
+
+// ========================================
+// Temporary Employee Import API
+// ========================================
+
+/**
+ * استيراد الموظفين من ملف Excel
+ * POST /api/import-employees
+ * 
+ * @param file - ملف Excel (xlsx, xls, csv)
+ */
+Route::post('/import-employees', function (Request $request) {
+    // التحقق من وجود الملف
+    if (!$request->hasFile('file')) {
+        return response()->json([
+            'success' => false,
+            'message' => 'No file uploaded. Please upload an Excel file.',
+        ], 400);
+    }
+
+    $file = $request->file('file');
+
+    // التحقق من نوع الملف
+    $allowedExtensions = ['xlsx', 'xls', 'csv'];
+    $extension = strtolower($file->getClientOriginalExtension());
+
+    if (!in_array($extension, $allowedExtensions)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid file type. Allowed types: xlsx, xls, csv',
+        ], 400);
+    }
+
+    try {
+        $import = new \App\Imports\EmployeeImport();
+
+        \Maatwebsite\Excel\Facades\Excel::import($import, $file);
+
+        $successCount = $import->getSuccessfulImportsCount();
+        $existingCount = $import->getExistingCount();
+        $failedCount = $import->getErrorCount();
+        $totalCount = $import->getProcessedRowsCount() + $failedCount;
+
+        return response()->json([
+            'success' => true,
+            'message' => "Import completed successfully.",
+            'data' => [
+                'total_count' => $totalCount,
+                'success_count' => $successCount,
+                'existing_count' => $existingCount,
+                'failed_count' => $failedCount,
+                'has_errors' => $import->hasErrors(),
+                'errors' => $import->getImportErrors(),
+            ],
+        ]);
+    } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+        $failures = $e->failures();
+        $errorMessages = [];
+
+        foreach ($failures as $failure) {
+            $errorMessages[] = [
+                'row' => $failure->row(),
+                'attribute' => $failure->attribute(),
+                'errors' => $failure->errors(),
+            ];
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation errors during import',
+            'errors' => $errorMessages,
+        ], 422);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Import failed: ' . $e->getMessage(),
+            'trace' => config('app.debug') ? $e->getTraceAsString() : null,
+        ], 500);
+    }
+});
+
+/**
+ * تحميل ملف Excel نموذجي للموظفين
+ * GET /api/import-employees/template
+ */
+Route::get('/import-employees/template', function () {
+    $templatePath = public_path('data/sample_file_imports/Sample import file.xlsx');
+
+    if (!file_exists($templatePath)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Template file not found.',
+        ], 404);
+    }
+
+    return response()->download($templatePath, 'employee_import_template.xlsx');
 });

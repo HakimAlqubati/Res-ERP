@@ -1,7 +1,5 @@
 <?php
 
-use App\Attendance\Services\AttendanceHandler;
-use App\Http\Controllers\Api\HR\AttendancePlanController;
 use App\Http\Controllers\Api\FaceImageController;
 use App\Http\Controllers\Api\HR\AttendanceController;
 use App\Http\Controllers\Api\HR\EmployeeApplicationController;
@@ -27,26 +25,30 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
-Route::prefix('hr/payroll')
-    ->middleware('auth:api')
-    ->group(function () {
-        Route::post('simulate-salaries/by-employee-ids', [PayrollSimulationController::class, 'simulateSalariesByEmployeeIds']);
-        Route::post('/preview', [PayrollSimulationController::class, 'previewByBranchYearMonth']);
+// Route::prefix('hr/payroll')
+//     ->middleware('auth:api')
+//     ->group(function () {
+//         Route::post('simulate-salaries/by-employee-ids', [PayrollSimulationController::class, 'simulateSalariesByEmployeeIds']);
+//         Route::post('/preview', [PayrollSimulationController::class, 'previewByBranchYearMonth']);
 
-        // محاكاة الرواتب (بدون حفظ)
-        Route::post('/simulate', [RunPayrollController::class, 'simulate']);
+//         // محاكاة الرواتب (بدون حفظ)
+//         Route::post('/simulate', [RunPayrollController::class, 'simulate']);
 
-        // تشغيل وحفظ الرواتب
-        Route::post('/run', [RunPayrollController::class, 'run']);
-    });
+//         // تشغيل وحفظ الرواتب
+//         Route::post('/run', [RunPayrollController::class, 'run']);
+//     });
 
 Route::prefix('hr')
     ->group(function () {
-        Route::post('/attendance/store', [AttendanceController::class, 'store'])->middleware('auth:api');
-        Route::post('/attendance/storeInOut', [AttendanceController::class, 'storeInOut'])->middleware('auth:api');
-        Route::post('/attendance/storeBulk', [AttendanceController::class, 'storeBulk'])->middleware('auth:api');
+        // Route::post('/attendance/store', [AttendanceController::class, 'store'])->middleware('auth:api');
+        // Route::post('/attendance/storeInOut', [AttendanceController::class, 'storeInOut'])->middleware('auth:api');
+        // Route::post('/attendance/storeBulk', [AttendanceController::class, 'storeBulk'])->middleware('auth:api');
         // يمكنك إضافة المزيد لاحقًا مثل:
         // Route::get('/employee/{id}', [EmployeeController::class, 'show']);
+
+        Route::get('/employees/without-users/export', [EmployeeController::class, 'exportEmployeesWithoutUser']);
+        Route::get('/employees/without-users', [EmployeeController::class, 'employeesWithoutUser']);
+        Route::get('/employees/create-users', [EmployeeController::class, 'createUsers']);
 
         Route::get('employees/{employee}/periodsHistory', [EmployeePeriodHistoryController::class, 'getPeriodsByDateRange']);
         Route::get('/employeeAttendance', [AttendanceController::class, 'employeeAttendance']);
@@ -54,7 +56,7 @@ Route::prefix('hr')
 
         Route::get('/attendancePlan', [AttendanceController::class, 'generate']);
 
-        Route::post('/attendance/plan/execute', [AttendancePlanController::class, 'execute'])->middleware('auth:api');
+        // Route::post('/attendance/plan/execute', [AttendancePlanController::class, 'execute'])->middleware('auth:api');
         Route::post('/faceRecognition', [AttendanceController::class, 'identifyEmployeeFromImage']);
         Route::post('/identifyEmployee', [EmployeeIdentificationController::class, 'identify'])
             // ->name('employees.identify')
@@ -220,6 +222,7 @@ Route::get('/face-data', function () {
     Route::post('/faceRecognition', [AttendanceController::class, 'identifyEmployeeFromImage']);
 });
 
+Route::post('/v2/attendance/test', [AttendanceController::class, 'store'])->middleware('auth:api');
 
 
 

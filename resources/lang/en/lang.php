@@ -13,6 +13,10 @@ return [
     'users'                                       => 'Users',
     'roles'                                       => 'Roles',
     'all'                                         => 'All',
+    'my_employees'                                => 'My Employees',
+    'my_employees_only'                           => 'My Employees Only',
+    'me'                                          => 'Me',
+    'others'                                      => 'Others',
     'choose_year'                                 => 'Choose year',
     'choose_branch'                               => 'Choose branch',
     'choose_month'                                => 'Choose month',
@@ -1010,4 +1014,44 @@ return [
     'financial_category' => 'Financial Category',
     'select_to_create_financial_transaction' => 'Select to create financial transaction',
     'status_already_changed_recently' => 'This status was already changed recently. Please wait before trying again.',
+
+    // ===========================================
+    // Installment Deferral
+    // ===========================================
+    'defer_installment' => 'Defer Installment',
+    'defer' => 'Defer',
+    'select_installment' => 'Select Installment',
+    'defer_reason_placeholder' => 'Enter deferral reason (optional)',
+    'defer_installment_desc' => 'The selected installment will be skipped and a new one will be created at the end of the schedule.',
+    'installment_not_found' => 'Installment not found',
+    'installment_deferred_success' => 'Installment deferred from :old_date to :new_date successfully',
+    'advance_exceeds_salary' => 'Advance amount (:amount) exceeds employee salary (:salary)',
+
+    // ===========================================
+    // Employee Meals Request
+    // ===========================================
+    'employee_meals_request' => 'Meal advance',
+    'meal_details'           => 'Meal Details',
+    'cost'                   => 'Cost',
+    'rejected_reason'        => 'Rejected Reason',
+    'approve'                => 'Approve',
+    'reject'                 => 'Reject',
+    // Product Halal Certificate
+    // ===========================================
+    'halal_certificate' => 'Halal Certificate',
+    'shelf_life' => 'Shelf Life',
+    'shelf_life_value' => 'Value',
+    'shelf_life_unit' => 'Unit',
+    'is_halal_certified' => 'Halal Certified',
+    'halal_certificate_no' => 'Certificate No.',
+    'halal_expiry_date' => 'Certificate Expiry Date',
+    'allergen_info' => 'Allergen Information',
+    'halal_certificate_saved' => 'Halal certificate data saved successfully',
+    'week' => 'Week',
+    'year' => 'Year',
+    'is_indexed_in_aws' => 'Indexed in AWS',
+    'employee_already_indexed_warning' => 'This employee is already indexed in AWS. Do you want to re-index?',
+    'end_period_and_delete' => 'End Work Period & Delete',
+    'end_period_confirmation' => 'This will end the employee work period at the specified date and remove the current record, keeping the history. Are you sure?',
+    'deleted_successfully' => 'Deleted successfully',
 ];

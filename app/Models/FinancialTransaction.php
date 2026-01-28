@@ -2,12 +2,18 @@
 
 namespace App\Models;
 
+use App\Scopes\BranchRequiredScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class FinancialTransaction extends Model
 {
     use SoftDeletes;
+
+    // protected static function booted(): void
+    // {
+    //     static::addGlobalScope(new BranchRequiredScope);
+    // }
 
     // Constants for transaction types
     const TYPE_INCOME = 'income';
@@ -46,7 +52,7 @@ class FinancialTransaction extends Model
         'year',
     ];
 
-   
+
 
     protected $casts = [
         'amount' => 'decimal:2',

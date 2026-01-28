@@ -14,8 +14,9 @@ class EmployeeObserver
      */
     public function created(Employee $employee): void
     {
-        // فقط إذا لم يكن هناك user مرتبط
-        if (!$employee->user_id) {
+        // فقط إذا لم يكن هناك user مرتبط وكان لديه بريد إلكتروني
+        // تخطي إنشاء المستخدم إذا كان البريد الإلكتروني فارغاً (مثل حالة الاستيراد من Excel)
+        if (!$employee->user_id && !empty($employee->email)) {
 
             $existingUser = User::where('email', $employee->email)->first();
             if ($existingUser) {
@@ -64,7 +65,9 @@ class EmployeeObserver
             $user->owner_id = $managerUserId;
             // Check if 'email' or 'phone_number' changed
             // if ($employee->isDirty('email')) {
-            $user->email = $employee->email;
+            if ($employee->email) {
+                $user->email = $employee->email;
+            }
             // }
             // if ($employee->isDirty('phone_number')) {
             $user->phone_number = $employee?->phone_number;
@@ -93,7 +96,16 @@ class EmployeeObserver
         }
     }
 
-
+    /**
+     * Handle the Employee "saved" event.
+     */
+    public function saved(Employee $employee): void
+    {
+        // فهرسة الصورة في AWS Rekognition عند الإنشاء أو عند تغيير الصورة
+        if ($employee->avatar && ($employee->wasRecentlyCreated || $employee->wasChanged('avatar'))) {
+            \App\Services\S3ImageService::indexEmployeeImage($employee->id);
+        }
+    }
     /**
      * Handle the Employee "deleted" event.
      */

@@ -135,6 +135,19 @@ class EmployeeApplicationTable
             $columns[] = TextColumn::make('detail_time')
                 ->label(__('lang.time'));
         }
+
+        // أعمدة خاصة بطلب وجبات (Employee Meals Request)
+        if ($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[5]) {
+            $columns[] = TextColumn::make('mealRequest.meal_details')
+                ->label(__('lang.meal_details'))
+                ->limit(50);
+            $columns[] = TextColumn::make('mealRequest.branch.name')
+                ->label(__('lang.branch'));
+
+            $columns[] = TextColumn::make('mealRequest.cost')
+                ->label(__('lang.cost'))
+                ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state));
+        }
         return $table->defaultSort('id', 'desc')
             ->paginated([10, 25, 50, 100])
             ->striped()
@@ -282,6 +295,20 @@ class EmployeeApplicationTable
                             }
 
                             break;
+                        case EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST:
+                            $record->load(['mealRequest']);
+                            DB::beginTransaction();
+                            try {
+                                $record->delete();
+                                $record->mealRequest()->delete();
+                                showSuccessNotifiMessage('Done');
+                                DB::commit();
+                            } catch (Exception $th) {
+                                showWarningNotifiMessage($th->getMessage());
+                                throw $th;
+                                DB::rollBack();
+                            }
+                            break;
 
                         default:
                             # code...
@@ -405,6 +432,31 @@ class EmployeeApplicationTable
 
                 EmployeeApplicationResource::advancedRequestDetails()
                     ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST)),
+
+                EmployeeApplicationResource::approveMealRequest()->hidden(function ($record) {
+                    if (isstuff() || isFinanceManager()) {
+                        return true;
+                    }
+                    if (isset(Auth::user()->employee)) {
+                        if ($record->employee_id == Auth::user()->employee->id) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }),
+                EmployeeApplicationResource::rejectMealRequest()->hidden(function ($record) {
+                    if (isstuff() || isFinanceManager()) {
+                        return true;
+                    }
+                    if (isset(Auth::user()->employee)) {
+                        if ($record->employee_id == Auth::user()->employee->id) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }),
+                EmployeeApplicationResource::mealRequestDetails()
+                    ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST)),
 
             ])
             ->toolbarActions([

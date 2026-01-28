@@ -77,13 +77,19 @@ class FinancialTransactionResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return static::getEloquentQuery()->count(); // Global Scope will filter automatically
     }
+
     public static function canAccess(): bool
     {
         if (isSuperAdmin()) {
             return true;
         }
         return false;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return static::getModel()::query()->whereHas('branch');
     }
 }

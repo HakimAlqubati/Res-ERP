@@ -2,8 +2,10 @@
 
 namespace App\Services\PurchasedReports;
 
+use App\Models\Branch;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
+use App\Models\Store;
 use App\Models\UnitPrice;
 use App\Services\MultiProductsInventoryService;
 use Illuminate\Support\Facades\DB;
@@ -65,7 +67,26 @@ class PurchaseInvoiceProductSummaryReportService
             $query->where('inventory_transactions.unit_id', $filters['unit_id']);
         }
 
+        // ✅ إذا كان المخزن هو الافتراضي، استثني الفئات المخصصة لفروع أخرى لديها مخازن
+        $storeId = $filters['store_id'] ?? null;
+        if ($storeId) {
+            $store = Store::find($storeId);
+            if ($store && $store->default_store) {
+                // جلب IDs الفئات المرتبطة بفروع لديها مخازن (غير المخزن الافتراضي)
+                $excludedCategoryIds = DB::table('branch_category')
+                    ->join('branches', 'branch_category.branch_id', '=', 'branches.id')
+                    ->whereNotNull('branches.store_id')
+                    ->where('branches.store_id', '!=', $storeId)
+                    ->whereNull('branches.deleted_at')
+                    ->pluck('branch_category.category_id')
+                    ->unique()
+                    ->toArray();
 
+                if (!empty($excludedCategoryIds)) {
+                    $query->whereNotIn('products.category_id', $excludedCategoryIds);
+                }
+            }
+        }
 
 
 
@@ -188,6 +209,27 @@ class PurchaseInvoiceProductSummaryReportService
         if (isset($filters['product_id'])) {
             $query->where('it.product_id', $filters['product_id']);
         }
+
+        // ✅ إذا كان المخزن هو الافتراضي، استثني الفئات المخصصة لفروع أخرى لديها مخازن
+        $storeId = $filters['store_id'] ?? null;
+        if ($storeId) {
+            $store = Store::find($storeId);
+            if ($store && $store->default_store) {
+                $excludedCategoryIds = DB::table('branch_category')
+                    ->join('branches', 'branch_category.branch_id', '=', 'branches.id')
+                    ->whereNotNull('branches.store_id')
+                    ->where('branches.store_id', '!=', $storeId)
+                    ->whereNull('branches.deleted_at')
+                    ->pluck('branch_category.category_id')
+                    ->unique()
+                    ->toArray();
+
+                if (!empty($excludedCategoryIds)) {
+                    $query->whereNotIn('p.category_id', $excludedCategoryIds);
+                }
+            }
+        }
+
         $result = $query->groupBy(
             'it.product_id',
             'it.unit_id',
