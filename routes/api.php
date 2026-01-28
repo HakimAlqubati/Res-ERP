@@ -449,85 +449,8 @@ Route::get('/monthOptions', function () {
 // Rekognition Sync Routes
 // ========================================
 
-/**
- * إعادة فهرسة جميع الموظفين في Rekognition + DynamoDB
- * GET /api/rekognition/sync-all
- */
-Route::get('/rekognition/sync-all', function () {
-    $employees = \App\Models\Employee::whereNotNull('avatar')
-        ->where('avatar', '!=', '')
-        ->get();
-
-    $results = [
-        'total' => $employees->count(),
-        'success' => 0,
-        'failed' => 0,
-        'errors' => [],
-    ];
-
-    foreach ($employees as $employee) {
-        try {
-            $response = \App\Services\S3ImageService::indexEmployeeImage($employee->id);
-            $data = $response->getData(true);
-
-            if ($data['success'] ?? false) {
-                $results['success']++;
-            } else {
-                $results['failed']++;
-                $results['errors'][] = [
-                    'employee_id' => $employee->id,
-                    'name' => $employee->name,
-                    'message' => $data['message'] ?? 'Unknown error',
-                ];
-            }
-        } catch (\Exception $e) {
-            $results['failed']++;
-            $results['errors'][] = [
-                'employee_id' => $employee->id,
-                'name' => $employee->name,
-                'message' => $e->getMessage(),
-            ];
-        }
-    }
-
-    return response()->json([
-        'success' => true,
-        'message' => "Sync completed: {$results['success']} succeeded, {$results['failed']} failed",
-        'results' => $results,
-    ]);
-});
-
-/**
- * إعادة فهرسة موظف واحد
- * GET /api/rekognition/sync/{employeeId}
- */
-Route::get('/rekognition/sync/{employeeId}', function ($employeeId) {
-    $employee = \App\Models\Employee::find($employeeId);
-
-    if (!$employee) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Employee not found',
-        ], 404);
-    }
-
-    if (!$employee->avatar) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Employee has no avatar',
-        ], 400);
-    }
-
-    try {
-        $response = \App\Services\S3ImageService::indexEmployeeImage($employeeId);
-        return $response;
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => $e->getMessage(),
-        ], 500);
-    }
-});
+ 
+ 
 
 /**
  * عرض حالة المزامنة - مقارنة Rekognition مع DynamoDB

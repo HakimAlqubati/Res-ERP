@@ -229,6 +229,13 @@ class EmployeeTable
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark')
                     ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
+                IconColumn::make('is_indexed_in_aws')
+                    ->label(__('lang.is_indexed_in_aws'))
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-badge')
+                    ->falseIcon('heroicon-o-x-mark')
+                    ->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true),
 
             ])->deferFilters(true)
             ->filters([
@@ -370,7 +377,6 @@ class EmployeeTable
                                     ->success()
                                     ->send();
                             } else {
-                                Log::error('Failed to index employee image.', ['employee_id' => $record->id]);
                                 Notification::make()
                                     ->title('Error')
                                     ->body($response->original['message'] ?? 'An error occurred.')

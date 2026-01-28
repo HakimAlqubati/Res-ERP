@@ -1031,4 +1031,5 @@ return [
   'halal_certificate_saved' => 'تم حفظ بيانات شهادة الحلال بنجاح',
   'week' => 'أسبوع',
   'year' => 'سنة',
+  'is_indexed_in_aws' => 'فهرست في AWS',
 ];

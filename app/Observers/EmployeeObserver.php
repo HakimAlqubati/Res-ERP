@@ -94,7 +94,16 @@ class EmployeeObserver
         }
     }
 
-
+    /**
+     * Handle the Employee "saved" event.
+     */
+    public function saved(Employee $employee): void
+    {
+        // فهرسة الصورة في AWS Rekognition عند الإنشاء أو عند تغيير الصورة
+        if ($employee->avatar && ($employee->wasRecentlyCreated || $employee->wasChanged('avatar'))) {
+            \App\Services\S3ImageService::indexEmployeeImage($employee->id);
+        }
+    }
     /**
      * Handle the Employee "deleted" event.
      */

@@ -105,7 +105,7 @@ class S3ImageService
         ]);
 
         // Log the result for verification
- 
+
         // Extract the Rekognition FaceId
         $faceId = $result['FaceRecords'][0]['Face']['FaceId'] ?? null;
 
@@ -121,9 +121,12 @@ class S3ImageService
                 'RekognitionId' => ['S' => $faceId],
                 'Name' => ['S' => $employeeName],
                 'AvatarUrl' => ['S' => "s3://emps/{$imageName}"],
-                'baseUrl' => ['S' => url('/')], 
+                'baseUrl' => ['S' => url('/')],
             ],
         ]);
+
+        // تحديث حالة الفهرسة
+        $employee->update(['is_indexed_in_aws' => true]);
 
         return response()->json([
             'success' => true,

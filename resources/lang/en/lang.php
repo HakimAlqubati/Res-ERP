@@ -1049,4 +1049,5 @@ return [
     'halal_certificate_saved' => 'Halal certificate data saved successfully',
     'week' => 'Week',
     'year' => 'Year',
+    'is_indexed_in_aws' => 'Indexed in AWS',
 ];
