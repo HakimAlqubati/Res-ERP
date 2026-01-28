@@ -956,7 +956,7 @@ Route::get('/admin/salary-slip/pdf/{payroll_id}', function (string $payroll_id) 
         'amountInWords'   => $amountInWords($net),
     ];
 
-    $pdf = \Mccarlosen\LaravelMpdf\Facades\LaravelMpdf::loadView('reports.hr.payroll.salary-slip', $data);
+    $pdf = \Mccarlosen\LaravelMpdf\Facades\LaravelMpdf::loadView('reports.hr.payroll.salary-slip-pdf', $data);
 
     // Generate filename
     $filename = 'SalarySlip-' . $payroll->employee?->employee_no . '-' . $payroll->year . '-' . $payroll->month . '.pdf';
