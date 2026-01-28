@@ -74,9 +74,9 @@ class AttendanceTest extends Page implements HasForms
                     ->label('Select Shift')
                     ->options($this->periodOptions)
                     ->visible(fn() => $this->showPeriodField)
-                    // ->required(fn() => $this->showPeriodField)
-                    // ->native(false)
-                    ,
+                // ->required(fn() => $this->showPeriodField)
+                // ->native(false)
+                ,
 
                 DateTimePicker::make('date_time')
                     ->label('Date & Time')
@@ -114,14 +114,14 @@ class AttendanceTest extends Page implements HasForms
                 return;
             }
 
-            // التعامل مع حالة اختيار الوردية
-            if ($result->shiftSelectionRequired) {
+            // Dealing with shift selection or conflict
+            if ($result->shiftSelectionRequired || ($result->shift_conflict_detected ?? false)) {
                 $this->showPeriodField = true;
 
-                // تحويل مصفوفة الورديات إلى خيارات للـ Select
+                // Transform shifts array to Select options
                 $this->periodOptions = collect($result->availableShifts ?? [])
                     ->mapWithKeys(function ($shift) {
-                        // التعامل مع المصفوفة أو الكائن
+                        // Handle array or object
                         $shift = (array) $shift;
                         $label = ($shift['name'] ?? '') . ' (' . ($shift['status'] ?? '') . ')';
                         return [$shift['period_id'] => $label];
@@ -129,8 +129,8 @@ class AttendanceTest extends Page implements HasForms
                     ->toArray();
 
                 Notification::make()
-                    ->title('Shift Selection Required')
-                    ->body($result->message ?? 'Multiple shifts found. Please select one.')
+                    ->title(($result->shift_conflict_detected ?? false) ? 'Shift Conflict / Selection Required' : 'Shift Selection Required')
+                    ->body($result->message ?? 'Multiple shifts found or conflict detected. Please select one.')
                     ->warning()
                     ->icon('heroicon-o-clock')
                     ->iconSize(IconSize::Large)
