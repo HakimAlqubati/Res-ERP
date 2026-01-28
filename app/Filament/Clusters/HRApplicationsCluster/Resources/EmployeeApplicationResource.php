@@ -245,10 +245,10 @@ class EmployeeApplicationResource extends Resource
                         ->schema([
                             DatePicker::make('request_check_date')
                                 ->default($record?->missedCheckoutRequest?->date)
-                                ->label('Date'),
+                                ->label('Date')->readOnly(),
                             TimePicker::make('request_check_time')
                                 ->default($record?->missedCheckoutRequest?->time)
-                                ->label('Time'),
+                                ->label('Time')->readOnly(),
                         ]),
                 ];
             });
