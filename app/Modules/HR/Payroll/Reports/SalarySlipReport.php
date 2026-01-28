@@ -70,6 +70,9 @@ class SalarySlipReport
             $payroll->month
         );
 
-        return $pdf->download($filename);
+        // Use streamDownload for Livewire compatibility
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->output();
+        }, $filename);
     }
 }
