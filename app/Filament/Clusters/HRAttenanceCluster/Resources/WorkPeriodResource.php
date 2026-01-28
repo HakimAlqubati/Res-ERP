@@ -288,11 +288,6 @@ class WorkPeriodResource extends Resource
                     ->schema([
                         FileUpload::make('file')
                             ->label('Select Excel file'),
-                    ])->extraModalFooterActions([
-                        Action::make('downloadexcel')->label(__('Download Example File'))
-                            ->icon('heroicon-o-arrow-down-on-square-stack')
-                            ->url(asset('storage/sample_file_imports/Sample import shifts.xlsx')) // URL to the existing file
-                            ->openUrlInNewTab()
                     ])
                     ->color('success')
                     ->action(function ($data) {
@@ -348,11 +343,7 @@ class WorkPeriodResource extends Resource
         return false;
     }
 
-    public static function calculateDayAndNight($startAt, $endAt): bool
-    {
-        // Logic to set default based on time fields
-        return $startAt > $endAt;
-    }
+
 
     public static function getEloquentQuery(): Builder
     {

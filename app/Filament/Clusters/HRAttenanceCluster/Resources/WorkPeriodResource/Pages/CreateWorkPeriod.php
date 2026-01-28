@@ -15,7 +15,7 @@ class CreateWorkPeriod extends CreateRecord
         $data['days'] = json_encode(['sun']);
         $data['created_by'] = auth()->user()->id;
         $data['updated_by'] = auth()->user()->id;
-        $data['day_and_night'] = WorkPeriodResource::calculateDayAndNight($data['start_at'], $data['end_at']);
+        $data['day_and_night'] = WorkPeriod::calculateDayAndNight($data['start_at'], $data['end_at']);
         return $data;
     }
 

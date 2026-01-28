@@ -119,6 +119,10 @@ class WorkPeriod extends Model implements Auditable
 
     protected static function booted()
     {
+        static::creating(function ($workPeriod) {
+            $workPeriod->days = json_encode(['sun']);
+        });
+
         // Branch scope logic moved to ApplyBranchScopes middleware
         // to avoid relationship issues during model boot cycle.
         // See: app/Http/Middleware/ApplyBranchScopes.php
@@ -136,5 +140,11 @@ class WorkPeriod extends Model implements Auditable
             'id',                   // Local key on WorkPeriod
             'id'                    // Local key on EmployeePeriod
         );
+    }
+
+    public static function calculateDayAndNight($startAt, $endAt): bool
+    {
+        // Logic to set default based on time fields
+        return $startAt > $endAt;
     }
 }
