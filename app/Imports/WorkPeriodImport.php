@@ -57,6 +57,7 @@ class WorkPeriodImport implements ToModel, WithHeadingRow, WithValidation, Skips
 
             $this->successfulImportsCount++;
             return new WorkPeriod([
+                'id' => $row['shift_id'] ?? null,
                 'name' => $row['shift_name'],
                 'description' => null, // Not in excel
                 'start_at' => $startAt,
@@ -76,10 +77,12 @@ class WorkPeriodImport implements ToModel, WithHeadingRow, WithValidation, Skips
     // Shift Name -> shift_name
     // Start Time -> start_time
     // End Time -> end_time
+    // Shift ID -> shift_id
 
     public function headings(): array
     {
         return [
+            'Shift ID',
             'Branch',
             'Shift Name',
             'Start Time',

@@ -27,6 +27,7 @@ use App\Filament\Clusters\HRAttenanceCluster\Resources\WorkPeriodResource\Pages;
 use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\WorkPeriod;
+use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Forms;
 use Illuminate\Database\Eloquent\Collection;
 use Filament\Forms\Components\FileUpload;
@@ -279,6 +280,7 @@ class WorkPeriodResource extends Resource
                         // ->action(fn(Collection $records) => $records->each->delete())
                         ->deselectRecordsAfterCompletion(),
                     RestoreBulkAction::make(),
+                    ForceDeleteBulkAction::make()->visible(fn() => isSuperAdmin())
                 ]),
             ])
             ->headerActions([

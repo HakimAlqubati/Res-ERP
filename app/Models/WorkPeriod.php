@@ -120,7 +120,9 @@ class WorkPeriod extends Model implements Auditable
     protected static function booted()
     {
         static::creating(function ($workPeriod) {
-            $workPeriod->days = json_encode(['sun']);
+            if (empty($workPeriod->days)) {
+                $workPeriod->days = json_encode(['sat', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri']);
+            }
         });
 
         // Branch scope logic moved to ApplyBranchScopes middleware
