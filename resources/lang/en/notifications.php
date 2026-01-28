@@ -8,7 +8,7 @@ return [
     'second'                                                                          => 'second',
     'attendance_time_is_greater_than_current_period_end_time'                         => 'Attendance time is greater than current period end time',
     'no_valid_period_found_for_the_specified_time'                                    => 'No valid period found for the specified time.',
-    'you_dont_have_periods_today'                                                     => 'You don t have periods today.',
+
     'sorry_no_working_hours_have_been_added_to_you_please_contact_the_administration' => 'Sorry, no working hours have been added to you, please contact the administration!',
     'there_is_no_employee_at_this_number'                                             => 'There is no employee at this number',
     'notify'                                                                          => 'Notify',
@@ -30,7 +30,7 @@ return [
     'check_in_success'  => 'Checked in successfully.',
     'check_out_success' => 'Checked out successfully.',
 
-    'you_dont_have_periods_today' => 'You do not have any work shifts scheduled for today.',
+    'you_dont_have_periods_today' => 'Please ensure your shift time has started, or you have no scheduled shift.',
 
     // Cannot auto-checkin near shift end
     'cannot_auto_checkin_near_shift_end' => 'Cannot auto-checkin near shift end without prior records. Please manually select the operation type (checkin/checkout).',

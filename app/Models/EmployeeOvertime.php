@@ -65,7 +65,7 @@ class EmployeeOvertime extends Model implements Auditable
     {
         return [
             EmployeeOvertime::TYPE_BASED_ON_DAY => 'Hourly',
-            EmployeeOvertime::TYPE_BASED_ON_MONTH => 'Daily',
+            // EmployeeOvertime::TYPE_BASED_ON_MONTH => 'Daily',
         ];
     }
     // Relationships
