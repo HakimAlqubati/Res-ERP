@@ -204,8 +204,7 @@ class PeriodRelationManager extends RelationManager
                             }
                             Log::alert('Error adding new periods: ' . $e->getMessage());
                         }
-                    })
-                    ,
+                    }),
             ])
             ->recordActions([
                 // Tables\Actions\EditAction::make(),
@@ -234,6 +233,15 @@ class PeriodRelationManager extends RelationManager
                             DB::transaction(function () use ($record, $data) {
                                 $period = EmployeePeriod::find($record->pivot_id);
 
+                                $lastAttendance = $this->ownerRecord->attendances()->latest('id')->first();
+                                if ($lastAttendance && $lastAttendance->check_type === Attendance::CHECKTYPE_CHECKIN) {
+                                    Notification::make()
+                                        ->title('Validation Error')
+                                        ->body('The employee has a pending check-out. You cannot add new work periods until the check-out is recorded.')
+                                        ->warning()
+                                        ->send();
+                                    return;
+                                }
                                 if ($period) {
                                     // حذف كل الأيام المرتبطة بهذه الفترة فقط
                                     $period->days()->delete();
