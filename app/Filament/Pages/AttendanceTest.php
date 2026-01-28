@@ -114,8 +114,8 @@ class AttendanceTest extends Page implements HasForms
                 return;
             }
 
-            // Dealing with shift selection or conflict
-            if ($result->shiftSelectionRequired || ($result->shift_conflict_detected ?? false)) {
+             // Dealing with shift selection or conflict
+            if ($result->shiftSelectionRequired || ($result->shiftConflictDetected ?? false)) {
                 $this->showPeriodField = true;
 
                 // Transform shifts array to Select options
@@ -129,7 +129,7 @@ class AttendanceTest extends Page implements HasForms
                     ->toArray();
 
                 Notification::make()
-                    ->title(($result->shift_conflict_detected ?? false) ? 'Shift Conflict / Selection Required' : 'Shift Selection Required')
+                    ->title(($result->shiftConflictDetected ?? false) ? 'Shift Conflict / Selection Required' : 'Shift Selection Required')
                     ->body($result->message ?? 'Multiple shifts found or conflict detected. Please select one.')
                     ->warning()
                     ->icon('heroicon-o-clock')
