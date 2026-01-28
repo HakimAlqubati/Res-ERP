@@ -306,55 +306,53 @@ class PeriodRelationManager extends RelationManager
                 // Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
                 $this->assignDaysAction(),
-                Action::make('Delete')->requiresConfirmation()
+                Action::make('Delete')
+                    ->label(__('lang.delete'))
+                    ->requiresConfirmation()
+                    ->modalHeading(__('lang.end_period_and_delete'))
+                    ->modalDescription(__('lang.end_period_confirmation'))
+                    ->form(function ($record) {
+                        $period = EmployeePeriod::find($record->pivot_id);
+                        return [
+                            DatePicker::make('end_date')
+                                ->label(__('lang.end_date'))
+                                ->default($period?->end_date ?? now())
+                                ->required(),
+                        ];
+                    })
                     ->color('warning')
                     ->button()
                     ->databaseTransaction()
                     ->icon('heroicon-o-x-mark')
-                    ->action(function ($record) {
-
+                    ->action(function ($record, array $data) {
                         try {
-
-                            DB::transaction(function () use ($record) {
+                            DB::transaction(function () use ($record, $data) {
                                 $period = EmployeePeriod::find($record->pivot_id);
 
                                 if ($period) {
-
-                                    // // 1. البحث عن أي حضور أو انصراف مرتبط بهذه الفترة
-                                    // $attendanceExists = \App\Models\Attendance::where('employee_id', $record->employee_id)
-                                    //     ->where('period_id', $record->period_id)
-                                    //     ->whereDate('check_date', '>=', $period->start_date)
-                                    //     ->when($period->end_date, fn($q) => $q->whereDate('check_date', '<=', $period->end_date))
-                                    //     ->exists();
-
-                                    // if ($attendanceExists) {
-                                    // showWarningNotifiMessage('Warning', 'Cannot delete this period because there are attendance records linked to it.');
-                                    // return;
-                                    // throw new \Exception('Cannot delete this period because there are attendance records linked to it.');
-                                    // }
-
                                     // حذف كل الأيام المرتبطة بهذه الفترة فقط
                                     $period->days()->delete();
-                                    // حذف الهستوري بنفس نطاق التواريخ
+
+                                    // تحديث الهستوري بنفس نطاق التواريخ بدلاً من الحذف
                                     $periodStart = $period->start_date;
-                                    $periodEnd   = $period->end_date;
+                                    // $periodEnd   = $period->end_date; // We rely on start_date match mostly
+
+                                    // Update history end_date
                                     \App\Models\EmployeePeriodHistory::where('employee_id', $record->employee_id)
                                         ->where('period_id', $record->period_id)
                                         ->where('start_date', $periodStart)
-                                        ->when($periodEnd, fn($q) => $q->where('end_date', $periodEnd), fn($q) => $q->whereNull('end_date'))
-                                        ->delete();
+                                        // ->when($periodEnd, fn($q) => $q->where('end_date', $periodEnd), fn($q) => $q->whereNull('end_date'))
+                                        ->update(['end_date' => $data['end_date']]);
+
+                                    // Delete the active period record
+                                    $period->delete();
                                 }
 
-                                $period->delete();
-                                // Optionally, send a success notification
-                                Notification::make()->title('Deleted')->success()->send();
+                                Notification::make()->title(__('lang.deleted_successfully'))->success()->send();
                             });
                         } catch (Exception $e) {
-                            // Handle the exception
                             Notification::make()->title('Error')->icon('heroicon-o-x-circle')
                                 ->body($e->getMessage())->danger()->persistent()->send();
-                            // You can also log the error if needed
-                            // Log::error($e);
                         }
                     }),
             ])

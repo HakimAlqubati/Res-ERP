@@ -1033,4 +1033,7 @@ return [
   'year' => 'سنة',
   'is_indexed_in_aws' => 'فهرست في AWS',
   'employee_already_indexed_warning' => 'هذا الموظف مفهرس بالفعل في AWS. هل تريد إعادة الفهرسة؟',
+  'end_period_and_delete' => 'إنهاء فترة العمل وحذفها',
+  'end_period_confirmation' => 'سيتم إنهاء فترة العمل للموظف بتاريخ المحدد وحذف السجل الحالي، مع الاحتفاظ بالسجل التاريخي. هل أنت متأكد؟',
+  'deleted_successfully' => 'تم الحذف بنجاح',
 ];

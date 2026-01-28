@@ -1051,4 +1051,7 @@ return [
     'year' => 'Year',
     'is_indexed_in_aws' => 'Indexed in AWS',
     'employee_already_indexed_warning' => 'This employee is already indexed in AWS. Do you want to re-index?',
+    'end_period_and_delete' => 'End Work Period & Delete',
+    'end_period_confirmation' => 'This will end the employee work period at the specified date and remove the current record, keeping the history. Are you sure?',
+    'deleted_successfully' => 'Deleted successfully',
 ];
