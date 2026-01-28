@@ -119,7 +119,8 @@ class AttendanceTest extends Page implements HasForms
                 $this->showPeriodField = true;
 
                 // Transform shifts array to Select options
-                $this->periodOptions = collect($result->availableShifts ?? [])
+                $periods = $result->conflictOptions ?? $result->availableShifts;
+                $this->periodOptions = collect($periods ?? [])
                     ->mapWithKeys(function ($shift) {
                         // Handle array or object
                         $shift = (array) $shift;
