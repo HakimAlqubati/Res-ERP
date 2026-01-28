@@ -100,9 +100,9 @@ class PayrollsRelationManager extends RelationManager
                     ->button()
                     ->color('danger')
                     ->icon('heroicon-o-arrow-down-tray')
-                    ->url(fn(Payroll $record) => route('salarySlip.pdf', [
-                        'payroll_id' => $record->id,
-                    ])),
+                    ->action(function (Payroll $record) {
+                        return app(\App\Modules\HR\Payroll\Reports\SalarySlipReport::class)->generate($record->id);
+                    }),
 
                 Action::make('exportTransactions')->button()
                     ->label('Print Transactions')

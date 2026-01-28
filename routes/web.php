@@ -909,61 +909,6 @@ Route::get('/admin/salary-slip/print/{payroll_id}', function (string $payroll_id
     ]);
 })->name('salarySlip.print')->middleware('auth:web');
 
-Route::get('/admin/salary-slip/pdf/{payroll_id}', function (string $payroll_id) {
-    /** @var \App\Models\Payroll $payroll */
-    $payroll = \App\Models\Payroll::with([
-        'employee',            // تأكد أن العلاقة موجودة
-        'employee.department', // إن وُجدت
-        'employee.position',   // إن وُجدت
-        'transactions',
-    ])->findOrFail($payroll_id);
-
-    // ترتيب الحركات حسب التاريخ
-    $transactions = $payroll->transactions()->orderBy('date')->get();
-    // تقسيم الحركات
-    $earnings = $transactions->filter(fn($t) => $t->operation === '+');
-    $deductions = $transactions->filter(fn($t) => $t->operation === '-');
-
-    // مساهمات صاحب العمل (لا تؤثر في صافي راتب الموظف، تُعرض فقط)
-    $employerContrib = $transactions->filter(function ($t) {
-        return true;
-    });
-
-    // المجاميع
-    $gross = $earnings->sum('amount');                 // إجمالي الاستحقاقات
-    $totalDeductions = $deductions->sum('amount');     // إجمالي الاستقطاعات
-    $net = max($gross - $totalDeductions, 0);          // الصافي لا ينزل عن الصفر
-    $totalEmployer = $employerContrib->sum('amount');  // مجموع مساهمة جهة العمل (للإظهار فقط)
-
-    // دالة مساعدة اختيارية لتحويل أرقام لكلمة
-    $amountInWords = function (float $value) {
-        if (function_exists('number_to_words')) {
-            return 'sdf';
-        }
-        return '';
-    };
-
-    $data = [
-        'payroll'         => $payroll,
-        'transactions'    => $transactions,
-        'earnings'        => $earnings,
-        'deductions'      => $deductions,
-        'employerContrib' => $employerContrib,
-        'gross'           => $gross,
-        'totalDeductions' => $totalDeductions,
-        'net'             => $net,
-        'totalEmployer'   => $totalEmployer,
-        'amountInWords'   => $amountInWords($net),
-    ];
-
-    $pdf = \Mccarlosen\LaravelMpdf\Facades\LaravelMpdf::loadView('reports.hr.payroll.salary-slip-pdf', $data);
-
-    // Generate filename
-    $filename = 'SalarySlip-' . $payroll->employee?->employee_no . '-' . $payroll->year . '-' . $payroll->month . '.pdf';
-
-    return $pdf->download($filename);
-})->name('salarySlip.pdf')->middleware('auth:web');
-
 Route::get('/test-pusher', function () {
     return view('test-pusher');
 });
