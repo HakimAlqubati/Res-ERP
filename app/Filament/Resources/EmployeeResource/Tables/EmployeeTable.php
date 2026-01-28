@@ -366,6 +366,10 @@ class EmployeeTable
                         // ->button()
                         ->icon('heroicon-o-user-plus')
                         ->color('success')
+                        ->requiresConfirmation(fn(Employee $record) => (bool) $record->is_indexed_in_aws)
+                        ->modalHeading(__('lang.warning'))
+                        ->modalDescription(__('lang.employee_already_indexed_warning'))
+                        ->modalSubmitActionLabel(__('lang.yes'))
                         // ->visible(fn($record): bool => $record->avatar && Storage::disk('s3')->exists($record->avatar))
                         ->action(function ($record) {
                             $response = S3ImageService::indexEmployeeImage($record->id);

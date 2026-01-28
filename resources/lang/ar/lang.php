@@ -1032,4 +1032,5 @@ return [
   'week' => 'أسبوع',
   'year' => 'سنة',
   'is_indexed_in_aws' => 'فهرست في AWS',
+  'employee_already_indexed_warning' => 'هذا الموظف مفهرس بالفعل في AWS. هل تريد إعادة الفهرسة؟',
 ];

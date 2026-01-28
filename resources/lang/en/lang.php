@@ -1050,4 +1050,5 @@ return [
     'week' => 'Week',
     'year' => 'Year',
     'is_indexed_in_aws' => 'Indexed in AWS',
+    'employee_already_indexed_warning' => 'This employee is already indexed in AWS. Do you want to re-index?',
 ];
