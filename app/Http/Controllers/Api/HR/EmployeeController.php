@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\HR;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use App\Models\Employee;
 use App\Services\EmployeeService;
 
@@ -131,5 +132,26 @@ class EmployeeController extends Controller
     public function employeesWithoutUser(EmployeeService $employeeService)
     {
         return response()->json($employeeService->getEmployeesWithoutUser());
+    }
+
+    public function createUsers(Request $request, EmployeeService $employeeService)
+    {
+        $request->validate([
+            'employees' => 'required|array',
+            'employees.*.id' => 'required|exists:hr_employees,id',
+            'employees.*.email' => 'nullable|email',
+            'employees.*.name' => 'nullable|string',
+            'employees.*.password' => 'nullable|string',
+        ]);
+
+        $result = $employeeService->createUsersForEmployees($request->all());
+
+        return response()->json($result);
+    }
+
+    public function exportEmployeesWithoutUser(EmployeeService $employeeService)
+    {
+        $employees = $employeeService->getEmployeesWithoutUser();
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\EmployeesWithoutUserExport($employees), 'employees_without_users.xlsx');
     }
 }

@@ -46,7 +46,9 @@ Route::prefix('hr')
         // يمكنك إضافة المزيد لاحقًا مثل:
         // Route::get('/employee/{id}', [EmployeeController::class, 'show']);
 
+        Route::get('/employees/without-users/export', [EmployeeController::class, 'exportEmployeesWithoutUser']);
         Route::get('/employees/without-users', [EmployeeController::class, 'employeesWithoutUser']);
+        Route::post('/employees/create-users', [EmployeeController::class, 'createUsers']);
 
         Route::get('employees/{employee}/periodsHistory', [EmployeePeriodHistoryController::class, 'getPeriodsByDateRange']);
         Route::get('/employeeAttendance', [AttendanceController::class, 'employeeAttendance']);

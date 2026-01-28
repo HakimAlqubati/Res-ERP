@@ -57,4 +57,51 @@ class EmployeeService
                 return $employee;
             });
     }
+
+    public function createUsersForEmployees(array $data)
+    {
+        $createdUsers = [];
+        $errors = [];
+
+        foreach ($data['employees'] as $employeeData) {
+            $employee = Employee::find($employeeData['id']);
+
+            if (!$employee) {
+                $errors[] = [
+                    'id' => $employeeData['id'],
+                    'message' => 'Employee not found',
+                ];
+                continue;
+            }
+
+            if ($employee->user_id) {
+                $errors[] = [
+                    'id' => $employeeData['id'],
+                    'message' => 'Employee already has a user',
+                ];
+                continue;
+            }
+
+            try {
+                // Pass the specific data for this employee to the trait method
+                // The trait method expects an array with keys like 'name', 'email', 'password'
+                $user = $employee->createLinkedUser($employeeData);
+                $createdUsers[] = [
+                    'employee_id' => $employee->id,
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                ];
+            } catch (\Exception $e) {
+                $errors[] = [
+                    'id' => $employee->id,
+                    'message' => $e->getMessage(),
+                ];
+            }
+        }
+
+        return [
+            'created' => $createdUsers,
+            'errors' => $errors,
+        ];
+    }
 }
