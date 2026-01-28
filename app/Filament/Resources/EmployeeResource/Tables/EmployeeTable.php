@@ -229,6 +229,13 @@ class EmployeeTable
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark')
                     ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
+                IconColumn::make('is_indexed_in_aws')
+                    ->label(__('lang.is_indexed_in_aws'))
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-badge')
+                    ->falseIcon('heroicon-o-x-mark')
+                    ->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true),
 
             ])->deferFilters(true)
             ->filters([
@@ -359,6 +366,10 @@ class EmployeeTable
                         // ->button()
                         ->icon('heroicon-o-user-plus')
                         ->color('success')
+                        ->requiresConfirmation(fn(Employee $record) => (bool) $record->is_indexed_in_aws)
+                        ->modalHeading(__('lang.warning'))
+                        ->modalDescription(__('lang.employee_already_indexed_warning'))
+                        ->modalSubmitActionLabel(__('lang.yes'))
                         // ->visible(fn($record): bool => $record->avatar && Storage::disk('s3')->exists($record->avatar))
                         ->action(function ($record) {
                             $response = S3ImageService::indexEmployeeImage($record->id);
@@ -370,7 +381,6 @@ class EmployeeTable
                                     ->success()
                                     ->send();
                             } else {
-                                Log::error('Failed to index employee image.', ['employee_id' => $record->id]);
                                 Notification::make()
                                     ->title('Error')
                                     ->body($response->original['message'] ?? 'An error occurred.')
