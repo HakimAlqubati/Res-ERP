@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\Pages;
 use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Support\Icons\Heroicon;
 
 class ViewPayroll extends ViewRecord
 {
@@ -13,8 +14,9 @@ class ViewPayroll extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make(),
+            // Actions\EditAction::make(),
             Actions\DeleteAction::make(),
+
         ];
     }
 }

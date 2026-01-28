@@ -98,7 +98,7 @@ class PayrollResource extends Resource
             'index' => Pages\ListPayrolls::route('/'),
             'create' => Pages\CreatePayroll::route('/create'),
             'view' => Pages\ViewPayroll::route('/{record}'),
-            'edit' => Pages\EditPayroll::route('/{record}/edit'),
+            // 'edit' => Pages\EditPayroll::route('/{record}/edit'),
         ];
     }
 
@@ -108,7 +108,7 @@ class PayrollResource extends Resource
             Pages\ListPayrolls::class,
             Pages\CreatePayroll::class,
             Pages\ViewPayroll::class,
-            Pages\EditPayroll::class,
+            // Pages\EditPayroll::class,
         ]);
     }
 
