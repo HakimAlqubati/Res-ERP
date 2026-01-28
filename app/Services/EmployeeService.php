@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Services;
 
@@ -32,5 +32,29 @@ class EmployeeService
         }
 
         return true;
+    }
+
+    public function getEmployeesWithoutUser()
+    {
+        return Employee::whereNull('user_id')
+            ->select('id', 'name', 'employee_no', 'job_title', 'branch_id', 'email')
+            ->active()
+            ->get()
+            ->map(function ($employee) {
+                if (empty($employee->email)) {
+                    $parts = array_values(array_filter(explode(' ', $employee->name)));
+                    $firstName = $parts[0] ?? '';
+                    $secondName = $parts[1] ?? '';
+
+                    $generatedEmail = $firstName;
+                    if ($secondName) {
+                        $generatedEmail .= '.' . $secondName;
+                    }
+                    $generatedEmail .= '@gmail.com';
+
+                    $employee->email = strtolower($generatedEmail);
+                }
+                return $employee;
+            });
     }
 }

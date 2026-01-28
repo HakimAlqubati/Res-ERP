@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\HR;
 
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
+use App\Services\EmployeeService;
 
 class EmployeeController extends Controller
 {
@@ -125,5 +126,10 @@ class EmployeeController extends Controller
         $result['data'] = $data;
 
         return response()->json($result);
+    }
+
+    public function employeesWithoutUser(EmployeeService $employeeService)
+    {
+        return response()->json($employeeService->getEmployeesWithoutUser());
     }
 }
