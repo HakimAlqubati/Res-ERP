@@ -151,6 +151,25 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
                 // حفظ اسم المدير للمراجعة في المرحلة الثانية
                 $this->managerMappings[$row['name']] = $row['manager'] ?? null;
 
+                // Handle Work Shift Assignment
+                if (!empty($row['work_shift_1'])) {
+                    try {
+                        $service = new \App\Services\HR\EmployeeWorkPeriodService();
+                        $service->assignPeriodsToEmployee($employee, [
+                            'periods' => [$row['work_shift_1']], // Work Period ID
+                            'start_date' => '2026-01-01',
+                            'end_date' => null,
+                            'period_days' => ['sat', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri'], // All days
+                        ]);
+                    } catch (Exception $e) {
+                        // Log error but allow employee creation to succeed? 
+                        // Or throw to log properly via existing catch block?
+                        // Existing catch block logs 'EXCEPTION' error type.
+                        // Let's throw it so it gets logged with the row details.
+                        throw new Exception("Failed to assign shift ID {$row['work_shift_1']}: " . $e->getMessage());
+                    }
+                }
+
                 return $employee;
             });
         } catch (Exception $e) {
@@ -352,6 +371,7 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
             'working_hours',
             'roletype',
             'manager',
+            'Work Shift 1',
         ];
     }
 

@@ -181,109 +181,14 @@ class PeriodRelationManager extends RelationManager
                     ->button()
                     ->databaseTransaction()
                     ->action(function ($data) {
-                        DB::beginTransaction();
-                        $employee = $this->ownerRecord;
                         try {
-
-                            $selectedPeriodsWithDates = [];
-                            foreach ($data['periods'] as $periodId) {
-                                $selectedPeriodsWithDates[] = [
-                                    'period_id'  => $periodId,
-                                    'start_date' => $data['start_date'],
-                                    'end_date'   => $data['end_date'] ?? null,
-                                ];
-                            }
-
-                            if ($this->isInternalPeriodsOverlappingWithDates($selectedPeriodsWithDates)) {
-                                Notification::make()
-                                    ->title('Overlapping Error')
-                                    ->body('There are overlapping shifts with overlapping periods and times. Please check your selection.')
-                                    ->danger()
-                                    ->send();
-                                return;
-                            }
-
-                            // Retrieve the existing periods associated with the owner record
-                            // $existPeriods = array_map('intval', $this->ownerRecord?->periods?->pluck('id')->toArray());
-                            $dataPeriods = array_map('intval', $data['periods']);
-
-                            // Find the periods that are not currently associated
-                            // $result = array_values(array_diff($dataPeriods, $existPeriods));
-
-                            // Validate the employee's last attendance
-                            $lastAttendance = $this->ownerRecord->attendances()->latest('id')->first();
-                            if ($lastAttendance && $lastAttendance->check_type === Attendance::CHECKTYPE_CHECKIN) {
-                                // Notification::make()
-                                //     ->title('Validation Error')
-                                //     ->body('The employee has a pending check-out. You cannot add new work periods until the check-out is recorded.')
-                                //     ->warning()
-                                //     ->send();
-                                // return;
-                            }
-
-                            // Insert new periods into hr_employee_periods table
-                            foreach ($dataPeriods as $value) {
-                                $workPeriod    = WorkPeriod::find($value);
-                                $periodStartAt = $workPeriod?->start_at;
-                                $periodEndAt   = $workPeriod?->end_at;
-
-                                // أيام الفترة المراد إدخالها
-                                $periodDays = $data['period_days'] ?? [];
-
-                                if ($this->isOverlappingDays_(
-                                    $this->ownerRecord->id,
-                                    $periodDays,
-                                    $periodStartAt,
-                                    $periodEndAt,
-                                    $data['start_date'],
-                                    $data['end_date'] ?? null,
-                                )) {
-                                    Notification::make()
-                                        ->title('Overlapping Error')
-                                        ->body('❌ Cannot add this Work Period as it overlaps with an existing period.')
-                                        ->danger()
-                                        ->send();
-
-                                    return;
-
-                                    // throw new \Exception('Overlapping periods are not allowed.');
-
-                                    // Notification::make()->title('Error')->body('Overlapping periods are not allowed.')->warning()->send();
-                                    // return;
-                                }
-
-                                $employeePeriod              = new EmployeePeriod();
-                                $employeePeriod->employee_id = $this->ownerRecord->id;
-                                $employeePeriod->period_id   = $value;
-                                $employeePeriod->start_date  = $data['start_date'];
-                                $employeePeriod->end_date    = $data['end_date'] ?? null;
-                                $employeePeriod->save();
-
-                                foreach ($data['period_days'] as $dayOfWeek) {
-
-                                    $employeePeriod->days()->create([
-                                        'day_of_week' => $dayOfWeek,
-
-                                    ]);
-
-                                    EmployeePeriodHistory::create([
-                                        'employee_id' => $this->ownerRecord->id,
-                                        'period_id'   => $value,
-                                        'start_date'  => $data['start_date'],
-                                        'end_date'    => $data['end_date'] ?? null,
-                                        'start_time'  => $periodStartAt,
-                                        'end_time'    => $periodEndAt,
-                                        'day_of_week' => $dayOfWeek,
-                                    ]);
-                                }
-                            }
+                            $service = new \App\Services\HR\EmployeeWorkPeriodService();
+                            $service->assignPeriodsToEmployee($this->ownerRecord, $data);
 
                             // Send notification after the operation is complete
                             Notification::make()->title('Done')->success()->send();
-                            DB::commit();
                         } catch (Exception $e) {
                             // Handle the exception
-                            DB::rollBack();
                             if ($e->getCode() == 23000) { // Integrity constraint violation
                                 Notification::make()
                                     ->title('Duplicate Shift Assignment')
@@ -292,15 +197,15 @@ class PeriodRelationManager extends RelationManager
                                     ->send();
                             } else {
                                 Notification::make()
-                                    ->title('Error')
+                                    ->title($e->getMessage() === 'Overlapping periods are not allowed.' ? 'Overlapping Error' : 'Error')
                                     ->body($e->getMessage())
-                                    ->warning()
+                                    ->danger() // Use danger for easier visibility of errors like overlap
                                     ->send();
                             }
                             Log::alert('Error adding new periods: ' . $e->getMessage());
-                            // You can also log the error or take other actions as needed
                         }
-                    }),
+                    })
+                    ,
             ])
             ->recordActions([
                 // Tables\Actions\EditAction::make(),
