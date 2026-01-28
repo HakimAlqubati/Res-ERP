@@ -72,7 +72,7 @@ class AttendanceValidator
     {
         return [
             // القاعدة 0: منع التسجيل في نفس الدقيقة
-            new DuplicateTimestampRule(),
+            // new DuplicateTimestampRule(),
 
             // القاعدة 1: التحقق من اكتمال الشيفت
             new ShiftCompletionRule($this->shiftResolver),
