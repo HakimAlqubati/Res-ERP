@@ -43,6 +43,7 @@ use App\Services\S3ImageService;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
@@ -502,6 +503,7 @@ class EmployeeTable
 
                         showSuccessNotifiMessage('Selected employees activated.');
                     }),
+                ForceDeleteBulkAction::make()->visible(fn() => isSuperAdmin()),
             ]);
     }
 }
