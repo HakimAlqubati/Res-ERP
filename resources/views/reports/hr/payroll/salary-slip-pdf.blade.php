@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 
 <head>
     <meta charset="UTF-8" />
@@ -113,13 +113,13 @@
 
         /* RTL adjustments if needed, but 'text-align: left' in RTL means left. Usually for numbers we want left (LTR) or right (RTL). Arabic usually right. */
         table.pay th {
-            text-align: right;
+            text-align: left;
             background-color: #fafafa;
             font-weight: 700;
         }
 
         table.pay td {
-            text-align: right;
+            text-align: left;
         }
 
         .right {
