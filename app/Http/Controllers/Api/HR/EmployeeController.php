@@ -137,8 +137,8 @@ class EmployeeController extends Controller
     public function createUsers(Request $request, EmployeeService $employeeService)
     {
         $request->validate([
-            'employees' => 'required|array',
-            'employees.*.id' => 'required|exists:hr_employees,id',
+            'employees' => 'nullable|array',
+            'employees.*.id' => 'required_with:employees|exists:hr_employees,id',
             'employees.*.email' => 'nullable|email',
             'employees.*.name' => 'nullable|string',
             'employees.*.password' => 'nullable|string',

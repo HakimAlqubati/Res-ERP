@@ -65,7 +65,9 @@ class EmployeeObserver
             $user->owner_id = $managerUserId;
             // Check if 'email' or 'phone_number' changed
             // if ($employee->isDirty('email')) {
-            $user->email = $employee->email;
+            if ($employee->email) {
+                $user->email = $employee->email;
+            }
             // }
             // if ($employee->isDirty('phone_number')) {
             $user->phone_number = $employee?->phone_number;

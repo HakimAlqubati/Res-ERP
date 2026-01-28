@@ -63,7 +63,22 @@ class EmployeeService
         $createdUsers = [];
         $errors = [];
 
-        foreach ($data['employees'] as $employeeData) {
+        $employeesData = $data['employees'] ?? [];
+
+        // If no employees provided, fetch all active employees without users
+        if (empty($employeesData)) {
+            $employees = $this->getEmployeesWithoutUser();
+            $employeesData = $employees->map(function ($employee) {
+                return [
+                    'id' => $employee->id,
+                    'name' => $employee->name,
+                    'email' => $employee->email,
+                    'password' => '123456', // Default password
+                ];
+            })->toArray();
+        }
+
+        foreach ($employeesData as $employeeData) {
             $employee = Employee::find($employeeData['id']);
 
             if (!$employee) {
