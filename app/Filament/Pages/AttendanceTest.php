@@ -49,7 +49,7 @@ class AttendanceTest extends Page implements HasForms
                             ->orderBy('name')
                             ->get()
                             ->mapWithKeys(function ($employee) {
-                                return [$employee->id => $employee->name . ' - ' . $employee->rfid];
+                                return [$employee->id => $employee->name . ' - ' . $employee->id];
                             })
                             ->toArray()
                     )
