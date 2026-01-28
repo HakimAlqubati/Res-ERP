@@ -40,6 +40,14 @@ class AttendanceValidator
      */
     public function validate(Employee $employee, Carbon $requestTime, ?string $requestType = null, ?int $periodId = null): void
     {
+        $this->validateWithContext($employee, $requestTime, $requestType, $periodId);
+    }
+
+    /**
+     * التحقق من صحة طلب الحضور مع إرجاع السياق
+     */
+    public function validateWithContext(Employee $employee, Carbon $requestTime, ?string $requestType = null, ?int $periodId = null): ValidationContext
+    {
         // 1. تحضير سياق التحقق
         $context = ValidationContext::create(
             $employee,
@@ -53,6 +61,8 @@ class AttendanceValidator
         foreach ($this->rules as $rule) {
             $rule->validate($context, $requestType, $periodId);
         }
+
+        return $context;
     }
 
     /**

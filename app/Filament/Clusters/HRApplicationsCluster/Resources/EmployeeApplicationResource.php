@@ -38,6 +38,7 @@ use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\ToggleButtons;
 use App\Modules\HR\Attendance\Services\AttendanceValidator;
 use App\Modules\HR\Attendance\Exceptions\MultipleShiftsException;
+use App\Modules\HR\Attendance\Exceptions\ShiftConflictException;
 use Carbon\Carbon;
 use Filament\Forms\Components\Radio;
 use Filament\Notifications\Notification;
@@ -253,7 +254,7 @@ class EmployeeApplicationResource extends Resource
             });
     }
 
-     public static function rejectDepartureRequest(): Action
+    public static function rejectDepartureRequest(): Action
     {
         return Action::make('rejectDepartureRequest')->label('Reject')->button()
             ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST))
@@ -450,7 +451,7 @@ class EmployeeApplicationResource extends Resource
             ->color('success')
             ->icon('heroicon-o-check')
             ->action(function ($record, $data) {
- 
+
                 DB::beginTransaction();
                 try {
                     $record->update([
@@ -587,18 +588,17 @@ class EmployeeApplicationResource extends Resource
                     try {
                         $requestTime = Carbon::parse($date . ' ' . $time);
                         // Validate using Validator directly to detect shifts
-                        app(AttendanceValidator::class)->validate(
+                        app(AttendanceValidator::class)->validateWithContext(
                             $employee,
                             $requestTime,
-                            Attendance::CHECKTYPE_CHECKIN // Default assumption
+                            // Attendance::CHECKTYPE_CHECKIN // Default assumption
                         );
-
-                        // If no exception, clear shifts
-                        $set('available_shifts_data', []);
                     } catch (MultipleShiftsException $e) {
-
                         // Shifts detected!
                         $set('available_shifts_data', $e->getShiftsArray());
+                    } catch (ShiftConflictException $e) {
+                        // Shifts detected!
+                        $set('available_shifts_data', $e->getOptions());
                     } catch (Exception $e) {
                         // Other errors
                         $set('available_shifts_data', []);
@@ -608,6 +608,7 @@ class EmployeeApplicationResource extends Resource
                 return [
                     // Hidden field to persist available shifts state
                     Hidden::make('available_shifts_data')->default([]),
+
 
                     Fieldset::make()->label('Request data')->columns(2)->schema([
                         DatePicker::make('request_check_date')
