@@ -85,7 +85,7 @@ class PayrollsRelationManager extends RelationManager
                 // Tables\Actions\DeleteAction::make(),
                 // ✅ Export transactions (no route)
 
-                
+
                 Action::make('printSalarySlip')
                     ->label('Print Salary Slip')->button()
                     ->color('primary')
@@ -94,6 +94,15 @@ class PayrollsRelationManager extends RelationManager
                         'payroll_id' => $record->id,
                     ]))
                     ->openUrlInNewTab(),
+
+                Action::make('pdfSalarySlip')
+                    ->label('Export PDF')
+                    ->button()
+                    ->color('danger')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->url(fn(Payroll $record) => route('salarySlip.pdf', [
+                        'payroll_id' => $record->id,
+                    ])),
 
                 Action::make('exportTransactions')->button()
                     ->label('Print Transactions')
