@@ -159,22 +159,13 @@ class EmployeeForm
                                                         0 => __('lang.female'),
                                                     ])
                                                     ->required(),
-                                                // TextInput::make('nationality')
-                                                // ->label('Nationality')
-                                                // ->nullable(),
-
-
-                                                // TextInput::make('working_hours')
-                                                //     ->label('Working Hours per Day')
-                                                //     ->numeric()
-                                                //     ->minValue(1)
-                                                //     ->maxValue(24)
-                                                //     ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee'),
-
+                                
+ 
                                                 Select::make('nationality')
                                                     ->label(__('lang.nationality'))->live()
                                                     // ->required()
                                                     ->options(getNationalities())
+                                                    ->preload()
                                                     ->searchable(),
 
                                                 TextInput::make('mykad_number')->label(__('lang.mykad_number'))->numeric()

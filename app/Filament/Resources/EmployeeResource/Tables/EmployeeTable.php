@@ -250,7 +250,8 @@ class EmployeeTable
                 SelectFilter::make('nationality')
                     ->searchable()
                     ->multiple()
-                    ->label(__('Nationality'))
+                    ->preload()
+                    ->label(__('lang.nationality'))
                     ->options(getNationalities()),
                 SelectFilter::make('active')
 

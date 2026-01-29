@@ -13,186 +13,56 @@
         "order": 1
     },
     {
-        "code": "MY",
+        "code": "SA",
         "name": {
-            "en": "Malaysian",
-            "ar": "ماليزي"
+            "en": "Saudi",
+            "ar": "سعودي"
         },
         "country": {
-            "en": "Malaysia",
-            "ar": "ماليزيا"
+            "en": "Saudi Arabia",
+            "ar": "السعودية"
         },
         "active": true,
         "order": 2
     },
     {
-        "code": "AF",
+        "code": "AE",
         "name": {
-            "en": "Afghan",
-            "ar": "أفغاني"
+            "en": "Emirati",
+            "ar": "إماراتي"
         },
         "country": {
-            "en": "Afghanistan",
-            "ar": "أفغانستان"
+            "en": "United Arab Emirates",
+            "ar": "الإمارات"
         },
         "active": true,
         "order": 3
     },
     {
-        "code": "AL",
+        "code": "KW",
         "name": {
-            "en": "Albanian",
-            "ar": "ألباني"
+            "en": "Kuwaiti",
+            "ar": "كويتي"
         },
         "country": {
-            "en": "Albania",
-            "ar": "ألبانيا"
+            "en": "Kuwait",
+            "ar": "الكويت"
         },
         "active": true,
         "order": 4
     },
     {
-        "code": "DZ",
+        "code": "QA",
         "name": {
-            "en": "Algerian",
-            "ar": "جزائري"
+            "en": "Qatari",
+            "ar": "قطري"
         },
         "country": {
-            "en": "Algeria",
-            "ar": "الجزائر"
+            "en": "Qatar",
+            "ar": "قطر"
         },
         "active": true,
         "order": 5
-    },
-    {
-        "code": "US",
-        "name": {
-            "en": "American",
-            "ar": "أمريكي"
-        },
-        "country": {
-            "en": "United States",
-            "ar": "الولايات المتحدة الأمريكية"
-        },
-        "active": true,
-        "order": 6
-    },
-    {
-        "code": "AD",
-        "name": {
-            "en": "Andorran",
-            "ar": "أندوري"
-        },
-        "country": {
-            "en": "Andorra",
-            "ar": "أندورا"
-        },
-        "active": true,
-        "order": 7
-    },
-    {
-        "code": "AO",
-        "name": {
-            "en": "Angolan",
-            "ar": "أنغولي"
-        },
-        "country": {
-            "en": "Angola",
-            "ar": "أنغولا"
-        },
-        "active": true,
-        "order": 8
-    },
-    {
-        "code": "AG",
-        "name": {
-            "en": "Antiguan",
-            "ar": "أنتيغوي"
-        },
-        "country": {
-            "en": "Antigua and Barbuda",
-            "ar": "أنتيغوا وبربودا"
-        },
-        "active": true,
-        "order": 9
-    },
-    {
-        "code": "AR",
-        "name": {
-            "en": "Argentinian",
-            "ar": "أرجنتيني"
-        },
-        "country": {
-            "en": "Argentina",
-            "ar": "الأرجنتين"
-        },
-        "active": true,
-        "order": 10
-    },
-    {
-        "code": "AM",
-        "name": {
-            "en": "Armenian",
-            "ar": "أرميني"
-        },
-        "country": {
-            "en": "Armenia",
-            "ar": "أرمينيا"
-        },
-        "active": true,
-        "order": 11
-    },
-    {
-        "code": "AU",
-        "name": {
-            "en": "Australian",
-            "ar": "أسترالي"
-        },
-        "country": {
-            "en": "Australia",
-            "ar": "أستراليا"
-        },
-        "active": true,
-        "order": 12
-    },
-    {
-        "code": "AT",
-        "name": {
-            "en": "Austrian",
-            "ar": "نمساوي"
-        },
-        "country": {
-            "en": "Austria",
-            "ar": "النمسا"
-        },
-        "active": true,
-        "order": 13
-    },
-    {
-        "code": "AZ",
-        "name": {
-            "en": "Azerbaijani",
-            "ar": "أذربيجاني"
-        },
-        "country": {
-            "en": "Azerbaijan",
-            "ar": "أذربيجان"
-        },
-        "active": true,
-        "order": 14
-    },
-    {
-        "code": "BS",
-        "name": {
-            "en": "Bahamian",
-            "ar": "باهامي"
-        },
-        "country": {
-            "en": "Bahamas",
-            "ar": "جزر البهاما"
-        },
-        "active": true,
-        "order": 15
     },
     {
         "code": "BH",
@@ -205,202 +75,228 @@
             "ar": "البحرين"
         },
         "active": true,
+        "order": 6
+    },
+    {
+        "code": "OM",
+        "name": {
+            "en": "Omani",
+            "ar": "عماني"
+        },
+        "country": {
+            "en": "Oman",
+            "ar": "عمان"
+        },
+        "active": true,
+        "order": 7
+    },
+    {
+        "code": "EG",
+        "name": {
+            "en": "Egyptian",
+            "ar": "مصري"
+        },
+        "country": {
+            "en": "Egypt",
+            "ar": "مصر"
+        },
+        "active": true,
+        "order": 8
+    },
+    {
+        "code": "SY",
+        "name": {
+            "en": "Syrian",
+            "ar": "سوري"
+        },
+        "country": {
+            "en": "Syria",
+            "ar": "سوريا"
+        },
+        "active": true,
+        "order": 9
+    },
+    {
+        "code": "JO",
+        "name": {
+            "en": "Jordanian",
+            "ar": "أردني"
+        },
+        "country": {
+            "en": "Jordan",
+            "ar": "الأردن"
+        },
+        "active": true,
+        "order": 10
+    },
+    {
+        "code": "LB",
+        "name": {
+            "en": "Lebanese",
+            "ar": "لبناني"
+        },
+        "country": {
+            "en": "Lebanon",
+            "ar": "لبنان"
+        },
+        "active": true,
+        "order": 11
+    },
+    {
+        "code": "IQ",
+        "name": {
+            "en": "Iraqi",
+            "ar": "عراقي"
+        },
+        "country": {
+            "en": "Iraq",
+            "ar": "العراق"
+        },
+        "active": true,
+        "order": 12
+    },
+    {
+        "code": "PS",
+        "name": {
+            "en": "Palestinian",
+            "ar": "فلسطيني"
+        },
+        "country": {
+            "en": "Palestine",
+            "ar": "فلسطين"
+        },
+        "active": true,
+        "order": 13
+    },
+    {
+        "code": "SD",
+        "name": {
+            "en": "Sudanese",
+            "ar": "سوداني"
+        },
+        "country": {
+            "en": "Sudan",
+            "ar": "السودان"
+        },
+        "active": true,
+        "order": 14
+    },
+    {
+        "code": "LY",
+        "name": {
+            "en": "Libyan",
+            "ar": "ليبي"
+        },
+        "country": {
+            "en": "Libya",
+            "ar": "ليبيا"
+        },
+        "active": true,
+        "order": 15
+    },
+    {
+        "code": "TN",
+        "name": {
+            "en": "Tunisian",
+            "ar": "تونسي"
+        },
+        "country": {
+            "en": "Tunisia",
+            "ar": "تونس"
+        },
+        "active": true,
         "order": 16
     },
     {
-        "code": "BD",
+        "code": "DZ",
         "name": {
-            "en": "Bangladeshi",
-            "ar": "بنغلاديشي"
+            "en": "Algerian",
+            "ar": "جزائري"
         },
         "country": {
-            "en": "Bangladesh",
-            "ar": "بنغلاديش"
+            "en": "Algeria",
+            "ar": "الجزائر"
         },
         "active": true,
         "order": 17
     },
     {
-        "code": "BB",
+        "code": "MA",
         "name": {
-            "en": "Barbadian",
-            "ar": "بربادوسي"
+            "en": "Moroccan",
+            "ar": "مغربي"
         },
         "country": {
-            "en": "Barbados",
-            "ar": "بربادوس"
+            "en": "Morocco",
+            "ar": "المغرب"
         },
         "active": true,
         "order": 18
     },
     {
-        "code": "BY",
+        "code": "MR",
         "name": {
-            "en": "Belarusian",
-            "ar": "بيلاروسي"
+            "en": "Mauritanian",
+            "ar": "موريتاني"
         },
         "country": {
-            "en": "Belarus",
-            "ar": "بيلاروسيا"
+            "en": "Mauritania",
+            "ar": "موريتانيا"
         },
         "active": true,
         "order": 19
     },
     {
-        "code": "BE",
+        "code": "SO",
         "name": {
-            "en": "Belgian",
-            "ar": "بلجيكي"
+            "en": "Somali",
+            "ar": "صومالي"
         },
         "country": {
-            "en": "Belgium",
-            "ar": "بلجيكا"
+            "en": "Somalia",
+            "ar": "الصومال"
         },
         "active": true,
         "order": 20
     },
     {
-        "code": "BZ",
+        "code": "DJ",
         "name": {
-            "en": "Belizean",
-            "ar": "بليزي"
+            "en": "Djiboutian",
+            "ar": "جيبوتي"
         },
         "country": {
-            "en": "Belize",
-            "ar": "بليز"
+            "en": "Djibouti",
+            "ar": "جيبوتي"
         },
         "active": true,
         "order": 21
     },
     {
-        "code": "BJ",
+        "code": "KM",
         "name": {
-            "en": "Beninese",
-            "ar": "بنيني"
+            "en": "Comoran",
+            "ar": "قمري"
         },
         "country": {
-            "en": "Benin",
-            "ar": "بنين"
+            "en": "Comoros",
+            "ar": "جزر القمر"
         },
         "active": true,
         "order": 22
     },
     {
-        "code": "BT",
+        "code": "IN",
         "name": {
-            "en": "Bhutanese",
-            "ar": "بوتاني"
+            "en": "Indian",
+            "ar": "هندي"
         },
         "country": {
-            "en": "Bhutan",
-            "ar": "بوتان"
+            "en": "India",
+            "ar": "الهند"
         },
         "active": true,
         "order": 23
-    },
-    {
-        "code": "BO",
-        "name": {
-            "en": "Bolivian",
-            "ar": "بوليفي"
-        },
-        "country": {
-            "en": "Bolivia",
-            "ar": "بوليفيا"
-        },
-        "active": true,
-        "order": 24
-    },
-    {
-        "code": "BA",
-        "name": {
-            "en": "Bosnian",
-            "ar": "بوسني"
-        },
-        "country": {
-            "en": "Bosnia and Herzegovina",
-            "ar": "البوسنة والهرسك"
-        },
-        "active": true,
-        "order": 25
-    },
-    {
-        "code": "BW",
-        "name": {
-            "en": "Botswanan",
-            "ar": "بوتسواني"
-        },
-        "country": {
-            "en": "Botswana",
-            "ar": "بوتسوانا"
-        },
-        "active": true,
-        "order": 26
-    },
-    {
-        "code": "BR",
-        "name": {
-            "en": "Brazilian",
-            "ar": "برازيلي"
-        },
-        "country": {
-            "en": "Brazil",
-            "ar": "البرازيل"
-        },
-        "active": true,
-        "order": 27
-    },
-    {
-        "code": "BN",
-        "name": {
-            "en": "Bruneian",
-            "ar": "بروني"
-        },
-        "country": {
-            "en": "Brunei",
-            "ar": "بروناي"
-        },
-        "active": true,
-        "order": 28
-    },
-    {
-        "code": "BG",
-        "name": {
-            "en": "Bulgarian",
-            "ar": "بلغاري"
-        },
-        "country": {
-            "en": "Bulgaria",
-            "ar": "بلغاريا"
-        },
-        "active": true,
-        "order": 29
-    },
-    {
-        "code": "BF",
-        "name": {
-            "en": "Burkinabé",
-            "ar": "بوركيني"
-        },
-        "country": {
-            "en": "Burkina Faso",
-            "ar": "بوركينا فاسو"
-        },
-        "active": true,
-        "order": 30
-    },
-    {
-        "code": "BI",
-        "name": {
-            "en": "Burundian",
-            "ar": "بوروندي"
-        },
-        "country": {
-            "en": "Burundi",
-            "ar": "بوروندي"
-        },
-        "active": true,
-        "order": 31
     },
     {
         "code": "PK",
@@ -413,17 +309,134 @@
             "ar": "باكستان"
         },
         "active": true,
+        "order": 24
+    },
+    {
+        "code": "BD",
+        "name": {
+            "en": "Bangladeshi",
+            "ar": "بنغلاديشي"
+        },
+        "country": {
+            "en": "Bangladesh",
+            "ar": "بنغلاديش"
+        },
+        "active": true,
+        "order": 25
+    },
+    {
+        "code": "PH",
+        "name": {
+            "en": "Filipino",
+            "ar": "فلبيني"
+        },
+        "country": {
+            "en": "Philippines",
+            "ar": "الفلبين"
+        },
+        "active": true,
+        "order": 26
+    },
+    {
+        "code": "ID",
+        "name": {
+            "en": "Indonesian",
+            "ar": "إندونيسي"
+        },
+        "country": {
+            "en": "Indonesia",
+            "ar": "إندونيسيا"
+        },
+        "active": true,
+        "order": 27
+    },
+    {
+        "code": "NP",
+        "name": {
+            "en": "Nepalese",
+            "ar": "نيبالي"
+        },
+        "country": {
+            "en": "Nepal",
+            "ar": "نيبال"
+        },
+        "active": true,
+        "order": 28
+    },
+    {
+        "code": "LK",
+        "name": {
+            "en": "Sri Lankan",
+            "ar": "سريلانكي"
+        },
+        "country": {
+            "en": "Sri Lanka",
+            "ar": "سريلانكا"
+        },
+        "active": true,
+        "order": 29
+    },
+    {
+        "code": "ET",
+        "name": {
+            "en": "Ethiopian",
+            "ar": "إثيوبي"
+        },
+        "country": {
+            "en": "Ethiopia",
+            "ar": "إثيوبيا"
+        },
+        "active": true,
+        "order": 30
+    },
+    {
+        "code": "MY",
+        "name": {
+            "en": "Malaysian",
+            "ar": "ماليزي"
+        },
+        "country": {
+            "en": "Malaysia",
+            "ar": "ماليزيا"
+        },
+        "active": true,
+        "order": 31
+    },
+    {
+        "code": "TR",
+        "name": {
+            "en": "Turkish",
+            "ar": "تركي"
+        },
+        "country": {
+            "en": "Turkey",
+            "ar": "تركيا"
+        },
+        "active": true,
         "order": 32
     },
     {
-        "code": "CA",
+        "code": "AF",
         "name": {
-            "en": "Canadian",
-            "ar": "كندي"
+            "en": "Afghan",
+            "ar": "أفغاني"
         },
         "country": {
-            "en": "Canada",
-            "ar": "كندا"
+            "en": "Afghanistan",
+            "ar": "أفغانستان"
+        },
+        "active": true,
+        "order": 33
+    },
+    {
+        "code": "IR",
+        "name": {
+            "en": "Iranian",
+            "ar": "إيراني"
+        },
+        "country": {
+            "en": "Iran",
+            "ar": "إيران"
         },
         "active": true,
         "order": 34
@@ -442,173 +455,17 @@
         "order": 35
     },
     {
-        "code": "FR",
+        "code": "VN",
         "name": {
-            "en": "French",
-            "ar": "فرنسي"
+            "en": "Vietnamese",
+            "ar": "فيتنامي"
         },
         "country": {
-            "en": "France",
-            "ar": "فرنسا"
+            "en": "Vietnam",
+            "ar": "فيتنام"
         },
         "active": true,
         "order": 36
-    },
-    {
-        "code": "DE",
-        "name": {
-            "en": "German",
-            "ar": "ألماني"
-        },
-        "country": {
-            "en": "Germany",
-            "ar": "ألمانيا"
-        },
-        "active": true,
-        "order": 37
-    },
-    {
-        "code": "IN",
-        "name": {
-            "en": "Indian",
-            "ar": "هندي"
-        },
-        "country": {
-            "en": "India",
-            "ar": "الهند"
-        },
-        "active": true,
-        "order": 38
-    },
-    {
-        "code": "IT",
-        "name": {
-            "en": "Italian",
-            "ar": "إيطالي"
-        },
-        "country": {
-            "en": "Italy",
-            "ar": "إيطاليا"
-        },
-        "active": true,
-        "order": 39
-    },
-    {
-        "code": "JP",
-        "name": {
-            "en": "Japanese",
-            "ar": "ياباني"
-        },
-        "country": {
-            "en": "Japan",
-            "ar": "اليابان"
-        },
-        "active": true,
-        "order": 40
-    },
-    {
-        "code": "KR",
-        "name": {
-            "en": "South Korean",
-            "ar": "كوري جنوبي"
-        },
-        "country": {
-            "en": "South Korea",
-            "ar": "كوريا الجنوبية"
-        },
-        "active": true,
-        "order": 41
-    },
-    {
-        "code": "MX",
-        "name": {
-            "en": "Mexican",
-            "ar": "مكسيكي"
-        },
-        "country": {
-            "en": "Mexico",
-            "ar": "المكسيك"
-        },
-        "active": true,
-        "order": 42
-    },
-    {
-        "code": "NG",
-        "name": {
-            "en": "Nigerian",
-            "ar": "نيجيري"
-        },
-        "country": {
-            "en": "Nigeria",
-            "ar": "نيجيريا"
-        },
-        "active": true,
-        "order": 43
-    },
-    {
-        "code": "RU",
-        "name": {
-            "en": "Russian",
-            "ar": "روسي"
-        },
-        "country": {
-            "en": "Russia",
-            "ar": "روسيا"
-        },
-        "active": true,
-        "order": 46
-    },
-    {
-        "code": "SA",
-        "name": {
-            "en": "Saudi Arabian",
-            "ar": "سعودي"
-        },
-        "country": {
-            "en": "Saudi Arabia",
-            "ar": "المملكة العربية السعودية"
-        },
-        "active": true,
-        "order": 47
-    },
-    {
-        "code": "ES",
-        "name": {
-            "en": "Spanish",
-            "ar": "إسباني"
-        },
-        "country": {
-            "en": "Spain",
-            "ar": "إسبانيا"
-        },
-        "active": true,
-        "order": 48
-    },
-    {
-        "code": "SE",
-        "name": {
-            "en": "Swedish",
-            "ar": "سويدي"
-        },
-        "country": {
-            "en": "Sweden",
-            "ar": "السويد"
-        },
-        "active": true,
-        "order": 49
-    },
-    {
-        "code": "CH",
-        "name": {
-            "en": "Swiss",
-            "ar": "سويسري"
-        },
-        "country": {
-            "en": "Switzerland",
-            "ar": "سويسرا"
-        },
-        "active": true,
-        "order": 50
     },
     {
         "code": "TH",
@@ -621,7 +478,85 @@
             "ar": "تايلاند"
         },
         "active": true,
-        "order": 51
+        "order": 37
+    },
+    {
+        "code": "MM",
+        "name": {
+            "en": "Burmese",
+            "ar": "بورمي"
+        },
+        "country": {
+            "en": "Myanmar",
+            "ar": "ميانمار"
+        },
+        "active": true,
+        "order": 38
+    },
+    {
+        "code": "KE",
+        "name": {
+            "en": "Kenyan",
+            "ar": "كيني"
+        },
+        "country": {
+            "en": "Kenya",
+            "ar": "كينيا"
+        },
+        "active": true,
+        "order": 39
+    },
+    {
+        "code": "UG",
+        "name": {
+            "en": "Ugandan",
+            "ar": "أوغندي"
+        },
+        "country": {
+            "en": "Uganda",
+            "ar": "أوغندا"
+        },
+        "active": true,
+        "order": 40
+    },
+    {
+        "code": "NG",
+        "name": {
+            "en": "Nigerian",
+            "ar": "نيجيري"
+        },
+        "country": {
+            "en": "Nigeria",
+            "ar": "نيجيريا"
+        },
+        "active": true,
+        "order": 41
+    },
+    {
+        "code": "GH",
+        "name": {
+            "en": "Ghanaian",
+            "ar": "غاني"
+        },
+        "country": {
+            "en": "Ghana",
+            "ar": "غانا"
+        },
+        "active": true,
+        "order": 42
+    },
+    {
+        "code": "US",
+        "name": {
+            "en": "American",
+            "ar": "أمريكي"
+        },
+        "country": {
+            "en": "United States",
+            "ar": "الولايات المتحدة"
+        },
+        "active": true,
+        "order": 43
     },
     {
         "code": "GB",
@@ -631,102 +566,1985 @@
         },
         "country": {
             "en": "United Kingdom",
-            "ar": "المملكة المتحدة"
+            "ar": "بريطانيا"
+        },
+        "active": true,
+        "order": 44
+    },
+    {
+        "code": "FR",
+        "name": {
+            "en": "French",
+            "ar": "فرنسي"
+        },
+        "country": {
+            "en": "France",
+            "ar": "فرنسا"
+        },
+        "active": true,
+        "order": 45
+    },
+    {
+        "code": "DE",
+        "name": {
+            "en": "German",
+            "ar": "ألماني"
+        },
+        "country": {
+            "en": "Germany",
+            "ar": "ألمانيا"
+        },
+        "active": true,
+        "order": 46
+    },
+    {
+        "code": "AL",
+        "name": {
+            "en": "Albanian",
+            "ar": "ألباني"
+        },
+        "country": {
+            "en": "Albania",
+            "ar": "ألبانيا"
+        },
+        "active": true,
+        "order": 47
+    },
+    {
+        "code": "AD",
+        "name": {
+            "en": "Andorran",
+            "ar": "أندوري"
+        },
+        "country": {
+            "en": "Andorra",
+            "ar": "أندورا"
+        },
+        "active": true,
+        "order": 48
+    },
+    {
+        "code": "AO",
+        "name": {
+            "en": "Angolan",
+            "ar": "أنغولي"
+        },
+        "country": {
+            "en": "Angola",
+            "ar": "أنغولا"
+        },
+        "active": true,
+        "order": 49
+    },
+    {
+        "code": "AG",
+        "name": {
+            "en": "Antiguan",
+            "ar": "أنتيغوي"
+        },
+        "country": {
+            "en": "Antigua and Barbuda",
+            "ar": "أنتيغوا وبربودا"
+        },
+        "active": true,
+        "order": 50
+    },
+    {
+        "code": "AR",
+        "name": {
+            "en": "Argentine",
+            "ar": "أرجنتيني"
+        },
+        "country": {
+            "en": "Argentina",
+            "ar": "الأرجنتين"
+        },
+        "active": true,
+        "order": 51
+    },
+    {
+        "code": "AM",
+        "name": {
+            "en": "Armenian",
+            "ar": "أرميني"
+        },
+        "country": {
+            "en": "Armenia",
+            "ar": "أرمينيا"
         },
         "active": true,
         "order": 52
     },
     {
-        "code": "SO",
+        "code": "AU",
         "name": {
-            "en": "Somali",
-            "ar": "صومالي"
+            "en": "Australian",
+            "ar": "أسترالي"
         },
         "country": {
-            "en": "Somalia",
-            "ar": "الصومال"
+            "en": "Australia",
+            "ar": "أستراليا"
         },
         "active": true,
         "order": 53
     },
     {
-        "code": "SY",
+        "code": "AT",
         "name": {
-            "en": "Syrian",
-            "ar": "سوري"
+            "en": "Austrian",
+            "ar": "نمساوي"
         },
         "country": {
-            "en": "Syria",
-            "ar": "سوريا"
+            "en": "Austria",
+            "ar": "النمسا"
         },
         "active": true,
         "order": 54
     },
     {
-        "code": "AF",
+        "code": "AZ",
         "name": {
-            "en": "Afghan",
-            "ar": "أفغاني",
-            "ps": "افغان"
+            "en": "Azerbaijani",
+            "ar": "أذربيجاني"
         },
         "country": {
-            "en": "Afghanistan",
-            "ar": "أفغانستان",
-            "ps": "افغانستان"
+            "en": "Azerbaijan",
+            "ar": "أذربيجان"
         },
         "active": true,
         "order": 55
     },
     {
-        "code": "EG",
+        "code": "BS",
         "name": {
-            "en": "Egyptian",
-            "ar": "مصري"
+            "en": "Bahamian",
+            "ar": "باهامي"
         },
         "country": {
-            "en": "Egypt",
-            "ar": "مصر"
+            "en": "Bahamas",
+            "ar": "الباهاما"
         },
         "active": true,
         "order": 56
     },
     {
-        "code": "TN",
+        "code": "BB",
         "name": {
-            "en": "Tunisian",
-            "ar": "تونسي"
+            "en": "Barbadian",
+            "ar": "بربادوسي"
         },
         "country": {
-            "en": "Tunisia",
-            "ar": "تونس"
+            "en": "Barbados",
+            "ar": "بربادوس"
         },
         "active": true,
         "order": 57
     },
     {
-        "code": "ID",
+        "code": "BY",
         "name": {
-            "en": "Indonesian",
-            "ar": "إندونيسي"
+            "en": "Belarusian",
+            "ar": "بيلاروسي"
         },
         "country": {
-            "en": "Indonesia",
-            "ar": "إندونيسيا"
+            "en": "Belarus",
+            "ar": "بيلاروسيا"
         },
         "active": true,
         "order": 58
     },
     {
-        "code": "MA",
+        "code": "BE",
         "name": {
-            "en": "Moroccan",
-            "ar": "مغربي"
+            "en": "Belgian",
+            "ar": "بلجيكي"
         },
         "country": {
-            "en": "Morocco",
-            "ar": "المغرب"
+            "en": "Belgium",
+            "ar": "بلجيكا"
         },
         "active": true,
         "order": 59
+    },
+    {
+        "code": "BZ",
+        "name": {
+            "en": "Belizean",
+            "ar": "بليزي"
+        },
+        "country": {
+            "en": "Belize",
+            "ar": "بليز"
+        },
+        "active": true,
+        "order": 60
+    },
+    {
+        "code": "BJ",
+        "name": {
+            "en": "Beninese",
+            "ar": "بنيني"
+        },
+        "country": {
+            "en": "Benin",
+            "ar": "بنين"
+        },
+        "active": true,
+        "order": 61
+    },
+    {
+        "code": "BT",
+        "name": {
+            "en": "Bhutanese",
+            "ar": "بوتاني"
+        },
+        "country": {
+            "en": "Bhutan",
+            "ar": "بوتان"
+        },
+        "active": true,
+        "order": 62
+    },
+    {
+        "code": "BO",
+        "name": {
+            "en": "Bolivian",
+            "ar": "بوليفي"
+        },
+        "country": {
+            "en": "Bolivia",
+            "ar": "بوليفيا"
+        },
+        "active": true,
+        "order": 63
+    },
+    {
+        "code": "BA",
+        "name": {
+            "en": "Bosnian",
+            "ar": "بوسني"
+        },
+        "country": {
+            "en": "Bosnia and Herzegovina",
+            "ar": "البوسنة والهرسك"
+        },
+        "active": true,
+        "order": 64
+    },
+    {
+        "code": "BW",
+        "name": {
+            "en": "Motswana",
+            "ar": "بوتسواني"
+        },
+        "country": {
+            "en": "Botswana",
+            "ar": "بوتسوانا"
+        },
+        "active": true,
+        "order": 65
+    },
+    {
+        "code": "BR",
+        "name": {
+            "en": "Brazilian",
+            "ar": "برازيلي"
+        },
+        "country": {
+            "en": "Brazil",
+            "ar": "البرازيل"
+        },
+        "active": true,
+        "order": 66
+    },
+    {
+        "code": "BN",
+        "name": {
+            "en": "Bruneian",
+            "ar": "بروناوي"
+        },
+        "country": {
+            "en": "Brunei",
+            "ar": "بروناي"
+        },
+        "active": true,
+        "order": 67
+    },
+    {
+        "code": "BG",
+        "name": {
+            "en": "Bulgarian",
+            "ar": "بلغاري"
+        },
+        "country": {
+            "en": "Bulgaria",
+            "ar": "بلغاريا"
+        },
+        "active": true,
+        "order": 68
+    },
+    {
+        "code": "BF",
+        "name": {
+            "en": "Burkinabé",
+            "ar": "بوركيني"
+        },
+        "country": {
+            "en": "Burkina Faso",
+            "ar": "بوركينا فاسو"
+        },
+        "active": true,
+        "order": 69
+    },
+    {
+        "code": "BI",
+        "name": {
+            "en": "Burundian",
+            "ar": "بوروندي"
+        },
+        "country": {
+            "en": "Burundi",
+            "ar": "بوروندي"
+        },
+        "active": true,
+        "order": 70
+    },
+    {
+        "code": "CV",
+        "name": {
+            "en": "Cape Verdean",
+            "ar": "رأس أخضري"
+        },
+        "country": {
+            "en": "Cape Verde",
+            "ar": "الرأس الأخضر"
+        },
+        "active": true,
+        "order": 71
+    },
+    {
+        "code": "KH",
+        "name": {
+            "en": "Cambodian",
+            "ar": "كمبودي"
+        },
+        "country": {
+            "en": "Cambodia",
+            "ar": "كمبوديا"
+        },
+        "active": true,
+        "order": 72
+    },
+    {
+        "code": "CM",
+        "name": {
+            "en": "Cameroonian",
+            "ar": "كاميروني"
+        },
+        "country": {
+            "en": "Cameroon",
+            "ar": "الكاميرون"
+        },
+        "active": true,
+        "order": 73
+    },
+    {
+        "code": "CA",
+        "name": {
+            "en": "Canadian",
+            "ar": "كندي"
+        },
+        "country": {
+            "en": "Canada",
+            "ar": "كندا"
+        },
+        "active": true,
+        "order": 74
+    },
+    {
+        "code": "CF",
+        "name": {
+            "en": "Central African",
+            "ar": "أفريقي وسطى"
+        },
+        "country": {
+            "en": "Central African Republic",
+            "ar": "جمهورية أفريقيا الوسطى"
+        },
+        "active": true,
+        "order": 75
+    },
+    {
+        "code": "TD",
+        "name": {
+            "en": "Chadian",
+            "ar": "تشادي"
+        },
+        "country": {
+            "en": "Chad",
+            "ar": "تشاد"
+        },
+        "active": true,
+        "order": 76
+    },
+    {
+        "code": "CL",
+        "name": {
+            "en": "Chilean",
+            "ar": "تشيلي"
+        },
+        "country": {
+            "en": "Chile",
+            "ar": "تشيلي"
+        },
+        "active": true,
+        "order": 77
+    },
+    {
+        "code": "CO",
+        "name": {
+            "en": "Colombian",
+            "ar": "كولومبي"
+        },
+        "country": {
+            "en": "Colombia",
+            "ar": "كولومبيا"
+        },
+        "active": true,
+        "order": 78
+    },
+    {
+        "code": "CG",
+        "name": {
+            "en": "Congolese",
+            "ar": "كونغولي"
+        },
+        "country": {
+            "en": "Congo",
+            "ar": "الكونغو"
+        },
+        "active": true,
+        "order": 79
+    },
+    {
+        "code": "CD",
+        "name": {
+            "en": "Congolese",
+            "ar": "كونغولي"
+        },
+        "country": {
+            "en": "DR Congo",
+            "ar": "الكونغو الديمقراطية"
+        },
+        "active": true,
+        "order": 80
+    },
+    {
+        "code": "CR",
+        "name": {
+            "en": "Costa Rican",
+            "ar": "كوستاريكي"
+        },
+        "country": {
+            "en": "Costa Rica",
+            "ar": "كوستاريكا"
+        },
+        "active": true,
+        "order": 81
+    },
+    {
+        "code": "CI",
+        "name": {
+            "en": "Ivorian",
+            "ar": "إيفواري"
+        },
+        "country": {
+            "en": "Côte d'Ivoire",
+            "ar": "ساحل العاج"
+        },
+        "active": true,
+        "order": 82
+    },
+    {
+        "code": "HR",
+        "name": {
+            "en": "Croatian",
+            "ar": "كرواتي"
+        },
+        "country": {
+            "en": "Croatia",
+            "ar": "كرواتيا"
+        },
+        "active": true,
+        "order": 83
+    },
+    {
+        "code": "CU",
+        "name": {
+            "en": "Cuban",
+            "ar": "كوبي"
+        },
+        "country": {
+            "en": "Cuba",
+            "ar": "كوبا"
+        },
+        "active": true,
+        "order": 84
+    },
+    {
+        "code": "CY",
+        "name": {
+            "en": "Cypriot",
+            "ar": "قبرصي"
+        },
+        "country": {
+            "en": "Cyprus",
+            "ar": "قبرص"
+        },
+        "active": true,
+        "order": 85
+    },
+    {
+        "code": "CZ",
+        "name": {
+            "en": "Czech",
+            "ar": "تشيكي"
+        },
+        "country": {
+            "en": "Czech Republic",
+            "ar": "التشيك"
+        },
+        "active": true,
+        "order": 86
+    },
+    {
+        "code": "DK",
+        "name": {
+            "en": "Danish",
+            "ar": "دنماركي"
+        },
+        "country": {
+            "en": "Denmark",
+            "ar": "الدنمارك"
+        },
+        "active": true,
+        "order": 87
+    },
+    {
+        "code": "DM",
+        "name": {
+            "en": "Dominican",
+            "ar": "دومينيكي"
+        },
+        "country": {
+            "en": "Dominica",
+            "ar": "دومينيكا"
+        },
+        "active": true,
+        "order": 88
+    },
+    {
+        "code": "DO",
+        "name": {
+            "en": "Dominican",
+            "ar": "دومينيكاني"
+        },
+        "country": {
+            "en": "Dominican Republic",
+            "ar": "جمهورية الدومينيكان"
+        },
+        "active": true,
+        "order": 89
+    },
+    {
+        "code": "EC",
+        "name": {
+            "en": "Ecuadorian",
+            "ar": "إكوادوري"
+        },
+        "country": {
+            "en": "Ecuador",
+            "ar": "الإكوادور"
+        },
+        "active": true,
+        "order": 90
+    },
+    {
+        "code": "SV",
+        "name": {
+            "en": "Salvadoran",
+            "ar": "سلفادوري"
+        },
+        "country": {
+            "en": "El Salvador",
+            "ar": "السلفادور"
+        },
+        "active": true,
+        "order": 91
+    },
+    {
+        "code": "GQ",
+        "name": {
+            "en": "Equatorial Guinean",
+            "ar": "غيني استوائي"
+        },
+        "country": {
+            "en": "Equatorial Guinea",
+            "ar": "غينيا الاستوائية"
+        },
+        "active": true,
+        "order": 92
+    },
+    {
+        "code": "ER",
+        "name": {
+            "en": "Eritrean",
+            "ar": "إريتري"
+        },
+        "country": {
+            "en": "Eritrea",
+            "ar": "إريتريا"
+        },
+        "active": true,
+        "order": 93
+    },
+    {
+        "code": "EE",
+        "name": {
+            "en": "Estonian",
+            "ar": "إستوني"
+        },
+        "country": {
+            "en": "Estonia",
+            "ar": "إستونيا"
+        },
+        "active": true,
+        "order": 94
+    },
+    {
+        "code": "SZ",
+        "name": {
+            "en": "Swazi",
+            "ar": "سوازيلندي"
+        },
+        "country": {
+            "en": "Eswatini",
+            "ar": "إسواتيني"
+        },
+        "active": true,
+        "order": 95
+    },
+    {
+        "code": "FJ",
+        "name": {
+            "en": "Fijian",
+            "ar": "فيجي"
+        },
+        "country": {
+            "en": "Fiji",
+            "ar": "فيجي"
+        },
+        "active": true,
+        "order": 96
+    },
+    {
+        "code": "FI",
+        "name": {
+            "en": "Finnish",
+            "ar": "فنلندي"
+        },
+        "country": {
+            "en": "Finland",
+            "ar": "فنلندا"
+        },
+        "active": true,
+        "order": 97
+    },
+    {
+        "code": "GA",
+        "name": {
+            "en": "Gabonese",
+            "ar": "غابوني"
+        },
+        "country": {
+            "en": "Gabon",
+            "ar": "الغابون"
+        },
+        "active": true,
+        "order": 98
+    },
+    {
+        "code": "GM",
+        "name": {
+            "en": "Gambian",
+            "ar": "غامبي"
+        },
+        "country": {
+            "en": "Gambia",
+            "ar": "غامبيا"
+        },
+        "active": true,
+        "order": 99
+    },
+    {
+        "code": "GE",
+        "name": {
+            "en": "Georgian",
+            "ar": "جورجي"
+        },
+        "country": {
+            "en": "Georgia",
+            "ar": "جورجيا"
+        },
+        "active": true,
+        "order": 100
+    },
+    {
+        "code": "GR",
+        "name": {
+            "en": "Greek",
+            "ar": "يوناني"
+        },
+        "country": {
+            "en": "Greece",
+            "ar": "اليونان"
+        },
+        "active": true,
+        "order": 101
+    },
+    {
+        "code": "GD",
+        "name": {
+            "en": "Grenadian",
+            "ar": "غرينادي"
+        },
+        "country": {
+            "en": "Grenada",
+            "ar": "غرينادا"
+        },
+        "active": true,
+        "order": 102
+    },
+    {
+        "code": "GT",
+        "name": {
+            "en": "Guatemalan",
+            "ar": "غواتيمالي"
+        },
+        "country": {
+            "en": "Guatemala",
+            "ar": "غواتيمالا"
+        },
+        "active": true,
+        "order": 103
+    },
+    {
+        "code": "GN",
+        "name": {
+            "en": "Guinean",
+            "ar": "غيني"
+        },
+        "country": {
+            "en": "Guinea",
+            "ar": "غينيا"
+        },
+        "active": true,
+        "order": 104
+    },
+    {
+        "code": "GW",
+        "name": {
+            "en": "Bissau-Guinean",
+            "ar": "غيني بيساوي"
+        },
+        "country": {
+            "en": "Guinea-Bissau",
+            "ar": "غينيا بيساو"
+        },
+        "active": true,
+        "order": 105
+    },
+    {
+        "code": "GY",
+        "name": {
+            "en": "Guyanese",
+            "ar": "غياني"
+        },
+        "country": {
+            "en": "Guyana",
+            "ar": "غيانا"
+        },
+        "active": true,
+        "order": 106
+    },
+    {
+        "code": "HT",
+        "name": {
+            "en": "Haitian",
+            "ar": "هايتي"
+        },
+        "country": {
+            "en": "Haiti",
+            "ar": "هايتي"
+        },
+        "active": true,
+        "order": 107
+    },
+    {
+        "code": "HN",
+        "name": {
+            "en": "Honduran",
+            "ar": "هندوراسي"
+        },
+        "country": {
+            "en": "Honduras",
+            "ar": "هندوراس"
+        },
+        "active": true,
+        "order": 108
+    },
+    {
+        "code": "HU",
+        "name": {
+            "en": "Hungarian",
+            "ar": "مجري"
+        },
+        "country": {
+            "en": "Hungary",
+            "ar": "المجر"
+        },
+        "active": true,
+        "order": 109
+    },
+    {
+        "code": "IS",
+        "name": {
+            "en": "Icelandic",
+            "ar": "آيسلندي"
+        },
+        "country": {
+            "en": "Iceland",
+            "ar": "آيسلندا"
+        },
+        "active": true,
+        "order": 110
+    },
+    {
+        "code": "IE",
+        "name": {
+            "en": "Irish",
+            "ar": "أيرلندي"
+        },
+        "country": {
+            "en": "Ireland",
+            "ar": "أيرلندا"
+        },
+        "active": true,
+        "order": 111
+    },
+    {
+        "code": "IL",
+        "name": {
+            "en": "Israeli",
+            "ar": "إسرائيلي"
+        },
+        "country": {
+            "en": "Israel",
+            "ar": "إسرائيل"
+        },
+        "active": true,
+        "order": 112
+    },
+    {
+        "code": "IT",
+        "name": {
+            "en": "Italian",
+            "ar": "إيطالي"
+        },
+        "country": {
+            "en": "Italy",
+            "ar": "إيطاليا"
+        },
+        "active": true,
+        "order": 113
+    },
+    {
+        "code": "JM",
+        "name": {
+            "en": "Jamaican",
+            "ar": "جامايكي"
+        },
+        "country": {
+            "en": "Jamaica",
+            "ar": "جامايكا"
+        },
+        "active": true,
+        "order": 114
+    },
+    {
+        "code": "JP",
+        "name": {
+            "en": "Japanese",
+            "ar": "ياباني"
+        },
+        "country": {
+            "en": "Japan",
+            "ar": "اليابان"
+        },
+        "active": true,
+        "order": 115
+    },
+    {
+        "code": "KZ",
+        "name": {
+            "en": "Kazakhstani",
+            "ar": "كازاخستاني"
+        },
+        "country": {
+            "en": "Kazakhstan",
+            "ar": "كازاخستان"
+        },
+        "active": true,
+        "order": 116
+    },
+    {
+        "code": "KI",
+        "name": {
+            "en": "I-Kiribati",
+            "ar": "كيريباتي"
+        },
+        "country": {
+            "en": "Kiribati",
+            "ar": "كيريباتي"
+        },
+        "active": true,
+        "order": 117
+    },
+    {
+        "code": "KP",
+        "name": {
+            "en": "North Korean",
+            "ar": "كوري شمالي"
+        },
+        "country": {
+            "en": "North Korea",
+            "ar": "كوريا الشمالية"
+        },
+        "active": true,
+        "order": 118
+    },
+    {
+        "code": "KR",
+        "name": {
+            "en": "South Korean",
+            "ar": "كوري جنوبي"
+        },
+        "country": {
+            "en": "South Korea",
+            "ar": "كوريا الجنوبية"
+        },
+        "active": true,
+        "order": 119
+    },
+    {
+        "code": "KG",
+        "name": {
+            "en": "Kyrgyzstani",
+            "ar": "قيرغيزستاني"
+        },
+        "country": {
+            "en": "Kyrgyzstan",
+            "ar": "قيرغيزستان"
+        },
+        "active": true,
+        "order": 120
+    },
+    {
+        "code": "LA",
+        "name": {
+            "en": "Laotian",
+            "ar": "لاوسي"
+        },
+        "country": {
+            "en": "Laos",
+            "ar": "لاوس"
+        },
+        "active": true,
+        "order": 121
+    },
+    {
+        "code": "LV",
+        "name": {
+            "en": "Latvian",
+            "ar": "لاتفي"
+        },
+        "country": {
+            "en": "Latvia",
+            "ar": "لاتفيا"
+        },
+        "active": true,
+        "order": 122
+    },
+    {
+        "code": "LS",
+        "name": {
+            "en": "Mosotho",
+            "ar": "ليسوتي"
+        },
+        "country": {
+            "en": "Lesotho",
+            "ar": "ليسوتو"
+        },
+        "active": true,
+        "order": 123
+    },
+    {
+        "code": "LR",
+        "name": {
+            "en": "Liberian",
+            "ar": "ليبيري"
+        },
+        "country": {
+            "en": "Liberia",
+            "ar": "ليبيريا"
+        },
+        "active": true,
+        "order": 124
+    },
+    {
+        "code": "LI",
+        "name": {
+            "en": "Liechtensteiner",
+            "ar": "ليختنشتايني"
+        },
+        "country": {
+            "en": "Liechtenstein",
+            "ar": "ليختنشتاين"
+        },
+        "active": true,
+        "order": 125
+    },
+    {
+        "code": "LT",
+        "name": {
+            "en": "Lithuanian",
+            "ar": "ليتواني"
+        },
+        "country": {
+            "en": "Lithuania",
+            "ar": "ليتوانيا"
+        },
+        "active": true,
+        "order": 126
+    },
+    {
+        "code": "LU",
+        "name": {
+            "en": "Luxembourger",
+            "ar": "لوكسمبورغي"
+        },
+        "country": {
+            "en": "Luxembourg",
+            "ar": "لوكسمبورغ"
+        },
+        "active": true,
+        "order": 127
+    },
+    {
+        "code": "MG",
+        "name": {
+            "en": "Malagasy",
+            "ar": "مدغشقري"
+        },
+        "country": {
+            "en": "Madagascar",
+            "ar": "مدغشقر"
+        },
+        "active": true,
+        "order": 128
+    },
+    {
+        "code": "MW",
+        "name": {
+            "en": "Malawian",
+            "ar": "مالاوي"
+        },
+        "country": {
+            "en": "Malawi",
+            "ar": "مالاوي"
+        },
+        "active": true,
+        "order": 129
+    },
+    {
+        "code": "MV",
+        "name": {
+            "en": "Maldivian",
+            "ar": "مالديفي"
+        },
+        "country": {
+            "en": "Maldives",
+            "ar": "المالديف"
+        },
+        "active": true,
+        "order": 130
+    },
+    {
+        "code": "ML",
+        "name": {
+            "en": "Malian",
+            "ar": "مالي"
+        },
+        "country": {
+            "en": "Mali",
+            "ar": "مالي"
+        },
+        "active": true,
+        "order": 131
+    },
+    {
+        "code": "MT",
+        "name": {
+            "en": "Maltese",
+            "ar": "مالطي"
+        },
+        "country": {
+            "en": "Malta",
+            "ar": "مالطا"
+        },
+        "active": true,
+        "order": 132
+    },
+    {
+        "code": "MH",
+        "name": {
+            "en": "Marshallese",
+            "ar": "مارشالي"
+        },
+        "country": {
+            "en": "Marshall Islands",
+            "ar": "جزر مارشال"
+        },
+        "active": true,
+        "order": 133
+    },
+    {
+        "code": "MU",
+        "name": {
+            "en": "Mauritian",
+            "ar": "موريشيوسي"
+        },
+        "country": {
+            "en": "Mauritius",
+            "ar": "موريشيوس"
+        },
+        "active": true,
+        "order": 134
+    },
+    {
+        "code": "MX",
+        "name": {
+            "en": "Mexican",
+            "ar": "مكسيكي"
+        },
+        "country": {
+            "en": "Mexico",
+            "ar": "المكسيك"
+        },
+        "active": true,
+        "order": 135
+    },
+    {
+        "code": "FM",
+        "name": {
+            "en": "Micronesian",
+            "ar": "ميكرونيزي"
+        },
+        "country": {
+            "en": "Micronesia",
+            "ar": "ميكرونيزيا"
+        },
+        "active": true,
+        "order": 136
+    },
+    {
+        "code": "MD",
+        "name": {
+            "en": "Moldovan",
+            "ar": "مولدوفي"
+        },
+        "country": {
+            "en": "Moldova",
+            "ar": "مولدوفا"
+        },
+        "active": true,
+        "order": 137
+    },
+    {
+        "code": "MC",
+        "name": {
+            "en": "Monegasque",
+            "ar": "موناكي"
+        },
+        "country": {
+            "en": "Monaco",
+            "ar": "موناكو"
+        },
+        "active": true,
+        "order": 138
+    },
+    {
+        "code": "MN",
+        "name": {
+            "en": "Mongolian",
+            "ar": "منغولي"
+        },
+        "country": {
+            "en": "Mongolia",
+            "ar": "منغوليا"
+        },
+        "active": true,
+        "order": 139
+    },
+    {
+        "code": "ME",
+        "name": {
+            "en": "Montenegrin",
+            "ar": "جبل أسودي"
+        },
+        "country": {
+            "en": "Montenegro",
+            "ar": "الجبل الأسود"
+        },
+        "active": true,
+        "order": 140
+    },
+    {
+        "code": "MZ",
+        "name": {
+            "en": "Mozambican",
+            "ar": "موزمبيقي"
+        },
+        "country": {
+            "en": "Mozambique",
+            "ar": "موزمبيق"
+        },
+        "active": true,
+        "order": 141
+    },
+    {
+        "code": "NA",
+        "name": {
+            "en": "Namibian",
+            "ar": "ناميبي"
+        },
+        "country": {
+            "en": "Namibia",
+            "ar": "ناميبيا"
+        },
+        "active": true,
+        "order": 142
+    },
+    {
+        "code": "NR",
+        "name": {
+            "en": "Nauruan",
+            "ar": "ناوروي"
+        },
+        "country": {
+            "en": "Nauru",
+            "ar": "ناورو"
+        },
+        "active": true,
+        "order": 143
+    },
+    {
+        "code": "NL",
+        "name": {
+            "en": "Dutch",
+            "ar": "هولندي"
+        },
+        "country": {
+            "en": "Netherlands",
+            "ar": "هولندا"
+        },
+        "active": true,
+        "order": 144
+    },
+    {
+        "code": "NZ",
+        "name": {
+            "en": "New Zealander",
+            "ar": "نيوزيلندي"
+        },
+        "country": {
+            "en": "New Zealand",
+            "ar": "نيوزيلندا"
+        },
+        "active": true,
+        "order": 145
+    },
+    {
+        "code": "NI",
+        "name": {
+            "en": "Nicaraguan",
+            "ar": "نيكاراغوي"
+        },
+        "country": {
+            "en": "Nicaragua",
+            "ar": "نيكاراغوا"
+        },
+        "active": true,
+        "order": 146
+    },
+    {
+        "code": "NE",
+        "name": {
+            "en": "Nigerien",
+            "ar": "نيجري"
+        },
+        "country": {
+            "en": "Niger",
+            "ar": "النيجر"
+        },
+        "active": true,
+        "order": 147
+    },
+    {
+        "code": "MK",
+        "name": {
+            "en": "Macedonian",
+            "ar": "مقدوني"
+        },
+        "country": {
+            "en": "North Macedonia",
+            "ar": "مقدونيا الشمالية"
+        },
+        "active": true,
+        "order": 148
+    },
+    {
+        "code": "NO",
+        "name": {
+            "en": "Norwegian",
+            "ar": "نرويجي"
+        },
+        "country": {
+            "en": "Norway",
+            "ar": "النرويج"
+        },
+        "active": true,
+        "order": 149
+    },
+    {
+        "code": "PW",
+        "name": {
+            "en": "Palauan",
+            "ar": "بالاوي"
+        },
+        "country": {
+            "en": "Palau",
+            "ar": "بالاو"
+        },
+        "active": true,
+        "order": 150
+    },
+    {
+        "code": "PA",
+        "name": {
+            "en": "Panamanian",
+            "ar": "بنمي"
+        },
+        "country": {
+            "en": "Panama",
+            "ar": "بنما"
+        },
+        "active": true,
+        "order": 151
+    },
+    {
+        "code": "PG",
+        "name": {
+            "en": "Papua New Guinean",
+            "ar": "بابوا غينيا الجديدة"
+        },
+        "country": {
+            "en": "Papua New Guinea",
+            "ar": "بابوا غينيا الجديدة"
+        },
+        "active": true,
+        "order": 152
+    },
+    {
+        "code": "PY",
+        "name": {
+            "en": "Paraguayan",
+            "ar": "باراغواي"
+        },
+        "country": {
+            "en": "Paraguay",
+            "ar": "باراغواي"
+        },
+        "active": true,
+        "order": 153
+    },
+    {
+        "code": "PE",
+        "name": {
+            "en": "Peruvian",
+            "ar": "بيروفي"
+        },
+        "country": {
+            "en": "Peru",
+            "ar": "بيرو"
+        },
+        "active": true,
+        "order": 154
+    },
+    {
+        "code": "PL",
+        "name": {
+            "en": "Polish",
+            "ar": "بولندي"
+        },
+        "country": {
+            "en": "Poland",
+            "ar": "بولندا"
+        },
+        "active": true,
+        "order": 155
+    },
+    {
+        "code": "PT",
+        "name": {
+            "en": "Portuguese",
+            "ar": "برتغالي"
+        },
+        "country": {
+            "en": "Portugal",
+            "ar": "البرتغال"
+        },
+        "active": true,
+        "order": 156
+    },
+    {
+        "code": "RO",
+        "name": {
+            "en": "Romanian",
+            "ar": "روماني"
+        },
+        "country": {
+            "en": "Romania",
+            "ar": "رومانيا"
+        },
+        "active": true,
+        "order": 157
+    },
+    {
+        "code": "RU",
+        "name": {
+            "en": "Russian",
+            "ar": "روسي"
+        },
+        "country": {
+            "en": "Russia",
+            "ar": "روسيا"
+        },
+        "active": true,
+        "order": 158
+    },
+    {
+        "code": "RW",
+        "name": {
+            "en": "Rwandan",
+            "ar": "رواندي"
+        },
+        "country": {
+            "en": "Rwanda",
+            "ar": "رواندا"
+        },
+        "active": true,
+        "order": 159
+    },
+    {
+        "code": "KN",
+        "name": {
+            "en": "Kittitian",
+            "ar": "كيتسي"
+        },
+        "country": {
+            "en": "Saint Kitts and Nevis",
+            "ar": "سانت كيتس ونيفيس"
+        },
+        "active": true,
+        "order": 160
+    },
+    {
+        "code": "LC",
+        "name": {
+            "en": "Saint Lucian",
+            "ar": "سانت لوسي"
+        },
+        "country": {
+            "en": "Saint Lucia",
+            "ar": "سانت لوسيا"
+        },
+        "active": true,
+        "order": 161
+    },
+    {
+        "code": "VC",
+        "name": {
+            "en": "Vincentian",
+            "ar": "فنسنتي"
+        },
+        "country": {
+            "en": "Saint Vincent and the Grenadines",
+            "ar": "سانت فنسنت والغرينادين"
+        },
+        "active": true,
+        "order": 162
+    },
+    {
+        "code": "WS",
+        "name": {
+            "en": "Samoan",
+            "ar": "ساموائي"
+        },
+        "country": {
+            "en": "Samoa",
+            "ar": "ساموا"
+        },
+        "active": true,
+        "order": 163
+    },
+    {
+        "code": "SM",
+        "name": {
+            "en": "Sammarinese",
+            "ar": "سان ماريني"
+        },
+        "country": {
+            "en": "San Marino",
+            "ar": "سان مارينو"
+        },
+        "active": true,
+        "order": 164
+    },
+    {
+        "code": "ST",
+        "name": {
+            "en": "São Toméan",
+            "ar": "ساو تومي"
+        },
+        "country": {
+            "en": "São Tomé and Príncipe",
+            "ar": "ساو تومي وبرينسيب"
+        },
+        "active": true,
+        "order": 165
+    },
+    {
+        "code": "SN",
+        "name": {
+            "en": "Senegalese",
+            "ar": "سنغالي"
+        },
+        "country": {
+            "en": "Senegal",
+            "ar": "السنغال"
+        },
+        "active": true,
+        "order": 166
+    },
+    {
+        "code": "RS",
+        "name": {
+            "en": "Serbian",
+            "ar": "صربي"
+        },
+        "country": {
+            "en": "Serbia",
+            "ar": "صربيا"
+        },
+        "active": true,
+        "order": 167
+    },
+    {
+        "code": "SC",
+        "name": {
+            "en": "Seychellois",
+            "ar": "سيشلي"
+        },
+        "country": {
+            "en": "Seychelles",
+            "ar": "سيشل"
+        },
+        "active": true,
+        "order": 168
+    },
+    {
+        "code": "SL",
+        "name": {
+            "en": "Sierra Leonean",
+            "ar": "سيراليوني"
+        },
+        "country": {
+            "en": "Sierra Leone",
+            "ar": "سيراليون"
+        },
+        "active": true,
+        "order": 169
+    },
+    {
+        "code": "SG",
+        "name": {
+            "en": "Singaporean",
+            "ar": "سنغافوري"
+        },
+        "country": {
+            "en": "Singapore",
+            "ar": "سنغافورة"
+        },
+        "active": true,
+        "order": 170
+    },
+    {
+        "code": "SK",
+        "name": {
+            "en": "Slovak",
+            "ar": "سلوفاكي"
+        },
+        "country": {
+            "en": "Slovakia",
+            "ar": "سلوفاكيا"
+        },
+        "active": true,
+        "order": 171
+    },
+    {
+        "code": "SI",
+        "name": {
+            "en": "Slovenian",
+            "ar": "سلوفيني"
+        },
+        "country": {
+            "en": "Slovenia",
+            "ar": "سلوفينيا"
+        },
+        "active": true,
+        "order": 172
+    },
+    {
+        "code": "SB",
+        "name": {
+            "en": "Solomon Islander",
+            "ar": "سليماني"
+        },
+        "country": {
+            "en": "Solomon Islands",
+            "ar": "جزر سليمان"
+        },
+        "active": true,
+        "order": 173
+    },
+    {
+        "code": "ZA",
+        "name": {
+            "en": "South African",
+            "ar": "جنوب أفريقي"
+        },
+        "country": {
+            "en": "South Africa",
+            "ar": "جنوب أفريقيا"
+        },
+        "active": true,
+        "order": 174
+    },
+    {
+        "code": "SS",
+        "name": {
+            "en": "South Sudanese",
+            "ar": "جنوب سوداني"
+        },
+        "country": {
+            "en": "South Sudan",
+            "ar": "جنوب السودان"
+        },
+        "active": true,
+        "order": 175
+    },
+    {
+        "code": "ES",
+        "name": {
+            "en": "Spanish",
+            "ar": "إسباني"
+        },
+        "country": {
+            "en": "Spain",
+            "ar": "إسبانيا"
+        },
+        "active": true,
+        "order": 176
+    },
+    {
+        "code": "SR",
+        "name": {
+            "en": "Surinamese",
+            "ar": "سورينامي"
+        },
+        "country": {
+            "en": "Suriname",
+            "ar": "سورينام"
+        },
+        "active": true,
+        "order": 177
+    },
+    {
+        "code": "SE",
+        "name": {
+            "en": "Swedish",
+            "ar": "سويدي"
+        },
+        "country": {
+            "en": "Sweden",
+            "ar": "السويد"
+        },
+        "active": true,
+        "order": 178
+    },
+    {
+        "code": "CH",
+        "name": {
+            "en": "Swiss",
+            "ar": "سويسري"
+        },
+        "country": {
+            "en": "Switzerland",
+            "ar": "سويسرا"
+        },
+        "active": true,
+        "order": 179
+    },
+    {
+        "code": "TW",
+        "name": {
+            "en": "Taiwanese",
+            "ar": "تايواني"
+        },
+        "country": {
+            "en": "Taiwan",
+            "ar": "تايوان"
+        },
+        "active": true,
+        "order": 180
+    },
+    {
+        "code": "TJ",
+        "name": {
+            "en": "Tajikistani",
+            "ar": "طاجيكستاني"
+        },
+        "country": {
+            "en": "Tajikistan",
+            "ar": "طاجيكستان"
+        },
+        "active": true,
+        "order": 181
+    },
+    {
+        "code": "TZ",
+        "name": {
+            "en": "Tanzanian",
+            "ar": "تنزاني"
+        },
+        "country": {
+            "en": "Tanzania",
+            "ar": "تنزانيا"
+        },
+        "active": true,
+        "order": 182
+    },
+    {
+        "code": "TL",
+        "name": {
+            "en": "Timorese",
+            "ar": "تيموري"
+        },
+        "country": {
+            "en": "Timor-Leste",
+            "ar": "تيمور الشرقية"
+        },
+        "active": true,
+        "order": 183
+    },
+    {
+        "code": "TG",
+        "name": {
+            "en": "Togolese",
+            "ar": "توغولي"
+        },
+        "country": {
+            "en": "Togo",
+            "ar": "توغو"
+        },
+        "active": true,
+        "order": 184
+    },
+    {
+        "code": "TO",
+        "name": {
+            "en": "Tongan",
+            "ar": "تونغي"
+        },
+        "country": {
+            "en": "Tonga",
+            "ar": "تونغا"
+        },
+        "active": true,
+        "order": 185
+    },
+    {
+        "code": "TT",
+        "name": {
+            "en": "Trinidadian",
+            "ar": "ترينيدادي"
+        },
+        "country": {
+            "en": "Trinidad and Tobago",
+            "ar": "ترينيداد وتوباغو"
+        },
+        "active": true,
+        "order": 186
+    },
+    {
+        "code": "TM",
+        "name": {
+            "en": "Turkmen",
+            "ar": "تركماني"
+        },
+        "country": {
+            "en": "Turkmenistan",
+            "ar": "تركمانستان"
+        },
+        "active": true,
+        "order": 187
+    },
+    {
+        "code": "TV",
+        "name": {
+            "en": "Tuvaluan",
+            "ar": "توفالي"
+        },
+        "country": {
+            "en": "Tuvalu",
+            "ar": "توفالو"
+        },
+        "active": true,
+        "order": 188
+    },
+    {
+        "code": "UA",
+        "name": {
+            "en": "Ukrainian",
+            "ar": "أوكراني"
+        },
+        "country": {
+            "en": "Ukraine",
+            "ar": "أوكرانيا"
+        },
+        "active": true,
+        "order": 189
+    },
+    {
+        "code": "UY",
+        "name": {
+            "en": "Uruguayan",
+            "ar": "أوروغواي"
+        },
+        "country": {
+            "en": "Uruguay",
+            "ar": "أوروغواي"
+        },
+        "active": true,
+        "order": 190
+    },
+    {
+        "code": "UZ",
+        "name": {
+            "en": "Uzbekistani",
+            "ar": "أوزبكستاني"
+        },
+        "country": {
+            "en": "Uzbekistan",
+            "ar": "أوزبكستان"
+        },
+        "active": true,
+        "order": 191
+    },
+    {
+        "code": "VU",
+        "name": {
+            "en": "Ni-Vanuatu",
+            "ar": "فانواتي"
+        },
+        "country": {
+            "en": "Vanuatu",
+            "ar": "فانواتو"
+        },
+        "active": true,
+        "order": 192
+    },
+    {
+        "code": "VA",
+        "name": {
+            "en": "Vatican",
+            "ar": "فاتيكاني"
+        },
+        "country": {
+            "en": "Vatican City",
+            "ar": "الفاتيكان"
+        },
+        "active": true,
+        "order": 193
+    },
+    {
+        "code": "VE",
+        "name": {
+            "en": "Venezuelan",
+            "ar": "فنزويلي"
+        },
+        "country": {
+            "en": "Venezuela",
+            "ar": "فنزويلا"
+        },
+        "active": true,
+        "order": 194
+    },
+    {
+        "code": "ZM",
+        "name": {
+            "en": "Zambian",
+            "ar": "زامبي"
+        },
+        "country": {
+            "en": "Zambia",
+            "ar": "زامبيا"
+        },
+        "active": true,
+        "order": 195
+    },
+    {
+        "code": "ZW",
+        "name": {
+            "en": "Zimbabwean",
+            "ar": "زيمبابوي"
+        },
+        "country": {
+            "en": "Zimbabwe",
+            "ar": "زيمبابوي"
+        },
+        "active": true,
+        "order": 196
     }
 ]

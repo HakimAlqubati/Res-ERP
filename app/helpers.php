@@ -530,6 +530,7 @@ if (!function_exists('settingWithDefault')) {
 if (!function_exists('getNationalities')) {
     function getNationalities(): array
     {
+        $lang = app()->getLocale();
         $path = public_path('data/nationalities.json');
 
         $nationalities = [];
@@ -538,7 +539,7 @@ if (!function_exists('getNationalities')) {
             $data = json_decode(file_get_contents($path), true);
             foreach ($data as $item) {
                 if ($item['active']) {
-                    $nationalities[$item['code']] = $item['name']['en'];
+                    $nationalities[$item['code']] = $item['name'][$lang];
                 }
             }
         }
