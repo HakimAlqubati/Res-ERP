@@ -84,7 +84,8 @@ class AttendanceService
                 $employee,
                 $requestTime,
                 $payload['type'] ?? null,
-                isset($payload['period_id']) ? (int) $payload['period_id'] : null
+                isset($payload['period_id']) ? (int) $payload['period_id'] : null,
+                $payload['skip_duplicate_timestamp_check'] ?? false
             );
             return null; // التحقق نجح
         } catch (MultipleShiftsException $e) {

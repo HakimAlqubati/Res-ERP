@@ -35,6 +35,8 @@ final readonly class ValidationContext
         // هل يوجد أي سجلات في جميع ورديات اليوم
         public bool $hasAnyDailyCheckIn,
         public bool $hasAnyDailyCheckOut,
+        // تخطي فحص الوقت المكرر (للإضافة اليدوية)
+        public bool $skipDuplicateTimestampCheck = false,
     ) {}
 
     /**
@@ -45,7 +47,8 @@ final readonly class ValidationContext
         Carbon $requestTime,
         ?int $periodId,
         ShiftResolverInterface $shiftResolver,
-        AttendanceRepositoryInterface $repository
+        AttendanceRepositoryInterface $repository,
+        bool $skipDuplicateTimestampCheck = false
     ): self {
         // تحديد الوردية
         $shiftInfo = $shiftResolver->resolve($employee, $requestTime, $repository, $periodId);
@@ -75,6 +78,7 @@ final readonly class ValidationContext
             hasAnyCheckOut: $shiftRecords->where('check_type', CheckType::CHECKOUT->value)->isNotEmpty(),
             hasAnyDailyCheckIn: $dailyRecords->where('check_type', CheckType::CHECKIN->value)->isNotEmpty(),
             hasAnyDailyCheckOut: $dailyRecords->where('check_type', CheckType::CHECKOUT->value)->isNotEmpty(),
+            skipDuplicateTimestampCheck: $skipDuplicateTimestampCheck,
         );
     }
 }
