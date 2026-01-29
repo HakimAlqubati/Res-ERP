@@ -196,14 +196,14 @@
                             <td
                                 class="internal_cell">
 
-                                {{ \App\Models\Attendance::getStatusLabel($checkin['status']) ?? '-' }}
+                                {{$checkin['status']??'-'}}
                             </td>
                             <td
                                 class="internal_cell">{{ $lastcheckout['check_time'] ?? '-' }}</td>
                             <td
                                 class="internal_cell">
 
-                                {{ \App\Models\Attendance::getStatusLabel($checkout['status']) ?? '-' }}
+                                {{$checkout['status']??'-'}}
                             </td>
 
                             <td
