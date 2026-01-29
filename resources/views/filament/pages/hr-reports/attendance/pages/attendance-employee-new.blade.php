@@ -233,7 +233,8 @@
                 </td>
 
                 <td>
-                    {{ $firstCheckinStatus }}
+
+                {{ \App\Models\Attendance::getStatusLabel($firstCheckinStatus) }}
                 </td>
 
                 <td>
@@ -241,7 +242,8 @@
                 </td>
 
                 <td>
-                    {{ $lastCheckoutStatus }}
+                
+                    {{ \App\Models\Attendance::getStatusLabel($lastCheckoutStatus) }}
                 </td>
 
                 <td>

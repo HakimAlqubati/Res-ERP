@@ -82,6 +82,13 @@ class Attendance extends Model implements Auditable
     const STATUS_LATE_DEPARTURE  = 'late_departure';
     const STATUS_TEST            = 'status_test';
 
+    const STATUS_EARLY_ARRIVAL_LABEL   = 'Early';
+    const STATUS_LATE_ARRIVAL_LABEL    = 'Late';
+    const STATUS_ON_TIME_LABEL         = 'On Time';
+    const STATUS_EARLY_DEPARTURE_LABEL = 'Early Out';
+    const STATUS_LATE_DEPARTURE_LABEL  = 'Late Out';
+    const STATUS_TEST_LABEL            = 'Test';
+
     protected $fillable = [
         'employee_id',
         'check_type',
@@ -194,6 +201,19 @@ class Attendance extends Model implements Auditable
             self::STATUS_LATE_DEPARTURE  => self::STATUS_LATE_DEPARTURE,
             self::STATUS_TEST            => self::STATUS_TEST,
         ];
+    }
+
+    public static function getStatusLabel(?string $status): string
+    {
+        return match ($status) {
+            self::STATUS_EARLY_ARRIVAL   => self::STATUS_EARLY_ARRIVAL_LABEL,
+            self::STATUS_LATE_ARRIVAL    => self::STATUS_LATE_ARRIVAL_LABEL,
+            self::STATUS_ON_TIME         => self::STATUS_ON_TIME_LABEL,
+            self::STATUS_EARLY_DEPARTURE => self::STATUS_EARLY_DEPARTURE_LABEL,
+            self::STATUS_LATE_DEPARTURE  => self::STATUS_LATE_DEPARTURE_LABEL,
+            self::STATUS_TEST            => self::STATUS_TEST_LABEL,
+            default                      => $status ?? '',
+        };
     }
 
     /**

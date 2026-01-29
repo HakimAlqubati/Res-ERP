@@ -184,11 +184,17 @@
                             <td
                                 class="internal_cell">{{ $checkin['check_time'] ?? '-' }}</td>
                             <td
-                                class="internal_cell">{{ $checkin['status'] ?? '-' }}</td>
+                                class="internal_cell">
+
+                                {{ \App\Models\Attendance::getStatusLabel($checkin['status']) ?? '-' }}
+                            </td>
                             <td
                                 class="internal_cell">{{ $lastcheckout['check_time'] ?? '-' }}</td>
                             <td
-                                class="internal_cell">{{ $checkout['status'] ?? '-' }}</td>
+                                class="internal_cell">
+
+                                {{ \App\Models\Attendance::getStatusLabel($checkout['status']) ?? '-' }}
+                            </td>
 
                             <td
                                 class="internal_cell">{{ $lastcheckout['supposed_duration_hourly'] ?? '-' }}</td>
