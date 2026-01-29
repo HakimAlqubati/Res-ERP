@@ -139,7 +139,7 @@ class EmployeeForm
                                                     ->columnSpan(1)->required(),
                                                 TextInput::make('known_name')
                                                     ->label(__('lang.known_name'))
-                                                    ->helperText(__('lang.known_name_description'))
+                                                    // ->helperText(__('lang.known_name_description'))
                                                     ->hint(__('lang.known_name_hint'))
                                                     ->placeholder(__('lang.known_name_example'))
                                                     ->unique(ignoreRecord: true)
