@@ -124,14 +124,14 @@
                 <th class="internal_cell">{{ __('To') }}</th>
                 <th class="internal_cell">{{ __('Check-in') }}</th>
                 <!-- Sortable columns with up and down arrows -->
-                <th class="internal_cell cursor-pointer" onclick="sortTable('checkin_status')">
+                <th class="internal_cell">
                     {{ __('Status') }}
-                    <span id="checkin_status-arrow" class="arrow-icon">&#x2195;</span> <!-- Arrow for Check-in -->
+                    <!-- <span id="checkin_status-arrow" class="arrow-icon">&#x2195;</span> Arrow for Check-in -->
                 </th>
                 <th class="internal_cell">{{ __('Check-out') }}</th>
-                <th class="internal_cell cursor-pointer" onclick="sortTable('checkout_status')">
+                <th class="internal_cell">
                     {{ __('Status') }}
-                    <span id="checkout_status-arrow" class="arrow-icon">&#x2195;</span> <!-- Arrow for Check-out -->
+                    <!-- <span id="checkout_status-arrow" class="arrow-icon">&#x2195;</span> Arrow for Check-out -->
                 </th>
 
                 <th class="internal_cell">{{ __('Supposed') }}</th>
