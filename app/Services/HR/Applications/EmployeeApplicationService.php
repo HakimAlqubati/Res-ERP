@@ -138,6 +138,7 @@ class EmployeeApplicationService
                     'date_time'       => $details->date . ' ' . $details->time,
                     'type'            => \App\Models\Attendance::CHECKTYPE_CHECKIN,
                     'attendance_type' => \App\Models\Attendance::ATTENDANCE_TYPE_REQUEST,
+                    'skip_duplicate_timestamp_check' => true,
                 ];
 
                 $result = app(\App\Modules\HR\Attendance\Services\AttendanceService::class)->handle($validated);
@@ -169,6 +170,7 @@ class EmployeeApplicationService
                     'date_time'       => $details->date . ' ' . $details->time,
                     'type'            => \App\Models\Attendance::CHECKTYPE_CHECKOUT,
                     'attendance_type' => \App\Models\Attendance::ATTENDANCE_TYPE_REQUEST,
+                    'skip_duplicate_timestamp_check' => true,
                 ];
 
                 $result = app(\App\Modules\HR\Attendance\Services\AttendanceService::class)->handle($validated);

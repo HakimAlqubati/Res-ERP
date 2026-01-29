@@ -38,15 +38,15 @@ class AttendanceValidator
      * 
      * @throws \App\Modules\HR\Attendance\Exceptions\AttendanceException
      */
-    public function validate(Employee $employee, Carbon $requestTime, ?string $requestType = null, ?int $periodId = null): void
+    public function validate(Employee $employee, Carbon $requestTime, ?string $requestType = null, ?int $periodId = null, bool $skipDuplicateTimestampCheck = false): void
     {
-        $this->validateWithContext($employee, $requestTime, $requestType, $periodId);
+        $this->validateWithContext($employee, $requestTime, $requestType, $periodId, $skipDuplicateTimestampCheck);
     }
 
     /**
      * التحقق من صحة طلب الحضور مع إرجاع السياق
      */
-    public function validateWithContext(Employee $employee, Carbon $requestTime, ?string $requestType = null, ?int $periodId = null): ValidationContext
+    public function validateWithContext(Employee $employee, Carbon $requestTime, ?string $requestType = null, ?int $periodId = null, bool $skipDuplicateTimestampCheck = false): ValidationContext
     {
         // 1. تحضير سياق التحقق
         $context = ValidationContext::create(
@@ -54,7 +54,8 @@ class AttendanceValidator
             $requestTime,
             $periodId,
             $this->shiftResolver,
-            $this->repository
+            $this->repository,
+            $skipDuplicateTimestampCheck
         );
 
         // 2. تطبيق جميع القواعد بالترتيب
