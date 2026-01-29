@@ -715,5 +715,18 @@
         },
         "active": true,
         "order": 58
+    },
+    {
+        "code": "MA",
+        "name": {
+            "en": "Moroccan",
+            "ar": "مغربي"
+        },
+        "country": {
+            "en": "Morocco",
+            "ar": "المغرب"
+        },
+        "active": true,
+        "order": 59
     }
 ]
