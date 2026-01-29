@@ -92,6 +92,10 @@ class EmployeeTable
                     ->weight(FontWeight::Bold)->tooltip(fn($state) => $state)
                     ->searchable(isIndividual: false, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('known_name')
+                    ->sortable()->searchable()
+                    ->label(__('lang.known_name'))
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('branch.name')
                     ->label(__('lang.branch'))
                     ->searchable()

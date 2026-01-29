@@ -24,6 +24,7 @@ class Employee extends Model implements Auditable
 
     protected $fillable = [
         'name',
+        'known_name',
         'position_id',
         'email',
         'phone_number',
@@ -58,6 +59,7 @@ class Employee extends Model implements Auditable
 
     protected $auditInclude = [
         'name',
+        'known_name',
         'position_id',
         'email',
         'phone_number',

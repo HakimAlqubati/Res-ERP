@@ -291,6 +291,10 @@ return [
     // ===========================================
     'personal_data' => 'Personal Data',
     'full_name' => 'Full Name',
+    'known_name' => 'Known Name',
+    'known_name_description' => 'HR system link',
+    'known_name_hint' => 'Match HR name',
+    'known_name_example' => 'e.g. Name',
     'gender' => 'Gender',
     'male' => 'Male',
     'female' => 'Female',

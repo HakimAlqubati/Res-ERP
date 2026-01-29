@@ -55,7 +55,6 @@ class EmployeeForm
                                             ->columnSpanFull()
                                             ->schema([
                                                 TextInput::make('name')->label(__('lang.full_name'))
-
                                                     ->dehydrateStateUsing(fn($state) => preg_replace('/\s+/u', ' ', trim((string) $state)))
                                                     ->rules(['string'])
                                                     ->rule(fn() => function (string $attribute, $value, \Closure $fail) {
@@ -138,6 +137,14 @@ class EmployeeForm
                                                         }
                                                     })
                                                     ->columnSpan(1)->required(),
+                                                TextInput::make('known_name')
+                                                    ->label(__('lang.known_name'))
+                                                    ->helperText(__('lang.known_name_description'))
+                                                    ->hint(__('lang.known_name_hint'))
+                                                    ->placeholder(__('lang.known_name_example'))
+                                                    ->unique(ignoreRecord: true)
+                                                    ->nullable()
+                                                    ->columnSpan(1),
                                                 TextInput::make('email')
                                                     ->label(__('lang.email'))
                                                     ->email()
@@ -159,8 +166,8 @@ class EmployeeForm
                                                         0 => __('lang.female'),
                                                     ])
                                                     ->required(),
-                                
- 
+
+
                                                 Select::make('nationality')
                                                     ->label(__('lang.nationality'))->live()
                                                     // ->required()
