@@ -530,9 +530,7 @@ if (!function_exists('settingWithDefault')) {
 if (!function_exists('getNationalities')) {
     function getNationalities(): array
     {
-        $path = file_exists(storage_path('app/data/nationalities.json'))
-            ? storage_path('app/data/nationalities.json')
-            : public_path('data/nationalities.json');
+        $path = public_path('data/nationalities.json');
 
         $nationalities = [];
 
@@ -540,7 +538,7 @@ if (!function_exists('getNationalities')) {
             $data = json_decode(file_get_contents($path), true);
             foreach ($data as $item) {
                 if ($item['active']) {
-                    $nationalities[$item['code']] = $item['name']['en']; // Change 'en' to your app's default language if needed
+                    $nationalities[$item['code']] = $item['name']['en'];
                 }
             }
         }
@@ -551,9 +549,7 @@ if (!function_exists('getNationalities')) {
 if (!function_exists('getNationalitiesAsCountries')) {
     function getNationalitiesAsCountries(): array
     {
-        $path = file_exists(storage_path('app/data/nationalities.json'))
-            ? storage_path('app/data/nationalities.json')
-            : public_path('data/nationalities.json');;
+        $path = public_path('data/nationalities.json');
 
         $nationalities = [];
 
@@ -561,7 +557,7 @@ if (!function_exists('getNationalitiesAsCountries')) {
             $data = json_decode(file_get_contents($path), true);
             foreach ($data as $item) {
                 if ($item['active']) {
-                    $nationalities[$item['code']] = $item['country']['en']; // Change 'en' to your app's default language if needed
+                    $nationalities[$item['code']] = $item['country']['en'];
                 }
             }
         }
