@@ -76,8 +76,8 @@ class UpdateWorkDuration
         $checkInTime = Carbon::parse($checkIn->real_check_date . ' ' . $checkIn->check_time);
         $checkOutTime = Carbon::parse($record->real_check_date . ' ' . $record->check_time);
 
-        $minutes = $checkInTime->diffInMinutes($checkOutTime);
-        $record->actual_duration_hourly = $this->formatMinutes($minutes);
+        $seconds = $checkInTime->diffInSeconds($checkOutTime);
+        $record->actual_duration_hourly = $this->formatDuration($seconds);
     }
 
     /**
@@ -93,44 +93,51 @@ class UpdateWorkDuration
             $record->id
         );
 
-        $totalMinutes = 0;
+        $totalSeconds = 0;
 
         // جمع مدد الخروجات السابقة
         foreach ($checkouts as $checkout) {
-            $totalMinutes += $this->parseMinutes($checkout->actual_duration_hourly);
+            $totalSeconds += $this->parseDuration($checkout->actual_duration_hourly);
         }
 
         // إضافة مدة السجل الحالي
-        $totalMinutes += $this->parseMinutes($record->actual_duration_hourly);
+        $totalSeconds += $this->parseDuration($record->actual_duration_hourly);
 
-        $record->total_actual_duration_hourly = $this->formatMinutes($totalMinutes);
+        $record->total_actual_duration_hourly = $this->formatDuration($totalSeconds);
     }
 
     /**
-     * تنسيق الدقائق إلى صيغة HH:MM
+     * تنسيق الثواني إلى صيغة HH:MM:SS
      */
-    private function formatMinutes(int $minutes): string
+    private function formatDuration(int $totalSeconds): string
     {
-        $hours = floor($minutes / 60);
-        $mins = $minutes % 60;
-        return sprintf('%02d:%02d', $hours, $mins);
+        $hours = floor($totalSeconds / 3600);
+        $minutes = floor(($totalSeconds % 3600) / 60);
+        $seconds = $totalSeconds % 60;
+
+        return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
     }
 
     /**
-     * تحويل صيغة HH:MM إلى دقائق
+     * تحويل صيغة HH:MM:SS أو HH:MM إلى ثواني
      */
-    private function parseMinutes(?string $duration): int
+    private function parseDuration(?string $duration): int
     {
         if (!$duration) {
             return 0;
         }
 
         $parts = explode(':', $duration);
+        $count = count($parts);
 
-        if (count($parts) < 2) {
-            return 0;
+        if ($count === 3) {
+            // HH:MM:SS
+            return ((int) $parts[0] * 3600) + ((int) $parts[1] * 60) + (int) $parts[2];
+        } elseif ($count === 2) {
+            // HH:MM (backwards compatibility)
+            return ((int) $parts[0] * 3600) + ((int) $parts[1] * 60);
         }
 
-        return ((int) $parts[0] * 60) + (int) $parts[1];
+        return 0;
     }
 }
