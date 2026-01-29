@@ -50,6 +50,15 @@ class AttendanceDeductionCalculator
         $missingHoursDeduction = $this->round($missingHours * $rates->hourlyRate);
         $earlyDepartureDeduction = $this->round($earlyDepartureHours * $rates->hourlyRate);
 
+        // تطبيق الاستثناءات من ملف الموظف
+        if ($context->employee->discount_exception_if_absent) {
+            $absenceDeduction = 0.0;
+        }
+
+        if ($context->employee->discount_exception_if_attendance_late) {
+            $lateDeduction = 0.0;
+        }
+
         return new DeductionResult(
             absenceDeduction: $absenceDeduction,
             lateDeduction: $lateDeduction,
