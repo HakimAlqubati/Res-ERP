@@ -196,6 +196,7 @@ class EmployeeApplicationResource extends Resource
                         'date_time'        => $data['request_check_date'] . ' ' . $data['request_check_time'],
                         'type'             => Attendance::CHECKTYPE_CHECKOUT,
                         'attendance_type'  => Attendance::ATTENDANCE_TYPE_REQUEST,
+                        'skip_duplicate_timestamp_check' => true,
                     ];
 
                     $result = app(AttendanceService::class)->handle($validated);
@@ -547,6 +548,7 @@ class EmployeeApplicationResource extends Resource
                         'date_time' => $data['request_check_date'] . ' ' . $data['request_check_time'],
                         'type' =>  Attendance::CHECKTYPE_CHECKIN,
                         'attendance_type' => Attendance::ATTENDANCE_TYPE_REQUEST,
+                        'skip_duplicate_timestamp_check' => true,
                     ];
 
                     // Add period_id if selected

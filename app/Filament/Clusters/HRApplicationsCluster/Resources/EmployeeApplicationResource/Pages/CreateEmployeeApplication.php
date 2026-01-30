@@ -204,7 +204,7 @@ class CreateEmployeeApplication extends CreateRecord
         }
 
         if ($data['application_type_id'] == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST) {
-            $attendances = $employee->attendancesByDate($this->data['missedCheckoutRequest']['detail_date'])->where('check_type', Attendance::CHECKTYPE_CHECKOUT)->get();
+            // $attendances = $employee->attendancesByDate($this->data['missedCheckoutRequest']['detail_date'])->where('check_type', Attendance::CHECKTYPE_CHECKOUT)->get();
 
             // if (count($attendances) == 0) {
             //     Notification::make()->body('Employee has not checked in today.(' . $this->data['missedCheckoutRequest']['detail_date'] . ')')->warning()->send();
@@ -213,15 +213,15 @@ class CreateEmployeeApplication extends CreateRecord
             //     ]);
             // }
 
-            if (count($attendances) > 0) {
-                $lastAttendance = $attendances->last();
-                if ($lastAttendance && $lastAttendance->check_type === Attendance::CHECKTYPE_CHECKOUT) {
-                    Notification::make()->body('Employee has already checked out today.(' . $this->data['missedCheckoutRequest']['detail_date'] . ')')->warning()->send();
-                    throw ValidationException::withMessages([
-                        'application_date' => 'Employee has already checked out today.(' . $this->data['missedCheckoutRequest']['detail_date'] . ')',
-                    ]);
-                }
-            }
+            // if (count($attendances) > 0) {
+            //     $lastAttendance = $attendances->last();
+            //     if ($lastAttendance && $lastAttendance->check_type === Attendance::CHECKTYPE_CHECKOUT) {
+            //         Notification::make()->body('Employee has already checked out today.(' . $this->data['missedCheckoutRequest']['detail_date'] . ')')->warning()->send();
+            //         throw ValidationException::withMessages([
+            //             'application_date' => 'Employee has already checked out today.(' . $this->data['missedCheckoutRequest']['detail_date'] . ')',
+            //         ]);
+            //     }
+            // }
         }
 
         $data['application_type_id'] = $data['application_type_id'];

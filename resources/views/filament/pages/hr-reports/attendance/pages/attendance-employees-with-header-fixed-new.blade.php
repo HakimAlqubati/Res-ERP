@@ -67,6 +67,10 @@
         .cursor-pointer {
             cursor: pointer;
         }
+
+        .emp_name {
+            padding: 0 3px 0 3px;
+        }
     </style>
 
     @if (!empty($branch_id))
@@ -84,25 +88,31 @@
             <tr class="header_report">
                 <th colspan="3"
                     class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }} company-info">
-                    {{-- <p>{{ 'Attendance employees report' }}</p> --}}
                     <div style="width: 100%;">
-
                         <img style="display: inline-block;"
                             src="{{ asset('/storage/' . setting('company_logo') . '') }}" alt="Company Logo"
                             class="logo-left">
                     </div>
                 </th>
-                <th colspan="3" class="no_border_right_left">
+                <th colspan="4" class="no_border_right_left" style="text-align: center; vertical-align: middle;">
+                    <div style="width: 100%;">
+                        <p style="font-size: 16px; font-weight: bold; margin-bottom: 5px;">
+                            {{ __('Attendance Report') }}
+                        </p>
+                        <p style="font-size: 14px; margin: 3px 0;">
+                            (
 
-                    <div style="width: 100;">
+                            {{ $branch_id == '' ? __('All Branches') : \App\Models\Branch::find($branch_id)?->name }}
+                            )
 
-                        <p>
-                            {{ $branch_id == '' ? ' ( All Branches ) ' : \App\Models\Branch::find($branch_id)?->name }}
+
+                        </p>
+                        <p style="font-size: 14px; margin: 3px 0;">
+                            {{ $date ?? '-' }}
                         </p>
                     </div>
-
                 </th>
-                <th colspan="4" style="text-align: center; vertical-align: middle; padding:12px;"
+                <th colspan="3" style="text-align: center; vertical-align: middle; padding:12px;"
                     class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">
                     <img class="circle-image" src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="">
                 </th>
@@ -124,14 +134,14 @@
                 <th class="internal_cell">{{ __('To') }}</th>
                 <th class="internal_cell">{{ __('Check-in') }}</th>
                 <!-- Sortable columns with up and down arrows -->
-                <th class="internal_cell cursor-pointer" onclick="sortTable('checkin_status')">
+                <th class="internal_cell">
                     {{ __('Status') }}
-                    <span id="checkin_status-arrow" class="arrow-icon">&#x2195;</span> <!-- Arrow for Check-in -->
+                    <!-- <span id="checkin_status-arrow" class="arrow-icon">&#x2195;</span> Arrow for Check-in -->
                 </th>
                 <th class="internal_cell">{{ __('Check-out') }}</th>
-                <th class="internal_cell cursor-pointer" onclick="sortTable('checkout_status')">
+                <th class="internal_cell">
                     {{ __('Status') }}
-                    <span id="checkout_status-arrow" class="arrow-icon">&#x2195;</span> <!-- Arrow for Check-out -->
+                    <!-- <span id="checkout_status-arrow" class="arrow-icon">&#x2195;</span> Arrow for Check-out -->
                 </th>
 
                 <th class="internal_cell">{{ __('Supposed') }}</th>
@@ -151,7 +161,7 @@
 
             <tr>
                 <td>
-                    <strong>{{ $emp['name'] }}</strong>
+                    <p class="emp_name">{{ $emp['name'] }}</p>
                 </td>
                 @if ($status === 'leave')
                 <td colspan="9" class="text-center text-gray-500 font-bold">
@@ -184,11 +194,17 @@
                             <td
                                 class="internal_cell">{{ $checkin['check_time'] ?? '-' }}</td>
                             <td
-                                class="internal_cell">{{ $checkin['status'] ?? '-' }}</td>
+                                class="internal_cell">
+
+                                {{$checkin['status']??'-'}}
+                            </td>
                             <td
                                 class="internal_cell">{{ $lastcheckout['check_time'] ?? '-' }}</td>
                             <td
-                                class="internal_cell">{{ $checkout['status'] ?? '-' }}</td>
+                                class="internal_cell">
+
+                                {{$checkout['status']??'-'}}
+                            </td>
 
                             <td
                                 class="internal_cell">{{ $lastcheckout['supposed_duration_hourly'] ?? '-' }}</td>

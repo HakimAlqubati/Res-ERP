@@ -241,7 +241,8 @@
                 </td>
 
                 <td>
-                    {{ $lastCheckoutStatus }}
+
+                    {{$lastCheckoutStatus}}
                 </td>
 
                 <td>
