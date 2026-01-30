@@ -42,77 +42,116 @@ class StockAdjustmentService
 
     /**
      * Create adjustment from a single StockInventoryDetail
+     * Logic matches Filament DetailsRelationManager exactly
      *
      * @param int $detailId
-     * @param array $additionalData
+     * @param array $data Must contain: quantity, product_id, unit_id, package_size, store_id, reason_id, notes (optional)
      * @return StockAdjustmentDetail
-     * @throws Exception
      */
     public function createFromInventoryDetail(int $detailId, array $data = []): StockAdjustmentDetail
     {
         return DB::transaction(function () use ($detailId, $data) {
-            $detail = \App\Models\StockInventoryDetail::with(['inventory', 'product', 'unit'])->findOrFail($detailId);
+            $detail = \App\Models\StockInventoryDetail::with(['inventory'])->findOrFail($detailId);
 
-            if ($detail->is_adjustmented) {
-                throw new Exception('This inventory detail has already been adjusted.');
+            // Get quantity from data (like Filament - already calculated difference)
+            $quantity = (float) ($data['quantity'] ?? 0);
+
+            // Determine adjustment type based on quantity sign (like Filament)
+            $defaultAdjustmentType = StockAdjustmentDetail::ADJUSTMENT_TYPE_EQUAL;
+            if ($quantity < 0) {
+                $defaultAdjustmentType = StockAdjustmentDetail::ADJUSTMENT_TYPE_DECREASE;
+            } elseif ($quantity > 0) {
+                $defaultAdjustmentType = StockAdjustmentDetail::ADJUSTMENT_TYPE_INCREASE;
             }
 
-            // Update detail with latest counts if provided
-            if (isset($data['physical_quantity'])) {
-                $detail->physical_quantity = $data['physical_quantity'];
-            }
-            if (isset($data['unit_id'])) {
-                $detail->unit_id = $data['unit_id'];
-            }
-
-            // Recalculate difference
-            $detail->difference = (float) ($detail->physical_quantity ?? 0) - (float) ($detail->system_quantity ?? 0);
-            $detail->save();
-
-            $diff = (float) $detail->difference;
-
-            $type = StockAdjustmentDetail::ADJUSTMENT_TYPE_EQUAL;
-            if ($diff > 0) {
-                $type = StockAdjustmentDetail::ADJUSTMENT_TYPE_INCREASE;
-            } elseif ($diff < 0) {
-                $type = StockAdjustmentDetail::ADJUSTMENT_TYPE_DECREASE;
-            }
-
-            $adjustmentData = [
-                'product_id' => $detail->product_id,
-                'unit_id' => $detail->unit_id,
-                'package_size' => $detail->package_size,
-                'quantity' => abs($diff),
-                'adjustment_type' => $type,
-                'adjustment_date' => $detail->inventory->inventory_date ?? now(),
-                'store_id' => $detail->inventory->store_id,
-                'notes' => $data['notes'] ?? "Stock adjustment based on Stock Inventory #{$detail->stock_inventory_id}",
+            // Create StockAdjustmentDetail (like Filament)
+            $stockAdjustment = StockAdjustmentDetail::create([
+                'product_id' => $data['product_id'] ?? $detail->product_id,
+                'unit_id' => $data['unit_id'] ?? $detail->unit_id,
+                'quantity' => abs($quantity),
+                'package_size' => $data['package_size'] ?? $detail->package_size,
+                'notes' => $data['notes'] ?? null,
+                'store_id' => $data['store_id'] ?? $detail->inventory->store_id,
                 'reason_id' => $data['reason_id'] ?? null,
+                'adjustment_type' => $defaultAdjustmentType,
+                'created_by' => auth()->id(),
+                'adjustment_date' => now(),
                 'source_id' => $detail->stock_inventory_id,
                 'source_type' => StockInventory::class,
-                'created_by' => auth()->id(),
-            ];
+            ]);
 
-            $adjustmentRecord = $this->repository->create($adjustmentData);
+            // Create Inventory Transaction (like Filament)
+            if ($quantity != 0) {
+                // Load relationships for notes
+                $stockAdjustment->loadMissing(['product', 'unit', 'store']);
 
-            // Mark detail as adjusted
-            $detail->update(['is_adjustmented' => true]);
+                $notes = "Stock adjustment for product ({$stockAdjustment->product->name}) "
+                    . "in unit '{$stockAdjustment->unit->name}' at store '{$stockAdjustment->store->name}', "
+                    . "adjusted by " . auth()->user()?->name . " on " . now()->format('Y-m-d H:i');
 
-            // Create Inventory Transaction only if there is a difference
-            if ($diff != 0) {
-                $this->createInventoryTransaction($adjustmentRecord);
+                $type = $quantity > 0
+                    ? InventoryTransaction::MOVEMENT_IN
+                    : InventoryTransaction::MOVEMENT_OUT;
+
+                if ($type == InventoryTransaction::MOVEMENT_IN) {
+                    InventoryTransaction::create([
+                        'product_id' => $stockAdjustment->product_id,
+                        'movement_type' => InventoryTransaction::MOVEMENT_IN,
+                        'quantity' => abs($quantity),
+                        'unit_id' => $stockAdjustment->unit_id,
+                        'movement_date' => now(),
+                        'transaction_date' => now(),
+                        'package_size' => $stockAdjustment->package_size,
+                        'store_id' => $stockAdjustment->store_id,
+                        'price' => getUnitPrice($stockAdjustment->product_id, $stockAdjustment->unit_id),
+                        'notes' => $notes,
+                        'transactionable_id' => $stockAdjustment->id,
+                        'transactionable_type' => StockAdjustmentDetail::class,
+                    ]);
+                } else {
+                    // Use FIFO for decrease (like Filament)
+                    $fifoService = new FifoMethodService($stockAdjustment);
+                    $allocations = $fifoService->getAllocateFifo(
+                        $stockAdjustment->product_id,
+                        $stockAdjustment->unit_id,
+                        abs($quantity),
+                        $stockAdjustment->store_id
+                    );
+
+                    foreach ($allocations as $alloc) {
+                        InventoryTransaction::create([
+                            'product_id' => $stockAdjustment->product_id,
+                            'movement_type' => InventoryTransaction::MOVEMENT_OUT,
+                            'quantity' => $alloc['deducted_qty'],
+                            'unit_id' => $alloc['target_unit_id'],
+                            'package_size' => $alloc['target_unit_package_size'],
+                            'price' => $alloc['price_based_on_unit'],
+                            'movement_date' => now(),
+                            'transaction_date' => now(),
+                            'store_id' => $stockAdjustment->store_id,
+                            'notes' => $alloc['notes'] ?? $notes,
+                            'transactionable_id' => $stockAdjustment->id,
+                            'transactionable_type' => StockAdjustmentDetail::class,
+                            'source_transaction_id' => $alloc['transaction_id'],
+                        ]);
+                    }
+                }
             }
 
-            // Check if all details are adjusted to finalize parent inventory
+            // Mark detail as adjusted (like Filament - only is_adjustmented)
+            $detail->update(['is_adjustmented' => true]);
+
+            // Finalize the inventory if all details adjusted (like Filament)
             $inventory = $detail->inventory;
             if ($inventory) {
                 $allAdjusted = $inventory->details()->where('is_adjustmented', false)->count() === 0;
                 if ($allAdjusted) {
-                    $inventory->update(['finalized' => true]);
+                    $inventory->finalized = true;
+                    $inventory->save();
                 }
             }
 
-            return $adjustmentRecord;
+            return $stockAdjustment;
         });
     }
 
@@ -164,7 +203,13 @@ class StockAdjustmentService
      */
     protected function createInventoryTransaction(StockAdjustmentDetail $adjustment): void
     {
-        $notes = $adjustment->notes ?? "Stock adjustment ({$adjustment->adjustment_type}) ID: {$adjustment->id}";
+        // Load relationships if not loaded
+        $adjustment->loadMissing(['product', 'unit', 'store']);
+
+        // Build notes like Filament format
+        $notes = $adjustment->notes ?? ("Stock adjustment for product ({$adjustment->product->name}) "
+            . "in unit '{$adjustment->unit->name}' at store '{$adjustment->store->name}', "
+            . "adjusted by " . auth()->user()?->name . " on " . now()->format('Y-m-d H:i'));
 
         $movementType = $adjustment->adjustment_type === 'increase'
             ? InventoryTransaction::MOVEMENT_IN
@@ -180,6 +225,7 @@ class StockAdjustmentService
                 'transaction_date' => now(),
                 'package_size' => $adjustment->package_size,
                 'store_id' => $adjustment->store_id,
+                'price' => getUnitPrice($adjustment->product_id, $adjustment->unit_id),
                 'notes' => $notes,
                 'transactionable_id' => $adjustment->id,
                 'transactionable_type' => StockAdjustmentDetail::class,

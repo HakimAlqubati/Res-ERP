@@ -66,7 +66,8 @@ class StockAdjustmentController extends Controller
     }
 
     /**
-     * Store a manual stock adjustment.
+     * Store a stock adjustment from inventory detail.
+     * Accepts quantity (positive for increase, negative for decrease)
      *
      * @param Request $request
      * @return JsonResponse
@@ -78,7 +79,9 @@ class StockAdjustmentController extends Controller
                 'stock_inventory_detail_id' => 'required|exists:stock_inventory_details,id',
                 'product_id' => 'required|exists:products,id',
                 'unit_id' => 'required|exists:units,id',
-                'physical_quantity' => 'required|numeric|min:0',
+                'quantity' => 'required|numeric', // Can be positive (increase) or negative (decrease)
+                'package_size' => 'nullable|numeric|min:0',
+                'store_id' => 'nullable|exists:stores,id',
                 'reason_id' => 'nullable|exists:stock_adjustment_reasons,id',
                 'notes' => 'nullable|string',
             ]);
