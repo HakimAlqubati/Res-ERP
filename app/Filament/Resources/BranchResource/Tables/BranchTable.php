@@ -257,7 +257,7 @@ class BranchTable
                                 ->danger()
                                 ->send();
                         }
-                    }),
+                    })->hidden(),
                 EditAction::make(),
                 DeleteAction::make(),
                 RestoreAction::make(),
