@@ -433,13 +433,13 @@ class AttendnaceResource extends Resource
                     })->hidden(),
                 ViewAction::make(),
                 DeleteAction::make(),
-                ForceDeleteAction::make(),
+                // ForceDeleteAction::make(),
                 RestoreAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
-                    ForceDeleteBulkAction::make(),
+                    // ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),
                 ]),
             ]);
