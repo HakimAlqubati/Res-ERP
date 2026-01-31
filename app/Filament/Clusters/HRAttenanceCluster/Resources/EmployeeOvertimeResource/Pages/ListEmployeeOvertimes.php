@@ -16,6 +16,7 @@ class ListEmployeeOvertimes extends ListRecords
         return [
             CreateAction::make()
             ->label('Manage Staff Overtime')
+            ->hidden(fn()=>isBranchUser())
             ,
         ];
     }
