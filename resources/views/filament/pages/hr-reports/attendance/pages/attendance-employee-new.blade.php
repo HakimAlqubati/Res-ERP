@@ -229,6 +229,10 @@
                 <td colspan="8">
                     {{ __('lang.absent') }}
                 </td>
+                @elseif ($period['final_status'] == 'future')
+                <td colspan="8">
+                    {{ '-' }}
+                </td>
                 @else
                 <td>
                     {{ $firstCheckin }}

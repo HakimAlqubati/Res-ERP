@@ -182,10 +182,14 @@
                         $lastcheckout = $item['attendances']['checkout']['lastcheckout'] ?? null;
                         @endphp
                         <tr>
-                            @if ($item['final_status'] == 'absent')
+                            @if ($item['final_status'] == 'absent' )
                             <td class="internal_cell">{{ $item['start_time'] ?? '-' }}</td>
                             <td class="internal_cell">{{ $item['end_time'] ?? '-' }}</td>
                             <td colspan="7" class="text-center">{{ __('Absent') }}</td>
+                            @elseif ($item['final_status'] == 'future')
+                            <td colspan="7" class="internal_cell">
+                            <p>-</p>    {{ '' }}
+                            </td>
                             @else
                             <td
                                 class="internal_cell">{{ $item['start_time'] ?? '-' }}</td>
