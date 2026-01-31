@@ -1,4 +1,5 @@
-<?php 
+<?php
+
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -13,6 +14,7 @@ class CheckInAttendanceResource extends JsonResource
             'delay_minutes'         => $this->delay_minutes,
             'early_arrival_minutes' => $this->early_arrival_minutes,
             'status'                => $this->status,
+            'status_label'          => \App\Models\Attendance::getStatusLabel($this->status),
             // حقول أخرى تخص الدخول فقط
         ];
     }

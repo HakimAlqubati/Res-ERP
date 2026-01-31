@@ -195,11 +195,13 @@
             // أول دخول
             $firstCheckin = $checkIns[0]['check_time'] ?? '-';
             $firstCheckinStatus = $checkIns[0]['status'] ?? '-';
+            $firstCheckinStatusLabel = $checkIns[0]['status_label'] ?? '-';
 
             // آخر خروج (باستخدام lastcheckout حصراً)
             $lastCheckout = $period['attendances']['checkout']['lastcheckout']['check_time'] ?? '-';
             $lastCheckoutStatus =
             $period['attendances']['checkout']['lastcheckout']['status'] ?? '-';
+            $lastCheckoutStatusLabel = $period['attendances']['checkout']['lastcheckout']['status_label'] ?? '-';
             @endphp
 
             <tr>
@@ -233,7 +235,9 @@
                 </td>
 
                 <td>
-                    {{ $firstCheckinStatus }}
+                    {{ /*$firstCheckinStatus */
+                    $firstCheckinStatusLabel
+                    }}
                 </td>
 
                 <td>
@@ -242,7 +246,7 @@
 
                 <td>
 
-                    {{$lastCheckoutStatus}}
+                    {{$lastCheckoutStatusLabel}}
                 </td>
 
                 <td>
