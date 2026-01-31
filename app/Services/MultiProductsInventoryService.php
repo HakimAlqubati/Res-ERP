@@ -72,7 +72,7 @@ class MultiProductsInventoryService
         $report = [];
         foreach ($products as $product) {
             $report = $this->getInventoryForProduct($product->id);
-            $reportArr[] = $this->getInventoryForProduct($product->id);
+            $reportArr[] = $report;
         }
         // dd($products, $report, $reportArr);
         return [

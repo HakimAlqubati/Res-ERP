@@ -10,6 +10,8 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Throwable;
+use App\Jobs\ZeroStoreStockJob;
+use Illuminate\Support\Facades\Auth;
 use Filament\Notifications\Notification;
 use Filament\Actions\EditAction;
 use Filament\Actions\DeleteAction;
@@ -52,7 +54,7 @@ class BranchTable
                 TextColumn::make('user.name')->label(__('lang.branch_manager'))->toggleable(),
                 TextColumn::make('category_names')->label(__('stock.customized_manufacturing_categories'))->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('user.email')->label('Email')->copyable()->toggleable(),
- 
+
                 TextColumn::make('start_date')
                     ->label(__('lang.start_date'))
                     ->dateTime('Y-m-d')
@@ -227,6 +229,36 @@ class BranchTable
                             ->title(__('Updated successfully'))
                             ->success()
                             ->send();
+                    }),
+                Action::make('zero_stock')
+                    ->label(__('stock.zero_stock'))
+                    ->icon('heroicon-o-archive-box-x-mark')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading(__('stock.zero_stock_heading'))
+                    ->modalDescription(fn($record) => __('stock.zero_stock_confirmation', ['branch' => $record->name]))
+                    ->visible(fn(Model $record) => (bool)$record->store_id && isSuperAdmin())
+                    ->action(function (Model $record) {
+                        try {
+                            ZeroStoreStockJob::dispatch(
+                                $record->store_id,
+                                null,
+                                null,
+                                Auth::id(),
+                                true // forced
+                            );
+
+                            Notification::make()
+                                ->title(__('stock.zero_stock_started'))
+                                ->info()
+                                ->send();
+                        } catch (Throwable $e) {
+                            Notification::make()
+                                ->title(__('stock.zero_stock_failed'))
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
                     }),
                 EditAction::make(),
                 DeleteAction::make(),

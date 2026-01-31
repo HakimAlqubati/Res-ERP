@@ -10,4 +10,10 @@ return [
     'customized_manufacturing_categories' => 'فئات التصنيع المخصصة',
     'remaining_quantity' => 'الكمية المتبقية',
     'qty_in_stock' => 'الكمية المتوفرة',
+    'zero_stock' => 'تصفير المخزن',
+    'zero_stock_heading' => 'تصفير كافة الكميات في المخزن',
+    'zero_stock_confirmation' => 'هل أنت متأكد من رغبتك في تصفير كافة الكميات في مخزن فرع: :branch؟ لا يمكن التراجع عن هذه العملية.',
+    'zero_stock_success' => 'تم تصفير المخزن بنجاح. تم تصفير :count صنف.',
+    'zero_stock_started' => 'بدأت عملية تصفير المخزن في الخلفية، سيتم تصفير كافة الأصناف تدريجياً.',
+    'zero_stock_failed' => 'فشلت عملية تصفير المخزن.',
 ];

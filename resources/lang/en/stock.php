@@ -10,4 +10,10 @@ return [
     'customized_manufacturing_categories' => 'Customized manufacturing categories',
     'remaining_quantity' => 'Remaining Quantity',
     'qty_in_stock' => 'Qty in Stock',
+    'zero_stock' => 'Zero Stock',
+    'zero_stock_heading' => 'Zero Out All Stock',
+    'zero_stock_confirmation' => 'Are you sure you want to zero out all stock in the store of branch: :branch? This action cannot be undone.',
+    'zero_stock_success' => 'Stock zeroed out successfully. :count items zeroed.',
+    'zero_stock_started' => 'Stock zeroing has started in the background. All items will be zeroed out gradually.',
+    'zero_stock_failed' => 'Failed to zero out stock.',
 ];

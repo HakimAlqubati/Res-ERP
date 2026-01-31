@@ -3,12 +3,15 @@
 namespace App\Services\Inventory\StockAdjustment;
 
 use App\Models\InventoryTransaction;
+use App\Models\StockAdjustment;
 use App\Models\StockAdjustmentDetail;
 use App\Models\StockInventory;
 use App\Repositories\Inventory\StockAdjustment\Contracts\StockAdjustmentRepositoryInterface;
 use App\Services\FifoMethodService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Jobs\ZeroStoreStockJob;
 use Exception;
 
 class StockAdjustmentService
@@ -283,6 +286,186 @@ class StockAdjustmentService
                 ->delete();
 
             return $this->repository->delete($id);
+        });
+    }
+    /**
+     * Dispatch a job to zero out all stock in a specific store
+     *
+     * @param int $storeId
+     * @param int|null $reasonId
+     * @param string|null $notes
+     * @param bool $forced Whether to use direct transaction zeroing (bypasses aggregate FIFO checks)
+     * @return void
+     */
+    public function zeroStoreStock(int $storeId, ?int $reasonId = null, ?string $notes = null, bool $forced = true): void
+    {
+        ZeroStoreStockJob::dispatch($storeId, $reasonId, $notes, Auth::id(), $forced);
+    }
+
+    /**
+     * Logic to zero out stock by closing individual batches (Bypasses aggregate mismatches)
+     *
+     * @param int $storeId
+     * @param int|null $reasonId
+     * @param string|null $notes
+     * @return int Number of batches closed
+     */
+    public function processZeroStoreStockDirect(int $storeId, ?int $reasonId = null, ?string $notes = null): int
+    {
+        $output = new \Symfony\Component\Console\Output\ConsoleOutput();
+        $output->writeln("\n<info>==================================================</info>");
+        $output->writeln("<info>🚀 تصفير آلي للمخزون - Store ID: {$storeId}</info>");
+        $output->writeln("<info>==================================================</info>");
+
+        return DB::transaction(function () use ($storeId, $reasonId, $notes, $output) {
+            // Optimize: Only fetch products that actually have a balance in this store
+            $productIdsWithStock = InventoryTransaction::where('store_id', $storeId)
+                ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+                ->where('remaining_quantity', '>', 0)
+                ->distinct()
+                ->pluck('product_id')
+                ->toArray();
+
+            $inventoryService = new \App\Services\MultiProductsInventoryService(
+                null,
+                null,
+                'all',
+                $storeId,
+                true // filterOnlyAvailable
+            );
+            $inventoryService->productIds = $productIdsWithStock;
+
+            // Fetch current stock from report (now only for relevant products)
+            $reportResult = $inventoryService->getInventoryReport();
+            $reportData = $reportResult['report'] ?? [];
+            $totalProducts = count($reportData);
+
+            $output->writeln("<comment>📊 جاري تصفير {$totalProducts} صنف متبقي في المخزون...</comment>");
+
+            if ($totalProducts === 0) {
+                $output->writeln("<info>✅ المخزن صفر بالفعل. لا توجد حركات مطلوبة.</info>");
+                return 0;
+            }
+
+            $closedCount = 0;
+            foreach ($reportData as $productUnits) {
+                if (empty($productUnits)) continue;
+
+                // Find the unit with the smallest package_size (base unit)
+                $baseUnit = collect($productUnits)->sortBy('package_size')->first();
+
+                if ($baseUnit && $baseUnit['remaining_qty'] > 0) {
+                    $productId = $baseUnit['product_id'];
+                    $qtyToZero = (float)$baseUnit['remaining_qty'];
+
+                    // 1. Create one balancing OUT transaction
+                    InventoryTransaction::create([
+                        'product_id'            => $productId,
+                        'movement_type'         => InventoryTransaction::MOVEMENT_OUT,
+                        'quantity'              => $qtyToZero,
+                        'unit_id'               => $baseUnit['unit_id'],
+                        'package_size'          => $baseUnit['package_size'],
+                        'price'                 => $baseUnit['price'] ?? 0,
+                        'movement_date'         => now(),
+                        'transaction_date'      => now(),
+                        'store_id'              => $storeId,
+                        'notes'                 => 'تصفير آلي للمخزون',
+                        'transactionable_id'    => 0,
+                        'transactionable_type'  => 'AutoZero',
+                    ]);
+
+                    // 2. Mass-update all previous IN transactions to close them (FIFO integrity)
+                    InventoryTransaction::where('store_id', $storeId)
+                        ->where('product_id', $productId)
+                        ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+                        ->where('remaining_quantity', '>', 0)
+                        ->update(['remaining_quantity' => 0]);
+
+                    $closedCount++;
+                    if ($closedCount % 50 == 0 || $closedCount == $totalProducts) {
+                        $percentage = round(($closedCount / $totalProducts) * 100);
+                        $output->writeln("⏳ التقدم: [{$percentage}%] (تم تصفير {$closedCount} من {$totalProducts} صنف)");
+                    }
+                }
+            }
+
+            $output->writeln("<info>==================================================</info>");
+            $output->writeln("<info>✅ تم التصفير الآلي للمخزون بنجاح (إجمالي الأصناف: {$closedCount})</info>");
+            $output->writeln("<info>==================================================</info>\n");
+
+            return $closedCount;
+        });
+    }
+
+    /**
+     * Actual logic to zero out all stock in a specific store (Original FIFO method)
+     *
+     * @param int $storeId
+     * @param int|null $reasonId
+     * @param string|null $notes
+     * @return int Number of products zeroed out
+     * @throws Exception
+     */
+    public function processZeroStoreStock(int $storeId, ?int $reasonId = null, ?string $notes = null): int
+    {
+        $output = new \Symfony\Component\Console\Output\ConsoleOutput();
+        $output->writeln("\n<info>==================================================</info>");
+        $output->writeln("<info>🚀 Starting stock zeroing for Store ID: {$storeId}</info>");
+        $output->writeln("<info>==================================================</info>");
+
+        return DB::transaction(function () use ($storeId, $reasonId, $notes, $output) {
+            $inventoryService = new \App\Services\MultiProductsInventoryService(
+                null,
+                null,
+                'all',
+                $storeId,
+                true // filterOnlyAvailable
+            );
+
+            $report = $inventoryService->getInventoryReportWithPagination(5000)['reportData'];
+            $totalProducts = count($report);
+            $output->writeln("<comment>📊 Found {$totalProducts} products with remaining stock.</comment>");
+
+            if ($totalProducts === 0) {
+                $output->writeln("<info>✅ No products with stock found. Store is already empty.</info>");
+                return 0;
+            }
+
+            $zeroedCount = 0;
+            $processedCount = 0;
+
+            foreach ($report as $productData) {
+                $processedCount++;
+                foreach ($productData as $unitInfo) {
+                    $remainingQty = (float)($unitInfo['remaining_qty'] ?? 0);
+
+                    if ($remainingQty > 0) {
+                        $this->createManualAdjustment([
+                            'product_id'      => $unitInfo['product_id'],
+                            'store_id'        => $storeId,
+                            'unit_id'         => $unitInfo['unit_id'],
+                            'package_size'    => $unitInfo['package_size'],
+                            'quantity'        => $remainingQty,
+                            'adjustment_type' => 'decrease',
+                            'adjustment_date' => now(),
+                            'notes'           => $notes ?? 'تصفير آلي بغرض الجرد (Auto-zeroing for inventory purposes)',
+                            'reason_id'       => $reasonId,
+                        ]);
+                        $zeroedCount++;
+                    }
+                }
+
+                // Show progress percentage
+                $percentage = round(($processedCount / $totalProducts) * 100);
+                if ($processedCount % 50 == 0 || $processedCount == $totalProducts) {
+                    $output->writeln("⏳ Progress: [{$percentage}%] ({$processedCount}/{$totalProducts} products processed)");
+                }
+            }
+
+            $output->writeln("<info>==================================================</info>");
+            $output->writeln("<info>✅ Completed! Total zeroed product-unit records: {$zeroedCount}</info>");
+            $output->writeln("<info>==================================================</info>\n");
+            return $zeroedCount;
         });
     }
 }
