@@ -199,12 +199,11 @@ class EmployeeTable
 
                         return '(' . $state . ') docs of ' . EmployeeFileType::getCountByRequirement()['required_count'];
                     }),
-                ToggleColumn::make('active')
+                IconColumn::make('active')
                     ->label(__('lang.active'))
-                    // ->boolean()
-                    // ->getStateUsing(fn($record) => $record->active ?? true)
-                    // ✅ يعامل null كـ true
-
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-badge')
+                    ->falseIcon('heroicon-o-x-mark')
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('has_user')->boolean()
@@ -434,7 +433,7 @@ class EmployeeTable
                                     Notification::make()->title(__('lang.termination_rejected_successfully'))->success()->send();
                                     $action->close();
                                 }),
-                                // $action->cancel(),
+                            // $action->cancel(),
                         ]),
                     Action::make('createUser')
                         ->label(__('lang.create_user'))
