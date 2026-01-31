@@ -73,7 +73,7 @@ class EmployeeOvertimeResource extends Resource
         return static::getModel()::forBranchManager()
             ->when(isBranchUser(), function (Builder $query) {
                 $query->whereHas('employee', function (Builder $query) {
-                    $query->where('branch_id', auth()->user()->branch_id);
+                    $query->where('employee_id', auth()->user()->employee->id);
                 });
             })
             ->count();
@@ -84,7 +84,7 @@ class EmployeeOvertimeResource extends Resource
         return parent::getEloquentQuery()
             ->when(isBranchUser(), function (Builder $query) {
                 $query->whereHas('employee', function (Builder $query) {
-                    $query->where('branch_id', auth()->user()->branch_id);
+                    $query->where('employee_id', auth()->user()->employee->id);
                 });
             })
             ->forBranchManager()
