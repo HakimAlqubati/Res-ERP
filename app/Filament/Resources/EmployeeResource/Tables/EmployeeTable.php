@@ -46,6 +46,9 @@ use Filament\Actions\BulkAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Textarea;
+use App\Models\EmployeeServiceTermination;
 use Filament\Notifications\Notification;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Icons\Heroicon;
@@ -350,6 +353,89 @@ class EmployeeTable
 
 
                 ActionGroup::make([
+                    Action::make('terminateService')
+                        ->label(__('lang.terminate_service'))
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->visible(fn(Employee $record) => $record->active && !$record->serviceTermination()->where('status', 'pending')->exists())
+                        ->schema([
+                            DatePicker::make('termination_date')
+                                ->label(__('lang.termination_date'))
+                                ->required()
+                                ->default(now()),
+                            Textarea::make('termination_reason')
+                                ->label(__('lang.termination_reason'))
+                                ->required(),
+                            Textarea::make('notes')
+                                ->label(__('lang.notes')),
+                        ])
+                        ->databaseTransaction()
+                        ->action(function (Employee $record, array $data) {
+                            $record->serviceTermination()->create([
+                                'termination_date'   => $data['termination_date'],
+                                'termination_reason' => $data['termination_reason'],
+                                'notes'              => $data['notes'],
+                                'status'             => \App\Models\EmployeeServiceTermination::STATUS_PENDING,
+                            ]);
+
+                            Notification::make()
+                                ->title(__('lang.termination_request_created'))
+                                ->success()
+                                ->send();
+                        }),
+
+                    Action::make('manageTermination')
+                        ->label(__('lang.manage_termination'))
+                        ->icon('heroicon-o-clipboard-document-check')
+                        ->color('warning')
+                        ->visible(fn(Employee $record) => $record->serviceTermination()->where('status', 'pending')->exists())
+                        ->schema(fn(Employee $record) => [
+                            DatePicker::make('termination_date')
+                                ->label(__('lang.termination_date'))
+                                ->default($record->serviceTermination->termination_date)
+                                ->disabled(),
+                            Textarea::make('termination_reason')
+                                ->label(__('lang.termination_reason'))
+                                ->default($record->serviceTermination->termination_reason)
+                                ->disabled(),
+                            Textarea::make('notes')
+                                ->label(__('lang.notes'))
+                                ->default($record->serviceTermination->notes)
+                                ->disabled(),
+                        ])
+                        ->modalSubmitAction(false)
+                        ->modalFooterActions(fn(Employee $record, Action $action) => [
+                            Action::make('approve')
+                                ->label(__('lang.approve_termination'))
+                                ->color('success')
+                                ->requiresConfirmation()
+                                ->action(function () use ($record, $action) {
+                                    $record->serviceTermination->update([
+                                        'status'      => \App\Models\EmployeeServiceTermination::STATUS_APPROVED,
+                                        'approved_at' => now(),
+                                        'approved_by' => auth()->id(),
+                                    ]);
+                                    Notification::make()->title(__('lang.termination_approved_successfully'))->success()->send();
+                                    $action->close();
+                                }),
+                            Action::make('reject')
+                                ->label(__('lang.reject_termination'))
+                                ->color('danger')
+                                ->schema([
+                                    Textarea::make('rejection_reason')->required()->label(__('lang.rejection_reason'))
+                                ])
+                                ->action(function (array $data) use ($record, $action) {
+                                    $record->serviceTermination->update([
+                                        'status'           => \App\Models\EmployeeServiceTermination::STATUS_REJECTED,
+                                        'rejected_at'      => now(),
+                                        'rejected_by'      => auth()->id(),
+                                        'rejection_reason' => $data['rejection_reason'] ?? null
+                                    ]);
+                                    Notification::make()->title(__('lang.termination_rejected_successfully'))->success()->send();
+                                    $action->close();
+                                }),
+                                // $action->cancel(),
+                        ]),
                     Action::make('createUser')
                         ->label(__('lang.create_user'))
                         ->icon('heroicon-o-user-plus')
