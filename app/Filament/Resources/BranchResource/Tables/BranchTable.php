@@ -240,17 +240,15 @@ class BranchTable
                     ->visible(fn(Model $record) => (bool)$record->store_id && isSuperAdmin())
                     ->action(function (Model $record) {
                         try {
-                            ZeroStoreStockJob::dispatch(
-                                $record->store_id,
-                                null,
-                                null,
-                                Auth::id(),
-                                true // forced
-                            );
+                            \Illuminate\Support\Facades\DB::table('inventory_transactions')
+                                ->where('store_id', $record->store_id)
+                                // ->where('movement_type','in')
+                                ->whereNull('deleted_at')
+                                ->update(['deleted_at' => now()]);
 
                             Notification::make()
-                                ->title(__('stock.zero_stock_started'))
-                                ->info()
+                                ->title(__('stock.zero_stock_success', ['count' => '...']))
+                                ->success()
                                 ->send();
                         } catch (Throwable $e) {
                             Notification::make()
