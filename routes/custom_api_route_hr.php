@@ -55,6 +55,7 @@ Route::prefix('hr')
         Route::get('employeesAttendanceOnDate', [AttendanceController::class, 'employeesAttendanceOnDate']);
 
         Route::get('/attendancePlan', [AttendanceController::class, 'generate']);
+        Route::get('/absentEmployees', [AttendanceController::class, 'absentEmployees']);
 
         // Route::post('/attendance/plan/execute', [AttendancePlanController::class, 'execute'])->middleware('auth:api');
         Route::post('/faceRecognition', [AttendanceController::class, 'identifyEmployeeFromImage']);

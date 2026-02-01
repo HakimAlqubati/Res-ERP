@@ -52,6 +52,7 @@ class EmployeeAbsentsReportResource extends Resource
     {
         return $table
             ->emptyStateHeading(__('lang.no_data'))
+            ->deferFilters(false)
             ->columns([])
             ->filters([
                 SelectFilter::make('branch_id')->label(__('lang.branch'))->options(Branch::where('active', 1)
@@ -102,5 +103,5 @@ class EmployeeAbsentsReportResource extends Resource
         ];
     }
 
-    protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = true;
 }
