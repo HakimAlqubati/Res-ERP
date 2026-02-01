@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\Tables;
 
+use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\Actions\ServiceRequestActions;
 use App\Models\Branch;
 use App\Models\Equipment;
@@ -30,6 +31,7 @@ class ServiceRequestTable
             ->columns(static::getColumns())
             ->filters(static::getFilters(), layout: FiltersLayout::Modal)
             ->filtersFormColumns(4)
+            ->recordUrl(fn(ServiceRequest $record): string => ServiceRequestResource::getUrl('view', ['record' => $record]))
             ->recordActions(ServiceRequestActions::getRecordActions())
             ->toolbarActions([
                 BulkActionGroup::make([

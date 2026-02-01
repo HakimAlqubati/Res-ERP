@@ -75,6 +75,7 @@ class EmployeeTable
             ->paginated([10, 25, 50, 100])
 
             ->defaultSort('id', 'desc')
+            ->recordUrl(fn(Employee $record): string => EmployeeResource::getUrl('view', ['record' => $record]))
             ->columns([
                 SoftDeleteColumn::make(),
                 TextColumn::make('id')->label(__('lang.id'))->alignCenter()->toggleable(isToggledHiddenByDefault: true),

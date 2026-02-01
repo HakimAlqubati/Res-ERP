@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource\Tables;
 
+use App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource\Actions\EquipmentActions;
 use App\Models\Branch;
 use App\Models\BranchArea;
@@ -33,6 +34,7 @@ class EquipmentTable
             ->columns(static::getColumns())
             ->filters(static::getFilters(), layout: FiltersLayout::Modal)
             ->filtersFormColumns(4)
+            ->recordUrl(fn(Equipment $record): string => EquipmentResource::getUrl('view', ['record' => $record]))
             ->recordActions(static::getRecordActions())
             ->toolbarActions([
                 BulkActionGroup::make([
