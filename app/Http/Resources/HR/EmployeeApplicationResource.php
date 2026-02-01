@@ -12,6 +12,8 @@ class EmployeeApplicationResource extends JsonResource
             'id'                => $this->id,
             'employee'          => $this->employee?->name,
             'applicationTypeId' => $this->application_type_id,
+            'branch_id'         => $this->branch_id,
+            'branch_name'       => $this->branch?->name,
             'applicationType'   => $this->application_type_name,
             'applicationDate'   => $this->application_date,
             'status'            => $this->status,
