@@ -169,7 +169,7 @@
                 </td>
                 @elseif(empty($periods))
                 <td colspan="9" class="text-center text-gray-500 font-bold">
-                    {{ __('No work period') }}
+                    {{ __('No periods') }}
                 </td>
                 @else
                 <td colspan="9" style="padding:0;">
@@ -200,14 +200,14 @@
                             <td
                                 class="internal_cell">
 
-                                {{$checkin['status']??'-'}}
+                                {{$checkin['status_label']??'-'}}
                             </td>
                             <td
                                 class="internal_cell">{{ $lastcheckout['check_time'] ?? '-' }}</td>
                             <td
                                 class="internal_cell">
 
-                                {{$checkout['status']??'-'}}
+                                {{$checkout['status_label']??'-'}}
                             </td>
 
                             <td
