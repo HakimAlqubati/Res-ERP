@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Equipment Sticker</title>
+    <title>Equipment QR Code</title>
     <style>
         @page {
             size: 50mm 50mm;
@@ -14,19 +14,28 @@
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 2mm;
+            padding: 0;
             width: 50mm;
             height: 50mm;
             text-align: center;
-            box-sizing: border-box;
         }
 
-        .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
+        table {
+            width: 100%;
+            height: 50mm; /* Force height */
+            border-collapse: collapse;
+            page-break-inside: avoid;
+        }
+
+        td {
+            vertical-align: top;
+            text-align: center;
+            padding: 0;
+        }
+
+        .qr-code {
+            margin-top: 5mm;
+            margin-bottom: 2px;
         }
 
         .qr-code img,
@@ -36,22 +45,25 @@
         }
 
         .code {
-            margin-top: 2px;
-            font-size: 10px;
+            font-size: 8px; /* Slightly smaller to fit better if long */
             font-weight: bold;
             word-wrap: break-word;
+            padding: 0 2mm;
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <div class="qr-code">
-            <!-- Ensure simple QR code generation without complex SVG attributes that mPDF might dislike -->
-            {!! str_replace('<?xml version="1.0" encoding="UTF-8"?>', '', \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->generate($url)) !!}
-        </div>
-        <div class="code">{{ $code }}</div>
-    </div>
+    <table>
+        <tr>
+            <td>
+                <div class="qr-code">
+                    {!! str_replace('<?xml version="1.0" encoding="UTF-8"?>', '', \SimpleSoftwareIO\QrCode\Facades\QrCode::size(130)->generate($url)) !!}
+                </div>
+                <div class="code">{{ $code }}</div>
+            </td>
+        </tr>
+    </table>
 </body>
 
 </html>

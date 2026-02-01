@@ -195,7 +195,7 @@ class EquipmentTable
         return [
             EditAction::make(),
             Action::make('downloadSticker')
-                ->label('Download Sticker')
+                ->label('QR Code')
                 ->button()
                 ->color('success')
                 ->icon('heroicon-o-arrow-down-tray')

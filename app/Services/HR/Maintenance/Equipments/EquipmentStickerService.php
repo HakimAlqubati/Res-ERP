@@ -23,6 +23,8 @@ class EquipmentStickerService
             'margin_footer' => 0,
         ]);
 
-        return $pdf->download('Sticker-' . $equipment->asset_tag . '.pdf');
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->output();
+        }, 'QR-' . $equipment->asset_tag . '.pdf');
     }
 }
