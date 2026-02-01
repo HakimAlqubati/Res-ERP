@@ -55,10 +55,12 @@ class EmployeeAbsentsReportResource extends Resource
             ->deferFilters(false)
             ->columns([])
             ->filters([
-                SelectFilter::make('branch_id')->label(__('lang.branch'))->options(Branch::where('active', 1)
-                    ->select('name', 'id')
+                SelectFilter::make('branch_id')
+                    ->placeholder('Select Branch')
+                    ->label(__('lang.branch'))->options(Branch::where('active', 1)
+                        ->select('name', 'id')
 
-                    ->get()->pluck('name', 'id'))
+                        ->get()->pluck('name', 'id'))
 
                     ->default(function () {
                         if (isBranchManager()) {
