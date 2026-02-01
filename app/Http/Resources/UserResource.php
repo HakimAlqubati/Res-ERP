@@ -35,7 +35,9 @@ class UserResource extends JsonResource
                 ->select('id', 'name', 'type', 'start_date', 'end_date')
                 ->get(),
             'managed_stores_ids' => $this->managed_stores_ids,
-            'employee' => $this?->employee,
+            'employee' => $this->employee ? tap($this->employee, function ($employee) {
+                $employee->salary = 0;
+            }) : null,
         ];
     }
 }
