@@ -131,6 +131,11 @@ class SettingResource extends Resource
                                         ->label('Early depature deduction minutes')
                                         ->numeric()
                                         ->required(),
+                                    TextInput::make("attendance_duplicate_check_minutes")
+                                        ->label('Duplicate Attendance Check (Minutes)')
+                                        ->numeric()
+                                        ->default(15)
+                                        ->required(),
                                     Fieldset::make()->columns(2)->columnSpanFull()->schema([
                                         Select::make("period_allowed_to_calculate_overtime")
                                             ->label('Overtime calculation period')

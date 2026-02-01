@@ -49,14 +49,7 @@ class AttendanceService
             return AttendanceResultDTO::failure(__('Invalid date format.'));
         }
 
-        // 3. التحقق من القواعد
-        $validationResult = $this->validateRequest($employee, $requestTime, $payload);
-
-        if ($validationResult !== null) {
-            return $validationResult;
-        }
-
-        // 4. تنفيذ العملية مع Lock
+        // 3. تنفيذ العملية مع Lock (والتحقق يتم داخل القفل)
         return $this->executeWithLock($employee, $payload, $requestTime);
     }
 
@@ -126,7 +119,15 @@ class AttendanceService
 
         try {
             return Cache::lock($lockKey, $this->config->getLockTimeout())
-                ->block($this->config->getLockWaitTime(), function () use ($employee, $payload) {
+                ->block($this->config->getLockWaitTime(), function () use ($employee, $payload, $requestTime) {
+
+                    // التحقق من القواعد داخل القفل
+                    $validationResult = $this->validateRequest($employee, $requestTime, $payload);
+
+                    if ($validationResult !== null) {
+                        return $validationResult;
+                    }
+
                     return $this->processAttendance($employee, $payload);
                 });
         } catch (\Throwable $e) {

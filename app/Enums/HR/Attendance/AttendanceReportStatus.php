@@ -1,13 +1,16 @@
 <?php
+
 namespace App\Enums\HR\Attendance;
 
-enum AttendanceReportStatus: string {
+enum AttendanceReportStatus: string
+{
     case Absent                 = 'absent';
     case IncompleteCheckinOnly  = 'incomplete_checkin_only';
     case IncompleteCheckoutOnly = 'incomplete_checkout_only';
     case Present                = 'present_days';
     case Partial                = 'partial';
     case Leave                  = 'leave';
+    case Future                 = 'future';
     case NoPeriods              = 'no_periods';
 
     public function label(): string
@@ -19,11 +22,12 @@ enum AttendanceReportStatus: string {
             self::Present => 'Present',
             self::Partial => 'Parital',
             self::Leave => 'Leave',
+            self::Future => 'Future',
             self::NoPeriods => 'No Periods',
         };
     }
 
-     // يمكنك تغيير الألوان حسب إطار العمل أو ذوقك (Bootstrap/Tailwind أو Hex code)
+    // يمكنك تغيير الألوان حسب إطار العمل أو ذوقك (Bootstrap/Tailwind أو Hex code)
     public function color(): string
     {
         return match ($this) {
@@ -33,6 +37,7 @@ enum AttendanceReportStatus: string {
             self::Present                => 'success',   // Bootstrap: أخضر. Tailwind: 'green-600'
             self::Partial                => 'info',      // Bootstrap: أزرق فاتح. Tailwind: 'sky-500'
             self::Leave                  => 'primary',   // Bootstrap: أزرق. Tailwind: 'blue-600'
+            self::Future                 => 'secondary', // Bootstrap: رمادي. Tailwind: 'gray-400'
             self::NoPeriods              => 'secondary', // Bootstrap: رمادي. Tailwind: 'gray-400'
         };
     }
@@ -47,6 +52,7 @@ enum AttendanceReportStatus: string {
             self::Present                => '#28a745', // أخضر
             self::Partial                => '#17a2b8', // أزرق سماوي
             self::Leave                  => '#007bff', // أزرق
+            self::Future                 => '#6c757d', // رمادي
             self::NoPeriods              => '#6c757d', // رمادي
         };
     }

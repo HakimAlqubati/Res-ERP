@@ -7,6 +7,7 @@ use App\Modules\HR\Attendance\Services\Validator\Helpers\TimeFormatter;
 use App\Modules\HR\Attendance\Services\Validator\ValidationContext;
 use App\Modules\HR\Attendance\Services\Validator\ValidationRuleInterface;
 use Carbon\Carbon;
+use App\Models\Setting;
 
 /**
  * القاعدة 0: منع التسجيل خلال 15 دقيقة من آخر بصمة
@@ -25,7 +26,8 @@ class DuplicateTimestampRule implements ValidationRuleInterface
         }
 
         $lastCheckTime = Carbon::parse($context->lastRecord->check_date . ' ' . $context->lastRecord->check_time);
-        $allowedTime = $lastCheckTime->copy()->addMinutes(15);
+        $duplicateCheckMinutes = (int) Setting::getSetting('attendance_duplicate_check_minutes', 15);
+        $allowedTime = $lastCheckTime->copy()->addMinutes($duplicateCheckMinutes);
 
         if ($context->requestTime->lessThan($allowedTime)) {
             $remainingSeconds = $context->requestTime->diffInSeconds($allowedTime);
