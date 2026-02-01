@@ -19,7 +19,7 @@ $totalNet += $r['data']['net_salary'];
 <div class="glass-panel p-6 rounded-2xl mb-8 flex justify-between items-center border-l-4 border-indigo-500">
     <div>
         <h3 class="text-gray-500 text-sm font-medium">Total Net for Selected</h3>
-        <p class="text-3xl font-bold text-indigo-700 mt-2">{{ number_format($totalNet, 2) }} <span class="text-sm font-normal text-gray-400">SAR</span></p>
+        <p class="text-3xl font-bold text-indigo-700 mt-2">{{ number_format($totalNet, 2) }} <span class="text-sm font-normal text-gray-400"></span></p>
     </div>
     <div class="text-right">
         <span class="block text-sm text-gray-500">Employee Count</span>
@@ -49,7 +49,7 @@ $totalNet += $r['data']['net_salary'];
             </div>
             <div class="text-right">
                 @if($success)
-                <div class="text-2xl font-bold text-indigo-700">{{ number_format($data['net_salary'] ?? 0, 2) }} <span class="text-xs text-gray-500 font-normal">SAR</span></div>
+                <div class="text-2xl font-bold text-indigo-700">{{ number_format($data['net_salary'] ?? 0, 2) }} <span class="text-xs text-gray-500 font-normal"> </span></div>
                 <div class="text-xs text-green-600">Active</div>
                 @else
                 <div class="text-red-500 font-bold">{{ $row['error'] ?? 'Error' }}</div>
@@ -60,22 +60,33 @@ $totalNet += $r['data']['net_salary'];
         @if($success)
         <div class="p-6">
             <!-- Stats Grid -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 text-sm">
-                <div class="bg-white p-3 rounded border border-gray-100">
-                    <span class="block text-gray-400 text-xs">Base Salary</span>
-                    <span class="font-bold text-gray-800">{{ number_format($data['base_salary'] ?? 0, 2) }}</span>
+            <!-- Calculation Factors & Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6 text-sm">
+                <div class="bg-gray-50 p-3 rounded border border-gray-200 col-span-1">
+                    <span class="block text-gray-500 text-xs uppercase tracking-wider">Month Days</span>
+                    <span class="font-mono font-bold text-lg text-gray-700">{{ $row['month_days'] ?? '-' }}</span>
                 </div>
-                <div class="bg-white p-3 rounded border border-gray-100">
-                    <span class="block text-gray-400 text-xs">Working Days</span>
-                    <span class="font-bold text-gray-800">{{ $row['attendance_statistics']['present_days'] ?? '-' }} / {{ $row['month_days'] ?? '-' }}</span>
+                <div class="bg-indigo-50 p-3 rounded border border-indigo-200 col-span-1">
+                    <span class="block text-indigo-800 text-xs uppercase tracking-wider">Working Days</span>
+                    <span class="font-mono font-bold text-lg text-indigo-700">{{ $row['working_days'] ?? '-' }}</span>
                 </div>
-                <div class="bg-white p-3 rounded border border-gray-100">
-                    <span class="block text-gray-400 text-xs">Absence Deduction</span>
-                    <span class="font-bold text-rose-600">{{ number_format($data['absence_deduction'] ?? 0, 2) }}</span>
+                <div class="bg-white p-3 rounded border border-gray-200 col-span-1">
+                    <span class="block text-gray-500 text-xs uppercase tracking-wider">Daily Rate</span>
+                    <span class="font-mono font-bold text-lg text-emerald-600">{{ number_format($row['daily_salary'] ?? 0, 2) }}</span>
                 </div>
-                <div class="bg-white p-3 rounded border border-gray-100">
-                    <span class="block text-gray-400 text-xs">Late Deduction</span>
-                    <span class="font-bold text-rose-600">{{ number_format($data['late_deduction'] ?? 0, 2) }}</span>
+                <div class="bg-white p-3 rounded border border-gray-200 col-span-1">
+                    <span class="block text-gray-500 text-xs uppercase tracking-wider">Hourly Rate</span>
+                    <span class="font-mono font-bold text-lg text-emerald-600">{{ number_format($row['hourly_salary'] ?? 0, 2) }}</span>
+                </div>
+
+                <div class="bg-rose-50 p-3 rounded border border-rose-100 col-span-1">
+                    <span class="block text-rose-800 text-xs uppercase tracking-wider">Absent Days</span>
+                    
+                    <span class="font-mono font-bold text-lg text-rose-600">{{ $row['attendance_statistics']['absent'] ?? 0 }}</span>
+                </div>
+                <div class="bg-rose-50 p-3 rounded border border-rose-100 col-span-1">
+                    <span class="block text-rose-800 text-xs uppercase tracking-wider">Late Hours</span>
+                    <span class="font-mono font-bold text-lg text-rose-600">{{ $row['late_hours'] ?? 0 }}</span>
                 </div>
             </div>
 

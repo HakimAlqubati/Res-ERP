@@ -24,10 +24,11 @@ class PayrollWebController extends Controller
      */
     public function simulateSalariesByEmployeeIds(Request $request)
     {
+        $employeeId = $request->input('employee_id', 23);
         $validated = [
-            'employee_ids'   => [23],
-            'year'           => 2026,
-            'month'          => 1,
+            'employee_ids'   => [$employeeId],
+            'year'           => $request->input('year', 2026),
+            'month'          => $request->input('month', 1),
         ];
         // $validated = $request->validate([
         //     'employee_ids'   => 'nullable|array|min:1',
