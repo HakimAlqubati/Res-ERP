@@ -88,6 +88,29 @@
 
 
         .btn-print i,
+
+        .star-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            /* background-color: #ea580c; */
+            border-radius: 50%;
+            font-size: 10px;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+
+        /* Default (White Rows / Odd) -> Black Star */
+        table tbody tr:nth-child(odd) .star-badge {
+            color: black;
+        }
+
+        /* Striped (Green Rows / Even) -> White Star */
+        table tbody tr:nth-child(even) .star-badge {
+            color: white;
+        }
     </style>
     <div class="text-right mb-4">
 
@@ -270,7 +293,7 @@
                         wire:click="showDetails('{{ $date }}', {{ $employee_id }}, {{ $period['period_id'] }})"
                         style="cursor:pointer; border:none; background:none; padding:0;"
                         title="Show all check-in/out details">
-                        {{ $duration }}
+                        <span class="star-badge">&#9733;</span> {{ $duration }}
                     </button>
                     @else
                     <span>{{ $duration }}</span>
