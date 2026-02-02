@@ -86,6 +86,16 @@
             font-size: 10px;
             margin-right: 4px;
             vertical-align: middle;
+        
+
+        margin-right: 4px;
+        vertical-align: middle;
+        }
+
+        /* Handle star badge on striped rows (assuming even rows are colored/green) */
+        table tbody tr:nth-child(even) .star-badge {
+            background-color: transparent;
+            /* Star remains white (color: white) */
         }
 
         .pulsing-dot {
@@ -263,11 +273,11 @@
                                 @endphp
                                 @if ($duration !== '-')
                                 <button
-                                class="text-blue-600 font-semibold underline hover:text-blue-900 transition"
-                                wire:click="showDetails('{{ $date }}', {{ $emp['id'] }}, {{ $item['period_id'] }})"
-                                style="cursor:pointer; border:none; background:none; padding:0;"
-                                title="Show all check-in/out details">
-                                <span class="star-badge">&#9733;</span> {{ $duration }}
+                                    class="text-blue-600 font-semibold underline hover:text-blue-900 transition"
+                                    wire:click="showDetails('{{ $date }}', {{ $emp['id'] }}, {{ $item['period_id'] }})"
+                                    style="cursor:pointer; border:none; background:none; padding:0;"
+                                    title="Show all check-in/out details">
+                                    <span class="star-badge">&#9733;</span> {{ $duration }}
                                 </button>
                                 @else
                                 <span>{{ $duration }}</span>
