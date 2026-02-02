@@ -63,7 +63,15 @@ Route::prefix('hr')
             // ->name('employees.identify')
             ->middleware('auth:api')
         ;
-        Route::post('/liveness', [LivenessController::class, 'check']);
+        Route::get('/liveness', [LivenessController::class, 'check']);
+
+        // Overtime Routes
+        Route::prefix('overtime')->group(function () {
+            Route::get('/', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'index']);
+            Route::post('/', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'store'])->middleware('auth:api');
+            Route::post('/approve', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'approve']);
+            Route::post('/undoApprove', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'undoApproval']);
+        })->middleware('auth:api');
     });
 
 Route::prefix('applications')
