@@ -20,9 +20,9 @@ use Illuminate\Database\Eloquent\Model;
 class EquipmentLogsRelationManager extends RelationManager
 {
     protected static string $relationship = 'logs';
-
+    protected static ?string $title       = 'History';
     public static function getBadge(Model $ownerRecord, string $pageClass): ?string
-    { 
+    {
         return $ownerRecord->logs()->count();
     }
 

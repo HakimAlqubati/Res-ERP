@@ -306,8 +306,14 @@ class ListEmployeesAttednaceReport extends ListRecords
     {
         // Replace with your actual data-fetching logic if needed
         $AttendanceDetails = getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
-        $this->modalData   = $AttendanceDetails->toArray();
+
+        $this->modalData = [
+            'data' => $AttendanceDetails->toArray(),
+            'date' => $date
+        ];
+
         //  dd($this->modalData);
         $this->showDetailsModal = true; // This opens the modal
+        $this->dispatch('open-modal', id: 'attendance-details');
     }
 }

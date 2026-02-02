@@ -82,8 +82,8 @@ class Attendance extends Model implements Auditable
     const STATUS_LATE_DEPARTURE  = 'late_departure';
     const STATUS_TEST            = 'status_test';
 
-    const STATUS_EARLY_ARRIVAL_LABEL   = 'Early';
-    const STATUS_LATE_ARRIVAL_LABEL    = 'Late';
+    const STATUS_EARLY_ARRIVAL_LABEL   = 'Early In';
+    const STATUS_LATE_ARRIVAL_LABEL    = 'Late In';
     const STATUS_ON_TIME_LABEL         = 'On Time';
     const STATUS_EARLY_DEPARTURE_LABEL = 'Early Out';
     const STATUS_LATE_DEPARTURE_LABEL  = 'Late Out';

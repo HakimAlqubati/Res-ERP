@@ -71,6 +71,51 @@
         .emp_name {
             padding: 0 3px 0 3px;
         }
+
+        .star-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            /* background-color: #ea580c; */
+            /* Orange background */
+            color: white;
+            /* White star */
+            border-radius: 50%;
+            font-size: 10px;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+
+        .pulsing-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background-color: #ea580c;
+            /* Orange for visibility */
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+            animation: pulse-opacity 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulse-opacity {
+            0% {
+                opacity: 0.5;
+                transform: scale(0.9);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+
+            100% {
+                opacity: 0.5;
+                transform: scale(0.9);
+            }
+        }
     </style>
 
     @if (!empty($branch_id))
@@ -188,7 +233,7 @@
                             <td colspan="7" class="text-center">{{ __('Absent') }}</td>
                             @elseif ($item['final_status'] == 'future')
                             <td colspan="7" class="internal_cell">
-                            <p>-</p>    {{ '' }}
+                                <p>-</p> {{ '' }}
                             </td>
                             @else
                             <td
@@ -212,8 +257,22 @@
 
                             <td
                                 class="internal_cell">{{ $lastcheckout['supposed_duration_hourly'] ?? '-' }}</td>
-                            <td
-                                class="internal_cell">{{ $lastcheckout['actual_duration_hourly'] ?? '-' }}</td>
+                            <td class="internal_cell">
+                                @php
+                                $duration = $lastcheckout['total_actual_duration_hourly'] ?? '-';
+                                @endphp
+                                @if ($duration !== '-')
+                                <button
+                                class="text-blue-600 font-semibold underline hover:text-blue-900 transition"
+                                wire:click="showDetails('{{ $date }}', {{ $emp['id'] }}, {{ $item['period_id'] }})"
+                                style="cursor:pointer; border:none; background:none; padding:0;"
+                                title="Show all check-in/out details">
+                                <span class="star-badge">&#9733;</span> {{ $duration }}
+                                </button>
+                                @else
+                                <span>{{ $duration }}</span>
+                                @endif
+                            </td>
                             <td
                                 class="internal_cell">{{ $lastcheckout['approved_overtime'] ?? '-' }}</td>
                             @endif
@@ -281,5 +340,11 @@
     <div class="please_select_message_div" style="text-align: center;">
         <h1 class="please_select_message_text">{{ __('Please select a Branch') }}</h1>
     </div>
+    @endif
+
+    @if ($showDetailsModal)
+    @include('components.hr.attendances-reports.attendance-details-modal', [
+    'modalData' => $modalData,
+    ])
     @endif
 </x-filament-panels::page>
