@@ -79,23 +79,20 @@
             width: 16px;
             height: 16px;
             /* background-color: #ea580c; */
-            /* Orange background */
-            color: white;
-            /* White star */
             border-radius: 50%;
             font-size: 10px;
             margin-right: 4px;
             vertical-align: middle;
-        
-
-        margin-right: 4px;
-        vertical-align: middle;
         }
 
-        /* Handle star badge on striped rows (assuming even rows are colored/green) */
+        /* Default (White Rows / Odd) -> Black Star */
+        table tbody tr:nth-child(odd) .star-badge {
+            color: black;
+        }
+
+        /* Striped (Green Rows / Even) -> White Star */
         table tbody tr:nth-child(even) .star-badge {
-            background-color: transparent;
-            /* Star remains white (color: white) */
+            color: white;
         }
 
         .pulsing-dot {
