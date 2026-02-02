@@ -3,6 +3,7 @@
 namespace App\Modules\HR\Overtime;
 
 use App\Models\EmployeeOvertime;
+use App\Models\Employee;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
@@ -198,5 +199,49 @@ class OvertimeService
         }
 
         return $query->latest('id')->paginate($filters['per_page'] ?? 15);
+    }
+
+    /**
+     * Get suggested overtime for employees in a branch for a specific date
+     *
+     * @param string $date
+     * @param int $branchId
+     * @return array
+     */
+    public function getSuggestedOvertime(string $date, int $branchId): array
+    {
+        $employees = Employee::where('branch_id', $branchId)
+            // ->forBranchManager() // You might need to check if this scope is applicable or needs arguments in this context
+            ->where('active', 1)
+            ->get();
+
+        $employeesWithOvertime = [];
+
+        foreach ($employees as $employee) {
+            // Calculate overtime for the specified date
+            // Assuming the trait is used in Employee model
+            if (method_exists($employee, 'calculateEmployeeOvertime')) {
+                $overtimeResults = $employee->calculateEmployeeOvertime($employee, $date);
+
+                // Only add to the results if there are overtime records
+                if (!empty($overtimeResults)) {
+                    // Flatten or pick the relevant part just like in the filament code
+                    // The filament code picks index 0
+                    if (isset($overtimeResults[0])) {
+                        $result = $overtimeResults[0];
+                        $employeesWithOvertime[] = [
+                            'employee_id' => $employee->id,
+                            'name'        => $employee->name,
+                            'start_time'  => $result['overtime_start_time'],
+                            'end_time'    => $result['overtime_end_time'],
+                            'hours'       => $result['overtime_hours'],
+                            'notes'       => null,
+                        ];
+                    }
+                }
+            }
+        }
+
+        return $employeesWithOvertime;
     }
 }

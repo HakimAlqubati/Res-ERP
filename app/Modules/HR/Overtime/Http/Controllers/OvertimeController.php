@@ -164,4 +164,43 @@ class OvertimeController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get suggested overtime for employees
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getSuggestedOvertime(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'date'      => 'required|date',
+                'branch_id' => 'required|exists:branches,id',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Validation Error',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $data = $this->overtimeService->getSuggestedOvertime(
+                $request->input('date'),
+                $request->input('branch_id')
+            );
+
+            return response()->json([
+                'status' => true,
+                'data'   => $data,
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }
