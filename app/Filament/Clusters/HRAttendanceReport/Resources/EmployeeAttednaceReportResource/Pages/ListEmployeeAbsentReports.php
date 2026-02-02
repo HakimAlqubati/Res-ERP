@@ -28,10 +28,12 @@ class ListEmployeeAbsentReports extends ListRecords
         if ($branchId) {
             $filters = ['branch_id' => $branchId];
 
-            if (isset($dateFilterState['current_time'])) {
-                $filters['current_time'] = $dateFilterState['current_time'];
-            }
+            // if (isset($dateFilterState['current_time'])) {
+            //     $filters['current_time'] = $dateFilterState['current_time'];
+            // }
+            $filters['current_time'] = now()->timezone('Asia/Kuala_Lumpur')->format('H:i');
 
+            // dd($filters);
             /** @var \App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesService $service */
             $service = app(\App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesService::class);
             $data = $service->getAbsentEmployees($date, $filters);

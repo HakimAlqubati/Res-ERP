@@ -28,13 +28,12 @@
         }
 
         td {
-            vertical-align: top;
+            vertical-align: middle;
             text-align: center;
             padding: 0;
         }
 
-        .qr-code {
-            margin-top: 5mm;
+        .qr-code { 
             margin-bottom: 2px;
         }
 
@@ -45,7 +44,7 @@
         }
 
         .code {
-            font-size: 8px; /* Slightly smaller to fit better if long */
+            font-size: 12px;
             font-weight: bold;
             word-wrap: break-word;
             padding: 0 2mm;
@@ -54,7 +53,12 @@
 </head>
 
 <body>
-    <table>
+     <table>
+        <tr>
+            <td colspan="100%">
+                <p style="color: whitesmoke;">.</p>
+            </td>
+        </tr>
         <tr>
             <td>
                 <div class="qr-code">

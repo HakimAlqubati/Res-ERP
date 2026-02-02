@@ -12,6 +12,7 @@ use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\Employee;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\TimePicker;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -71,10 +72,12 @@ class EmployeeAbsentsReportResource extends Resource
                 Filter::make('filter_date')->label('')->schema([
                     DatePicker::make('date')
                         ->label(__('lang.date'))->default(date('Y-m-d')),
-                    TimePicker::make('current_time')
-                        ->label(__('lang.current_time'))
-                        ->default(now()->timezone('Asia/Kuala_Lumpur')->format('H:i'))
-                        ->withoutSeconds(),
+                    Hidden::make('current_time')
+                        ->default(now()->timezone('Asia/Kuala_Lumpur')->format('H:i')),
+                    // TimePicker::make('current_time')
+                    //     ->label(__('lang.current_time'))
+                    //     ->default(now()->timezone('Asia/Kuala_Lumpur')->format('H:i'))
+                    //     ->withoutSeconds(),
                 ]),
 
             ], FiltersLayout::AboveContent)
