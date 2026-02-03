@@ -314,3 +314,11 @@ Route::prefix('hr')
         Route::get('/leaveTypes-weekly', [LeaveTypeController::class, 'weekly']);         // first active weekly/monthly
         Route::get('/leaveTypes-monthly-days-sum', [LeaveTypeController::class, 'monthlyDaysSum']); // sum with default=4
     });
+
+Route::get('/testWeeklyLeaveCalculator', function () {
+    $totalMonthDays = (int) request('total_month_days', 30);
+    $absentDays = (int) request('absent_days', 0);
+
+    $calculator = new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator();
+    return $calculator->calculate($totalMonthDays, $absentDays);
+});
