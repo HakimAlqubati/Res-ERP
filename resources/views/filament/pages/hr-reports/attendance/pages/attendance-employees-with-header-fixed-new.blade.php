@@ -266,20 +266,57 @@
                                 class="internal_cell">{{ $lastcheckout['supposed_duration_hourly'] ?? '-' }}</td>
                             <td class="internal_cell">
                                 @php
-                                $duration = $lastcheckout['total_actual_duration_hourly'] ?? '-';
-                                @endphp
-                                @if ($duration !== '-')
-                                <button
-                                    class="text-blue-600 font-semibold hover:text-blue-900 transition flex items-center justify-between w-full"
-                                    wire:click="showDetails('{{ $date }}', {{ $emp['id'] }}, {{ $item['period_id'] }})"
-                                    style="cursor:pointer; border:none; background:none; padding:0;"
-                                    title="Show all check-in/out details">
-                                    <span class="underline">{{ $duration }}</span>
-                                    <span class="star-badge">&#9733;</span>
-                                </button>
-                                @else
-                                <span>{{ $duration }}</span>
-                                @endif
+                                $checkIns = collect($item['attendances']['checkin'] ?? [])
+                                ->filter(fn($v, $k) => is_int($k))
+                                ->values()
+                                ->all();
+
+                                $checkOuts = collect($item['attendances']['checkout'] ?? [])
+                                ->filter(fn($v, $k) => is_int($k))
+                                ->values()
+                                ->all();
+
+                                $totalMinutesCalc = 0;
+                                $maxRowsCalc = max(count($checkIns), count($checkOuts));
+
+                                for ($i = 0; $i < $maxRowsCalc; $i++) {
+                                    $ciVal=$checkIns[$i]['check_time'] ?? null;
+                                    $coVal=$checkOuts[$i]['check_time'] ?? null;
+
+                                    if ($ciVal && $coVal) {
+                                    try {
+                                    $ciTime=\Carbon\Carbon::createFromFormat('H:i:s', $ciVal);
+                                    $coTime=\Carbon\Carbon::createFromFormat('H:i:s', $coVal);
+
+                                    if ($coTime->lessThan($ciTime)) {
+                                    $coTime->addDay();
+                                    }
+
+                                    $totalMinutesCalc += $ciTime->diffInMinutes($coTime);
+                                    } catch (\Exception $e) {}
+                                    }
+                                    }
+
+                                    if ($totalMinutesCalc > 0) {
+                                    $h = intdiv($totalMinutesCalc, 60);
+                                    $m = $totalMinutesCalc % 60;
+                                    $duration = "{$h}h {$m}m";
+                                    } else {
+                                    $duration = '-';
+                                    }
+                                    @endphp
+                                    @if ($duration !== '-')
+                                    <button
+                                        class="text-blue-600 font-semibold hover:text-blue-900 transition flex items-center justify-between w-full"
+                                        wire:click="showDetails('{{ $date }}', {{ $emp['id'] }}, {{ $item['period_id'] }})"
+                                        style="cursor:pointer; border:none; background:none; padding:0;"
+                                        title="Show all check-in/out details">
+                                        <span class="underline">{{ $duration }}</span>
+                                        <span class="star-badge">&#9733;</span>
+                                    </button>
+                                    @else
+                                    <span>{{ $duration }}</span>
+                                    @endif
                             </td>
                             <td
                                 class="internal_cell">{{ $lastcheckout['approved_overtime'] ?? '-' }}</td>
