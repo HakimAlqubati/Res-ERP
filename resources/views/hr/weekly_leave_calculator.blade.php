@@ -95,7 +95,7 @@
 
                 <div class="space-y-2">
                     <label class="block text-gray-300 text-sm font-semibold" for="total_month_days">
-                        إجمالي أيام الشهر (الوعاء)
+                        إجمالي أيام الشهر
                     </label>
                     <div class="relative group">
                         <input class="w-full bg-dark-input text-white border border-dark-border rounded-xl px-4 py-3 pl-12 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-300 placeholder-gray-600 group-hover:border-gray-500"
@@ -185,7 +185,7 @@
                 </div>
 
                 <!-- Section 1: Analysis Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Worked Days -->
                     <div class="relative overflow-hidden bg-dark-card rounded-2xl p-8 border border-dark-border group hover:border-blue-500/30 transition-all duration-300">
                         <div class="absolute right-0 top-0 w-32 h-32 bg-blue-500/10 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
@@ -225,6 +225,28 @@
                                 <span class="text-gray-500 font-bold">يوم</span>
                             </div>
                             <p class="text-primary/60 text-xs mt-2 font-medium">عدد أيام الإجازة المسموح بها</p>
+                        </div>
+                    </div>
+
+                    <!-- Paid Days -->
+                    <div class="relative overflow-hidden bg-dark-card rounded-2xl p-8 border border-dark-border group hover:border-emerald-500/30 transition-all duration-300">
+                        <div class="absolute right-0 top-0 w-32 h-32 bg-emerald-500/10 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+
+                        <div class="relative z-10">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <h3 class="text-gray-300 font-bold text-lg">الأيام المدفوعة</h3>
+                            </div>
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-5xl font-black text-white group-hover:text-emerald-400 transition-colors">{{ $result['result']['payable_days'] }}</span>
+                                <!-- <span class="text-5xl font-black text-white group-hover:text-emerald-400 transition-colors">{{ $result['analysis']['worked_days'] + $result['analysis']['earned_leave_days'] }}</span> -->
+                                <span class="text-gray-500 font-bold">يوم</span>
+                            </div>
+                            <p class="text-emerald-500/60 text-xs mt-2 font-medium">العمل الفعلي + الإجازات المعتمدة</p>
                         </div>
                     </div>
                 </div>

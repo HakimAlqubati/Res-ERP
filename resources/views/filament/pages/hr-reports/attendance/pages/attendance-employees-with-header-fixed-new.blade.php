@@ -270,11 +270,12 @@
                                 @endphp
                                 @if ($duration !== '-')
                                 <button
-                                    class="text-blue-600 font-semibold underline hover:text-blue-900 transition"
+                                    class="text-blue-600 font-semibold hover:text-blue-900 transition flex items-center justify-between w-full"
                                     wire:click="showDetails('{{ $date }}', {{ $emp['id'] }}, {{ $item['period_id'] }})"
                                     style="cursor:pointer; border:none; background:none; padding:0;"
                                     title="Show all check-in/out details">
-                                    <span class="star-badge">&#9733;</span> {{ $duration }}
+                                    <span class="underline">{{ $duration }}</span>
+                                    <span class="star-badge">&#9733;</span>
                                 </button>
                                 @else
                                 <span>{{ $duration }}</span>

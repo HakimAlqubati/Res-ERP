@@ -72,7 +72,7 @@ class WeeklyLeaveCalculator
                 // ب. باقي الخصم يعتبر غياباً صافياً
                 $absentPenaltyDisplay = max(0, $totalPenaltyDays - $leavePenaltyDisplay);
             }
-
+            $payableDays = $actualWorkedDays + $cappedEarnedDays;
             return [
                 'inputs' => [
                     'total_days'  => $totalMonthDays,
@@ -92,7 +92,8 @@ class WeeklyLeaveCalculator
                     // ==========================================
                     'total_deduction_days' => $totalPenaltyDays,
 
-                    'overtime_days'        => $overtimeDays
+                    'overtime_days'        => $overtimeDays,
+                    'payable_days'         => $payableDays
                 ]
             ];
         } catch (\Exception $e) {
