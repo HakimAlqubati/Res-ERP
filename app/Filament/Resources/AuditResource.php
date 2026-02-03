@@ -89,6 +89,16 @@ class AuditResource extends Resource
                             ->toArray()
                     )
                     ->searchable(),
+                SelectFilter::make('event')
+                    ->label('Event')
+                    ->options(
+                        fn() => Audit::query()
+                            ->select('event')
+                            ->distinct()
+                            ->pluck('event')
+                            ->mapWithKeys(fn($event) => [$event => ucfirst($event)])
+                            ->toArray()
+                    ),
 
             ], FiltersLayout::AboveContent)
             ->recordActions([
