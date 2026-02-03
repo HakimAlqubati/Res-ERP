@@ -52,7 +52,7 @@ class OrderTable
             ->columns([
                 SoftDeleteColumn::make(),
                 TextColumn::make('deleted_at')
-                    ->label(__('lang.deleted_at'))
+                    ->label('Deleted At')
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('id')->label(__('lang.order_id'))
