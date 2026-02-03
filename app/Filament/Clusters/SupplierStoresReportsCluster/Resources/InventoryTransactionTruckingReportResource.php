@@ -20,6 +20,8 @@ use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\DatePicker;
 
 class InventoryTransactionTruckingReportResource extends Resource
 {
@@ -92,6 +94,16 @@ class InventoryTransactionTruckingReportResource extends Resource
                         'App\Models\StockSupplyOrder' => 'Stock Supply',
                         // أضف أي أنواع عمليات أخرى هنا بنفس الطريقة
                     ]),
+                Filter::make('date_range')
+                    ->form([
+                        DatePicker::make('from_date')
+                            ->label('From Date'),
+                        DatePicker::make('to_date')
+                            ->label('To Date'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query;
+                    }),
             ], FiltersLayout::AboveContent);
     }
 

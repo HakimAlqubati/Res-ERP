@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Traits\Inventory;
 
 use App\Services\MultiProductsInventoryService;
@@ -14,7 +15,9 @@ trait InventoryStaticMethods
         ?string $movementType = null,
         $unitId = null,
         $storeId = null,
-        ?string $transactionableType = null
+        ?string $transactionableType = null,
+        $fromDate = null,
+        $toDate = null
     ) {
         $query = InventoryTransaction::query() // Using Eloquent query instead of DB::table()
             ->whereNull('deleted_at')
@@ -32,6 +35,14 @@ trait InventoryStaticMethods
         }
         if (! empty($transactionableType)) {
             $query->where('transactionable_type', $transactionableType);
+        }
+
+        if (! empty($fromDate)) {
+            $query->whereDate('movement_date', '>=', $fromDate);
+        }
+
+        if (! empty($toDate)) {
+            $query->whereDate('movement_date', '<=', $toDate);
         }
         return $query->orderBy('id', 'desc')
             ->paginate($perPage);
@@ -150,5 +161,4 @@ trait InventoryStaticMethods
             InventoryTransaction::MOVEMENT_OUT => 'Out',
         ];
     }
-
 }
