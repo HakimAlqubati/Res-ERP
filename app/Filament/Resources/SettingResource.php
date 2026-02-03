@@ -263,7 +263,7 @@ class SettingResource extends Resource
                                         ->default(2)
                                         ->numeric()
                                         ->helperText('How many days before closing should the system notify HR?'),
-                                ]),
+                                ])->hidden(),
                                 Fieldset::make()->label('Face rekognation settings')
                                     ->hidden(fn(): bool => isFinanceManager())
                                     ->columns(4)->schema([
