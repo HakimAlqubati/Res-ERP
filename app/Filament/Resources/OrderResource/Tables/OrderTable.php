@@ -5,6 +5,7 @@ namespace App\Filament\Resources\OrderResource\Tables;
 use App\Exports\OrdersExport2;
 use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\Order;
+use App\Filament\Resources\OrderResource;
 use App\Services\Orders\OrderCostAnalysisService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -46,9 +47,14 @@ class OrderTable
             ->deferLoading()
             ->striped()
             ->extremePaginationLinks()
+            ->recordUrl(fn(Order $record): string => OrderResource::getUrl('view', ['record' => $record]))
 
             ->columns([
                 SoftDeleteColumn::make(),
+                TextColumn::make('deleted_at')
+                    ->label('Deleted At')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('id')->label(__('lang.order_id'))
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->copyable()->alignCenter(true)

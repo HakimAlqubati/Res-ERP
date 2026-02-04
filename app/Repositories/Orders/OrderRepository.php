@@ -437,12 +437,14 @@ class OrderRepository implements OrderRepositoryInterface
                     'message' => "You Are not a Store Keeper",
                 ], 500);
             }
+
+
             // $branchId = auth()->user()->managedStores->first()->id;
             try {
                 // Find the order by the given ID or throw a ModelNotFoundException
-                $order = Order::
-                // lockForUpdate()
-                findOrFail($id);
+                $order = Order::lockForUpdate()->findOrFail($id);
+
+              
             } catch (ModelNotFoundException $e) {
                 // Roll back the transaction and return an error response if the order is not found
                 DB::rollBack();

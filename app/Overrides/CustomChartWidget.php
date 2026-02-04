@@ -3,6 +3,7 @@
 namespace App\Overrides;
 
 use Filament\Widgets\Concerns\CanPoll;
+use Filament\Widgets\Widget;
 
 class CustomChartWidget extends Widget
 {

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\SalaryTransactions\Tables;
 
 use App\Models\SalaryTransaction;
+use App\Filament\Resources\SalaryTransactions\SalaryTransactionResource;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -20,6 +21,7 @@ class SalaryTransactionsTable
     public static function configure(Table $table): Table
     {
         return $table->striped()
+            ->recordUrl(fn(SalaryTransaction $record): string => SalaryTransactionResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('employee.name')
                     ->label(__('Employee'))->toggleable()

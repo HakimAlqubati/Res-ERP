@@ -2,6 +2,8 @@
 
 namespace App\Filament\Clusters\HRAttenanceCluster\Resources\UserDevices\Tables;
 
+use App\Models\UserDevice;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\UserDevices\UserDeviceResource;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -18,6 +20,7 @@ class UserDevicesTable
     {
         return $table
             ->striped()
+            ->recordUrl(fn(UserDevice $record): string => UserDeviceResource::getUrl('view', ['record' => $record]))
 
             ->columns([
                 TextColumn::make('user.name')

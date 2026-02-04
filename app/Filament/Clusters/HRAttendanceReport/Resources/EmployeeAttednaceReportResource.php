@@ -71,9 +71,13 @@ class EmployeeAttednaceReportResource extends Resource
                     })
                     ->getSearchResultsUsing(function ($search = null) {
                         return Employee::query()
-                            ->select('id', 'name')
+                            ->select('id', 'name', 'employee_no')
                             ->where('active', 1)
-                            ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
+                            ->when($search, fn($q) => $q->where(function ($query) use ($search) {
+                                $query->where('name', 'like', "%{$search}%")
+                                    ->orWhere('id', 'like', "%{$search}%")
+                                    ->orWhere('employee_no', 'like', "%{$search}%");
+                            }))
                             ->limit(5)
                             ->get()
                             ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);

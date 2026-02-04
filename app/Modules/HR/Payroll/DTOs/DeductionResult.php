@@ -14,7 +14,7 @@ final class DeductionResult
         public float $lateDeduction,
         public float $missingHoursDeduction,
         public float $earlyDepartureDeduction,
-        public int $absentDays,
+        public int|float $absentDays,
         public float $lateHours,
         public float $missingHours,
         public float $earlyDepartureHours,

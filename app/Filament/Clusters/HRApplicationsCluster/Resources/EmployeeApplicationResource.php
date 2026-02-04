@@ -1107,9 +1107,10 @@ class EmployeeApplicationResource extends Resource
                             ->default('Y-m-d'),
                         TextInput::make('detail_advance_amount')->numeric()->required()
                             ->label('Amount'),
-                        TextInput::make('basic_salary')->numeric()->disabled()
-                            ->default(0)
-                            ->label('Basic salary')->helperText('Employee basic salary'),
+                        // TextInput::make('basic_salary')->numeric()->disabled()
+                        //     ->default(0)
+                        // ->label('Basic salary')->helperText('Employee basic salary'),
+                        Hidden::make('basic_salary')->default(0),
 
                     ]),
                     Grid::make()->columns(3)->columnSpanFull()->schema([

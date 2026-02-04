@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\POSIntegration\Resources\Products\Tables;
 
 use App\Models\InventoryTransaction;
 use App\Models\PosSale;
+use App\Filament\Clusters\POSIntegration\Resources\Products\ProductResource;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\UnitPrice;
@@ -32,6 +33,7 @@ class ProductsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordUrl(fn(Product $record): string => ProductResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('id')
                     ->label(__('lang.id'))
@@ -95,7 +97,7 @@ class ProductsTable
                     ->label(__('lang.category'))->relationship('category', 'name'),
             ])
             ->recordActions([
-               
+
                 ViewAction::make(),
                 EditAction::make(),
             ])
@@ -107,7 +109,4 @@ class ProductsTable
                 ]),
             ]);
     }
-
-
-  
 }

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\ProductResource\Tables;
 
 use Illuminate\Database\Eloquent\Builder;
 use App\Exports\ProductsExport;
+use App\Filament\Resources\ProductResource;
 use App\Imports\ProductImport;
 use App\Imports\ProductItemsImport;
 use App\Imports\ProductItemsQuantityImport;
@@ -56,6 +57,7 @@ class ProductsTable
     public static function configure(Table $table): Table
     {
         return $table->striped()
+            ->recordUrl(fn(Product $record): string => ProductResource::getUrl('view', ['record' => $record]))
             ->paginated([10, 25, 50, 100, 150, 200])
             ->defaultSort('id', 'desc')
             ->headerActions([

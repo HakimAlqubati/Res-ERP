@@ -35,6 +35,7 @@ Route::get('/testGetOrdersDetails/{orderId}', [TestController4::class, 'testGetO
 
 Route::get('/testfifo', [TestController3::class, 'testFifo']);
 Route::get('/testQRCode/{id}', [TestController3::class, 'testQRCode'])->name('testQRCode');
+Route::get('/downloadQrSticker/{id}', [TestController3::class, 'downloadQrSticker'])->name('downloadQrSticker');
 
 Route::get('/currntStock', [TestController3::class, 'currntStock'])->name('currntStock');
 Route::get('/lowStock', [TestController3::class, 'lowStock']);
@@ -193,7 +194,7 @@ Route::get('/updatePricesOfSuppliesManufacturingProducts', [TestController8::cla
 
 Route::get('/runFullUpdate/{categoryId}/{unitId}/{newPrice}', [TestController8::class, 'handleUpdateFromRoute']);
 
-Route::get('/updateCorrectStore',function(){
+Route::get('/updateCorrectStore', function () {
 
     DB::statement("
         UPDATE stock_supply_orders sso
@@ -219,7 +220,7 @@ Route::get('/updateCorrectStore',function(){
     ");
 
     // ----------------------------
-    
+
     DB::statement("
         UPDATE stock_supply_orders sso
         JOIN stock_supply_order_details ssod ON ssod.stock_supply_order_id = sso.id
@@ -245,7 +246,7 @@ Route::get('/updateCorrectStore',function(){
 });
 
 Route::get('employeesAttendanceOnDateToTest', [\App\Http\Controllers\Api\HR\AttendanceController::class, 'employeesAttendanceOnDateToTest']);
- 
+
 Route::get('stockPosition', [PurchaseInventoryReportController::class, 'index']);
 
 Route::get('/copyOutToIn', [CopyOutToInApiController::class, 'handle']);

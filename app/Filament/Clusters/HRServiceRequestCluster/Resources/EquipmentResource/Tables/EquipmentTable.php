@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource\Tables;
 
+use App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource\Actions\EquipmentActions;
 use App\Models\Branch;
 use App\Models\BranchArea;
@@ -33,6 +34,7 @@ class EquipmentTable
             ->columns(static::getColumns())
             ->filters(static::getFilters(), layout: FiltersLayout::Modal)
             ->filtersFormColumns(4)
+            ->recordUrl(fn(Equipment $record): string => EquipmentResource::getUrl('view', ['record' => $record]))
             ->recordActions(static::getRecordActions())
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -67,10 +69,9 @@ class EquipmentTable
 
             TextColumn::make('asset_tag')
                 ->searchable()->toggleable()
-                ->sortable()->toggleable(isToggledHiddenByDefault: false),
+                ->sortable()->toggleable(isToggledHiddenByDefault: true),
 
-            TextColumn::make('qr_code')
-                ->searchable()->toggleable()->hidden(),
+
 
             TextColumn::make('make')->toggleable()
                 ->sortable()->toggleable(isToggledHiddenByDefault: false),
@@ -128,7 +129,7 @@ class EquipmentTable
                 ->trueColor('success')
                 ->falseColor('danger')
                 ->alignCenter()
-                ->toggleable(isToggledHiddenByDefault: false),
+                ->toggleable(isToggledHiddenByDefault: true),
         ];
     }
 
@@ -193,10 +194,14 @@ class EquipmentTable
     {
         return [
             EditAction::make(),
-            Action::make('qrCodePrint')
-                ->label('Print')
-                ->button()->icon('heroicon-o-qr-code')
-                ->url(fn($record): string => route('testQRCode', ['id' => $record->id]), true),
+            Action::make('downloadSticker')
+                ->label('QR Code')
+                ->button()
+                ->color('success')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->action(function (Equipment $record) {
+                    return app(\App\Services\HR\Maintenance\Equipments\EquipmentStickerService::class)->generate($record->id);
+                }),
             EquipmentActions::getSyncPurchaseCostAction(),
         ];
     }

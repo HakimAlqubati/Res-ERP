@@ -97,6 +97,13 @@ class EmployeeOvertime extends Model implements Auditable
 
     protected static function booted()
     {
+        static::creating(function ($model) {
+            $model->created_by = auth()->id();
+            $model->updated_by = auth()->id();
+        });
+        static::updating(function ($model) {
+            $model->updated_by = auth()->id();
+        });
         // Branch scope logic moved to ApplyBranchScopes middleware
         // to avoid relationship issues during model boot cycle.
         // See: app/Http/Middleware/ApplyBranchScopes.php

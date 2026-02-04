@@ -8,6 +8,7 @@ use App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource\Pa
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource\Pages\EditEquipment;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource\Pages\ListEquipment;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource\Pages\ViewEquipment;
+use App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource\RelationManagers\EquipmentLogsRelationManager;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource\Services\EquipmentCodeGenerator;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource\Tables\EquipmentTable;
 use App\Models\Equipment;
@@ -53,7 +54,7 @@ class EquipmentResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            EquipmentLogsRelationManager::class,
         ];
     }
 

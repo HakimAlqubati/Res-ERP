@@ -1098,3 +1098,6 @@ require __DIR__ . '/maintenance_routes.php';
 
 // Tasks System Proposals Routes
 require __DIR__ . '/tasks_routes.php';
+
+
+Route::get('/hr/weeklyLeaveCalculator', [App\Http\Controllers\HR\WeeklyLeaveCalculatorController::class, 'index'])->name('hr.weekly-leave-calculator');

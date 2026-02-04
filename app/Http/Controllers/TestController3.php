@@ -32,11 +32,11 @@ class TestController3 extends Controller
     }
 
 
-    
+
 
     public function testQRCode($id)
     {
-        $equipment = Equipment::findOrFail($id); // Fetch all equipment
+        $equipment = Equipment::findOrFail($id);
 
         $qrCode = [
             'id' => $equipment->id,
@@ -45,7 +45,36 @@ class TestController3 extends Controller
             'asset_tag' => $equipment->asset_tag
         ];
 
-        return view('qr-code.qrcode', compact('qrCode'));
+        $pdf = \Mccarlosen\LaravelMpdf\Facades\LaravelMpdf::loadView('qr-code.qrcode', compact('qrCode'), [], [
+            'format' => [50, 50],
+            'margin_left' => 0,
+            'margin_right' => 0,
+            'margin_top' => 0,
+            'margin_bottom' => 0,
+            'margin_header' => 0,
+            'margin_footer' => 0,
+        ]);
+
+        return $pdf->download('QR-' . $equipment->asset_tag . '.pdf');
+    }
+
+    public function downloadQrSticker($id)
+    {
+        $equipment = Equipment::findOrFail($id);
+        $url = url('/') . '/admin/h-r-service-request/equipment/' . $equipment->id;
+        $code = $equipment->asset_tag;
+
+        $pdf = \Mccarlosen\LaravelMpdf\Facades\LaravelMpdf::loadView('qr-code.sticker', compact('url', 'code'), [], [
+            'format' => [50, 50],
+            'margin_left' => 0,
+            'margin_right' => 0,
+            'margin_top' => 0,
+            'margin_bottom' => 0,
+            'margin_header' => 0,
+            'margin_footer' => 0,
+        ]);
+
+        return $pdf->download('Sticker-' . $equipment->asset_tag . '.pdf');
     }
 
     public function currntStock()

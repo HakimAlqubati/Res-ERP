@@ -29,8 +29,23 @@ Route::prefix('api/hr/payroll')
         Route::post('/run', [RunPayrollController::class, 'run']);
     });
 
-Route::middleware(['web', 'auth:web'])
+Route::middleware(['web'])
     ->group(function () {
         Route::get('/admin/salary-slip/pdf/{payroll_id}', [\App\Modules\HR\Payroll\Reports\SalarySlipReport::class, 'generate'])
             ->name('salarySlip.pdf');
     });
+
+// Web Simulation Routes
+// Route::prefix('payroll/simulation')->group(function () {
+// محاكاة لمجموعة موظفين
+Route::get('/payroll/simulation/by-employees', [\App\Modules\HR\Payroll\Http\Controllers\PayrollWebController::class, 'simulateSalariesByEmployeeIds'])
+    ->name('payroll.web.simulate.employees');
+
+// معاينة الرواتب (Preview)
+Route::any('/payroll/simulation/preview', [\App\Modules\HR\Payroll\Http\Controllers\PayrollWebController::class, 'previewByBranchYearMonth'])
+    ->name('payroll.web.preview');
+
+// محاكاة التشغيل (Run)
+Route::any('/payroll/simulation/run', [\App\Modules\HR\Payroll\Http\Controllers\PayrollWebController::class, 'simulateRun'])
+    ->name('payroll.web.simulate.run');
+// });

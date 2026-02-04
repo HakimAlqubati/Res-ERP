@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\BranchResource\Tables;
 
+use App\Filament\Resources\BranchResource;
 use App\Models\Branch;
 use App\Models\Store;
 use App\Models\User;
@@ -38,6 +39,7 @@ class BranchTable
     public static function configure(Table $table): Table
     {
         return $table->striped()
+            ->recordUrl(fn(Branch $record): string => BranchResource::getUrl('view', ['record' => $record]))    
             ->columns([
                 TextColumn::make('id')->label(__('lang.branch_id'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
                 SpatieMediaLibraryImageColumn::make('default')->label('')->size(50)
