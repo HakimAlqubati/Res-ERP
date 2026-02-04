@@ -44,10 +44,15 @@ class RunRebuildInventory extends Command
             Log::info("🔁 RebuildInventory: Running without tenant");
         }
 
+        if (!$this->confirm('⚠️  This will dispatch a background job to DELETE and REBUILD all transactions. Continue?', true)) {
+            return;
+        }
+
         Log::info('✅ start run of rebuild.');
         $this->info('📦 Dispatching job to rebuild inventory...');
         dispatch(new RebuildInventoryFromSources());
 
-        $this->info('✅ Job dispatched successfully!');
+        $this->info('✅ Job dispatched successfully! The rebuild will happen in the background.');
+        $this->info('👉 Check your queue worker to see progress.');
     }
 }

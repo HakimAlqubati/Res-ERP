@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Console\Commands;
 
 use Throwable;
@@ -70,7 +71,7 @@ class AllocateAllProductsFifo extends Command
         //     ->values();
         // $productIds = collect([1]);
 
-// بناء كويري واحد يحتوي كل المصادر باستخدام union
+        // بناء كويري واحد يحتوي كل المصادر باستخدام union
         $productIds = DB::table('orders_details as od')
             ->join('orders as o', 'od.order_id', '=', 'o.id')
             ->whereIn('o.status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
@@ -86,10 +87,16 @@ class AllocateAllProductsFifo extends Command
             )
 
             ->union(
-
                 DB::table('stock_adjustment_details')
                     ->where('adjustment_type', 'decrease')
                     ->select('product_id')
+            )
+            ->union(
+                DB::table('stock_transfer_order_details as std')
+                    ->join('stock_transfer_orders as st', 'std.stock_transfer_order_id', '=', 'st.id')
+                    ->where('st.status', 'approved')
+                    ->whereNull('st.deleted_at')
+                    ->select('std.product_id')
             )
 
             ->distinct()
@@ -97,33 +104,32 @@ class AllocateAllProductsFifo extends Command
             ->sort() // ترتيب تصاعدي
             ->values();
 
-        $fifoService = new FifoAllocatorService();
-        // $productIds = $this->option('products');
+        $total = $productIds->count();
+        $this->info("🚀 Found {$total} products to allocate. Dispatching background jobs...");
 
-        InventoryTransaction::where('transactionable_type', Order::class)
-            ->whereIn('product_id', $productIds) // $productIds is an array
-            ->chunkById(1000, function ($transactions) {
-                foreach ($transactions as $tx) {
-                    $tx->forceDelete();
-                }
-            });
+        $bar = $this->output->createProgressBar($total);
+        $bar->start();
+
         foreach ($productIds as $productId) {
-            $allocations = $fifoService->allocate($productId);
-            $this->line("⚙️ Allocating for product_id: {$productId}");
 
-            try {
-                FifoAllocationSaver::save($allocations, $productId);
+            // Delete existing allocations for this product first specific to Order context
+            // Note: Ideally the Job should handle this or we do it here. 
+            // The previous code chunked delete for ALL transactionable_type = Order::class
+            // But now we dispatch per product.
+            // Let's keep the bulk delete logic or let the Job handle it?
+            // The previous code did: InventoryTransaction::where('transactionable_type', Order::class)...->forceDelete();
+            // This is risky if we have other types.
+            // But since 'RebuildInventory' already wiped ALL 'out' transactions, we might not need to delete again?
+            // RebuildInventory deleted `where('movement_type', 'out')->forceDelete();`
+            // So we are safe to just dispatch.
 
-                $this->info("✅ Allocation completed for product_id: {$productId}");
-            } catch (Throwable $e) {
-                Log::error("❌ Error allocating product_id={$productId}", [
-                    'error' => $e->getMessage(),
-                ]);
-
-                $this->error("❌ Failed for product_id: {$productId} - " . $e->getMessage());
-            }
+            \App\Jobs\AllocateProductFifoJob::dispatch($productId);
+            $bar->advance();
         }
 
-        $this->info('🎉 FIFO allocation completed for all products.');
+        $bar->finish();
+        $this->newLine();
+        $this->info("✅ Dispatched {$total} jobs to the queue.");
+        $this->info("👉 Run 'php artisan queue:work' to process them.");
     }
 }

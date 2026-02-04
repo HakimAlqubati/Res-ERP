@@ -11,6 +11,7 @@ use App\Models\GoodsReceivedNote;
 use App\Models\ProductPriceHistory;
 use App\Models\StockAdjustmentDetail;
 use App\Models\StockSupplyOrder;
+use App\Models\StockTransferOrder;
 use App\Models\UnitPrice;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +22,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Spatie\Multitenancy\Jobs\TenantAware;
 
-class RebuildInventoryFromSources
+class RebuildInventoryFromSources implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -101,6 +102,20 @@ class RebuildInventoryFromSources
                 ]);
             }
 
+            // 🟪 جمع أوامر النقل (كمية واردة للمخزن المستقبل)
+            $transfers = StockTransferOrder::where('status', StockTransferOrder::STATUS_APPROVED)
+                ->whereNotNull('to_store_id')
+                ->with(['details', 'toStore', 'fromStore'])
+                ->get();
+
+            foreach ($transfers as $transfer) {
+                $records->push([
+                    'date' => $transfer->date ?? $transfer->created_at,
+                    'type' => 'stock_transfer',
+                    'model' => $transfer,
+                ]);
+            }
+
             // ✅ الترتيب حسب التاريخ
             $sortedRecords = $records->sortBy('date');
 
@@ -112,6 +127,7 @@ class RebuildInventoryFromSources
                     'stock_supply' => $this->createFromSupplyOrder($item['model']),
                     'stock_adjustment_detail' => $this->createFromStockAdjustmentDetail($item['model']),
                     'returned_order' => $this->createFromReturnedOrder($item['model']),
+                    'stock_transfer' => $this->createFromStockTransfer($item['model']),
                 };
             }
 
@@ -410,6 +426,40 @@ class RebuildInventoryFromSources
                 'notes' => $notes,
                 'transactionable_id' => $order->original_order_id,
                 'transactionable_type' => ReturnedOrder::class,
+            ]);
+        }
+    }
+
+    protected function createFromStockTransfer(StockTransferOrder $transfer): void
+    {
+        foreach ($transfer->details as $detail) {
+            // if (!empty($this->productIds) && !in_array($detail->product_id, $this->productIds)) {
+            //     continue;
+            // }
+            $notes = 'Stock Transfer IN from Store ' . ($transfer->fromStore?->name ?? 'Unknown');
+
+            // ملاحظة: السعر هنا سيعتمد على التكلفة، وبما أننا نعيد البناء قد يكون السعر غير دقيق لحظياً
+            // يفضل وضع آلية لجلب السعر أو تركه 0 ليتم تحديثه لاحقاً بواسطة FIFO
+            $price = 0;
+
+            // محاولة جلب السعر إذا كان متاحاً في التفاصيل (أحياناً يخزن)
+            if (isset($detail->price) && $detail->price > 0) {
+                $price = $detail->price;
+            }
+
+            InventoryTransaction::create([
+                'product_id' => $detail->product_id,
+                'movement_type' => InventoryTransaction::MOVEMENT_IN,
+                'quantity' => $detail->quantity,
+                'unit_id' => $detail->unit_id,
+                'package_size' => $detail->package_size ?? 1,
+                'price' => $price,
+                'movement_date' => $transfer->date ?? $transfer->created_at,
+                'transaction_date' => $transfer->date ?? $transfer->created_at,
+                'store_id' => $transfer->to_store_id, // المخزن المستقبل
+                'notes' => $notes,
+                'transactionable_id' => $transfer->id,
+                'transactionable_type' => StockTransferOrder::class,
             ]);
         }
     }

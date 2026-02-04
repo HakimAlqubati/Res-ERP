@@ -4,6 +4,7 @@ namespace App\Services\FixFifo;
 
 use App\Models\Product;
 use App\Models\StockIssueOrder;
+use App\Models\StockTransferOrder;
 use App\Models\StockAdjustmentDetail;
 use Illuminate\Support\Str;
 use Exception;
@@ -29,14 +30,14 @@ class FifoAllocatorService
             return [];
 
             // خيار 2: لو تحب تسجل رسالة خطأ:
-             return [];
+            return [];
         }
 
 
         $storeId = defaultManufacturingStore($product)->id;
 
         // if (! $store) {
-         //     return [];
+        //     return [];
         // }
 
         // $storeId = $store->id;
@@ -105,12 +106,29 @@ class FifoAllocatorService
                 DB::raw("'adjustment_decrease' as source_type")
             ]);
 
+        $transferDetails = DB::table('stock_transfer_order_details as std')
+            ->join('stock_transfer_orders as st', 'std.stock_transfer_order_id', '=', 'st.id')
+            ->where('std.product_id', $productId)
+            ->whereNotNull('st.to_store_id')
+            ->where('st.status', 'approved')
+            ->whereNull('st.deleted_at')
+            ->orderBy('st.id')
+            ->get([
+                'std.unit_id',
+                'std.package_size',
+                'std.quantity as available_quantity',
+                'std.stock_transfer_order_id as order_id',
+                'st.date as created_at',
+                DB::raw("'stock_transfer' as source_type")
+            ]);
+
         $allocations = [];
         $allOrders = $orders->merge($issueOrders);
         $allOrders = $allOrders->sortBy('created_at')->values();
         $allOrders = $orders
             ->merge($issueOrders)
             ->merge($adjustmentDetails)
+            ->merge($transferDetails)
             ->sortBy('created_at')
             ->values();
 
@@ -118,6 +136,7 @@ class FifoAllocatorService
             // $transactionableType = isset($order->stock_issue_order_id) ? \App\Models\StockIssueOrder::class : \App\Models\Order::class;
             $transactionableType = match ($order->source_type ?? null) {
                 'stock_issue' => StockIssueOrder::class,
+                'stock_transfer' => StockTransferOrder::class,
                 'adjustment_decrease' => StockAdjustmentDetail::class,
                 default => Order::class,
             };
@@ -235,7 +254,7 @@ class FifoAllocatorService
         foreach ($unitPrices as $unitId => $unitPrice) {
 
             $newPrice = ($supplyPrice / $supplyPackageSize) * $unitPrice->package_size;
-         
+
             $unitPrice->update([
                 'price' => $newPrice,
                 'date' => $date,
