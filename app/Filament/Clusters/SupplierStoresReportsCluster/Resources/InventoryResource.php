@@ -104,7 +104,7 @@ class InventoryResource extends Resource
                 TextColumn::make('deleted_at')
                     ->label('Deleted At')
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('id')->sortable()
+                TextColumn::make('id')->sortable()->searchable()
                     ->label('ID')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('product.code')
                     ->label('Product Code'),
