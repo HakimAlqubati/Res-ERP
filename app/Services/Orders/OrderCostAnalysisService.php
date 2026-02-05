@@ -49,10 +49,19 @@ class OrderCostAnalysisService
         }
 
         // 2. حساب إجمالي قيمة الطلب (سعر البيع/التحويل)
+        // مع fallback لـ unit_prices إذا كان السعر صفر أو null
         $orderValue = OrderDetails::query()
             ->where('order_id', $orderId)
+            ->leftJoin('unit_prices', function ($join) {
+                $join->on('orders_details.product_id', '=', 'unit_prices.product_id')
+                    ->on('orders_details.unit_id', '=', 'unit_prices.unit_id');
+            })
             ->sum(
-                DB::raw('price * available_quantity')
+                DB::raw('CASE 
+                    WHEN orders_details.price IS NULL OR orders_details.price = 0 
+                    THEN COALESCE(unit_prices.price, 0) * orders_details.available_quantity
+                    ELSE orders_details.price * orders_details.available_quantity
+                END')
             );
 
         // --- ثانياً وثالثاً: حساب التكلفة والتحقق من حركات المخزون ---
