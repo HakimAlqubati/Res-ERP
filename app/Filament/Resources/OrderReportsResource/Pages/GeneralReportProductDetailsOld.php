@@ -4,6 +4,7 @@ namespace App\Filament\Resources\OrderReportsResource\Pages;
 
 use App\Models\Category;
 use App\Models\Branch;
+use App\Models\InventoryTransaction;
 use Carbon\Carbon;
 use stdClass;
 use Filament\Actions\Action;
@@ -13,7 +14,7 @@ use Filament\Resources\Pages\Page;
 use Illuminate\Support\Facades\DB;
 use niklasravnsborg\LaravelPdf\Facades\Pdf;
 
-class GeneralReportProductDetails extends Page
+class GeneralReportProductDetailsOld extends Page
 {
   protected static string $resource = GeneralReportOfProductsResource::class;
 
@@ -32,15 +33,11 @@ class GeneralReportProductDetails extends Page
   }
   protected string $view = 'filament.pages.order-reports.general-report-product-details';
 
-  public function runSourceBalanceByCategorySQL(int $categoryId, string $fromDate, string $toDate): array
+  public function runSourceBalanceByCategorySQL(int $storeId, int $categoryId, string $fromDate, string $toDate): array
   {
     $locale = app()->getLocale();
     // اسم المنتج مع دعم JSON locales
     $nameExpr = "IF(JSON_VALID(p.name), JSON_UNQUOTE(JSON_EXTRACT(p.name, '$.\"{$locale}\"')), p.name)";
-
-
-    $branchId = $this->branch_id;
-
     $sql = <<<SQL
 SELECT
   t.product_id,
@@ -56,95 +53,100 @@ SELECT
   SUM(t.remaining_value)    AS remaining_value
 FROM (
   SELECT
-    od.id AS detail_id,
-    od.product_id,
+    it_in.id AS in_tx_id,
+    it_in.product_id,
     p.code AS product_code,
     {$nameExpr} AS product_name,
-    o.order_date as movement_date, 
-    od.unit_id,
+    it_in.movement_date,
+    it_in.unit_id,
     u.name AS unit_name,
-    COALESCE(od.package_size, 1.0) AS package_size,
+    COALESCE(it_in.package_size, 1.0) AS package_size,
 
-    od.quantity AS in_qty_unit,
-    od.quantity * COALESCE(od.package_size, 1.0) AS in_qty_base,
+    it_in.quantity AS in_qty_unit,
+    it_in.quantity * COALESCE(it_in.package_size, 1.0) AS in_qty_base,
 
-    -- Returns (OUT)
-    COALESCE(returns_q.returned_qty, 0) AS out_qty_unit,
-    COALESCE(returns_q.returned_qty, 0) * COALESCE(od.package_size, 1.0) AS out_qty_base,
+    COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0) AS out_qty_base,
 
-    -- Remaining
     GREATEST(
-      (od.quantity - COALESCE(returns_q.returned_qty, 0)) * COALESCE(od.package_size, 1.0),
+      it_in.quantity * COALESCE(it_in.package_size, 1.0)
+      - COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0),
       0
     ) AS remaining_base,
 
     GREATEST(
-      od.quantity - COALESCE(returns_q.returned_qty, 0),
+      it_in.quantity * COALESCE(it_in.package_size, 1.0)
+      - COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0),
       0
-    ) AS remaining_qty_unit,
+    ) / COALESCE(it_in.package_size, 1.0) AS remaining_qty_unit,
 
     CASE 
-      WHEN od.price IS NULL OR od.price = 0 
+      WHEN it_in.price IS NULL OR it_in.price = 0 
       THEN COALESCE(up.price, 0)
-      ELSE od.price
+      ELSE it_in.price
     END AS unit_price,
+    -- COALESCE(it_in.price, 0) AS unit_price,
 
-    -- Remaining Value
-    GREATEST(
-      od.quantity - COALESCE(returns_q.returned_qty, 0),
-      0
+    (
+      GREATEST(
+        it_in.quantity * COALESCE(it_in.package_size, 1.0)
+        - COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0),
+        0
+      ) / COALESCE(it_in.package_size, 1.0)
     ) *
     CASE 
-      WHEN od.price IS NULL OR od.price = 0 
+      WHEN it_in.price IS NULL OR it_in.price = 0 
       THEN COALESCE(up.price, 0)
-      ELSE od.price
+      ELSE it_in.price
     END AS remaining_value
+    -- COALESCE(it_in.price, 0) AS remaining_value
 
-  FROM orders_details AS od
-  INNER JOIN orders AS o ON o.id = od.order_id
-  INNER JOIN products AS p ON p.id = od.product_id
-  LEFT JOIN units AS u ON u.id = od.unit_id
-  LEFT JOIN unit_prices AS up ON up.product_id = od.product_id AND up.unit_id = od.unit_id
+  FROM inventory_transactions AS it_in
+  LEFT JOIN inventory_transactions AS it_out
+    ON it_out.source_transaction_id = it_in.id
+   AND it_out.movement_type = 'out'
+   AND it_out.store_id = it_in.store_id
+   AND it_out.deleted_at IS  NULL
+   and it_out.transactionable_type = :returned_orders
 
-  -- Join to calculate Returns for this specific Order-Product-Unit combination
-  LEFT JOIN (
-      SELECT 
-          ro.original_order_id,
-          rod.product_id,
-          rod.unit_id,
-          SUM(rod.quantity) as returned_qty
-      FROM returned_orders ro
-      JOIN returned_order_details rod ON rod.returned_order_id = ro.id
-      WHERE ro.status = 'approved'
-        AND ro.deleted_at IS NULL
-        AND rod.deleted_at IS NULL
-      GROUP BY ro.original_order_id, rod.product_id, rod.unit_id
-  ) AS returns_q 
-  ON returns_q.original_order_id = o.id 
-  AND returns_q.product_id = od.product_id 
-  AND returns_q.unit_id = od.unit_id
+  LEFT JOIN units AS u
+    ON u.id = it_in.unit_id
 
-  WHERE o.deleted_at IS NULL
-    AND o.branch_id = :branch_id
-    AND p.category_id = :category_id
-    AND o.transfer_date BETWEEN :from_date AND :to_date
-    -- Ensure we only pick orders that are effectively "IN" stock (Delivered/Ready)
-    AND o.status IN ('ready_for_delivery', 'delevired')
+  LEFT JOIN unit_prices AS up
+    ON up.product_id = it_in.product_id
+   AND up.unit_id    = it_in.unit_id
 
+  INNER JOIN products AS p
+    ON p.id = it_in.product_id
+   AND p.category_id = :category_id
+
+  WHERE it_in.deleted_at IS NULL
+    AND it_in.movement_type = 'in'
+    AND it_in.store_id = :store_id
+    AND it_in.movement_date BETWEEN :from_date AND :to_date
+    AND it_in.transactionable_type = :order_morph
+
+  GROUP BY
+    it_in.id, it_in.product_id, p.code, p.name,
+    it_in.unit_id, u.name,
+    it_in.package_size, it_in.quantity, it_in.price
+    , up.price
+    , it_in.movement_date
 ) AS t
 GROUP BY
   t.product_id, t.product_code, t.product_name,
   t.unit_id, t.unit_name, t.package_size, t.unit_price
 ORDER BY
-  t.product_id
+--   t.product_code, t.unit_id, t.package_size
+t.product_id
 SQL;
 
-
     return DB::select($sql, [
-      'branch_id'   => $branchId,
+      'store_id'    => $storeId,
       'category_id' => $categoryId,
       'from_date'   => $fromDate,
       'to_date'     => $toDate,
+      'order_morph'  => 'App\\Models\\Order',
+      'returned_orders' => 'App\\Models\\ReturnedOrder'
     ]);
   }
 
@@ -192,6 +194,8 @@ SQL;
 
   public function getReportDetails($start_date, $end_date, $branch_id, $category_id)
   {
+    $IN  = InventoryTransaction::MOVEMENT_IN  ?? 'in';
+    $OUT = InventoryTransaction::MOVEMENT_OUT ?? 'out';
 
     // فرع -> متجر
     $storeId = Branch::where('id', $branch_id)->value('store_id');
@@ -207,7 +211,17 @@ SQL;
     $this->storeId = $storeId;
     $from = Carbon::parse($start_date)->startOfDay();
     $to   = Carbon::parse($end_date)->endOfDay();
-    $rows = $this->runSourceBalanceByCategorySQL($category_id, $from, $to);
+    $rows = $this->runSourceBalanceByCategorySQL($storeId, $category_id, $from, $to);
+
+    // dd($rows);
+    // print_html_table($rows, [
+    //     'column' => 'movement_type',
+    //     'value'  => 'in',
+    //     'color'  => '#ECFDF5',   // خلفية
+    //     'text'   => '#065F46',   // (اختياري) لون النص
+    // ]);
+
+
 
 
 

@@ -109,8 +109,9 @@ class GeneralReportOfProductsResource extends Resource
         foreach ($categories as $cat_id => $cat_name) {
 
             // 3) جلب صفوف المنتجات داخل الفئة بنفس منطق runSourceBalanceByCategorySQL
-            $rows = app(GeneralReportProductDetails::class)->runSourceBalanceByCategorySQL(
-                (int)$storeId,
+            $reportDetailsInstance = app(GeneralReportProductDetails::class);
+            $reportDetailsInstance->branch_id = $branch_id;  // Set branch_id on instance
+            $rows = $reportDetailsInstance->runSourceBalanceByCategorySQL(
                 (int)$cat_id,
                 $from,
                 $to

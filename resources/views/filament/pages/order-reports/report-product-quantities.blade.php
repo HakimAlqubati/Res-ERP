@@ -81,7 +81,7 @@
                     <p>({{ isset($product_id) && is_numeric($product_id) ? \App\Models\Product::find($product_id)->name : __('lang.all') }})
                     </p>
                 </th>
-                <th colspan="3" class="no_border_right_left">
+                <th colspan="2" class="no_border_right_left">
                     <p>{{ __('lang.start_date') . ': ' . $start_date }}</p>
                     <br>
                     <p>{{ __('lang.end_date') . ': ' . $end_date }}</p>
@@ -96,7 +96,7 @@
                 <th>{{ __('lang.code') }}</th>
                 <th>{{ __('lang.product') }}</th>
                 <th>{{ __('lang.unit') }}</th>
-                <th>{{ __('lang.package_size') }}</th>
+                <!-- <th>{{ __('lang.package_size') }}</th> -->
                 <th>{{ __('lang.quantity') }}</th>
                 <th>{{ __('lang.price') }}</th>
             </tr>
@@ -109,7 +109,7 @@
                     <td> {{ $data?->code }} </td>
                     <td> {{ $data?->product }} </td>
                     <td> {{ $data?->unit }} </td>
-                    <td> {{ $data?->package_size }} </td>
+                    <!-- <td> {{ $data?->package_size }} </td> -->
                     <td> {{ $data?->quantity }} </td>
                     <td> {{ $data?->price }} </td>
 

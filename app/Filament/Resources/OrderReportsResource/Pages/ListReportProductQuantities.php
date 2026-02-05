@@ -61,7 +61,7 @@ class ListReportProductQuantities extends ListRecords
                 ->activePopups()
                 ->active()->pluck('id');
         }
-        $data = $repo->getReportDataFromTransactionsV2($product_id, $start_date, $end_date, $branchIds, $categoryIds);
+        $data = $repo->getReportDataFromOrdersDetails($product_id, $start_date, $end_date, $branchIds, $categoryIds);
 
         return [
             'report_data' => $data,
