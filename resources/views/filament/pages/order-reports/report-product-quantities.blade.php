@@ -81,7 +81,7 @@
                     <p>({{ isset($product_id) && is_numeric($product_id) ? \App\Models\Product::find($product_id)->name : __('lang.all') }})
                     </p>
                 </th>
-                <th colspan="2" class="no_border_right_left">
+                <th colspan="3" class="no_border_right_left">
                     <p>{{ __('lang.start_date') . ': ' . $start_date }}</p>
                     <br>
                     <p>{{ __('lang.end_date') . ': ' . $end_date }}</p>
@@ -96,33 +96,32 @@
                 <th>{{ __('lang.code') }}</th>
                 <th>{{ __('lang.product') }}</th>
                 <th>{{ __('lang.unit') }}</th>
-                <!-- <th>{{ __('lang.package_size') }}</th> -->
                 <th>{{ __('lang.quantity') }}</th>
                 <th>{{ __('lang.price') }}</th>
+                <th>{{ __('lang.subtotal') }}</th>
             </tr>
         </thead>
         <tbody>
             @foreach ($report_data as $data)
-                <tr>
-
-                    <td> {{ $data?->branch }} </td>
-                    <td> {{ $data?->code }} </td>
-                    <td> {{ $data?->product }} </td>
-                    <td> {{ $data?->unit }} </td>
-                    <!-- <td> {{ $data?->package_size }} </td> -->
-                    <td> {{ $data?->quantity }} </td>
-                    <td> {{ $data?->price }} </td>
-
-
-                </tr>
+            <tr>
+                <td> {{ $data?->branch }} </td>
+                <td> {{ $data?->code }} </td>
+                <td> {{ $data?->product }} </td>
+                <td> {{ $data?->unit }} </td>
+                <td> {{ $data?->quantity }} </td>
+                <td> {{ $data?->price }} </td>
+                <td> {{ $data?->subtotal }} </td>
+            </tr>
             @endforeach
 
-            {{-- <tr>
-                <td colspan="3"> {{ __('lang.total') }} </td>
+            @php
+            $grandTotal = collect($report_data)->sum('subtotal_raw');
+            @endphp
+            <tr style="font-weight: bold; ">
+                <td colspan="6">{{ __('lang.total') }}</td>
 
-                <td> {{ $total_quantity }} </td>
-                <td> {{ $total_price }} </td>
-            </tr> --}}
+                <td>{{ formatMoneyWithCurrency($grandTotal) }}</td>
+            </tr>
         </tbody>
 
     </table>
@@ -130,6 +129,6 @@
         <div class="please_select_message_div" style="text-align: center;">
 
             <h1 class="please_select_message_text">{{ __('lang.please_select_product') }}</h1>
-        </div>
+    </div>
     @endif --}}
 </x-filament::page>

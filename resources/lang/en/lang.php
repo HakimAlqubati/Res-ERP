@@ -1075,4 +1075,5 @@ return [
     'termination_rejected_successfully' => 'Termination request rejected',
     'cancel' => 'Cancel',
     'termination_request_created' => 'Termination request created successfully',
+    'subtotal' => 'Subtotal',
 ];

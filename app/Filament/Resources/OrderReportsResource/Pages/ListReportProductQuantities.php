@@ -63,6 +63,7 @@ class ListReportProductQuantities extends ListRecords
         }
         $data = $repo->getReportDataFromOrdersDetails($product_id, $start_date, $end_date, $branchIds, $categoryIds);
 
+        // $totalPrice = $data->sum('price');
         return [
             'report_data' => $data,
             'product_id' => $product_id,

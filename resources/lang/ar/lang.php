@@ -1057,4 +1057,5 @@ return [
   'termination_rejected_successfully' => 'تم رفض طلب الإنهاء',
   'cancel' => 'إلغاء',
   'termination_request_created' => 'تم إنشاء طلب إنهاء الخدمة بنجاح',
+  'subtotal' => 'المجموع الفرعي',
 ];

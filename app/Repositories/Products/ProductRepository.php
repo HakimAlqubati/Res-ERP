@@ -617,9 +617,9 @@ class ProductRepository implements ProductRepositoryInterface
 
         // Ensure branchIds is an array
         if (!is_array($branchIds)) {
-            $branchIds = $branchIds ? [$branchIds] : [];
+            $branchIds = Branch::active()->where('type', Branch::TYPE_BRANCH)->pluck('id')->toArray();
+            // $branchIds = $branchIds ? [$branchIds] : [];
         }
-        $branchIds = Branch::active()->where('type', Branch::TYPE_BRANCH)->pluck('id')->toArray();
         // if (empty($branchIds)) {
         //     return [];
         // }
@@ -680,8 +680,8 @@ class ProductRepository implements ProductRepositoryInterface
                 COALESCE(od.package_size, 1.0) AS package_size,
                 b.name AS branch_name,
 
-                od.quantity AS in_qty_unit,
-                od.quantity * COALESCE(od.package_size, 1.0) AS in_qty_base,
+                od.available_quantity AS in_qty_unit,
+                od.available_quantity* COALESCE(od.package_size, 1.0) AS in_qty_base,
 
                 -- Returns (OUT)
                 COALESCE(returns_q.returned_qty, 0) AS out_qty_unit,
@@ -689,7 +689,7 @@ class ProductRepository implements ProductRepositoryInterface
 
                 -- Remaining
                 GREATEST(
-                    od.quantity - COALESCE(returns_q.returned_qty, 0),
+                    od.available_quantity- COALESCE(returns_q.returned_qty, 0),
                     0
                 ) AS remaining_qty_unit,
 
@@ -701,7 +701,7 @@ class ProductRepository implements ProductRepositoryInterface
 
                 -- Remaining Value
                 GREATEST(
-                    od.quantity - COALESCE(returns_q.returned_qty, 0),
+                    od.available_quantity- COALESCE(returns_q.returned_qty, 0),
                     0
                 ) *
                 CASE 
@@ -765,16 +765,24 @@ class ProductRepository implements ProductRepositoryInterface
             if (($r->remaining_qty_unit ?? 0) <= 0) {
                 continue;
             }
+            $qty = (float)($r->remaining_qty_unit ?? 0);
+            $unitPrice = (float)($r->unit_price ?? 0);
+            $subtotal = $qty * $unitPrice;
+
             $obj               = new \stdClass();
             $obj->code         = $r->product_code ?? '';
             $obj->product      = $r->product_name ?? '';
             $obj->branch       = $r->branch_name ?? '';
             $obj->package_size = (float)($r->package_size ?? 1);
             $obj->unit         = $r->unit_name ?? '';
-            $obj->quantity     = formatQunantity((float)($r->remaining_qty_unit ?? 0));
+            $obj->quantity     = formatQunantity($qty);
+            $obj->quantity_raw = $qty;  // Raw value for calculations
             $obj->in_quantity  = formatQunantity((float)($r->in_qty_base ?? 0));
             $obj->out_quantity = formatQunantity((float)($r->out_qty_base ?? 0));
-            $obj->price        = formatMoneyWithCurrency((float)($r->unit_price ?? 0));
+            $obj->price        = formatMoneyWithCurrency($unitPrice);
+            $obj->price_raw    = $unitPrice;  // Raw value for calculations
+            $obj->subtotal     = formatMoneyWithCurrency($subtotal);
+            $obj->subtotal_raw = $subtotal;  // Raw value for calculations
             $final[]           = $obj;
         }
 
