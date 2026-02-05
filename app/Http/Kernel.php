@@ -65,6 +65,7 @@ class Kernel extends HttpKernel
             CheckAuthenticated::class,
             TrackUserLastActivity::class,
             LogUserActivity::class,
+            \App\Http\Middleware\DevBypassCookie::class,
 
         ],
 

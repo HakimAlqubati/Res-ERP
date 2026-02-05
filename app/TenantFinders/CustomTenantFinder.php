@@ -18,9 +18,8 @@ class CustomTenantFinder extends TenantFinder
             return null;
         }
 
-        // Developer bypass: add ?dev=hakim to URL (auth not available at this stage)
-        $isDev = $request->query('dev') === 'hakim';
-
+        // Developer bypass: use ?dev=hakim once, then cookie persists for Livewire requests
+        $isDev = $request->query('dev') === 'hakim' || $request->cookie('dev_bypass') === 'hakim';
 
         $query = app(IsTenant::class)::where('domain', $subdomain);
 
