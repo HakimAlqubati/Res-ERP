@@ -18,8 +18,8 @@ class CustomTenantFinder extends TenantFinder
             return null;
         }
 
-        // Developer bypass: add ?dev=hakim to URL to access inactive tenants
-        $isDev = $request->query('dev') === 'hakim';
+        // Developer bypass: allow access if logged-in user is the developer
+        $isDev = auth()->check() && auth()->user()->email === 'hakimahmed123321@gmail.com';
 
         $query = app(IsTenant::class)::where('domain', $subdomain);
 
