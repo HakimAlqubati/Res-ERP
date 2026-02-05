@@ -773,9 +773,10 @@ class EmployeeApplicationResource extends Resource
             ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST))
             ->color('danger')
             ->icon('heroicon-o-x-mark')
-            ->action(function ($record) {
+            ->action(function ($record, $data) {
                 $record->update([
                     'status'      => EmployeeApplicationV2::STATUS_REJECTED,
+                    'rejected_reason'      => $data['rejected_reason'],
                     'rejected_by' => auth()->user()->id,
                     'rejected_at' => now(),
                 ]);
