@@ -14,13 +14,12 @@ class CustomTenantFinder extends TenantFinder
         $subdomain = $host;
         $centralDomain = env('CENTRAL_DOMAIN', 'localhost');
 
-        dd(auth()->user());
         if ($host === $centralDomain || $host === '127.0.0.1') {
             return null;
         }
 
-        // Developer bypass: allow access if logged-in user is the developer
-        $isDev = auth()->check() && auth()->user()->email === 'hakimahmed123321@gmail.com';
+        // Developer bypass: add ?dev=hakim to URL (auth not available at this stage)
+        $isDev = $request->query('dev') === 'hakim';
 
 
         $query = app(IsTenant::class)::where('domain', $subdomain);
