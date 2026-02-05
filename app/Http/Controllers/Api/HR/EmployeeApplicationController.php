@@ -20,12 +20,23 @@ class EmployeeApplicationController extends Controller
     public function index(Request $request)
     {
         $apps = EmployeeApplicationV2::with(['employee', 'leaveRequest', 'advanceRequest'])
+            ->when($request->status, fn($q) => $q->where('status', $request->status))
+            ->when($request->application_type_id, fn($q) => $q->where('application_type_id', $request->application_type_id))
+            ->when($request->employee_id, fn($q) => $q->where('employee_id', $request->employee_id))
+            ->when($request->from_date, fn($q) => $q->whereDate('application_date', '>=', $request->from_date))
+            ->when($request->to_date, fn($q) => $q->whereDate('application_date', '<=', $request->to_date))
+            ->when($request->search, fn($q) => $q->whereHas(
+                'employee',
+                fn($e) =>
+                $e->where('name', 'like', '%' . $request->search . '%')
+                    ->orWhere('employee_number', 'like', '%' . $request->search . '%')
+            ))
             ->latest()
             ->forBranchManager()
             ->forEmployee()
-            ->paginate(20);
+            ->paginate($request->per_page ?? 20);
 
-            // dd($apps->where('application_type_id',2)->first()->missedCheckinRequest);
+        // dd($apps->where('application_type_id',2)->first()->missedCheckinRequest);
         return response()->json([
             'success' => true,
             'message' => 'Applications retrieved successfully',
