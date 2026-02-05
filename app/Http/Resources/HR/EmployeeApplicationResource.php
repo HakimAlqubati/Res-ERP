@@ -18,6 +18,7 @@ class EmployeeApplicationResource extends JsonResource
             'applicationDate'   => $this->application_date,
             'status'            => $this->status,
             'notes'             => $this->notes,
+            'rejected_reason'             => $this->rejected_reason,
 
             'leaveRequest'      => $this->leaveRequest,
             'advanceRequest'    => $this->advanceRequest,
