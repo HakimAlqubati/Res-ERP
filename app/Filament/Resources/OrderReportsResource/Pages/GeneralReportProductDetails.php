@@ -48,52 +48,28 @@ SELECT
   t.product_name,
   t.unit_id,
   t.unit_name,
-  t.package_size,
-  t.unit_price,
-  SUM(t.in_qty_base)  AS in_qty_base,
-  SUM(t.out_qty_base) AS out_qty_base,
-  SUM(t.remaining_qty_unit) AS remaining_qty,
-  SUM(t.remaining_value)    AS remaining_value
+  SUM(t.in_qty)  AS in_qty,
+  SUM(t.out_qty) AS out_qty,
+  SUM(t.remaining_qty) AS remaining_qty,
+  SUM(t.remaining_value) AS remaining_value,
+  CASE 
+    WHEN SUM(t.remaining_qty) > 0 
+    THEN SUM(t.remaining_value) / SUM(t.remaining_qty)
+    ELSE 0 
+  END AS unit_price
 FROM (
   SELECT
-    od.id AS detail_id,
     od.product_id,
     p.code AS product_code,
     {$nameExpr} AS product_name,
-    o.order_date as movement_date, 
     od.unit_id,
     u.name AS unit_name,
-    COALESCE(od.package_size, 1.0) AS package_size,
 
-    od.quantity AS in_qty_unit,
-    od.quantity * COALESCE(od.package_size, 1.0) AS in_qty_base,
+    od.available_quantity AS in_qty,
+    COALESCE(returns_q.returned_qty, 0) AS out_qty,
+    GREATEST(od.available_quantity - COALESCE(returns_q.returned_qty, 0), 0) AS remaining_qty,
 
-    -- Returns (OUT)
-    COALESCE(returns_q.returned_qty, 0) AS out_qty_unit,
-    COALESCE(returns_q.returned_qty, 0) * COALESCE(od.package_size, 1.0) AS out_qty_base,
-
-    -- Remaining
-    GREATEST(
-      (od.quantity - COALESCE(returns_q.returned_qty, 0)) * COALESCE(od.package_size, 1.0),
-      0
-    ) AS remaining_base,
-
-    GREATEST(
-      od.quantity - COALESCE(returns_q.returned_qty, 0),
-      0
-    ) AS remaining_qty_unit,
-
-    CASE 
-      WHEN od.price IS NULL OR od.price = 0 
-      THEN COALESCE(up.price, 0)
-      ELSE od.price
-    END AS unit_price,
-
-    -- Remaining Value
-    GREATEST(
-      od.quantity - COALESCE(returns_q.returned_qty, 0),
-      0
-    ) *
+    GREATEST(od.available_quantity - COALESCE(returns_q.returned_qty, 0), 0) *
     CASE 
       WHEN od.price IS NULL OR od.price = 0 
       THEN COALESCE(up.price, 0)
@@ -106,7 +82,6 @@ FROM (
   LEFT JOIN units AS u ON u.id = od.unit_id
   LEFT JOIN unit_prices AS up ON up.product_id = od.product_id AND up.unit_id = od.unit_id
 
-  -- Join to calculate Returns for this specific Order-Product-Unit combination
   LEFT JOIN (
       SELECT 
           ro.original_order_id,
@@ -128,13 +103,12 @@ FROM (
     AND o.branch_id = :branch_id
     AND p.category_id = :category_id
     AND o.transfer_date BETWEEN :from_date AND :to_date
-    -- Ensure we only pick orders that are effectively "IN" stock (Delivered/Ready)
     AND o.status IN ('ready_for_delivery', 'delevired')
 
 ) AS t
 GROUP BY
   t.product_id, t.product_code, t.product_name,
-  t.unit_id, t.unit_name, t.package_size, t.unit_price
+  t.unit_id, t.unit_name
 ORDER BY
   t.product_id
 SQL;
@@ -234,9 +208,8 @@ SQL;
       $obj->product_id   = $r->product_id;
       $obj->product_name = $r->product_name;
       $obj->product_code = $r->product_code;
-      $obj->package_size = $r->package_size; // لا نعتمد package_size هنا (الأسعار بالقاعدة)
-      $obj->unit_name    = $r->unit_name ?? ''; // اسم وحدة الدخول إن وُجد عبر od/u
-      $obj->unit_id      = $r->unit_id ?? '';               // إن أردتها، إنضم بوحدة محددة
+      $obj->unit_name    = $r->unit_name ?? '';
+      $obj->unit_id      = $r->unit_id ?? '';
 
       // الكمية بالصافي (قاعدة)
       $obj->quantity =  formatQunantity($netBase);

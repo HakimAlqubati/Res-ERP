@@ -116,6 +116,7 @@ class GeneralReportOfProductsResource extends Resource
                 $from,
                 $to
             );
+            
             // 4) تجميع كميات وقيم الفئة
             $cat_qty   = 0.0; // مجموع remaining_qty (بالوحدة المُدخلة لكل منتج)
             $cat_amount = 0.0; // مجموع remaining_value
