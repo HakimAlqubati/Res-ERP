@@ -78,7 +78,9 @@ class EmployeeTable
             ->recordUrl(fn(Employee $record): string => EmployeeResource::getUrl('view', ['record' => $record]))
             ->columns([
                 SoftDeleteColumn::make(),
-                TextColumn::make('id')->label(__('lang.id'))->alignCenter()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('id')
+                ->sortable()
+                ->label(__('lang.id'))->alignCenter()->toggleable(isToggledHiddenByDefault: true),
                 // TextColumn::make('avatar_image')->copyable()->label('avatar_image')->alignCenter()->toggleable(isToggledHiddenByDefault: true),
                 ImageColumn::make('avatar_image')->label('')
                     ->circular(),

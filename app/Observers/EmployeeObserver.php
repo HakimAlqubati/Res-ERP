@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Employee;
+use App\Models\EmployeeBranchLog;
 use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Storage;
@@ -104,6 +105,27 @@ class EmployeeObserver
         // فهرسة الصورة في AWS Rekognition عند الإنشاء أو عند تغيير الصورة
         if ($employee->avatar && ($employee->wasRecentlyCreated || $employee->wasChanged('avatar'))) {
             \App\Services\S3ImageService::indexEmployeeImage($employee->id);
+        }
+
+        // تسجيل سجل الفرع عند تغيير branch_id
+        if ($employee->wasChanged('branch_id')) {
+            // إغلاق السجل السابق للفرع (إن وجد)
+            $previousBranchLog = $employee->branchLogs()
+                ->whereNull('end_at')
+                ->latest()
+                ->first();
+
+            if ($previousBranchLog) {
+                $previousBranchLog->update(['end_at' => now()]);
+            }
+
+            // إنشاء سجل جديد للفرع الحالي
+            $employee->branchLogs()->create([
+                'branch_id'  => $employee->branch_id,
+                'start_at'   => now(),
+                'end_at'     => null,
+                'created_by' => auth()->id(),
+            ]);
         }
     }
     /**
