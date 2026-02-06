@@ -3,13 +3,12 @@
 namespace App\Models;
 
 use OwenIt\Auditing\Contracts\Auditable;
-use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Position extends Model implements Auditable
 {
-    use HasFactory,DynamicConnection, \OwenIt\Auditing\Auditable;
+    use HasFactory, \OwenIt\Auditing\Auditable;
     protected $table = 'hr_positions';
 
     // Define the fillable fields

@@ -8,7 +8,6 @@ use App\Models\Branch\Traits\BranchConstants;
 use App\Models\Branch\Traits\BranchRelations;
 use App\Models\Branch\Traits\BranchScopes;
 use App\Models\Branch\Traits\BranchAggregates;
-use App\Traits\DynamicConnection;
 use App\Traits\Scopes\BranchScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

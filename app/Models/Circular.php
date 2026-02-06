@@ -3,14 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
-use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class Circular extends Model implements Auditable
 {
-    use SoftDeletes, DynamicConnection, \OwenIt\Auditing\Auditable;
+    use SoftDeletes, \OwenIt\Auditing\Auditable;
 
     protected $table = 'hr_circulars';
 

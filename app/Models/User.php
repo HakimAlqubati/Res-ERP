@@ -6,7 +6,6 @@ namespace App\Models;
 
 use App\Models\Traits\HasUserDevices;
 use Illuminate\Database\Eloquent\Builder;
-use App\Traits\DynamicConnection;
 use App\Traits\Scopes\BranchScope;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Filament\Models\Contracts\FilamentUser;

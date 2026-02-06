@@ -4,18 +4,18 @@ namespace App\Models;
 
 use OwenIt\Auditing\Contracts\Auditable;
 use Illuminate\Database\Eloquent\Builder;
-use App\Traits\DynamicConnection;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MonthSalary extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes,DynamicConnection, \OwenIt\Auditing\Auditable;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
     protected $table = 'hr_month_salaries';
 
     protected $fillable = [
-        'name', 
+        'name',
         'start_month',
         'end_month',
         'notes',
@@ -26,7 +26,7 @@ class MonthSalary extends Model implements Auditable
         'month',
     ];
     protected $auditInclude = [
-        'name', 
+        'name',
         'start_month',
         'end_month',
         'notes',
@@ -57,7 +57,7 @@ class MonthSalary extends Model implements Auditable
     }
     public function createdBy()
     {
-        return $this->belongsTo(User::class,'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     protected static function booted()

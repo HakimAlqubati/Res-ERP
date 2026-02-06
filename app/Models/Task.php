@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Exception;
 use InvalidArgumentException;
-use App\Traits\DynamicConnection;
+
 use App\Traits\Scopes\BranchScope;
 use Filament\Facades\Filament;
 use Illuminate\Database\Eloquent\Model;
@@ -20,7 +20,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Task extends Model implements Auditable, HasMedia
 {
-    use SoftDeletes, DynamicConnection, \OwenIt\Auditing\Auditable, BranchScope, InteractsWithMedia;
+    use SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope, InteractsWithMedia;
 
     protected $table = 'hr_tasks';
 
