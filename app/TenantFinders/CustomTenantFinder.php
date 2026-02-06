@@ -14,7 +14,10 @@ class CustomTenantFinder extends TenantFinder
         $subdomain = $host;
         $centralDomain = env('CENTRAL_DOMAIN', 'localhost');
 
-        if ($host === $centralDomain || $host === '127.0.0.1') {
+        if (
+            $host === $centralDomain || $host === '127.0.0.1'
+            || $host === 'workbench.test'
+        ) {
             return null;
         }
 
