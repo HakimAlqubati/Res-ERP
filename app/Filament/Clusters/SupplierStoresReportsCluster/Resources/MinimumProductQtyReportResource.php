@@ -66,7 +66,9 @@ class MinimumProductQtyReportResource extends Resource
                     ->label(__('lang.category'))->searchable()
                     ->query(function (Builder $q, $data) {
                         return $q;
-                    })->options(Category::active()->get()->pluck('name', 'id')),
+                    })->options(Category::active()
+                        ->where('for_pos', 0)
+                        ->get()->pluck('name', 'id')),
             ], FiltersLayout::AboveContent)
             ->recordActions([]);
     }

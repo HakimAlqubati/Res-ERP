@@ -118,4 +118,12 @@ class AttendanceImagesUploadedResource extends Resource
     {
         return static::getModel()::count();
     }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+        return false;
+    }
 }

@@ -225,7 +225,7 @@ class AdminPanelProvider extends PanelProvider
                             )),
                         NavigationGroup::make('AppLogs')
                             ->items(array_merge(
-                                AppLogResource::getNavigationItems()
+                                (isSuperAdmin()) ? AppLogResource::getNavigationItems() : [],
                             ))
                     ]
                 );

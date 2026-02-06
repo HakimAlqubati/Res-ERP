@@ -88,6 +88,29 @@
 
 
         .btn-print i,
+
+        .star-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            /* background-color: #ea580c; */
+            border-radius: 50%;
+            font-size: 10px;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+
+        /* Default (White Rows / Odd) -> Black Star */
+        table tbody tr:nth-child(odd) .star-badge {
+            color: black;
+        }
+
+        /* Striped (Green Rows / Even) -> White Star */
+        table tbody tr:nth-child(even) .star-badge {
+            color: white;
+        }
     </style>
     <div class="text-right mb-4">
 
@@ -195,11 +218,13 @@
             // أول دخول
             $firstCheckin = $checkIns[0]['check_time'] ?? '-';
             $firstCheckinStatus = $checkIns[0]['status'] ?? '-';
+            $firstCheckinStatusLabel = $checkIns[0]['status_label'] ?? '-';
 
             // آخر خروج (باستخدام lastcheckout حصراً)
             $lastCheckout = $period['attendances']['checkout']['lastcheckout']['check_time'] ?? '-';
             $lastCheckoutStatus =
             $period['attendances']['checkout']['lastcheckout']['status'] ?? '-';
+            $lastCheckoutStatusLabel = $period['attendances']['checkout']['lastcheckout']['status_label'] ?? '-';
             @endphp
 
             <tr>
@@ -227,13 +252,19 @@
                 <td colspan="8">
                     {{ __('lang.absent') }}
                 </td>
+                @elseif ($period['final_status'] == 'future')
+                <td colspan="8">
+                    {{ '-' }}
+                </td>
                 @else
                 <td>
                     {{ $firstCheckin }}
                 </td>
 
                 <td>
-                    {{ $firstCheckinStatus }}
+                    {{ /*$firstCheckinStatus */
+                    $firstCheckinStatusLabel
+                    }}
                 </td>
 
                 <td>
@@ -242,7 +273,7 @@
 
                 <td>
 
-                    {{$lastCheckoutStatus}}
+                    {{$lastCheckoutStatusLabel}}
                 </td>
 
                 <td>
@@ -251,22 +282,52 @@
                 </td>
                 <td>
                     @php
-                    $duration =
-                    $period['attendances']['checkout']['lastcheckout'][
-                    'total_actual_duration_hourly'
-                    ] ?? '-';
-                    @endphp
-                    @if ($duration !== '-')
-                    <button
-                        class="text-blue-600 font-semibold underline hover:text-blue-900 transition"
-                        wire:click="showDetails('{{ $date }}', {{ $employee_id }}, {{ $period['period_id'] }})"
-                        style="cursor:pointer; border:none; background:none; padding:0;"
-                        title="Show all check-in/out details">
-                        {{ $duration }}
-                    </button>
-                    @else
-                    <span>{{ $duration }}</span>
-                    @endif
+                    $checkOuts = collect($period['attendances']['checkout'] ?? [])
+                    ->filter(fn($v, $k) => is_int($k))
+                    ->values()
+                    ->all();
+
+                    $totalMinutesCalc = 0;
+                    $maxRowsCalc = max(count($checkIns), count($checkOuts));
+
+                    for ($i = 0; $i < $maxRowsCalc; $i++) {
+                        $ciVal=$checkIns[$i]['check_time'] ?? null;
+                        $coVal=$checkOuts[$i]['check_time'] ?? null;
+
+                        if ($ciVal && $coVal) {
+                        try {
+                        $ciTime=\Carbon\Carbon::createFromFormat('H:i:s', $ciVal);
+                        $coTime=\Carbon\Carbon::createFromFormat('H:i:s', $coVal);
+
+                        if ($coTime->lessThan($ciTime)) {
+                        $coTime->addDay();
+                        }
+
+                        $totalMinutesCalc += $ciTime->diffInMinutes($coTime);
+                        } catch (\Exception $e) {}
+                        }
+                        }
+
+                        if ($totalMinutesCalc > 0) {
+                        $h = intdiv($totalMinutesCalc, 60);
+                        $m = $totalMinutesCalc % 60;
+                        $duration = "{$h}h {$m}m";
+                        } else {
+                        $duration = '-';
+                        }
+                        @endphp
+                        @if ($duration !== '-')
+                        <button
+                            class="text-blue-600 font-semibold hover:text-blue-900 transition flex items-center justify-between w-full"
+                            wire:click="showDetails('{{ $date }}', {{ $employee_id }}, {{ $period['period_id'] }})"
+                            style="cursor:pointer; border:none; background:none; padding:0;"
+                            title="Show all check-in/out details">
+                            <span class="underline">{{ $duration }}</span>
+                            <span class="star-badge">&#9733;</span>
+                        </button>
+                        @else
+                        <span>{{ $duration }}</span>
+                        @endif
                 </td>
                 <td>
                     {{ $period['attendances']['checkout']['lastcheckout']['approved_overtime'] ?? '-' }}

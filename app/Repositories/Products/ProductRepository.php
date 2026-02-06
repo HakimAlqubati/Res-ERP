@@ -597,6 +597,199 @@ class ProductRepository implements ProductRepositoryInterface
     }
 
 
+    /**
+     * Get report data from orders_details table instead of inventory_transactions.
+     * Similar logic to getReportDataFromTransactionsV2 but sources data from Orders.
+     *
+     * @param mixed $productParam Product ID or Code
+     * @param string|null $from_date Start date
+     * @param string|null $to_date End date
+     * @param array $branchIds Branch IDs to filter
+     * @param array $categoryIds Category IDs to filter (optional)
+     * @return array
+     */
+    public function getReportDataFromOrdersDetails($productParam, $from_date, $to_date, $branchIds, $categoryIds = [])
+    {
+        $from = $from_date ? Carbon::parse($from_date)->startOfDay() : null;
+        $to   = $to_date   ? Carbon::parse($to_date)->endOfDay()   : null;
+        $fromStr = $from ? $from->toDateTimeString() : null;
+        $toStr   = $to   ? $to->toDateTimeString()   : null;
+
+        // Ensure branchIds is an array
+        if (!is_array($branchIds)) {
+            $branchIds = Branch::active()->where('type', Branch::TYPE_BRANCH)->pluck('id')->toArray();
+            // $branchIds = $branchIds ? [$branchIds] : [];
+        }
+        // if (empty($branchIds)) {
+        //     return [];
+        // }
+
+        // Product filter
+        $productId = null;
+        if ($productParam !== null && $productParam !== '') {
+            $productId = is_numeric($productParam)
+                ? (int) $productParam
+                : DB::table('products')->where('code', trim((string)$productParam))->value('id');
+        }
+
+        $productFilterSql = '';
+        $productBindings  = [];
+        if ($productId) {
+            $productFilterSql = "AND od.product_id = ?";
+            $productBindings  = [$productId];
+        }
+
+        // Category filter
+        $categoryFilterSql = '';
+        $categoryBindings = [];
+        if (!empty($categoryIds)) {
+            $catPlaceholders = implode(',', array_fill(0, count($categoryIds), '?'));
+            $categoryFilterSql = "AND p.category_id IN ($catPlaceholders)";
+            $categoryBindings = $categoryIds;
+        }
+
+        // Branch filter
+        $placeholdersBranches = implode(',', array_fill(0, count($branchIds), '?'));
+
+        $locale = app()->getLocale();
+        $nameExpr = "IF(JSON_VALID(p.name), JSON_UNQUOTE(JSON_EXTRACT(p.name, '$.\"{$locale}\"')), p.name)";
+
+        $sql = "
+        SELECT 
+            t.branch_name,
+            t.unit_id,
+            t.unit_name,
+            t.package_size,
+            t.unit_price,
+            t.product_id,
+            t.product_code,
+            t.product_name,
+            SUM(t.in_qty_base)  AS in_qty_base,
+            SUM(t.out_qty_base) AS out_qty_base,
+            SUM(t.remaining_qty_unit) AS remaining_qty_unit,
+            SUM(t.remaining_value)    AS remaining_value
+        FROM (
+            SELECT
+                od.id AS detail_id,
+                od.product_id,
+                p.code AS product_code,
+                {$nameExpr} AS product_name,
+                o.transfer_date as movement_date, 
+                od.unit_id,
+                u.name AS unit_name,
+                COALESCE(od.package_size, 1.0) AS package_size,
+                b.name AS branch_name,
+
+                od.available_quantity AS in_qty_unit,
+                od.available_quantity* COALESCE(od.package_size, 1.0) AS in_qty_base,
+
+                -- Returns (OUT)
+                COALESCE(returns_q.returned_qty, 0) AS out_qty_unit,
+                COALESCE(returns_q.returned_qty, 0) * COALESCE(od.package_size, 1.0) AS out_qty_base,
+
+                -- Remaining
+                GREATEST(
+                    od.available_quantity- COALESCE(returns_q.returned_qty, 0),
+                    0
+                ) AS remaining_qty_unit,
+
+                CASE 
+                    WHEN od.price IS NULL OR od.price = 0 
+                    THEN COALESCE(up.price, 0)
+                    ELSE od.price
+                END AS unit_price,
+
+                -- Remaining Value
+                GREATEST(
+                    od.available_quantity- COALESCE(returns_q.returned_qty, 0),
+                    0
+                ) *
+                CASE 
+                    WHEN od.price IS NULL OR od.price = 0 
+                    THEN COALESCE(up.price, 0)
+                    ELSE od.price
+                END AS remaining_value
+
+            FROM orders_details AS od
+            INNER JOIN orders AS o ON o.id = od.order_id
+            INNER JOIN products AS p ON p.id = od.product_id
+            INNER JOIN branches AS b ON b.id = o.branch_id
+            LEFT JOIN units AS u ON u.id = od.unit_id
+            LEFT JOIN unit_prices AS up ON up.product_id = od.product_id AND up.unit_id = od.unit_id
+
+            -- Join to calculate Returns for this specific Order-Product-Unit combination
+            LEFT JOIN (
+                SELECT 
+                    ro.original_order_id,
+                    rod.product_id,
+                    rod.unit_id,
+                    SUM(rod.quantity) as returned_qty
+                FROM returned_orders ro
+                JOIN returned_order_details rod ON rod.returned_order_id = ro.id
+                WHERE ro.status = 'approved'
+                    AND ro.deleted_at IS NULL
+                    AND rod.deleted_at IS NULL
+                GROUP BY ro.original_order_id, rod.product_id, rod.unit_id
+            ) AS returns_q 
+            ON returns_q.original_order_id = o.id 
+            AND returns_q.product_id = od.product_id 
+            AND returns_q.unit_id = od.unit_id
+
+            WHERE o.deleted_at IS NULL
+                AND o.branch_id IN ({$placeholdersBranches})
+                {$productFilterSql}
+                {$categoryFilterSql}
+                AND (? IS NULL OR o.transfer_date >= ?)
+                AND (? IS NULL OR o.transfer_date <= ?)
+                -- Ensure we only pick orders that are effectively 'IN' stock (Delivered/Ready)
+                AND o.status IN ('ready_for_delivery', 'delevired')
+
+        ) AS t
+        GROUP BY 
+            t.branch_name, t.unit_id, t.unit_name, t.unit_price, 
+            t.package_size, t.product_id, t.product_code, t.product_name
+        ORDER BY t.branch_name, t.unit_id, t.package_size
+        ";
+
+        $bindings = array_merge(
+            $branchIds,                              // الفروع
+            $productBindings,                        // المنتج
+            $categoryBindings,                       // الأصناف
+            [$fromStr, $fromStr, $toStr, $toStr]     // قيد التاريخ
+        );
+
+        $rows = collect(DB::select($sql, $bindings));
+
+        $final = [];
+        foreach ($rows as $r) {
+            if (($r->remaining_qty_unit ?? 0) <= 0) {
+                continue;
+            }
+            $qty = (float)($r->remaining_qty_unit ?? 0);
+            $unitPrice = (float)($r->unit_price ?? 0);
+            $subtotal = $qty * $unitPrice;
+
+            $obj               = new \stdClass();
+            $obj->code         = $r->product_code ?? '';
+            $obj->product      = $r->product_name ?? '';
+            $obj->branch       = $r->branch_name ?? '';
+            $obj->package_size = (float)($r->package_size ?? 1);
+            $obj->unit         = $r->unit_name ?? '';
+            $obj->quantity     = formatQunantity($qty);
+            $obj->quantity_raw = $qty;  // Raw value for calculations
+            $obj->in_quantity  = formatQunantity((float)($r->in_qty_base ?? 0));
+            $obj->out_quantity = formatQunantity((float)($r->out_qty_base ?? 0));
+            $obj->price        = formatMoneyWithCurrency($unitPrice);
+            $obj->price_raw    = $unitPrice;  // Raw value for calculations
+            $obj->subtotal     = formatMoneyWithCurrency($subtotal);
+            $obj->subtotal_raw = $subtotal;  // Raw value for calculations
+            $final[]           = $obj;
+        }
+
+        return $final;
+    }
+
+
 
 
     public function getProductsOrdersQuntities($request)

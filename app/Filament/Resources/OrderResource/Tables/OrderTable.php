@@ -5,6 +5,7 @@ namespace App\Filament\Resources\OrderResource\Tables;
 use App\Exports\OrdersExport2;
 use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\Order;
+use App\Filament\Resources\OrderResource;
 use App\Services\Orders\OrderCostAnalysisService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -46,9 +47,14 @@ class OrderTable
             ->deferLoading()
             ->striped()
             ->extremePaginationLinks()
+            ->recordUrl(fn(Order $record): string => OrderResource::getUrl('view', ['record' => $record]))
 
             ->columns([
                 SoftDeleteColumn::make(),
+                TextColumn::make('deleted_at')
+                    ->label('Deleted At')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('id')->label(__('lang.order_id'))
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->copyable()->alignCenter(true)
@@ -81,10 +87,10 @@ class OrderTable
                     ->numeric()
                     ->hidden(fn(): bool => isStoreManager())
                     ->state(function (Order $record, OrderCostAnalysisService $service) {
-                        if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
-                            $analysis = $service->getOrderValues($record->id);
-                            return $analysis['total_cost_from_inventory_transactions'] ?? $record->total_amount;
-                        }
+                        // if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
+                        //     $analysis = $service->getOrderValues($record->id);
+                        //     return $analysis['total_cost_from_inventory_transactions'] ?? $record->total_amount;
+                        // }
                         return $record->total_amount;
                     })
                     ->formatStateUsing(function ($state) {
@@ -95,10 +101,10 @@ class OrderTable
                             ->using(function (Table $table) {
                                 $service = app(OrderCostAnalysisService::class);
                                 $total = $table->getRecords()->sum(function ($record) use ($service) {
-                                    if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
-                                        $analysis = $service->getOrderValues($record->id);
-                                        return $analysis['total_cost_from_inventory_transactions'] ?? $record->total_amount;
-                                    }
+                                    // if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
+                                    //     $analysis = $service->getOrderValues($record->id);
+                                    //     return $analysis['total_cost_from_inventory_transactions'] ?? $record->total_amount;
+                                    // }
                                     return $record->total_amount;
                                 });
                                 if (is_numeric($total)) {

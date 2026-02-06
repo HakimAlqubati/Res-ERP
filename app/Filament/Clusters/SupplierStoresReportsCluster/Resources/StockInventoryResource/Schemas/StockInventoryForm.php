@@ -333,6 +333,7 @@ class StockInventoryForm
                         Grid::make()->columns(12)->columnSpanFull()->visibleOn('create')->schema([
                             Select::make('per_page_selector')
                                 ->label('Per page')
+                                ->hidden()
                                 ->options([
                                     10 => '10',
                                     20 => '20',

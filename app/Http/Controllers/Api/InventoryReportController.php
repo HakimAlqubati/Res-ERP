@@ -128,21 +128,27 @@ class InventoryReportController extends Controller
     }
     public function filters()
     {
-        $stores = Store::query()
-            // يوجد فروع تصنيعية
-            ->whereHas('branches', fn($q) => $q->where('type', Branch::TYPE_CENTRAL_KITCHEN)
-                ->whereNull('deleted_at'))
-            // لا يوجد فروع غير تصنيعية
-            ->whereDoesntHave('branches', fn($q) => $q->where('type', '!=', Branch::TYPE_CENTRAL_KITCHEN)
-                ->whereNull('deleted_at'))
-                ->orWhereDoesntHave('branches')->where('default_store',1)
-            ->get()->pluck('name', 'id')->toArray();
+        $query = Store::query();
+
+        if (isBranchManager()) {
+            $query->where('id', auth()->user()->branch->store_id);
+        } else {
+            $query->where(function ($q) {
+                $q->whereHas('branches', fn($q) => $q->where('type', Branch::TYPE_CENTRAL_KITCHEN)
+                    ->whereNull('deleted_at'))
+                    ->whereDoesntHave('branches', fn($q) => $q->where('type', '!=', Branch::TYPE_CENTRAL_KITCHEN)
+                        ->whereNull('deleted_at'));
+            })->orWhere(function ($q) {
+                $q->doesntHave('branches')->where('default_store', 1);
+            });
+        }
+        $stores = $query->get()->pluck('name', 'id')->toArray();
 
         $filters = [
 
-            'categories'     => Category::where('active',1)
-            ->notForPos()
-            ->pluck('name', 'id')->toArray(),
+            'categories'     => Category::where('active', 1)
+                ->notForPos()
+                ->pluck('name', 'id')->toArray(),
             'stores'         => $stores,
             'movement_types' => InventoryTransaction::getMovementTypes(),
             'manufacturing_filter' => collect(\App\Enums\ProductType::cases())

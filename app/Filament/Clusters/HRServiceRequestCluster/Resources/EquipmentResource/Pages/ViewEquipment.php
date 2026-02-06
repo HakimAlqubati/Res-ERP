@@ -6,6 +6,7 @@ use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource;
 use Filament\Actions;
+use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewEquipment extends ViewRecord
@@ -23,6 +24,12 @@ class ViewEquipment extends ViewRecord
                 ]))
                 ->openUrlInNewTab(),
             DeleteAction::make(),
+            EditAction::make()
         ];
+    }
+
+    public function hasCombinedRelationManagerTabsWithContent(): bool
+    {
+        return true;
     }
 }

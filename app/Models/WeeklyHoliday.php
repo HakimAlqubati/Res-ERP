@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -35,5 +34,4 @@ class WeeklyHoliday extends Model
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
-
 }

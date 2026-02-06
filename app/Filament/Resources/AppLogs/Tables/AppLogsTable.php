@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AppLogs\Tables;
 
 use App\Models\AppLog;
+use App\Filament\Resources\AppLogs\AppLogResource;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -21,6 +22,7 @@ class AppLogsTable
     {
         return $table
             ->defaultSort('id', 'desc')
+            ->recordUrl(fn(AppLog $record): string => AppLogResource::getUrl('view', ['record' => $record]))
             ->striped()->deferFilters(false)
             ->paginated([10, 25, 50, 100, 150])
 

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\BranchResource\Tables;
 
+use App\Filament\Resources\BranchResource;
 use App\Models\Branch;
 use App\Models\Store;
 use App\Models\User;
@@ -10,6 +11,8 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Throwable;
+use App\Jobs\ZeroStoreStockJob;
+use Illuminate\Support\Facades\Auth;
 use Filament\Notifications\Notification;
 use Filament\Actions\EditAction;
 use Filament\Actions\DeleteAction;
@@ -36,6 +39,7 @@ class BranchTable
     public static function configure(Table $table): Table
     {
         return $table->striped()
+            ->recordUrl(fn(Branch $record): string => BranchResource::getUrl('view', ['record' => $record]))    
             ->columns([
                 TextColumn::make('id')->label(__('lang.branch_id'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
                 SpatieMediaLibraryImageColumn::make('default')->label('')->size(50)
@@ -52,7 +56,7 @@ class BranchTable
                 TextColumn::make('user.name')->label(__('lang.branch_manager'))->toggleable(),
                 TextColumn::make('category_names')->label(__('stock.customized_manufacturing_categories'))->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('user.email')->label('Email')->copyable()->toggleable(),
- 
+
                 TextColumn::make('start_date')
                     ->label(__('lang.start_date'))
                     ->dateTime('Y-m-d')
@@ -228,6 +232,34 @@ class BranchTable
                             ->success()
                             ->send();
                     }),
+                Action::make('zero_stock')
+                    ->label(__('stock.zero_stock'))
+                    ->icon('heroicon-o-archive-box-x-mark')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading(__('stock.zero_stock_heading'))
+                    ->modalDescription(fn($record) => __('stock.zero_stock_confirmation', ['branch' => $record->name]))
+                    ->visible(fn(Model $record) => (bool)$record->store_id && isSuperAdmin())
+                    ->action(function (Model $record) {
+                        try {
+                            \Illuminate\Support\Facades\DB::table('inventory_transactions')
+                                ->where('store_id', $record->store_id)
+                                // ->where('movement_type','in')
+                                ->whereNull('deleted_at')
+                                ->update(['deleted_at' => now()]);
+
+                            Notification::make()
+                                ->title(__('stock.zero_stock_success', ['count' => '...']))
+                                ->success()
+                                ->send();
+                        } catch (Throwable $e) {
+                            Notification::make()
+                                ->title(__('stock.zero_stock_failed'))
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    })->hidden(),
                 EditAction::make(),
                 DeleteAction::make(),
                 RestoreAction::make(),

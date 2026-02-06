@@ -318,6 +318,7 @@ class EmployeeForm
                                         TextInput::make('working_days')
                                             ->label(__('lang.working_days_per_month'))
                                             ->numeric()
+                                            ->default(26)
                                             ->minValue(1)->required()
                                             ->maxValue(31)
                                             ->extraInputAttributes(['onkeypress' => 'return event.charCode >= 48 && event.charCode <= 57'])

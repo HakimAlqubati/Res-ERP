@@ -9,6 +9,7 @@ use App\Services\HR\Attendance\AttendancePlanService;
 use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
 use App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateService;
+use App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesService;
 use App\Services\HR\v2\Attendance\AttendanceServiceV2;
 use Aws\DynamoDb\DynamoDbClient;
 use Aws\Rekognition\RekognitionClient;
@@ -23,12 +24,17 @@ class AttendanceController extends Controller
     protected AttendanceServiceV2 $attendanceService;
     protected $attendanceFetcher;
     protected EmployeesAttendanceOnDateService $employeesAttendanceOnDateService;
+    protected AbsentEmployeesService $absentEmployeesService;
 
-    public function __construct(AttendanceServiceV2 $attendanceService, EmployeesAttendanceOnDateService $employeesAttendanceOnDateService)
-    {
+    public function __construct(
+        AttendanceServiceV2 $attendanceService,
+        EmployeesAttendanceOnDateService $employeesAttendanceOnDateService,
+        AbsentEmployeesService $absentEmployeesService
+    ) {
         $this->attendanceService = $attendanceService;
         $this->attendanceFetcher = new AttendanceFetcher(new EmployeePeriodHistoryService());
         $this->employeesAttendanceOnDateService = $employeesAttendanceOnDateService;
+        $this->absentEmployeesService = $absentEmployeesService;
     }
     public function store(Request $request)
     {
@@ -135,6 +141,25 @@ class AttendanceController extends Controller
         return response()->json([
             'status'  => 'success',
             'data'    => $attendanceReports,
+        ]);
+    }
+
+    public function absentEmployees(Request $request)
+    {
+        $validated = $request->validate([
+            'date'          => 'required|date',
+            'branch_id'     => 'nullable|integer',
+            'department_id' => 'nullable|integer',
+        ]);
+
+        $filters = array_filter($request->only(['branch_id', 'department_id']));
+
+        $absents = $this->absentEmployeesService->getAbsentEmployees($validated['date'], $filters);
+
+        return response()->json([
+            'status' => 'success',
+            'count'  => $absents->count(),
+            'data'   => $absents
         ]);
     }
 

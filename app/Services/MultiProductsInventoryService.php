@@ -72,7 +72,7 @@ class MultiProductsInventoryService
         $report = [];
         foreach ($products as $product) {
             $report = $this->getInventoryForProduct($product->id);
-            $reportArr[] = $this->getInventoryForProduct($product->id);
+            $reportArr[] = $report;
         }
         // dd($products, $report, $reportArr);
         return [
@@ -289,7 +289,7 @@ class MultiProductsInventoryService
                 'order' => $unitPrice['order'],
                 'package_size' => $unitPrice['package_size'],
                 'unit_name' => $unitPrice['unit_name'],
-                'remaining_qty' => $remainingQty > 0 ? $remainingQty : 0,
+                'remaining_qty' => ($this->storeId != 1 || $remainingQty > 0) ? $remainingQty : 0,
                 'remaining_quantity_base' => $remainingBaseQty,
                 'base_unit_id' => $baseUnitPrice?->unit_id,
                 'base_unit_name' => $baseUnitPrice?->unit?->name,

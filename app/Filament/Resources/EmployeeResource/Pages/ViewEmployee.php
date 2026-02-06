@@ -8,4 +8,8 @@ use Filament\Resources\Pages\ViewRecord;
 class ViewEmployee extends ViewRecord
 {
     protected static string $resource = EmployeeResource::class;
+      public function hasCombinedRelationManagerTabsWithContent(): bool
+    {
+        return true;
+    }
 }

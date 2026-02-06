@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PurchaseInvoiceResource\Tables;
 
+use App\Filament\Resources\PurchaseInvoiceResource;
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Fieldset;
@@ -42,6 +43,7 @@ class PurchaseInvoiceTable
             ->striped()
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
+            ->recordUrl(fn(PurchaseInvoice $record): string => PurchaseInvoiceResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('id')
                     ->color('primary')

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Resources;
 
 use App\Services\HR\AttendanceHelpers\Reports\HelperFunctions;
@@ -30,6 +31,7 @@ class CheckOutAttendanceResource extends JsonResource
             'total_actual_duration_hourly'   => $this->total_actual_duration_hourly,
             'supposed_duration_hourly' => $this->supposed_duration_hourly,
             'status'                   => $this->status,
+            'status_label'             => \App\Models\Attendance::getStatusLabel($this->status),
             'missing_hours'            => $this->helperFunctions->calculateMissingHours(
                 $this->status,
                 $this->supposed_duration_hourly ?? $this->period . ':00',

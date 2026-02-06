@@ -99,6 +99,9 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         $this->assertPositive($dailyHours, 'Daily hours');
         $this->assertPositive($monthDays, 'Month days');
 
+        // Logic Override: Working days is always (Month Days - 4)
+        $workingDays = max(1, $monthDays - 4);
+
         if (!$periodYear || !$periodMonth) {
             throw new InvalidArgumentException('periodYear and periodMonth are required to compute penalty deductions.');
         }
@@ -154,14 +157,25 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         // 6b. Calculate meal requests
         $mealRequests = $this->mealRequestCalculator->calculate($context);
 
+        // --- NEW LOGIC: Monthly Leave Balance Compensation (Overtime Days) ---
+        $leaveStats = \App\Modules\HR\Payroll\Services\WeeklyLeaveCalculator::calculateLeave($deductions->absentDays);
+        $overtimeDays = $leaveStats['final_result']['remaining_leaves'] ?? 0;
+        $overtimeDaysAmount = 0.0;
+
+        if ($overtimeDays > 0) {
+            $overtimeDaysAmount = $this->round($overtimeDays * $rates->dailyRate);
+        }
+        // --------------------------------------------------------------------
+
         // Calculate totals
         $this->baseSalary = $salary;
         $this->grossSalary = $this->round(
-            $this->baseSalary + $overtime['amount'] + $allowances['total']
+            $this->baseSalary + $overtime['amount'] + $allowances['total'] + $overtimeDaysAmount
         );
         $this->totalDeductions = $this->round(
             $deductions->absenceDeduction +
                 $deductions->lateDeduction +
+                $deductions->earlyDepartureDeduction +
                 $penalties['total'] +
                 $advanceInstallments['total'] +
                 $mealRequests['total'] +
@@ -212,6 +226,21 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             overtimeMultiplier: $this->overtimeMultiplier,
             policyHookTransactions: $policyHookTransactions
         );
+
+        // Add Overtime Days Transaction (Unused Leave Balance)
+        if ($overtimeDaysAmount > 0) {
+            $transactions[] = [
+                'type'        => \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_ALLOWANCE,
+                'sub_type'    => \App\Enums\HR\Payroll\SalaryTransactionSubType::OVERTIME_DAYS,
+                'amount'      => $overtimeDaysAmount,
+                'operation'   => '+',
+                'description' => 'Overtime days (Unused Leave Balance)',
+                'unit'        => 'day',
+                'qty'         => $overtimeDays,
+                'rate'        => $this->round($rates->dailyRate),
+                'multiplier'  => 1.0,
+            ];
+        }
 
         // Parse durations
         $totalDurationParsed = is_array($totalDuration) ? $this->sanitizeHM($totalDuration) : $this->parseHM($totalDuration);

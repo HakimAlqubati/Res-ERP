@@ -3,14 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
-use App\Traits\DynamicConnection;
 use App\Traits\Scopes\BranchScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class DailyTasksSettingUp extends Model
 {
-    use HasFactory, DynamicConnection, BranchScope;
+    use HasFactory, BranchScope;
     protected $table = 'daily_tasks_setting_up';
 
     const TYPE_SCHEDULE_DAILY = 'daily';

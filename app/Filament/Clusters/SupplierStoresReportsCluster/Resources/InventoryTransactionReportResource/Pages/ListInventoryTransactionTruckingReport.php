@@ -44,7 +44,9 @@ class ListInventoryTransactionTruckingReport extends ListRecords
                 $movementType,
                 $unitId,
                 $storeId,
-                $transactionableType
+                $transactionableType,
+                $this->getTable()->getFilters()['date_range']->getState()['from_date'] ?? null,
+                $this->getTable()->getFilters()['date_range']->getState()['to_date'] ?? null
             );
             $reportData = $rawData->through(function ($item) {
                 $item->formatted_transactionable_type = class_basename($item->transactionable_type);

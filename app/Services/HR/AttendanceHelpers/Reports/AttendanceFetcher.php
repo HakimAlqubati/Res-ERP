@@ -129,7 +129,9 @@ class AttendanceFetcher
                 // --- منطق الحالة ---
                 $hasCheckin  = count($checkInResources) > 0;
                 $hasCheckout = count($checkOutResources) > 0;
-                if (! $hasCheckin && ! $hasCheckout) {
+                if (Carbon::parse($date)->gt(Carbon::today())) {
+                    $status = AttendanceReportStatus::Future;
+                } elseif (! $hasCheckin && ! $hasCheckout) {
                     $status = AttendanceReportStatus::Absent;
                 } elseif ($hasCheckin && ! $hasCheckout) {
                     $status = AttendanceReportStatus::IncompleteCheckinOnly;
@@ -154,6 +156,8 @@ class AttendanceFetcher
             $allAbsent        = count($allPeriodsStatus) > 0 && count(array_unique($allPeriodsStatus)) === 1 && $allPeriodsStatus[0] === AttendanceReportStatus::Absent->value;
             if (empty($allPeriodsStatus)) {
                 $dayStatus = AttendanceReportStatus::NoPeriods->value;
+            } elseif (count(array_unique($allPeriodsStatus)) === 1 && $allPeriodsStatus[0] === AttendanceReportStatus::Future->value) {
+                $dayStatus = AttendanceReportStatus::Future->value;
             } elseif (count(array_unique($allPeriodsStatus)) === 1 && $allPeriodsStatus[0] === AttendanceReportStatus::Absent->value) {
                 $dayStatus = AttendanceReportStatus::Absent->value;
             } elseif (count(array_unique($allPeriodsStatus)) === 1 && $allPeriodsStatus[0] === AttendanceReportStatus::Present->value) {

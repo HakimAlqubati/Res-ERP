@@ -29,4 +29,8 @@ class EditEquipment extends EditRecord
     {
         return $this->getResource()::getUrl('index');
     }
+       public function hasCombinedRelationManagerTabsWithContent(): bool
+    {
+        return true;
+    }
 }

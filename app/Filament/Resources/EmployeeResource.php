@@ -17,6 +17,7 @@ use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodHistoriesRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodRelationManager;
 use App\Filament\Resources\EmployeeResource\Pages;
+use App\Filament\Resources\EmployeeResource\Pages\ViewEmployee;
 use App\Filament\Resources\EmployeeResource\Schemas\EmployeeForm;
 use App\Filament\Resources\EmployeeResource\Tables\EmployeeTable;
 use App\Models\Employee;
@@ -95,6 +96,7 @@ class EmployeeResource extends Resource
             'index'             => ListEmployees::route('/'),
             'create'            => CreateEmployee::route('/create'),
             'edit'              => EditEmployee::route('/{record}/edit'),
+            'view'              => ViewEmployee::route('/{record}'),
             'org_chart'         => OrgChart::route('/org_chart'),
             // 'view' => Pages\ViewEmployee::route('/{record}'),
             'checkInstallments' => CheckInstallments::route('/{employeeId}/check-installments'), // Pass employee ID here

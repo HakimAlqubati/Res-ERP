@@ -9,6 +9,7 @@ use App\Filament\Resources\BranchResource\Pages\ManageBranches;
 use App\Filament\Resources\BranchResource\Pages\EditBranch;
 use App\Filament\Resources\BranchResource\Pages\CreateBranch;
 use App\Filament\Resources\BranchResource\Pages;
+use App\Filament\Resources\BranchResource\Pages\ViewBranch;
 use App\Filament\Resources\BranchResource\RelationManagers\AreasRelationManager;
 use App\Filament\Resources\BranchResource\Schemas\BranchForm;
 use App\Filament\Resources\BranchResource\Tables\BranchTable;
@@ -46,6 +47,7 @@ class BranchResource extends Resource
         return [
             'index' => ManageBranches::route('/'),
             'edit' => EditBranch::route('/{record}/edit'),
+            'view' => ViewBranch::route('/{record}'),
             'create' => CreateBranch::route('/create'),
 
 

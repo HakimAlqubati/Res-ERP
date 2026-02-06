@@ -55,6 +55,7 @@ Route::prefix('hr')
         Route::get('employeesAttendanceOnDate', [AttendanceController::class, 'employeesAttendanceOnDate']);
 
         Route::get('/attendancePlan', [AttendanceController::class, 'generate']);
+        Route::get('/absentEmployees', [AttendanceController::class, 'absentEmployees']);
 
         // Route::post('/attendance/plan/execute', [AttendancePlanController::class, 'execute'])->middleware('auth:api');
         Route::post('/faceRecognition', [AttendanceController::class, 'identifyEmployeeFromImage']);
@@ -62,7 +63,16 @@ Route::prefix('hr')
             // ->name('employees.identify')
             ->middleware('auth:api')
         ;
-        Route::post('/liveness', [LivenessController::class, 'check']);
+        Route::get('/liveness', [LivenessController::class, 'check']);
+
+        // Overtime Routes
+        Route::prefix('overtime')->group(function () {
+            Route::get('/', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'index']);
+            Route::get('/suggest', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'getSuggestedOvertime']);
+            Route::post('/', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'store'])->middleware('auth:api');
+            Route::post('/approve', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'approve']);
+            Route::post('/undoApprove', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'undoApproval']);
+        })->middleware('auth:api');
     });
 
 Route::prefix('applications')
@@ -303,4 +313,47 @@ Route::prefix('hr')
         Route::get('/leaveTypes/{leaveType}', [LeaveTypeController::class, 'show']);      // single
         Route::get('/leaveTypes-weekly', [LeaveTypeController::class, 'weekly']);         // first active weekly/monthly
         Route::get('/leaveTypes-monthly-days-sum', [LeaveTypeController::class, 'monthlyDaysSum']); // sum with default=4
+    });
+
+Route::get('/testWeeklyLeaveCalculator', function () {
+    $totalMonthDays = (int) request('total_month_days', 30);
+    $absentDays = (int) request('absent_days', 0);
+
+    $calculator = new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator();
+    return $calculator->calculate($totalMonthDays, $absentDays);
+});
+
+// Employee Work Periods Routes
+Route::prefix('hr')
+    ->middleware('auth:api')
+    ->group(function () {
+        // Get employee periods
+        Route::get('/employees/{employee}/workPeriods', [
+            \App\Modules\HR\EmployeeWorkPeriods\Http\Controllers\EmployeeWorkPeriodController::class,
+            'index'
+        ]);
+
+        // Assign work periods to employee
+        Route::post('/employees/{employee}/workPeriods', [
+            \App\Modules\HR\EmployeeWorkPeriods\Http\Controllers\EmployeeWorkPeriodController::class,
+            'store'
+        ]);
+
+        // Assign days to existing employee period
+        Route::post('/employeePeriods/{employeePeriod}/assignDays', [
+            \App\Modules\HR\EmployeeWorkPeriods\Http\Controllers\EmployeeWorkPeriodController::class,
+            'assignDays'
+        ]);
+
+        // End/Delete employee period
+        Route::post('/employeePeriods/{employeePeriod}', [
+            \App\Modules\HR\EmployeeWorkPeriods\Http\Controllers\EmployeeWorkPeriodController::class,
+            'destroy'
+        ]);
+
+        // Get available work periods (shifts) by branch
+        Route::get('/workPeriods', [
+            \App\Modules\HR\EmployeeWorkPeriods\Http\Controllers\EmployeeWorkPeriodController::class,
+            'getWorkPeriods'
+        ]);
     });

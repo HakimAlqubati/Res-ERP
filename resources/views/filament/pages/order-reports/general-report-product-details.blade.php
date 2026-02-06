@@ -17,7 +17,7 @@
                     <br>
                     <p>{{ __('lang.end_date') . ': ' . $end_date }}</p>
                 </th>
-                <th class="no_border_right_left" colspan="3">
+                <th class="no_border_right_left" colspan="2">
                     <p>{{ __('lang.category') . ': (' . $category . ')' }}</p>
 
                 </th>
@@ -35,7 +35,7 @@
                 <th>{{ __('lang.product_code') }}</th>
                 <th>{{ __('lang.product') }}</th>
                 <th>{{ __('lang.unit') }}</th>
-                <th>{{ __('lang.package_size') }}</th>
+                <!-- <th>{{ __('lang.package_size') }}</th> -->
                 <th>{{ __('lang.quantity') }}</th>
                 <th>{{ __('lang.unit_price') }}</th>
                 <th>{{ __('lang.total_price') }}</th>
@@ -50,14 +50,13 @@
                     </td>
                     <td title="{{ $data->unit_id }}"> {{ $data?->unit_name }}
                     </td>
-                    <td> {{ $data?->package_size }} </td>
-                    <td> {{ $data?->quantity }} </td>
+                     <td> {{ $data?->quantity }} </td>
                     <td> {{ $data?->unit_price }} </td>
                     <td> {{ $data?->price }} </td>
                 </tr>
             @endforeach
             <tr class="sticky-total">
-                <td colspan="6" class="font-bold"> {{ __('lang.total') }}
+                <td colspan="5" class="font-bold"> {{ __('lang.total') }}
                 </td>
                 {{-- <td> {{ $total_quantity }} </td> --}}
                 <td class="font-bold"> {{ $total_price }} </td>

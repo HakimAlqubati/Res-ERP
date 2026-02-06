@@ -71,6 +71,58 @@
         .emp_name {
             padding: 0 3px 0 3px;
         }
+
+        .star-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            /* background-color: #ea580c; */
+            border-radius: 50%;
+            font-size: 10px;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+
+        /* Default (White Rows / Odd) -> Black Star */
+        table tbody tr:nth-child(odd) .star-badge {
+            color: black;
+        }
+
+        /* Striped (Green Rows / Even) -> White Star */
+        table tbody tr:nth-child(even) .star-badge {
+            color: white;
+        }
+
+        .pulsing-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background-color: #ea580c;
+            /* Orange for visibility */
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+            animation: pulse-opacity 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulse-opacity {
+            0% {
+                opacity: 0.5;
+                transform: scale(0.9);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+
+            100% {
+                opacity: 0.5;
+                transform: scale(0.9);
+            }
+        }
     </style>
 
     @if (!empty($branch_id))
@@ -169,7 +221,7 @@
                 </td>
                 @elseif(empty($periods))
                 <td colspan="9" class="text-center text-gray-500 font-bold">
-                    {{ __('No work period') }}
+                    {{ __('No periods') }}
                 </td>
                 @else
                 <td colspan="9" style="padding:0;">
@@ -182,10 +234,14 @@
                         $lastcheckout = $item['attendances']['checkout']['lastcheckout'] ?? null;
                         @endphp
                         <tr>
-                            @if ($item['final_status'] == 'absent')
+                            @if ($item['final_status'] == 'absent' )
                             <td class="internal_cell">{{ $item['start_time'] ?? '-' }}</td>
                             <td class="internal_cell">{{ $item['end_time'] ?? '-' }}</td>
                             <td colspan="7" class="text-center">{{ __('Absent') }}</td>
+                            @elseif ($item['final_status'] == 'future')
+                            <td colspan="7" class="internal_cell">
+                                <p>-</p> {{ '' }}
+                            </td>
                             @else
                             <td
                                 class="internal_cell">{{ $item['start_time'] ?? '-' }}</td>
@@ -196,20 +252,72 @@
                             <td
                                 class="internal_cell">
 
-                                {{$checkin['status']??'-'}}
+                                {{$checkin['status_label']??'-'}}
                             </td>
                             <td
                                 class="internal_cell">{{ $lastcheckout['check_time'] ?? '-' }}</td>
                             <td
                                 class="internal_cell">
 
-                                {{$checkout['status']??'-'}}
+                                {{$checkout['status_label']??'-'}}
                             </td>
 
                             <td
                                 class="internal_cell">{{ $lastcheckout['supposed_duration_hourly'] ?? '-' }}</td>
-                            <td
-                                class="internal_cell">{{ $lastcheckout['actual_duration_hourly'] ?? '-' }}</td>
+                            <td class="internal_cell">
+                                @php
+                                $checkIns = collect($item['attendances']['checkin'] ?? [])
+                                ->filter(fn($v, $k) => is_int($k))
+                                ->values()
+                                ->all();
+
+                                $checkOuts = collect($item['attendances']['checkout'] ?? [])
+                                ->filter(fn($v, $k) => is_int($k))
+                                ->values()
+                                ->all();
+
+                                $totalMinutesCalc = 0;
+                                $maxRowsCalc = max(count($checkIns), count($checkOuts));
+
+                                for ($i = 0; $i < $maxRowsCalc; $i++) {
+                                    $ciVal=$checkIns[$i]['check_time'] ?? null;
+                                    $coVal=$checkOuts[$i]['check_time'] ?? null;
+
+                                    if ($ciVal && $coVal) {
+                                    try {
+                                    $ciTime=\Carbon\Carbon::createFromFormat('H:i:s', $ciVal);
+                                    $coTime=\Carbon\Carbon::createFromFormat('H:i:s', $coVal);
+
+                                    if ($coTime->lessThan($ciTime)) {
+                                    $coTime->addDay();
+                                    }
+
+                                    $totalMinutesCalc += $ciTime->diffInMinutes($coTime);
+                                    } catch (\Exception $e) {}
+                                    }
+                                    }
+
+                                    if ($totalMinutesCalc > 0) {
+                                    $h = intdiv($totalMinutesCalc, 60);
+                                    $m = $totalMinutesCalc % 60;
+                                    $duration = "{$h}h {$m}m";
+                                    } else {
+                                    $duration = '-';
+                                    }
+                                    @endphp
+                                    @if ($duration !== '-')
+                                    <button
+                                        class="text-blue-600 font-semibold hover:text-blue-900 transition flex items-center justify-between w-full"
+                                        wire:click="showDetails('{{ $date }}', {{ $emp['id'] }}, {{ $item['period_id'] }})"
+                                        style="cursor:pointer; border:none; background:none; padding:0;"
+                                        title="Show all check-in/out details">
+                                        <span class="underline">{{ $duration }}</span>
+                                        <span class="star-badge">&#9733;</span>
+                                    </button>
+                                    @else
+                                    <span>{{ $duration }}</span>
+                                    @endif
+                            </td>
                             <td
                                 class="internal_cell">{{ $lastcheckout['approved_overtime'] ?? '-' }}</td>
                             @endif
@@ -277,5 +385,11 @@
     <div class="please_select_message_div" style="text-align: center;">
         <h1 class="please_select_message_text">{{ __('Please select a Branch') }}</h1>
     </div>
+    @endif
+
+    @if ($showDetailsModal)
+    @include('components.hr.attendances-reports.attendance-details-modal', [
+    'modalData' => $modalData,
+    ])
     @endif
 </x-filament-panels::page>

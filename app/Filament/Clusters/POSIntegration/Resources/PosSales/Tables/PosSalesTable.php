@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\POSIntegration\Resources\PosSales\Tables;
 
 use App\Imports\PosImportDataImport;
+use App\Filament\Clusters\POSIntegration\Resources\PosSales\PosSaleResource;
 use App\Imports\PosSaleFromExcelImport;
 use App\Models\Branch;
 use App\Models\PosSale;
@@ -35,6 +36,7 @@ class PosSalesTable
         return $table->defaultSort('id', 'desc')
             ->deferFilters(false)
             ->striped()
+            ->recordUrl(fn(PosSale $record): string => PosSaleResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('id')
                     ->label('ID')

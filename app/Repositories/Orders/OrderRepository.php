@@ -14,7 +14,7 @@ use App\Models\Order;
 use App\Models\OrderDetails;
 use App\Models\Store;
 use App\Models\UnitPrice;
-use App\Models\User; 
+use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -242,7 +242,7 @@ class OrderRepository implements OrderRepositoryInterface
                 $orderId = $pendingOrderId;
                 $orderStatus = $order->status; // Could be PENDING_APPROVAL or ORDERED
             } else {
-                
+
                 $order = Order::create([
                     'status' => $orderStatus,
                     'customer_id' => $customerId,
@@ -437,10 +437,14 @@ class OrderRepository implements OrderRepositoryInterface
                     'message' => "You Are not a Store Keeper",
                 ], 500);
             }
+
+
             // $branchId = auth()->user()->managedStores->first()->id;
             try {
                 // Find the order by the given ID or throw a ModelNotFoundException
-                $order = Order::findOrFail($id);
+                $order = Order::lockForUpdate()->findOrFail($id);
+
+              
             } catch (ModelNotFoundException $e) {
                 // Roll back the transaction and return an error response if the order is not found
                 DB::rollBack();

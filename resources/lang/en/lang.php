@@ -1058,4 +1058,22 @@ return [
     'end_period_and_delete' => 'End Work Period & Delete',
     'end_period_confirmation' => 'This will end the employee work period at the specified date and remove the current record, keeping the history. Are you sure?',
     'deleted_successfully' => 'Deleted successfully',
+    // ===========================================
+    // Employee Service Termination
+    // ===========================================
+    'terminate_service' => 'End Service',
+    'termination_date' => 'Termination Date',
+    'termination_reason' => 'Termination Reason',
+    'notes' => 'Notes',
+    'service_termination' => 'Service Termination',
+    'manage_termination' => 'Manage Termination',
+    'termination_status' => 'Termination Status',
+    'approve_termination' => 'Approve Termination',
+    'reject_termination' => 'Reject Termination',
+    'rejection_reason' => 'Rejection Reason',
+    'termination_approved_successfully' => 'Service terminated successfully',
+    'termination_rejected_successfully' => 'Termination request rejected',
+    'cancel' => 'Cancel',
+    'termination_request_created' => 'Termination request created successfully',
+    'subtotal' => 'Subtotal',
 ];

@@ -15,7 +15,8 @@ class FinancialReportService
         $salesCategoryId = $salesCategory?->id;
 
         $query = FinancialTransaction::query()
-            ->whereNotNull('branch_id');
+            ->whereNotNull('branch_id')
+            ->whereNull('deleted_at');
 
         if ($dto->startDate && $dto->endDate) {
             $query->whereBetween('transaction_date', [$dto->startDate, $dto->endDate]);

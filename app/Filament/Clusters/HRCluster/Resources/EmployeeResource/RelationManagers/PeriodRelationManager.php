@@ -182,7 +182,7 @@ class PeriodRelationManager extends RelationManager
                     ->databaseTransaction()
                     ->action(function ($data) {
                         try {
-                            $service = new \App\Services\HR\EmployeeWorkPeriodService();
+                            $service = new \App\Modules\HR\EmployeeWorkPeriods\EmployeeWorkPeriodService();
                             $service->assignPeriodsToEmployee($this->ownerRecord, $data);
 
                             // Send notification after the operation is complete
@@ -343,33 +343,24 @@ class PeriodRelationManager extends RelationManager
                     return;
                 }
 
-                try {
-                    DB::transaction(function () use ($data, $employeePeriod) {
-                        if (!empty($data['days'])) {
-                            foreach ($data['days'] as $day) {
-                                $employeePeriod->days()->create([
-                                    'day_of_week' => $day,
-                                ]);
+                if (empty($data['days'])) {
+                    Notification::make()
+                        ->title('No Days Selected')
+                        ->body('Please select at least one day to assign.')
+                        ->warning()
+                        ->send();
+                    return;
+                }
 
-                                EmployeePeriodHistory::create([
-                                    'employee_id' => $employeePeriod->employee_id,
-                                    'period_id'   => $employeePeriod->period_id,
-                                    'start_date'  => $employeePeriod->start_date,
-                                    'end_date'    => $employeePeriod->end_date,
-                                    'start_time'  => $employeePeriod->workPeriod->start_at,
-                                    'end_time'    => $employeePeriod->workPeriod->end_at,
-                                    'day_of_week' => $day,
-                                ]);
-                            }
-                        }
-                    });
+                try {
+                    $service = new \App\Modules\HR\EmployeeWorkPeriods\EmployeeWorkPeriodService();
+                    $service->assignDaysToEmployeePeriod($employeePeriod, $data['days']);
 
                     Notification::make()
                         ->title('Days Assigned Successfully')
                         ->success()
                         ->send();
                 } catch (\Exception $e) {
-                    DB::rollBack();
                     Notification::make()
                         ->title('Error')
                         ->body($e->getMessage())
@@ -380,149 +371,5 @@ class PeriodRelationManager extends RelationManager
             ->modalHeading('Assign Work Days')
             ->modalSubmitActionLabel('Save')
             ->modalWidth('md');
-    }
-
-    private function isOverlappingDays_(
-        $employeeId,
-        $periodDays,
-        $periodStartAt,
-        $periodEndAt,
-        $periodStartDate,
-        $periodEndDate = null,
-        $excludePeriodId = null
-    ) {
-        $query = EmployeePeriod::query()
-            ->with([
-                'days' => function ($q) use ($periodDays) {
-                    $q->whereIn('day_of_week', $periodDays);
-                },
-                'workPeriod', // إضافة علاقة الشيفت
-            ])
-            ->where('employee_id', $employeeId)
-            ->where(function ($q) use ($periodStartDate, $periodEndDate) {
-                $q->where(function ($q2) use ($periodStartDate, $periodEndDate) {
-                    // شرط تقاطع الفترات
-                    $q2->whereNull('end_date')->orWhere(function ($q3) use ($periodStartDate, $periodEndDate) {
-                        if ($periodEndDate) {
-                            $q3->where('start_date', '<=', $periodEndDate)
-                                ->where(function ($q4) use ($periodStartDate) {
-                                    $q4->whereNull('end_date')->orWhere('end_date', '>=', $periodStartDate);
-                                });
-                        } else {
-                            $q3->where('end_date', '>=', $periodStartDate)->orWhereNull('end_date');
-                        }
-                    });
-                });
-            });
-
-        if ($excludePeriodId) {
-            $query->where('id', '!=', $excludePeriodId);
-        }
-
-        $overlappingPeriods = $query->get();
-
-        // أوقات الفترة الحالية المراد إضافتها
-        $currentStart = Carbon::createFromFormat('H:i:s', $periodStartAt);
-        $currentEnd   = Carbon::createFromFormat('H:i:s', $periodEndAt);
-
-        // إذا الشيفت جديد يمتد لليوم التالي، عدل النهاية
-        $currentWorkPeriodModel = \App\Models\WorkPeriod::where('start_at', $periodStartAt)
-            ->where('end_at', $periodEndAt)->first();
-
-        $currentDayAndNight = $currentWorkPeriodModel?->day_and_night ?? 0;
-        if ($currentDayAndNight) {
-            $currentEnd->addDay();
-        }
-
-        foreach ($overlappingPeriods as $period) {
-            $wp = $period->workPeriod;
-            if (! $wp) {
-                continue;
-            }
-
-            $existStart = Carbon::createFromFormat('H:i:s', $wp->start_at);
-            $existEnd   = Carbon::createFromFormat('H:i:s', $wp->end_at);
-
-            if ($wp->day_and_night) {
-                $existEnd->addDay();
-            }
-
-            // تحقق تداخل الأوقات
-            $timesOverlap = ($currentStart <= $existEnd) && ($existStart <= $currentEnd);
-
-            // يوجد يوم متداخل && أوقات متداخلة
-            if ($timesOverlap && $period->days->count()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private function isInternalPeriodsOverlapping($selectedPeriodIds)
-    {
-        $periods = \App\Models\WorkPeriod::whereIn('id', $selectedPeriodIds)->get();
-        foreach ($periods as $i => $periodA) {
-            foreach ($periods as $j => $periodB) {
-                if ($i >= $j) {
-                    continue;
-                }
-                // لا تقارن نفس الشيفت أو تكرار
-                // تحقق من تداخل الأوقات
-                if (
-                    ($periodA->start_at < $periodB->end_at) &&
-                    ($periodB->start_at < $periodA->end_at)
-                ) {
-                    // يوجد تداخل بين الشيفتين
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private function isInternalPeriodsOverlappingWithDates($selectedPeriodsWithDates)
-    {
-        $periods = WorkPeriod::whereIn('id', array_column($selectedPeriodsWithDates, 'period_id'))
-            ->get()
-            ->keyBy('id');
-
-        $count = count($selectedPeriodsWithDates);
-        for ($i = 0; $i < $count; $i++) {
-            for ($j = $i + 1; $j < $count; $j++) {
-                $a = $selectedPeriodsWithDates[$i];
-                $b = $selectedPeriodsWithDates[$j];
-
-                $periodA = $periods[$a['period_id']];
-                $periodB = $periods[$b['period_id']];
-
-                // ✅ استخدم Carbon وحسب day_and_night
-                $aStart = Carbon::createFromFormat('H:i:s', $periodA->start_at);
-                $aEnd   = Carbon::createFromFormat('H:i:s', $periodA->end_at);
-                if ($periodA->day_and_night) {
-                    $aEnd->addDay();
-                }
-
-                $bStart = Carbon::createFromFormat('H:i:s', $periodB->start_at);
-                $bEnd   = Carbon::createFromFormat('H:i:s', $periodB->end_at);
-                if ($periodB->day_and_night) {
-                    $bEnd->addDay();
-                }
-
-                // تحقق من التداخل
-                $timesOverlap = ($aStart <= $bEnd) && ($bStart <= $aEnd);
-
-                // تحقق من التواريخ
-                $aEndDate = $a['end_date'] ?? null;
-                $bEndDate = $b['end_date'] ?? null;
-                $datesOverlap =
-                    ($aEndDate === null || $b['start_date'] <= $aEndDate) &&
-                    ($bEndDate === null || $a['start_date'] <= $bEndDate);
-
-                if ($timesOverlap && $datesOverlap) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 }

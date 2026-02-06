@@ -20,6 +20,11 @@ class Employee extends Model implements Auditable
     use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope;
     use EmployeeRelationships, EmployeeAccessorsTrait, EmployeeAttendanceTrait;
 
+    public function serviceTermination()
+    {
+        return $this->hasOne(EmployeeServiceTermination::class);
+    }
+
     protected $table = 'hr_employees';
 
     protected $fillable = [

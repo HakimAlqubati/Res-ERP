@@ -1040,4 +1040,22 @@ return [
   'end_period_and_delete' => 'إنهاء فترة العمل وحذفها',
   'end_period_confirmation' => 'سيتم إنهاء فترة العمل للموظف بتاريخ المحدد وحذف السجل الحالي، مع الاحتفاظ بالسجل التاريخي. هل أنت متأكد؟',
   'deleted_successfully' => 'تم الحذف بنجاح',
+  // ===========================================
+  // Employee Service Termination
+  // ===========================================
+  'terminate_service' => 'إنهاء الخدمة',
+  'termination_date' => 'تاريخ إنهاء الخدمة',
+  'termination_reason' => 'سبب الإنهاء',
+  'notes' => 'ملاحظات',
+  'service_termination' => 'إنهاء الخدمة',
+  'manage_termination' => 'إدارة إنهاء الخدمة',
+  'termination_status' => 'حالة الإنهاء',
+  'approve_termination' => 'الموافقة على الإنهاء',
+  'reject_termination' => 'رفض الإنهاء',
+  'rejection_reason' => 'سبب الرفض',
+  'termination_approved_successfully' => 'تم إنهاء الخدمة بنجاح',
+  'termination_rejected_successfully' => 'تم رفض طلب الإنهاء',
+  'cancel' => 'إلغاء',
+  'termination_request_created' => 'تم إنشاء طلب إنهاء الخدمة بنجاح',
+  'subtotal' => 'المجموع الفرعي',
 ];

@@ -86,7 +86,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
                 'employee_id' => $employee->id,
                 'employee_no' => $employee->employee_no,
                 'name'        => $employee->name,
-                'working_days' => $workDays,
+                'working_days' => $result['working_days'], // Use the calculated working days (Month - 4)
                 'working_hours' => $dailyHours,
                 'monthly_salary' => $monthlySalary,
                 'daily_salary' => round($result['daily_rate'], 2),
@@ -196,7 +196,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
                 'employee_id'             => $employee->id,
                 'employee_no'             => $employee->employee_no,
                 'name'                    => $employee->name,
-                'working_days'            => $workDays,
+                'working_days'            => $result['working_days'], // Use the calculated working days
                 'daily_rate_method' => $result['daily_rate_method'] ?? '',
                 'working_hours'           => $dailyHours,
                 'monthly_salary'          => $monthlySalary,

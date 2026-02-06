@@ -81,4 +81,12 @@ class UserDeviceResource extends Resource
     {
         return static::getModel()::count();
     }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager()) {
+            return true;
+        }
+        return false;
+    }
 }

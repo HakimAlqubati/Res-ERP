@@ -12,6 +12,7 @@ use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\Employee;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\TimePicker;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -52,12 +53,15 @@ class EmployeeAbsentsReportResource extends Resource
     {
         return $table
             ->emptyStateHeading(__('lang.no_data'))
+            ->deferFilters(false)
             ->columns([])
             ->filters([
-                SelectFilter::make('branch_id')->label(__('lang.branch'))->options(Branch::where('active', 1)
-                    ->select('name', 'id')
+                SelectFilter::make('branch_id')
+                    ->placeholder('Select Branch')
+                    ->label(__('lang.branch'))->options(Branch::where('active', 1)
+                        ->select('name', 'id')
 
-                    ->get()->pluck('name', 'id'))
+                        ->get()->pluck('name', 'id'))
 
                     ->default(function () {
                         if (isBranchManager()) {
@@ -68,10 +72,12 @@ class EmployeeAbsentsReportResource extends Resource
                 Filter::make('filter_date')->label('')->schema([
                     DatePicker::make('date')
                         ->label(__('lang.date'))->default(date('Y-m-d')),
-                    TimePicker::make('current_time')
-                        ->label(__('lang.current_time'))
-                        ->default(now()->timezone('Asia/Kuala_Lumpur')->format('H:i'))
-                        ->withoutSeconds(),
+                    Hidden::make('current_time')
+                        ->default(now()->timezone('Asia/Kuala_Lumpur')->format('H:i')),
+                    // TimePicker::make('current_time')
+                    //     ->label(__('lang.current_time'))
+                    //     ->default(now()->timezone('Asia/Kuala_Lumpur')->format('H:i'))
+                    //     ->withoutSeconds(),
                 ]),
 
             ], FiltersLayout::AboveContent)
@@ -102,5 +108,5 @@ class EmployeeAbsentsReportResource extends Resource
         ];
     }
 
-    protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = true;
 }

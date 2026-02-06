@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\HRAttenanceCluster\Resources\WorkPeriodResource\
 
 use Filament\Actions\DeleteAction;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\WorkPeriodResource;
+use App\Models\WorkPeriod;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
@@ -32,7 +33,7 @@ class EditWorkPeriod extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        $data['day_and_night'] = WorkPeriodResource::calculateDayAndNight($data['start_at'], $data['end_at']);
+        $data['day_and_night'] = WorkPeriod::calculateDayAndNight($data['start_at'], $data['end_at']);
         return $data;
     }
 }

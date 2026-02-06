@@ -21,6 +21,7 @@ use App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource\Pa
 use App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource\Pages\EditGoodsReceivedNoteV3;
 use App\Filament\Clusters\SupplierCluster;
 use App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource\Pages;
+use App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource\Pages\ViewGoodsReceivedNote;
 use App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource\RelationManagers;
 use App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource\RelationManagers\GrnDetailsRelationManager;
 use App\Filament\Tables\Columns\SoftDeleteColumn;
@@ -239,7 +240,7 @@ class GoodsReceivedNoteResource extends Resource
     {
         return $table
             ->paginated([10, 25, 50, 100, 150])
-
+            ->recordUrl(fn(GoodsReceivedNote $record): string => GoodsReceivedNoteResource::getUrl('view', ['record' => $record]))
             ->striped()
             ->defaultSort('created_at', 'desc')
             ->columns([
@@ -506,6 +507,7 @@ class GoodsReceivedNoteResource extends Resource
             'index' => ListGoodsReceivedNotes::route('/'),
             'create' => CreateGoodsReceivedNote::route('/create'),
             'edit' => EditGoodsReceivedNote::route('/{record}/edit'),
+            'view' => ViewGoodsReceivedNote::route('/{record}'),
             // 'create-purchase-invoice' => Pages\EditGoodsReceivedNoteV2::route('/{record}/create-purchase-invoice'),
             'create-purchase-invoice' => EditGoodsReceivedNoteV3::route('/{record}/create-purchase-invoice'),
         ];

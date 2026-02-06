@@ -21,6 +21,7 @@ enum SalaryTransactionSubType: string
     case HOUSING = 'housing_allowance';     // بدل سكن
     case TRANSPORT = 'transport_allowance'; // بدل مواصلات
     case OVERTIME = 'overtime';             // عمل إضافي
+    case OVERTIME_DAYS = 'overtime_days';   // أيام عمل إضافية (رصيد إجازات)
 
         // مكافآت (Bonus)
     case ANNUAL = 'annual_bonus';           // مكافأة سنوية
@@ -42,7 +43,8 @@ enum SalaryTransactionSubType: string
 
             self::HOUSING,
             self::TRANSPORT,
-            self::OVERTIME      => SalaryTransactionType::TYPE_ALLOWANCE,
+            self::OVERTIME,
+            self::OVERTIME_DAYS => SalaryTransactionType::TYPE_ALLOWANCE,
 
             self::ANNUAL,
             self::PERFORMANCE   => SalaryTransactionType::TYPE_BONUS,
