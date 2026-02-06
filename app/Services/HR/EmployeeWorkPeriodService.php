@@ -238,4 +238,38 @@ class EmployeeWorkPeriodService
         }
         return false;
     }
+
+    /**
+     * Assign additional days to an existing EmployeePeriod.
+     *
+     * @param EmployeePeriod $employeePeriod
+     * @param array $days Array of day_of_week values to add
+     * @return void
+     * @throws Exception
+     */
+    public function assignDaysToEmployeePeriod(EmployeePeriod $employeePeriod, array $days): void
+    {
+        DB::beginTransaction();
+        try {
+            foreach ($days as $day) {
+                $employeePeriod->days()->create([
+                    'day_of_week' => $day,
+                ]);
+
+                EmployeePeriodHistory::create([
+                    'employee_id' => $employeePeriod->employee_id,
+                    'period_id'   => $employeePeriod->period_id,
+                    'start_date'  => $employeePeriod->start_date,
+                    'end_date'    => $employeePeriod->end_date,
+                    'start_time'  => $employeePeriod->workPeriod->start_at,
+                    'end_time'    => $employeePeriod->workPeriod->end_at,
+                    'day_of_week' => $day,
+                ]);
+            }
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
 }
