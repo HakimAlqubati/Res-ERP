@@ -322,3 +322,38 @@ Route::get('/testWeeklyLeaveCalculator', function () {
     $calculator = new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator();
     return $calculator->calculate($totalMonthDays, $absentDays);
 });
+
+// Employee Work Periods Routes
+Route::prefix('hr')
+    ->middleware('auth:api')
+    ->group(function () {
+        // Get employee periods
+        Route::get('/employees/{employee}/workPeriods', [
+            \App\Modules\HR\EmployeeWorkPeriods\Http\Controllers\EmployeeWorkPeriodController::class,
+            'index'
+        ]);
+
+        // Assign work periods to employee
+        Route::post('/employees/{employee}/workPeriods', [
+            \App\Modules\HR\EmployeeWorkPeriods\Http\Controllers\EmployeeWorkPeriodController::class,
+            'store'
+        ]);
+
+        // Assign days to existing employee period
+        Route::post('/employeePeriods/{employeePeriod}/assignDays', [
+            \App\Modules\HR\EmployeeWorkPeriods\Http\Controllers\EmployeeWorkPeriodController::class,
+            'assignDays'
+        ]);
+
+        // End/Delete employee period
+        Route::post('/employeePeriods/{employeePeriod}', [
+            \App\Modules\HR\EmployeeWorkPeriods\Http\Controllers\EmployeeWorkPeriodController::class,
+            'destroy'
+        ]);
+
+        // Get available work periods (shifts) by branch
+        Route::get('/workPeriods', [
+            \App\Modules\HR\EmployeeWorkPeriods\Http\Controllers\EmployeeWorkPeriodController::class,
+            'getWorkPeriods'
+        ]);
+    });

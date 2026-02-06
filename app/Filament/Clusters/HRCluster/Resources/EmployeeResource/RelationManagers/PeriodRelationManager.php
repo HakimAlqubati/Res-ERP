@@ -182,7 +182,7 @@ class PeriodRelationManager extends RelationManager
                     ->databaseTransaction()
                     ->action(function ($data) {
                         try {
-                            $service = new \App\Services\HR\EmployeeWorkPeriodService();
+                            $service = new \App\Modules\HR\EmployeeWorkPeriods\EmployeeWorkPeriodService();
                             $service->assignPeriodsToEmployee($this->ownerRecord, $data);
 
                             // Send notification after the operation is complete
@@ -353,7 +353,7 @@ class PeriodRelationManager extends RelationManager
                 }
 
                 try {
-                    $service = new \App\Services\HR\EmployeeWorkPeriodService();
+                    $service = new \App\Modules\HR\EmployeeWorkPeriods\EmployeeWorkPeriodService();
                     $service->assignDaysToEmployeePeriod($employeePeriod, $data['days']);
 
                     Notification::make()

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\HR;
+namespace App\Modules\HR\EmployeeWorkPeriods;
 
 use App\Models\Attendance;
 use App\Models\EmployeePeriod;
@@ -9,8 +9,6 @@ use App\Models\WorkPeriod;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Filament\Notifications\Notification;
 
 class EmployeeWorkPeriodService
 {
@@ -19,10 +17,10 @@ class EmployeeWorkPeriodService
      *
      * @param \App\Models\Employee $employee
      * @param array $data Expected keys: 'periods' (array of IDs), 'start_date', 'end_date' (optional), 'period_days' (array)
-     * @return void
+     * @return bool
      * @throws Exception
      */
-    public function assignPeriodsToEmployee($employee, array $data)
+    public function assignPeriodsToEmployee($employee, array $data): bool
     {
         DB::beginTransaction();
         try {
@@ -36,29 +34,7 @@ class EmployeeWorkPeriodService
             }
 
             if ($this->isInternalPeriodsOverlappingWithDates($selectedPeriodsWithDates)) {
-                Notification::make()
-                    ->title('Overlapping Error')
-                    ->body('There are overlapping shifts with overlapping periods and times. Please check your selection.')
-                    ->danger()
-                    ->send();
-                // Depending on how we want to handle this, we might throw an exception instead of returning
-                // But since the original code was in a closure that returns void/null, we need to signal failure.
-                // The original code used `return;` to stop execution.
-                // Here we should probably throw an exception to be caught by the controller/action, 
-                // OR duplicate the notification logic if we want to keep it consistent.
-                // Given the user wants "use from anywhere", throwing exceptions is cleaner for APIs, 
-                // but for Filament actions, notifications are often embedded. 
-                // I will throw an exception to allow the caller to handle UI feedback, 
-                // OR I can keep the notification if this is primarily for Filament.
-                // Let's stick closer to the original logic but make it reusable. 
-                // I will throw valid exceptions and let the caller catch them.
                 throw new Exception('There are overlapping shifts with overlapping periods and times. Please check your selection.');
-            }
-
-            // Validate the employee's last attendance
-            $lastAttendance = $employee->attendances()->latest('id')->first();
-            if ($lastAttendance && $lastAttendance->check_type === Attendance::CHECKTYPE_CHECKIN) {
-                // Original commented out code kept for reference if needed
             }
 
             $dataPeriods = array_map('intval', $data['periods']);
@@ -91,10 +67,8 @@ class EmployeeWorkPeriodService
                 $employeePeriod->save();
 
                 foreach ($data['period_days'] as $dayOfWeek) {
-
                     $employeePeriod->days()->create([
                         'day_of_week' => $dayOfWeek,
-
                     ]);
 
                     EmployeePeriodHistory::create([
@@ -115,6 +89,87 @@ class EmployeeWorkPeriodService
             DB::rollBack();
             throw $e;
         }
+    }
+
+    /**
+     * Assign additional days to an existing EmployeePeriod.
+     *
+     * @param EmployeePeriod $employeePeriod
+     * @param array $days Array of day_of_week values to add
+     * @return void
+     * @throws Exception
+     */
+    public function assignDaysToEmployeePeriod(EmployeePeriod $employeePeriod, array $days): void
+    {
+        DB::beginTransaction();
+        try {
+            foreach ($days as $day) {
+                $employeePeriod->days()->create([
+                    'day_of_week' => $day,
+                ]);
+
+                EmployeePeriodHistory::create([
+                    'employee_id' => $employeePeriod->employee_id,
+                    'period_id'   => $employeePeriod->period_id,
+                    'start_date'  => $employeePeriod->start_date,
+                    'end_date'    => $employeePeriod->end_date,
+                    'start_time'  => $employeePeriod->workPeriod->start_at,
+                    'end_time'    => $employeePeriod->workPeriod->end_at,
+                    'day_of_week' => $day,
+                ]);
+            }
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * End/Delete an employee period.
+     *
+     * @param int $employeePeriodId
+     * @param string $endDate
+     * @return void
+     * @throws Exception
+     */
+    public function endEmployeePeriod(int $employeePeriodId, string $endDate): void
+    {
+        DB::beginTransaction();
+        try {
+            $period = EmployeePeriod::findOrFail($employeePeriodId);
+
+            // حذف كل الأيام المرتبطة بهذه الفترة
+            $period->days()->delete();
+
+            // تحديث الهستوري
+            EmployeePeriodHistory::where('employee_id', $period->employee_id)
+                ->where('period_id', $period->period_id)
+                ->where('start_date', $period->start_date)
+                ->update(['end_date' => $endDate]);
+
+            // حذف الفترة
+            $period->delete();
+
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Get employee periods.
+     *
+     * @param int $employeeId
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getEmployeePeriods(int $employeeId)
+    {
+        return EmployeePeriod::with(['workPeriod', 'days'])
+            ->where('employee_id', $employeeId)
+            ->orderBy('id', 'desc')
+            ->get();
     }
 
     private function isInternalPeriodsOverlappingWithDates($selectedPeriodsWithDates)
@@ -177,7 +232,7 @@ class EmployeeWorkPeriodService
                 'days' => function ($q) use ($periodDays) {
                     $q->whereIn('day_of_week', $periodDays);
                 },
-                'workPeriod', // إضافة علاقة الشيفت
+                'workPeriod',
             ])
             ->where('employee_id', $employeeId)
             ->where(function ($q) use ($periodStartDate, $periodEndDate) {
@@ -207,7 +262,7 @@ class EmployeeWorkPeriodService
         $currentEnd   = Carbon::createFromFormat('H:i:s', $periodEndAt);
 
         // إذا الشيفت جديد يمتد لليوم التالي، عدل النهاية
-        $currentWorkPeriodModel = \App\Models\WorkPeriod::where('start_at', $periodStartAt)
+        $currentWorkPeriodModel = WorkPeriod::where('start_at', $periodStartAt)
             ->where('end_at', $periodEndAt)->first();
 
         $currentDayAndNight = $currentWorkPeriodModel?->day_and_night ?? 0;
@@ -237,39 +292,5 @@ class EmployeeWorkPeriodService
             }
         }
         return false;
-    }
-
-    /**
-     * Assign additional days to an existing EmployeePeriod.
-     *
-     * @param EmployeePeriod $employeePeriod
-     * @param array $days Array of day_of_week values to add
-     * @return void
-     * @throws Exception
-     */
-    public function assignDaysToEmployeePeriod(EmployeePeriod $employeePeriod, array $days): void
-    {
-        DB::beginTransaction();
-        try {
-            foreach ($days as $day) {
-                $employeePeriod->days()->create([
-                    'day_of_week' => $day,
-                ]);
-
-                EmployeePeriodHistory::create([
-                    'employee_id' => $employeePeriod->employee_id,
-                    'period_id'   => $employeePeriod->period_id,
-                    'start_date'  => $employeePeriod->start_date,
-                    'end_date'    => $employeePeriod->end_date,
-                    'start_time'  => $employeePeriod->workPeriod->start_at,
-                    'end_time'    => $employeePeriod->workPeriod->end_at,
-                    'day_of_week' => $day,
-                ]);
-            }
-            DB::commit();
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
     }
 }
