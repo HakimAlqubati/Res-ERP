@@ -170,7 +170,7 @@ class TransactionBuilder
                 'sub_type'     => $ded['name'] ?? SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION,
                 'amount'       => $this->round($employerAmount),
                 'operation'    => null,
-                'description'  => $ded['name'] ?? 'Employer contribution',
+                'description'  => $ded['name'] . ' (employer contribution)' ?? 'Employer contribution',
                 'deduction_id' => $ded['id'] ?? null,
             ];
         }

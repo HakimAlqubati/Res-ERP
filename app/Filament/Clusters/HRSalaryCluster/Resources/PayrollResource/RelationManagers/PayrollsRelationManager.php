@@ -34,8 +34,12 @@ class PayrollsRelationManager extends RelationManager
             ->recordTitleAttribute('employee')
             ->columns([
                 Tables\Columns\TextColumn::make('employee.employee_no')
-                    ->alignCenter()->label('Employee No')->default('-'),
-                Tables\Columns\TextColumn::make('employee.name'),
+                    ->alignCenter()->label('Employee No')->default('-')
+                    ->searchable()
+                    ,
+                Tables\Columns\TextColumn::make('employee.name')
+                ->searchable()
+                ,
                 Tables\Columns\TextColumn::make('base_salary')
                     ->label('Base')
                     ->numeric()->alignCenter()

@@ -873,10 +873,15 @@ Route::get('/admin/salary-slip/print/{payroll_id}', function (string $payroll_id
     $earnings = $transactions->filter(fn($t) => $t->operation === '+');
     $deductions = $transactions->filter(fn($t) => $t->operation === '-');
 
+    // خصومات تتحملها الشركة (نوع خصم ولكن ليست عملية سالبة)
+    $companyBorneDeductions = $transactions->filter(function ($t) {
+        return $t->type === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_DEDUCTION->value
+            && $t->operation !== '-';
+    });
+
     // مساهمات صاحب العمل (لا تؤثر في صافي راتب الموظف، تُعرض فقط)
     $employerContrib = $transactions->filter(function ($t) {
-        // return ($t->type ?? null) === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value;
-        return true;
+        return $t->type === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value;
     });
 
 
@@ -896,16 +901,17 @@ Route::get('/admin/salary-slip/print/{payroll_id}', function (string $payroll_id
     };
 
     return view('reports.hr.payroll.salary-slip', [
-        'payroll'         => $payroll,
-        'transactions'    => $transactions,
-        'earnings'        => $earnings,
-        'deductions'      => $deductions,
-        'employerContrib' => $employerContrib,
-        'gross'           => $gross,
-        'totalDeductions' => $totalDeductions,
-        'net'             => $net,
-        'totalEmployer'   => $totalEmployer,
-        'amountInWords'   => $amountInWords($net),
+        'payroll'                => $payroll,
+        'transactions'           => $transactions,
+        'earnings'               => $earnings,
+        'deductions'             => $deductions,
+        'companyBorneDeductions' => $companyBorneDeductions,
+        'employerContrib'        => $employerContrib,
+        'gross'                  => $gross,
+        'totalDeductions'        => $totalDeductions,
+        'net'                    => $net,
+        'totalEmployer'          => $totalEmployer,
+        'amountInWords'          => $amountInWords($net),
     ]);
 })->name('salarySlip.print')->middleware('auth:web');
 

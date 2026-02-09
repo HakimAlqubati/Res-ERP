@@ -164,6 +164,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
 
         // --- NEW LOGIC: Monthly Leave Balance Compensation (Overtime Days) ---
         $leaveStats = \App\Modules\HR\Payroll\Services\WeeklyLeaveCalculator::calculateLeave($deductions->absentDays);
+        // dd($leaveStats);
         $overtimeDays = $leaveStats['final_result']['remaining_leaves'] ?? 0;
         $overtimeDaysAmount = 0.0;
 

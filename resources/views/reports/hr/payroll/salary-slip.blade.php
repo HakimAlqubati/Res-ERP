@@ -325,6 +325,64 @@
 
             <p class="note"><strong>Net Salary:</strong> {{ formatMoneyWithCurrency($net) }}</p>
 
+            {{-- خصومات تتحملها الشركة --}}
+            @if(isset($companyBorneDeductions) && $companyBorneDeductions->count() > 0)
+            <div style="margin-top: 16px; padding: 12px; background: #f9fafb; border: 1px solid var(--line); border-radius: 4px;">
+                <h4 style="margin: 0 0 10px; font-size: 14px; color: #555;">Company-Borne Deductions (خصومات تتحملها الشركة)</h4>
+                <table class="pay" style="margin-top: 0;">
+                    <thead>
+                        <tr>
+                            <th style="width:70%">Description</th>
+                            <th style="width:30%" class="right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($companyBorneDeductions as $cbd)
+                        <tr>
+                            <td>{{ $cbd->description ?: ucfirst(str_replace('_', ' ', $cbd->sub_type ?? $cbd->type ?? '')) }}</td>
+                            <td class="right">{{ formatMoneyWithCurrency($cbd->amount) }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td><strong>Total</strong></td>
+                            <td class="right"><strong>{{ formatMoneyWithCurrency($companyBorneDeductions->sum('amount')) }}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            @endif
+
+            {{-- مساهمات صاحب العمل --}}
+            @if(isset($employerContrib) && $employerContrib->count() > 0)
+            <div style="margin-top: 16px; padding: 12px; background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 4px;">
+                <h4 style="margin: 0 0 10px; font-size: 14px; color: #2e7d32;">Employer Contributions (مساهمات صاحب العمل)</h4>
+                <table class="pay" style="margin-top: 0;">
+                    <thead>
+                        <tr>
+                            <th style="width:70%">Description</th>
+                            <th style="width:30%" class="right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($employerContrib as $ec)
+                        <tr>
+                            <td>{{ $ec->description ?: ucfirst(str_replace('_', ' ', $ec->sub_type ?? $ec->type ?? '')) }}</td>
+                            <td class="right">{{ formatMoneyWithCurrency($ec->amount) }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td><strong>Total</strong></td>
+                            <td class="right"><strong>{{ formatMoneyWithCurrency($employerContrib->sum('amount')) }}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            @endif
+
             <div class="sign">Employee Signature</div>
 
         </div>

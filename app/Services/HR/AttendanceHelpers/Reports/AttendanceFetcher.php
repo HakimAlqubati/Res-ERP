@@ -280,6 +280,7 @@ class AttendanceFetcher
         ]);
 
         $totalEarlyDepartureSeconds = 0;
+        $minEarlyDepartureMinutes = (int) setting('early_depature_deduction_minutes', 0);
         foreach ($result as $key => $day) {
             if (
                 is_array($day)
@@ -290,7 +291,8 @@ class AttendanceFetcher
                     $lastCheckout = $period['attendances']['checkout']['lastcheckout'] ?? null;
                     if ($lastCheckout && isset($lastCheckout['early_departure_minutes'])) {
                         $minutes = (int) ($lastCheckout['early_departure_minutes'] ?? 0);
-                        if ($minutes > 0) {
+                        // Only count if minutes >= minimum threshold from settings
+                        if ($minutes >= $minEarlyDepartureMinutes && $minutes > 0) {
                             $totalEarlyDepartureSeconds += $minutes * 60;
                         }
                     }

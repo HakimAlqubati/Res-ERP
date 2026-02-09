@@ -2,6 +2,7 @@
 
 namespace App\Modules\HR\Payroll\Reports;
 
+use App\Enums\HR\Payroll\SalaryTransactionType;
 use App\Models\Payroll;
 use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf;
 
@@ -31,7 +32,7 @@ class SalarySlipReport
         $deductions = $transactions->filter(fn($t) => $t->operation === '-');
 
         // Employer contributions (for display only)
-        $employerContrib = $transactions->filter(fn($t) => true);
+        $employerContrib = $transactions->filter(fn($t) => $t->type === SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value);
 
         // Totals
         $gross = $earnings->sum('amount');

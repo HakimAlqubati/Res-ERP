@@ -57,6 +57,7 @@ class AttendanceDeductionCalculator
 
         if ($context->employee->discount_exception_if_attendance_late) {
             $lateDeduction = 0.0;
+            $earlyDepartureDeduction = 0.0; // إعفاء الانصراف المبكر للموظف المعفي من التأخيرات
         }
 
         return new DeductionResult(

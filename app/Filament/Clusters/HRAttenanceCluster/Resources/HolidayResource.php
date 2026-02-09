@@ -147,9 +147,10 @@ class HolidayResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if(isSystemManager() || isSuperAdmin()){
+        if (isSystemManager() || isSuperAdmin()) {
             return true;
         }
         return false;
     }
+    protected static bool $shouldRegisterNavigation = false;
 }

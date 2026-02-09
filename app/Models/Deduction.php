@@ -78,6 +78,10 @@ class Deduction extends Model
             self::APPLIED_BY_BOTH => 'Both',
         ];
     }
+
+    public function getAppliedByLabelAttribute(){
+        return self::getAppliedByOptions()[$this->applied_by];
+    }
     // Define a model scope for filtering by 'condition_applied'
     public function scopeConditionApplied($query, $condition)
     {
