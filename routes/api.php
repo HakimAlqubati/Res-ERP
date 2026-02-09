@@ -266,6 +266,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/branches', function () {
         return Branch::active()
             ->branches()
+            ->forBranchManager('id')
             ->get(['id', 'name', 'type'])
 
             ->makeHidden([
