@@ -252,26 +252,25 @@ class TenantResource extends Resource
             // Ensure backup folder exists
             Storage::disk('local')->makeDirectory('backups');
 
-            // Run the mysqldump command
-            $process = new Process([
-                // 'C:\xampp\mysql\bin\mysqldump.exe',
-                'mysqldump',
-                '--user=' . env('DB_USERNAME', 'root'),
-                '--password=' . env('DB_PASSWORD'),
-                '--host=' . env('DB_HOST'),
-                '--ignore-table=' . $dbName . '.audits',
-                $dbName
-            ]);
+            // Build the mysqldump command with direct file output to avoid memory issues
+            $command = sprintf(
+                'mysqldump --user=%s --password=%s --host=%s --ignore-table=%s --ignore-table=%s %s > %s',
+                escapeshellarg(env('DB_USERNAME', 'root')),
+                escapeshellarg(env('DB_PASSWORD', '')),
+                escapeshellarg(env('DB_HOST', 'localhost')),
+                escapeshellarg($dbName . '.audits'),
+                escapeshellarg($dbName . '.app_logs'),
+                escapeshellarg($dbName),
+                escapeshellarg($sqlPath)
+            );
 
+            $process = Process::fromShellCommandline($command);
             $process->setTimeout(3600); // 1 hour timeout
             $process->run();
 
             if (!$process->isSuccessful()) {
                 throw new ProcessFailedException($process);
             }
-
-            // Save SQL dump
-            file_put_contents($sqlPath, $process->getOutput());
 
             // Create ZIP archive
             $zip = new \ZipArchive;
