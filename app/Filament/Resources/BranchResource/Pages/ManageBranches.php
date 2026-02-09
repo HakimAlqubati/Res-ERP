@@ -8,9 +8,10 @@ use App\Filament\Resources\BranchResource;
 use App\Models\Branch;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\ManageRecords;
+use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
 
-class ManageBranches extends ManageRecords
+class ManageBranches extends ListRecords
 {
     protected static string $resource = BranchResource::class;
 
