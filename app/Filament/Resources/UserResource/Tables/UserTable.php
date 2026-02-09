@@ -73,7 +73,7 @@ class UserTable
                 TextColumn::make('name')
                     ->limit(20)
                     ->sortable()->searchable()
-                    ->searchable(isIndividual: true, isGlobal: false)
+                    ->searchable(isIndividual: true, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('email')->icon('heroicon-m-envelope')->copyable()
                     ->copyMessage('Email address copied')
