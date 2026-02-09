@@ -99,8 +99,13 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         $this->assertPositive($dailyHours, 'Daily hours');
         $this->assertPositive($monthDays, 'Month days');
 
-        // Logic Override: Working days is always (Month Days - 4)
-        $workingDays = max(1, $monthDays - 4);
+        // Determine working days based on the daily rate method
+        // ByEmployeeWorkingDays: use the employee's working_days field directly
+        // Other methods: use calculated working days (Month Days - 4)
+        $employeeWorkingDays = $workingDays; // Preserve employee's original working_days
+        if ($this->dailyRateMethod !== DailyRateMethod::ByEmployeeWorkingDays->value) {
+            $workingDays = max(1, $monthDays - 4);
+        }
 
         if (!$periodYear || !$periodMonth) {
             throw new InvalidArgumentException('periodYear and periodMonth are required to compute penalty deductions.');

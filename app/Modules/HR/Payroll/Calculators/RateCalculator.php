@@ -29,9 +29,11 @@ class RateCalculator
         string $dailyRateMethod
     ): RateResult {
         $dailyRate = match ($dailyRateMethod) {
-            DailyRateMethod::By30Days->value      => $salary / 30,
-            DailyRateMethod::ByMonthDays->value   => $salary / $monthDays,
-            default                               => $salary / $workingDays,
+            DailyRateMethod::By30Days->value              => $salary / 30,
+            DailyRateMethod::ByMonthDays->value           => $salary / $monthDays,
+            DailyRateMethod::ByWorkingDays->value         => $salary / $workingDays, // Calculated: monthDays - 4
+            DailyRateMethod::ByEmployeeWorkingDays->value => $salary / $workingDays, // Employee's working_days field
+            default                                       => $salary / $workingDays,
         };
 
         $dailyRate = $this->round($dailyRate);
