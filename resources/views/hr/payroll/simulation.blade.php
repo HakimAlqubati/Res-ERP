@@ -6,6 +6,136 @@
 
 @section('content')
 
+<style>
+    body {
+        background-color: #020617 !important;
+        /* Very dark slate */
+    }
+
+    header h1 {
+        color: #818cf8 !important;
+        /* Indigo 400 */
+    }
+
+    header p {
+        color: #94a3b8 !important;
+        /* Slate 400 */
+    }
+
+    footer {
+        color: #475569 !important;
+        /* Slate 600 */
+    }
+
+    .glass-panel {
+        background: rgba(15, 23, 42, 0.8) !important;
+        /* Slate 900 with opacity */
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        backdrop-filter: blur(12px) !important;
+    }
+
+    .bg-white {
+        background-color: #0f172a !important;
+    }
+
+    .bg-gray-50 {
+        background-color: #1e293b !important;
+    }
+
+    .border-gray-200 {
+        border-color: #334155 !important;
+    }
+
+    .divide-gray-100>*+* {
+        border-color: #334155 !important;
+    }
+
+    .text-gray-900 {
+        color: #f8fafc !important;
+    }
+
+    .text-gray-800 {
+        color: #f1f5f9 !important;
+    }
+
+    .text-gray-700 {
+        color: #e2e8f0 !important;
+    }
+
+    .text-gray-600 {
+        color: #cbd5e1 !important;
+    }
+
+    .text-gray-500 {
+        color: #94a3b8 !important;
+    }
+
+    .text-gray-400 {
+        color: #64748b !important;
+    }
+
+    /* Indigo Accents */
+    .text-indigo-700 {
+        color: #a5b4fc !important;
+    }
+
+    /* Indigo 300 */
+    .bg-indigo-100 {
+        background-color: #312e81 !important;
+        color: #e0e7ff !important;
+    }
+
+    .bg-indigo-50 {
+        background-color: rgba(49, 46, 129, 0.3) !important;
+        border-color: #4338ca !important;
+    }
+
+    .text-indigo-800 {
+        color: #c7d2fe !important;
+    }
+
+    /* Red/Rose Accents */
+    .bg-rose-50 {
+        background-color: rgba(136, 19, 55, 0.2) !important;
+        border-color: #9f1239 !important;
+    }
+
+    .text-rose-600 {
+        color: #fb7185 !important;
+    }
+
+    .text-rose-800 {
+        color: #fecdd3 !important;
+    }
+
+    /* Green/Emerald Accents */
+    .text-emerald-600 {
+        color: #34d399 !important;
+    }
+
+    .text-emerald-700 {
+        color: #6ee7b7 !important;
+    }
+
+    /* Red/Green Status */
+    .text-green-600 {
+        color: #4ade80 !important;
+    }
+
+    /* Green 400 */
+    .text-red-500 {
+        color: #f87171 !important;
+    }
+
+    /* Red 400 */
+
+    /* Table Hover */
+    .hover\:bg-gray-50:hover {
+        background-color: #1e293b !important;
+    }
+</style>
+
+
 @php
 $totalNet = 0;
 foreach($results as $r) {
@@ -81,7 +211,7 @@ $totalNet += $r['data']['net_salary'];
 
                 <div class="bg-rose-50 p-3 rounded border border-rose-100 col-span-1">
                     <span class="block text-rose-800 text-xs uppercase tracking-wider">Absent Days</span>
-                    
+
                     <span class="font-mono font-bold text-lg text-rose-600">{{ $row['attendance_statistics']['absent'] ?? 0 }}</span>
                 </div>
                 <div class="bg-rose-50 p-3 rounded border border-rose-100 col-span-1">

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\HR\Payroll\Calculators;
 
+use App\Models\EmployeeApplicationV2;
 use App\Models\EmployeeMealRequest;
 use App\Modules\HR\Payroll\DTOs\CalculationContext;
 
@@ -50,7 +51,7 @@ class MealRequestCalculator
 
             $mealItems[] = [
                 'id'             => $mr->id,
-                'meal_details'   => $mr->meal_details ?? 'Employee Meal',
+                'meal_details'   => EmployeeApplicationV2::APPLICATION_TYPES[EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST] ?? 'Employee Meal',
                 'amount'         => $this->round($cost),
                 'date'           => $mr->date,
                 'reference_type' => EmployeeMealRequest::class,

@@ -220,7 +220,7 @@ class TransactionBuilder
                 $descParts[] = "installment {$adv['sequence']}/{$adv['months']}";
             }
             if (!empty($adv['due_date'])) {
-                $descParts[] = "due {$adv['due_date']}";
+                $descParts[] = 'due ' . \Carbon\Carbon::parse($adv['due_date'])->format('Y-m-d');
             }
             $desc = 'Advance installment';
             if (!empty($descParts)) {
