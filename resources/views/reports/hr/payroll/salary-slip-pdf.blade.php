@@ -243,7 +243,7 @@
                         </tr>
                         @endfor
                         @foreach ($employerContrib as $employerContribution)
-                        <tr>
+                        <tr style="background-color: #e6ffc8ff;">
                             <td>{{ $employerContribution->description }}</td>
                             <td></td>
                             <td>{{ formatMoneyWithCurrency($employerContribution->amount) }}</td>
