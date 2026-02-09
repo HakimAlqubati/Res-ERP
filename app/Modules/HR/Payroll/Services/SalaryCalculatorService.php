@@ -6,6 +6,7 @@ namespace App\Modules\HR\Payroll\Services;
 
 use App\Enums\HR\Payroll\DailyRateMethod;
 use App\Models\Employee;
+use App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator;
 use InvalidArgumentException;
 use App\Modules\HR\Payroll\DTOs\CalculationContext;
 use App\Modules\HR\Payroll\DTOs\SalaryMutableComponents;
@@ -102,7 +103,6 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         // Determine working days based on the daily rate method
         // ByEmployeeWorkingDays: use the employee's working_days field directly
         // Other methods: use calculated working days (Month Days - 4)
-        $employeeWorkingDays = $workingDays; // Preserve employee's original working_days
         if ($this->dailyRateMethod !== DailyRateMethod::ByEmployeeWorkingDays->value) {
             $workingDays = max(1, $monthDays - 4);
         }
@@ -123,6 +123,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             periodMonth: $periodMonth,
         );
 
+    
         // Policy hooks (pre calculation)
         foreach ($this->policyHooks as $hook) {
             $hook->beforeRates($employee, $employeeData);
@@ -143,7 +144,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
 
         // 3. Calculate overtime
         $overtime = $this->overtimeCalculator->calculate($context, $totalApprovedOvertime);
-
+ 
         // Hook: allow policies to alter deductions and overtime
         foreach ($this->policyHooks as $hook) {
             $hook->adjustDeductions($employee, $employeeData, $deductions->absenceDeduction, $deductions->lateDeduction, $deductions->missingHoursDeduction, $deductions->earlyDepartureDeduction);
@@ -162,15 +163,12 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         // 6b. Calculate meal requests
         $mealRequests = $this->mealRequestCalculator->calculate($context);
 
-        // --- NEW LOGIC: Monthly Leave Balance Compensation (Overtime Days) ---
-        $leaveStats = \App\Modules\HR\Payroll\Services\WeeklyLeaveCalculator::calculateLeave($deductions->absentDays);
-        // dd($leaveStats);
-        $overtimeDays = $leaveStats['final_result']['remaining_leaves'] ?? 0;
-        $overtimeDaysAmount = 0.0;
+ 
+        $statistics = $employeeData['statistics'];
+        $totalDeductionDays =  $statistics['weekly_leave_calculation']['result']['total_deduction_days'];
 
-        if ($overtimeDays > 0) {
-            $overtimeDaysAmount = $this->round($overtimeDays * $rates->dailyRate);
-        }
+        $overTimeDays = $statistics['weekly_leave_calculation']['result']['overtime_days'];
+        $overtimeDaysAmount = ($overTimeDays * $rates->dailyRate) ?? 0;
         // --------------------------------------------------------------------
 
         // Calculate totals
@@ -242,7 +240,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
                 'operation'   => '+',
                 'description' => 'Overtime days (Unused Leave Balance)',
                 'unit'        => 'day',
-                'qty'         => $overtimeDays,
+                'qty'         => $overTimeDays,
                 'rate'        => $this->round($rates->dailyRate),
                 'multiplier'  => 1.0,
             ];
@@ -287,7 +285,8 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             'working_days'           => $workingDays,
             'daily_hours'            => $dailyHours,
             'present_days'           => $presentDays,
-            'absent_days'            => $deductions->absentDays,
+            'absent_days'            => $totalDeductionDays,
+            // 'absent_days'            => $deductions->absentDays,
             'total_duration'         => $totalDurationParsed,
             'total_actual_duration'  => $totalActualDurationParsed,
             'total_approved_overtime' => $this->round($totalApprovedOvertime),

@@ -256,6 +256,10 @@
                 <td colspan="8">
                     {{ '-' }}
                 </td>
+                @elseif ($period['final_status'] == 'weekly_leave')
+                <td colspan="8">
+                    {{ __('lang.weekly_leave') }}
+                </td>
                 @else
                 <td>
                     {{ $firstCheckin }}

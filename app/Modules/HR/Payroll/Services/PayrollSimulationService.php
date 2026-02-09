@@ -52,7 +52,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
 
             $attendanceData  = $this->attendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
             $attendanceArray = $attendanceData->toArray();
-
+ 
             $totalDuration         = $attendanceArray['total_duration_hours'] ?? '0:00:00';
             $totalActualDuration   = $attendanceArray['total_actual_duration_hours'] ?? '0:00:00';
 

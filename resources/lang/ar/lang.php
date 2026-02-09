@@ -1058,4 +1058,5 @@ return [
   'cancel' => 'إلغاء',
   'termination_request_created' => 'تم إنشاء طلب إنهاء الخدمة بنجاح',
   'subtotal' => 'المجموع الفرعي',
+  'weekly_leave' => 'إجازة أسبوعية',
 ];

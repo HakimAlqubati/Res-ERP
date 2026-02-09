@@ -10,13 +10,14 @@ class HelperFunctions
     public static function calculateAttendanceStats($reportData)
     {
         $stats = [
-            'present_days' => 0,
-            'absent'       => 0,
-            'partial'      => 0,
-            'no_periods'   => 0,
-            'leave'        => 0,
+            'present_days'  => 0,
+            'absent'        => 0,
+            'partial'       => 0,
+            'no_periods'    => 0,
+            'leave'         => 0,
+            'weekly_leave'  => 0, // إجازة أسبوعية تلقائية
             'required_days' => 0,
-            'total_days'   => 0,
+            'total_days'    => 0,
         ];
 
         foreach ($reportData as $date => $data) {
@@ -44,6 +45,10 @@ class HelperFunctions
                     break;
                 case AttendanceReportStatus::Leave->value:
                     $stats['leave']++;
+                    $stats['required_days']++;
+                    break;
+                case AttendanceReportStatus::WeeklyLeave->value:
+                    $stats['weekly_leave']++;
                     $stats['required_days']++;
                     break;
                 case AttendanceReportStatus::NoPeriods->value:
@@ -165,7 +170,7 @@ class HelperFunctions
             ->having('total', '>', 1)
             ->exists();
 
-        
+
         if (!$isMultiple) {
             return [
                 'formatted' => '0 h 0m',
@@ -188,9 +193,9 @@ class HelperFunctions
         // Default the supposed duration if null
         $supposedDuration = $supposedDuration ?? '00:00:00';
 
- 
+
         $approvedOvertimeParsed = convertToFormattedTime($approvedOvertime);
-         if (!\Carbon\Carbon::parse($approvedOvertimeParsed)->lt(\Carbon\Carbon::parse($supposedDuration))) {
+        if (!\Carbon\Carbon::parse($approvedOvertimeParsed)->lt(\Carbon\Carbon::parse($supposedDuration))) {
             // dd(\Carbon\Carbon::parse($supposedDuration), \Carbon\Carbon::parse($approvedOvertimeParsed));
             return [
                 'formatted' => '0 h 0m',
