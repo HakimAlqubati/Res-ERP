@@ -91,7 +91,9 @@
             </thead>
             <tbody>
                 @foreach ($transactions as $i => $t)
-                <tr>
+                <tr
+                    @if($t->type == 'employer_contribution') style="background-color: #e6ffc8ff;"
+                    @endif>
                     <td>{{ $i + 1 }}</td>
                     <td>{{ ucfirst($t->type) }}</td>
                     <td>{{ ucfirst(str_replace('_', ' ', $t->sub_type)) }}</td>
