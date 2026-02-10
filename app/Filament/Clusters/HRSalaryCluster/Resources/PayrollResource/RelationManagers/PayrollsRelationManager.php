@@ -33,13 +33,13 @@ class PayrollsRelationManager extends RelationManager
         return $table->striped()
             ->recordTitleAttribute('employee')
             ->columns([
+                Tables\Columns\TextColumn::make('id')
+                    ->alignCenter()->label('ID')->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('employee.employee_no')
                     ->alignCenter()->label('Employee No')->default('-')
-                    ->searchable()
-                    ,
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('employee.name')
-                ->searchable()
-                ,
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('base_salary')
                     ->label('Base')
                     ->numeric()->alignCenter()
@@ -71,6 +71,8 @@ class PayrollsRelationManager extends RelationManager
                     ->dateTime(),
 
             ])->recordActions([
+
+
                 Action::make('pdfSalarySlip')
                     ->label('Salary Slip')
                     ->button()
