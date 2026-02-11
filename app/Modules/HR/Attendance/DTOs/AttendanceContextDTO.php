@@ -59,13 +59,29 @@ class AttendanceContextDTO
         $attendanceType = AttendanceType::tryFrom($payload['attendance_type'] ?? 'rfid')
             ?? AttendanceType::RFID;
 
+        $sourceType = $payload['source_type'] ?? null;
+        $sourceId = isset($payload['source_id']) ? (int) $payload['source_id'] : null;
+
+        // Auto-resolve: إذا كان webcam ولم يتم تمرير source_id، نبحث تلقائياً
+        if ($attendanceType === AttendanceType::WEBCAM && $sourceType === null && $sourceId === null) {
+            $recentImage = \App\Models\AttendanceImagesUploaded::where('employee_id', $employee->id)
+                ->where('datetime', '>=', $requestTime->copy()->subMinutes(2))
+                ->orderByDesc('datetime')
+                ->first();
+
+            if ($recentImage) {
+                $sourceType = \App\Models\AttendanceImagesUploaded::class;
+                $sourceId = $recentImage->id;
+            }
+        }
+
         return new self(
             employee: $employee,
             requestTime: $requestTime,
             payload: $payload,
             attendanceType: $attendanceType,
-            sourceType: $payload['source_type'] ?? null,
-            sourceId: isset($payload['source_id']) ? (int) $payload['source_id'] : null,
+            sourceType: $sourceType,
+            sourceId: $sourceId,
         );
     }
 
