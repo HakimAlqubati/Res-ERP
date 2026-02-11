@@ -41,6 +41,8 @@ class Attendance extends Model implements Auditable
         'message',
         'attendance_type',
         'real_check_date',
+        'source_type',
+        'source_id',
     ];
     protected $table = 'hr_attendances';
 
@@ -117,7 +119,8 @@ class Attendance extends Model implements Auditable
         'message',
         'attendance_type',
         'real_check_date',
-
+        'source_type',
+        'source_id',
     ];
 
     const ATTENDANCE_TYPE_WEBCAM  = 'webcam';
@@ -166,6 +169,15 @@ class Attendance extends Model implements Auditable
     public function period()
     {
         return $this->belongsTo(WorkPeriod::class, 'period_id');
+    }
+
+    /**
+     * Polymorphic relationship to the source that created this attendance.
+     * e.g. EmployeeApplicationV2 (missed check-in/out), AttendanceImagesUploaded (webcam)
+     */
+    public function source()
+    {
+        return $this->morphTo();
     }
 
     protected static function booted()
