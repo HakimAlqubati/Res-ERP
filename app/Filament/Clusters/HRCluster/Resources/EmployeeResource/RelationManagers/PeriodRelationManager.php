@@ -211,7 +211,8 @@ class PeriodRelationManager extends RelationManager
                 // Tables\Actions\DeleteAction::make(),
                 $this->assignDaysAction(),
                 Action::make('Delete')
-                    ->label(__('lang.delete'))
+                    // ->label(__('lang.delete'))
+                    ->label('Cease')
                     ->requiresConfirmation()
                     ->modalHeading(__('lang.end_period_and_delete'))
                     ->modalDescription(__('lang.end_period_confirmation'))
