@@ -6,6 +6,7 @@ namespace App\Modules\HR\Payroll\Services;
 
 use App\Enums\HR\Payroll\DailyRateMethod;
 use App\Models\Employee;
+use App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator;
 use InvalidArgumentException;
 use App\Modules\HR\Payroll\DTOs\CalculationContext;
 use App\Modules\HR\Payroll\DTOs\SalaryMutableComponents;
@@ -99,8 +100,12 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         $this->assertPositive($dailyHours, 'Daily hours');
         $this->assertPositive($monthDays, 'Month days');
 
-        // Logic Override: Working days is always (Month Days - 4)
-        $workingDays = max(1, $monthDays - 4);
+        // Determine working days based on the daily rate method
+        // ByEmployeeWorkingDays: use the employee's working_days field directly
+        // Other methods: use calculated working days (Month Days - 4)
+        if ($this->dailyRateMethod !== DailyRateMethod::ByEmployeeWorkingDays->value) {
+            $workingDays = max(1, $monthDays - 4);
+        }
 
         if (!$periodYear || !$periodMonth) {
             throw new InvalidArgumentException('periodYear and periodMonth are required to compute penalty deductions.');
@@ -117,6 +122,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             periodYear: $periodYear,
             periodMonth: $periodMonth,
         );
+
 
         // Policy hooks (pre calculation)
         foreach ($this->policyHooks as $hook) {
@@ -157,14 +163,12 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         // 6b. Calculate meal requests
         $mealRequests = $this->mealRequestCalculator->calculate($context);
 
-        // --- NEW LOGIC: Monthly Leave Balance Compensation (Overtime Days) ---
-        $leaveStats = \App\Modules\HR\Payroll\Services\WeeklyLeaveCalculator::calculateLeave($deductions->absentDays);
-        $overtimeDays = $leaveStats['final_result']['remaining_leaves'] ?? 0;
-        $overtimeDaysAmount = 0.0;
 
-        if ($overtimeDays > 0) {
-            $overtimeDaysAmount = $this->round($overtimeDays * $rates->dailyRate);
-        }
+        $statistics = $employeeData['statistics'];
+        $totalDeductionDays =  $statistics['weekly_leave_calculation']['result']['total_deduction_days'];
+
+        $overTimeDays = $statistics['weekly_leave_calculation']['result']['overtime_days'];
+        $overtimeDaysAmount = ($overTimeDays * $rates->dailyRate) ?? 0;
         // --------------------------------------------------------------------
 
         // Calculate totals
@@ -236,8 +240,43 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
                 'operation'   => '+',
                 'description' => 'Overtime days (Unused Leave Balance)',
                 'unit'        => 'day',
-                'qty'         => $overtimeDays,
+                'qty'         => $overTimeDays,
                 'rate'        => $this->round($rates->dailyRate),
+                'multiplier'  => 1.0,
+            ];
+        }
+
+        // 9. Carry Forward: if net salary is negative, cap at 0 and record debt
+        $carryForwarded = 0.0;
+        if ($finalNetSalary < 0) {
+            $carryForwarded = $this->round(abs($finalNetSalary));
+            $finalNetSalary = 0.0;
+
+            $notes = sprintf(
+                "Gross Salary: %.2f | Total Deductions: %.2f (Absence: %.2f, Late: %.2f, Early Departure: %.2f, Missing Hours: %.2f, Penalties: %.2f, Advances: %.2f, Meals: %.2f, Dynamic: %.2f) | Deficit: %.2f",
+                $this->grossSalary,
+                $finalTotalDeductions,
+                $deductions->absenceDeduction,
+                $deductions->lateDeduction,
+                $deductions->earlyDepartureDeduction,
+                $deductions->missingHoursDeduction,
+                $penalties['total'],
+                $advanceInstallments['total'],
+                $mealRequests['total'],
+                $dynamicTotal,
+                $carryForwarded
+            );
+
+            $transactions[] = [
+                'type'        => \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_CARRY_FORWARD,
+                'sub_type'    => \App\Enums\HR\Payroll\SalaryTransactionSubType::CARRY_FORWARD,
+                'amount'      => $carryForwarded,
+                'operation'   => '-',
+                'description' => 'Carry forward ' . $carryForwarded . ' (Gross ' . $this->grossSalary . ' - Ded. ' . $finalTotalDeductions . ')',
+                'notes'       => $notes,
+                'unit'        => 'flat',
+                'qty'         => 1,
+                'rate'        => $carryForwarded,
                 'multiplier'  => 1.0,
             ];
         }
@@ -281,7 +320,8 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             'working_days'           => $workingDays,
             'daily_hours'            => $dailyHours,
             'present_days'           => $presentDays,
-            'absent_days'            => $deductions->absentDays,
+            'absent_days'            => $totalDeductionDays,
+            // 'absent_days'            => $deductions->absentDays,
             'total_duration'         => $totalDurationParsed,
             'total_actual_duration'  => $totalActualDurationParsed,
             'total_approved_overtime' => $this->round($totalApprovedOvertime),

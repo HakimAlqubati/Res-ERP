@@ -181,10 +181,9 @@ class SettingResource extends Resource
                                         ->label('Daily Salary Calculation Method')
                                         ->options(\App\Enums\HR\Payroll\DailyRateMethod::options())
                                         ->live()
+                                        ->columnSpan(2)
                                         ->required(),
-                                    TextInput::make('days_in_month')->label('Days in Month')->helperText('Days of month to calculate daily salary')->required(),
 
-                                    TextInput::make('hours_no_in_day')->label('Hours No in Day')->helperText('Hours number in day to calculate hourly salary')->required(),
                                     TextInput::make('overtime_hour_multiplier')
                                         ->label('Overtime Hour Multiplier')
                                         ->helperText('Enter the overtime multiplier, e.g., 2 for double, 3 for triple')
@@ -192,12 +191,7 @@ class SettingResource extends Resource
                                         ->minValue(1)
                                         ->placeholder('Enter multiplier (e.g., 2, 3, 4)')
                                         ->required(),
-                                    Toggle::make('create_auto_leave_when_create_payroll')
-                                        ->label('Create Auto Leave When Create Payroll')
-                                        ->helperText('Create auto leave when create payroll')
-                                        ->default(false)
-                                        ->visible(fn(): bool => isSuperAdmin())
-                                        ->hidden(),
+                                    
                                     Toggle::make('flix_hours')
                                         ->label('Flix Hours')
                                         ->helperText('No deductions will be applied if the total hours worked equal or exceed the required daily hours')

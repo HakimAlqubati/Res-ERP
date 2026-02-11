@@ -10,6 +10,7 @@ enum AttendanceReportStatus: string
     case Present                = 'present_days';
     case Partial                = 'partial';
     case Leave                  = 'leave';
+    case WeeklyLeave            = 'weekly_leave'; // إجازة أسبوعية تلقائية
     case Future                 = 'future';
     case NoPeriods              = 'no_periods';
 
@@ -22,6 +23,7 @@ enum AttendanceReportStatus: string
             self::Present => 'Present',
             self::Partial => 'Parital',
             self::Leave => 'Leave',
+            self::WeeklyLeave => 'Weekly Leave',
             self::Future => 'Future',
             self::NoPeriods => 'No Periods',
         };
@@ -37,6 +39,7 @@ enum AttendanceReportStatus: string
             self::Present                => 'success',   // Bootstrap: أخضر. Tailwind: 'green-600'
             self::Partial                => 'info',      // Bootstrap: أزرق فاتح. Tailwind: 'sky-500'
             self::Leave                  => 'primary',   // Bootstrap: أزرق. Tailwind: 'blue-600'
+            self::WeeklyLeave            => 'info',      // Bootstrap: أزرق فاتح. Tailwind: 'cyan-500'
             self::Future                 => 'secondary', // Bootstrap: رمادي. Tailwind: 'gray-400'
             self::NoPeriods              => 'secondary', // Bootstrap: رمادي. Tailwind: 'gray-400'
         };
@@ -52,6 +55,7 @@ enum AttendanceReportStatus: string
             self::Present                => '#28a745', // أخضر
             self::Partial                => '#17a2b8', // أزرق سماوي
             self::Leave                  => '#007bff', // أزرق
+            self::WeeklyLeave            => '#06b6d4', // سماوي (Cyan)
             self::Future                 => '#6c757d', // رمادي
             self::NoPeriods              => '#6c757d', // رمادي
         };

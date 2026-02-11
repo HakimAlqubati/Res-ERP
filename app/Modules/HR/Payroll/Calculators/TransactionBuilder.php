@@ -170,7 +170,7 @@ class TransactionBuilder
                 'sub_type'     => $ded['name'] ?? SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION,
                 'amount'       => $this->round($employerAmount),
                 'operation'    => null,
-                'description'  => $ded['name'] ?? 'Employer contribution',
+                'description'  => $ded['name'] . ' (employer contribution)' ?? 'Employer contribution',
                 'deduction_id' => $ded['id'] ?? null,
             ];
         }
@@ -220,7 +220,7 @@ class TransactionBuilder
                 $descParts[] = "installment {$adv['sequence']}/{$adv['months']}";
             }
             if (!empty($adv['due_date'])) {
-                $descParts[] = "due {$adv['due_date']}";
+                $descParts[] = 'due ' . \Carbon\Carbon::parse($adv['due_date'])->format('Y-m-d');
             }
             $desc = 'Advance installment';
             if (!empty($descParts)) {

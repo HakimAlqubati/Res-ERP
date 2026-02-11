@@ -242,6 +242,7 @@ class DeductionResource extends Resource
                     ->badge()
                     ->color('info')
                     ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('applied_by_label')->label(__('Applied By'))->toggleable(isToggledHiddenByDefault: false),
                 ToggleColumn::make('active')->disabled(fn(): bool => isBranchManager()),
             ])
             ->filters([

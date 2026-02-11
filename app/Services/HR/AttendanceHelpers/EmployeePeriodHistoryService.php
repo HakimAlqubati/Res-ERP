@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\HR\AttendanceHelpers;
 
 use App\Models\Employee;
@@ -32,7 +33,7 @@ class EmployeePeriodHistoryService
         // لكل يوم في النطاق الزمني
         while ($date->lte($end)) {
             $currentDay = strtolower($date->format('D'));   // ex: 'mon', 'tue'
-                                                            // $currentDayName = $currentDay;   // 'Monday' أو 'الاثنين'
+            // $currentDayName = $currentDay;   // 'Monday' أو 'الاثنين'
             $currentDayName = $date->translatedFormat('l'); // 'Monday' أو 'الاثنين'
 
             $matchingPeriods = $histories->filter(function ($history) use ($date, $currentDay) {
@@ -103,14 +104,33 @@ class EmployeePeriodHistoryService
                 $totalSecondsAllDays += ($h * 3600) + ($m * 60) + $s;
             }
         }
-        $totalDurationHours = sprintf('%02d:%02d:%02d',
+        $totalDurationHours = sprintf(
+            '%02d:%02d:%02d',
             floor($totalSecondsAllDays / 3600),
             ($totalSecondsAllDays / 60) % 60,
             $totalSecondsAllDays % 60
         );
-// الناتج هنا سيكون 31:00:00
 
-// يمكنك إرجاع النتيجة كمصفوفة فيها كل الأيام والمجموع الكلي، هكذا:
+        // =========================================================================
+        // طرح 4 أيام (الإجازات الأسبوعية) فقط إذا كان الفلتر شهر كامل
+        // =========================================================================
+        $isFullMonth = $start->day === 1 && $end->day === $end->daysInMonth;
+
+        if ($isFullMonth && count($days) > 4) {
+            // حساب متوسط المدة اليومية
+            $averageSecondsPerDay = $totalSecondsAllDays / count($days);
+            // طرح 4 أيام
+            $adjustedSeconds = $totalSecondsAllDays - (4 * $averageSecondsPerDay);
+            $adjustedSeconds = max(0, $adjustedSeconds); // تجنب القيم السالبة
+
+            $totalDurationHours = sprintf(
+                '%02d:%02d:%02d',
+                floor($adjustedSeconds / 3600),
+                ($adjustedSeconds / 60) % 60,
+                $adjustedSeconds % 60
+            );
+        }
+
         return collect([
             'days'                 => $days,
             'total_duration_hours' => $totalDurationHours,

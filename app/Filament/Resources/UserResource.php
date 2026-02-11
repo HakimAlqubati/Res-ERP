@@ -3,21 +3,21 @@
 namespace App\Filament\Resources;
 
 use Filament\Pages\Enums\SubNavigationPosition;
-use Filament\Schemas\Schema;  
+use Filament\Schemas\Schema;
 use App\Filament\Resources\UserResource\Pages\ListUsers;
 use App\Filament\Resources\UserResource\Pages\CreateUser;
-use App\Filament\Resources\UserResource\Pages\EditUser; 
-use App\Filament\Resources\UserResource\Tables\UserTable; 
+use App\Filament\Resources\UserResource\Pages\EditUser;
+use App\Filament\Resources\UserResource\Tables\UserTable;
 use App\Filament\Traits\Forms\HasAttendanceForm;
 use App\Filament\Traits\Forms\HasEmployeeExistingForm;
-use App\Filament\Traits\Forms\HasNewUserForm; 
-use App\Models\User; 
+use App\Filament\Traits\Forms\HasNewUserForm;
+use App\Models\User;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Resources\Pages\Page;
-use Filament\Resources\Resource; 
+use Filament\Resources\Resource;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope; 
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 // use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
@@ -29,6 +29,12 @@ class UserResource extends Resource
     protected static string | \UnitEnum | null $navigationGroup = 'User & Roles';
     // protected static ?string $cluster = UserCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    protected static bool $isGloballySearchable = true;
+
+
     public static function getNavigationLabel(): string
     {
         return __('lang.users');
@@ -54,7 +60,7 @@ class UserResource extends Resource
                     ])->visibleOn('create')
                     ->default('new_user')
                     ->live()
-                    ->required(), 
+                    ->required(),
                 self::newUserForm(),
                 self::attendanceForm(),
             ]);
@@ -62,7 +68,7 @@ class UserResource extends Resource
 
     public static function table(Table $table): Table
     {
-       return UserTable::configure($table);
+        return UserTable::configure($table);
     }
 
     public static function getRelations(): array
@@ -109,8 +115,13 @@ class UserResource extends Resource
         return true;
     }
 
-      public static function getGlobalSearchResultsLimit(): int
+    public static function getGlobalSearchResultsLimit(): int
     {
         return 15;
+    }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name', 'email'];
     }
 }

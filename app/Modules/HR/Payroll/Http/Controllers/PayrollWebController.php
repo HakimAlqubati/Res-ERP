@@ -42,6 +42,7 @@ class PayrollWebController extends Controller
             $validated['year'],
             $validated['month']
         );
+        // dd($results);
 
         return view('hr.payroll.simulation', [
             'results' => $results,

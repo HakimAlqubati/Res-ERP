@@ -1050,8 +1050,8 @@ class EmployeeApplicationResource extends Resource
     {
         $employee = Employee::find($get('employee_id'));
         $set('advanceRequest.basic_salary', $employee?->salary);
-        $set('advanceRequest.detail_date', $get('application_date'));
-        $set('advanceRequest.detail_deduction_starts_from', $get('application_date'));
+        // $set('advanceRequest.detail_date', $get('application_date'));
+        // $set('advanceRequest.detail_deduction_starts_from', $get('application_date'));
         return [
             Fieldset::make('advanceRequest')->columnSpanFull()
                 ->relationship('advanceRequest')
@@ -1130,7 +1130,8 @@ class EmployeeApplicationResource extends Resource
                                 }
                             }),
                         Fieldset::make()->columnSpan(1)->columns(1)->schema([
-                            DatePicker::make('detail_deduction_starts_from')->minDate(now()->toDateString())
+                            DatePicker::make('detail_deduction_starts_from')
+                                // ->minDate(now()->toDateString())
                                 ->label('Deduction starts from')
                                 ->default('Y-m-d')
                                 ->live()

@@ -7,7 +7,7 @@ class WeeklyLeaveCalculator
     /**
      * معدل الاستحقاق: يوم راحة واحد مقابل كل 6 أيام عمل
      */
-    private const WORK_DAYS_PER_LEAVE = 6;
+    public const WORK_DAYS_PER_LEAVE = 6;
 
     /**
      * الحد القياسي للإجازات (المعيار الذي يقاس عليه الخصم أو الإضافي)

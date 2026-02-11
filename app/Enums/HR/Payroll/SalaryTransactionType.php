@@ -16,4 +16,5 @@ enum SalaryTransactionType: string
     case TYPE_NET_SALARY = 'net_salary';
     case TYPE_ADJUSTMENT = 'adjustment';   // Salary Adjustment
     case TYPE_EMPLOYER_CONTRIBUTION = 'employer_contribution';
+    case TYPE_CARRY_FORWARD = 'carry_forward';
 }

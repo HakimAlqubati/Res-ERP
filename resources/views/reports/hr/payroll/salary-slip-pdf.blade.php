@@ -204,6 +204,7 @@
                     </tr>
                 </thead>
                 <tbody>
+
                     @php
                     $earn = $earnings ?? collect();
                     $ded = $deductions ?? collect();
@@ -241,6 +242,13 @@
                             </td>
                         </tr>
                         @endfor
+                        @foreach ($employerContrib as $employerContribution)
+                        <tr style="background-color: #e6ffc8ff;">
+                            <td>{{ $employerContribution->description }}</td>
+                            <td></td>
+                            <td>{{ formatMoneyWithCurrency($employerContribution->amount) }}</td>
+                        </tr>
+                        @endforeach
                 </tbody>
                 <tfoot>
                     <tr>

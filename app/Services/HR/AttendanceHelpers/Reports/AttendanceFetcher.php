@@ -184,7 +184,29 @@ class AttendanceFetcher
                 'day_status'            => $dayStatus,
             ]);
         }
+
         $stats = HelperFunctions::calculateAttendanceStats($result);
+        // dd($stats);
+        // =========================================================================
+        // حساب نتيجة WeeklyLeaveCalculator النهائية
+        // =========================================================================
+        $weeklyLeaveStats = $result->get('weekly_leave_stats', []);
+        $totalMonthDays = $stats['total_days'] ?? 0;
+        $absentDays = $weeklyLeaveStats['remaining_absences'] ?? $stats['absent'] ?? 0;
+
+        $weeklyLeaveCalculator = new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator();
+        $weeklyLeaveResult = $weeklyLeaveCalculator->calculate($totalMonthDays, $absentDays);
+
+        $stats['weekly_leave_calculation'] =  $weeklyLeaveResult;
+
+
+
+        // =========================================================================
+        // منطق تحويل الغياب إلى إجازة أسبوعية تلقائية
+        // كل 6 أيام عمل = يوم إجازة مستحق
+        // =========================================================================
+        $result = $this->applyWeeklyLeaveToAbsences($result);
+
         $result->put('statistics', $stats);
         $result->put('total_duration_hours', $totalDurationHours);
 
@@ -280,6 +302,7 @@ class AttendanceFetcher
         ]);
 
         $totalEarlyDepartureSeconds = 0;
+        $minEarlyDepartureMinutes = (int) setting('early_depature_deduction_minutes', 0);
         foreach ($result as $key => $day) {
             if (
                 is_array($day)
@@ -290,7 +313,8 @@ class AttendanceFetcher
                     $lastCheckout = $period['attendances']['checkout']['lastcheckout'] ?? null;
                     if ($lastCheckout && isset($lastCheckout['early_departure_minutes'])) {
                         $minutes = (int) ($lastCheckout['early_departure_minutes'] ?? 0);
-                        if ($minutes > 0) {
+                        // Only count if minutes >= minimum threshold from settings
+                        if ($minutes >= $minEarlyDepartureMinutes && $minutes > 0) {
                             $totalEarlyDepartureSeconds += $minutes * 60;
                         }
                     }
@@ -315,6 +339,7 @@ class AttendanceFetcher
         ]);
 
         $result->put('late_hours',  $this->helperFunctions->calculateTotalLateArrival($result));
+
 
         return $result;
     }
@@ -367,5 +392,112 @@ class AttendanceFetcher
         }
 
         return $hours * 3600 + $minutes * 60 + $seconds;
+    }
+
+    /**
+     * تحويل أيام الغياب إلى إجازة أسبوعية تلقائية
+     * القاعدة: كل 6 أيام عمل = يوم إجازة مستحق
+     * 
+     * المنطق الجديد (نظام الاقتراض):
+     * - يمكن للموظف أخذ إجازته في أي وقت خلال الدورة (6 عمل + 1 إجازة)
+     * - إذا غاب الموظف قبل إكمال 6 أيام عمل، يُحسب كـ "اقتراض" للإجازة
+     * - بعد الاقتراض، يحتاج لإكمال 6 أيام عمل للتأهل لإجازة جديدة
+     * - إذا غاب مرة أخرى قبل إكمال 6 أيام عمل، يُحسب كغياب حقيقي
+     */
+    protected function applyWeeklyLeaveToAbsences(Collection $result): Collection
+    {
+        $workDaysPerLeave = \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::WORK_DAYS_PER_LEAVE;
+
+        // جمع التواريخ فقط (استبعاد الإحصائيات والمفاتيح غير التواريخ)
+        $dates = $result->keys()->filter(function ($key) {
+            return preg_match('/^\d{4}-\d{2}-\d{2}$/', $key);
+        })->sort()->values();
+
+        // =========================================================================
+        // المرحلة الأولى: حساب إجمالي أيام العمل وأيام الغياب
+        // =========================================================================
+        $totalWorkDays = 0;
+        $absentDates = [];
+
+        foreach ($dates as $date) {
+            $day = $result->get($date);
+            if (!is_array($day) || !isset($day['day_status'])) {
+                continue;
+            }
+
+            $status = $day['day_status'];
+
+            // إذا كان حاضراً أو حضور جزئي، احسب كيوم عمل
+            if (in_array($status, [
+                AttendanceReportStatus::Present->value,
+                AttendanceReportStatus::Partial->value,
+                AttendanceReportStatus::IncompleteCheckinOnly->value,
+                AttendanceReportStatus::IncompleteCheckoutOnly->value,
+            ])) {
+                $totalWorkDays++;
+            }
+            // إذا كان غائباً، أضفه لقائمة الغيابات
+            elseif ($status === AttendanceReportStatus::Absent->value) {
+                $absentDates[] = $date;
+            }
+        }
+
+        // =========================================================================
+        // حساب إجمالي الإجازات المستحقة
+        // =========================================================================
+        // كل 6 أيام عمل = يوم إجازة مستحق
+        $totalEntitledLeaves = floor($totalWorkDays / $workDaysPerLeave);
+        $workDaysTowardsNext = $totalWorkDays % $workDaysPerLeave;
+
+        // عدد الغيابات التي يمكن تحويلها = الإجازات المستحقة (بحد أقصى عدد الغيابات)
+        $leavesToUse = min($totalEntitledLeaves, count($absentDates));
+
+        // =========================================================================
+        // المرحلة الثانية: تحويل الغيابات إلى إجازة أسبوعية
+        // =========================================================================
+        $usedLeaves = 0;
+
+        foreach ($absentDates as $date) {
+            if ($usedLeaves >= $leavesToUse) {
+                break; // استهلكنا كل الإجازات المتاحة
+            }
+
+            $day = $result->get($date);
+
+            $day['day_status'] = AttendanceReportStatus::WeeklyLeave->value;
+            $day['weekly_leave_auto'] = true;
+            $day['leave_type'] = 'Weekly Leave (Auto)';
+
+            // تحديث final_status داخل كل period
+            if (isset($day['periods'])) {
+                $periods = $day['periods'];
+                if ($periods instanceof \Illuminate\Support\Collection) {
+                    $periods = $periods->toArray();
+                }
+                foreach ($periods as $key => $period) {
+                    $periods[$key]['final_status'] = AttendanceReportStatus::WeeklyLeave->value;
+                }
+                $day['periods'] = $periods;
+            }
+
+            $result->put($date, $day);
+            $usedLeaves++;
+        }
+
+        // =========================================================================
+        // إضافة إحصائيات الإجازة الأسبوعية
+        // =========================================================================
+        $remainingAbsences = count($absentDates) - $usedLeaves;
+
+        $result->put('weekly_leave_stats', [
+            'total_work_days' => $totalWorkDays,
+            'entitled_leaves' => $totalEntitledLeaves,
+            'used_leaves' => $usedLeaves,
+            'remaining_leaves' => $totalEntitledLeaves - $usedLeaves,
+            'remaining_absences' => $remainingAbsences,
+            'work_days_towards_next' => $workDaysTowardsNext,
+        ]);
+
+        return $result;
     }
 }

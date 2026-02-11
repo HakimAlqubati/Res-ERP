@@ -16,7 +16,7 @@ use App\Filament\Resources\BranchResource\Tables\BranchTable;
 use App\Models\Branch;
 
 use Filament\Resources\Resource;
- 
+
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -46,11 +46,9 @@ class BranchResource extends Resource
     {
         return [
             'index' => ManageBranches::route('/'),
+            'create' => CreateBranch::route('/create'),
             'edit' => EditBranch::route('/{record}/edit'),
             'view' => ViewBranch::route('/{record}'),
-            'create' => CreateBranch::route('/create'),
-
-
         ];
     }
 

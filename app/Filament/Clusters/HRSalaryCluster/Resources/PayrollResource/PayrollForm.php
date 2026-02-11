@@ -3,10 +3,14 @@
 namespace App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource;
 
 use App\Models\Branch;
+use App\Models\Employee;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Fieldset;
 
 class PayrollForm
@@ -31,6 +35,7 @@ class PayrollForm
                         ->get()
                         ->pluck('name', 'id'))
                     ->required()
+                    ->live()
                     ->helperText('Please, choose a branch'),
                 Select::make('name')->label('Month')->hiddenOn('view')
                     ->required()
@@ -46,19 +51,23 @@ class PayrollForm
                             [$monthName, $year] = explode(' ', $value);
                             $monthNumber = \Carbon\Carbon::parse($monthName)->month;
 
-                            $exists = \App\Models\PayrollRun::query()
+                            $allEmployees = $get('all_employees');
+                            $employeeIds = $get('employee_ids') ?? [];
+
+                            $query = \App\Models\Payroll::query()
                                 ->where('branch_id', $branchId)
                                 ->where('year', (int) $year)
-                                ->where('month', (int) $monthNumber)
-                                ->withTrashed()
-                                ->first();
+                                ->where('month', (int) $monthNumber);
 
-                            if ($exists) {
-                                if ($exists->trashed()) {
-                                    $fail(__('Payroll for this branch and month already exists in the recycle bin. Please restore or permanently delete it before creating a new one.'));
-                                } else {
-                                    $fail(__('Payroll for this branch and month already exists. You cannot create a duplicate.'));
-                                }
+                            if (! $allEmployees && !empty($employeeIds)) {
+                                $query->whereIn('employee_id', $employeeIds);
+                            }
+
+                            $existing = $query->with('employee:id,name')->get();
+
+                            if ($existing->isNotEmpty()) {
+                                $names = $existing->pluck('employee.name')->filter()->implode(', ');
+                                $fail(__("Payroll already exists for: $names in this month."));
                             }
                         };
                     }),
@@ -66,6 +75,33 @@ class PayrollForm
                 DatePicker::make('pay_date')->required()
                     ->default(date('Y-m-d')),
             ]),
+
+            Fieldset::make()->columnSpanFull()->label('Employee Selection')->columns(1)->hiddenOn('view')
+                ->visible(fn(Get $get) => filled($get('branch_id')))
+                ->schema([
+                    Toggle::make('all_employees')
+                        ->label('All Employees')
+                        ->default(true)
+                        ->live(),
+                    CheckboxList::make('employee_ids')
+                        ->label('Select Employees')
+                        ->bulkToggleable()
+
+                        ->searchable()
+                        ->columns(4)
+                        ->visible(fn(Get $get) => !$get('all_employees'))
+                        ->options(function (Get $get) {
+                            $branchId = $get('branch_id');
+                            if (!$branchId) return [];
+                            return Employee::where('branch_id', $branchId)
+                                ->active()
+                                ->where('salary', '>', 0)
+                                ->pluck('name', 'id');
+                        })
+                        ->columnSpanFull()
+                        ->helperText('Choose the employees to include in this payroll run.'),
+                ]),
+
             Textarea::make('notes')->label('Notes')->columnSpanFull(),
         ];
     }

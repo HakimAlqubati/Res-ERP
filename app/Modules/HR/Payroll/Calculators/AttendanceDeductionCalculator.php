@@ -32,8 +32,11 @@ class AttendanceDeductionCalculator
 
         // استخراج الإحصائيات
         $stats = $employeeData['statistics'] ?? [];
-        $absentDays = (int)($stats['absent'] ?? $stats['absent_days'] ?? 0);
+        // dd($stats);
+        // $absentDays = (int)($stats['absent'] ?? $stats['absent_days'] ?? 0);
+        $absentDays = $stats['weekly_leave_calculation']['result']['total_deduction_days'] ?? 0;
         $presentDays = (int)($stats['present_days'] ?? $stats['present'] ?? 0);
+        // dd($absentDays);
 
         // استخراج ساعات التأخير
         $lateHours = $this->extractLateHours($employeeData);
@@ -57,6 +60,7 @@ class AttendanceDeductionCalculator
 
         if ($context->employee->discount_exception_if_attendance_late) {
             $lateDeduction = 0.0;
+            $earlyDepartureDeduction = 0.0; // إعفاء الانصراف المبكر للموظف المعفي من التأخيرات
         }
 
         return new DeductionResult(

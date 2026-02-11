@@ -1076,4 +1076,5 @@ return [
     'cancel' => 'Cancel',
     'termination_request_created' => 'Termination request created successfully',
     'subtotal' => 'Subtotal',
+    'weekly_leave' => 'Weekly Leave',
 ];

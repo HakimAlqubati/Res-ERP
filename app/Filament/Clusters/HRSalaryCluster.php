@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters;
 
+use App\Models\PayrollRun;
 use Filament\Clusters\Cluster;
 
 class HRSalaryCluster extends Cluster
@@ -16,5 +17,12 @@ class HRSalaryCluster extends Cluster
     public static function getNavigationLabel(): string
     {
         return __('lang.payroll');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return PayrollRun::select('id')
+        ->forBranchManager()
+        ->count();
     }
 }

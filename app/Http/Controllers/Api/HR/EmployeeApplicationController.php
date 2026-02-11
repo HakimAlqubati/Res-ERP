@@ -20,6 +20,12 @@ class EmployeeApplicationController extends Controller
     public function index(Request $request)
     {
         $apps = EmployeeApplicationV2::with(['employee', 'leaveRequest', 'advanceRequest'])
+            ->when($request->id, fn($q) => $q->where('id', $request->id))
+            ->when($request->branch_id, fn($q) => $q->where('branch_id', $request->branch_id))
+            ->when($request->employee_name, fn($q) => $q->whereHas(
+                'employee',
+                fn($e) => $e->where('name', 'like', '%' . $request->employee_name . '%')
+            ))
             ->when($request->status, fn($q) => $q->where('status', $request->status))
             ->when($request->application_type_id, fn($q) => $q->where('application_type_id', $request->application_type_id))
             ->when($request->employee_id, fn($q) => $q->where('employee_id', $request->employee_id))
