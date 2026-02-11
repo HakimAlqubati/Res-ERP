@@ -8,8 +8,9 @@ final class RunPayrollData
         public readonly int $branchId,
         public readonly int $year,
         public readonly int $month,
-        public readonly bool $overwriteExisting = false, // optional flag
+        public readonly bool $overwriteExisting = false,
         public readonly ?string $payDate = null,
+        public readonly ?array $employeeIds = null,
     ) {}
 
     public static function fromArray(array $data): self

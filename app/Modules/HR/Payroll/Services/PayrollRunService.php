@@ -89,7 +89,7 @@ class PayrollRunService implements PayrollRunnerInterface
         [$periodStart, $periodEnd] = $this->computePeriod($input->year, $input->month);
         $branch = Branch::findOrFail($input->branchId);
 
-        $employees = $this->eligibleEmployees($input->branchId);
+        $employees = $this->eligibleEmployees($input->branchId, $input->employeeIds);
 
         // 1) احضر/أنشئ سجل التشغيل للفترة
         $run = PayrollRun::query()
@@ -269,12 +269,13 @@ class PayrollRunService implements PayrollRunnerInterface
         return [$start, $end];
     }
 
-    protected function eligibleEmployees(int $branchId): Collection
+    protected function eligibleEmployees(int $branchId, ?array $employeeIds = null): Collection
     {
         return Employee::query()
             ->where('branch_id', $branchId)
             ->active()
             ->where('salary', '>', 0)
+            ->when($employeeIds, fn($q) => $q->whereIn('id', $employeeIds))
             ->get();
     }
 }
