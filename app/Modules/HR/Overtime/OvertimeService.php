@@ -227,14 +227,14 @@ class OvertimeService
                 if (!empty($overtimeResults)) {
                     // Flatten or pick the relevant part just like in the filament code
                     // The filament code picks index 0
-                    if (isset($overtimeResults[0])) {
-                        $result = $overtimeResults[0];
+                    if (isset($overtimeResults)) {
+                        $result = $overtimeResults;
                         $employeesWithOvertime[] = [
                             'employee_id' => $employee->id,
                             'name'        => $employee->name,
-                            'start_time'  => $result['overtime_start_time'],
-                            'end_time'    => $result['overtime_end_time'],
-                            'hours'       => $result['overtime_hours'],
+                            'start_time'  => $result[0]['overtime_start_time'],
+                            'end_time'    => $result[0]['overtime_end_time'],
+                            'hours'       => $result[0]['overtime_hours'],
                             'notes'       => null,
                         ];
                     }
