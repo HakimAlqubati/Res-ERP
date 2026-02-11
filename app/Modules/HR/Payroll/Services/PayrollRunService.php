@@ -91,43 +91,27 @@ class PayrollRunService implements PayrollRunnerInterface
 
         $employees = $this->eligibleEmployees($input->branchId, $input->employeeIds);
 
-        // 1) احضر/أنشئ سجل التشغيل للفترة
-        $run = PayrollRun::query()
-            ->where('branch_id', $input->branchId)
-            ->where('year', $input->year)
-            ->where('month', $input->month)
-            ->first();
 
-        if (! $run) {
-            $run = new PayrollRun();
-            $run->status = PayrollRun::STATUS_PENDING;
-            $run->branch_id         = $input->branchId;
-            $run->year              = $input->year;
-            $run->month             = $input->month;
-            $run->period_start_date = $periodStart->toDateString();
-            $run->period_end_date   = $periodEnd->toDateString();
-            $monthName = Carbon::create($input->year, $input->month, 1)->format('F Y');
-            $run->name = "Payroll {$monthName} - $branch->name";
+        $run = new PayrollRun();
+        $run->status = PayrollRun::STATUS_PENDING;
+        $run->branch_id         = $input->branchId;
+        $run->year              = $input->year;
+        $run->month             = $input->month;
+        $run->period_start_date = $periodStart->toDateString();
+        $run->period_end_date   = $periodEnd->toDateString();
+        $monthName = Carbon::create($input->year, $input->month, 1)->format('F Y');
+        $run->name = "Payroll {$monthName} - $branch->name";
 
-            // ← هنا نثبت pay_date
-            $run->pay_date = $input->payDate
-                ? Carbon::parse($input->payDate)->toDateString()
-                : now()->toDateString(); // افتراضي اليوم لو ما انرسل
-            // اترك currency/fx_rate كما هي إن لم تكن موجودة في الـ DTO
-            $run->total_gross       = 0;
-            $run->total_net         = 0;
-            $run->total_allowances  = 0;
-            $run->total_deductions  = 0;
-            $run->save();
-        } else {
-            if (is_null($run->pay_date) && $input->payDate) {
-                $run->pay_date = Carbon::parse($input->payDate)->toDateString();
-            }
-            $run->period_start_date = $periodStart->toDateString();
-            $run->period_end_date   = $periodEnd->toDateString();
-
-            $run->save();
-        }
+        // ← هنا نثبت pay_date
+        $run->pay_date = $input->payDate
+            ? Carbon::parse($input->payDate)->toDateString()
+            : now()->toDateString(); // افتراضي اليوم لو ما انرسل
+        // اترك currency/fx_rate كما هي إن لم تكن موجودة في الـ DTO
+        $run->total_gross       = 0;
+        $run->total_net         = 0;
+        $run->total_allowances  = 0;
+        $run->total_deductions  = 0;
+        $run->save();
 
         $created = 0;
         $updated = 0;
