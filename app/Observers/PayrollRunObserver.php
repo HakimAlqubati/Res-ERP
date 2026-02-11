@@ -56,6 +56,11 @@ class PayrollRunObserver
                 // Silent fail - error already handled by syncService
             }
         }
+
+        // Process carry forwards when payroll is first processed (Pending) or Approved
+        if (in_array($newStatus, [PayrollRun::STATUS_PENDING, PayrollRun::STATUS_APPROVED])) {
+            $this->handleCarryForwards($payrollRun);
+        }
     }
 
     /**
@@ -289,6 +294,74 @@ class PayrollRunObserver
         } catch (\Exception $e) {
             // Silent fail - log for debugging if needed
             // \Log::error('Failed to revert installments: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Detect and record any carry forward deficits into the dedicated hr_carry_forward table.
+     */
+    protected function handleCarryForwards(PayrollRun $payrollRun): void
+    {
+        try {
+            $transactions = \App\Models\SalaryTransaction::query()
+                ->where('payroll_run_id', $payrollRun->id)
+                ->where('type', \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_CARRY_FORWARD->value)
+                ->get();
+
+            foreach ($transactions as $txn) {
+                if ($txn->operation === '+') {
+                    // This is a NEW deficit being recorded
+                    \App\Models\CarryForward::updateOrCreate(
+                        [
+                            'employee_id'         => $txn->employee_id,
+                            'from_payroll_run_id' => $payrollRun->id,
+                        ],
+                        [
+                            'year'              => $txn->year ?? $payrollRun->year,
+                            'month'             => $txn->month ?? $payrollRun->month,
+                            'total_amount'      => $txn->amount,
+                            'remaining_balance' => $txn->amount,
+                            'status'            => 'active',
+                            'notes'             => $txn->notes ?? $txn->description,
+                            'created_by'        => $txn->created_by ?? auth()->id(),
+                        ]
+                    );
+                } elseif ($txn->operation === '-') {
+                    // This is a RECOVERY (settlement) of previous debts
+                    $this->settleCarryForwards($txn);
+                }
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Error handling carry forwards: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Settle active carry forwards using a recovery transaction.
+     */
+    protected function settleCarryForwards(\App\Models\SalaryTransaction $txn): void
+    {
+        $amountToSettle = $txn->amount;
+        $activeDebts = \App\Models\CarryForward::query()
+            ->where('employee_id', $txn->employee_id)
+            ->where('status', 'active')
+            ->orderBy('year', 'asc')
+            ->orderBy('month', 'asc')
+            ->get();
+
+        foreach ($activeDebts as $debt) {
+            if ($amountToSettle <= 0) break;
+
+            $canSettle = min($amountToSettle, $debt->remaining_balance);
+
+            $debt->settled_amount += $canSettle;
+            $debt->remaining_balance -= $canSettle;
+            $amountToSettle -= $canSettle;
+
+            if ($debt->remaining_balance <= 0) {
+                $debt->status = 'settled';
+            }
+            $debt->save();
         }
     }
 }
