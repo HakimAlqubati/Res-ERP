@@ -24,6 +24,10 @@ class AttendanceContextDTO
         public readonly array $payload,
         public readonly AttendanceType $attendanceType,
 
+        // مرجع المصدر (Polymorphic)
+        public readonly ?string $sourceType = null,
+        public readonly ?int $sourceId = null,
+
         // بيانات الوردية (تُحدد لاحقاً)
         public ?WorkPeriod $workPeriod = null,
         public ?string $shiftDate = null,
@@ -60,6 +64,8 @@ class AttendanceContextDTO
             requestTime: $requestTime,
             payload: $payload,
             attendanceType: $attendanceType,
+            sourceType: $payload['source_type'] ?? null,
+            sourceId: isset($payload['source_id']) ? (int) $payload['source_id'] : null,
         );
     }
 
@@ -151,6 +157,8 @@ class AttendanceContextDTO
             'late_departure_minutes' => $this->lateDepartureMinutes,
             'early_departure_minutes' => $this->earlyDepartureMinutes,
             'checkinrecord_id' => $this->isCheckOut() ? $this->lastCheckIn?->id : null,
+            'source_type' => $this->sourceType,
+            'source_id' => $this->sourceId,
         ];
     }
 }

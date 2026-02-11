@@ -35,6 +35,8 @@ class AttendanceController extends Controller
             'type' => 'nullable|string|in:checkin,checkout',
             'attendance_type' => 'nullable|string|in:rfid,request,webcam',
             'period_id' => 'nullable|integer|exists:hr_work_periods,id',
+            'source_type' => 'nullable|string|max:255',
+            'source_id' => 'nullable|integer',
         ]);
 
         // لازم واحد منهم يكون موجود
