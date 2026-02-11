@@ -79,7 +79,8 @@ class ListEmployeesAttednaceReport extends ListRecords
             ];
         }
 
-        $employeesPaginator = Employee::where('branch_id', $branch_id)->active()
+        $employeesPaginator = Employee::where('branch_id', $branch_id)
+            // ->active()
             ->select('id', 'name')
             ->paginate(100);
         $employeeIds = $employeesPaginator->pluck('id')->toArray();
