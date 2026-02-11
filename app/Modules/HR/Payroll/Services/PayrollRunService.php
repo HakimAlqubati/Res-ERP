@@ -21,11 +21,15 @@ class PayrollRunService implements PayrollRunnerInterface
         protected PayrollCalculationService $calculator,
     ) {}
 
+    private string $year;
+    private string $month;
     public function simulate(RunPayrollData $input): array
     {
         [$periodStart, $periodEnd] = $this->computePeriod($input->year, $input->month);
         $employees = $this->eligibleEmployees($input->branchId);
 
+        $this->year = $input->year;
+        $this->month = $input->month;
         $items = [];
         $totals = [
             'base_salary'       => 0.0,
@@ -86,6 +90,8 @@ class PayrollRunService implements PayrollRunnerInterface
      */
     public function runAndPersist(RunPayrollData $input): array
     {
+        $this->year = $input->year;
+        $this->month = $input->month;
         [$periodStart, $periodEnd] = $this->computePeriod($input->year, $input->month);
         $branch = Branch::findOrFail($input->branchId);
 
@@ -259,6 +265,7 @@ class PayrollRunService implements PayrollRunnerInterface
             ->where('branch_id', $branchId)
             ->active()
             ->where('salary', '>', 0)
+            ->where('join_date', '<=', Carbon::create($this->year, $this->month, 1)->startOfMonth()->toDateString())
             ->when($employeeIds, fn($q) => $q->whereIn('id', $employeeIds))
             ->get();
     }
