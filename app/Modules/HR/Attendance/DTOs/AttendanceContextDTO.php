@@ -4,6 +4,7 @@ namespace App\Modules\HR\Attendance\DTOs;
 
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Models\EmployeeApplicationV2;
 use App\Models\WorkPeriod;
 use App\Modules\HR\Attendance\Enums\AttendanceStatus;
 use App\Modules\HR\Attendance\Enums\AttendanceType;
@@ -63,7 +64,7 @@ class AttendanceContextDTO
         $sourceId = isset($payload['source_id']) ? (int) $payload['source_id'] : null;
 
         // Auto-resolve: إذا كان webcam ولم يتم تمرير source_id، نبحث تلقائياً
-        if ($attendanceType === AttendanceType::WEBCAM && $sourceType === null && $sourceId === null) {
+        if ($sourceType === null && $sourceId === null) {
             $recentImage = \App\Models\AttendanceImagesUploaded::where('employee_id', $employee->id)
                 ->where('datetime', '>=', $requestTime->copy()->subMinutes(2))
                 ->orderByDesc('datetime')
