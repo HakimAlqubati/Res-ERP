@@ -129,32 +129,47 @@
     @if (isset($employee_id) && is_numeric($employee_id))
     <table class="w-full text-sm text-left pretty reports" id="report-table">
         <thead class="fixed-header" style="top:64px;">
+            @php
+            $employee = \App\Models\Employee::find($employee_id);
+            @endphp
             <tr class="header_report">
-                <th colspan="2" class="">
-                    <button onclick="exportToExcel()" class="btn btn-primary">
-                        &#128200; {{ __('lang.to_excel') }}
-                    </button>
-                    <button type="button" class="btn btn-secondary btn-refresh" wire:click="refreshData">
-                        🔄 {{ __('lang.refresh') }}
-                    </button>
+                <th colspan="11" style="padding: 12px 16px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+                        {{-- Left: Buttons --}}
+                        <div style="display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;">
+                            <button onclick="exportToExcel()" class="btn btn-primary">
+                                &#128200; {{ __('lang.to_excel') }}
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-refresh" wire:click="refreshData">
+                                🔄 {{ __('lang.refresh') }}
+                            </button>
+                            <div wire:loading wire:target="refreshData" class="inline-block" style="color: #45a049 !important;">
+                                <i class="fas fa-spinner fa-spin" style="color: #45a049 !important"></i>
+                            </div>
+                        </div>
 
-                    <!-- سبينر يظهر فقط أثناء تشغيل refreshData -->
-                    <div wire:loading wire:target="refreshData" class="inline-block ml-2" style="color: #45a049 !important;">
-                        <i class="fas fa-spinner fa-spin" style="color: #45a049 !important"></i> {{ __('') }}
+                        {{-- Center: Avatar + Name --}}
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 10px; flex: 1;">
+                            @if ($employee)
+                            <img src="{{ $employee->avatar_image }}"
+                                alt="{{ $employee->name }}"
+                                style="width: 90px; height: 90px; border-radius: 12px; object-fit: cover; border: 3px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.18);">
+                            @endif
+                            <span style="font-size: 13px; font-weight: bold;">{{ $employee?->name ?? __('lang.choose_branch') }}</span>
+                        </div>
+
+                        {{-- Right: Dates --}}
+                        <div style="text-align: center; flex-shrink: 0; line-height: 1.8;">
+                            <span style="font-weight: 600;">{{ __('lang.start_date') . ': ' . $start_date }}</span>
+                            <br>
+                            <span style="font-weight: 600;">{{ __('lang.end_date') . ': ' . $end_date }}</span>
+                        </div>
+
+                        {{-- Far Right: Logo --}}
+                        <div style="flex-shrink: 0; text-align: center;">
+                            <img class="circle-image" src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="">
+                        </div>
                     </div>
-                </th>
-                <th colspan="2">
-
-                    <p>({{ \App\Models\Employee::find($employee_id)?->name ?? __('lang.choose_branch') }})</p>
-
-                </th>
-                <th colspan="2" class="no_border_right_left">
-                    <p>{{ __('lang.start_date') . ': ' . $start_date }}</p>
-                    <br>
-                    <p>{{ __('lang.end_date') . ': ' . $end_date }}</p>
-                </th>
-                <th colspan="5" style="text-align: center;">
-                    <img class="circle-image" src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="">
                 </th>
             </tr>
             <tr>
