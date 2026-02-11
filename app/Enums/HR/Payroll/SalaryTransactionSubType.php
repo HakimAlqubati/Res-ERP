@@ -28,6 +28,9 @@ enum SalaryTransactionSubType: string
     case PERFORMANCE = 'performance_bonus'; // مكافأة أداء
     case SALARY_CORRECTION = 'salary_correction'; // تعديل / تسوية راتب
 
+        // ترحيل (Carry Forward)
+    case CARRY_FORWARD = 'carry_forward';           // مبلغ مرحّل على الموظف
+
     public function parentType(): SalaryTransactionType
     {
         return match ($this) {
@@ -50,6 +53,8 @@ enum SalaryTransactionSubType: string
             self::PERFORMANCE   => SalaryTransactionType::TYPE_BONUS,
 
             self::SALARY_CORRECTION => SalaryTransactionType::TYPE_ADJUSTMENT,
+
+            self::CARRY_FORWARD => SalaryTransactionType::TYPE_CARRY_FORWARD,
         };
     }
 }

@@ -52,7 +52,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
 
             $attendanceData  = $this->attendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
             $attendanceArray = $attendanceData->toArray();
- 
+
             $totalDuration         = $attendanceArray['total_duration_hours'] ?? '0:00:00';
             $totalActualDuration   = $attendanceArray['total_actual_duration_hours'] ?? '0:00:00';
 
@@ -77,8 +77,8 @@ class PayrollSimulationService implements PayrollSimulatorInterface
 
             );
 
-            $netSalary = $result['net_salary'] < 0 ? 0 : $result['net_salary'];
-            $debt      = $result['net_salary'] < 0 ? abs($result['net_salary']) : 0;
+            $netSalary = $result['net_salary'];
+            $carryForwarded = $result['carry_forwarded'] ?? 0;
 
             $results[] = [
                 'success'     => true,
@@ -118,7 +118,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
                     'overtime_amount'   => $result['overtime_amount'],
                     'allowances' => $result['allowances'],
                     'allowance_total' => $result['allowance_total'],
-                    'debt_amount'       => $debt,
+                    'carry_forwarded'   => $carryForwarded,
                     'period_start'      => $periodStart->toDateString(),
                     'period_end'        => $periodEnd->toDateString(),
                     'transactions' => $result['transactions'] ?? [],
@@ -187,8 +187,8 @@ class PayrollSimulationService implements PayrollSimulatorInterface
                 totalApprovedOvertime: $totalApprovedOvertime
             );
 
-            $netSalary = $result['net_salary'] < 0 ? 0 : $result['net_salary'];
-            $debt      = $result['net_salary'] < 0 ? abs($result['net_salary']) : 0;
+            $netSalary = $result['net_salary'];
+            $carryForwarded = $result['carry_forwarded'] ?? 0;
 
             $results[] = [
                 'success'                 => true,
@@ -216,7 +216,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
                     'net_salary'        => $netSalary,
                     'absence_deduction' => $result['absence_deduction'],
                     'overtime_amount'   => $result['overtime_amount'],
-                    'debt_amount'       => $debt,
+                    'carry_forwarded'   => $carryForwarded,
                     'period_start'      => $periodStart->toDateString(),
                     'period_end'        => $periodEnd->toDateString(),
                     'transactions'      => $result['transactions'] ?? [],

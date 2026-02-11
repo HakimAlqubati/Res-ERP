@@ -276,6 +276,12 @@ $totalNet += $r['data']['net_salary'];
                             <td colspan="5" class="px-4 py-2 text-right text-gray-800">Net Payable</td>
                             <td class="px-4 py-2 text-right text-indigo-700 border-t border-gray-300">{{ number_format($data['net_salary'] ?? 0, 2) }}</td>
                         </tr>
+                        @if(($data['carry_forwarded'] ?? 0) > 0)
+                        <tr>
+                            <td colspan="5" class="px-4 py-2 text-right text-rose-600 font-bold">Carry Forwarded</td>
+                            <td class="px-4 py-2 text-right text-rose-600 font-bold">{{ number_format($data['carry_forwarded'], 2) }}</td>
+                        </tr>
+                        @endif
                     </tfoot>
                 </table>
             </div>

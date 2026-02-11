@@ -123,7 +123,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             periodMonth: $periodMonth,
         );
 
-    
+
         // Policy hooks (pre calculation)
         foreach ($this->policyHooks as $hook) {
             $hook->beforeRates($employee, $employeeData);
@@ -144,7 +144,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
 
         // 3. Calculate overtime
         $overtime = $this->overtimeCalculator->calculate($context, $totalApprovedOvertime);
- 
+
         // Hook: allow policies to alter deductions and overtime
         foreach ($this->policyHooks as $hook) {
             $hook->adjustDeductions($employee, $employeeData, $deductions->absenceDeduction, $deductions->lateDeduction, $deductions->missingHoursDeduction, $deductions->earlyDepartureDeduction);
@@ -163,7 +163,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         // 6b. Calculate meal requests
         $mealRequests = $this->mealRequestCalculator->calculate($context);
 
- 
+
         $statistics = $employeeData['statistics'];
         $totalDeductionDays =  $statistics['weekly_leave_calculation']['result']['total_deduction_days'];
 
@@ -242,6 +242,41 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
                 'unit'        => 'day',
                 'qty'         => $overTimeDays,
                 'rate'        => $this->round($rates->dailyRate),
+                'multiplier'  => 1.0,
+            ];
+        }
+
+        // 9. Carry Forward: if net salary is negative, cap at 0 and record debt
+        $carryForwarded = 0.0;
+        if ($finalNetSalary < 0) {
+            $carryForwarded = $this->round(abs($finalNetSalary));
+            $finalNetSalary = 0.0;
+
+            $notes = sprintf(
+                "Gross Salary: %.2f | Total Deductions: %.2f (Absence: %.2f, Late: %.2f, Early Departure: %.2f, Missing Hours: %.2f, Penalties: %.2f, Advances: %.2f, Meals: %.2f, Dynamic: %.2f) | Deficit: %.2f",
+                $this->grossSalary,
+                $finalTotalDeductions,
+                $deductions->absenceDeduction,
+                $deductions->lateDeduction,
+                $deductions->earlyDepartureDeduction,
+                $deductions->missingHoursDeduction,
+                $penalties['total'],
+                $advanceInstallments['total'],
+                $mealRequests['total'],
+                $dynamicTotal,
+                $carryForwarded
+            );
+
+            $transactions[] = [
+                'type'        => \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_CARRY_FORWARD,
+                'sub_type'    => \App\Enums\HR\Payroll\SalaryTransactionSubType::CARRY_FORWARD,
+                'amount'      => $carryForwarded,
+                'operation'   => '-',
+                'description' => 'Carry forward ' . $carryForwarded . ' (Gross ' . $this->grossSalary . ' - Ded. ' . $finalTotalDeductions . ')',
+                'notes'       => $notes,
+                'unit'        => 'flat',
+                'qty'         => 1,
+                'rate'        => $carryForwarded,
                 'multiplier'  => 1.0,
             ];
         }
