@@ -311,4 +311,78 @@ class AttendanceController extends Controller
 
         return response()->json($plan);
     }
+
+    /**
+     * صور الحضور التي لها سجل حضور مقبول (accepted)
+     */
+    public function attendanceImages(Request $request)
+    {
+        try {
+            $query = \App\Models\AttendanceImagesUploaded::query()
+                ->with(['employee:id,name,branch_id', 'attendances' => function ($q) {
+                    $q->where('accepted', 1)
+                        ->select('id', 'source_type', 'source_id', 'check_type', 'status', 'check_date', 'check_time', 'employee_id');
+                }])
+                ->whereHas('attendances', function ($q) {
+                    $q->where('accepted', 1);
+                });
+
+            // فلتر بالموظف
+            if ($request->filled('employee_id')) {
+                $query->where('employee_id', $request->input('employee_id'));
+            }
+
+            // فلتر بالتاريخ
+            if ($request->filled('from_date')) {
+                $query->whereDate('datetime', '>=', $request->input('from_date'));
+            }
+            if ($request->filled('to_date')) {
+                $query->whereDate('datetime', '<=', $request->input('to_date'));
+            }
+
+            // فلتر بالفرع
+            if ($request->filled('branch_id')) {
+                $query->whereHas('employee', function ($q) use ($request) {
+                    $q->where('branch_id', $request->input('branch_id'));
+                });
+            }
+
+            $perPage = $request->input('per_page', 20);
+            $images = $query->orderByDesc('id')->paginate($perPage);
+
+            // تحويل البيانات مع إضافة labels و colors
+            $images->getCollection()->transform(function ($image) {
+                $attendance = $image->attendances->first();
+                return [
+                    'id'             => $image->id,
+                    'img_url'        => $image->full_image_url,
+                    'employee_id'    => $image->employee_id,
+                    'employee_name'  => $image->employee?->name ?? 'Unknown',
+                    'datetime'       => $image->datetime,
+                    'attendance'     => $attendance ? [
+                        'id'              => $attendance->id,
+                        'check_type'      => $attendance->check_type,
+                        'check_type_label' => \App\Models\Attendance::getCheckTypes()[$attendance->check_type] ?? $attendance->check_type,
+                        'status'          => $attendance->status,
+                        'status_label'    => \App\Models\Attendance::getStatusLabel($attendance->status),
+                        'status_color'    => \App\Models\Attendance::getStatusColor($attendance->status),
+                        'status_hex'      => \App\Models\Attendance::getStatusHex($attendance->status),
+                        'check_date'      => $attendance->check_date,
+                        'check_time'      => $attendance->check_time,
+                    ] : null,
+                ];
+            });
+
+            return response()->json([
+                'status' => 'success',
+                'data'   => $images,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Something went wrong.',
+                'error'   => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }
