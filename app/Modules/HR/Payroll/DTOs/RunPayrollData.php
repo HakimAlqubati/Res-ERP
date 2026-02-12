@@ -23,6 +23,7 @@ final class RunPayrollData
             payDate: isset($data['pay_date'])
                 ? \Carbon\Carbon::parse($data['pay_date'])->toDateString()
                 : null,
+            employeeIds: $data['employee_ids'] ?? null,
         );
     }
 }

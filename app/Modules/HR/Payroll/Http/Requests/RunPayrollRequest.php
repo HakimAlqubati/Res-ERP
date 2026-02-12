@@ -19,13 +19,13 @@ class RunPayrollRequest extends FormRequest
             'month'              => ['required', 'integer', 'min:1', 'max:12'],
             'overwrite_existing' => ['sometimes', 'boolean'],
             'pay_date'           => ['sometimes', 'nullable', 'date'],
+            'employee_ids'       => ['sometimes', 'array'],
+            'employee_ids.*'     => ['integer', 'exists:hr_employees,id'],
         ];
     }
 
     public function validatedPayload(): array
     {
-        $data = $this->validated();
-        unset($data['employee_ids']); // safety: enforce not provided
-        return $data;
+        return $this->validated();
     }
 }
