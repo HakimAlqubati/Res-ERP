@@ -48,7 +48,7 @@ class FaceRecognitionResource extends Resource
 
                 Tables\Columns\TextColumn::make('id')
                     ->label('Rekognition Face ID')
-                    ->copyable()
+                    ->copyable()->alignCenter()
                     ->fontFamily('mono') // Is monospaced
                     ->color('gray')
                     ->limit(20),
