@@ -64,7 +64,7 @@ Route::prefix('hr')
             // ->name('employees.identify')
             ->middleware('auth:api')
         ;
-        Route::get('/liveness', [LivenessController::class, 'check']);
+        Route::post('/liveness', [LivenessController::class, 'check']);
 
         // Overtime Routes
         Route::prefix('overtime')->group(function () {
