@@ -25,12 +25,12 @@ return [
     */,
     'attendance_already_completed_for_date' => 'Attendance for this date (:date) is already completed.',
     'you_are_already_checked_in'            => 'You are already checked in.',
-    'cannot_checkout_without_checkin'       => 'Cannot check out without a prior check-in record.',
+    'cannot_checkout_without_checkin'       => 'You cannot check out without checking in first. To fix this, please submit a Missed Check-in Request.',
 
     'check_in_success'  => 'Checked in successfully.',
     'check_out_success' => 'Checked out successfully.',
 
-    'you_dont_have_periods_today' => 'Please ensure your shift time has started, or you have no scheduled shift.',
+    'you_dont_have_periods_today' => 'Please ensure your shift has started, or contact your manager to confirm your shift.',
 
     // Cannot auto-checkin near shift end
     'cannot_auto_checkin_near_shift_end' => 'Cannot auto-checkin near shift end without prior records. Please manually select the operation type (checkin/checkout).',
