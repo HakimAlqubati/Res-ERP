@@ -89,4 +89,11 @@ class FaceRecognitionResource extends Resource
     {
         return static::getModel()::count();
     }
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
 }
