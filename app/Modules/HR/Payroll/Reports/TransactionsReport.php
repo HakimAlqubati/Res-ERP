@@ -31,13 +31,29 @@ class TransactionsReport
             return $t->operation === '+' ? $t->amount : -$t->amount;
         });
 
+        $totalDeductions = $transactions->sum(function ($t) {
+            if (isset($t->type) && $t->type === SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value) {
+                return 0;
+            }
+            return $t->operation === '-' ? $t->amount : 0;
+        });
+
+        $totalAdditions = $transactions->sum(function ($t) {
+            if (isset($t->type) && $t->type === SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value) {
+                return 0;
+            }
+            return $t->operation === '+' ? $t->amount : 0;
+        });
+
         $total = $total >= 0 ? $total : 0; // Or keep negative? Original logic had formatMoneyWithCurrency($total)
         $formattedTotal = formatMoneyWithCurrency($total);
 
         $data = [
-            'payroll'      => $payroll,
-            'transactions' => $transactions,
-            'total'        => $formattedTotal,
+            'payroll'         => $payroll,
+            'transactions'    => $transactions,
+            'total'           => $formattedTotal,
+            'totalDeductions' => formatMoneyWithCurrency($totalDeductions),
+            'totalAdditions'  => formatMoneyWithCurrency($totalAdditions),
         ];
 
         $pdf = LaravelMpdf::loadView('reports.hr.payroll.transactions-pdf', $data, [], [
