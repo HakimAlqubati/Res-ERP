@@ -43,17 +43,22 @@ class AttendanceDeductionCalculator
         $effectiveAbsentDays = $absentDays;
 
         // 1. شهر > 30 يوم (مثال: 31):
-        // القاعدة: الخصم = 30 - الأيام المدفوعة
-        // الأيام المدفوعة = (أيام الشهر - الغياب الفعلي)
-        // مثال: غياب 30 (حضور 1) => الأيام المدفوعة = 31 - 30 = 1. الخصم = 30 - 1 = 29.
         if ($monthDays > self::STANDARD_MONTH_DAYS) {
-            $paidDays = $monthDays - $absentDays;
-            $effectiveAbsentDays = max(0, self::STANDARD_MONTH_DAYS - $paidDays);
+            // الخصم الأساسي هو عدد أيام الغياب
+            $effectiveAbsentDays = $absentDays;
+
+            // حالة خاصة: إذا حضر يوم واحد فقط (غاب 30 يوم في شهر 31)
+            // يجب أن يخصم له 29 يوم فقط، لكي يتبقى له راتب يوم واحد
+            if ($absentDays == self::STANDARD_MONTH_DAYS) {
+                $effectiveAbsentDays = self::STANDARD_MONTH_DAYS - 1;
+            }
+
+            // تسقيف الخصم عند 30 يوم (في حال غاب 31 يوم)
+            $effectiveAbsentDays = min($effectiveAbsentDays, self::STANDARD_MONTH_DAYS);
         }
 
         // 2. شهر < 30 يوم (فبراير):
-        // القاعدة: إذا الغياب كامل الشهر، الخصم = 30. (لكي لا يتبقى له راتب)
-        // إذا الغياب جزئي، نخصم الأيام الفعلية فقط (ميزة للموظف في الشهر القصير)
+        // إذا غاب الشهر كاملاً، يخصم 30 يوم (ليكون الراتب صفر)
         if ($monthDays < self::STANDARD_MONTH_DAYS && $absentDays >= $monthDays) {
             $effectiveAbsentDays = self::STANDARD_MONTH_DAYS;
         }
