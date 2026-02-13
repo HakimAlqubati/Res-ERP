@@ -54,7 +54,7 @@ class EmployeeDeductoinSummaryResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('branch_id')->label('Branch')->options(Branch::where('active', 1)
-                        ->select('name', 'id')->get()->pluck('name', 'id'))->searchable(),
+                    ->select('name', 'id')->get()->pluck('name', 'id'))->searchable(),
                 SelectFilter::make('employee_id')->label('Employee')->options(
                     function () {
                         return Employee::where('active', 1)
@@ -96,5 +96,9 @@ class EmployeeDeductoinSummaryResource extends Resource
             'index' => ListEmployeeDeductionSummaryReports::route('/'),
 
         ];
+    }
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
     }
 }
