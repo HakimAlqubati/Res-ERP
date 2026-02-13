@@ -37,6 +37,7 @@ class TransactionBuilder
         array $advanceInstallments,
         array $mealRequests,
         array $dynamicDeductions,
+        array $monthlyIncentives = [],
         float $overtimeMultiplier = 1.5,
         array $policyHookTransactions = []
     ): array {
@@ -251,6 +252,19 @@ class TransactionBuilder
                 'reference_type' => EmployeeMealRequest::class,
                 'reference_id'   => $mr['id'],
                 'date'           => $mr['date'],
+            ];
+        }
+
+        // 14. المكافآت الشهرية / الحوافز
+        foreach ($monthlyIncentives['items'] ?? [] as $bonus) {
+            $tx[] = [
+                'type'         => SalaryTransactionType::TYPE_BONUS,
+                'sub_type'     => SalaryTransactionSubType::PERFORMANCE->value,
+                'amount'       => $this->round((float)$bonus['amount']),
+                'operation'    => '+',
+                'description'  => $bonus['name'] ?? 'Incentive',
+                'reference_type' => \App\Models\EmployeeMonthlyIncentive::class,
+                'reference_id'   => $bonus['employee_incentive_id'] ?? null,
             ];
         }
 

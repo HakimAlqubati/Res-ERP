@@ -24,6 +24,7 @@ use App\Modules\HR\Payroll\Calculators\AdvanceInstallmentCalculator;
 use App\Modules\HR\Payroll\Calculators\MealRequestCalculator;
 use App\Modules\HR\Payroll\Calculators\GeneralDeductionCalculator;
 use App\Modules\HR\Payroll\Calculators\TransactionBuilder;
+use App\Modules\HR\Payroll\Calculators\MonthlyIncentiveCalculator;
 
 /**
  * Professional, extensible salary calculator.
@@ -63,6 +64,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         protected MealRequestCalculator $mealRequestCalculator,
         protected GeneralDeductionCalculator $generalDeductionCalculator,
         protected TransactionBuilder $transactionBuilder,
+        protected MonthlyIncentiveCalculator $monthlyIncentiveCalculator,
         /** @var SalaryPolicyHookInterface[] */
         protected array $policyHooks = []
     ) {
@@ -163,6 +165,9 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         // 6b. Calculate meal requests
         $mealRequests = $this->mealRequestCalculator->calculate($context);
 
+        // 6c. Calculate monthly incentives
+        $monthlyIncentives = $this->monthlyIncentiveCalculator->calculate($context);
+
 
         $statistics = $employeeData['statistics'];
         $totalDeductionDays =  $statistics['weekly_leave_calculation']['result']['total_deduction_days'];
@@ -174,7 +179,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         // Calculate totals
         $this->baseSalary = $salary;
         $this->grossSalary = $this->round(
-            $this->baseSalary + $overtime['amount'] + $allowances['total'] + $overtimeDaysAmount
+            $this->baseSalary + $overtime['amount'] + $allowances['total'] + $overtimeDaysAmount + ($monthlyIncentives['total'] ?? 0)
         );
         $this->totalDeductions = $this->round(
             $deductions->absenceDeduction +
@@ -227,6 +232,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             advanceInstallments: $advanceInstallments,
             mealRequests: $mealRequests,
             dynamicDeductions: $dynamicDeductions,
+            monthlyIncentives: $monthlyIncentives,
             overtimeMultiplier: $this->overtimeMultiplier,
             policyHookTransactions: $policyHookTransactions
         );
@@ -339,6 +345,8 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             'advance_installments'   => $advanceInstallments['items'],
             'meal_requests_total'    => $this->round($mealRequests['total']),
             'meal_requests'          => $mealRequests['items'],
+            'monthly_incentives_total' => $this->round($monthlyIncentives['total'] ?? 0),
+            'monthly_incentives'       => $monthlyIncentives['items'] ?? [],
         ];
     }
 
