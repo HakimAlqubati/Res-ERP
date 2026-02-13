@@ -27,13 +27,21 @@ use App\Modules\HR\Payroll\Calculators\TransactionBuilder;
 use App\Modules\HR\Payroll\Calculators\MonthlyIncentiveCalculator;
 
 /**
- * Professional, extensible salary calculator.
+ * The Core Payroll Calculation Engine.
  *
- * Design notes:
- * - Uses Strategy Pattern with dedicated calculators for each responsibility
- * - Policy hooks (pre/post) to allow injecting discounts/taxes caps etc.
- * - Clear separation of rate, overtime, deductions.
- * - Safe parsing of time inputs and consistent rounding.
+ * This service is the central authority for all payroll logic within the application.
+ * It serves as the main entry point for salary computations, orchestrating the flow
+ * of data through various specialized calculators (e.g., Overtime, Deductions, Allowances).
+ *
+ * Architectural Overview:
+ * - **Orchestrator**: It aggregates results from granular calculators to build the final salary structure.
+ * - **Extensible**: Supports `SalaryPolicyHookInterface` for injecting custom organizational policies
+ *   (tax rules, caps, or dynamic adjustments) without modifying core logic.
+ * - **Robust**: Ensures precision with consistent rounding strategies and safe time-tracking parsing.
+ *
+ * Usage:
+ * calling `calculate()` triggers the full pipeline, returning a comprehensive array of
+ * salary components, transactions, and statistics ready for persistence or simulation.
  */
 class SalaryCalculatorService implements SalaryCalculatorInterface
 {
