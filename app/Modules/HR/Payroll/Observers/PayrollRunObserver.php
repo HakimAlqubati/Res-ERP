@@ -56,11 +56,6 @@ class PayrollRunObserver
                 // Silent fail - error already handled by syncService
             }
         }
-
-        // Process carry forwards when payroll is first processed (Pending) or Approved
-        if (in_array($newStatus, [PayrollRun::STATUS_PENDING, PayrollRun::STATUS_APPROVED])) {
-            $this->handleCarryForwards($payrollRun);
-        }
     }
 
     /**
@@ -212,40 +207,6 @@ class PayrollRunObserver
             }
         } catch (\Exception $e) {
             // Silent fail
-        }
-    }
-
-    /**
-     * Detect and record any carry forward deficits into the dedicated hr_carry_forward table.
-     */
-    protected function handleCarryForwards(PayrollRun $payrollRun): void
-    {
-        try {
-            $transactions = \App\Models\SalaryTransaction::query()
-                ->where('payroll_run_id', $payrollRun->id)
-                ->where('type', \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_CARRY_FORWARD->value)
-                ->get();
-
-            foreach ($transactions as $txn) {
-                \App\Models\CarryForward::updateOrCreate(
-                    [
-                        'employee_id'         => $txn->employee_id,
-                        'from_payroll_run_id' => $payrollRun->id,
-                    ],
-                    [
-                        'year'              => $txn->year ?? $payrollRun->year,
-                        'month'             => $txn->month ?? $payrollRun->month,
-                        'total_amount'      => $txn->amount,
-                        'remaining_balance' => $txn->amount, // الرصيد المبدئي هو المبلغ الكامل للترحيل
-                        'status'            => 'active',
-                        'notes'             => $txn->notes ?? $txn->description,
-                        'created_by'        => $txn->created_by ?? auth()->id(),
-                    ]
-                );
-            }
-        } catch (\Exception $e) {
-            // Silent fail to avoid blocking payroll run completion
-            \Illuminate\Support\Facades\Log::error("Error handling carry forwards: " . $e->getMessage());
         }
     }
 }
