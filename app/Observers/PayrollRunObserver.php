@@ -56,9 +56,9 @@ class PayrollRunObserver
                 // Silent fail - error already handled by syncService
             }
         }
-
-       
     }
+
+
 
     /**
      * Handle the PayrollRun "deleted" event.
@@ -293,7 +293,7 @@ class PayrollRunObserver
             // \Log::error('Failed to revert installments: ' . $e->getMessage());
         }
     }
- 
+
 
     /**
      * Settle active carry forwards using a recovery transaction.

@@ -25,21 +25,35 @@ class TransactionsReport
         $transactions = $payroll->transactions()->orderBy('date')->get();
 
         $total = $transactions->sum(function ($t) {
-            if (isset($t->type) && $t->type === SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value) {
+            $typeVal = $t->type instanceof \BackedEnum ? $t->type->value : $t->type;
+
+            // Exclude Employer Contribution & Carry Forward from Total
+            if (
+                $typeVal === SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value ||
+                $typeVal === SalaryTransactionType::TYPE_CARRY_FORWARD->value
+            ) {
                 return 0;
             }
             return $t->operation === '+' ? $t->amount : -$t->amount;
         });
 
         $totalDeductions = $transactions->sum(function ($t) {
-            if (isset($t->type) && $t->type === SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value) {
+            $typeVal = $t->type instanceof \BackedEnum ? $t->type->value : $t->type;
+
+            // Exclude Employer Contribution & Carry Forward from Deductions
+            if (
+                $typeVal === SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value ||
+                $typeVal === SalaryTransactionType::TYPE_CARRY_FORWARD->value
+            ) {
                 return 0;
             }
             return $t->operation === '-' ? $t->amount : 0;
         });
 
         $totalAdditions = $transactions->sum(function ($t) {
-            if (isset($t->type) && $t->type === SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value) {
+            $typeVal = $t->type instanceof \BackedEnum ? $t->type->value : $t->type;
+
+            if ($typeVal === SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value) {
                 return 0;
             }
             return $t->operation === '+' ? $t->amount : 0;

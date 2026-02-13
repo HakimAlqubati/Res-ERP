@@ -78,7 +78,8 @@ class PayrollResource extends Resource
                     PayrollActions::earlyInstallmentPaymentAction(),
                     PayrollActions::pdfSalarySlipAction(),
                     PayrollActions::approveAction(),
-                    RestoreAction::make()->button(false)->color('success'),
+                    RestoreAction::make()->color('success'),
+                    ViewAction::make()
                 ]),
             ])
             ->bulkActions([
