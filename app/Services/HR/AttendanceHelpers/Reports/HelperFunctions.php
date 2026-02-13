@@ -165,6 +165,7 @@ class HelperFunctions
         $isMultiple = Attendance::selectRaw('period_id, COUNT(*) as total')
             ->where('check_date', $date)
             ->where('employee_id', $employeeId)
+            ->where('accepted', 1)
             ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
             ->groupBy('period_id')
             ->having('total', '>', 1)
