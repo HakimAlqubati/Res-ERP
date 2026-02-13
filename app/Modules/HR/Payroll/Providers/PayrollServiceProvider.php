@@ -120,6 +120,9 @@ class PayrollServiceProvider extends ServiceProvider
         // Load module routes
         $this->loadRoutesFrom(__DIR__ . '/../routes.php');
 
+        // Load module views
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'payroll');
+
         // Register Observer for PayrollRun model
         // Note: This uses the module's observer, not the original one
         // PayrollRun::observe(PayrollRunObserver::class);
