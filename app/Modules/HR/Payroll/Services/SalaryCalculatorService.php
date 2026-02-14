@@ -12,6 +12,9 @@ use App\Modules\HR\Payroll\DTOs\CalculationContext;
 use App\Modules\HR\Payroll\DTOs\SalaryMutableComponents;
 use App\Modules\HR\Payroll\Traits\ResetsState;
 use Carbon\Carbon;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Validator;
+use App\Rules\HR\Payroll\NotFuturePayrollPeriod;
 
 use App\Modules\HR\Payroll\Contracts\SalaryCalculatorInterface;
 
@@ -133,6 +136,16 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
 
         if (!$periodYear || !$periodMonth) {
             throw new InvalidArgumentException('periodYear and periodMonth are required to compute penalty deductions.');
+        }
+
+        // Professional Validation: Prevent future periods at the service level
+        $validator = Validator::make(
+            ['year' => $periodYear, 'month' => $periodMonth],
+            ['month' => [new NotFuturePayrollPeriod()]]
+        );
+
+        if ($validator->fails()) {
+            throw new ValidationException($validator);
         }
 
         // Create calculation context
