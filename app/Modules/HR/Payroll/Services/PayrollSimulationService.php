@@ -26,6 +26,12 @@ class PayrollSimulationService implements PayrollSimulatorInterface
         $employees    = Employee::whereIn('id', $employeeIds)->get();
         $periodStart  = Carbon::create($year, $month, 1)->startOfMonth();
         $periodEnd    = Carbon::create($year, $month, 1)->endOfMonth();
+
+        // If current month/year, cap periodEnd to today
+        if ($year == now()->year && $month == now()->month) {
+            $periodEnd = now()->endOfDay();
+        }
+
         $monthDays    = $periodStart->daysInMonth;
 
         foreach ($employees as $employee) {
@@ -73,7 +79,8 @@ class PayrollSimulationService implements PayrollSimulatorInterface
                 totalActualDuration: $totalActualDuration,
                 totalApprovedOvertime: $totalApprovedOvertime,
                 periodYear: $year,
-                periodMonth: $month
+                periodMonth: $month,
+                periodEnd: $periodEnd
 
             );
 
@@ -184,7 +191,10 @@ class PayrollSimulationService implements PayrollSimulatorInterface
                 monthDays: $monthDays,
                 totalDuration: $totalDuration,
                 totalActualDuration: $totalActualDuration,
-                totalApprovedOvertime: $totalApprovedOvertime
+                totalApprovedOvertime: $totalApprovedOvertime,
+                periodYear: (int)$run->year,
+                periodMonth: (int)$run->month,
+                periodEnd: $periodEnd
             );
 
             $netSalary = $result['net_salary'];
