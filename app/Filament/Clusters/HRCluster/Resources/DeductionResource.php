@@ -150,7 +150,7 @@ class DeductionResource extends Resource
                                 ->label('Employeer Percentage')
                                 // ->rangePadding([10, 20])
                                 // ->tooltips()
-                                ->rangePadding(30)
+                                ->rangePadding(0)
                                 ->tooltips(RawJs::make(<<<'JS'
                                     `%${$value.toFixed(0)}`
                                 JS))
