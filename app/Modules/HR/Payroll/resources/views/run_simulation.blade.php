@@ -1,4 +1,4 @@
-@extends('hr.payroll.layout')
+@extends('payroll::layout')
 
 @section('title', 'محاكاة التشغيل الكامل')
 @section('header', 'نتيجة محاكاة التشغيل (Run Simulation)')
