@@ -218,7 +218,7 @@
                         $eDesc = $e?->description ?: (isset($e) ? ucfirst(str_replace('_', ' ', $e->sub_type ?? ($e->type ?? ''))) : '');
                         $dDesc = $d?->description ?: (isset($d) ? ucfirst(str_replace('_', ' ', $d->sub_type ?? ($d->type ?? ''))) : '');
                         @endphp
-                        <tr>
+                        <tr @if(($e && $e->type === 'carry_forward') || ($d && $d->type === 'carry_forward')) style="background-color: #ffe6e6;" @endif>
                             <td>
                                 @if ($e && $d)
                                 {{ $eDesc }} / {{ $dDesc }}

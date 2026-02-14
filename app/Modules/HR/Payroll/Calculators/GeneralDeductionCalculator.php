@@ -107,12 +107,13 @@ class GeneralDeductionCalculator
                 $appliedBrackets = $taxResult['applied_brackets'] ?? null;
             } elseif ($deduction->is_percentage) {
                 // نسبة مئوية
-                $deductionAmount = ($basicSalary * $deduction->percentage) / 100;
+                $salaryBase = max(0, $basicSalary);
+                $deductionAmount = ($salaryBase * $deduction->percentage) / 100;
                 $effectivePercentage = $deduction->percentage;
                 $notes = sprintf(
                     "Flat rate deduction: %.2f%% of %.2f = %.2f",
                     $deduction->percentage,
-                    $basicSalary,
+                    $salaryBase,
                     $deductionAmount
                 );
             } else {
@@ -123,7 +124,8 @@ class GeneralDeductionCalculator
 
             // حساب مساهمة صاحب العمل
             if ($deduction->employer_percentage > 0) {
-                $employerAmount = ($basicSalary * $deduction->employer_percentage) / 100;
+                $salaryBase = max(0, $basicSalary);
+                $employerAmount = ($salaryBase * $deduction->employer_percentage) / 100;
             } elseif ($deduction->employer_amount > 0) {
                 $employerAmount = (float) $deduction->employer_amount;
             }

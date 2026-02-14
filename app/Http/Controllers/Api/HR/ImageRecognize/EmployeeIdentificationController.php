@@ -17,6 +17,7 @@ class EmployeeIdentificationController extends Controller
     public function identify(IdentifyEmployeeRequest $request): JsonResponse
     {
         $file = $request->file('image');
+        // dd($file);
         try {
             $match = $this->service->identify($file);
 

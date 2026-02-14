@@ -4,6 +4,7 @@ namespace App\Services\HR\v2\Attendance;
 
 use App\Models\Employee;
 use App\Models\WorkPeriod;
+use App\Models\AttendanceImagesUploaded;
 use Carbon\Carbon;
 
 class AttendanceContext
@@ -13,6 +14,10 @@ class AttendanceContext
         public Carbon $requestTime,
         public array $payload,
         public string $attendanceType,
+
+        // مرجع المصدر (Polymorphic)
+        public ?string $sourceType = null,
+        public ?int $sourceId = null,
 
         // Resolved State
         public ?WorkPeriod $workPeriod = null,
@@ -31,7 +36,29 @@ class AttendanceContext
         public int $lateDepartureMinutes = 0,
         public int $earlyDepartureMinutes = 0,
         public int $actualMinutes = 0,
-    ) {}
+    ) {
+        // Auto-resolve source for webcam attendance when not explicitly provided
+        if ($this->attendanceType === 'webcam' && $this->sourceType === null && $this->sourceId === null) {
+            $this->autoResolveWebcamSource();
+        }
+    }
+
+    /**
+     * البحث تلقائياً عن آخر صورة مرفوعة لنفس الموظف خلال آخر دقيقتين
+     * هذا يربط الحضور بالصورة بدون الحاجة لتعديل تطبيق Flutter
+     */
+    private function autoResolveWebcamSource(): void
+    {
+        $recentImage = AttendanceImagesUploaded::where('employee_id', $this->employee->id)
+            ->where('datetime', '>=', $this->requestTime->copy()->subMinutes(2))
+            ->orderByDesc('datetime')
+            ->first();
+
+        if ($recentImage) {
+            $this->sourceType = AttendanceImagesUploaded::class;
+            $this->sourceId = $recentImage->id;
+        }
+    }
 
     public function setShift(WorkPeriod $period, string $date, string $day, array $bounds)
     {

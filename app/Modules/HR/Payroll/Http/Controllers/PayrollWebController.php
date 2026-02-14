@@ -44,7 +44,7 @@ class PayrollWebController extends Controller
         );
         // dd($results);
 
-        return view('hr.payroll.simulation', [
+        return view('payroll::simulation', [
             'results' => $results,
             'year' => $validated['year'],
             'month' => $validated['month']
@@ -96,7 +96,7 @@ class PayrollWebController extends Controller
             }
         }
 
-        return view('hr.payroll.preview', compact('results', 'totals', 'year', 'month', 'branchId'));
+        return view('payroll::preview', compact('results', 'totals', 'year', 'month', 'branchId'));
     }
 
     /**
@@ -108,6 +108,6 @@ class PayrollWebController extends Controller
         $dto = RunPayrollData::fromArray($request->validatedPayload());
         $result = $this->runnerService->simulate($dto);
 
-        return view('hr.payroll.run_simulation', ['data' => $result]);
+        return view('payroll::run_simulation', ['data' => $result]);
     }
 }

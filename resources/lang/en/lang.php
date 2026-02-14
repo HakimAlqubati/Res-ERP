@@ -771,6 +771,7 @@ return [
     // ===========================================
     'attendance_images' => 'Attendance Images',
     'attendance_image' => 'Attendance Image',
+    'has_accepted_attendance' => 'Has Accepted Attendance',
     'image' => 'Image',
 
     // ===========================================

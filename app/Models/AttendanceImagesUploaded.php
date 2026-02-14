@@ -33,6 +33,14 @@ class AttendanceImagesUploaded extends Model
         return $this->belongsTo(Employee::class);
     }
 
+    /**
+     * سجلات الحضور المرتبطة بهذه الصورة (عبر polymorphic source)
+     */
+    public function attendances()
+    {
+        return $this->morphMany(Attendance::class, 'source');
+    }
+
     public function getFullImageUrlAttribute()
     {
         $url = env('AWS_URL_IMG') . $this->img_url;

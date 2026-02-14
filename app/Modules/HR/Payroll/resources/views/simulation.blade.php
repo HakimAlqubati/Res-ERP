@@ -1,4 +1,4 @@
-@extends('hr.payroll.layout')
+@extends('payroll::layout')
 
 @section('title', 'Salary Simulation (Selected Employees)')
 @section('header', 'Salary Simulation')

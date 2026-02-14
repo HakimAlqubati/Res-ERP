@@ -13,6 +13,8 @@ use App\Modules\HR\Payroll\DTOs\DeductionResult;
 class AttendanceDeductionCalculator
 {
     public const DEFAULT_ROUND_SCALE = 2;
+    public const STANDARD_MONTH_DAYS = 30;
+    public const HYBRID_CALCULATION_THRESHOLD = 15;
 
     public function __construct(
         protected int $roundScale = self::DEFAULT_ROUND_SCALE
@@ -38,6 +40,39 @@ class AttendanceDeductionCalculator
         $presentDays = (int)($stats['present_days'] ?? $stats['present'] ?? 0);
         // dd($absentDays);
 
+        $monthDays = $context->monthDays;
+        $effectiveAbsentDays = $absentDays;
+
+        // 1. شهر > 30 يوم (مثال: 31):
+        if ($monthDays > self::STANDARD_MONTH_DAYS) {
+            // حساب أيام الحضور الفعلية (التي يجب أن يُدفع عنها)
+            $paidDays = $monthDays - $absentDays;
+
+            // القاعدة الذكية (Hybrid Rule):
+            // أ) إذا كان دوام الموظف قليل (أقل من أو يساوي النصف):
+            // نعتمد مبدأ "الدفع مقابل الحضور". (مثال: حضر يومين -> يقبض يومين)
+            if ($paidDays <= self::HYBRID_CALCULATION_THRESHOLD) {
+                // الخصم = 30 - عدد الأيام التي حضرها
+                // (مثال: حضر 2. الخصم = 30 - 2 = 28)
+                $effectiveAbsentDays = self::STANDARD_MONTH_DAYS - $paidDays;
+            }
+            // ب) إذا كان دوام الموظف كثير (أكثر من النصف - أي غيابه قليل):
+            // نعتمد مبدأ "الخصم مقابل الغياب". (مثال: غاب يوم -> يخصم يوم)
+            else {
+                $effectiveAbsentDays = $absentDays;
+            }
+
+            // ضمان عدم السالب (في حال كان paidDays > 30 وهو مستحيل هنا لكن للاحتياط)
+            // وتسقيف الخصم عند 30 (في حال كان الغياب 31 يوم -> paidDays=0 -> الخصم=30)
+            $effectiveAbsentDays = max(0, min($effectiveAbsentDays, self::STANDARD_MONTH_DAYS));
+        }
+
+        // 2. شهر < 30 يوم (فبراير):
+        // إذا غاب الشهر كاملاً، يخصم 30 يوم (ليكون الراتب صفر)
+        if ($monthDays < self::STANDARD_MONTH_DAYS && $absentDays >= $monthDays) {
+            $effectiveAbsentDays = self::STANDARD_MONTH_DAYS;
+        }
+
         // استخراج ساعات التأخير
         $lateHours = $this->extractLateHours($employeeData);
 
@@ -48,7 +83,7 @@ class AttendanceDeductionCalculator
         $earlyDepartureHours = $this->extractEarlyDepartureHours($employeeData);
 
         // حساب الخصومات
-        $absenceDeduction = $this->round($absentDays * $rates->dailyRate);
+        $absenceDeduction = $this->round($effectiveAbsentDays * $rates->dailyRate);
         $lateDeduction = $this->round($lateHours * $rates->hourlyRate);
         $missingHoursDeduction = $this->round($missingHours * $rates->hourlyRate);
         $earlyDepartureDeduction = $this->round($earlyDepartureHours * $rates->hourlyRate);

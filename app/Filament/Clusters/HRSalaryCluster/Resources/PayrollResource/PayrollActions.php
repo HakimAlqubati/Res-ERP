@@ -23,7 +23,7 @@ class PayrollActions
      */
     public static function approveAction(): Action
     {
-        return Action::make('approve')->button()
+        return Action::make('approve')
             ->label(__('Approve'))
             ->icon('heroicon-o-check-circle')
             ->color('success')
@@ -72,7 +72,6 @@ class PayrollActions
     public static function earlyInstallmentPaymentAction(): Action
     {
         return Action::make('earlyPayment')
-            ->button()
             ->label(__('lang.early_installment_payment'))
             ->icon('heroicon-o-banknotes')
             ->color('warning')
@@ -250,5 +249,37 @@ class PayrollActions
             ->body(__('lang.early_installments_added', ['count' => $createdCount]))
             ->success()
             ->send();
+    }
+    /**
+     * PDF Salary Slip Action for PayrollRun table.
+     * 
+     * Shows a modal to select an employee from the run and prints their salary slip.
+     */
+    public static function pdfSalarySlipAction(): Action
+    {
+        return Action::make('pdfSalarySlip')
+            ->label('Salary Slip')
+            ->icon('heroicon-o-document-arrow-down')
+            ->color('info')
+            ->form([
+                \Filament\Forms\Components\Select::make('payroll_id')
+                    ->label('Select Employee')
+                    ->options(function (PayrollRun $record) {
+                        return $record->payrolls()
+                            ->with('employee:id,name,employee_no')
+                            ->get()
+                            ->mapWithKeys(fn($payroll) => [
+                                $payroll->id => $payroll->employee->name . ' (' . $payroll->employee->employee_no . ')'
+                            ]);
+                    })
+                    ->searchable()
+                    ->preload()
+                    ->required(),
+            ])
+            ->modalHeading('Print Salary Slip')
+            ->modalSubmitActionLabel('Print')
+            ->action(function (array $data) {
+                return app(\App\Modules\HR\Payroll\Reports\SalarySlipReport::class)->generate($data['payroll_id']);
+            });
     }
 }

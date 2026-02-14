@@ -24,15 +24,24 @@ use App\Modules\HR\Payroll\Calculators\AdvanceInstallmentCalculator;
 use App\Modules\HR\Payroll\Calculators\MealRequestCalculator;
 use App\Modules\HR\Payroll\Calculators\GeneralDeductionCalculator;
 use App\Modules\HR\Payroll\Calculators\TransactionBuilder;
+use App\Modules\HR\Payroll\Calculators\MonthlyIncentiveCalculator;
 
 /**
- * Professional, extensible salary calculator.
+ * The Core Payroll Calculation Engine.
  *
- * Design notes:
- * - Uses Strategy Pattern with dedicated calculators for each responsibility
- * - Policy hooks (pre/post) to allow injecting discounts/taxes caps etc.
- * - Clear separation of rate, overtime, deductions.
- * - Safe parsing of time inputs and consistent rounding.
+ * This service is the central authority for all payroll logic within the application.
+ * It serves as the main entry point for salary computations, orchestrating the flow
+ * of data through various specialized calculators (e.g., Overtime, Deductions, Allowances).
+ *
+ * Architectural Overview:
+ * - **Orchestrator**: It aggregates results from granular calculators to build the final salary structure.
+ * - **Extensible**: Supports `SalaryPolicyHookInterface` for injecting custom organizational policies
+ *   (tax rules, caps, or dynamic adjustments) without modifying core logic.
+ * - **Robust**: Ensures precision with consistent rounding strategies and safe time-tracking parsing.
+ *
+ * Usage:
+ * calling `calculate()` triggers the full pipeline, returning a comprehensive array of
+ * salary components, transactions, and statistics ready for persistence or simulation.
  */
 class SalaryCalculatorService implements SalaryCalculatorInterface
 {
@@ -63,6 +72,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         protected MealRequestCalculator $mealRequestCalculator,
         protected GeneralDeductionCalculator $generalDeductionCalculator,
         protected TransactionBuilder $transactionBuilder,
+        protected MonthlyIncentiveCalculator $monthlyIncentiveCalculator,
         /** @var SalaryPolicyHookInterface[] */
         protected array $policyHooks = []
     ) {
@@ -163,6 +173,9 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         // 6b. Calculate meal requests
         $mealRequests = $this->mealRequestCalculator->calculate($context);
 
+        // 6c. Calculate monthly incentives
+        $monthlyIncentives = $this->monthlyIncentiveCalculator->calculate($context);
+
 
         $statistics = $employeeData['statistics'];
         $totalDeductionDays =  $statistics['weekly_leave_calculation']['result']['total_deduction_days'];
@@ -174,7 +187,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         // Calculate totals
         $this->baseSalary = $salary;
         $this->grossSalary = $this->round(
-            $this->baseSalary + $overtime['amount'] + $allowances['total'] + $overtimeDaysAmount
+            $this->baseSalary + $overtime['amount'] + $allowances['total'] + $overtimeDaysAmount + ($monthlyIncentives['total'] ?? 0)
         );
         $this->totalDeductions = $this->round(
             $deductions->absenceDeduction +
@@ -227,6 +240,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             advanceInstallments: $advanceInstallments,
             mealRequests: $mealRequests,
             dynamicDeductions: $dynamicDeductions,
+            monthlyIncentives: $monthlyIncentives,
             overtimeMultiplier: $this->overtimeMultiplier,
             policyHookTransactions: $policyHookTransactions
         );
@@ -339,6 +353,8 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             'advance_installments'   => $advanceInstallments['items'],
             'meal_requests_total'    => $this->round($mealRequests['total']),
             'meal_requests'          => $mealRequests['items'],
+            'monthly_incentives_total' => $this->round($monthlyIncentives['total'] ?? 0),
+            'monthly_incentives'       => $monthlyIncentives['items'] ?? [],
         ];
     }
 

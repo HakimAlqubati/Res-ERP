@@ -132,6 +132,76 @@ class SalaryTransaction extends Model
                 }
             }
         });
+
+        static::created(function ($transaction) {
+            $typeValue = $transaction->type instanceof \BackedEnum ? $transaction->type->value : $transaction->type;
+
+            \Illuminate\Support\Facades\Log::info("SalaryTransaction Created: ID={$transaction->id}, Type={$typeValue}");
+
+            if ($typeValue === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_CARRY_FORWARD->value) {
+                \Illuminate\Support\Facades\Log::info("CarryForward transaction detected. Handling...");
+                $transaction->handleCarryForward();
+            }
+        });
+    }
+
+    /**
+     * Handle Carry Forward logic when a transaction is created.
+     */
+    public function handleCarryForward()
+    {
+        \Illuminate\Support\Facades\Log::info("Handling CarryForward: Op={$this->operation}, Amount={$this->amount}");
+        if ($this->operation === '-') {
+            // This is a NEW deficit being recorded
+            $cf = \App\Models\CarryForward::updateOrCreate(
+                [
+                    'employee_id'         => $this->employee_id,
+                    'from_payroll_run_id' => $this->payroll_run_id,
+                ],
+                [
+                    'year'              => $this->year,
+                    'month'             => $this->month,
+                    'total_amount'      => $this->amount,
+                    'remaining_balance' => $this->amount,
+                    'status'            => 'active',
+                    'notes'             => $this->notes ?? $this->description,
+                    'created_by'        => $this->created_by ?? auth()->id(),
+                ]
+            );
+            \Illuminate\Support\Facades\Log::info("CarryForward created/updated: ID={$cf->id}");
+        } elseif ($this->operation === '+') {
+            // This is a RECOVERY (settlement) of previous debts
+            $this->settleCarryForwards();
+        }
+    }
+
+    /**
+     * Settle active carry forwards using a recovery transaction.
+     */
+    protected function settleCarryForwards(): void
+    {
+        $amountToSettle = $this->amount;
+        $activeDebts = \App\Models\CarryForward::query()
+            ->where('employee_id', $this->employee_id)
+            ->where('status', 'active')
+            ->orderBy('year', 'asc')
+            ->orderBy('month', 'asc')
+            ->get();
+
+        foreach ($activeDebts as $debt) {
+            if ($amountToSettle <= 0) break;
+
+            $canSettle = min($amountToSettle, $debt->remaining_balance);
+
+            $debt->settled_amount += $canSettle;
+            $debt->remaining_balance -= $canSettle;
+            $amountToSettle -= $canSettle;
+
+            if ($debt->remaining_balance <= 0) {
+                $debt->status = 'settled';
+            }
+            $debt->save();
+        }
     }
 
 

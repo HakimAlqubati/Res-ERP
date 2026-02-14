@@ -51,9 +51,9 @@ class EmployeeRecognitionRepository
 
         $currentBranchId = auth()->user()?->branch_id;
 
-        if (!$currentBranchId) {
-            abort(403, 'Branch context is required to resolve employee.');
-        }
+        // if (!$currentBranchId) {
+        //     abort(403, 'Branch context is required to resolve employee.');
+        // }
 
         // إن لم يتوفر رقم موظف صالح نرجع الاسم والـ ID كما هو وبدون موديل
         if (!$empId) {

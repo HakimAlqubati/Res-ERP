@@ -36,7 +36,12 @@ class SalarySlipReport
 
         // Totals
         $gross = $earnings->sum('amount');
-        $totalDeductions = $deductions->sum('amount');
+
+        // Exclude Carry Forward from the TOTAL sum, but keep them in the $deductions list for display
+        $totalDeductions = $deductions->filter(function ($t) {
+            return $t->type !== SalaryTransactionType::TYPE_CARRY_FORWARD->value;
+        })->sum('amount');
+
         $net = max($gross - $totalDeductions, 0);
         $totalEmployer = $employerContrib->sum('amount');
 

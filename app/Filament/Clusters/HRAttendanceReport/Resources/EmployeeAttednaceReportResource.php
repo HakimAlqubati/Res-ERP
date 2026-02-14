@@ -62,7 +62,7 @@ class EmployeeAttednaceReportResource extends Resource
                     ->options(function ($search = null) {
                         return Employee::query()
                             ->select('id', 'name')
-                            ->where('active', 1)
+                            // ->where('active', 1)
                             ->forBranchManager()
                             // ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
                             ->limit(5)
@@ -72,7 +72,7 @@ class EmployeeAttednaceReportResource extends Resource
                     ->getSearchResultsUsing(function ($search = null) {
                         return Employee::query()
                             ->select('id', 'name', 'employee_no')
-                            ->where('active', 1)
+                            // ->where('active', 1)
                             ->when($search, fn($q) => $q->where(function ($query) use ($search) {
                                 $query->where('name', 'like', "%{$search}%")
                                     ->orWhere('id', 'like', "%{$search}%")

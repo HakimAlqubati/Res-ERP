@@ -41,6 +41,8 @@ class Attendance extends Model implements Auditable
         'message',
         'attendance_type',
         'real_check_date',
+        'source_type',
+        'source_id',
     ];
     protected $table = 'hr_attendances';
 
@@ -89,6 +91,22 @@ class Attendance extends Model implements Auditable
     const STATUS_LATE_DEPARTURE_LABEL  = 'Late Out';
     const STATUS_TEST_LABEL            = 'Test';
 
+    // ── Status Colors (Filament) ──────────────────────────
+    const STATUS_ON_TIME_COLOR         = 'success';   // #10B981
+    const STATUS_LATE_ARRIVAL_COLOR    = 'warning';   // #F59E0B
+    const STATUS_EARLY_DEPARTURE_COLOR = 'danger';    // #EF4444
+    const STATUS_EARLY_ARRIVAL_COLOR   = 'info';      // #3B82F6
+    const STATUS_LATE_DEPARTURE_COLOR  = 'info';      // #3B82F6
+    const STATUS_TEST_COLOR            = 'gray';      // #6B7280
+
+    // ── Status Hex Colors ─────────────────────────────────
+    const STATUS_ON_TIME_HEX           = '#10B981';
+    const STATUS_LATE_ARRIVAL_HEX      = '#F59E0B';
+    const STATUS_EARLY_DEPARTURE_HEX   = '#EF4444';
+    const STATUS_EARLY_ARRIVAL_HEX     = '#3B82F6';
+    const STATUS_LATE_DEPARTURE_HEX    = '#3B82F6';
+    const STATUS_TEST_HEX              = '#6B7280';
+
     protected $fillable = [
         'employee_id',
         'check_type',
@@ -117,7 +135,8 @@ class Attendance extends Model implements Auditable
         'message',
         'attendance_type',
         'real_check_date',
-
+        'source_type',
+        'source_id',
     ];
 
     const ATTENDANCE_TYPE_WEBCAM  = 'webcam';
@@ -168,6 +187,15 @@ class Attendance extends Model implements Auditable
         return $this->belongsTo(WorkPeriod::class, 'period_id');
     }
 
+    /**
+     * Polymorphic relationship to the source that created this attendance.
+     * e.g. EmployeeApplicationV2 (missed check-in/out), AttendanceImagesUploaded (webcam)
+     */
+    public function source()
+    {
+        return $this->morphTo();
+    }
+
     protected static function booted()
     {
         // Branch scope logic moved to ApplyBranchScopes middleware
@@ -213,6 +241,32 @@ class Attendance extends Model implements Auditable
             self::STATUS_LATE_DEPARTURE  => self::STATUS_LATE_DEPARTURE_LABEL,
             self::STATUS_TEST            => self::STATUS_TEST_LABEL,
             default                      => $status ?? '',
+        };
+    }
+
+    public static function getStatusColor(?string $status): string
+    {
+        return match ($status) {
+            self::STATUS_ON_TIME         => self::STATUS_ON_TIME_COLOR,
+            self::STATUS_LATE_ARRIVAL    => self::STATUS_LATE_ARRIVAL_COLOR,
+            self::STATUS_EARLY_DEPARTURE => self::STATUS_EARLY_DEPARTURE_COLOR,
+            self::STATUS_EARLY_ARRIVAL   => self::STATUS_EARLY_ARRIVAL_COLOR,
+            self::STATUS_LATE_DEPARTURE  => self::STATUS_LATE_DEPARTURE_COLOR,
+            self::STATUS_TEST            => self::STATUS_TEST_COLOR,
+            default                      => 'gray',
+        };
+    }
+
+    public static function getStatusHex(?string $status): string
+    {
+        return match ($status) {
+            self::STATUS_ON_TIME         => self::STATUS_ON_TIME_HEX,
+            self::STATUS_LATE_ARRIVAL    => self::STATUS_LATE_ARRIVAL_HEX,
+            self::STATUS_EARLY_DEPARTURE => self::STATUS_EARLY_DEPARTURE_HEX,
+            self::STATUS_EARLY_ARRIVAL   => self::STATUS_EARLY_ARRIVAL_HEX,
+            self::STATUS_LATE_DEPARTURE  => self::STATUS_LATE_DEPARTURE_HEX,
+            self::STATUS_TEST            => self::STATUS_TEST_HEX,
+            default                      => '#6B7280',
         };
     }
 

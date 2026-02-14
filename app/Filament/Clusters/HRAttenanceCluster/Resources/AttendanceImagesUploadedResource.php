@@ -61,10 +61,21 @@ class AttendanceImagesUploadedResource extends Resource
                     TextColumn::make('employee.name')->label(__('lang.employee'))->default('--')->searchable()
                         ->color('primary')
                         ->weight(FontWeight::Bold),
-                    TextColumn::make('datetime')->label(__('lang.date'))->default('--')
+                    TextColumn::make('attendances.check_date')->label(__('lang.check_date'))->placeholder('--')
                         ->date('Y-m-d'),
-                    TextColumn::make('datetime')->label(__('lang.date'))->default('--')
-                        ->time('H:i:s'),
+                    TextColumn::make('attendances.check_time')->label(__('lang.check_time'))->placeholder('--'),
+                    TextColumn::make('attendances.check_type')
+                        ->label(__('lang.check_type'))
+                        ->default('--')
+                        ->badge()
+                        ->formatStateUsing(fn($state) => $state === 'checkin' ? __('lang.checkin') : ($state === 'checkout' ? __('lang.checkout') : $state))
+                        ->color(fn($state) => $state === 'checkin' ? 'success' : ($state === 'checkout' ? 'danger' : 'gray')),
+                    TextColumn::make('attendances.status')
+                        ->label(__('lang.status'))
+                        ->default('--')
+                        ->badge()
+                        ->formatStateUsing(fn($state) => \App\Models\Attendance::getStatusLabel($state))
+                        ->color(fn($state) => \App\Models\Attendance::getStatusColor($state)),
                 ]),
 
             ])
@@ -73,6 +84,16 @@ class AttendanceImagesUploadedResource extends Resource
                 'xl' => 4,
             ])
             ->filters([
+
+                Filter::make('has_accepted_attendance')
+                    ->label(__('lang.has_accepted_attendance'))
+                    ->toggle()
+                    ->default(true)
+                    ->query(function (Builder $query): Builder {
+                        return $query->whereHas('attendances', function (Builder $q) {
+                            $q->where('accepted', 1);
+                        });
+                    }),
 
                 Filter::make('datetime')
                     ->label(__('lang.created_at'))

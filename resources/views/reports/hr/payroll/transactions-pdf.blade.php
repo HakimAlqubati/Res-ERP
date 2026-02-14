@@ -113,7 +113,17 @@
 
             <tfoot>
                 <tr>
-                    <td colspan="7">
+                    <td colspan="7" style="border-bottom: none;">
+                        Total Additions: {{ $totalAdditions }}
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="7" style="border-bottom: none; border-top: none;">
+                        Total Deductions: {{ $totalDeductions }}
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="7" style="border-top: none;">
                         Final Result: {{ $total }}
                     </td>
                 </tr>

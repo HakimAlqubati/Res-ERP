@@ -7,6 +7,8 @@ use App\Models\Attendance;
 
 class HelperFunctions
 {
+    public const FLEXIBLE_HOURS_MARGIN_MINUTES = 10;
+
     public static function calculateAttendanceStats($reportData)
     {
         $stats = [
@@ -107,7 +109,7 @@ class HelperFunctions
                                     if (
                                         isset($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly']) &&
                                         $this->timeToHoursForLateArrival($period['attendances']['checkout']['lastcheckout']['total_actual_duration_hourly'])
-                                        < $this->timeToHoursForLateArrival($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'])
+                                        < ($this->timeToHoursForLateArrival($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly']) - (self::FLEXIBLE_HOURS_MARGIN_MINUTES / 60))
                                     ) {
                                         $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
                                     }
@@ -165,6 +167,7 @@ class HelperFunctions
         $isMultiple = Attendance::selectRaw('period_id, COUNT(*) as total')
             ->where('check_date', $date)
             ->where('employee_id', $employeeId)
+            ->where('accepted', 1)
             ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
             ->groupBy('period_id')
             ->having('total', '>', 1)

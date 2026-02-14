@@ -9,6 +9,7 @@ use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\PayrollForm;
 use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\PayrollTable;
 use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\RelationManagers\PayrollsRelationManager;
 use App\Models\PayrollRun;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ForceDeleteBulkAction;
@@ -72,10 +73,14 @@ class PayrollResource extends Resource
                 FiltersLayout::Modal
             )
             ->recordActions([
-                RestoreAction::make()->button()->color('success'),
-                ViewAction::make(),
-                PayrollActions::earlyInstallmentPaymentAction(),
-                PayrollActions::approveAction(),
+                ActionGroup::make([
+
+                    PayrollActions::earlyInstallmentPaymentAction(),
+                    PayrollActions::pdfSalarySlipAction(),
+                    PayrollActions::approveAction(),
+                    RestoreAction::make()->color('success'),
+                    ViewAction::make()
+                ]),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

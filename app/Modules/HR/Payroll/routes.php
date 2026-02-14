@@ -33,6 +33,10 @@ Route::middleware(['web'])
     ->group(function () {
         Route::get('/admin/salary-slip/pdf/{payroll_id}', [\App\Modules\HR\Payroll\Reports\SalarySlipReport::class, 'generate'])
             ->name('salarySlip.pdf');
+
+        // Documentation Routes
+        Route::get('/payroll/logic-flow', [\App\Modules\HR\Payroll\Http\Controllers\PayrollDocsController::class, 'logicFlow'])
+            ->name('payroll.docs.logic-flow');
     });
 
 // Web Simulation Routes

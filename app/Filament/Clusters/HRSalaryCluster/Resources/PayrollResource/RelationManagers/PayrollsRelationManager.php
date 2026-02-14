@@ -56,6 +56,7 @@ class PayrollsRelationManager extends RelationManager
                     ->getStateUsing(function (Payroll $record) {
                         $amount  = $record->transactions()
                             ->where('operation', '-')
+                            ->where('type', '!=', \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_CARRY_FORWARD->value)
                             ->sum('amount');
                         return formatMoneyWithCurrency($amount);
                     }),

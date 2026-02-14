@@ -100,11 +100,11 @@ class FaceRecognitionService
         );
 
         if ($isAnotherBranch) {
-            return EmployeeMatch::notFound('Employee belongs to another branch and cannot be accessed.');
+            // return EmployeeMatch::notFound('Employee belongs to another branch and cannot be accessed.');
         }
 
         if (!$employee) {
-            return EmployeeMatch::notFound();
+            // return EmployeeMatch::notFound();
         }
         // dd($name,$employee,$employeeId,$similarity,$confidence);
         if (!$employeeId && !$name) {

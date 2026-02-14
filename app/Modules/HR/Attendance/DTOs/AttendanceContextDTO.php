@@ -4,6 +4,7 @@ namespace App\Modules\HR\Attendance\DTOs;
 
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Models\EmployeeApplicationV2;
 use App\Models\WorkPeriod;
 use App\Modules\HR\Attendance\Enums\AttendanceStatus;
 use App\Modules\HR\Attendance\Enums\AttendanceType;
@@ -23,6 +24,10 @@ class AttendanceContextDTO
         public readonly Carbon $requestTime,
         public readonly array $payload,
         public readonly AttendanceType $attendanceType,
+
+        // مرجع المصدر (Polymorphic)
+        public readonly ?string $sourceType = null,
+        public readonly ?int $sourceId = null,
 
         // بيانات الوردية (تُحدد لاحقاً)
         public ?WorkPeriod $workPeriod = null,
@@ -55,11 +60,29 @@ class AttendanceContextDTO
         $attendanceType = AttendanceType::tryFrom($payload['attendance_type'] ?? 'rfid')
             ?? AttendanceType::RFID;
 
+        $sourceType = $payload['source_type'] ?? null;
+        $sourceId = isset($payload['source_id']) ? (int) $payload['source_id'] : null;
+
+        // Auto-resolve: إذا كان webcam ولم يتم تمرير source_id، نبحث تلقائياً
+        if ($sourceType === null && $sourceId === null) {
+            $recentImage = \App\Models\AttendanceImagesUploaded::where('employee_id', $employee->id)
+                ->where('datetime', '>=', $requestTime->copy()->subMinutes(2))
+                ->orderByDesc('datetime')
+                ->first();
+
+            if ($recentImage) {
+                $sourceType = \App\Models\AttendanceImagesUploaded::class;
+                $sourceId = $recentImage->id;
+            }
+        }
+
         return new self(
             employee: $employee,
             requestTime: $requestTime,
             payload: $payload,
             attendanceType: $attendanceType,
+            sourceType: $sourceType,
+            sourceId: $sourceId,
         );
     }
 
@@ -151,6 +174,8 @@ class AttendanceContextDTO
             'late_departure_minutes' => $this->lateDepartureMinutes,
             'early_departure_minutes' => $this->earlyDepartureMinutes,
             'checkinrecord_id' => $this->isCheckOut() ? $this->lastCheckIn?->id : null,
+            'source_type' => $this->sourceType,
+            'source_id' => $this->sourceId,
         ];
     }
 }

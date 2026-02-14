@@ -56,6 +56,7 @@ Route::prefix('hr')
 
         Route::get('/attendancePlan', [AttendanceController::class, 'generate']);
         Route::get('/absentEmployees', [AttendanceController::class, 'absentEmployees']);
+        Route::get('/attendanceImages', [AttendanceController::class, 'attendanceImages']);
 
         // Route::post('/attendance/plan/execute', [AttendancePlanController::class, 'execute'])->middleware('auth:api');
         Route::post('/faceRecognition', [AttendanceController::class, 'identifyEmployeeFromImage']);
@@ -63,7 +64,7 @@ Route::prefix('hr')
             // ->name('employees.identify')
             ->middleware('auth:api')
         ;
-        Route::get('/liveness', [LivenessController::class, 'check']);
+        Route::post('/liveness', [LivenessController::class, 'check']);
 
         // Overtime Routes
         Route::prefix('overtime')->group(function () {
@@ -232,7 +233,7 @@ Route::get('/face-data', function () {
     Route::post('/faceRecognition', [AttendanceController::class, 'identifyEmployeeFromImage']);
 });
 
-Route::post('/v2/attendance/test', [AttendanceController::class, 'store'])->middleware('auth:api');
+// Route::post('/v2/attendance/test', [AttendanceController::class, 'store'])->middleware('auth:api');
 
 
 

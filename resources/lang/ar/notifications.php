@@ -8,7 +8,7 @@ return [
     'second'                                                                          => 'ثانية',
     'attendance_time_is_greater_than_current_period_end_time'                         => 'وقت الحضور يتجاوز وقت نهاية الفترة الحالية',
     'no_valid_period_found_for_the_specified_time'                                    => 'لم يتم العثور على فترة صالحة للوقت المحدد.',
-    'you_dont_have_periods_today'                                                     => 'ليس لديك فترات اليوم.',
+    'you_dont_have_periods_today'                                                     => 'تأكد بأن الشيفت الخاصة بك قد بدأت، أو قم بالتواصل مع مديرك لتأكيد شيفتك',
     'sorry_no_working_hours_have_been_added_to_you_please_contact_the_administration' => 'عذرًا، لم يتم إضافة ساعات العمل الخاصة بك، يرجى التواصل مع الإدارة!',
     'there_is_no_employee_at_this_number'                                             => 'لا يوجد موظف بهذا الرقم',
     'notify'                                                                          => 'تنبيه',
@@ -31,14 +31,14 @@ return [
     'you_are_already_checked_in' => 'عفواً، لديك عملية دخول مسجلة مسبقاً ومفتوحة حالياً.',
 
     // رسالة عند محاولة عمل "خروج" بدون وجود سجل "دخول"
-    'cannot_checkout_without_checkin' => 'عفواً، لا يمكن تسجيل انصراف لعدم وجود سجل دخول لهذا اليوم.',
+    'cannot_checkout_without_checkin' => 'لا يمكنك تسجيل الخروج بدون تسجيل دخول، لإنشاء الدخول قم بتقديم طلب تسجيل دخول.',
 
     // رسائل نجاح العملية (للاستخدام العام)
     'check_in_success' => 'تم تسجيل الدخول بنجاح.',
     'check_out_success' => 'تم تسجيل الانصراف بنجاح.',
 
     // رسائل عامة
-    'you_dont_have_periods_today' => 'عفواً، لا توجد لك فترات عمل مجدولة لهذا اليوم.',
+    'you_dont_have_periods_today' => 'تأكد بأن الشيفت الخاصة بك قد بدأت، أو قم بالتواصل مع مديرك لتأكيد شيفتك',
 
     // رسالة عند محاولة تسجيل دخول تلقائي قرب نهاية الشيفت بدون سجلات
     'cannot_auto_checkin_near_shift_end' => 'عفواً، لا يمكن تسجيل الدخول التلقائي قرب نهاية الدوام. يرجى تحديد نوع العملية (دخول/خروج) يدوياً.',

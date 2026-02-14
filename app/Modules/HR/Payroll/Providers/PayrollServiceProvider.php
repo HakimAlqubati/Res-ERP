@@ -35,6 +35,7 @@ use App\Modules\HR\Payroll\Calculators\AdvanceInstallmentCalculator;
 use App\Modules\HR\Payroll\Calculators\MealRequestCalculator;
 use App\Modules\HR\Payroll\Calculators\GeneralDeductionCalculator;
 use App\Modules\HR\Payroll\Calculators\TransactionBuilder;
+use App\Modules\HR\Payroll\Calculators\MonthlyIncentiveCalculator;
 
 class PayrollServiceProvider extends ServiceProvider
 {
@@ -53,6 +54,7 @@ class PayrollServiceProvider extends ServiceProvider
         $this->app->singleton(MealRequestCalculator::class);
         $this->app->singleton(GeneralDeductionCalculator::class);
         $this->app->singleton(TransactionBuilder::class);
+        $this->app->singleton(MonthlyIncentiveCalculator::class);
 
         // ===== Repositories =====
         $this->app->singleton(PayrollRepositoryInterface::class, PayrollRepository::class);
@@ -72,6 +74,7 @@ class PayrollServiceProvider extends ServiceProvider
                 $app->make(MealRequestCalculator::class),
                 $app->make(GeneralDeductionCalculator::class),
                 $app->make(TransactionBuilder::class),
+                $app->make(MonthlyIncentiveCalculator::class),
             );
         });
         $this->app->singleton(SalaryCalculatorService::class, function ($app) {
@@ -116,6 +119,9 @@ class PayrollServiceProvider extends ServiceProvider
     {
         // Load module routes
         $this->loadRoutesFrom(__DIR__ . '/../routes.php');
+
+        // Load module views
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'payroll');
 
         // Register Observer for PayrollRun model
         // Note: This uses the module's observer, not the original one

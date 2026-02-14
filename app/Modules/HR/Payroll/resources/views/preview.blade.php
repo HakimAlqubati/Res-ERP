@@ -1,4 +1,4 @@
-@extends('hr.payroll.layout')
+@extends('payroll::layout')
 
 @section('title', 'معاينة الرواتب')
 @section('header', 'معاينة الرواتب')

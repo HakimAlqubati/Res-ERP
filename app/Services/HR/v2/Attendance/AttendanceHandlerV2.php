@@ -124,6 +124,10 @@ class AttendanceHandlerV2
             'early_arrival_minutes'   => $ctx->earlyArrivalMinutes,
             'late_departure_minutes'  => $ctx->lateDepartureMinutes,
             'early_departure_minutes' => $ctx->earlyDepartureMinutes,
+
+            // Source Reference
+            'source_type' => $ctx->sourceType,
+            'source_id'   => $ctx->sourceId,
         ];
 
         if ($ctx->checkType === Attendance::CHECKTYPE_CHECKOUT && $ctx->lastAction) {
