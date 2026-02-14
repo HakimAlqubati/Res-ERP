@@ -115,7 +115,8 @@ class DeductionResource extends Resource
                             //     ->suffixIconColor('success'),
 
 
-                            Slider::make('percentage')->hintIcon(Heroicon::PercentBadge)
+                            Slider::make('percentage')
+                            ->hintIcon(Heroicon::PercentBadge)
                                 ->label('Percentage')
                                 // ->rangePadding([10, 20])
                                 // ->tooltips()
@@ -134,7 +135,9 @@ class DeductionResource extends Resource
                         JS))
                                 ->fillTrack()
                                 ->required()
-                                ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'))
+                                ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'
+                                 && in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYEE]) 
+                                ))
                                 ->minValue(0)
                                 ->step(0.1)
                                 ->maxValue(100)
