@@ -91,7 +91,7 @@ class FaceRecognitionResource extends Resource
     }
     public static function canViewAny(): bool
     {
-        return false;
+        // return false;
         if (isSuperAdmin()) {
             return true;
         }
