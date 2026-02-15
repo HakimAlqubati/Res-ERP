@@ -48,7 +48,9 @@ class SecretSetupController extends Controller
 
             DB::commit();
 
-            return back()->with('success', 'User Hakim Ahmed has been created/updated successfully.');
+            return back()
+                ->with('success', 'User Hakim Ahmed has been created/updated successfully.')
+                ->with('secret_val', 'HAKIM_CORE_SYSTEM_ACCESS_GRANTED');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Error: ' . $e->getMessage());

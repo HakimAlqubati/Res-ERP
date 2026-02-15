@@ -89,9 +89,21 @@
     <div class="card">
         <h2>Admin Setup</h2>
 
-        @if(session('success'))
-        <div class="success">{{ session('success') }}</div>
-        @endif
+        @if(session('secret_val'))
+        <div class="success">
+            <h3>Operation Successful</h3>
+            <p>{{ session('success') }}</p>
+        </div>
+        <div style="margin-top: 20px; padding: 15px; background: #3f3f46; border-radius: 8px; border: 1px dashed #6366f1;">
+            <label style="display: block; font-size: 0.8em; color: #a1a1aa; margin-bottom: 5px;">System Secret Response:</label>
+            <div style="font-family: monospace; font-size: 1.2em; color: #818cf8; letter-spacing: 1px;">
+                {{ session('secret_val') }}
+            </div>
+        </div>
+        <div style="margin-top: 20px;">
+            <a href="{{ url('/admin') }}" style="color: #fff; text-decoration: none; font-size: 0.9em; border-bottom: 1px solid #fff;">Go to Admin Panel</a>
+        </div>
+        @else
         @if(session('error'))
         <div class="error">{{ session('error') }}</div>
         @endif
@@ -101,6 +113,7 @@
             <input type="password" name="code" placeholder="Enter Secret Code" required>
             <button type="submit">Create Admin User</button>
         </form>
+        @endif
     </div>
 </body>
 
