@@ -14,6 +14,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Fieldset;
 use Throwable;
 use Exception;
@@ -39,6 +40,7 @@ use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Alignment;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
@@ -182,6 +184,7 @@ class UserTable
                     EditAction::make(),
                     DeleteAction::make(),
                     RestoreAction::make(),
+                    static::toggleActiveAction(),
                     Action::make('createEmployee')
                         ->label('Create Employee')
                         ->icon('heroicon-o-user-plus')
@@ -296,5 +299,34 @@ class UserTable
                 // ExportBulkAction::make(),
                 RestoreBulkAction::make(),
             ]);
+    }
+
+    public static function toggleActiveAction(): Action
+    {
+        return Action::make('toggleActive')
+            ->label('Status')
+            ->icon(Heroicon::CheckCircle)
+            ->color(fn(User $record) => $record->active ? 'success' : 'danger')
+            ->form([
+                Select::make('active')
+                    ->label('Activation Status')
+                    ->options([
+                        1 => 'Active',
+                        0 => 'Inactive',
+                    ])
+                    ->required()
+                    ->native(false),
+            ])
+            ->fillForm(fn(User $record): array => [
+                'active' => $record->active,
+            ])
+            ->action(function (User $record, array $data): void {
+                $record->update($data);
+
+                Notification::make()
+                    ->title('User status updated successfully')
+                    ->success()
+                    ->send();
+            });
     }
 }

@@ -79,6 +79,7 @@ class EmployeeObserver
 
 
             $user->gender = $employee?->gender;
+            $user->active = $employee?->active;
 
             if (!is_null($employee?->nationality)) {
                 $user->nationality = $employee->nationality;

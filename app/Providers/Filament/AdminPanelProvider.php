@@ -54,6 +54,7 @@ use App\Filament\Resources\SystemSettingResource;
 use App\Filament\Resources\TenantResource;
 use App\Filament\Resources\UserResource;
 use App\Filament\Resources\VisitLogResource;
+use App\Http\Middleware\CheckUserActive;
 use App\Models\CustomTenantModel;
 // use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Coolsam\Modules\ModulesPlugin;
@@ -301,6 +302,7 @@ class AdminPanelProvider extends PanelProvider
             // })
             ->authMiddleware([
                 Authenticate::class,
+                CheckUserActive::class,
             ])
             ->sidebarCollapsibleOnDesktop()
             // ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')

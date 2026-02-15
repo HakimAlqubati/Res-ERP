@@ -34,6 +34,10 @@ class UserObserver
             if ($user->isDirty('name')) {
                 $employee->name = $user->name;
             }
+            
+            if ($user->isDirty('active')) {
+                $employee->active = $user->active;
+            }
 
             if ($user->isDirty('branch_id')) {
                 $employee->branch_id = $user->branch_id;
