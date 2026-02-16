@@ -177,11 +177,18 @@ class DeductionResource extends Resource
                                 ->default(0)
                                 ->rtl(),
 
-                            // TextInput::make('employer_percentage')
-                            //     ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage') && (in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])))
-                            //     ->numeric()
-                            //     ->suffixIcon('heroicon-o-percent-badge')
-                            //     ->suffixIconColor('success'),
+                            Toggle::make('has_cap')
+                                ->label('Has Cap')
+                                ->live()
+                                ->default(false)
+                                ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage')),
+
+                            TextInput::make('cap_value')
+                                ->label('Cap Value')
+                                ->numeric()
+                                ->visible(fn(Get $get): bool => $get('has_cap') && ($get('is_percentage') == 'is_percentage'))
+                                ->suffixIcon('heroicon-o-currency-dollar')
+                                ->suffixIconColor('success'),
                         ]),
                     // Tax Brackets Repeater
                     Repeater::make('brackets')  // The relationship field for Deduction Brackets

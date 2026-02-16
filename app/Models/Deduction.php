@@ -29,6 +29,8 @@ class Deduction extends Model
         'applied_by',
         'employer_percentage',
         'employer_amount',
+        'has_cap',
+        'cap_value',
         'financial_category_id',  // للربط مع الفئة المالية
     ];
 
@@ -79,7 +81,8 @@ class Deduction extends Model
         ];
     }
 
-    public function getAppliedByLabelAttribute(){
+    public function getAppliedByLabelAttribute()
+    {
         return self::getAppliedByOptions()[$this->applied_by];
     }
     // Define a model scope for filtering by 'condition_applied'

@@ -40,7 +40,9 @@ class GeneralDeductionCalculator
                 'has_brackets',
                 'applied_by',
                 'employer_percentage',
-                'employer_amount'
+                'employer_amount',
+                'has_cap',
+                'cap_value'
             )
             ->with('brackets')
             ->get();
@@ -97,9 +99,18 @@ class GeneralDeductionCalculator
             $notes = null;
             $appliedBrackets = null;
 
+            // Determine Salary Base (applying cap if configured)
+            $salaryBase = max(0, $basicSalary);
+            $isCapped = false;
+            if ($deduction->has_cap && $deduction->cap_value > 0 && $salaryBase > $deduction->cap_value) {
+                $salaryBase = (float) $deduction->cap_value;
+                $isCapped = true;
+            }
+
             // حساب خصم الموظف
             if (isset($deduction->has_brackets) && $deduction->has_brackets && $deduction->brackets->isNotEmpty()) {
-                // حساب تصاعدي (ضريبة)
+                // حساب تصاعدي (ضريبة) - Brackets logic usually handles its own tiers, so we pass origin basic salary unless instructed otherwise. 
+                // But for now, let's keep brackets using $basicSalary as it's separate logic.
                 $taxResult = $deduction->calculateTax($basicSalary);
                 $deductionAmount = $taxResult['monthly_tax'] ?? 0;
                 $effectivePercentage = $taxResult['effective_percentage'] ?? null;
@@ -107,7 +118,6 @@ class GeneralDeductionCalculator
                 $appliedBrackets = $taxResult['applied_brackets'] ?? null;
             } elseif ($deduction->is_percentage) {
                 // نسبة مئوية
-                $salaryBase = max(0, $basicSalary);
                 $deductionAmount = ($salaryBase * $deduction->percentage) / 100;
                 $effectivePercentage = $deduction->percentage;
                 $notes = sprintf(
@@ -116,6 +126,9 @@ class GeneralDeductionCalculator
                     $salaryBase,
                     $deductionAmount
                 );
+                if ($isCapped) {
+                    $notes .= sprintf(" (Wage Capped at %.2f)", $deduction->cap_value);
+                }
             } else {
                 // مبلغ ثابت
                 $deductionAmount = (float) $deduction->amount;
@@ -124,7 +137,7 @@ class GeneralDeductionCalculator
 
             // حساب مساهمة صاحب العمل
             if ($deduction->employer_percentage > 0) {
-                $salaryBase = max(0, $basicSalary);
+                // Use the same capped salary base
                 $employerAmount = ($salaryBase * $deduction->employer_percentage) / 100;
             } elseif ($deduction->employer_amount > 0) {
                 $employerAmount = (float) $deduction->employer_amount;
