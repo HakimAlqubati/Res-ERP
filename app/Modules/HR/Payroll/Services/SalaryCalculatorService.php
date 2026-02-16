@@ -248,7 +248,17 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         }
 
         // 7. Calculate general deductions (taxes, insurance)
-        $dynamicDeductions = $this->generalDeductionCalculator->calculate($context, $this->netSalary);
+        // Statutory deductions (EPF, SOCSO, EIS) are typically based on Gross Wages EARNED.
+        // Gross Wages should include Overtime, Allowances, etc.
+        // However, we should subtract Unpaid Leave (Absent days) because that salary was never earned.
+        // We should NOT subtract Late/Early/Penalties/Advances as those are deductions from earned salary.
+        
+        $baseForStatutoryDeductions = $this->grossSalary - ($this->totalDeductions);
+        
+        // Ensure base is not negative
+        $baseForStatutoryDeductions = max(0, $baseForStatutoryDeductions);
+
+        $dynamicDeductions = $this->generalDeductionCalculator->calculate($context, $baseForStatutoryDeductions);
         $dynamicTotal = (float)($dynamicDeductions['result'] ?? 0);
 
         // Include dynamic deductions in totals
