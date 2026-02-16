@@ -155,7 +155,7 @@ class DeductionResource extends Resource
                                 // ->tooltips()
                                 ->rangePadding(0)
                                 ->tooltips(RawJs::make(<<<'JS'
-                                    `%${$value.toFixed(1)}`
+                                    `%${$value.toFixed(2)}`
                                 JS))
                                 ->pips()
                                 ->pipsFilter(RawJs::make(<<<'JS'
@@ -172,7 +172,7 @@ class DeductionResource extends Resource
                                 ->required()
                                 ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage') && (in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])))
                                 ->minValue(0)
-                                ->step(0.1)
+                                ->step(0.01)
                                 ->maxValue(100)
                                 ->default(0)
                                 ->rtl(),
