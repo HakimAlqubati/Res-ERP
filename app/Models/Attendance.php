@@ -93,16 +93,16 @@ class Attendance extends Model implements Auditable
 
     // ── Status Colors (Filament) ──────────────────────────
     const STATUS_ON_TIME_COLOR         = 'success';   // #10B981
-    const STATUS_LATE_ARRIVAL_COLOR    = 'warning';   // #F59E0B
-    const STATUS_EARLY_DEPARTURE_COLOR = 'danger';    // #EF4444
+    const STATUS_LATE_ARRIVAL_COLOR    = 'danger';    // #EF4444
+    const STATUS_EARLY_DEPARTURE_COLOR = 'warning';   // #F59E0B
     const STATUS_EARLY_ARRIVAL_COLOR   = 'info';      // #3B82F6
     const STATUS_LATE_DEPARTURE_COLOR  = 'info';      // #3B82F6
     const STATUS_TEST_COLOR            = 'gray';      // #6B7280
 
     // ── Status Hex Colors ─────────────────────────────────
     const STATUS_ON_TIME_HEX           = '#10B981';
-    const STATUS_LATE_ARRIVAL_HEX      = '#F59E0B';
-    const STATUS_EARLY_DEPARTURE_HEX   = '#EF4444';
+    const STATUS_LATE_ARRIVAL_HEX      = '#EF4444';
+    const STATUS_EARLY_DEPARTURE_HEX   = '#F59E0B';
     const STATUS_EARLY_ARRIVAL_HEX     = '#3B82F6';
     const STATUS_LATE_DEPARTURE_HEX    = '#3B82F6';
     const STATUS_TEST_HEX              = '#6B7280';
