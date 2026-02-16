@@ -116,7 +116,7 @@ class DeductionResource extends Resource
 
 
                             Slider::make('percentage')
-                            ->hintIcon(Heroicon::PercentBadge)
+                                ->hintIcon(Heroicon::PercentBadge)
                                 ->label('Percentage')
                                 // ->rangePadding([10, 20])
                                 // ->tooltips()
@@ -136,7 +136,7 @@ class DeductionResource extends Resource
                                 ->fillTrack()
                                 ->required()
                                 ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'
-                                 && in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYEE]) 
+                                    && in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYEE])
                                 ))
                                 ->minValue(0)
                                 ->step(0.1)
@@ -150,12 +150,12 @@ class DeductionResource extends Resource
                                 ->suffixIconColor('success'),
 
                             Slider::make('employer_percentage')->hintIcon(Heroicon::PercentBadge)
-                                ->label('Employeer Percentage')
+                                ->label('Employer Percentage')
                                 // ->rangePadding([10, 20])
                                 // ->tooltips()
                                 ->rangePadding(0)
                                 ->tooltips(RawJs::make(<<<'JS'
-                                    `%${$value.toFixed(0)}`
+                                    `%${$value.toFixed(1)}`
                                 JS))
                                 ->pips()
                                 ->pipsFilter(RawJs::make(<<<'JS'
@@ -172,7 +172,7 @@ class DeductionResource extends Resource
                                 ->required()
                                 ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage') && (in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])))
                                 ->minValue(0)
-                                ->step(1)
+                                ->step(0.1)
                                 ->maxValue(100)
                                 ->default(0)
                                 ->rtl(),
