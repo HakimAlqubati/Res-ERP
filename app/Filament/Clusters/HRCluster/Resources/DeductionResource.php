@@ -228,6 +228,13 @@ class DeductionResource extends Resource
                 IconColumn::make('is_penalty')->alignCenter(true)
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark'),
+
+                IconColumn::make('has_brackets')
+                    ->label('Has Brackets')
+                    ->alignCenter(true)
+                    ->trueIcon('heroicon-o-check-badge')
+                    ->falseIcon('heroicon-o-x-mark')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('is_specific')->label('Custom')->alignCenter(true)
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark')
@@ -251,7 +258,7 @@ class DeductionResource extends Resource
                     ->placeholder('-')
                     ->badge()
                     ->color('info')
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('applied_by_label')->label(__('Applied By'))->toggleable(isToggledHiddenByDefault: false),
                 ToggleColumn::make('active')->disabled(fn(): bool => isBranchManager()),
             ])
