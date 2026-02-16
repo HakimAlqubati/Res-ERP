@@ -79,6 +79,15 @@ class GeneralDeductionCalculator
             ) {
                 $deductions[] = $deductionType;
             }
+
+            // تطبيق على الأجانب مع رخصة عمل
+            if (
+                $deductionType->condition_applied_v2 == Deduction::CONDITION_APPLIED_V2_FOREIGN_HAS_EMP_PASS &&
+                !$employee->is_citizen &&
+                $employee->has_employee_pass
+            ) {
+                $deductions[] = $deductionType;
+            }
         }
 
         return $this->calculateDeductions($deductions, $netSalary);

@@ -94,9 +94,11 @@ class Deduction extends Model
 
 
     // Optional: Define constants for the new field 'condition_applied_v2'
+    // Optional: Define constants for the new field 'condition_applied_v2'
     const CONDITION_APPLIED_V2_ALL = 'all';
     const CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE = 'citizen_employee';
     const CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE_AND_FOREIGN_HAS_PASS = 'citizen_employee_and_foreign_has_emp_pass';
+    const CONDITION_APPLIED_V2_FOREIGN_HAS_EMP_PASS = 'foreign_has_emp_pass';
 
     public static function getConditionAppliedV2Options()
     {
@@ -104,6 +106,7 @@ class Deduction extends Model
             self::CONDITION_APPLIED_V2_ALL => 'All',
             self::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE => 'Local staff',
             self::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE_AND_FOREIGN_HAS_PASS => 'Local staff & expat with EP',
+            self::CONDITION_APPLIED_V2_FOREIGN_HAS_EMP_PASS => 'Expat with EP',
         ];
     }
 
