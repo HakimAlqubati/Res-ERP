@@ -124,39 +124,78 @@ class Deduction extends Model
      * @param float $salary The monthly salary amount to calculate tax for.
      * @return array Detailed tax calculation including brackets applied.
      */
-    public function calculateTax(float $salary): array
+    /**
+     * Calculate Tax with correct MTD logic but maintaining old output structure.
+     *
+     * @param float $salary Monthly Gross Salary
+     * @param float $totalReliefs (Optional) Total Annual Reliefs (Default 9000 for individual)
+     * @param float $zakatAndRebates (Optional) Total Zakat + other rebates
+     * @return array
+     */
+
+    public function calculateTax(float $salary, float $totalReliefs = 0, float $zakatAndRebates = 0): array
     {
+        // 1. استدعاء الشرائح
         $brackets = $this->brackets()->orderBy('min_amount')->get();
 
+        // 2. الحسابات الأولية
         $annualSalary = $salary * 12;
-        $tax = 0;
+        $chargeableIncome = max(0, $annualSalary - $totalReliefs);
+
+        $grossTax = 0;
         $appliedBrackets = [];
         $currentBracket = null;
+
+        // متغيرات الملاحظات
+        $baseTax = 0;
+        $excessAmount = 0;
+        $excessTax = 0;
 
         foreach ($brackets as $bracket) {
             $bracketMin = (float) $bracket['min_amount'];
             $bracketMax = (float) $bracket['max_amount'];
             $bracketPercentage = (float) $bracket['percentage'];
 
-            if ($annualSalary <= $bracketMin) {
+            // تخطي الشرائح التي لم يصل إليها الدخل
+            if ($chargeableIncome <= $bracketMin) {
                 continue;
             }
 
-            if ($annualSalary > $bracketMax) {
-                $taxableInBracket = $bracketMax - $bracketMin;
+            // --- تصحيح الخطأ الجوهري هنا ---
+            // لحساب المبلغ الخاضع للضريبة داخل الشريحة، يجب معالجة الفجوة بين الشرائح
+            // إذا كانت الشرائح (0-5000) ثم (5001-20000)، الفرق هو (Max - Min + 1) للشرائح المكتملة
+
+            if ($chargeableIncome > $bracketMax) {
+                // شريحة مكتملة (سابقة)
+                // المعادلة الصحيحة: (Max - Min) + 1 لتعويض الفجوة الرقمية
+                // مثال: 20000 - 5001 + 1 = 15000
+                $taxableInBracket = ($bracketMax - $bracketMin) + 1;
+
+                // حالة خاصة للشريحة الأولى التي تبدأ بصفر (لأن 5000-0 = 5000 ولا تحتاج +1 عادة إلا لو النظام يعتبر الصفر رقم)
+                // لكن الأضمن رياضياً مع جدولك هو التعامل مع الـ Min وكأنه (Previous Max)
+                // الحل الأبسط والفعال لجدولك هو: ($bracketMax - ($bracketMin - 1))
+                $taxableInBracket = $bracketMax - ($bracketMin - 1);
+
                 $taxFromBracket = $taxableInBracket * ($bracketPercentage / 100);
+                $baseTax += $taxFromBracket;
             } else {
-                $taxableInBracket = $annualSalary - $bracketMin;
+                // الشريحة الحالية (الأخيرة)
+                // المبلغ هو: الدخل - (بداية الشريحة - 1)
+                $taxableInBracket = $chargeableIncome - ($bracketMin - 1);
+
                 $taxFromBracket = $taxableInBracket * ($bracketPercentage / 100);
-                // This is the bracket where salary falls
+
                 $currentBracket = [
                     'min' => $bracketMin,
                     'max' => $bracketMax,
                     'percentage' => $bracketPercentage,
                 ];
+
+                $excessAmount = $taxableInBracket;
+                $excessTax = $taxFromBracket;
             }
 
-            $tax += $taxFromBracket;
+            $grossTax += $taxFromBracket;
 
             if ($taxFromBracket > 0) {
                 $appliedBrackets[] = [
@@ -168,29 +207,44 @@ class Deduction extends Model
                 ];
             }
 
-            if ($annualSalary <= $bracketMax) {
+            if ($chargeableIncome <= $bracketMax) {
                 break;
             }
         }
 
-        $effectivePercentage = $annualSalary > 0 ? round(($tax / $annualSalary) * 100, 4) : 0;
-        $monthlyTax = round($tax / 12, 2);
+        // 3. الخصومات النهائية
+        $automaticRebate = ($chargeableIncome > 0 && $chargeableIncome <= 35000) ? 400 : 0;
+        $totalRebates = $zakatAndRebates + $automaticRebate;
+       
+        $finalTax = max(0, $grossTax - $totalRebates);
 
-        // Simple, concise notes - only the essential info
+        // 4. النتائج النهائية
+        $monthlyTax = round($finalTax / 12, 2);
+        $effectivePercentage = $annualSalary > 0 ? round(($finalTax / $annualSalary) * 100, 4) : 0;
+
+        // 5. الملاحظات
         if ($currentBracket) {
             $notes = sprintf(
-                "Effective rate: %.2f%% (Bracket: %.0f-%.0f @ %.1f%%)",
-                $effectivePercentage,
-                $currentBracket['min'],
-                $currentBracket['max'],
-                $currentBracket['percentage']
+                "Gross: %s * 12 = %s | Reliefs: %s | Chargeable: %s | Bracket: %s-%s @ %s%% | Base Tax: %s + Excess Tax: (%s * %s%% = %s) = Total Tax: %s",
+                number_format($salary, 2),
+                number_format($annualSalary, 2),
+                number_format($totalReliefs, 2),
+                number_format($chargeableIncome, 2),
+                number_format($currentBracket['min']),
+                number_format($currentBracket['max']),
+                $currentBracket['percentage'],
+                number_format($baseTax, 2),
+                number_format($excessAmount, 2),
+                $currentBracket['percentage'],
+                number_format($excessTax, 2),
+                number_format($grossTax, 2)
             );
         } else {
-            $notes = sprintf("Effective rate: %.2f%%", $effectivePercentage);
+            $notes = sprintf("No Tax Payable. Chargeable Income: %s", number_format($chargeableIncome, 2));
         }
 
         return [
-            'total_tax' => round($tax, 2),
+            'total_tax' => round($finalTax, 2),
             'monthly_tax' => $monthlyTax,
             'effective_percentage' => $effectivePercentage,
             'applied_brackets' => $appliedBrackets,
@@ -199,7 +253,6 @@ class Deduction extends Model
             'current_bracket' => $currentBracket,
         ];
     }
-
 
 
     /**
