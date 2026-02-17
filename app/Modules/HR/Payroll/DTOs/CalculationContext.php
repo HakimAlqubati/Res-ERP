@@ -20,6 +20,7 @@ final class CalculationContext
         public int $monthDays,
         public ?int $periodYear,
         public ?int $periodMonth,
+        public ?string $periodEndDate = null,
         public ?RateResult $rates = null,
     ) {}
 
@@ -37,6 +38,7 @@ final class CalculationContext
             monthDays: $this->monthDays,
             periodYear: $this->periodYear,
             periodMonth: $this->periodMonth,
+            periodEndDate: $this->periodEndDate,
             rates: $rates,
         );
     }
@@ -54,6 +56,6 @@ final class CalculationContext
      */
     public function periodEnd(): string
     {
-        return date('Y-m-t', strtotime($this->periodStart()));
+        return $this->periodEndDate ?? date('Y-m-t', strtotime($this->periodStart()));
     }
 }

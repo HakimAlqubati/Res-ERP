@@ -37,6 +37,10 @@ Route::middleware(['web'])
         // Documentation Routes
         Route::get('/payroll/logic-flow', [\App\Modules\HR\Payroll\Http\Controllers\PayrollDocsController::class, 'logicFlow'])
             ->name('payroll.docs.logic-flow');
+
+        // Tax Calculation Explanation
+        Route::get('/payroll/tax-calculation-steps', [\App\Modules\HR\Payroll\Http\Controllers\PayrollSimulationController::class, 'taxCalculationSteps'])
+            ->name('payroll.docs.tax-steps');
     });
 
 // Web Simulation Routes

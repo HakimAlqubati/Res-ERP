@@ -253,6 +253,12 @@ $totalNet += $r['data']['net_salary'];
                                     {{ is_object($trans['sub_type']) && property_exists($trans['sub_type'], 'value') ? $trans['sub_type']->value : '' }}
                                 </div>
                                 @endif
+
+                                @if(isset($trans['notes']) && !empty($trans['notes']))
+                                <div class="text-xs text-indigo-400 mt-1">
+                                    {{ $trans['notes'] }}
+                                </div>
+                                @endif
                             </td>
                             <td class="px-4 py-2 text-center text-xs text-gray-500">{{ $trans['unit'] ?? '-' }}</td>
                             <td class="px-4 py-2 text-center font-mono">{{ $trans['qty'] ?? 1 }}</td>

@@ -57,23 +57,39 @@ class AttendanceImagesUploadedResource extends Resource
                 Stack::make([
                     ImageColumn::make('full_image_url')->circular(false)->tooltip(fn($record) => $record->employee_name)
                         ->label(__('lang.image'))
-                        ->size(200)->wrap(),
+                        ->size(200)->wrap()
+                        ->extraImgAttributes(
+                            fn($record) => $record->attendances()->doesntExist()
+                                ? ['style' => 'border: 3px solid red; border-radius: 8px;']
+                                : ['style' => 'border: 3px solid green; border-radius: 8px;']
+                        ),
                     TextColumn::make('employee.name')->label(__('lang.employee'))->default('--')->searchable()
                         ->color('primary')
                         ->weight(FontWeight::Bold),
+                    // TextColumn::make('datetime')->label(__('lang.date'))
+                    //     ->date('Y-m-d')
+
+                    //     ->hidden(fn($state) => blank($state)),
+                    // TextColumn::make('datetime')->label(__('lang.date'))
+                    //     ->time('H:i:s')
+                    //     ->hidden(fn($state) => blank($state)),
+
                     TextColumn::make('attendances.check_date')->label(__('lang.check_date'))->placeholder('--')
-                        ->date('Y-m-d'),
-                    TextColumn::make('attendances.check_time')->label(__('lang.check_time'))->placeholder('--'),
+                        ->date('Y-m-d')
+                        ->hidden(fn($state) => blank($state)),
+                    TextColumn::make('attendances.check_time')->label(__('lang.check_time'))
+                        ->placeholder('--')
+                        ->hidden(fn($state) => blank($state)),
                     TextColumn::make('attendances.check_type')
                         ->label(__('lang.check_type'))
-                        ->default('--')
                         ->badge()
                         ->formatStateUsing(fn($state) => $state === 'checkin' ? __('lang.checkin') : ($state === 'checkout' ? __('lang.checkout') : $state))
-                        ->color(fn($state) => $state === 'checkin' ? 'success' : ($state === 'checkout' ? 'danger' : 'gray')),
+                        ->color(fn($state) => $state === 'checkin' ? 'success' : ($state === 'checkout' ? 'danger' : 'gray'))
+                        ->hidden(fn($state) => blank($state)),
                     TextColumn::make('attendances.status')
                         ->label(__('lang.status'))
-                        ->default('--')
                         ->badge()
+                        ->hidden(fn($state) => blank($state))
                         ->formatStateUsing(fn($state) => \App\Models\Attendance::getStatusLabel($state))
                         ->color(fn($state) => \App\Models\Attendance::getStatusColor($state)),
                 ]),
@@ -88,7 +104,7 @@ class AttendanceImagesUploadedResource extends Resource
                 Filter::make('has_accepted_attendance')
                     ->label(__('lang.has_accepted_attendance'))
                     ->toggle()
-                    ->default(true)
+                    ->default(false)
                     ->query(function (Builder $query): Builder {
                         return $query->whereHas('attendances', function (Builder $q) {
                             $q->where('accepted', 1);

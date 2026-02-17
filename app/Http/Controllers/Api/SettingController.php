@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Models\CustomTenantModel;
+use Spatie\Multitenancy\Contracts\IsTenant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class SettingController extends Controller
 {
@@ -17,10 +20,41 @@ class SettingController extends Controller
             'faceRawMin' => (float) Setting::getSetting('face_raw_min', 0.20),
             'faceRawIdeal' => (float) Setting::getSetting('face_raw_ideal', 0.22),
             'faceRawMax' => (float) Setting::getSetting('face_raw_max', 0.50),
-            'cropScale' => (float) Setting::getSetting('crop_scale', 0.7),  
+            'cropScale' => (float) Setting::getSetting('crop_scale', 0.7),
             'showKeypadScreen' => (bool) Setting::getSetting('show_keypad_screen', true),
             'showCameraScreen' => (bool) Setting::getSetting('show_camera_screen', true),
             'updatedAt' => now()->toIso8601String(),
+        ]);
+    }
+
+    public function getCompanyLogo()
+    {
+        $logo = Setting::getSetting('company_logo');
+
+        return response()->json([
+            'logo_url' => $logo ? Storage::disk('public')->url($logo) : null,
+        ]);
+    }
+
+    public function getTenantModules()
+    {
+        $tenant = app(IsTenant::class)::current();
+
+        if (!$tenant) {
+            return response()->json([
+                'success' => true,
+                'data' => [],
+                'tenant' => null,
+            ]);
+        }
+
+        // Ensure we load the custom tenant model to access the 'modules' cast/attribute
+        $customTenant = CustomTenantModel::find($tenant->id);
+
+        return response()->json([
+            'success' => true,
+            'data' => $customTenant->modules ?? [],
+            'tenant' => $customTenant->name,
         ]);
     }
 }

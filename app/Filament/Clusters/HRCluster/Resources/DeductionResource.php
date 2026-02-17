@@ -115,7 +115,8 @@ class DeductionResource extends Resource
                             //     ->suffixIconColor('success'),
 
 
-                            Slider::make('percentage')->hintIcon(Heroicon::PercentBadge)
+                            Slider::make('percentage')
+                                ->hintIcon(Heroicon::PercentBadge)
                                 ->label('Percentage')
                                 // ->rangePadding([10, 20])
                                 // ->tooltips()
@@ -134,7 +135,9 @@ class DeductionResource extends Resource
                         JS))
                                 ->fillTrack()
                                 ->required()
-                                ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'))
+                                ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'
+                                    && in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYEE])
+                                ))
                                 ->minValue(0)
                                 ->step(0.1)
                                 ->maxValue(100)
@@ -147,12 +150,12 @@ class DeductionResource extends Resource
                                 ->suffixIconColor('success'),
 
                             Slider::make('employer_percentage')->hintIcon(Heroicon::PercentBadge)
-                                ->label('Employeer Percentage')
+                                ->label('Employer Percentage')
                                 // ->rangePadding([10, 20])
                                 // ->tooltips()
-                                ->rangePadding(30)
+                                ->rangePadding(0)
                                 ->tooltips(RawJs::make(<<<'JS'
-                                    `%${$value.toFixed(0)}`
+                                    `%${$value.toFixed(2)}`
                                 JS))
                                 ->pips()
                                 ->pipsFilter(RawJs::make(<<<'JS'
@@ -169,16 +172,23 @@ class DeductionResource extends Resource
                                 ->required()
                                 ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage') && (in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])))
                                 ->minValue(0)
-                                ->step(1)
+                                ->step(0.01)
                                 ->maxValue(100)
                                 ->default(0)
                                 ->rtl(),
 
-                            // TextInput::make('employer_percentage')
-                            //     ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage') && (in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])))
-                            //     ->numeric()
-                            //     ->suffixIcon('heroicon-o-percent-badge')
-                            //     ->suffixIconColor('success'),
+                            Toggle::make('has_cap')
+                                ->label('Has Cap')
+                                ->live()
+                                ->default(false)
+                                ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage')),
+
+                            TextInput::make('cap_value')
+                                ->label('Cap Value')
+                                ->numeric()
+                                ->visible(fn(Get $get): bool => $get('has_cap') && ($get('is_percentage') == 'is_percentage'))
+                                ->suffixIcon('heroicon-o-currency-dollar')
+                                ->suffixIconColor('success'),
                         ]),
                     // Tax Brackets Repeater
                     Repeater::make('brackets')  // The relationship field for Deduction Brackets
@@ -218,6 +228,13 @@ class DeductionResource extends Resource
                 IconColumn::make('is_penalty')->alignCenter(true)
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark'),
+
+                IconColumn::make('has_brackets')
+                    ->label('Has Brackets')
+                    ->alignCenter(true)
+                    ->trueIcon('heroicon-o-check-badge')
+                    ->falseIcon('heroicon-o-x-mark')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('is_specific')->label('Custom')->alignCenter(true)
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark')
@@ -241,7 +258,7 @@ class DeductionResource extends Resource
                     ->placeholder('-')
                     ->badge()
                     ->color('info')
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('applied_by_label')->label(__('Applied By'))->toggleable(isToggledHiddenByDefault: false),
                 ToggleColumn::make('active')->disabled(fn(): bool => isBranchManager()),
             ])

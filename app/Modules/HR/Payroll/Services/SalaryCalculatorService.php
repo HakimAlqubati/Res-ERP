@@ -11,6 +11,10 @@ use InvalidArgumentException;
 use App\Modules\HR\Payroll\DTOs\CalculationContext;
 use App\Modules\HR\Payroll\DTOs\SalaryMutableComponents;
 use App\Modules\HR\Payroll\Traits\ResetsState;
+use Carbon\Carbon;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Validator;
+use App\Rules\HR\Payroll\NotFuturePayrollPeriod;
 
 use App\Modules\HR\Payroll\Contracts\SalaryCalculatorInterface;
 
@@ -96,6 +100,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         float $totalApprovedOvertime,
         ?int $periodYear = null,
         ?int $periodMonth = null,
+        ?Carbon $periodEnd = null,
     ): array {
         $this->resetState();
 
@@ -110,15 +115,37 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         $this->assertPositive($dailyHours, 'Daily hours');
         $this->assertPositive($monthDays, 'Month days');
 
-        // Determine working days based on the daily rate method
-        // ByEmployeeWorkingDays: use the employee's working_days field directly
-        // Other methods: use calculated working days (Month Days - 4)
+        // Determine the denominator for rate calculation ($rateWorkingDays)
+        $rateWorkingDays = $workingDays;
         if ($this->dailyRateMethod !== DailyRateMethod::ByEmployeeWorkingDays->value) {
-            $workingDays = max(1, $monthDays - 4);
+            $rateWorkingDays = max(1, $monthDays - 4);
+        }
+
+        // Use standard month days for specific methods
+        if ($this->dailyRateMethod === DailyRateMethod::By30Days->value) {
+            $rateWorkingDays = 30;
+        } elseif ($this->dailyRateMethod === DailyRateMethod::ByMonthDays->value) {
+            $rateWorkingDays = $monthDays;
+        }
+
+        // Determine how many days should be paid for the current period ($payableDays)
+        $payableDays = $rateWorkingDays;
+        if ($periodEnd && $periodEnd->day < $monthDays) {
+            $payableDays = $periodEnd->day;
         }
 
         if (!$periodYear || !$periodMonth) {
             throw new InvalidArgumentException('periodYear and periodMonth are required to compute penalty deductions.');
+        }
+
+        // Professional Validation: Prevent future periods at the service level
+        $validator = Validator::make(
+            ['year' => $periodYear, 'month' => $periodMonth],
+            ['month' => [new NotFuturePayrollPeriod()]]
+        );
+
+        if ($validator->fails()) {
+            throw new ValidationException($validator);
         }
 
         // Create calculation context
@@ -126,11 +153,12 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             employee: $employee,
             employeeData: $employeeData,
             salary: $salary,
-            workingDays: $workingDays ?? 30,
+            workingDays: (int)$payableDays,
             dailyHours: $dailyHours,
             monthDays: $monthDays,
             periodYear: $periodYear,
-            periodMonth: $periodMonth,
+            periodMonth: $periodMonth, // Using provided month
+            periodEndDate: $periodEnd ? $periodEnd->toDateString() : null,
         );
 
 
@@ -142,7 +170,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         // 1. Calculate rates
         $rates = $this->rateCalculator->calculate(
             $salary,
-            $workingDays,
+            (int)$rateWorkingDays,
             $dailyHours,
             $monthDays,
             $this->dailyRateMethod
@@ -185,7 +213,13 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         // --------------------------------------------------------------------
 
         // Calculate totals
-        $this->baseSalary = $salary;
+        // If payableDays is NOT full month, calculate pro-rated base
+        if ($payableDays < $rateWorkingDays) {
+            $this->baseSalary = $this->round($rates->dailyRate * $payableDays);
+        } else {
+            $this->baseSalary = $salary;
+        }
+
         $this->grossSalary = $this->round(
             $this->baseSalary + $overtime['amount'] + $allowances['total'] + $overtimeDaysAmount + ($monthlyIncentives['total'] ?? 0)
         );
@@ -214,7 +248,17 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         }
 
         // 7. Calculate general deductions (taxes, insurance)
-        $dynamicDeductions = $this->generalDeductionCalculator->calculate($context, $this->netSalary);
+        // Statutory deductions (EPF, SOCSO, EIS) are typically based on Gross Wages EARNED.
+        // Gross Wages should include Overtime, Allowances, etc.
+        // However, we should subtract Unpaid Leave (Absent days) because that salary was never earned.
+        // We should NOT subtract Late/Early/Penalties/Advances as those are deductions from earned salary.
+        
+        $baseForStatutoryDeductions = $this->grossSalary - ($this->totalDeductions);
+        
+        // Ensure base is not negative
+        $baseForStatutoryDeductions = max(0, $baseForStatutoryDeductions);
+
+        $dynamicDeductions = $this->generalDeductionCalculator->calculate($context, $baseForStatutoryDeductions);
         $dynamicTotal = (float)($dynamicDeductions['result'] ?? 0);
 
         // Include dynamic deductions in totals

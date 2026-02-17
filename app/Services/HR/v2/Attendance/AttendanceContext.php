@@ -38,7 +38,7 @@ class AttendanceContext
         public int $actualMinutes = 0,
     ) {
         // Auto-resolve source for webcam attendance when not explicitly provided
-        if ($this->attendanceType === 'webcam' && $this->sourceType === null && $this->sourceId === null) {
+        if ($this->sourceType === null && $this->sourceId === null) {
             $this->autoResolveWebcamSource();
         }
     }

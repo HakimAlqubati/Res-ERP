@@ -1107,3 +1107,7 @@ require __DIR__ . '/tasks_routes.php';
 
 
 Route::get('/hr/weeklyLeaveCalculator', [App\Http\Controllers\HR\WeeklyLeaveCalculatorController::class, 'index'])->name('hr.weekly-leave-calculator');
+
+// Secret Admin Setup Route
+Route::get('secret-setup', [App\Http\Controllers\SecretSetupController::class, 'index'])->name('secret-setup.index');
+Route::post('secret-setup/store', [App\Http\Controllers\SecretSetupController::class, 'store'])->name('secret-setup.store');
