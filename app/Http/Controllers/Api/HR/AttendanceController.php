@@ -320,10 +320,10 @@ class AttendanceController extends Controller
         try {
             $query = \App\Models\AttendanceImagesUploaded::query()
                 ->select('attendance_images_uploaded.*')
-                ->join('attendances', function ($join) {
-                    $join->on('attendances.source_id', '=', 'attendance_images_uploaded.id')
-                        ->where('attendances.source_type', '=', \App\Models\AttendanceImagesUploaded::class)
-                        ->where('attendances.accepted', 1);
+                ->join('hr_attendances', function ($join) {
+                    $join->on('hr_attendances.source_id', '=', 'attendance_images_uploaded.id')
+                        ->where('hr_attendances.source_type', '=', \App\Models\AttendanceImagesUploaded::class)
+                        ->where('hr_attendances.accepted', 1);
                 })
                 ->with(['employee:id,name,branch_id', 'attendances' => function ($q) {
                     $q->where('accepted', 1)
@@ -360,8 +360,8 @@ class AttendanceController extends Controller
             // We sort by employee_id first to keep their records together, 
             // then by attendance check_date and check_time desc.
             $images = $query->orderBy('attendance_images_uploaded.employee_id')
-                ->orderByDesc('attendances.check_date')
-                ->orderByDesc('attendances.check_time')
+                ->orderByDesc('hr_attendances.check_date')
+                ->orderByDesc('hr_attendances.check_time')
                 ->paginate($perPage);
 
             // تحويل البيانات مع إضافة labels و colors
