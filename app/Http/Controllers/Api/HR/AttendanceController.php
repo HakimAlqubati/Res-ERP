@@ -349,7 +349,13 @@ class AttendanceController extends Controller
             }
 
             $perPage = $request->input('per_page', 20);
-            $images = $query->orderByDesc('id')->paginate($perPage);
+
+            // User requested grouping by employee. 
+            // We sort by employee_id first to keep their records together, 
+            // then by datetime desc to show latest first.
+            $images = $query->orderBy('employee_id')
+                ->orderByDesc('datetime')
+                ->paginate($perPage);
 
             // تحويل البيانات مع إضافة labels و colors
             $mappedImages = $images->getCollection()->map(function ($image) {
