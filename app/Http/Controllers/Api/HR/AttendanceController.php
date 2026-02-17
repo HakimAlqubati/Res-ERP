@@ -321,7 +321,8 @@ class AttendanceController extends Controller
             $query = \App\Models\AttendanceImagesUploaded::query()
                 ->with(['employee:id,name,branch_id', 'attendances' => function ($q) {
                     $q->where('accepted', 1)
-                        ->select('id', 'source_type', 'source_id', 'check_type', 'status', 'check_date', 'check_time', 'employee_id');
+                        ->select('id', 'source_type', 'source_id', 'check_type', 'status', 'check_date', 'check_time', 'employee_id', 'period_id')
+                        ->with('period:id,name');
                 }])
                 ->whereHas('attendances', function ($q) {
                     $q->where('accepted', 1);
@@ -351,8 +352,61 @@ class AttendanceController extends Controller
             $images = $query->orderByDesc('id')->paginate($perPage);
 
             // تحويل البيانات مع إضافة labels و colors
-            $images->getCollection()->transform(function ($image) {
+            $mappedImages = $images->getCollection()->map(function ($image) {
                 $attendance = $image->attendances->first();
+
+                // Filter Logic: Only return First CheckIn and Last CheckOut per (employee, date, period)
+                if ($attendance) {
+                    $keep = false;
+
+                    if ($attendance->check_type == \App\Models\Attendance::CHECKTYPE_CHECKIN) {
+                        // Check if there is any strictly earlier checkin
+                        $earlierExists = \App\Models\Attendance::where('employee_id', $attendance->employee_id)
+                            ->where('check_date', $attendance->check_date)
+                            ->where('period_id', $attendance->period_id)
+                            ->where('check_type', \App\Models\Attendance::CHECKTYPE_CHECKIN)
+                            ->where('accepted', 1)
+                            ->where('id', '<>', $attendance->id)
+                            ->where(function ($q) use ($attendance) {
+                                $q->where('check_time', '<', $attendance->check_time)
+                                    ->orWhere(function ($q2) use ($attendance) {
+                                        $q2->where('check_time', '=', $attendance->check_time)
+                                            ->where('id', '<', $attendance->id);
+                                    });
+                            })
+                            ->exists();
+
+                        if (!$earlierExists) {
+                            $keep = true;
+                        }
+                    } elseif ($attendance->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT) {
+                        // Check if there is any strictly later checkout
+                        $laterExists = \App\Models\Attendance::where('employee_id', $attendance->employee_id)
+                            ->where('check_date', $attendance->check_date)
+                            ->where('period_id', $attendance->period_id)
+                            ->where('check_type', \App\Models\Attendance::CHECKTYPE_CHECKOUT)
+                            ->where('accepted', 1)
+                            ->where('id', '<>', $attendance->id)
+                            ->where(function ($q) use ($attendance) {
+                                $q->where('check_time', '>', $attendance->check_time)
+                                    ->orWhere(function ($q2) use ($attendance) {
+                                        $q2->where('check_time', '=', $attendance->check_time)
+                                            ->where('id', '>', $attendance->id);
+                                    });
+                            })
+                            ->exists();
+
+                        if (!$laterExists) {
+                            $keep = true;
+                        }
+                    }
+
+                    // If filter failed, return null to remove from list
+                    if (!$keep) {
+                        return null;
+                    }
+                }
+
                 return [
                     'id'             => $image->id,
                     'img_url'        => $image->full_image_url,
@@ -369,9 +423,13 @@ class AttendanceController extends Controller
                         'status_hex'      => \App\Models\Attendance::getStatusHex($attendance->status),
                         'check_date'      => $attendance->check_date,
                         'check_time'      => $attendance->check_time,
+                        'period_id'       => $attendance->period_id,
+                        'period_name'     => $attendance->period ? $attendance->period->name : null,
                     ] : null,
                 ];
-            });
+            })->filter()->values(); // Filter out nulls and reindex
+
+            $images->setCollection($mappedImages);
 
             return response()->json([
                 'status' => 'success',
