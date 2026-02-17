@@ -320,17 +320,17 @@ class AttendanceController extends Controller
         try {
             $query = \App\Models\AttendanceImagesUploaded::query()
                 ->select('attendance_images_uploaded.*')
-                ->join('hr_attendances', function ($join) {
-                    $join->on('hr_attendances.source_id', '=', 'attendance_images_uploaded.id')
-                        ->where('hr_attendances.source_type', '=', \App\Models\AttendanceImagesUploaded::class)
-                        ->where('hr_attendances.accepted', 1);
+                ->join('attendances', function ($join) {
+                    $join->on('attendances.source_id', '=', 'attendance_images_uploaded.id')
+                        ->where('attendances.source_type', '=', \App\Models\AttendanceImagesUploaded::class)
+                        ->where('attendances.accepted', 1);
                 })
-                ->with(['employee:id,name,branch_id', 'hr_attendances' => function ($q) {
+                ->with(['employee:id,name,branch_id', 'attendances' => function ($q) {
                     $q->where('accepted', 1)
                         ->select('id', 'source_type', 'source_id', 'check_type', 'status', 'check_date', 'check_time', 'employee_id', 'period_id')
                         ->with('period:id,name');
                 }]);
-            // ->whereHas('hr_attendances', function ($q) {
+            // ->whereHas('attendances', function ($q) {
             //     $q->where('accepted', 1);
             // });
 
@@ -360,8 +360,8 @@ class AttendanceController extends Controller
             // We sort by employee_id first to keep their records together, 
             // then by attendance check_date and check_time desc.
             $images = $query->orderBy('attendance_images_uploaded.employee_id')
-                ->orderByDesc('hr_attendances.check_date')
-                ->orderByDesc('hr_attendances.check_time')
+                ->orderByDesc('attendances.check_date')
+                ->orderByDesc('attendances.check_time')
                 ->paginate($perPage);
 
             // تحويل البيانات مع إضافة labels و colors
