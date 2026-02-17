@@ -13,10 +13,13 @@ use App\Modules\HR\Payroll\DTOs\CalculationContext;
 class GeneralDeductionCalculator
 {
     public const DEFAULT_ROUND_SCALE = 2;
+    protected float $totalReliefs = 0.0;
 
     public function __construct(
         protected int $roundScale = self::DEFAULT_ROUND_SCALE
-    ) {}
+    ) {
+        $this->totalReliefs = (float) settingWithDefault('tax_total_reliefs', 0);
+    }
 
     /**
      * حساب الخصومات العامة للموظف
@@ -120,7 +123,7 @@ class GeneralDeductionCalculator
             if (isset($deduction->has_brackets) && $deduction->has_brackets && $deduction->brackets->isNotEmpty()) {
                 // حساب تصاعدي (ضريبة) - Brackets logic usually handles its own tiers, so we pass origin basic salary unless instructed otherwise. 
                 // But for now, let's keep brackets using $basicSalary as it's separate logic.
-                $taxResult = $deduction->calculateTax($basicSalary);
+                $taxResult = $deduction->calculateTax($basicSalary, $this->totalReliefs);
                 $deductionAmount = $taxResult['monthly_tax'] ?? 0;
                 $effectivePercentage = $taxResult['effective_percentage'] ?? null;
                 $notes = $taxResult['notes'] ?? null;

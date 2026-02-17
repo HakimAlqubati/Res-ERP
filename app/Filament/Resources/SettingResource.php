@@ -191,7 +191,14 @@ class SettingResource extends Resource
                                         ->minValue(1)
                                         ->placeholder('Enter multiplier (e.g., 2, 3, 4)')
                                         ->required(),
-                                    
+
+                                    TextInput::make('tax_total_reliefs')
+                                        ->label('Tax Total Reliefs')
+                                        ->helperText('Total annual reliefs to be deducted from annual salary before tax calculation')
+                                        ->numeric()
+                                        ->default(0)
+                                        ->required(),
+
                                     Toggle::make('flix_hours')
                                         ->label('Flix Hours')
                                         ->helperText('No deductions will be applied if the total hours worked equal or exceed the required daily hours')
