@@ -357,10 +357,10 @@ class AttendanceController extends Controller
             $perPage = $request->input('per_page', 20);
 
             // User requested grouping by Date, then Employee. 
-            // We sort by check_date DESC (latest days first), 
+            // We sort by check_date ASC (chronological sequence), 
             // then by employee_id ASC (group employees within the day),
             // then by check_time ASC (chronological order for that employee).
-            $images = $query->orderByDesc('hr_attendances.check_date')
+            $images = $query->orderBy('hr_attendances.check_date')
                 ->orderBy('attendance_images_uploaded.employee_id')
                 ->orderBy('hr_attendances.check_time')
                 ->paginate($perPage);
