@@ -61,6 +61,15 @@ class AttendanceImagesUploadedResource extends Resource
                     TextColumn::make('employee.name')->label(__('lang.employee'))->default('--')->searchable()
                         ->color('primary')
                         ->weight(FontWeight::Bold),
+                    TextColumn::make('datetime')->label(__('lang.date'))
+                        ->date('Y-m-d')
+
+                        ->hidden(fn($state) => blank($state)),
+                    TextColumn::make('datetime')->label(__('lang.date'))
+                        ->time('H:i:s')
+                        ->hidden(fn($state) => blank($state))
+                        ,
+
                     TextColumn::make('attendances.check_date')->label(__('lang.check_date'))->placeholder('--')
                         ->date('Y-m-d')
                         ->hidden(fn($state) => blank($state)),
@@ -75,7 +84,6 @@ class AttendanceImagesUploadedResource extends Resource
                         ->hidden(fn($state) => blank($state)),
                     TextColumn::make('attendances.status')
                         ->label(__('lang.status'))
-                        ->default('--')
                         ->badge()
                         ->hidden(fn($state) => blank($state))
                         ->formatStateUsing(fn($state) => \App\Models\Attendance::getStatusLabel($state))
