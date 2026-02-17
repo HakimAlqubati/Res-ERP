@@ -356,12 +356,13 @@ class AttendanceController extends Controller
 
             $perPage = $request->input('per_page', 20);
 
-            // User requested grouping by employee. 
-            // We sort by employee_id first to keep their records together, 
-            // then by attendance check_date and check_time desc.
-            $images = $query->orderBy('attendance_images_uploaded.employee_id')
-                ->orderByDesc('hr_attendances.check_date')
-                ->orderByDesc('hr_attendances.check_time')
+            // User requested grouping by Date, then Employee. 
+            // We sort by check_date DESC (latest days first), 
+            // then by employee_id ASC (group employees within the day),
+            // then by check_time ASC (chronological order for that employee).
+            $images = $query->orderByDesc('hr_attendances.check_date')
+                ->orderBy('attendance_images_uploaded.employee_id')
+                ->orderBy('hr_attendances.check_time')
                 ->paginate($perPage);
 
             // تحويل البيانات مع إضافة labels و colors
