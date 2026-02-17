@@ -31,4 +31,11 @@ class MaintenanceWidget extends Widget
         Artisan::call('config:clear');
         Notification::make()->title('Config Cleared')->success()->send();
     }
+
+    public function linkAttendanceImages()
+    {
+        // Run the command with 60 days lookback as requested
+        Artisan::call('attendance:link-images', ['--days' => 60]);
+        Notification::make()->title('Attendance Images Linked (Last 60 Days)')->success()->send();
+    }
 }

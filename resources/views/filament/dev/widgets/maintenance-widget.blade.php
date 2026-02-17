@@ -16,6 +16,10 @@
             <x-filament::button wire:click="clearConfig" color="gray" icon="heroicon-m-cog">
                 Clear Config
             </x-filament::button>
+
+            <x-filament::button wire:click="linkAttendanceImages" color="success" icon="heroicon-m-link">
+                Link Images (60 Days)
+            </x-filament::button>
         </div>
     </x-filament::section>
 </x-filament-widgets::widget>
