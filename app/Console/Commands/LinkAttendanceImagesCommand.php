@@ -38,7 +38,9 @@ class LinkAttendanceImagesCommand extends Command
         $this->info("Starting linkage process for the last {$days} days...");
 
         $attendanceQuery = Attendance::query()
-            ->where('check_date', '>=', now()->subDays($days)->toDateString());
+            // ->where('check_date', '>=', now()->subDays($days)->toDateString())
+
+        ;
 
         if (!$force) {
             $attendanceQuery->whereNull('source_id');
