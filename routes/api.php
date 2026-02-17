@@ -311,6 +311,7 @@ Route::get('branchConsumptionReport/topProducts', [BranchConsumptionController::
 
 Route::get('/app/settings', [SettingController::class, 'show']);
 Route::get('/company-logo', [SettingController::class, 'getCompanyLogo']);
+Route::get('/tenant/modules', [SettingController::class, 'getTenantModules']);
 
 require base_path('routes/ocr.php');
 require base_path('routes/custom_api_route_hr.php');

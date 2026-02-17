@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Models\CustomTenantModel;
+use Spatie\Multitenancy\Contracts\IsTenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -31,6 +33,28 @@ class SettingController extends Controller
 
         return response()->json([
             'logo_url' => $logo ? Storage::disk('public')->url($logo) : null,
+        ]);
+    }
+
+    public function getTenantModules()
+    {
+        $tenant = app(IsTenant::class)::current();
+
+        if (!$tenant) {
+            return response()->json([
+                'success' => true,
+                'data' => [],
+                'tenant' => null,
+            ]);
+        }
+
+        // Ensure we load the custom tenant model to access the 'modules' cast/attribute
+        $customTenant = CustomTenantModel::find($tenant->id);
+
+        return response()->json([
+            'success' => true,
+            'data' => $customTenant->modules ?? [],
+            'tenant' => $customTenant->name,
         ]);
     }
 }
