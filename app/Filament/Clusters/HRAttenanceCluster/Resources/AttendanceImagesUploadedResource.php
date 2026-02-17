@@ -62,18 +62,22 @@ class AttendanceImagesUploadedResource extends Resource
                         ->color('primary')
                         ->weight(FontWeight::Bold),
                     TextColumn::make('attendances.check_date')->label(__('lang.check_date'))->placeholder('--')
-                        ->date('Y-m-d'),
-                    TextColumn::make('attendances.check_time')->label(__('lang.check_time'))->placeholder('--'),
+                        ->date('Y-m-d')
+                        ->hidden(fn($state) => blank($state)),
+                    TextColumn::make('attendances.check_time')->label(__('lang.check_time'))
+                        ->placeholder('--')
+                        ->hidden(fn($state) => blank($state)),
                     TextColumn::make('attendances.check_type')
                         ->label(__('lang.check_type'))
-                        ->default('--')
                         ->badge()
                         ->formatStateUsing(fn($state) => $state === 'checkin' ? __('lang.checkin') : ($state === 'checkout' ? __('lang.checkout') : $state))
-                        ->color(fn($state) => $state === 'checkin' ? 'success' : ($state === 'checkout' ? 'danger' : 'gray')),
+                        ->color(fn($state) => $state === 'checkin' ? 'success' : ($state === 'checkout' ? 'danger' : 'gray'))
+                        ->hidden(fn($state) => blank($state)),
                     TextColumn::make('attendances.status')
                         ->label(__('lang.status'))
                         ->default('--')
                         ->badge()
+                        ->hidden(fn($state) => blank($state))
                         ->formatStateUsing(fn($state) => \App\Models\Attendance::getStatusLabel($state))
                         ->color(fn($state) => \App\Models\Attendance::getStatusColor($state)),
                 ]),
