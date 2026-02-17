@@ -319,14 +319,20 @@ class AttendanceController extends Controller
     {
         try {
             $query = \App\Models\AttendanceImagesUploaded::query()
+                ->select('attendance_images_uploaded.*')
+                ->join('attendances', function ($join) {
+                    $join->on('attendances.source_id', '=', 'attendance_images_uploaded.id')
+                        ->where('attendances.source_type', '=', \App\Models\AttendanceImagesUploaded::class)
+                        ->where('attendances.accepted', 1);
+                })
                 ->with(['employee:id,name,branch_id', 'attendances' => function ($q) {
                     $q->where('accepted', 1)
                         ->select('id', 'source_type', 'source_id', 'check_type', 'status', 'check_date', 'check_time', 'employee_id', 'period_id')
                         ->with('period:id,name');
-                }])
-                ->whereHas('attendances', function ($q) {
-                    $q->where('accepted', 1);
-                });
+                }]);
+            // ->whereHas('attendances', function ($q) {
+            //     $q->where('accepted', 1);
+            // });
 
             // فلتر بالموظف
             if ($request->filled('employee_id')) {
@@ -352,9 +358,10 @@ class AttendanceController extends Controller
 
             // User requested grouping by employee. 
             // We sort by employee_id first to keep their records together, 
-            // then by datetime desc to show latest first.
-            $images = $query->orderBy('employee_id')
-                ->orderByDesc('datetime')
+            // then by attendance check_date and check_time desc.
+            $images = $query->orderBy('attendance_images_uploaded.employee_id')
+                ->orderByDesc('attendances.check_date')
+                ->orderByDesc('attendances.check_time')
                 ->paginate($perPage);
 
             // تحويل البيانات مع إضافة labels و colors
