@@ -35,7 +35,7 @@ class MaintenanceWidget extends Widget
     public function linkAttendanceImages()
     {
         // Run the command with 60 days lookback as requested
-        Artisan::call('attendance:link-images', ['--days' => 60]);
-        Notification::make()->title('Attendance Images Linked (Last 60 Days)')->success()->send();
+        $count = Artisan::call('attendance:link-images', ['--days' => 60]);
+        Notification::make()->title("Attendance Images Linked. Updated: {$count} records")->success()->send();
     }
 }

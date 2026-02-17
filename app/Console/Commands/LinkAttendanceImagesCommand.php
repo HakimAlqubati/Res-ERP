@@ -42,8 +42,9 @@ class LinkAttendanceImagesCommand extends Command
 
         $count = $attendanceQuery->count();
         $bar = $this->output->createProgressBar($count);
+        $updatedCount = 0;
 
-        $attendanceQuery->chunk(100, function ($attendances) use ($bar) {
+        $attendanceQuery->chunk(100, function ($attendances) use ($bar, &$updatedCount) {
             foreach ($attendances as $attendance) {
                 try {
                     // Combine date and time to get full timestamp
@@ -73,6 +74,7 @@ class LinkAttendanceImagesCommand extends Command
                             'source_type' => AttendanceImagesUploaded::class,
                             'source_id'   => $image->id,
                         ]);
+                        $updatedCount++;
                     }
                 } catch (\Exception $e) {
                     // $this->error("Error linking attendance #{$attendance->id}: " . $e->getMessage());
@@ -83,6 +85,8 @@ class LinkAttendanceImagesCommand extends Command
 
         $bar->finish();
         $this->newLine();
-        $this->info('Linking process completed.');
+        $this->info("Linking process completed. Updated records: {$updatedCount}");
+
+        return $updatedCount;
     }
 }
