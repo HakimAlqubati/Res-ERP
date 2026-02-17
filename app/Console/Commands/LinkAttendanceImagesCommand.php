@@ -31,6 +31,10 @@ class LinkAttendanceImagesCommand extends Command
         $days = (int) $this->option('days');
         $force = (bool) $this->option('force');
 
+        Attendance::query()->update([
+            'source_id' => null,
+            'source_type' => null,
+        ]);
         $this->info("Starting linkage process for the last {$days} days...");
 
         $attendanceQuery = Attendance::query()
