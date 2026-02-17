@@ -57,7 +57,12 @@ class AttendanceImagesUploadedResource extends Resource
                 Stack::make([
                     ImageColumn::make('full_image_url')->circular(false)->tooltip(fn($record) => $record->employee_name)
                         ->label(__('lang.image'))
-                        ->size(200)->wrap(),
+                        ->size(200)->wrap()
+                        ->extraImgAttributes(
+                            fn($record) => $record->attendances()->doesntExist()
+                                ? ['style' => 'border: 3px solid red; border-radius: 8px;']
+                                : []
+                        ),
                     TextColumn::make('employee.name')->label(__('lang.employee'))->default('--')->searchable()
                         ->color('primary')
                         ->weight(FontWeight::Bold),
@@ -67,8 +72,7 @@ class AttendanceImagesUploadedResource extends Resource
                         ->hidden(fn($state) => blank($state)),
                     TextColumn::make('datetime')->label(__('lang.date'))
                         ->time('H:i:s')
-                        ->hidden(fn($state) => blank($state))
-                        ,
+                        ->hidden(fn($state) => blank($state)),
 
                     TextColumn::make('attendances.check_date')->label(__('lang.check_date'))->placeholder('--')
                         ->date('Y-m-d')
