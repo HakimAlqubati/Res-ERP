@@ -61,7 +61,7 @@ class AttendanceImagesUploadedResource extends Resource
                         ->extraImgAttributes(
                             fn($record) => $record->attendances()->doesntExist()
                                 ? ['style' => 'border: 3px solid red; border-radius: 8px;']
-                                : []
+                                : ['style' => 'border: 3px solid green; border-radius: 8px;']
                         ),
                     TextColumn::make('employee.name')->label(__('lang.employee'))->default('--')->searchable()
                         ->color('primary')
