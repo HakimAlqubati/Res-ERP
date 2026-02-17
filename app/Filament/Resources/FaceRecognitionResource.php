@@ -97,4 +97,6 @@ class FaceRecognitionResource extends Resource
         }
         return false;
     }
+
+    protected static bool $shouldRegisterNavigation = false;
 }
