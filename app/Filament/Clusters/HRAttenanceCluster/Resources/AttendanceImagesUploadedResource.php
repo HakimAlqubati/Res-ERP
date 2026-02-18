@@ -104,7 +104,7 @@ class AttendanceImagesUploadedResource extends Resource
                 Filter::make('has_accepted_attendance')
                     ->label(__('lang.has_accepted_attendance'))
                     ->toggle()
-                    ->default(false)
+                    ->default(true)
                     ->query(function (Builder $query): Builder {
                         return $query->whereHas('attendances', function (Builder $q) {
                             $q->where('accepted', 1);
