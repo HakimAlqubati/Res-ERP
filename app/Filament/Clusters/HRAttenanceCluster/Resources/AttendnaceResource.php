@@ -231,7 +231,7 @@ class AttendnaceResource extends Resource
                     ->label('Early departure minutes')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->summarize(Sum::make()->query(fn(\Illuminate\Database\Query\Builder $query) => $query->where('early_departure_minutes', '>', 20))),
-                TextColumn::make('attendance_type')->alignCenter(true),
+                // TextColumn::make('attendance_type')->alignCenter(true),
                 TextColumn::make('created_at')->alignCenter(true)->sortable()->toggleable(isToggledHiddenByDefault: true),
 
 
