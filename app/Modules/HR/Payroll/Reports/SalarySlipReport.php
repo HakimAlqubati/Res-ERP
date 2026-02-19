@@ -14,7 +14,13 @@ class SalarySlipReport
      * @param int|string $payrollId
      * @return \Illuminate\Http\Response
      */
-    public function generate($payrollId)
+    /**
+     * Get the salary slip data.
+     *
+     * @param int|string $payrollId
+     * @return array
+     */
+    public function getData($payrollId)
     {
         /** @var \App\Models\Payroll $payroll */
         $payroll = Payroll::with([
@@ -54,18 +60,30 @@ class SalarySlipReport
             return '';
         };
 
-        $data = [
+        return [
             'payroll'         => $payroll,
             'transactions'    => $transactions,
-            'earnings'        => $earnings,
-            'deductions'      => $deductions,
-            'employerContrib' => $employerContrib,
+            'earnings'        => $earnings->values(),
+            'deductions'      => $deductions->values(),
+            'employerContrib' => $employerContrib->values(),
             'gross'           => $gross,
             'totalDeductions' => $totalDeductions,
             'net'             => $net,
             'totalEmployer'   => $totalEmployer,
             'amountInWords'   => $amountInWords($net),
         ];
+    }
+
+    /**
+     * Generate and download the Salary Slip PDF.
+     * 
+     * @param int|string $payrollId
+     * @return \Illuminate\Http\Response
+     */
+    public function generate($payrollId)
+    {
+        $data = $this->getData($payrollId);
+        $payroll = $data['payroll'];
 
         $pdf = LaravelMpdf::loadView('reports.hr.payroll.salary-slip-pdf', $data);
 
@@ -80,5 +98,20 @@ class SalarySlipReport
         return response()->streamDownload(function () use ($pdf) {
             echo $pdf->output();
         }, $filename);
+    }
+
+    /**
+     * Return the Salary Slip data as JSON.
+     * 
+     * @param int|string $payrollId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function json($payrollId)
+    {
+        $data = $this->getData($payrollId);
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+        ]);
     }
 }

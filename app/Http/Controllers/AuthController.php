@@ -12,6 +12,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
@@ -54,7 +56,7 @@ class AuthController extends Controller
              */
             if ($request->filled('device_id')) {
                 $deviceId = $request->input('device_id');
- 
+
                 // dd($deviceId,$user->hasAuthorizedDevice($deviceId));
                 // إذا لم يكن الجهاز مصرحاً للمستخدم:
                 if (! $user->hasAuthorizedDevice($deviceId)) {
@@ -176,5 +178,22 @@ class AuthController extends Controller
                 'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'new_password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        $request->user()->update([
+            'password' => Hash::make($validated['new_password']),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password updated successfully.',
+        ]);
     }
 }
