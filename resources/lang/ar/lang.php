@@ -810,6 +810,10 @@ return [
   'overtime_date' => 'تاريخ العمل الإضافي',
   'overtime_reason' => 'سبب العمل الإضافي',
   'overtime_amount' => 'مبلغ العمل الإضافي',
+  'overtime_report' => 'تقرير العمل الإضافي',
+  'total_records'   => 'إجمالي السجلات',
+  'hours'           => 'الساعات',
+  'approved_by'     => 'اعتمد بواسطة',
 
   // ===========================================
   // Attendance Report Blade View

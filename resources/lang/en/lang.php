@@ -828,6 +828,10 @@ return [
     'overtime_date' => 'Overtime Date',
     'overtime_reason' => 'Overtime Reason',
     'overtime_amount' => 'Overtime Amount',
+    'overtime_report' => 'Overtime Report',
+    'total_records'   => 'Total Records',
+    'hours'           => 'Hours',
+    'approved_by'     => 'Approved By',
 
     // ===========================================
     // Attendance Report Blade View
