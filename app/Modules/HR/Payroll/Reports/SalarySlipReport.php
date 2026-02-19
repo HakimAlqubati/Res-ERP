@@ -4,6 +4,7 @@ namespace App\Modules\HR\Payroll\Reports;
 
 use App\Enums\HR\Payroll\SalaryTransactionType;
 use App\Models\Payroll;
+use Illuminate\Support\Str;
 use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf;
 
 class SalarySlipReport
@@ -40,6 +41,70 @@ class SalarySlipReport
         // Employer contributions (for display only)
         $employerContrib = $transactions->filter(fn($t) => $t->type === SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value);
 
+        // Build interleaved deduction rows: each employee deduction followed by its matching employer contribution
+        $deductionRows = collect();
+        $matchedEmployerIds = [];
+
+        foreach ($deductions->values() as $d) {
+            // Add the employee deduction row
+            $dDesc = $d->description ?: ucfirst(str_replace('_', ' ', $d->sub_type ?? ($d->type ?? '')));
+            $deductionRows->push((object)[
+                'description' => $dDesc,
+                'amount'      => $d->amount,
+                'isEmployer'  => false,
+                'bgColor'     => $d->type === SalaryTransactionType::TYPE_CARRY_FORWARD->value ? '#ffe6e6' : null,
+                'type'        => $d->type,
+                'sub_type'    => $d->sub_type,
+            ]);
+
+            // Try to find matching employer contribution
+            $dSlug = Str::slug($d->sub_type ?? '');
+            $matchingEc = null;
+
+            foreach ($employerContrib as $ec) {
+                if (in_array($ec->id, $matchedEmployerIds)) continue;
+
+                $ecSlug = Str::slug($ec->sub_type ?? '');
+
+                // Match by slugified sub_type (e.g., "EPF" -> "epf" matches "epf")
+                // or by checking if the employer description contains the deduction's sub_type name
+                if (
+                    ($dSlug !== '' && $ecSlug === $dSlug) ||
+                    ($dSlug !== '' && Str::contains(Str::lower($ec->description ?? ''), $dSlug))
+                ) {
+                    $matchingEc = $ec;
+                    break;
+                }
+            }
+
+            if ($matchingEc) {
+                $matchedEmployerIds[] = $matchingEc->id;
+                $ecDesc = $matchingEc->description ?: ucfirst(str_replace('_', ' ', $matchingEc->sub_type ?? ''));
+                $deductionRows->push((object)[
+                    'description' => $ecDesc,
+                    'amount'      => $matchingEc->amount,
+                    'isEmployer'  => true,
+                    'bgColor'     => '#e6ffc8',
+                    'type'        => $matchingEc->type,
+                    'sub_type'    => $matchingEc->sub_type,
+                ]);
+            }
+        }
+
+        // Add any unmatched employer contributions at the end
+        foreach ($employerContrib as $ec) {
+            if (in_array($ec->id, $matchedEmployerIds)) continue;
+            $ecDesc = $ec->description ?: ucfirst(str_replace('_', ' ', $ec->sub_type ?? ''));
+            $deductionRows->push((object)[
+                'description' => $ecDesc,
+                'amount'      => $ec->amount,
+                'isEmployer'  => true,
+                'bgColor'     => '#e6ffc8',
+                'type'        => $ec->type,
+                'sub_type'    => $ec->sub_type,
+            ]);
+        }
+
         // Totals
         $gross = $earnings->sum('amount');
 
@@ -65,6 +130,7 @@ class SalarySlipReport
             'transactions'    => $transactions,
             'earnings'        => $earnings->values(),
             'deductions'      => $deductions->values(),
+            'deductionRows'   => $deductionRows,
             'employerContrib' => $employerContrib->values(),
             'gross'           => $gross,
             'totalDeductions' => $totalDeductions,
