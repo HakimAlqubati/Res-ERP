@@ -79,8 +79,8 @@ class EmployeeTable
             ->columns([
                 SoftDeleteColumn::make(),
                 TextColumn::make('id')
-                ->sortable()
-                ->label(__('lang.id'))->alignCenter()->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable()
+                    ->label(__('lang.id'))->alignCenter()->toggleable(isToggledHiddenByDefault: true),
                 // TextColumn::make('avatar_image')->copyable()->label('avatar_image')->alignCenter()->toggleable(isToggledHiddenByDefault: true),
                 ImageColumn::make('avatar_image')->label('')
                     ->circular(),
@@ -574,10 +574,18 @@ class EmployeeTable
                     ->color('success')
                     ->requiresConfirmation()
                     ->action(function (\Illuminate\Support\Collection $records) {
+                        $activatedCount = 0;
+
                         foreach ($records as $record) {
                             try {
+                                // Skip already active employees
+                                if ($record->active == 1) {
+                                    continue;
+                                }
+
                                 // activate employee
                                 $record->update(['active' => 1]);
+                                $activatedCount++;
 
                                 // if employee has linked user, restore (if trashed) and activate user
                                 if ($record->user_id) {
@@ -594,7 +602,7 @@ class EmployeeTable
                             }
                         }
 
-                        showSuccessNotifiMessage('Selected employees activated.');
+                        showSuccessNotifiMessage("{$activatedCount} employees activated.");
                     }),
                 ForceDeleteBulkAction::make()->visible(fn() => isSuperAdmin()),
             ]);
