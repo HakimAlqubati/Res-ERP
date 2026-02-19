@@ -184,6 +184,15 @@ class SettingResource extends Resource
                                         ->columnSpan(2)
                                         ->required(),
 
+                                    TextInput::make('custom_month_days')
+                                        ->label('Custom Month Days')
+                                        ->helperText('Enter the number of days to use for daily rate calculation')
+                                        ->numeric()
+                                        ->minValue(1)
+                                        ->maxValue(31)
+                                        ->required()
+                                        ->visible(fn(Get $get): bool => $get('daily_salary_calculation_method') === \App\Enums\HR\Payroll\DailyRateMethod::ByCustomDays->value),
+
                                     TextInput::make('overtime_hour_multiplier')
                                         ->label('Overtime Hour Multiplier')
                                         ->helperText('Enter the overtime multiplier, e.g., 2 for double, 3 for triple')

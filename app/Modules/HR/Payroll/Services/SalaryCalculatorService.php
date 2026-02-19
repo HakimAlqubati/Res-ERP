@@ -126,6 +126,8 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             $rateWorkingDays = 30;
         } elseif ($this->dailyRateMethod === DailyRateMethod::ByMonthDays->value) {
             $rateWorkingDays = $monthDays;
+        } elseif ($this->dailyRateMethod === DailyRateMethod::ByCustomDays->value) {
+            $rateWorkingDays = (int) settingWithDefault('custom_month_days', 30);
         }
 
         // Determine how many days should be paid for the current period ($payableDays)
@@ -252,9 +254,9 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         // Gross Wages should include Overtime, Allowances, etc.
         // However, we should subtract Unpaid Leave (Absent days) because that salary was never earned.
         // We should NOT subtract Late/Early/Penalties/Advances as those are deductions from earned salary.
-        
+
         $baseForStatutoryDeductions = $this->grossSalary - ($this->totalDeductions);
-        
+
         // Ensure base is not negative
         $baseForStatutoryDeductions = max(0, $baseForStatutoryDeductions);
 
