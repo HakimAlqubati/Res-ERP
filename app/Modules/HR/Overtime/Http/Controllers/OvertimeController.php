@@ -203,4 +203,29 @@ class OvertimeController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get overtime report with filters and summary.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function report(Request $request)
+    {
+        try {
+            $filter = \App\Modules\HR\Overtime\Reports\DTOs\OvertimeReportFilter::fromArray($request->all());
+            $report = app(\App\Modules\HR\Overtime\Reports\OvertimeReportService::class)->generate($filter);
+
+            return response()->json([
+                'status'  => true,
+                'data'    => $report['items'],
+                'summary' => $report['summary'],
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

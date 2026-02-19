@@ -37,3 +37,14 @@ Route::prefix('api/v2/attendance')
         // اختبار (للتوافق مع V2)
         Route::post('/test', [AttendanceController::class, 'test']);
     });
+
+/*
+|--------------------------------------------------------------------------
+| Overtime Report API Route
+|--------------------------------------------------------------------------
+*/
+Route::prefix('api/hr/overtime')
+    ->middleware(['auth:api'])
+    ->group(function () {
+        Route::get('/report', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'report']);
+    });
