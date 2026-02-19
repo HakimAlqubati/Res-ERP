@@ -767,10 +767,10 @@ return [
     'is_trusted' => 'Trusted',
 
     // ===========================================
-    // Attendance Images
+    // Attendance Photos
     // ===========================================
-    'attendance_images' => 'Attendance Images',
-    'attendance_image' => 'Attendance Image',
+    'attendance_images' => 'Attendance Photos',
+    'attendance_image' => 'Attendance Photo',
     'has_accepted_attendance' => 'Has Accepted Attendance',
     'image' => 'Image',
 

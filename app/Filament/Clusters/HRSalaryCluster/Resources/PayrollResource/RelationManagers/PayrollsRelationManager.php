@@ -8,10 +8,9 @@ use App\Models\Payroll;
 use App\Models\SalaryTransaction;
 use App\Services\HR\SalaryHelpers\SalarySlipService;
 use Filament\Actions\Action;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Forms;
+use Filament\Actions\ForceDeleteAction;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -31,6 +30,7 @@ class PayrollsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table->striped()
+
             ->recordTitleAttribute('employee')
             ->columns([
                 Tables\Columns\TextColumn::make('id')
@@ -71,8 +71,12 @@ class PayrollsRelationManager extends RelationManager
                     ->sortable()
                     ->dateTime(),
 
-            ])->recordActions([
+            ])
+            ->selectable()
+            ->recordActions([
 
+                ForceDeleteAction::make(),
+                DeleteAction::make(),
 
                 Action::make('pdfSalarySlip')
                     ->label('Salary Slip')
@@ -94,10 +98,14 @@ class PayrollsRelationManager extends RelationManager
                     }),
 
 
-            ])->bulkActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
+            ])
+            ->bulkActions([
+                DeleteBulkAction::make(),
+            ])
+            ->toolbarActions([
+                DeleteBulkAction::make(),
+                // BulkActionGroup::make([
+                // ]),
             ]);
     }
 }
