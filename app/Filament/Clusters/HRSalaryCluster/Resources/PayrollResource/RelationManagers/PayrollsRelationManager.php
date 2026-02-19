@@ -4,6 +4,8 @@ namespace App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\Relati
 
 use Illuminate\Support\Str;
 
+use App\Exports\PayrollsExport;
+use App\Exports\PayrollTransactionsExport;
 use App\Models\Payroll;
 use App\Models\SalaryTransaction;
 use App\Services\HR\SalaryHelpers\SalarySlipService;
@@ -19,6 +21,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Maatwebsite\Excel\Facades\Excel;
 use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
 
 class PayrollsRelationManager extends RelationManager
@@ -97,12 +100,34 @@ class PayrollsRelationManager extends RelationManager
                         return app(\App\Modules\HR\Payroll\Reports\TransactionsReport::class)->generate($record->id);
                     }),
 
+                Action::make('excelPayroll')
+                    ->label('Excel')
+                    ->button()
+                    ->tooltip('Export Transactions to Excel')
+                    ->color('info')
+                    ->icon('heroicon-o-arrow-down-on-square-stack')
+                    ->action(function (Payroll $record) {
+                        $transactions = $record->transactions()->get();
+                        $employeeName = $record->employee?->name ?? 'Employee';
+                        $fileName = 'transactions-' . $employeeName . '.xlsx';
+                        return Excel::download(new PayrollTransactionsExport($transactions, $employeeName), $fileName);
+                    }),
 
             ])
             ->bulkActions([
                 DeleteBulkAction::make(),
             ])
             ->toolbarActions([
+                Action::make('exportExcel')
+                    ->label('Export Excel')
+                    ->button()
+                    ->color('info')
+                    ->icon('heroicon-o-arrow-down-on-square-stack')
+                    ->action(function () {
+                        $payrolls = $this->getOwnerRecord()->payrolls()->with('employee')->get();
+                        $fileName = 'payrolls-' . $this->getOwnerRecord()->name . '.xlsx';
+                        return Excel::download(new PayrollsExport($payrolls), $fileName);
+                    }),
                 DeleteBulkAction::make(),
                 // BulkActionGroup::make([
                 // ]),
