@@ -89,8 +89,16 @@ class AttendanceCalculator
             $context->setStatus(AttendanceStatus::LATE_DEPARTURE);
         } elseif ($checkTime->lt($shiftEnd)) {
             // المغادرة المبكرة
-            $context->earlyDepartureMinutes = $checkTime->diffInMinutes($shiftEnd);
-            $context->setStatus(AttendanceStatus::EARLY_DEPARTURE);
+            $earlyDepartureMinutes = $checkTime->diffInMinutes($shiftEnd);
+            $context->earlyDepartureMinutes = $earlyDepartureMinutes;
+
+            $graceMinutes = $this->config->getEarlyDepartureGraceMinutes();
+
+            $context->setStatus(
+                $earlyDepartureMinutes <= $graceMinutes
+                    ? AttendanceStatus::ON_TIME
+                    : AttendanceStatus::EARLY_DEPARTURE
+            );
         } else {
             $context->setStatus(AttendanceStatus::ON_TIME);
         }
