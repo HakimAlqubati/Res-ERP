@@ -336,7 +336,7 @@ class AttendanceController extends Controller
 
             // فلتر بالموظف
             if ($request->filled('employee_id')) {
-                $query->where('employee_id', $request->input('employee_id'));
+                $query->where('attendance_images_uploaded.employee_id', $request->input('employee_id'));
             }
 
             // فلتر بالتاريخ
