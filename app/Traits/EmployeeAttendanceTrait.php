@@ -5,6 +5,7 @@ namespace App\Traits;
 use App\Models\AppLog;
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Models\EmployeeOvertime;
 use App\Models\EmployeePeriod;
 use App\Models\Setting;
 use App\Models\User;
@@ -63,6 +64,16 @@ trait EmployeeAttendanceTrait
     public function calculateEmployeeOvertime($employee, $date)
     {
         if ($employee === null || $employee->periods->isEmpty()) {
+            return [];
+        }
+
+        // Skip calculation if employee already has an approved overtime for this date
+        $hasApprovedOvertime = EmployeeOvertime::where('employee_id', $employee->id)
+            ->where('date', $date)
+            ->where('approved', 1)
+            ->exists();
+
+        if ($hasApprovedOvertime) {
             return [];
         }
 
