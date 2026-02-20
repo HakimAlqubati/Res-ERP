@@ -82,6 +82,10 @@ class EmployeeAttednaceReportResource extends Resource
                             ->get()
                             ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
                     })
+                    ->getOptionLabelUsing(function ($value): ?string {
+                        $employee = Employee::select('id', 'name')->find($value);
+                        return $employee ? "{$employee->name} - {$employee->id}" : null;
+                    })
 
                     ->hidden(fn() => isStuff() || isMaintenanceManager())
                     ->searchable(),
