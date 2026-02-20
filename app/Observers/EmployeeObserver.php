@@ -93,6 +93,7 @@ class EmployeeObserver
             //     $user->avatar = $employee->avatar;
             // }
 
+            $user->active = $employee->active ?? 1;
             // Save changes to the user model
             $user->save();
         }
