@@ -10,6 +10,7 @@ use App\Models\Payroll;
 use App\Models\SalaryTransaction;
 use App\Services\HR\SalaryHelpers\SalarySlipService;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ForceDeleteAction;
@@ -20,6 +21,7 @@ use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Maatwebsite\Excel\Facades\Excel;
 use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
@@ -114,10 +116,29 @@ class PayrollsRelationManager extends RelationManager
                     }),
 
             ])
-            ->bulkActions([
-                DeleteBulkAction::make(),
-            ])
+
             ->toolbarActions([
+                BulkAction::make('delete_payroll')
+                    ->label('Delete')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->action(function (Collection $records) {
+                        try {
+                            \Illuminate\Support\Facades\DB::beginTransaction();
+                            $records->each(fn($record) => $record->forceDelete());
+                            \Illuminate\Support\Facades\DB::commit();
+                            showSuccessNotifiMessage(__('lang.deleted_successfully'));
+                        } catch (\Exception $e) {
+                            \Illuminate\Support\Facades\DB::rollBack();
+                            \Filament\Notifications\Notification::make()
+                                ->danger()
+                                ->title(__('lang.error_occurred') ?? 'Error')
+                                ->body($e->getMessage())
+                                ->send();
+                            \Illuminate\Support\Facades\Log::error('Bulk delete payrolls error: ' . $e->getMessage());
+                        }
+                    }),
                 Action::make('exportExcel')
                     ->label('Export Excel')
                     ->button()
