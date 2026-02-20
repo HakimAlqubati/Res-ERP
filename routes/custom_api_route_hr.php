@@ -358,3 +358,16 @@ Route::prefix('hr')
             'getWorkPeriods'
         ]);
     });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Payroll Reports API (PDF Downloads)
+// ═══════════════════════════════════════════════════════════════════════════
+Route::prefix('hr')
+    // ->middleware('auth:api')
+    ->group(function () {
+        // Download Salary Slip PDF
+        // GET /api/hr/payrolls/{payroll}/salary-slip-pdf
+        Route::get('/payrolls/{payroll}/salary-slip-pdf', function ($payrollId) {
+            return app(\App\Modules\HR\Payroll\Reports\SalarySlipReport::class)->generate($payrollId);
+        })->name('api.hr.payrolls.salary-slip-pdf');
+    });
