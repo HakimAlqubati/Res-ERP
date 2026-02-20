@@ -136,7 +136,6 @@ class PayrollsRelationManager extends RelationManager
                                 ->title(__('lang.error_occurred') ?? 'Error')
                                 ->body($e->getMessage())
                                 ->send();
-                            \Illuminate\Support\Facades\Log::error('Bulk delete payrolls error: ' . $e->getMessage());
                         }
                     }),
                 Action::make('exportExcel')
