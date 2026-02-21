@@ -362,7 +362,8 @@ class AttendanceController extends Controller
             // then by the actual physical datetimeASC so CheckIn always appears before CheckOut for that day
             $images = $query->orderBy('hr_attendances.check_date', 'desc')
                 ->orderBy('attendance_images_uploaded.employee_id')
-                ->orderBy('attendance_images_uploaded.datetime', 'asc')
+
+                // ->orderBy('attendance_images_uploaded.datetime', 'asc')
                 ->paginate($perPage);
 
             // تحويل البيانات مع إضافة labels و colors
