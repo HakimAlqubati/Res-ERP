@@ -15,7 +15,17 @@ class EmployeeController extends Controller
     public function simpleList()
     {
         // يمكنك تصفية الموظفين الفعالين فقط حسب حاجتك
-        $employees = Employee::select('id', 'name', 'avatar', 'branch_id')
+        $employees = Employee::select(
+            'id',
+            'name',
+            'avatar',
+            'branch_id',
+            'nationality',
+            'job_title',
+            'salary',
+            'phone_number',
+            'email',
+        )
             ->when(request('branch_id'), function ($query, $branchId) {
                 $query->where('branch_id', $branchId);
             })
@@ -29,6 +39,12 @@ class EmployeeController extends Controller
                     'branch_id' => $emp->branch_id,
                     'branch' => $emp?->branch?->name,
                     'avatar_url'  => $emp->avatar_image, // accessor الموجود عندك getAvatarImageAttribute
+                    'nationality_code' => $emp->nationality,
+                    'nationality_name' =>getNationalities()[$emp->nationality] ?? $emp->nationality,
+                    'job_title' => $emp->job_title,
+                    'salary' => $emp->salary,
+                    'phone_number' => $emp->phone_number,
+                    'email' => $emp->email,
                 ];
             });
 
