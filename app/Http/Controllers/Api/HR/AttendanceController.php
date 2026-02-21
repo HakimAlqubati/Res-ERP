@@ -356,13 +356,13 @@ class AttendanceController extends Controller
 
             $perPage = $request->input('per_page', 20);
 
-            // User requested grouping by Date, then Employee. 
-            // We sort by check_date ASC (chronological sequence), 
-            // then by employee_id ASC (group employees within the day),
-            // then by check_time ASC (chronological order for that employee).
-            $images = $query->orderBy('hr_attendances.check_date')
+            // User requested chronological order which honors multi-day shifts
+            // We sort by check_date DESC (newest day first)
+            // then by employee_id ASC
+            // then by the actual physical datetimeASC so CheckIn always appears before CheckOut for that day
+            $images = $query->orderBy('hr_attendances.check_date', 'desc')
                 ->orderBy('attendance_images_uploaded.employee_id')
-                ->orderBy('hr_attendances.check_time')
+                ->orderBy('attendance_images_uploaded.datetime', 'asc')
                 ->paginate($perPage);
 
             // تحويل البيانات مع إضافة labels و colors
@@ -380,14 +380,7 @@ class AttendanceController extends Controller
                             ->where('period_id', $attendance->period_id)
                             ->where('check_type', \App\Models\Attendance::CHECKTYPE_CHECKIN)
                             ->where('accepted', 1)
-                            ->where('id', '<>', $attendance->id)
-                            ->where(function ($q) use ($attendance) {
-                                $q->where('check_time', '<', $attendance->check_time)
-                                    ->orWhere(function ($q2) use ($attendance) {
-                                        $q2->where('check_time', '=', $attendance->check_time)
-                                            ->where('id', '<', $attendance->id);
-                                    });
-                            })
+                            ->where('id', '<', $attendance->id)
                             ->exists();
 
                         if (!$earlierExists) {
@@ -400,14 +393,7 @@ class AttendanceController extends Controller
                             ->where('period_id', $attendance->period_id)
                             ->where('check_type', \App\Models\Attendance::CHECKTYPE_CHECKOUT)
                             ->where('accepted', 1)
-                            ->where('id', '<>', $attendance->id)
-                            ->where(function ($q) use ($attendance) {
-                                $q->where('check_time', '>', $attendance->check_time)
-                                    ->orWhere(function ($q2) use ($attendance) {
-                                        $q2->where('check_time', '=', $attendance->check_time)
-                                            ->where('id', '>', $attendance->id);
-                                    });
-                            })
+                            ->where('id', '>', $attendance->id)
                             ->exists();
 
                         if (!$laterExists) {
