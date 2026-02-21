@@ -35,6 +35,12 @@ class EmployeeController extends Controller
             ->when(request('id'), function ($query, $id) {
                 $query->where('id', $id);
             })
+            ->when(request('email'), function ($query, $email) {
+                $query->where('email', $email);
+            })
+            ->when(request('phone_number'), function ($query, $phoneNumber) {
+                $query->where('phone_number', $phoneNumber);
+            })
             ->when(request('employee_no'), function ($query, $employeeNo) {
                 $query->where('employee_no', $employeeNo);
             })
