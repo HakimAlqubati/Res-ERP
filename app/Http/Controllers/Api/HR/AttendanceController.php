@@ -341,10 +341,10 @@ class AttendanceController extends Controller
 
             // فلتر بالتاريخ
             if ($request->filled('from_date')) {
-                $query->whereDate('datetime', '>=', $request->input('from_date'));
+                $query->whereDate('hr_attendances.check_date', '>=', $request->input('from_date'));
             }
             if ($request->filled('to_date')) {
-                $query->whereDate('datetime', '<=', $request->input('to_date'));
+                $query->whereDate('hr_attendances.check_date', '<=', $request->input('to_date'));
             }
 
             // فلتر بالفرع
