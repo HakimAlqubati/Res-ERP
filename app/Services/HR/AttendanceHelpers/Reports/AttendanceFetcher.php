@@ -427,21 +427,24 @@ class AttendanceFetcher
 
             $status = $day['day_status'];
 
-            // إذا كان حاضراً أو حضور جزئي، احسب كيوم عمل
+            // إذا كان حاضراً، احسب كيوم عمل
             if (in_array($status, [
                 AttendanceReportStatus::Present->value,
-                AttendanceReportStatus::Partial->value,
-                AttendanceReportStatus::IncompleteCheckinOnly->value,
                 AttendanceReportStatus::IncompleteCheckoutOnly->value,
             ])) {
                 $totalWorkDays++;
             }
-            // إذا كان غائباً، أضفه لقائمة الغيابات
-            elseif ($status === AttendanceReportStatus::Absent->value) {
+            // إذا كان غائباً أو لديه حضور جزئي أو حضور بلا انصراف، أضفه لقائمة الغيابات
+            elseif (in_array($status, [
+                AttendanceReportStatus::Absent->value,
+                AttendanceReportStatus::Partial->value,
+                AttendanceReportStatus::IncompleteCheckinOnly->value,
+            ])) {
                 $absentDates[] = $date;
             }
         }
 
+        // dd($absentDates, $totalWorkDays);
         // =========================================================================
         // حساب إجمالي الإجازات المستحقة
         // =========================================================================
