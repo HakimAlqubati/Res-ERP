@@ -99,16 +99,7 @@ class DeveloperTools extends Page
                         showWarningNotifiMessage("❌ Error: " . $th->getMessage());
                     }
                 }),
-            // Action::make('Update Product Unit Prices')
-            //     ->label('💰 Update Product Unit Prices')
-            //     ->color('success')
-
-            //     ->requiresConfirmation()
-            //     ->action(function (array $data) {
-            //         $tenantId = $data['tenant_id'] ?? null;
-            //         dispatch(new \App\Jobs\UpdateProductUnitPricesJob($tenantId));
-            //         showSuccessNotifiMessage('✅ Job dispatched to update product unit prices.');
-            //     }),
+         
         ];
     }
     public static function shouldRegisterNavigation(): bool
