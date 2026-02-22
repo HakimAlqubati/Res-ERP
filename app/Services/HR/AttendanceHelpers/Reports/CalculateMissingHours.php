@@ -52,7 +52,7 @@ class CalculateMissingHours
                     $checkinTime->addDay();
                 }
 
-                $gapMinutes = $checkinTime->diffInMinutes($checkoutTime);
+                $gapMinutes = abs($checkinTime->diffInMinutes($checkoutTime));
                 $totalMissingMinutes += $gapMinutes;
             }
         }
