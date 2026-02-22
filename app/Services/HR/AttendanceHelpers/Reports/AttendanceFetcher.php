@@ -315,13 +315,36 @@ class AttendanceFetcher
                         $minutes = (int) ($lastCheckout['early_departure_minutes'] ?? 0);
                         // Only count if minutes >= minimum threshold from settings
                         if ($minutes >= $minEarlyDepartureMinutes && $minutes > 0) {
-                            $totalEarlyDepartureSeconds += $minutes * 60;
+                            $shouldDeduct = true;
+                            if (setting('flix_hours_early_departure')) {
+                                if (
+                                    isset($lastCheckout['total_actual_duration_hourly']) &&
+                                    isset($lastCheckout['supposed_duration_hourly'])
+                                ) {
+                                    $helper = new \App\Services\HR\AttendanceHelpers\Reports\HelperFunctions();
+                                    $reflection = new \ReflectionClass($helper);
+                                    $method = $reflection->getMethod('timeToHoursForLateArrival');
+                                    $method->setAccessible(true);
+
+                                    $actualHoursFloat = $method->invoke($helper, $lastCheckout['total_actual_duration_hourly']);
+                                    $supposedHoursFloat = $method->invoke($helper, $lastCheckout['supposed_duration_hourly']);
+
+                                    if ($actualHoursFloat >= ($supposedHoursFloat - (\App\Services\HR\AttendanceHelpers\Reports\HelperFunctions::FLEXIBLE_HOURS_MARGIN_MINUTES / 60))) {
+                                        $shouldDeduct = false;
+                                    }
+                                }
+                            }
+
+                            if ($shouldDeduct) {
+                                $totalEarlyDepartureSeconds += $minutes * 60;
+                            }
                         }
                     }
                 }
             }
         }
 
+     
         // Convert total seconds to H:i:s format
         $totalEarlyDeparture = sprintf(
             '%02d:%02d:%02d',

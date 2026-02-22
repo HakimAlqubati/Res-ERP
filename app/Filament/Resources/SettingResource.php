@@ -212,6 +212,10 @@ class SettingResource extends Resource
                                         ->label('Flix Hours')
                                         ->helperText('No deductions will be applied if the total hours worked equal or exceed the required daily hours')
                                         ->default(false),
+                                    Toggle::make('flix_hours_early_departure')
+                                        ->label('Flix Early Departure')
+                                        ->helperText('No deductions will be applied for early departure if the total hours worked equal or exceed the required daily hours')
+                                        ->default(false),
                                     Fieldset::make()->label('End of Month Day')->columnSpanFull()->schema([
                                         Toggle::make('use_standard_end_of_month')
                                             ->label('Use Standard End of Month')
