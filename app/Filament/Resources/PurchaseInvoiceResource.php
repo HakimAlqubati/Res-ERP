@@ -30,14 +30,14 @@ use App\Models\Category;
 use App\Models\InventoryTransaction;
 use App\Models\PaymentMethod;
 use App\Models\Product;
-use App\Models\PurchaseInvoice; 
+use App\Models\PurchaseInvoice;
 use Filament\Pages\Page;
-use Filament\Resources\Resource; 
+use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Table; 
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletingScope; 
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class PurchaseInvoiceResource extends Resource
 {
@@ -73,7 +73,7 @@ class PurchaseInvoiceResource extends Resource
 
     public static function table(Table $table): Table
     {
-       return PurchaseInvoiceTable::configure($table);
+        return PurchaseInvoiceTable::configure($table);
     }
 
 
@@ -143,10 +143,10 @@ class PurchaseInvoiceResource extends Resource
     }
 
 
-    
+
     public static function getGlobalSearchResultTitle(Model $record): string
     {
-        return 'Purchase Invoice #' . $record->id;
+        return 'Invoice #id' . $record->id . ' -  Invoice.No #' . $record->invoice_no;
     }
 
 
@@ -158,7 +158,11 @@ class PurchaseInvoiceResource extends Resource
         return static::can('update', $record);
     }
 
-      public static function getGlobalSearchResultsLimit(): int
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['id', 'invoice_no'];
+    }
+    public static function getGlobalSearchResultsLimit(): int
     {
         return 15;
     }

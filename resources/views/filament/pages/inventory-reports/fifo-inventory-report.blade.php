@@ -22,87 +22,95 @@
     {{ $this->getTableFiltersForm() }}
 
     @if (isset($storeId) || $storeId != null)
-        @if (count($reportData) > 0)
-            <div id="reportContent">
-                <table class="w-full text-sm text-left pretty reports table-striped border">
-                    <thead class="fixed-header">
-                        <tr class="header_report">
-                            <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}"></th>
-                            <th colspan="3" class="no_border_right_left text-center">
-                                <h3 class="text-lg font-bold">Inventory Transaction Report</h3>
-                            </th>
-                            <th colspan="3"
-                                class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}"
-                                style="text-align: center;">
-                                <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt="Logo"
-                                    class="logo-left circle-image" style="display: inline-block;">
-                            </th>
-                        </tr>
-                        <tr>
+    @if (count($reportData) > 0)
+    <div id="reportContent">
+        <table class="w-full text-sm text-left pretty reports table-striped border">
+            <thead class="fixed-header">
+                <tr class="header_report">
+                    <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}"></th>
+                    <th colspan="4" class="no_border_right_left text-center">
+                        <h3 class="text-lg font-bold">Inventory Transaction Report</h3>
+                    </th>
+                    <th colspan="4"
+                        class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}"
+                        style="text-align: center;">
+                        <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt="Logo"
+                            class="logo-left circle-image" style="display: inline-block;">
+                    </th>
+                </tr>
+                <tr>
 
-                            <th>Source Type</th>
-                            <th>Source ID</th>
-                            <th>Date</th>
+                    <th>Source Type</th>
+                    <th>Source ID</th>
+                    <th>Date</th>
 
-                            <th>Unit</th>
-                            <th>Qty</th>
-                            <th>Price</th>
-                            <th>Total Value</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($reportData as $batch)
-                            @foreach ($batch['units_breakdown'] as $unit)
-                                <tr>
+                    <th>Unit</th>
+                    <th>Supply Qty</th>
+                    <th>Consumed Qty</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Total Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($reportData as $batch)
+                @foreach ($batch['units_breakdown'] as $unit)
+                <tr>
 
-                                    <td class="border border-gray-300 px-4 py-2">
-                                        {{ class_basename($batch['transactionable_type']) }}
-                                    </td>
-                                    <td class="border border-gray-300 px-4 py-2">
-                                        {{ $batch['transactionable_id'] }}
-                                    </td>
-                                    <td class="border border-gray-300 px-4 py-2">
-                                        {{ $batch['transaction_date'] }}
-                                    </td>
+                    <td class="border border-gray-300 px-4 py-2">
+                        {{ class_basename($batch['transactionable_type']) }}
+                    </td>
+                    <td class="border border-gray-300 px-4 py-2">
+                        {{ $batch['transactionable_id'] }}
+                    </td>
+                    <td class="border border-gray-300 px-4 py-2">
+                        {{ $batch['transaction_date'] }}
+                    </td>
 
 
-                                    <td class="border border-gray-300 px-4 py-2">
-                                        {{ $unit['unit_name'] }}
-                                    </td>
-                                    <td class="border border-gray-300 px-4 py-2">
-                                        {{ $unit['remaining_quantity'] }}
-                                    </td>
-                                    <td class="border border-gray-300 px-4 py-2">
-                                        {{ $unit['price'] }}
-                                    </td>
-                                    <td class="border border-gray-300 px-4 py-2 font-bold">
-                                        {{ $unit['total_value'] }}
-                                    </td>
-                                </tr>
-                            @endforeach
-                        @endforeach
-                        @if ($onlySmallestUnit)
-                            <tr>
-                                <td colspan="6" class="border border-gray-300 px-4 py-2">
-                                    Total
-                                </td>
-                                <td class="border border-gray-300 px-4 py-2">
-                                    {{ $finalTotalValue }}
-                                </td>
-                            </tr>
-                        @endif
-                    </tbody>
-                </table>
-            </div>
-        @else
-            <div class="please_select_message_div text-center">
-                <h2 class="text-gray-500 text-lg">No inventory transaction data available.</h2>
-            </div>
-        @endif
+                    <td class="border border-gray-300 px-4 py-2">
+                        {{ $unit['unit_name'] }}
+                    </td>
+                    <td class="border border-gray-300 px-4 py-2">
+                        {{ $unit['supply_qty'] }}
+                    </td>
+                    <td class="border border-gray-300 px-4 py-2">
+                        {{ $unit['consumed_qty'] }}
+                    </td>
+                    <td class="border border-gray-300 px-4 py-2">
+                        {{ $unit['remaining_quantity'] }}
+                    </td>
+                    <td class="border border-gray-300 px-4 py-2">
+                        {{ $unit['price'] }}
+                    </td>
+                    <td class="border border-gray-300 px-4 py-2 font-bold">
+                        {{ $unit['total_value'] }}
+                    </td>
+                </tr>
+                @endforeach
+                @endforeach
+                @if ($onlySmallestUnit)
+                <tr>
+                    <td colspan="6" class="border border-gray-300 px-4 py-2">
+                        Total
+                    </td>
+                    <td class="border border-gray-300 px-4 py-2">
+                        {{ $finalTotalValue }}
+                    </td>
+                </tr>
+                @endif
+            </tbody>
+        </table>
+    </div>
     @else
-        <div class="please_select_message_div text-center">
-            <h2 class="text-gray-500 text-lg">{{ __('lang.please_select_store') }}</h2>
-        </div>
+    <div class="please_select_message_div text-center">
+        <h2 class="text-gray-500 text-lg">No inventory transaction data available.</h2>
+    </div>
+    @endif
+    @else
+    <div class="please_select_message_div text-center">
+        <h2 class="text-gray-500 text-lg">{{ __('lang.please_select_store') }}</h2>
+    </div>
     @endif
 
     {{-- JavaScript to Handle Printing --}}

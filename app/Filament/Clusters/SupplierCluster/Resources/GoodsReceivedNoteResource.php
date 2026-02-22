@@ -87,12 +87,13 @@ class GoodsReceivedNoteResource extends Resource
     public static function form(Schema $schema): Schema
     {
         $isEditOperation = $schema->getOperation() == 'edit';
-
+        $operation = $schema->getOperation();
         return $schema
             ->components([
                 Section::make([
                     Grid::make(3)
                         ->schema([
+
                             TextInput::make('grn_number')
                                 ->label('GRN Number')
                                 ->default(fn(): int => (GoodsReceivedNote::query()
@@ -123,6 +124,10 @@ class GoodsReceivedNoteResource extends Resource
                                 ->searchable()
                                 ->options(Supplier::limit(5)->get(['id', 'name'])->pluck('name', 'id'))
                                 ->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
+                            TextInput::make('purchase_invoice_id')
+                                ->label('Purchase Invoice ID')
+                                ->readOnly()
+                                ->hidden(fn() => $operation == 'create'),
                             Textarea::make('notes')
                                 ->label('Notes')
                                 ->columnSpanFull()->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),

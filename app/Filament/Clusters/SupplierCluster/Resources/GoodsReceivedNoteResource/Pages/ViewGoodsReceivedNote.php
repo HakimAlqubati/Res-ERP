@@ -11,12 +11,16 @@ class ViewGoodsReceivedNote extends ViewRecord
 {
     protected static string $resource = GoodsReceivedNoteResource::class;
 
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $purchaseInvoiceId   = $this->record?->purchase_invoice_id;
+        return $data;
+    }
+
     protected function getHeaderActions(): array
     {
         return [
             DeleteAction::make(),
         ];
     }
-    
-   
 }
