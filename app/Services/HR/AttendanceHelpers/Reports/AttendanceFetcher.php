@@ -285,6 +285,7 @@ class AttendanceFetcher
             }
         }
 
+        // dd($totalMissingHoursSeconds);
         // Convert total seconds to H:i:s format if needed, or just store the total minutes
         $totalMissingHours = sprintf(
             '%02d:%02d:%02d',

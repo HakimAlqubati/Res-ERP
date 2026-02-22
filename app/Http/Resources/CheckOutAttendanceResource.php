@@ -3,14 +3,13 @@
 namespace App\Http\Resources;
 
 use App\Models\Attendance;
-use App\Services\HR\AttendanceHelpers\Reports\HelperFunctions;
+use App\Services\HR\AttendanceHelpers\Reports\CalculateMissingHours;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class CheckOutAttendanceResource extends JsonResource
 {
     protected $approvedOvertime;
     protected $date;
-    protected HelperFunctions $helperFunctions;
 
     public function __construct($resource, $approvedOvertime = null, $date = null)
     {
@@ -18,7 +17,6 @@ class CheckOutAttendanceResource extends JsonResource
         parent::__construct($resource);
         $this->approvedOvertime = $approvedOvertime;
         $this->date             = $date;
-        $this->helperFunctions = new HelperFunctions();
     }
 
     public function toArray($request)
@@ -39,7 +37,7 @@ class CheckOutAttendanceResource extends JsonResource
             'status_label'             => Attendance::getStatusLabel($supposedStatus),
             'supposed_status'          => $supposedStatus,
             'supposed_status_label'    => Attendance::getStatusLabel($supposedStatus),
-            'missing_hours'            => $this->helperFunctions->calculateMissingHours(
+            'missing_hours'            => (new CalculateMissingHours())->calculate(
                 $this->status,
                 $this->supposed_duration_hourly ?? $this->period . ':00',
                 $this->approvedOvertime,
