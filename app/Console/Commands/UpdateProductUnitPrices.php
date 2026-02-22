@@ -9,7 +9,6 @@ use App\Models\Product;
 use App\Models\UnitPrice;
 use App\Models\ProductPriceHistory;
 use App\Services\ProductPriceHistoryService;
-use Illuminate\Support\Facades\Log;
 use Spatie\Multitenancy\Models\Tenant;
 
 class UpdateProductUnitPrices extends Command
@@ -25,7 +24,6 @@ class UpdateProductUnitPrices extends Command
 
             $tenant = Tenant::find($tenantId);
 
-            Log::infO('hi - this is tenant :', [$tenant->name]);
             if (! $tenant) {
                 $this->error("❌ Tenant with ID {$tenantId} not found.");
                 return;
