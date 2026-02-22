@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 namespace App\Modules\HR\Payroll\Services;
-
+/**
+ * Main Class.
+ */
 use App\Enums\HR\Payroll\DailyRateMethod;
 use App\Models\Employee;
 use App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator;
