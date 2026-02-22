@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Pages;
+namespace App\Filament\Dev\Pages;
 
 use App\Jobs\RebuildInventoryFromSources;
 use Throwable;
