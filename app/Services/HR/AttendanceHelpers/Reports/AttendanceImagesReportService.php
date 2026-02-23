@@ -9,6 +9,14 @@ use Illuminate\Http\Request;
 class AttendanceImagesReportService
 {
     /**
+     * Determines whether to return only the first CheckIn and last CheckOut.
+     * Set this property to true to enable this filtering behavior.
+     *
+     * @var bool
+     */
+    public bool $returnOnlyFirstAndLast = false;
+
+    /**
      * Fetch and format attendance images based on the applied filters.
      *
      * @param Request $request
@@ -63,8 +71,13 @@ class AttendanceImagesReportService
         $mappedImages = $images->getCollection()->map(function ($image) {
             $attendance = $image->attendances->first();
 
-            // Filter Logic: Only return First CheckIn and Last CheckOut per (employee, date, period)
-            if ($attendance) {
+            // Only return if it has a valid accepted attendance record
+            if (!$attendance) {
+                return null;
+            }
+
+            // Filter Logic: If enabled, only return First CheckIn and Last CheckOut per (employee, date, period)
+            if ($this->returnOnlyFirstAndLast) {    
                 $keep = false;
 
                 if ($attendance->check_type == Attendance::CHECKTYPE_CHECKIN) {
@@ -99,8 +112,6 @@ class AttendanceImagesReportService
                 if (!$keep) {
                     return null;
                 }
-            } else {
-                return null; // Ignore if no accepted attendance found
             }
 
             return [
