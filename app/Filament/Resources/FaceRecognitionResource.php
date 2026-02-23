@@ -33,6 +33,7 @@ class FaceRecognitionResource extends Resource
 
     public static function table(Table $table): Table
     {
+
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('avatar_url')
@@ -94,10 +95,12 @@ class FaceRecognitionResource extends Resource
     {
         return false;
     }
-    public static function getNavigationBadge(): ?string
-    {
-        return static::getEloquentQuery()->count();
-    }
+    // public static function getNavigationBadge(): ?string
+    // {
+    //     return FaceRecognition::where('base_url', url('/'))->count();
+    //     return
+    //         static::getModel()::where('base_url', url('/'))->count();;
+    // }
     public static function canViewAny(): bool
     {
         // return false;
@@ -110,7 +113,6 @@ class FaceRecognitionResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            // ->where('role_id',8)
             ->where('base_url', url('/'))
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
