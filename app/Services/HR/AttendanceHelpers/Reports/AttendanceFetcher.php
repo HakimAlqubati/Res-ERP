@@ -186,26 +186,26 @@ class AttendanceFetcher
         }
 
         $stats = HelperFunctions::calculateAttendanceStats($result);
-        // dd($stats);
-        // =========================================================================
-        // حساب نتيجة WeeklyLeaveCalculator النهائية
-        // =========================================================================
-        $weeklyLeaveStats = $result->get('weekly_leave_stats', []);
-        $totalMonthDays = $stats['total_days'] ?? 0;
-        $absentDays = $weeklyLeaveStats['remaining_absences'] ?? $stats['absent'] ?? 0;
-
-        $weeklyLeaveCalculator = new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator();
-        $weeklyLeaveResult = $weeklyLeaveCalculator->calculate($totalMonthDays, $absentDays);
-
-        $stats['weekly_leave_calculation'] =  $weeklyLeaveResult;
-
-
 
         // =========================================================================
         // منطق تحويل الغياب إلى إجازة أسبوعية تلقائية
         // كل 6 أيام عمل = يوم إجازة مستحق
         // =========================================================================
         $result = $this->applyWeeklyLeaveToAbsences($result);
+
+        // =========================================================================
+        // حساب نتيجة WeeklyLeaveCalculator النهائية
+        // يجب أن يكون بعد applyWeeklyLeaveToAbsences لتكون weekly_leave_stats معبأة
+        // نستخدم required_days بدل total_days لاستبعاد أيام no_periods
+        // =========================================================================
+        $weeklyLeaveStats = $result->get('weekly_leave_stats', []);
+        $totalMonthDays = $stats['required_days'] ?? $stats['total_days'] ?? 0;
+        $absentDays = $weeklyLeaveStats['remaining_absences'] ?? $stats['absent'] ?? 0;
+
+        $weeklyLeaveCalculator = new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator();
+        $weeklyLeaveResult = $weeklyLeaveCalculator->calculate($totalMonthDays, $absentDays);
+
+        $stats['weekly_leave_calculation'] = $weeklyLeaveResult;
 
         $result->put('statistics', $stats);
         $result->put('total_duration_hours', $totalDurationHours);
@@ -345,7 +345,7 @@ class AttendanceFetcher
             }
         }
 
-     
+
         // Convert total seconds to H:i:s format
         $totalEarlyDeparture = sprintf(
             '%02d:%02d:%02d',
