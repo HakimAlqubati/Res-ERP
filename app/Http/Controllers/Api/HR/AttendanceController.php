@@ -10,6 +10,7 @@ use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
 use App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateService;
 use App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesService;
+use App\Services\HR\AttendanceHelpers\Reports\AttendanceImagesReportService;
 use App\Services\HR\v2\Attendance\AttendanceServiceV2;
 use Aws\DynamoDb\DynamoDbClient;
 use Aws\Rekognition\RekognitionClient;
@@ -442,6 +443,27 @@ class AttendanceController extends Controller
                 'message' => 'Something went wrong.',
                 'error'   => $e->getMessage(),
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * صور الحضور الإصدار الثاني باستخدام كلاس خدمة
+     */
+    public function attendanceImagesV2(Request $request, AttendanceImagesReportService $reportService)
+    {
+        try {
+            $images = $reportService->getImagesReport($request);
+
+            return response()->json([
+                'status' => 'success',
+                'data'   => $images,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Something went wrong.',
+                'error'   => $e->getMessage(),
+            ], \Symfony\Component\HttpFoundation\Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }
