@@ -100,13 +100,13 @@ class FaceRecognitionService
         );
 
         if ($isAnotherBranch) {
-            // return EmployeeMatch::notFound('Employee belongs to another branch and cannot be accessed.');
+            return new EmployeeMatch(false, $name, $employeeId, null, $similarity, $confidence, 'Sorry, this employee belongs to another branch and cannot check in from this device.');
         }
 
         if (!$employee) {
-            // return EmployeeMatch::notFound();
+            return new EmployeeMatch(false, $name, $employeeId, null, $similarity, $confidence, 'Sorry, employee details are not currently found in the system.');
         }
-        // dd($name,$employee,$employeeId,$similarity,$confidence);
+
         if (!$employeeId && !$name) {
             return new EmployeeMatch(false, 'No mapping found', null, null, $similarity, $confidence);
         }
