@@ -52,9 +52,18 @@ class FaceRecognitionResource extends Resource
                     ->fontFamily('mono') // Is monospaced
                     ->color('gray')
                     ->limit(20),
+
+                Tables\Columns\TextColumn::make('base_url')
+                    ->label('Base URL')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable()
+                    ->limit(30),
             ])
             ->filters([
-                //
+                // Tables\Filters\SelectFilter::make('base_url')
+                //     ->label('Base URL')
+                //     ->options(fn() => FaceRecognition::query()->pluck('base_url', 'base_url')->filter()->unique()->toArray()),
             ])
             ->actions([
                 // Since it's read-only from DynamoDB via Sushi, we probably don't want edit/delete here unless we implement it
@@ -87,7 +96,7 @@ class FaceRecognitionResource extends Resource
     }
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return static::getEloquentQuery()->count();
     }
     public static function canViewAny(): bool
     {
@@ -98,5 +107,14 @@ class FaceRecognitionResource extends Resource
         return false;
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            // ->where('role_id',8)
+            ->where('base_url', url('/'))
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
+    }
     protected static bool $shouldRegisterNavigation = false;
 }
