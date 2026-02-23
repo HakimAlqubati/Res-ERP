@@ -61,6 +61,8 @@ Route::middleware(['auth:api', 'lastSeen'])->group(function () {
     Route::get('/report_products', [ProductController::class, 'reportProducts']);
     Route::get('/user', [AuthController::class, 'getCurrnetUser']);
     Route::post('/user/updatePassword', [AuthController::class, 'updatePassword']);
+    Route::post('/user/sendMailOtp', [AuthController::class, 'sendMailOtp']);
+    Route::post('/user/confirmMailOtp', [AuthController::class, 'confirmMailOtp']);
     Route::apiResource('products', ProductController::class);
     Route::apiResource('orders', OrderController::class);
     Route::post('orders2', [OrderController::class, 'index']);

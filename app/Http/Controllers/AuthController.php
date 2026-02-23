@@ -180,12 +180,21 @@ class AuthController extends Controller
         }
     }
 
-    public function updatePassword(Request $request)
+    public function updatePassword(Request $request, \App\Services\Auth\EmailOtpService $emailOtpService)
     {
         $validated = $request->validate([
+            'email' => 'required|email',
+            'otp' => 'required|string',
             'current_password' => ['required', 'current_password'],
             'new_password' => ['required', 'confirmed', Password::defaults()],
         ]);
+
+        if (!$emailOtpService->isValidOtp($request->email, $request->otp)) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Invalid or expired OTP'
+            ], 401);
+        }
 
         $request->user()->update([
             'password' => Hash::make($validated['new_password']),
@@ -194,6 +203,40 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Password updated successfully.',
+        ]);
+    }
+
+    public function sendMailOtp(Request $request, \App\Services\Auth\EmailOtpService $emailOtpService)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $emailOtpService->sendOtp($request->email);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'OTP sent to your email successfully.',
+        ]);
+    }
+
+    public function confirmMailOtp(Request $request, \App\Services\Auth\EmailOtpService $emailOtpService)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'otp' => 'required|string',
+        ]);
+
+        if (!$emailOtpService->isValidOtp($request->email, $request->otp)) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Invalid or expired OTP'
+            ], 401);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Email confirmed successfully.',
         ]);
     }
 }
