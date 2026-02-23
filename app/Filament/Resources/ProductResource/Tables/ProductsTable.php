@@ -34,6 +34,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Tables\Columns\CheckboxColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -184,7 +185,11 @@ class ProductsTable
                     }),
                 TextColumn::make('product_items_count')->label('Items No')
                     ->toggleable(isToggledHiddenByDefault: true)->default('-')->alignCenter(true),
-            ])
+           
+                    TextColumn::make('created_at')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->label('Created At')
+                    ])
             ->filters([
                 Filter::make('active')->label(__('lang.active'))
                     ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
@@ -209,7 +214,8 @@ class ProductsTable
                                 ->havingRaw('MIN(package_size) != 1');
                         });
                     }),
-            ])
+            ], FiltersLayout::Modal)
+            ->filtersFormColumns(4)
             ->recordActions([
                 // Action::make('updateUnitPrice')
                 //     ->label('Update Unit Price')->button()->action(function ($record) {
