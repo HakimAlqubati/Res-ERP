@@ -54,6 +54,12 @@ Route::post('/login', [AuthController::class, 'login'])
     // ->middleware(EnsureOwnerIfRequired::class)
 ;
 Route::post('/login/otp/check', [AuthController::class, 'loginWithOtp']);
+
+// Forgot Password Flow (Unauthenticated)
+Route::post('/forgotPassword/sendOtp', [\App\Http\Controllers\Api\Auth\ForgotPasswordController::class, 'sendOtp']);
+Route::post('/forgotPassword/verifyOtp', [\App\Http\Controllers\Api\Auth\ForgotPasswordController::class, 'verifyOtp']);
+Route::post('/forgotPassword/reset', [\App\Http\Controllers\Api\Auth\ForgotPasswordController::class, 'resetPassword']);
+
 Route::get('/products', [ProductController::class, 'index'])->middleware('lastSeen');
 Route::get('/orders/{order}/pdf', [OrderController::class, 'generate']);
 
