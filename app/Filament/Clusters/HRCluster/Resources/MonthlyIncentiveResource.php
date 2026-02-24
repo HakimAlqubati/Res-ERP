@@ -23,6 +23,7 @@ use App\Filament\Clusters\HRSalarySettingCluster;
 use App\Models\MonthlyIncentive;
 use Filament\Forms;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Fieldset;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -52,9 +53,21 @@ class MonthlyIncentiveResource extends Resource
     {
         return $schema
             ->components([
+                Fieldset::make()->columns(3)->columnSpanFull()->schema([
                 TextInput::make('name')->required(),
-                Textarea::make('description'),
-                Toggle::make('active')->default(true),
+                // Financial Category Link
+                Forms\Components\Select::make('financial_category_id')
+                    ->label(__('Financial Category'))
+                    ->relationship('financialCategory', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->placeholder(__('Select to create financial transaction'))
+                    ->helperText(__('If selected, a separate financial transaction will be created when payroll is processed')),
+                Toggle::make('active')->inline(false)->default(true),
+
+                Textarea::make('description')->columnSpanFull(),
+                ])
+
             ]);
     }
 

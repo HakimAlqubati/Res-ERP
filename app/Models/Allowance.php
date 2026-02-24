@@ -11,8 +11,8 @@ class Allowance extends Model implements Auditable
 {
     use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
     protected $table = 'hr_allowances';
-    protected $fillable = ['name', 'description', 'is_monthly', 'active', 'is_specific', 'amount', 'percentage', 'is_percentage'];
-    protected $auditInclude = ['name', 'description', 'is_monthly', 'active', 'is_specific', 'amount', 'percentage', 'is_percentage'];
+    protected $fillable = ['name', 'description', 'is_monthly', 'active', 'is_specific', 'amount', 'percentage', 'is_percentage', 'financial_category_id'];
+    protected $auditInclude = ['name', 'description', 'is_monthly', 'active', 'is_specific', 'amount', 'percentage', 'is_percentage', 'financial_category_id'];
     protected $casts = [
         'is_monthly'   => 'boolean',
         'active'       => 'boolean',
@@ -21,4 +21,12 @@ class Allowance extends Model implements Auditable
         'amount'       => 'decimal:2',
         'percentage'   => 'decimal:2',
     ];
+
+    /**
+     * Get the financial category associated with this allowance.
+     */
+    public function financialCategory()
+    {
+        return $this->belongsTo(FinancialCategory::class);
+    }
 }

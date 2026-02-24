@@ -45,9 +45,19 @@ class AllowanceResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->columnSpanFull()->columns(3)->label('')->schema([
+                Fieldset::make()->columnSpanFull()->columns(2)->label('')->schema([
                     TextInput::make('name')->required(),
-                    TextInput::make('description')->columnSpan(2),
+                    // Financial Category Link
+                    Forms\Components\Select::make('financial_category_id')
+                        ->label(__('Financial Category'))
+                        ->relationship('financialCategory', 'name')
+                        ->searchable()
+                        ->preload()
+                        ->placeholder(__('Select to create financial transaction'))
+                        ->helperText(__('If selected, a separate financial transaction will be created when payroll is processed')),
+                    TextInput::make('description')->columnSpanFull(),
+
+
                 ]),
                 Fieldset::make()->columnSpanFull()->label('')->columns(4)->schema([
                     Toggle::make('is_specific')->default(false)->label('Custom')
@@ -73,8 +83,8 @@ class AllowanceResource extends Resource
                         ->tooltips(RawJs::make(<<<'JS'
                             `%${$value.toFixed(1)}`
                         JS))
-                                            ->pips()
-                                            ->pipsFilter(RawJs::make(<<<'JS'
+                        ->pips()
+                        ->pipsFilter(RawJs::make(<<<'JS'
                             ($value % 50) === 0
                                 ? 1
                                 : ($value % 10) === 0
