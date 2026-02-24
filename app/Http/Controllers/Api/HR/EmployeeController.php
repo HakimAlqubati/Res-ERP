@@ -14,6 +14,64 @@ class EmployeeController extends Controller
      */
     public function simpleList()
     {
+        $employees = Employee::select(
+            'id',
+            'employee_no',
+            'name',
+            'avatar',
+            'branch_id',
+            'nationality',
+            'job_title',
+            'salary',
+            'phone_number',
+            'email',
+        )
+            ->when(request('branch_id'), function ($query, $branchId) {
+                $query->where('branch_id', $branchId);
+            })
+            ->when(request('id'), function ($query, $id) {
+                $query->where('id', $id);
+            })
+            ->when(request('email'), function ($query, $email) {
+                $query->where('email', $email);
+            })
+            ->when(request('phone_number'), function ($query, $phoneNumber) {
+                $query->where('phone_number', $phoneNumber);
+            })
+            ->when(request('employee_no'), function ($query, $employeeNo) {
+                $query->where('employee_no', $employeeNo);
+            })
+            ->when(request('name'), function ($query, $name) {
+                $query->where('name', 'like', "%{$name}%");
+            })
+            ->when(request('job_title'), function ($query, $jobTitle) {
+                $query->where('job_title', 'like', "%{$jobTitle}%");
+            })
+            // ->whereNotNull('avatar')
+            ->active() // scopeActive من الموديل
+            ->get()
+            ->map(function ($emp) {
+                return [
+                    'employee_id' => $emp->id,
+                    'employee_no' => $emp->employee_no,
+                    'name'        => $emp->name,
+                    'branch_id' => $emp->branch_id,
+                    'branch' => $emp?->branch?->name,
+                    'avatar_url'  => $emp->avatar_image, // accessor الموجود عندك getAvatarImageAttribute
+                    'nationality_code' => $emp->nationality,
+                    'nationality_name' => getNationalities()[$emp->nationality] ?? $emp->nationality,
+                    'job_title' => $emp->job_title,
+                    'salary' => $emp->salary,
+                    'phone_number' => $emp->phone_number,
+                    'email' => $emp->email,
+                ];
+            });
+
+        return response()->json($employees);
+    }
+
+    public function simpleListV2()
+    {
         $perPage = request('per_page', 30);
 
         // يمكنك تصفية الموظفين الفعالين فقط حسب حاجتك
