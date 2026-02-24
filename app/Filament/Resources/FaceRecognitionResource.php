@@ -95,12 +95,12 @@ class FaceRecognitionResource extends Resource
     {
         return false;
     }
-    // public static function getNavigationBadge(): ?string
-    // {
-    //     return FaceRecognition::where('base_url', url('/'))->count();
-    //     return
-    //         static::getModel()::where('base_url', url('/'))->count();;
-    // }
+    public static function getNavigationBadge(): ?string
+    {
+        return FaceRecognition::where('base_url', url('/'))->count();
+        return
+            static::getModel()::where('base_url', url('/'))->count();;
+    }
     public static function canViewAny(): bool
     {
         // return false;
@@ -118,5 +118,5 @@ class FaceRecognitionResource extends Resource
                 SoftDeletingScope::class,
             ]);
     }
-    protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = true;
 }
