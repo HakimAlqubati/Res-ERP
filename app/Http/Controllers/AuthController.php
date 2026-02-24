@@ -184,15 +184,14 @@ class AuthController extends Controller
     {
         $validated = $request->validate([
             'email' => 'required|email',
-            'otp' => 'required|string',
-            'current_password' => ['required', 'current_password'],
+            'reset_token' => 'required|string',
             'new_password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
-        if (!$emailOtpService->isValidOtp($request->email, $request->otp)) {
+        if (!$emailOtpService->isValidResetToken($request->email, $request->reset_token)) {
             return response()->json([
                 'success' => false,
-                'error' => 'Invalid or expired OTP'
+                'error' => 'Invalid or expired reset token. Please verify OTP first.'
             ], 401);
         }
 
@@ -227,7 +226,9 @@ class AuthController extends Controller
             'otp' => 'required|string',
         ]);
 
-        if (!$emailOtpService->isValidOtp($request->email, $request->otp)) {
+        $resetToken = $emailOtpService->verifyOtpAndGenerateResetToken($request->email, $request->otp);
+
+        if (!$resetToken) {
             return response()->json([
                 'success' => false,
                 'error' => 'Invalid or expired OTP'
@@ -236,7 +237,8 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Email confirmed successfully.',
+            'message' => 'OTP verified successfully.',
+            'reset_token' => $resetToken,
         ]);
     }
 }
