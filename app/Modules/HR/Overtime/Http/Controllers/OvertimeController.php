@@ -242,11 +242,14 @@ class OvertimeController extends Controller
             $filter = \App\Modules\HR\Overtime\Reports\DTOs\OvertimeReportFilter::fromArray($request->all());
             $report = app(\App\Modules\HR\Overtime\Reports\OvertimeReportService::class)->generate($filter);
 
-            return response()->json([
-                'status'  => true,
-                'data'    => $report['items'],
-                'summary' => $report['summary'],
-            ]);
+            // Fetch paginated items and merge summary into the response
+            $paginator = $report['items']->toArray();
+
+            return response()->json(array_merge(
+                ['status' => true],
+                $paginator, // This includes: data, current_page, last_page, per_page, total, etc.
+                ['summary' => $report['summary']]
+            ));
         } catch (Exception $e) {
             return response()->json([
                 'status'  => false,

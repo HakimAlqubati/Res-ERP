@@ -20,9 +20,9 @@ use Illuminate\Support\Collection;
 class OvertimeReportService
 {
     /**
-     * Generate the overtime report.
+     * Generate the overtime report with pagination.
      *
-     * @return array{items: Collection, summary: array}
+     * @return array{items: \Illuminate\Contracts\Pagination\LengthAwarePaginator, summary: array}
      */
     public function generate(OvertimeReportFilter $filter): array
     {
@@ -31,11 +31,15 @@ class OvertimeReportService
 
         $this->applyFilters($query, $filter);
 
-        $records = $query->orderBy('date', 'desc')->get();
+        // Clone query for full summary before paginating, to get the total matching summary
+        $summaryQuery = clone $query;
+
+        $paginatedRecords = $query->orderBy('date', 'desc')
+            ->paginate($filter->perPage, ['*'], 'page', $filter->page);
 
         return [
-            'items'   => $records,
-            'summary' => $this->buildSummary($records),
+            'items'   => $paginatedRecords,
+            'summary' => $this->buildSummary($summaryQuery),
         ];
     }
 
@@ -45,7 +49,9 @@ class OvertimeReportService
     protected function applyFilters($query, OvertimeReportFilter $filter): void
     {
         if ($filter->branchId !== null) {
-            $query->where('branch_id', $filter->branchId);
+            $query->whereHas('employee', function ($q) use ($filter) {
+                $q->where('branch_id', $filter->branchId);
+            });
         }
 
         if ($filter->employeeId !== null) {
@@ -66,16 +72,16 @@ class OvertimeReportService
     }
 
     /**
-     * Build a summary from the report records.
+     * Build an aggregate summary from the query itself to respect full scope (not just current page).
      */
-    protected function buildSummary(Collection $records): array
+    protected function buildSummary($query): array
     {
         return [
-            'total_records'        => $records->count(),
-            'total_hours'          => round($records->sum('hours'), 2),
-            'approved_count'       => $records->where('approved', 1)->count(),
-            'pending_count'        => $records->where('approved', 0)->count(),
-            'unique_employees'     => $records->pluck('employee_id')->unique()->count(),
+            'total_records'        => (clone $query)->count(),
+            'total_hours'          => round((float) (clone $query)->sum('hours'), 2),
+            'approved_count'       => (clone $query)->where('approved', 1)->count(),
+            'pending_count'        => (clone $query)->where('approved', 0)->count(),
+            'unique_employees'     => (clone $query)->distinct('employee_id')->count('employee_id'),
         ];
     }
 }

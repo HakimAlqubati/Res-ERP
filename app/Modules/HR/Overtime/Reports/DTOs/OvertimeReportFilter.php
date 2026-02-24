@@ -18,6 +18,8 @@ final class OvertimeReportFilter
         public readonly ?string $dateFrom = null,
         public readonly ?string $dateTo = null,
         public readonly ?bool $approved = null,
+        public readonly int $perPage = 15,
+        public readonly int $page = 1,
     ) {}
 
     /**
@@ -31,6 +33,8 @@ final class OvertimeReportFilter
             dateFrom: $data['date_from']  ?? null,
             dateTo: $data['date_to']    ?? null,
             approved: isset($data['approved'])     ? filter_var($data['approved'], FILTER_VALIDATE_BOOLEAN) : null,
+            perPage: isset($data['per_page'])     ? (int) $data['per_page'] : 15,
+            page: isset($data['page'])         ? (int) $data['page'] : 1,
         );
     }
 
