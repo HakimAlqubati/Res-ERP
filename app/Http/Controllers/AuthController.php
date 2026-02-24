@@ -12,6 +12,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
@@ -54,7 +56,7 @@ class AuthController extends Controller
              */
             if ($request->filled('device_id')) {
                 $deviceId = $request->input('device_id');
- 
+
                 // dd($deviceId,$user->hasAuthorizedDevice($deviceId));
                 // إذا لم يكن الجهاز مصرحاً للمستخدم:
                 if (! $user->hasAuthorizedDevice($deviceId)) {
@@ -176,5 +178,67 @@ class AuthController extends Controller
                 'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
+    }
+
+    public function updatePassword(Request $request, \App\Services\Auth\EmailOtpService $emailOtpService)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'reset_token' => 'required|string',
+            'new_password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        if (!$emailOtpService->isValidResetToken($request->email, $request->reset_token)) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Invalid or expired reset token. Please verify OTP first.'
+            ], 401);
+        }
+
+        $request->user()->update([
+            'password' => Hash::make($validated['new_password']),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password updated successfully.',
+        ]);
+    }
+
+    public function sendMailOtp(Request $request, \App\Services\Auth\EmailOtpService $emailOtpService)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $emailOtpService->sendOtp($request->email);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'OTP sent to your email successfully.',
+        ]);
+    }
+
+    public function confirmMailOtp(Request $request, \App\Services\Auth\EmailOtpService $emailOtpService)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'otp' => 'required|string',
+        ]);
+
+        $resetToken = $emailOtpService->verifyOtpAndGenerateResetToken($request->email, $request->otp);
+
+        if (!$resetToken) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Invalid or expired OTP'
+            ], 401);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'OTP verified successfully.',
+            'reset_token' => $resetToken,
+        ]);
     }
 }

@@ -183,4 +183,50 @@ class FinancialReportService
             ->where('category_id', $category->id)
             ->sum('amount');
     }
+
+    /**
+     * Get Income Statement including Net Profit deduction logic.
+     * Reuses the existing Income Statement calculation but clearly structures Gross and Net.
+     *
+     * @param IncomeStatementRequestDTO $dto
+     * @return array
+     */
+    public function getNetProfitReport(IncomeStatementRequestDTO $dto): array
+    {
+        // We can just reuse getIncomeStatement as it already calculates Net Profit
+        // However, if the user requested a specific "Net Profit" structure that emphasizes
+        // "deducting salaries to get the Net Profit", we can wrap or modify the output here.
+
+        $incomeStatement = $this->getIncomeStatement($dto);
+
+        // Let's enhance it with specific Payroll details if needed to show how salaries affect it
+        $payrollCategory = \App\Models\FinancialCategory::findByCode(\App\Enums\FinancialCategoryCode::PAYROLL_SALARIES);
+
+        $totalPayrollExpenses = 0;
+
+        if ($payrollCategory) {
+            // Find payroll in the expenses details
+            foreach ($incomeStatement['expenses']['details'] as $expenseGroup) {
+                if (isset($expenseGroup['category_id']) && $expenseGroup['category_id'] == $payrollCategory->id) {
+                    $totalPayrollExpenses = $expenseGroup['amount'];
+                } elseif (!empty($expenseGroup['children'])) {
+                    // It might be a child
+                    foreach ($expenseGroup['children'] as $child) {
+                        if (isset($child['category_id']) && $child['category_id'] == $payrollCategory->id) {
+                            $totalPayrollExpenses += $child['amount'];
+                        }
+                    }
+                }
+            }
+        }
+
+        // Add specific payroll breakdown to the report
+        $incomeStatement['payroll_impact'] = [
+            'total_payroll_expenses' => (float) $totalPayrollExpenses,
+            'total_payroll_expenses_formatted' => formatMoneyWithCurrency($totalPayrollExpenses),
+            'description' => __('Total salaries and HR expenses deducted from Gross Profit'),
+        ];
+
+        return $incomeStatement;
+    }
 }

@@ -37,6 +37,14 @@ class AttendanceConfig
     }
 
     /**
+     * دقائق السماحية للانصراف المبكر
+     */
+    public function getEarlyDepartureGraceMinutes(): int
+    {
+        return (int) Setting::getSetting('early_depature_deduction_minutes', 0);
+    }
+
+    /**
      * عدد الساعات قبل نهاية الوردية التي تتطلب تحديد نوع العملية
      */
     public function getPreEndHoursForCheckInOut(): int

@@ -54,12 +54,21 @@ Route::post('/login', [AuthController::class, 'login'])
     // ->middleware(EnsureOwnerIfRequired::class)
 ;
 Route::post('/login/otp/check', [AuthController::class, 'loginWithOtp']);
+
+// Forgot Password Flow (Unauthenticated)
+Route::post('/forgotPassword/sendOtp', [\App\Http\Controllers\Api\Auth\ForgotPasswordController::class, 'sendOtp']);
+Route::post('/forgotPassword/verifyOtp', [\App\Http\Controllers\Api\Auth\ForgotPasswordController::class, 'verifyOtp']);
+Route::post('/forgotPassword/reset', [\App\Http\Controllers\Api\Auth\ForgotPasswordController::class, 'resetPassword']);
+
 Route::get('/products', [ProductController::class, 'index'])->middleware('lastSeen');
 Route::get('/orders/{order}/pdf', [OrderController::class, 'generate']);
 
 Route::middleware(['auth:api', 'lastSeen'])->group(function () {
     Route::get('/report_products', [ProductController::class, 'reportProducts']);
     Route::get('/user', [AuthController::class, 'getCurrnetUser']);
+    Route::post('/user/updatePassword', [AuthController::class, 'updatePassword']);
+    Route::post('/user/sendMailOtp', [AuthController::class, 'sendMailOtp']);
+    Route::post('/user/confirmMailOtp', [AuthController::class, 'confirmMailOtp']);
     Route::apiResource('products', ProductController::class);
     Route::apiResource('orders', OrderController::class);
     Route::post('orders2', [OrderController::class, 'index']);

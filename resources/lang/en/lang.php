@@ -767,10 +767,10 @@ return [
     'is_trusted' => 'Trusted',
 
     // ===========================================
-    // Attendance Images
+    // Attendance Photos
     // ===========================================
-    'attendance_images' => 'Attendance Images',
-    'attendance_image' => 'Attendance Image',
+    'attendance_images' => 'Attendance Photos',
+    'attendance_image' => 'Attendance Photo',
     'has_accepted_attendance' => 'Has Accepted Attendance',
     'image' => 'Image',
 
@@ -828,6 +828,10 @@ return [
     'overtime_date' => 'Overtime Date',
     'overtime_reason' => 'Overtime Reason',
     'overtime_amount' => 'Overtime Amount',
+    'overtime_report' => 'Overtime Report',
+    'total_records'   => 'Total Records',
+    'hours'           => 'Hours',
+    'approved_by'     => 'Approved By',
 
     // ===========================================
     // Attendance Report Blade View
@@ -1078,4 +1082,5 @@ return [
     'termination_request_created' => 'Termination request created successfully',
     'subtotal' => 'Subtotal',
     'weekly_leave' => 'Weekly Leave',
+    'error_occurred' => 'Error Occurred',
 ];

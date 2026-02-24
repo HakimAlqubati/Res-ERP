@@ -38,6 +38,12 @@ class OverlappingShiftsRule implements ValidationRuleInterface
             return;
         }
 
+        // إذا كانت جميع الورديات المطابقة هي نفس الوردية (نفس period_id) في أيام مختلفة، فلا نعتبرها تداخل يحتاج لاختيار المستخدم
+        $uniquePeriodIds = $matchingShifts->pluck('candidate.period.id')->unique();
+        if ($uniquePeriodIds->count() === 1) {
+            return;
+        }
+
         // التحقق: هل الوقت في منطقة الفجوة بين الورديتين؟
         if (ShiftInfoBuilder::isTimeInGapZone($matchingShifts, $context->requestTime)) {
             throw new MultipleShiftsException(

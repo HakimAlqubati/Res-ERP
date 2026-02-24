@@ -810,6 +810,10 @@ return [
   'overtime_date' => 'تاريخ العمل الإضافي',
   'overtime_reason' => 'سبب العمل الإضافي',
   'overtime_amount' => 'مبلغ العمل الإضافي',
+  'overtime_report' => 'تقرير العمل الإضافي',
+  'total_records'   => 'إجمالي السجلات',
+  'hours'           => 'الساعات',
+  'approved_by'     => 'اعتمد بواسطة',
 
   // ===========================================
   // Attendance Report Blade View
@@ -1060,4 +1064,5 @@ return [
   'termination_request_created' => 'تم إنشاء طلب إنهاء الخدمة بنجاح',
   'subtotal' => 'المجموع الفرعي',
   'weekly_leave' => 'إجازة أسبوعية',
+  'error_occurred' => 'حدث خطأ',
 ];

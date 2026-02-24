@@ -186,26 +186,26 @@ class AttendanceFetcher
         }
 
         $stats = HelperFunctions::calculateAttendanceStats($result);
-        // dd($stats);
-        // =========================================================================
-        // حساب نتيجة WeeklyLeaveCalculator النهائية
-        // =========================================================================
-        $weeklyLeaveStats = $result->get('weekly_leave_stats', []);
-        $totalMonthDays = $stats['total_days'] ?? 0;
-        $absentDays = $weeklyLeaveStats['remaining_absences'] ?? $stats['absent'] ?? 0;
-
-        $weeklyLeaveCalculator = new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator();
-        $weeklyLeaveResult = $weeklyLeaveCalculator->calculate($totalMonthDays, $absentDays);
-
-        $stats['weekly_leave_calculation'] =  $weeklyLeaveResult;
-
-
 
         // =========================================================================
         // منطق تحويل الغياب إلى إجازة أسبوعية تلقائية
         // كل 6 أيام عمل = يوم إجازة مستحق
         // =========================================================================
         $result = $this->applyWeeklyLeaveToAbsences($result);
+
+        // =========================================================================
+        // حساب نتيجة WeeklyLeaveCalculator النهائية
+        // يجب أن يكون بعد applyWeeklyLeaveToAbsences لتكون weekly_leave_stats معبأة
+        // نستخدم required_days بدل total_days لاستبعاد أيام no_periods
+        // =========================================================================
+        $weeklyLeaveStats = $result->get('weekly_leave_stats', []);
+        $totalMonthDays = $stats['required_days'] ?? $stats['total_days'] ?? 0;
+        $absentDays = $weeklyLeaveStats['remaining_absences'] ?? $stats['absent'] ?? 0;
+
+        $weeklyLeaveCalculator = new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator();
+        $weeklyLeaveResult = $weeklyLeaveCalculator->calculate($totalMonthDays, $absentDays);
+
+        $stats['weekly_leave_calculation'] = $weeklyLeaveResult;
 
         $result->put('statistics', $stats);
         $result->put('total_duration_hours', $totalDurationHours);
@@ -285,6 +285,7 @@ class AttendanceFetcher
             }
         }
 
+        // dd($totalMissingHoursSeconds);
         // Convert total seconds to H:i:s format if needed, or just store the total minutes
         $totalMissingHours = sprintf(
             '%02d:%02d:%02d',
@@ -315,12 +316,35 @@ class AttendanceFetcher
                         $minutes = (int) ($lastCheckout['early_departure_minutes'] ?? 0);
                         // Only count if minutes >= minimum threshold from settings
                         if ($minutes >= $minEarlyDepartureMinutes && $minutes > 0) {
-                            $totalEarlyDepartureSeconds += $minutes * 60;
+                            $shouldDeduct = true;
+                            if (setting('flix_hours_early_departure')) {
+                                if (
+                                    isset($lastCheckout['total_actual_duration_hourly']) &&
+                                    isset($lastCheckout['supposed_duration_hourly'])
+                                ) {
+                                    $helper = new \App\Services\HR\AttendanceHelpers\Reports\HelperFunctions();
+                                    $reflection = new \ReflectionClass($helper);
+                                    $method = $reflection->getMethod('timeToHoursForLateArrival');
+                                    $method->setAccessible(true);
+
+                                    $actualHoursFloat = $method->invoke($helper, $lastCheckout['total_actual_duration_hourly']);
+                                    $supposedHoursFloat = $method->invoke($helper, $lastCheckout['supposed_duration_hourly']);
+
+                                    if ($actualHoursFloat >= ($supposedHoursFloat - (\App\Services\HR\AttendanceHelpers\Reports\HelperFunctions::FLEXIBLE_HOURS_MARGIN_MINUTES / 60))) {
+                                        $shouldDeduct = false;
+                                    }
+                                }
+                            }
+
+                            if ($shouldDeduct) {
+                                $totalEarlyDepartureSeconds += $minutes * 60;
+                            }
                         }
                     }
                 }
             }
         }
+
 
         // Convert total seconds to H:i:s format
         $totalEarlyDeparture = sprintf(
@@ -427,21 +451,24 @@ class AttendanceFetcher
 
             $status = $day['day_status'];
 
-            // إذا كان حاضراً أو حضور جزئي، احسب كيوم عمل
+            // إذا كان حاضراً، احسب كيوم عمل
             if (in_array($status, [
                 AttendanceReportStatus::Present->value,
-                AttendanceReportStatus::Partial->value,
-                AttendanceReportStatus::IncompleteCheckinOnly->value,
                 AttendanceReportStatus::IncompleteCheckoutOnly->value,
             ])) {
                 $totalWorkDays++;
             }
-            // إذا كان غائباً، أضفه لقائمة الغيابات
-            elseif ($status === AttendanceReportStatus::Absent->value) {
+            // إذا كان غائباً أو لديه حضور جزئي أو حضور بلا انصراف، أضفه لقائمة الغيابات
+            elseif (in_array($status, [
+                AttendanceReportStatus::Absent->value,
+                AttendanceReportStatus::Partial->value,
+                AttendanceReportStatus::IncompleteCheckinOnly->value,
+            ])) {
                 $absentDates[] = $date;
             }
         }
 
+        // dd($absentDates, $totalWorkDays);
         // =========================================================================
         // حساب إجمالي الإجازات المستحقة
         // =========================================================================

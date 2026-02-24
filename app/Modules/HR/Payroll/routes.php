@@ -27,6 +27,9 @@ Route::prefix('api/hr/payroll')
 
         // تشغيل وحفظ الرواتب
         Route::post('/run', [RunPayrollController::class, 'run']);
+
+        // Salary Slip JSON
+        Route::get('/salary-slip/{payroll_id}', [\App\Modules\HR\Payroll\Reports\SalarySlipReport::class, 'json']);
     });
 
 Route::middleware(['web'])

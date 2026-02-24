@@ -53,9 +53,15 @@ class AttendanceImagesUploadedResource extends Resource
         return $table->striped()
             ->defaultSort('id', 'desc')
             ->paginated([10, 25, 50, 100])
+            ->defaultPaginationPageOption(25)
             ->columns([
                 Stack::make([
-                    ImageColumn::make('full_image_url')->circular(false)->tooltip(fn($record) => $record->employee_name)
+                    ImageColumn::make('full_image_url')->circular(false)
+                        ->tooltip(
+                            fn($record) =>
+                            "ID: (" . ($record->employee?->id ?? '--') . "), Employee No: (" . ($record->employee?->employee_no ?? '--') . "), Nationality: (" . ($record->employee?->nationality ?? '--') . "), Branch: (" . ($record->employee?->branch?->name ?? '--') . "), Job Title: (" . ($record->employee?->job_title ?? '--') . ")"
+                        )
+
                         ->label(__('lang.image'))
                         ->size(200)->wrap()
                         ->extraImgAttributes(
@@ -104,7 +110,7 @@ class AttendanceImagesUploadedResource extends Resource
                 Filter::make('has_accepted_attendance')
                     ->label(__('lang.has_accepted_attendance'))
                     ->toggle()
-                    ->default(false)
+                    ->default(true)
                     ->query(function (Builder $query): Builder {
                         return $query->whereHas('attendances', function (Builder $q) {
                             $q->where('accepted', 1);

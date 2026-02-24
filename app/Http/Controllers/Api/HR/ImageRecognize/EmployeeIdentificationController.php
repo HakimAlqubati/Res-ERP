@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\HR\ImageRecognize\IdentifyEmployeeRequest;
 use App\Services\HR\ImageRecognize\FaceRecognitionService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
+use App\Models\AppLog;
 
 class EmployeeIdentificationController extends Controller
 {
@@ -35,10 +35,15 @@ class EmployeeIdentificationController extends Controller
                 ],
             ]);
         } catch (\Throwable $e) {
-            Log::error('Face recognition failed', [
-                'message' => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
-            ]);
+            AppLog::write(
+                'Face recognition failed',
+                AppLog::LEVEL_ERROR,
+                'EmployeeIdentificationController',
+                [
+                    'message' => $e->getMessage(),
+                    'trace'   => $e->getTraceAsString(),
+                ]
+            );
 
             return response()->json([
                 'status'  => 'error',

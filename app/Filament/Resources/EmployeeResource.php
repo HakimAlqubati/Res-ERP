@@ -295,4 +295,10 @@ class EmployeeResource extends Resource
     {
         return 15;
     }
+
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name', 'email', 'employee_no', 'id'];
+    }
 }

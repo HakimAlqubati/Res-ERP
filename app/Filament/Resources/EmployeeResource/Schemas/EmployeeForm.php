@@ -41,8 +41,11 @@ class EmployeeForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
-            ->components([
-
+        ->components([
+                // static::avatar()
+                // ->imagePreviewHeight(200)
+                // ,
+                
                 Wizard::make([
                     Step::make(__('lang.personal_data'))
                         ->icon('heroicon-o-user-circle')
@@ -198,31 +201,7 @@ class EmployeeForm
                                         ->icon(Heroicon::UserCircle)
                                         ->schema([
 
-                                            FileUpload::make('avatar')->columnSpanFull()
-                                                ->image()
-                                                ->label('')
-                                                // ->avatar()
-                                                ->imageEditor()
-
-                                                ->circleCropper()
-                                                ->disk('s3')
-                                                // ->directory('employees')
-                                                ->visibility('public')
-                                                ->imageEditorAspectRatios([
-                                                    '16:9',
-                                                    '4:3',
-                                                    '1:1',
-                                                ])
-                                                // ->disk('s3') // Change disk to S3
-                                                ->directory('employees')
-                                                ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                                    return Str::random(15) . "." . $file->getClientOriginalExtension();
-                                                })
-                                                // ->imagePreviewHeight('250')
-                                                // ->resize(5)
-                                                ->maxSize(1000)
-                                                ->columnSpan(2)
-                                                ->reactive(),
+                                            static::avatar(),
 
                                         ])
                                 ]),
@@ -574,5 +553,34 @@ class EmployeeForm
                 ])->columnSpanFull()->skippable(),
 
             ]);
+    }
+
+    public static function avatar(): FileUpload
+    {
+        return FileUpload::make('avatar')->columnSpanFull()
+            ->image()
+            ->label('')
+            // ->avatar()
+            ->imageEditor()
+
+            ->circleCropper()
+            ->disk('s3')
+            // ->directory('employees')
+            ->visibility('public')
+            ->imageEditorAspectRatios([
+                '16:9',
+                '4:3',
+                '1:1',
+            ])
+            // ->disk('s3') // Change disk to S3
+            ->directory('employees')
+            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                return Str::random(15) . "." . $file->getClientOriginalExtension();
+            })
+            // ->imagePreviewHeight('250')
+            // ->resize(5)
+            ->maxSize(1000)
+            ->columnSpan(2)
+            ->reactive();
     }
 }

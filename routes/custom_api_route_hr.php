@@ -57,6 +57,7 @@ Route::prefix('hr')
         Route::get('/attendancePlan', [AttendanceController::class, 'generate']);
         Route::get('/absentEmployees', [AttendanceController::class, 'absentEmployees']);
         Route::get('/attendanceImages', [AttendanceController::class, 'attendanceImages']);
+        Route::get('/v2/attendanceImages', [AttendanceController::class, 'attendanceImagesV2']);
 
         // Route::post('/attendance/plan/execute', [AttendancePlanController::class, 'execute'])->middleware('auth:api');
         Route::post('/faceRecognition', [AttendanceController::class, 'identifyEmployeeFromImage']);
@@ -200,6 +201,7 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
 
 
 Route::get('employees/simple-list', [EmployeeController::class, 'simpleList']);
+Route::get('employees/v2/simple-list', [EmployeeController::class, 'simpleListV2']);
 
 Route::post('/face-images', [FaceImageController::class, 'store']);
 
@@ -357,4 +359,17 @@ Route::prefix('hr')
             \App\Modules\HR\EmployeeWorkPeriods\Http\Controllers\EmployeeWorkPeriodController::class,
             'getWorkPeriods'
         ]);
+    });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Payroll Reports API (PDF Downloads)
+// ═══════════════════════════════════════════════════════════════════════════
+Route::prefix('hr')
+    // ->middleware('auth:api')
+    ->group(function () {
+        // Download Salary Slip PDF
+        // GET /api/hr/payrolls/{payroll}/salary-slip-pdf
+        Route::get('/payrolls/{payroll}/salary-slip-pdf', function ($payrollId) {
+            return app(\App\Modules\HR\Payroll\Reports\SalarySlipReport::class)->generate($payrollId);
+        })->name('api.hr.payrolls.salary-slip-pdf');
     });

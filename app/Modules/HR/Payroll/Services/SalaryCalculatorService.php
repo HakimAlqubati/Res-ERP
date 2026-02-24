@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\HR\Payroll\Services;
 
+/**
+ * Main Class.
+ */
+
 use App\Enums\HR\Payroll\DailyRateMethod;
 use App\Models\Employee;
 use App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator;
@@ -115,6 +119,14 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         $this->assertPositive($dailyHours, 'Daily hours');
         $this->assertPositive($monthDays, 'Month days');
 
+        // Check if employee has any assigned shifts (required days) in this period
+        $requiredDays = (int)($employeeData['statistics']['required_days'] ?? 0);
+        if ($requiredDays === 0) {
+            throw new InvalidArgumentException(
+                "Skipped: Employee [{$employee->name}] (No: {$employee->employee_no}) has no assigned shifts for this period. Salary cannot be calculated."
+            );
+        }
+
         // Determine the denominator for rate calculation ($rateWorkingDays)
         $rateWorkingDays = $workingDays;
         if ($this->dailyRateMethod !== DailyRateMethod::ByEmployeeWorkingDays->value) {
@@ -126,12 +138,19 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             $rateWorkingDays = 30;
         } elseif ($this->dailyRateMethod === DailyRateMethod::ByMonthDays->value) {
             $rateWorkingDays = $monthDays;
+        } elseif ($this->dailyRateMethod === DailyRateMethod::ByCustomDays->value) {
+            $rateWorkingDays = (int) settingWithDefault('custom_month_days', 30);
         }
 
         // Determine how many days should be paid for the current period ($payableDays)
         $payableDays = $rateWorkingDays;
         if ($periodEnd && $periodEnd->day < $monthDays) {
             $payableDays = $periodEnd->day;
+        }
+
+        // Cap payable days by required shift days (exclude no_periods days)
+        if ($requiredDays < $payableDays) {
+            $payableDays = $requiredDays;
         }
 
         if (!$periodYear || !$periodMonth) {
@@ -252,9 +271,9 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         // Gross Wages should include Overtime, Allowances, etc.
         // However, we should subtract Unpaid Leave (Absent days) because that salary was never earned.
         // We should NOT subtract Late/Early/Penalties/Advances as those are deductions from earned salary.
-        
+
         $baseForStatutoryDeductions = $this->grossSalary - ($this->totalDeductions);
-        
+
         // Ensure base is not negative
         $baseForStatutoryDeductions = max(0, $baseForStatutoryDeductions);
 

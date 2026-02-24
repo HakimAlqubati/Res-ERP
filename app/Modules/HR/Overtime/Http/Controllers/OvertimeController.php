@@ -3,9 +3,11 @@
 namespace App\Modules\HR\Overtime\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Employee;
 use App\Models\EmployeeOvertime;
 use App\Modules\HR\Overtime\OvertimeService;
 use Exception;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -76,18 +78,30 @@ class OvertimeController extends Controller
         try {
             $data = $validator->validated();
 
+            // Check for existing overtime records before inserting
+            $employeeIds = collect($data['employees'])->pluck('employee_id');
+            $existingRecords = EmployeeOvertime::where('date', $data['date'])
+                ->where('type', $data['type'])
+                ->whereIn('employee_id', $employeeIds)
+                ->with('employee:id,name')
+                ->get();
+
+            if ($existingRecords->isNotEmpty()) {
+                $duplicateNames = $existingRecords->map(function ($record) {
+                    return $record->employee
+                        ? "{$record->employee->name} (#{$record->employee_id})"
+                        : "#{$record->employee_id}";
+                })->implode(', ');
+
+                return response()->json([
+                    'status'  => false,
+                    'message' => "Overtime already exists for the following employees on {$data['date']}: {$duplicateNames}",
+                ], 422);
+            }
+
             if ($data['type'] === EmployeeOvertime::TYPE_BASED_ON_DAY) {
                 $this->overtimeService->handleOvertimeByDay($data);
             } elseif ($data['type'] === EmployeeOvertime::TYPE_BASED_ON_MONTH) {
-                // Ensure 'employees_with_month' or similar structure is handled if needed
-                // But for now, based on user request, we focus on the structure provided which matches 'based_on_day'
-                // If based_on_month uses a different key for employees, we might need adjustments
-                // valid for based_on_day according to service
-
-                // NOTE: The service method handleOverTimeMonth expects 'employees_with_month' key.
-                // If the user sends 'employees' but type is 'based_on_month', this might fail if we don't map it.
-                // However, the user example specifically showed 'based_on_day'. 
-                // We will assume for now we just pass data.
                 $this->overtimeService->handleOverTimeMonth($data);
             }
 
@@ -95,6 +109,18 @@ class OvertimeController extends Controller
                 'status'  => true,
                 'message' => 'Overtime records created successfully',
             ]);
+        } catch (QueryException $e) {
+            if ($e->errorInfo[1] == 1062) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Overtime record already exists for one or more employees on this date.',
+                ], 422);
+            }
+
+            return response()->json([
+                'status'  => false,
+                'message' => 'A database error occurred.',
+            ], 500);
         } catch (Exception $e) {
             return response()->json([
                 'status'  => false,
@@ -196,6 +222,34 @@ class OvertimeController extends Controller
                 'status' => true,
                 'data'   => $data,
             ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get overtime report with filters and summary.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function report(Request $request)
+    {
+        try {
+            $filter = \App\Modules\HR\Overtime\Reports\DTOs\OvertimeReportFilter::fromArray($request->all());
+            $report = app(\App\Modules\HR\Overtime\Reports\OvertimeReportService::class)->generate($filter);
+
+            // Fetch paginated items and merge summary into the response
+            $paginator = $report['items']->toArray();
+
+            return response()->json(array_merge(
+                ['status' => true],
+                $paginator, // This includes: data, current_page, last_page, per_page, total, etc.
+                ['summary' => $report['summary']]
+            ));
         } catch (Exception $e) {
             return response()->json([
                 'status'  => false,
