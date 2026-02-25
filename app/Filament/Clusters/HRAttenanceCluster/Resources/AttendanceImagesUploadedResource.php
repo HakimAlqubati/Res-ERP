@@ -72,10 +72,11 @@ class AttendanceImagesUploadedResource extends Resource
                     TextColumn::make('employee.name')->label(__('lang.employee'))->default('--')->searchable()
                         ->color('primary')
                         ->weight(FontWeight::Bold),
-                    // TextColumn::make('datetime')->label(__('lang.date'))
-                    //     ->date('Y-m-d')
+                    TextColumn::make('datetime')->label(__('lang.date'))
+                        ->date('Y-m-d')
 
-                    //     ->hidden(fn($state) => blank($state)),
+                        // ->hidden(fn($state) => blank($state))
+                        ,
                     TextColumn::make('datetime')->label(__('lang.date'))
                         ->time('H:i:s')
                         // ->hidden(fn($state) => blank($state))
