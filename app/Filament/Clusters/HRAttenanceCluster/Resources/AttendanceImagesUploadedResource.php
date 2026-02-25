@@ -76,9 +76,10 @@ class AttendanceImagesUploadedResource extends Resource
                     //     ->date('Y-m-d')
 
                     //     ->hidden(fn($state) => blank($state)),
-                    // TextColumn::make('datetime')->label(__('lang.date'))
-                    //     ->time('H:i:s')
-                    //     ->hidden(fn($state) => blank($state)),
+                    TextColumn::make('datetime')->label(__('lang.date'))
+                        ->time('H:i:s')
+                        // ->hidden(fn($state) => blank($state))
+                        ,
 
                     TextColumn::make('attendances.check_date')->label(__('lang.check_date'))->placeholder('--')
                         ->date('Y-m-d')
