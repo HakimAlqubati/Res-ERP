@@ -58,9 +58,9 @@ class LinkAttendanceImagesCommand extends Command
                     // Logic based on AttendanceContext.php:
                     // Range: [Time - 2 mins, Time + 1 min buffer]
 
-                    // Revert to strict 2-minute window as per user request
-                    $startTime = $attendanceTimestamp->copy()->subMinutes(2);
-                    $endTime = $attendanceTimestamp->copy()->addMinutes(2);
+                    // Revert to strict 15-minute window to catch any syncing issues on the external database
+                    $startTime = $attendanceTimestamp->copy()->subMinutes(15);
+                    $endTime = $attendanceTimestamp->copy()->addMinutes(15);
 
                     // We need to use raw query mostly because datetime in DB might be string
                     // But Eloquent whereBetween usually handles it.
