@@ -53,8 +53,9 @@ class LinkAttendanceImagesCommand extends Command
         $attendanceQuery->chunk(100, function ($attendances) use ($bar, &$updatedCount) {
             foreach ($attendances as $attendance) {
                 try {
-                    // Combine date and time to get full timestamp
-                    $attendanceTimestamp = Carbon::parse($attendance->check_date . ' ' . $attendance->check_time);
+                    // Combine date and time to get full timestamp (use real_check_date to handle night shifts)
+                    $actualDate = $attendance->real_check_date ?: $attendance->check_date;
+                    $attendanceTimestamp = Carbon::parse($actualDate . ' ' . $attendance->check_time);
 
                     // Logic based on AttendanceContext.php:
                     // Range: [Time - 2 mins, Time + 1 min buffer]
@@ -70,7 +71,8 @@ class LinkAttendanceImagesCommand extends Command
                     $image = AttendanceImagesUploaded::query()
                         ->where('employee_id', $attendance->employee_id)
                         ->whereBetween('datetime', [$startTime, $endTime])
-                        ->whereDate('created_at', '<', '2026-02-22')
+                        // Use datetime instead of created_at to avoid issues with late uploads
+                        ->whereDate('datetime', '<', '2026-02-22')
                         // Get the one with minimum time difference
                         ->get()
                         ->sortBy(fn($img) => abs(Carbon::parse($img->datetime)->diffInSeconds($attendanceTimestamp)))
