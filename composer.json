@@ -34,6 +34,7 @@
         "mpdf/mpdf": "^8.2",
         "nwidart/laravel-modules": "^11.0",
         "owen-it/laravel-auditing": "^14.0",
+        "predis/predis": "^3.4",
         "pusher/pusher-php-server": "^7.2",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-activitylog": "^4.10",

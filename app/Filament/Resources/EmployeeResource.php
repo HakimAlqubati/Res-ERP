@@ -116,6 +116,8 @@ class EmployeeResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
+        return '_';
+        
         return static::getModel()::forBranchManager()->count();
     }
 
@@ -123,6 +125,7 @@ class EmployeeResource extends Resource
     {
         return parent::getEloquentQuery()
             // ->where('role_id',8)
+            ->with(['serviceTermination', 'user']) // أضفنا العلاقات هنا
             ->forBranchManager()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,

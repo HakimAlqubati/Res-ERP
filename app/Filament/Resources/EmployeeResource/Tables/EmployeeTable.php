@@ -170,6 +170,23 @@ class EmployeeTable
                             'working_hours' => $hoursCount,
                         ]);
                     }),
+                TextColumn::make('unrequired_documents_count')->label(__('lang.unrequired_docs'))->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->formatStateUsing(function ($state) {
+                        $counts = \Illuminate\Support\Facades\Cache::remember('employee_file_type_counts', 86400, function () {
+                            return \App\Models\EmployeeFileType::getCountByRequirement();
+                        });
+                        return '(' . $state . ') docs of ' . $counts['unrequired_count'];
+                    }),
+
+                TextColumn::make('required_documents_count')->label(__('lang.required_docs'))->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->formatStateUsing(function ($state) {
+                        $counts = \Illuminate\Support\Facades\Cache::remember('employee_file_type_counts', 86400, function () {
+                            return \App\Models\EmployeeFileType::getCountByRequirement();
+                        });
+                        return '(' . $state . ') docs of ' . $counts['required_count'];
+                    }),
                 TextColumn::make('working_days')->label(__('lang.working_days'))->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: false)->alignCenter(true),
                 TextColumn::make('position.title')->limit(20)
@@ -216,7 +233,7 @@ class EmployeeTable
                     )
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->url(function ($record) {
-                        if ($record->user) {
+                        if ($record->user_id) {
                             return url('admin/users/' . $record?->user_id . '/edit');
                         }
                     })->openUrlInNewTab()
@@ -255,7 +272,10 @@ class EmployeeTable
                 SelectFilter::make('branch_id')
                     ->searchable()
                     ->multiple()
-                    ->label(__('lang.branch'))->options(Branch::active()->forBranchManager('id')->get()->pluck('name', 'id')->toArray()),
+                    ->label(__('lang.branch'))
+                    ->options(fn() => \Illuminate\Support\Facades\Cache::remember('active_branches_filter', 86400, function () {
+                        return \App\Models\Branch::active()->forBranchManager('id')->get()->pluck('name', 'id')->toArray();
+                    })),
                 SelectFilter::make('nationality')
                     ->searchable()
                     ->multiple()
@@ -268,13 +288,16 @@ class EmployeeTable
                     ->label(__('lang.active')),
                 SelectFilter::make('employee_type')
                     ->label(__('lang.role_type'))
-                    ->options(UserType::where('active', 1)->pluck('name', 'id')->toArray())
+                    ->options(fn() => \Illuminate\Support\Facades\Cache::remember('user_types_filter', 86400, function () {
+                        return \App\Models\UserType::where('active', 1)->pluck('name', 'id')->toArray();
+                    }))
                     ->searchable()
                     ->multiple(),
                 SelectFilter::make('manager_id')
                     ->label(__('lang.manager'))
-                    ->options(Employee::whereIn('employee_type', [1, 2])->pluck('name', 'id')->toArray())
-                    ->searchable()
+                    ->options(fn() => \Illuminate\Support\Facades\Cache::remember('managers_filter', 86400, function () {
+                        return \App\Models\Employee::whereIn('employee_type', [1, 2])->pluck('name', 'id')->toArray();
+                    }))->searchable()
                     ->multiple(),
                 Filter::make('me')
                     ->label(__('lang.me'))
