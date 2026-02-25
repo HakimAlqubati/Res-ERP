@@ -38,9 +38,7 @@ class LinkAttendanceImagesCommand extends Command
         $this->info("Starting linkage process for the last {$days} days...");
 
         $attendanceQuery = Attendance::query()
-            // ->where('check_date', '>=', now()->subDays($days)->toDateString())
-
-        ;
+            ->where('check_date', '<', '2026-02-23');
 
         if (!$force) {
             $attendanceQuery->whereNull('source_id');
@@ -71,8 +69,6 @@ class LinkAttendanceImagesCommand extends Command
                     $image = AttendanceImagesUploaded::query()
                         ->where('employee_id', $attendance->employee_id)
                         ->whereBetween('datetime', [$startTime, $endTime])
-                        // Use datetime instead of created_at to avoid issues with late uploads
-                        ->whereDate('datetime', '<', '2026-02-22')
                         // Get the one with minimum time difference
                         ->get()
                         ->sortBy(fn($img) => abs(Carbon::parse($img->datetime)->diffInSeconds($attendanceTimestamp)))
