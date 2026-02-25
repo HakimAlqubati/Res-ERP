@@ -324,8 +324,11 @@
         {{-- Footer --}}
         <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
             {{-- Formula --}}
-            <p style="font-size: 0.7rem; color: #6b7280; margin: 0 0 0.5rem 0; font-weight: 500; text-align: center;">
+            <p style="font-size: 0.7rem; color: #6b7280; margin: 0 0 0.25rem 0; font-weight: 500; text-align: center;">
                 Net Profit = Gross Profit - Total Operating Expenses
+            </p>
+            <p style="font-size: 0.7rem; color: #6b7280; margin: 0 0 0.5rem 0; font-weight: 500; text-align: center;">
+                Gross Profit = Sales + Closing Stock – Transfers – Direct Purchases
             </p>
             {{-- Generated on + Powered by AWS (same row) --}}
             <div style="display: flex; align-items: center;">

@@ -444,7 +444,6 @@
                 </tr>
 
                 {{-- Cost of Goods Sold Components --}}
-                @if(($report['cost_of_goods_sold']['closing_stock'] ?? 0) > 0)
                 <tr class="table-row">
                     <td class="row-label">
                         <div style="font-weight: 600;">{{ __('Closing Stock') }}</div>
@@ -453,9 +452,7 @@
                         {{ $report['cost_of_goods_sold']['closing_stock_formatted'] ?? number_format($report['cost_of_goods_sold']['closing_stock'] ?? 0, 2) }}
                     </td>
                 </tr>
-                @endif
 
-                @if(($report['cost_of_goods_sold']['direct_purchase'] ?? 0) > 0)
                 <tr class="table-row">
                     <td class="row-label">
                         <div style="font-weight: 600;">{{ __('Direct Purchase') }}</div>
@@ -464,7 +461,6 @@
                         ({{ $report['cost_of_goods_sold']['direct_purchase_formatted'] ?? number_format($report['cost_of_goods_sold']['direct_purchase'] ?? 0, 2) }})
                     </td>
                 </tr>
-                @endif
 
                 {{-- Gross Profit Step --}}
                 <tr class="total-row">
@@ -530,8 +526,11 @@
         {{-- Generated On --}}
         <div style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
             {{-- Formula --}}
-            <p style="font-size: 0.7rem; color: #6b7280; margin: 0 0 0.5rem 0; font-weight: 500; text-align: center;">
+            <p style="font-size: 0.7rem; color: #6b7280; margin: 0 0 0.25rem 0; font-weight: 500; text-align: center;">
                 Net Profit = Gross Profit - Total Operating Expenses
+            </p>
+            <p style="font-size: 0.7rem; color: #6b7280; margin: 0 0 0.5rem 0; font-weight: 500; text-align: center;">
+                Gross Profit = Sales + Closing Stock – Transfers – Direct Purchases
             </p>
             {{-- Generated on + Powered by AWS (same row) --}}
             <div style="display: flex; align-items: center;">
