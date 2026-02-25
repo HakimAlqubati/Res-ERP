@@ -38,7 +38,8 @@ class LinkAttendanceImagesCommand extends Command
         $this->info("Starting linkage process for the last {$days} days...");
 
         $attendanceQuery = Attendance::query()
-            ->where('check_date', '<', '2026-02-23');
+            // ->where('check_date', '<', '2026-02-23')
+        ;
 
         if (!$force) {
             $attendanceQuery->whereNull('source_id');
