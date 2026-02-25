@@ -70,6 +70,7 @@ class LinkAttendanceImagesCommand extends Command
                     $image = AttendanceImagesUploaded::query()
                         ->where('employee_id', $attendance->employee_id)
                         ->whereBetween('datetime', [$startTime, $endTime])
+                        ->whereDate('created_at', '<', '2026-02-22')
                         // Get the one with minimum time difference
                         ->get()
                         ->sortBy(fn($img) => abs(Carbon::parse($img->datetime)->diffInSeconds($attendanceTimestamp)))
