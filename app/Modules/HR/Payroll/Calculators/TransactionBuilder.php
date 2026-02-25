@@ -173,6 +173,8 @@ class TransactionBuilder
                 'operation'    => null,
                 'description'  => $ded['name'] . ' (employer contribution)' ?? 'Employer contribution',
                 'deduction_id' => $ded['id'] ?? null,
+                'reference_type' => Deduction::class,
+                'reference_id' => $ded['id'] ?? null,
             ];
         }
 

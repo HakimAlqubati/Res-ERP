@@ -180,6 +180,8 @@ class FinancialTransactionsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+
+                TrashedFilter::make(),
                 SelectFilter::make('type')
                     ->options(FinancialTransaction::TYPES)
                     ->label('Type'),
@@ -219,7 +221,6 @@ class FinancialTransactionsTable
                             );
                     }),
 
-                TrashedFilter::make(),
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
             ->recordActions([

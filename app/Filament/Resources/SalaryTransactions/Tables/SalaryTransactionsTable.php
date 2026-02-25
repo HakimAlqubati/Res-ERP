@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\SalaryTransactions\Tables;
 
+use App\Enums\HR\Payroll\SalaryTransactionType;
 use App\Models\SalaryTransaction;
 use App\Filament\Resources\SalaryTransactions\SalaryTransactionResource;
 use Filament\Actions\BulkActionGroup;
@@ -20,6 +21,14 @@ class SalaryTransactionsTable
 {
     public static function configure(Table $table): Table
     {
+
+        // $randomIds = range(1, 1000);
+
+        // $employerContributions = SalaryTransaction::whereIn('payroll_id', $randomIds)
+        //     ->where('type', SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value)
+        //     ->get();
+
+        // dd($employerContributions);
         return $table->striped()
             ->recordUrl(fn(SalaryTransaction $record): string => SalaryTransactionResource::getUrl('view', ['record' => $record]))
             ->columns([
@@ -47,8 +56,9 @@ class SalaryTransactionsTable
                 // نوع العملية (خصم / إضافة)
                 TextColumn::make('operation')->toggleable()
                     ->label(__('Operation'))->alignCenter()
-                    ->badge()
-                    ->color(fn($state) => $state === '+' ? 'success' : 'danger'),
+                // ->badge()
+                // ->color(fn($state) => $state === '+' ? 'success' : 'danger')
+                ,
 
                 // النوع الفرعي (مثلاً غياب، إضافي، سلفة)
                 TextColumn::make('type')->toggleable()
@@ -100,6 +110,17 @@ class SalaryTransactionsTable
                     ->label(__('Description'))->toggleable()
                     ->limit(40)
                     ->toggleable(),
+
+                TextColumn::make('referenceable.name')
+                    ->label(__('Deduction'))
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('notes')
+                    ->label(__('Notes'))
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->searchable()
+                    ->sortable(),
             ])->deferFilters(false)
             ->filters([
                 TrashedFilter::make(),
