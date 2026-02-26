@@ -145,6 +145,9 @@ class UserTable
                         }
                     })
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('created_at')
+                    ->label(__('lang.created_at'))
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filtersFormColumns(2)
             ->filters([

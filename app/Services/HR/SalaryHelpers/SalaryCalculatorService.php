@@ -750,8 +750,8 @@ class SalaryCalculatorService
                 'operation'    => null, // التزام على الشركة وليس الموظف
                 'description'  => $ded['name'] ?? 'Employer contribution',
                 'deduction_id' => $ded['id'] ?? null,
-                // 'reference_id' => $ded['id'],
-                // 'reference_type' => Deduction::class,
+                'reference_id' => $ded['id'] ?? null,
+                'reference_type' => Deduction::class,
             ];
         }
 

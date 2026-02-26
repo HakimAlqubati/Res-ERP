@@ -200,7 +200,9 @@ class AttendanceFetcher
         // =========================================================================
         $weeklyLeaveStats = $result->get('weekly_leave_stats', []);
         $totalMonthDays = $stats['required_days'] ?? $stats['total_days'] ?? 0;
-        $absentDays = $weeklyLeaveStats['remaining_absences'] ?? $stats['absent'] ?? 0;
+         
+        // $absentDays = $weeklyLeaveStats['remaining_absences'] ?? $stats['absent'] ?? 0;
+        $absentDays =  $stats['absent'] ?? 0;
 
         $weeklyLeaveCalculator = new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator();
         $weeklyLeaveResult = $weeklyLeaveCalculator->calculate($totalMonthDays, $absentDays);
@@ -461,8 +463,8 @@ class AttendanceFetcher
             // إذا كان غائباً أو لديه حضور جزئي أو حضور بلا انصراف، أضفه لقائمة الغيابات
             elseif (in_array($status, [
                 AttendanceReportStatus::Absent->value,
-                AttendanceReportStatus::Partial->value,
-                AttendanceReportStatus::IncompleteCheckinOnly->value,
+                // AttendanceReportStatus::Partial->value,
+                // AttendanceReportStatus::IncompleteCheckinOnly->value,
             ])) {
                 $absentDates[] = $date;
             }

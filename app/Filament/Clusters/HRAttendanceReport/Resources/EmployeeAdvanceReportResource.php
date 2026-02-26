@@ -163,7 +163,7 @@ class EmployeeAdvanceReportResource extends Resource
                             ->when(
                                 $data['deduction_to'],
                                 fn(Builder $query, $date): Builder => $query->whereDate('deduction_ends_at', '<=', $date)
-                            );  
+                            );
                     })
                     ->columns(2),
 
@@ -191,71 +191,7 @@ class EmployeeAdvanceReportResource extends Resource
             ], FiltersLayout::Modal)
             ->filtersFormColumns(2)
             ->recordActions([
-                Action::make('details')
-                    ->label(__('lang.installments'))
-                    ->button()
-                    ->icon('heroicon-o-list-bullet')
-                    ->color('info')
-                    ->schema(function ($record) {
-                        $installments = $record->installments()->orderBy('sequence')->get();
-
-                        return [
-                            Repeater::make('installments')
-                                ->label('')
-                                ->table([
-                                    TableColumn::make(__('lang.sequence'))
-                                        ->width('8%'),
-                                    TableColumn::make(__('lang.amount'))
-                                        ->width('18%'),
-                                    TableColumn::make(__('lang.due_date'))
-                                        ->width('18%'),
-                                    TableColumn::make(__('lang.paid'))
-                                        ->width('10%'),
-                                    TableColumn::make(__('lang.paid_date'))
-                                        ->width('18%'),
-                                    TableColumn::make(__('lang.status'))
-                                        ->width('15%'),
-                                ])
-                                ->schema([
-                                    TextInput::make('sequence')
-                                        ->label('#')
-                                        ->extraInputAttributes(['class' => 'text-center'])
-                                        ->disabled(),
-                                    TextInput::make('installment_amount')
-                                        ->label(__('lang.amount'))
-                                        ->disabled(),
-                                    DatePicker::make('due_date')
-                                        ->label(__('lang.due_date'))
-                                        ->disabled(),
-                                    TextInput::make('is_paid')
-                                        ->label(__('lang.paid'))
-                                        ->disabled()
-                                        ->extraInputAttributes(['class' => 'text-center']),
-                                    DatePicker::make('paid_date')
-                                        ->label(__('lang.paid_date'))
-                                        ->extraInputAttributes(['class' => 'text-center'])
-                                        ->disabled(),
-                                    TextInput::make('status')
-                                        ->label(__('lang.status'))
-                                        ->extraInputAttributes(['class' => 'text-center'])
-                                        ->disabled(),
-                                ])
-                                ->defaultItems(count($installments))
-                                ->columns(6)
-                                ->default($installments->map(fn($inst) => [
-                                    'sequence' => $inst->sequence,
-                                    'installment_amount' => number_format($inst->installment_amount, 2),
-                                    'due_date' => $inst->due_date?->format('Y-m-d'),
-                                    'is_paid' => $inst->is_paid ? '✓' : '✗',
-                                    'paid_date' => $inst->paid_date?->format('Y-m-d'),
-                                    'status' => $inst->status,
-                                ])->toArray()),
-                        ];
-                    })
-                    ->modalHeading(__('lang.installment_details'))
-                    ->disabledForm()
-                    ->modalSubmitAction(false)
-                    ->modalCancelAction(false),
+                \App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource::advanceInstallmentsAction(),
 
                 // ✅ تأجيل قسط (Skip & Reschedule)
                 Action::make('defer_installment')

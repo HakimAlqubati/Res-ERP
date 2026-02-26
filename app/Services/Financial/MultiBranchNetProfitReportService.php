@@ -7,12 +7,12 @@ use App\Models\Branch;
 use Illuminate\Support\Collection;
 
 /**
- * Multi-Branch Financial Report Service
+ * Multi-Branch Net Profit Report Service
  * 
  * A wrapper service that leverages the existing FinancialReportService
- * to generate comparative reports across multiple branches.
+ * to generate comparative net profit reports across multiple branches.
  */
-class MultiBranchFinancialReportService
+class MultiBranchNetProfitReportService
 {
     protected FinancialReportService $reportService;
 
@@ -22,7 +22,7 @@ class MultiBranchFinancialReportService
     }
 
     /**
-     * Get income statement comparison for multiple branches.
+     * Get net profit comparison for multiple branches.
      *
      * @param array $branchIds Array of branch IDs to compare
      * @param string|null $startDate Start date for the report
@@ -30,7 +30,7 @@ class MultiBranchFinancialReportService
      * @param bool $includeTotal Whether to include a total/summary column
      * @return array
      */
-    public function getMultiBranchIncomeStatement(
+    public function getMultiBranchNetProfitReport(
         array $branchIds,
         ?string $startDate = null,
         ?string $endDate = null,
@@ -47,7 +47,8 @@ class MultiBranchFinancialReportService
                 branchId: (int) $branchId
             );
 
-            $report = $this->reportService->getIncomeStatement($dto, excludePayroll: true);
+            // Utilizing the new method specialized for Net Profit Report to keep consistent
+            $report = $this->reportService->getNetProfitReport($dto);
 
             $branchName = $branches->get($branchId)?->name ?? "Branch #{$branchId}";
 
@@ -96,7 +97,7 @@ class MultiBranchFinancialReportService
         ?string $startDate = null,
         ?string $endDate = null
     ): array {
-        $result = $this->getMultiBranchIncomeStatement($branchIds, $startDate, $endDate);
+        $result = $this->getMultiBranchNetProfitReport($branchIds, $startDate, $endDate);
 
         $rows = [
             'revenue' => ['label' => __('Total Sales Revenue'), 'values' => [], 'raw_values' => []],
@@ -105,6 +106,8 @@ class MultiBranchFinancialReportService
             'transfers' => ['label' => __('Transfers'), 'values' => [], 'raw_values' => []],
             'gross_profit' => ['label' => __('Gross Profit'), 'values' => [], 'raw_values' => []],
             'gross_margin' => ['label' => __('Gross Margin %'), 'values' => [], 'raw_values' => []],
+            'expenses' => ['label' => __('Total Operating Expenses'), 'values' => [], 'raw_values' => []],
+            'net_profit' => ['label' => __('Net Profit'), 'values' => [], 'raw_values' => []],
         ];
 
         $headers = [];
@@ -134,6 +137,12 @@ class MultiBranchFinancialReportService
 
             $rows['gross_margin']['values'][$branchId] = $data['gross_profit']['ratio_formatted'];
             $rows['gross_margin']['raw_values'][$branchId] = $data['gross_profit']['ratio'] ?? 0;
+
+            $rows['expenses']['values'][$branchId] = $data['expenses']['total_formatted'];
+            $rows['expenses']['raw_values'][$branchId] = $data['expenses']['total'] ?? 0;
+
+            $rows['net_profit']['values'][$branchId] = $data['net_profit_formatted'];
+            $rows['net_profit']['raw_values'][$branchId] = $data['net_profit'] ?? 0;
         }
 
         // Add totals column
@@ -162,6 +171,12 @@ class MultiBranchFinancialReportService
 
             $rows['gross_margin']['values']['total'] = $totals['gross_profit']['ratio_formatted'];
             $rows['gross_margin']['raw_values']['total'] = $totals['gross_profit']['ratio'] ?? 0;
+
+            $rows['expenses']['values']['total'] = $totals['expenses']['total_formatted'];
+            $rows['expenses']['raw_values']['total'] = $totals['expenses']['total'] ?? 0;
+
+            $rows['net_profit']['values']['total'] = $totals['net_profit_formatted'];
+            $rows['net_profit']['raw_values']['total'] = $totals['net_profit'] ?? 0;
         }
 
         // Filter out rows where all values are zero (like single branch report)

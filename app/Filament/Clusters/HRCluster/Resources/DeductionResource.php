@@ -26,6 +26,7 @@ use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Slider;
 use Filament\Forms\Components\TextInput;
+use Filament\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Support\RawJs;
@@ -45,6 +46,11 @@ class DeductionResource extends Resource
     protected static ?string $cluster = HRSalarySettingCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 6;
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    protected static bool $isGloballySearchable = true;
+
     public static function form(Schema $schema): Schema
     {
 
@@ -321,5 +327,26 @@ class DeductionResource extends Resource
             return true;
         }
         return false;
+    }
+
+    public static function getGlobalSearchResultsLimit(): int
+    {
+        return 15;
+    }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name', 'description', 'id'];
+    }
+
+
+    public static function getRecordSubNavigation(Page $page): array
+    {
+        return $page->generateNavigationItems([
+            ListDeductions::class,
+            CreateDeduction::class,
+            EditDeduction::class,
+            ViewDeduction::class,
+        ]);
     }
 }

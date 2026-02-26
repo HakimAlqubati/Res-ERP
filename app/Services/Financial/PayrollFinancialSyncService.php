@@ -13,7 +13,7 @@ use App\Models\FinancialCategory;
 use App\Models\FinancialTransaction;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Log;
 
 /**
  * Service for syncing payroll data with financial transactions.
@@ -120,7 +120,7 @@ class PayrollFinancialSyncService
                         'category_id' => $salaryCategory->id,
                         'amount' => max(0, $basicSalaryExpense),
                         'type' => FinancialTransaction::TYPE_EXPENSE,
-                        'transaction_date' => $payrollRun->pay_date ?? now(),
+                        'transaction_date' => \Carbon\Carbon::create($payrollRun->year, $payrollRun->month, 1)->endOfMonth(),
                         'status' => FinancialTransaction::STATUS_PAID,
                         'description' => "Basic Salaries - Payroll Run: {$payrollRun->name} - {$payrollRun->year}/{$payrollRun->month}",
                         'reference_type' => PayrollRun::class,
@@ -358,7 +358,7 @@ class PayrollFinancialSyncService
                     'category_id' => $group['category_id'],
                     'amount' => $group['amount'],
                     'type' => FinancialTransaction::TYPE_EXPENSE,
-                    'transaction_date' => $payrollRun->pay_date ?? now(),
+                    'transaction_date' => \Carbon\Carbon::create($payrollRun->year, $payrollRun->month, 1)->endOfMonth(),
                     'status' => FinancialTransaction::STATUS_PAID,
                     'description' => "{$group['name']} - Payroll: {$payrollRun->name} ({$payrollRun->year}/{$payrollRun->month})",
                     'reference_type' => PayrollRun::class,
@@ -381,15 +381,22 @@ class PayrollFinancialSyncService
             ->where('type', SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value)
             ->get();
 
+        Log::info('Employer Contributions: ' . $employerContributions->count());
         if ($employerContributions->isEmpty()) {
             return;
         }
 
         $grouped = [];
+        $logCount = 0;
 
         foreach ($employerContributions as $transaction) {
             $catId = null;
             $name = 'Employer Contribution';
+
+            if ($logCount < 5) {
+                Log::info("Transaction ID: {$transaction->id}, RefType: {$transaction->reference_type}, RefID: {$transaction->reference_id}");
+                $logCount++;
+            }
 
             if ($transaction->reference_type === Deduction::class && $transaction->reference_id) {
                 $deduction = Deduction::with('financialCategory')->find($transaction->reference_id);
@@ -397,6 +404,13 @@ class PayrollFinancialSyncService
                     $name = "Employer Share: " . $deduction->name;
                     if ($deduction->financial_category_id) {
                         $catId = $deduction->financial_category_id;
+                    }
+                    if ($logCount <= 5) {
+                        Log::info("Found Deduction: {$deduction->name}, FinCatID: {$deduction->financial_category_id}");
+                    }
+                } else {
+                    if ($logCount <= 5) {
+                        Log::info("Deduction not found for RefID: {$transaction->reference_id}");
                     }
                 }
             }
@@ -414,6 +428,7 @@ class PayrollFinancialSyncService
             }
         }
 
+        Log::info('Grouped Employer Contributions: ' . json_encode($grouped));
         foreach ($grouped as $group) {
             if ($group['amount'] > 0) {
                 FinancialTransaction::create([
@@ -421,7 +436,7 @@ class PayrollFinancialSyncService
                     'category_id' => $group['category_id'],
                     'amount' => $group['amount'],
                     'type' => FinancialTransaction::TYPE_EXPENSE,
-                    'transaction_date' => $payrollRun->pay_date ?? now(),
+                    'transaction_date' => \Carbon\Carbon::create($payrollRun->year, $payrollRun->month, 1)->endOfMonth(),
                     'status' => FinancialTransaction::STATUS_PAID,
                     'description' => "{$group['name']} - Payroll: {$payrollRun->name} ({$payrollRun->year}/{$payrollRun->month})",
                     'reference_type' => PayrollRun::class,

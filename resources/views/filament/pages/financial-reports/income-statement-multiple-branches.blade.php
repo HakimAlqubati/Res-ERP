@@ -44,12 +44,13 @@
         }
 
         .comparison-table th {
-            background: linear-gradient(135deg, #047857 0%, #10b981 100%);
+            background: #0d7c66;
+            /* linear-gradient(135deg, #047857 0%, #10b981 100%); */
             color: white;
             padding: 0.75rem 1rem;
             text-align: center;
             font-weight: 600;
-            border: 1px solid #047857;
+            border: 1px solid #0d7c66;
             white-space: nowrap;
         }
 

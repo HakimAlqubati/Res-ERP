@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 
 class FinancialReportService
 {
-    public function getIncomeStatement(IncomeStatementRequestDTO $dto): array
+    public function getIncomeStatement(IncomeStatementRequestDTO $dto, bool $excludePayroll = false): array
     {
         // Get sales category ID
         $salesCategory = \App\Models\FinancialCategory::findByCode(\App\Enums\FinancialCategoryCode::SALES);
@@ -24,6 +24,10 @@ class FinancialReportService
 
         if ($dto->branchId) {
             $query->where('branch_id', $dto->branchId);
+        }
+
+        if ($excludePayroll) {
+            $query->excludePayroll();
         }
 
         // Clone query for different aggregations
@@ -99,7 +103,18 @@ class FinancialReportService
             $group['amount_formatted'] = formatMoneyWithCurrency($group['amount']);
         }
 
-        $expenses = collect(array_values($groupedExpenses));
+        // Filter out COGS categories from expenses array
+        $cogsCodes = [
+            \App\Enums\FinancialCategoryCode::TRANSFERS,
+            \App\Enums\FinancialCategoryCode::DIRECT_PURCHASE,
+            \App\Enums\FinancialCategoryCode::CLOSING_STOCK,
+        ];
+
+        $cogsCategoryIds = \App\Models\FinancialCategory::whereIn('code', $cogsCodes)->pluck('id')->toArray();
+
+        $expenses = collect(array_values($groupedExpenses))->reject(function ($group) use ($cogsCategoryIds) {
+            return in_array($group['category_id'], $cogsCategoryIds);
+        });
 
         $totalExpenses = $expenses->sum('amount');
 
@@ -193,11 +208,8 @@ class FinancialReportService
      */
     public function getNetProfitReport(IncomeStatementRequestDTO $dto): array
     {
-        // We can just reuse getIncomeStatement as it already calculates Net Profit
-        // However, if the user requested a specific "Net Profit" structure that emphasizes
-        // "deducting salaries to get the Net Profit", we can wrap or modify the output here.
-
-        $incomeStatement = $this->getIncomeStatement($dto);
+        // We reuse getIncomeStatement and pass true to exclude payroll from calculation
+        $incomeStatement = $this->getIncomeStatement($dto, excludePayroll: false);
 
         // Let's enhance it with specific Payroll details if needed to show how salaries affect it
         $payrollCategory = \App\Models\FinancialCategory::findByCode(\App\Enums\FinancialCategoryCode::PAYROLL_SALARIES);
@@ -220,12 +232,11 @@ class FinancialReportService
             }
         }
 
-        // Add specific payroll breakdown to the report
-        $incomeStatement['payroll_impact'] = [
-            'total_payroll_expenses' => (float) $totalPayrollExpenses,
-            'total_payroll_expenses_formatted' => formatMoneyWithCurrency($totalPayrollExpenses),
-            'description' => __('Total salaries and HR expenses deducted from Gross Profit'),
-        ];
+        // Add specific payroll breakdown to the report if not excluded totally
+        // Since we excluded payroll from calculations, we might still want to show the total
+        // that *would* have been deducted, or we can just omit it since it's totally excluded.
+        // But since the user wanted it excluded "from appearing and from calculation", we can just return it without the impact section,
+        // or we keep the impact section 0. Let's just remove the misleading payroll impact section altogether to meet the requirement precisely.
 
         return $incomeStatement;
     }

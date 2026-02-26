@@ -31,35 +31,39 @@ class LinkAttendanceImagesCommand extends Command
         $days = (int) $this->option('days');
         $force = (bool) $this->option('force');
 
-        Attendance::query()->update([
-            'source_id' => null,
-            'source_type' => null,
-        ]);
+        // Attendance::query()
+        //     ->update([
+        //         'source_id' => null,
+        //         'source_type' => null,
+        //     ]);
         $this->info("Starting linkage process for the last {$days} days...");
 
         $attendanceQuery = Attendance::query()
-            // ->where('check_date', '>=', now()->subDays($days)->toDateString())
 
+            // ->where('check_date', '<', '2026-02-23')
         ;
 
-        if (!$force) {
-            $attendanceQuery->whereNull('source_id');
-        }
+        // if (!$force) {
+        $attendanceQuery->whereNull('source_id');
+        // }
 
-        $count = $attendanceQuery->count();
+        $count = $attendanceQuery
+            ->count();
         $bar = $this->output->createProgressBar($count);
         $updatedCount = 0;
 
         $attendanceQuery->chunk(100, function ($attendances) use ($bar, &$updatedCount) {
             foreach ($attendances as $attendance) {
                 try {
-                    // Combine date and time to get full timestamp
-                    $attendanceTimestamp = Carbon::parse($attendance->check_date . ' ' . $attendance->check_time);
+                    // Combine date and time to get full timestamp (use real_check_date to handle night shifts)
+                    $actualDate = $attendance->real_check_date
+                        ?: $attendance->check_date;
+                    $attendanceTimestamp = Carbon::parse($actualDate . ' ' . $attendance->check_time);
 
                     // Logic based on AttendanceContext.php:
                     // Range: [Time - 2 mins, Time + 1 min buffer]
 
-                    // Revert to strict 2-minute window as per user request
+                    // Revert to strict 15-minute window to catch any syncing issues on the external database
                     $startTime = $attendanceTimestamp->copy()->subMinutes(2);
                     $endTime = $attendanceTimestamp->copy()->addMinutes(2);
 

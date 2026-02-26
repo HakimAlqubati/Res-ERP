@@ -72,6 +72,7 @@ class PayrollResource extends Resource
                 PayrollTable::getFilters(),
                 FiltersLayout::Modal
             )
+            ->filtersFormColumns(4)
             ->recordActions([
                 ActionGroup::make([
 

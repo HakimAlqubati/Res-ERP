@@ -318,6 +318,7 @@ class EmployeeApplicationResource extends Resource
                     \App\Models\AdvanceRequest::createInstallments(
                         $record->employee_id,
                         $adv->advance_amount,
+                        $adv->monthly_deduction_amount,
                         $adv->number_of_months_of_deduction,
                         $startMonth,
                         $record->id // application_id
@@ -771,6 +772,83 @@ class EmployeeApplicationResource extends Resource
         ;
     }
 
+    public static function advanceInstallmentsAction(): Action
+    {
+        return Action::make('installments')
+            ->label(__('lang.installments'))
+            ->button()
+            ->icon('heroicon-o-list-bullet')
+            ->color('info')
+            ->visible(function ($record) {
+                if ($record instanceof EmployeeApplicationV2) {
+                    return $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST
+                        && $record->status == EmployeeApplicationV2::STATUS_APPROVED;
+                }
+                return true;
+            })
+            ->schema(function ($record) {
+                $advanceRequest = $record instanceof \App\Models\AdvanceRequest ? $record : $record->advanceRequest;
+                $installments = $advanceRequest ? $advanceRequest->installments()->orderBy('sequence')->get() : collect();
+
+                return [
+                    \Filament\Forms\Components\Repeater::make('installments')
+                        ->label('')
+                        ->table([
+                            \Filament\Forms\Components\Repeater\TableColumn::make(__('lang.sequence'))
+                                ->width('8%'),
+                            \Filament\Forms\Components\Repeater\TableColumn::make(__('lang.amount'))
+                                ->width('18%'),
+                            \Filament\Forms\Components\Repeater\TableColumn::make(__('lang.due_date'))
+                                ->width('18%'),
+                            \Filament\Forms\Components\Repeater\TableColumn::make(__('lang.paid'))
+                                ->width('10%'),
+                            \Filament\Forms\Components\Repeater\TableColumn::make(__('lang.paid_date'))
+                                ->width('18%'),
+                            \Filament\Forms\Components\Repeater\TableColumn::make(__('lang.status'))
+                                ->width('15%'),
+                        ])
+                        ->schema([
+                            TextInput::make('sequence')
+                                ->label('#')
+                                ->extraInputAttributes(['class' => 'text-center'])
+                                ->disabled(),
+                            TextInput::make('installment_amount')
+                                ->label(__('lang.amount'))
+                                ->disabled(),
+                            DatePicker::make('due_date')
+                                ->label(__('lang.due_date'))
+                                ->disabled(),
+                            TextInput::make('is_paid')
+                                ->label(__('lang.paid'))
+                                ->disabled()
+                                ->extraInputAttributes(['class' => 'text-center']),
+                            DatePicker::make('paid_date')
+                                ->label(__('lang.paid_date'))
+                                ->extraInputAttributes(['class' => 'text-center'])
+                                ->disabled(),
+                            TextInput::make('status')
+                                ->label(__('lang.status'))
+                                ->extraInputAttributes(['class' => 'text-center'])
+                                ->disabled(),
+                        ])
+                        ->defaultItems(count($installments))
+                        ->columns(6)
+                        ->default($installments->map(fn($inst) => [
+                            'sequence' => $inst->sequence,
+                            'installment_amount' => number_format($inst->installment_amount, 2),
+                            'due_date' => $inst->due_date?->format('Y-m-d'),
+                            'is_paid' => $inst->is_paid ? '✓' : '✗',
+                            'paid_date' => $inst->paid_date?->format('Y-m-d'),
+                            'status' => $inst->status,
+                        ])->toArray()),
+                ];
+            })
+            ->modalHeading(__('lang.installment_details'))
+            ->disabledForm()
+            ->modalSubmitAction(false)
+            ->modalCancelAction(false);
+    }
+
     public static function rejectAttendanceRequest(): Action
     {
         return Action::make('rejectAttendanceRequest')->label('Reject')->button()
@@ -1106,16 +1184,22 @@ class EmployeeApplicationResource extends Resource
                             ->maxDate(now()->toDateString())
                             ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                 // Parse the state as a Carbon date, add one month, and set it to the end of the month
-                                $endNextMonth = Carbon::parse($state)->addMonth()->endOfMonth()->format('Y-m-d');
+                                $endNextMonth = Carbon::parse($state)
+                                    // ->addMonth()
+                                    ->endOfMonth()->format('Y-m-d');
                                 $set('detail_deduction_starts_from', $endNextMonth);
                             })
                             ->default('Y-m-d'),
                         TextInput::make('detail_advance_amount')->numeric()->required()
                             ->label('Amount'),
-                        // TextInput::make('basic_salary')->numeric()->disabled()
-                        //     ->default(0)
-                        // ->label('Basic salary')->helperText('Employee basic salary'),
-                        Hidden::make('basic_salary')->default(0),
+                        TextInput::make('basic_salary')->numeric()->disabled()
+                            ->default(0)
+                            ->label('Basic salary')
+                            ->helperText('Employee basic salary')
+                            ->visible(fn() => isSuperAdmin()),
+                        Hidden::make('basic_salary')
+                            ->default(0)
+                            ->visible(fn() => !isSuperAdmin()),
 
                     ]),
                     Grid::make()->columns(3)->columnSpanFull()->schema([
@@ -1126,10 +1210,16 @@ class EmployeeApplicationResource extends Resource
                             ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                 $advancedAmount = $get('detail_advance_amount');
                                 if ($state > 0 && $advancedAmount > 0) {
-                                    $res = $advancedAmount / $state;
+                                    $res = ceil($advancedAmount / $state);
 
                                     $set('detail_number_of_months_of_deduction', $res);
-                                    $toMonth = Carbon::now()->addMonths(($res - 1))->endOfMonth()->format('Y-m-d');
+
+                                    $startsFrom = $get('detail_deduction_starts_from') ?? \Carbon\Carbon::now();
+                                    $toMonth = \Carbon\Carbon::parse($startsFrom)
+                                        ->startOfMonth()
+                                        ->addMonths(($res - 1))
+                                        ->endOfMonth()->format('Y-m-d');
+
                                     $set('detail_deduction_ends_at', $toMonth);
                                 }
                             }),
@@ -1145,7 +1235,7 @@ class EmployeeApplicationResource extends Resource
 
                                     // $toMonth = Carbon::now()->addMonths($noOfMonths)->endOfMonth()->format('Y-m-d');
 
-                                    $endNextMonth = Carbon::parse($state)->addMonths(($noOfMonths - 1))->endOfMonth()->format('Y-m-d');
+                                    $endNextMonth = \Carbon\Carbon::parse($state)->startOfMonth()->addMonths(($noOfMonths - 1))->endOfMonth()->format('Y-m-d');
                                     $set('detail_deduction_ends_at', $endNextMonth);
                                 }),
                             DatePicker::make('detail_deduction_ends_at')->minDate(now()->toDateString())
@@ -1162,7 +1252,11 @@ class EmployeeApplicationResource extends Resource
                                     $set('detail_monthly_deduction_amount', round($res, 2));
                                     $state = (int) $state;
 
-                                    $toMonth = Carbon::now()->addMonths(($state - 2))->endOfMonth()->format('Y-m-d');
+                                    $startsFrom = $get('detail_deduction_starts_from') ?? \Carbon\Carbon::now();
+                                    $toMonth = \Carbon\Carbon::parse($startsFrom)
+                                        ->startOfMonth()
+                                        ->addMonths(($state - 1))
+                                        ->endOfMonth()->format('Y-m-d');
 
                                     $set('detail_deduction_ends_at', $toMonth);
                                 }

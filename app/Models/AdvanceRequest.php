@@ -200,6 +200,7 @@ class AdvanceRequest extends Model
     public static function createInstallments(
         $employeeId,
         $totalAmount,
+        $monthlyDeductionAmount,
         $numberOfMonths,
         string|\DateTimeInterface $startMonth,
         $applicationId,
@@ -207,7 +208,7 @@ class AdvanceRequest extends Model
     ) {
         if ($numberOfMonths <= 0 || $totalAmount <= 0) return;
 
-        DB::transaction(function () use ($employeeId, $totalAmount, $numberOfMonths, $startMonth, $applicationId, $advanceRequestId) {
+        DB::transaction(function () use ($employeeId, $totalAmount, $monthlyDeductionAmount, $numberOfMonths, $startMonth, $applicationId, $advanceRequestId) {
             // prevent duplicates for same application
             if (EmployeeAdvanceInstallment::where('application_id', $applicationId)->exists()) {
                 return;
@@ -219,7 +220,7 @@ class AdvanceRequest extends Model
                 $advanceRequestId = $advanceRequest?->id;
             }
 
-            $base = floor(($totalAmount / $numberOfMonths) * 100) / 100;   // 2-dec
+            $base = (float) $monthlyDeductionAmount;
             $acc  = round($base * ($numberOfMonths - 1), 2);
             $last = round($totalAmount - $acc, 2);
 

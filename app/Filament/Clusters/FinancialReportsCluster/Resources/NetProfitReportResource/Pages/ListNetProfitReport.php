@@ -55,7 +55,7 @@ class ListNetProfitReport extends ListRecords
             // We assume MultiBranchFinancialReportService has a net profit comparison or uses the same base.
             // But since user just requested Net Profit Report, we will focus on Single initially.
             // If MultiBranch is required, we use the original for now and see if it needs update.
-            $service = new \App\Services\Financial\MultiBranchFinancialReportService();
+            $service = new \App\Services\Financial\MultiBranchNetProfitReportService();
             $comparisonData = $service->getComparisonTable(
                 array_map('intval', $branchIds),
                 $startDate,

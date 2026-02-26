@@ -60,85 +60,85 @@ class EmployeeForm
                                                 TextInput::make('name')->label(__('lang.full_name'))
                                                     ->dehydrateStateUsing(fn($state) => preg_replace('/\s+/u', ' ', trim((string) $state)))
                                                     ->rules(['string'])
-                                                    ->rule(fn() => function (string $attribute, $value, \Closure $fail) {
-                                                        $value = preg_replace('/\s+/u', ' ', trim((string) $value));
-                                                        $parts = array_values(array_filter(explode(' ', $value)));
+                                                    // ->rule(fn() => function (string $attribute, $value, \Closure $fail) {
+                                                    //     $value = preg_replace('/\s+/u', ' ', trim((string) $value));
+                                                    //     $parts = array_values(array_filter(explode(' ', $value)));
 
-                                                        // 1) At least two words
-                                                        if (count($parts) < 2) {
-                                                            return $fail(__('lang.name_must_contain_two_words'));
-                                                        }
+                                                    //     // 1) At least two words
+                                                    //     if (count($parts) < 2) {
+                                                    //         return $fail(__('lang.name_must_contain_two_words'));
+                                                    //     }
 
-                                                        // 2) Letters only (any language) + spaces/hyphen/apostrophe
-                                                        if (!preg_match("/^[\\p{L}\\p{M}\\s'\\-]+$/u", $value)) {
-                                                            return $fail(__('lang.name_letters_spaces_only'));
-                                                        }
+                                                    //     // 2) Letters only (any language) + spaces/hyphen/apostrophe
+                                                    //     if (!preg_match("/^[\\p{L}\\p{M}\\s'\\-]+$/u", $value)) {
+                                                    //         return $fail(__('lang.name_letters_spaces_only'));
+                                                    //     }
 
-                                                        // Helper lists
-                                                        $blacklistExact     = ['test', 'tester', 'unknown', 'na', 'n/a', 'none', 'xxx', 'aaaa', 'dd', 'dk', 'as'];
-                                                        $whitelistShortLatin = ['al', 'ib', 'bin', 'ibn'];   // common transliterations
-                                                        $arabicParticles    = ['بن', 'ابن', 'آل', 'ال'];   // allowed connectors (don’t count as full name)
-                                                        $latinVowels        = '/[aeiouy]/i';
+                                                    //     // Helper lists
+                                                    //     $blacklistExact     = ['test', 'tester', 'unknown', 'na', 'n/a', 'none', 'xxx', 'aaaa', 'dd', 'dk', 'as'];
+                                                    //     $whitelistShortLatin = ['al', 'ib', 'bin', 'ibn'];   // common transliterations
+                                                    //     $arabicParticles    = ['بن', 'ابن', 'آل', 'ال'];   // allowed connectors (don’t count as full name)
+                                                    //     $latinVowels        = '/[aeiouy]/i';
 
-                                                        // 3) Reject testy/unrealistic tokens
-                                                        $lower = mb_strtolower(str_replace(['-', "'"], ' ', $value));
-                                                        foreach ($blacklistExact as $bad) {
-                                                            if ($lower === $bad || preg_match('/\\b' . preg_quote($bad, '/') . '\\b/u', $lower)) {
-                                                                return $fail(__('lang.name_placeholder_unrealistic'));
-                                                            }
-                                                        }
+                                                    //     // 3) Reject testy/unrealistic tokens
+                                                    //     $lower = mb_strtolower(str_replace(['-', "'"], ' ', $value));
+                                                    //     foreach ($blacklistExact as $bad) {
+                                                    //         if ($lower === $bad || preg_match('/\\b' . preg_quote($bad, '/') . '\\b/u', $lower)) {
+                                                    //             return $fail(__('lang.name_placeholder_unrealistic'));
+                                                    //         }
+                                                    //     }
 
-                                                        $hasLongCore    = false; // at least one core word length ≥ 3
-                                                        $twoLetterCount = 0;
+                                                    //     $hasLongCore    = false; // at least one core word length ≥ 3
+                                                    //     $twoLetterCount = 0;
 
-                                                        foreach ($parts as $w) {
-                                                            $wTrim = $w;
+                                                    //     foreach ($parts as $w) {
+                                                    //         $wTrim = $w;
 
-                                                            // Each part ≥ 2 chars
-                                                            if (mb_strlen($wTrim) < 2) {
-                                                                return $fail(__('lang.each_part_min_2_chars'));
-                                                            }
+                                                    //         // Each part ≥ 2 chars
+                                                    //         if (mb_strlen($wTrim) < 2) {
+                                                    //             return $fail(__('lang.each_part_min_2_chars'));
+                                                    //         }
 
-                                                            // No single-letter repetition like "dd", "aaa"
-                                                            if (preg_match('/^(.)\\1{1,}$/u', $wTrim)) {
-                                                                return $fail(__('lang.name_unrealistic_repeated_letters'));
-                                                            }
+                                                    //         // No single-letter repetition like "dd", "aaa"
+                                                    //         if (preg_match('/^(.)\\1{1,}$/u', $wTrim)) {
+                                                    //             return $fail(__('lang.name_unrealistic_repeated_letters'));
+                                                    //         }
 
-                                                            if (mb_strlen($wTrim) === 2) {
-                                                                $twoLetterCount++;
-                                                            }
+                                                    //         if (mb_strlen($wTrim) === 2) {
+                                                    //             $twoLetterCount++;
+                                                    //         }
 
-                                                            $isArabicParticle = in_array($wTrim, $arabicParticles, true);
-                                                            $isShortLatinOk   = in_array(mb_strtolower($wTrim), $whitelistShortLatin, true);
+                                                    //         $isArabicParticle = in_array($wTrim, $arabicParticles, true);
+                                                    //         $isShortLatinOk   = in_array(mb_strtolower($wTrim), $whitelistShortLatin, true);
 
-                                                            if (mb_strlen($wTrim) >= 3 && !$isArabicParticle) {
-                                                                $hasLongCore = true;
-                                                            }
+                                                    //         if (mb_strlen($wTrim) >= 3 && !$isArabicParticle) {
+                                                    //             $hasLongCore = true;
+                                                    //         }
 
-                                                            // For Latin segments: must include a vowel
-                                                            if (preg_match('/^[A-Za-z]+$/', $wTrim)) {
-                                                                if (!preg_match($latinVowels, $wTrim) && !$isShortLatinOk) {
-                                                                    return $fail(__('lang.latin_parts_must_include_vowel'));
-                                                                }
-                                                                // Avoid long consonant clusters like "dkrv"
-                                                                if (preg_match('/[bcdfghjklmnpqrstvwxz]{4,}/i', $wTrim)) {
-                                                                    return $fail(__('lang.name_unlikely_consonant_clusters'));
-                                                                }
-                                                            }
-                                                        }
+                                                    //         // For Latin segments: must include a vowel
+                                                    //         if (preg_match('/^[A-Za-z]+$/', $wTrim)) {
+                                                    //             if (!preg_match($latinVowels, $wTrim) && !$isShortLatinOk) {
+                                                    //                 return $fail(__('lang.latin_parts_must_include_vowel'));
+                                                    //             }
+                                                    //             // Avoid long consonant clusters like "dkrv"
+                                                    //             if (preg_match('/[bcdfghjklmnpqrstvwxz]{4,}/i', $wTrim)) {
+                                                    //                 return $fail(__('lang.name_unlikely_consonant_clusters'));
+                                                    //             }
+                                                    //         }
+                                                    //     }
 
-                                                        // 7) Avoid names made mostly of 2-letter words unless there is a long core
-                                                        if ($twoLetterCount >= (int) ceil(count($parts) * 0.5)) {
-                                                            if (!$hasLongCore) {
-                                                                return $fail(__('lang.name_too_short_unrealistic'));
-                                                            }
-                                                        }
+                                                    //     // 7) Avoid names made mostly of 2-letter words unless there is a long core
+                                                    //     if ($twoLetterCount >= (int) ceil(count($parts) * 0.5)) {
+                                                    //         if (!$hasLongCore) {
+                                                    //             return $fail(__('lang.name_too_short_unrealistic'));
+                                                    //         }
+                                                    //     }
 
-                                                        // 8) Reasonable total length
-                                                        if (mb_strlen($value) < 5) {
-                                                            return $fail(__('lang.name_too_short'));
-                                                        }
-                                                    })
+                                                    //     // 8) Reasonable total length
+                                                    //     if (mb_strlen($value) < 5) {
+                                                    //         return $fail(__('lang.name_too_short'));
+                                                    //     }
+                                                    // })
                                                     ->columnSpan(1)->required(),
                                                 TextInput::make('known_name')
                                                     ->label(__('lang.known_name'))
