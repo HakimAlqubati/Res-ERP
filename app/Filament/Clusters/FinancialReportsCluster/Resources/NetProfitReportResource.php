@@ -100,7 +100,7 @@ class NetProfitReportResource extends Resource
                         \Filament\Forms\Components\Select::make('month')
                             ->label(__('Month'))
                             ->options(fn() => getMonthOptionsBasedOnSettings())
-                            ->default(now()->format('F Y'))
+                            ->default(now()->subMonth()->format('F Y'))
                             ->required(),
                     ]),
             ])

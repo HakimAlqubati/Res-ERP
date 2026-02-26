@@ -34,7 +34,7 @@ class IncomeStatementResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return __('Income Statement');
+        return __('Gross Profit');
     }
 
     public static function getPluralLabel(): ?string
@@ -100,7 +100,7 @@ class IncomeStatementResource extends Resource
                         \Filament\Forms\Components\Select::make('month')
                             ->label(__('Month'))
                             ->options(fn() => getMonthOptionsBasedOnSettings())
-                            ->default(now()->format('F Y'))
+                            ->default(now()->subMonth()->format('F Y'))
                             ->required(),
                     ]),
             ])

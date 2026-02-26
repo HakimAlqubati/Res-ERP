@@ -77,7 +77,7 @@ class FinancialCategoriesTable
                     ->label('Transactions')->alignCenter()
                     ->counts('transactions')
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('created_at')
                     ->label('Created At')->alignCenter()
@@ -120,9 +120,9 @@ class FinancialCategoriesTable
                 TrashedFilter::make(),
             ], FiltersLayout::Modal)
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
                 ActionGroup::make([
+                    EditAction::make(),
+                    DeleteAction::make(),
                     static::forceDeleteTransactions(),
                 ])
             ])

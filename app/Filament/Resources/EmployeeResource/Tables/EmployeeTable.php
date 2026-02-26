@@ -111,7 +111,8 @@ class EmployeeTable
                 TextColumn::make('manager.name')
                     ->label(__('lang.manager'))
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ->searchable(),
+                    // ->searchable()
+                    ,
 
                 TextColumn::make('email')
                     ->icon('heroicon-m-envelope')
