@@ -33,7 +33,7 @@ class AttendanceImagesReportService
             })
             ->with(['employee:id,name,branch_id', 'attendances' => function ($q) {
                 $q->where('accepted', 1)
-                    ->select('id', 'source_type', 'source_id', 'check_type', 'status', 'check_date', 'real_check_date', 'check_time', 'employee_id', 'period_id')
+                    ->select('id', 'source_type', 'source_id', 'check_type', 'status', 'check_date', 'real_check_date', 'check_time', 'employee_id', 'period_id', 'early_departure_minutes', 'late_departure_minutes')
                     ->with('period:id,name');
             }]);
 
@@ -77,7 +77,7 @@ class AttendanceImagesReportService
             }
 
             // Filter Logic: If enabled, only return First CheckIn and Last CheckOut per (employee, date, period)
-            if ($this->returnOnlyFirstAndLast) {    
+            if ($this->returnOnlyFirstAndLast) {
                 $keep = false;
 
                 if ($attendance->check_type == Attendance::CHECKTYPE_CHECKIN) {
@@ -114,6 +114,26 @@ class AttendanceImagesReportService
                 }
             }
 
+            $attendanceStatus = $attendance->status;
+
+            if ($attendance->check_type == Attendance::CHECKTYPE_CHECKOUT) {
+                if ($attendanceStatus === Attendance::STATUS_EARLY_DEPARTURE) {
+                    $earlyMinutes = (int) ($attendance->early_departure_minutes ?? 0);
+                    $graceMinutes = (int) settingWithDefault('early_depature_deduction_minutes', 0);
+
+                    if ($earlyMinutes <= $graceMinutes) {
+                        $attendanceStatus = Attendance::STATUS_ON_TIME;
+                    }
+                } elseif ($attendanceStatus === Attendance::STATUS_LATE_DEPARTURE) {
+                    $lateMinutes = (int) ($attendance->late_departure_minutes ?? 0);
+                    $graceMinutes = (int) settingWithDefault('early_depature_deduction_minutes', 0);
+
+                    if ($lateMinutes <= $graceMinutes) {
+                        $attendanceStatus = Attendance::STATUS_ON_TIME;
+                    }
+                }
+            }
+
             return [
                 'id'             => $image->id,
                 'img_url'        => $image->full_image_url,
@@ -126,10 +146,10 @@ class AttendanceImagesReportService
                     'id'               => $attendance->id,
                     'check_type'       => $attendance->check_type,
                     'check_type_label' => Attendance::getCheckTypes()[$attendance->check_type] ?? $attendance->check_type,
-                    'status'           => $attendance->status,
-                    'status_label'     => Attendance::getStatusLabel($attendance->status),
-                    'status_color'     => Attendance::getStatusColor($attendance->status),
-                    'status_hex'       => Attendance::getStatusHex($attendance->status),
+                    'status'           => $attendanceStatus,
+                    'status_label'     => Attendance::getStatusLabel($attendanceStatus),
+                    'status_color'     => Attendance::getStatusColor($attendanceStatus),
+                    'status_hex'       => Attendance::getStatusHex($attendanceStatus),
                     'check_date'       => $attendance->check_date,
                     'real_check_date'  => $attendance->real_check_date,
                     'check_time'       => $attendance->check_time,
