@@ -31,23 +31,21 @@ class LinkAttendanceImagesCommand extends Command
         $days = (int) $this->option('days');
         $force = (bool) $this->option('force');
 
-        Attendance::query()
-            ->where('employee_id', 21)
-            ->update([
-                'source_id' => null,
-                'source_type' => null,
-            ]);
+        // Attendance::query()
+        //     ->update([
+        //         'source_id' => null,
+        //         'source_type' => null,
+        //     ]);
         $this->info("Starting linkage process for the last {$days} days...");
 
         $attendanceQuery = Attendance::query()
-            ->where('employee_id', 21)
 
             // ->where('check_date', '<', '2026-02-23')
         ;
 
-        if (!$force) {
-            $attendanceQuery->whereNull('source_id');
-        }
+        // if (!$force) {
+        $attendanceQuery->whereNull('source_id');
+        // }
 
         $count = $attendanceQuery
             ->count();
