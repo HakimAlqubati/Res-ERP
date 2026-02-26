@@ -10,6 +10,19 @@ class FinancialTransaction extends Model
 {
     use SoftDeletes;
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($model) {
+            if ($model->transaction_date) {
+                $date = \Carbon\Carbon::parse($model->transaction_date);
+                $model->month = $date->month;
+                $model->year = $date->year;
+            }
+        });
+    }
+
     // protected static function booted(): void
     // {
     //     static::addGlobalScope(new BranchRequiredScope);
@@ -121,5 +134,15 @@ class FinancialTransaction extends Model
     public function scopeByDateRange($query, $startDate, $endDate)
     {
         return $query->whereBetween('transaction_date', [$startDate, $endDate]);
+    }
+
+    /**
+     * Exclude payroll related transactions based on financial category codes.
+     */
+    public function scopeExcludePayroll($query)
+    {
+        return $query->whereDoesntHave('category', function ($q) {
+            $q->whereIn('code', \App\Enums\FinancialCategoryCode::getPayrollCodes());
+        });
     }
 }
