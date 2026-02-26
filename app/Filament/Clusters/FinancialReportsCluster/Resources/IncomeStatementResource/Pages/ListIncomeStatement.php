@@ -74,7 +74,7 @@ class ListIncomeStatement extends ListRecords
         );
 
         $service = new FinancialReportService();
-        $report = $service->getIncomeStatement($dto);
+        $report = $service->getIncomeStatement($dto, excludePayroll: true);
 
         $branchName = null;
         if ($branchId) {

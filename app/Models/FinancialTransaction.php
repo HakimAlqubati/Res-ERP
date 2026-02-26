@@ -141,8 +141,13 @@ class FinancialTransaction extends Model
      */
     public function scopeExcludePayroll($query)
     {
-        return $query->whereDoesntHave('category', function ($q) {
-            $q->whereIn('code', \App\Enums\FinancialCategoryCode::getPayrollCodes());
+        $payrollCodes = \App\Enums\FinancialCategoryCode::getPayrollCodes();
+
+        return $query->whereDoesntHave('category', function ($q) use ($payrollCodes) {
+            $q->whereIn('code', $payrollCodes)
+                ->orWhereHas('parent', function ($parentQuery) use ($payrollCodes) {
+                    $parentQuery->whereIn('code', $payrollCodes);
+                });
         });
     }
 }

@@ -455,6 +455,18 @@
 
                 <tr class="table-row">
                     <td class="row-label">
+                        <div style="font-weight: 600;">{{ __('Transfers') }}</div>
+                        <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 0rem;">
+                            {{ __('Transfers of branches') }}
+                        </div>
+                    </td>
+                    <td class="row-value expense-amount">
+                        ({{ $report['cost_of_goods_sold']['transfers_formatted'] ?? number_format($report['cost_of_goods_sold']['transfers'] ?? 0, 2) }})
+                    </td>
+                </tr>
+
+                <tr class="table-row">
+                    <td class="row-label">
                         <div style="font-weight: 600;">{{ __('Direct Purchase') }}</div>
                     </td>
                     <td class="row-value expense-amount">
