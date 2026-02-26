@@ -75,12 +75,12 @@ class AttendanceImagesUploadedResource extends Resource
                     TextColumn::make('datetime')->label(__('lang.date'))
                         ->date('Y-m-d')
 
-                        // ->hidden(fn($state) => blank($state))
-                        ,
+                    // ->hidden(fn($state) => blank($state))
+                    ,
                     TextColumn::make('datetime')->label(__('lang.date'))
                         ->time('H:i:s')
-                        // ->hidden(fn($state) => blank($state))
-                        ,
+                    // ->hidden(fn($state) => blank($state))
+                    ,
 
                     TextColumn::make('attendances.check_date')->label(__('lang.check_date'))->placeholder('--')
                         ->date('Y-m-d')
@@ -99,7 +99,8 @@ class AttendanceImagesUploadedResource extends Resource
                         ->badge()
                         ->hidden(fn($state) => blank($state))
                         ->formatStateUsing(fn($state) => \App\Models\Attendance::getStatusLabel($state))
-                        ->color(fn($state) => \App\Models\Attendance::getStatusColor($state)),
+                        ->color(fn($state) => \App\Models\Attendance::getStatusColor($state))
+                        ->hidden(),
                 ]),
 
             ])
