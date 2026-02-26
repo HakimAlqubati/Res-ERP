@@ -200,7 +200,9 @@ class AttendanceFetcher
         // =========================================================================
         $weeklyLeaveStats = $result->get('weekly_leave_stats', []);
         $totalMonthDays = $stats['required_days'] ?? $stats['total_days'] ?? 0;
-        $absentDays = $weeklyLeaveStats['remaining_absences'] ?? $stats['absent'] ?? 0;
+         
+        // $absentDays = $weeklyLeaveStats['remaining_absences'] ?? $stats['absent'] ?? 0;
+        $absentDays =  $stats['absent'] ?? 0;
 
         $weeklyLeaveCalculator = new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator();
         $weeklyLeaveResult = $weeklyLeaveCalculator->calculate($totalMonthDays, $absentDays);
