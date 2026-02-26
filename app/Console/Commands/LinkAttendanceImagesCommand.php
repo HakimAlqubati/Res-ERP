@@ -31,13 +31,17 @@ class LinkAttendanceImagesCommand extends Command
         $days = (int) $this->option('days');
         $force = (bool) $this->option('force');
 
-        Attendance::query()->update([
-            'source_id' => null,
-            'source_type' => null,
-        ]);
+        Attendance::query()
+            ->where('employee_id', 18)
+            ->update([
+                'source_id' => null,
+                'source_type' => null,
+            ]);
         $this->info("Starting linkage process for the last {$days} days...");
 
         $attendanceQuery = Attendance::query()
+            ->where('employee_id', 18)
+
             // ->where('check_date', '<', '2026-02-23')
         ;
 
@@ -45,7 +49,8 @@ class LinkAttendanceImagesCommand extends Command
             $attendanceQuery->whereNull('source_id');
         }
 
-        $count = $attendanceQuery->count();
+        $count = $attendanceQuery
+            ->count();
         $bar = $this->output->createProgressBar($count);
         $updatedCount = 0;
 
