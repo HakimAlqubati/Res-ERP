@@ -50,9 +50,9 @@ class PayrollTable
     public static function getFilters(): array
     {
         return [
+            TrashedFilter::make(),
             SelectFilter::make('branch_id')->label('Branch')
                 ->options(Branch::selectable()->forBranchManager('id')->pluck('name', 'id')),
-            TrashedFilter::make(),
         ];
     }
 }
