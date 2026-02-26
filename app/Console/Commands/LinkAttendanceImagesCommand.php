@@ -53,9 +53,10 @@ class LinkAttendanceImagesCommand extends Command
             foreach ($attendances as $attendance) {
                 try {
                     // Combine date and time to get full timestamp (use real_check_date to handle night shifts)
-                    $actualDate = $attendance->real_check_date
-                        // ?: $attendance->check_date
-                    ;
+                    // $actualDate = $attendance->real_check_date
+                    //     // ?: $attendance->check_date
+                    // ;
+                    $actualDate = $attendance->real_check_date;
                     $attendanceTimestamp = Carbon::parse($actualDate . ' ' . $attendance->check_time);
 
                     // Logic based on AttendanceContext.php:
