@@ -629,3 +629,63 @@ Route::get('/import-employees/template', function () {
 
     return response()->download($templatePath, 'employee_import_template.xlsx');
 });
+
+Route::get('/testAttendanceImages', function (Request $request) {
+    $employeeId = $request->input('employee_id');
+    $date = $request->input('date'); // e.g., '2026-02-21'
+    $minutesBuffer = (int) $request->input('buffer', 2);
+
+    if (!$employeeId || !$date) {
+        return response()->json(['error' => 'employee_id and date are required'], 400);
+    }
+
+    $attendances = App\Models\Attendance::query()
+        ->where('employee_id', $employeeId)
+        ->where('check_date', $date)
+        ->get();
+
+    $results = [];
+
+    foreach ($attendances as $attendance) {
+        $actualDate = $attendance->real_check_date ?: $attendance->check_date;
+        $attendanceTimestamp = Carbon\Carbon::parse($actualDate . ' ' . $attendance->check_time);
+
+        $startTime = $attendanceTimestamp->copy()->subMinutes($minutesBuffer);
+        $endTime = $attendanceTimestamp->copy()->addMinutes($minutesBuffer);
+
+        $images = App\Models\AttendanceImagesUploaded::query()
+            ->where('employee_id', $attendance->employee_id)
+            ->whereBetween('datetime', [$startTime, $endTime])
+            ->get()
+            ->sortBy(fn($img) => abs(Carbon\Carbon::parse($img->datetime)->diffInSeconds($attendanceTimestamp)))
+            ->values();
+
+        $results[] = [
+            'attendance_id' => $attendance->id,
+            'check_type' => $attendance->check_type,
+            'check_date' => $attendance->check_date,
+            'real_check_date' => $attendance->real_check_date,
+            'check_time' => $attendance->check_time,
+            'target_timestamp' => $attendanceTimestamp->toDateTimeString(),
+            'search_start' => $startTime->toDateTimeString(),
+            'search_end' => $endTime->toDateTimeString(),
+            'found_images_count' => $images->count(),
+            'images' => $images->map(function ($img) use ($attendanceTimestamp) {
+                return [
+                    'id' => $img->id,
+                    'datetime' => $img->datetime,
+                    'diff_in_seconds' => Carbon\Carbon::parse($img->datetime)->diffInSeconds($attendanceTimestamp),
+                    'url' => $img->full_image_url
+                ];
+            })
+        ];
+    }
+
+    return response()->json([
+        'success' => true,
+        'employee_id' => $employeeId,
+        'date' => $date,
+        'buffer_used' => $minutesBuffer,
+        'results' => $results,
+    ]);
+});
