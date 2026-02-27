@@ -17,6 +17,14 @@ class AttendanceImagesReportService
     public bool $returnOnlyFirstAndLast = false;
 
     /**
+     * Determines whether to include 'request' type attendances.
+     * Set this property to true to enable this behavior.
+     *
+     * @var bool
+     */
+    public bool $includeRequests = false;
+
+    /**
      * Fetch and format attendance images based on the applied filters.
      *
      * @param Request $request
@@ -24,30 +32,24 @@ class AttendanceImagesReportService
      */
     public function getImagesReport(Request $request)
     {
-        $query = AttendanceImagesUploaded::query()
-            ->select('attendance_images_uploaded.*')
-            ->join('hr_attendances', function ($join) {
-                $join->on('hr_attendances.source_id', '=', 'attendance_images_uploaded.id')
-                    ->where('hr_attendances.source_type', '=', AttendanceImagesUploaded::class)
-                    ->where('hr_attendances.accepted', 1);
+        $query = Attendance::where('accepted', 1)
+            ->when(!$this->includeRequests, function ($q) {
+                // Return only actual webcam/photo check-ins/check-outs when requests are NOT included
+                $q->where('source_type', AttendanceImagesUploaded::class);
             })
-            ->with(['employee:id,name,branch_id', 'attendances' => function ($q) {
-                $q->where('accepted', 1)
-                    ->select('id', 'source_type', 'source_id', 'check_type', 'status', 'check_date', 'real_check_date', 'check_time', 'employee_id', 'period_id', 'early_departure_minutes', 'late_departure_minutes')
-                    ->with('period:id,name');
-            }]);
+            ->with(['employee:id,name,branch_id', 'period:id,name', 'source']);
 
         // Filter by employee
         if ($request->filled('employee_id')) {
-            $query->where('attendance_images_uploaded.employee_id', $request->input('employee_id'));
+            $query->where('employee_id', $request->input('employee_id'));
         }
 
         // Filter by date
         if ($request->filled('from_date')) {
-            $query->whereDate('hr_attendances.check_date', '>=', $request->input('from_date'));
+            $query->whereDate('check_date', '>=', $request->input('from_date'));
         }
         if ($request->filled('to_date')) {
-            $query->whereDate('hr_attendances.check_date', '<=', $request->input('to_date'));
+            $query->whereDate('check_date', '<=', $request->input('to_date'));
         }
 
         // Filter by branch
@@ -63,25 +65,20 @@ class AttendanceImagesReportService
         $sortOrder = strtolower($sortOrder) === 'desc' ? 'desc' : 'asc';
 
         // Sorting by check_date, employee_id
-        $images = $query->orderBy('hr_attendances.check_date', $sortOrder)
-            ->orderBy('attendance_images_uploaded.employee_id')
+        $attendances = $query->orderBy('check_date', $sortOrder)
+            ->orderBy('employee_id')
             ->paginate($perPage);
 
         // Map and filter logic
-        $mappedImages = $images->getCollection()->map(function ($image) {
-            $attendance = $image->attendances->first();
-
-            // Only return if it has a valid accepted attendance record
-            if (!$attendance) {
-                return null;
-            }
+        $mappedImages = $attendances->getCollection()->map(function ($attendance) {
+            $source = $attendance->source;
+            $isImageUpload = $attendance->source_type === AttendanceImagesUploaded::class;
 
             // Filter Logic: If enabled, only return First CheckIn and Last CheckOut per (employee, date, period)
             if ($this->returnOnlyFirstAndLast) {
                 $keep = false;
 
                 if ($attendance->check_type == Attendance::CHECKTYPE_CHECKIN) {
-                    // Check if there is any strictly earlier checkin
                     $earlierExists = Attendance::where('employee_id', $attendance->employee_id)
                         ->where('check_date', $attendance->check_date)
                         ->where('period_id', $attendance->period_id)
@@ -94,7 +91,6 @@ class AttendanceImagesReportService
                         $keep = true;
                     }
                 } elseif ($attendance->check_type == Attendance::CHECKTYPE_CHECKOUT) {
-                    // Check if there is any strictly later checkout
                     $laterExists = Attendance::where('employee_id', $attendance->employee_id)
                         ->where('check_date', $attendance->check_date)
                         ->where('period_id', $attendance->period_id)
@@ -108,7 +104,6 @@ class AttendanceImagesReportService
                     }
                 }
 
-                // If filter failed, return null to remove from list
                 if (!$keep) {
                     return null;
                 }
@@ -134,17 +129,24 @@ class AttendanceImagesReportService
                 }
             }
 
+            $isImageUpload = $source && str_contains($attendance->source_type, 'AttendanceImagesUploaded');
+            $defaultImage = 'https://ui-avatars.com/api/?name=Missed+Checkout&color=7F9CF5&background=EBF4FF';
+            $imgUrl = $isImageUpload && !empty($source->img_url) ? $source->full_image_url : $defaultImage;
+            $datetime = $isImageUpload && !empty($source->datetime) ? $source->datetime : $attendance->check_date . ' ' . $attendance->check_time;
+            $imageId = $isImageUpload && $source ? $source->id : $attendance->id;
+
             return [
-                'id'             => $image->id,
-                'img_url'        => $image->full_image_url,
-                'employee_id'    => $image->employee_id,
-                'employee_name'  => $image->employee?->name ?? 'Unknown',
-                'datetime'       => $image->datetime,
+                'id'             => $imageId,
+                'img_url'        => $imgUrl,
+                'employee_id'    => $attendance->employee_id,
+                'employee_name'  => $attendance->employee?->name ?? 'Unknown',
+                'datetime'       => $datetime,
                 'check_date'     => $attendance->check_date,
                 'real_check_date'  => $attendance->real_check_date,
                 'attendance'     => [
                     'id'               => $attendance->id,
                     'check_type'       => $attendance->check_type,
+                    'attendance_type'  => $attendance->attendance_type,
                     'check_type_label' => Attendance::getCheckTypes()[$attendance->check_type] ?? $attendance->check_type,
                     'status'           => $attendanceStatus,
                     'status_label'     => Attendance::getStatusLabel($attendanceStatus),
@@ -185,8 +187,8 @@ class AttendanceImagesReportService
             ];
         })->values();
 
-        $images->setCollection($groupedImages);
+        $attendances->setCollection($groupedImages);
 
-        return $images;
+        return $attendances;
     }
 }
