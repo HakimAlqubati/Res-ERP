@@ -452,7 +452,7 @@ class AttendanceController extends Controller
     public function attendanceImagesV2(Request $request, AttendanceImagesReportService $reportService)
     {
         try {
-            $reportService->includeRequests = false;
+            $reportService->includeRequests = $request->boolean('include_requests', false);
             $images = $reportService->getImagesReport($request);
 
             return response()->json([
