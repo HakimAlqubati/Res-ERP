@@ -505,6 +505,25 @@ class SettingResource extends Resource
                                         Toggle::make('show_dashboard_manufacturing')->label('Show Manufacturing Section')->default(true),
                                     ]),
 
+                                    Fieldset::make('Halal Logo Settings')->columnSpanFull()->columns(2)->schema([
+                                        Toggle::make('use_global_halal_logo')
+                                            ->label('Use One Halal Logo for All Products')
+                                            ->helperText('If enabled, a single uploaded halal logo will be used for all products in the label report.')
+                                            ->inline(false)
+                                            ->live()
+                                            ->default(false),
+
+                                        FileUpload::make('global_halal_logo')
+                                            ->label('Global Halal Logo')
+                                            ->directory('halal_logos')
+                                            ->image()->disk('public')
+                                            ->visibility('public')
+                                            ->visible(fn(Get $get): bool => (bool) $get('use_global_halal_logo'))
+                                            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                                return 'global_halal_logo_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+                                            }),
+                                    ]),
+
                                 ]),
                             ]),
                         Tab::make('Users Settings')
