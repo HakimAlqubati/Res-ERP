@@ -144,7 +144,7 @@ class AdminPanelProvider extends PanelProvider
                             //  (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  ReportOrdersCluster::getNavigationItems(): [], 
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  SupplierCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  SupplierStoresReportsCluster::getNavigationItems() : [],
-                            (isSuperAdmin() || isSystemManager() || isBranchManager()) ?  InventoryManagementCluster::getNavigationItems() : [],
+                            (isSuperAdmin() || isSystemManager()) ?  InventoryManagementCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  InventoryReportLinks::getNavigationItems() : [],
                             // InventoryReportLinks::getNavigationItems(),
 
