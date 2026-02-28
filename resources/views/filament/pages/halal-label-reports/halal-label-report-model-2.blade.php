@@ -71,14 +71,9 @@
     {{ $this->getTableFiltersForm() }}
 
     <div class="flex justify-end mb-4 mt-4 no-print">
-        <button wire:click="exportPdf" type="button"
-            class="px-4 py-2 font-semibold text-white rounded-md shadow-md"
-            style="background-color: #0d7c66; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-            <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-            </svg>
-            Export PDF (mPDF)
-        </button>
+        <x-filament::button wire:click="exportPdf" size="sm" color="success" icon="heroicon-o-document-arrow-down">
+            {{ __('Export PDF') }}
+        </x-filament::button>
     </div>
 
     <div id="reportContent" class="mt-6 bg-white p-4">
