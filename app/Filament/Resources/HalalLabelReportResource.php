@@ -84,7 +84,7 @@ class HalalLabelReportResource extends Resource
                         'model_1' => 'Model 1',
                         'model_2' => 'Model 2',
                     ])
-                    ->default('model_1'),
+                    ->default('model_2'),
                 SelectFilter::make("product_id")
                     ->label(__('lang.product'))
                     ->multiple()
