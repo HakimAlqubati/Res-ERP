@@ -162,7 +162,7 @@
                             </div>
                             <div style="font-size: 10px; font-weight: bold; line-height: 1.2;">
                                 MS1500<br>
-                                X XXX-XX/XXXX
+                                {{ $row['patch_number'] ?? '' }}
                             </div>
                         </td>
                     </tr>
