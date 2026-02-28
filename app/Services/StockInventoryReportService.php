@@ -37,6 +37,20 @@ class StockInventoryReportService
             ->whereNotIn('id', $inventoriedProductIds)
             ->with(['category:id,name']);
 
+        if ($hideZero) {
+            $bindings = [\App\Models\InventoryTransaction::MOVEMENT_IN, \App\Models\InventoryTransaction::MOVEMENT_OUT];
+            $storeCondition = '';
+            if ($storeId) {
+                $storeCondition = ' AND store_id = ?';
+                $bindings[] = $storeId;
+            }
+
+            $query->whereRaw(
+                '(SELECT COALESCE(SUM(CASE WHEN movement_type = ? THEN IFNULL(base_quantity, quantity * package_size) ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN movement_type = ? THEN IFNULL(base_quantity, quantity * package_size) ELSE 0 END), 0) FROM inventory_transactions WHERE product_id = products.id AND deleted_at IS NULL' . $storeCondition . ') > 0',
+                $bindings
+            );
+        }
+
         // 4. الحصول على النتائج مع Pagination من قاعدة البيانات
         $products = $query->paginate($perPage);
 
@@ -109,11 +123,7 @@ class StockInventoryReportService
             return $product;
         });
 
-        // 7. فلترة المنتجات بكمية صفر إذا لزم الأمر
-        if ($hideZero) {
-            $filtered = $products->getCollection()->filter(fn($p) => $p->remaining_qty > 0);
-            $products->setCollection($filtered->values());
-        }
+        // 7. التأكد من معالجة جميع المنتجات وإعادتها مع الـ pagination الصحيح (تم الفلترة مسبقاً)
 
         return $products;
     }
