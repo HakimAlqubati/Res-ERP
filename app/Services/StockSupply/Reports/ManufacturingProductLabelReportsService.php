@@ -80,6 +80,7 @@ class ManufacturingProductLabelReportsService
                 'unit' => $transaction->unit?->name,
                 'store_name' => $transaction->store?->name ?? null,
                 'halal_logo' => $transaction->product->halalCertificate?->halal_logo ? Storage::url($transaction->product->halalCertificate->halal_logo) : null,
+                'allergen_info' => $transaction->product->halalCertificate?->allergen_info ?? '',
             ];
         });
     }

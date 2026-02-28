@@ -12,7 +12,15 @@ class ListHalalLabelReports extends ListRecords
 {
     use HasBackButtonAction;
     protected static string $resource = HalalLabelReportResource::class;
-    protected string $view = 'filament.pages.halal-label-reports.halal-label-report';
+    public static string $viewModel2 = 'filament.pages.halal-label-reports.halal-label-report-model-2';
+    public static string $viewModel1 = 'filament.pages.halal-label-reports.halal-label-report';
+    // protected string $view = 'filament.pages.halal-label-reports.halal-label-report';
+
+    public function getView(): string
+    {
+        $viewModel = $this->getTable()->getFilters()['view_model']->getState()['value'] ?? 'model_1';
+        return $viewModel === 'model_2' ? self::$viewModel2 : self::$viewModel1;
+    }
     public $selectedLabelDetails = null;
 
     public function showDetails($productId, $batchCode)

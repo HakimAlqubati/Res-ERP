@@ -21,7 +21,7 @@
         }
     </style>
 
-   
+
 
     {{ $this->getTableFiltersForm() }}
 
@@ -87,90 +87,94 @@
     <x-filament::modal id="label-details-modal" width="2xl">
         <x-slot name="heading">
             <div class="flex items-center gap-2">
-                <span class="font-bold text-lg text-gray-800">   </span>
+                <span class="font-bold text-lg text-gray-800"> </span>
             </div>
         </x-slot>
 
         @if ($selectedLabelDetails)
-        <div class="p-8 font-serif text-black bg-white" style="font-family: 'Times New Roman', Times, serif;">
-            {{-- Top Section: Product Details --}}
-            <div class="mb-6">
-                <table class="w-full text-base font-bold leading-relaxed border-none">
-                    <tbody>
-                        <tr>
-                            <td class="w-40 align-top uppercase pb-1">PRODUCT</td>
-                            <td class="w-4 align-top pb-1">:</td>
-                            <td class="align-top pb-1">
-                                {{ $selectedLabelDetails['product_name'] }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="align-top uppercase pb-1">CODE</td>
-                            <td class="align-top pb-1">:</td>
-                            <td class="align-top pb-1">{{ $selectedLabelDetails['code'] ?? 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="align-top uppercase pb-1">BATCH CODE</td>
-                            <td class="align-top pb-1">:</td>
-                            <td class="align-top pb-1">{{ $selectedLabelDetails['batch_code'] }}</td>
-                        </tr>
-                        <tr>
-                            <td class="align-top uppercase pb-1">PROD. DATE</td>
-                            <td class="align-top pb-1">:</td>
-                            <td class="align-top pb-1">{{ $selectedLabelDetails['production_date'] }}</td>
-                        </tr>
-                        <tr>
-                            <td class="align-top uppercase pb-1">BEST BEFORE</td>
-                            <td class="align-top pb-1">:</td>
-                            <td class="align-top pb-1">{{ $selectedLabelDetails['best_before'] ?? $selectedLabelDetails['expiry_date'] ?? '' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="align-top uppercase pb-1">NETT WEIGHT</td>
-                            <td class="align-top pb-1">:</td>
-                            <td class="align-top pb-1 uppercase">{{ $selectedLabelDetails['net_weight'] }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+        <div class="p-8 font-serif text-black bg-white" style="font-family: 'Times New Roman', Times, serif; position: relative; min-height: 350px;">
+            <div style="padding-right: 120px;">
+                {{-- Top Section: Product Details --}}
+                <div class="mb-6">
+                    <table class="w-full text-base font-bold leading-relaxed border-none">
+                        <tbody>
+                            <tr>
+                                <td class="w-40 align-top uppercase pb-1">PRODUCT</td>
+                                <td class="w-4 align-top pb-1">:</td>
+                                <td class="align-top pb-1">
+                                    {{ $selectedLabelDetails['product_name'] }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="align-top uppercase pb-1">CODE</td>
+                                <td class="align-top pb-1">:</td>
+                                <td class="align-top pb-1">{{ $selectedLabelDetails['code'] ?? 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="align-top uppercase pb-1">BATCH CODE</td>
+                                <td class="align-top pb-1">:</td>
+                                <td class="align-top pb-1">{{ $selectedLabelDetails['batch_code'] }}</td>
+                            </tr>
+                            <tr>
+                                <td class="align-top uppercase pb-1">PROD. DATE</td>
+                                <td class="align-top pb-1">:</td>
+                                <td class="align-top pb-1">{{ $selectedLabelDetails['production_date'] }}</td>
+                            </tr>
+                            <tr>
+                                <td class="align-top uppercase pb-1">BEST BEFORE</td>
+                                <td class="align-top pb-1">:</td>
+                                <td class="align-top pb-1">{{ $selectedLabelDetails['best_before'] ?? $selectedLabelDetails['expiry_date'] ?? '' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="align-top uppercase pb-1">NETT WEIGHT</td>
+                                <td class="align-top pb-1">:</td>
+                                <td class="align-top pb-1 uppercase">{{ $selectedLabelDetails['net_weight'] }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-            {{-- Middle Section: Manufacturer & Logo --}}
-            <div class="flex items-end justify-between mb-6">
-                {{-- Manufacturer Info --}}
-                <div class="w-3/4">
+                {{-- Middle Section: Manufacturer Info --}}
+                <div class="mb-6">
                     <div class="mb-1 font-bold uppercase">MANUFACTURED BY:</div>
                     <div class="font-bold uppercase leading-tight mb-2">
                         {{ $selectedLabelDetails['manufactured_by'] }}
                     </div>
-                    <div class="flex justify-between items-start">
-                        <div class="text-base leading-snug mb-1 font-bold flex-1">
-                            {!! nl2br(e($selectedLabelDetails['address'])) !!}
-                              
-                        </div>
-                        {{-- Halal Logo --}}
-                        @if($selectedLabelDetails['halal_logo'])
-                        <div class="ml-4 flex-shrink-0">
-                            <img src="{{ $selectedLabelDetails['halal_logo'] }}" alt="Halal Logo" style="height: 80px;width: auto;">
-                        </div>
-                        @endif
+                    <div class="text-base leading-snug mb-1 font-bold">
+                        {!! nl2br(e($selectedLabelDetails['address'])) !!}
                     </div>
-                    <div class="font-bold">
+                    <div class="font-bold mt-2">
                         <span class="uppercase">TEL :</span> {{ $selectedLabelDetails['tel'] }}
                     </div>
                 </div>
 
-
+                {{-- Bottom Section: Origin & Allergens --}}
+                <div class="space-y-1 font-bold uppercase">
+                    <div>
+                        COUNTRY OF ORIGIN: {{ $selectedLabelDetails['country_of_origin'] }}
+                    </div>
+                    @if(!empty($selectedLabelDetails['allergen_info']))
+                    <div class="uppercase">
+                        {{ $selectedLabelDetails['allergen_info'] }}
+                    </div>
+                    @endif
+                </div>
             </div>
 
-            {{-- Bottom Section: Origin & Allergens --}}
-            <div class="space-y-1 font-bold uppercase">
-                <div>
-                    COUNTRY OF ORIGIN: {{ $selectedLabelDetails['country_of_origin'] }}
+            {{-- Halal Logo on right --}}
+            <div style="position: absolute; right: 32px; bottom: 32px; width: 100px; text-align: center;">
+                <div style="margin-bottom: 6px; display: flex; justify-content: center;">
+                    @if($selectedLabelDetails['halal_logo'])
+                    <img src="{{ $selectedLabelDetails['halal_logo'] }}" alt="Halal Logo" style="height: 80px; width: auto; object-fit: contain;">
+                    @else
+                    <div style="height: 80px; width: 80px; border: 1px dashed #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #555;">LOGO</div>
+                    @endif
                 </div>
-                @if(!empty($selectedLabelDetails['allergen_info']))
-                <div class="uppercase">
-                    {{ $selectedLabelDetails['allergen_info'] }}
+
+                <div style="font-size: 11px; font-weight: bold; line-height: 1.2;">
+                    MS1500<br>
+                    X XXX-XX/XXXX
                 </div>
-                @endif
             </div>
         </div>
         @else
