@@ -137,16 +137,13 @@
                 <div style="position: absolute; right: 16px; bottom: 16px; width: 100px; text-align: center;">
                     <div style="margin-bottom: 6px; display: flex; justify-content: center;">
                         @if($row['halal_logo'])
-                        <img src="{{ $row['halal_logo'] }}" alt="Halal" style="height: 65px; width: auto; object-fit: contain;">
+                        <img src="{{ $row['halal_logo'] }}" alt="Halal" style="height: 90px; width: auto; object-fit: contain;">
                         @else
-                        <div style="height: 65px; width: 65px; border: 1px dashed #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #555;">LOGO</div>
+                        <div style="height: 90px; width: 90px; border: 1px dashed #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #555;">LOGO</div>
                         @endif
                     </div>
 
-                    <div style="font-size: 11px; font-weight: bold; line-height: 1.2;">
-                        MS1500<br>
-                        {{ $row['patch_number'] ?? '' }}
-                    </div>
+
                 </div>
             </div>
             @endforeach

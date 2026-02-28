@@ -155,15 +155,12 @@
                                 // ensure absolute path or base64 for mPDF, but often it can read remote URLs or local asset urls if configured. Assuming $row['halal_logo'] is public URL. If it's slow, we might need public_path().
                                 // In standard Laravel mPDF, local URLs work.
                                 @endphp
-                                <img src="{{ $row['halal_logo'] }}" alt="Halal" style="height: 65px; width: auto;">
+                                <img src="{{ $row['halal_logo'] }}" alt="Halal" style="height: 90px; width: auto;">
                                 @else
-                                <div style="height: 65px; width: 65px; border: 1px dashed #ccc; border-radius: 50%; display: inline-block; line-height: 65px; font-size: 10px; color: #555;">LOGO</div>
+                                <div style="height: 90px; width: 90px; border: 1px dashed #ccc; border-radius: 50%; display: inline-block; line-height: 90px; font-size: 10px; color: #555;">LOGO</div>
                                 @endif
                             </div>
-                            <div style="font-size: 10px; font-weight: bold; line-height: 1.2;">
-                                MS1500<br>
-                                {{ $row['patch_number'] ?? '' }}
-                            </div>
+
                         </td>
                     </tr>
                 </table>
