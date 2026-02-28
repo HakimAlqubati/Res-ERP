@@ -7,6 +7,7 @@ use App\Filament\Resources\HalalLabelReportResource;
 use App\Models\Store;
 use App\Services\StockSupply\Reports\ManufacturingProductLabelReportsService;
 use Filament\Resources\Pages\ListRecords;
+use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
 
 class ListHalalLabelReports extends ListRecords
 {
@@ -60,5 +61,30 @@ class ListHalalLabelReports extends ListRecords
             'startDate' => $startDate,
             'endDate' => $endDate,
         ];
+    }
+
+    public function exportPdf()
+    {
+        $data = $this->getViewData();
+
+        $pdf = PDF::loadView('export.reports.halal-label-report-model-2-pdf', [
+            'reportData' => $data['reportData'],
+            'store' => $data['store'],
+            'startDate' => $data['startDate'],
+            'endDate' => $data['endDate'],
+        ], [], [
+            'margin_left'   => 2,
+            'margin_right'  => 2,
+            'margin_top'    => 2,
+            'margin_bottom' => 2,
+        ]);
+
+        $storeName = preg_replace('/[^A-Za-z0-9\-_ ]/', '', $data['store'] ?? 'All_Stores');
+        $storeName = str_replace(' ', '_', $storeName);
+        $fileName = "Halal_Label_{$storeName}_{$data['startDate']}_to_{$data['endDate']}.pdf";
+
+        return response()->streamDownload(function () use ($pdf, $fileName) {
+            $pdf->stream($fileName);
+        }, $fileName);
     }
 }
