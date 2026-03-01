@@ -149,8 +149,16 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         }
 
         // Cap payable days by required shift days (exclude no_periods days)
+        // For By30Days method: only skip the cap if the employee covers the full month
+        // (requiredDays >= monthDays), so short months like February still get full salary.
+        // If the employee has partial shifts (e.g. 6 out of 28), the cap still applies.
         if ($requiredDays < $payableDays) {
-            $payableDays = $requiredDays;
+            $isFullMonthBy30 = $this->dailyRateMethod === DailyRateMethod::By30Days->value
+                && $requiredDays >= $monthDays;
+
+            if (!$isFullMonthBy30) {
+                $payableDays = $requiredDays;
+            }
         }
 
         if (!$periodYear || !$periodMonth) {
