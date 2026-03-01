@@ -73,6 +73,7 @@ class ListHalalLabelReports extends ListRecords
             'startDate' => $data['startDate'],
             'endDate' => $data['endDate'],
         ], [], [
+            'format'        => [100, 55],  // Custom sticker size: 100mm x 55mm (Zebra ZD230)
             'margin_left'   => 2,
             'margin_right'  => 2,
             'margin_top'    => 2,

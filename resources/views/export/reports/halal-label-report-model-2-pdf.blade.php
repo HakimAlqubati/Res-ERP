@@ -3,60 +3,46 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Halal Label Artwork</title>
+    <title>Halal Label Sticker</title>
     <style>
         body {
             font-family: 'Arial', sans-serif !important;
-            font-size: 11px;
-            /* Slightly reduced font size to fit more content if needed */
+            font-size: 10px;
             color: black;
             background-color: #ffffff;
             direction: ltr !important;
-            margin: 5px;
-            /* Added small margin to the whole page instead of relying solely on mPDF padding */
+            margin: 0;
+            padding: 0;
         }
 
-        .label-title {
-            font-size: 16px;
-            font-weight: bold;
-            text-align: center;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
-
-        .grid-table {
+        .label-card {
             width: 100%;
-            border-collapse: collapse;
-            border-top: 1px solid black;
-            border-left: 1px solid black;
-        }
-
-        .grid-td {
-            width: 50%;
-            border-right: 1px solid black;
-            border-bottom: 1px solid black;
-            padding: 16px;
-            vertical-align: top;
-            height: 250px;
+            padding: 10px;
             box-sizing: border-box;
+            page-break-after: always;
+            height: 100%;
         }
 
-        .inner-table {
+        .label-card:last-child {
+            page-break-after: auto;
+        }
+
+        .card-table {
             width: 100%;
             border-collapse: collapse;
             border: none;
         }
 
-        .inner-td-left {
-            width: 75%;
+        .card-td-left {
+            width: 70%;
             vertical-align: top;
             border: none;
             padding: 0;
-            padding-right: 15px;
+            padding-right: 8px;
         }
 
-        .inner-td-right {
-            width: 25%;
+        .card-td-right {
+            width: 30%;
             vertical-align: bottom;
             text-align: center;
             border: none;
@@ -64,22 +50,17 @@
         }
 
         .info-row {
-            margin-bottom: 12px;
-            line-height: 1.4;
+            margin-bottom: 16px;
+            line-height: 1.6;
         }
 
         .bold-label {
-            font-weight: bold;
-            display: block;
-        }
-
-        .bold-label-inline {
             font-weight: bold;
         }
 
         .product-name-val {
             font-weight: bold;
-            font-size: 16px;
+            font-size: 13px;
             text-transform: uppercase;
             display: block;
             margin-top: 2px;
@@ -87,7 +68,7 @@
 
         .val-text {
             display: block;
-            margin-top: 2px;
+            margin-top: 1px;
         }
     </style>
 </head>
@@ -101,78 +82,54 @@
     $manufacturerInfo = $companyName . '. ' . $address;
     @endphp
 
-    <div class="label-title">
-        LABEL ARTWORK<br>
-        (LABEL PEMBUNGKUSAN) - STICKER
+    @foreach ($reportData as $index => $row)
+    <div class="label-card">
+        <table class="card-table">
+            <tr>
+                <td class="card-td-left">
+                    <div class="info-row">
+                        <span class="bold-label">Product Name/Nama Produk:</span>
+                        <span class="product-name-val">{{ $row['product_name'] }}</span>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="bold-label">Manufacturer/Pengilang:</span>
+                        <span class="val-text">{{ $manufacturerInfo }}</span>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="bold-label">Raw Material/Bahan Ramuan:</span>
+                        <span class="val-text">{{ $row['allergen_info'] }}</span>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="bold-label">Prod. Date/Tarikh Pemprosesan:</span>
+                        <span class="val-text">{{ $row['production_date'] }}</span>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="bold-label">Expiry/Tarikh Tamat Tempoh:</span>
+                        <span class="val-text">{{ $row['expiry_date'] }}</span>
+                    </div>
+
+                    <div class="info-row" style="margin-bottom: 0;">
+                        <span class="bold-label">Net Weight/Berat Bersih:</span>
+                        <span class="val-text">{{ $row['net_weight'] ?? '1KG/2KG/5KG' }}</span>
+                    </div>
+                </td>
+                <td class="card-td-right">
+                    <div style="margin-bottom: 4px;">
+                        @if($row['halal_logo'])
+                        <img src="{{ $row['halal_logo'] }}" alt="Halal" style="height: 55px; width: auto;">
+                        @else
+                        <div style="height: 55px; width: 55px; border: 1px dashed #ccc; border-radius: 50%; display: inline-block; line-height: 55px; font-size: 9px; color: #555;">LOGO</div>
+                        @endif
+                    </div>
+                </td>
+            </tr>
+        </table>
     </div>
-
-    <table class="grid-table">
-        <tr>
-            @foreach ($reportData as $index => $row)
-            @if($index > 0 && $index % 2 == 0)
-        </tr>
-        <tr>
-            @endif
-
-            <td class="grid-td">
-                <table class="inner-table" style="height: 100%;">
-                    <tr>
-                        <td class="inner-td-left">
-                            <div class="info-row">
-                                <span class="bold-label">Product Name/Nama Produk:</span>
-                                <span class="product-name-val">{{ $row['product_name'] }}</span>
-                            </div>
-
-                            <div class="info-row">
-                                <span class="bold-label">Manufacturer Information/Maklumat Pengilang:</span>
-                                <span class="val-text">{{ $manufacturerInfo }}</span>
-                            </div>
-
-                            <div class="info-row">
-                                <span class="bold-label">Raw Material Information/Maklumat Bahan Ramuan:</span>
-                                <span class="val-text">{{ $row['allergen_info'] }}</span>
-                            </div>
-
-                            <div class="info-row">
-                                <span class="bold-label-inline">Production Date/Tarikh Pemprosesan:</span>
-                                <span class="val-text">{{ $row['production_date'] }}</span>
-                            </div>
-
-                            <div class="info-row">
-                                <span class="bold-label-inline">Expiry Date/Tarikh Tamat Tempoh:</span>
-                                <span class="val-text">{{ $row['expiry_date'] }}</span>
-                            </div>
-
-                            <div class="info-row" style="margin-bottom: 0;">
-                                <span class="bold-label-inline">Net Weight/Berat Bersih:</span>
-                                <span class="val-text">{{ $row['net_weight'] ?? '1KG/2KG/5KG' }}</span>
-                            </div>
-                        </td>
-                        <td class="inner-td-right">
-                            <div style="margin-bottom: 5px;">
-                                @if($row['halal_logo'])
-                                @php
-                                // ensure absolute path or base64 for mPDF, but often it can read remote URLs or local asset urls if configured. Assuming $row['halal_logo'] is public URL. If it's slow, we might need public_path().
-                                // In standard Laravel mPDF, local URLs work.
-                                @endphp
-                                <img src="{{ $row['halal_logo'] }}" alt="Halal" style="height: 90px; width: auto;">
-                                @else
-                                <div style="height: 90px; width: 90px; border: 1px dashed #ccc; border-radius: 50%; display: inline-block; line-height: 90px; font-size: 10px; color: #555;">LOGO</div>
-                                @endif
-                            </div>
-
-                        </td>
-                    </tr>
-                </table>
-            </td>
-            @endforeach
-
-            {{-- Fill empty cell if odd number of items --}}
-            @if(count($reportData) % 2 != 0)
-            <td class="grid-td" style="border-right: 1px solid black;"></td>
-            @endif
-        </tr>
-    </table>
+    @endforeach
 
 </body>
 
