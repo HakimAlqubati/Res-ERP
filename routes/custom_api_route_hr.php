@@ -53,6 +53,7 @@ Route::prefix('hr')
         Route::get('employees/{employee}/periodsHistory', [EmployeePeriodHistoryController::class, 'getPeriodsByDateRange']);
         Route::get('/employeeAttendance', [AttendanceController::class, 'employeeAttendance']);
         Route::get('/multipleAttendanceDetails', [AttendanceController::class, 'multipleAttendanceDetails']);
+        Route::get('/branchAttendanceSummary', [AttendanceController::class, 'branchAttendanceSummary']);
         Route::get('employeesAttendanceOnDate', [AttendanceController::class, 'employeesAttendanceOnDate']);
 
         Route::get('/attendancePlan', [AttendanceController::class, 'generate']);

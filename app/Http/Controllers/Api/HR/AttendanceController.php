@@ -11,6 +11,7 @@ use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
 use App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateService;
 use App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesService;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceImagesReportService;
+use App\Services\HR\BranchAttendanceSummaryService;
 use App\Services\HR\v2\Attendance\AttendanceServiceV2;
 use Aws\DynamoDb\DynamoDbClient;
 use Aws\Rekognition\RekognitionClient;
@@ -511,6 +512,39 @@ class AttendanceController extends Controller
                 'message' => 'Something went wrong.',
                 'error'   => $e->getMessage(),
             ], \Symfony\Component\HttpFoundation\Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Branch Attendance Summary Report
+     *
+     * GET /api/hr/branchAttendanceSummary?branch_id=7&year=2026&month=2
+     */
+    public function branchAttendanceSummary(Request $request, BranchAttendanceSummaryService $summaryService)
+    {
+        try {
+            $validated = $request->validate([
+                'branch_id' => 'required|integer|exists:branches,id',
+                'year'      => 'required|integer|min:2000',
+                'month'     => 'required|integer|between:1,12',
+            ]);
+
+            $report = $summaryService->generate(
+                $validated['branch_id'],
+                $validated['year'],
+                $validated['month']
+            );
+
+            return response()->json([
+                'status' => 'success',
+                'data'   => $report,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Something went wrong.',
+                'error'   => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }
