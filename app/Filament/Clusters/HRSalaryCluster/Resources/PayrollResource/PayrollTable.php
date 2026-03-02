@@ -50,8 +50,7 @@ class PayrollTable
     public static function getFilters(): array
     {
         return [
-            TrashedFilter::make()
-                ->default(fn() => auth()->user()->email === 'hakimahmed123321@gmail.com'),
+            TrashedFilter::make(),
             SelectFilter::make('branch_id')->label('Branch')
                 ->options(Branch::selectable()->forBranchManager('id')->pluck('name', 'id')),
         ];
