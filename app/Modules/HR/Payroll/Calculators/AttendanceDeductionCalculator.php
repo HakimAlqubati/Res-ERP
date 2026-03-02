@@ -91,6 +91,7 @@ class AttendanceDeductionCalculator
         // تطبيق الاستثناءات من ملف الموظف
         if ($context->employee->discount_exception_if_absent) {
             $absenceDeduction = 0.0;
+            $missingHoursDeduction = 0.0;
         }
 
         if ($context->employee->discount_exception_if_attendance_late) {
