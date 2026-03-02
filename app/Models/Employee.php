@@ -60,6 +60,7 @@ class Employee extends Model implements Auditable
         'is_ceo',
         'working_days',
         'is_indexed_in_aws',
+        'is_mtd_applicable',
     ];
 
     protected $auditInclude = [
@@ -94,11 +95,13 @@ class Employee extends Model implements Auditable
         'manager_id',
         'working_days',
         'is_indexed_in_aws',
+        'is_mtd_applicable',
     ];
 
     protected $casts = [
-        'bank_information' => 'array',
-        'changes'          => 'array',
+        'bank_information'  => 'array',
+        'changes'           => 'array',
+        'is_mtd_applicable' => 'boolean',
     ];
 
     // ─────────────────────────────────────────────────────────────

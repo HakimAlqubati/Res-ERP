@@ -365,6 +365,7 @@ return [
     'is_percentage' => 'Is Percentage',
     'no_salary_deduction_for_absences' => 'No Salary Deduction for Absences',
     'exempt_from_late_attendance_deduction' => 'Exempt from Late Attendance Deduction',
+    'is_mtd_applicable' => 'MTD Applicable',
 
     // ===========================================
     // HRMS - Attendance & Shifts

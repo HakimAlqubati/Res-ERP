@@ -347,6 +347,7 @@ return [
   'is_percentage' => 'نسبة مئوية',
   'no_salary_deduction_for_absences' => 'بدون خصم راتب للغياب',
   'exempt_from_late_attendance_deduction' => 'معفى من خصم التأخير',
+  'is_mtd_applicable' => 'خاضع لـMTD',
 
   // ===========================================
   // HRMS - Attendance & Shifts

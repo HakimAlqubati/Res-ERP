@@ -41,11 +41,11 @@ class EmployeeForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
-        ->components([
+            ->components([
                 // static::avatar()
                 // ->imagePreviewHeight(200)
                 // ,
-                
+
                 Wizard::make([
                     Step::make(__('lang.personal_data'))
                         ->icon('heroicon-o-user-circle')
@@ -427,6 +427,9 @@ class EmployeeForm
                                             ->label(__('lang.exempt_from_late_attendance_deduction'))->default(0)->inline(false)
                                         // ->isInline(false)
                                         ,
+                                        Toggle::make('is_mtd_applicable')->columnSpan(1)
+                                            ->disabled(fn(): bool => isBranchManager())
+                                            ->label(__('lang.is_mtd_applicable'))->default(0)->inline(false),
 
                                         Repeater::make('bank_information')
                                             ->disabled(fn(): bool => isBranchManager())
