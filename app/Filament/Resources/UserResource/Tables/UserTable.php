@@ -121,7 +121,10 @@ class UserTable
                 IconColumn::make('is_blocked')
                     ->boolean()->alignCenter(true)
                     ->label(__("lang.is_blocked"))->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('last_login_at')->label('Last Login')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('last_login_at')
+                    ->label('Last Login')->dateTime()->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->visible(fn() => isHakimOrAdel()),
                 TextColumn::make('activities_count')
                     ->label(__('lang.activities_count'))
                     ->counts('activities')
