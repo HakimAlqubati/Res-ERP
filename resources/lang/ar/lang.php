@@ -657,6 +657,10 @@ return [
   'attendance_by_employee' => 'الحضور حسب الموظف',
   'my_attendance' => 'سجل حضوري',
   'absence_report' => 'تقرير الغياب',
+  'branch_attendance_summary' => 'ملخص حضور الفرع',
+  'current_staff' => 'الموظفين الحاليين',
+  'new_staff' => 'الموظفين الجدد',
+  'terminated_staff' => 'الموظفين المنتهية خدماتهم',
   'no_data' => 'لا توجد بيانات',
   'start_date' => 'تاريخ البداية',
   'end_date' => 'تاريخ النهاية',
@@ -1066,4 +1070,5 @@ return [
   'subtotal' => 'المجموع الفرعي',
   'weekly_leave' => 'إجازة أسبوعية',
   'error_occurred' => 'حدث خطأ',
+  'employee_name' => 'اسم الموظف',
 ];
