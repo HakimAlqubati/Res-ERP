@@ -161,6 +161,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             }
         }
 
+        // dd($payableDays,$monthDays);
         if (!$periodYear || !$periodMonth) {
             throw new InvalidArgumentException('periodYear and periodMonth are required to compute penalty deductions.');
         }
@@ -313,7 +314,8 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             dynamicDeductions: $dynamicDeductions,
             monthlyIncentives: $monthlyIncentives,
             overtimeMultiplier: $this->overtimeMultiplier,
-            policyHookTransactions: $policyHookTransactions
+            policyHookTransactions: $policyHookTransactions,
+            baseSalary: $this->baseSalary,
         );
 
         // Add Overtime Days Transaction (Unused Leave Balance)
