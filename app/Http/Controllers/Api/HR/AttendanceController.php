@@ -127,6 +127,52 @@ class AttendanceController extends Controller
         }
     }
 
+    /**
+     * Get detailed multiple attendance breakdown for a specific employee, period, and date.
+     *
+     * GET /api/hr/multipleAttendanceDetails?employee_id=13&period_id=1&date=2026-02-15
+     */
+    public function multipleAttendanceDetails(Request $request)
+    {
+        try {
+            $request->validate([
+                'employee_id' => 'required|integer|exists:hr_employees,id',
+                'period_id'   => 'required|integer',
+                'date'        => 'required|date',
+            ]);
+
+            $employeeId = $request->input('employee_id');
+            $periodId   = $request->input('period_id');
+            $date       = $request->input('date');
+
+            // Fetch raw attendance records using AttendanceFetcher
+            $attendances = $this->attendanceFetcher->getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
+
+            // Use the calculator service
+            $result = \App\Services\HR\AttendanceHelpers\Reports\AttendanceDetailsCalculator::calculateDetailedBreakdown(
+                $attendances->toArray()
+            );
+
+            return response()->json([
+                'status'             => 'success',
+                'date'               => $date,
+                'employee_id'        => $employeeId,
+                'period_id'          => $periodId,
+                'attendances'        => $result['attendances'],
+                'total_hours'        => $result['total_hours'],
+                'remaining_minutes'  => $result['remaining_minutes'],
+                'total_minutes'      => $result['total_minutes'],
+                'formatted_total'    => $result['total_hours'] . 'h ' . $result['remaining_minutes'] . 'm',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Something went wrong.',
+                'error'   => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     public function employeesAttendanceOnDate(Request $request)
     {
         $validated = $request->validate([

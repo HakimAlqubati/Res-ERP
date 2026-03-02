@@ -104,6 +104,7 @@ class AttendanceDetailsCalculator
         $totalHours = intdiv($totalMinutes, 60);
         $remainingMinutes = $totalMinutes % 60;
 
+        $totalMinutes = round($totalMinutes, 4);
         return [
             'attendances'       => $attendances,
             'total_hours'       => $totalHours,
