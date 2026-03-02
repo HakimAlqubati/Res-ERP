@@ -66,8 +66,8 @@ class BranchAttendanceSummaryService
         Employee::where('branch_id', $branchId)
             ->where('active', 1)
             ->select('id', 'name', 'employee_no', 'salary', 'join_date', 'working_days', 'working_hours')
-            ->limit(20)
-            ->chunk($chunkSize, function ($employees) use (&$currentStaff, &$newStaff, $terminatedEmployeeIds, $year, $month, $periodStart, $periodEnd, $monthDays) {
+            // ->limit(20)
+            ->chunk(10, function ($employees) use (&$currentStaff, &$newStaff, $terminatedEmployeeIds, $year, $month, $periodStart, $periodEnd, $monthDays) {
 
                 $filtered = $employees->filter(fn($emp) => !in_array($emp->id, $terminatedEmployeeIds));
 
