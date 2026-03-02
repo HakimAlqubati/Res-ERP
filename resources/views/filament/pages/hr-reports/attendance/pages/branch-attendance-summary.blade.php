@@ -3,6 +3,11 @@
     {{ $this->getTableFiltersForm() }}
 
     @if (!empty($branch_id) && $report)
+    <div class="flex justify-end mb-4 mt-4 no-print">
+        <x-filament::button wire:click="exportPdf" size="sm" color="success" icon="heroicon-o-document-arrow-down">
+            {{ __('Export PDF') }}
+        </x-filament::button>
+    </div>
     <div class="overflow-x-auto">
         {{-- ============ CURRENT STAFF ============ --}}
         <table class="w-full text-sm text-left pretty reports" style="margin-bottom: 2rem;">

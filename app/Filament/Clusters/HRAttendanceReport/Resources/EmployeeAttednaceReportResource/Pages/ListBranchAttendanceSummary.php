@@ -3,8 +3,10 @@
 namespace App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource\Pages;
 
 use App\Filament\Clusters\HRAttendanceReport\Resources\BranchAttendanceSummaryResource;
+use App\Models\Branch;
 use App\Services\HR\BranchAttendanceSummaryService;
 use Filament\Resources\Pages\ListRecords;
+use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
 
 class ListBranchAttendanceSummary extends ListRecords
 {
@@ -38,5 +40,52 @@ class ListBranchAttendanceSummary extends ListRecords
             'year'      => $year,
             'month'     => $month,
         ];
+    }
+
+    public function exportPdf()
+    {
+        $data = $this->getViewData();
+
+        if (!$data['report']) {
+            return;
+        }
+
+        $branch = Branch::find($data['branch_id']);
+        $branchName = $branch?->name ?? 'Branch';
+
+        // Company logo
+        $companyLogo = \App\Models\Setting::getSetting('company_logo');
+        if ($companyLogo) {
+            $companyLogo = public_path('storage/' . $companyLogo);
+            if (!file_exists($companyLogo)) {
+                $companyLogo = null;
+            }
+        }
+
+        $pdf = PDF::loadView('export.reports.branch-attendance-summary-pdf', [
+            'report'            => $data['report'],
+            'branchName'        => $branchName,
+            'year'              => $data['year'],
+            'month'             => $data['month'],
+            'companyLogo'       => $companyLogo,
+            'branchManager'     => null,
+            'operationManager'  => null,
+            'sustainingManager' => null,
+            'financeManager'    => null,
+        ], [], [
+            'format'        => 'A4',
+            'orientation'   => 'P',
+            'margin_left'   => 10,
+            'margin_right'  => 10,
+            'margin_top'    => 10,
+            'margin_bottom' => 10,
+        ]);
+
+        $monthName = \Carbon\Carbon::create($data['year'], $data['month'])->format('M');
+        $fileName = "Attendance_Report_{$branchName}_{$monthName}_{$data['year']}.pdf";
+
+        return response()->streamDownload(function () use ($pdf, $fileName) {
+            $pdf->stream($fileName);
+        }, $fileName);
     }
 }
