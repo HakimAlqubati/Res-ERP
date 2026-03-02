@@ -7,6 +7,7 @@ use App\Models\EmployeeServiceTermination;
 use App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator;
 use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
+use App\Services\HR\AttendanceHelpers\Reports\CachedAttendanceFetcher;
 use Carbon\Carbon;
 
 /**
@@ -22,11 +23,13 @@ use Carbon\Carbon;
 class BranchAttendanceSummaryService
 {
     protected AttendanceFetcher $attendanceFetcher;
+    protected CachedAttendanceFetcher $cachedAttendanceFetcher;
     protected WeeklyLeaveCalculator $weeklyLeaveCalculator;
 
     public function __construct()
     {
         $this->attendanceFetcher = new AttendanceFetcher(new EmployeePeriodHistoryService());
+        $this->cachedAttendanceFetcher = new CachedAttendanceFetcher($this->attendanceFetcher);
         $this->weeklyLeaveCalculator = new WeeklyLeaveCalculator();
     }
 
@@ -122,7 +125,8 @@ class BranchAttendanceSummaryService
     ): array {
         try {
             // 1. Fetch attendance data (the main data source)
-            $attendanceData  = $this->attendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
+            // $attendanceData  = $this->attendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
+            $attendanceData  = $this->cachedAttendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
             $attendanceArray = $attendanceData->toArray();
 
             $stats = $attendanceArray['statistics'] ?? [];
