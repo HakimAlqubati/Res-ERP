@@ -47,7 +47,7 @@ class MultiBranchFinancialReportService
                 branchId: (int) $branchId
             );
 
-            $report = $this->reportService->getIncomeStatement($dto, excludePayroll: true);
+            $report = $this->reportService->getIncomeStatement($dto);
 
             $branchName = $branches->get($branchId)?->name ?? "Branch #{$branchId}";
 

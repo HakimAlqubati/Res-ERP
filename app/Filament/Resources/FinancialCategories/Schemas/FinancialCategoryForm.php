@@ -41,6 +41,13 @@ class FinancialCategoryForm
                                     ->native(false)
                                     ->columnSpan(1),
 
+                                Select::make('profit_type')
+                                    ->label('Profit Type')
+                                    ->options(FinancialCategory::PROFIT_TYPES)
+                                    ->native(false)
+                                    ->helperText('Specify if this category affects gross profit or net profit')
+                                    ->columnSpan(1),
+
                                 TextInput::make('description')
                                     ->label('Description')
                                     ->maxLength(255)
