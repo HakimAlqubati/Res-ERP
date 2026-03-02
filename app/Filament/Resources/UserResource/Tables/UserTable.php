@@ -148,7 +148,8 @@ class UserTable
                             return $date->format('M d, Y h:i A');
                         }
                     })
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->visible(fn() => isHakimOrAdel()),
                 TextColumn::make('created_at')
                     ->label(__('lang.created_at'))
                     ->toggleable(isToggledHiddenByDefault: true),

@@ -33,17 +33,17 @@ class PayrollTable
                 ->sortable(),
             TextColumn::make('creator.name')
                 ->label(__('Created By'))
-                ->sortable()
-                ->toggleable(),
+                ->sortable()        
+                ->toggleable(isToggledHiddenByDefault: true),
             TextColumn::make('approver.name')
                 ->label(__('Approved By'))
                 ->sortable()
-                ->toggleable(),
+                ->toggleable(isToggledHiddenByDefault: true),
             TextColumn::make('created_at')
                 ->label(__('Created At'))
                 ->dateTime('Y-m-d H:i')
                 ->sortable()
-                ->toggleable(),
+                ->toggleable(isToggledHiddenByDefault: true),
             TextColumn::make('status')
                 ->label(__('Status'))
                 ->sortable()
