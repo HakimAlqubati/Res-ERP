@@ -18,6 +18,7 @@ class GoodsReceivedNote extends Model implements Auditable
         'store_id',
         'grn_number',
         'notes',
+        'attachment',
         'created_by',
         'updated_by',
         'approved_by',
@@ -36,6 +37,7 @@ class GoodsReceivedNote extends Model implements Auditable
         'store_id',
         'grn_number',
         'notes',
+        'attachment',
         'created_by',
         'updated_by',
         'approved_by',
@@ -48,6 +50,7 @@ class GoodsReceivedNote extends Model implements Auditable
     ];
     protected $appends = [
         'details_count',
+        'has_attachment',
         'has_inventory_transaction',
         'belongs_to_purchase_invoice',
         'has_outbound_transactions',
@@ -63,6 +66,15 @@ class GoodsReceivedNote extends Model implements Auditable
     ];
 
     // ✅ العلاقات
+
+    public function getHasAttachmentAttribute()
+    {
+        if (strlen($this->attachment) > 0) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
 
     public function purchaseInvoice()
     {
