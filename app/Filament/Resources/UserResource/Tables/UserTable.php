@@ -128,7 +128,8 @@ class UserTable
                 TextColumn::make('activities_count')
                     ->label(__('lang.activities_count'))
                     ->counts('activities')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->visible(fn() => isHakimOrAdel()),
                 TextColumn::make('last_activity')
                     ->label(__('lang.last_activity'))
                     ->formatStateUsing(function ($state) {
