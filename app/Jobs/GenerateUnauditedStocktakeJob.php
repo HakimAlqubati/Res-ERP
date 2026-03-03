@@ -138,7 +138,7 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue
                     })->toArray(),
                 ];
 
-                DetailsRelationManager::createStockAdjustment($adjustmentData, $insertedDetails, $this->userId);
+                DetailsRelationManager::createStockAdjustment($adjustmentData, $insertedDetails);
             }
 
             // 7. Notify Success
