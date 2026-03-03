@@ -17,9 +17,15 @@
                 Clear Config
             </x-filament::button>
 
+            <x-filament::button wire:click="clearQueue" color="danger" icon="heroicon-m-trash">
+                Clear Queue
+            </x-filament::button>
+
+            @if(1>2)
             <x-filament::button wire:click="linkAttendanceImages" color="success" icon="heroicon-m-link">
                 Link Images (60 Days)
             </x-filament::button>
+            @endif
         </div>
     </x-filament::section>
 </x-filament-widgets::widget>
