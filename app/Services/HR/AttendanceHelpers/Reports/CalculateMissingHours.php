@@ -13,6 +13,18 @@ class CalculateMissingHours
         $date,
         $employeeId
     ) {
+        if ($employeeId) {
+            $employee = \App\Models\Employee::find($employeeId);
+            if ($employee && $employee->discount_exception_if_attendance_late) {
+                return [
+                    'formatted' => '0 h 0 m',
+                    'total_hours' => 0,
+                    'total_minutes' => 0,
+                    'is_multiple' => false,
+                ];
+            }
+        }
+
         $attendances = Attendance::where('check_date', $date)
             ->where('employee_id', $employeeId)
             ->where('accepted', 1)

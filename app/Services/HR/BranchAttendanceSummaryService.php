@@ -22,6 +22,7 @@ use Carbon\Carbon;
  */
 class BranchAttendanceSummaryService
 {
+
     protected AttendanceFetcher $attendanceFetcher;
     protected CachedAttendanceFetcher $cachedAttendanceFetcher;
     protected WeeklyLeaveCalculator $weeklyLeaveCalculator;
@@ -54,7 +55,7 @@ class BranchAttendanceSummaryService
         $terminatedRecords = EmployeeServiceTermination::where('status', EmployeeServiceTermination::STATUS_APPROVED)
             ->whereHas('employee', fn($q) => $q->where('branch_id', $branchId))
             ->whereBetween('termination_date', [$periodStart, $periodEnd])
-            ->with('employee:id,name,employee_no,salary,join_date,working_days,working_hours')
+            ->with('employee:id,name,employee_no,salary,join_date,working_days,working_hours,discount_exception_if_attendance_late')
             ->get();
 
         $terminatedEmployeeIds = $terminatedRecords->pluck('employee_id')->toArray();
@@ -65,8 +66,12 @@ class BranchAttendanceSummaryService
         // Process active employees in DB-level chunks
         Employee::where('branch_id', $branchId)
             ->where('active', 1)
-            ->select('id', 'name', 'employee_no', 'salary', 'join_date', 'working_days', 'working_hours')
-            // ->limit(20)
+            ->select('id', 'name', 'employee_no', 'salary', 'join_date', 'working_days', 'working_hours', 'discount_exception_if_attendance_late')
+            ->withSum(['overtimes as total_overtime' => function ($query) use ($year, $month) {
+                $query->whereYear('date', $year)
+                    ->whereMonth('date', $month);
+            }], 'hours')
+            // ->limit(20) 
             ->chunk(10, function ($employees) use (&$currentStaff, &$newStaff, $terminatedEmployeeIds, $year, $month, $periodStart, $periodEnd, $monthDays) {
 
                 $filtered = $employees->filter(fn($emp) => !in_array($emp->id, $terminatedEmployeeIds));
@@ -124,12 +129,14 @@ class BranchAttendanceSummaryService
         int $monthDays
     ): array {
         try {
+            $approvedOvertimeHours = (float) ($employee->total_overtime ?? 0);
             // 1. Fetch attendance data (the main data source)
             // $attendanceData  = $this->attendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
             $attendanceData  = $this->cachedAttendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
             $attendanceArray = $attendanceData->toArray();
 
-            $stats = $attendanceArray['statistics'] ?? [];
+            $reportData = $attendanceArray['report_data'] ?? $attendanceArray;
+            $stats = $reportData['statistics'] ?? ($attendanceArray['statistics'] ?? []);
 
             // 2. Weekly leave calculation (overtime_days / deduction_days)
             $totalDays  = $stats['required_days'] ?? $monthDays;
@@ -138,21 +145,15 @@ class BranchAttendanceSummaryService
             $weeklyCalc = $this->weeklyLeaveCalculator->calculate($totalDays, $absentDays);
             $weeklyResult = $weeklyCalc['result'] ?? [];
 
-            // 3. Approved overtime hours (simple DB query)
-            $approvedOvertimeHours = $employee->overtimes()
-                ->whereYear('date', $year)
-                ->whereMonth('date', $month)
-                ->sum('hours');
 
-            // 4. Deduction hours: total expected - total actual worked
-            $totalActualDuration = $attendanceArray['total_actual_duration_hours'] ?? '0:00:00';
-            $totalExpectedDuration = $attendanceArray['total_duration_hours'] ?? '0:00:00';
 
-            $actualMinutes   = $this->durationToMinutes($totalActualDuration);
-            $expectedMinutes = $this->durationToMinutes($totalExpectedDuration);
 
-            // Deduction hours = max(0, expected - actual) converted to hours
-            $deductionMinutes = max(0, $expectedMinutes - $actualMinutes);
+            // 4. Deduction hours: sum of missing hours, late, and early departure
+            $missingMinutes        = $reportData['total_missing_hours']['total_minutes'] ?? 0;
+            $earlyDepartureMinutes = $reportData['total_early_departure_minutes']['total_minutes'] ?? 0;
+            $lateMinutes           = $reportData['late_hours']['totalMinutes'] ?? 0;
+
+            $deductionMinutes = $missingMinutes + $earlyDepartureMinutes + $lateMinutes;
             $deductionHours = round($deductionMinutes / 60, 2);
 
             return [

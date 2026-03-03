@@ -200,7 +200,7 @@ class AttendanceFetcher
         // =========================================================================
         $weeklyLeaveStats = $result->get('weekly_leave_stats', []);
         $totalMonthDays = $stats['required_days'] ?? $stats['total_days'] ?? 0;
-         
+
         // $absentDays = $weeklyLeaveStats['remaining_absences'] ?? $stats['absent'] ?? 0;
         $absentDays =  $stats['absent'] ?? 0;
 
@@ -317,7 +317,8 @@ class AttendanceFetcher
                     if ($lastCheckout && isset($lastCheckout['early_departure_minutes'])) {
                         $minutes = (int) ($lastCheckout['early_departure_minutes'] ?? 0);
                         // Only count if minutes >= minimum threshold from settings
-                        if ($minutes >= $minEarlyDepartureMinutes && $minutes > 0) {
+                        if (!$employee->discount_exception_if_attendance_late  && $minutes >= $minEarlyDepartureMinutes && $minutes > 0) {
+
                             $shouldDeduct = true;
                             if (setting('flix_hours_early_departure')) {
                                 if (
@@ -357,14 +358,30 @@ class AttendanceFetcher
         );
 
         // Add the total early departure to the result collection
-        $result->put('total_early_departure_minutes', [
-            'total_minutes' => $totalEarlyDepartureSeconds / 60,
-            'formatted'     => $totalEarlyDeparture,
-            'total_seconds' => $totalEarlyDepartureSeconds,
-            'total_hours'   => round($totalEarlyDepartureSeconds / 3600, 2),
-        ]);
+        if (!$employee->discount_exception_if_attendance_late) {
+            $result->put('total_early_departure_minutes', [
+                'total_minutes' => $totalEarlyDepartureSeconds / 60,
+                'formatted'     => $totalEarlyDeparture,
+                'total_seconds' => $totalEarlyDepartureSeconds,
+                'total_hours'   => round($totalEarlyDepartureSeconds / 3600, 2),
+            ]);
+        } else {
+            $result->put('total_early_departure_minutes', [
+                'total_minutes' => 0,
+                'formatted'     => '00:00:00',
+                'total_seconds' => 0,
+                'total_hours'   => 0,
+            ]);
+        }
 
-        $result->put('late_hours',  $this->helperFunctions->calculateTotalLateArrival($result));
+        if (!$employee->discount_exception_if_attendance_late) {
+            $result->put('late_hours',  $this->helperFunctions->calculateTotalLateArrival($result));
+        } else {
+            $result->put('late_hours', [
+                'totalMinutes' => 0,
+                'totalHoursFloat' => 0,
+            ]);
+        }
 
 
         return $result;

@@ -36,10 +36,10 @@
                 <tr>
                     <td>{{ $i + 1 }}</td>
                     <td>{{ $row['name'] }}</td>
-                    <td style="text-align:center;">{{ $row['overtime']['days'] ?: '-' }}</td>
-                    <td style="text-align:center;">{{ $row['overtime']['hours'] ?: '-' }}</td>
-                    <td style="text-align:center;">{{ $row['deductions']['days'] ?: '-' }}</td>
-                    <td style="text-align:center;">{{ $row['deductions']['hours'] ?: '-' }}</td>
+                    <td style="text-align:center;">{{ $row['overtime']['days'] ?: '0' }}</td>
+                    <td style="text-align:center;">{{ $row['overtime']['hours'] ?: '0' }}</td>
+                    <td style="text-align:center;">{{ $row['deductions']['days'] ?: '0' }}</td>
+                    <td style="text-align:center;">{{ $row['deductions']['hours'] ?: '0' }}</td>
                     <td>{{ $row['note'] }}</td>
                 </tr>
                 @empty
@@ -78,11 +78,11 @@
                 <tr>
                     <td>{{ $i + 1 }}</td>
                     <td>{{ $row['name'] }}</td>
-                    <td style="text-align:center;">{{ $row['overtime']['days'] ?: '-' }}</td>
-                    <td style="text-align:center;">{{ $row['overtime']['hours'] ?: '-' }}</td>
-                    <td style="text-align:center;">{{ $row['deductions']['days'] ?: '-' }}</td>
-                    <td style="text-align:center;">{{ $row['deductions']['hours'] ?: '-' }}</td>
-                    <td style="text-align:center;">{{ $row['salary'] ?? '-' }}</td>
+                    <td style="text-align:center;">{{ $row['overtime']['days'] ?: '0' }}</td>
+                    <td style="text-align:center;">{{ $row['overtime']['hours'] ?: '0' }}</td>
+                    <td style="text-align:center;">{{ $row['deductions']['days'] ?: '0' }}</td>
+                    <td style="text-align:center;">{{ $row['deductions']['hours'] ?: '0' }}</td>
+                    <td style="text-align:center;">{{ $row['salary'] ?? '0' }}</td>
                     <td>{{ $row['note'] }}</td>
                 </tr>
                 @empty
@@ -121,11 +121,11 @@
                 <tr>
                     <td>{{ $i + 1 }}</td>
                     <td>{{ $row['name'] }}</td>
-                    <td style="text-align:center;">{{ $row['overtime']['days'] ?: '-' }}</td>
-                    <td style="text-align:center;">{{ $row['overtime']['hours'] ?: '-' }}</td>
-                    <td style="text-align:center;">{{ $row['deductions']['days'] ?: '-' }}</td>
-                    <td style="text-align:center;">{{ $row['deductions']['hours'] ?: '-' }}</td>
-                    <td style="text-align:center;">{{ $row['termination_date'] ?? '-' }}</td>
+                    <td style="text-align:center;">{{ $row['overtime']['days'] ?: '0' }}</td>
+                    <td style="text-align:center;">{{ $row['overtime']['hours'] ?: '0' }}</td>
+                    <td style="text-align:center;">{{ $row['deductions']['days'] ?: '0' }}</td>
+                    <td style="text-align:center;">{{ $row['deductions']['hours'] ?: '0' }}</td>
+                    <td style="text-align:center;">{{ $row['termination_date'] ?? '0' }}</td>
                     <td>{{ $row['note'] }}</td>
                 </tr>
                 @empty
