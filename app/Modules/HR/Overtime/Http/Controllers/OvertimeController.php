@@ -231,6 +231,47 @@ class OvertimeController extends Controller
     }
 
     /**
+     * Get suggested overtime for employees (V2 with date range)
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getSuggestedOvertimeV2(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'from_date' => 'required|date',
+                'to_date'   => 'required|date|after_or_equal:from_date',
+                'branch_id' => 'required|exists:branches,id',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Validation Error',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $data = $this->overtimeService->getSuggestedOvertimeV2(
+                $request->input('from_date'),
+                $request->input('to_date'),
+                $request->input('branch_id')
+            );
+
+            return response()->json([
+                'status' => true,
+                'data'   => $data,
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Get overtime report with filters and summary.
      *
      * @param Request $request
