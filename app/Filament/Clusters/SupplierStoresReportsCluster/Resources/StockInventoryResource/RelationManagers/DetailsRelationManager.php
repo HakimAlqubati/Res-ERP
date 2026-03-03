@@ -360,7 +360,7 @@ class DetailsRelationManager extends RelationManager
                         ];
                     })
                     ->action(function (Collection $records, $data) {
-                        static::createStockAdjustment($data, $records);
+                        static::createStockAdjustment($data, $records, auth()->id());
                     })
                     ->color('success')->icon('heroicon-o-plus')
                     ->deselectRecordsAfterCompletion(),
@@ -411,8 +411,9 @@ class DetailsRelationManager extends RelationManager
         return;
     }
 
-    public static function createStockAdjustment($data, $records)
+    public static function createStockAdjustment($data, $records, $userId = null)
     {
+        $userId = $userId ?? auth()->id();
         DB::beginTransaction();
         try {
 
@@ -438,14 +439,15 @@ class DetailsRelationManager extends RelationManager
                     'store_id' => $data['store_id'], // Adjust this based on your relationship
                     'reason_id' => $data['reason_id'], // You can set a reason if needed 
                     'adjustment_type' => $defaultAdjustmentType,
-                    'created_by' => auth()->id(),
+                    'created_by' => $userId,
                     'adjustment_date' => now(),
                     'source_id' => $records->first()->stock_inventory_id ?? null,
                     'source_type' => StockInventory::class,
                 ]);
+                $userName = \App\Models\User::find($userId)?->name ?? 'System';
                 $notes = "Stock adjustment for product ({$stockAdjustment->product->name}) "
                     . "in unit '{$stockAdjustment->unit->name}' at store '{$stockAdjustment->store->name}', "
-                    . "adjusted by " . auth()->user()?->name . " on " . now()->format('Y-m-d H:i');
+                    . "adjusted by " . $userName . " on " . now()->format('Y-m-d H:i');
 
                 $type = $detail['quantity'] > 0
                     ? InventoryTransaction::MOVEMENT_IN
@@ -493,12 +495,18 @@ class DetailsRelationManager extends RelationManager
                 $inventory->finalized = true;
                 $inventory->save();
             }
-            showSuccessNotifiMessage('done', 'Stock adjustment created successfully.');
+            if (!app()->runningInConsole()) {
+                showSuccessNotifiMessage('done', 'Stock adjustment created successfully.');
+            }
             DB::commit();
         } catch (Throwable $th) {
             //throw $th;
             DB::rollBack();
-            showWarningNotifiMessage('Faild', $th->getMessage());
+            if (!app()->runningInConsole()) {
+                showWarningNotifiMessage('Faild', $th->getMessage());
+            } else {
+                \Illuminate\Support\Facades\Log::error('Background adjustment failed', ['error' => $th->getMessage()]);
+            }
         }
     }
 }
