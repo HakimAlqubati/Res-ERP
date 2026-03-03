@@ -19,7 +19,15 @@ class EmployeeApplicationController extends Controller
      */
     public function index(Request $request)
     {
-        $apps = EmployeeApplicationV2::with(['employee', 'leaveRequest', 'advanceRequest'])
+        $apps = EmployeeApplicationV2::with([
+            'employee',
+            'leaveRequest',
+            'advanceRequest',
+            'missedCheckinRequest',
+            'missedCheckoutRequest',
+            'mealRequest',
+            'approvedBy'
+        ])
             ->when($request->id, fn($q) => $q->where('id', $request->id))
             ->when($request->branch_id, fn($q) => $q->where('branch_id', $request->branch_id))
             ->when($request->employee_name, fn($q) => $q->whereHas(
