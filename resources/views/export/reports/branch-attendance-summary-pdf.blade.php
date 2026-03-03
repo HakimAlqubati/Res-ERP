@@ -126,11 +126,11 @@
             <tr>
                 <td class="text-center">{{ $i + 1 }}.</td>
                 <td style="font-weight: bold;">{{ $row['name'] }}</td>
-                <td class="text-center">{{ $row['overtime']['days'] ?: '' }}</td>
-                <td class="text-center">{{ $row['overtime']['hours'] ?: '' }}</td>
-                <td class="text-center">{{ $row['deductions']['days'] ?: '' }}</td>
-                <td class="text-center">{{ $row['deductions']['hours'] ?: '' }}</td>
-                <td>{{ $row['note'] ?? '' }}</td>
+                <td class="text-center">{{ $row['overtime']['days'] ?: '0' }}</td>
+                <td class="text-center">{{ $row['overtime']['hours'] ?: '0' }}</td>
+                <td class="text-center">{{ $row['deductions']['days'] ?: '0' }}</td>
+                <td class="text-center">{{ $row['deductions']['hours'] ?: '0' }}</td>
+                <td>{{ $row['note'] ?? '0' }}</td>
             </tr>
             @empty
             <tr>
@@ -167,12 +167,12 @@
             <tr>
                 <td class="text-center">{{ $i + 1 }}.</td>
                 <td>{{ $row['name'] }}</td>
-                <td class="text-center">{{ $row['overtime']['days'] ?: '' }}</td>
-                <td class="text-center">{{ $row['overtime']['hours'] ?: '' }}</td>
-                <td class="text-center">{{ $row['deductions']['days'] ?: '' }}</td>
-                <td class="text-center">{{ $row['deductions']['hours'] ?: '' }}</td>
-                <td class="text-center">{{ $row['salary'] ?? '' }}</td>
-                <td>{{ $row['note'] ?? '' }}</td>
+                <td class="text-center">{{ $row['overtime']['days'] ?: '0' }}</td>
+                <td class="text-center">{{ $row['overtime']['hours'] ?: '0' }}</td>
+                <td class="text-center">{{ $row['deductions']['days'] ?: '0' }}</td>
+                <td class="text-center">{{ $row['deductions']['hours'] ?: '0' }}</td>
+                <td class="text-center">{{ $row['salary'] ?? '0' }}</td>
+                <td>{{ $row['note'] ?? '0' }}</td>
             </tr>
             @empty
             @for ($j = 1; $j <= 5; $j++)
@@ -218,12 +218,12 @@
             <tr>
                 <td class="text-center">{{ $i + 1 }}.</td>
                 <td>{{ $row['name'] }}</td>
-                <td class="text-center">{{ $row['overtime']['days'] ?: '' }}</td>
-                <td class="text-center">{{ $row['overtime']['hours'] ?: '' }}</td>
-                <td class="text-center">{{ $row['deductions']['days'] ?: '' }}</td>
-                <td class="text-center">{{ $row['deductions']['hours'] ?: '' }}</td>
-                <td class="text-center">{{ $row['termination_date'] ?? '' }}</td>
-                <td>{{ $row['note'] ?? '' }}</td>
+                <td class="text-center">{{ $row['overtime']['days'] ?: '0' }}</td>
+                <td class="text-center">{{ $row['overtime']['hours'] ?: '0' }}</td>
+                <td class="text-center">{{ $row['deductions']['days'] ?: '0' }}</td>
+                <td class="text-center">{{ $row['deductions']['hours'] ?: '0' }}</td>
+                <td class="text-center">{{ $row['termination_date'] ?? '0' }}</td>
+                <td>{{ $row['note'] ?? '0' }}</td>
             </tr>
             @empty
             @for ($j = 1; $j <= 6; $j++)

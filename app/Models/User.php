@@ -193,10 +193,6 @@ class User extends Authenticatable implements FilamentUser, Auditable
     public function isFinanceManager()
     {
         return in_array(16, $this->roles->pluck('id')->toArray());
-        if (getCurrentRole() == 16) {
-            return true;
-        }
-        return false;
     }
     public function isOwner()
     {

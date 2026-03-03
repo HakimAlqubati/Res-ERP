@@ -53,6 +53,10 @@ class ListBranchAttendanceSummary extends ListRecords
         $branch = Branch::find($data['branch_id']);
         $branchName = $branch?->name ?? 'Branch';
 
+        $branchManager = $branch?->user?->name ?? '';
+        $financeManager = \App\Models\User::whereHas('roles', function ($query) {
+            $query->where('id', 16);
+        })->first()?->name ?? '';
         // Company logo
         $companyLogo = \App\Models\Setting::getSetting('company_logo');
         if ($companyLogo) {
@@ -68,10 +72,10 @@ class ListBranchAttendanceSummary extends ListRecords
             'year'              => $data['year'],
             'month'             => $data['month'],
             'companyLogo'       => $companyLogo,
-            'branchManager'     => null,
+            'branchManager'     => $branchManager,
             'operationManager'  => null,
             'sustainingManager' => null,
-            'financeManager'    => null,
+            'financeManager'    => $financeManager,
         ], [], [
             'format'        => 'A4',
             'orientation'   => 'P',
