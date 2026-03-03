@@ -63,7 +63,9 @@ trait EmployeeAttendanceTrait
 
     public function calculateEmployeeOvertime($employee, $date)
     {
-        if ($employee === null || $employee->periods->isEmpty()) {
+        $employeePeriods = $employee ? $employee->periodHistoriesOnDate($date) : collect();
+
+        if ($employee === null || $employeePeriods->isEmpty()) {
             return [];
         }
 
@@ -80,7 +82,10 @@ trait EmployeeAttendanceTrait
         $results = [];
         $arr = [];
 
-        foreach ($employee->periods as $period) {
+        foreach ($employeePeriods as $employeePeriod) {
+            $period = $employeePeriod->workPeriod;
+            if (!$period) continue;
+
             $attendances = $this->attendances()
                 ->where('employee_id', $employee->id)
                 ->where('period_id', $period->id)
@@ -94,6 +99,7 @@ trait EmployeeAttendanceTrait
             $checkInTime  = null;
             $checkOutTime = null;
 
+            // dd($attendances, $date, $period, $employee);
             for ($i = 0; $i < $attendances->count(); $i++) {
                 $checkIn = $attendances[$i];
 
@@ -166,22 +172,35 @@ trait EmployeeAttendanceTrait
         $allPeriods = $this->employeePeriods()->count();
         $allDays = $this->periodDays()->count();
 
-        AppLog::write(
-            "[periodsOnDate DEBUG] Employee ID: {$this->id}, Employee DB: {$employeeConnection}, Period Query DB: {$periodConnection}, All EmployeePeriods: {$allPeriods}, All PeriodDays: {$allDays}, DayOfWeek: {$dow}",
-            AppLog::LEVEL_INFO,
-            'attendance'
-        );
 
         $workPeriods = $this->employeePeriods()
             ->with(['workPeriod', 'days'])
+            ->where(function ($q) use ($d) {
+                $q->whereNull('end_date')->orWhere('end_date', '>=', $d->toDateString());
+            })
+            ->where(function ($q) use ($d) {
+                $q->whereNull('start_date')->orWhere('start_date', '<=', $d->toDateString());
+            })
+            ->whereHas('days', function ($q) use ($dow, $d) {
+                // Filter by day_of_week if needed
+            })
+            ->get();
+
+        return $workPeriods;
+    }
+
+    public function periodHistoriesOnDate(Carbon|string $date): Collection
+    {
+        $d = $date instanceof Carbon ? $date->copy() : Carbon::parse($date);
+
+        $workPeriods = $this->periodHistories()
+            ->with(['workPeriod'])
+            ->where('active', 1)
             ->where(function ($q) use ($d) {
                 $q->whereNull('start_date')->orWhere('start_date', '<=', $d->toDateString());
             })
             ->where(function ($q) use ($d) {
                 $q->whereNull('end_date')->orWhere('end_date', '>=', $d->toDateString());
-            })
-            ->whereHas('days', function ($q) use ($dow, $d) {
-                // Filter by day_of_week if needed
             })
             ->get();
 
