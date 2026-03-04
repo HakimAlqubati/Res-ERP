@@ -29,20 +29,30 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue, TenantAware
     public $hideZero;
     public $storeId;
     public $userId;
+    public $tenantId;
 
     public $timeout = 600; // allow for big calculations
 
-    public function __construct($startDate, $endDate, $hideZero, $storeId, $userId)
+    public function __construct($startDate, $endDate, $hideZero, $storeId, $userId, $tenantId = null)
     {
         $this->startDate = $startDate;
         $this->endDate = $endDate;
         $this->hideZero = $hideZero;
         $this->storeId = $storeId;
         $this->userId = $userId;
+        $this->tenantId = $tenantId;
     }
 
     public function handle(): void
     {
+        // Explicitly set the current tenant just in case Spatie's TenantAware faces issues
+        if ($this->tenantId) {
+            $tenant = \App\Models\CustomTenantModel::find($this->tenantId);
+            if ($tenant) {
+                $tenant->makeCurrent();
+            }
+        }
+
         Log::info('Generating unaudited stocktake for store: ' . $this->storeId);
         try {
             // 1. Fetch stock inventory IDs in the date range and store
