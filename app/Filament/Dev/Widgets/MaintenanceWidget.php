@@ -32,12 +32,6 @@ class MaintenanceWidget extends Widget
         Notification::make()->title('Config Cleared')->success()->send();
     }
 
-    public function clearQueue()
-    {
-        Artisan::call('queue:clear');
-        Notification::make()->title('Queue Cleared')->success()->send();
-    }
-
     public function linkAttendanceImages()
     {
         // Run the command with 60 days lookback as requested
