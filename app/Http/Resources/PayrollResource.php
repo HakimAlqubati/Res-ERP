@@ -15,8 +15,7 @@ class PayrollResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
-            'name' => $this->name,
+            'id' => $this->id, 
             'employee' => [
                 'id' => $this->employee_id,
                 'name' => $this->whenLoaded('employee', fn() => $this->employee->name),
