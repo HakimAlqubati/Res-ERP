@@ -41,6 +41,7 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue
 
     public function handle(): void
     {
+        Log::info('Generating unaudited stocktake for store: ' . $this->storeId);
         try {
             // 1. Fetch stock inventory IDs in the date range and store
             $inventoryIds = StockInventory::whereBetween('inventory_date', [$this->startDate, $this->endDate])
@@ -84,6 +85,7 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue
 
             $detailsBatch = [];
 
+            Log::info('Number of products to process: ' . $products->count());
             // 5. Process EACH product, getting inventory quantities
             foreach ($products as $product) {
                 $unitPrices = $product->supplyOutUnitPrices ?? collect();
