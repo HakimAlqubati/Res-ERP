@@ -43,9 +43,6 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue, TenantAware
 
     public function handle(): void
     {
-        // Prevent timeout when running synchronously or on slow queues
-        set_time_limit(0);
-
         Log::info('Generating unaudited stocktake for store: ' . $this->storeId);
         try {
             // 1. Fetch stock inventory IDs in the date range and store

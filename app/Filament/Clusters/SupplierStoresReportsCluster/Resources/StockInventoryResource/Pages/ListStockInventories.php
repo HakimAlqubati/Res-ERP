@@ -55,7 +55,7 @@ class ListStockInventories extends ListRecords
                         ->default(true),
                 ])
                 ->action(function (array $data) {
-                    GenerateUnauditedStocktakeJob::dispatchSync(
+                    GenerateUnauditedStocktakeJob::dispatch(
                         $data['start_date'],
                         $data['end_date'],
                         $data['hide_zero'],
@@ -64,8 +64,8 @@ class ListStockInventories extends ListRecords
                     );
 
                     Notification::make()
-                        ->title('Stocktake Generation Completed')
-                        ->body('The unaudited stocktake has been generated successfully.')
+                        ->title('Stocktake Generation Started')
+                        ->body('The unaudited stocktake is being generated in the background. You will receive a notification once it is complete.')
                         ->success()
                         ->send();
                 })
