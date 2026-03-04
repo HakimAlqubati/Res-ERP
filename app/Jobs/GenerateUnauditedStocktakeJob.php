@@ -18,7 +18,9 @@ use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
 
-class GenerateUnauditedStocktakeJob implements ShouldQueue
+use Spatie\Multitenancy\Jobs\TenantAware;
+
+class GenerateUnauditedStocktakeJob implements ShouldQueue, TenantAware
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
