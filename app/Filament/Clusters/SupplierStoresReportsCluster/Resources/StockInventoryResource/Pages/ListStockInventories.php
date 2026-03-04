@@ -47,7 +47,7 @@ class ListStockInventories extends ListRecords
                         ->label('Store')
                         ->options(fn() => Store::active()
                             ->whereHas('branches', function ($query) {
-                                // $query->where('type', Branch::TYPE_BRANCH);
+                                $query->where('type', Branch::TYPE_BRANCH);
                             })
                             ->pluck('name', 'id'))
                         ->required()
@@ -57,22 +57,22 @@ class ListStockInventories extends ListRecords
                         ->default(true),
                 ])
                 ->action(function (array $data) {
-                    $tenantId = app(\Spatie\Multitenancy\Contracts\IsTenant::class)::current()?->id;
-                   
-                    Log::info('tenantId: ' . $tenantId);
-                    AppLog::write('tenantId: ' . $tenantId);
-                    GenerateUnauditedStocktakeJob::dispatch(
+                    // $tenantId = app(\Spatie\Multitenancy\Contracts\IsTenant::class)::current()?->id;
+
+                    // Log::info('tenantId: ' . $tenantId);
+                    // AppLog::write('tenantId: ' . $tenantId);
+                    GenerateUnauditedStocktakeJob::dispatchSync(
                         $data['start_date'],
                         $data['end_date'],
                         $data['hide_zero'],
                         $data['store_id'],
                         auth()->id(),
-                        $tenantId
+                        // $tenantId
                     );
 
                     Notification::make()
-                        ->title('Stocktake Generation Started')
-                        ->body('The unaudited stocktake is being generated in the background. You will receive a notification once it is complete.')
+                        ->title('Stocktake Generation Completed')
+                        ->body('The unaudited stocktake has been generated successfully.')
                         ->success()
                         ->send();
                 })

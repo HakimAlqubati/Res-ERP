@@ -41,19 +41,20 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue, TenantAware
         $this->hideZero = $hideZero;
         $this->storeId = $storeId;
         $this->userId = $userId;
-        $this->tenantId = $tenantId;
+        // $this->tenantId = $tenantId;
     }
 
     public function handle(): void
     {
+        set_time_limit(0); // Prevent PHP execution timeout
         AppLog::write('tenantId: ' . $this->tenantId);
         // Explicitly set the current tenant just in case Spatie's TenantAware faces issues
-        if ($this->tenantId) {
-            $tenant = \App\Models\CustomTenantModel::find($this->tenantId);
-            if ($tenant) {
-                $tenant->makeCurrent();
-            }
-        }
+        // if ($this->tenantId) {
+        //     $tenant = \App\Models\CustomTenantModel::find($this->tenantId);
+        //     if ($tenant) {
+        //         $tenant->makeCurrent();
+        //     }
+        // }
 
         Log::info('Generating unaudited stocktake for store: ' . $this->storeId);
         try {
