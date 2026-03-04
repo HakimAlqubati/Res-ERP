@@ -12,12 +12,15 @@ use App\Models\StockInventory;
 use App\Models\StockInventoryDetail;
 use App\Services\MultiProductsInventoryService;
 use App\Models\User;
+use App\Models\StockAdjustment;
+use App\Models\StockAdjustmentDetail;
+use App\Services\FifoMethodService;
 use App\Models\StockAdjustmentReason;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\RelationManagers\DetailsRelationManager;
 use App\Models\AppLog;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 use Spatie\Multitenancy\Jobs\TenantAware;
 
@@ -137,25 +140,75 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue, TenantAware
             }
 
             // Fetch newly inserted details to run adjustment
-            $insertedDetails = StockInventoryDetail::where('stock_inventory_id', $stockInventory->id)->get();
+            $insertedDetails = StockInventoryDetail::where('stock_inventory_id', $stockInventory->id)
+                ->where('difference', '<', 0) // Only process items that need negative adjustment
+                ->get();
 
             if ($insertedDetails->isNotEmpty()) {
-                // Call the existing logic to adjust stock down to 0 for these remaining quantities
-                $adjustmentData = [
-                    'store_id' => $this->storeId,
-                    'reason_id' => StockAdjustmentReason::getFirstId(), // use default reason
-                    'stock_adjustment_details' => $insertedDetails->map(function ($detail) use ($stockInventory) {
-                        return [
+                DB::beginTransaction();
+                try {
+                    $reasonId = StockAdjustmentReason::getFirstId();
+
+                    foreach ($insertedDetails as $detail) {
+                        $qtyToDeduct = abs($detail->difference);
+
+                        // 1. Create the adjustment detail log
+                        $stockAdjustment = StockAdjustmentDetail::create([
                             'product_id' => $detail->product_id,
                             'unit_id' => $detail->unit_id,
-                            'quantity' => $detail->difference, // this will be negative (e.g., -SystemQty)
+                            'quantity' => $qtyToDeduct,
                             'package_size' => $detail->package_size,
                             'notes' => "Auto-Adjustment for uninventoried product in stocktake #{$stockInventory->id}",
-                        ];
-                    })->toArray(),
-                ];
 
-                DetailsRelationManager::createStockAdjustment($adjustmentData, $insertedDetails);
+                            'store_id' => $this->storeId,
+                            'reason_id' => $reasonId,
+                            'adjustment_type' => StockAdjustment::ADJUSTMENT_TYPE_DECREASE,
+                            'created_by' => $this->userId,
+                            'adjustment_date' => now(),
+                            'source_id' => $stockInventory->id,
+                            'source_type' => StockInventory::class,
+                        ]);
+
+                        // 2. Perform Fifo Deduction
+                        $fifoService = new FifoMethodService($stockAdjustment);
+                        $allocations = $fifoService->getAllocateFifo(
+                            $detail->product_id,
+                            $detail->unit_id,
+                            $qtyToDeduct,
+                            $this->storeId
+                        );
+
+                        // 3. Move from inventory loop
+                        foreach ($allocations as $alloc) {
+                            \App\Models\InventoryTransaction::create([
+                                'product_id'           => $detail->product_id,
+                                'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
+                                'quantity'             => $alloc['quantity'],
+                                'base_quantity'        => $alloc['quantity'] * ($detail->package_size ?? 1),
+                                'unit_id'              => $detail->unit_id,
+                                'price'                => $alloc['price'],
+                                'package_size'         => $detail->package_size,
+                                'movement_date'        => now(),
+                                'transaction_date'     => now(),
+                                'store_id'             => $alloc['store_id'],
+                                'notes'                => $alloc['notes'],
+
+                                'transactionable_id'   => $stockAdjustment->id,
+                                'transactionable_type' => StockAdjustmentDetail::class,
+                                'source_transaction_id' => $alloc['transaction_id'],
+                            ]);
+                        }
+                    }
+
+                    DB::commit();
+
+                    $stockInventory->finalized = true;
+                    $stockInventory->save();
+                } catch (\Throwable $th) {
+                    DB::rollBack();
+                    Log::error('Background adjustment failed', ['error' => $th->getMessage()]);
+                    throw $th; // re-throw to be caught by the outer catch block
+                }
             }
 
             // 7. Notify Success
