@@ -2,7 +2,6 @@
     <x-filament::section>
         <x-slot name="heading">
             <div class="flex items-center gap-2">
-                <x-heroicon-o-queue-list class="w-5 h-5" />
                 <span>Queue Management</span>
             </div>
         </x-slot>
