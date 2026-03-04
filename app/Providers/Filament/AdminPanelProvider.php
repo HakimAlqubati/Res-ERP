@@ -222,14 +222,17 @@ class AdminPanelProvider extends PanelProvider
                             ->items(array_merge(
                                 (isSuperAdmin() && ((count(explode('.', request()->getHost())) == 1 && env('APP_ENV') == 'local')
                                     || (count(explode('.', request()->getHost())) == 2 && env('APP_ENV') == 'production')
-                                )) ? TenantResource::getNavigationItems() : [],
+
+                                )
+                                    || env('APP_ENV') == 'local' && env('APP_URL') == 'https://workbench.test/')
+                                    ? TenantResource::getNavigationItems() : [],
                             )),
                         NavigationGroup::make('AppLogs')
                             ->items(array_merge(
                                 (isSuperAdmin()) ? AppLogResource::getNavigationItems() : [],
                             ))
                     ]
-                );
+                ); 
                 $menu =  $builder->items([
                     NavigationItem::make(__('lang.dashboard'))->hidden(function () {
                         if (getCurrentRole() == 17) {
