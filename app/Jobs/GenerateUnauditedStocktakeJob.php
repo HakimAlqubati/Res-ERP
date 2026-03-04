@@ -14,6 +14,7 @@ use App\Services\MultiProductsInventoryService;
 use App\Models\User;
 use App\Models\StockAdjustmentReason;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\RelationManagers\DetailsRelationManager;
+use App\Models\AppLog;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
@@ -45,6 +46,7 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue, TenantAware
 
     public function handle(): void
     {
+        AppLog::write('tenantId: ' . $this->tenantId);
         // Explicitly set the current tenant just in case Spatie's TenantAware faces issues
         if ($this->tenantId) {
             $tenant = \App\Models\CustomTenantModel::find($this->tenantId);

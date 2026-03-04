@@ -15,6 +15,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Notifications\Notification;
 use App\Jobs\GenerateUnauditedStocktakeJob;
+use App\Models\AppLog;
 use App\Models\Branch;
 use Filament\Schemas\Components\Fieldset;
 use Illuminate\Support\Facades\Log;
@@ -59,6 +60,7 @@ class ListStockInventories extends ListRecords
                     $tenantId = app(\Spatie\Multitenancy\Contracts\IsTenant::class)::current()?->id;
                    
                     Log::info('tenantId: ' . $tenantId);
+                    AppLog::write('tenantId: ' . $tenantId);
                     GenerateUnauditedStocktakeJob::dispatch(
                         $data['start_date'],
                         $data['end_date'],
