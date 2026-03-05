@@ -135,7 +135,7 @@ trait EmployeeAttendanceTrait
 
                 $formattedOvertime = "{$overtimeHours} h {$remainingMinutes} m";
 
-                $overtimeStartTime = $period->end_at;
+                $overtimeStartTime = $checkInTime;
                 $overtimeEndTime   = $checkOutTime;
 
                 if (
@@ -151,7 +151,7 @@ trait EmployeeAttendanceTrait
                     'supposed_duration_minutes' => (int) $overtimeMinutes,
                     'overtime_hours'            => $overtimeHours,
                     'overtime'                  => $formattedOvertime,
-                    'overtime_start_time'       => $overtimeStartTime,
+                    'overtime_start_time'       => $overtimeStartTime->toTimeString(),
                     'overtime_end_time'         => $overtimeEndTime->toTimeString(),
                     'check_in_time'             => $checkIn->check_time,
                     'check_out_time'            => $checkOut->check_time,
