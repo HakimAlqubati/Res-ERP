@@ -173,7 +173,7 @@ class EmployeeForm
 
                                                 Select::make('nationality')
                                                     ->label(__('lang.nationality'))->live()
-                                                    // ->required()
+                                                    ->required()
                                                     ->options(getNationalities())
                                                     ->preload()
                                                     ->searchable(),
