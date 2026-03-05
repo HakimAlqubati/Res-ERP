@@ -251,16 +251,20 @@ class AttendanceController extends Controller
         return response()->json([
             'status'   => 'success',
             'datetime' => $datetime->toDateTimeString(),
-
-            // Employees currently inside (checked-in, not checked-out yet)
-            'message_present'        => "Employees currently present at work.",
-            'present_count'          => $present->count(),
-            'present'                => $present,
-
-            // Employees assigned to an active shift but have not checked in yet
-            'message_expected_absent' => "Employees who should be present now but have not checked in yet.",
-            'expected_absent_count'  => $expectedAbsent->count(),
-            'expected_absent'        => $expectedAbsent,
+            'data'     => [
+                'present' => [
+                    'label'   => 'Present',
+                    'message' => 'Employees currently at work (checked-in, not yet checked-out).',
+                    'count'   => $present->count(),
+                    'items'   => $present,
+                ],
+                'absent' => [
+                    'label'   => 'Absent',
+                    'message' => 'Employees assigned to an active shift but have not checked in yet.',
+                    'count'   => $expectedAbsent->count(),
+                    'items'   => $expectedAbsent,
+                ],
+            ],
         ]);
     }
 

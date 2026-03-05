@@ -11,9 +11,9 @@ use Illuminate\Support\Collection;
 /**
  * PresentEmployeesService
  *
- * يحدد الموظفين الحاضرين حالياً بناءً على:
- *   1. وجود بصمة دخول (CheckIn) مقبولة في اليوم المطلوب.
- *   2. وقوع الوقت الحالي داخل نافذة الوردية الممتدة:
+ * Determines which employees are currently present based on:
+ *   1. An accepted check-in record exists for the requested day.
+ *   2. The observed time falls within the extended shift window:
  *      [start_at - allowedHoursBefore]  ←→  [end_at + allowedHoursAfter]
  */
 class PresentEmployeesService
@@ -23,10 +23,10 @@ class PresentEmployeesService
     ) {}
 
     /**
-     * جلب الموظفين الحاضرين في الوقت المحدد (افتراضياً الآن).
+     * Retrieve employees who are present at the given datetime (defaults to now).
      *
-     * @param  Carbon|string|null  $datetime  تاريخ ووقت نقطة المراقبة (null = الآن)
-     * @param  array               $filters   فلاتر اختيارية: branch_id, department_id
+     * @param  Carbon|string|null  $datetime  Observation point (null = now)
+     * @param  array               $filters   Optional filters: branch_id, department_id
      * @return Collection
      */
     public function getPresentEmployees(Carbon|string|null $datetime = null, array $filters = []): Collection
@@ -35,21 +35,20 @@ class PresentEmployeesService
             ? $datetime
             : ($datetime ? Carbon::parse($datetime) : Carbon::now());
 
-        $date        = $now->toDateString();
-        $currentTime = $now->format('H:i:s');
+        $date = $now->toDateString();
 
-        // ── 1. قراءة إعدادات النافذة الزمنية ──────────────────────────────
+        // ── 1. Read shift window configuration ─────────────────────────────
         $allowedHoursBefore = $this->config->getAllowedHoursBefore();
         $allowedHoursAfter  = $this->config->getAllowedHoursAfter();
 
-        // ── 2. تحديد الورديات النشطة عند الوقت الحالي ─────────────────────
+        // ── 2. Identify shifts whose window covers the observed time ────────
         $activeShiftIds = $this->resolveActiveShiftIds($now, $allowedHoursBefore, $allowedHoursAfter);
 
         if ($activeShiftIds->isEmpty()) {
             return collect();
         }
 
-        // ── 3. جلب سجلات الحضور المقبولة (CheckIn فقط) ───────────────────
+        // ── 3. Fetch accepted check-in records for active shifts ────────────
         $query = Attendance::query()
             ->with([
                 'employee:id,name,branch_id,department_id',
@@ -60,7 +59,7 @@ class PresentEmployeesService
             ->where('check_date', $date)
             ->whereIn('period_id', $activeShiftIds);
 
-        // ── فلتر الفرع ───────────────────────────────────────────────────
+        // ── Branch filter ───────────────────────────────────────────────────
         if (!empty($filters['branch_id'])) {
             $query->whereHas(
                 'employee',
@@ -69,7 +68,7 @@ class PresentEmployeesService
             );
         }
 
-        // ── فلتر القسم ──────────────────────────────────────────────────
+        // ── Department filter ───────────────────────────────────────────────
         if (!empty($filters['department_id'])) {
             $query->whereHas(
                 'employee',
@@ -78,7 +77,7 @@ class PresentEmployeesService
             );
         }
 
-        // ── 4. التأكد من عدم وجود checkout مقبول لنفس الموظف + وردية + يوم ──
+        // ── 4. Exclude employees who already have an accepted checkout ──────
         $query->whereNotExists(function ($sub) use ($date) {
             $sub->from('hr_attendances as checkout_check')
                 ->whereColumn('checkout_check.employee_id', 'hr_attendances.employee_id')
@@ -89,18 +88,17 @@ class PresentEmployeesService
                 ->whereNull('checkout_check.deleted_at');
         });
 
-        // ── 5. أول بصمة دخول لكل موظف/وردية لتجنب التكرار ───────────────
+        // ── 5. Keep only the earliest check-in per (employee, shift) ────────
         $checkins = $query
             ->orderBy('check_time')
             ->get()
             ->unique(fn($record) => $record->employee_id . '_' . $record->period_id);
 
-        // ── 6. تشكيل الاستجابة ──────────────────────────────────────────────
+        // ── 6. Shape the response ───────────────────────────────────────────
         return $checkins->values()->map(fn($checkin) => [
             'employee_id'     => $checkin->employee_id,
             'employee_name'   => $checkin->employee?->name,
             'branch_id'       => $checkin->employee?->branch_id,
-            'department_id'   => $checkin->employee?->department_id,
             'checkin_time'    => $checkin->check_time,
             'checkin_date'    => $checkin->check_date,
             'attendance_id'   => $checkin->id,
@@ -113,14 +111,14 @@ class PresentEmployeesService
     }
 
     /**
-     * جلب الموظفين الغائبين الذين كان يجب أن يكونوا حاضرين الآن.
+     * Retrieve employees who should be present now but have not checked in yet.
      *
-     * المعيار:
-     *   - الموظف مُعيَّن لوردية نشطة حالياً (في hr_employee_periods).
-     *   - التعيين ساري في التاريخ المطلوب (start_date <= date <= end_date).
-     *   - لم يُسجَّل له أي بصمة دخول مقبولة اليوم لأي وردية نشطة.
+     * Criteria:
+     *   - The employee is assigned to a currently-active shift (hr_employee_periods).
+     *   - The assignment is valid on the requested date (start_date <= date <= end_date).
+     *   - No accepted check-in exists for them today on any active shift.
      *
-     * @param  Collection  $activeShiftIds  الورديات النشطة حالياً
+     * @param  Collection  $activeShiftIds  IDs of shifts whose window covers now
      * @param  string      $date            Y-m-d
      * @param  array       $filters         branch_id, department_id
      * @return Collection
@@ -134,7 +132,7 @@ class PresentEmployeesService
             return collect();
         }
 
-        // Employee IDs who already checked in today for any active shift
+        // Collect IDs of employees who already have an accepted check-in today
         $presentEmployeeIds = Attendance::query()
             ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
             ->where('accepted', 1)
@@ -143,14 +141,16 @@ class PresentEmployeesService
             ->pluck('employee_id')
             ->unique();
 
-        // Employees assigned to an active shift but with no check-in today
+        // Employees assigned to an active shift but missing a check-in today
         $query = \App\Models\EmployeePeriod::query()
             ->with(['employee:id,name,branch_id,department_id', 'workPeriod:id,name,start_at,end_at'])
             ->whereIn('period_id', $activeShiftIds)
             ->where(function ($q) use ($date) {
+                // Assignment starts on or before the requested date
                 $q->whereNull('start_date')->orWhere('start_date', '<=', $date);
             })
             ->where(function ($q) use ($date) {
+                // Assignment ends on or after the requested date (or has no end)
                 $q->whereNull('end_date')->orWhere('end_date', '>=', $date);
             })
             ->whereNotIn('employee_id', $presentEmployeeIds)
@@ -172,14 +172,14 @@ class PresentEmployeesService
             );
         }
 
-        // One record per employee (an employee may be assigned to multiple active shifts)
+        // One entry per employee (they may be assigned to multiple active shifts)
         $results = $query->get()->unique('employee_id');
 
         return $results->values()->map(fn($ep) => [
             'employee_id'     => $ep->employee_id,
             'employee_name'   => $ep->employee?->name,
             'branch_id'       => $ep->employee?->branch_id,
-            'department_id'   => $ep->employee?->department_id,
+            // 'department_id'   => $ep->employee?->department_id,
             'period_id'       => $ep->period_id,
             'period_name'     => $ep->workPeriod?->name,
             'period_start_at' => $ep->workPeriod?->start_at,
@@ -188,11 +188,11 @@ class PresentEmployeesService
     }
 
     /**
-     * تقرير شامل: الحاضرون الآن + الغائبون المُقصِّرون.
+     * Full attendance snapshot: present employees + expected-but-absent employees.
      *
-     * @param  Carbon|string|null  $datetime
-     * @param  array               $filters
-     * @return array{ present: Collection, expected_absent: Collection, active_shift_ids: Collection }
+     * @param  Carbon|string|null  $datetime  Observation point (null = now)
+     * @param  array               $filters   branch_id, department_id
+     * @return array{ present: Collection, expectedAbsent: Collection, activeShiftIds: Collection }
      */
     public function getReport(Carbon|string|null $datetime = null, array $filters = []): array
     {
@@ -211,18 +211,18 @@ class PresentEmployeesService
         return compact('present', 'expectedAbsent', 'activeShiftIds');
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
     // Helpers
-    // ─────────────────────────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
 
     /**
-     * يحدد الورديات التي يقع الوقت الحالي داخل نافذتها الممتدة.
+     * Returns IDs of all active shifts whose extended window covers the given time.
      *
-     * نافذة الوردية:
-     *   فتح الباب من  : start_at - $allowedHoursBefore
-     *   إغلاق الباب حتى: end_at   + $allowedHoursAfter
+     * Extended window per shift:
+     *   Opens  : start_at - $allowedHoursBefore
+     *   Closes : end_at   + $allowedHoursAfter
      *
-     * الورديات الليلية (day_and_night): end_at + 1 يوم
+     * Overnight shifts (day_and_night = true): end_at is pushed to the next day.
      */
     protected function resolveActiveShiftIds(
         Carbon $now,
@@ -241,7 +241,7 @@ class PresentEmployeesService
                 $windowEnd = Carbon::parse("{$today} {$period->end_at}")
                     ->addHours($allowedHoursAfter);
 
-                // الورديات الليلية تتجاوز منتصف الليل
+                // Overnight shifts cross midnight — push the end to the next day
                 if ($period->day_and_night) {
                     $windowEnd->addDay();
                 }
