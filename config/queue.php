@@ -43,6 +43,15 @@ return [
             'after_commit' => false,
         ],
 
+        'tenant' => [
+            'driver' => 'database',
+            'connection' => 'landlord',
+            // 'connection' => 'tenant',
+            'table' => 'jobs',
+            'queue' => 'default',
+            'retry_after' => 90,
+        ],
+
         'beanstalkd' => [
             'driver' => 'beanstalkd',
             'host' => env('BEANSTALKD_QUEUE_HOST', 'localhost'),

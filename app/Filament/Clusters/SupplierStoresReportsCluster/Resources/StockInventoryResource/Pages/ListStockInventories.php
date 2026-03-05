@@ -45,6 +45,7 @@ class ListStockInventories extends ListRecords
                         ]),
                     Select::make('store_id')
                         ->label('Store')
+                        // ->default(8)
                         ->options(fn() => Store::active()
                             // ->whereHas('branches', function ($query) {
                             //     // $query->where('type', Branch::TYPE_BRANCH);
@@ -57,23 +58,22 @@ class ListStockInventories extends ListRecords
                         ->default(true),
                 ])
                 ->action(function (array $data) {
-                    // $tenantId = app(\Spatie\Multitenancy\Contracts\IsTenant::class)::current()?->id;
+                    $tenantId = app(\Spatie\Multitenancy\Contracts\IsTenant::class)::current()?->id;
+                    Log::info('StartingJob for tenant: ' . $tenantId);
 
-                    // Log::info('tenantId: ' . $tenantId);
-                    // AppLog::write('tenantId: ' . $tenantId);
-                    GenerateUnauditedStocktakeJob::dispatchSync(
+                    GenerateUnauditedStocktakeJob::dispatch(
                         $data['start_date'],
                         $data['end_date'],
                         $data['hide_zero'],
                         $data['store_id'],
                         auth()->id(),
-                        // $tenantId
-                    );
+                        $tenantId
+                    )->onConnection('tenant');
 
                     Notification::make()
-                        ->title('Stocktake Generation Completed')
-                        ->body('The unaudited stocktake has been generated successfully.')
-                        ->success()
+                        ->title('Stocktake Generation Started')
+                        ->body('The unaudited stocktake is being generated in the background. You will receive a notification when it is finished.')
+                        ->info()
                         ->send();
                 })
                 ->visible(fn(): bool => isSuperAdmin()),

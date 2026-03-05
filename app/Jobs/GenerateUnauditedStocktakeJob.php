@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Bus\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
@@ -22,72 +22,54 @@ use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
-use Spatie\Multitenancy\Jobs\TenantAware;
-
-class GenerateUnauditedStocktakeJob implements ShouldQueue, TenantAware
+class GenerateUnauditedStocktakeJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable,
+        InteractsWithQueue,
+        Queueable,
+        SerializesModels;
 
     public $startDate;
     public $endDate;
     public $hideZero;
     public $storeId;
     public $userId;
-    public $tenantId;
+    // public $tenantId;
 
-    public $timeout = 600; // allow for big calculations
+    // public $timeout = 600; // allow for big calculations
 
-    public function __construct($startDate, $endDate, $hideZero, $storeId, $userId, $tenantId = null)
+    public function __construct($startDate, $endDate, $hideZero, $storeId, $userId)
     {
         $this->startDate = $startDate;
         $this->endDate = $endDate;
         $this->hideZero = $hideZero;
         $this->storeId = $storeId;
         $this->userId = $userId;
-        // $this->tenantId = $tenantId;
+
+        // Force connection to landlord database queue
+        $this->onConnection('database');
     }
 
     public function handle(): void
     {
-        set_time_limit(0); // Prevent PHP execution timeout
-        AppLog::write('tenantId: ' . $this->tenantId);
-        // Explicitly set the current tenant just in case Spatie's TenantAware faces issues
-        // if ($this->tenantId) {
-        //     $tenant = \App\Models\CustomTenantModel::find($this->tenantId);
-        //     if ($tenant) {
-        //         $tenant->makeCurrent();
-        //     }
-        // }
-
         Log::info('Generating unaudited stocktake for store: ' . $this->storeId);
         try {
-            // 1. Fetch stock inventory IDs in the date range and store
-            $inventoryIds = StockInventory::whereBetween('inventory_date', [$this->startDate, $this->endDate])
-                ->where('store_id', $this->storeId)
-                ->pluck('id');
+            // 1. Fetch stock inventory using unified service method
+            $products = \App\Services\StockInventoryReportService::getProductsNotInventoriedBetween(
+                $this->startDate,
+                $this->endDate,
+                150,
+                $this->storeId,
+                true
+            );
 
-            // 2. Fetch inventoried product IDs
-            $inventoriedProductIds = StockInventoryDetail::whereIn('stock_inventory_id', $inventoryIds)
-                ->pluck('product_id')
-                ->unique();
 
-            // 3. Build Query for Unaudited Products (active only)
-            $query = Product::where('active', 1)
-                ->whereNotIn('id', $inventoriedProductIds);
-
-            if ($this->hideZero) {
-                $bindings = [\App\Models\InventoryTransaction::MOVEMENT_IN, \App\Models\InventoryTransaction::MOVEMENT_OUT, $this->storeId];
-
-                $query->whereRaw(
-                    '(SELECT COALESCE(SUM(CASE WHEN movement_type = ? THEN IFNULL(base_quantity, quantity * package_size) ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN movement_type = ? THEN IFNULL(base_quantity, quantity * package_size) ELSE 0 END), 0) FROM inventory_transactions WHERE product_id = products.id AND deleted_at IS NULL AND store_id = ?) > 0',
-                    $bindings
-                );
-            }
-
-            // Get products with their supply units eagerly loaded
-            $products = $query->with('supplyOutUnitPrices.unit')->get();
-
-            if ($products->isEmpty()) {
+            Log::info('startDate ', [$this->startDate]);
+            Log::info('endDate ', [$this->endDate]);
+            Log::info('storeId ', [$this->storeId]);
+            Log::info('products ', [$products->items()]);
+            if (count($products->items()) == 0) {
+                Log::info('No unaudited products found based on your parameters.');
                 $this->notifyUser('Stocktake Generation Failed', 'No unaudited products found based on your parameters.', 'warning');
                 return;
             }
@@ -103,9 +85,9 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue, TenantAware
 
             $detailsBatch = [];
 
-            Log::info('Number of products to process: ' . $products->count());
+            Log::info('Number of products to process: ' . $products->total());
             // 5. Process EACH product, getting inventory quantities
-            foreach ($products as $product) {
+            foreach ($products->items() as $product) {
                 $unitPrices = $product->supplyOutUnitPrices ?? collect();
                 // We use the smallest unit by default, similar to the UI logic
                 $selectedUnit = $unitPrices->sortBy('package_size')->first();
@@ -128,7 +110,7 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue, TenantAware
                     'system_quantity'    => $remainingQty,
                     'physical_quantity'  => 0, // By default, physical = 0, user will edit
                     'difference'         => 0 - ($remainingQty), // difference = physical - system
-                    'is_adjustmented'    => 0,
+                    'is_adjustmented'    => 1, // Marked as 1 because we explicitly adjust them below
                     'created_at'         => now(),
                     'updated_at'         => now(),
                 ];
@@ -183,11 +165,11 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue, TenantAware
                             \App\Models\InventoryTransaction::create([
                                 'product_id'           => $detail->product_id,
                                 'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
-                                'quantity'             => $alloc['quantity'],
-                                'base_quantity'        => $alloc['quantity'] * ($detail->package_size ?? 1),
-                                'unit_id'              => $detail->unit_id,
-                                'price'                => $alloc['price'],
-                                'package_size'         => $detail->package_size,
+                                'quantity'             => $alloc['deducted_qty'],
+                                'base_quantity'        => $alloc['deducted_qty'] * ($alloc['target_unit_package_size'] ?? 1),
+                                'unit_id'              => $alloc['target_unit_id'],
+                                'price'                => $alloc['price_based_on_unit'],
+                                'package_size'         => $alloc['target_unit_package_size'],
                                 'movement_date'        => now(),
                                 'transaction_date'     => now(),
                                 'store_id'             => $alloc['store_id'],
