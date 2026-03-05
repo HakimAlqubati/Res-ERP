@@ -26,7 +26,7 @@ class EmployeeApplicationController extends Controller
             'missedCheckinRequest',
             'missedCheckoutRequest',
             'mealRequest',
-            'approvedBy'
+            'approvedBy',
         ])
             ->when($request->id, fn($q) => $q->where('id', $request->id))
             ->when($request->branch_id, fn($q) => $q->where('branch_id', $request->branch_id))
@@ -45,6 +45,7 @@ class EmployeeApplicationController extends Controller
                 $e->where('name', 'like', '%' . $request->search . '%')
                     ->orWhere('employee_number', 'like', '%' . $request->search . '%')
             ))
+            ->whereHas('employee')
             ->latest()
             ->forBranchManager()
             ->forEmployee()
