@@ -429,7 +429,7 @@ class EmployeeForm
                                         ,
                                         Toggle::make('is_mtd_applicable')->columnSpan(1)
                                             ->disabled(fn(): bool => isBranchManager())
-                                            ->label(__('lang.is_mtd_applicable'))->default(0)->inline(false),
+                                            ->label(__('lang.is_mtd_applicable'))->default(1)->inline(false),
 
                                         Repeater::make('bank_information')
                                             ->disabled(fn(): bool => isBranchManager())
