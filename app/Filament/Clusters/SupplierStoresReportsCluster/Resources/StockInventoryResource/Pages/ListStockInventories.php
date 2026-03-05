@@ -53,9 +53,7 @@ class ListStockInventories extends ListRecords
                             ->pluck('name', 'id'))
                         ->required()
                         ->searchable(),
-                    Toggle::make('hide_zero')
-                        ->label('Hide Zero Qty')
-                        ->default(true),
+
                 ])
                 ->action(function (array $data) {
                     $tenantId = app(\Spatie\Multitenancy\Contracts\IsTenant::class)::current()?->id;
@@ -64,7 +62,7 @@ class ListStockInventories extends ListRecords
                     GenerateUnauditedStocktakeJob::dispatch(
                         $data['start_date'],
                         $data['end_date'],
-                        $data['hide_zero'],
+                        true,
                         $data['store_id'],
                         auth()->id(),
                         $tenantId
