@@ -11,6 +11,7 @@ use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
 use App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateService;
 use App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesService;
 use App\Services\HR\AttendanceHelpers\Reports\PresentEmployeesService;
+use App\Services\HR\AttendanceHelpers\Reports\MissingCheckoutService;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceImagesReportService;
 use App\Services\HR\BranchAttendanceSummaryService;
 use App\Services\HR\v2\Attendance\AttendanceServiceV2;
@@ -29,18 +30,21 @@ class AttendanceController extends Controller
     protected EmployeesAttendanceOnDateService $employeesAttendanceOnDateService;
     protected AbsentEmployeesService $absentEmployeesService;
     protected PresentEmployeesService $presentEmployeesService;
+    protected MissingCheckoutService $missingCheckoutService;
 
     public function __construct(
         AttendanceServiceV2 $attendanceService,
         EmployeesAttendanceOnDateService $employeesAttendanceOnDateService,
         AbsentEmployeesService $absentEmployeesService,
-        PresentEmployeesService $presentEmployeesService
+        PresentEmployeesService $presentEmployeesService,
+        MissingCheckoutService $missingCheckoutService
     ) {
         $this->attendanceService          = $attendanceService;
         $this->attendanceFetcher          = new AttendanceFetcher(new EmployeePeriodHistoryService());
         $this->employeesAttendanceOnDateService = $employeesAttendanceOnDateService;
         $this->absentEmployeesService     = $absentEmployeesService;
         $this->presentEmployeesService    = $presentEmployeesService;
+        $this->missingCheckoutService     = $missingCheckoutService;
     }
     public function store(Request $request)
     {
@@ -265,6 +269,39 @@ class AttendanceController extends Controller
                     'items'   => $expectedAbsent,
                 ],
             ],
+        ]);
+    }
+
+    /**
+     * GET /api/hr/missingCheckout
+     *
+     * Returns employees who have an accepted check-in for the given date
+     * but have NOT recorded an accepted check-out yet.
+     *
+     * Query Params:
+     *   - date          : Y-m-d   (optional, defaults to today)
+     *   - branch_id     : integer (optional)
+     *   - department_id : integer (optional)
+     */
+    public function missingCheckout(Request $request)
+    {
+        $validated = $request->validate([
+            'date'          => 'nullable|date',
+            'branch_id'     => 'nullable|integer',
+            'department_id' => 'nullable|integer',
+        ]);
+
+        $date    = $validated['date'] ?? null;
+        $filters = array_filter($request->only(['branch_id', 'department_id']));
+
+        $records = $this->missingCheckoutService->getMissingCheckouts($date, $filters);
+
+        return response()->json([
+            'status'  => 'success',
+            'date'    => Carbon::parse($date ?? 'today')->toDateString(),
+            'message' => 'Employees who checked in but forgot to check out.',
+            'count'   => $records->count(),
+            'data'    => $records,
         ]);
     }
 
