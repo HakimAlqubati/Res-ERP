@@ -161,26 +161,26 @@ class EmployeeApplicationResource extends Resource
             )
 
             // ✅ ملاحظة (Note) تظهر كـ Tooltip عندما يكون الزر Disabled
-            ->tooltip(function ($record) {
-                $hasCheckin = Attendance::query()
-                    ->where('employee_id', $record?->employee_id)
-                    ->where('check_date', $record?->detail_date)
-                    ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
-                    ->exists();
+            // ->tooltip(function ($record) {
+            //     $hasCheckin = Attendance::query()
+            //         ->where('employee_id', $record?->employee_id)
+            //         ->where('check_date', $record?->detail_date)
+            //         ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+            //         ->exists();
 
-                return $hasCheckin
-                    ? null
-                    : 'There is no check-in, so you cannot approve this request.';
-            })
+            //     return $hasCheckin
+            //         ? null
+            //         : 'There is no check-in, so you cannot approve this request.';
+            // })
 
             // ✅ تعطيل زر الـ Action في حالة عدم وجود Check-in
-            ->disabled(function ($record): bool {
-                return ! Attendance::query()
-                    ->where('employee_id', $record?->employee_id)
-                    ->where('check_date', $record?->detail_date)
-                    ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
-                    ->exists();
-            })
+            // ->disabled(function ($record): bool {
+            //     return ! Attendance::query()
+            //         ->where('employee_id', $record?->employee_id)
+            //         ->where('check_date', $record?->detail_date)
+            //         ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+            //         ->exists();
+            // })
 
             ->color('success')
             ->icon('heroicon-o-check')
