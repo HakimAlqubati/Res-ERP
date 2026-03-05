@@ -10,6 +10,7 @@ use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
 use App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateService;
 use App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesService;
+use App\Services\HR\AttendanceHelpers\Reports\PresentEmployeesService;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceImagesReportService;
 use App\Services\HR\BranchAttendanceSummaryService;
 use App\Services\HR\v2\Attendance\AttendanceServiceV2;
@@ -27,16 +28,19 @@ class AttendanceController extends Controller
     protected $attendanceFetcher;
     protected EmployeesAttendanceOnDateService $employeesAttendanceOnDateService;
     protected AbsentEmployeesService $absentEmployeesService;
+    protected PresentEmployeesService $presentEmployeesService;
 
     public function __construct(
         AttendanceServiceV2 $attendanceService,
         EmployeesAttendanceOnDateService $employeesAttendanceOnDateService,
-        AbsentEmployeesService $absentEmployeesService
+        AbsentEmployeesService $absentEmployeesService,
+        PresentEmployeesService $presentEmployeesService
     ) {
-        $this->attendanceService = $attendanceService;
-        $this->attendanceFetcher = new AttendanceFetcher(new EmployeePeriodHistoryService());
+        $this->attendanceService          = $attendanceService;
+        $this->attendanceFetcher          = new AttendanceFetcher(new EmployeePeriodHistoryService());
         $this->employeesAttendanceOnDateService = $employeesAttendanceOnDateService;
-        $this->absentEmployeesService = $absentEmployeesService;
+        $this->absentEmployeesService     = $absentEmployeesService;
+        $this->presentEmployeesService    = $presentEmployeesService;
     }
     public function store(Request $request)
     {
@@ -208,6 +212,55 @@ class AttendanceController extends Controller
             'status' => 'success',
             'count'  => $absents->count(),
             'data'   => $absents
+        ]);
+    }
+
+    /**
+     * GET /api/hr/presentEmployees
+     *
+     * إرجاع الموظفين الحاضرين حالياً بناءً على:
+     *   - وجود بصمة دخول مقبولة في اليوم المحدد.
+     *   - لم يُسجَّل لهم خروج بعد.
+     *   - الوقت الحالي يقع داخل نافذة الوردية الممتدة
+     *     [start_at - allowedHoursBefore]  ←→  [end_at + allowedHoursAfter]
+     *
+     * Query Params:
+     *   - datetime      : Y-m-d H:i:s  (اختياري، افتراضي = now)
+     *   - branch_id     : integer       (اختياري)
+     *   - department_id : integer       (اختياري)
+     */
+    public function presentEmployees(Request $request)
+    {
+        $validated = $request->validate([
+            'datetime'      => 'nullable|date',
+            'branch_id'     => 'nullable|integer',
+            'department_id' => 'nullable|integer',
+        ]);
+
+        $datetime = isset($validated['datetime'])
+            ? Carbon::parse($validated['datetime'])
+            : Carbon::now();
+
+        $filters = array_filter($request->only(['branch_id', 'department_id']));
+
+        $report = $this->presentEmployeesService->getReport($datetime, $filters);
+
+        $present        = $report['present'];
+        $expectedAbsent = $report['expectedAbsent'];
+
+        return response()->json([
+            'status'   => 'success',
+            'datetime' => $datetime->toDateTimeString(),
+
+            // Employees currently inside (checked-in, not checked-out yet)
+            'message_present'        => "Employees currently present at work.",
+            'present_count'          => $present->count(),
+            'present'                => $present,
+
+            // Employees assigned to an active shift but have not checked in yet
+            'message_expected_absent' => "Employees who should be present now but have not checked in yet.",
+            'expected_absent_count'  => $expectedAbsent->count(),
+            'expected_absent'        => $expectedAbsent,
         ]);
     }
 
