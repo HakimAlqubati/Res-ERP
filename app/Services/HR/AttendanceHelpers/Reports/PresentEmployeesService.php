@@ -3,8 +3,12 @@
 namespace App\Services\HR\AttendanceHelpers\Reports;
 
 use App\Models\Attendance;
+use App\Models\Employee;
 use App\Models\WorkPeriod;
 use App\Modules\HR\Attendance\Services\AttendanceConfig;
+use App\Services\HR\AttendanceHelpers\Reports\DTOs\ExpectedAbsentEmployeeDTO;
+use App\Services\HR\AttendanceHelpers\Reports\DTOs\PresentEmployeeDTO;
+use App\Services\HR\AttendanceHelpers\Reports\DTOs\PresentReportDTO;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -94,20 +98,10 @@ class PresentEmployeesService
             ->get()
             ->unique(fn($record) => $record->employee_id . '_' . $record->period_id);
 
-        // ── 6. Shape the response ───────────────────────────────────────────
-        return $checkins->values()->map(fn($checkin) => [
-            'employee_id'     => $checkin->employee_id,
-            'employee_name'   => $checkin->employee?->name,
-            'branch_id'       => $checkin->employee?->branch_id,
-            'checkin_time'    => $checkin->check_time,
-            'checkin_date'    => $checkin->check_date,
-            'attendance_id'   => $checkin->id,
-            'period_id'       => $checkin->period_id,
-            'period_name'     => $checkin->period?->name,
-            'period_start_at' => $checkin->period?->start_at,
-            'period_end_at'   => $checkin->period?->end_at,
-            'status'          => $checkin->status,
-        ]);
+        // ── 6. Map to DTOs ──────────────────────────────────────────────────
+        return $checkins->values()->map(
+            fn($checkin) => PresentEmployeeDTO::fromAttendance($checkin)
+        );
     }
 
     /**
@@ -175,26 +169,18 @@ class PresentEmployeesService
         // One entry per employee (they may be assigned to multiple active shifts)
         $results = $query->get()->unique('employee_id');
 
-        return $results->values()->map(fn($ep) => [
-            'employee_id'     => $ep->employee_id,
-            'employee_name'   => $ep->employee?->name,
-            'branch_id'       => $ep->employee?->branch_id,
-            // 'department_id'   => $ep->employee?->department_id,
-            'period_id'       => $ep->period_id,
-            'period_name'     => $ep->workPeriod?->name,
-            'period_start_at' => $ep->workPeriod?->start_at,
-            'period_end_at'   => $ep->workPeriod?->end_at,
-        ]);
+        return $results->values()->map(
+            fn($ep) => ExpectedAbsentEmployeeDTO::fromEmployeePeriod($ep)
+        );
     }
 
     /**
-     * Full attendance snapshot: present employees + expected-but-absent employees.
+     * Full attendance snapshot — returns a PresentReportDTO that owns the response shape.
      *
      * @param  Carbon|string|null  $datetime  Observation point (null = now)
      * @param  array               $filters   branch_id, department_id
-     * @return array{ present: Collection, expectedAbsent: Collection, activeShiftIds: Collection }
      */
-    public function getReport(Carbon|string|null $datetime = null, array $filters = []): array
+    public function getReport(Carbon|string|null $datetime = null, array $filters = []): PresentReportDTO
     {
         $now = $datetime instanceof Carbon
             ? $datetime
@@ -205,15 +191,36 @@ class PresentEmployeesService
         $allowedAfter   = $this->config->getAllowedHoursAfter();
         $activeShiftIds = $this->resolveActiveShiftIds($now, $allowedBefore, $allowedAfter);
 
-        $present        = $this->getPresentEmployees($now, $filters);
-        $expectedAbsent = $this->getExpectedAbsentEmployees($activeShiftIds, $date, $filters);
-
-        return compact('present', 'expectedAbsent', 'activeShiftIds');
+        return new PresentReportDTO(
+            present: $this->getPresentEmployees($now, $filters),
+            expectedAbsent: $this->getExpectedAbsentEmployees($activeShiftIds, $date, $filters),
+            totalEmployees: $this->countTotalEmployees($filters),
+            datetime: $now,
+        );
     }
 
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
+
+    /**
+     * Count total active employees matching the given filters.
+     * Used to show "X present out of Y total" in the response.
+     */
+    protected function countTotalEmployees(array $filters = []): int
+    {
+        $query = Employee::query()->active();
+
+        if (!empty($filters['branch_id'])) {
+            $query->where('branch_id', (int) $filters['branch_id']);
+        }
+
+        if (!empty($filters['department_id'])) {
+            $query->where('department_id', (int) $filters['department_id']);
+        }
+
+        return $query->count();
+    }
 
     /**
      * Returns IDs of all active shifts whose extended window covers the given time.
