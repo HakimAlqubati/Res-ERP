@@ -26,6 +26,7 @@ class Deduction extends Model
         'less_salary_to_apply',
         'condition_applied_v2',
         'has_brackets',
+        'is_mtd_deduction',       // يُطبَّق على الموظفين ذوي is_mtd_applicable=true
         'applied_by',
         'employer_percentage',
         'employer_amount',
@@ -215,7 +216,7 @@ class Deduction extends Model
         // 3. الخصومات النهائية
         $automaticRebate = ($chargeableIncome > 0 && $chargeableIncome <= 35000) ? 400 : 0;
         $totalRebates = $zakatAndRebates + $automaticRebate;
-       
+
         $finalTax = max(0, $grossTax - $totalRebates);
 
         // 4. النتائج النهائية

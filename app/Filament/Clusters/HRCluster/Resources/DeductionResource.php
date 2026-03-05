@@ -100,6 +100,11 @@ class DeductionResource extends Resource
                     Toggle::make('active')->default(true),
                     Toggle::make('has_brackets')->default(false)->live()
                         ->hidden(fn($get): bool => ($get('is_penalty') || $get('is_specific'))),
+                    Toggle::make('is_mtd_deduction')
+                        ->label('Is MTD Deduction')
+                        ->helperText('Apply to employees with MTD applicable flag, regardless of the condition above')
+                        ->default(false)
+                        ->hidden(fn($get): bool => ($get('is_penalty') || $get('is_specific'))),
                     Radio::make('is_percentage')->label('')->live()
                         ->helperText('Set deduction as a salary percentage or fixed amount')->options([
                             'is_percentage' => 'Is percentage',
