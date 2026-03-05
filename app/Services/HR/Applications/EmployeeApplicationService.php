@@ -155,16 +155,16 @@ class EmployeeApplicationService
                 }
 
                 // Check for existing Check-in
-                $hasCheckin = \App\Models\Attendance::query()
-                    ->where('employee_id', $record->employee_id)
-                    ->where('check_date', $details->date)
-                    ->where('check_type', \App\Models\Attendance::CHECKTYPE_CHECKIN)
-                    ->exists();
+                // $hasCheckin = \App\Models\Attendance::query()
+                //     ->where('employee_id', $record->employee_id)
+                //     ->where('check_date', $details->date)
+                //     ->where('check_type', \App\Models\Attendance::CHECKTYPE_CHECKIN)
+                //     ->exists();
 
-                if (!$hasCheckin) {
-                    throw new \Exception('There is no check-in, so you cannot approve this request.');
-                }
-
+                // if (!$hasCheckin) {
+                //     throw new \Exception('There is no check-in, so you cannot approve this request.');
+                // }
+                // dd('sdf',$record);
                 $validated = [
                     'employee_id'     => $record->employee_id,
                     'date_time'       => $details->date . ' ' . $details->time,
