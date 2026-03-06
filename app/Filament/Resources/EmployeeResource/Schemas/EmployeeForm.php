@@ -150,8 +150,9 @@ class EmployeeForm
                                                     ->columnSpan(1),
                                                 TextInput::make('email')
                                                     ->label(__('lang.email'))
-                                                    ->email()
                                                     ->required()
+                                                    // ->email()
+                                                    ->rule('email')
                                                     // ->unique(table: 'users', column: 'email', ignoreRecord: true)
                                                     ->unique(column: 'email', ignoreRecord: true),
 
