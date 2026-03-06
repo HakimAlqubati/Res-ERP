@@ -288,67 +288,21 @@ class EmployeeApplicationResource extends Resource
             ->action(function ($record) {
                 DB::beginTransaction();
                 try {
-                    $adv = $record->advanceRequest;
-
-                    // Guards
-                    if (! $adv || ! $record->employee_id || ! $adv->advance_amount || ! $adv->number_of_months_of_deduction || ! $adv->deduction_starts_from) {
-                        Notification::make()->danger()->title('Missing advance data.')->send();
-                        DB::rollBack();
-                        return;
-                    }
-
-                    // Prevent duplicates for this application
-                    if (\App\Models\EmployeeAdvanceInstallment::where('application_id', $record->id)->exists()) {
-                        Notification::make()->warning()->title('Installments already exist.')->send();
-                        DB::rollBack();
-                        return;
-                    }
-
-                    // Approve
+                    // Only update the status.
+                    // EmployeeApplicationObserver::updated() will detect the
+                    // status transition and handle installment creation,
+                    // aggregate recomputation, and financial transaction.
                     $record->update([
-                        'status'      => \App\Models\EmployeeApplicationV2::STATUS_APPROVED,
+                        'status'      => EmployeeApplicationV2::STATUS_APPROVED,
                         'approved_by' => auth()->id(),
                         'approved_at' => now(),
                     ]);
-
-                    // Normalize start month
-                    $startMonth = \Carbon\Carbon::parse($adv->deduction_starts_from)->startOfMonth()->toDateString();
-
-                    // Generate installments (creates sequence + status=scheduled)
-                    \App\Models\AdvanceRequest::createInstallments(
-                        $record->employee_id,
-                        $adv->advance_amount,
-                        $adv->monthly_deduction_amount,
-                        $adv->number_of_months_of_deduction,
-                        $startMonth,
-                        $record->id // application_id
-                    );
-
-                    // Recompute aggregates on the advance request
-                    // (use model method if موجود، وإلا fallback سريع)
-                    if (method_exists($adv, 'recomputeTotals')) {
-                        $adv->refresh();
-                        $adv->recomputeTotals();
-                    } else {
-                        $sumAll  = (float) \App\Models\EmployeeAdvanceInstallment::where('application_id', $record->id)->sum('installment_amount');
-                        $sumPaid = (float) \App\Models\EmployeeAdvanceInstallment::where('application_id', $record->id)->where('is_paid', true)->sum('installment_amount');
-                        $cntPaid =        \App\Models\EmployeeAdvanceInstallment::where('application_id', $record->id)->where('is_paid', true)->count();
-                        $lastDue =        \App\Models\EmployeeAdvanceInstallment::where('application_id', $record->id)->max('due_date');
-
-                        $adv->remaining_total   = round($sumAll - $sumPaid, 2);
-                        $adv->paid_installments = $cntPaid;
-                        if ($lastDue) $adv->deduction_ends_at = $lastDue;
-                        $adv->saveQuietly();
-                    }
-
-                    // Create financial transaction for the advance payment
-                    $adv->createFinancialTransaction();
 
                     DB::commit();
                     Notification::make()->success()->title('Approved and installments created.')->send();
                 } catch (\Throwable $th) {
                     DB::rollBack();
-                    Notification::make()->danger()->title('Approval error.')->send();
+                    Notification::make()->danger()->title('Approval error: ' . $th->getMessage())->send();
                     throw $th;
                 }
             })

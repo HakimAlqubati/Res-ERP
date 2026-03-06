@@ -42,9 +42,28 @@ class EmployeeApplicationForm
                                 return auth()->user()->employee->id;
                             }
                         })
-                        ->options(Employee::select('name', 'id')
-                            ->active()->forBranchManager()
-                            ->get()->plucK('name', 'id')),
+                        ->getSearchResultsUsing(function (string $search) {
+                            return Employee::select('name', 'id')
+                                ->active()
+                                ->forBranchManager()
+                                ->where(function ($query) use ($search) {
+                                    $query->where('name', 'like', "%{$search}%")
+                                        ->orWhere('id', 'like', "%{$search}%");
+                                })
+                                ->limit(8)
+                                ->get()
+                                ->mapWithKeys(fn($e) => [$e->id => "{$e->id} - {$e->name}"]);
+                        })
+                        ->getOptionLabelUsing(function ($value) {
+                            $e = Employee::find($value);
+                            return $e ? "{$e->id} - {$e->name}" : $value;
+                        })
+                        ->options(fn() => Employee::select('name', 'id')
+                            ->active()
+                            ->forBranchManager()
+                            ->limit(5)
+                            ->get()
+                            ->mapWithKeys(fn($e) => [$e->id => "{$e->id} - {$e->name}"])),
 
                     DatePicker::make('application_date')
                         ->label(__('lang.request_date'))

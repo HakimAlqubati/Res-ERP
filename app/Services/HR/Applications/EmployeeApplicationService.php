@@ -4,9 +4,17 @@ namespace App\Services\HR\Applications;
 
 use App\Models\Employee;
 use App\Models\EmployeeApplicationV2;
+use App\Rules\HR\Applications\AdvanceRequestConsistencyRule;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class EmployeeApplicationService
 {
+    // =========================================================================
+    //  Public API
+    // =========================================================================
+
     public function createApplication(array $data)
     {
         // 1) جلب الموظف
@@ -27,10 +35,15 @@ class EmployeeApplicationService
         $data['created_by'] = $data['created_by'] ?? auth()->id();
         $data['status']     = $data['status'] ?? EmployeeApplicationV2::STATUS_PENDING;
 
-        // 5) إنشاء السجل الأساسي
+        // 5) Validate advance-request fields before persisting anything
+        if (($data['application_type_id'] ?? null) == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST) {
+            $this->validateAdvanceRequest($data['advance_request'] ?? []);
+        }
+
+        // 6) إنشاء السجل الأساسي
         $record = EmployeeApplicationV2::create($data);
 
-        // 6) إنشاء الـ relations حسب نوع الطلب
+        // 7) إنشاء الـ relations حسب نوع الطلب
         switch ($record->application_type_id) {
             case EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST:
                 $details = $data['missed_checkin_request'] ?? null;
@@ -109,6 +122,34 @@ class EmployeeApplicationService
         return $record;
     }
 
+    // =========================================================================
+    //  Private Helpers
+    // =========================================================================
+
+    /**
+     * Validate that the advance-request detail fields are internally consistent.
+     *
+     * Rules mirror the Filament advanceRequestForm logic exactly:
+     *   - advance_amount > 0
+     *   - monthly_deduction_amount > 0 and <= advance_amount
+     *   - number_of_months_of_deduction == ceil(advance_amount / monthly_deduction_amount)
+     *   - deduction_ends_at == startOfMonth(deduction_starts_from)
+     *                           + (number_of_months - 1) months → endOfMonth
+     *
+     * @throws ValidationException
+     */
+    private function validateAdvanceRequest(array $details): void
+    {
+        $validator = Validator::make(
+            ['advance_request' => $details],
+            ['advance_request' => ['required', 'array', new AdvanceRequestConsistencyRule()]]
+        );
+
+        if ($validator->fails()) {
+            throw new ValidationException($validator);
+        }
+    }
+
     public function updateApplication(int $id, array $data)
     {
         $record = EmployeeApplicationV2::findOrFail($id);
@@ -124,70 +165,64 @@ class EmployeeApplicationService
 
     public function approveApplication(int $id, int $userId)
     {
-        $record = EmployeeApplicationV2::with(['missedCheckinRequest', 'missedCheckoutRequest'])->findOrFail($id);
+        // DB::transaction ensures that the status update AND all observer
+        // side-effects (installment generation, financial transaction) are
+        // atomic. Any failure rolls back everything — no orphaned state.
+        return DB::transaction(function () use ($id, $userId) {
+            $record = EmployeeApplicationV2::with(['missedCheckinRequest', 'missedCheckoutRequest'])->findOrFail($id);
 
-        switch ($record->application_type_id) {
-            case EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST:
-                $details = $record->missedCheckinRequest;
-                if (!$details) {
-                    throw new \Exception('Missing attendance details');
-                }
+            switch ($record->application_type_id) {
+                case EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST:
+                    $details = $record->missedCheckinRequest;
+                    if (!$details) {
+                        throw new \Exception('Missing attendance details');
+                    }
 
-                $validated = [
-                    'employee_id'     => $record->employee_id,
-                    'date_time'       => $details->date . ' ' . $details->time,
-                    'type'            => \App\Models\Attendance::CHECKTYPE_CHECKIN,
-                    'attendance_type' => \App\Models\Attendance::ATTENDANCE_TYPE_REQUEST,
-                    'skip_duplicate_timestamp_check' => true,
-                ];
+                    $result = app(\App\Modules\HR\Attendance\Services\AttendanceService::class)->handle([
+                        'employee_id'                    => $record->employee_id,
+                        'date_time'                      => $details->date . ' ' . $details->time,
+                        'type'                           => \App\Models\Attendance::CHECKTYPE_CHECKIN,
+                        'attendance_type'                => \App\Models\Attendance::ATTENDANCE_TYPE_REQUEST,
+                        'skip_duplicate_timestamp_check' => true,
+                    ]);
 
-                $result = app(\App\Modules\HR\Attendance\Services\AttendanceService::class)->handle($validated);
+                    if (!$result->success) {
+                        throw new \Exception($result->message ?? 'Failed to create attendance record');
+                    }
+                    break;
 
-                if (!$result->success) {
-                    throw new \Exception($result->message ?? 'Failed to create attendance record');
-                }
-                break;
+                case EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST:
+                    $details = $record->missedCheckoutRequest;
+                    if (!$details) {
+                        throw new \Exception('Missing departure details');
+                    }
 
-            case EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST:
-                $details = $record->missedCheckoutRequest;
-                if (!$details) {
-                    throw new \Exception('Missing departure details');
-                }
+                    $result = app(\App\Modules\HR\Attendance\Services\AttendanceService::class)->handle([
+                        'employee_id'                    => $record->employee_id,
+                        'date_time'                      => $details->date . ' ' . $details->time,
+                        'type'                           => \App\Models\Attendance::CHECKTYPE_CHECKOUT,
+                        'attendance_type'                => \App\Models\Attendance::ATTENDANCE_TYPE_REQUEST,
+                        'skip_duplicate_timestamp_check' => true,
+                    ]);
 
-                // Check for existing Check-in
-                // $hasCheckin = \App\Models\Attendance::query()
-                //     ->where('employee_id', $record->employee_id)
-                //     ->where('check_date', $details->date)
-                //     ->where('check_type', \App\Models\Attendance::CHECKTYPE_CHECKIN)
-                //     ->exists();
+                    if (!$result->success) {
+                        throw new \Exception($result->message ?? 'Failed to create departure record');
+                    }
+                    break;
+            }
 
-                // if (!$hasCheckin) {
-                //     throw new \Exception('There is no check-in, so you cannot approve this request.');
-                // }
-                // dd('sdf',$record);
-                $validated = [
-                    'employee_id'     => $record->employee_id,
-                    'date_time'       => $details->date . ' ' . $details->time,
-                    'type'            => \App\Models\Attendance::CHECKTYPE_CHECKOUT,
-                    'attendance_type' => \App\Models\Attendance::ATTENDANCE_TYPE_REQUEST,
-                    'skip_duplicate_timestamp_check' => true,
-                ];
+            // Updating status fires Observer::updated(). Because we are inside
+            // DB::transaction(), any failure in the observer's side-effects
+            // (installments, financial transaction) rolls back EVERYTHING —
+            // including this status update.
+            $record->update([
+                'status'      => EmployeeApplicationV2::STATUS_APPROVED,
+                'approved_by' => $userId,
+                'approved_at' => now(),
+            ]);
 
-                $result = app(\App\Modules\HR\Attendance\Services\AttendanceService::class)->handle($validated);
-
-                if (!$result->success) {
-                    throw new \Exception($result->message ?? 'Failed to create departure record');
-                }
-                break;
-        }
-
-        $record->update([
-            'status'      => EmployeeApplicationV2::STATUS_APPROVED,
-            'approved_by' => $userId,
-            'approved_at' => now(),
-        ]);
-
-        return $record;
+            return $record;
+        });
     }
 
     public function rejectApplication(int $id, int $userId, string $reason)
