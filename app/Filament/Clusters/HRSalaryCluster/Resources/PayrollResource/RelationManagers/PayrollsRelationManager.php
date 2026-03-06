@@ -14,6 +14,7 @@ use Filament\Actions\BulkAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ForceDeleteAction;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -44,9 +45,12 @@ class PayrollsRelationManager extends RelationManager
                     ->alignCenter()->label('ID')->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('employee.employee_no')
                     ->alignCenter()->label('Employee No')->default('-')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('employee.name')
-                    ->searchable(),
+                    ->searchable()
+                    ->limit(15)
+                    ->tooltip(fn($state) => $state),
                 Tables\Columns\TextColumn::make('base_salary')
                     ->label('Base')
                     ->numeric()->alignCenter()
@@ -72,8 +76,7 @@ class PayrollsRelationManager extends RelationManager
                     ->label(__('Net Salary'))->alignCenter()
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->sortable()
-                    ->summarize(Sum::make())
-                    ,
+                    ->summarize(Sum::make()),
                 TextColumn::make('created_at')
                     ->label(__('Created At'))
                     ->alignCenter()->toggleable(isToggledHiddenByDefault: true)
@@ -119,6 +122,8 @@ class PayrollsRelationManager extends RelationManager
                         return Excel::download(new PayrollTransactionsExport($transactions, $employeeName), $fileName);
                     }),
 
+                self::quickShowAction(),
+
             ])
 
             ->toolbarActions([
@@ -153,8 +158,63 @@ class PayrollsRelationManager extends RelationManager
                         return Excel::download(new PayrollsExport($payrolls), $fileName);
                     }),
                 DeleteBulkAction::make(),
-                // BulkActionGroup::make([
-                // ]),
             ]);
+    }
+
+    // =========================================================================
+    //  Record Actions
+    // =========================================================================
+
+    /**
+     * Quick-preview modal: shows all financial transactions for a payroll
+     * without leaving the page or generating a PDF.
+     */
+    public static function quickShowAction(): Action
+    {
+        return Action::make('quickShow')
+            ->label('Preview')
+            ->button()
+            ->color('gray')
+            ->icon('heroicon-o-eye')
+            ->tooltip('Preview transactions in-page')
+            ->modalWidth('2xl')
+            ->modalHeading(fn(Payroll $record) => "Transactions — {$record->employee?->name} ({$record->year}/{$record->month})")
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel('Close')
+            ->disabledForm()
+            ->schema(function (Payroll $record): array {
+                $rows = $record->transactions()
+                    ->orderByRaw("FIELD(operation, '+', '-')")
+                    ->orderBy('type')
+                    ->get()
+                    ->map(fn($tx) => [
+                        'operation'   => $tx->operation,
+                        'type'        => $tx->type,
+                        'description' => $tx->description ?? $tx->notes ?? '—',
+                        'amount'      => formatMoneyWithCurrency($tx->amount),
+                    ])
+                    ->values()
+                    ->toArray();
+
+                return [
+                    \Filament\Forms\Components\Repeater::make('transactions')
+                        ->label('')
+                        ->default($rows)
+                        ->columnSpanFull()
+                        ->table([
+                            TableColumn::make('type'),
+                            TableColumn::make('description'),
+                            TableColumn::make('amount'),
+                        ])
+                        ->deletable(false)
+                        ->addable(false)
+                        ->schema([
+                            \Filament\Forms\Components\TextInput::make('type')->columnSpan(2),
+                            \Filament\Forms\Components\TextInput::make('description')->columnSpan(3),
+                            \Filament\Forms\Components\TextInput::make('amount')->columnSpan(2),
+                        ])
+                        ->columns(8),
+                ];
+            });
     }
 }
