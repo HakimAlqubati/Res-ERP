@@ -229,10 +229,10 @@ class AdminPanelProvider extends PanelProvider
                             )),
                         NavigationGroup::make('AppLogs')
                             ->items(array_merge(
-                                (isSuperAdmin()) ? AppLogResource::getNavigationItems() : [],
+                                (isHakimOrAdel()) ? AppLogResource::getNavigationItems() : [],
                             ))
                     ]
-                ); 
+                );
                 $menu =  $builder->items([
                     NavigationItem::make(__('lang.dashboard'))->hidden(function () {
                         if (getCurrentRole() == 17) {
