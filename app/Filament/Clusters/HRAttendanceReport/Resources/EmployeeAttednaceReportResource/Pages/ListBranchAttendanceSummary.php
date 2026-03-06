@@ -20,25 +20,27 @@ class ListBranchAttendanceSummary extends ListRecords
             ?? current($this->getTable()->getFilter('branch_id')->getState() ?: [])
             ?? null;
 
-        $yearState  = $this->getTable()->getFilters()['year']->getState()['value'] ?? null;
         $monthState = $this->getTable()->getFilters()['month']->getState()['value'] ?? null;
 
-        $year  = $yearState ? (int) $yearState : now()->year;
-        $month = $monthState ? (int) $monthState : now()->month;
+        // The month filter value is in "Month Year" format, e.g. "March 2026"
+        if ($monthState) {
+            $parsed = \Carbon\Carbon::createFromFormat('F Y', $monthState);
+            $year  = (int) $parsed->year;
+            $month = (int) $parsed->month;
+        }
 
         $report = null;
 
-        if ($branchId) {
+        if ($branchId && isset($year) && isset($month)) {
             /** @var BranchAttendanceSummaryService $service */
             $service = app(BranchAttendanceSummaryService::class);
             $report  = $service->generate((int) $branchId, $year, $month);
         }
-
         return [
             'report'    => $report,
             'branch_id' => $branchId,
-            'year'      => $year,
-            'month'     => $month,
+            'year'      => $year ?? null,
+            'month'     => $month ?? null,
         ];
     }
 

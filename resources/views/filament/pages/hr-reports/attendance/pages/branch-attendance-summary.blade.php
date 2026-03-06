@@ -13,13 +13,14 @@
         <table class="w-full text-sm text-left pretty reports" style="margin-bottom: 2rem;">
             <thead class="fixed-header" style="top:64px;">
                 <tr class="header_report">
-                    <th colspan="7" class="no_border_right_left" style="text-align:center; font-size:14px;">
+                    <th colspan="8" class="no_border_right_left" style="text-align:center; font-size:14px;">
                         {{ __('lang.current_staff') }} &mdash; {{ $report['period'] }}
                     </th>
                 </tr>
                 <tr>
                     <th rowspan="2" style="width:40px;">{{ __('No.') }}</th>
                     <th rowspan="2">{{ __('lang.employee_name') }}</th>
+                    <th rowspan="2" style="text-align:center;">{{ __('Present Days') }}</th>
                     <th colspan="2" style="text-align:center;">{{ __('lang.overtime') }}</th>
                     <th colspan="2" style="text-align:center;">{{ __('lang.deductions') }}</th>
                     <th rowspan="2">{{ __('lang.note') }}</th>
@@ -36,6 +37,7 @@
                 <tr>
                     <td>{{ $i + 1 }}</td>
                     <td>{{ $row['name'] }}</td>
+                    <td style="text-align:center;">{{ $row['attendance']['present_days'] ?? '0' }}</td>
                     <td style="text-align:center;">{{ $row['overtime']['days'] ?: '0' }}</td>
                     <td style="text-align:center;">{{ $row['overtime']['hours'] ?: '0' }}</td>
                     <td style="text-align:center;">{{ $row['deductions']['days'] ?: '0' }}</td>
@@ -44,7 +46,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" style="text-align:center;">{{ __('lang.no_data') }}</td>
+                    <td colspan="8" style="text-align:center;">{{ __('lang.no_data') }}</td>
                 </tr>
                 @endforelse
             </tbody>
@@ -54,13 +56,14 @@
         <table class="w-full text-sm text-left pretty reports" style="margin-bottom: 2rem;">
             <thead>
                 <tr class="header_report">
-                    <th colspan="8" class="no_border_right_left" style="text-align:center; font-size:14px;">
+                    <th colspan="9" class="no_border_right_left" style="text-align:center; font-size:14px;">
                         {{ __('lang.new_staff') }} &mdash; {{ $report['period'] }}
                     </th>
                 </tr>
                 <tr>
                     <th rowspan="2" style="width:40px;">{{ __('No.') }}</th>
                     <th rowspan="2">{{ __('lang.employee_name') }}</th>
+                    <th rowspan="2" style="text-align:center;">{{ __('Present Days') }}</th>
                     <th colspan="2" style="text-align:center;">{{ __('lang.overtime') }}</th>
                     <th colspan="2" style="text-align:center;">{{ __('lang.deductions') }}</th>
                     <th rowspan="2">{{ __('lang.salary') }}</th>
@@ -78,6 +81,7 @@
                 <tr>
                     <td>{{ $i + 1 }}</td>
                     <td>{{ $row['name'] }}</td>
+                    <td style="text-align:center;">{{ $row['attendance']['present_days'] ?? '0' }}</td>
                     <td style="text-align:center;">{{ $row['overtime']['days'] ?: '0' }}</td>
                     <td style="text-align:center;">{{ $row['overtime']['hours'] ?: '0' }}</td>
                     <td style="text-align:center;">{{ $row['deductions']['days'] ?: '0' }}</td>
@@ -87,7 +91,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" style="text-align:center;">-</td>
+                    <td colspan="9" style="text-align:center;">-</td>
                 </tr>
                 @endforelse
             </tbody>
@@ -97,13 +101,14 @@
         <table class="w-full text-sm text-left pretty reports">
             <thead>
                 <tr class="header_report">
-                    <th colspan="8" class="no_border_right_left" style="text-align:center; font-size:14px;">
+                    <th colspan="9" class="no_border_right_left" style="text-align:center; font-size:14px;">
                         {{ __('lang.terminated_staff') }} &mdash; {{ $report['period'] }}
                     </th>
                 </tr>
                 <tr>
                     <th rowspan="2" style="width:40px;">{{ __('No.') }}</th>
                     <th rowspan="2">{{ __('lang.employee_name') }}</th>
+                    <th rowspan="2" style="text-align:center;">{{ __('Present Days') }}</th>
                     <th colspan="2" style="text-align:center;">{{ __('lang.overtime') }}</th>
                     <th colspan="2" style="text-align:center;">{{ __('lang.deductions') }}</th>
                     <th rowspan="2">{{ __('lang.termination_date') }}</th>
@@ -121,6 +126,7 @@
                 <tr>
                     <td>{{ $i + 1 }}</td>
                     <td>{{ $row['name'] }}</td>
+                    <td style="text-align:center;">{{ $row['attendance']['present_days'] ?? '0' }}</td>
                     <td style="text-align:center;">{{ $row['overtime']['days'] ?: '0' }}</td>
                     <td style="text-align:center;">{{ $row['overtime']['hours'] ?: '0' }}</td>
                     <td style="text-align:center;">{{ $row['deductions']['days'] ?: '0' }}</td>
@@ -130,7 +136,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" style="text-align:center;">-</td>
+                    <td colspan="9" style="text-align:center;">-</td>
                 </tr>
                 @endforelse
             </tbody>
@@ -138,7 +144,7 @@
     </div>
     @else
     <div class="please_select_message_div" style="text-align: center;">
-        <h1 class="please_select_message_text">{{ __('Please select a Branch') }}</h1>
+        <h1 class="please_select_message_text">{{ __('Please select a Branch and Month') }}</h1>
     </div>
     @endif
 </x-filament-panels::page>

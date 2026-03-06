@@ -26,7 +26,8 @@ class BranchAttendanceSummaryResource extends Resource
 
     public static function getModelLabel(): string
     {
-        return __('lang.branch_attendance_summary');
+        return 'Attendance Summary';
+        // return __('lang.branch_attendance_summary');
     }
 
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
@@ -54,14 +55,12 @@ class BranchAttendanceSummaryResource extends Resource
                         }
                     })
                     ->searchable(),
-                SelectFilter::make('year')
-                    ->label(__('lang.year'))
-                    ->options(collect(range(now()->year - 2, now()->year + 1))->mapWithKeys(fn($y) => [$y => $y]))
-                    ->default(now()->year),
                 SelectFilter::make('month')
                     // ->label(__('lang.month'))
-                    ->options(collect(range(1, 12))->mapWithKeys(fn($m) => [$m => \Carbon\Carbon::create()->month($m)->format('F')]))
-                    ->default(now()->month),
+                    ->placeholder('Select Month')
+
+                    ->options(fn() => getMonthOptionsBasedOnSettings())
+                    ->default(now()->subMonth()->format('F Y')),
             ], FiltersLayout::AboveContent)
             ->recordActions([]);
     }

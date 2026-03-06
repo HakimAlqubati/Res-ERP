@@ -105,11 +105,12 @@
     <table>
         <thead>
             <tr>
-                <td class="section-header" colspan="7">Current Staff &mdash; {{ \Carbon\Carbon::create($year, $month)->format('M Y') }}</td>
+                <td class="section-header" colspan="8">Current Staff &mdash; {{ \Carbon\Carbon::create($year, $month)->format('M Y') }}</td>
             </tr>
             <tr class="sub-header">
                 <th rowspan="2" style="width:30px;">#</th>
                 <th rowspan="2">NAME</th>
+                <th rowspan="2" class="text-center">Present Days</th>
                 <th colspan="2" class="text-center">Overtime</th>
                 <th colspan="2" class="text-center">Deductions</th>
                 <th rowspan="2">Note</th>
@@ -126,6 +127,7 @@
             <tr>
                 <td class="text-center">{{ $i + 1 }}.</td>
                 <td style="font-weight: bold;">{{ $row['name'] }}</td>
+                <td class="text-center">{{ $row['attendance']['present_days'] ?? '0' }}</td>
                 <td class="text-center">{{ $row['overtime']['days'] ?: '0' }}</td>
                 <td class="text-center">{{ $row['overtime']['hours'] ?: '0' }}</td>
                 <td class="text-center">{{ $row['deductions']['days'] ?: '0' }}</td>
@@ -134,7 +136,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="7" class="text-center">-</td>
+                <td colspan="8" class="text-center">-</td>
             </tr>
             @endforelse
         </tbody>
@@ -144,11 +146,12 @@
     <table>
         <thead>
             <tr>
-                <td class="section-header" colspan="8">New Staff &mdash; {{ \Carbon\Carbon::create($year, $month)->format('M Y') }}</td>
+                <td class="section-header" colspan="9">New Staff &mdash; {{ \Carbon\Carbon::create($year, $month)->format('M Y') }}</td>
             </tr>
             <tr class="sub-header">
                 <th rowspan="2" style="width:30px;">#.</th>
                 <th rowspan="2">Name</th>
+                <th rowspan="2" class="text-center">Present Days</th>
                 <th colspan="2" class="text-center">Overtime</th>
                 <th colspan="2" class="text-center">Deductions</th>
                 <th colspan="2" class="text-center">Notes</th>
@@ -167,6 +170,7 @@
             <tr>
                 <td class="text-center">{{ $i + 1 }}.</td>
                 <td>{{ $row['name'] }}</td>
+                <td class="text-center">{{ $row['attendance']['present_days'] ?? '0' }}</td>
                 <td class="text-center">{{ $row['overtime']['days'] ?: '0' }}</td>
                 <td class="text-center">{{ $row['overtime']['hours'] ?: '0' }}</td>
                 <td class="text-center">{{ $row['deductions']['days'] ?: '0' }}</td>
@@ -185,6 +189,7 @@
                 <td>&nbsp;</td>
                 <td>&nbsp;</td>
                 <td>&nbsp;</td>
+                <td>&nbsp;</td>
                 </tr>
                 @endfor
                 @endforelse
@@ -195,11 +200,12 @@
     <table>
         <thead>
             <tr>
-                <td class="section-header" colspan="8">Terminated Staff &mdash; {{ \Carbon\Carbon::create($year, $month)->format('M Y') }}</td>
+                <td class="section-header" colspan="9">Terminated Staff &mdash; {{ \Carbon\Carbon::create($year, $month)->format('M Y') }}</td>
             </tr>
             <tr class="sub-header">
                 <th rowspan="2" style="width:30px;">#.</th>
                 <th rowspan="2">Name</th>
+                <th rowspan="2" class="text-center">Present Days</th>
                 <th colspan="2" class="text-center">Overtime</th>
                 <th colspan="2" class="text-center">Deductions</th>
                 <th colspan="2" class="text-center">Notes</th>
@@ -218,6 +224,7 @@
             <tr>
                 <td class="text-center">{{ $i + 1 }}.</td>
                 <td>{{ $row['name'] }}</td>
+                <td class="text-center">{{ $row['attendance']['present_days'] ?? '0' }}</td>
                 <td class="text-center">{{ $row['overtime']['days'] ?: '0' }}</td>
                 <td class="text-center">{{ $row['overtime']['hours'] ?: '0' }}</td>
                 <td class="text-center">{{ $row['deductions']['days'] ?: '0' }}</td>
@@ -229,6 +236,7 @@
             @for ($j = 1; $j <= 6; $j++)
                 <tr>
                 <td class="text-center">{{ $j }}.</td>
+                <td>&nbsp;</td>
                 <td>&nbsp;</td>
                 <td>&nbsp;</td>
                 <td>&nbsp;</td>
