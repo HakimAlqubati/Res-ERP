@@ -30,7 +30,7 @@ return [
     'check_in_success'  => 'Checked in successfully.',
     'check_out_success' => 'Checked out successfully.',
 
-    'you_dont_have_periods_today' => 'Please ensure your shift has started, or contact your manager to confirm your shift.',
+    'you_dont_have_periods_today' => 'Please ensure your shift has started, or contact your manager to update your shift.',
 
     // Cannot auto-checkin near shift end
     'cannot_auto_checkin_near_shift_end' => 'Cannot auto-checkin near shift end without prior records. Please manually select the operation type (checkin/checkout).',
