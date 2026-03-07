@@ -11,7 +11,8 @@ class CalculateMissingHours
         $supposedDuration,
         $approvedOvertime,
         $date,
-        $employeeId
+        $employeeId,
+        $totalActualDurationHourly = null
     ) {
         if ($employeeId) {
             $employee = \App\Models\Employee::find($employeeId);
@@ -22,6 +23,29 @@ class CalculateMissingHours
                     'total_minutes' => 0,
                     'is_multiple' => false,
                 ];
+            }
+        }
+
+        // Add check: if we worked more or equal to the supposed duration, missing hours should be zero
+        if ($supposedDuration && $totalActualDurationHourly) {
+            $helper = new \App\Services\HR\AttendanceHelpers\Reports\HelperFunctions();
+            $reflection = new \ReflectionClass($helper);
+            $method = $reflection->getMethod('timeToHoursForLateArrival');
+            $method->setAccessible(true);
+            try {
+                $actualHoursFloat = $method->invoke($helper, $totalActualDurationHourly);
+                $supposedHoursFloat = $method->invoke($helper, $supposedDuration);
+
+                if ($actualHoursFloat >= $supposedHoursFloat) {
+                    return [
+                        'formatted' => '0 h 0 m',
+                        'total_hours' => 0,
+                        'total_minutes' => 0,
+                        'is_multiple' => false,
+                    ];
+                }
+            } catch (\Exception $e) {
+                // If parsing fails, just continue with the regular gap calculation
             }
         }
 

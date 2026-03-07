@@ -43,7 +43,7 @@ class CheckOutAttendanceResource extends JsonResource
                 $this->approvedOvertime,
                 $this->date,
                 $this->employee_id,
-
+                $this->total_actual_duration_hourly
             ),
             // حقول أخرى تخص الانصراف فقط
         ];
