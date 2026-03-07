@@ -24,6 +24,7 @@ final readonly class PresentReportDTO implements \JsonSerializable
         public Collection $expectedAbsent,
         public int        $totalEmployees,
         public Carbon     $datetime,
+        public bool       $hasBranchFilter = true,
     ) {}
 
     public function presentCount(): int
@@ -38,26 +39,66 @@ final readonly class PresentReportDTO implements \JsonSerializable
 
     public function jsonSerialize(): array
     {
-        $presentCount = $this->presentCount();
+        // Always group by branch logic, even if there's only one branch from the filter
+        $structuredData = [];
+
+        // Group present employees by branchId
+        $groupedPresent = $this->present->groupBy(fn($item) => $item->branchId);
+
+        // Group absent employees by branchId
+        $groupedAbsent = $this->expectedAbsent->groupBy(fn($item) => $item->branchId);
+
+        // Get all unique branch IDs across both collections
+        $allBranchIds = $groupedPresent->keys()->merge($groupedAbsent->keys())->unique();
+
+        foreach ($allBranchIds as $branchId) {
+            $branchPresent = $groupedPresent->get($branchId, collect());
+            $branchAbsent = $groupedAbsent->get($branchId, collect());
+
+            $bPresentCount = $branchPresent->count();
+            $bAbsentCount = $branchAbsent->count();
+
+            // Try to extract branch name from the first available record
+            $branchName = 'Unknown Branch';
+            $firstRecord = $branchPresent->first() ?? $branchAbsent->first();
+
+            if ($firstRecord) {
+                $branch = \App\Models\Branch::find($branchId);
+                $branchName = $branch ? $branch->name : 'Unknown Branch';
+            }
+
+            // Build the base branch structure
+            $branchStructure = [
+                'branch_id'   => $branchId,
+                'branch_name' => $branchName,
+                'attendance_data' => [
+                    'present' => [
+                        'label'           => 'Present',
+                        'message'         => "{$bPresentCount} present" . ($this->hasBranchFilter ? " out of {$this->totalEmployees} total employees." : "."),
+                        'count'           => $bPresentCount,
+                    ],
+                    'absent' => [
+                        'label'   => 'Absent',
+                        'message' => $this->hasBranchFilter ? 'Employees assigned to an active shift but have not checked in yet.' : "{$bAbsentCount} absent.",
+                        'count'   => $bAbsentCount,
+                    ]
+                ]
+            ];
+
+            // If a specific branch filter was requested, include the exact employee items arrays and context.
+            if ($this->hasBranchFilter) {
+                $branchStructure['attendance_data']['present']['total_employees'] = $this->totalEmployees;
+                $branchStructure['attendance_data']['present']['items'] = $branchPresent;
+                $branchStructure['attendance_data']['absent']['items'] = $branchAbsent;
+            }
+
+            $structuredData[] = $branchStructure;
+        }
 
         return [
             'status'   => 'success',
             'datetime' => $this->datetime->toDateTimeString(),
-            'data'     => [
-                'present' => [
-                    'label'           => 'Present',
-                    'message'         => "{$presentCount} present out of {$this->totalEmployees} total employees.",
-                    'count'           => $presentCount,
-                    'total_employees' => $this->totalEmployees,
-                    'items'           => $this->present,
-                ],
-                'absent'  => [
-                    'label'   => 'Absent',
-                    'message' => 'Employees assigned to an active shift but have not checked in yet.',
-                    'count'   => $this->absentCount(),
-                    'items'   => $this->expectedAbsent,
-                ],
-            ],
+            'data'     => $structuredData,
         ];
     }
 

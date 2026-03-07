@@ -191,11 +191,14 @@ class PresentEmployeesService
         $allowedAfter   = $this->config->getAllowedHoursAfter();
         $activeShiftIds = $this->resolveActiveShiftIds($now, $allowedBefore, $allowedAfter);
 
+        $hasBranchFilter = !empty($filters['branch_id']);
+
         return new PresentReportDTO(
             present: $this->getPresentEmployees($now, $filters),
             expectedAbsent: $this->getExpectedAbsentEmployees($activeShiftIds, $date, $filters),
             totalEmployees: $this->countTotalEmployees($filters),
             datetime: $now,
+            hasBranchFilter: $hasBranchFilter
         );
     }
 
