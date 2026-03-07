@@ -30,6 +30,8 @@ class ListMissingCheckoutReports extends ListRecords
         return [
             'items'     => $items,
             'branch_id' => $branchId,
+            'date_from' => $dateFrom,
+            'date_to'   => $dateTo,
             'summary'   => [
                 'total_records' => $items->count(),
             ],

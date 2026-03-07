@@ -39,7 +39,7 @@
     {{-- Summary Cards --}}
     {{-- Removed Total Records Section --}}
 
-    {{-- Actions --}}
+    {{-- Actions Moved Above Table --}}
     <div style="display: flex; gap: 8px; margin-bottom: 16px;">
         <button onclick="exportMissingCheckoutToExcel()" class="btn-export">
             &#128200; {{ __('lang.export_excel') }}
@@ -55,8 +55,34 @@
         <table class="w-full text-sm text-left pretty reports" id="missing-checkout-report-table">
             <thead class="fixed-header" style="top:64px;">
                 <tr class="header_report">
-                    <th colspan="5" class="no_border_right_left" style="text-align:center; font-size:14px;">
-                        {{ __('lang.missing_checkout_report') }}
+                    <th colspan="5" style="padding: 12px 16px;">
+                        @php
+                        $branch = \App\Models\Branch::find($branch_id);
+                        @endphp
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+                            {{-- Far Left: Company Logo --}}
+                            <div style="flex-shrink: 0; text-align: left;">
+                                <img class="circle-image" src="{{ asset('/storage/' . setting('company_logo')) }}" alt="Company Logo" style="width: 80px; height: 80px; object-fit: contain;">
+                            </div>
+
+                            {{-- Center: Report Name + Branch --}}
+                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; flex: 1;">
+                                <span style="font-size: 16px; font-weight: bold; text-transform: uppercase;">{{ __('lang.missing_checkout_report') }}</span>
+                                <span style="font-size: 14px; font-weight: bold; color: #374151;">{{ $branch?->name ?? __('lang.choose_branch') }}</span>
+                            </div>
+
+                            {{-- Far Right: Dates + System Logo --}}
+                            <div style="display: flex; align-items: center; justify-content: flex-end; gap: 16px; flex-shrink: 0;">
+                                <div style="text-align: right; line-height: 1.8;">
+                                    <span style="font-weight: 600;">{{ __('lang.start_date') . ': ' . $date_from }}</span>
+                                    <br>
+                                    <span style="font-weight: 600;">{{ __('lang.end_date') . ': ' . $date_to }}</span>
+                                </div>
+                                <div style="text-align: center;">
+                                    <img class="circle-image" src="{{ url('/') . '/storage/workbench.png' }}" alt="System Logo" style="width: 80px; height: 80px; object-fit: contain;">
+                                </div>
+                            </div>
+                        </div>
                     </th>
                 </tr>
                 <tr>
