@@ -290,7 +290,7 @@ class AttendanceController extends Controller
             'status'  => 'success',
             'date_from' => Carbon::parse($dateFrom)->toDateString(),
             'date_to'   => Carbon::parse($dateTo)->toDateString(),
-            'message' => 'Employees who checked in but forgot to check out.',
+            'message' => 'Employees missing check-out.',
             'count'   => $records->count(),
             'data'    => $records,
         ]);
