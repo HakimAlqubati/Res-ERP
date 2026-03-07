@@ -66,10 +66,11 @@ class AttendanceDetailsCalculator
 
         // Group by period_id
         foreach ($data as $detail) {
+            $formattedTime = isset($detail['check_time']) ? Carbon::parse($detail['check_time'])->format('H:i') : null;
             if ($detail['check_type'] === 'checkin') {
-                $attendances[$detail['period_id']]['checkins'][] = $detail['check_time'];
+                $attendances[$detail['period_id']]['checkins'][] = $formattedTime;
             } elseif ($detail['check_type'] === 'checkout') {
-                $attendances[$detail['period_id']]['checkouts'][] = $detail['check_time'];
+                $attendances[$detail['period_id']]['checkouts'][] = $formattedTime;
             }
         }
 
@@ -82,8 +83,8 @@ class AttendanceDetailsCalculator
                 $checkout = $attendance['checkouts'][$i] ?? null;
 
                 if ($checkin && $checkout) {
-                    $checkinTime = Carbon::createFromFormat('H:i:s', $checkin);
-                    $checkoutTime = Carbon::createFromFormat('H:i:s', $checkout);
+                    $checkinTime = Carbon::createFromFormat('H:i', $checkin);
+                    $checkoutTime = Carbon::createFromFormat('H:i', $checkout);
 
                     if (!$checkoutTime->greaterThanOrEqualTo($checkinTime)) {
                         $checkoutTime->addDay();
