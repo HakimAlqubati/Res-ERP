@@ -111,8 +111,8 @@ class EmployeeTable
                 TextColumn::make('manager.name')
                     ->label(__('lang.manager'))
                     ->toggleable(isToggledHiddenByDefault: true)
-                    // ->searchable()
-                    ,
+                // ->searchable()
+                ,
 
                 TextColumn::make('email')
                     ->icon('heroicon-m-envelope')
@@ -144,6 +144,11 @@ class EmployeeTable
                     ->sortable()->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: false),
+                TextColumn::make('serviceTermination.termination_date')
+                    ->label(__('lang.termination_date'))
+                    ->date()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('salary')->sortable()->label(__('lang.salary'))
                     ->sortable()->searchable()
                     // ->money(fn(): string => getDefaultCurrency())

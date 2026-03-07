@@ -39,8 +39,23 @@ class AttendanceFetcher
         $result             = collect();
 
         $leaveApplications = $this->getEmployeeLeaves($employee, $startDate, $endDate);
+
+        $termination = $employee->serviceTermination()->where('status', \App\Models\EmployeeServiceTermination::STATUS_APPROVED)->first();
+
         // 2. لكل يوم -> لكل فترة -> جلب الحضور
         foreach ($periodsByDay['days'] as $date => $data) {
+            if ($termination && \Carbon\Carbon::parse($date)->gt($termination->termination_date)) {
+                $result->put($date, [
+                    'date'          => $date,
+                    'day_name'      => $data['day_name'],
+                    'periods'       => collect(),
+                    'day_status'    => AttendanceReportStatus::Terminated->value,
+                    'leave_type'    => 'Terminated',
+                    'leave_type_id' => null,
+                ]);
+                continue;
+            }
+
             $leaveFound = null;
 
             foreach ($leaveApplications as $leave) {

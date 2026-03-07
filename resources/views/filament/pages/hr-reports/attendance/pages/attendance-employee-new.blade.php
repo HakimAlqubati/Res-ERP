@@ -335,7 +335,11 @@
                 @endif
                 <td>{{ $date }}</td>
                 <td colspan="9" class="text-center text-gray-500 font-bold">
+                    @if(isset($data['day_status']) )
+                    {{ $data['day_status'] }}
+                    @else
                     {{ __('lang.no_periods') }}
+                    @endif
                 </td>
             </tr>
             @endif
