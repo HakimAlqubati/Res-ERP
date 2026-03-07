@@ -100,7 +100,7 @@ class PayrollForm
                             $branchId = $get('branch_id');
                             if (!$branchId) return [];
                             return Employee::where('branch_id', $branchId)
-                                ->active()
+                                // ->active()
                                 ->where('salary', '>', 0)
                                 ->pluck('name', 'id');
                         })

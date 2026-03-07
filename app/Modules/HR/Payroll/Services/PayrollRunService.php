@@ -261,7 +261,6 @@ class PayrollRunService implements PayrollRunnerInterface
     {
         return Employee::query()
             ->where('branch_id', $branchId)
-            ->active()
             ->where('salary', '>', 0)
             ->where('join_date', '<=', Carbon::create($this->year, $this->month, 1)->startOfMonth()->toDateString())
             ->when($employeeIds, fn($q) => $q->whereIn('id', $employeeIds))
