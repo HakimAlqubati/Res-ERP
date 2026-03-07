@@ -655,6 +655,8 @@ return [
   // ===========================================
   'attendance_reports' => 'تقارير الحضور',
   'attendance_by_employee' => 'الحضور حسب الموظف',
+  'missing_checkout_report' => 'تقرير نسيان الانصراف',
+  'missing_checkout' => 'نسيان الانصراف',
   'my_attendance' => 'سجل حضوري',
   'absence_report' => 'تقرير الغياب',
   'branch_attendance_summary' => 'ملخص حضور الفرع',

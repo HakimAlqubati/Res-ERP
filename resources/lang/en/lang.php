@@ -673,6 +673,8 @@ return [
     // ===========================================
     'attendance_reports' => 'Attendance Reports',
     'attendance_by_employee' => 'Attendance by employee',
+    'missing_checkout_report' => 'Missing Checkout Report',
+    'missing_checkout' => 'Missing Checkout',
     'my_attendance' => 'My attendance',
     'absence_report' => 'Absence Report',
     'branch_attendance_summary' => 'Branch Attendance Summary',

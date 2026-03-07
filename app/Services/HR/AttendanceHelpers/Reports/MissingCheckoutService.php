@@ -15,49 +15,42 @@ use Illuminate\Support\Collection;
 class MissingCheckoutService
 {
     /**
-     * Retrieve employees missing a checkout on the given date.
+     * Retrieve employees missing a checkout on the given date range.
      *
-     * @param  Carbon|string|null  $date     Target date (defaults to today)
-     * @param  array               $filters  Optional: branch_id, department_id
+     * @param  Carbon|string  $dateFrom Target start date
+     * @param  Carbon|string  $dateTo   Target end date
+     * @param  array          $filters  Optional: branch_id, department_id
      * @return Collection
      */
-    public function getMissingCheckouts(Carbon|string|null $date = null, array $filters = []): Collection
+    public function getMissingCheckouts(Carbon|string $dateFrom, Carbon|string $dateTo, array $filters = []): Collection
     {
-        $date = $this->resolveDate($date);
-
-        // ── 1. Collect (employee_id, period_id) pairs that already have a checkout ──
-        $checkedOutPairs = Attendance::query()
-            ->where('check_type', Attendance::CHECKTYPE_CHECKOUT)
-            ->where('accepted', 1)
-            ->where('check_date', $date)
-            ->get(['employee_id', 'period_id'])
-            ->map(fn($r) => $r->employee_id . '_' . $r->period_id)
-            ->unique();
+        $dateFrom = $this->resolveDate($dateFrom);
+        $dateTo   = $this->resolveDate($dateTo);
 
         // ── 2. Fetch accepted check-ins with no matching checkout pair ─────────────
         $query = Attendance::query()
             ->with(['employee:id,name,branch_id', 'period:id,name,start_at,end_at'])
             ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
             ->where('accepted', 1)
-            ->where('check_date', $date)
-            ->whereNotExists(function ($sub) use ($date) {
+            ->whereBetween('check_date', [$dateFrom, $dateTo])
+            ->whereNotExists(function ($sub) use ($dateFrom, $dateTo) {
                 $sub->from('hr_attendances as co')
                     ->whereColumn('co.employee_id', 'hr_attendances.employee_id')
                     ->whereColumn('co.period_id',   'hr_attendances.period_id')
-                    ->where('co.check_date',  $date)
+                    ->whereColumn('co.check_date',  'hr_attendances.check_date')
                     ->where('co.check_type',  Attendance::CHECKTYPE_CHECKOUT)
                     ->where('co.accepted',    1)
                     ->whereNull('co.deleted_at');
             });
 
         // ── 3. Apply optional filters ───────────────────────────────────────────────
-        if (!empty($filters['branch_id'])) {
-            $query->whereHas(
-                'employee',
-                fn($q) =>
-                $q->where('branch_id', (int) $filters['branch_id'])
-            );
-        }
+
+        $query->whereHas(
+            'employee',
+            fn($q) =>
+            $q->where('branch_id', (int) $filters['branch_id'])
+        );
+
 
         if (!empty($filters['department_id'])) {
             $query->whereHas(
@@ -71,7 +64,7 @@ class MissingCheckoutService
         return $query
             ->orderBy('check_time')
             ->get()
-            ->unique(fn($r) => $r->employee_id . '_' . $r->period_id)
+            ->unique(fn($r) => $r->employee_id . '_' . $r->period_id . '_' . $r->check_date)
             ->values()
             ->map(fn($r) => [
                 'employee_id'     => $r->employee_id,
@@ -92,12 +85,12 @@ class MissingCheckoutService
     // Helpers
     // -------------------------------------------------------------------------
 
-    protected function resolveDate(Carbon|string|null $date): string
+    protected function resolveDate(Carbon|string $date): string
     {
         if ($date instanceof Carbon) {
             return $date->toDateString();
         }
 
-        return $date ? Carbon::parse($date)->toDateString() : Carbon::today()->toDateString();
+        return Carbon::parse($date)->toDateString();
     }
 }
