@@ -93,7 +93,28 @@ class CalculateMissingHours
             }
         }
 
-        if ($totalMissingMinutes == 0) {
+        // Capping missing minutes: You cannot miss more minutes than (supposed - actual)
+        if ($supposedDuration && $totalActualDurationHourly) {
+            $helper = new \App\Services\HR\AttendanceHelpers\Reports\HelperFunctions();
+            $reflection = new \ReflectionClass($helper);
+            $method = $reflection->getMethod('timeToHoursForLateArrival');
+            $method->setAccessible(true);
+            try {
+                $actualHoursFloat = $method->invoke($helper, $totalActualDurationHourly);
+                $supposedHoursFloat = $method->invoke($helper, $supposedDuration);
+
+                $maxMissingHours = max(0, $supposedHoursFloat - $actualHoursFloat);
+                $maxMissingMinutes = $maxMissingHours * 60;
+
+                if ($totalMissingMinutes > $maxMissingMinutes) {
+                    $totalMissingMinutes = $maxMissingMinutes;
+                }
+            } catch (\Exception $e) {
+                // If parsing fails, just keep the original totalMissingMinutes
+            }
+        }
+
+        if ($totalMissingMinutes <= 0) {
             return [
                 'formatted' => '0 h 0 m',
                 'total_hours' => 0,
