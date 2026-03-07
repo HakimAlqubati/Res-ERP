@@ -62,6 +62,7 @@ class MissingCheckoutService
 
         // ── 4. Keep earliest check-in per (employee, period) to avoid duplicates ───
         return $query
+            ->orderBy('check_date')
             ->orderBy('check_time')
             ->get()
             ->unique(fn($r) => $r->employee_id . '_' . $r->period_id . '_' . $r->check_date)
