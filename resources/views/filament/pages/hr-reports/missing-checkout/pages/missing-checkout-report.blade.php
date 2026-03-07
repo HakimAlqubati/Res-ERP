@@ -41,11 +41,8 @@
 
     {{-- Actions Moved Above Table --}}
     <div style="display: flex; gap: 8px; margin-bottom: 16px;">
-        <button onclick="exportMissingCheckoutToExcel()" class="btn-export">
-            &#128200; {{ __('lang.export_excel') }}
-        </button>
-        <button onclick="window.print()" class="btn-export" style="background-color: #3b82f6; border-color: #3b82f6;">
-            &#128438; {{ __('lang.print') }}
+        <button type="button" class="btn-export" style="background-color: #ef4444; border-color: #ef4444;" wire:click="exportPdf">
+            &#128196; {{ __('Export PDF') }}
         </button>
     </div>
 
