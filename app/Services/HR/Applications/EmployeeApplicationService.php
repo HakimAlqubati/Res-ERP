@@ -178,33 +178,13 @@ class EmployeeApplicationService
                         throw new \Exception('Missing attendance details');
                     }
 
-                    $employee = \App\Models\Employee::find($record->employee_id);
-                    $date = \Carbon\Carbon::parse($details->date);
-                    $historyService = app(\App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService::class);
-                    $history = $historyService->getEmployeePeriodsByDateRange($employee, $date, $date);
-                    $dayData = $history->get('days')->get($date->toDateString());
-
-                    $periodId = null;
-                    if ($dayData && isset($dayData['periods'])) {
-                        $firstPeriod = $dayData['periods'] instanceof \Illuminate\Support\Collection
-                            ? $dayData['periods']->first()
-                            : $dayData['periods'][0];
-                        $periodId = $firstPeriod['period_id'] ?? null;
-                    }
-
-                    $payload = [
+                    $result = app(\App\Modules\HR\Attendance\Services\AttendanceService::class)->handle([
                         'employee_id'                    => $record->employee_id,
                         'date_time'                      => $details->date . ' ' . $details->time,
                         'type'                           => \App\Models\Attendance::CHECKTYPE_CHECKIN,
                         'attendance_type'                => \App\Models\Attendance::ATTENDANCE_TYPE_REQUEST,
                         'skip_duplicate_timestamp_check' => true,
-                    ];
-
-                    if ($periodId) {
-                        $payload['period_id'] = $periodId;
-                    }
-
-                    $result = app(\App\Modules\HR\Attendance\Services\AttendanceService::class)->handle($payload);
+                    ]);
 
                     if (!$result->success) {
                         throw new \Exception($result->message ?? 'Failed to create attendance record');
@@ -217,33 +197,13 @@ class EmployeeApplicationService
                         throw new \Exception('Missing departure details');
                     }
 
-                    $employee = \App\Models\Employee::find($record->employee_id);
-                    $date = \Carbon\Carbon::parse($details->date);
-                    $historyService = app(\App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService::class);
-                    $history = $historyService->getEmployeePeriodsByDateRange($employee, $date, $date);
-                    $dayData = $history->get('days')->get($date->toDateString());
-
-                    $periodId = null;
-                    if ($dayData && isset($dayData['periods'])) {
-                        $firstPeriod = $dayData['periods'] instanceof \Illuminate\Support\Collection
-                            ? $dayData['periods']->first()
-                            : $dayData['periods'][0];
-                        $periodId = $firstPeriod['period_id'] ?? null;
-                    }
-
-                    $payload = [
+                    $result = app(\App\Modules\HR\Attendance\Services\AttendanceService::class)->handle([
                         'employee_id'                    => $record->employee_id,
                         'date_time'                      => $details->date . ' ' . $details->time,
                         'type'                           => \App\Models\Attendance::CHECKTYPE_CHECKOUT,
                         'attendance_type'                => \App\Models\Attendance::ATTENDANCE_TYPE_REQUEST,
                         'skip_duplicate_timestamp_check' => true,
-                    ];
-
-                    if ($periodId) {
-                        $payload['period_id'] = $periodId;
-                    }
-
-                    $result = app(\App\Modules\HR\Attendance\Services\AttendanceService::class)->handle($payload);
+                    ]);
 
                     if (!$result->success) {
                         throw new \Exception($result->message ?? 'Failed to create departure record');
