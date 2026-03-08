@@ -23,11 +23,40 @@ class CheckOutAttendanceResource extends JsonResource
     {
         $supposedStatus = $this->resolveSupposedStatus();
 
+        $earlyDepartureMinutes = $this->early_departure_minutes;
+        if ($earlyDepartureMinutes > 0 && $this->total_actual_duration_hourly && $this->supposed_duration_hourly) {
+            $helper = new \App\Services\HR\AttendanceHelpers\Reports\HelperFunctions();
+            $reflection = new \ReflectionClass($helper);
+            $method = $reflection->getMethod('timeToHoursForLateArrival');
+            $method->setAccessible(true);
+            try {
+                $actualHoursFloat = $method->invoke($helper, $this->total_actual_duration_hourly);
+                $supposedHoursFloat = $method->invoke($helper, $this->supposed_duration_hourly);
+
+                $margin = 0;
+                if (function_exists('setting') && setting('flix_hours_early_departure')) {
+                    $margin = \App\Services\HR\AttendanceHelpers\Reports\HelperFunctions::FLEXIBLE_HOURS_MARGIN_MINUTES / 60;
+                }
+
+                if ($actualHoursFloat >= ($supposedHoursFloat - $margin)) {
+                    $earlyDepartureMinutes = 0;
+                } else {
+                    $maxEarlyHours = max(0, $supposedHoursFloat - $actualHoursFloat);
+                    $maxEarlyMinutes = (int) round($maxEarlyHours * 60);
+
+                    if ($earlyDepartureMinutes > $maxEarlyMinutes) {
+                        $earlyDepartureMinutes = $maxEarlyMinutes;
+                    }
+                }
+            } catch (\Exception $e) {
+            }
+        }
+
         return [
             'id'                       => $this->id,
             'check_time'               => $this->check_time,
             'late_departure_minutes'   => $this->late_departure_minutes,
-            'early_departure_minutes'  => $this->early_departure_minutes,
+            'early_departure_minutes'  => $earlyDepartureMinutes,
             'actual_duration_hourly'   => $this->actual_duration_hourly,
             'total_actual_duration_hourly'   => $this->total_actual_duration_hourly,
             'supposed_duration_hourly' => $this->supposed_duration_hourly,
@@ -60,6 +89,35 @@ class CheckOutAttendanceResource extends JsonResource
         // إعادة تقييم حالة الانصراف المبكر حسب فترة السماح
         if ($status === Attendance::STATUS_EARLY_DEPARTURE) {
             $earlyMinutes = (int) ($this->early_departure_minutes ?? 0);
+
+            if ($earlyMinutes > 0 && $this->total_actual_duration_hourly && $this->supposed_duration_hourly) {
+                $helper = new \App\Services\HR\AttendanceHelpers\Reports\HelperFunctions();
+                $reflection = new \ReflectionClass($helper);
+                $method = $reflection->getMethod('timeToHoursForLateArrival');
+                $method->setAccessible(true);
+                try {
+                    $actualHoursFloat = $method->invoke($helper, $this->total_actual_duration_hourly);
+                    $supposedHoursFloat = $method->invoke($helper, $this->supposed_duration_hourly);
+
+                    $margin = 0;
+                    if (function_exists('setting') && setting('flix_hours_early_departure')) {
+                        $margin = \App\Services\HR\AttendanceHelpers\Reports\HelperFunctions::FLEXIBLE_HOURS_MARGIN_MINUTES / 60;
+                    }
+
+                    if ($actualHoursFloat >= ($supposedHoursFloat - $margin)) {
+                        $earlyMinutes = 0;
+                    } else {
+                        $maxEarlyHours = max(0, $supposedHoursFloat - $actualHoursFloat);
+                        $maxEarlyMinutes = (int) round($maxEarlyHours * 60);
+
+                        if ($earlyMinutes > $maxEarlyMinutes) {
+                            $earlyMinutes = $maxEarlyMinutes;
+                        }
+                    }
+                } catch (\Exception $e) {
+                }
+            }
+
             $graceMinutes = (int) settingWithDefault('early_depature_deduction_minutes', 0);
 
             if ($earlyMinutes <= $graceMinutes) {
