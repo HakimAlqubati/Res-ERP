@@ -80,6 +80,11 @@ Route::prefix('hr')
             Route::post('/', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'store'])->middleware('auth:api');
             Route::post('/approve', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'approve'])->middleware('auth:api');
             Route::post('/undoApprove', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'undoApproval'])->middleware('auth:api');
+
+            // --- API V2 ---
+            Route::prefix('v2')->group(function () {
+                Route::get('/', [\App\Modules\HR\Overtime\V2\Http\Controllers\Api\OvertimeController::class, 'index']);
+            });
         })->middleware('auth:api');
     });
 
