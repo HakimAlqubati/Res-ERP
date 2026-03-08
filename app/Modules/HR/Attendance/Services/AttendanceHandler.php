@@ -40,6 +40,7 @@ class AttendanceHandler
     public function handle(AttendanceContextDTO $context): AttendanceResultDTO
     {
         // 1. تحديد الوردية
+        // 1. تحديد الوردية
         $periodId = $context->payload['period_id'] ?? null;
 
         $shiftInfo = $this->shiftResolver->resolve(
@@ -49,28 +50,13 @@ class AttendanceHandler
             $periodId
         );
 
-        // إذا لم يتم العثور على الشيفت لكن نوع الطلب هو طلب إداري (REQUEST) وتم تحديد فترة
-        if (!$shiftInfo && $periodId && $context->attendanceType === \App\Modules\HR\Attendance\Enums\AttendanceType::REQUEST) {
-            $workPeriod = \App\Models\WorkPeriod::find($periodId);
-            if ($workPeriod) {
-                // نعيد بناء معلومات الشيفت يدويا حيث أن هذا الطلب معتمد مسبقا
-                $shiftDate = $context->requestTime->toDateString();
-                $bounds = $this->shiftResolver->calculateBounds($workPeriod, $shiftDate);
-                $shiftInfo = new ShiftInfoDTO(
-                    period: $workPeriod,
-                    date: $shiftDate,
-                    dayName: strtolower($context->requestTime->translatedFormat('D')), // or format('D')
-                    start: $bounds['start'],
-                    end: $bounds['end'],
-                    windowStart: $bounds['windowStart'],
-                    windowEnd: $bounds['windowEnd']
-                );
-            }
-        }
-
         // إذا تم تحديد فترة ولم يتم العثور عليها (غير مطابقة)
         if ($periodId && !$shiftInfo) {
             throw new \App\Modules\HR\Attendance\Exceptions\ShiftMismatchException();
+        }
+
+        if (!$shiftInfo) {
+            throw new NoShiftFoundException();
         }
 
         if (!$shiftInfo) {
