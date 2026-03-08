@@ -176,10 +176,17 @@ class EmployeeApplicationController extends Controller
                 'data'    => new EmployeeApplicationResource($record),
             ]);
         } catch (Throwable $th) {
+            $errorMessage = $th->getMessage();
+
+            // Intercept the specific invalid datetime error that occurs when checkout is earlier than checkin
+            if (str_contains($errorMessage, 'Incorrect time value') && str_contains($errorMessage, 'actual_duration_hourly')) {
+                $errorMessage = __('The departure time cannot be before the check-in time for this shift.');
+            }
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to approve application',
-                'error'   => $th->getMessage(),
+                'error'   => $errorMessage,
             ], 500);
         }
     }
