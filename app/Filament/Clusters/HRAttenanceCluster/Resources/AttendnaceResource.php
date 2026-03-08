@@ -239,7 +239,26 @@ class AttendnaceResource extends Resource
             ])
             ->filtersFormColumns(3)
             ->filters([
+                Filter::make('id')
+                    ->form([
+                        TextInput::make('id')
+                            ->label('ID')
+                            ->numeric(),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['id'],
+                            fn(Builder $query, $id): Builder => $query->where('id', $id)
+                        );
+                    })
+                    ->indicateUsing(function (array $data): ?string {
+                        if (! $data['id']) {
+                            return null;
+                        }
+                        return 'ID: ' . $data['id'];
+                    }),
                 TrashedFilter::make(),
+
                 SelectFilter::make('accepted')->searchable()->label('Rejected')->options([
                     0 => 'Yes',
                     1 => 'No',
