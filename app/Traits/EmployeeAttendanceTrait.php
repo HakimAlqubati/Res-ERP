@@ -261,4 +261,108 @@ trait EmployeeAttendanceTrait
             }
         });
     }
+
+
+    /**
+     * حساب إضافي الموظف ليوم محدد بالاعتماد كلياً على الـ Memory (Collections)
+     * لا توجد أي استعلامات DB هنا، الأداء O(1)
+     */
+    public function calculateOvertimeInMemory(string $date, int $allowedOffset, bool $halfHourRule): array
+    {
+        // 1. التحقق من وجود إضافي معتمد مسبقاً في هذا اليوم
+        if ($this->overtimes->where('date', $date)->isNotEmpty()) {
+            return [];
+        }
+
+        // 2. فلترة الفترات النشطة لهذا اليوم من الـ Collection
+        $activePeriods = $this->periodHistories->filter(function ($history) use ($date) {
+            $startValid = is_null($history->start_date) || $history->start_date <= $date;
+            $endValid = is_null($history->end_date) || $history->end_date >= $date;
+            return $startValid && $endValid;
+        });
+
+        if ($activePeriods->isEmpty()) {
+            return [];
+        }
+
+        // 3. جلب بصمات هذا اليوم فقط (يجب استخدام values لإعادة الفهرسة وتجنب أخطاء الـ Loop)
+        $attendances = $this->attendances
+            ->where('check_date', $date)
+            ->sortBy('id') // 👈 إجبار الترتيب بالتسلسل الصحيح
+            ->values();
+        if ($attendances->count() < 2) {
+            return [];
+        }
+
+        $totalMinutes = 0;
+        $firstCheckInTime = null;
+        $lastCheckOutTime = null;
+
+        // 4. حساب دقائق العمل الفِعلية بدقة (معالجة أزواج الدخول/الخروج)
+        for ($i = 0; $i < $attendances->count() - 1; $i++) {
+            $current = $attendances[$i];
+            $next = $attendances[$i + 1];
+
+            if ($current->check_type === 'checkin' && $next->check_type === 'checkout') {
+                $in  = \Carbon\Carbon::parse("{$current->real_check_date} {$current->check_time}");
+                $out = \Carbon\Carbon::parse("{$next->real_check_date} {$next->check_time}");
+
+                // معالجة الورديات المسائية التي تعبر لمنتصف الليل (اليوم التالي)
+                if ($out < $in) {
+                    $out->addDay();
+                }
+
+                $totalMinutes += $in->diffInMinutes($out);
+
+                // حفظ أول وقت دخول كبداية للإضافي، وتحديث آخر وقت خروج كنهاية
+                $firstCheckInTime = $firstCheckInTime ?? $in;
+                $lastCheckOutTime = $out;
+
+                // تخطي بصمة الخروج لأننا أدخلناها في الحساب بنجاح مع الدخول
+                $i++;
+            }
+        }
+
+        if ($totalMinutes === 0) {
+            return [];
+        }
+
+        // 5. مقارنة وقت العمل الفعلي بوقت الفترة المقررة (Supposed Duration)
+        // 5. مقارنة وقت العمل الفعلي بوقت الفترة المقررة (Supposed Duration)
+        foreach ($activePeriods as $history) {
+            $period = $history->workPeriod;
+            if (!$period) continue;
+
+            [$hours, $minutes] = explode(':', $period->supposed_duration);
+            $supposedDurationMinutes = ((int)$hours * 60) + (int)$minutes;
+
+            if ($totalMinutes >= ($supposedDurationMinutes + $allowedOffset)) {
+                $overtimeMinutes = $totalMinutes - $supposedDurationMinutes;
+
+                // 👈 هنا الحل: استخدام معادلتك الأصلية لإجبار التقريب لأقرب نصف ساعة دائماً
+                $overtimeHours = round(($overtimeMinutes / 60) * 2) / 2;
+
+                // تطبيق الشرط الخاص بك (من الكود القديم) إذا لزم الأمر
+                if ($halfHourRule) {
+                    $overtimeHours = round($overtimeHours, 2);
+                }
+
+                // حساب التنسيق النصي بنفس طريقتك الأصلية
+                $remainingMinutes = $overtimeMinutes % 60;
+                $formattedOvertime = "{$overtimeHours} h {$remainingMinutes} m";
+
+                return [
+                    'employee_id'               => $this->id,
+                    'period_id'                 => $period->id,
+                    'supposed_duration_minutes' => (int) $overtimeMinutes,
+                    'overtime_hours'            => $overtimeHours, // 👈 النتيجة الآن ستتطابق
+                    'overtime'                  => $formattedOvertime,
+                    'overtime_start_time'       => $firstCheckInTime?->toTimeString(),
+                    'overtime_end_time'         => $lastCheckOutTime?->toTimeString(),
+                ];
+            }
+        }
+
+        return [];
+    }
 }
