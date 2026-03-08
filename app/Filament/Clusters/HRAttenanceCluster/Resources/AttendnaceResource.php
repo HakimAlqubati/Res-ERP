@@ -196,7 +196,8 @@ class AttendnaceResource extends Resource
                 TextColumn::make('period.name')
                     ->label('Period')
                     ->tooltip(function ($record) {
-                        return $record->period->start_at . ' - ' . $record->period->end_at;
+                        $period = $record->period;
+                        return '(' . $period->start_at . ' - ' . $period->end_at . ') _ (' . $period->id . ' - ' . $period->name . ')';
                     }),
 
                 TextColumn::make('check_date')
