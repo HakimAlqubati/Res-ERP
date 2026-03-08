@@ -73,12 +73,15 @@ class AttendanceService
     private function validateRequest(Employee $employee, Carbon $requestTime, array $payload): ?AttendanceResultDTO
     {
         try {
+            $isRequest = ($payload['attendance_type'] ?? null) === \App\Modules\HR\Attendance\Enums\AttendanceType::REQUEST->value;
+
             $this->validator->validate(
                 $employee,
                 $requestTime,
                 $payload['type'] ?? null,
                 isset($payload['period_id']) ? (int) $payload['period_id'] : null,
-                $payload['skip_duplicate_timestamp_check'] ?? false
+                $payload['skip_duplicate_timestamp_check'] ?? false,
+                $isRequest
             );
             return null; // التحقق نجح
         } catch (MultipleShiftsException $e) {

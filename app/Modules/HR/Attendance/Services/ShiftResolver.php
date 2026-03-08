@@ -229,9 +229,6 @@ class ShiftResolver implements ShiftResolverInterface
         );
     }
 
-    /**
-     * جلب الورديات المحتملة للموظف حول تاريخ معين
-     */
     private function getCandidatePeriods(Employee $employee, Carbon $refTime): Collection
     {
         // نبحث في ثلاثة أيام: أمس، اليوم، غداً
@@ -245,11 +242,12 @@ class ShiftResolver implements ShiftResolverInterface
         $candidates = collect();
 
         // تحميل الورديات مسبقاً لتجنب N+1
-        $employee->loadMissing('employeePeriods.workPeriod', 'employeePeriods.days');
+        $employee->loadMissing(['employeePeriods.workPeriod', 'employeePeriods.days', 'periodHistories.workPeriod']);
 
         foreach ($dates as $date) {
             $dayName = strtolower(Carbon::parse($date)->format('D'));
 
+            // 1. فحص الشيفتات الحالية
             foreach ($employee->employeePeriods as $ep) {
                 // التحقق من نطاق التاريخ
                 if (!$this->isWithinDateRange($ep, $date)) {
@@ -269,9 +267,56 @@ class ShiftResolver implements ShiftResolverInterface
                     ]);
                 }
             }
+
+            // 2. فحص الشيفتات التاريخية (في حال كان هذا طلب لتاريخ قديم تغير فيه الشيفت)
+            foreach ($employee->periodHistories as $ph) {
+                // التحقق من نطاق التاريخ
+                if (!$this->isWithinHistoricalDateRange($ph, $date)) {
+                    continue;
+                }
+
+                // التحقق من الأيام
+                if (!$this->isWorkingDayHistorical($ph, $dayName)) {
+                    continue;
+                }
+
+                if ($ph->workPeriod) {
+                    $candidates->push([
+                        'period' => $ph->workPeriod,
+                        'date' => $date,
+                        'day' => $dayName,
+                    ]);
+                }
+            }
         }
 
         return $candidates;
+    }
+
+    /**
+     * التحقق من أن التاريخ ضمن نطاق الوردية التاريخية
+     */
+    private function isWithinHistoricalDateRange($periodHistory, string $date): bool
+    {
+        if ($periodHistory->start_date > $date) return false;
+        if ($periodHistory->end_date && $periodHistory->end_date < $date) return false;
+        return true;
+    }
+
+    /**
+     * التحقق من أن اليوم هو يوم عمل في الوردية التاريخية
+     */
+    private function isWorkingDayHistorical($periodHistory, string $dayName): bool
+    {
+        if (!empty($periodHistory->period_days) && is_array($periodHistory->period_days)) {
+            return in_array($dayName, $periodHistory->period_days);
+        }
+
+        if ($periodHistory->day_of_week) {
+            return $periodHistory->day_of_week->value === $dayName;
+        }
+
+        return false;
     }
 
     /**
