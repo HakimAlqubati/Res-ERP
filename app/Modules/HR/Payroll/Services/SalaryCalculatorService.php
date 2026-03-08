@@ -366,10 +366,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
                 'rate'        => $carryForwarded,
                 'multiplier'  => 1.0,
             ];
-        } else if ($finalNetSalary <= 0 && $finalNetSalary >= 0.1) {
-            $finalNetSalary = 0;
         }
-
         // Parse durations
         $totalDurationParsed = is_array($totalDuration) ? $this->sanitizeHM($totalDuration) : $this->parseHM($totalDuration);
         $totalActualDurationParsed = is_array($totalActualDuration) ? $this->sanitizeHM($totalActualDuration) : $this->parseHM($totalActualDuration);
