@@ -7,14 +7,47 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class CheckInAttendanceResource extends JsonResource
 {
+    protected $checkoutData;
+
+    public function __construct($resource, $checkoutData = null)
+    {
+        parent::__construct($resource);
+        $this->checkoutData = $checkoutData;
+    }
+
     public function toArray($request)
     {
         $supposedStatus = $this->resolveSupposedStatus();
 
+        $delayMinutes = $this->delay_minutes;
+
+        if ($delayMinutes > 0 && isset($this->checkoutData['total_actual_duration_hourly']) && isset($this->checkoutData['supposed_duration_hourly'])) {
+            $helper = new \App\Services\HR\AttendanceHelpers\Reports\HelperFunctions();
+            $reflection = new \ReflectionClass($helper);
+            $method = $reflection->getMethod('timeToHoursForLateArrival');
+            $method->setAccessible(true);
+
+            try {
+                $actualHoursFloat = $method->invoke($helper, $this->checkoutData['total_actual_duration_hourly']);
+                $supposedHoursFloat = $method->invoke($helper, $this->checkoutData['supposed_duration_hourly']);
+
+                $diffMinutes = max(0, ($supposedHoursFloat - $actualHoursFloat) * 60);
+
+                // We only adjust if the diff is LESS than the delay.
+                // If they stayed late, diffMinutes will be small.
+                // If they stayed MORE than supposed, diffMinutes will be 0.
+                if ($diffMinutes < $delayMinutes) {
+                    $delayMinutes = (int) round($diffMinutes);
+                }
+            } catch (\Exception $e) {
+                // Keep original delay if parsing fails
+            }
+        }
+
         return [
             'id'                    => $this->id,
             'check_time'            => $this->check_time,
-            'delay_minutes'         => $this->delay_minutes,
+            'delay_minutes'         => $delayMinutes,
             'early_arrival_minutes' => $this->early_arrival_minutes,
             // 'status'                => $this->status,
             // 'status_label'          => Attendance::getStatusLabel($this->status),

@@ -109,20 +109,7 @@ class HelperFunctions
                         // Loop through each checkin record 
                         // Check if the status is 'late_arrival'
                         if (isset($period['attendances']['checkin'][0]['status']) && $period['attendances']['checkin'][0]['status'] === Attendance::STATUS_LATE_ARRIVAL) {
-                            // Add the delay minutes to the total
-                            if ($period['attendances']['checkin'][0]['delay_minutes'] > settingWithDefault('early_attendance_minutes', 15)) {
-                                if (setting('flix_hours')) {
-                                    if (
-                                        isset($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly']) &&
-                                        $this->timeToHoursForLateArrival($period['attendances']['checkout']['lastcheckout']['total_actual_duration_hourly'])
-                                        < ($this->timeToHoursForLateArrival($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly']) - (self::FLEXIBLE_HOURS_MARGIN_MINUTES / 60))
-                                    ) {
-                                        $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
-                                    }
-                                } else {
-                                    $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
-                                }
-                            }
+                            $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'] ?? 0;
                         }
                     }
                 }

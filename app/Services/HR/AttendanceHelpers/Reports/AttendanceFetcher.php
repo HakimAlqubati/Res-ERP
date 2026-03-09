@@ -99,33 +99,34 @@ class AttendanceFetcher
                     ->sortBy('id')
                     ->values();
                 // تحويل إلى Resources (مصفوفة رقمية)
-                $checkInResources  = CheckInAttendanceResource::collection($checkInCollection)->toArray(request());
-                $checkOutResources = $checkOutCollection->map(function ($item) use ($employee, $period, $date, $overtimeCalculator) {
-                    $approvedOvertime = $overtimeCalculator->calculatePeriodApprovedOvertime($employee, $period, $date);
+                $approvedOvertime = $overtimeCalculator->calculatePeriodApprovedOvertime($employee, $period, $date);
+
+                // 1. Process CheckOuts first to get duration info
+                $checkOutResources = $checkOutCollection->map(function ($item) use ($employee, $period, $date, $overtimeCalculator, $approvedOvertime) {
                     return (new CheckOutAttendanceResource($item, $approvedOvertime, $date))->toArray(request());
                 })->all();
 
-                // أول سجل checkout (للـ firstcheckout)
+                // Get last checkout resource for duration info
+                $lastCheckoutModel    = $checkOutCollection->last();
+                $lastCheckoutResource = $lastCheckoutModel ? (new CheckOutAttendanceResource($lastCheckoutModel, $approvedOvertime, $date))->toArray(request()) : null;
+
+                if ($lastCheckoutResource) {
+                    $lastCheckoutResource['period_end_at'] = $period['end_time'];
+                }
+
+                // 2. Process CheckIns with duration info from last checkout
+                $checkInResources = $checkInCollection->map(function ($item) use ($lastCheckoutResource) {
+                    return (new CheckInAttendanceResource($item, $lastCheckoutResource))->toArray(request());
+                })->all();
+
+                $checkIn = $checkInResources;
+
+                // For legacy or specific UI needs, still attach firstcheckout/lastcheckout if needed
                 $firstCheckoutModel    = $checkOutCollection->first();
                 $firstCheckoutResource = $firstCheckoutModel ? (new CheckOutAttendanceResource($firstCheckoutModel))->toArray(request()) : null;
 
                 if ($firstCheckoutResource) {
                     $firstCheckoutResource['period_end_at'] = $period['end_time'];
-                    // أضف أي حقول إضافية هنا
-                }
-                $approvedOvertime = $overtimeCalculator->calculatePeriodApprovedOvertime($employee, $period, $date);
-
-                // آخر سجل checkout (للـ lastcheckout)
-                $lastCheckoutModel    = $checkOutCollection->last();
-                $lastCheckoutResource = $lastCheckoutModel ? (new CheckOutAttendanceResource($lastCheckoutModel, $approvedOvertime, $date))->toArray(request()) : null;
-                if ($lastCheckoutResource) {
-                    $lastCheckoutResource['period_end_at'] = $period['end_time'];
-                    // أضف أي حقول إضافية هنا
-                }
-
-                $checkIn = $checkInResources;
-
-                if ($firstCheckoutResource) {
                     $checkIn['firstcheckout']                      = $firstCheckoutResource;
                     $checkIn['firstcheckout']['approved_overtime'] = $approvedOvertime;
                 }
