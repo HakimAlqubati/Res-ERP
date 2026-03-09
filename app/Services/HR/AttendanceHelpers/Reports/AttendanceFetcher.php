@@ -206,7 +206,8 @@ class AttendanceFetcher
         // منطق تحويل الغياب إلى إجازة أسبوعية تلقائية
         // كل 6 أيام عمل = يوم إجازة مستحق
         // =========================================================================
-        $result = $this->applyWeeklyLeaveToAbsences($result);
+        $isPreviousMonth = $endDate->format('Y-m') < now()->format('Y-m');
+        $result = $this->applyWeeklyLeaveToAbsences($result, $isPreviousMonth);
 
         // =========================================================================
         // حساب نتيجة WeeklyLeaveCalculator النهائية
@@ -462,7 +463,7 @@ class AttendanceFetcher
      * - بعد الاقتراض، يحتاج لإكمال 6 أيام عمل للتأهل لإجازة جديدة
      * - إذا غاب مرة أخرى قبل إكمال 6 أيام عمل، يُحسب كغياب حقيقي
      */
-    protected function applyWeeklyLeaveToAbsences(Collection $result): Collection
+    protected function applyWeeklyLeaveToAbsences(Collection $result, bool $isPreviousMonth = true): Collection
     {
         $workDaysPerLeave = \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::WORK_DAYS_PER_LEAVE;
 
@@ -518,31 +519,33 @@ class AttendanceFetcher
         // =========================================================================
         $usedLeaves = 0;
 
-        foreach ($absentDates as $date) {
-            if ($usedLeaves >= $leavesToUse) {
-                break; // استهلكنا كل الإجازات المتاحة
-            }
-
-            $day = $result->get($date);
-
-            $day['day_status'] = AttendanceReportStatus::WeeklyLeave->value;
-            $day['weekly_leave_auto'] = true;
-            $day['leave_type'] = 'Weekly Leave (Auto)';
-
-            // تحديث final_status داخل كل period
-            if (isset($day['periods'])) {
-                $periods = $day['periods'];
-                if ($periods instanceof \Illuminate\Support\Collection) {
-                    $periods = $periods->toArray();
+        if ($isPreviousMonth) {
+            foreach ($absentDates as $date) {
+                if ($usedLeaves >= $leavesToUse) {
+                    break; // استهلكنا كل الإجازات المتاحة
                 }
-                foreach ($periods as $key => $period) {
-                    // $periods[$key]['final_status'] = AttendanceReportStatus::WeeklyLeave->value;
-                }
-                $day['periods'] = $periods;
-            }
 
-            $result->put($date, $day);
-            $usedLeaves++;
+                $day = $result->get($date);
+
+                $day['day_status'] = AttendanceReportStatus::WeeklyLeave->value;
+                $day['weekly_leave_auto'] = true;
+                $day['leave_type'] = 'Weekly Leave (Auto)';
+
+                // تحديث final_status داخل كل period
+                if (isset($day['periods'])) {
+                    $periods = $day['periods'];
+                    if ($periods instanceof \Illuminate\Support\Collection) {
+                        $periods = $periods->toArray();
+                    }
+                    foreach ($periods as $key => $period) {
+                        $periods[$key]['final_status'] = AttendanceReportStatus::WeeklyLeave->value;
+                    }
+                    $day['periods'] = $periods;
+                }
+
+                $result->put($date, $day);
+                $usedLeaves++;
+            }
         }
 
         // =========================================================================
