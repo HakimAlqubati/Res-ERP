@@ -322,22 +322,14 @@ class AttendanceController extends Controller
 
         $records = $this->missingCheckoutService->getMissingCheckouts($dateFrom, $dateTo, $filters);
 
-        // Group the records by date
-        $groupedData = [];
-        foreach ($records->groupBy('checkin_date') as $date => $items) {
-            $groupedData[] = [
-                'date'  => $date,
-                'items' => $items->values()
-            ];
-        }
-
+        // Uses a resource collection to format the data
         return response()->json([
             'status'    => 'success',
             'date_from' => Carbon::parse($dateFrom)->toDateString(),
             'date_to'   => Carbon::parse($dateTo)->toDateString(),
             'message'   => 'Employees missing check-out.',
             'count'     => $records->count(),
-            'data'      => $groupedData,
+            'data'      => new \App\Http\Resources\HR\MissingCheckoutGroupCollection($records),
         ]);
     }
 
