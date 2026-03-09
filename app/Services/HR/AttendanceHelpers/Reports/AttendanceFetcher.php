@@ -536,7 +536,7 @@ class AttendanceFetcher
                     $periods = $periods->toArray();
                 }
                 foreach ($periods as $key => $period) {
-                    $periods[$key]['final_status'] = AttendanceReportStatus::WeeklyLeave->value;
+                    // $periods[$key]['final_status'] = AttendanceReportStatus::WeeklyLeave->value;
                 }
                 $day['periods'] = $periods;
             }
