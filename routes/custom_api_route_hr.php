@@ -60,6 +60,7 @@ Route::prefix('hr')
         Route::get('/absentEmployees', [AttendanceController::class, 'absentEmployees']);
         Route::get('/presentEmployees', [AttendanceController::class, 'presentEmployees']);
         Route::get('/missingCheckout', [AttendanceController::class, 'missingCheckout']);
+        Route::get('/v2/missingCheckout', [AttendanceController::class, 'missingCheckoutV2']);
         Route::get('/attendanceImages', [AttendanceController::class, 'attendanceImages']);
         Route::get('/v2/attendanceImages', [AttendanceController::class, 'attendanceImagesV2']);
 

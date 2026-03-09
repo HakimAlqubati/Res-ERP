@@ -20,11 +20,12 @@ final readonly class PresentReportDTO implements \JsonSerializable
      * @param  Carbon                                 $datetime
      */
     public function __construct(
-        public Collection $present,
-        public Collection $expectedAbsent,
-        public int        $totalEmployees,
-        public Carbon     $datetime,
-        public bool       $hasBranchFilter = true,
+        public Collection  $present,
+        public Collection  $expectedAbsent,
+        public int         $totalEmployees,
+        public Carbon      $datetime,
+        public bool        $hasBranchFilter = true,
+        public ?Collection $totalEmployeesByBranch = null,
     ) {}
 
     public function presentCount(): int
@@ -58,6 +59,11 @@ final readonly class PresentReportDTO implements \JsonSerializable
             $bPresentCount = $branchPresent->count();
             $bAbsentCount = $branchAbsent->count();
 
+            // Get the total employees for this specific branch
+            $bTotalEmployees = $this->totalEmployeesByBranch
+                ? $this->totalEmployeesByBranch->get($branchId, 0)
+                : $this->totalEmployees; // Fallback if not configured
+
             // Try to extract branch name from the first available record
             $branchName = 'Unknown Branch';
             $firstRecord = $branchPresent->first() ?? $branchAbsent->first();
@@ -74,20 +80,20 @@ final readonly class PresentReportDTO implements \JsonSerializable
                 'attendance_data' => [
                     'present' => [
                         'label'           => 'Present',
-                        'message'         => "{$bPresentCount} present" . ($this->hasBranchFilter ? " out of {$this->totalEmployees} total employees." : "."),
+                        'message'         => "{$bPresentCount} present out of {$bTotalEmployees} total employees.",
                         'count'           => $bPresentCount,
                     ],
                     'absent' => [
-                        'label'   => 'Absent',
-                        'message' => $this->hasBranchFilter ? 'Employees assigned to an active shift but have not checked in yet.' : "{$bAbsentCount} absent.",
-                        'count'   => $bAbsentCount,
+                        'label'           => 'Absent',
+                        'message'         => 'Employees assigned to an active shift but have not checked in yet.',
+                        'count'           => $bAbsentCount,
                     ]
                 ]
             ];
 
             // If a specific branch filter was requested, include the exact employee items arrays and context.
             if ($this->hasBranchFilter) {
-                $branchStructure['attendance_data']['present']['total_employees'] = $this->totalEmployees;
+                $branchStructure['attendance_data']['present']['total_employees'] = $bTotalEmployees;
                 $branchStructure['attendance_data']['present']['items'] = $branchPresent;
                 $branchStructure['attendance_data']['absent']['items'] = $branchAbsent;
             }

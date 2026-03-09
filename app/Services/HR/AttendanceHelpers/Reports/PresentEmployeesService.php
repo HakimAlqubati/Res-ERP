@@ -198,7 +198,8 @@ class PresentEmployeesService
             expectedAbsent: $this->getExpectedAbsentEmployees($activeShiftIds, $date, $filters),
             totalEmployees: $this->countTotalEmployees($filters),
             datetime: $now,
-            hasBranchFilter: $hasBranchFilter
+            hasBranchFilter: $hasBranchFilter,
+            totalEmployeesByBranch: $this->countTotalEmployeesByBranch($filters)
         );
     }
 
@@ -223,6 +224,26 @@ class PresentEmployeesService
         }
 
         return $query->count();
+    }
+
+    /**
+     * Get the count of total active employees grouped by branch matching the given filters.
+     */
+    protected function countTotalEmployeesByBranch(array $filters = []): Collection
+    {
+        $query = Employee::query()->active();
+
+        if (!empty($filters['branch_id'])) {
+            $query->where('branch_id', (int) $filters['branch_id']);
+        }
+
+        if (!empty($filters['department_id'])) {
+            $query->where('department_id', (int) $filters['department_id']);
+        }
+
+        return $query->groupBy('branch_id')
+            ->selectRaw('branch_id, count(*) as total')
+            ->pluck('total', 'branch_id');
     }
 
     /**

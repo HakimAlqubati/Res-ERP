@@ -296,6 +296,51 @@ class AttendanceController extends Controller
         ]);
     }
 
+    /**
+     * GET /api/v2/hr/missingCheckout
+     * Same as above but groups the 'data' array by 'checkin_date'.
+     */
+    public function missingCheckoutV2(Request $request)
+    {
+        $validated = $request->validate([
+            'date'          => 'sometimes|required|date',
+            'from_date'     => 'required_without:date|date',
+            'to_date'       => 'required_without:date|date|after_or_equal:from_date',
+            'branch_id'     => 'required|integer',
+            'department_id' => 'nullable|integer',
+        ]);
+
+        $dateFrom = $request->input('from_date');
+        $dateTo   = $request->input('to_date');
+
+        if (!$dateFrom && !$dateTo && $request->has('date')) {
+            $dateFrom = $request->input('date');
+            $dateTo   = $request->input('date');
+        }
+
+        $filters  = array_filter($request->only(['branch_id', 'department_id']));
+
+        $records = $this->missingCheckoutService->getMissingCheckouts($dateFrom, $dateTo, $filters);
+
+        // Group the records by date
+        $groupedData = [];
+        foreach ($records->groupBy('checkin_date') as $date => $items) {
+            $groupedData[] = [
+                'date'  => $date,
+                'items' => $items->values()
+            ];
+        }
+
+        return response()->json([
+            'status'    => 'success',
+            'date_from' => Carbon::parse($dateFrom)->toDateString(),
+            'date_to'   => Carbon::parse($dateTo)->toDateString(),
+            'message'   => 'Employees missing check-out.',
+            'count'     => $records->count(),
+            'data'      => $groupedData,
+        ]);
+    }
+
     private function formatDuration($totalMinutes)
     {
         $hours   = intdiv($totalMinutes, 60);
