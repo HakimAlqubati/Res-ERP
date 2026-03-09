@@ -21,12 +21,23 @@ class OvertimeGroupCollection extends ResourceCollection
     public function toArray(Request $request): array
     {
         $groupedData = [];
+        $includeEmployees = $request->boolean('include_employees');
 
         foreach ($this->collection as $date => $records) {
-            $groupedData[] = [
-                'date' => $date,
-                'records' => OvertimeResource::collection($records),
+            $totalEmployees = $records->pluck('employee_id')->unique()->count();
+            $totalHours = $records->sum('hours');
+
+            $group = [
+                'date'            => $date,
+                'total_employees' => $totalEmployees,
+                'total_hours'     => round((float) $totalHours, 2),
             ];
+
+            if ($includeEmployees) {
+                $group['records'] = OvertimeResource::collection($records);
+            }
+
+            $groupedData[] = $group;
         }
 
         return $groupedData;
