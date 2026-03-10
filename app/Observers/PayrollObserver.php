@@ -62,6 +62,7 @@ class PayrollObserver
             // استخراج معرّفات الأقساط التي تم دفعها عبر كشف الراتب هذا
             $installmentIds = SalaryTransaction::query()
                 ->where('payroll_id', $payroll->id)
+                ->withTrashed()
                 ->where('reference_type', EmployeeAdvanceInstallment::class)
                 ->whereIn('sub_type', [
                     SalaryTransactionSubType::ADVANCE_INSTALLMENT->value,
@@ -102,8 +103,9 @@ class PayrollObserver
                 // إرجاع حالة القسط لغير مدفوع
                 $installment->update([
                     'is_paid' => false,
-                    'paid_at' => null,
+                    'paid_date' => null,
                     'paid_by' => null,
+                    'status' => EmployeeAdvanceInstallment::STATUS_SCHEDULED,
                     'payroll_id' => null,
                     'payment_method' => null,
                 ]);
