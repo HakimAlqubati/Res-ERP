@@ -726,6 +726,20 @@ class EmployeeApplicationResource extends Resource
         ;
     }
 
+    public static function exportAdvanceRequestPdf(): Action
+    {
+        return Action::make('exportAdvanceRequestPdf')
+            ->label('Export PDF')
+            ->button()
+            ->color('success')
+            ->tooltip('Export Advance Request PDF')
+            ->icon('heroicon-o-document-arrow-down')
+            ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST))
+            ->action(function ($record) {
+                return app(\App\Reports\HR\AdvanceRequestSlipReport::class)->generate($record->id);
+            });
+    }
+
     public static function advanceInstallmentsAction(): Action
     {
         return Action::make('installments')

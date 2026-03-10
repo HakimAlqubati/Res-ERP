@@ -435,6 +435,8 @@ class EmployeeApplicationTable
                 EmployeeApplicationResource::advancedRequestDetails()
                     ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST)),
 
+                EmployeeApplicationResource::exportAdvanceRequestPdf(),
+
                 EmployeeApplicationResource::advanceInstallmentsAction(),
 
                 EmployeeApplicationResource::approveMealRequest()->hidden(function ($record) {
