@@ -91,6 +91,7 @@ Route::prefix('applications')
     ->middleware('auth:api')
     ->group(function () {
         Route::get('/types', [EmployeeApplicationController::class, 'getTypes']); // ✅ الأنواع
+        Route::get('/pendingCounts', [EmployeeApplicationController::class, 'pendingCounts']); // 🔢 عداد الطلبات المعلقة
 
         Route::get('/', [EmployeeApplicationController::class, 'index']); // GET /applications
         Route::post('/', [EmployeeApplicationController::class, 'store']); // POST /applications

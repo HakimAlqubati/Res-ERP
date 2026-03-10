@@ -238,4 +238,33 @@ class EmployeeApplicationController extends Controller
             'data'    => $result,
         ]);
     }
+
+    public function pendingCounts(Request $request)
+    {
+        // Get the base query for pending applications
+        $query = EmployeeApplicationV2::where('status', EmployeeApplicationV2::STATUS_PENDING)
+            ->forBranchManager()
+            ->forEmployee();
+
+        // Use standard groupBy to get counts per type
+        $counts = $query->select('application_type_id', DB::raw('count(*) as count'))
+            ->groupBy('application_type_id')
+            ->pluck('count', 'application_type_id');
+            
+        // Map all known types, setting count to 0 if not present
+        $types = EmployeeApplicationV2::APPLICATION_TYPE_NAMES;
+        
+        $result = collect($types)->map(function ($label, $id) use ($counts) {
+            return [
+                'id'   => $id,
+                'name' => $label,
+                'count' => $counts->get($id, 0),
+            ];
+        })->values();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $result,
+        ]);
+    }
 }
