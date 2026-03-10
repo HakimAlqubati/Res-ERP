@@ -58,6 +58,7 @@ Route::prefix('hr')
 
         Route::get('/attendancePlan', [AttendanceController::class, 'generate']);
         Route::get('/absentEmployees', [AttendanceController::class, 'absentEmployees']);
+        Route::get('/v2/absentEmployees', [AttendanceController::class, 'absentEmployeesV2']);
         Route::get('/presentEmployees', [AttendanceController::class, 'presentEmployees']);
         Route::get('/missingCheckout', [AttendanceController::class, 'missingCheckout']);
         Route::get('/v2/missingCheckout', [AttendanceController::class, 'missingCheckoutV2']);
