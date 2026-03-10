@@ -293,7 +293,10 @@ class EmployeeForm
                                             ->default(now())
                                             ->columnSpan(1)->label(__('lang.start_date'))->required()
                                             ->maxDate(now()->toDateString()),
-                                        TextInput::make('working_hours')->label(__('lang.working_hours'))->numeric()->required()->default(6),
+                                        TextInput::make('working_hours')
+                                            ->label(__('lang.working_hours'))
+                                            ->helperText('To Calculate the Hour Late')
+                                            ->numeric()->required()->default(6),
 
                                         TextInput::make('working_days')
                                             ->label(__('lang.working_days_per_month'))
