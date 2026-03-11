@@ -40,6 +40,7 @@ use Illuminate\Support\Facades\Storage;
 
 Route::prefix('hr')
     ->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\Api\HR\DashboardController::class, 'index'])->middleware('auth:api');
         // Route::post('/attendance/store', [AttendanceController::class, 'store'])->middleware('auth:api');
         // Route::post('/attendance/storeInOut', [AttendanceController::class, 'storeInOut'])->middleware('auth:api');
         // Route::post('/attendance/storeBulk', [AttendanceController::class, 'storeBulk'])->middleware('auth:api');
