@@ -10,6 +10,7 @@ use App\Models\Branch;
 use Spatie\Permission\Models\Role as Role;
 use App\Models\User;
 use App\Models\UserType;
+use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -76,7 +77,7 @@ trait HasNewUserForm
                             ->options(function () {
                                 // return Branch::selectable()
                                 return Branch::query()
-                                ->whereIn('type',[Branch::TYPE_BRANCH,Branch::TYPE_CENTRAL_KITCHEN,Branch::TYPE_RESELLER,Branch::TYPE_POPUP,Branch::TYPE_HQ])
+                                    ->whereIn('type', [Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN, Branch::TYPE_RESELLER, Branch::TYPE_POPUP, Branch::TYPE_HQ])
                                     ->select('id', 'name')
                                     ->forBranchManager('id')
                                     ->get()
@@ -87,58 +88,66 @@ trait HasNewUserForm
 
                 ]),
 
-                Fieldset::make()->columnSpanFull()->label('Set user type and role')->schema([
-                    Select::make('user_type')
-                        ->label('User type')
-                        // ->options(getUserTypes())
-                        ->options(
-                            UserType::select('name', 'id')
-                                // ->whereNotIn('id', [2,3,4])
-                                ->get()->pluck('name', 'id')
-                        )
-                        ->required()
-                        ->live()
-                        ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
+                Checkbox::make('edit_role_and_permissions')
+                    ->label('Edit Role and Permissions')
+                    ->live()
+                    ->visible(fn(string $context): bool => $context === 'edit'),
 
-                            //  dd($roles,$state);
-                        }),
-                    CheckboxList::make('roles')->required()
-                        ->label('Roles')
-                        ->relationship(
-                            name: 'roles',
-                            titleAttribute: 'name',
-                            modifyQueryUsing: function (Builder $query, Get $get) {
-                                $allowed = getRolesByTypeId($get('user_type') ?? null) ?? [];
-                                $query->where('guard_name', 'web')   // عدّل الحارس إذا لزم
-                                    ->whereIn('id', $allowed);
-                            }
-                        )
-                        ->validationAttribute('Roles')
-                        ->validationMessages([
-                            // Error triggered on each item: roles.*.in
-                            '*.in'     => 'The selected role is not valid for the current user type. Please choose only from the available roles or change the user type.',
-                            // Fallback if error comes on the whole array
-                            'in'       => 'One of the selected roles is not valid for the current user type.',
-                            'array'    => 'The roles list format is invalid.',
-                            'required' => 'Please select at least one role.',
-                        ])
+                Fieldset::make()->columnSpanFull()
+                    ->visible(fn(Get $get, string $context): bool => $context === 'create' || $get('edit_role_and_permissions'))
 
-                        // ->helperText('الأدوار المعروضة تعتمد على نوع المستخدم. عند تغيير "User type" قد تصبح بعض الأدوار غير متاحة.')
-                        // ->maxItems(1)
-                        ->live()
-                    // ->options(function (Get $get) {
-                    //     // dd($get('user_type'),'hi');
-                    //     if ($get('user_type')) {
-                    //         $roles = getRolesByTypeId($get('user_type'));
-                    //         // dd($roles,gettype($roles));
-                    //         return Role::select('name', 'id')
-                    //             ->whereIn('id', $roles)
-                    //             ->orderBy('name', 'asc')
-                    //             ->get()->pluck('name', 'id');
-                    //     }
-                    // })
-                    ,
-                ]),
+                    ->label('Set user type and role')->schema([
+                        Select::make('user_type')
+                            ->label('User type')
+                            // ->options(getUserTypes())
+                            ->options(
+                                UserType::select('name', 'id')
+                                    // ->whereNotIn('id', [2,3,4])
+                                    ->get()->pluck('name', 'id')
+                            )
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
+
+                                //  dd($roles,$state);
+                            }),
+                        CheckboxList::make('roles')->required()
+                            ->label('Roles')
+                            ->relationship(
+                                name: 'roles',
+                                titleAttribute: 'name',
+                                modifyQueryUsing: function (Builder $query, Get $get) {
+                                    $allowed = getRolesByTypeId($get('user_type') ?? null) ?? [];
+                                    $query->where('guard_name', 'web')   // عدّل الحارس إذا لزم
+                                        ->whereIn('id', $allowed);
+                                }
+                            )
+                            ->validationAttribute('Roles')
+                            ->validationMessages([
+                                // Error triggered on each item: roles.*.in
+                                '*.in'     => 'The selected role is not valid for the current user type. Please choose only from the available roles or change the user type.',
+                                // Fallback if error comes on the whole array
+                                'in'       => 'One of the selected roles is not valid for the current user type.',
+                                'array'    => 'The roles list format is invalid.',
+                                'required' => 'Please select at least one role.',
+                            ])
+
+                            // ->helperText('الأدوار المعروضة تعتمد على نوع المستخدم. عند تغيير "User type" قد تصبح بعض الأدوار غير متاحة.')
+                            // ->maxItems(1)
+                            ->live()
+                        // ->options(function (Get $get) {
+                        //     // dd($get('user_type'),'hi');
+                        //     if ($get('user_type')) {
+                        //         $roles = getRolesByTypeId($get('user_type'));
+                        //         // dd($roles,gettype($roles));
+                        //         return Role::select('name', 'id')
+                        //             ->whereIn('id', $roles)
+                        //             ->orderBy('name', 'asc')
+                        //             ->get()->pluck('name', 'id');
+                        //     }
+                        // })
+                        ,
+                    ]),
                 Grid::make()->columnSpanFull()->columns(2)->schema([
 
                     Select::make('owner_id')
