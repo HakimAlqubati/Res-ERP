@@ -58,20 +58,33 @@ class SalarySlipReport
             ]);
 
             // Try to find matching employer contribution
-            $dSlug = Str::slug($d->sub_type ?? '');
             $matchingEc = null;
+            
+            // Generate a base slug for matching, removing "(employer)" strings
+            $dBaseName = trim(str_ireplace(['(employer)', 'employer'], '', $dDesc));
+            $dSlug = Str::slug($dBaseName);
 
             foreach ($employerContrib as $ec) {
                 if (in_array($ec->id, $matchedEmployerIds)) continue;
 
-                $ecSlug = Str::slug($ec->sub_type ?? '');
+                $ecDesc = $ec->description ?: ucfirst(str_replace('_', ' ', $ec->sub_type ?? ($ec->type ?? '')));
+                $ecBaseName = trim(str_ireplace(['(employer)', 'employer'], '', $ecDesc));
+                $ecSlug = Str::slug($ecBaseName);
 
-                // Match by slugified sub_type (e.g., "EPF" -> "epf" matches "epf")
-                // or by checking if the employer description contains the deduction's sub_type name
-                if (
-                    ($dSlug !== '' && $ecSlug === $dSlug) ||
-                    ($dSlug !== '' && Str::contains(Str::lower($ec->description ?? ''), $dSlug))
-                ) {
+                // 1. Match by sub_type if both are present
+                if (!empty($d->sub_type) && !empty($ec->sub_type) && $d->sub_type === $ec->sub_type) {
+                    $matchingEc = $ec;
+                    break;
+                }
+
+                // 2. Match by base description slugs
+                if (!empty($dSlug) && !empty($ecSlug) && $dSlug === $ecSlug) {
+                    $matchingEc = $ec;
+                    break;
+                }
+                
+                // 3. Match if one slug contains the other
+                if (!empty($dSlug) && !empty($ecSlug) && (Str::contains($ecSlug, $dSlug) || Str::contains($dSlug, $ecSlug))) {
                     $matchingEc = $ec;
                     break;
                 }

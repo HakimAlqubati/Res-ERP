@@ -219,6 +219,38 @@ class AttendanceController extends Controller
         ]);
     }
 
+    public function absentEmployeesV2(Request $request, \App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesV2Service $service)
+    {
+        $validated = $request->validate([
+            'date'          => 'sometimes|required|date',
+            'from_date'     => 'required_without:date|date',
+            'to_date'       => 'required_without:date|date|after_or_equal:from_date',
+            'branch_id'     => 'nullable|integer',
+            'department_id' => 'nullable|integer',
+        ]);
+
+        $dateFrom = $request->input('from_date');
+        $dateTo   = $request->input('to_date');
+
+        if (!$dateFrom && !$dateTo && $request->has('date')) {
+            $dateFrom = $request->input('date');
+            $dateTo   = $request->input('date');
+        }
+
+        $filters  = array_filter($request->only(['branch_id', 'department_id']));
+
+        $records = $service->getAbsentEmployees($dateFrom, $dateTo, $filters);
+
+        return response()->json([
+            'status'    => 'success',
+            'date_from' => Carbon::parse($dateFrom)->toDateString(),
+            'date_to'   => Carbon::parse($dateTo)->toDateString(),
+            'message'   => 'Absent employees.',
+            'count'     => $records->count(),
+            'data'      => $records, // This will return grouped by employee
+        ]);
+    }
+
     /**
      * GET /api/hr/presentEmployees
      *

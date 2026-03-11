@@ -28,10 +28,13 @@ class OvertimeController extends Controller
             $groupedData = $this->overtimeService->getGroupedByDate($request->all());
 
             // Format using the Resource Collection
-            return response()->json([
-                'status' => true,
-                'data' => new OvertimeGroupCollection($groupedData),
-            ]);
+            return (new OvertimeGroupCollection($groupedData))
+                ->additional([
+                    'status' => true,
+                    'count'  => $groupedData->flatten()->count(),
+                ])
+                ->response()
+                ->setStatusCode(200);
         } catch (Exception $e) {
             return response()->json([
                 'status' => false,

@@ -12,7 +12,7 @@ use App\Modules\HR\Payroll\DTOs\DeductionResult;
  */
 class AttendanceDeductionCalculator
 {
-    public const DEFAULT_ROUND_SCALE = 2;
+    public const DEFAULT_ROUND_SCALE = 4;
     public const STANDARD_MONTH_DAYS = 30;
     public const HYBRID_CALCULATION_THRESHOLD = 15;
 
@@ -84,6 +84,7 @@ class AttendanceDeductionCalculator
 
         // حساب الخصومات
         $absenceDeduction = $this->round($effectiveAbsentDays * $rates->dailyRate);
+       
         $lateDeduction = $this->round($lateHours * $rates->hourlyRate);
         $missingHoursDeduction = $this->round($missingHours * $rates->hourlyRate);
         $earlyDepartureDeduction = $this->round($earlyDepartureHours * $rates->hourlyRate);

@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\Reports\StockAdjustmentReportController;
 use App\Http\Controllers\Api\Reports\StoreCostReportController;
 use App\Http\Controllers\Api\ReturnedOrderController;
 use App\Http\Controllers\Api\SettingController;
+use App\Http\Controllers\Api\QuoteController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
@@ -321,6 +322,7 @@ Route::get('branchConsumptionReport/topProducts', [BranchConsumptionController::
 Route::get('/app/settings', [SettingController::class, 'show']);
 Route::get('/company-logo', [SettingController::class, 'getCompanyLogo']);
 Route::get('/tenant/modules', [SettingController::class, 'getTenantModules']);
+Route::get('/quote', [QuoteController::class, 'index']);
 
 require base_path('routes/ocr.php');
 require base_path('routes/custom_api_route_hr.php');

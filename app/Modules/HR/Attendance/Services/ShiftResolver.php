@@ -260,6 +260,11 @@ class ShiftResolver implements ShiftResolverInterface
                 }
 
                 if ($ep->workPeriod) {
+                    // التحقق من أن الوردية نشطة (ليست disabled)
+                    if (!$ep->workPeriod->active) {
+                        continue;
+                    }
+
                     $candidates->push([
                         'period' => $ep->workPeriod,
                         'date' => $date,
@@ -281,6 +286,11 @@ class ShiftResolver implements ShiftResolverInterface
                 }
 
                 if ($ph->workPeriod) {
+                    // التحقق من أن السجل التاريخي نشط
+                    if (!$ph->active) {
+                        continue;
+                    }
+
                     $candidates->push([
                         'period' => $ph->workPeriod,
                         'date' => $date,

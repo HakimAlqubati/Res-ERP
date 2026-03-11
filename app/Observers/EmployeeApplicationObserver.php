@@ -96,6 +96,27 @@ class EmployeeApplicationObserver
 
         try {
             DB::transaction(fn() => $this->advanceApprovalService->process($app));
+
+            // Notify the employee that their advance request was approved
+            $employeeUser = $app->employee?->user;
+            if ($employeeUser) {
+                Warnings::send(
+                    $employeeUser,
+                    WarningPayload::make(
+                        'Advance Request Approved',
+                        'Your advance request has been approved.',
+                        WarningLevel::Info
+                    )
+                    ->ctx([
+                        'application_id' => $app->id,
+                        'employee_id'    => $app->employee_id,
+                        'type_id'        => $app->application_type_id,
+                    ])
+                    ->url(rtrim(EmployeeApplicationResource::getUrl(), '/') . '?tab=Advance+request')
+                    ->scope("emp-app-approved-{$app->id}")
+                    ->expires(now()->addDays(3))
+                );
+            }
         } catch (\Throwable $e) {
             Log::error('[EmployeeApplicationObserver] Failed to process advance approval.', [
                 'application_id' => $app->id,
