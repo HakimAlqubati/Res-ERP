@@ -137,10 +137,22 @@ class GoodsReceivedNoteResource extends Resource
                                 })
                                 ->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false)
                                 ->live()
-                                ->afterStateUpdated(function ($state, callable $set) {
+                                ->afterStateUpdated(function ($state, callable $set, callable $get, ?\Illuminate\Database\Eloquent\Model $record) {
                                     if (!$state) return;
 
+                                    $attempt = null;
+                                    $repo = app(\App\Repositories\Contracts\DocumentAnalysisAttemptRepositoryInterface::class);
+
                                     try {
+                                        if ($state instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                                            $attempt = $repo->createAttempt(
+                                                GoodsReceivedNote::class,
+                                                $record?->id,
+                                                auth()->id(),
+                                                $state->getClientOriginalName()
+                                            );
+                                        }
+
                                         $service = new \App\Services\AWS\Textract\AnalyzeExpenseService();
 
                                         if ($state instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
@@ -153,6 +165,10 @@ class GoodsReceivedNoteResource extends Resource
                                             );
 
                                             $result = $service->analyze($file);
+
+                                            if ($attempt) {
+                                                $repo->updatePayload($attempt, $result);
+                                            }
 
                                             if (!empty($result['documents'][0]['line_items'])) {
 
@@ -193,24 +209,34 @@ class GoodsReceivedNoteResource extends Resource
                                                 }
 
                                                 $set('grnDetails', $items);
+                                                
+                                                if ($attempt) {
+                                                    $repo->markAsSuccess($attempt, $items);
+                                                }
 
                                                 \Filament\Notifications\Notification::make()
-                                                    ->title('✅ تم تحليل المرفق بنجاح')
-                                                    ->body('تم استيراد المنتجات تلقائيًا من المرفق.')
+                                                    ->title('✅ Attachment parsed successfully')
+                                                    ->body('Products imported automatically from the attachment.')
                                                     ->success()
                                                     ->send();
                                             } else {
+                                                if ($attempt) {
+                                                    $repo->markAsFailed($attempt, 'No items found in the document.');
+                                                }
                                                 \Filament\Notifications\Notification::make()
-                                                    ->title('⚠️ لم يتم العثور على عناصر')
-                                                    ->body('لم يتمكن النظام من استخراج بنود من المرفق.')
+                                                    ->title('⚠️ No items found')
+                                                    ->body('System could not extract items from the attachment.')
                                                     ->warning()
                                                     ->send();
                                             }
                                         }
                                     } catch (\Throwable $e) {
-                                        \Illuminate\Support\Facades\Log::error('faild_file', [$e->getMessage()]);
+                                        if (isset($attempt) && $attempt) {
+                                            $repo->markAsFailed($attempt, $e->getMessage());
+                                        }
+                                        \Illuminate\Support\Facades\Log::error('failed_file', [$e->getMessage()]);
                                         \Filament\Notifications\Notification::make()
-                                            ->title('❌ فشل تحليل الملف')
+                                            ->title('❌ Failed to parse file')
                                             ->body($e->getMessage())
                                             ->danger()
                                             ->send();

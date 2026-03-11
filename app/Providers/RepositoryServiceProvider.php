@@ -6,6 +6,8 @@ use App\Repositories\Inventory\StockInventory\Contracts\StockInventoryRepository
 use App\Repositories\Inventory\StockInventory\StockInventoryRepository;
 use App\Repositories\Inventory\StockAdjustment\Contracts\StockAdjustmentRepositoryInterface;
 use App\Repositories\Inventory\StockAdjustment\StockAdjustmentRepository;
+use App\Repositories\Contracts\DocumentAnalysisAttemptRepositoryInterface;
+use App\Repositories\Eloquent\DocumentAnalysisAttemptRepository;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -25,6 +27,12 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(
             StockAdjustmentRepositoryInterface::class,
             StockAdjustmentRepository::class
+        );
+
+        // Document Analysis Attempt Repository Binding
+        $this->app->bind(
+            DocumentAnalysisAttemptRepositoryInterface::class,
+            DocumentAnalysisAttemptRepository::class
         );
     }
 
