@@ -151,6 +151,7 @@ class GoodsReceivedNoteResource extends Resource
                                                 auth()->id(),
                                                 $state->getClientOriginalName()
                                             );
+                                            $set('document_analysis_attempt_id', $attempt->id);
                                         }
 
                                         $service = new \App\Services\AWS\Textract\AnalyzeExpenseService();
@@ -242,6 +243,9 @@ class GoodsReceivedNoteResource extends Resource
                                             ->send();
                                     }
                                 }),
+                            
+                            \Filament\Forms\Components\Hidden::make('document_analysis_attempt_id')
+                                ->dehydrated(false),
                         ]),
 
 
