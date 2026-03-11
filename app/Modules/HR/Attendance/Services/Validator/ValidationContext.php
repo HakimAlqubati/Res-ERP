@@ -37,6 +37,8 @@ final readonly class ValidationContext
         public bool $hasAnyDailyCheckOut,
         // تخطي فحص الوقت المكرر (للإضافة اليدوية)
         public bool $skipDuplicateTimestampCheck = false,
+        // هل هذا طلب مقدم من الموظف وتمت الموافقة عليه (Request)
+        public bool $isRequest = false,
     ) {}
 
     /**
@@ -48,7 +50,8 @@ final readonly class ValidationContext
         ?int $periodId,
         ShiftResolverInterface $shiftResolver,
         AttendanceRepositoryInterface $repository,
-        bool $skipDuplicateTimestampCheck = false
+        bool $skipDuplicateTimestampCheck = false,
+        bool $isRequest = false
     ): self {
         // تحديد الوردية
         $shiftInfo = $shiftResolver->resolve($employee, $requestTime, $repository, $periodId);
@@ -79,6 +82,7 @@ final readonly class ValidationContext
             hasAnyDailyCheckIn: $dailyRecords->where('check_type', CheckType::CHECKIN->value)->isNotEmpty(),
             hasAnyDailyCheckOut: $dailyRecords->where('check_type', CheckType::CHECKOUT->value)->isNotEmpty(),
             skipDuplicateTimestampCheck: $skipDuplicateTimestampCheck,
+            isRequest: $isRequest,
         );
     }
 }

@@ -149,10 +149,19 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         }
 
         // Cap payable days by required shift days (exclude no_periods days)
+        // For By30Days method: only skip the cap if the employee covers the full month
+        // (requiredDays >= monthDays), so short months like February still get full salary.
+        // If the employee has partial shifts (e.g. 6 out of 28), the cap still applies.
         if ($requiredDays < $payableDays) {
-            $payableDays = $requiredDays;
+            $isFullMonthBy30 = $this->dailyRateMethod === DailyRateMethod::By30Days->value
+                && $requiredDays >= $monthDays;
+
+            if (!$isFullMonthBy30) {
+                $payableDays = $requiredDays;
+            }
         }
 
+        // dd($payableDays,$monthDays);
         if (!$periodYear || !$periodMonth) {
             throw new InvalidArgumentException('periodYear and periodMonth are required to compute penalty deductions.');
         }
@@ -305,7 +314,8 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             dynamicDeductions: $dynamicDeductions,
             monthlyIncentives: $monthlyIncentives,
             overtimeMultiplier: $this->overtimeMultiplier,
-            policyHookTransactions: $policyHookTransactions
+            policyHookTransactions: $policyHookTransactions,
+            baseSalary: $this->baseSalary,
         );
 
         // Add Overtime Days Transaction (Unused Leave Balance)
@@ -357,7 +367,6 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
                 'multiplier'  => 1.0,
             ];
         }
-
         // Parse durations
         $totalDurationParsed = is_array($totalDuration) ? $this->sanitizeHM($totalDuration) : $this->parseHM($totalDuration);
         $totalActualDurationParsed = is_array($totalActualDuration) ? $this->sanitizeHM($totalActualDuration) : $this->parseHM($totalActualDuration);

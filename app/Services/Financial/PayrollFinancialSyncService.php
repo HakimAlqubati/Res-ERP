@@ -381,7 +381,6 @@ class PayrollFinancialSyncService
             ->where('type', SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value)
             ->get();
 
-        Log::info('Employer Contributions: ' . $employerContributions->count());
         if ($employerContributions->isEmpty()) {
             return;
         }
@@ -391,7 +390,7 @@ class PayrollFinancialSyncService
 
         foreach ($employerContributions as $transaction) {
             $catId = null;
-            $name = 'Employer Contribution';
+            $name = 'Employer';
 
             if ($logCount < 5) {
                 Log::info("Transaction ID: {$transaction->id}, RefType: {$transaction->reference_type}, RefID: {$transaction->reference_id}");
@@ -428,7 +427,6 @@ class PayrollFinancialSyncService
             }
         }
 
-        Log::info('Grouped Employer Contributions: ' . json_encode($grouped));
         foreach ($grouped as $group) {
             if ($group['amount'] > 0) {
                 FinancialTransaction::create([

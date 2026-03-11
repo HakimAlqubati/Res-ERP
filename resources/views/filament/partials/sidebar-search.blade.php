@@ -2,8 +2,8 @@
 <div class="p-3 border-b border-gray-200 dark:border-gray-800 " x-show="$store.sidebar.isOpen" x-data="wbSidebarFilter()"
     style="">
     <div class="relative" dir="auto" style="text-align: center;">
-        <input style="padding: 0px 10px 0px 10px;width: 95%;border: 1px solid #0d7c66;border-radius: 5px;direction: {{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }};text-align: {{ app()->getLocale() === 'ar' ? 'right' : 'left' }};" x-model="q"
-            x-on:input.debounce.150ms="filter()" type="text" placeholder="{{ __('hrms.search_in_menu') }} 🔍"
+        <input x-ref="sidebarSearchInput" style="padding: 0px 10px 0px 10px;width: 95%;border: 1px solid #0d7c66;border-radius: 5px;direction: {{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }};text-align: {{ app()->getLocale() === 'ar' ? 'right' : 'left' }};" x-model="q"
+            x-on:input.debounce.150ms="filter()" type="text" placeholder="{{ __('hrms.search_in_menu') }} (Ctrl+M) 🔍"
             class="w-full rounded-lg border border-gray-300 dark:border-gray-700 focus:border-primary-600 focus:ring-2 focus:ring-primary-600/20 text-sm px-3 py-2"
             aria-label="{{ __('hrms.search_in_menu') }} " />
     </div>
@@ -125,6 +125,21 @@
             // Optional: initial run (useful when navigating back)
             init() {
                 this.$nextTick(() => this.filter());
+
+                // Ctrl+M shortcut to focus sidebar search
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey && e.key.toLowerCase() === 'm') {
+                        e.preventDefault();
+                        // Open sidebar if closed
+                        if (Alpine.store('sidebar') && !Alpine.store('sidebar').isOpen) {
+                            Alpine.store('sidebar').isOpen = true;
+                        }
+                        this.$nextTick(() => {
+                            this.$refs.sidebarSearchInput?.focus();
+                            this.$refs.sidebarSearchInput?.select();
+                        });
+                    }
+                });
             },
         }))
     })

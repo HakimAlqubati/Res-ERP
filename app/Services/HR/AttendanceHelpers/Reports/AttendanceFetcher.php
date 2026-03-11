@@ -39,8 +39,23 @@ class AttendanceFetcher
         $result             = collect();
 
         $leaveApplications = $this->getEmployeeLeaves($employee, $startDate, $endDate);
+
+        $termination = $employee->serviceTermination()->where('status', \App\Models\EmployeeServiceTermination::STATUS_APPROVED)->first();
+
         // 2. لكل يوم -> لكل فترة -> جلب الحضور
         foreach ($periodsByDay['days'] as $date => $data) {
+            if ($termination && \Carbon\Carbon::parse($date)->gt($termination->termination_date)) {
+                $result->put($date, [
+                    'date'          => $date,
+                    'day_name'      => $data['day_name'],
+                    'periods'       => collect(),
+                    'day_status'    => AttendanceReportStatus::Terminated->value,
+                    'leave_type'    => 'Terminated',
+                    'leave_type_id' => null,
+                ]);
+                continue;
+            }
+
             $leaveFound = null;
 
             foreach ($leaveApplications as $leave) {
@@ -84,33 +99,34 @@ class AttendanceFetcher
                     ->sortBy('id')
                     ->values();
                 // تحويل إلى Resources (مصفوفة رقمية)
-                $checkInResources  = CheckInAttendanceResource::collection($checkInCollection)->toArray(request());
-                $checkOutResources = $checkOutCollection->map(function ($item) use ($employee, $period, $date, $overtimeCalculator) {
-                    $approvedOvertime = $overtimeCalculator->calculatePeriodApprovedOvertime($employee, $period, $date);
+                $approvedOvertime = $overtimeCalculator->calculatePeriodApprovedOvertime($employee, $period, $date);
+
+                // 1. Process CheckOuts first to get duration info
+                $checkOutResources = $checkOutCollection->map(function ($item) use ($employee, $period, $date, $overtimeCalculator, $approvedOvertime) {
                     return (new CheckOutAttendanceResource($item, $approvedOvertime, $date))->toArray(request());
                 })->all();
 
-                // أول سجل checkout (للـ firstcheckout)
+                // Get last checkout resource for duration info
+                $lastCheckoutModel    = $checkOutCollection->last();
+                $lastCheckoutResource = $lastCheckoutModel ? (new CheckOutAttendanceResource($lastCheckoutModel, $approvedOvertime, $date))->toArray(request()) : null;
+
+                if ($lastCheckoutResource) {
+                    $lastCheckoutResource['period_end_at'] = $period['end_time'];
+                }
+
+                // 2. Process CheckIns with duration info from last checkout
+                $checkInResources = $checkInCollection->map(function ($item) use ($lastCheckoutResource) {
+                    return (new CheckInAttendanceResource($item, $lastCheckoutResource))->toArray(request());
+                })->all();
+
+                $checkIn = $checkInResources;
+
+                // For legacy or specific UI needs, still attach firstcheckout/lastcheckout if needed
                 $firstCheckoutModel    = $checkOutCollection->first();
                 $firstCheckoutResource = $firstCheckoutModel ? (new CheckOutAttendanceResource($firstCheckoutModel))->toArray(request()) : null;
 
                 if ($firstCheckoutResource) {
                     $firstCheckoutResource['period_end_at'] = $period['end_time'];
-                    // أضف أي حقول إضافية هنا
-                }
-                $approvedOvertime = $overtimeCalculator->calculatePeriodApprovedOvertime($employee, $period, $date);
-
-                // آخر سجل checkout (للـ lastcheckout)
-                $lastCheckoutModel    = $checkOutCollection->last();
-                $lastCheckoutResource = $lastCheckoutModel ? (new CheckOutAttendanceResource($lastCheckoutModel, $approvedOvertime, $date))->toArray(request()) : null;
-                if ($lastCheckoutResource) {
-                    $lastCheckoutResource['period_end_at'] = $period['end_time'];
-                    // أضف أي حقول إضافية هنا
-                }
-
-                $checkIn = $checkInResources;
-
-                if ($firstCheckoutResource) {
                     $checkIn['firstcheckout']                      = $firstCheckoutResource;
                     $checkIn['firstcheckout']['approved_overtime'] = $approvedOvertime;
                 }
@@ -191,7 +207,8 @@ class AttendanceFetcher
         // منطق تحويل الغياب إلى إجازة أسبوعية تلقائية
         // كل 6 أيام عمل = يوم إجازة مستحق
         // =========================================================================
-        $result = $this->applyWeeklyLeaveToAbsences($result);
+        $isPreviousMonth = $endDate->format('Y-m') < now()->format('Y-m');
+        $result = $this->applyWeeklyLeaveToAbsences($result, $isPreviousMonth);
 
         // =========================================================================
         // حساب نتيجة WeeklyLeaveCalculator النهائية
@@ -200,7 +217,7 @@ class AttendanceFetcher
         // =========================================================================
         $weeklyLeaveStats = $result->get('weekly_leave_stats', []);
         $totalMonthDays = $stats['required_days'] ?? $stats['total_days'] ?? 0;
-         
+
         // $absentDays = $weeklyLeaveStats['remaining_absences'] ?? $stats['absent'] ?? 0;
         $absentDays =  $stats['absent'] ?? 0;
 
@@ -317,7 +334,8 @@ class AttendanceFetcher
                     if ($lastCheckout && isset($lastCheckout['early_departure_minutes'])) {
                         $minutes = (int) ($lastCheckout['early_departure_minutes'] ?? 0);
                         // Only count if minutes >= minimum threshold from settings
-                        if ($minutes >= $minEarlyDepartureMinutes && $minutes > 0) {
+                        if (!$employee->discount_exception_if_attendance_late  && $minutes >= $minEarlyDepartureMinutes && $minutes > 0) {
+
                             $shouldDeduct = true;
                             if (setting('flix_hours_early_departure')) {
                                 if (
@@ -357,14 +375,30 @@ class AttendanceFetcher
         );
 
         // Add the total early departure to the result collection
-        $result->put('total_early_departure_minutes', [
-            'total_minutes' => $totalEarlyDepartureSeconds / 60,
-            'formatted'     => $totalEarlyDeparture,
-            'total_seconds' => $totalEarlyDepartureSeconds,
-            'total_hours'   => round($totalEarlyDepartureSeconds / 3600, 2),
-        ]);
+        if (!$employee->discount_exception_if_attendance_late) {
+            $result->put('total_early_departure_minutes', [
+                'total_minutes' => $totalEarlyDepartureSeconds / 60,
+                'formatted'     => $totalEarlyDeparture,
+                'total_seconds' => $totalEarlyDepartureSeconds,
+                'total_hours'   => round($totalEarlyDepartureSeconds / 3600, 2),
+            ]);
+        } else {
+            $result->put('total_early_departure_minutes', [
+                'total_minutes' => 0,
+                'formatted'     => '00:00:00',
+                'total_seconds' => 0,
+                'total_hours'   => 0,
+            ]);
+        }
 
-        $result->put('late_hours',  $this->helperFunctions->calculateTotalLateArrival($result));
+        if (!$employee->discount_exception_if_attendance_late) {
+            $result->put('late_hours',  $this->helperFunctions->calculateTotalLateArrival($result));
+        } else {
+            $result->put('late_hours', [
+                'totalMinutes' => 0,
+                'totalHoursFloat' => 0,
+            ]);
+        }
 
 
         return $result;
@@ -430,7 +464,7 @@ class AttendanceFetcher
      * - بعد الاقتراض، يحتاج لإكمال 6 أيام عمل للتأهل لإجازة جديدة
      * - إذا غاب مرة أخرى قبل إكمال 6 أيام عمل، يُحسب كغياب حقيقي
      */
-    protected function applyWeeklyLeaveToAbsences(Collection $result): Collection
+    protected function applyWeeklyLeaveToAbsences(Collection $result, bool $isPreviousMonth = true): Collection
     {
         $workDaysPerLeave = \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::WORK_DAYS_PER_LEAVE;
 
@@ -486,31 +520,33 @@ class AttendanceFetcher
         // =========================================================================
         $usedLeaves = 0;
 
-        foreach ($absentDates as $date) {
-            if ($usedLeaves >= $leavesToUse) {
-                break; // استهلكنا كل الإجازات المتاحة
-            }
-
-            $day = $result->get($date);
-
-            $day['day_status'] = AttendanceReportStatus::WeeklyLeave->value;
-            $day['weekly_leave_auto'] = true;
-            $day['leave_type'] = 'Weekly Leave (Auto)';
-
-            // تحديث final_status داخل كل period
-            if (isset($day['periods'])) {
-                $periods = $day['periods'];
-                if ($periods instanceof \Illuminate\Support\Collection) {
-                    $periods = $periods->toArray();
+        if ($isPreviousMonth) {
+            foreach ($absentDates as $date) {
+                if ($usedLeaves >= $leavesToUse) {
+                    break; // استهلكنا كل الإجازات المتاحة
                 }
-                foreach ($periods as $key => $period) {
-                    $periods[$key]['final_status'] = AttendanceReportStatus::WeeklyLeave->value;
-                }
-                $day['periods'] = $periods;
-            }
 
-            $result->put($date, $day);
-            $usedLeaves++;
+                $day = $result->get($date);
+
+                $day['day_status'] = AttendanceReportStatus::WeeklyLeave->value;
+                $day['weekly_leave_auto'] = true;
+                $day['leave_type'] = 'Weekly Leave (Auto)';
+
+                // تحديث final_status داخل كل period
+                if (isset($day['periods'])) {
+                    $periods = $day['periods'];
+                    if ($periods instanceof \Illuminate\Support\Collection) {
+                        $periods = $periods->toArray();
+                    }
+                    foreach ($periods as $key => $period) {
+                        $periods[$key]['final_status'] = AttendanceReportStatus::WeeklyLeave->value;
+                    }
+                    $day['periods'] = $periods;
+                }
+
+                $result->put($date, $day);
+                $usedLeaves++;
+            }
         }
 
         // =========================================================================

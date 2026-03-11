@@ -13,6 +13,7 @@ enum AttendanceReportStatus: string
     case WeeklyLeave            = 'weekly_leave'; // إجازة أسبوعية تلقائية
     case Future                 = 'future';
     case NoPeriods              = 'no_periods';
+    case Terminated             = 'terminated';
 
     public function label(): string
     {
@@ -26,6 +27,7 @@ enum AttendanceReportStatus: string
             self::WeeklyLeave => 'Weekly Leave',
             self::Future => 'Future',
             self::NoPeriods => 'No Periods',
+            self::Terminated => 'Terminated',
         };
     }
 
@@ -42,6 +44,7 @@ enum AttendanceReportStatus: string
             self::WeeklyLeave            => 'info',      // Bootstrap: أزرق فاتح. Tailwind: 'cyan-500'
             self::Future                 => 'secondary', // Bootstrap: رمادي. Tailwind: 'gray-400'
             self::NoPeriods              => 'secondary', // Bootstrap: رمادي. Tailwind: 'gray-400'
+            self::Terminated             => 'danger',    // Bootstrap: أحمر. Tailwind: 'red-600'
         };
     }
 
@@ -58,6 +61,7 @@ enum AttendanceReportStatus: string
             self::WeeklyLeave            => '#06b6d4', // سماوي (Cyan)
             self::Future                 => '#6c757d', // رمادي
             self::NoPeriods              => '#6c757d', // رمادي
+            self::Terminated             => '#dc3545', // أحمر
         };
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Services\StockSupply\Reports;
 
 use App\Models\InventoryTransaction;
+use App\Models\Setting;
 use App\Models\StockSupplyOrder;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -60,12 +61,21 @@ class ManufacturingProductLabelReportsService
         // Apply sorting (default latest)
         $query->latest('movement_date');
 
-        return $query->paginate($perPage)->through(function ($transaction) {
+        // Check if global halal logo is enabled
+        $useGlobalLogo = Setting::getSetting('use_global_halal_logo');
+        $globalLogoPath = Setting::getSetting('global_halal_logo');
+        $globalLogoUrl = ($useGlobalLogo && $globalLogoPath) ? Storage::url($globalLogoPath) : null;
+
+        return $query->paginate($perPage)->through(function ($transaction) use ($globalLogoUrl) {
             $productionDate = $transaction->movement_date ? Carbon::parse($transaction->movement_date) : null;
             $expiryDate = $transaction->expiry_date; // Using the accessor we created
 
             // Patch Number: movement_date formatted as Ymd (e.g., 20241025)
             $patchNumber = $productionDate ? $productionDate->format('Ymd') : null;
+
+            // Use global logo if set, otherwise per-product logo
+            $halalLogo = $globalLogoUrl
+                ?? ($transaction->product->halalCertificate?->halal_logo ? Storage::url($transaction->product->halalCertificate->halal_logo) : null);
 
             return [
                 'transaction_id' => $transaction->id,
@@ -79,7 +89,8 @@ class ManufacturingProductLabelReportsService
                 'quantity' => $transaction->quantity,
                 'unit' => $transaction->unit?->name,
                 'store_name' => $transaction->store?->name ?? null,
-                'halal_logo' => $transaction->product->halalCertificate?->halal_logo ? Storage::url($transaction->product->halalCertificate->halal_logo) : null,
+                'halal_logo' => $halalLogo,
+                'allergen_info' => $transaction->product->halalCertificate?->allergen_info ?? '',
             ];
         });
     }
@@ -121,11 +132,18 @@ class ManufacturingProductLabelReportsService
         $patchNumber = $batchCode; // Return the requested batch code
 
         // Fetch company settings
-        $companyName = \App\Models\Setting::getSetting('company_name');
-        $companyPhone = \App\Models\Setting::getSetting('company_phone');
-        $companyAddress = \App\Models\Setting::getSetting('address');
-        $countryCode = \App\Models\Setting::getSetting('default_nationality');
+        $companyName = Setting::getSetting('company_name');
+        $companyPhone = Setting::getSetting('company_phone');
+        $companyAddress = Setting::getSetting('address');
+        $countryCode = Setting::getSetting('default_nationality');
         $countryOfOrigin = getNationalitiesAsCountries()[$countryCode] ?? $countryCode;
+
+        // Check if global halal logo is enabled
+        $useGlobalLogo = Setting::getSetting('use_global_halal_logo');
+        $globalLogoPath = Setting::getSetting('global_halal_logo');
+        $halalLogo = ($useGlobalLogo && $globalLogoPath)
+            ? Storage::url($globalLogoPath)
+            : ($transaction->product->halalCertificate?->halal_logo ? Storage::url($transaction->product->halalCertificate->halal_logo) : null);
 
         return [
             'product_name' => $transaction->product->name,
@@ -139,7 +157,7 @@ class ManufacturingProductLabelReportsService
             'tel' => $companyPhone,
             'country_of_origin' => $countryOfOrigin,
             'allergen_info' => $transaction->product->halalCertificate?->allergen_info,
-            'halal_logo' => $transaction->product->halalCertificate?->halal_logo ? Storage::url($transaction->product->halalCertificate->halal_logo) : null,
+            'halal_logo' => $halalLogo,
         ];
     }
 }

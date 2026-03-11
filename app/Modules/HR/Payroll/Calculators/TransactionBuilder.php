@@ -39,18 +39,25 @@ class TransactionBuilder
         array $dynamicDeductions,
         array $monthlyIncentives = [],
         float $overtimeMultiplier = 1.5,
-        array $policyHookTransactions = []
+        array $policyHookTransactions = [],
+        ?float $baseSalary = null
     ): array {
         $tx = [];
         $rates = $context->rates;
 
         // 1. الراتب الأساسي
+        $effectiveBase = $baseSalary ?? $context->salary;
+        $isProRated = $baseSalary !== null && $baseSalary < $context->salary;
+        $baseDescription = $isProRated
+            ? sprintf('Base salary (%d days)', $context->workingDays)
+            : 'Base salary';
+
         $tx[] = [
             'type'        => SalaryTransactionType::TYPE_SALARY,
             'sub_type'    => SalaryTransactionSubType::BASE_SALARY,
-            'amount'      => $this->round($context->salary),
+            'amount'      => $this->round($effectiveBase),
             'operation'   => '+',
-            'description' => 'Base salary',
+            'description' => $baseDescription,
             'unit'        => 'day',
             'qty'         => $context->workingDays,
             'rate'        => $this->round($rates->dailyRate),
@@ -171,7 +178,7 @@ class TransactionBuilder
                 'sub_type'     => $ded['name'] ?? SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION,
                 'amount'       => $this->round($employerAmount),
                 'operation'    => null,
-                'description'  => $ded['name'] . ' (employer contribution)' ?? 'Employer contribution',
+                'description'  => $ded['name'] . ' (employer)' ?? 'Employer',
                 'deduction_id' => $ded['id'] ?? null,
                 'reference_type' => Deduction::class,
                 'reference_id' => $ded['id'] ?? null,

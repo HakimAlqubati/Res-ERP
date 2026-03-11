@@ -9,6 +9,7 @@ use Filament\Actions\Concerns\CanCustomizeProcess;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -112,6 +113,14 @@ class PeriodHistoriesRelationManager extends RelationManager
 
                     ->form(fn($record) => [
                         Fieldset::make()->columns(3)->schema([
+                            TimePicker::make('start_time')
+                                ->default($record->start_time)
+                                ->visible(fn() => isHakimOrAdel())
+                                ->required(),
+                            TimePicker::make('end_time')
+                                ->default($record->end_time)
+                                ->visible(fn() => isHakimOrAdel())
+                                ->required(),
                             DatePicker::make('start_date')
                                 ->default($record->start_date)
                                 ->required(),

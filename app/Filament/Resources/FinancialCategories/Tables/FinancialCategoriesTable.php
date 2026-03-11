@@ -18,6 +18,7 @@ use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\IconColumn;
 use App\Models\FinancialCategory;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkAction;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Notifications\Notification;
@@ -33,13 +34,21 @@ class FinancialCategoriesTable
                     ->searchable()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
+
+                TextColumn::make('profit_type')
+                    ->label('Profit Type')
+                    ->searchable()
+                    ->sortable()
+                    ->badge()
+                    ->color('info')
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('description')
                     ->label('Description')
                     ->searchable()
                     ->limit(40)
                     // ->wrap()
                     ->tooltip(fn($state) => $state)
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('code')
                     ->label('System Code')
@@ -128,6 +137,36 @@ class FinancialCategoriesTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('change_profit_type')
+                        ->label('Change Profit Type')
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('warning')
+                        ->schema([
+                            \Filament\Forms\Components\Select::make('profit_type')
+                                ->label('Profit Type')
+                                ->options([
+                                    '' => '-- Clear (No Profit Type) --',
+                                    ...FinancialCategory::PROFIT_TYPES,
+                                ])
+                                ->required()
+                                ->native(false),
+                        ])
+                        ->action(function ($records, array $data) {
+                            $profitType = $data['profit_type'] === '' ? null : $data['profit_type'];
+
+                            FinancialCategory::whereIn('id', $records->pluck('id'))
+                                ->update(['profit_type' => $profitType]);
+
+                            Notification::make()
+                                ->title('Profit Type Updated')
+                                ->body('Updated ' . $records->count() . ' categories successfully.')
+                                ->success()
+                                ->send();
+                        })
+                        ->deselectRecordsAfterCompletion()
+                        ->requiresConfirmation()
+                        ->modalHeading('Change Profit Type')
+                        ->modalDescription('Select the new profit type for the selected categories.'),
                     DeleteBulkAction::make()
                         ->action(function ($records) {
                             $records->each(function ($record) {

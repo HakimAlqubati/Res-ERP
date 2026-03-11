@@ -144,7 +144,7 @@ class AdminPanelProvider extends PanelProvider
                             //  (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  ReportOrdersCluster::getNavigationItems(): [], 
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  SupplierCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  SupplierStoresReportsCluster::getNavigationItems() : [],
-                            (isSuperAdmin() || isSystemManager() || isBranchManager()) ?  InventoryManagementCluster::getNavigationItems() : [],
+                            (isSuperAdmin() || isSystemManager()) ?  InventoryManagementCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  InventoryReportLinks::getNavigationItems() : [],
                             // InventoryReportLinks::getNavigationItems(),
 
@@ -222,11 +222,14 @@ class AdminPanelProvider extends PanelProvider
                             ->items(array_merge(
                                 (isSuperAdmin() && ((count(explode('.', request()->getHost())) == 1 && env('APP_ENV') == 'local')
                                     || (count(explode('.', request()->getHost())) == 2 && env('APP_ENV') == 'production')
-                                )) ? TenantResource::getNavigationItems() : [],
+
+                                )
+                                    || env('APP_ENV') == 'local' && env('APP_URL') == 'https://workbench.test/')
+                                    ? TenantResource::getNavigationItems() : [],
                             )),
                         NavigationGroup::make('AppLogs')
                             ->items(array_merge(
-                                (isSuperAdmin()) ? AppLogResource::getNavigationItems() : [],
+                                (isHakimOrAdel()) ? AppLogResource::getNavigationItems() : [],
                             ))
                     ]
                 );

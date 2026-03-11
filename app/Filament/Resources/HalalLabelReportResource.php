@@ -77,6 +77,14 @@ class HalalLabelReportResource extends Resource
                             ->pluck('name', 'id')
                             ->toArray()
                     ),
+                SelectFilter::make("view_model")
+                    ->label('Report Model')
+                    ->selectablePlaceholder(false)
+                    ->options([
+                        'model_1' => 'Model 1',
+                        'model_2' => 'Model 2',
+                    ])
+                    ->default('model_2'),
                 SelectFilter::make("product_id")
                     ->label(__('lang.product'))
                     ->multiple()

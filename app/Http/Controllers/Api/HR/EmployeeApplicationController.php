@@ -19,7 +19,15 @@ class EmployeeApplicationController extends Controller
      */
     public function index(Request $request)
     {
-        $apps = EmployeeApplicationV2::with(['employee', 'leaveRequest', 'advanceRequest'])
+        $apps = EmployeeApplicationV2::with([
+            'employee',
+            'leaveRequest',
+            'advanceRequest',
+            'missedCheckinRequest',
+            'missedCheckoutRequest',
+            'mealRequest',
+            'approvedBy',
+        ])
             ->when($request->id, fn($q) => $q->where('id', $request->id))
             ->when($request->branch_id, fn($q) => $q->where('branch_id', $request->branch_id))
             ->when($request->employee_name, fn($q) => $q->whereHas(
@@ -37,6 +45,7 @@ class EmployeeApplicationController extends Controller
                 $e->where('name', 'like', '%' . $request->search . '%')
                     ->orWhere('employee_number', 'like', '%' . $request->search . '%')
             ))
+            ->whereHas('employee')
             ->latest()
             ->forBranchManager()
             ->forEmployee()
@@ -167,10 +176,17 @@ class EmployeeApplicationController extends Controller
                 'data'    => new EmployeeApplicationResource($record),
             ]);
         } catch (Throwable $th) {
+            $errorMessage = $th->getMessage();
+
+            // Intercept the specific invalid datetime error that occurs when checkout is earlier than checkin
+            if (str_contains($errorMessage, 'Incorrect time value') && str_contains($errorMessage, 'actual_duration_hourly')) {
+                $errorMessage = __('The departure time cannot be before the check-in time for this shift.');
+            }
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to approve application',
-                'error'   => $th->getMessage(),
+                'error'   => $errorMessage,
             ], 500);
         }
     }

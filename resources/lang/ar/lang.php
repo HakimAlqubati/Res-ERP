@@ -347,6 +347,7 @@ return [
   'is_percentage' => 'نسبة مئوية',
   'no_salary_deduction_for_absences' => 'بدون خصم راتب للغياب',
   'exempt_from_late_attendance_deduction' => 'معفى من خصم التأخير',
+  'is_mtd_applicable' => 'خاضع لـMTD',
 
   // ===========================================
   // HRMS - Attendance & Shifts
@@ -654,8 +655,14 @@ return [
   // ===========================================
   'attendance_reports' => 'تقارير الحضور',
   'attendance_by_employee' => 'الحضور حسب الموظف',
+  'missing_checkout_report' => 'تقرير نسيان الانصراف',
+  'missing_checkout' => 'نسيان الانصراف',
   'my_attendance' => 'سجل حضوري',
   'absence_report' => 'تقرير الغياب',
+  'branch_attendance_summary' => 'ملخص حضور الفرع',
+  'current_staff' => 'الموظفين الحاليين',
+  'new_staff' => 'الموظفين الجدد',
+  'terminated_staff' => 'الموظفين المنتهية خدماتهم',
   'no_data' => 'لا توجد بيانات',
   'start_date' => 'تاريخ البداية',
   'end_date' => 'تاريخ النهاية',
@@ -1065,4 +1072,5 @@ return [
   'subtotal' => 'المجموع الفرعي',
   'weekly_leave' => 'إجازة أسبوعية',
   'error_occurred' => 'حدث خطأ',
+  'employee_name' => 'اسم الموظف',
 ];

@@ -244,4 +244,121 @@ class OvertimeService
 
         return $employeesWithOvertime;
     }
+
+    /**
+     * Get suggested overtime for employees in a branch for a date range (V2)
+     * Groups the results by date.
+     *
+     * @param string $fromDate
+     * @param string $toDate
+     * @param int $branchId
+     * @return array
+     */
+    public function getSuggestedOvertimeV2(string $fromDate, string $toDate, int $branchId): array
+    {
+        $employees = Employee::where('branch_id', $branchId)
+            ->where('active', 1) 
+            ->get();
+
+        $groupedOvertime = [];
+        $startDate = \Carbon\Carbon::parse($fromDate);
+        $endDate = \Carbon\Carbon::parse($toDate);
+
+        // Iterate through each date in the range
+        for ($date = $startDate; $date->lte($endDate); $date->addDay()) {
+            $dateString = $date->toDateString();
+            $dailyOvertime = [];
+
+            foreach ($employees as $employee) {
+                if (method_exists($employee, 'calculateEmployeeOvertime')) {
+                    $overtimeResults = $employee->calculateEmployeeOvertime($employee, $dateString);
+
+                    if (!empty($overtimeResults) && isset($overtimeResults[0])) {
+                        $result = $overtimeResults[0];
+                        $dailyOvertime[] = [
+                            'employee_id' => $employee->id,
+                            'name'        => $employee->name,
+                            'start_time'  => $result['overtime_start_time'],
+                            'end_time'    => $result['overtime_end_time'],
+                            'hours'       => $result['overtime_hours'],
+                            'notes'       => null,
+                        ];
+                    }
+                }
+            }
+
+            if (!empty($dailyOvertime)) {
+                $groupedOvertime[$dateString] = $dailyOvertime;
+            }
+        }
+
+        return $groupedOvertime;
+    }
+
+    public function getSuggestedOvertimeV3(string $fromDate, string $toDate, int $branchId): array
+    {
+        // 1. جلب الإعدادات مرة واحدة فقط (O(1) Database hit)
+        $allowedOffset = \App\Models\Attendance::getMinutesByConstant(\App\Models\Setting::getSetting('period_allowed_to_calculate_overtime'));
+        $halfHourRule = \App\Models\Setting::getSetting('calculating_overtime_with_half_hour_after_hour') == 1;
+
+        // 2. التحميل المسبق (Eager Loading) لكل البيانات المطلوبة بنطاق التواريخ
+        $employees = Employee::where('branch_id', $branchId)
+            ->where('active', 1) 
+            ->with([
+
+                'attendances' => function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('check_date', [$fromDate, $toDate])
+                        ->where('accepted', 1)
+                        ->orderBy('check_date')
+                        ->orderBy('id'); // 👈 التعديل هنا: الترتيب بالـ ID وليس بالوقت
+                },
+                'periodHistories' => function ($query) use ($fromDate, $toDate) {
+                    $query->where('active', 1)
+                        ->where(function ($q) use ($toDate) {
+                            $q->whereNull('start_date')->orWhere('start_date', '<=', $toDate);
+                        })
+                        ->where(function ($q) use ($fromDate) {
+                            $q->whereNull('end_date')->orWhere('end_date', '>=', $fromDate);
+                        })
+                        ->with('workPeriod');
+                },
+                // افترض أن العلاقة في موديل الموظف لجدول EmployeeOvertime اسمها overtimes
+                'overtimes' => function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('date', [$fromDate, $toDate])
+                        ->where('approved', 1);
+                }
+            ])
+            ->get();
+
+        $groupedOvertime = [];
+        $periodDates = \Carbon\CarbonPeriod::create($fromDate, $toDate);
+
+        // 3. المعالجة السريعة داخل الذاكرة (بدون أي استعلام قاعدة بيانات هنا)
+        foreach ($periodDates as $dateObj) {
+            $dateString = $dateObj->toDateString();
+            $dailyOvertime = [];
+
+            foreach ($employees as $employee) {
+                // استدعاء دالة الحساب التي تعمل على الـ Collections المحملة مسبقاً
+                $result = $employee->calculateOvertimeInMemory($dateString, $allowedOffset, $halfHourRule);
+
+                if (!empty($result)) {
+                    $dailyOvertime[] = [
+                        'employee_id' => $employee->id,
+                        'name'        => $employee->name,
+                        'start_time'  => $result['overtime_start_time'],
+                        'end_time'    => $result['overtime_end_time'],
+                        'hours'       => $result['overtime_hours'],
+                        'notes'       => null,
+                    ];
+                }
+            }
+
+            if (!empty($dailyOvertime)) {
+                $groupedOvertime[$dateString] = $dailyOvertime;
+            }
+        }
+
+        return $groupedOvertime;
+    }
 }

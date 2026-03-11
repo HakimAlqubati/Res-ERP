@@ -196,7 +196,8 @@ class AttendnaceResource extends Resource
                 TextColumn::make('period.name')
                     ->label('Period')
                     ->tooltip(function ($record) {
-                        return $record->period->start_at . ' - ' . $record->period->end_at;
+                        $period = $record->period;
+                        return '(' . $period->start_at . ' - ' . $period->end_at . ') _ (' . $period->id . ' - ' . $period->name . ')';
                     }),
 
                 TextColumn::make('check_date')
@@ -238,7 +239,26 @@ class AttendnaceResource extends Resource
             ])
             ->filtersFormColumns(3)
             ->filters([
+                Filter::make('id')
+                    ->form([
+                        TextInput::make('id')
+                            ->label('ID')
+                            ->numeric(),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['id'],
+                            fn(Builder $query, $id): Builder => $query->where('id', $id)
+                        );
+                    })
+                    ->indicateUsing(function (array $data): ?string {
+                        if (! $data['id']) {
+                            return null;
+                        }
+                        return 'ID: ' . $data['id'];
+                    }),
                 TrashedFilter::make(),
+
                 SelectFilter::make('accepted')->searchable()->label('Rejected')->options([
                     0 => 'Yes',
                     1 => 'No',

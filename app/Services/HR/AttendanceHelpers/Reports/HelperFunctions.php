@@ -18,6 +18,7 @@ class HelperFunctions
             'no_periods'    => 0,
             'leave'         => 0,
             'weekly_leave'  => 0, // إجازة أسبوعية تلقائية
+            'terminated'    => 0,
             'required_days' => 0,
             'total_days'    => 0,
         ];
@@ -53,6 +54,10 @@ class HelperFunctions
                     $stats['weekly_leave']++;
                     $stats['required_days']++;
                     break;
+                case AttendanceReportStatus::Terminated->value:
+                    $stats['terminated']++;
+                    // Not incrementing required_days, as they are no longer required to work.
+                    break;
                 case AttendanceReportStatus::NoPeriods->value:
                     $stats['no_periods']++;
                     break;
@@ -74,6 +79,7 @@ class HelperFunctions
             AttendanceReportStatus::Partial,
             AttendanceReportStatus::Leave,
             AttendanceReportStatus::NoPeriods,
+            AttendanceReportStatus::Terminated,
         ];
         $stats = self::calculateAttendanceStats($reportData);
 
@@ -103,20 +109,7 @@ class HelperFunctions
                         // Loop through each checkin record 
                         // Check if the status is 'late_arrival'
                         if (isset($period['attendances']['checkin'][0]['status']) && $period['attendances']['checkin'][0]['status'] === Attendance::STATUS_LATE_ARRIVAL) {
-                            // Add the delay minutes to the total
-                            if ($period['attendances']['checkin'][0]['delay_minutes'] > settingWithDefault('early_attendance_minutes', 15)) {
-                                if (setting('flix_hours')) {
-                                    if (
-                                        isset($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly']) &&
-                                        $this->timeToHoursForLateArrival($period['attendances']['checkout']['lastcheckout']['total_actual_duration_hourly'])
-                                        < ($this->timeToHoursForLateArrival($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly']) - (self::FLEXIBLE_HOURS_MARGIN_MINUTES / 60))
-                                    ) {
-                                        $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
-                                    }
-                                } else {
-                                    $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
-                                }
-                            }
+                            $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'] ?? 0;
                         }
                     }
                 }

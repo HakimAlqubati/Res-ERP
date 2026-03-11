@@ -30,7 +30,7 @@ use App\Models\StockInventory;
 use App\Models\Store;
 use App\Services\MultiProductsInventoryService;
 use App\Services\Stock\StockInventory\InventoryProductCacheService;
-use Filament\Facades\Filament;
+use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\DatePicker;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\IconColumn;
@@ -46,6 +46,8 @@ class StockInventoryTable
     {
         return $table
             ->striped()->defaultSort('id', 'desc')
+            ->recordUrl(fn(StockInventory $record): string => StockInventoryResource::getUrl('edit', ['record' => $record]))
+
             ->columns([
                 TextColumn::make('id')->sortable()->label('ID')->searchable()->toggleable(isToggledHiddenByDefault: true),
 
@@ -55,7 +57,10 @@ class StockInventoryTable
                     ->wrap()->label('Categories')->toggleable(),
                 TextColumn::make('details_count')->label('Products No')->alignCenter(true)->toggleable(),
                 TextColumn::make('store.name')->sortable()->label('Store')->toggleable(),
-                TextColumn::make('responsibleUser.name')->sortable()->label('Responsible')->toggleable(),
+                TextColumn::make('responsibleUser.name')
+                ->limit(15)
+                ->tooltip(fn($state) => $state)
+                ->sortable()->label('Responsible')->toggleable(),
                 IconColumn::make('finalized')->sortable()->label('Finalized')->boolean()->alignCenter(true)->toggleable(),
 
             ])->deferFilters(false)->filtersFormColumns(4)
@@ -91,10 +96,12 @@ class StockInventoryTable
                     ->label('Finalize')
                     ->button()
                     ->hidden(fn($record): bool => $record->finalized),
-                ViewAction::make()
-                    ->visible(fn($record): bool => $record->finalized)
-                    ->button()
-                    ->icon('heroicon-o-eye')->color('success'),
+                ActionGroup::make([
+                    ViewAction::make()
+                        ->visible(fn($record): bool => $record->finalized)
+                        ->button()
+                        ->icon('heroicon-o-eye')->color('success'),
+                ])
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

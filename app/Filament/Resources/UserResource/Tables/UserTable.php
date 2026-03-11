@@ -121,11 +121,15 @@ class UserTable
                 IconColumn::make('is_blocked')
                     ->boolean()->alignCenter(true)
                     ->label(__("lang.is_blocked"))->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('last_login_at')->label('Last Login')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('last_login_at')
+                    ->label('Last Login')->dateTime()->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->visible(fn() => isHakimOrAdel()),
                 TextColumn::make('activities_count')
                     ->label(__('lang.activities_count'))
                     ->counts('activities')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->visible(fn() => isHakimOrAdel()),
                 TextColumn::make('last_activity')
                     ->label(__('lang.last_activity'))
                     ->formatStateUsing(function ($state) {
@@ -144,7 +148,8 @@ class UserTable
                             return $date->format('M d, Y h:i A');
                         }
                     })
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->visible(fn() => isHakimOrAdel()),
                 TextColumn::make('created_at')
                     ->label(__('lang.created_at'))
                     ->toggleable(isToggledHiddenByDefault: true),

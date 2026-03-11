@@ -148,6 +148,8 @@ class EmployeeApplicationTable
                 ->label(__('lang.cost'))
                 ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state));
         }
+        $columns[] = TextColumn::make('approvedBy.name')
+            ->label(__('lang.approved_by'));
         return $table->defaultSort('id', 'desc')
             ->paginated([10, 25, 50, 100])
             ->striped()

@@ -365,6 +365,7 @@ return [
     'is_percentage' => 'Is Percentage',
     'no_salary_deduction_for_absences' => 'No Salary Deduction for Absences',
     'exempt_from_late_attendance_deduction' => 'Exempt from Late Attendance Deduction',
+    'is_mtd_applicable' => 'MTD Applicable',
 
     // ===========================================
     // HRMS - Attendance & Shifts
@@ -672,8 +673,14 @@ return [
     // ===========================================
     'attendance_reports' => 'Attendance Reports',
     'attendance_by_employee' => 'Attendance by employee',
+    'missing_checkout_report' => 'Missing Checkout Report',
+    'missing_checkout' => 'Missing Checkout',
     'my_attendance' => 'My attendance',
     'absence_report' => 'Absence Report',
+    'branch_attendance_summary' => 'Branch Attendance Summary',
+    'current_staff' => 'Current Staff',
+    'new_staff' => 'New Staff',
+    'terminated_staff' => 'Terminated Staff',
     'no_data' => 'No data',
     'start_date' => 'Start Date',
     'end_date' => 'End Date',
@@ -1083,4 +1090,5 @@ return [
     'subtotal' => 'Subtotal',
     'weekly_leave' => 'Weekly Leave',
     'error_occurred' => 'Error Occurred',
+    'employee_name' => 'Employee Name',
 ];

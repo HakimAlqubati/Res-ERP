@@ -33,6 +33,7 @@ use App\Models\UnitPrice;
 
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
@@ -56,6 +57,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Unique;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class GoodsReceivedNoteResource extends Resource
 {
@@ -131,6 +133,94 @@ class GoodsReceivedNoteResource extends Resource
                             Textarea::make('notes')
                                 ->label('Notes')
                                 ->columnSpanFull()->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
+                            FileUpload::make('attachment')
+                                ->label(__('lang.attachment'))
+                                ->directory('goods-received-notes')
+                                ->columnSpanFull()
+                                ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                    return (string) str($file->getClientOriginalName())->prepend('grn-');
+                                })
+                                ->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false)
+                                ->live()
+                                ->afterStateUpdated(function ($state, callable $set) {
+                                    if (!$state) return;
+
+                                    try {
+                                        $service = new \App\Services\AWS\Textract\AnalyzeExpenseService();
+
+                                        if ($state instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                                            $file = new \Illuminate\Http\UploadedFile(
+                                                $state->getRealPath(),
+                                                $state->getClientOriginalName(),
+                                                $state->getMimeType(),
+                                                $state->getError(),
+                                                true
+                                            );
+
+                                            $result = $service->analyze($file);
+
+                                            if (!empty($result['documents'][0]['line_items'])) {
+
+                                               
+                                                if (!empty($result['documents'][0]['summary']['VENDOR_ID'])) {
+                                                    $set('supplier_id', $result['documents'][0]['summary']['VENDOR_ID']);
+                                                }
+                                                if (!empty($result['documents'][0]['summary']['INVOICE_RECEIPT_DATE'])) {
+                                                    $date = $result['documents'][0]['summary']['INVOICE_RECEIPT_DATE'];
+                                                    $date = date('Y-m-d', strtotime(str_replace('/', '-', $date)));
+                                                    $set('grn_date', $date);
+                                                }
+                                                $items = [];
+
+                                                foreach ($result['documents'][0]['line_items'] as $item) {
+                                                    // 1) استخراج اسم الوحدة من الاستجابة
+                                                    $unitName = trim((string)($item['unit_name'] ?? ''));
+
+                                                    // 2) محاولة إيجاد الـ ID للوحدة (حسب الاسم، أو الرمز إن لزم)
+                                                    $unitId = null;
+                                                    if ($unitName !== '') {
+                                                        $unitId = \App\Models\Unit::query()
+                                                            ->where('name', 'like', $unitName)           // تطابق مباشر
+                                                            ->orWhere('name', 'like', "%{$unitName}%")   // تطابق جزئي
+                                                            ->orWhere('code', 'like', $unitName)         // لو عندك code للوحدة
+                                                            ->orWhere('code', 'like', "%{$unitName}%")
+                                                            ->value('id');
+                                                    }
+
+                                                    // 3) بناء عنصر الريبيتر بقيم نهائية (بدون Closures)
+                                                    $items[] = [
+                                                        'product_id'              => $item['existing_product_id'] ?? null,
+                                                        'unit_id'                 => $unitId,                                    // ← قيمة رقمية أو null
+                                                        'package_size'            => (float)($item['package_size'] ?? 0),
+                                                        'quantity'                => (float)($item['quantity'] ?? 1),
+                                                        'waste_stock_percentage'  => 0,
+                                                    ];
+                                                }
+
+                                                $set('grnDetails', $items);
+
+                                                \Filament\Notifications\Notification::make()
+                                                    ->title('✅ تم تحليل المرفق بنجاح')
+                                                    ->body('تم استيراد المنتجات تلقائيًا من المرفق.')
+                                                    ->success()
+                                                    ->send();
+                                            } else {
+                                                \Filament\Notifications\Notification::make()
+                                                    ->title('⚠️ لم يتم العثور على عناصر')
+                                                    ->body('لم يتمكن النظام من استخراج بنود من المرفق.')
+                                                    ->warning()
+                                                    ->send();
+                                            }
+                                        }
+                                    } catch (\Throwable $e) {
+                                        \Illuminate\Support\Facades\Log::error('faild_file', [$e->getMessage()]);
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('❌ فشل تحليل الملف')
+                                            ->body($e->getMessage())
+                                            ->danger()
+                                            ->send();
+                                    }
+                                }),
                         ]),
 
 
@@ -252,23 +342,25 @@ class GoodsReceivedNoteResource extends Resource
                 SoftDeleteColumn::make(),
                 TextColumn::make('id')
                     ->sortable()->alignCenter(true)
-                    ->label('ID')->toggleable()
                     ->color('primary')
-                    ->weight(FontWeight::Bold),
+                    ->weight(FontWeight::Bold)
+
+                    ->label('ID')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('grn_number')
                     ->sortable()
                     ->label('GRN Number')
                     ->color('primary')
                     ->weight(FontWeight::Bold)
-                    ->searchable()->alignCenter(true)->toggleable(),
+                    ->searchable()->alignCenter(true)->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('grn_date')->label('Date')->date()->toggleable(),
-                TextColumn::make('store.name')->label('Store')->searchable()->toggleable(),
-                TextColumn::make('supplier.name')->label('Supplier')->searchable()->toggleable(),
+                TextColumn::make('store.name')->label('Store')
+                    ->searchable()->toggleable(),
+                TextColumn::make('supplier.name')->label('Supplier')
+                    ->searchable()->toggleable(isToggledHiddenByDefault: false),
                 // TextColumn::make('status')->label('Status')->badge()->toggleable(),
                 TextColumn::make('details_count')->alignCenter(true)
-                    ->toggleable(isToggledHiddenByDefault: false),
-                TextColumn::make('details_count')->alignCenter(true)
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('total_amount')
                     ->label(__('lang.total_amount'))
                     ->alignCenter(true)
@@ -285,12 +377,12 @@ class GoodsReceivedNoteResource extends Resource
                                 return $total;
                             })
                     )
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')->alignCenter(true)
-                    ->toggleable(isToggledHiddenByDefault: false)
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
                 TextColumn::make('approve_date')->alignCenter(true)
-                    ->toggleable(isToggledHiddenByDefault: false)
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
                 IconColumn::make('has_inventory_transaction')
                     ->label('Inventory Updated')
@@ -305,6 +397,8 @@ class GoodsReceivedNoteResource extends Resource
                     ->label('Untouched')->boolean()->alignCenter(),
                 IconColumn::make('cancelled')
                     ->label('Cancelled')->toggleable(isToggledHiddenByDefault: true)->boolean()->alignCenter(),
+                IconColumn::make('has_attachment')->alignCenter(true)->label(__('lang.has_attachment'))
+                    ->boolean()->toggleable(),
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
@@ -462,6 +556,19 @@ class GoodsReceivedNoteResource extends Resource
                             showSuccessNotifiMessage('Record restored successfully.');
                         })
                         ->visible(fn($record) => $record->trashed()),
+                    Action::make('download')
+                        ->label(__('lang.download_attachment'))
+                        ->action(function ($record) {
+                            if (strlen($record['attachment']) > 0) {
+                                if (env('APP_ENV') == 'local') {
+                                    $file_link = url('storage/' . $record['attachment']);
+                                } else if (env('APP_ENV') == 'production') {
+                                    $file_link = url('New-Res-System/public/storage/' . $record['attachment']);
+                                }
+                                return redirect(url($file_link));
+                            }
+                        })->hidden(fn($record) => !(strlen($record['attachment']) > 0))
+                        ->color('green'),
                 ]),
                 Action::make('Approve')
                     ->label(fn($record): string =>  $record->status == GoodsReceivedNote::STATUS_APPROVED ? 'Approved' : 'Approve')

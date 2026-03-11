@@ -279,7 +279,7 @@
                     </tr>
                     @endforeach
 
-                    {{-- Deduction rows (interleaved with matching employer contributions) --}}
+                    {{-- Deduction rows (interleaved with matching employer) --}}
                     @foreach (($deductionRows ?? collect()) as $row)
                     <tr @if($row->bgColor) style="background-color: {{ $row->bgColor }};" @endif>
                         <td>{{ $row->description }}</td>
@@ -332,7 +332,7 @@
             {{-- مساهمات صاحب العمل --}}
             @if(isset($employerContrib) && $employerContrib->count() > 0)
             <div style="margin-top: 16px; padding: 12px; background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 4px;">
-                <h4 style="margin: 0 0 10px; font-size: 14px; color: #2e7d32;">Employer Contributions (مساهمات صاحب العمل)</h4>
+                <h4 style="margin: 0 0 10px; font-size: 14px; color: #2e7d32;">Employer (مساهمات صاحب العمل)</h4>
                 <table class="pay" style="margin-top: 0;">
                     <thead>
                         <tr>

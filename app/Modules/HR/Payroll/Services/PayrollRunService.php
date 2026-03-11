@@ -97,39 +97,41 @@ class PayrollRunService implements PayrollRunnerInterface
 
         $employees = $this->eligibleEmployees($input->branchId, $input->employeeIds);
 
+        $run = PayrollRun::query()
+            ->where('branch_id', $input->branchId)
+            ->where('year', $input->year)
+            ->where('month', $input->month)
+            ->where('status', '!=', PayrollRun::STATUS_APPROVED)
+            ->first();
 
-        $run = new PayrollRun();
-        $run->status = PayrollRun::STATUS_PENDING;
-        $run->branch_id         = $input->branchId;
-        $run->year              = $input->year;
-        $run->month             = $input->month;
-        $run->period_start_date = $periodStart->toDateString();
-        $run->period_end_date   = $periodEnd->toDateString();
-        $monthName = Carbon::create($input->year, $input->month, 1)->format('F Y');
-        $run->name = "Payroll {$monthName} - $branch->name";
+        if (!$run) {
+            $run = new PayrollRun();
+            $run->status = PayrollRun::STATUS_PENDING;
+            $run->branch_id         = $input->branchId;
+            $run->year              = $input->year;
+            $run->month             = $input->month;
+            $run->period_start_date = $periodStart->toDateString();
+            $run->period_end_date   = $periodEnd->toDateString();
+            $monthName = Carbon::create($input->year, $input->month, 1)->format('M Y');
+            $run->name = "{$monthName} - $branch->name";
 
-        // ← هنا نثبت pay_date
-        $run->pay_date = $input->payDate
-            ? Carbon::parse($input->payDate)->toDateString()
-            : now()->toDateString(); // افتراضي اليوم لو ما انرسل
-        // اترك currency/fx_rate كما هي إن لم تكن موجودة في الـ DTO
-        $run->total_gross       = 0;
-        $run->total_net         = 0;
-        $run->total_allowances  = 0;
-        $run->total_deductions  = 0;
-        $run->save();
+            // ← هنا نثبت pay_date
+            $run->pay_date = $input->payDate
+                ? Carbon::parse($input->payDate)->toDateString()
+                : now()->toDateString(); // افتراضي اليوم لو ما انرسل
+            // اترك currency/fx_rate كما هي إن لم تكن موجودة في الـ DTO
+            $run->total_gross       = 0;
+            $run->total_net         = 0;
+            $run->total_allowances  = 0;
+            $run->total_deductions  = 0;
+            $run->save();
+        }
 
         $created = 0;
         $updated = 0;
         $rows    = [];
 
-        // مجاميع التشغيل
-        $aggGross      = 0.0;
-        $aggNet        = 0.0;
-        $aggAllowances = 0.0;
-        $aggDeductions = 0.0;
-
-        DB::transaction(function () use ($employees, $input, $periodStart, $periodEnd, $run, &$created, &$updated, &$rows, &$aggGross, &$aggNet, &$aggAllowances, &$aggDeductions) {
+        DB::transaction(function () use ($employees, $input, $periodStart, $periodEnd, $run, &$created, &$updated, &$rows) {
 
             foreach ($employees as $employee) {
                 $calc = $this->calculator->calculateForEmployee($employee, $input->year, $input->month);
@@ -193,11 +195,7 @@ class PayrollRunService implements PayrollRunnerInterface
                     $payroll
                 );
 
-                // 5) حدّث المجاميع للتشغيل
-                $aggGross      += ($calc['gross_salary']      ?? 0);
-                $aggNet        += ($calc['net_salary']        ?? 0);
-                $aggAllowances += ($calc['total_allowances']  ?? 0);
-                $aggDeductions += ($calc['total_deductions']  ?? 0);
+                // لا حاجة لجمعها يدويا هنا لأنه سيتم حسابها في النهاية من قاعدة البيانات لكل الرواتب المرتبطة
 
                 $rows[] = [
                     'employee_id' => $employee->id,
@@ -210,10 +208,10 @@ class PayrollRunService implements PayrollRunnerInterface
             }
 
             // 6) حفظ مجاميع التشغيل وتحديث الحالة
-            $run->total_gross      = round($aggGross, 2);
-            $run->total_net        = round($aggNet, 2);
-            $run->total_allowances = round($aggAllowances, 2);
-            $run->total_deductions = round($aggDeductions, 2);
+            $run->total_gross      = round($run->payrolls()->sum('gross_salary'), 2);
+            $run->total_net        = round($run->payrolls()->sum('net_salary'), 2);
+            $run->total_allowances = round($run->payrolls()->sum('total_allowances'), 2);
+            $run->total_deductions = round($run->payrolls()->sum('total_deductions'), 2);
 
             $run->save();
         });
@@ -263,7 +261,6 @@ class PayrollRunService implements PayrollRunnerInterface
     {
         return Employee::query()
             ->where('branch_id', $branchId)
-            ->active()
             ->where('salary', '>', 0)
             ->where('join_date', '<=', Carbon::create($this->year, $this->month, 1)->startOfMonth()->toDateString())
             ->when($employeeIds, fn($q) => $q->whereIn('id', $employeeIds))

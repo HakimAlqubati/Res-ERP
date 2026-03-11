@@ -41,6 +41,7 @@ class GeneralDeductionCalculator
                 'nationalities_applied',
                 'less_salary_to_apply',
                 'has_brackets',
+                'is_mtd_deduction',
                 'applied_by',
                 'employer_percentage',
                 'employer_amount',
@@ -50,12 +51,15 @@ class GeneralDeductionCalculator
             ->with('brackets')
             ->get();
 
+        // نستخدم id الخصم كـ key لمنع الإضافة المكررة تلقائياً
         $deductions = [];
 
         foreach ($generalDeductionTypes as $deductionType) {
+            $id = $deductionType->id;
+
             // تطبيق على الكل
             if ($deductionType->condition_applied_v2 == Deduction::CONDITION_APPLIED_V2_ALL) {
-                $deductions[] = $deductionType;
+                $deductions[$id] = $deductionType;
             }
 
             // تطبيق على المواطنين مع brackets
@@ -64,7 +68,7 @@ class GeneralDeductionCalculator
                 $employee->is_citizen &&
                 $deductionType->has_brackets == 1
             ) {
-                $deductions[] = $deductionType;
+                $deductions[$id] = $deductionType;
             }
 
             // تطبيق على المواطنين
@@ -72,7 +76,7 @@ class GeneralDeductionCalculator
                 $deductionType->condition_applied_v2 == Deduction::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE &&
                 $employee->is_citizen
             ) {
-                $deductions[] = $deductionType;
+                $deductions[$id] = $deductionType;
             }
 
             // تطبيق على المواطنين والأجانب مع رخصة عمل
@@ -80,7 +84,7 @@ class GeneralDeductionCalculator
                 $deductionType->condition_applied_v2 == Deduction::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE_AND_FOREIGN_HAS_PASS &&
                 ($employee->is_citizen || ($employee->has_employee_pass))
             ) {
-                $deductions[] = $deductionType;
+                $deductions[$id] = $deductionType;
             }
 
             // تطبيق على الأجانب مع رخصة عمل
@@ -89,11 +93,18 @@ class GeneralDeductionCalculator
                 !$employee->is_citizen &&
                 $employee->has_employee_pass
             ) {
-                $deductions[] = $deductionType;
+                $deductions[$id] = $deductionType;
+            }
+
+            // ── شرط MTD ──────────────────────────────────────────────────────────
+            // إذا كان الخصم مُعلَّماً كـ MTD والموظف خاضع لـ MTD،
+            // يُضاف بغض النظر عن condition_applied_v2 (مع حماية من التكرار بالـ key)
+            if ($deductionType->is_mtd_deduction && $employee->is_mtd_applicable) {
+                $deductions[$id] = $deductionType;
             }
         }
 
-        return $this->calculateDeductions($deductions, $netSalary);
+        return $this->calculateDeductions(array_values($deductions), $netSalary);
     }
 
     /**

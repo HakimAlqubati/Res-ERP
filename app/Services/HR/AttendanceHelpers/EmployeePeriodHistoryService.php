@@ -112,17 +112,40 @@ class EmployeePeriodHistoryService
         );
 
         // =========================================================================
-        // طرح 4 أيام (الإجازات الأسبوعية) فقط إذا كان الفلتر شهر كامل
+        // طرح أيام الإجازات الأسبوعية فقط إذا كان الفلتر شهر كامل
+        // وكانت شيفتات الموظف تبدأ من أول الشهر أو قبله
+        // يُطرح آخر يوم من كل أسبوع (يوم الإجازة) بساعاته الفعلية لا المتوسطة
         // =========================================================================
-        $isFullMonth = $start->day === 1 && $end->day === $end->daysInMonth;
+        $earliestHistoryStart = $histories->min('start_date');
+        $employeeStartedFromBeginning = $earliestHistoryStart !== null
+            && Carbon::parse($earliestHistoryStart)->lte($start);
+
+        $isFullMonth = $start->day === 1
+            && $end->day === $end->daysInMonth
+            && $start->month === $end->month
+            && $start->year === $end->year
+            && $employeeStartedFromBeginning;
 
         if ($isFullMonth && count($days) > 4) {
-            // حساب متوسط المدة اليومية
-            $averageSecondsPerDay = $totalSecondsAllDays / count($days);
-            // طرح 4 أيام
-            $adjustedSeconds = $totalSecondsAllDays - (4 * $averageSecondsPerDay);
-            $adjustedSeconds = max(0, $adjustedSeconds); // تجنب القيم السالبة
+            // نقسّم الأيام إلى أسابيع (كل 7 أيام) ونطرح آخر يوم من كل أسبوع مكتمل
+            $deductionSeconds = 0;
+            $chunks = $days->values()->chunk(7);
 
+            foreach ($chunks as $week) {
+                if ($week->count() < 7) {
+                    continue; // تجاهل الأسبوع غير المكتمل
+                }
+                $lastDay = $week->last();
+                if (
+                    isset($lastDay['daily_duration_hours'])
+                    && preg_match('/^\d{2}:\d{2}:\d{2}$/', $lastDay['daily_duration_hours'])
+                ) {
+                    [$h, $m, $s] = explode(':', $lastDay['daily_duration_hours']);
+                    $deductionSeconds += ($h * 3600) + ($m * 60) + $s;
+                }
+            }
+
+            $adjustedSeconds = max(0, $totalSecondsAllDays - $deductionSeconds);
             $totalDurationHours = sprintf(
                 '%02d:%02d:%02d',
                 floor($adjustedSeconds / 3600),

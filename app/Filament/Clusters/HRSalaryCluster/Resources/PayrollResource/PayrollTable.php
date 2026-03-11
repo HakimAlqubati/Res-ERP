@@ -31,6 +31,19 @@ class PayrollTable
                     return $months[$key] ?? '';
                 })
                 ->sortable(),
+            TextColumn::make('creator.name')
+                ->label(__('Created By'))
+                ->sortable()        
+                ->toggleable(isToggledHiddenByDefault: true),
+            TextColumn::make('approver.name')
+                ->label(__('Approved By'))
+                ->sortable()
+                ->toggleable(isToggledHiddenByDefault: true),
+            TextColumn::make('created_at')
+                ->label(__('Created At'))
+                ->dateTime('Y-m-d H:i')
+                ->sortable()
+                ->toggleable(isToggledHiddenByDefault: true),
             TextColumn::make('status')
                 ->label(__('Status'))
                 ->sortable()

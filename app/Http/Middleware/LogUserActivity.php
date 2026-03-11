@@ -72,7 +72,9 @@ class LogUserActivity
 
     private function prepareRequestData(Request $request): array
     {
-        return collect($request->except(['password', 'password_confirmation', 'token', '_token']))
+        // Use input() to exclude files (which may have been moved/deleted) and avoid FileNotFoundException
+        return collect($request->input())
+            ->except(['password', 'password_confirmation', 'token', '_token'])
             ->map(function ($value, $key) {
                 // معالجة الـ Snapshots فقط إذا كانت ضرورية جداً
                 // ملاحظة: فك تشفير الـ Snapshot مكلف، تأكد من حاجتك له في اللوج

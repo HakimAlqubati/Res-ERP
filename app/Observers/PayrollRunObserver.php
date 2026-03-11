@@ -92,13 +92,16 @@ class PayrollRunObserver
     public function forceDeleted(PayrollRun $payrollRun): void
     {
         try {
-            // 1. حذف المعاملات المالية نهائياً
+            // 1. إرجاع أقساط السلف إلى غير مدفوعة
+            $this->revertInstallmentsToUnpaid($payrollRun);
+
+            // 2. حذف المعاملات المالية نهائياً
             $this->syncService->deletePayrollRunTransactions($payrollRun->id);
 
-            // 2. حذف حركات الراتب نهائياً (بما في ذلك المحذوفة مسبقاً)
+            // 3. حذف حركات الراتب نهائياً (بما في ذلك المحذوفة مسبقاً)
             $payrollRun->transactions()->withTrashed()->forceDelete();
 
-            // 3. حذف كشوفات الرواتب نهائياً (بما في ذلك المحذوفة مسبقاً)
+            // 4. حذف كشوفات الرواتب نهائياً (بما في ذلك المحذوفة مسبقاً)
             $payrollRun->payrolls()->withTrashed()->forceDelete();
         } catch (\Exception $e) {
             // Silent fail
@@ -224,6 +227,7 @@ class PayrollRunObserver
         try {
             // Find ALL installments linked via SalaryTransaction in this payroll run
             $installmentIds = \App\Models\SalaryTransaction::query()
+                ->withTrashed()
                 ->where('payroll_run_id', $payrollRun->id)
                 ->where('reference_type', EmployeeAdvanceInstallment::class)
                 ->whereIn('sub_type', [
@@ -268,8 +272,9 @@ class PayrollRunObserver
                 // Revert installment to unpaid
                 $installment->update([
                     'is_paid' => false,
-                    'paid_at' => null,
+                    'paid_date' => null,
                     'paid_by' => null,
+                    'status' => EmployeeAdvanceInstallment::STATUS_SCHEDULED,
                     'payroll_id' => null,
                     'payment_method' => null,
                 ]);

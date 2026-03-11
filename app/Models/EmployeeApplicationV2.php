@@ -10,11 +10,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
-
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 #[ObservedBy([EmployeeApplicationObserver::class])]
-class EmployeeApplicationV2 extends Model implements Auditable
+class EmployeeApplicationV2 extends Model implements Auditable, HasMedia
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope, EmployeeApplicationAccessors;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope, EmployeeApplicationAccessors, InteractsWithMedia;
 
     protected $appends = [
         'leave_type_name',

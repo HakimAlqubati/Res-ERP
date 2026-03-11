@@ -67,7 +67,7 @@ class CreatePayroll extends CreateRecord
                 branchId: (int) $data['branch_id'],
                 year: (int) $data['year'],
                 month: (int) $data['month'],
-                overwriteExisting: false,
+                overwriteExisting: true,
                 payDate: $data['pay_date'] ?? null,
                 employeeIds: $data['employee_ids'] ?? null,
             );

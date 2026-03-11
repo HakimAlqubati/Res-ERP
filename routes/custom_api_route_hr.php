@@ -52,10 +52,15 @@ Route::prefix('hr')
 
         Route::get('employees/{employee}/periodsHistory', [EmployeePeriodHistoryController::class, 'getPeriodsByDateRange']);
         Route::get('/employeeAttendance', [AttendanceController::class, 'employeeAttendance']);
+        Route::get('/multipleAttendanceDetails', [AttendanceController::class, 'multipleAttendanceDetails']);
+        Route::get('/branchAttendanceSummary', [AttendanceController::class, 'branchAttendanceSummary']);
         Route::get('employeesAttendanceOnDate', [AttendanceController::class, 'employeesAttendanceOnDate']);
 
         Route::get('/attendancePlan', [AttendanceController::class, 'generate']);
         Route::get('/absentEmployees', [AttendanceController::class, 'absentEmployees']);
+        Route::get('/presentEmployees', [AttendanceController::class, 'presentEmployees']);
+        Route::get('/missingCheckout', [AttendanceController::class, 'missingCheckout']);
+        Route::get('/v2/missingCheckout', [AttendanceController::class, 'missingCheckoutV2']);
         Route::get('/attendanceImages', [AttendanceController::class, 'attendanceImages']);
         Route::get('/v2/attendanceImages', [AttendanceController::class, 'attendanceImagesV2']);
 
@@ -71,9 +76,13 @@ Route::prefix('hr')
         Route::prefix('overtime')->group(function () {
             Route::get('/', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'index']);
             Route::get('/suggest', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'getSuggestedOvertime']);
+            // Route::get('/v2/suggest', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'getSuggestedOvertimeV2']);
+            Route::get('/v2/suggest', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'getSuggestedOvertimeV3']);
             Route::post('/', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'store'])->middleware('auth:api');
-            Route::post('/approve', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'approve']);
-            Route::post('/undoApprove', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'undoApproval']);
+            Route::post('/approve', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'approve'])->middleware('auth:api');
+            Route::post('/undoApprove', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'undoApproval'])->middleware('auth:api');
+
+            Route::get('/summary', [\App\Modules\HR\Overtime\V2\Http\Controllers\Api\OvertimeController::class, 'index']);
         })->middleware('auth:api');
     });
 

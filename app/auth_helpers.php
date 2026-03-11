@@ -96,3 +96,17 @@ if (!function_exists('isStuff')) {
         return auth()?->user()?->isStuff();
     }
 }
+
+if (!function_exists('isHakimOrAdel')) {
+    function isHakimOrAdel(): bool
+    {
+        if (!auth()->check()) {
+            return false;
+        }
+
+        return in_array(auth()->user()->email, [
+            'hakimahmed123321@gmail.com',
+            'adelalqubati12@gmail.com',
+        ]);
+    }
+}

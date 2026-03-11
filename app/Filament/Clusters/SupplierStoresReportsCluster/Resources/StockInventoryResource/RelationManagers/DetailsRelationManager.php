@@ -360,136 +360,7 @@ class DetailsRelationManager extends RelationManager
                         ];
                     })
                     ->action(function (Collection $records, $data) {
-                        DB::beginTransaction();
-                        try {
-
-                            foreach ($data['stock_adjustment_details'] as $detail) {
-                                $defaultAdjustmentType = 0;
-                                if (isset($detail['quantity']) && is_numeric($detail['quantity'])) {
-                                    if ($detail['quantity'] <  0) {
-                                        $defaultAdjustmentType = StockAdjustment::ADJUSTMENT_TYPE_DECREASE;
-                                    } elseif ($detail['quantity'] > 0) {
-                                        $defaultAdjustmentType = StockAdjustment::ADJUSTMENT_TYPE_INCREASE;
-                                    } elseif ($detail['quantity'] == 0) {
-                                        $defaultAdjustmentType = StockAdjustment::ADJUSTMENT_TYPE_EQUAL;
-                                    }
-                                }
-
-                                $stockAdjustment = StockAdjustmentDetail::create([
-                                    'product_id' => $detail['product_id'],
-                                    'unit_id' => $detail['unit_id'],
-                                    'quantity' => abs($detail['quantity']),
-                                    'package_size' => $detail['package_size'],
-                                    'notes' => $detail['notes'],
-
-                                    'store_id' => $data['store_id'], // Adjust this based on your relationship
-                                    'reason_id' => $data['reason_id'], // You can set a reason if needed 
-                                    'adjustment_type' => $defaultAdjustmentType,
-                                    'created_by' => auth()->id(),
-                                    'adjustment_date' => now(),
-                                    'source_id' => $records->first()->stock_inventory_id ?? null,
-                                    'source_type' => StockInventory::class,
-                                ]);
-                                $notes = "Stock adjustment for product ({$stockAdjustment->product->name}) "
-                                    . "in unit '{$stockAdjustment->unit->name}' at store '{$stockAdjustment->store->name}', "
-                                    . "adjusted by " . auth()->user()?->name . " on " . now()->format('Y-m-d H:i');
-
-                                $type = $detail['quantity'] > 0
-                                    ? InventoryTransaction::MOVEMENT_IN
-                                    : InventoryTransaction::MOVEMENT_OUT;
-
-                                if ($type == 'in') {
-
-                                    InventoryTransaction::create([
-                                        'product_id' => $detail['product_id'],
-                                        'movement_type' => InventoryTransaction::MOVEMENT_IN,
-                                        'quantity' => abs((float) $detail['quantity']),
-                                        'unit_id' => $detail['unit_id'],
-                                        'movement_date' => now(),
-                                        'transaction_date' => now(),
-                                        'package_size' => $detail['package_size'],
-                                        'store_id' => $data['store_id'],
-                                        'price' => getUnitPrice($detail['product_id'], $detail['unit_id']), // إن أحببت
-                                        'notes' => $notes,
-                                        'transactionable_id' => $stockAdjustment->id,
-                                        'transactionable_type' => StockAdjustmentDetail::class,
-                                    ]);
-                                } else {
-                                    $fifoService = new FifoMethodService($stockAdjustment);
-                                    $allocations = $fifoService->getAllocateFifo(
-                                        $detail['product_id'],
-                                        $detail['unit_id'],
-                                        abs($detail['quantity']),
-                                        $data['store_id']
-                                    );
-
-                                    self::moveFromInventory($allocations, $stockAdjustment);
-                                }
-
-                                // if ($detail['quantity'] > 0) {
-                                //     // Create a StockSupplyOrder
-                                //     $order = StockSupplyOrder::create([
-                                //         'order_date' => now(),
-                                //         'store_id' => $data['store_id'],
-                                //         'notes' => $stockAdjustment->notes,
-                                //         'cancelled' => false,
-                                //         'created_by' => $stockAdjustment->created_by,
-                                //         'created_using_model_id' => $stockAdjustment->id,
-                                //         'created_using_model_type' => StockAdjustmentDetail::class,
-                                //     ]);
-
-
-                                //     // Create StockSupplyOrderDetail for each detail
-                                //     StockSupplyOrderDetail::create([
-                                //         'stock_supply_order_id' => $order->id,
-                                //         'product_id' => $detail['product_id'],
-                                //         'unit_id' => $detail['unit_id'],
-                                //         'quantity' => abs($detail['quantity']), // Convert to positive if negative
-                                //         'package_size' => $detail['package_size'],
-                                //     ]);
-                                // } elseif ($detail['quantity'] < 0) {
-                                //     // Create a StockIssueOrder
-                                //     $order = StockIssueOrder::create([
-                                //         'order_date' => now(),
-                                //         'store_id' => $data['store_id'],
-                                //         'notes' => $stockAdjustment->notes,
-                                //         'cancelled' => false,
-                                //         'created_by' => $stockAdjustment->created_by,
-                                //         'created_using_model_id' => $stockAdjustment->id,
-                                //         'created_using_model_type' => StockAdjustmentDetail::class,
-                                //     ]);
-
-                                //     // Create StockIssueOrderDetail for each detail
-                                //     StockIssueOrderDetail::create([
-                                //         'stock_issue_order_id' => $order->id,
-                                //         'product_id' => $detail['product_id'],
-                                //         'unit_id' => $detail['unit_id'],
-                                //         'quantity' => abs($detail['quantity']), // Assuming quantity is used
-                                //         'package_size' => $detail['package_size'],
-                                //     ]);
-                                // }
-                            }
-                            // Update is_adjustmented field for selected records
-                            $records->each(function ($record) {
-                                $record->update(['is_adjustmented' => true]);
-                            });
-
-                            // Finalize the inventory if all details adjusted
-                            $inventory = $records->first()->inventory;
-
-                            $allAdjusted = $inventory->details()->where('is_adjustmented', false)->count() === 0;
-
-                            if ($allAdjusted) {
-                                $inventory->finalized = true;
-                                $inventory->save();
-                            }
-                            showSuccessNotifiMessage('done', 'Stock adjustment created successfully.');
-                            DB::commit();
-                        } catch (Throwable $th) {
-                            //throw $th;
-                            DB::rollBack();
-                            showWarningNotifiMessage('Faild', $th->getMessage());
-                        }
+                        static::createStockAdjustment($data, $records);
                     })
                     ->color('success')->icon('heroicon-o-plus')
                     ->deselectRecordsAfterCompletion(),
@@ -538,5 +409,96 @@ class DetailsRelationManager extends RelationManager
             ]);
         }
         return;
+    }
+
+    public static function createStockAdjustment($data, $records)
+    {
+        DB::beginTransaction();
+        try {
+
+            foreach ($data['stock_adjustment_details'] as $detail) {
+                $defaultAdjustmentType = 0;
+                if (isset($detail['quantity']) && is_numeric($detail['quantity'])) {
+                    if ($detail['quantity'] <  0) {
+                        $defaultAdjustmentType = StockAdjustment::ADJUSTMENT_TYPE_DECREASE;
+                    } elseif ($detail['quantity'] > 0) {
+                        $defaultAdjustmentType = StockAdjustment::ADJUSTMENT_TYPE_INCREASE;
+                    } elseif ($detail['quantity'] == 0) {
+                        $defaultAdjustmentType = StockAdjustment::ADJUSTMENT_TYPE_EQUAL;
+                    }
+                }
+
+                $stockAdjustment = StockAdjustmentDetail::create([
+                    'product_id' => $detail['product_id'],
+                    'unit_id' => $detail['unit_id'],
+                    'quantity' => abs($detail['quantity']),
+                    'package_size' => $detail['package_size'],
+                    'notes' => $detail['notes'],
+
+                    'store_id' => $data['store_id'], // Adjust this based on your relationship
+                    'reason_id' => $data['reason_id'], // You can set a reason if needed 
+                    'adjustment_type' => $defaultAdjustmentType,
+                    'created_by' => auth()->id(),
+                    'adjustment_date' => now(),
+                    'source_id' => $records->first()->stock_inventory_id ?? null,
+                    'source_type' => StockInventory::class,
+                ]);
+                $notes = "Stock adjustment for product ({$stockAdjustment->product->name}) "
+                    . "in unit '{$stockAdjustment->unit->name}' at store '{$stockAdjustment->store->name}', "
+                    . "adjusted by " . auth()->user()?->name . " on " . now()->format('Y-m-d H:i');
+
+                $type = $detail['quantity'] > 0
+                    ? InventoryTransaction::MOVEMENT_IN
+                    : InventoryTransaction::MOVEMENT_OUT;
+
+                if ($type == 'in') {
+
+                    InventoryTransaction::create([
+                        'product_id' => $detail['product_id'],
+                        'movement_type' => InventoryTransaction::MOVEMENT_IN,
+                        'quantity' => abs((float) $detail['quantity']),
+                        'unit_id' => $detail['unit_id'],
+                        'movement_date' => now(),
+                        'transaction_date' => now(),
+                        'package_size' => $detail['package_size'],
+                        'store_id' => $data['store_id'],
+                        'price' => getUnitPrice($detail['product_id'], $detail['unit_id']), // إن أحببت
+                        'notes' => $notes,
+                        'transactionable_id' => $stockAdjustment->id,
+                        'transactionable_type' => StockAdjustmentDetail::class,
+                    ]);
+                } else {
+                    $fifoService = new FifoMethodService($stockAdjustment);
+                    $allocations = $fifoService->getAllocateFifo(
+                        $detail['product_id'],
+                        $detail['unit_id'],
+                        abs($detail['quantity']),
+                        $data['store_id']
+                    );
+
+                    self::moveFromInventory($allocations, $stockAdjustment);
+                }
+            }
+            // Update is_adjustmented field for selected records
+            $records->each(function ($record) {
+                $record->update(['is_adjustmented' => true]);
+            });
+
+            // Finalize the inventory if all details adjusted
+            $inventory = $records->first()->inventory;
+
+            $allAdjusted = $inventory->details()->where('is_adjustmented', false)->count() === 0;
+
+            if ($allAdjusted) {
+                $inventory->finalized = true;
+                $inventory->save();
+            }
+            showSuccessNotifiMessage('done', 'Stock adjustment created successfully.');
+            DB::commit();
+        } catch (Throwable $th) {
+            //throw $th;
+            DB::rollBack();
+            showWarningNotifiMessage('Faild', $th->getMessage());
+        }
     }
 }

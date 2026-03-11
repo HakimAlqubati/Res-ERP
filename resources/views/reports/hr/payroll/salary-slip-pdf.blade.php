@@ -217,7 +217,7 @@
                     </tr>
                     @endforeach
 
-                    {{-- Deduction rows (interleaved with matching employer contributions) --}}
+                    {{-- Deduction rows (interleaved with matching employer) --}}
                     @foreach (($deductionRows ?? collect()) as $row)
                     <tr @if($row->bgColor) style="background-color: {{ $row->bgColor }};" @endif>
                         <td>{{ $row->description }}</td>
