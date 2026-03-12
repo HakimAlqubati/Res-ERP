@@ -300,6 +300,33 @@
                             <div class="req-label">Repayment Period</div>
                             <div class="req-val-small">{{ $advance?->number_of_months_of_deduction ?? 0 }} Months</div>
                         </div>
+
+                        <div class="req-item">
+                            <div class="req-label">Payment Method</div>
+                            <div class="req-val-small">
+                                @if($advance?->payment_method === \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
+                                    Bank Transfer 
+                                    @if($advance->bank_account_number)
+                                        <br><span style="color: #666; font-size: 12px;">Acc: {{ $advance->bank_account_number }}</span>
+                                    @endif
+                                @elseif($advance?->payment_method === \App\Models\AdvanceRequest::PAYMENT_METHOD_CASH)
+                                    Cash
+                                @else
+                                    -
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="req-item">
+                            <div class="req-label">Payment Status</div>
+                            <div class="req-val-small">
+                                @if($advance?->is_paid)
+                                    <span style="color: #006644; font-weight: bold;">Paid / Disbursed</span>
+                                @else
+                                    <span style="color: #cc0000; font-weight: bold;">Pending Payment</span>
+                                @endif
+                            </div>
+                        </div>
                     </td>
 
                     <!-- Right: Installment Schedule -->
