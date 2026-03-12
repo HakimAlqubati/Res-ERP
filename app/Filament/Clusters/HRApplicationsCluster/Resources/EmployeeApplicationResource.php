@@ -885,7 +885,7 @@ class EmployeeApplicationResource extends Resource
     {
         return Action::make('exportAdvanceRequestPdf')
             ->label('Export PDF')
-            ->button()
+            // ->button()
             ->color('success')
             ->tooltip('Export Advance Request PDF')
             ->icon('heroicon-o-document-arrow-down')

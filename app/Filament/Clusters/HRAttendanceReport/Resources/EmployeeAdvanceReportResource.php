@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRAttendanceReport\Resources;
 
+use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource;
 use App\Filament\Clusters\HRAttendanceReport;
 use App\Filament\Clusters\HRSalaryCluster;
 use Filament\Pages\Enums\SubNavigationPosition;
@@ -22,6 +23,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
@@ -69,12 +71,21 @@ class EmployeeAdvanceReportResource extends Resource
                     ->wrap()
                     ->limit(20),
 
+                IconColumn::make('is_paid')
+                    ->label(__('lang.is_paid'))
+                    ->boolean()
+                    ->alignCenter()
+                    ->color(fn(string $state): string => match ($state) {
+                        '1' => 'success',
+                        '0' => 'warning',
+                        default => 'gray',
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('advance_amount')
                     ->label(__('lang.advance_amount'))
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ,
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('number_of_months_of_deduction')
                     ->label(__('lang.months'))
@@ -199,6 +210,8 @@ class EmployeeAdvanceReportResource extends Resource
                 ActionGroup::make([
 
                     \App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource::advanceInstallmentsAction(),
+                    EmployeeApplicationResource::exportAdvanceRequestPdf(),
+
                     Action::make('defer_installment')
                         ->label(__('lang.defer_installment'))
                         // ->button()
