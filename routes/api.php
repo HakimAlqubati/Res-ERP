@@ -228,6 +228,7 @@ Route::middleware('auth:api')->group(function () {
 });
 
 Route::middleware('auth:api')->group(function () {
+    Route::post('/whatsapp/send', [\App\Http\Controllers\Api\WhatsAppController::class, 'sendMessage']);
     Route::get('purchaseReports', [PurchaseReportController::class, 'index']);
     Route::prefix('returnedOrders')->group(function () {
         Route::get('/', [ReturnedOrderController::class, 'index']);    // all with filters
