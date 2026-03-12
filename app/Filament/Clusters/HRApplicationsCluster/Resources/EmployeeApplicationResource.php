@@ -871,7 +871,7 @@ class EmployeeApplicationResource extends Resource
     {
         return Action::make('installments')
             ->label(__('lang.installments'))
-            ->button()
+            // ->button()
             ->icon('heroicon-o-list-bullet')
             ->color('info')
             ->visible(function ($record) {
