@@ -41,7 +41,12 @@ class ListEmployeeApplications extends ListRecords
                 ->label(__('lang.advance_request'))
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST))
                 ->icon('heroicon-m-banknotes')
-                ->badge(EmployeeApplicationV2::query()->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST)->count())
+                ->badge(EmployeeApplicationV2::query()
+                ->whereHas('employee')
+                ->forBranchManager()
+                ->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST)
+                
+                ->count())
                 ->badgeColor('warning'),
             EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST] => Tab::make()
                 ->label(__('lang.leave_request'))
