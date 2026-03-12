@@ -68,10 +68,11 @@ class AdvanceApprovalService
             ! $application->employee_id ||
             ! $advanceRequest->advance_amount ||
             ! $advanceRequest->number_of_months_of_deduction ||
-            ! $advanceRequest->deduction_starts_from
+            ! $advanceRequest->deduction_starts_from ||
+            ! $advanceRequest->finance_approved_at
         ) {
             throw new \RuntimeException(
-                "Advance application #{$application->id}: missing required data to generate installments."
+                "Advance application #{$application->id}: missing required data or financial approval to generate installments."
             );
         }
     }

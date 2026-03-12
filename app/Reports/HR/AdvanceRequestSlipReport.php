@@ -21,6 +21,7 @@ class AdvanceRequestSlipReport
             'employee.department',
             'employee.branch',
             'advanceRequest.installments',
+            'advanceRequest.financeApprovedBy',
             'approvedBy',
         ])->findOrFail($applicationId);
 

@@ -218,26 +218,22 @@ class EmployeeApplicationTable
 
                     EmployeeApplicationResource::advanceInstallmentsAction(),
                     EmployeeApplicationResource::approveAdvanceRequest()->hidden(function ($record) {
-                        if (isstuff() || isFinanceManager()) {
-                            return true;
-                        }
-                        if (isset(Auth::user()->employee)) {
-                            if ($record->employee_id == Auth::user()->employee->id) {
-                                return true;
-                            }
-                        }
                         return false;
                     }),
                     EmployeeApplicationResource::rejectAdvanceRequest()->hidden(function ($record) {
-                        if (isstuff() || isFinanceManager()) {
-                            return true;
-                        }
-                        if (isset(Auth::user()->employee)) {
-                            if ($record->employee_id == Auth::user()->employee->id) {
-                                return true;
-                            }
-                        }
                         return false;
+                    }),
+                    EmployeeApplicationResource::financeApproveAdvanceRequest()->hidden(function ($record) {
+                        if (isFinanceManager() || isSuperAdmin()) {
+                            return false;
+                        }
+                        return true;
+                    }),
+                    EmployeeApplicationResource::financeRejectAdvanceRequest()->hidden(function ($record) {
+                        if (isFinanceManager() || isSuperAdmin()) {
+                            return false;
+                        }
+                        return true;
                     }),
                 ]),
                 RestoreAction::make(),

@@ -348,11 +348,27 @@
                     <div class="approver">
                         <div class="approver-name">
                             {{ $application->approvedBy->name }} 
-                            <span class="badge badge-approved" style="margin-left: 5px;">Approved</span>
+                            <span class="badge badge-approved" style="margin-left: 5px;">Manager Approved</span>
                         </div>
                         <div class="approver-time">
                             Approved: {{ $application->approved_at ? \Carbon\Carbon::parse($application->approved_at)->format('M d, Y | h:i A') : '-' }}
                         </div>
+                    </div>
+                    @endif
+                    @if($advance?->financeApprovedBy)
+                    <div class="approver">
+                        <div class="approver-name">
+                            {{ $advance->financeApprovedBy->name }} 
+                            <span class="badge badge-approved" style="margin-left: 5px;">Finance Approved</span>
+                        </div>
+                        <div class="approver-time">
+                            Approved: {{ $advance->finance_approved_at ? \Carbon\Carbon::parse($advance->finance_approved_at)->format('M d, Y | h:i A') : '-' }}
+                        </div>
+                    </div>
+                    @else
+                    <div class="approver">
+                        <div class="approver-name">Pending Finance Approval</div>
+                        <div class="approver-time">Waiting for finance team review.</div>
                     </div>
                     @endif
                 @elseif($application->status === \App\Models\EmployeeApplicationV2::STATUS_REJECTED)
@@ -384,7 +400,11 @@
                         </td>
                         <td style="text-align: right;">
                             @if($application->status === \App\Models\EmployeeApplicationV2::STATUS_APPROVED)
-                                <span class="badge badge-approved" style="font-size: 13px; padding: 5px 12px;">Approved</span>
+                                @if($advance?->is_paid)
+                                    <span class="badge badge-paid" style="font-size: 13px; padding: 5px 12px; background-color: #d4edda; color: #155724; border-color: #c3e6cb;">Disbursed (Paid)</span>
+                                @else
+                                    <span class="badge badge-approved" style="font-size: 13px; padding: 5px 12px;">Approved (Pending Payment)</span>
+                                @endif
                             @elseif($application->status === \App\Models\EmployeeApplicationV2::STATUS_REJECTED)
                                 <span class="badge" style="border: 1px solid #cc0000; color: #cc0000; background-color: #ffe6e6; font-size: 13px; padding: 5px 12px;">Rejected</span>
                             @else
@@ -399,8 +419,10 @@
                         </td>
                         <td style="text-align: right; vertical-align: bottom;">
                             <div class="approver-time">
-                                @if($application->status === \App\Models\EmployeeApplicationV2::STATUS_APPROVED)
-                                    Approved: {{ $application->approved_at ? \Carbon\Carbon::parse($application->approved_at)->format('M d, Y | h:i A') : '-' }}
+                                @if($advance?->is_paid)
+                                    Disbursed: {{ $advance->finance_approved_at ? \Carbon\Carbon::parse($advance->finance_approved_at)->format('M d, Y | h:i A') : '-' }}
+                                @elseif($application->status === \App\Models\EmployeeApplicationV2::STATUS_APPROVED)
+                                    Manager Approved: {{ $application->approved_at ? \Carbon\Carbon::parse($application->approved_at)->format('M d, Y | h:i A') : '-' }}
                                 @endif
                             </div>
                         </td>
