@@ -74,13 +74,13 @@ class EmployeeAdvanceReportResource extends Resource
                 IconColumn::make('is_paid')
                     ->label(__('lang.is_paid'))
                     ->boolean()
-                    ->alignCenter()
-                    ->color(fn(string $state): string => match ($state) {
-                        '1' => 'success',
-                        '0' => 'warning',
-                        default => 'gray',
+                    ->getStateUsing(function ($record) {
+                        return $record->is_paid;
                     })
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->trueColor('success')
+                    ->falseColor('warning')
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('advance_amount')
                     ->label(__('lang.advance_amount'))
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
