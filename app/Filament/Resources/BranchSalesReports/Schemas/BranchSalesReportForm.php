@@ -204,7 +204,7 @@ class BranchSalesReportForm
                         ->hiddenOn('view'),
 
                     \Filament\Forms\Components\Hidden::make('document_analysis_attempt_id')
-                        ->dehydrated(false),
+                        ->dehydrated(),
                 ])
             ]);
     }
