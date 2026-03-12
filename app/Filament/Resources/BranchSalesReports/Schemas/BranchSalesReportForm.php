@@ -28,12 +28,38 @@ class BranchSalesReportForm
                             ->options(Branch::active()->pluck('name', 'id'))
                             ->searchable()
                             ->required()
-                            ->disabledOn('edit'),
+                            ->disabledOn('edit')
+                            
+                            ,
                         DatePicker::make('date')
                             ->label('Date')
                             ->required()
                             ->default(now())
-                            ->disabledOn('edit'),
+                            ->disabledOn('edit')
+                            ->rule(function (callable $get) {
+                                return function (string $attribute, $value, \Closure $fail) use ($get) {
+                                    $branchId = $get('branch_id');
+                                    if (!$branchId || !$value) {
+                                        return;
+                                    }
+
+                                    $date = \Carbon\Carbon::parse($value)->startOfDay();
+
+                                    $existing = \App\Models\BranchSalesReport::query()
+                                        ->withTrashed()
+                                        ->where('branch_id', $branchId)
+                                        ->whereDate('date', $date)
+                                        ->first();
+
+                                    if ($existing) {
+                                        if ($existing->deleted_at) {
+                                            $fail(__("A report already exists in the trash for this branch and date. Please restore or permanently delete it first."));
+                                        } else {
+                                            $fail(__("A report already exists for this branch and date."));
+                                        }
+                                    }
+                                };
+                            }),
                         TextInput::make('status')
                             ->label('Status')
                             ->default(\App\Models\BranchSalesReport::STATUS_PENDING)

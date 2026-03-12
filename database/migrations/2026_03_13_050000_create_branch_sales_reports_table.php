@@ -34,9 +34,10 @@ return new class extends Migration
             $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('approved_at')->nullable();
             
-            // Soft deletes to allow archiving
             $table->softDeletes();
             $table->timestamps();
+
+            $table->unique(['branch_id', 'date']);
         });
     }
 
