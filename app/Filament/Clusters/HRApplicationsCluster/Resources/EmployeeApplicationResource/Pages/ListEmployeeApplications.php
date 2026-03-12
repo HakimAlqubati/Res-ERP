@@ -58,7 +58,12 @@ class ListEmployeeApplications extends ListRecords
                 ->label(__('lang.employee_meals_request'))
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST))
                 ->icon('heroicon-o-fire')
-                ->badge(EmployeeApplicationV2::query()->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST)->count())
+                ->badge(EmployeeApplicationV2::query()
+                ->whereHas('employee')
+                ->forBranchManager()
+                ->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST)
+                
+                ->count())
                 ->badgeColor('warning'),
 
         ];
