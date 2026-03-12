@@ -404,10 +404,10 @@ class EmployeeApplicationResource extends Resource
     public static function financeApproveAdvanceRequest(): Action
     {
         return Action::make('financeApproveAdvanceRequest')->label('Approve & Pay')->button()
-            ->visible(function($record) {
-                return $record->status == EmployeeApplicationV2::STATUS_APPROVED 
-                       && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST
-                       && is_null($record->advanceRequest?->finance_approved_at);
+            ->visible(function ($record) {
+                return $record->status == EmployeeApplicationV2::STATUS_APPROVED
+                    && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST
+                    && is_null($record->advanceRequest?->finance_approved_at);
             })
             ->color('success')
             ->icon('heroicon-o-check-circle')
@@ -523,8 +523,8 @@ class EmployeeApplicationResource extends Resource
                         TextInput::make('bank_account_number')
                             ->label('Bank Account Number')
                             ->default($employee?->bank_account_number)
-                            ->required(fn ($get) => $get('payment_method') === \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
-                            ->visible(fn ($get) => $get('payment_method') === \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
+                            ->required(fn($get) => $get('payment_method') === \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
+                            ->visible(fn($get) => $get('payment_method') === \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
                             ->prefixIcon('heroicon-o-identification'),
                     ]),
 
@@ -535,10 +535,10 @@ class EmployeeApplicationResource extends Resource
     public static function financeRejectAdvanceRequest(): Action
     {
         return Action::make('financeRejectAdvanceRequest')->label('Finance Reject')->button()
-            ->visible(function($record) {
-                return $record->status == EmployeeApplicationV2::STATUS_APPROVED 
-                       && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST
-                       && is_null($record->advanceRequest?->finance_approved_at);
+            ->visible(function ($record) {
+                return $record->status == EmployeeApplicationV2::STATUS_APPROVED
+                    && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST
+                    && is_null($record->advanceRequest?->finance_approved_at);
             })
             ->color('danger')
             ->icon('heroicon-o-x-circle')
@@ -891,6 +891,9 @@ class EmployeeApplicationResource extends Resource
             ->icon('heroicon-o-document-arrow-down')
             ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST))
             ->action(function ($record) {
+                if (get_class($record) == AdvanceRequest::class) {
+                    $record = $record->application;
+                }
                 return app(\App\Reports\HR\AdvanceRequestSlipReport::class)->generate($record->id);
             });
     }
