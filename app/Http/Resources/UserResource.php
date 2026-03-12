@@ -38,6 +38,7 @@ class UserResource extends JsonResource
             'managed_stores_ids' => $this->managed_stores_ids,
             'employee' => $this->employee ? tap($this->employee, function ($employee) {
                 $employee->salary = 0;
+                $employee->avatar = $employee->avatar_image   ;
             }) : null,
         ];
     }
