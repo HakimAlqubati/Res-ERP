@@ -43,6 +43,7 @@ use App\Filament\Pages\InventoryReportLinks;
 use App\Filament\Resources\AppLogs\AppLogResource;
 use App\Filament\Resources\ApprovalResource;
 use App\Filament\Resources\BranchResource;
+use App\Filament\Resources\BranchSalesReports\BranchSalesReportResource;
 use App\Filament\Resources\FinancialCategories\FinancialCategoryResource;
 use App\Filament\Resources\FinancialTransactions\FinancialTransactionResource;
 use App\Filament\Resources\HalalLabelReportResource;
@@ -156,6 +157,7 @@ class AdminPanelProvider extends PanelProvider
                     [
                         NavigationGroup::make(__('menu.financial_system'))
                             ->items(array_merge(
+                                (isSuperAdmin() || isFinanceManager()) ? BranchSalesReportResource::getNavigationItems() : [],
                                 (isSuperAdmin()) ? FinancialCategoryResource::getNavigationItems() : [],
                                 (isSuperAdmin()) ? FinancialTransactionResource::getNavigationItems() : [],
                                 (isSuperAdmin()) ? FinancialReportsCluster::getNavigationItems() : [],
