@@ -20,7 +20,7 @@ class BranchSalesReportResource extends Resource
 {
     protected static ?string $model = BranchSalesReport::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentChartBar;
 
     protected static ?string $recordTitleAttribute = 'branch';
 
@@ -73,5 +73,10 @@ class BranchSalesReportResource extends Resource
             return true;
         }
         return false;
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
     }
 }
