@@ -42,7 +42,7 @@ class ListEmployeeApplications extends ListRecords
                 ->modifyQueryUsing(
                     fn(Builder $query) => $query->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST)
 
-                        ->with(['employee:id,name,employee_no,branch_id', 'employee.branch:id,name', 'application:id,status'])
+                    // ->with(['employee:id,name,employee_no,branch_id', 'employee.branch:id,name', 'application:id,status'])
                 )
                 ->icon('heroicon-m-banknotes')
                 ->badge(EmployeeApplicationV2::query()->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST)
