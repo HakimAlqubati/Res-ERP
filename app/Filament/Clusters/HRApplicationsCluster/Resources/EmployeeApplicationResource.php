@@ -403,7 +403,7 @@ class EmployeeApplicationResource extends Resource
 
     public static function financeApproveAdvanceRequest(): Action
     {
-        return Action::make('financeApproveAdvanceRequest')->label('Finance Approve')->button()
+        return Action::make('financeApproveAdvanceRequest')->label('Approve & Pay')->button()
             ->visible(function($record) {
                 return $record->status == EmployeeApplicationV2::STATUS_APPROVED 
                        && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST
@@ -412,13 +412,15 @@ class EmployeeApplicationResource extends Resource
             ->color('success')
             ->icon('heroicon-o-check-circle')
 
-            ->action(function ($record) {
+            ->action(function ($record, array $data) {
                 DB::beginTransaction();
                 try {
                     // Approve as Financial Manager
                     $advanceRequest = $record->advanceRequest;
                     $advanceRequest->finance_approved_by = auth()->id();
                     $advanceRequest->finance_approved_at = now();
+                    $advanceRequest->payment_method = $data['payment_method'] ?? null;
+                    $advanceRequest->bank_account_number = $data['bank_account_number'] ?? null;
                     $advanceRequest->save();
 
                     // Generate installments and financial transactions
@@ -432,7 +434,6 @@ class EmployeeApplicationResource extends Resource
                     throw $th;
                 }
             })
-            ->disabledForm()
             ->schema(function ($record) {
 
                 $details = $record->advanceRequest;
@@ -455,11 +456,13 @@ class EmployeeApplicationResource extends Resource
                         TextInput::make('employee')
                             ->label(__('lang.employee'))
                             ->default($employee?->name)
-                            ->prefixIcon('heroicon-o-user'),
+                            ->prefixIcon('heroicon-o-user')
+                            ->disabled(),
                         DatePicker::make('date')
                             ->label(__('lang.advance_date'))
                             ->default($detailDate)
-                            ->prefixIcon('heroicon-o-calendar'),
+                            ->prefixIcon('heroicon-o-calendar')
+                            ->disabled(),
                     ]),
 
                     // Advance Amount Details
@@ -468,12 +471,14 @@ class EmployeeApplicationResource extends Resource
                             ->label(__('lang.advance_amount'))
                             ->default(number_format($advanceAmount, 2))
                             ->suffix($currency)
-                            ->prefixIcon('heroicon-o-banknotes'),
+                            ->prefixIcon('heroicon-o-banknotes')
+                            ->disabled(),
                         TextInput::make('monthlyDeductionAmount')
                             ->label(__('lang.monthly_deduction'))
                             ->default(number_format($monthlyDeductionAmount, 2))
                             ->suffix($currency)
-                            ->prefixIcon('heroicon-o-calculator'),
+                            ->prefixIcon('heroicon-o-calculator')
+                            ->disabled(),
                     ]),
 
                     // Deduction Schedule
@@ -481,16 +486,19 @@ class EmployeeApplicationResource extends Resource
                         TextInput::make('deductionStartsFrom')
                             ->label(__('lang.starts_from'))
                             ->default($deductionStartsFrom)
-                            ->prefixIcon('heroicon-o-play'),
+                            ->prefixIcon('heroicon-o-play')
+                            ->disabled(),
                         TextInput::make('deductionEndsAt')
                             ->label(__('lang.ends_at'))
                             ->default($deductionEndsAt)
-                            ->prefixIcon('heroicon-o-stop'),
+                            ->prefixIcon('heroicon-o-stop')
+                            ->disabled(),
                         TextInput::make('numberOfMonthsOfDeduction')
                             ->label(__('lang.number_of_months'))
                             ->default($numberOfMonthsOfDeduction)
                             ->suffix(__('lang.months'))
-                            ->prefixIcon('heroicon-o-clock'),
+                            ->prefixIcon('heroicon-o-clock')
+                            ->disabled(),
                     ]),
 
 
@@ -498,7 +506,27 @@ class EmployeeApplicationResource extends Resource
                         ->label(__('lang.additional_notes'))
                         ->default($notes)
                         ->rows(2)
-                        ->columnSpanFull(),
+                        ->columnSpanFull()
+                        ->disabled(),
+
+                    Fieldset::make()->label('Payment Details')->columns(2)->schema([
+                        Select::make('payment_method')
+                            ->label('Payment Method')
+                            ->options([
+                                \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER => 'Bank Transfer',
+                                \App\Models\AdvanceRequest::PAYMENT_METHOD_CASH => 'Cash',
+                            ])
+                            ->required()
+                            ->live()
+                            ->default(\App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
+                            ->prefixIcon('heroicon-o-credit-card'),
+                        TextInput::make('bank_account_number')
+                            ->label('Bank Account Number')
+                            ->default($employee?->bank_account_number)
+                            ->required(fn ($get) => $get('payment_method') === \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
+                            ->visible(fn ($get) => $get('payment_method') === \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
+                            ->prefixIcon('heroicon-o-identification'),
+                    ]),
 
                 ];
             });

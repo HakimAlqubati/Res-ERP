@@ -162,7 +162,7 @@ class EmployeeForm
                                                     ->columnSpan(1)
 
                                                     // ->numeric()
-                                                    ->maxLength(14)->minLength(8),
+                                                    ->maxLength(18)->minLength(8),
                                                 Select::make('gender')
                                                     ->label(__('lang.gender'))
                                                     ->options([
@@ -418,9 +418,9 @@ class EmployeeForm
                                             ))
                                             ->numeric()
                                             ->disabled(fn(): bool => isBranchManager()),
-                                        // TextInput::make('bank_account_number')
-                                        //     ->columnSpan(2)
-                                        //     ->label('Bank account number')->nullable(),
+                                        TextInput::make('bank_account_number')
+                                            ->columnSpan(1)
+                                            ->label('Bank account number')->nullable(),
                                         Toggle::make('discount_exception_if_absent')->columnSpan(1)
                                             ->disabled(fn(): bool => isBranchManager())
                                             ->label(__('lang.no_salary_deduction_for_absences'))->default(0)->inline(false)
@@ -459,7 +459,8 @@ class EmployeeForm
                                             ->minItems(0)         // Set the minimum number of items
                                             // Optional: set the maximum number of items
                                             ->defaultItems(0)     // Default number of items when the form loads
-                                            ->columnSpan('full'), // Adjust the span as necessary
+                                            ->columnSpan('full')
+                                            ->hidden(), // Adjust the span as necessary
                                     ]),
                                     Fieldset::make()->columnSpanFull()->label(__('lang.shift_rfid'))->columnSpanFull()->schema([
                                         Grid::make()->columns(2)->columnSpanFull()->schema([

@@ -64,8 +64,13 @@ class AdvanceRequest extends Model
         'remaining_total',
         'paid_installments',
         'finance_approved_by',
-        'finance_approved_at'
+        'finance_approved_at',
+        'payment_method',
+        'bank_account_number',
     ];
+
+    public const PAYMENT_METHOD_CASH = 'cash';
+    public const PAYMENT_METHOD_BANK_TRANSFER = 'bank_transfer';
 
     protected $appends = ['payment_status'];
 

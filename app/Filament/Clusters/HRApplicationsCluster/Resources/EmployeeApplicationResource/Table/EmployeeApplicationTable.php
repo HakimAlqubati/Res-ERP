@@ -223,12 +223,13 @@ class EmployeeApplicationTable
                     EmployeeApplicationResource::rejectAdvanceRequest()->hidden(function ($record) {
                         return false;
                     }),
-                    EmployeeApplicationResource::financeApproveAdvanceRequest()->hidden(function ($record) {
-                        if (isFinanceManager() || isSuperAdmin()) {
-                            return false;
-                        }
-                        return true;
-                    }),
+                    EmployeeApplicationResource::financeApproveAdvanceRequest()
+                        ->hidden(function ($record) {
+                            if (isFinanceManager() || isSuperAdmin()) {
+                                return false;
+                            }
+                            return true;
+                        }),
                     EmployeeApplicationResource::financeRejectAdvanceRequest()->hidden(function ($record) {
                         if (isFinanceManager() || isSuperAdmin()) {
                             return false;
