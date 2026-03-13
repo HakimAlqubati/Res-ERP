@@ -44,6 +44,7 @@ class DashboardService
             'pending_checkout' => $appCounts->get(EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST, 0),
             'pending_overtime' => $pendingOvertimeCount,
             'pending_advance'  => $appCounts->get(EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST, 0),
+            'pending_meal'     => $appCounts->get(EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST, 0),
         ];
     }
 
@@ -58,7 +59,7 @@ class DashboardService
         }
         $branches = $branchesQuery->get(['id', 'name']);
 
-        $today = Carbon::today()->subDays(4)->toDateString();
+        $today = Carbon::today()->toDateString();
         
         $todayAttendance = [];
         $last7DaysAttendance = [];
@@ -69,19 +70,29 @@ class DashboardService
             $dates[] = Carbon::today()->subDays($i)->toDateString();
         }
 
+        // Fetch all active employees counts grouped by branch
+        $employeeCounts = Employee::where('active', 1)
+            ->when($dto->branchId, fn($q) => $q->where('branch_id', $dto->branchId))
+            ->select('branch_id', DB::raw('count(*) as count'))
+            ->groupBy('branch_id')
+            ->pluck('count', 'branch_id');
+
+        // Fetch all relevant attendance records for the last 7 days for all relevant branches
+        $allAttendances = Attendance::whereIn('check_date', $dates)
+            ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+            ->where('accepted', 1)
+            ->when($dto->branchId, fn($q) => $q->where('branch_id', $dto->branchId))
+            ->select('branch_id', 'check_date', 'employee_id', 'status')
+            ->get()
+            ->groupBy(['branch_id', 'check_date']);
+
         foreach ($branches as $branch) {
             $bId = $branch->id;
+            $totalEmployees = $employeeCounts->get($bId, 0);
             
-            // Total active employees for the branch
-            $totalEmployees = Employee::where('branch_id', $bId)->where('active', 1)->count();
-
             // -- Today's Attendance --
-            $todayAttendances = Attendance::where('branch_id', $bId)
-                ->where('check_date', $today)
-                ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
-                ->where('accepted', 1)
-                ->select('employee_id', 'status')
-                ->get();
+            $branchDayData = $allAttendances->get($bId, collect());
+            $todayAttendances = $branchDayData->get($today, collect());
             
             $todayPresent = $todayAttendances->unique('employee_id')->count();
             $todayLate = $todayAttendances->where('status', Attendance::STATUS_LATE_ARRIVAL)->unique('employee_id')->count();
@@ -100,19 +111,8 @@ class DashboardService
 
             // -- Last 7 Days Attendance --
             $history = [];
-            
-            // Get attendance stats for all 7 days efficiently
-            $attendancesHistory = Attendance::where('branch_id', $bId)
-                ->whereIn('check_date', $dates)
-                ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
-                ->where('accepted', 1)
-                ->select('check_date', 'employee_id', 'status')
-                ->get()
-                ->groupBy('check_date');
-
             foreach ($dates as $date) {
-                // If there's no data for the date, use an empty collection
-                $dayData = $attendancesHistory->get($date, collect());
+                $dayData = $branchDayData->get($date, collect());
                 
                 $presentCount = $dayData->unique('employee_id')->count();
                 $lateCount = $dayData->where('status', Attendance::STATUS_LATE_ARRIVAL)->unique('employee_id')->count();
