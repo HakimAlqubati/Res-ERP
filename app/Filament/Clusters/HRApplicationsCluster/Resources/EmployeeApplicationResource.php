@@ -421,6 +421,7 @@ class EmployeeApplicationResource extends Resource
                     $advanceRequest->finance_approved_at = now();
                     $advanceRequest->payment_method = $data['payment_method'] ?? null;
                     $advanceRequest->bank_account_number = $data['bank_account_number'] ?? null;
+                    $advanceRequest->transaction_number = $data['transaction_number'] ?? null;
                     $advanceRequest->save();
 
                     // Generate installments and financial transactions
@@ -526,6 +527,10 @@ class EmployeeApplicationResource extends Resource
                             ->required(fn($get) => $get('payment_method') === \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
                             ->visible(fn($get) => $get('payment_method') === \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
                             ->prefixIcon('heroicon-o-identification'),
+                        TextInput::make('transaction_number')
+                            ->label(__('lang.transaction_number'))
+                            ->placeholder(__('lang.enter_transaction_number'))
+                            ->prefixIcon('heroicon-o-hashtag'),
                     ]),
 
                 ];

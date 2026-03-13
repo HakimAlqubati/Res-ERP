@@ -349,6 +349,8 @@ return [
     'bank' => 'Bank',
     'enter_bank_name' => 'Enter bank name',
     'enter_bank_account_number' => 'Enter bank account number',
+    'transaction_number' => 'Transaction Number',
+    'enter_transaction_number' => 'Enter transaction number',
 
     // ===========================================
     // HRMS - Allowances & Deductions

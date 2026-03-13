@@ -67,6 +67,7 @@ class AdvanceRequest extends Model
         'finance_approved_at',
         'payment_method',
         'bank_account_number',
+        'transaction_number',
     ];
 
     public const PAYMENT_METHOD_CASH = 'cash';
