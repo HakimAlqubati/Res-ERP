@@ -508,9 +508,11 @@ class EmployeeApplicationResource extends Resource
                         ->default($notes)
                         ->rows(2)
                         ->columnSpanFull()
-                        ->disabled(),
+                        ->disabled()
+                        ->hidden()
+                        ,
 
-                    Fieldset::make()->label('Payment Details')->columns(2)->schema([
+                    Fieldset::make()->label('Payment Details')->columns(3)->schema([
                         Select::make('payment_method')
                             ->label('Payment Method')
                             ->options([
@@ -529,6 +531,7 @@ class EmployeeApplicationResource extends Resource
                             ->prefixIcon('heroicon-o-identification'),
                         TextInput::make('transaction_number')
                             ->label(__('lang.transaction_number'))
+                            ->visible(fn($get) => $get('payment_method') === \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
                             ->placeholder(__('lang.enter_transaction_number'))
                             ->prefixIcon('heroicon-o-hashtag'),
                     ]),

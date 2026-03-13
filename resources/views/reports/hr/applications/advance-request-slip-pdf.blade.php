@@ -309,6 +309,9 @@
                                     @if($advance->bank_account_number)
                                         <br><span style="color: #666; font-size: 12px;">Acc: {{ $advance->bank_account_number }}</span>
                                     @endif
+                                    @if($advance->transaction_number)
+                                        <br><span style="color: #666; font-size: 12px;">Trans #: {{ $advance->transaction_number }}</span>
+                                    @endif
                                 @elseif($advance?->payment_method === \App\Models\AdvanceRequest::PAYMENT_METHOD_CASH)
                                     Cash
                                 @else
