@@ -282,6 +282,7 @@ class UserTable
                                 'password' => Hash::make($data['password']),
                             ]);
                         })
+                        ->visible(fn() => isSuperAdmin())
                         ->icon('heroicon-s-lock-closed') // Optional: Add an icon
                         ->label('Update Password'),      // Optional: Add a label
                     Action::make("allowLogin")
