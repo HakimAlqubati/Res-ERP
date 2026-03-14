@@ -88,6 +88,93 @@ class OvertimeService
     }
 
     /**
+     * Store bulk overtime records after duplicate checking.
+     *
+     * @param array $data
+     * @return array
+     * @throws Exception
+     */
+    public function storeBulkOvertime(array $data): array
+    {
+        $employeeIds = collect($data['employees'])->pluck('employee_id');
+
+        $existingRecords = EmployeeOvertime::where('date', $data['date'])
+            ->where('type', $data['type'])
+            ->whereIn('employee_id', $employeeIds)
+            ->with('employee:id,name')
+            ->get();
+
+        if ($existingRecords->isNotEmpty()) {
+            $duplicateNames = $existingRecords->map(function ($record) {
+                return $record->employee
+                    ? "{$record->employee->name} (#{$record->employee_id})"
+                    : "#{$record->employee_id}";
+            })->implode(', ');
+
+            throw new Exception("Overtime already exists for: {$duplicateNames} on {$data['date']}");
+        }
+
+        if ($data['type'] === EmployeeOvertime::TYPE_BASED_ON_DAY) {
+            $this->handleOvertimeByDay($data);
+        } elseif ($data['type'] === EmployeeOvertime::TYPE_BASED_ON_MONTH) {
+            $this->handleOverTimeMonth($data);
+        }
+
+        return [
+            'status' => true,
+            'message' => 'Overtime records created successfully',
+            'count' => count($data['employees'])
+        ];
+    }
+
+    /**
+     * Automatically process suggested overtime for a specific date and branch.
+     *
+     * @param string $date
+     * @param int|null $branchId
+     * @return array
+     */
+    public function autoProcessSuggestedOvertime(string $date, ?int $branchId = null): array
+    {
+        $branchQuery = \App\Models\Branch::query();
+        if ($branchId) {
+            $branchQuery->where('id', $branchId);
+        } else {
+            $branchQuery->where('active', 1);
+        }
+
+        $branches = $branchQuery->get();
+        $results = [];
+
+        foreach ($branches as $branch) {
+            $suggestions = $this->getSuggestedOvertimeV3($date, $date, $branch->id);
+
+            if (empty($suggestions) || !isset($suggestions[$date])) {
+                $results[$branch->name] = 0;
+                continue;
+            }
+
+            $employeesToStore = $suggestions[$date];
+
+            try {
+                $storeData = [
+                    'type' => EmployeeOvertime::TYPE_BASED_ON_DAY,
+                    'date' => $date,
+                    'branch_id' => $branch->id,
+                    'employees' => $employeesToStore
+                ];
+
+                $this->storeBulkOvertime($storeData);
+                $results[$branch->name] = count($employeesToStore);
+            } catch (Exception $e) {
+                $results[$branch->name] = "Skipped/Error: " . $e->getMessage();
+            }
+        }
+
+        return $results;
+    }
+
+    /**
      * Calculate total hours from time string
      *
      * @param string $timeString
