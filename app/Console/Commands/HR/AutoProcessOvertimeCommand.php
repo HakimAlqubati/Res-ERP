@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\HR;
 
+use App\Models\AppLog;
 use App\Modules\HR\Overtime\OvertimeService;
 use Illuminate\Console\Command;
 use Carbon\Carbon;
@@ -40,7 +41,7 @@ class AutoProcessOvertimeCommand extends Command
 
         // If not in a tenant context, loop through all active tenants
         $tenants = \App\Models\CustomTenantModel::where('active', 1)->get();
-        
+
         if ($tenants->isEmpty()) {
             $this->warn("No active tenants found.");
             return 0;
@@ -49,14 +50,27 @@ class AutoProcessOvertimeCommand extends Command
         $this->info("Starting automatic overtime processing for " . $tenants->count() . " tenants.");
 
         foreach ($tenants as $tenant) {
+
             $this->line("--------------------------------------------------");
             $this->info("Processing Tenant: {$tenant->name}");
-            
+
             try {
                 $tenant->makeCurrent();
                 $this->processForTenant($tenant, $date, $branchId, $overtimeService);
             } catch (\Exception $e) {
                 $this->error("Error processing tenant {$tenant->name}: " . $e->getMessage());
+
+                \App\Models\AppLog::write(
+                    message: "Error auto-processing overtime for tenant: {$tenant->name}: " . $e->getMessage(),
+                    level: \App\Models\AppLog::LEVEL_ERROR,
+                    context: 'HR_OVERTIME_AUTO',
+                    extra: [
+                        'tenant' => $tenant->name,
+                        'date' => $date,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]
+                );
             } finally {
                 \Spatie\Multitenancy\Models\Tenant::forgetCurrent();
             }
@@ -72,7 +86,16 @@ class AutoProcessOvertimeCommand extends Command
     protected function processForTenant($tenant, $date, $branchId, $overtimeService)
     {
         $this->info("Starting automatic overtime processing for date: {$date}" . ($branchId ? " (Branch ID: {$branchId})" : ""));
-
+        AppLog::write(
+            message: "Starting automatic overtime processing for tenant: {$tenant->name}",
+            level: AppLog::LEVEL_INFO,
+            context: 'HR_OVERTIME_AUTO',
+            extra: [
+                'tenant' => $tenant->name,
+                'date' => $date,
+                'branch_id' => $branchId
+            ]
+        );
         $results = $overtimeService->autoProcessSuggestedOvertime($date, $branchId);
 
         if (empty($results)) {
@@ -82,11 +105,37 @@ class AutoProcessOvertimeCommand extends Command
 
         $headers = ['Branch', 'Processed Records / Status'];
         $data = [];
+        $totalProcessed = 0;
+
         foreach ($results as $branchName => $status) {
-            $data[] = [$branchName, $status];
+            // Only show branches with activity or errors
+            if ($status !== 0 && $status !== "0") {
+                $data[] = [$branchName, $status];
+                if (is_numeric($status)) {
+                    $totalProcessed += $status;
+                }
+            }
         }
 
-        $this->table($headers, $data);
+        if (empty($data)) {
+            $this->warn("No records were suggested or processed for any branch in tenant: {$tenant->name}");
+        } else {
+            $this->table($headers, $data);
+
+            // Log the activity
+            \App\Models\AppLog::write(
+                message: "Auto-processed overtime for tenant: {$tenant->name} on date: {$date}. Total records: {$totalProcessed}",
+                level: \App\Models\AppLog::LEVEL_INFO,
+                context: 'HR_OVERTIME_AUTO',
+                extra: [
+                    'tenant' => $tenant->name,
+                    'date' => $date,
+                    'branch_id' => $branchId,
+                    'results' => $results
+                ]
+            );
+        }
+
         return 0;
     }
 }
