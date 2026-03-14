@@ -79,4 +79,16 @@ class BranchSalesReportResource extends Resource
     {
         return static::getModel()::count();
     }
+
+
+    public static function getGlobalSearchResultsLimit(): int
+    {
+        return 0;
+    }
+
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['branch.name'];
+    }
 }

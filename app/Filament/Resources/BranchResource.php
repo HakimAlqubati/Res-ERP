@@ -103,4 +103,20 @@ class BranchResource extends Resource
         }
         return false;
     }
+
+
+    public static function getGlobalSearchResultsLimit(): int
+    {
+        return 3;
+    }
+
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name'];
+    }
+    public static function getGlobalSearchResultTitle(Model $record): string
+    {
+        return $record->name;
+    }
 }
