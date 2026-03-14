@@ -46,6 +46,7 @@ class EmployeeApplicationController extends Controller
                     ->orWhere('employee_number', 'like', '%' . $request->search . '%')
             ))
             ->whereHas('employee')
+            ->orderByRaw("status = 'pending' DESC")
             ->latest()
             ->forBranchManager()
             ->forEmployee()
