@@ -119,6 +119,11 @@ class EmployeeApplicationService
                 break;
         }
 
+        // 8) Handle images
+        if (isset($data['images']) && $data['images'] instanceof \Illuminate\Http\UploadedFile) {
+            $record->addMedia($data['images'])->toMediaCollection('images');
+        }
+
         return $record;
     }
 
@@ -154,6 +159,13 @@ class EmployeeApplicationService
     {
         $record = EmployeeApplicationV2::findOrFail($id);
         $record->update($data);
+
+        // Handle images
+        if (isset($data['images']) && $data['images'] instanceof \Illuminate\Http\UploadedFile) {
+            $record->clearMediaCollection('images');
+            $record->addMedia($data['images'])->toMediaCollection('images');
+        }
+
         return $record;
     }
 
