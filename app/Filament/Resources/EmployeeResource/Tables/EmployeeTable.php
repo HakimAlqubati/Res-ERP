@@ -382,17 +382,20 @@ class EmployeeTable
                         ])
                         ->databaseTransaction()
                         ->action(function (Employee $record, array $data) {
-                            $record->serviceTermination()->create([
-                                'termination_date'   => $data['termination_date'],
-                                'termination_reason' => $data['termination_reason'],
-                                'notes'              => $data['notes'],
-                                'status'             => \App\Models\EmployeeServiceTermination::STATUS_PENDING,
-                            ]);
+                            try {
+                                app(\App\Modules\HR\Employee\Services\EmployeeLifecycleService::class)->requestTermination($record, $data);
 
-                            Notification::make()
-                                ->title(__('lang.termination_request_created'))
-                                ->success()
-                                ->send();
+                                Notification::make()
+                                    ->title(__('lang.termination_request_created'))
+                                    ->success()
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title(__('lang.error_occurred'))
+                                    ->body($e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
                         }),
 
                     Action::make('manageTermination')
@@ -421,13 +424,15 @@ class EmployeeTable
                                 ->color('success')
                                 ->requiresConfirmation()
                                 ->action(function () use ($record, $action) {
-                                    $record->serviceTermination->update([
-                                        'status'      => \App\Models\EmployeeServiceTermination::STATUS_APPROVED,
-                                        'approved_at' => now(),
-                                        'approved_by' => auth()->id(),
-                                    ]);
-                                    Notification::make()->title(__('lang.termination_approved_successfully'))->success()->send();
-                                    $action->close();
+                                    try {
+                                        app(\App\Modules\HR\Employee\Services\EmployeeLifecycleService::class)
+                                            ->approveTermination($record->serviceTermination);
+
+                                        Notification::make()->title(__('lang.termination_approved_successfully'))->success()->send();
+                                        $action->close();
+                                    } catch (\Exception $e) {
+                                        Notification::make()->title(__('lang.error_occurred'))->body($e->getMessage())->danger()->send();
+                                    }
                                 }),
                             Action::make('reject')
                                 ->label(__('lang.reject_termination'))
@@ -436,14 +441,15 @@ class EmployeeTable
                                     Textarea::make('rejection_reason')->required()->label(__('lang.rejection_reason'))
                                 ])
                                 ->action(function (array $data) use ($record, $action) {
-                                    $record->serviceTermination->update([
-                                        'status'           => \App\Models\EmployeeServiceTermination::STATUS_REJECTED,
-                                        'rejected_at'      => now(),
-                                        'rejected_by'      => auth()->id(),
-                                        'rejection_reason' => $data['rejection_reason'] ?? null
-                                    ]);
-                                    Notification::make()->title(__('lang.termination_rejected_successfully'))->success()->send();
-                                    $action->close();
+                                    try {
+                                        app(\App\Modules\HR\Employee\Services\EmployeeLifecycleService::class)
+                                            ->rejectTermination($record->serviceTermination, $data);
+
+                                        Notification::make()->title(__('lang.termination_rejected_successfully'))->success()->send();
+                                        $action->close();
+                                    } catch (\Exception $e) {
+                                        Notification::make()->title(__('lang.error_occurred'))->body($e->getMessage())->danger()->send();
+                                    }
                                 }),
                             // $action->cancel(),
                         ]),
@@ -462,46 +468,8 @@ class EmployeeTable
                                 ->label(__('lang.notes')),
                         ])
                         ->action(function (Employee $record, array $data) {
-                            \Illuminate\Support\Facades\DB::beginTransaction();
                             try {
-                                // 1. Reactivate employee and update join date
-                                $record->update([
-                                    'active' => 1,
-                                    'join_date' => $data['join_date'],
-                                ]);
-
-                                // 2. Reactivate/Restore linked user if exists
-                                if ($record->user_id) {
-                                    $user = \App\Models\User::withTrashed()->find($record->user_id);
-                                    if ($user) {
-                                        if (method_exists($user, 'trashed') && $user->trashed()) {
-                                            $user->restore();
-                                        }
-                                        $user->update(['active' => 1]);
-                                    }
-                                }
-
-                                // 3. Cancel any pending termination requests
-                                $record->serviceTermination()
-                                    ->where('status', \App\Models\EmployeeServiceTermination::STATUS_PENDING)
-                                    ->update([
-                                        'status' => \App\Models\EmployeeServiceTermination::STATUS_CANCEL,
-                                        'notes' => (isset($data['notes']) && $data['notes'] ? $data['notes'] . " (Rehired)" : "Rehired")
-                                    ]);
-
-                                // 4. Log the rehire event
-                                AppLog::write(
-                                    message: "Employee {$record->name} (#{$record->id}) rehired successfully with join date: {$data['join_date']}",
-                                    level: AppLog::LEVEL_INFO,
-                                    context: 'HR_REHIRE',
-                                    extra: [
-                                        'employee_id' => $record->id,
-                                        'join_date' => $data['join_date'],
-                                        'notes' => $data['notes'] ?? null
-                                    ]
-                                );
-
-                                \Illuminate\Support\Facades\DB::commit();
+                                app(\App\Modules\HR\Employee\Services\EmployeeLifecycleService::class)->rehire($record, $data);
 
                                 Notification::make()
                                     ->title(__('lang.employee_rehired_successfully'))
@@ -509,20 +477,6 @@ class EmployeeTable
                                     ->send();
 
                             } catch (\Exception $e) {
-                                \Illuminate\Support\Facades\DB::rollBack();
-
-                                // Log the failure
-                                AppLog::write(
-                                    message: "Failed to rehire employee {$record->name} (#{$record->id}): " . $e->getMessage(),
-                                    level: AppLog::LEVEL_ERROR,
-                                    context: 'HR_REHIRE_ERROR',
-                                    extra: [
-                                        'employee_id' => $record->id,
-                                        'error' => $e->getMessage(),
-                                        'trace' => $e->getTraceAsString()
-                                    ]
-                                );
-
                                 Notification::make()
                                     ->title(__('lang.error_occurred'))
                                     ->body($e->getMessage())
