@@ -37,6 +37,10 @@ class AttendanceImagesReportService
                 // Return only actual webcam/photo check-ins/check-outs when requests are NOT included
                 $q->where('source_type', AttendanceImagesUploaded::class);
             })
+            ->whereHas('employee', function ($q) {
+                // Exclude inactive employees
+                $q->where('active', 1);
+            })
             ->with(['employee:id,name,branch_id', 'period:id,name', 'source']);
 
         // Filter by employee
