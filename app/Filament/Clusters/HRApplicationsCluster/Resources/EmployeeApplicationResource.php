@@ -403,7 +403,8 @@ class EmployeeApplicationResource extends Resource
 
     public static function financeApproveAdvanceRequest(): Action
     {
-        return Action::make('financeApproveAdvanceRequest')->label('Approve & Pay')->button()
+        return Action::make('financeApproveAdvanceRequest')->label('Approve & Pay')
+            // ->button()
             ->visible(function ($record) {
                 return $record->status == EmployeeApplicationV2::STATUS_APPROVED
                     && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST
@@ -416,6 +417,11 @@ class EmployeeApplicationResource extends Resource
                 DB::beginTransaction();
                 try {
                     // Approve as Financial Manager
+                    $classType = get_class($record);
+                    if ($classType == AdvanceRequest::class) {
+                        $record = $record->application;
+                        $record = EmployeeApplicationV2::find($record->id);
+                    }
                     $advanceRequest = $record->advanceRequest;
                     $advanceRequest->finance_approved_by = auth()->id();
                     $advanceRequest->finance_approved_at = now();
@@ -437,6 +443,13 @@ class EmployeeApplicationResource extends Resource
             })
             ->schema(function ($record) {
 
+
+                $classType = get_class($record);
+                if ($classType == AdvanceRequest::class) {
+                    $record = $record->application;
+                    $record = EmployeeApplicationV2::find($record->id);
+                }
+                // dd($record,$record->employee);
                 $details = $record->advanceRequest;
                 $employee = $record->employee;
                 $currency = $employee?->currency ?? getDefaultCurrency();
@@ -509,8 +522,7 @@ class EmployeeApplicationResource extends Resource
                         ->rows(2)
                         ->columnSpanFull()
                         ->disabled()
-                        ->hidden()
-                        ,
+                        ->hidden(),
 
                     Fieldset::make()->label('Payment Details')->columns(3)->schema([
                         Select::make('payment_method')

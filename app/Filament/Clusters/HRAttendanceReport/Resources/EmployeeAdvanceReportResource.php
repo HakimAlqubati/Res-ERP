@@ -211,7 +211,13 @@ class EmployeeAdvanceReportResource extends Resource
 
                     \App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource::advanceInstallmentsAction(),
                     EmployeeApplicationResource::exportAdvanceRequestPdf(),
-
+                    EmployeeApplicationResource::financeApproveAdvanceRequest()
+                        ->visible(function ($record) {
+                            if (isFinanceManager() || isSuperAdmin()) {
+                                return true;
+                            }
+                            return false;
+                        }),
                     Action::make('defer_installment')
                         ->label(__('lang.defer_installment'))
                         // ->button()

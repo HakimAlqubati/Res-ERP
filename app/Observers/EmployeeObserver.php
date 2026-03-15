@@ -135,7 +135,9 @@ class EmployeeObserver
      */
     public function deleted(Employee $employee): void
     {
-        //
+        if ($employee->has('user')) {
+            $employee->user()->delete();
+        }
     }
 
     /**
