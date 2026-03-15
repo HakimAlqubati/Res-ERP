@@ -90,6 +90,9 @@ class WeeklyLeaveCalculator extends Page implements HasForms
         $absentDays = (float) $data['absent_days'];
 
         $calculator = new CalculatorService();
-        $this->result = $calculator->calculate($totalMonthDays, $absentDays);
+        $this->result = $calculator->calculate($totalMonthDays, $absentDays,[
+            'is_period_ended' => true,
+            'is_for_payroll'  => true,
+        ]);
     }
 }

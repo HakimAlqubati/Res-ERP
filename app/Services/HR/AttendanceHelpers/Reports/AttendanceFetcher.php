@@ -204,27 +204,27 @@ class AttendanceFetcher
         $stats = HelperFunctions::calculateAttendanceStats($result);
 
         // =========================================================================
-        // منطق تحويل الغياب إلى إجازة أسبوعية تلقائية
-        // كل 6 أيام عمل = يوم إجازة مستحق
+        // منطق الإجازة الأسبوعية
         // =========================================================================
         $isPreviousMonth = $endDate->format('Y-m') < now()->format('Y-m');
-        $result = $this->applyWeeklyLeaveToAbsences($result, $isPreviousMonth);
+        $totalMonthDays  = $stats['required_days'] ?? $stats['total_days'] ?? 0;
+        $absentDays      = $stats['absent'] ?? 0;
 
-        // =========================================================================
-        // حساب نتيجة WeeklyLeaveCalculator النهائية
-        // يجب أن يكون بعد applyWeeklyLeaveToAbsences لتكون weekly_leave_stats معبأة
-        // نستخدم required_days بدل total_days لاستبعاد أيام no_periods
-        // =========================================================================
-        $weeklyLeaveStats = $result->get('weekly_leave_stats', []);
-        $totalMonthDays = $stats['required_days'] ?? $stats['total_days'] ?? 0;
+        // تحويل أيام الغياب بصرياً في التقرير — فقط عند انتهاء الشهر
+        if ($isPreviousMonth) {
+            $result           = $this->applyWeeklyLeaveToAbsences($result);
+            $weeklyLeaveStats = $result->get('weekly_leave_stats', []);
+            $absentDays       = $weeklyLeaveStats['remaining_absences'] ?? $absentDays;
+        }
 
-        // $absentDays = $weeklyLeaveStats['remaining_absences'] ?? $stats['absent'] ?? 0;
-        $absentDays =  $stats['absent'] ?? 0;
-
-        $weeklyLeaveCalculator = new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator();
-        $weeklyLeaveResult = $weeklyLeaveCalculator->calculate($totalMonthDays, $absentDays);
-
-        $stats['weekly_leave_calculation'] = $weeklyLeaveResult;
+        // الاحتساب المالي — يعمل دائماً بنفس هيكل الريسبونس
+        // when is_period_ended && is_for_payroll → يُطبَّق احتساب الإجازات الأسبوعية
+        // otherwise → نفس الريسبونس لكن بدون خصم الإجازات (الغياب كما هو)
+        $stats['weekly_leave_calculation'] = (new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator())
+            ->calculate($totalMonthDays, $absentDays, [
+                'is_period_ended' => $isPreviousMonth,
+                'is_for_payroll'  => true,
+            ]);
 
         $result->put('statistics', $stats);
         $result->put('total_duration_hours', $totalDurationHours);
