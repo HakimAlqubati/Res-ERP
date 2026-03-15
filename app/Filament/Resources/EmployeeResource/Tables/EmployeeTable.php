@@ -62,6 +62,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Log;
+use App\Models\AppLog;
 use Maatwebsite\Excel\Facades\Excel;
 use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
 
@@ -94,7 +95,9 @@ class EmployeeTable
                 TextColumn::make('name')
                     ->sortable()->searchable()
                     ->label(__('lang.full_name'))->wrap(false)
-                    ->color(fn($record): string => $record->active ? 'primary' : 'warning')->words(3)->limit(20)
+                    ->color(fn($record): string => $record->active ? 'primary' : 'warning')
+                    // ->words(3)
+                    ->limit(20)
                     ->weight(FontWeight::Medium)->tooltip(fn($state) => $state)
                     ->searchable(isIndividual: false, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: false),
@@ -444,6 +447,90 @@ class EmployeeTable
                                 }),
                             // $action->cancel(),
                         ]),
+
+                    Action::make('rehire')
+                        ->label(__('lang.rehire'))
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('success')
+                        ->visible(fn(Employee $record) => !$record->active)
+                        ->schema([
+                            DatePicker::make('join_date')
+                                ->label(__('lang.join_date'))
+                                ->required()
+                                ->default(now()),
+                            Textarea::make('notes')
+                                ->label(__('lang.notes')),
+                        ])
+                        ->action(function (Employee $record, array $data) {
+                            \Illuminate\Support\Facades\DB::beginTransaction();
+                            try {
+                                // 1. Reactivate employee and update join date
+                                $record->update([
+                                    'active' => 1,
+                                    'join_date' => $data['join_date'],
+                                ]);
+
+                                // 2. Reactivate/Restore linked user if exists
+                                if ($record->user_id) {
+                                    $user = \App\Models\User::withTrashed()->find($record->user_id);
+                                    if ($user) {
+                                        if (method_exists($user, 'trashed') && $user->trashed()) {
+                                            $user->restore();
+                                        }
+                                        $user->update(['active' => 1]);
+                                    }
+                                }
+
+                                // 3. Cancel any pending termination requests
+                                $record->serviceTermination()
+                                    ->where('status', \App\Models\EmployeeServiceTermination::STATUS_PENDING)
+                                    ->update([
+                                        'status' => \App\Models\EmployeeServiceTermination::STATUS_CANCEL,
+                                        'notes' => (isset($data['notes']) && $data['notes'] ? $data['notes'] . " (Rehired)" : "Rehired")
+                                    ]);
+
+                                // 4. Log the rehire event
+                                AppLog::write(
+                                    message: "Employee {$record->name} (#{$record->id}) rehired successfully with join date: {$data['join_date']}",
+                                    level: AppLog::LEVEL_INFO,
+                                    context: 'HR_REHIRE',
+                                    extra: [
+                                        'employee_id' => $record->id,
+                                        'join_date' => $data['join_date'],
+                                        'notes' => $data['notes'] ?? null
+                                    ]
+                                );
+
+                                \Illuminate\Support\Facades\DB::commit();
+
+                                Notification::make()
+                                    ->title(__('lang.employee_rehired_successfully'))
+                                    ->success()
+                                    ->send();
+
+                            } catch (\Exception $e) {
+                                \Illuminate\Support\Facades\DB::rollBack();
+
+                                // Log the failure
+                                AppLog::write(
+                                    message: "Failed to rehire employee {$record->name} (#{$record->id}): " . $e->getMessage(),
+                                    level: AppLog::LEVEL_ERROR,
+                                    context: 'HR_REHIRE_ERROR',
+                                    extra: [
+                                        'employee_id' => $record->id,
+                                        'error' => $e->getMessage(),
+                                        'trace' => $e->getTraceAsString()
+                                    ]
+                                );
+
+                                Notification::make()
+                                    ->title(__('lang.error_occurred'))
+                                    ->body($e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
+
                     Action::make('createUser')
                         ->label(__('lang.create_user'))
                         ->icon('heroicon-o-user-plus')

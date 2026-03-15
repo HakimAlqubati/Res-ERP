@@ -1076,6 +1076,9 @@ return [
     // Employee Service Termination
     // ===========================================
     'terminate_service' => 'End Service',
+    'rehire' => 'Rehire',
+    'rehire_employee' => 'Rehire Employee',
+    'employee_rehired_successfully' => 'Employee rehired successfully',
     'termination_date' => 'Termination Date',
     'termination_reason' => 'Termination Reason',
     'notes' => 'Notes',

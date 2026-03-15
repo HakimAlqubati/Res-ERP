@@ -1058,6 +1058,9 @@ return [
   // Employee Service Termination
   // ===========================================
   'terminate_service' => 'إنهاء الخدمة',
+  'rehire' => 'إعادة تعيين',
+  'rehire_employee' => 'إعادة تعيين موظف',
+  'employee_rehired_successfully' => 'تم إعادة تعيين الموظف بنجاح',
   'termination_date' => 'تاريخ إنهاء الخدمة',
   'termination_reason' => 'سبب الإنهاء',
   'notes' => 'ملاحظات',
