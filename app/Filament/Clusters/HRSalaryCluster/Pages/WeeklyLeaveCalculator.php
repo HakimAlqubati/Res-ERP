@@ -36,12 +36,22 @@ class WeeklyLeaveCalculator extends Page implements HasForms
     // Result State
     public ?array $result = null;
 
+    // ✅ مزامنة قيم الفورم مع الـ URL
+    protected $queryString = [
+        'data' => ['except' => [], 'as' => 'data'],
+    ];
+
     public function mount(): void
     {
         $this->form->fill([
-            'total_month_days' => 30,
-            'absent_days' => 0,
+            'total_month_days' => $this->data['total_month_days'] ?? 30,
+            'absent_days'      => $this->data['absent_days'] ?? 0,
         ]);
+
+        // ✅ إذا كانت القيم موجودة في الـ URL، احسب تلقائياً
+        if (isset($this->data['total_month_days']) || isset($this->data['absent_days'])) {
+            $this->calculate();
+        }
     }
 
     public function form(Schema $schema): Schema
