@@ -36,6 +36,7 @@ class AuthController extends Controller
         $credentials = [
             $loginMethod => $request->input('username') ?? $request->input('email'),
             'password' => $request->input('password'),
+            'active' => 1,
         ];
 
         if (Auth::attempt($credentials)) {
@@ -98,6 +99,10 @@ class AuthController extends Controller
             return response()->json(['error' => 'User not found'], 404);
         }
 
+        if (!$user->active) {
+            return response()->json(['error' => 'Account is inactive'], 403);
+        }
+
         $otp = rand(100000, 999999);
 
         EmailOtp::create([
@@ -131,6 +136,10 @@ class AuthController extends Controller
 
         if (!$user) {
             return response()->json(['error' => 'User not found'], 404);
+        }
+
+        if (!$user->active) {
+            return response()->json(['error' => 'Account is inactive'], 403);
         }
 
         // حذف الـ OTP بعد الاستخدام

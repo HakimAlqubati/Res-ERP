@@ -112,8 +112,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return true;
-        return $this->group === 'Filament Users';
+        return $this->active;
     }
 
     public function manageBranches()
