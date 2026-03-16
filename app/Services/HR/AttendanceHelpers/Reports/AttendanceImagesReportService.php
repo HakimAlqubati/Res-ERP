@@ -134,7 +134,7 @@ class AttendanceImagesReportService
             }
 
             $isImageUpload = $source && str_contains($attendance->source_type, 'AttendanceImagesUploaded');
-            $defaultImage = 'https://ui-avatars.com/api/?name=Missed+Checkout&color=7F9CF5&background=EBF4FF';
+            $defaultImage = 'https://ui-avatars.com/api/?name=Missed+Checked&color=FFFFFF&background=0d7c66&length=14&font-size=0.15';
             $imgUrl = $isImageUpload && !empty($source->img_url) ? $source->full_image_url : $defaultImage;
             $datetime = $isImageUpload && !empty($source->datetime) ? $source->datetime : $attendance->check_date . ' ' . $attendance->check_time;
             $imageId = $isImageUpload && $source ? $source->id : $attendance->id;
