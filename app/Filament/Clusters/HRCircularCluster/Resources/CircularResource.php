@@ -204,21 +204,24 @@ class CircularResource extends Resource
         return true;
     }
 
+    public static function canView(Model $record): bool
+    {
+        return isSuperAdmin() || isSystemManager() || isHR();
+    }
+
+    public static function canViewAny(): bool
+    {
+        return isSuperAdmin() || isSystemManager() || isHR();
+    }
 
     public static function canDelete(Model $record): bool
     {
-        if (isSuperAdmin() || isSystemManager()) {
-            return true;
-        }
-        return false;
+        return isSuperAdmin() || isSystemManager() || isHR();
     }
 
 
     public static function canDeleteAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager()) {
-            return true;
-        }
-        return false;
+        return isSuperAdmin() || isSystemManager() || isHR();
     }
 }

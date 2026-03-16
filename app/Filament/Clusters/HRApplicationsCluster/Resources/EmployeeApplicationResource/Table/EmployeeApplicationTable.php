@@ -225,13 +225,13 @@ class EmployeeApplicationTable
                     }),
                     EmployeeApplicationResource::financeApproveAdvanceRequest()
                         ->hidden(function ($record) {
-                            if (isFinanceManager() || isSuperAdmin()) {
+                            if (isFinanceManager() || isHR() || isSuperAdmin()) {
                                 return false;
                             }
                             return true;
                         }),
                     EmployeeApplicationResource::financeRejectAdvanceRequest()->hidden(function ($record) {
-                        if (isFinanceManager() || isSuperAdmin()) {
+                        if (isFinanceManager() || isHR() || isSuperAdmin()) {
                             return false;
                         }
                         return true;
@@ -366,7 +366,7 @@ class EmployeeApplicationTable
                 }),
 
                 EmployeeApplicationResource::approveDepartureRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
+                    if (isstuff() || isFinanceManager() || isHR()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -377,7 +377,7 @@ class EmployeeApplicationTable
                     return false;
                 }),
                 EmployeeApplicationResource::rejectDepartureRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
+                    if (isstuff() || isFinanceManager() || isHR()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -391,7 +391,7 @@ class EmployeeApplicationTable
 
 
                 EmployeeApplicationResource::approveLeaveRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
+                    if (isstuff() || isFinanceManager() || isHR()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -402,7 +402,7 @@ class EmployeeApplicationTable
                     return false;
                 }),
                 EmployeeApplicationResource::rejectLeaveRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
+                    if (isstuff() || isFinanceManager() || isHR()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -415,7 +415,7 @@ class EmployeeApplicationTable
 
                 EmployeeApplicationResource::approveAttendanceRequest()->hidden(function ($record) {
                     // return false;
-                    if (isstuff() || isFinanceManager()) {
+                    if (isstuff() || isFinanceManager() || isHR()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -427,7 +427,7 @@ class EmployeeApplicationTable
                 }),
 
                 EmployeeApplicationResource::rejectAttendanceRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
+                    if (isstuff() || isFinanceManager() || isHR()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -445,7 +445,7 @@ class EmployeeApplicationTable
 
 
                 EmployeeApplicationResource::approveMealRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
+                    if (isstuff() || isFinanceManager() || isHR()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -456,7 +456,7 @@ class EmployeeApplicationTable
                     return false;
                 }),
                 EmployeeApplicationResource::rejectMealRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
+                    if (isstuff() || isFinanceManager() || isHR()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -478,3 +478,4 @@ class EmployeeApplicationTable
             ]);
     }
 }
+

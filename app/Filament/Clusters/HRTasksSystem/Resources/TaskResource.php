@@ -1062,7 +1062,7 @@ class TaskResource extends Resource
         if (
             isSuperAdmin() || isSystemManager() || (isBranchManager() && ($record->assigned_by == auth()?->user()?->id || $record->assigned_to == auth()?->user()?->employee?->id))
             // (isSystemManager() && $record->assigned_by == auth()?->user()?->id)
-            || isStuff() || isFinanceManager()
+            || isStuff() || isFinanceManager() || isHR()
         ) {
             return true;
         }
@@ -1089,7 +1089,7 @@ class TaskResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff() || isFinanceManager()) {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff() || isFinanceManager() || isHR()) {
             return true;
         }
         return false;
@@ -1136,3 +1136,4 @@ class TaskResource extends Resource
         ]);
     }
 }
+

@@ -213,7 +213,7 @@ class EmployeeAdvanceReportResource extends Resource
                     EmployeeApplicationResource::exportAdvanceRequestPdf(),
                     EmployeeApplicationResource::financeApproveAdvanceRequest()
                         ->visible(function ($record) {
-                            if (isFinanceManager() || isSuperAdmin()) {
+                            if (isFinanceManager() || isHR() || isSuperAdmin()) {
                                 return true;
                             }
                             return false;
@@ -302,6 +302,7 @@ class EmployeeAdvanceReportResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return isSuperAdmin() || isSystemManager() || isFinanceManager();
+        return isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR();
     }
 }
+

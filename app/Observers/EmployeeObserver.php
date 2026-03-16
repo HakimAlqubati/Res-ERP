@@ -48,7 +48,7 @@ class EmployeeObserver
             // إنشاء اليوزر
             $user = User::create($userData);
 
-            $user->assignRole(8);
+            // $user->assignRole(8);
             // ربط user_id بالموظف
             $employee->user_id = $user->id;
             $employee->save();

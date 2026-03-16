@@ -69,6 +69,16 @@ if (!function_exists('isFinanceManager')) {
     }
 }
 
+if (!function_exists('isHR')) {
+    function isHR()
+    {
+        if (auth()->check()) {
+            return auth()->user()->isHR();
+        }
+        return false;
+    }
+}
+
 if (!function_exists('isSystemManager')) {
     function isSystemManager()
     {

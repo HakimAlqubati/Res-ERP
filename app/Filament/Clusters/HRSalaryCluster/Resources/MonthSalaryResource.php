@@ -358,7 +358,7 @@ class MonthSalaryResource extends Resource
     public static function canCreate(): bool
     {
 
-        if (isSystemManager()  || isSuperAdmin() || isFinanceManager()) {
+        if (isSystemManager()  || isSuperAdmin() || isFinanceManager() || isHR()) {
             return true;
         }
         return false;
@@ -366,7 +366,7 @@ class MonthSalaryResource extends Resource
 
     public static function canDelete(Model $record): bool
     {
-        if (isSystemManager() || isBranchManager() || isSuperAdmin() || isFinanceManager()) {
+        if (isSystemManager() || isBranchManager() || isSuperAdmin() || isFinanceManager() || isHR()) {
             return true;
         }
         return false;
@@ -374,9 +374,10 @@ class MonthSalaryResource extends Resource
 
     public static function canDeleteAny(): bool
     {
-        if (isSystemManager() || isSuperAdmin() || isFinanceManager()) {
+        if (isSystemManager() || isSuperAdmin() || isFinanceManager() || isHR()) {
             return true;
         }
         return false;
     }
 }
+

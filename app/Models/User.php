@@ -197,6 +197,10 @@ class User extends Authenticatable implements FilamentUser, Auditable
     {
         return in_array(18, $this->roles->pluck('id')->toArray());
     }
+    public function isHR()
+    {
+        return in_array(19, $this->roles->pluck('id')->toArray());
+    }
     public function isSuperAdmin()
     {
         $roleIds = $this->roles->pluck('id')->toArray();

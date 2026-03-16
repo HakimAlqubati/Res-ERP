@@ -144,7 +144,7 @@ class EmployeeApplicationResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSystemManager() || isSuperAdmin() || isBranchManager() || isStuff() || isFinanceManager()) {
+        if (isSystemManager() || isSuperAdmin() || isBranchManager() || isStuff() || isFinanceManager() || isHR()) {
             return true;
         }
         return false;
@@ -1654,3 +1654,4 @@ class EmployeeApplicationResource extends Resource
         return $query->forBranchManager();
     }
 }
+

@@ -418,7 +418,8 @@ class SettingResource extends Resource
                             ])->hidden(function () {
                                 return hideHrForTenant();
                             }),
-                        Tab::make('Stock Settings')->hidden(fn(): bool => isFinanceManager())
+                        Tab::make('Stock Settings')
+                            ->hidden(fn(): bool => isFinanceManager() || isHR())
                             ->icon('heroicon-o-shopping-cart')
                             ->schema([
                                 Fieldset::make('')->columnSpanFull()->label('Purchase Settings')->columns(3)->schema([
@@ -528,6 +529,7 @@ class SettingResource extends Resource
                             ]),
                         Tab::make('Users Settings')
                             ->label(__('lang.users_settings'))
+                            ->hidden(fn(): bool => isHR())
                             ->icon('heroicon-o-users')
                             ->schema([
                                 Grid::make()->columnSpanFull()->schema([
