@@ -149,6 +149,7 @@ class EmployeeOvertimeTable
                     ->hidden(fn() => isStuff() || isMaintenanceManager())
                     ->searchable(),
             ], FiltersLayout::Modal)
+            ->filtersFormColumns(4)
             ->recordActions([
                 // Tables\Actions\EditAction::make(),
                 // Action::make('Edit')->visible(fn(): bool => (isSuperAdmin() || isBranchManager()))
