@@ -284,6 +284,7 @@ class EmployeeApplicationResource extends Resource
             ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST))
             ->color('success')
             ->icon('heroicon-o-check')
+            ->modalSubmitActionLabel('Approve')
 
             ->action(function ($record) {
                 DB::beginTransaction();
@@ -412,6 +413,7 @@ class EmployeeApplicationResource extends Resource
             })
             ->color('success')
             ->icon('heroicon-o-check-circle')
+            ->modalSubmitActionLabel('Approve & Pay')
 
             ->action(function ($record, array $data) {
                 DB::beginTransaction();
@@ -425,9 +427,17 @@ class EmployeeApplicationResource extends Resource
                     $advanceRequest = $record->advanceRequest;
                     $advanceRequest->finance_approved_by = auth()->id();
                     $advanceRequest->finance_approved_at = now();
-                    $advanceRequest->payment_method = $data['payment_method'] ?? null;
+                    $advanceRequest->payment_method      = $data['payment_method'] ?? null;
                     $advanceRequest->bank_account_number = $data['bank_account_number'] ?? null;
-                    $advanceRequest->transaction_number = $data['transaction_number'] ?? null;
+                    $advanceRequest->transaction_number  = $data['transaction_number'] ?? null;
+
+                    // ✅ تحديث بيانات الأقساط بالقيم التي عدّلها المدير المالي
+                    // advance_amount: غير قابل للتعديل — يُستخدم دائماً المبلغ الأصلي
+                    $advanceRequest->monthly_deduction_amount      = $data['monthly_deduction_amount'] ?? $advanceRequest->monthly_deduction_amount;
+                    $advanceRequest->number_of_months_of_deduction = $data['number_of_months_of_deduction'] ?? $advanceRequest->number_of_months_of_deduction;
+                    $advanceRequest->deduction_starts_from         = $data['deduction_starts_from'] ?? $advanceRequest->deduction_starts_from;
+                    $advanceRequest->deduction_ends_at             = $data['deduction_ends_at'] ?? $advanceRequest->deduction_ends_at;
+
                     $advanceRequest->save();
 
                     // Generate installments and financial transactions
@@ -479,40 +489,75 @@ class EmployeeApplicationResource extends Resource
                             ->disabled(),
                     ]),
 
-                    // Advance Amount Details
+                    // ── تفاصيل السلفة (قابلة للتعديل) ─────────────────────
                     Fieldset::make()->label(__('lang.advance_details'))->columns(2)->schema([
                         TextInput::make('advance_amount')
                             ->label(__('lang.advance_amount'))
-                            ->default(number_format($advanceAmount, 2))
+                            ->default($advanceAmount)
+                            ->numeric()
                             ->suffix($currency)
                             ->prefixIcon('heroicon-o-banknotes')
-                            ->disabled(),
-                        TextInput::make('monthlyDeductionAmount')
+                            ->disabled()
+                            ->dehydrated(),
+
+                        TextInput::make('monthly_deduction_amount')
                             ->label(__('lang.monthly_deduction'))
-                            ->default(number_format($monthlyDeductionAmount, 2))
+                            ->default($monthlyDeductionAmount)
+                            ->numeric()
+                            ->required()
                             ->suffix($currency)
                             ->prefixIcon('heroicon-o-calculator')
-                            ->disabled(),
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                $advAmt = (float) $get('advance_amount');
+                                if ((float)$state > 0 && $advAmt > 0) {
+                                    $months = (int) ceil($advAmt / (float)$state);
+                                    $set('number_of_months_of_deduction', $months);
+                                    static::_recalcDeductionEnd($get, $set, $months);
+                                }
+                            }),
                     ]),
 
-                    // Deduction Schedule
+                    // ── جدول الخصم (قابل للتعديل) ──────────────────────────
                     Fieldset::make()->label(__('lang.deduction_schedule'))->columns(3)->schema([
-                        TextInput::make('deductionStartsFrom')
+
+                        DatePicker::make('deduction_starts_from')
                             ->label(__('lang.starts_from'))
                             ->default($deductionStartsFrom)
                             ->prefixIcon('heroicon-o-play')
-                            ->disabled(),
-                        TextInput::make('deductionEndsAt')
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                $months = (int) $get('number_of_months_of_deduction');
+                                if ($months > 0 && $state) {
+                                    static::_recalcDeductionEnd($get, $set, $months);
+                                }
+                            }),
+
+                        DatePicker::make('deduction_ends_at')
                             ->label(__('lang.ends_at'))
                             ->default($deductionEndsAt)
                             ->prefixIcon('heroicon-o-stop')
-                            ->disabled(),
-                        TextInput::make('numberOfMonthsOfDeduction')
+                            ->disabled()
+                            ->dehydrated(),
+
+                        TextInput::make('number_of_months_of_deduction')
                             ->label(__('lang.number_of_months'))
                             ->default($numberOfMonthsOfDeduction)
+                            ->numeric()
+                            ->required()
+                            ->minValue(1)
                             ->suffix(__('lang.months'))
                             ->prefixIcon('heroicon-o-clock')
-                            ->disabled(),
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                $advAmt = (float) $get('advance_amount');
+                                $months = (int) $state;
+                                if ($advAmt > 0 && $months > 0) {
+                                    $set('monthly_deduction_amount', round($advAmt / $months, 2));
+                                    static::_recalcDeductionEnd($get, $set, $months);
+                                }
+                            }),
                     ]),
 
 
@@ -550,6 +595,20 @@ class EmployeeApplicationResource extends Resource
 
                 ];
             });
+    }
+
+    /**
+     * Helper: إعادة حساب تاريخ انتهاء الخصم بناءً على تاريخ البداية وعدد الأشهر.
+     */
+    private static function _recalcDeductionEnd(Get $get, Set $set, int $months): void
+    {
+        $startsFrom = $get('deduction_starts_from') ?? now()->toDateString();
+        $endsAt = Carbon::parse($startsFrom)
+            ->startOfMonth()
+            ->addMonths($months - 1)
+            ->endOfMonth()
+            ->format('Y-m-d');
+        $set('deduction_ends_at', $endsAt);
     }
 
     public static function financeRejectAdvanceRequest(): Action
