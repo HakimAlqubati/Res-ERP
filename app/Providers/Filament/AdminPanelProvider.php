@@ -226,7 +226,7 @@ class AdminPanelProvider extends PanelProvider
                                     || (count(explode('.', request()->getHost())) == 2 && env('APP_ENV') == 'production')
 
                                 )
-                                    || env('APP_ENV') == 'local' && env('APP_URL') == 'https://workbench.test/')
+                                    || env('APP_ENV') == 'local' && env('APP_URL') == 'https://workbench.test/' && isSuperAdmin())
                                     ? TenantResource::getNavigationItems() : [],
                             )),
                         NavigationGroup::make('AppLogs')
