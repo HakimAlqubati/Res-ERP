@@ -54,6 +54,7 @@ use App\Filament\Resources\SettingResource;
 use App\Filament\Resources\SystemSettingResource;
 use App\Filament\Resources\TenantResource;
 use App\Filament\Resources\UserResource;
+use App\Filament\Resources\UserTypeResource;
 use App\Filament\Resources\VisitLogResource;
 use App\Http\Middleware\CheckUserActive;
 use App\Models\CustomTenantModel;
@@ -165,6 +166,7 @@ class AdminPanelProvider extends PanelProvider
                         NavigationGroup::make(__('lang.user_and_roles'))->collapsed(1)
                             ->items(array_merge(
                                 (isSuperAdmin() || isSystemManager() || isBranchManager()) ?   UserResource::getNavigationItems() : [],
+                                (isSuperAdmin()) ?   UserTypeResource::getNavigationItems() : [],
                                 // isSuperAdmin() || isSystemManager() ? RoleResource::getNavigationItems() : []
                             )),
                         NavigationGroup::make(__('lang.branches'))->collapsed(1)
