@@ -43,7 +43,7 @@ class HelperFunctions
                     break;
                 case AttendanceReportStatus::Partial->value:
                     $stats['partial']++;
-                    $stats['absent']++;
+                    // $stats['absent']++;
                     $stats['required_days']++;
                     break;
                 case AttendanceReportStatus::Leave->value:
