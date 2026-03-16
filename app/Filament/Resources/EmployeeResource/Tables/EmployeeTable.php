@@ -422,43 +422,36 @@ class EmployeeTable
                                 ->default($record->serviceTermination->notes)
                                 ->disabled(),
                         ])
-                        ->modalSubmitAction(false)
-                        ->modalFooterActions(fn(Employee $record, Action $action) => [
-                            Action::make('approve')
-                                ->label(__('lang.approve_termination'))
-                                ->color('success')
-                                ->requiresConfirmation()
-                                ->action(function () use ($record, $action) {
-                                    try {
-                                        app(\App\Modules\HR\Employee\Services\EmployeeLifecycleService::class)
-                                            ->approveTermination($record->serviceTermination);
+                        ->label(__('lang.approve_termination'))
+                        ->color('success')
+                        // ->requiresConfirmation()
+                        ->action(function ($record) {
+                            try {
+                                app(\App\Modules\HR\Employee\Services\EmployeeLifecycleService::class)
+                                    ->approveTermination($record->serviceTermination);
 
-                                        Notification::make()->title(__('lang.termination_approved_successfully'))->success()->send();
-                                        $action->close();
-                                    } catch (\Exception $e) {
-                                        Notification::make()->title(__('lang.error_occurred'))->body($e->getMessage())->danger()->send();
-                                    }
-                                }),
-                            Action::make('reject')
-                                ->label(__('lang.reject_termination'))
-                                ->color('danger')
-                                ->schema([
-                                    Textarea::make('rejection_reason')->required()->label(__('lang.rejection_reason'))
-                                ])
-                                ->action(function (array $data) use ($record, $action) {
-                                    try {
-                                        app(\App\Modules\HR\Employee\Services\EmployeeLifecycleService::class)
-                                            ->rejectTermination($record->serviceTermination, $data);
+                                Notification::make()->title(__('lang.termination_approved_successfully'))->success()->send();
+                            } catch (\Exception $e) {
+                                Notification::make()->title(__('lang.error_occurred'))->body($e->getMessage())->danger()->send();
+                            }
+                        }),
+                    Action::make('reject')
+                        ->label(__('lang.reject_termination'))
+                        ->color('danger')
+                        ->schema([
+                            Textarea::make('rejection_reason')->required()->label(__('lang.rejection_reason'))
+                        ])
+                        ->icon('heroicon-o-x-circle')
+                        ->action(function (array $data, $record) {
+                            try {
+                                app(\App\Modules\HR\Employee\Services\EmployeeLifecycleService::class)
+                                    ->rejectTermination($record->serviceTermination, $data);
 
-                                        Notification::make()->title(__('lang.termination_rejected_successfully'))->success()->send();
-                                        $action->close();
-                                    } catch (\Exception $e) {
-                                        Notification::make()->title(__('lang.error_occurred'))->body($e->getMessage())->danger()->send();
-                                    }
-                                }),
-                            // $action->cancel(),
-                        ]),
-
+                                Notification::make()->title(__('lang.termination_rejected_successfully'))->success()->send();
+                            } catch (\Exception $e) {
+                                Notification::make()->title(__('lang.error_occurred'))->body($e->getMessage())->danger()->send();
+                            }
+                        }),
                     Action::make('rehire')
                         ->label(__('lang.rehire'))
                         ->icon('heroicon-o-arrow-path')
@@ -480,7 +473,6 @@ class EmployeeTable
                                     ->title(__('lang.employee_rehired_successfully'))
                                     ->success()
                                     ->send();
-
                             } catch (\Exception $e) {
                                 Notification::make()
                                     ->title(__('lang.error_occurred'))
