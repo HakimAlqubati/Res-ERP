@@ -273,7 +273,7 @@ class EmployeeTable
                     ->options(getNationalities()),
                 SelectFilter::make('active')
 
-                    ->options([1 => __('lang.active'), 0 => __('lang.unterminated')])->default(1)
+                    ->options([1 => __('lang.active'), 0 => __('lang.terminated')])->default(1)
                     ->label(__('lang.active')),
                 SelectFilter::make('employee_type')
                     ->label(__('lang.role_type'))

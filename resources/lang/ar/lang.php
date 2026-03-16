@@ -1078,5 +1078,6 @@ return [
   'weekly_leave' => 'إجازة أسبوعية',
   'error_occurred' => 'حدث خطأ',
   'employee_name' => 'اسم الموظف',
-  'unterminated' => 'موقف'
+  'unterminated' => 'غير موقف',
+  'terminated' => 'موقف'
 ];

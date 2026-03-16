@@ -1096,5 +1096,6 @@ return [
     'weekly_leave' => 'Weekly Leave',
     'error_occurred' => 'Error Occurred',
     'employee_name' => 'Employee Name',
-    'unterminated' => 'Unterminated'
+    'unterminated' => 'Unterminated',
+    'terminated' => 'Terminated'
 ];
