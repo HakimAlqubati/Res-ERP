@@ -252,22 +252,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
 
     public function getIsBranchManagerAttribute() {}
-    // public function canAccessFilament(): bool
-    // {
-    //     return true;
-    // }
-
-    protected static function booted()
-    {
-        // dd(auth()->check());
-        if (auth()->check()) {
-            // if (isBranchManager()) {
-            //     static::addGlobalScope('active', function (Builder $builder) {
-            //         $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
-            //     });
-            // }
-        }
-    }
+  
+ 
 
     public function getHasEmployeeAttribute()
     {

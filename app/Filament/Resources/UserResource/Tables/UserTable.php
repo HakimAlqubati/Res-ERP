@@ -74,10 +74,13 @@ class UserTable
                     ->circular()->alignCenter(true),
                 TextColumn::make('name')
                     ->limit(20)
+                    ->tooltip(fn($state) => $state)
                     ->sortable()->searchable()
                     ->searchable(isIndividual: true, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: false),
-                TextColumn::make('email')->icon('heroicon-m-envelope')->copyable()
+                TextColumn::make('email')
+                    // ->icon('heroicon-m-envelope')
+                    ->copyable()
                     ->copyMessage('Email address copied')
                     ->copyMessageDuration(1500)
                     ->sortable()->searchable()
@@ -85,10 +88,12 @@ class UserTable
                     ->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('phone_number')->label('Phone')->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: true)
-                    ->toggleable(isToggledHiddenByDefault: false)->default('_')->copyable()
-                    ->copyable()
-                    ->copyMessage('Phone number copied')
-                    ->copyMessageDuration(1500),
+                    ->toggleable(isToggledHiddenByDefault: false)->default('_')
+                    // ->copyable()
+                    // ->copyable()
+                    // ->copyMessage('Phone number copied')
+                    // ->copyMessageDuration(1500)
+                    ,
 
                 IconColumn::make('active')
                     ->label('Active')

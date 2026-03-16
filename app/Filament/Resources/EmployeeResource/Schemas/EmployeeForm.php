@@ -296,7 +296,7 @@ class EmployeeForm
                                         TextInput::make('working_hours')
                                             ->label(__('lang.working_hours'))
                                             ->helperText('To Calculate the Hour Late')
-                                            ->numeric()->required()->default(6),
+                                            ->numeric()->required()->default(12),
 
                                         TextInput::make('working_days')
                                             ->label(__('lang.working_days_per_month'))
