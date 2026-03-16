@@ -255,6 +255,11 @@ class EmployeeTable
                     ->falseIcon('heroicon-o-x-mark')
                     ->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('created_at')
+                    ->label(__('lang.created_at'))
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
             ])->deferFilters(true)
             ->filters([
