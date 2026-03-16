@@ -1097,5 +1097,6 @@ return [
     'error_occurred' => 'Error Occurred',
     'employee_name' => 'Employee Name',
     'unterminated' => 'Unterminated',
-    'terminated' => 'Terminated'
+    'terminated' => 'Terminated',
+    'access_denied' => 'Access Denied',
 ];

@@ -1079,5 +1079,6 @@ return [
   'error_occurred' => 'حدث خطأ',
   'employee_name' => 'اسم الموظف',
   'unterminated' => 'غير موقف',
-  'terminated' => 'موقف'
+  'terminated' => 'موقف',
+  'access_denied' => 'ممنوع من الوصول',
 ];
