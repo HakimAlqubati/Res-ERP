@@ -213,8 +213,8 @@ class AttendanceFetcher
         // تحويل أيام الغياب بصرياً في التقرير — فقط عند انتهاء الشهر
         if ($isPreviousMonth) {
             $result           = $this->applyWeeklyLeaveToAbsences($result);
-            $weeklyLeaveStats = $result->get('weekly_leave_stats', []);
-            $absentDays       = $weeklyLeaveStats['remaining_absences'] ?? $absentDays;
+            // $weeklyLeaveStats = $result->get('weekly_leave_stats', []);
+            // $absentDays       = $weeklyLeaveStats['remaining_absences'] ?? $absentDays;
         }
 
         // الاحتساب المالي — يعمل دائماً بنفس هيكل الريسبونس
