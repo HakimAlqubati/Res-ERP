@@ -529,7 +529,7 @@ class SettingResource extends Resource
                             ]),
                         Tab::make('Users Settings')
                             ->label(__('lang.users_settings'))
-                            ->hidden(fn(): bool => isHR())
+                            ->visible(fn(): bool => isSuperAdmin() || isSystemManager())
                             ->icon('heroicon-o-users')
                             ->schema([
                                 Grid::make()->columnSpanFull()->schema([
