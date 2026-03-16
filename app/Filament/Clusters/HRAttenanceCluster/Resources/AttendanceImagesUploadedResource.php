@@ -167,7 +167,7 @@ class AttendanceImagesUploadedResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager()) {
+        if (isSuperAdmin() || isSystemManager() || isHR()) {
             return true;
         }
         return false;

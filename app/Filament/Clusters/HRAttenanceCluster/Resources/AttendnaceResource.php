@@ -505,7 +505,7 @@ class AttendnaceResource extends Resource
 
     public static function canDelete(Model $record): bool
     {
-        if (isSuperAdmin()) {
+        if (isSuperAdmin() || isHR()) {
             return true;
         }
         return false;
@@ -537,7 +537,7 @@ class AttendnaceResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSystemManager() || isSuperAdmin()) {
+        if (isSystemManager() || isSuperAdmin() || isHR()) {
             return true;
         }
         return false;
