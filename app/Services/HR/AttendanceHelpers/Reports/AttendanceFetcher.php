@@ -145,7 +145,13 @@ class AttendanceFetcher
                 // --- منطق الحالة ---
                 $hasCheckin  = count($checkInResources) > 0;
                 $hasCheckout = count($checkOutResources) > 0;
-                if (Carbon::parse($date)->gt(Carbon::today())) {
+
+                // المستقبل: إما اليوم لاحق، أو اليوم ذاته لكن وقت الشيفت لم يبدأ بعد
+                $isFutureDate  = Carbon::parse($date)->gt(Carbon::today());
+                $isShiftNotYetStarted = Carbon::parse($date)->isToday()
+                    && Carbon::now()->lt(Carbon::parse("{$date} {$period['start_time']}"));
+
+                if ($isFutureDate || $isShiftNotYetStarted) {
                     $status = AttendanceReportStatus::Future;
                 } elseif (! $hasCheckin && ! $hasCheckout) {
                     $status = AttendanceReportStatus::Absent;
