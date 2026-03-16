@@ -79,15 +79,48 @@ class SeedHRRoleCommand extends Command
      */
     protected function processForTenant($tenant): int
     {
-        // ── 1. Create (or fetch) the HR role ─────────────────────────────────
-        $role = Role::firstOrCreate(
-            ['id' => 19, 'name' => 'HR', 'guard_name' => 'web'],
-        );
+        // ── 1. Create or Update the HR role to ensure ID is 19 ────────────────
+        $roleName = 'HR';
+        $guardName = 'web';
+        $targetId = 19;
 
-        $wasCreated = $role->wasRecentlyCreated;
-        $roleAction = $wasCreated ? 'Created' : 'Already exists';
+        // Check if role with name HR exists
+        $existingRole = Role::where('name', $roleName)->where('guard_name', $guardName)->first();
 
-        $this->line("  ✔ Role [HR] — {$roleAction} (id: {$role->id})");
+        if ($existingRole) {
+            if ($existingRole->id !== $targetId) {
+                // Check if target ID is already taken by another role
+                $roleWithTargetId = Role::find($targetId);
+                if ($roleWithTargetId) {
+                    $this->warn("  ⚠ Role ID {$targetId} is already taken by role [{$roleWithTargetId->name}]. Cannot update ID for [{$roleName}].");
+                    $role = $existingRole;
+                    $roleAction = 'Exists but could not update ID to ' . $targetId;
+                } else {
+                    // Update ID to 19
+                    // Disable foreign key checks temporarily if needed, though Spatie usually handles it or we can just update
+                    $existingRole->id = $targetId;
+                    $existingRole->save();
+                    
+                    $role = $existingRole;
+                    $roleAction = "Updated ID from {$existingRole->getOriginal('id')} to {$targetId}";
+                }
+            } else {
+                $role = $existingRole;
+                $roleAction = 'Already exists with correct ID 19';
+            }
+        } else {
+            // Check if ID 19 is taken before creating
+            $roleWithTargetId = Role::find($targetId);
+            if ($roleWithTargetId) {
+                 $this->warn("  ⚠ Role ID {$targetId} is already taken by role [{$roleWithTargetId->name}]. Creating [{$roleName}] without forcing ID.");
+                 $role = Role::create(['name' => $roleName, 'guard_name' => $guardName]);
+            } else {
+                 $role = Role::create(['id' => $targetId, 'name' => $roleName, 'guard_name' => $guardName]);
+            }
+            $roleAction = 'Created';
+        }
+
+        $this->line("  ✔ Role [{$roleName}] — {$roleAction} (id: {$role->id})");
 
         // ── 2. Update user_type id=2 (Middle management) ─────────────────────
         $userType = UserType::find(2);
