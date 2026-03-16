@@ -105,13 +105,34 @@ class OvertimeService
             ->get();
 
         if ($existingRecords->isNotEmpty()) {
-            $duplicateNames = $existingRecords->map(function ($record) {
-                return $record->employee
-                    ? "{$record->employee->name} (#{$record->employee_id})"
-                    : "#{$record->employee_id}";
-            })->implode(', ');
+            $existingEmployeeIds = $existingRecords->pluck('employee_id')->toArray();
+            
+            // Filter out existing employees
+            $data['employees'] = array_filter($data['employees'], function ($employee) use ($existingEmployeeIds) {
+                return !in_array($employee['employee_id'], $existingEmployeeIds);
+            });
+            
+            // Re-index array
+            $data['employees'] = array_values($data['employees']);
 
-            throw new Exception("Overtime already exists for: {$duplicateNames} on {$data['date']}");
+            // Filter employees_with_month if it exists
+            if (isset($data['employees_with_month'])) {
+                $data['employees_with_month'] = array_filter($data['employees_with_month'], function ($employee) use ($existingEmployeeIds) {
+                    return !in_array($employee['employee_id'], $existingEmployeeIds);
+                });
+                $data['employees_with_month'] = array_values($data['employees_with_month']);
+            }
+
+            // If all were duplicates
+            if (empty($data['employees'])) {
+                $duplicateNames = $existingRecords->map(function ($record) {
+                    return $record->employee
+                        ? "{$record->employee->name} (#{$record->employee_id})"
+                        : "#{$record->employee_id}";
+                })->implode(', ');
+
+                throw new Exception("Overtime already exists for: {$duplicateNames} on {$data['date']}");
+            }
         }
 
         if ($data['type'] === EmployeeOvertime::TYPE_BASED_ON_DAY) {
@@ -120,9 +141,14 @@ class OvertimeService
             $this->handleOverTimeMonth($data);
         }
 
+        $skippedCount = $existingRecords->count();
+        $message = $skippedCount > 0 
+            ? "Overtime records created successfully. Skipped {$skippedCount} existing records." 
+            : 'Overtime records created successfully';
+
         return [
             'status' => true,
-            'message' => 'Overtime records created successfully',
+            'message' => $message,
             'count' => count($data['employees'])
         ];
     }
