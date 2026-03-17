@@ -226,7 +226,15 @@ class EmployeeForm
                                         Select::make('employee_type')->columnSpan(1)->label(__('lang.role_type'))
                                             ->searchable()
                                             ->live()
-                                            ->options(UserType::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id'))->required(),
+                                            ->options(function () {
+                                                return [0 => __('lang.all')] + UserType::where('active', 1)
+                                                    ->select('id', 'name')
+                                                    ->get()
+                                                    ->pluck('name', 'id')
+                                                    ->toArray();
+                                            })
+                                            ->required()
+                                            ->default(0),
 
                                         Select::make('branch_id')->columnSpan(1)->label(__('lang.branch'))
                                             ->searchable()
@@ -249,23 +257,36 @@ class EmployeeForm
                                             ),
                                         Toggle::make('is_ceo')->label(__('lang.is_ceo'))
                                             ->live()
-                                            ->visible(fn($get): bool => $get('employee_type') == 1)
+                                            ->visible(fn($get): bool => in_array((int) $get('employee_type'), [0, 1]))
                                             ->default(0)->inline(false),
                                         Select::make('manager_id')
                                             ->columnSpan(1)
                                             ->label(__('lang.manager'))
                                             ->searchable()
                                             // ->requiredIf('is_ceo', false)
-                                            ->required(fn(Get $get) => in_array((int) $get('employee_type'), [3, 4]))
+                                            ->required(fn(Get $get) => in_array((int) $get('employee_type'), [2, 3, 4]))
 
                                             ->options(function (Get $get, ?Employee $record) {
                                                 $branchId = $get('branch_id');
+                                                $employeeType = (int) $get('employee_type');
                                                 $currentEmployeeId = $record?->id; // سيكون null في List/Create، ومتوفر في Edit/View
 
+                                                if (in_array($employeeType, [0, 1, 2, 3])) {
+                                                    // إذا كان نوع الموظف 2، يمكن اختيار المدراء من أي فرع بشرط أن يكونوا من نوع 1 أو 2
+                                                    return Employee::active()
+                                                        ->whereIn('employee_type', [1, 2])
+                                                        ->when(
+                                                            $currentEmployeeId,
+                                                            fn($query) =>
+                                                            $query->where('id', '!=', $currentEmployeeId) // استبعاد الموظف الحالي إن كنا في وضع التعديل
+                                                        )
+                                                        ->pluck('name', 'id');
+                                                }
+
                                                 if ($branchId) {
+                                                    // للموظفين الآخرين، تصفية حسب الفرع الحالي وأن يكون المدير من نوع 1، 2، أو 3
                                                     return Employee::active()
                                                         ->forBranch($branchId)
-                                                        // ->employeeTypesManagers()
                                                         ->whereIn('employee_type', [1, 2, 3])
                                                         ->when(
                                                             $currentEmployeeId,

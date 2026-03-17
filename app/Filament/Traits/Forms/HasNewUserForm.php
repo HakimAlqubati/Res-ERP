@@ -99,27 +99,32 @@ trait HasNewUserForm
                     ->label('Set user type and role')->schema([
                         Select::make('user_type')
                             ->label('User type')
-                            // ->options(getUserTypes())
-                            ->options(
-                                UserType::select('name', 'id')
-                                    // ->whereNotIn('id', [2,3,4])
-                                    ->get()->pluck('name', 'id')
-                            )
+                            ->options(function () {
+                                return [0 => 'All'] + UserType::select('name', 'id')->get()->pluck('name', 'id')->toArray();
+                            })
+                            ->default(0)
                             ->required()
                             ->live()
-                            ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
-
-                                //  dd($roles,$state);
+                            ->afterStateUpdated(function (Set $set, Get $get, ?string $state, ?\Illuminate\Database\Eloquent\Model $record) {
+                                // استعادة كل الأدوار الأصلية للمستخدم عند اختيار 0
+                                if ($state == 0 && $record) {
+                                    $set('roles', $record->roles()->pluck('id')->toArray());
+                                }
                             }),
                         CheckboxList::make('roles')->required()
                             ->label('Roles')
+                            ->columns(3)
                             ->relationship(
                                 name: 'roles',
                                 titleAttribute: 'name',
                                 modifyQueryUsing: function (Builder $query, Get $get) {
-                                    $allowed = getRolesByTypeId($get('user_type') ?? null) ?? [];
-                                    $query->where('guard_name', 'web')   // عدّل الحارس إذا لزم
-                                        ->whereIn('id', $allowed);
+                                    $userType = $get('user_type');
+                                    $query->where('guard_name', 'web'); // عدّل الحارس إذا لزم
+
+                                    if ($userType != 0 && $userType !== null) {
+                                        $allowed = getRolesByTypeId($userType) ?? [];
+                                        $query->whereIn('id', $allowed);
+                                    }
                                 }
                             )
                             ->validationAttribute('Roles')
