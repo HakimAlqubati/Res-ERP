@@ -280,6 +280,7 @@ return [
   'gender' => 'الجنس',
   'male' => 'ذكر',
   'female' => 'أنثى',
+  'birthday' => 'تاريخ الميلاد',
   'nationality' => 'الجنسية',
   'employee_address' => 'عنوان الموظف',
   'avatar' => 'الصورة الشخصية',

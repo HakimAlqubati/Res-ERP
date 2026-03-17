@@ -298,6 +298,7 @@ return [
     'gender' => 'Gender',
     'male' => 'Male',
     'female' => 'Female',
+    'birthday' => 'Birthday',
     'nationality' => 'Nationality',
     'employee_address' => 'Employee Address',
     'avatar' => 'Avatar',

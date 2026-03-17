@@ -61,6 +61,7 @@ class Employee extends Model implements Auditable
         'working_days',
         'is_indexed_in_aws',
         'is_mtd_applicable',
+        'birthday',
     ];
 
     protected $auditInclude = [
@@ -96,6 +97,7 @@ class Employee extends Model implements Auditable
         'working_days',
         'is_indexed_in_aws',
         'is_mtd_applicable',
+        'birthday',
     ];
 
     protected $casts = [

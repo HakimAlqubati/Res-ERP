@@ -171,6 +171,9 @@ class EmployeeForm
                                                     ])
                                                     ->required(),
 
+                                                DatePicker::make('birthday')
+                                                    ->label(__('lang.birthday'))
+                                                    ->nullable(),
 
                                                 Select::make('nationality')
                                                     ->label(__('lang.nationality'))->live()
