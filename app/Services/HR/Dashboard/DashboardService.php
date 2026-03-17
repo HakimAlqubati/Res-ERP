@@ -22,7 +22,7 @@ class DashboardService
         $appQuery = EmployeeApplicationV2::where('status', EmployeeApplicationV2::STATUS_PENDING)
             ->forBranchManager()
             ->forEmployee();
-        
+
         if ($dto->branchId) {
             $appQuery->where('branch_id', $dto->branchId);
         }
@@ -30,7 +30,7 @@ class DashboardService
         $appCounts = $appQuery->select('application_type_id', DB::raw('count(*) as count'))
             ->groupBy('application_type_id')
             ->pluck('count', 'application_type_id');
-            
+
         // Overtime
         $overtimeQuery = EmployeeOvertime::where('approved', 0);
         if ($dto->branchId) {
@@ -59,15 +59,17 @@ class DashboardService
         }
         $branches = $branchesQuery->get(['id', 'name']);
 
-        $today = Carbon::today()->toDateString();
-        
+        $baseDate = $dto->dateTime ? $dto->dateTime->clone() : Carbon::now();
+        $today = $baseDate->toDateString();
+
         $todayAttendance = [];
         $last7DaysAttendance = [];
 
-        // Last 7 days including today
+        // Last 7 days including the selected date
         $dates = [];
         for ($i = 6; $i >= 0; $i--) {
-            $dates[] = Carbon::today()->subDays($i)->toDateString();
+            // we use toDateString() to just generate the string label for the day
+            $dates[] = $baseDate->clone()->subDays($i)->toDateString();
         }
 
         // Fetch all active employees counts grouped by branch
@@ -86,16 +88,20 @@ class DashboardService
             ->get()
             ->groupBy(['branch_id', 'check_date']);
 
+        // Fetch live present employees using the dedicated service to properly handle overnight shifts
+        $presentService = app(\App\Services\HR\AttendanceHelpers\Reports\PresentEmployeesService::class);
+        $livePresentEmployees = $presentService->getPresentEmployees($baseDate, $dto->branchId ? ['branch_id' => $dto->branchId] : []);
+        $livePresentGrouped = $livePresentEmployees->groupBy('branchId');
         foreach ($branches as $branch) {
             $bId = $branch->id;
             $totalEmployees = $employeeCounts->get($bId, 0);
-            
-            // -- Today's Attendance --
+
+            // -- Today's Attendance (Live Present) --
             $branchDayData = $allAttendances->get($bId, collect());
-            $todayAttendances = $branchDayData->get($today, collect());
-            
-            $todayPresent = $todayAttendances->unique('employee_id')->count();
-            $todayLate = $todayAttendances->where('status', Attendance::STATUS_LATE_ARRIVAL)->unique('employee_id')->count();
+
+            $branchLivePresent = $livePresentGrouped->get($bId, collect());
+            $todayPresent = $branchLivePresent->count();
+            $todayLate = $branchLivePresent->where('status', Attendance::STATUS_LATE_ARRIVAL)->count();
             $todayAbsent = max(0, $totalEmployees - $todayPresent);
             $todayPercentage = $totalEmployees > 0 ? round(($todayPresent / $totalEmployees) * 100, 2) : 0;
 
@@ -112,12 +118,20 @@ class DashboardService
             // -- Last 7 Days Attendance --
             $history = [];
             foreach ($dates as $date) {
-                $dayData = $branchDayData->get($date, collect());
-                
-                $presentCount = $dayData->unique('employee_id')->count();
-                $lateCount = $dayData->where('status', Attendance::STATUS_LATE_ARRIVAL)->unique('employee_id')->count();
-                $absentCount = max(0, $totalEmployees - $presentCount);
-                $percentage = $totalEmployees > 0 ? round(($presentCount / $totalEmployees) * 100, 2) : 0;
+                if ($date === $today) {
+                    $presentCount = $todayPresent;
+
+                    $lateCount = $todayLate;
+                    $absentCount = $todayAbsent;
+                    $percentage = $todayPercentage;
+                } else {
+                    $dayData = $branchDayData->get($date, collect());
+
+                    $presentCount = $dayData->unique('employee_id')->count();
+                    $lateCount = $dayData->where('status', Attendance::STATUS_LATE_ARRIVAL)->unique('employee_id')->count();
+                    $absentCount = max(0, $totalEmployees - $presentCount);
+                    $percentage = $totalEmployees > 0 ? round(($presentCount / $totalEmployees) * 100, 2) : 0;
+                }
 
                 $history[] = [
                     'date'       => $date,
