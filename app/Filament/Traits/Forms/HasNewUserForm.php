@@ -100,17 +100,27 @@ trait HasNewUserForm
                         Select::make('user_type')
                             ->label('User type')
                             ->options(function () {
-                                return [0 => 'All'] + UserType::select('name', 'id')->get()->pluck('name', 'id')->toArray();
+                                return
+                                 [0 => 'All'] +
+                                 UserType::select('name', 'id')->get()->pluck('name', 'id')->toArray();
                             })
                             ->default(0)
                             ->required()
                             ->live()
                             ->afterStateUpdated(function (Set $set, Get $get, ?string $state, ?\Illuminate\Database\Eloquent\Model $record) {
-                                // استعادة كل الأدوار الأصلية للمستخدم عند اختيار 0
                                 if ($state == 0 && $record) {
                                     $set('roles', $record->roles()->pluck('id')->toArray());
+                                } else {
+                                    // تفريغ الأدوار عند تغيير النوع لتجنب تعارض الأدوار القديمة مع النوع الجديد
+                                    $set('roles', []);
                                 }
                             }),
+                        // ->afterStateUpdated(function (Set $set, Get $get, ?string $state, ?\Illuminate\Database\Eloquent\Model $record) {
+                        //     // استعادة كل الأدوار الأصلية للمستخدم عند اختيار 0
+                        //     if ($state == 0 && $record) {
+                        //         $set('roles', $record->roles()->pluck('id')->toArray());
+                        //     }
+                        // }),
                         CheckboxList::make('roles')->required()
                             ->label('Roles')
                             ->columns(3)
@@ -127,6 +137,18 @@ trait HasNewUserForm
                                     }
                                 }
                             )
+                            ->afterStateHydrated(function (CheckboxList $component, $state, Get $get) {
+                                $userType = $get('user_type');
+                                if ($userType != 0 && $userType !== null && is_array($state)) {
+                                    $allowed = getRolesByTypeId($userType) ?? [];
+                                    $validState = array_values(array_intersect($state, $allowed));
+                                    $component->state($validState);
+                                }
+                            })
+                            ->saveRelationshipsUsing(function ($record, $state) {
+                                // إجبار الحفظ على مسح كل الرولز القديمة تماماً، وإبقاء الرولز المحددة فقط 
+                                $record->syncRoles($state ?? []);
+                            })
                             ->validationAttribute('Roles')
                             ->validationMessages([
                                 // Error triggered on each item: roles.*.in
@@ -136,21 +158,9 @@ trait HasNewUserForm
                                 'array'    => 'The roles list format is invalid.',
                                 'required' => 'Please select at least one role.',
                             ])
-
-                            // ->helperText('الأدوار المعروضة تعتمد على نوع المستخدم. عند تغيير "User type" قد تصبح بعض الأدوار غير متاحة.')
-                            // ->maxItems(1)
+ 
                             ->live()
-                        // ->options(function (Get $get) {
-                        //     // dd($get('user_type'),'hi');
-                        //     if ($get('user_type')) {
-                        //         $roles = getRolesByTypeId($get('user_type'));
-                        //         // dd($roles,gettype($roles));
-                        //         return Role::select('name', 'id')
-                        //             ->whereIn('id', $roles)
-                        //             ->orderBy('name', 'asc')
-                        //             ->get()->pluck('name', 'id');
-                        //     }
-                        // })
+                       
                         ,
                     ]),
                 Grid::make()->columnSpanFull()->columns(2)->schema([
