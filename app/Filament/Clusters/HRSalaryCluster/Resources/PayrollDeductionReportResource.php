@@ -45,7 +45,9 @@ class PayrollDeductionReportResource extends Resource
                                 return [$employee->id => $employee->name . ' - ' . $employee->id];
                             })->all();
                     }
-                )->searchable(),
+                )->searchable()
+                ->placeholder('Select Employee')
+                ,
 
                 Filter::make('date_range')
                     ->form([
@@ -56,19 +58,20 @@ class PayrollDeductionReportResource extends Resource
                             ->label('To Date')
                             ->default(now()->endOfMonth()),
                     ])
-                    ->query(function (Builder $query) { 
-                        return $query; 
+                    ->query(function (Builder $query) {
+                        return $query;
                     }),
 
                 \Filament\Tables\Filters\TernaryFilter::make('include_employer_contribution')
                     ->label('Include Employer Contribution')
-                    ->placeholder('Yes')
+                    ->selectablePlaceholder(false)
                     ->trueLabel('Yes')
                     ->falseLabel('No')
+                    ->default(true)
                     ->queries(
-                        true: fn (Builder $query) => $query,
-                        false: fn (Builder $query) => $query,
-                        blank: fn (Builder $query) => $query,
+                        true: fn(Builder $query) => $query,
+                        false: fn(Builder $query) => $query,
+                        blank: fn(Builder $query) => $query,
                     )
             ], FiltersLayout::AboveContent)
             ->actions([])
