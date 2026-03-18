@@ -53,13 +53,24 @@ class DeductionReport
             return $this->emptyResponse($filters);
         }
 
-        // Aggregate total deductions by description (or sub_type/type if description is null)
-        $totalDeductions = $transactions->groupBy(function (SalaryTransaction $tx) {
-            return $tx->description ?: ucfirst(str_replace('_', ' ', $tx->sub_type ?? $tx->type));
-        })->map(function ($group, $name) {
+        // Aggregate deductions by Year-Month, then by description
+        $monthlyDeductions = $transactions->groupBy(function (SalaryTransaction $tx) {
+            return \Carbon\Carbon::parse($tx->date)->format('Y-m');
+        })->sortKeys()->map(function ($monthTransactions, $monthKey) {
+            $deductionsList = $monthTransactions->groupBy(function (SalaryTransaction $tx) {
+                return $tx->description ?: ucfirst(str_replace('_', ' ', $tx->sub_type ?? $tx->type));
+            })->map(function ($group, $name) {
+                return [
+                    'deduction_name' => $name,
+                    'deduction_amount' => round(abs((float) $group->sum('amount')), 2)
+                ];
+            })->values()->all();
+
             return [
-                'deduction_name' => $name,
-                'deduction_amount' => round(abs((float) $group->sum('amount')), 2)
+                'month' => $monthKey,
+                'month_name' => \Carbon\Carbon::createFromFormat('Y-m', $monthKey)->translatedFormat('F Y'),
+                'deductions_list' => $deductionsList,
+                'month_total' => round(abs((float) $monthTransactions->sum('amount')), 2)
             ];
         })->values()->all();
 
@@ -74,7 +85,7 @@ class DeductionReport
             'to_date' => $filters->toDate->format('Y-m-d'),
             'employee_id' => $filters->employeeId,
             'branch_id' => $filters->branchId,
-            'total_deductions_list' => $totalDeductions,
+            'monthly_deductions' => $monthlyDeductions,
             'grand_total' => round(abs((float) $transactions->sum('amount')), 2),
             'transactions' => $transactions, // Just in case detailed view is needed
         ];
@@ -91,7 +102,7 @@ class DeductionReport
             'to_date' => $filters->toDate->format('Y-m-d'),
             'employee_id' => $filters->employeeId,
             'branch_id' => $filters->branchId,
-            'total_deductions_list' => [],
+            'monthly_deductions' => [],
             'grand_total' => 0.0,
             'transactions' => collect(),
         ];

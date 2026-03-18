@@ -157,10 +157,27 @@
         </thead>
 
         <tbody>
-            @forelse ($reportData['total_deductions_list'] as $item)
+            @forelse ($reportData['monthly_deductions'] as $monthData)
+            <!-- Month Header Row -->
+            <tr>
+                <td colspan="2" style="background-color: #f0fdf4 !important; color: #0b7a5a !important; font-weight: bold; text-align: left; padding-left: 15px;">
+                    {{ $monthData['month_name'] }}
+                </td>
+            </tr>
+            @foreach ($monthData['deductions_list'] as $item)
             <tr>
                 <td style="text-align: center;">{{ __($item['deduction_name']) }}</td>
                 <td style="text-align: right; font-weight: bold;">{{ formatMoneyWithCurrency($item['deduction_amount']) }}</td>
+            </tr>
+            @endforeach
+            <!-- Month Footer Row -->
+            <tr>
+                <td style="text-align: right; font-weight: bold; background-color: #fafafa !important; color: #111827 !important;">
+                    {{ __('Total for :month', ['month' => $monthData['month_name']]) }}
+                </td>
+                <td style="text-align: right; font-weight: bold; background-color: #fafafa !important; color: #d9534f !important;">
+                    {{ formatMoneyWithCurrency($monthData['month_total']) }}
+                </td>
             </tr>
             @empty
             <tr>
@@ -171,10 +188,10 @@
             @endforelse
         </tbody>
 
-        @if(count($reportData['total_deductions_list']) > 0)
+        @if(count($reportData['monthly_deductions']) > 0)
         <tfoot>
             <tr>
-                <td style="text-align: right; font-weight: bold; background-color:#eaeaea; color:#000;">{{ __('Total Deductions') }}</td>
+                <td style="text-align: right; font-weight: bold; background-color:#eaeaea; color:#000;">{{ __('Grand Total Deductions') }}</td>
                 <td style="text-align: right; font-weight: bold; background-color:#eaeaea; color:#d9534f;">
                     {{ formatMoneyWithCurrency($reportData['grand_total']) }}
                 </td>
