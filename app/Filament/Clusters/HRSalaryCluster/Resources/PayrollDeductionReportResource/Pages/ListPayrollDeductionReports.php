@@ -38,6 +38,12 @@ class ListPayrollDeductionReports extends ListRecords
         $employerContriState = $filters['include_employer_contribution']->getState()['value'] ?? true;
         $includeEmployerContribution = filter_var($employerContriState, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
 
+        $deductionState = $filters['deduction_type']->getState() ?? [];
+        $deductionTypes = $deductionState['values'] ?? (isset($deductionState['value']) ? (array) $deductionState['value'] : null);
+        if (empty($deductionTypes)) {
+            $deductionTypes = null;
+        }
+
         try {
             // Use DTO to validate and hold data
             $dto = DeductionReportFilterDTO::fromArray([
@@ -45,7 +51,8 @@ class ListPayrollDeductionReports extends ListRecords
                 'to_date' => $toDate,
                 'employee_id' => $employeeId,
                 'branch_id' => $branchId,
-                'include_employer_contribution' => $includeEmployerContribution
+                'include_employer_contribution' => $includeEmployerContribution,
+                'deduction_types' => $deductionTypes
             ]);
 
             // Execute the specific report class

@@ -49,6 +49,31 @@ class PayrollDeductionReportResource extends Resource
                 ->placeholder('Select Employee')
                 ,
 
+                SelectFilter::make('deduction_type')
+                    ->multiple()
+                    ->label(__('Deduction Type'))
+                    ->options(function () {
+                        return \App\Models\SalaryTransaction::query()
+                            ->where(function ($q) {
+                                $q->where('operation', \App\Models\SalaryTransaction::OPERATION_SUB)
+                                  ->orWhere('type', \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION);
+                            })
+                            ->where('status', \App\Models\SalaryTransaction::STATUS_APPROVED)
+                            ->select('type', 'sub_type', 'description')
+                            ->distinct()
+                            ->get()
+                            ->mapWithKeys(function ($tx) {
+                                $name = $tx->description ?: ucfirst(str_replace('_', ' ', $tx->sub_type ?? $tx->type));
+                                return [$name => $name];
+                            })
+                            ->filter()
+                            ->unique()
+                            ->sort()
+                            ->toArray();
+                    })
+                    ->searchable()
+                    ->placeholder(__('All')),
+
                 Filter::make('date_range')
                     ->form([
                         DatePicker::make('from_date')

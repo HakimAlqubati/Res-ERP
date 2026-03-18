@@ -441,6 +441,8 @@ class EmployeeTable
                         ->schema([
                             Textarea::make('rejection_reason')->required()->label(__('lang.rejection_reason'))
                         ])
+                        ->visible(fn(Employee $record) => $record->serviceTermination()->where('status', 'pending')->exists())
+
                         ->icon('heroicon-o-x-circle')
                         ->action(function (array $data, $record) {
                             try {

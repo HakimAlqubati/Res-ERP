@@ -14,7 +14,8 @@ final class DeductionReportFilterDTO
         public readonly Carbon $toDate,
         public readonly ?int $employeeId = null,
         public readonly ?int $branchId = null,
-        public readonly bool $includeEmployerContribution = true
+        public readonly bool $includeEmployerContribution = true,
+        public readonly ?array $deductionTypes = null
     ) {
         if ($this->fromDate->isAfter($this->toDate)) {
             throw new InvalidArgumentException('Start date cannot be after end date.');
@@ -31,7 +32,8 @@ final class DeductionReportFilterDTO
             toDate: Carbon::parse($data['to_date']),
             employeeId: isset($data['employee_id']) ? (int) $data['employee_id'] : null,
             branchId: isset($data['branch_id']) ? (int) $data['branch_id'] : null,
-            includeEmployerContribution: isset($data['include_employer_contribution']) ? (bool) $data['include_employer_contribution'] : true
+            includeEmployerContribution: isset($data['include_employer_contribution']) ? (bool) $data['include_employer_contribution'] : true,
+            deductionTypes: $data['deduction_types'] ?? null
         );
     }
 }

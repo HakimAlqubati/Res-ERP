@@ -49,6 +49,13 @@ class DeductionReport
         /** @var Collection<int, SalaryTransaction> $transactions */
         $transactions = $query->get();
 
+        if (!empty($filters->deductionTypes)) {
+            $transactions = $transactions->filter(function (SalaryTransaction $tx) use ($filters) {
+                $name = $tx->description ?: ucfirst(str_replace('_', ' ', $tx->sub_type ?? $tx->type));
+                return in_array($name, $filters->deductionTypes);
+            })->values();
+        }
+
         if ($transactions->isEmpty()) {
             return $this->emptyResponse($filters);
         }

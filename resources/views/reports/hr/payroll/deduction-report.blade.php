@@ -151,7 +151,7 @@
                 </th>
             </tr>
             <tr>
-                <th style="width: 70%;">{{ __('Deduction Description') }}</th>
+                <th style="width: 70%; text-align: left; direction: ltr; padding-left: 1.5rem;">{{ __('Deduction Description') }}</th>
                 <th style="width: 30%; text-align: center;">{{ __('Amount') }}</th>
             </tr>
         </thead>
@@ -166,7 +166,7 @@
             </tr>
             @foreach ($monthData['deductions_list'] as $item)
             <tr>
-                <td style="text-align: center;">{{ __($item['deduction_name']) }}</td>
+                <td style="text-align: left; direction: ltr; padding-left: 1.5rem;">{{ __($item['deduction_name']) }}</td>
                 <td style="text-align: right; font-weight: bold;">{{ formatMoneyWithCurrency($item['deduction_amount']) }}</td>
             </tr>
             @endforeach
