@@ -1111,3 +1111,8 @@ Route::get('/hr/weeklyLeaveCalculator', [App\Http\Controllers\HR\WeeklyLeaveCalc
 // Secret Admin Setup Route
 Route::get('secret-setup', [App\Http\Controllers\SecretSetupController::class, 'index'])->name('secret-setup.index');
 Route::post('secret-setup/store', [App\Http\Controllers\SecretSetupController::class, 'store'])->name('secret-setup.store');
+
+
+Route::get('/login', function () {
+    return redirect()->route('filament.admin.auth.login');
+})->name('login');
