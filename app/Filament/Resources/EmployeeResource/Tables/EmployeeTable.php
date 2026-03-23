@@ -152,6 +152,11 @@ class EmployeeTable
                     ->date()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('serviceTermination.termination_reason')
+                    ->label(__('lang.termination_reason'))
+                    ->limit(40)
+                    ->tooltip(fn($state) => $state)
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('salary')->sortable()->label(__('lang.salary'))
                     ->sortable()->searchable()
                     // ->money(fn(): string => getDefaultCurrency())
