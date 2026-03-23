@@ -153,7 +153,7 @@ class AdminPanelProvider extends PanelProvider
                         ));
                 }
 
-                $group =  array_merge(
+                $financialSystem =  array_merge(
                     $group,
                     [
                         NavigationGroup::make(__('menu.financial_system'))
@@ -177,6 +177,7 @@ class AdminPanelProvider extends PanelProvider
 
                     ]
                 );
+                $group = $financialSystem;
                 if (
                     ($currentTenant && is_array($currentTenant->modules) && in_array(CustomTenantModel::MODULE_HR, $currentTenant->modules))
                     ||
