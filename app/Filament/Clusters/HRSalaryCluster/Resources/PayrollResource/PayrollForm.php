@@ -26,7 +26,7 @@ class PayrollForm
                     ->disabled()
                     ->suffixIcon('heroicon-o-exclamation-triangle')
                     ->suffixIconColor('warning')
-                    ->default('Employees who have not had their work periods added, will not appear on the payroll.'),
+                    ->default('Staffs who have not had their work periods added, will not appear on the payroll.'),
                 Select::make('branch_id')->label('Choose branch')
                     ->disabledOn('view')->searchable()
                     ->options(Branch::branches()
@@ -82,15 +82,15 @@ class PayrollForm
                     ->default(date('Y-m-d')),
             ]),
 
-            Fieldset::make()->columnSpanFull()->label('Employee Selection')->columns(1)->hiddenOn('view')
+            Fieldset::make()->columnSpanFull()->label('Staff Selection')->columns(1)->hiddenOn('view')
                 ->visible(fn(Get $get) => filled($get('branch_id')))
                 ->schema([
                     Toggle::make('all_employees')
-                        ->label('All Employees')
+                        ->label('All Staffs')
                         ->default(true)
                         ->live(),
                     CheckboxList::make('employee_ids')
-                        ->label('Select Employees')
+                        ->label('Select Staffs')
                         ->bulkToggleable()
 
                         ->searchable()

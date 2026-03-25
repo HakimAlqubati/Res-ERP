@@ -37,8 +37,8 @@ class EmployeeAdvanceReportResource extends Resource
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-banknotes';
 
     protected static ?string $cluster = HRSalaryCluster::class;
-    protected static ?string $label = 'Employee Advances';
-    protected static ?string $pluralLabel = 'Employee Advances';
+    protected static ?string $label = 'Staff Advances';
+    protected static ?string $pluralLabel = 'Staff Advances';
 
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 5;
