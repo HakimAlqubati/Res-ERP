@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\DB;
 use Filament\Tables\Filters\TrashedFilter;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource;
 use App\Models\Employee;
+use Filament\Actions\ActionGroup;
 use Filament\Tables\Enums\FiltersLayout;
 
 class EmployeeApplicationTable
@@ -44,7 +45,8 @@ class EmployeeApplicationTable
             TextColumn::make('employee.name')
                 ->label(__('lang.employee'))
                 ->sortable()
-                ->limit(20)
+                // ->limit(20)
+                ->tooltip(fn($state) => $state)
                 ->searchable(),
 
             TextColumn::make('createdBy.name')
@@ -102,14 +104,17 @@ class EmployeeApplicationTable
 
             $columns[] = TextColumn::make('detail_monthly_deduction_amount')
                 ->label(__('lang.monthly_deduction'))
+                ->toggleable(isToggledHiddenByDefault: true)
                 ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state));
 
             $columns[] = TextColumn::make('detail_deduction_starts_from')
                 ->label(__('lang.deduction_starts'))
+                ->toggleable(isToggledHiddenByDefault: true)
                 ->date();
 
             $columns[] = TextColumn::make('detail_deduction_ends_at')
                 ->label(__('lang.deduction_ends'))
+                ->toggleable(isToggledHiddenByDefault: true)
                 ->date();
 
             $columns[] = TextColumn::make('detail_number_of_months_of_deduction')
@@ -148,6 +153,8 @@ class EmployeeApplicationTable
                 ->label(__('lang.cost'))
                 ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state));
         }
+        $columns[] = TextColumn::make('approvedBy.name')
+            ->label(__('lang.approved_by'));
         return $table->defaultSort('id', 'desc')
             ->paginated([10, 25, 50, 100])
             ->striped()
@@ -203,6 +210,33 @@ class EmployeeApplicationTable
                     ->options(Branch::select('name', 'id')->selectable()->forBranchManager('id')->pluck('name', 'id')),
             ], FiltersLayout::Modal)
             ->recordActions([
+                ActionGroup::make([
+                    EmployeeApplicationResource::advancedRequestDetails()
+                        ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST)),
+
+                    EmployeeApplicationResource::exportAdvanceRequestPdf(),
+
+                    EmployeeApplicationResource::advanceInstallmentsAction(),
+                    EmployeeApplicationResource::approveAdvanceRequest()->hidden(function ($record) {
+                        return false;
+                    }),
+                    EmployeeApplicationResource::rejectAdvanceRequest()->hidden(function ($record) {
+                        return false;
+                    }),
+                    EmployeeApplicationResource::financeApproveAdvanceRequest()
+                        ->hidden(function ($record) {
+                            if (isFinanceManager() || isHR() || isSuperAdmin()) {
+                                return false;
+                            }
+                            return true;
+                        }),
+                    EmployeeApplicationResource::financeRejectAdvanceRequest()->hidden(function ($record) {
+                        if (isFinanceManager() || isHR() || isSuperAdmin()) {
+                            return false;
+                        }
+                        return true;
+                    }),
+                ]),
                 RestoreAction::make(),
                 DeleteAction::make()->using(function ($record) {
 
@@ -332,7 +366,7 @@ class EmployeeApplicationTable
                 }),
 
                 EmployeeApplicationResource::approveDepartureRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
+                    if (isstuff() || isFinanceManager() || isHR()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -343,7 +377,7 @@ class EmployeeApplicationTable
                     return false;
                 }),
                 EmployeeApplicationResource::rejectDepartureRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
+                    if (isstuff() || isFinanceManager() || isHR()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -354,31 +388,10 @@ class EmployeeApplicationTable
                     return false;
                 }),
 
-                EmployeeApplicationResource::approveAdvanceRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }),
-                EmployeeApplicationResource::rejectAdvanceRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }),
+
 
                 EmployeeApplicationResource::approveLeaveRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
+                    if (isstuff() || isFinanceManager() || isHR()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -389,7 +402,7 @@ class EmployeeApplicationTable
                     return false;
                 }),
                 EmployeeApplicationResource::rejectLeaveRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
+                    if (isstuff() || isFinanceManager() || isHR()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -402,7 +415,7 @@ class EmployeeApplicationTable
 
                 EmployeeApplicationResource::approveAttendanceRequest()->hidden(function ($record) {
                     // return false;
-                    if (isstuff() || isFinanceManager()) {
+                    if (isstuff() || isFinanceManager() || isHR()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -414,7 +427,7 @@ class EmployeeApplicationTable
                 }),
 
                 EmployeeApplicationResource::rejectAttendanceRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
+                    if (isstuff() || isFinanceManager() || isHR()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -430,11 +443,9 @@ class EmployeeApplicationTable
                 EmployeeApplicationResource::departureRequesttDetails()
                     ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST)),
 
-                EmployeeApplicationResource::advancedRequestDetails()
-                    ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST)),
 
                 EmployeeApplicationResource::approveMealRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
+                    if (isstuff() || isFinanceManager() || isHR()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -445,7 +456,7 @@ class EmployeeApplicationTable
                     return false;
                 }),
                 EmployeeApplicationResource::rejectMealRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
+                    if (isstuff() || isFinanceManager() || isHR()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -467,3 +478,4 @@ class EmployeeApplicationTable
             ]);
     }
 }
+

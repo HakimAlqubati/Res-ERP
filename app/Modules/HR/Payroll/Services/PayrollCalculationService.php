@@ -122,6 +122,7 @@ class PayrollCalculationService
                     description: $payload['description'] ?? 'Deduction',
                     type: $payload['type'],
                     subType: $payload['subType'],
+                    reference: null,
                     payrollId: $payload['payrollId'] ?? $payroll->id,
                     extra: $payload['extra']
                 );
@@ -134,7 +135,9 @@ class PayrollCalculationService
                     type: $payload['type'],
                     operation: $payload['operation'],
                     description: $payload['description'] ?? 'Addition',
-                    payrollId: $payload['payrollId'] ?? $payroll->id
+                    payrollId: $payload['payrollId'] ?? $payroll->id,
+                    status: null,
+                    extra: $payload['extra']
                 );
             }
         }

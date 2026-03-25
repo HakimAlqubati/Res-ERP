@@ -21,6 +21,7 @@ use App\Models\UserType;
 use Filament\Forms;
 use Filament\Forms\Components\Select;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -30,8 +31,13 @@ class UserTypeResource extends Resource
 {
     protected static ?string $model = UserType::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::UserGroup;
     protected static ?string $slug = 'user-types';
+
+    protected static ?string $pluralLabel = 'Role Assignment';
+
+    protected static ?string $pluralModelLabel = 'Role Assignment';
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -90,5 +96,10 @@ class UserTypeResource extends Resource
             'create' => CreateUserType::route('/create'),
             'edit' => EditUserType::route('/{record}/edit'),
         ];
+    }
+
+        public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
     }
 }

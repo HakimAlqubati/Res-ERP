@@ -19,8 +19,8 @@ class OverlappingShiftsRule implements ValidationRuleInterface
 
     public function validate(ValidationContext $context, ?string $requestType = null, ?int $periodId = null): void
     {
-        // إذا تم تحديد period_id صراحةً، لا حاجة للتحقق
-        if ($periodId !== null) {
+        // إذا تم تحديد period_id صراحةً، أو كان هذا طلب موافقة مدخل يدوياً، لا حاجة للتحقق
+        if ($periodId !== null || $context->isRequest) {
             return;
         }
 
@@ -35,6 +35,12 @@ class OverlappingShiftsRule implements ValidationRuleInterface
 
         // إذا وردية واحدة فقط أو أقل، لا تداخل
         if ($matchingShifts->count() <= 1) {
+            return;
+        }
+
+        // إذا كانت جميع الورديات المطابقة هي نفس الوردية (نفس period_id) في أيام مختلفة، فلا نعتبرها تداخل يحتاج لاختيار المستخدم
+        $uniquePeriodIds = $matchingShifts->pluck('candidate.period.id')->unique();
+        if ($uniquePeriodIds->count() === 1) {
             return;
         }
 

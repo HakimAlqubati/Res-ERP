@@ -13,8 +13,8 @@ return [
     'users'                                       => 'Users',
     'roles'                                       => 'Roles',
     'all'                                         => 'All',
-    'my_employees'                                => 'My Employees',
-    'my_employees_only'                           => 'My Employees Only',
+    'my_employees'                                => 'My Staffs',
+    'my_employees_only'                           => 'My Staffs Only',
     'me'                                          => 'Me',
     'others'                                      => 'Others',
     'choose_year'                                 => 'Choose year',
@@ -66,7 +66,7 @@ return [
     'export_pdf'                                  => 'Export PDF',
     'stores_report'                               => 'Stores report',
     'notes'                                       => 'Notes',
-    'notes_from_store'                            => 'Notes from store employee',
+    'notes_from_store'                            => 'Notes from store staffs',
     'product_id_copied'                           => 'Product id copied',
     'code'                                        => 'Code',
     'category'                                    => 'Category',
@@ -84,7 +84,7 @@ return [
     'product_code'                                => 'Product code',
     'email'                                       => 'Email',
     'order_created_notification'                  => 'A new order has been created with number #',
-    'store_responsiple'                           => 'Store employee responsiple',
+    'store_responsiple'                           => 'Store staff responsiple',
     'ordered_quantity_by_branch'                  => 'Orderd quantity',
     'quantity_after_modification'                 => 'Qty after modification',
     'order_details'                               => 'Order details',
@@ -129,7 +129,7 @@ return [
     'order_date'                                  => 'Order date',
     'product_approved_by_store'                   => 'Updated product by (Store)',
     'ordered_product'                             => 'Orderd product from (Branch)',
-    'employees'                                   => 'Employees',
+    'employees'                                   => 'Staffs',
     'tasks_ms'                                    => 'Task management',
     'departments_and_employees'                   => 'Human Resource',
     'attenance_management'                        => 'Attenance management',
@@ -258,7 +258,7 @@ return [
     'grn_report' => 'GRN Report',
     'grn_number' => 'GRN No',
     'show_grn_number' => 'Show GRN No',
-    'employee' => 'Employee',
+    'employee' => 'Staff',
     'psize' => 'Pack Size',
     'pos_integration' => 'POS Integration',
     'menu_categories' => 'Menu Categories',
@@ -298,8 +298,9 @@ return [
     'gender' => 'Gender',
     'male' => 'Male',
     'female' => 'Female',
+    'birthday' => 'Birthday',
     'nationality' => 'Nationality',
-    'employee_address' => 'Employee Address',
+    'employee_address' => 'Staff Address',
     'avatar' => 'Avatar',
     'mykad_number' => 'MyKad No.',
     'passport_no' => 'Passport No.',
@@ -309,8 +310,8 @@ return [
     // HRMS - Employment Information
     // ===========================================
     'employment' => 'Employment',
-    'employee_no' => 'Employee No.',
-    'employee_number' => 'Employee Number',
+    'employee_no' => 'Staff No.',
+    'employee_number' => 'Staff Number',
     'job_title' => 'Job Title',
     'position' => 'Position',
     'position_type' => 'Position Type',
@@ -325,7 +326,7 @@ return [
     // ===========================================
     // HRMS - Employee Files
     // ===========================================
-    'employee_files' => 'Employee Files',
+    'employee_files' => 'Staff Files',
     'file_type' => 'File Type',
     'attach_file' => 'Attach File',
     'file_details' => 'File Details',
@@ -349,6 +350,8 @@ return [
     'bank' => 'Bank',
     'enter_bank_name' => 'Enter bank name',
     'enter_bank_account_number' => 'Enter bank account number',
+    'transaction_number' => 'Transaction Number',
+    'enter_transaction_number' => 'Enter transaction number',
 
     // ===========================================
     // HRMS - Allowances & Deductions
@@ -365,6 +368,7 @@ return [
     'is_percentage' => 'Is Percentage',
     'no_salary_deduction_for_absences' => 'No Salary Deduction for Absences',
     'exempt_from_late_attendance_deduction' => 'Exempt from Late Attendance Deduction',
+    'is_mtd_applicable' => 'MTD Applicable',
 
     // ===========================================
     // HRMS - Attendance & Shifts
@@ -373,7 +377,7 @@ return [
     'shift' => 'Shift',
     'shifts' => 'Shifts',
     'shift_rfid' => 'Shift - RFID',
-    'employee_rfid' => 'Employee RFID',
+    'employee_rfid' => 'Staff RFID',
     'rfid' => 'RFID',
     'work_periods' => 'Work Periods',
     'check_in' => 'Check In',
@@ -433,24 +437,24 @@ return [
     'import_from_excel' => 'Import from Excel',
     'select_excel_file' => 'Select Excel File',
     'download_example_file' => 'Download Example File',
-    'employees_imported_successfully' => 'Employees imported successfully',
+    'employees_imported_successfully' => 'Staff imported successfully',
     'rows_added' => 'Rows added',
-    'no_employees_added' => 'No employees added. Please check the file.',
-    'error_importing_employees' => 'Error importing employees',
+    'no_employees_added' => 'No staff added. Please check the file.',
+    'error_importing_employees' => 'Error importing staff',
 
     // ===========================================
     // HRMS - Employee Actions
     // ===========================================
     'edit_avatar' => 'Edit Avatar',
-    'edit_employee_avatar' => 'Edit Employee Avatar',
+    'edit_employee_avatar' => 'Edit Staff Avatar',
     'avatar_updated' => 'Avatar Updated',
-    'avatar_updated_successfully' => 'Employee avatar updated successfully',
+    'avatar_updated_successfully' => 'Staff avatar updated successfully',
     'change_branch' => 'Change Branch',
-    'change_employee_branch' => 'Change Employee Branch',
+    'change_employee_branch' => 'Change Staff Branch',
     'select_new_branch' => 'Select New Branch',
     'check_advanced_installments' => 'Check Advanced Installments',
     'aws_indexing' => 'AWS Indexing',
-    'selected_employees_activated' => 'Selected employees activated',
+    'selected_employees_activated' => 'Selected staff activated',
 
     // ===========================================
     // HRMS - Notifications & Messages
@@ -490,7 +494,7 @@ return [
     'hr_salary_cluster' => 'Payroll',
     'hr_attendance_cluster' => 'Attendance',
     'hr_leave_cluster' => 'Leaves',
-    'hr_applications_cluster' => 'Employee Requests',
+    'hr_applications_cluster' => 'Staff Requests',
     'hr_reports_cluster' => 'HR Reports',
     'my_records' => 'My Records',
 
@@ -671,9 +675,15 @@ return [
     // Attendance Reports
     // ===========================================
     'attendance_reports' => 'Attendance Reports',
-    'attendance_by_employee' => 'Attendance by employee',
+    'attendance_by_employee' => 'Attendance by staff',
+    'missing_checkout_report' => 'Missing Checkout Report',
+    'missing_checkout' => 'Missing Checkout',
     'my_attendance' => 'My attendance',
     'absence_report' => 'Absence Report',
+    'branch_attendance_summary' => 'Branch Attendance Summary',
+    'current_staff' => 'Current Staff',
+    'new_staff' => 'New Staff',
+    'terminated_staff' => 'Terminated Staff',
     'no_data' => 'No data',
     'start_date' => 'Start Date',
     'end_date' => 'End Date',
@@ -695,7 +705,7 @@ return [
     'advance_report' => 'Advance Report',
     'rating_report' => 'Rating Report',
     'task_report' => 'Task Report',
-    'employees_attendance' => 'Employees Attendance',
+    'employees_attendance' => 'Staff Attendance',
     'filter' => 'Filter',
     'reset' => 'Reset',
     'export' => 'Export',
@@ -767,10 +777,10 @@ return [
     'is_trusted' => 'Trusted',
 
     // ===========================================
-    // Attendance Images
+    // Attendance Photos
     // ===========================================
-    'attendance_images' => 'Attendance Images',
-    'attendance_image' => 'Attendance Image',
+    'attendance_images' => 'Attendance Photos',
+    'attendance_image' => 'Attendance Photo',
     'has_accepted_attendance' => 'Has Accepted Attendance',
     'image' => 'Image',
 
@@ -782,7 +792,7 @@ return [
     'check_date' => 'Check date',
     'check_time' => 'Check time',
     'day' => 'Day',
-    'select_employee_check_type' => 'Select employee and check type',
+    'select_employee_check_type' => 'Select staff and check type',
     'check_type' => 'Check type',
     'notes' => 'Notes',
     'approved' => 'Approved',
@@ -821,13 +831,17 @@ return [
     // ===========================================
     // Employee Overtime
     // ===========================================
-    'employee_overtime' => 'Employee Overtime',
+    'employee_overtime' => 'Staff Overtime',
     'staff_overtime' => 'Staff Overtime',
     'my_overtime' => 'My Overtime',
     'overtime_hours' => 'Overtime Hours',
     'overtime_date' => 'Overtime Date',
     'overtime_reason' => 'Overtime Reason',
     'overtime_amount' => 'Overtime Amount',
+    'overtime_report' => 'Overtime Report',
+    'total_records'   => 'Total Records',
+    'hours'           => 'Hours',
+    'approved_by'     => 'Approved By',
 
     // ===========================================
     // Attendance Report Blade View
@@ -841,7 +855,7 @@ return [
     'total_hours_worked' => 'Total Hours Worked',
     'no_periods' => 'No periods',
     'total' => 'Total',
-    'please_select_employee' => 'Please select an Employee',
+    'please_select_employee' => 'Please select a Staff',
     'show_details' => 'Show details',
     'show_charts' => 'Show Charts',
     'print_report' => 'Print Report',
@@ -908,7 +922,7 @@ return [
     'Purchases' => 'Purchases',
     'Inventory' => 'Inventory',
     'Human Resources' => 'Human Resources',
-    'Employees' => 'Employees',
+    'Employees' => 'Staffs',
     'Attendance' => 'Attendance',
     'Departments' => 'Departments',
     'Tasks' => 'Tasks',
@@ -998,14 +1012,14 @@ return [
     'select_installments_to_pay' => 'Select installments to pay:',
     'add_to_payroll' => 'Add to Payroll',
     'early_installments_added' => ':count installment(s) added to payroll',
-    'no_employees_in_payroll' => 'No employees in this payroll',
+    'no_employees_in_payroll' => 'No staff in this payroll',
     'no_future_installments' => 'No future installments available for payment',
     'no_installments_selected' => 'No installments selected',
 
     // ===========================================
     // Advance Request Approval Form
     // ===========================================
-    'employee_info' => 'Employee Information',
+    'employee_info' => 'Staff Information',
     'advance_date' => 'Advance Date',
     'advance_details' => 'Advance Details',
     'advance_amount' => 'Advance Amount',
@@ -1030,7 +1044,7 @@ return [
     'defer_installment_desc' => 'The selected installment will be skipped and a new one will be created at the end of the schedule.',
     'installment_not_found' => 'Installment not found',
     'installment_deferred_success' => 'Installment deferred from :old_date to :new_date successfully',
-    'advance_exceeds_salary' => 'Advance amount (:amount) exceeds employee salary (:salary)',
+    'advance_exceeds_salary' => 'Advance amount (:amount) exceeds staff salary (:salary)',
 
     // ===========================================
     // Employee Meals Request
@@ -1055,14 +1069,17 @@ return [
     'week' => 'Week',
     'year' => 'Year',
     'is_indexed_in_aws' => 'Indexed in AWS',
-    'employee_already_indexed_warning' => 'This employee is already indexed in AWS. Do you want to re-index?',
+    'employee_already_indexed_warning' => 'This staff is already indexed in AWS. Do you want to re-index?',
     'end_period_and_delete' => 'End Work Period & Delete',
-    'end_period_confirmation' => 'This will end the employee work period at the specified date and remove the current record, keeping the history. Are you sure?',
+    'end_period_confirmation' => 'This will end the staff work period at the specified date and remove the current record, keeping the history. Are you sure?',
     'deleted_successfully' => 'Deleted successfully',
     // ===========================================
     // Employee Service Termination
     // ===========================================
     'terminate_service' => 'End Service',
+    'rehire' => 'Rehire',
+    'rehire_employee' => 'Rehire Staff',
+    'employee_rehired_successfully' => 'Staff rehired successfully',
     'termination_date' => 'Termination Date',
     'termination_reason' => 'Termination Reason',
     'notes' => 'Notes',
@@ -1078,4 +1095,9 @@ return [
     'termination_request_created' => 'Termination request created successfully',
     'subtotal' => 'Subtotal',
     'weekly_leave' => 'Weekly Leave',
+    'error_occurred' => 'Error Occurred',
+    'employee_name' => 'Staff Name',
+    'unterminated' => 'Unterminated',
+    'terminated' => 'Terminated',
+    'access_denied' => 'Access Denied',
 ];

@@ -8,6 +8,7 @@ enum DailyRateMethod: string
     case ByMonthDays           = 'by_month_days';
     case ByWorkingDays         = 'by_working_days';
     case ByEmployeeWorkingDays = 'by_employee_working_days';
+    case ByCustomDays          = 'by_custom_days';
 
     public function label(): string
     {
@@ -16,6 +17,7 @@ enum DailyRateMethod: string
             self::ByMonthDays           => 'Divide by number of days in the month',
             self::ByWorkingDays         => 'Divide by working days (calculated)',
             self::ByEmployeeWorkingDays => 'Divide by working days (based on employee)',
+            self::ByCustomDays          => 'Divide by custom days',
         };
     }
 

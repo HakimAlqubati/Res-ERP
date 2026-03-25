@@ -19,7 +19,15 @@ class EmployeeApplicationController extends Controller
      */
     public function index(Request $request)
     {
-        $apps = EmployeeApplicationV2::with(['employee', 'leaveRequest', 'advanceRequest'])
+        $apps = EmployeeApplicationV2::with([
+            'employee',
+            'leaveRequest',
+            'advanceRequest',
+            'missedCheckinRequest',
+            'missedCheckoutRequest',
+            'mealRequest',
+            'approvedBy',
+        ])
             ->when($request->id, fn($q) => $q->where('id', $request->id))
             ->when($request->branch_id, fn($q) => $q->where('branch_id', $request->branch_id))
             ->when($request->employee_name, fn($q) => $q->whereHas(
@@ -37,6 +45,8 @@ class EmployeeApplicationController extends Controller
                 $e->where('name', 'like', '%' . $request->search . '%')
                     ->orWhere('employee_number', 'like', '%' . $request->search . '%')
             ))
+            ->whereHas('employee')
+            ->orderByRaw("status = 'pending' DESC")
             ->latest()
             ->forBranchManager()
             ->forEmployee()
@@ -167,10 +177,17 @@ class EmployeeApplicationController extends Controller
                 'data'    => new EmployeeApplicationResource($record),
             ]);
         } catch (Throwable $th) {
+            $errorMessage = $th->getMessage();
+
+            // Intercept the specific invalid datetime error that occurs when checkout is earlier than checkin
+            if (str_contains($errorMessage, 'Incorrect time value') && str_contains($errorMessage, 'actual_duration_hourly')) {
+                $errorMessage = __('The departure time cannot be before the check-in time for this shift.');
+            }
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to approve application',
-                'error'   => $th->getMessage(),
+                'error'   => $errorMessage,
             ], 500);
         }
     }
@@ -214,6 +231,35 @@ class EmployeeApplicationController extends Controller
             return [
                 'id'   => $id,
                 'name' => $label,
+            ];
+        })->values();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $result,
+        ]);
+    }
+
+    public function pendingCounts(Request $request)
+    {
+        // Get the base query for pending applications
+        $query = EmployeeApplicationV2::where('status', EmployeeApplicationV2::STATUS_PENDING)
+            ->forBranchManager()
+            ->forEmployee();
+
+        // Use standard groupBy to get counts per type
+        $counts = $query->select('application_type_id', DB::raw('count(*) as count'))
+            ->groupBy('application_type_id')
+            ->pluck('count', 'application_type_id');
+            
+        // Map all known types, setting count to 0 if not present
+        $types = EmployeeApplicationV2::APPLICATION_TYPE_NAMES;
+        
+        $result = collect($types)->map(function ($label, $id) use ($counts) {
+            return [
+                'id'   => $id,
+                'name' => $label,
+                'count' => $counts->get($id, 0),
             ];
         })->values();
 

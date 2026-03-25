@@ -10,6 +10,10 @@ use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
 use App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateService;
 use App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesService;
+use App\Services\HR\AttendanceHelpers\Reports\PresentEmployeesService;
+use App\Services\HR\AttendanceHelpers\Reports\MissingCheckoutService;
+use App\Services\HR\AttendanceHelpers\Reports\AttendanceImagesReportService;
+use App\Services\HR\BranchAttendanceSummaryService;
 use App\Services\HR\v2\Attendance\AttendanceServiceV2;
 use Aws\DynamoDb\DynamoDbClient;
 use Aws\Rekognition\RekognitionClient;
@@ -25,16 +29,22 @@ class AttendanceController extends Controller
     protected $attendanceFetcher;
     protected EmployeesAttendanceOnDateService $employeesAttendanceOnDateService;
     protected AbsentEmployeesService $absentEmployeesService;
+    protected PresentEmployeesService $presentEmployeesService;
+    protected MissingCheckoutService $missingCheckoutService;
 
     public function __construct(
         AttendanceServiceV2 $attendanceService,
         EmployeesAttendanceOnDateService $employeesAttendanceOnDateService,
-        AbsentEmployeesService $absentEmployeesService
+        AbsentEmployeesService $absentEmployeesService,
+        PresentEmployeesService $presentEmployeesService,
+        MissingCheckoutService $missingCheckoutService
     ) {
-        $this->attendanceService = $attendanceService;
-        $this->attendanceFetcher = new AttendanceFetcher(new EmployeePeriodHistoryService());
+        $this->attendanceService          = $attendanceService;
+        $this->attendanceFetcher          = new AttendanceFetcher(new EmployeePeriodHistoryService());
         $this->employeesAttendanceOnDateService = $employeesAttendanceOnDateService;
-        $this->absentEmployeesService = $absentEmployeesService;
+        $this->absentEmployeesService     = $absentEmployeesService;
+        $this->presentEmployeesService    = $presentEmployeesService;
+        $this->missingCheckoutService     = $missingCheckoutService;
     }
     public function store(Request $request)
     {
@@ -126,6 +136,52 @@ class AttendanceController extends Controller
         }
     }
 
+    /**
+     * Get detailed multiple attendance breakdown for a specific employee, period, and date.
+     *
+     * GET /api/hr/multipleAttendanceDetails?employee_id=13&period_id=1&date=2026-02-15
+     */
+    public function multipleAttendanceDetails(Request $request)
+    {
+        try {
+            $request->validate([
+                'employee_id' => 'required|integer|exists:hr_employees,id',
+                'period_id'   => 'required|integer',
+                'date'        => 'required|date',
+            ]);
+
+            $employeeId = $request->input('employee_id');
+            $periodId   = $request->input('period_id');
+            $date       = $request->input('date');
+
+            // Fetch raw attendance records using AttendanceFetcher
+            $attendances = $this->attendanceFetcher->getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
+
+            // Use the calculator service
+            $result = \App\Services\HR\AttendanceHelpers\Reports\AttendanceDetailsCalculator::calculateDetailedBreakdown(
+                $attendances->toArray()
+            );
+
+            return response()->json([
+                'status'             => 'success',
+                'date'               => $date,
+                'employee_id'        => $employeeId,
+                'period_id'          => $periodId,
+                'attendances'        => $result['attendances'],
+                'total_hours'        => $result['total_hours'],
+                'remaining_minutes'  => $result['remaining_minutes'],
+                'total_minutes'      => $result['total_minutes'],
+                'formatted_total'    => $result['total_hours'] . 'h ' . $result['remaining_minutes'] . 'm',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Something went wrong.',
+                'error'   => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     public function employeesAttendanceOnDate(Request $request)
     {
         $validated = $request->validate([
@@ -160,6 +216,152 @@ class AttendanceController extends Controller
             'status' => 'success',
             'count'  => $absents->count(),
             'data'   => $absents
+        ]);
+    }
+
+    public function absentEmployeesV2(Request $request, \App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesV2Service $service)
+    {
+        $validated = $request->validate([
+            'date'          => 'sometimes|required|date',
+            'from_date'     => 'required_without:date|date',
+            'to_date'       => 'required_without:date|date|after_or_equal:from_date',
+            'branch_id'     => 'nullable|integer',
+            'department_id' => 'nullable|integer',
+        ]);
+
+        $dateFrom = $request->input('from_date');
+        $dateTo   = $request->input('to_date');
+
+        if (!$dateFrom && !$dateTo && $request->has('date')) {
+            $dateFrom = $request->input('date');
+            $dateTo   = $request->input('date');
+        }
+
+        $filters  = array_filter($request->only(['branch_id', 'department_id']));
+
+        $records = $service->getAbsentEmployees($dateFrom, $dateTo, $filters);
+
+        return response()->json([
+            'status'    => 'success',
+            'date_from' => Carbon::parse($dateFrom)->toDateString(),
+            'date_to'   => Carbon::parse($dateTo)->toDateString(),
+            'message'   => 'Absent employees.',
+            'count'     => $records->count(),
+            'data'      => $records, // This will return grouped by employee
+        ]);
+    }
+
+    /**
+     * GET /api/hr/presentEmployees
+     *
+     * إرجاع الموظفين الحاضرين حالياً بناءً على:
+     *   - وجود بصمة دخول مقبولة في اليوم المحدد.
+     *   - لم يُسجَّل لهم خروج بعد.
+     *   - الوقت الحالي يقع داخل نافذة الوردية الممتدة
+     *     [start_at - allowedHoursBefore]  ←→  [end_at + allowedHoursAfter]
+     *
+     * Query Params:
+     *   - datetime      : Y-m-d H:i:s  (اختياري، افتراضي = now)
+     *   - branch_id     : integer       (اختياري)
+     *   - department_id : integer       (اختياري)
+     */
+    public function presentEmployees(Request $request)
+    {
+        $validated = $request->validate([
+            'datetime'      => 'nullable|date',
+            'branch_id'     => 'nullable|integer',
+            'department_id' => 'nullable|integer',
+        ]);
+
+        $datetime = isset($validated['datetime'])
+            ? Carbon::parse($validated['datetime'])
+            : Carbon::now();
+
+        $filters = array_filter($request->only(['branch_id', 'department_id']));
+
+        return $this->presentEmployeesService->getReport($datetime, $filters)->toResponse();
+    }
+
+    /**
+     * GET /api/hr/missingCheckout
+     *
+     * Returns employees who have an accepted check-in for the given date
+     * but have NOT recorded an accepted check-out yet.
+     *
+     * Query Params:
+     *   - date          : Y-m-d   (optional, defaults to today)
+     *   - branch_id     : integer (optional)
+     *   - department_id : integer (optional)
+     */
+    public function missingCheckout(Request $request)
+    {
+        // For backwards compatibility and convenience, if they only pass 'date', use it for both.
+        // Otherwise require from_date and to_date.
+        $validated = $request->validate([
+            'date'          => 'sometimes|required|date',
+            'from_date'     => 'required_without:date|date',
+            'to_date'       => 'required_without:date|date|after_or_equal:from_date',
+            'branch_id'     => 'required|integer',
+            'department_id' => 'nullable|integer',
+        ]);
+
+        $dateFrom = $request->input('from_date');
+        $dateTo   = $request->input('to_date');
+
+        // Fallback for missing 'date'
+        if (!$dateFrom && !$dateTo && $request->has('date')) {
+            $dateFrom = $request->input('date');
+            $dateTo   = $request->input('date');
+        }
+
+        $filters  = array_filter($request->only(['branch_id', 'department_id']));
+
+        $records = $this->missingCheckoutService->getMissingCheckouts($dateFrom, $dateTo, $filters);
+
+        return response()->json([
+            'status'  => 'success',
+            'date_from' => Carbon::parse($dateFrom)->toDateString(),
+            'date_to'   => Carbon::parse($dateTo)->toDateString(),
+            'message' => 'Employees missing check-out.',
+            'count'   => $records->count(),
+            'data'    => $records,
+        ]);
+    }
+
+    /**
+     * GET /api/v2/hr/missingCheckout
+     * Same as above but groups the 'data' array by 'checkin_date'.
+     */
+    public function missingCheckoutV2(Request $request)
+    {
+        $validated = $request->validate([
+            'date'          => 'sometimes|required|date',
+            'from_date'     => 'required_without:date|date',
+            'to_date'       => 'required_without:date|date|after_or_equal:from_date',
+            'branch_id'     => 'required|integer',
+            'department_id' => 'nullable|integer',
+        ]);
+
+        $dateFrom = $request->input('from_date');
+        $dateTo   = $request->input('to_date');
+
+        if (!$dateFrom && !$dateTo && $request->has('date')) {
+            $dateFrom = $request->input('date');
+            $dateTo   = $request->input('date');
+        }
+
+        $filters  = array_filter($request->only(['branch_id', 'department_id']));
+
+        $records = $this->missingCheckoutService->getMissingCheckouts($dateFrom, $dateTo, $filters);
+
+        // Uses a resource collection to format the data
+        return response()->json([
+            'status'    => 'success',
+            'date_from' => Carbon::parse($dateFrom)->toDateString(),
+            'date_to'   => Carbon::parse($dateTo)->toDateString(),
+            'message'   => 'Employees missing check-out.',
+            'count'     => $records->count(),
+            'data'      => new \App\Http\Resources\HR\MissingCheckoutGroupCollection($records),
         ]);
     }
 
@@ -336,15 +538,15 @@ class AttendanceController extends Controller
 
             // فلتر بالموظف
             if ($request->filled('employee_id')) {
-                $query->where('employee_id', $request->input('employee_id'));
+                $query->where('attendance_images_uploaded.employee_id', $request->input('employee_id'));
             }
 
             // فلتر بالتاريخ
             if ($request->filled('from_date')) {
-                $query->whereDate('datetime', '>=', $request->input('from_date'));
+                $query->whereDate('hr_attendances.check_date', '>=', $request->input('from_date'));
             }
             if ($request->filled('to_date')) {
-                $query->whereDate('datetime', '<=', $request->input('to_date'));
+                $query->whereDate('hr_attendances.check_date', '<=', $request->input('to_date'));
             }
 
             // فلتر بالفرع
@@ -356,13 +558,14 @@ class AttendanceController extends Controller
 
             $perPage = $request->input('per_page', 20);
 
-            // User requested grouping by Date, then Employee. 
-            // We sort by check_date ASC (chronological sequence), 
-            // then by employee_id ASC (group employees within the day),
-            // then by check_time ASC (chronological order for that employee).
-            $images = $query->orderBy('hr_attendances.check_date')
+            // User requested chronological order which honors multi-day shifts
+            // We sort by check_date DESC (newest day first)
+            // then by employee_id ASC
+            // then by the actual physical datetimeASC so CheckIn always appears before CheckOut for that day
+            $images = $query->orderBy('hr_attendances.check_date', 'desc')
                 ->orderBy('attendance_images_uploaded.employee_id')
-                ->orderBy('hr_attendances.check_time')
+
+                // ->orderBy('attendance_images_uploaded.datetime', 'asc')
                 ->paginate($perPage);
 
             // تحويل البيانات مع إضافة labels و colors
@@ -380,14 +583,7 @@ class AttendanceController extends Controller
                             ->where('period_id', $attendance->period_id)
                             ->where('check_type', \App\Models\Attendance::CHECKTYPE_CHECKIN)
                             ->where('accepted', 1)
-                            ->where('id', '<>', $attendance->id)
-                            ->where(function ($q) use ($attendance) {
-                                $q->where('check_time', '<', $attendance->check_time)
-                                    ->orWhere(function ($q2) use ($attendance) {
-                                        $q2->where('check_time', '=', $attendance->check_time)
-                                            ->where('id', '<', $attendance->id);
-                                    });
-                            })
+                            ->where('id', '<', $attendance->id)
                             ->exists();
 
                         if (!$earlierExists) {
@@ -400,14 +596,7 @@ class AttendanceController extends Controller
                             ->where('period_id', $attendance->period_id)
                             ->where('check_type', \App\Models\Attendance::CHECKTYPE_CHECKOUT)
                             ->where('accepted', 1)
-                            ->where('id', '<>', $attendance->id)
-                            ->where(function ($q) use ($attendance) {
-                                $q->where('check_time', '>', $attendance->check_time)
-                                    ->orWhere(function ($q2) use ($attendance) {
-                                        $q2->where('check_time', '=', $attendance->check_time)
-                                            ->where('id', '>', $attendance->id);
-                                    });
-                            })
+                            ->where('id', '>', $attendance->id)
                             ->exists();
 
                         if (!$laterExists) {
@@ -448,6 +637,61 @@ class AttendanceController extends Controller
             return response()->json([
                 'status' => 'success',
                 'data'   => $images,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Something went wrong.',
+                'error'   => $e->getMessage(),
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * صور الحضور الإصدار الثاني باستخدام كلاس خدمة
+     */
+    public function attendanceImagesV2(Request $request, AttendanceImagesReportService $reportService)
+    {
+        try {
+            $reportService->includeRequests = $request->boolean('include_requests', true);
+            $images = $reportService->getImagesReport($request);
+
+            return response()->json([
+                'status' => 'success',
+                'data'   => $images,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Something went wrong.',
+                'error'   => $e->getMessage(),
+            ], \Symfony\Component\HttpFoundation\Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Branch Attendance Summary Report
+     *
+     * GET /api/hr/branchAttendanceSummary?branch_id=7&year=2026&month=2
+     */
+    public function branchAttendanceSummary(Request $request, BranchAttendanceSummaryService $summaryService)
+    {
+        try {
+            $validated = $request->validate([
+                'branch_id' => 'required|integer|exists:branches,id',
+                'year'      => 'required|integer|min:2000',
+                'month'     => 'required|integer|between:1,12',
+            ]);
+
+            $report = $summaryService->generate(
+                $validated['branch_id'],
+                $validated['year'],
+                $validated['month']
+            );
+
+            return response()->json([
+                'status' => 'success',
+                'data'   => $report,
             ]);
         } catch (\Throwable $e) {
             return response()->json([

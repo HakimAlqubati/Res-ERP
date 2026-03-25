@@ -16,8 +16,8 @@ class DuplicateTimestampRule implements ValidationRuleInterface
 {
     public function validate(ValidationContext $context, ?string $requestType = null, ?int $periodId = null): void
     {
-        // تخطي الفحص إذا طُلب ذلك (للإضافة اليدوية من لوحة التحكم)
-        if ($context->skipDuplicateTimestampCheck) {
+        // تخطي الفحص إذا طُلب ذلك (للإضافة اليدوية من لوحة التحكم أو طلبات الحضور)
+        if ($context->skipDuplicateTimestampCheck || $context->isRequest) {
             return;
         }
 

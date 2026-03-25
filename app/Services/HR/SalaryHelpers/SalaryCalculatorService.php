@@ -748,10 +748,10 @@ class SalaryCalculatorService
                 'sub_type'     => $ded['name'] ?? SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION,
                 'amount'       => $this->round($employerAmount),
                 'operation'    => null, // التزام على الشركة وليس الموظف
-                'description'  => $ded['name'] ?? 'Employer contribution',
+                'description'  => $ded['name'] ?? 'Employer',
                 'deduction_id' => $ded['id'] ?? null,
-                // 'reference_id' => $ded['id'],
-                // 'reference_type' => Deduction::class,
+                'reference_id' => $ded['id'] ?? null,
+                'reference_type' => Deduction::class,
             ];
         }
 

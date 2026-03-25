@@ -100,15 +100,15 @@ class FaceRecognitionService
         );
 
         if ($isAnotherBranch) {
-            // return EmployeeMatch::notFound('Employee belongs to another branch and cannot be accessed.');
+            return new EmployeeMatch(false, $name, $employeeId, null, $similarity, $confidence, 'Access denied: Employee belongs to a different branch.');
         }
 
         if (!$employee) {
-            // return EmployeeMatch::notFound();
+            return new EmployeeMatch(false, $name, $employeeId, null, $similarity, $confidence, 'This employee is removed from AWS Rekognition.');
         }
-        // dd($name,$employee,$employeeId,$similarity,$confidence);
+
         if (!$employeeId && !$name) {
-            return new EmployeeMatch(false, 'No mapping found', null, null, $similarity, $confidence);
+            return new EmployeeMatch(false, 'Unidentified face', null, null, $similarity, $confidence, 'Face not linked to any employee.');
         }
 
         // ✅ 5) إنشاء سجل attendance_images_uploaded

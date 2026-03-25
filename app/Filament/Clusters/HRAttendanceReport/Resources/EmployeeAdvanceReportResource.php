@@ -2,7 +2,9 @@
 
 namespace App\Filament\Clusters\HRAttendanceReport\Resources;
 
+use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource;
 use App\Filament\Clusters\HRAttendanceReport;
+use App\Filament\Clusters\HRSalaryCluster;
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Actions\Action;
 use App\Filament\Clusters\HRTaskReport;
@@ -11,6 +13,7 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeAdvanceInstallment;
 use App\Models\EmployeeApplicationV2;
+use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
@@ -20,6 +23,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
@@ -32,9 +36,9 @@ class EmployeeAdvanceReportResource extends Resource
     // protected static ?string $slug = 'employee-advance-report';
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-banknotes';
 
-    protected static ?string $cluster = HRAttendanceReport::class;
-    protected static ?string $label = 'Employee Advances';
-    protected static ?string $pluralLabel = 'Employee Advances';
+    protected static ?string $cluster = HRSalaryCluster::class;
+    protected static ?string $label = 'Staff Advances';
+    protected static ?string $pluralLabel = 'Staff Advances';
 
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 5;
@@ -56,6 +60,7 @@ class EmployeeAdvanceReportResource extends Resource
                 TextColumn::make('employee.employee_no')
                     ->label(__('lang.employee_no'))
                     ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable()
                     ->alignCenter(),
 
@@ -66,10 +71,21 @@ class EmployeeAdvanceReportResource extends Resource
                     ->wrap()
                     ->limit(20),
 
+                IconColumn::make('is_paid')
+                    ->label(__('lang.is_paid'))
+                    ->boolean()
+                    ->getStateUsing(function ($record) {
+                        return $record->is_paid;
+                    })
+                    ->trueColor('success')
+                    ->falseColor('warning')
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('advance_amount')
                     ->label(__('lang.advance_amount'))
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('number_of_months_of_deduction')
                     ->label(__('lang.months'))
@@ -163,7 +179,7 @@ class EmployeeAdvanceReportResource extends Resource
                             ->when(
                                 $data['deduction_to'],
                                 fn(Builder $query, $date): Builder => $query->whereDate('deduction_ends_at', '<=', $date)
-                            );  
+                            );
                     })
                     ->columns(2),
 
@@ -191,128 +207,74 @@ class EmployeeAdvanceReportResource extends Resource
             ], FiltersLayout::Modal)
             ->filtersFormColumns(2)
             ->recordActions([
-                Action::make('details')
-                    ->label(__('lang.installments'))
-                    ->button()
-                    ->icon('heroicon-o-list-bullet')
-                    ->color('info')
-                    ->schema(function ($record) {
-                        $installments = $record->installments()->orderBy('sequence')->get();
+                ActionGroup::make([
 
-                        return [
-                            Repeater::make('installments')
-                                ->label('')
-                                ->table([
-                                    TableColumn::make(__('lang.sequence'))
-                                        ->width('8%'),
-                                    TableColumn::make(__('lang.amount'))
-                                        ->width('18%'),
-                                    TableColumn::make(__('lang.due_date'))
-                                        ->width('18%'),
-                                    TableColumn::make(__('lang.paid'))
-                                        ->width('10%'),
-                                    TableColumn::make(__('lang.paid_date'))
-                                        ->width('18%'),
-                                    TableColumn::make(__('lang.status'))
-                                        ->width('15%'),
-                                ])
-                                ->schema([
-                                    TextInput::make('sequence')
-                                        ->label('#')
-                                        ->extraInputAttributes(['class' => 'text-center'])
-                                        ->disabled(),
-                                    TextInput::make('installment_amount')
-                                        ->label(__('lang.amount'))
-                                        ->disabled(),
-                                    DatePicker::make('due_date')
-                                        ->label(__('lang.due_date'))
-                                        ->disabled(),
-                                    TextInput::make('is_paid')
-                                        ->label(__('lang.paid'))
-                                        ->disabled()
-                                        ->extraInputAttributes(['class' => 'text-center']),
-                                    DatePicker::make('paid_date')
-                                        ->label(__('lang.paid_date'))
-                                        ->extraInputAttributes(['class' => 'text-center'])
-                                        ->disabled(),
-                                    TextInput::make('status')
-                                        ->label(__('lang.status'))
-                                        ->extraInputAttributes(['class' => 'text-center'])
-                                        ->disabled(),
-                                ])
-                                ->defaultItems(count($installments))
-                                ->columns(6)
-                                ->default($installments->map(fn($inst) => [
-                                    'sequence' => $inst->sequence,
-                                    'installment_amount' => number_format($inst->installment_amount, 2),
-                                    'due_date' => $inst->due_date?->format('Y-m-d'),
-                                    'is_paid' => $inst->is_paid ? '✓' : '✗',
-                                    'paid_date' => $inst->paid_date?->format('Y-m-d'),
-                                    'status' => $inst->status,
-                                ])->toArray()),
-                        ];
-                    })
-                    ->modalHeading(__('lang.installment_details'))
-                    ->disabledForm()
-                    ->modalSubmitAction(false)
-                    ->modalCancelAction(false),
+                    \App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource::advanceInstallmentsAction(),
+                    EmployeeApplicationResource::exportAdvanceRequestPdf(),
+                    EmployeeApplicationResource::financeApproveAdvanceRequest()
+                        ->visible(function ($record) {
+                            if (isFinanceManager() || isHR() || isSuperAdmin()) {
+                                return true;
+                            }
+                            return false;
+                        }),
+                    Action::make('defer_installment')
+                        ->label(__('lang.defer_installment'))
+                        // ->button()
+                        ->icon('heroicon-o-clock')
+                        ->color('warning')
+                        ->schema(function ($record) {
+                            $unpaidInstallments = $record->installments()
+                                ->where('is_paid', false)
+                                ->where('status', EmployeeAdvanceInstallment::STATUS_SCHEDULED)
+                                ->orderBy('sequence')
+                                ->get();
 
-                // ✅ تأجيل قسط (Skip & Reschedule)
-                Action::make('defer_installment')
-                    ->label(__('lang.defer_installment'))
-                    ->button()
-                    ->icon('heroicon-o-clock')
-                    ->color('warning')
-                    ->schema(function ($record) {
-                        $unpaidInstallments = $record->installments()
-                            ->where('is_paid', false)
-                            ->where('status', EmployeeAdvanceInstallment::STATUS_SCHEDULED)
-                            ->orderBy('sequence')
-                            ->get();
+                            return [
+                                Select::make('installment_id')
+                                    ->label(__('lang.select_installment'))
+                                    ->options(
+                                        $unpaidInstallments->mapWithKeys(fn($inst) => [
+                                            $inst->id => "#{$inst->sequence} - {$inst->due_date->format('Y-m')} (" . number_format($inst->installment_amount, 2) . ")"
+                                        ])
+                                    )
+                                    ->required()
+                                    ->native(false),
+                                Textarea::make('reason')
+                                    ->label(__('lang.reason'))
+                                    ->rows(2)
+                                    ->placeholder(__('lang.defer_reason_placeholder')),
+                            ];
+                        })
+                        ->action(function (array $data, $record): void {
+                            $installment = EmployeeAdvanceInstallment::find($data['installment_id']);
 
-                        return [
-                            Select::make('installment_id')
-                                ->label(__('lang.select_installment'))
-                                ->options(
-                                    $unpaidInstallments->mapWithKeys(fn($inst) => [
-                                        $inst->id => "#{$inst->sequence} - {$inst->due_date->format('Y-m')} (" . number_format($inst->installment_amount, 2) . ")"
-                                    ])
-                                )
-                                ->required()
-                                ->native(false),
-                            Textarea::make('reason')
-                                ->label(__('lang.reason'))
-                                ->rows(2)
-                                ->placeholder(__('lang.defer_reason_placeholder')),
-                        ];
-                    })
-                    ->action(function (array $data, $record): void {
-                        $installment = EmployeeAdvanceInstallment::find($data['installment_id']);
+                            if (!$installment) {
+                                Notification::make()
+                                    ->title(__('lang.error'))
+                                    ->body(__('lang.installment_not_found'))
+                                    ->danger()
+                                    ->send();
+                                return;
+                            }
 
-                        if (!$installment) {
+                            $newInstallment = $installment->skipAndReschedule($data['reason'] ?? null);
+
                             Notification::make()
-                                ->title(__('lang.error'))
-                                ->body(__('lang.installment_not_found'))
-                                ->danger()
+                                ->title(__('lang.success'))
+                                ->body(__('lang.installment_deferred_success', [
+                                    'old_date' => $installment->due_date->format('Y-m'),
+                                    'new_date' => $newInstallment->due_date->format('Y-m'),
+                                ]))
+                                ->success()
                                 ->send();
-                            return;
-                        }
+                        })
+                        ->modalHeading(__('lang.defer_installment'))
+                        ->modalDescription(__('lang.defer_installment_desc'))
+                        ->modalSubmitActionLabel(__('lang.defer'))
+                        ->visible(fn($record) => $record->remaining_total > 0),
+                ])
 
-                        $newInstallment = $installment->skipAndReschedule($data['reason'] ?? null);
-
-                        Notification::make()
-                            ->title(__('lang.success'))
-                            ->body(__('lang.installment_deferred_success', [
-                                'old_date' => $installment->due_date->format('Y-m'),
-                                'new_date' => $newInstallment->due_date->format('Y-m'),
-                            ]))
-                            ->success()
-                            ->send();
-                    })
-                    ->modalHeading(__('lang.defer_installment'))
-                    ->modalDescription(__('lang.defer_installment_desc'))
-                    ->modalSubmitActionLabel(__('lang.defer'))
-                    ->visible(fn($record) => $record->remaining_total > 0),
             ])
             ->defaultSort('created_at', 'desc');
     }
@@ -340,6 +302,7 @@ class EmployeeAdvanceReportResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return isSuperAdmin() || isSystemManager() || isFinanceManager();
+        return isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR();
     }
 }
+

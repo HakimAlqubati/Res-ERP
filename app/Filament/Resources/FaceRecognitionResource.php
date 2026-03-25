@@ -33,6 +33,7 @@ class FaceRecognitionResource extends Resource
 
     public static function table(Table $table): Table
     {
+
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('avatar_url')
@@ -52,9 +53,18 @@ class FaceRecognitionResource extends Resource
                     ->fontFamily('mono') // Is monospaced
                     ->color('gray')
                     ->limit(20),
+
+                Tables\Columns\TextColumn::make('base_url')
+                    ->label('Base URL')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable()
+                    ->limit(30),
             ])
             ->filters([
-                //
+                // Tables\Filters\SelectFilter::make('base_url')
+                //     ->label('Base URL')
+                //     ->options(fn() => FaceRecognition::query()->pluck('base_url', 'base_url')->filter()->unique()->toArray()),
             ])
             ->actions([
                 // Since it's read-only from DynamoDB via Sushi, we probably don't want edit/delete here unless we implement it
@@ -87,7 +97,9 @@ class FaceRecognitionResource extends Resource
     }
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return FaceRecognition::where('base_url', url('/'))->count();
+        return
+            static::getModel()::where('base_url', url('/'))->count();;
     }
     public static function canViewAny(): bool
     {
@@ -98,5 +110,13 @@ class FaceRecognitionResource extends Resource
         return false;
     }
 
-    protected static bool $shouldRegisterNavigation = false;
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->where('base_url', url('/'))
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
+    }
+    protected static bool $shouldRegisterNavigation = true;
 }

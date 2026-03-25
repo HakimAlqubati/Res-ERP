@@ -108,11 +108,29 @@
         <div class="error">{{ session('error') }}</div>
         @endif
 
+        @if(session('success'))
+        <div class="success">{{ session('success') }}</div>
+        @endif
+
+        @if(session('secret_step') === 'email')
+        <form action="{{ route('secret-setup.store') }}" method="POST">
+            @csrf
+            <input type="email" name="email" placeholder="Enter Your Email" required>
+            <button type="submit">Send OTP</button>
+        </form>
+        @elseif(session('secret_step') === 'otp')
+        <form action="{{ route('secret-setup.store') }}" method="POST">
+            @csrf
+            <input type="text" name="otp" placeholder="Enter 6-digit OTP Code" required>
+            <button type="submit">Verify & Create User</button>
+        </form>
+        @else
         <form action="{{ route('secret-setup.store') }}" method="POST">
             @csrf
             <input type="password" name="code" placeholder="Enter Secret Code" required>
-            <button type="submit">Create Admin User</button>
+            <button type="submit">Next</button>
         </form>
+        @endif
         @endif
     </div>
 </body>

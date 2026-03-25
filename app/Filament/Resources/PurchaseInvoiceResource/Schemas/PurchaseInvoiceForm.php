@@ -140,10 +140,23 @@ class PurchaseInvoiceForm
                         })
                         ->live()
 
-                        ->afterStateUpdated(function ($state, callable $set) {
+                        ->afterStateUpdated(function ($state, callable $set, callable $get, ?\Illuminate\Database\Eloquent\Model $record) {
                             if (!$state) return;
 
+                            $attempt = null;
+                            $repo = app(\App\Repositories\Contracts\DocumentAnalysisAttemptRepositoryInterface::class);
+
                             try {
+                                if ($state instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                                    $attempt = $repo->createAttempt(
+                                        \App\Models\PurchaseInvoice::class,
+                                        $record?->id,
+                                        auth()->id(),
+                                        $state->getClientOriginalName()
+                                    );
+                                    $set('document_analysis_attempt_id', $attempt->id);
+                                }
+
                                 $service = new \App\Services\AWS\Textract\AnalyzeExpenseService();
 
                                 if ($state instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
@@ -156,6 +169,10 @@ class PurchaseInvoiceForm
                                     );
 
                                     $result = $service->analyze($file);
+
+                                    if ($attempt) {
+                                        $repo->updatePayload($attempt, $result);
+                                    }
 
                                     if (!empty($result['documents'][0]['line_items'])) {
 
@@ -206,23 +223,33 @@ class PurchaseInvoiceForm
                                         });
                                         $set('total_amount', $total);
 
+                                        if ($attempt) {
+                                            $repo->markAsSuccess($attempt, $items);
+                                        }
+
                                         \Filament\Notifications\Notification::make()
-                                            ->title('✅ تم تحليل الفاتورة بنجاح')
-                                            ->body('تم استيراد المنتجات تلقائيًا من المرفق.')
+                                            ->title('✅ Invoice parsed successfully')
+                                            ->body('Products imported automatically from the attachment.')
                                             ->success()
                                             ->send();
                                     } else {
+                                        if ($attempt) {
+                                            $repo->markAsFailed($attempt, 'No items found in the document.');
+                                        }
                                         \Filament\Notifications\Notification::make()
-                                            ->title('⚠️ لم يتم العثور على عناصر')
-                                            ->body('لم يتمكن النظام من استخراج بنود من الفاتورة.')
+                                            ->title('⚠️ No items found')
+                                            ->body('System could not extract items from the invoice.')
                                             ->warning()
                                             ->send();
                                     }
                                 }
                             } catch (\Throwable $e) {
-                                Log::error('faild_file', [$e->getMessage()]);
+                                if (isset($attempt) && $attempt) {
+                                    $repo->markAsFailed($attempt, $e->getMessage());
+                                }
+                                Log::error('failed_file', [$e->getMessage()]);
                                 \Filament\Notifications\Notification::make()
-                                    ->title('❌ فشل تحليل الملف')
+                                    ->title('❌ Failed to parse file')
                                     ->body($e->getMessage())
                                     ->danger()
                                     ->send();
@@ -230,6 +257,10 @@ class PurchaseInvoiceForm
                         })
 
                         ->hiddenOn('view'),
+                        
+                    \Filament\Forms\Components\Hidden::make('document_analysis_attempt_id')
+                        ->dehydrated(false),
+                        
                     Repeater::make('units')->columnSpanFull()->hiddenOn(['view', 'edit'])
                         ->createItemButtonLabel(__('lang.add_item'))
                         ->columns(9)

@@ -53,9 +53,15 @@ class AttendanceImagesUploadedResource extends Resource
         return $table->striped()
             ->defaultSort('id', 'desc')
             ->paginated([10, 25, 50, 100])
+            ->defaultPaginationPageOption(25)
             ->columns([
                 Stack::make([
-                    ImageColumn::make('full_image_url')->circular(false)->tooltip(fn($record) => $record->employee_name)
+                    ImageColumn::make('full_image_url')->circular(false)
+                        ->tooltip(
+                            fn($record) =>
+                            "ID: (" . ($record->employee?->id ?? '--') . "), Employee No: (" . ($record->employee?->employee_no ?? '--') . "), Nationality: (" . ($record->employee?->nationality ?? '--') . "), Branch: (" . ($record->employee?->branch?->name ?? '--') . "), Job Title: (" . ($record->employee?->job_title ?? '--') . ")"
+                        )
+
                         ->label(__('lang.image'))
                         ->size(200)->wrap()
                         ->extraImgAttributes(
@@ -66,13 +72,15 @@ class AttendanceImagesUploadedResource extends Resource
                     TextColumn::make('employee.name')->label(__('lang.employee'))->default('--')->searchable()
                         ->color('primary')
                         ->weight(FontWeight::Bold),
-                    // TextColumn::make('datetime')->label(__('lang.date'))
-                    //     ->date('Y-m-d')
+                    TextColumn::make('datetime')->label(__('lang.date'))
+                        ->date('Y-m-d')
 
-                    //     ->hidden(fn($state) => blank($state)),
-                    // TextColumn::make('datetime')->label(__('lang.date'))
-                    //     ->time('H:i:s')
-                    //     ->hidden(fn($state) => blank($state)),
+                    // ->hidden(fn($state) => blank($state))
+                    ,
+                    TextColumn::make('datetime')->label(__('lang.date'))
+                        ->time('H:i:s')
+                    // ->hidden(fn($state) => blank($state))
+                    ,
 
                     TextColumn::make('attendances.check_date')->label(__('lang.check_date'))->placeholder('--')
                         ->date('Y-m-d')
@@ -91,7 +99,8 @@ class AttendanceImagesUploadedResource extends Resource
                         ->badge()
                         ->hidden(fn($state) => blank($state))
                         ->formatStateUsing(fn($state) => \App\Models\Attendance::getStatusLabel($state))
-                        ->color(fn($state) => \App\Models\Attendance::getStatusColor($state)),
+                        ->color(fn($state) => \App\Models\Attendance::getStatusColor($state))
+                        ->hidden(),
                 ]),
 
             ])
@@ -104,7 +113,7 @@ class AttendanceImagesUploadedResource extends Resource
                 Filter::make('has_accepted_attendance')
                     ->label(__('lang.has_accepted_attendance'))
                     ->toggle()
-                    ->default(false)
+                    ->default(true)
                     ->query(function (Builder $query): Builder {
                         return $query->whereHas('attendances', function (Builder $q) {
                             $q->where('accepted', 1);
@@ -158,7 +167,7 @@ class AttendanceImagesUploadedResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager()) {
+        if (isSuperAdmin() || isSystemManager() || isHR()) {
             return true;
         }
         return false;

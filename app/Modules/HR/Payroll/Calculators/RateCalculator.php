@@ -12,7 +12,7 @@ use App\Modules\HR\Payroll\DTOs\RateResult;
  */
 class RateCalculator
 {
-    public const DEFAULT_ROUND_SCALE = 2;
+    public const DEFAULT_ROUND_SCALE = 4;
 
     public function __construct(
         protected int $roundScale = self::DEFAULT_ROUND_SCALE

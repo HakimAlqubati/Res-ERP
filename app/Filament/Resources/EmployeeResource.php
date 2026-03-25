@@ -135,7 +135,7 @@ class EmployeeResource extends Resource
     public static function canCreate(): bool
     {
 
-        if (isSystemManager() || isSuperAdmin()) {
+        if (isSystemManager() || isSuperAdmin() || isHR()) {
             return true;
         }
         return false;
@@ -143,7 +143,7 @@ class EmployeeResource extends Resource
 
     public static function canDelete(Model $record): bool
     {
-        if (isSystemManager() || isBranchManager() || isSuperAdmin()) {
+        if (isSystemManager() || isBranchManager() || isSuperAdmin() || isHR()) {
             return true;
         }
         return false;
@@ -151,7 +151,7 @@ class EmployeeResource extends Resource
 
     public static function canDeleteAny(): bool
     {
-        if (isSystemManager() || isBranchManager() || isSuperAdmin()) {
+        if (isSystemManager() || isBranchManager() || isSuperAdmin() || isHR()) {
             return true;
         }
         return false;
@@ -159,7 +159,7 @@ class EmployeeResource extends Resource
 
     public static function canEdit(Model $record): bool
     {
-        if (isSuperAdmin() || isBranchManager() || isSystemManager() || isStuff() || isFinanceManager()) {
+        if (isSuperAdmin() || isBranchManager() || isSystemManager() || isStuff() || isFinanceManager() || isHR()) {
             return true;
         }
         return false;
@@ -167,7 +167,7 @@ class EmployeeResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager() || isHR()) {
             return true;
         }
         return false;
@@ -294,5 +294,11 @@ class EmployeeResource extends Resource
     public static function getGlobalSearchResultsLimit(): int
     {
         return 15;
+    }
+
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name', 'email', 'employee_no', 'id'];
     }
 }

@@ -91,8 +91,11 @@ class PeriodRelationManager extends RelationManager
                             return '-';
                         }
 
+                        $daysOrder = array_keys(DayOfWeek::options());
+
                         return $employeePeriod->days
                             ->pluck('day_of_week')
+                            ->sortBy(fn($d) => array_search($d, $daysOrder))
                             ->map(fn($d) => DayOfWeek::from($d)->english())
                             ->implode(', ');
                     })

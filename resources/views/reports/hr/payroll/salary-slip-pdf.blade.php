@@ -205,50 +205,27 @@
                 </thead>
                 <tbody>
 
+                    {{-- Earnings rows --}}
+                    @foreach (($earnings ?? collect()) as $e)
                     @php
-                    $earn = $earnings ?? collect();
-                    $ded = $deductions ?? collect();
-                    $rows = $transactions->count();
+                    $eDesc = $e->description ?: ucfirst(str_replace('_', ' ', $e->sub_type ?? ($e->type ?? '')));
                     @endphp
+                    <tr @if($e->type === 'carry_forward') style="background-color: #ffe6e6;" @endif>
+                        <td>{{ $eDesc }}</td>
+                        <td>{{ formatMoneyWithCurrency($e->amount) }}</td>
+                        <td></td>
+                    </tr>
+                    @endforeach
 
-                    @for ($i = 0; $i < $rows; $i++)
-                        @php
-                        $e=$earn->get($i);
-                        $d = $ded->get($i);
-                        $eDesc = $e?->description ?: (isset($e) ? ucfirst(str_replace('_', ' ', $e->sub_type ?? ($e->type ?? ''))) : '');
-                        $dDesc = $d?->description ?: (isset($d) ? ucfirst(str_replace('_', ' ', $d->sub_type ?? ($d->type ?? ''))) : '');
-                        @endphp
-                        <tr @if(($e && $e->type === 'carry_forward') || ($d && $d->type === 'carry_forward')) style="background-color: #ffe6e6;" @endif>
-                            <td>
-                                @if ($e && $d)
-                                {{ $eDesc }} / {{ $dDesc }}
-                                @elseif($e)
-                                {{ $eDesc }}
-                                @elseif($d)
-                                {{ $dDesc }}
-                                @else
-                                &nbsp;
-                                @endif
-                            </td>
-                            <td>
-                                @if ($e)
-                                {{ formatMoneyWithCurrency($e->amount) }}
-                                @endif
-                            </td>
-                            <td>
-                                @if ($d)
-                                {{ formatMoneyWithCurrency($d->amount) }}
-                                @endif
-                            </td>
-                        </tr>
-                        @endfor
-                        @foreach ($employerContrib as $employerContribution)
-                        <tr style="background-color: #e6ffc8ff;">
-                            <td>{{ $employerContribution->description }}</td>
-                            <td></td>
-                            <td>{{ formatMoneyWithCurrency($employerContribution->amount) }}</td>
-                        </tr>
-                        @endforeach
+                    {{-- Deduction rows (interleaved with matching employer) --}}
+                    @foreach (($deductionRows ?? collect()) as $row)
+                    <tr @if($row->bgColor) style="background-color: {{ $row->bgColor }};" @endif>
+                        <td>{{ $row->description }}</td>
+                        <td></td>
+                        <td>{{ formatMoneyWithCurrency($row->amount) }}</td>
+                    </tr>
+                    @endforeach
+
                 </tbody>
                 <tfoot>
                     <tr>

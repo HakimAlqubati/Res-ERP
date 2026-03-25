@@ -21,8 +21,8 @@ class ShiftConflictRule implements ValidationRuleInterface
 
     public function validate(ValidationContext $context, ?string $requestType = null, ?int $periodId = null): void
     {
-        // إذا تم تحديد period_id أو النوع صراحةً، لا حاجة للتحقق
-        if ($periodId !== null || $requestType !== null) {
+        // إذا تم تحديد period_id أو النوع صراحةً، أو كان هذا طلب موافقة مدخل يدوياً، لا حاجة للتحقق
+        if ($periodId !== null || $requestType !== null || $context->isRequest) {
             return;
         }
 

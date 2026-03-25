@@ -193,6 +193,10 @@ $totalNet += $r['data']['net_salary'];
             <!-- Calculation Factors & Stats -->
             <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6 text-sm">
                 <div class="bg-gray-50 p-3 rounded border border-gray-200 col-span-1">
+                    <span class="block text-gray-500 text-xs uppercase tracking-wider">Monthly Salary</span>
+                    <span class="font-mono font-bold text-lg text-gray-700">{{ $row['monthly_salary'] ?? '-' }}</span>
+                </div>
+                <div class="bg-gray-50 p-3 rounded border border-gray-200 col-span-1">
                     <span class="block text-gray-500 text-xs uppercase tracking-wider">Month Days</span>
                     <span class="font-mono font-bold text-lg text-gray-700">{{ $row['month_days'] ?? '-' }}</span>
                 </div>

@@ -9,6 +9,7 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryR
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages\EditStockInventory;
 use App\Models\UnitPrice;
 use App\Filament\Clusters\InventoryManagementCluster;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages\ViewStockInventory;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Schemas\StockInventoryForm;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\RelationManagers\DetailsRelationManager;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Tables\StockInventoryTable;
@@ -74,6 +75,7 @@ class StockInventoryResource extends Resource
             // 'new-create' => StockInventoryReactPage::route('/new-create'),
             'create' => CreateStockInventory::route('/create'),
             'edit'   => EditStockInventory::route('/{record}/edit'),
+            'view'   => ViewStockInventory::route('/{record}'),
         ];
     }
 

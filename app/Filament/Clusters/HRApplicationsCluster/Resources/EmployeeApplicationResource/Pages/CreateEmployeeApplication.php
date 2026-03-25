@@ -115,14 +115,14 @@ class CreateEmployeeApplication extends CreateRecord
     {
 
         // dd($data);
-        if (!isStuff() && !isFinanceManager()) {
+        if (!isStuff() && !isFinanceManager() || isHR()) {
             $employee = Employee::find($data['employee_id']);
             if ($employee->branch()->exists()) {
                 $data['branch_id'] = $employee->branch->id;
             }
         }
 
-        if (isStuff() || isFinanceManager()) {
+        if (isStuff() || isFinanceManager() || isHR()) {
             $data['employee_id'] = auth()->user()->employee->id;
             $data['branch_id'] = auth()->user()->branch_id;
             $employee = Employee::find($data['employee_id']);
@@ -239,3 +239,4 @@ class CreateEmployeeApplication extends CreateRecord
         return $this->getResource()::getUrl('index') . EmployeeApplicationV2::APPLICATION_TYPE_FILTERS[$this->record->application_type_id];
     }
 }
+

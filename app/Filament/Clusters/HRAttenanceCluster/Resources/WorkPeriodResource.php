@@ -339,14 +339,13 @@ class WorkPeriodResource extends Resource
     }
     public static function canViewAny(): bool
     {
-        if (isSystemManager() || isSuperAdmin() || isBranchManager()) {
+        if (isSystemManager() || isSuperAdmin() || isBranchManager() || isHR()) {
             return true;
         }
         return false;
     }
 
-
-
+ 
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery()

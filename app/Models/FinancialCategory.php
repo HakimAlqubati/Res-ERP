@@ -18,10 +18,19 @@ class FinancialCategory extends Model
         self::TYPE_EXPENSE => 'Expense',
     ];
 
+    const PROFIT_TYPE_GROSS = 'gross_profit';
+    const PROFIT_TYPE_NET = 'net_profit';
+
+    const PROFIT_TYPES = [
+        self::PROFIT_TYPE_GROSS => 'Gross Profit',
+        self::PROFIT_TYPE_NET => 'Net Profit',
+    ];
+
     protected $fillable = [
         'name',
         'code',
         'type',
+        'profit_type',
         'parent_id',
         'is_system',
         'is_visible',

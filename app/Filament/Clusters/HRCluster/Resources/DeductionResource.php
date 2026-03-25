@@ -26,6 +26,7 @@ use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Slider;
 use Filament\Forms\Components\TextInput;
+use Filament\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Support\RawJs;
@@ -45,6 +46,11 @@ class DeductionResource extends Resource
     protected static ?string $cluster = HRSalarySettingCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 6;
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    protected static bool $isGloballySearchable = true;
+
     public static function form(Schema $schema): Schema
     {
 
@@ -93,6 +99,11 @@ class DeductionResource extends Resource
                         ->hidden(fn($get): bool => ($get('is_penalty')))->live(),
                     Toggle::make('active')->default(true),
                     Toggle::make('has_brackets')->default(false)->live()
+                        ->hidden(fn($get): bool => ($get('is_penalty') || $get('is_specific'))),
+                    Toggle::make('is_mtd_deduction')
+                        ->label('Is MTD Deduction')
+                        ->helperText('Apply to employees with MTD applicable flag, regardless of the condition above')
+                        ->default(false)
                         ->hidden(fn($get): bool => ($get('is_penalty') || $get('is_specific'))),
                     Radio::make('is_percentage')->label('')->live()
                         ->helperText('Set deduction as a salary percentage or fixed amount')->options([
@@ -299,7 +310,7 @@ class DeductionResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager() || isHR()) {
             return true;
         }
         return false;
@@ -322,4 +333,26 @@ class DeductionResource extends Resource
         }
         return false;
     }
+
+    public static function getGlobalSearchResultsLimit(): int
+    {
+        return 15;
+    }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name', 'description', 'id'];
+    }
+
+
+    public static function getRecordSubNavigation(Page $page): array
+    {
+        return $page->generateNavigationItems([
+            ListDeductions::class,
+            CreateDeduction::class,
+            EditDeduction::class,
+            ViewDeduction::class,
+        ]);
+    }
 }
+

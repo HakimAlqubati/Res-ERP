@@ -196,7 +196,8 @@ class AttendnaceResource extends Resource
                 TextColumn::make('period.name')
                     ->label('Period')
                     ->tooltip(function ($record) {
-                        return $record->period->start_at . ' - ' . $record->period->end_at;
+                        $period = $record->period;
+                        return '(' . $period->start_at . ' - ' . $period->end_at . ') _ (' . $period->id . ' - ' . $period->name . ')';
                     }),
 
                 TextColumn::make('check_date')
@@ -231,14 +232,33 @@ class AttendnaceResource extends Resource
                     ->label('Early departure minutes')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->summarize(Sum::make()->query(fn(\Illuminate\Database\Query\Builder $query) => $query->where('early_departure_minutes', '>', 20))),
-                TextColumn::make('attendance_type')->alignCenter(true),
+                // TextColumn::make('attendance_type')->alignCenter(true),
                 TextColumn::make('created_at')->alignCenter(true)->sortable()->toggleable(isToggledHiddenByDefault: true),
 
 
             ])
             ->filtersFormColumns(3)
             ->filters([
+                Filter::make('id')
+                    ->form([
+                        TextInput::make('id')
+                            ->label('ID')
+                            ->numeric(),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['id'],
+                            fn(Builder $query, $id): Builder => $query->where('id', $id)
+                        );
+                    })
+                    ->indicateUsing(function (array $data): ?string {
+                        if (! $data['id']) {
+                            return null;
+                        }
+                        return 'ID: ' . $data['id'];
+                    }),
                 TrashedFilter::make(),
+
                 SelectFilter::make('accepted')->searchable()->label('Rejected')->options([
                     0 => 'Yes',
                     1 => 'No',
@@ -485,7 +505,7 @@ class AttendnaceResource extends Resource
 
     public static function canDelete(Model $record): bool
     {
-        if (isSuperAdmin()) {
+        if (isSuperAdmin() || isHR()) {
             return true;
         }
         return false;
@@ -517,7 +537,7 @@ class AttendnaceResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSystemManager() || isSuperAdmin()) {
+        if (isSystemManager() || isSuperAdmin() || isHR()) {
             return true;
         }
         return false;

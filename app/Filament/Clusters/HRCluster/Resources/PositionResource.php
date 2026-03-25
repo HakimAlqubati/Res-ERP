@@ -97,14 +97,14 @@ class PositionResource extends Resource
 
     public static function canView(Model $record): bool
     {
-        if (isSuperAdmin() || isSystemManager()) {
+        if (isSuperAdmin() || isSystemManager() || isHR()) {
             return true;
         }
         return false;
     }
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager()) {
+        if (isSuperAdmin() || isSystemManager() || isHR()) {
             return true;
         }
         return false;

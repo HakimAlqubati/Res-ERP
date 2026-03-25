@@ -52,7 +52,7 @@ return [
      * will be automatically set on the job. When the job is executed, the set
      * tenant on the job will be made current.
      */
-    'queues_are_tenant_aware_by_default' => false,
+    'queues_are_tenant_aware_by_default' => true,
 
     /*
      * The connection name to reach the tenant database.
@@ -97,7 +97,10 @@ return [
      * Jobs tenant aware even if these don't implement the TenantAware interface.
      */
     'tenant_aware_jobs' => [
-        // ...
+        // App\Jobs\GenerateUnauditedStocktakeJob::class,
+        // Illuminate\Notifications\SendQueuedNotifications::class,
+
+
     ],
 
     /*

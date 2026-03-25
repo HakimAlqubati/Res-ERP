@@ -24,6 +24,15 @@
                     animation: {
                         'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
                         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 20s ease-in-out infinite',
+                        'glow-breathe': 'glowBreathe 10s ease-in-out infinite',
+                        'orbit': 'orbit 40s linear infinite',
+                        'orbit-reverse': 'orbitReverse 55s linear infinite',
+                        'shimmer': 'shimmer 10s ease-in-out infinite',
+                        'drift-1': 'drift1 60s ease-in-out infinite',
+                        'drift-2': 'drift2 80s ease-in-out infinite',
+                        'drift-3': 'drift3 50s ease-in-out infinite',
+                        'fade-in-slow': 'fadeInUp 1.8s ease-out forwards',
                     }
                 }
             }
@@ -64,6 +73,137 @@
                 opacity: 1;
                 transform: translateY(0);
             }
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        @keyframes glowBreathe {
+
+            0%,
+            100% {
+                box-shadow: 0 0 30px rgba(13, 124, 102, 0.15), 0 0 60px rgba(13, 124, 102, 0.05);
+                border-color: rgba(13, 124, 102, 0.15);
+            }
+
+            50% {
+                box-shadow: 0 0 50px rgba(13, 124, 102, 0.3), 0 0 100px rgba(13, 124, 102, 0.1);
+                border-color: rgba(13, 124, 102, 0.35);
+            }
+        }
+
+        @keyframes orbit {
+            from {
+                transform: rotate(0deg) translateX(100px) rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg) translateX(100px) rotate(-360deg);
+            }
+        }
+
+        @keyframes orbitReverse {
+            from {
+                transform: rotate(0deg) translateX(120px) rotate(0deg);
+            }
+
+            to {
+                transform: rotate(-360deg) translateX(120px) rotate(360deg);
+            }
+        }
+
+        @keyframes shimmer {
+
+            0%,
+            100% {
+                background-position: -200% center;
+            }
+
+            50% {
+                background-position: 200% center;
+            }
+        }
+
+        @keyframes drift1 {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            25% {
+                transform: translate(25px, -12px) scale(1.03);
+            }
+
+            50% {
+                transform: translate(10px, 15px) scale(0.98);
+            }
+
+            75% {
+                transform: translate(-15px, 8px) scale(1.02);
+            }
+        }
+
+        @keyframes drift2 {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(-20px, 20px) scale(1.04);
+            }
+
+            66% {
+                transform: translate(15px, -10px) scale(0.97);
+            }
+        }
+
+        @keyframes drift3 {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: translate(-12px, -15px) scale(1.06);
+                opacity: 0.65;
+            }
+        }
+
+        .shimmer-text {
+            background: linear-gradient(90deg,
+                    #ffffff 0%,
+                    #ffffff 40%,
+                    #0d7c66 50%,
+                    #ffffff 60%,
+                    #ffffff 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 4s ease-in-out infinite;
+        }
+
+        .particle {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
         }
 
         .glass-effect {
@@ -163,8 +303,9 @@
 
         <!-- Background decorative elements -->
         <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-            <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]"></div>
-            <div class="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-blue-500/5 rounded-full blur-[100px]"></div>
+            <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] animate-drift-1"></div>
+            <div class="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-blue-500/5 rounded-full blur-[100px] animate-drift-2"></div>
+            <div class="absolute top-[30%] right-[20%] w-[25%] h-[25%] bg-purple-500/3 rounded-full blur-[100px] animate-drift-3"></div>
         </div>
 
         <div class="flex-grow p-6 md:p-12 flex items-center justify-center relative z-10 w-full" id="result-container">
@@ -296,17 +437,26 @@
             </div>
             @else
             <!-- Empty State -->
-            <div id="empty-state" class="text-center max-w-lg mx-auto animate-fade-in-up">
-                <div class="relative w-48 h-48 mx-auto mb-8">
-                    <div class="absolute inset-0 bg-gradient-to-tr from-primary/20 to-blue-500/20 rounded-full blur-2xl animate-pulse-slow"></div>
-                    <div class="relative bg-dark-card border border-dark-border rounded-full w-full h-full flex items-center justify-center shadow-2xl">
-                        <svg class="w-20 h-20 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div id="empty-state" class="text-center max-w-lg mx-auto">
+                <div class="relative w-48 h-48 mx-auto mb-8 animate-float">
+                    <!-- Orbiting particles -->
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="particle bg-primary/60 animate-orbit" style="animation-delay: 0s;"></div>
+                        <div class="particle bg-blue-400/50 animate-orbit" style="animation-delay: -4s; animation-duration: 10s;"></div>
+                        <div class="particle bg-emerald-400/40 animate-orbit-reverse" style="animation-delay: -2s;"></div>
+                        <div class="particle bg-primary/30 animate-orbit-reverse" style="width: 4px; height: 4px; animation-delay: -7s; animation-duration: 18s;"></div>
+                    </div>
+                    <!-- Glow behind the circle -->
+                    <div class="absolute inset-0 bg-gradient-to-tr from-primary/20 to-blue-500/20 rounded-full blur-2xl animate-glow-breathe"></div>
+                    <!-- Main circle -->
+                    <div class="relative bg-dark-card border border-dark-border rounded-full w-full h-full flex items-center justify-center shadow-2xl animate-glow-breathe">
+                        <svg class="w-20 h-20 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="filter: drop-shadow(0 0 8px rgba(13, 124, 102, 0.3));">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                         </svg>
                     </div>
                 </div>
-                <h3 class="text-3xl font-bold text-white mb-3">في انتظار البيانات</h3>
-                <p class="text-gray-400 text-lg">قم بإدخال البيانات في النموذج الجانبي لعرض تحليل تفصيلي لاستحقاقات الإجازة والخصومات.</p>
+                <h3 class="text-3xl font-bold mb-3 shimmer-text" style="animation-delay: 0.3s;">في انتظار البيانات</h3>
+                <p class="text-gray-400 text-lg animate-fade-in-slow" style="opacity: 0; animation-delay: 0.6s;">قم بإدخال البيانات في النموذج الجانبي لعرض تحليل تفصيلي لاستحقاقات الإجازة والخصومات.</p>
             </div>
             @endif
         </div>

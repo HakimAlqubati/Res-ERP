@@ -11,5 +11,13 @@ class MonthlyIncentive extends Model
 {
     use HasFactory, SoftDeletes;
     protected $table = 'hr_monthly_incentives';
-    protected $fillable = ['name', 'description', 'active'];
+    protected $fillable = ['name', 'description', 'active', 'financial_category_id'];
+
+    /**
+     * Get the financial category associated with this incentive.
+     */
+    public function financialCategory()
+    {
+        return $this->belongsTo(FinancialCategory::class);
+    }
 }

@@ -18,6 +18,7 @@ class HelperFunctions
             'no_periods'    => 0,
             'leave'         => 0,
             'weekly_leave'  => 0, // إجازة أسبوعية تلقائية
+            'terminated'    => 0,
             'required_days' => 0,
             'total_days'    => 0,
         ];
@@ -42,7 +43,7 @@ class HelperFunctions
                     break;
                 case AttendanceReportStatus::Partial->value:
                     $stats['partial']++;
-                    $stats['absent']++;
+                    // $stats['absent']++;
                     $stats['required_days']++;
                     break;
                 case AttendanceReportStatus::Leave->value:
@@ -52,6 +53,10 @@ class HelperFunctions
                 case AttendanceReportStatus::WeeklyLeave->value:
                     $stats['weekly_leave']++;
                     $stats['required_days']++;
+                    break;
+                case AttendanceReportStatus::Terminated->value:
+                    $stats['terminated']++;
+                    // Not incrementing required_days, as they are no longer required to work.
                     break;
                 case AttendanceReportStatus::NoPeriods->value:
                     $stats['no_periods']++;
@@ -74,6 +79,7 @@ class HelperFunctions
             AttendanceReportStatus::Partial,
             AttendanceReportStatus::Leave,
             AttendanceReportStatus::NoPeriods,
+            AttendanceReportStatus::Terminated,
         ];
         $stats = self::calculateAttendanceStats($reportData);
 
@@ -99,24 +105,14 @@ class HelperFunctions
             if (isset($data['periods'])) {
                 // Loop through each period for the date
                 foreach ($data['periods'] as $period) {
-                    if (isset($period['attendances']['checkin'])) {
+                    $hasCheckin = !empty($period['attendances']['checkin']);
+                    $hasCheckout = !empty($period['attendances']['checkout']);
+
+                    if ($hasCheckin && $hasCheckout) {
                         // Loop through each checkin record 
                         // Check if the status is 'late_arrival'
                         if (isset($period['attendances']['checkin'][0]['status']) && $period['attendances']['checkin'][0]['status'] === Attendance::STATUS_LATE_ARRIVAL) {
-                            // Add the delay minutes to the total
-                            if ($period['attendances']['checkin'][0]['delay_minutes'] > settingWithDefault('early_attendance_minutes', 15)) {
-                                if (setting('flix_hours')) {
-                                    if (
-                                        isset($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly']) &&
-                                        $this->timeToHoursForLateArrival($period['attendances']['checkout']['lastcheckout']['total_actual_duration_hourly'])
-                                        < ($this->timeToHoursForLateArrival($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly']) - (self::FLEXIBLE_HOURS_MARGIN_MINUTES / 60))
-                                    ) {
-                                        $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
-                                    }
-                                } else {
-                                    $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
-                                }
-                            }
+                            $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'] ?? 0;
                         }
                     }
                 }
@@ -154,73 +150,5 @@ class HelperFunctions
 
         // If format is invalid
         throw new \InvalidArgumentException("Invalid time format. Expected 'H:i:s' or 'X h Y m'.");
-    }
-
-    public function calculateMissingHours(
-        $status,
-        $supposedDuration,
-        $approvedOvertime,
-        $date,
-        $employeeId
-    ) {
-
-        $isMultiple = Attendance::selectRaw('period_id, COUNT(*) as total')
-            ->where('check_date', $date)
-            ->where('employee_id', $employeeId)
-            ->where('accepted', 1)
-            ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
-            ->groupBy('period_id')
-            ->having('total', '>', 1)
-            ->exists();
-
-
-        if (!$isMultiple) {
-            return [
-                'formatted' => '0 h 0m',
-                'total_hours' => 0,
-                'total_minutes' => 0,
-                'is_multiple' => $isMultiple,
-            ];
-        }
-        if (in_array($status, [
-            Attendance::STATUS_EARLY_DEPARTURE,
-            Attendance::STATUS_LATE_ARRIVAL
-        ])) {
-            return [
-                'formatted' => '0 h 0m',
-                'total_hours' => 0,
-                'total_minutes' => 0,
-                'is_multiple' => $isMultiple,
-            ];
-        }
-        // Default the supposed duration if null
-        $supposedDuration = $supposedDuration ?? '00:00:00';
-
-
-        $approvedOvertimeParsed = convertToFormattedTime($approvedOvertime);
-        if (!\Carbon\Carbon::parse($approvedOvertimeParsed)->lt(\Carbon\Carbon::parse($supposedDuration))) {
-            // dd(\Carbon\Carbon::parse($supposedDuration), \Carbon\Carbon::parse($approvedOvertimeParsed));
-            return [
-                'formatted' => '0 h 0m',
-                'total_hours' => 0,
-                'total_minutes' => 0,
-                'is_multiple' => $isMultiple,
-            ];
-        }
-        // Calculate the difference
-        $difference = \Carbon\Carbon::parse($supposedDuration)->diff(\Carbon\Carbon::parse($approvedOvertimeParsed));
-
-        // Calculate the total number of minutes
-        $totalMinutes = $difference->h * 60 + $difference->i;
-        $totalHours = round($totalMinutes / 60, 1);
-        // Return both formatted difference and total minutes in an array
-        return [
-            'formatted' => $difference->format('%h h %i m'),
-            'total_minutes' => $totalMinutes,
-            'total_hours' => $totalHours,
-            'is_multiple' => $isMultiple,
-        ];
-        // Return the formatted difference
-        return $difference->format('%h h %i m');
     }
 }

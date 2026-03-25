@@ -18,12 +18,18 @@ class EmployeeApplicationResource extends JsonResource
             'applicationDate'   => $this->application_date,
             'status'            => $this->status,
             'notes'             => $this->notes,
-            'rejected_reason'             => $this->rejected_reason,
+            'rejected_reason'       => $this->rejected_reason,
+            'approved_by'           => $this->approvedBy ? [
+                'id' => $this->approvedBy->id,
+                'name' => $this->approvedBy->name,
+                'approved_at' => $this->approved_at,
+            ] : null,
 
-            'leaveRequest'      => $this->leaveRequest,
+            'leaveRequest'          => $this->leaveRequest,
             'advanceRequest'    => $this->advanceRequest,
             'missedCheckinRequest'    => $this->missedCheckinRequest,
             'missedCheckoutRequest'    => $this->missedCheckoutRequest,
+            'images'            => $this->getMedia('images')->map(fn($media) => $media->getFullUrl()),
             'createdAt'         => $this->created_at?->toDateTimeString(),
         ];
     }

@@ -48,6 +48,7 @@ class EmployeeObserver
             // إنشاء اليوزر
             $user = User::create($userData);
 
+            // $user->assignRole(8);
             // ربط user_id بالموظف
             $employee->user_id = $user->id;
             $employee->save();
@@ -93,6 +94,7 @@ class EmployeeObserver
             //     $user->avatar = $employee->avatar;
             // }
 
+            $user->active = $employee->active ?? 1;
             // Save changes to the user model
             $user->save();
         }
@@ -134,7 +136,9 @@ class EmployeeObserver
      */
     public function deleted(Employee $employee): void
     {
-        //
+        if ($employee->has('user')) {
+            $employee->user()->delete();
+        }
     }
 
     /**

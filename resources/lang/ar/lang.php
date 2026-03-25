@@ -280,6 +280,7 @@ return [
   'gender' => 'الجنس',
   'male' => 'ذكر',
   'female' => 'أنثى',
+  'birthday' => 'تاريخ الميلاد',
   'nationality' => 'الجنسية',
   'employee_address' => 'عنوان الموظف',
   'avatar' => 'الصورة الشخصية',
@@ -331,6 +332,8 @@ return [
   'bank' => 'البنك',
   'enter_bank_name' => 'أدخل اسم البنك',
   'enter_bank_account_number' => 'أدخل رقم الحساب البنكي',
+  'transaction_number' => 'رقم الترنزكشن',
+  'enter_transaction_number' => 'أدخل رقم الترنزكشن',
 
   // ===========================================
   // HRMS - Allowances & Deductions
@@ -347,6 +350,7 @@ return [
   'is_percentage' => 'نسبة مئوية',
   'no_salary_deduction_for_absences' => 'بدون خصم راتب للغياب',
   'exempt_from_late_attendance_deduction' => 'معفى من خصم التأخير',
+  'is_mtd_applicable' => 'خاضع لـMTD',
 
   // ===========================================
   // HRMS - Attendance & Shifts
@@ -654,8 +658,14 @@ return [
   // ===========================================
   'attendance_reports' => 'تقارير الحضور',
   'attendance_by_employee' => 'الحضور حسب الموظف',
+  'missing_checkout_report' => 'تقرير نسيان الانصراف',
+  'missing_checkout' => 'نسيان الانصراف',
   'my_attendance' => 'سجل حضوري',
   'absence_report' => 'تقرير الغياب',
+  'branch_attendance_summary' => 'ملخص حضور الفرع',
+  'current_staff' => 'الموظفين الحاليين',
+  'new_staff' => 'الموظفين الجدد',
+  'terminated_staff' => 'الموظفين المنتهية خدماتهم',
   'no_data' => 'لا توجد بيانات',
   'start_date' => 'تاريخ البداية',
   'end_date' => 'تاريخ النهاية',
@@ -810,6 +820,10 @@ return [
   'overtime_date' => 'تاريخ العمل الإضافي',
   'overtime_reason' => 'سبب العمل الإضافي',
   'overtime_amount' => 'مبلغ العمل الإضافي',
+  'overtime_report' => 'تقرير العمل الإضافي',
+  'total_records'   => 'إجمالي السجلات',
+  'hours'           => 'الساعات',
+  'approved_by'     => 'اعتمد بواسطة',
 
   // ===========================================
   // Attendance Report Blade View
@@ -1045,6 +1059,9 @@ return [
   // Employee Service Termination
   // ===========================================
   'terminate_service' => 'إنهاء الخدمة',
+  'rehire' => 'إعادة تعيين',
+  'rehire_employee' => 'إعادة تعيين موظف',
+  'employee_rehired_successfully' => 'تم إعادة تعيين الموظف بنجاح',
   'termination_date' => 'تاريخ إنهاء الخدمة',
   'termination_reason' => 'سبب الإنهاء',
   'notes' => 'ملاحظات',
@@ -1060,4 +1077,9 @@ return [
   'termination_request_created' => 'تم إنشاء طلب إنهاء الخدمة بنجاح',
   'subtotal' => 'المجموع الفرعي',
   'weekly_leave' => 'إجازة أسبوعية',
+  'error_occurred' => 'حدث خطأ',
+  'employee_name' => 'اسم الموظف',
+  'unterminated' => 'غير موقف',
+  'terminated' => 'موقف',
+  'access_denied' => 'ممنوع من الوصول',
 ];

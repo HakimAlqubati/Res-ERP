@@ -144,7 +144,7 @@ class EmployeeApplicationResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSystemManager() || isSuperAdmin() || isBranchManager() || isStuff() || isFinanceManager()) {
+        if (isSystemManager() || isSuperAdmin() || isBranchManager() || isStuff() || isFinanceManager() || isHR()) {
             return true;
         }
         return false;
@@ -161,26 +161,26 @@ class EmployeeApplicationResource extends Resource
             )
 
             // ✅ ملاحظة (Note) تظهر كـ Tooltip عندما يكون الزر Disabled
-            ->tooltip(function ($record) {
-                $hasCheckin = Attendance::query()
-                    ->where('employee_id', $record?->employee_id)
-                    ->where('check_date', $record?->detail_date)
-                    ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
-                    ->exists();
+            // ->tooltip(function ($record) {
+            //     $hasCheckin = Attendance::query()
+            //         ->where('employee_id', $record?->employee_id)
+            //         ->where('check_date', $record?->detail_date)
+            //         ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+            //         ->exists();
 
-                return $hasCheckin
-                    ? null
-                    : 'There is no check-in, so you cannot approve this request.';
-            })
+            //     return $hasCheckin
+            //         ? null
+            //         : 'There is no check-in, so you cannot approve this request.';
+            // })
 
             // ✅ تعطيل زر الـ Action في حالة عدم وجود Check-in
-            ->disabled(function ($record): bool {
-                return ! Attendance::query()
-                    ->where('employee_id', $record?->employee_id)
-                    ->where('check_date', $record?->detail_date)
-                    ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
-                    ->exists();
-            })
+            // ->disabled(function ($record): bool {
+            //     return ! Attendance::query()
+            //         ->where('employee_id', $record?->employee_id)
+            //         ->where('check_date', $record?->detail_date)
+            //         ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+            //         ->exists();
+            // })
 
             ->color('success')
             ->icon('heroicon-o-check')
@@ -284,70 +284,25 @@ class EmployeeApplicationResource extends Resource
             ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST))
             ->color('success')
             ->icon('heroicon-o-check')
+            ->modalSubmitActionLabel('Approve')
 
             ->action(function ($record) {
                 DB::beginTransaction();
                 try {
-                    $adv = $record->advanceRequest;
-
-                    // Guards
-                    if (! $adv || ! $record->employee_id || ! $adv->advance_amount || ! $adv->number_of_months_of_deduction || ! $adv->deduction_starts_from) {
-                        Notification::make()->danger()->title('Missing advance data.')->send();
-                        DB::rollBack();
-                        return;
-                    }
-
-                    // Prevent duplicates for this application
-                    if (\App\Models\EmployeeAdvanceInstallment::where('application_id', $record->id)->exists()) {
-                        Notification::make()->warning()->title('Installments already exist.')->send();
-                        DB::rollBack();
-                        return;
-                    }
-
-                    // Approve
+                    // Only update the status to MANAGER APPROVED.
+                    // Installments and financial transactions will be created
+                    // when the Financial Manager approves the request.
                     $record->update([
-                        'status'      => \App\Models\EmployeeApplicationV2::STATUS_APPROVED,
+                        'status'      => EmployeeApplicationV2::STATUS_APPROVED,
                         'approved_by' => auth()->id(),
                         'approved_at' => now(),
                     ]);
 
-                    // Normalize start month
-                    $startMonth = \Carbon\Carbon::parse($adv->deduction_starts_from)->startOfMonth()->toDateString();
-
-                    // Generate installments (creates sequence + status=scheduled)
-                    \App\Models\AdvanceRequest::createInstallments(
-                        $record->employee_id,
-                        $adv->advance_amount,
-                        $adv->number_of_months_of_deduction,
-                        $startMonth,
-                        $record->id // application_id
-                    );
-
-                    // Recompute aggregates on the advance request
-                    // (use model method if موجود، وإلا fallback سريع)
-                    if (method_exists($adv, 'recomputeTotals')) {
-                        $adv->refresh();
-                        $adv->recomputeTotals();
-                    } else {
-                        $sumAll  = (float) \App\Models\EmployeeAdvanceInstallment::where('application_id', $record->id)->sum('installment_amount');
-                        $sumPaid = (float) \App\Models\EmployeeAdvanceInstallment::where('application_id', $record->id)->where('is_paid', true)->sum('installment_amount');
-                        $cntPaid =        \App\Models\EmployeeAdvanceInstallment::where('application_id', $record->id)->where('is_paid', true)->count();
-                        $lastDue =        \App\Models\EmployeeAdvanceInstallment::where('application_id', $record->id)->max('due_date');
-
-                        $adv->remaining_total   = round($sumAll - $sumPaid, 2);
-                        $adv->paid_installments = $cntPaid;
-                        if ($lastDue) $adv->deduction_ends_at = $lastDue;
-                        $adv->saveQuietly();
-                    }
-
-                    // Create financial transaction for the advance payment
-                    $adv->createFinancialTransaction();
-
                     DB::commit();
-                    Notification::make()->success()->title('Approved and installments created.')->send();
+                    Notification::make()->success()->title('Manager Approved. Waiting for Finance Approval.')->send();
                 } catch (\Throwable $th) {
                     DB::rollBack();
-                    Notification::make()->danger()->title('Approval error.')->send();
+                    Notification::make()->danger()->title('Approval error: ' . $th->getMessage())->send();
                     throw $th;
                 }
             })
@@ -440,6 +395,240 @@ class EmployeeApplicationResource extends Resource
                 ]);
             })
             // ->disabledForm()
+            ->schema(function ($record) {
+                return [
+                    Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
+                ];
+            });
+    }
+
+    public static function financeApproveAdvanceRequest(): Action
+    {
+        return Action::make('financeApproveAdvanceRequest')->label('Approve & Pay')
+            // ->button()
+            ->visible(function ($record) {
+                return $record->status == EmployeeApplicationV2::STATUS_APPROVED
+                    && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST
+                    && is_null($record->advanceRequest?->finance_approved_at);
+            })
+            ->color('success')
+            ->icon('heroicon-o-check-circle')
+            ->modalSubmitActionLabel('Approve & Pay')
+
+            ->action(function ($record, array $data) {
+                DB::beginTransaction();
+                try {
+                    // Approve as Financial Manager
+                    $classType = get_class($record);
+                    if ($classType == AdvanceRequest::class) {
+                        $record = $record->application;
+                        $record = EmployeeApplicationV2::find($record->id);
+                    }
+                    $advanceRequest = $record->advanceRequest;
+                    $advanceRequest->finance_approved_by = auth()->id();
+                    $advanceRequest->finance_approved_at = now();
+                    $advanceRequest->payment_method      = $data['payment_method'] ?? null;
+                    $advanceRequest->bank_account_number = $data['bank_account_number'] ?? null;
+                    $advanceRequest->transaction_number  = $data['transaction_number'] ?? null;
+
+                    // ✅ تحديث بيانات الأقساط بالقيم التي عدّلها المدير المالي
+                    // advance_amount: غير قابل للتعديل — يُستخدم دائماً المبلغ الأصلي
+                    $advanceRequest->monthly_deduction_amount      = $data['monthly_deduction_amount'] ?? $advanceRequest->monthly_deduction_amount;
+                    $advanceRequest->number_of_months_of_deduction = $data['number_of_months_of_deduction'] ?? $advanceRequest->number_of_months_of_deduction;
+                    $advanceRequest->deduction_starts_from         = $data['deduction_starts_from'] ?? $advanceRequest->deduction_starts_from;
+                    $advanceRequest->deduction_ends_at             = $data['deduction_ends_at'] ?? $advanceRequest->deduction_ends_at;
+
+                    $advanceRequest->save();
+
+                    // Generate installments and financial transactions
+                    app(\App\Services\HR\Applications\AdvanceRequest\AdvanceApprovalService::class)->process($record);
+
+                    DB::commit();
+                    Notification::make()->success()->title('Finance Approved and installments created.')->send();
+                } catch (\Throwable $th) {
+                    DB::rollBack();
+                    Notification::make()->danger()->title('Approval error: ' . $th->getMessage())->send();
+                    throw $th;
+                }
+            })
+            ->schema(function ($record) {
+
+
+                $classType = get_class($record);
+                if ($classType == AdvanceRequest::class) {
+                    $record = $record->application;
+                    $record = EmployeeApplicationV2::find($record->id);
+                }
+                // dd($record,$record->employee);
+                $details = $record->advanceRequest;
+                $employee = $record->employee;
+                $currency = $employee?->currency ?? getDefaultCurrency();
+
+                $detailDate             = $details?->date;
+                $monthlyDeductionAmount = $details?->monthly_deduction_amount;
+                $advanceAmount          = $details->advance_amount;
+
+                $deductionStartsFrom       = $details?->deduction_starts_from;
+                $deductionEndsAt           = $details?->deduction_ends_at;
+                $numberOfMonthsOfDeduction = $details?->number_of_months_of_deduction;
+                $notes                     = $record?->notes;
+                $reason                    = $details?->reason;
+
+                return [
+                    // Employee Info
+                    Fieldset::make()->label(__('lang.employee_info'))->columns(2)->schema([
+                        TextInput::make('employee')
+                            ->label(__('lang.employee'))
+                            ->default($employee?->name)
+                            ->prefixIcon('heroicon-o-user')
+                            ->disabled(),
+                        DatePicker::make('date')
+                            ->label(__('lang.advance_date'))
+                            ->default($detailDate)
+                            ->prefixIcon('heroicon-o-calendar')
+                            ->disabled(),
+                    ]),
+
+                    // ── تفاصيل السلفة (قابلة للتعديل) ─────────────────────
+                    Fieldset::make()->label(__('lang.advance_details'))->columns(2)->schema([
+                        TextInput::make('advance_amount')
+                            ->label(__('lang.advance_amount'))
+                            ->default($advanceAmount)
+                            ->numeric()
+                            ->suffix($currency)
+                            ->prefixIcon('heroicon-o-banknotes')
+                            ->disabled()
+                            ->dehydrated(),
+
+                        TextInput::make('monthly_deduction_amount')
+                            ->label(__('lang.monthly_deduction'))
+                            ->default($monthlyDeductionAmount)
+                            ->numeric()
+                            ->required()
+                            ->suffix($currency)
+                            ->prefixIcon('heroicon-o-calculator')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                $advAmt = (float) $get('advance_amount');
+                                if ((float)$state > 0 && $advAmt > 0) {
+                                    $months = (int) ceil($advAmt / (float)$state);
+                                    $set('number_of_months_of_deduction', $months);
+                                    static::_recalcDeductionEnd($get, $set, $months);
+                                }
+                            }),
+                    ]),
+
+                    // ── جدول الخصم (قابل للتعديل) ──────────────────────────
+                    Fieldset::make()->label(__('lang.deduction_schedule'))->columns(3)->schema([
+
+                        DatePicker::make('deduction_starts_from')
+                            ->label(__('lang.starts_from'))
+                            ->default($deductionStartsFrom)
+                            ->prefixIcon('heroicon-o-play')
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                $months = (int) $get('number_of_months_of_deduction');
+                                if ($months > 0 && $state) {
+                                    static::_recalcDeductionEnd($get, $set, $months);
+                                }
+                            }),
+
+                        DatePicker::make('deduction_ends_at')
+                            ->label(__('lang.ends_at'))
+                            ->default($deductionEndsAt)
+                            ->prefixIcon('heroicon-o-stop')
+                            ->disabled()
+                            ->dehydrated(),
+
+                        TextInput::make('number_of_months_of_deduction')
+                            ->label(__('lang.number_of_months'))
+                            ->default($numberOfMonthsOfDeduction)
+                            ->numeric()
+                            ->required()
+                            ->minValue(1)
+                            ->suffix(__('lang.months'))
+                            ->prefixIcon('heroicon-o-clock')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                $advAmt = (float) $get('advance_amount');
+                                $months = (int) $state;
+                                if ($advAmt > 0 && $months > 0) {
+                                    $set('monthly_deduction_amount', round($advAmt / $months, 2));
+                                    static::_recalcDeductionEnd($get, $set, $months);
+                                }
+                            }),
+                    ]),
+
+
+                    Textarea::make('notes')
+                        ->label(__('lang.additional_notes'))
+                        ->default($notes)
+                        ->rows(2)
+                        ->columnSpanFull()
+                        ->disabled()
+                        ->hidden(),
+
+                    Fieldset::make()->label('Payment Details')->columns(3)->schema([
+                        Select::make('payment_method')
+                            ->label('Payment Method')
+                            ->options([
+                                \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER => 'Bank Transfer',
+                                \App\Models\AdvanceRequest::PAYMENT_METHOD_CASH => 'Cash',
+                            ])
+                            ->required()
+                            ->live()
+                            ->default(\App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
+                            ->prefixIcon('heroicon-o-credit-card'),
+                        TextInput::make('bank_account_number')
+                            ->label('Bank Account Number')
+                            ->default($employee?->bank_account_number)
+                            ->required(fn($get) => $get('payment_method') === \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
+                            ->visible(fn($get) => $get('payment_method') === \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
+                            ->prefixIcon('heroicon-o-identification'),
+                        TextInput::make('transaction_number')
+                            ->label(__('lang.transaction_number'))
+                            ->visible(fn($get) => $get('payment_method') === \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
+                            ->placeholder(__('lang.enter_transaction_number'))
+                            ->prefixIcon('heroicon-o-hashtag'),
+                    ]),
+
+                ];
+            });
+    }
+
+    /**
+     * Helper: إعادة حساب تاريخ انتهاء الخصم بناءً على تاريخ البداية وعدد الأشهر.
+     */
+    private static function _recalcDeductionEnd(Get $get, Set $set, int $months): void
+    {
+        $startsFrom = $get('deduction_starts_from') ?? now()->toDateString();
+        $endsAt = Carbon::parse($startsFrom)
+            ->startOfMonth()
+            ->addMonths($months - 1)
+            ->endOfMonth()
+            ->format('Y-m-d');
+        $set('deduction_ends_at', $endsAt);
+    }
+
+    public static function financeRejectAdvanceRequest(): Action
+    {
+        return Action::make('financeRejectAdvanceRequest')->label('Finance Reject')->button()
+            ->visible(function ($record) {
+                return $record->status == EmployeeApplicationV2::STATUS_APPROVED
+                    && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST
+                    && is_null($record->advanceRequest?->finance_approved_at);
+            })
+            ->color('danger')
+            ->icon('heroicon-o-x-circle')
+            ->action(function ($record, $data) {
+                $record->update([
+                    'status'      => EmployeeApplicationV2::STATUS_REJECTED,
+                    'rejected_by' => auth()->user()->id,
+                    'rejected_at' => now(),
+                    'rejected_reason' => $data['rejected_reason'],
+                ]);
+            })
             ->schema(function ($record) {
                 return [
                     Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
@@ -769,6 +958,100 @@ class EmployeeApplicationResource extends Resource
             ->modalSubmitAction(false)
             ->modalCancelAction(false)
         ;
+    }
+
+    public static function exportAdvanceRequestPdf(): Action
+    {
+        return Action::make('exportAdvanceRequestPdf')
+            ->label('Export PDF')
+            // ->button()
+            ->color('success')
+            ->tooltip('Export Advance Request PDF')
+            ->icon('heroicon-o-document-arrow-down')
+            ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST))
+            ->action(function ($record) {
+                if (get_class($record) == AdvanceRequest::class) {
+                    $record = $record->application;
+                }
+                return app(\App\Reports\HR\AdvanceRequestSlipReport::class)->generate($record->id);
+            });
+    }
+
+    public static function advanceInstallmentsAction(): Action
+    {
+        return Action::make('installments')
+            ->label(__('lang.installments'))
+            // ->button()
+            ->icon('heroicon-o-list-bullet')
+            ->color('info')
+            ->visible(function ($record) {
+                if ($record instanceof EmployeeApplicationV2) {
+                    return $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST
+                        && $record->status == EmployeeApplicationV2::STATUS_APPROVED;
+                }
+                return true;
+            })
+            ->schema(function ($record) {
+                $advanceRequest = $record instanceof \App\Models\AdvanceRequest ? $record : $record->advanceRequest;
+                $installments = $advanceRequest ? $advanceRequest->installments()->orderBy('sequence')->get() : collect();
+
+                return [
+                    \Filament\Forms\Components\Repeater::make('installments')
+                        ->label('')
+                        ->table([
+                            \Filament\Forms\Components\Repeater\TableColumn::make(__('lang.sequence'))
+                                ->width('8%'),
+                            \Filament\Forms\Components\Repeater\TableColumn::make(__('lang.amount'))
+                                ->width('18%'),
+                            \Filament\Forms\Components\Repeater\TableColumn::make(__('lang.due_date'))
+                                ->width('18%'),
+                            \Filament\Forms\Components\Repeater\TableColumn::make(__('lang.paid'))
+                                ->width('10%'),
+                            \Filament\Forms\Components\Repeater\TableColumn::make(__('lang.paid_date'))
+                                ->width('18%'),
+                            \Filament\Forms\Components\Repeater\TableColumn::make(__('lang.status'))
+                                ->width('15%'),
+                        ])
+                        ->schema([
+                            TextInput::make('sequence')
+                                ->label('#')
+                                ->extraInputAttributes(['class' => 'text-center'])
+                                ->disabled(),
+                            TextInput::make('installment_amount')
+                                ->label(__('lang.amount'))
+                                ->disabled(),
+                            DatePicker::make('due_date')
+                                ->label(__('lang.due_date'))
+                                ->disabled(),
+                            TextInput::make('is_paid')
+                                ->label(__('lang.paid'))
+                                ->disabled()
+                                ->extraInputAttributes(['class' => 'text-center']),
+                            DatePicker::make('paid_date')
+                                ->label(__('lang.paid_date'))
+                                ->extraInputAttributes(['class' => 'text-center'])
+                                ->disabled(),
+                            TextInput::make('status')
+                                ->label(__('lang.status'))
+                                ->extraInputAttributes(['class' => 'text-center'])
+                                ->disabled(),
+                        ])
+                        ->defaultItems(count($installments))
+                        ->columns(6)
+                        ->default($installments->map(fn($inst) => [
+                            'sequence' => $inst->sequence,
+                            'installment_amount' => number_format($inst->installment_amount, 2),
+                            'due_date' => $inst->due_date?->format('Y-m-d'),
+                            'is_paid' => $inst->is_paid ? '✓' : '✗',
+                            'paid_date' => $inst->paid_date?->format('Y-m-d'),
+                            'status' => $inst->status,
+                        ])->toArray()),
+                ];
+            })
+            ->modalHeading(__('lang.installment_details'))
+            ->disabledForm()
+            ->modalSubmitAction(false)
+            ->modalCancelAction(false);
     }
 
     public static function rejectAttendanceRequest(): Action
@@ -1106,16 +1389,22 @@ class EmployeeApplicationResource extends Resource
                             ->maxDate(now()->toDateString())
                             ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                 // Parse the state as a Carbon date, add one month, and set it to the end of the month
-                                $endNextMonth = Carbon::parse($state)->addMonth()->endOfMonth()->format('Y-m-d');
+                                $endNextMonth = Carbon::parse($state)
+                                    // ->addMonth()
+                                    ->endOfMonth()->format('Y-m-d');
                                 $set('detail_deduction_starts_from', $endNextMonth);
                             })
                             ->default('Y-m-d'),
                         TextInput::make('detail_advance_amount')->numeric()->required()
                             ->label('Amount'),
-                        // TextInput::make('basic_salary')->numeric()->disabled()
-                        //     ->default(0)
-                        // ->label('Basic salary')->helperText('Employee basic salary'),
-                        Hidden::make('basic_salary')->default(0),
+                        TextInput::make('basic_salary')->numeric()->disabled()
+                            ->default(0)
+                            ->label('Basic salary')
+                            ->helperText('Employee basic salary')
+                            ->visible(fn() => isSuperAdmin()),
+                        Hidden::make('basic_salary')
+                            ->default(0)
+                            ->visible(fn() => !isSuperAdmin()),
 
                     ]),
                     Grid::make()->columns(3)->columnSpanFull()->schema([
@@ -1126,10 +1415,16 @@ class EmployeeApplicationResource extends Resource
                             ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                 $advancedAmount = $get('detail_advance_amount');
                                 if ($state > 0 && $advancedAmount > 0) {
-                                    $res = $advancedAmount / $state;
+                                    $res = ceil($advancedAmount / $state);
 
                                     $set('detail_number_of_months_of_deduction', $res);
-                                    $toMonth = Carbon::now()->addMonths(($res - 1))->endOfMonth()->format('Y-m-d');
+
+                                    $startsFrom = $get('detail_deduction_starts_from') ?? \Carbon\Carbon::now();
+                                    $toMonth = \Carbon\Carbon::parse($startsFrom)
+                                        ->startOfMonth()
+                                        ->addMonths(($res - 1))
+                                        ->endOfMonth()->format('Y-m-d');
+
                                     $set('detail_deduction_ends_at', $toMonth);
                                 }
                             }),
@@ -1145,7 +1440,7 @@ class EmployeeApplicationResource extends Resource
 
                                     // $toMonth = Carbon::now()->addMonths($noOfMonths)->endOfMonth()->format('Y-m-d');
 
-                                    $endNextMonth = Carbon::parse($state)->addMonths(($noOfMonths - 1))->endOfMonth()->format('Y-m-d');
+                                    $endNextMonth = \Carbon\Carbon::parse($state)->startOfMonth()->addMonths(($noOfMonths - 1))->endOfMonth()->format('Y-m-d');
                                     $set('detail_deduction_ends_at', $endNextMonth);
                                 }),
                             DatePicker::make('detail_deduction_ends_at')->minDate(now()->toDateString())
@@ -1162,7 +1457,11 @@ class EmployeeApplicationResource extends Resource
                                     $set('detail_monthly_deduction_amount', round($res, 2));
                                     $state = (int) $state;
 
-                                    $toMonth = Carbon::now()->addMonths(($state - 2))->endOfMonth()->format('Y-m-d');
+                                    $startsFrom = $get('detail_deduction_starts_from') ?? \Carbon\Carbon::now();
+                                    $toMonth = \Carbon\Carbon::parse($startsFrom)
+                                        ->startOfMonth()
+                                        ->addMonths(($state - 1))
+                                        ->endOfMonth()->format('Y-m-d');
 
                                     $set('detail_deduction_ends_at', $toMonth);
                                 }
@@ -1355,3 +1654,4 @@ class EmployeeApplicationResource extends Resource
         return $query->forBranchManager();
     }
 }
+

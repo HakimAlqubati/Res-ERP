@@ -97,6 +97,11 @@ class FinancialTransactionsTable
             ])
             ->columns([
                 SoftDeleteColumn::make(),
+                TextColumn::make('id')
+                    ->label('ID')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->searchable(),
                 TextColumn::make('transaction_date')
                     ->label('Date')
                     ->date()
@@ -180,6 +185,8 @@ class FinancialTransactionsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+
+                TrashedFilter::make(),
                 SelectFilter::make('type')
                     ->options(FinancialTransaction::TYPES)
                     ->label('Type'),
@@ -219,7 +226,6 @@ class FinancialTransactionsTable
                             );
                     }),
 
-                TrashedFilter::make(),
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
             ->recordActions([
@@ -231,14 +237,7 @@ class FinancialTransactionsTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->action(function ($records) {
-                            $records->each(function ($record) {
-                                if ($record->reference_type === null) {
-                                    $record->delete();
-                                }
-                            });
-                        }),
+                    DeleteBulkAction::make(),
                     ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),
                 ]),

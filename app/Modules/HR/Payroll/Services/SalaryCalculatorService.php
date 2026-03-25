@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\HR\Payroll\Services;
 
+/**
+ * Main Class.
+ */
+
 use App\Enums\HR\Payroll\DailyRateMethod;
 use App\Models\Employee;
 use App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator;
@@ -115,6 +119,14 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         $this->assertPositive($dailyHours, 'Daily hours');
         $this->assertPositive($monthDays, 'Month days');
 
+        // Check if employee has any assigned shifts (required days) in this period
+        $requiredDays = (int)($employeeData['statistics']['required_days'] ?? 0);
+        if ($requiredDays === 0) {
+            throw new InvalidArgumentException(
+                "Skipped: Employee [{$employee->name}] (No: {$employee->employee_no}) has no assigned shifts for this period. Salary cannot be calculated."
+            );
+        }
+
         // Determine the denominator for rate calculation ($rateWorkingDays)
         $rateWorkingDays = $workingDays;
         if ($this->dailyRateMethod !== DailyRateMethod::ByEmployeeWorkingDays->value) {
@@ -126,6 +138,8 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             $rateWorkingDays = 30;
         } elseif ($this->dailyRateMethod === DailyRateMethod::ByMonthDays->value) {
             $rateWorkingDays = $monthDays;
+        } elseif ($this->dailyRateMethod === DailyRateMethod::ByCustomDays->value) {
+            $rateWorkingDays = (int) settingWithDefault('custom_month_days', 30);
         }
 
         // Determine how many days should be paid for the current period ($payableDays)
@@ -134,6 +148,20 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             $payableDays = $periodEnd->day;
         }
 
+        // Cap payable days by required shift days (exclude no_periods days)
+        // For By30Days method: only skip the cap if the employee covers the full month
+        // (requiredDays >= monthDays), so short months like February still get full salary.
+        // If the employee has partial shifts (e.g. 6 out of 28), the cap still applies.
+        if ($requiredDays < $payableDays) {
+            $isFullMonthBy30 = $this->dailyRateMethod === DailyRateMethod::By30Days->value
+                && $requiredDays >= $monthDays;
+
+            if (!$isFullMonthBy30) {
+                $payableDays = $requiredDays;
+            }
+        }
+
+        // dd($payableDays,$monthDays);
         if (!$periodYear || !$periodMonth) {
             throw new InvalidArgumentException('periodYear and periodMonth are required to compute penalty deductions.');
         }
@@ -252,9 +280,9 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         // Gross Wages should include Overtime, Allowances, etc.
         // However, we should subtract Unpaid Leave (Absent days) because that salary was never earned.
         // We should NOT subtract Late/Early/Penalties/Advances as those are deductions from earned salary.
-        
+
         $baseForStatutoryDeductions = $this->grossSalary - ($this->totalDeductions);
-        
+
         // Ensure base is not negative
         $baseForStatutoryDeductions = max(0, $baseForStatutoryDeductions);
 
@@ -286,7 +314,8 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             dynamicDeductions: $dynamicDeductions,
             monthlyIncentives: $monthlyIncentives,
             overtimeMultiplier: $this->overtimeMultiplier,
-            policyHookTransactions: $policyHookTransactions
+            policyHookTransactions: $policyHookTransactions,
+            baseSalary: $this->baseSalary,
         );
 
         // Add Overtime Days Transaction (Unused Leave Balance)
@@ -338,7 +367,6 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
                 'multiplier'  => 1.0,
             ];
         }
-
         // Parse durations
         $totalDurationParsed = is_array($totalDuration) ? $this->sanitizeHM($totalDuration) : $this->parseHM($totalDuration);
         $totalActualDurationParsed = is_array($totalActualDuration) ? $this->sanitizeHM($totalActualDuration) : $this->parseHM($totalActualDuration);

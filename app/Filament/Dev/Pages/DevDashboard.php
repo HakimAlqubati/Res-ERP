@@ -16,6 +16,8 @@ class DevDashboard extends BaseDashboard
         return [
             \App\Filament\Dev\Widgets\SystemHealthWidget::class,
             \App\Filament\Dev\Widgets\MaintenanceWidget::class,
+            \App\Filament\Dev\Widgets\QueueManagerWidget::class,
+            \App\Filament\Dev\Widgets\AdvanceInstallmentFixerWidget::class,
         ];
     }
 }

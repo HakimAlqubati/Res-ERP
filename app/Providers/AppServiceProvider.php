@@ -58,10 +58,12 @@ class AppServiceProvider extends ServiceProvider
     {
         DatabaseNotifications::trigger('filament.notifications.database-notifications-trigger');
         CustomTenantModel::observe(TenantObserver::class);
+        \App\Models\DocumentAnalysisAttempt::observe(\App\Observers\DocumentAnalysisAttemptObserver::class);
         InventoryTransaction::observe(InventoryTransactionObserver::class);
         StockTransferOrder::observe(StockTransferOrderObserver::class);
         StockInventory::observe(StockInventoryObserver::class);
         \App\Models\PayrollRun::observe(\App\Observers\PayrollRunObserver::class);
+        \App\Models\Payroll::observe(\App\Observers\PayrollObserver::class);
         \App\Models\MaintenanceCost::observe(\App\Observers\MaintenanceCostObserver::class);
 
         // PurchaseInvoiceDetail::observe(PurchaseInvoiceDetailObserver::class);

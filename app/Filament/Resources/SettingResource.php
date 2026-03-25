@@ -184,6 +184,15 @@ class SettingResource extends Resource
                                         ->columnSpan(2)
                                         ->required(),
 
+                                    TextInput::make('custom_month_days')
+                                        ->label('Custom Month Days')
+                                        ->helperText('Enter the number of days to use for daily rate calculation')
+                                        ->numeric()
+                                        ->minValue(1)
+                                        ->maxValue(31)
+                                        ->required()
+                                        ->visible(fn(Get $get): bool => $get('daily_salary_calculation_method') === \App\Enums\HR\Payroll\DailyRateMethod::ByCustomDays->value),
+
                                     TextInput::make('overtime_hour_multiplier')
                                         ->label('Overtime Hour Multiplier')
                                         ->helperText('Enter the overtime multiplier, e.g., 2 for double, 3 for triple')
@@ -202,6 +211,10 @@ class SettingResource extends Resource
                                     Toggle::make('flix_hours')
                                         ->label('Flix Hours')
                                         ->helperText('No deductions will be applied if the total hours worked equal or exceed the required daily hours')
+                                        ->default(false),
+                                    Toggle::make('flix_hours_early_departure')
+                                        ->label('Flix Early Departure')
+                                        ->helperText('No deductions will be applied for early departure if the total hours worked equal or exceed the required daily hours')
                                         ->default(false),
                                     Fieldset::make()->label('End of Month Day')->columnSpanFull()->schema([
                                         Toggle::make('use_standard_end_of_month')
@@ -405,7 +418,8 @@ class SettingResource extends Resource
                             ])->hidden(function () {
                                 return hideHrForTenant();
                             }),
-                        Tab::make('Stock Settings')->hidden(fn(): bool => isFinanceManager())
+                        Tab::make('Stock Settings')
+                            ->hidden(fn(): bool => isFinanceManager() || isHR())
                             ->icon('heroicon-o-shopping-cart')
                             ->schema([
                                 Fieldset::make('')->columnSpanFull()->label('Purchase Settings')->columns(3)->schema([
@@ -492,10 +506,30 @@ class SettingResource extends Resource
                                         Toggle::make('show_dashboard_manufacturing')->label('Show Manufacturing Section')->default(true),
                                     ]),
 
+                                    Fieldset::make('Halal Logo Settings')->columnSpanFull()->columns(2)->schema([
+                                        Toggle::make('use_global_halal_logo')
+                                            ->label('Use One Halal Logo for All Products')
+                                            ->helperText('If enabled, a single uploaded halal logo will be used for all products in the label report.')
+                                            ->inline(false)
+                                            ->live()
+                                            ->default(false),
+
+                                        FileUpload::make('global_halal_logo')
+                                            ->label('Global Halal Logo')
+                                            ->directory('halal_logos')
+                                            ->image()->disk('public')
+                                            ->visibility('public')
+                                            ->visible(fn(Get $get): bool => (bool) $get('use_global_halal_logo'))
+                                            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                                return 'global_halal_logo_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+                                            }),
+                                    ]),
+
                                 ]),
                             ]),
                         Tab::make('Users Settings')
                             ->label(__('lang.users_settings'))
+                            ->visible(fn(): bool => isSuperAdmin() || isSystemManager())
                             ->icon('heroicon-o-users')
                             ->schema([
                                 Grid::make()->columnSpanFull()->schema([

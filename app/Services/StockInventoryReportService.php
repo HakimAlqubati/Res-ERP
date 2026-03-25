@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\InventorySummary;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\StockInventory;
@@ -38,6 +37,20 @@ class StockInventoryReportService
             ->whereNotIn('id', $inventoriedProductIds)
             ->with(['category:id,name']);
 
+        if ($hideZero) {
+            $bindings = [\App\Models\InventoryTransaction::MOVEMENT_IN, \App\Models\InventoryTransaction::MOVEMENT_OUT];
+            $storeCondition = '';
+            if ($storeId) {
+                $storeCondition = ' AND store_id = ?';
+                $bindings[] = $storeId;
+            }
+
+            $query->whereRaw(
+                '(SELECT COALESCE(SUM(CASE WHEN movement_type = ? THEN IFNULL(base_quantity, quantity * package_size) ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN movement_type = ? THEN IFNULL(base_quantity, quantity * package_size) ELSE 0 END), 0) FROM inventory_transactions WHERE product_id = products.id AND deleted_at IS NULL' . $storeCondition . ') > 0',
+                $bindings
+            );
+        }
+
         // 4. الحصول على النتائج مع Pagination من قاعدة البيانات
         $products = $query->paginate($perPage);
 
@@ -58,14 +71,25 @@ class StockInventoryReportService
             ->groupBy('product_id')
             ->map(fn($units) => $units->first());
 
-        // جلب الكميات من InventorySummary مرة واحدة
-        $inventorySummaries = InventorySummary::query()
-            ->select(['product_id', 'unit_id', 'remaining_qty', 'store_id'])
-            ->whereIn('product_id', $productIds)
-            ->where('store_id', $storeId)
-            ->with('unit:id,name')
-            ->get()
-            ->groupBy('product_id');
+        // جلب الكميات من MultiProductsInventoryService لضمان الدقة
+        $inventorySummaries = collect();
+        foreach ($productIds as $pId) {
+            $report = \App\Services\MultiProductsInventoryService::quickReport($storeId, $pId);
+            $unitsInfo = $report[0] ?? [];
+            foreach ($unitsInfo as $unitInfo) {
+                $inventorySummaries->push((object) [
+                    'product_id' => $unitInfo['product_id'],
+                    'unit_id' => $unitInfo['unit_id'],
+                    'remaining_qty' => $unitInfo['remaining_qty'],
+                    'store_id' => $storeId,
+                    'unit' => (object) [
+                        'id' => $unitInfo['unit_id'],
+                        'name' => $unitInfo['unit_name']
+                    ]
+                ]);
+            }
+        }
+        $inventorySummaries = $inventorySummaries->groupBy('product_id');
 
         // جلب اسم المخزن مرة واحدة
         $storeName = Store::find($storeId)?->name ?? '—';
@@ -99,11 +123,7 @@ class StockInventoryReportService
             return $product;
         });
 
-        // 7. فلترة المنتجات بكمية صفر إذا لزم الأمر
-        if ($hideZero) {
-            $filtered = $products->getCollection()->filter(fn($p) => $p->remaining_qty > 0);
-            $products->setCollection($filtered->values());
-        }
+        // 7. التأكد من معالجة جميع المنتجات وإعادتها مع الـ pagination الصحيح (تم الفلترة مسبقاً)
 
         return $products;
     }

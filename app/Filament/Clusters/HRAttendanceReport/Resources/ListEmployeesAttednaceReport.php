@@ -80,7 +80,7 @@ class ListEmployeesAttednaceReport extends ListRecords
         }
 
         $employeesPaginator = Employee::where('branch_id', $branch_id)
-            // ->active()
+            ->active()
             ->select('id', 'name')
             ->paginate(100);
         $employeeIds = $employeesPaginator->pluck('id')->toArray();
@@ -88,7 +88,6 @@ class ListEmployeesAttednaceReport extends ListRecords
         $service = new EmployeesAttendanceOnDateService(new AttendanceFetcher(new EmployeePeriodHistoryService()));
         $reports = $service->fetchAttendances($employeeIds, $date);
 
-        // dd($reports);
         // بعد جلب التقارير:
         $employees = $reports->map(function ($item) {
             // تحويل attendance_report إلى مصفوفة (لأنها Collection)
@@ -115,7 +114,6 @@ class ListEmployeesAttednaceReport extends ListRecords
         $totalWorked   = 0;
         $totalApproved = 0;
 
-        // dd($employees,$report_data);
         return [
             'employees'   => $employees,
             'report_data'   => $report_data,
@@ -294,12 +292,7 @@ class ListEmployeesAttednaceReport extends ListRecords
         return $leaveDates;
     }
 
-    // public function showDetails($date, $employeeId, $periodId)
-    // {
-    //     $AttendanceDetails = getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
-    //     dd($AttendanceDetails,$periodId,$date,$employeeId);
-    //     return dd($AttendanceDetails->toArray());
-    // }
+    
 
     // Add a method to handle showing the modal with data
 

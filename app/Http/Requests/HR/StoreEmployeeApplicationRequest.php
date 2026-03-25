@@ -3,9 +3,7 @@
 namespace App\Http\Requests\HR;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Contracts\Validation\Validator
-
-;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
 class StoreEmployeeApplicationRequest extends FormRequest
@@ -19,6 +17,7 @@ class StoreEmployeeApplicationRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'images' => 'nullable|image|mimes:jpeg,png,jpg,gif',
             'employee_id'        => 'required|exists:hr_employees,id',
             'application_type_id' => 'required|integer|in:1,2,3,4',
             'application_date'   => 'required|date',

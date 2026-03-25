@@ -65,16 +65,20 @@ class AuditResource extends Resource
                     ->label('Model')
                     ->formatStateUsing(fn(string $state) => class_basename($state)),
 
-                TextColumn::make('auditable_id')->label('Model ID')->sortable()->searchable()->alignCenter(true),
+                TextColumn::make('auditable_id')->label('Model ID')->sortable()->searchable()->alignCenter(true)
+                    ->toggleable(),
                 IconColumn::make('has_parent')->label('Has Parent')->boolean()->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('parent_id')->label('Parent ID')->sortable()->toggleable(isToggledHiddenByDefault: true),
                 // TextColumn::make('field')->label('Field'),
-                TextColumn::make('old_values')->label('Old Value'),
-                TextColumn::make('new_values')->label('New Value'),
+                TextColumn::make('old_values')->label('Old Value')
+                    ->toggleable(),
+                TextColumn::make('new_values')->label('New Value')
+                    ->toggleable(),
 
                 TextColumn::make('created_at')
                     ->label('When')
                     ->since()
+                    ->toggleable()
                     ->tooltip(fn($record) => $record->created_at->format('Y-m-d H:i:s')),
             ])
             ->filters([

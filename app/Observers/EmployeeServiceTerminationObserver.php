@@ -30,32 +30,12 @@ class EmployeeServiceTerminationObserver
 
     /**
      * Handle the EmployeeServiceTermination "updated" event.
+     * Note: Deactivation logic has been moved to EmployeeLifecycleService
+     * to ensure explicit control and consistency.
      */
     public function updated(EmployeeServiceTermination $employeeServiceTermination): void
     {
-        // Check if status changed to approved
-        if (
-            $employeeServiceTermination->isDirty('status') &&
-            $employeeServiceTermination->status === EmployeeServiceTermination::STATUS_APPROVED
-        ) {
-
-            DB::transaction(function () use ($employeeServiceTermination) {
-                // Deactivate Employee
-                $employee = $employeeServiceTermination->employee;
-                if ($employee) {
-                    $employee->active = 0; // or false
-                    $employee->saveQuietly(); // Use saveQuietly to avoid triggering other observers if not needed, or save() if needed.
-
-                    // Deactivate Linked User
-                    if ($employee->user_id) {
-                        $user = User::withTrashed()->find($employee->user_id);
-                        if ($user) {
-                            $user->active = 0;
-                            $user->saveQuietly();
-                        }
-                    }
-                }
-            });
-        }
+        // Complex side-effects like deactivating employees are now
+        // handled explicitly in the EmployeeLifecycleService.
     }
 }

@@ -26,7 +26,7 @@ class PayrollForm
                     ->disabled()
                     ->suffixIcon('heroicon-o-exclamation-triangle')
                     ->suffixIconColor('warning')
-                    ->default('Employees who have not had their work periods added, will not appear on the payroll.'),
+                    ->default('Staffs who have not had their work periods added, will not appear on the payroll.'),
                 Select::make('branch_id')->label('Choose branch')
                     ->disabledOn('view')->searchable()
                     ->options(Branch::branches()
@@ -55,6 +55,7 @@ class PayrollForm
                             $employeeIds = $get('employee_ids') ?? [];
 
                             $query = \App\Models\Payroll::query()
+                                ->withTrashed()
                                 ->where('branch_id', $branchId)
                                 ->where('year', (int) $year)
                                 ->where('month', (int) $monthNumber);
@@ -66,8 +67,13 @@ class PayrollForm
                             $existing = $query->with('employee:id,name')->get();
 
                             if ($existing->isNotEmpty()) {
-                                $names = $existing->pluck('employee.name')->filter()->implode(', ');
-                                $fail(__("Payroll already exists for: $names in this month."));
+                                $names = $existing->pluck('employee.name')->filter()->unique()->implode(', ');
+                                $trashed = $existing->whereNotNull('deleted_at')->isNotEmpty();
+                                if ($trashed) {
+                                    $fail(__("Payroll already exists in the trash for: $names in this month. Please restore or permanently delete them first."));
+                                } else {
+                                    $fail(__("Payroll already exists for: $names in this month."));
+                                }
                             }
                         };
                     }),
@@ -76,15 +82,15 @@ class PayrollForm
                     ->default(date('Y-m-d')),
             ]),
 
-            Fieldset::make()->columnSpanFull()->label('Employee Selection')->columns(1)->hiddenOn('view')
+            Fieldset::make()->columnSpanFull()->label('Staff Selection')->columns(1)->hiddenOn('view')
                 ->visible(fn(Get $get) => filled($get('branch_id')))
                 ->schema([
                     Toggle::make('all_employees')
-                        ->label('All Employees')
+                        ->label('All Staffs')
                         ->default(true)
                         ->live(),
                     CheckboxList::make('employee_ids')
-                        ->label('Select Employees')
+                        ->label('Select Staffs')
                         ->bulkToggleable()
 
                         ->searchable()
@@ -94,7 +100,7 @@ class PayrollForm
                             $branchId = $get('branch_id');
                             if (!$branchId) return [];
                             return Employee::where('branch_id', $branchId)
-                                ->active()
+                                // ->active()
                                 ->where('salary', '>', 0)
                                 ->pluck('name', 'id');
                         })

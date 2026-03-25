@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class EmailOtp extends Model
 {
-    protected $fillable = ['email', 'otp', 'expires_at'];
+    protected $fillable = ['email', 'otp', 'expires_at', 'reset_token', 'reset_token_expires_at'];
 
     public $timestamps = true;
 

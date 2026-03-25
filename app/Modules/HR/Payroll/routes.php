@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Modules\HR\Payroll\Http\Controllers\PayrollSimulationController;
 use App\Modules\HR\Payroll\Http\Controllers\RunPayrollController;
+use App\Modules\HR\Payroll\Http\Controllers\PayrollApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,6 +17,12 @@ use App\Modules\HR\Payroll\Http\Controllers\RunPayrollController;
 Route::prefix('api/hr/payroll')
     ->middleware('auth:api')
     ->group(function () {
+        // جلب قائمة الرواتب
+        Route::get('/', [PayrollApiController::class, 'index']);
+
+        // جلب تفاصيل راتب محدد
+        Route::get('/{id}', [PayrollApiController::class, 'show'])->where('id', '[0-9]+');
+
         // محاكاة الرواتب لمجموعة موظفين
         Route::post('simulate-salaries/by-employee-ids', [PayrollSimulationController::class, 'simulateSalariesByEmployeeIds']);
 
@@ -27,6 +34,9 @@ Route::prefix('api/hr/payroll')
 
         // تشغيل وحفظ الرواتب
         Route::post('/run', [RunPayrollController::class, 'run']);
+
+        // Salary Slip JSON
+        Route::get('/salary-slip/{payroll_id}', [\App\Modules\HR\Payroll\Reports\SalarySlipReport::class, 'json']);
     });
 
 Route::middleware(['web'])

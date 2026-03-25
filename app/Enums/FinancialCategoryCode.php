@@ -25,6 +25,7 @@ class FinancialCategoryCode
             self::SALES => 'Sales',
             self::CLOSING_STOCK => 'Closing Stock',
             self::DIRECT_PURCHASE => 'Direct Purchase',
+            self::PAYROLL_SALARIES => 'Payroll Salaries',
         ];
     }
 
@@ -35,7 +36,6 @@ class FinancialCategoryCode
     {
         return [
             self::PAYROLL_SALARIES,
-            self::PAYROLL_ADVANCES,
         ];
     }
 

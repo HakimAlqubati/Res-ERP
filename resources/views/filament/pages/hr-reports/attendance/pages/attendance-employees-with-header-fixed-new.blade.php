@@ -220,7 +220,9 @@
                     {{ $att['leave_type'] ?? __('Leave') }}
                 </td>
                 @elseif(empty($periods))
-                <td colspan="9" class="text-center text-gray-500 font-bold">
+                <td class="internal_cell" colspan="2" style="border: none;"> </td>
+                <td colspan="7" class="text-center text-gray-500 font-bold" style="border: none;"   >
+
                     {{ __('No periods') }}
                 </td>
                 @else
@@ -239,7 +241,9 @@
                             <td class="internal_cell">{{ $item['end_time'] ?? '-' }}</td>
                             <td colspan="7" class="text-center">{{ __('Absent') }}</td>
                             @elseif ($item['final_status'] == 'future')
-                            <td colspan="7" class="internal_cell">
+                            <td class="internal_cell">{{ $item['start_time'] ?? '-' }}</td>
+                            <td class="internal_cell">{{ $item['end_time'] ?? '-' }}</td>
+                            <td colspan="7" class="internal_cell text-center">
                                 <p>-</p> {{ '' }}
                             </td>
                             @else
@@ -276,47 +280,21 @@
                                 ->values()
                                 ->all();
 
-                                $totalMinutesCalc = 0;
-                                $maxRowsCalc = max(count($checkIns), count($checkOuts));
-
-                                for ($i = 0; $i < $maxRowsCalc; $i++) {
-                                    $ciVal=$checkIns[$i]['check_time'] ?? null;
-                                    $coVal=$checkOuts[$i]['check_time'] ?? null;
-
-                                    if ($ciVal && $coVal) {
-                                    try {
-                                    $ciTime=\Carbon\Carbon::createFromFormat('H:i:s', $ciVal);
-                                    $coTime=\Carbon\Carbon::createFromFormat('H:i:s', $coVal);
-
-                                    if ($coTime->lessThan($ciTime)) {
-                                    $coTime->addDay();
-                                    }
-
-                                    $totalMinutesCalc += $ciTime->diffInMinutes($coTime);
-                                    } catch (\Exception $e) {}
-                                    }
-                                    }
-
-                                    if ($totalMinutesCalc > 0) {
-                                    $h = intdiv($totalMinutesCalc, 60);
-                                    $m = $totalMinutesCalc % 60;
-                                    $duration = "{$h}h {$m}m";
-                                    } else {
-                                    $duration = '-';
-                                    }
-                                    @endphp
-                                    @if ($duration !== '-')
-                                    <button
-                                        class="text-blue-600 font-semibold hover:text-blue-900 transition flex items-center justify-between w-full"
-                                        wire:click="showDetails('{{ $date }}', {{ $emp['id'] }}, {{ $item['period_id'] }})"
-                                        style="cursor:pointer; border:none; background:none; padding:0;"
-                                        title="Show all check-in/out details">
-                                        <span class="underline">{{ $duration }}</span>
-                                        <span class="star-badge">&#9733;</span>
-                                    </button>
-                                    @else
-                                    <span>{{ $duration }}</span>
-                                    @endif
+                                $result = \App\Services\HR\AttendanceHelpers\Reports\AttendanceDetailsCalculator::calculatePeriodDuration($checkIns, $checkOuts);
+                                $duration = $result['formatted'];
+                                @endphp
+                                @if ($duration !== '-')
+                                <button
+                                    class="text-blue-600 font-semibold hover:text-blue-900 transition flex items-center justify-between w-full"
+                                    wire:click="showDetails('{{ $date }}', {{ $emp['id'] }}, {{ $item['period_id'] }})"
+                                    style="cursor:pointer; border:none; background:none; padding:0;"
+                                    title="Show all check-in/out details">
+                                    <span class="underline">{{ $duration }}</span>
+                                    <span class="star-badge">&#9733;</span>
+                                </button>
+                                @else
+                                <span>{{ $duration }}</span>
+                                @endif
                             </td>
                             <td
                                 class="internal_cell">{{ $lastcheckout['approved_overtime'] ?? '-' }}</td>

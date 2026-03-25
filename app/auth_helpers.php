@@ -69,6 +69,16 @@ if (!function_exists('isFinanceManager')) {
     }
 }
 
+if (!function_exists('isHR')) {
+    function isHR()
+    {
+        if (auth()->check()) {
+            return auth()->user()->isHR();
+        }
+        return false;
+    }
+}
+
 if (!function_exists('isSystemManager')) {
     function isSystemManager()
     {
@@ -94,5 +104,19 @@ if (!function_exists('isStuff')) {
     function isStuff()
     {
         return auth()?->user()?->isStuff();
+    }
+}
+
+if (!function_exists('isHakimOrAdel')) {
+    function isHakimOrAdel(): bool
+    {
+        if (!auth()->check()) {
+            return false;
+        }
+
+        return in_array(auth()->user()->email, [
+            'hakimahmed123321@gmail.com',
+            'adelalqubati12@gmail.com',
+        ]);
     }
 }
