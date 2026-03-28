@@ -124,6 +124,16 @@ class EmployeeApplicationService
             $record->addMedia($data['images'])->toMediaCollection('images');
         }
 
+        // 9) Handle files
+        if (isset($data['files'])) {
+            $files = is_array($data['files']) ? $data['files'] : [$data['files']];
+            foreach ($files as $file) {
+                if ($file instanceof \Illuminate\Http\UploadedFile) {
+                    $record->addMedia($file)->toMediaCollection('files');
+                }
+            }
+        }
+
         return $record;
     }
 
@@ -164,6 +174,17 @@ class EmployeeApplicationService
         if (isset($data['images']) && $data['images'] instanceof \Illuminate\Http\UploadedFile) {
             $record->clearMediaCollection('images');
             $record->addMedia($data['images'])->toMediaCollection('images');
+        }
+
+        // Handle files
+        if (isset($data['files'])) {
+            $record->clearMediaCollection('files');
+            $files = is_array($data['files']) ? $data['files'] : [$data['files']];
+            foreach ($files as $file) {
+                if ($file instanceof \Illuminate\Http\UploadedFile) {
+                    $record->addMedia($file)->toMediaCollection('files');
+                }
+            }
         }
 
         return $record;

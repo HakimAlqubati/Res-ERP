@@ -52,4 +52,27 @@ class OvertimeService
         // Ex: ['2023-10-01' => [OvertimeRecord1, OvertimeRecord2]]
         return $records->groupBy('date');
     }
+
+    /**
+     * Update overtime hours for a specific record.
+     *
+     * @param int $id
+     * @param float $hours
+     * @return EmployeeOvertime
+     * @throws \Exception
+     */
+    public function updateHours(int $id, float $hours): EmployeeOvertime
+    {
+        $overtime = EmployeeOvertime::findOrFail($id);
+
+        if ($overtime->approved) {
+            throw new \Exception('Cannot update an approved overtime record. Please undo the approval first.', 403);
+        }
+
+        $overtime->update([
+            'hours' => $hours,
+        ]);
+
+        return $overtime;
+    }
 }

@@ -22,17 +22,36 @@ class ExtractReportSummaryService
         ?TextractClient $client = null,
         ?GenericReportSummaryParser $parser = null
     ) {
-        $this->region = (string) config('services.textract.region', env('AWS_DEFAULT_REGION', 'me-central-1'));
+        $this->region = (string) config('services.textract.region', env('AWS_TEXTRACT_REGION', 'eu-central-1'));
         $this->bucket = config('filesystems.disks.s3.bucket', env('AWS_BUCKET'));
 
-        $this->client = $client ?: new TextractClient([
+        $options = [
             'version' => 'latest',
             'region' => $this->region,
-            'credentials' => [
-                'key' => (string) env('AWS_ACCESS_KEY_ID'),
-                'secret' => (string) env('AWS_SECRET_ACCESS_KEY'),
+            'http' => [
+                'timeout' => 30,
+                'connect_timeout' => 10,
+                'curl' => [
+                    CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+                ]
             ],
-        ]);
+        ];
+
+        $key = env('TEXTRACT_KEY', env('AWS_ACCESS_KEY_ID'));
+        $secret = env('TEXTRACT_SECRET', env('AWS_SECRET_ACCESS_KEY'));
+        $token = env('TEXTRACT_SESSION_TOKEN', env('AWS_SESSION_TOKEN'));
+
+        if ($key && $secret) {
+            $options['credentials'] = [
+                'key' => (string) $key,
+                'secret' => (string) $secret,
+            ];
+            if ($token) {
+                $options['credentials']['token'] = (string) $token;
+            }
+        }
+
+        $this->client = $client ?: new TextractClient($options);
 
         $this->parser = $parser ?: new GenericReportSummaryParser();
     }
@@ -47,35 +66,14 @@ class ExtractReportSummaryService
             throw new \InvalidArgumentException('Only image files or PDF are supported.');
         }
 
-        $s3TempKey = null;
-
         try {
             $params = [];
 
-            if ($isImage) {
-                $params['Document'] = [
-                    'Bytes' => file_get_contents($file->getRealPath()),
-                ];
-            } else {
-                if (! $this->bucket) {
-                    throw new \RuntimeException('AWS_BUCKET is not configured. PDF requires S3.');
-                }
-
-                $s3TempKey = 'textract/tmp/' . now()->format('Y/m/d/') . Str::uuid() . '-' . $file->getClientOriginalName();
-
-                Storage::disk('s3')->put(
-                    $s3TempKey,
-                    file_get_contents($file->getRealPath()),
-                    'private'
-                );
-
-                $params['Document'] = [
-                    'S3Object' => [
-                        'Bucket' => $this->bucket,
-                        'Name' => $s3TempKey,
-                    ],
-                ];
-            }
+            // Both images and PDFs (single-page, <5MB) can be passed natively using Bytes for Textract synchronous APIs.
+            // This completely eliminates the S3 cross-region issue and local bucket dependencies!
+            $params['Document'] = [
+                'Bytes' => file_get_contents($file->getRealPath()),
+            ];
 
             $result = $this->client->detectDocumentText($params);
 
@@ -115,14 +113,8 @@ class ExtractReportSummaryService
                     'lines' => $lines,
                 ] : null,
             ];
-        } finally {
-            if ($s3TempKey) {
-                try {
-                    Storage::disk('s3')->delete($s3TempKey);
-                } catch (Throwable $e) {
-                    // ignore cleanup failures
-                }
-            }
+        } catch (\Throwable $e) {
+            throw $e;
         }
     }
 }

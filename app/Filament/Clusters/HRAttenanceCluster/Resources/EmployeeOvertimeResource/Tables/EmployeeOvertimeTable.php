@@ -47,7 +47,7 @@ class EmployeeOvertimeTable
             ->paginated([10, 25, 50, 100])
             ->columns([
                 TextColumn::make('id')
-                    ->label('')
+                    ->label('ID')
                     ->sortable()
                     ->wrap()
                     ->searchable()->toggleable(isToggledHiddenByDefault: true),
