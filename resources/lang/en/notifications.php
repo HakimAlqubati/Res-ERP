@@ -36,7 +36,7 @@ return [
     'cannot_auto_checkin_near_shift_end' => 'Cannot auto-checkin near shift end without prior records. Please manually select the operation type (checkin/checkout).',
 
     // Duplicate timestamp
-    'duplicate_timestamp_not_allowed' => 'Please wait :seconds before trying again.',
+    'duplicate_timestamp_not_allowed' => 'Check-in already recorded. Please wait :seconds before trying again.',
 
     // Multiple shifts available
     'multiple_shifts_available' => 'Multiple shifts are available. Please select the desired shift.',
