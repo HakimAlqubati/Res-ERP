@@ -57,7 +57,7 @@ class PeriodHistoriesRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->defaultSort('period_id', 'asc')
+            ->defaultSort('start_date', 'desc')
             ->striped()
             ->recordTitleAttribute('period_id')
             ->columns([
