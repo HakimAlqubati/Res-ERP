@@ -19,6 +19,11 @@ class EmployeeApplicationResource extends JsonResource
             'status'            => $this->status,
             'notes'             => $this->notes,
             'rejected_reason'       => $this->rejected_reason,
+            'rejected_by'           => $this->rejectedBy ? [
+                'id' => $this->rejectedBy->id,
+                'name' => $this->rejectedBy->name,
+                'rejected_at' => $this->rejected_at,
+            ] : null,
             'approved_by'           => $this->approvedBy ? [
                 'id' => $this->approvedBy->id,
                 'name' => $this->approvedBy->name,
