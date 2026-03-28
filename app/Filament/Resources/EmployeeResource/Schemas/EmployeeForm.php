@@ -42,9 +42,7 @@ class EmployeeForm
     {
         return $schema
             ->components([
-                // static::avatar()
-                // ->imagePreviewHeight(200)
-                // ,
+
 
                 Wizard::make([
                     Step::make(__('lang.personal_data'))
@@ -58,15 +56,17 @@ class EmployeeForm
                                             Grid::make(4)
                                                 ->columnSpanFull()
                                                 ->schema([
-                                                    static::avatar()
-                                                        ->columnSpan(1),
+
 
                                                     Grid::make(3)
                                                         ->columnSpan(3)
                                                         ->schema([
                                                             TextInput::make('name')->label(__('lang.full_name'))
                                                                 ->dehydrateStateUsing(fn($state) => preg_replace('/\s+/u', ' ', trim((string) $state)))
-                                                                ->rules(['string'])
+                                                                ->extraInputAttributes(fn($record) => [
+                                                                    'style' => $record && !$record->active ? 'color: #ef4444 !important; font-weight: bold;' : '',
+                                                                ])
+                                                                ->rules('string')
                                                                 ->columnSpan(2)->required(),
 
                                                             TextInput::make('known_name')
@@ -76,6 +76,19 @@ class EmployeeForm
                                                                 ->unique(ignoreRecord: true)
                                                                 ->nullable()
                                                                 ->columnSpan(1),
+                                                            Fieldset::make()
+                                                                ->columnSpanFull()
+                                                                ->visible(fn($record) => $record && !$record->active)
+                                                                ->schema([
+                                                                    DatePicker::make('termination_date')
+                                                                        ->label(__('lang.termination_date'))
+
+                                                                        ->disabled(),
+                                                                    Textarea::make('termination_reason')
+                                                                        ->label(__('lang.termination_reason'))
+                                                                        ->columnSpanFull()
+                                                                        ->disabled(),
+                                                                ]),
 
                                                             TextInput::make('email')
                                                                 ->label(__('lang.email'))
@@ -125,16 +138,21 @@ class EmployeeForm
                                                                     Toggle::make('has_employee_pass')->label(__('lang.has_employee_pass'))->inline(false)->live()
                                                                         ->columnSpan(1),
                                                                 ])->columns(3),
+
+
                                                         ]),
+
+                                                    static::avatar()
+                                                        ->columnSpan(1),
                                                 ]),
+                                            Textarea::make('address')->label('')->columnSpanFull(),
+
                                         ]),
-                                    Tab::make(__('lang.address'))
-                                        ->icon(Heroicon::MapPin)
-                                        ->schema([
-                                            Fieldset::make()->label(__('lang.employee_address'))->columnSpanFull()->schema([
-                                                Textarea::make('address')->label('')->columnSpanFull(),
-                                            ]),
-                                        ]),
+                                    // Tab::make(__('lang.address'))
+                                    //     ->icon(Heroicon::MapPin)
+                                    //     ->schema([
+                                    //         Fieldset::make()->label(__('lang.employee_address'))->columnSpanFull()->schema([]),
+                                    //     ]),
                                 ]),
 
                         ]),

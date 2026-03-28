@@ -3,13 +3,56 @@
 namespace App\Filament\Resources\EmployeeResource\Pages;
 
 use App\Filament\Resources\EmployeeResource;
+use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewEmployee extends ViewRecord
 {
-    protected static string $resource = EmployeeResource::class;
-      public function hasCombinedRelationManagerTabsWithContent(): bool
-    {
-        return true;
-    }
+  protected static string $resource = EmployeeResource::class;
+  public function hasCombinedRelationManagerTabsWithContent(): bool
+  {
+    return true;
+  }
+  protected function mutateFormDataBeforeFill(array $data): array
+  {
+    $terminationData = $this->record?->serviceTermination ?? null;
+    $data['termination_date'] = $terminationData?->termination_date;
+    $data['termination_reason'] = $terminationData?->termination_reason;
+    return $data;
+  }
+  protected function getHeaderActions(): array
+  {
+    return [
+      EditAction::make(),
+      \Filament\Actions\Action::make('rehire')
+        ->label(__('lang.rehire'))
+        ->color('success')
+        ->icon('heroicon-o-arrow-path')
+        ->visible(fn($record) => !$record->active)
+        ->schema([
+          \Filament\Forms\Components\DatePicker::make('join_date')
+            ->label(__('lang.join_date'))
+            ->default(now())
+            ->required(),
+          \Filament\Forms\Components\Textarea::make('notes')
+            ->label(__('lang.notes')),
+        ])
+        ->action(function (\App\Models\Employee $record, array $data) {
+          try {
+            app(\App\Modules\HR\Employee\Services\EmployeeLifecycleService::class)->rehire($record, $data);
+
+            \Filament\Notifications\Notification::make()
+              ->title(__('lang.employee_rehired_successfully'))
+              ->success()
+              ->send();
+          } catch (\Exception $e) {
+            \Filament\Notifications\Notification::make()
+              ->title(__('lang.error_occurred'))
+              ->body($e->getMessage())
+              ->danger()
+              ->send();
+          }
+        }),
+    ];
+  }
 }
