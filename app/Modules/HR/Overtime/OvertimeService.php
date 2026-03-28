@@ -281,6 +281,29 @@ class OvertimeService
     }
 
     /**
+     * Update overtime hours for a specific record.
+     *
+     * @param int $id
+     * @param float $hours
+     * @return EmployeeOvertime
+     * @throws Exception
+     */
+    public function updateHours(int $id, float $hours): EmployeeOvertime
+    {
+        $overtime = EmployeeOvertime::findOrFail($id);
+
+        if ($overtime->approved) {
+            throw new Exception('Cannot update an approved overtime record. Please undo the approval first.', 403);
+        }
+
+        $overtime->update([
+            'hours' => $hours,
+        ]);
+
+        return $overtime;
+    }
+
+    /**
      * Get overtime records
      *
      * @param array $filters

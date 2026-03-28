@@ -101,6 +101,52 @@ class OvertimeController extends Controller
     }
 
     /**
+     * Update overtime hours for a specific record.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function update(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'hours' => 'required|numeric|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $overtime = $this->overtimeService->updateHours($id, $request->input('hours'));
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Overtime hours updated successfully.',
+                'data' => $overtime
+            ]);
+        } catch (Exception $e) {
+            $code = $e->getCode() ?: 500;
+            // Handle ModelNotFoundException if needed, or let Exception catch it
+            if ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Overtime record not found.'
+                ], 404);
+            }
+
+            return response()->json([
+                'status'  => false,
+                'message' => $e->getMessage(),
+            ], in_array($code, [403, 404, 422, 500]) ? $code : 500);
+        }
+    }
+
+    /**
      * Approve overtime (Bulk)
      *
      * @param Request $request
