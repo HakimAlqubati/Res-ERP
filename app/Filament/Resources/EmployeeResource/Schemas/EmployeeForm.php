@@ -76,6 +76,7 @@ class EmployeeForm
                                                 ->visible(fn($record) => $record && !$record->active)
                                                 ->schema([
                                                     DatePicker::make('termination_date')
+                                                        ->columnSpanFull()
                                                         ->label(__('lang.termination_date'))
 
                                                         ->disabled(),
@@ -523,6 +524,7 @@ class EmployeeForm
         return FileUpload::make('avatar')->columnSpanFull()
             ->image()
             ->label('')
+            ->hiddenLabel()
             // ->avatar()
             ->imageEditor()
 
