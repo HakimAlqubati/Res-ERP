@@ -8,6 +8,7 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeApplicationV2;
 use App\Models\EmployeeOvertime;
+use App\Services\HR\AttendanceHelpers\Reports\MissingCheckoutService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -18,6 +19,32 @@ class DashboardService
      */
     public function getPendingCounts(DashboardFilterDTO $dto): array
     {
+        $baseDate = $dto->dateTime ? $dto->dateTime->clone() : Carbon::now();
+        $startOfMonth = $baseDate->clone()->startOfMonth()->toDateString();
+        $yesterday = $baseDate->clone()->subDay()->toDateString();
+
+        $missingCheckoutsCount = 0;
+        if (Carbon::parse($yesterday)->gte(Carbon::parse($startOfMonth))) {
+            $missingCheckoutsCount = Attendance::query()
+                ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+                ->where('accepted', 1)
+                ->whereBetween('check_date', [$startOfMonth, $yesterday])
+                ->whereNotExists(function ($sub) {
+                    $sub->from('hr_attendances as co')
+                        ->whereColumn('co.employee_id', 'hr_attendances.employee_id')
+                        ->whereColumn('co.period_id',   'hr_attendances.period_id')
+                        ->whereColumn('co.check_date',  'hr_attendances.check_date')
+                        ->where('co.check_type',  Attendance::CHECKTYPE_CHECKOUT)
+                        ->where('co.accepted',    1)
+                        ->whereNull('co.deleted_at');
+                })
+                ->when($dto->branchId, fn($q) => $q->where('branch_id', $dto->branchId))
+                ->whereHas('employee', fn($q) => $q->where('active', 1))
+                ->get(['employee_id', 'period_id', 'check_date'])
+                ->unique(fn($r) => $r->employee_id . '_' . $r->period_id . '_' . $r->check_date)
+                ->count();
+        }
+
         // Applications
         $appQuery = EmployeeApplicationV2::where('status', EmployeeApplicationV2::STATUS_PENDING)
             ->forBranchManager()
@@ -45,6 +72,7 @@ class DashboardService
             'pending_overtime' => $pendingOvertimeCount,
             'pending_advance'  => $appCounts->get(EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST, 0),
             'pending_meal'     => $appCounts->get(EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST, 0),
+            'missing_checkouts_count' => $missingCheckoutsCount,
         ];
     }
 
