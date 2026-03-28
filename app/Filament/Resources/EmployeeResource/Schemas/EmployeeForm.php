@@ -48,113 +48,99 @@ class EmployeeForm
                     Step::make(__('lang.personal_data'))
                         ->icon('heroicon-o-user-circle')
                         ->schema([
-                            Tabs::make('')->columnSpanFull()
-                                ->tabs([
-                                    Tab::make(__('lang.personal_data'))
-                                        ->icon(Heroicon::UserCircle)
+                            Grid::make(4)
+                                ->columnSpanFull()
+                                ->schema([
+
+
+                                    Grid::make(3)
+                                        ->columnSpan(3)
                                         ->schema([
-                                            Grid::make(4)
+                                            TextInput::make('name')->label(__('lang.full_name'))
+                                                ->dehydrateStateUsing(fn($state) => preg_replace('/\s+/u', ' ', trim((string) $state)))
+                                                ->extraInputAttributes(fn($record) => [
+                                                    'style' => $record && !$record->active ? 'color: #ef4444 !important; font-weight: bold;' : '',
+                                                ])
+                                                ->rules('string')
+                                                ->columnSpan(2)->required(),
+
+                                            TextInput::make('known_name')
+                                                ->label(__('lang.known_name'))
+                                                ->hint(__('lang.known_name_hint'))
+                                                ->placeholder(__('lang.known_name_example'))
+                                                ->unique(ignoreRecord: true)
+                                                ->nullable()
+                                                ->columnSpan(1),
+                                            Fieldset::make()
                                                 ->columnSpanFull()
+                                                ->visible(fn($record) => $record && !$record->active)
                                                 ->schema([
+                                                    DatePicker::make('termination_date')
+                                                        ->label(__('lang.termination_date'))
 
-
-                                                    Grid::make(3)
-                                                        ->columnSpan(3)
-                                                        ->schema([
-                                                            TextInput::make('name')->label(__('lang.full_name'))
-                                                                ->dehydrateStateUsing(fn($state) => preg_replace('/\s+/u', ' ', trim((string) $state)))
-                                                                ->extraInputAttributes(fn($record) => [
-                                                                    'style' => $record && !$record->active ? 'color: #ef4444 !important; font-weight: bold;' : '',
-                                                                ])
-                                                                ->rules('string')
-                                                                ->columnSpan(2)->required(),
-
-                                                            TextInput::make('known_name')
-                                                                ->label(__('lang.known_name'))
-                                                                ->hint(__('lang.known_name_hint'))
-                                                                ->placeholder(__('lang.known_name_example'))
-                                                                ->unique(ignoreRecord: true)
-                                                                ->nullable()
-                                                                ->columnSpan(1),
-                                                            Fieldset::make()
-                                                                ->columnSpanFull()
-                                                                ->visible(fn($record) => $record && !$record->active)
-                                                                ->schema([
-                                                                    DatePicker::make('termination_date')
-                                                                        ->label(__('lang.termination_date'))
-
-                                                                        ->disabled(),
-                                                                    Textarea::make('termination_reason')
-                                                                        ->label(__('lang.termination_reason'))
-                                                                        ->columnSpanFull()
-                                                                        ->disabled(),
-                                                                ]),
-
-                                                            TextInput::make('email')
-                                                                ->label(__('lang.email'))
-                                                                ->required()
-                                                                ->rule('email')
-                                                                ->unique(column: 'email', ignoreRecord: true)
-                                                                ->columnSpan(2),
-
-                                                            Select::make('nationality')
-                                                                ->label(__('lang.nationality'))->live()
-                                                                ->required()
-                                                                ->options(getNationalities())
-                                                                ->preload()
-                                                                ->searchable()
-                                                                ->columnSpan(1),
-
-                                                            TextInput::make('phone_number')
-                                                                ->label(__('lang.phone_number'))
-                                                                ->unique(ignoreRecord: true)
-                                                                ->columnSpan(1)
-                                                                ->maxLength(18)->minLength(8),
-
-                                                            Select::make('gender')
-                                                                ->label(__('lang.gender'))
-                                                                ->options([
-                                                                    1 => __('lang.male'),
-                                                                    0 => __('lang.female'),
-                                                                ])
-                                                                ->required()
-                                                                ->columnSpan(1),
-
-                                                            DatePicker::make('birthday')
-                                                                ->label(__('lang.birthday'))
-                                                                ->nullable()
-                                                                ->columnSpan(1),
-
-                                                            TextInput::make('mykad_number')->label(__('lang.mykad_number'))->numeric()
-                                                                ->columnSpanFull()
-                                                                ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') == setting('default_nationality'))),
-
-                                                            Fieldset::make()
-                                                                ->columnSpanFull()
-                                                                ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') != setting('default_nationality')))
-                                                                ->schema([
-                                                                    TextInput::make('passport_no')->label(__('lang.passport_no'))->numeric()
-                                                                        ->columnSpan(2),
-                                                                    Toggle::make('has_employee_pass')->label(__('lang.has_employee_pass'))->inline(false)->live()
-                                                                        ->columnSpan(1),
-                                                                ])->columns(3),
-
-
-                                                        ]),
-
-                                                    static::avatar()
-                                                        ->columnSpan(1),
+                                                        ->disabled(),
+                                                    Textarea::make('termination_reason')
+                                                        ->label(__('lang.termination_reason'))
+                                                        ->columnSpanFull()
+                                                        ->disabled(),
                                                 ]),
-                                            Textarea::make('address')->label('')->columnSpanFull(),
+
+                                            TextInput::make('email')
+                                                ->label(__('lang.email'))
+                                                ->required()
+                                                ->rule('email')
+                                                ->unique(column: 'email', ignoreRecord: true)
+                                                ->columnSpan(2),
+
+                                            Select::make('nationality')
+                                                ->label(__('lang.nationality'))->live()
+                                                ->required()
+                                                ->options(getNationalities())
+                                                ->preload()
+                                                ->searchable()
+                                                ->columnSpan(1),
+
+                                            TextInput::make('phone_number')
+                                                ->label(__('lang.phone_number'))
+                                                ->unique(ignoreRecord: true)
+                                                ->columnSpan(1)
+                                                ->maxLength(18)->minLength(8),
+
+                                            Select::make('gender')
+                                                ->label(__('lang.gender'))
+                                                ->options([
+                                                    1 => __('lang.male'),
+                                                    0 => __('lang.female'),
+                                                ])
+                                                ->required()
+                                                ->columnSpan(1),
+
+                                            DatePicker::make('birthday')
+                                                ->label(__('lang.birthday'))
+                                                ->nullable()
+                                                ->columnSpan(1),
+
+                                            TextInput::make('mykad_number')->label(__('lang.mykad_number'))->numeric()
+                                                ->columnSpanFull()
+                                                ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') == setting('default_nationality'))),
+
+                                            Fieldset::make()
+                                                ->columnSpanFull()
+                                                ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') != setting('default_nationality')))
+                                                ->schema([
+                                                    TextInput::make('passport_no')->label(__('lang.passport_no'))->numeric()
+                                                        ->columnSpan(2),
+                                                    Toggle::make('has_employee_pass')->label(__('lang.has_employee_pass'))->inline(false)->live()
+                                                        ->columnSpan(1),
+                                                ])->columns(3),
+
 
                                         ]),
-                                    // Tab::make(__('lang.address'))
-                                    //     ->icon(Heroicon::MapPin)
-                                    //     ->schema([
-                                    //         Fieldset::make()->label(__('lang.employee_address'))->columnSpanFull()->schema([]),
-                                    //     ]),
-                                ]),
 
+                                    static::avatar()
+                                        ->columnSpan(1),
+                                ]),
+                            Textarea::make('address')->label('')->columnSpanFull(),
                         ]),
 
                     Step::make(__('lang.employment'))
