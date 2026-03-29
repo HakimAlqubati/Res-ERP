@@ -991,7 +991,7 @@ if (!function_exists('getMonthOptionsBasedOnSettings')) {
         $useStandard = setting('use_standard_end_of_month', true); // Default: true
 
         for ($i = 0; $i < 12; $i++) {
-            $monthDate = $currentDate->copy()->subMonths($i); // Get past months
+            $monthDate = $currentDate->copy()->subMonthsNoOverflow($i); // Get past months
 
             if ($useStandard) {
                 // Standard month format (Full name with year)
@@ -1009,7 +1009,6 @@ if (!function_exists('getMonthOptionsBasedOnSettings')) {
                 $options[$monthYear] = $formattedPeriod;
             }
         }
-
         return $options;
     }
 }
