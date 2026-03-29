@@ -234,6 +234,11 @@ class SettingResource extends Resource
                                             ->required(),
                                     ]),
 
+                                    Toggle::make('count_partial_as_absent')
+                                        ->label('Count Partial/Incomplete Attendance as Absent')
+                                        ->helperText('If enabled, employees with incomplete or partial attendance will be marked as absent in reports.')
+                                        ->default(true),
+
                                 ]),
 
                                 Fieldset::make()->label('Payroll Closing Settings')->columns(4)->schema([

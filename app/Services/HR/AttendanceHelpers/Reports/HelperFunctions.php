@@ -11,6 +11,8 @@ class HelperFunctions
 
     public static function calculateAttendanceStats($reportData)
     {
+        $countAsAbsent = (bool) (setting('count_partial_as_absent') ?? true);
+
         $stats = [
             'present_days'  => 0,
             'absent'        => 0,
@@ -42,8 +44,15 @@ class HelperFunctions
                     $stats['required_days']++;
                     break;
                 case AttendanceReportStatus::Partial->value:
-                    $stats['partial']++;
-                    // $stats['absent']++;
+                case AttendanceReportStatus::IncompleteCheckinOnly->value:
+                case AttendanceReportStatus::IncompleteCheckoutOnly->value:
+                    if ($data['day_status'] === AttendanceReportStatus::Partial->value) {
+                        $stats['partial']++;
+                    }
+
+                    if ($countAsAbsent) {
+                        $stats['absent']++;
+                    }
                     $stats['required_days']++;
                     break;
                 case AttendanceReportStatus::Leave->value:
