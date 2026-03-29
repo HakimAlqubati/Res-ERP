@@ -101,8 +101,8 @@ Route::prefix('applications')
         Route::put('/{id}', [EmployeeApplicationController::class, 'update']); // PUT /applications/{id}
         Route::delete('/{id}', [EmployeeApplicationController::class, 'destroy']); // DELETE /applications/{id}
 
-        // Actions
         Route::post('/{id}/approve', [EmployeeApplicationController::class, 'approve']); // POST /applications/{id}/approve
+        Route::post('/{id}/rollback', [EmployeeApplicationController::class, 'rollback']); // POST /applications/{id}/rollback
         Route::post('/{id}/reject', [EmployeeApplicationController::class, 'reject']);   // POST /applications/{id}/reject
 
 

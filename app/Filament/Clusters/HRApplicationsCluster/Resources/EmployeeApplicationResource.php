@@ -646,31 +646,20 @@ class EmployeeApplicationResource extends Resource
 
                 DB::beginTransaction();
                 try {
+                    app(\App\Services\HR\Applications\LeaveRequest\LeaveApprovalService::class)->process($record);
+
                     $record->update([
                         'status'      => EmployeeApplicationV2::STATUS_APPROVED,
                         'approved_by' => auth()->user()->id,
                         'approved_at' => now(),
                     ]);
-                    // Step 3: Calculate the number of leave days and update the leave balance
-                    $leaveBalance = LeaveBalance::getLeaveBalanceForEmployee(
-                        $record->employee_id,
-                        $record->leaveRequest->year,
-                        $record->leaveRequest->leave_type,
-                        $record->leaveRequest->month
-                    );
-                    // Update the balance if found
-                    if ($leaveBalance) {
-                        $leaveBalance->decrement('balance', $record->leaveRequest->days_count);
-                        DB::commit();
-                        showSuccessNotifiMessage('Done');
-                    } else {
-                        // showWarningNotifiMessage('dd');
-                        throw new Exception('Leave balance not found for the given conditions.', $leaveBalance);
-                    }
+                    
+                    DB::commit();
+                    showSuccessNotifiMessage('Done');
                 } catch (Exception $th) {
                     //throw $th;
                     DB::rollBack();
-                    showWarningNotifiMessage('Faild', $th->getMessage());
+                    showWarningNotifiMessage('Failed', $th->getMessage());
                 }
             })
             ->disabledForm()
@@ -698,6 +687,32 @@ class EmployeeApplicationResource extends Resource
                 ];
             })
         ;
+    }
+
+    public static function undoApproveLeaveRequest(): Action
+    {
+        return Action::make('undoApproveLeaveRequest')
+            ->label(__('lang.undo_approve'))
+            ->button()
+            ->visible(fn($record): bool => (
+                $record->status === EmployeeApplicationV2::STATUS_APPROVED && 
+                $record->application_type_id === EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST
+            ))
+            ->color('warning')
+            ->icon('heroicon-o-arrow-path')
+            ->requiresConfirmation()
+            ->modalHeading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_title' , ['id' => '#'.$record->id]))
+            ->modalSubheading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_body'))
+            ->action(function (EmployeeApplicationV2 $record) {
+                try {
+                    app(\App\Services\HR\Applications\EmployeeApplicationService::class)
+                        ->undoApproveApplication($record->id, auth()->id());
+                    
+                    showSuccessNotifiMessage(__('lang.done'));
+                } catch (\Exception $th) {
+                    showWarningNotifiMessage(__('lang.failed'), $th->getMessage());
+                }
+            });
     }
 
     public static function rejectLeaveRequest(): Action
