@@ -20,6 +20,7 @@ class PayrollForm
      */
     public static function getSchema(): array
     {
+        // dd(getMonthOptionsBasedOnSettings());
         return [
             Fieldset::make()->columnSpanFull()->label('Set Branch, Month and payment date')->columns(3)->schema([
                 TextInput::make('note_that')->label('Note that!')->columnSpan(3)->hiddenOn('view')
@@ -50,7 +51,7 @@ class PayrollForm
                             }
 
                             [$monthName, $year] = explode(' ', $value);
-                            $monthNumber = \Carbon\Carbon::parse($monthName)->month;
+                            $monthNumber = \Carbon\Carbon::parse("1 $value")->month;
 
                             $allEmployees = $get('all_employees');
                             $employeeIds = $get('employee_ids') ?? [];
@@ -108,7 +109,7 @@ class PayrollForm
                                 $year = now()->year;
                             } else {
                                 [$monthName, $year] = explode(' ', $monthValue);
-                                $monthNumber = \Carbon\Carbon::parse($monthName)->month;
+                                $monthNumber = \Carbon\Carbon::parse("1 $monthValue")->month;
                                 $year = (int) $year;
                             }
 

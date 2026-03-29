@@ -18,8 +18,8 @@ class CreatePayroll extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         // Parse "July 2025" coming in as $data['name'] (month label)
+        $monthNumber = Carbon::parse("1 {$data['name']}")->month;
         [$monthName, $year] = explode(' ', $data['name']);
-        $monthNumber = Carbon::parse($monthName)->month;
 
         // Period (if you have custom month logic, keep your helper)
         $monthData = getEndOfMonthDate((int) $year, (int) $monthNumber);
