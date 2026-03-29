@@ -17,8 +17,7 @@ class PayrollConflictException extends Exception
     public static function overtimeLockedByPayroll(): self
     {
         return new self(
-            'Action denied: This overtime record is linked to a period for which a payroll run has already been initiated. ' .
-            'Modifying or deleting it would cause data inconsistency.'
+            'Locked: Payroll has already been initiated for this period.'
         );
     }
 }
