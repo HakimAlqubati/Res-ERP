@@ -260,9 +260,8 @@ class PayrollRunService implements PayrollRunnerInterface
     protected function eligibleEmployees(int $branchId, ?array $employeeIds = null): Collection
     {
         return Employee::query()
+            ->eligibleForPayroll((int)$this->year, (int)$this->month)
             ->where('branch_id', $branchId)
-            ->where('salary', '>', 0)
-            ->where('join_date', '<=', Carbon::create($this->year, $this->month, 1)->startOfMonth()->toDateString())
             ->when($employeeIds, fn($q) => $q->whereIn('id', $employeeIds))
             ->get();
     }
