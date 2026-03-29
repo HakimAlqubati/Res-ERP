@@ -16,6 +16,7 @@ class ViewPayroll extends ViewRecord
         return [
             // Actions\EditAction::make(),
             Actions\DeleteAction::make(),
+            \App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\PayrollActions::approveAction(),
 
         ];
     }
