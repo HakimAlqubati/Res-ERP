@@ -34,6 +34,7 @@ use App\Models\UnitPrice;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
@@ -92,162 +93,218 @@ class GoodsReceivedNoteResource extends Resource
 
         return $schema
             ->components([
+
                 Section::make([
-                    Grid::make(3)
-                        ->schema([
-                            TextInput::make('grn_number')
-                                ->label('GRN Number')
-                                ->default(fn(): int => (GoodsReceivedNote::query()
-                                    ->orderBy('id', 'desc')
-                                    ->value('id') + 1 ?? 1))
-                                ->unique(ignoreRecord: true)
-                                ->readOnly()->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false)
-                                ->helperText('Enter GRN Number')->required(),
-                            DatePicker::make('grn_date')
-                                ->label('GRN Date')->default(now())
-                                ->required()->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
+                    Grid::make(2)->columnSpanFull()->schema([
+                        Grid::make(3)
+                            ->schema([
+                                TextInput::make('grn_number')
+                                    ->label('GRN Number')
+                                    ->default(fn(): int => (GoodsReceivedNote::query()
+                                        ->orderBy('id', 'desc')
+                                        ->value('id') + 1 ?? 1))
+                                    ->unique(ignoreRecord: true)
+                                    ->readOnly()->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false)
+                                    ->helperText('Enter GRN Number')->required(),
+                                DatePicker::make('grn_date')
+                                    ->label('GRN Date')->default(now())
+                                    ->required()->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
 
 
-                            Select::make('store_id')
-                                ->options(
-                                    Store::active()->pluck('name', 'id')->toArray()
-                                )->default(getDefaultStore())
-                                ->label('Store')->searchable()
-                                ->required()->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
-                            Select::make('status')->disabled()->dehydrated()
-                                ->label('Status')->default(GoodsReceivedNote::STATUS_CREATED)
-                                ->options(GoodsReceivedNote::getStatusOptions())
-                                ->required()
-                                ->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
-                            Select::make('supplier_id')->label(__('lang.supplier'))
-                                ->getSearchResultsUsing(fn(string $search): array => Supplier::where('name', 'like', "%{$search}%")->limit(10)->pluck('name', 'id')->toArray())
-                                ->getOptionLabelUsing(fn($value): ?string => Supplier::find($value)?->name)
-                                ->searchable()
-                                ->options(Supplier::limit(5)->get(['id', 'name'])->pluck('name', 'id'))
-                                ->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
-                            Textarea::make('notes')
-                                ->label('Notes')
-                                ->columnSpanFull()->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
-                            FileUpload::make('attachment')
-                                ->label(__('lang.attachment'))
-                                ->directory('goods-received-notes')
-                                ->columnSpanFull()
-                                ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                    return (string) str($file->getClientOriginalName())->prepend('grn-');
-                                })
-                                ->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false)
-                                ->live()
-                                ->afterStateUpdated(function ($state, callable $set, callable $get, ?\Illuminate\Database\Eloquent\Model $record) {
-                                    if (!$state) return;
+                                Select::make('store_id')
+                                    ->options(
+                                        Store::active()->pluck('name', 'id')->toArray()
+                                    )->default(getDefaultStore())
+                                    ->label('Store')->searchable()
+                                    ->required()->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
+                                Select::make('status')->disabled()->dehydrated()
+                                    ->label('Status')->default(GoodsReceivedNote::STATUS_CREATED)
+                                    ->options(GoodsReceivedNote::getStatusOptions())
+                                    ->required()
+                                    ->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
+                                Select::make('supplier_id')->label(__('lang.supplier'))
+                                    ->getSearchResultsUsing(fn(string $search): array => Supplier::where('name', 'like', "%{$search}%")->limit(10)->pluck('name', 'id')->toArray())
+                                    ->getOptionLabelUsing(fn($value): ?string => Supplier::find($value)?->name)
+                                    ->searchable()
+                                    ->options(Supplier::limit(5)->get(['id', 'name'])->pluck('name', 'id'))
+                                    ->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
+                                Textarea::make('notes')
+                                    ->label('Notes')
+                                    ->columnSpanFull()->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
+                                FileUpload::make('attachment')
+                                    ->label(__('lang.attachment'))
+                                    ->directory('goods-received-notes')
+                                    ->columnSpanFull()
+                                    ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                        return (string) str($file->getClientOriginalName())->prepend('grn-');
+                                    })
+                                    ->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false)
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get, ?\Illuminate\Database\Eloquent\Model $record) {
+                                        if (!$state) return;
 
-                                    $attempt = null;
-                                    $repo = app(\App\Repositories\Contracts\DocumentAnalysisAttemptRepositoryInterface::class);
+                                        $attempt = null;
+                                        $repo = app(\App\Repositories\Contracts\DocumentAnalysisAttemptRepositoryInterface::class);
 
-                                    try {
-                                        if ($state instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
-                                            $attempt = $repo->createAttempt(
-                                                GoodsReceivedNote::class,
-                                                $record?->id,
-                                                auth()->id(),
-                                                $state->getClientOriginalName()
-                                            );
-                                            $set('document_analysis_attempt_id', $attempt->id);
-                                        }
-
-                                        $service = new \App\Services\AWS\Textract\AnalyzeExpenseService();
-
-                                        if ($state instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
-                                            $file = new \Illuminate\Http\UploadedFile(
-                                                $state->getRealPath(),
-                                                $state->getClientOriginalName(),
-                                                $state->getMimeType(),
-                                                $state->getError(),
-                                                true
-                                            );
-
-                                            $result = $service->analyze($file);
-
-                                            if ($attempt) {
-                                                $repo->updatePayload($attempt, $result);
+                                        try {
+                                            if ($state instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                                                $attempt = $repo->createAttempt(
+                                                    GoodsReceivedNote::class,
+                                                    $record?->id,
+                                                    auth()->id(),
+                                                    $state->getClientOriginalName()
+                                                );
+                                                $set('document_analysis_attempt_id', $attempt->id);
                                             }
 
-                                            if (!empty($result['documents'][0]['line_items'])) {
+                                            $service = new \App\Services\AWS\Textract\AnalyzeExpenseService();
 
-                                               
-                                                if (!empty($result['documents'][0]['summary']['VENDOR_ID'])) {
-                                                    $set('supplier_id', $result['documents'][0]['summary']['VENDOR_ID']);
+                                            if ($state instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                                                $file = new \Illuminate\Http\UploadedFile(
+                                                    $state->getRealPath(),
+                                                    $state->getClientOriginalName(),
+                                                    $state->getMimeType(),
+                                                    $state->getError(),
+                                                    true
+                                                );
+
+                                                $result = $service->analyze($file);
+
+                                                if ($attempt) {
+                                                    $repo->updatePayload($attempt, $result);
                                                 }
-                                                if (!empty($result['documents'][0]['summary']['INVOICE_RECEIPT_DATE'])) {
-                                                    $date = $result['documents'][0]['summary']['INVOICE_RECEIPT_DATE'];
-                                                    $date = date('Y-m-d', strtotime(str_replace('/', '-', $date)));
-                                                    $set('grn_date', $date);
-                                                }
-                                                $items = [];
 
-                                                foreach ($result['documents'][0]['line_items'] as $item) {
-                                                    // 1) استخراج اسم الوحدة من الاستجابة
-                                                    $unitName = trim((string)($item['unit_name'] ?? ''));
+                                                if (!empty($result['documents'][0]['line_items'])) {
 
-                                                    // 2) محاولة إيجاد الـ ID للوحدة (حسب الاسم، أو الرمز إن لزم)
-                                                    $unitId = null;
-                                                    if ($unitName !== '') {
-                                                        $unitId = \App\Models\Unit::query()
-                                                            ->where('name', 'like', $unitName)           // تطابق مباشر
-                                                            ->orWhere('name', 'like', "%{$unitName}%")   // تطابق جزئي
-                                                            ->orWhere('code', 'like', $unitName)         // لو عندك code للوحدة
-                                                            ->orWhere('code', 'like', "%{$unitName}%")
-                                                            ->value('id');
+
+                                                    if (!empty($result['documents'][0]['summary']['VENDOR_ID'])) {
+                                                        $set('supplier_id', $result['documents'][0]['summary']['VENDOR_ID']);
+                                                    }
+                                                    if (!empty($result['documents'][0]['summary']['INVOICE_RECEIPT_DATE'])) {
+                                                        $date = $result['documents'][0]['summary']['INVOICE_RECEIPT_DATE'];
+                                                        $date = date('Y-m-d', strtotime(str_replace('/', '-', $date)));
+                                                        $set('grn_date', $date);
+                                                    }
+                                                    $items = [];
+
+                                                    foreach ($result['documents'][0]['line_items'] as $item) {
+                                                        // 1) استخراج اسم الوحدة من الاستجابة
+                                                        $unitName = trim((string)($item['unit_name'] ?? ''));
+
+                                                        // 2) محاولة إيجاد الـ ID للوحدة (حسب الاسم، أو الرمز إن لزم)
+                                                        $unitId = null;
+                                                        if ($unitName !== '') {
+                                                            $unitId = \App\Models\Unit::query()
+                                                                ->where('name', 'like', $unitName)           // تطابق مباشر
+                                                                ->orWhere('name', 'like', "%{$unitName}%")   // تطابق جزئي
+                                                                ->orWhere('code', 'like', $unitName)         // لو عندك code للوحدة
+                                                                ->orWhere('code', 'like', "%{$unitName}%")
+                                                                ->value('id');
+                                                        }
+
+                                                        // 3) بناء عنصر الريبيتر بقيم نهائية (بدون Closures)
+                                                        $items[] = [
+                                                            'product_id'              => $item['existing_product_id'] ?? null,
+                                                            'unit_id'                 => $unitId,                                    // ← قيمة رقمية أو null
+                                                            'package_size'            => (float)($item['package_size'] ?? 0),
+                                                            'quantity'                => (float)($item['quantity'] ?? 1),
+                                                            'waste_stock_percentage'  => 0,
+                                                        ];
                                                     }
 
-                                                    // 3) بناء عنصر الريبيتر بقيم نهائية (بدون Closures)
-                                                    $items[] = [
-                                                        'product_id'              => $item['existing_product_id'] ?? null,
-                                                        'unit_id'                 => $unitId,                                    // ← قيمة رقمية أو null
-                                                        'package_size'            => (float)($item['package_size'] ?? 0),
-                                                        'quantity'                => (float)($item['quantity'] ?? 1),
-                                                        'waste_stock_percentage'  => 0,
-                                                    ];
-                                                }
+                                                    $set('grnDetails', $items);
 
-                                                $set('grnDetails', $items);
-                                                
-                                                if ($attempt) {
-                                                    $repo->markAsSuccess($attempt, $items);
-                                                }
+                                                    if ($attempt) {
+                                                        $repo->markAsSuccess($attempt, $items);
+                                                    }
 
-                                                \Filament\Notifications\Notification::make()
-                                                    ->title('✅ Attachment parsed successfully')
-                                                    ->body('Products imported automatically from the attachment.')
-                                                    ->success()
-                                                    ->send();
-                                            } else {
-                                                if ($attempt) {
-                                                    $repo->markAsFailed($attempt, 'No items found in the document.');
+                                                    \Filament\Notifications\Notification::make()
+                                                        ->title('✅ Attachment parsed successfully')
+                                                        ->body('Products imported automatically from the attachment.')
+                                                        ->success()
+                                                        ->send();
+                                                } else {
+                                                    if ($attempt) {
+                                                        $repo->markAsFailed($attempt, 'No items found in the document.');
+                                                    }
+                                                    \Filament\Notifications\Notification::make()
+                                                        ->title('⚠️ No items found')
+                                                        ->body('System could not extract items from the attachment.')
+                                                        ->warning()
+                                                        ->send();
                                                 }
-                                                \Filament\Notifications\Notification::make()
-                                                    ->title('⚠️ No items found')
-                                                    ->body('System could not extract items from the attachment.')
-                                                    ->warning()
-                                                    ->send();
                                             }
+                                        } catch (\Throwable $e) {
+                                            if (isset($attempt) && $attempt) {
+                                                $repo->markAsFailed($attempt, $e->getMessage());
+                                            }
+                                            \Illuminate\Support\Facades\Log::error('failed_file', [$e->getMessage()]);
+                                            \Filament\Notifications\Notification::make()
+                                                ->title('❌ Failed to parse file')
+                                                ->body($e->getMessage())
+                                                ->danger()
+                                                ->send();
                                         }
-                                    } catch (\Throwable $e) {
-                                        if (isset($attempt) && $attempt) {
-                                            $repo->markAsFailed($attempt, $e->getMessage());
-                                        }
-                                        \Illuminate\Support\Facades\Log::error('failed_file', [$e->getMessage()]);
-                                        \Filament\Notifications\Notification::make()
-                                            ->title('❌ Failed to parse file')
-                                            ->body($e->getMessage())
-                                            ->danger()
-                                            ->send();
-                                    }
-                                }),
-                            
-                            \Filament\Forms\Components\Hidden::make('document_analysis_attempt_id')
-                                ->dehydrated(false),
-                        ]),
+                                    }),
 
+                                \Filament\Forms\Components\Hidden::make('document_analysis_attempt_id')
+                                    ->dehydrated(false),
+                            ]),
+
+                        Placeholder::make('file_preview')
+                            ->hiddenLabel()
+                            ->content(function (callable $get) {
+                                $file = $get('attachment');
+
+                                if (!$file) {
+                                    return new \Illuminate\Support\HtmlString('<div class="text-gray-400 p-8 text-center border-2 border-dashed rounded-lg">No file uploaded</div>');
+                                }
+
+                                if (is_array($file)) {
+                                    $file = array_values($file)[0] ?? null;
+                                }
+
+                                $url = null;
+                                $isPdf = false;
+
+                                if (is_string($file)) {
+                                    $url = \Illuminate\Support\Facades\Storage::url($file);
+                                    $isPdf = str_ends_with(strtolower($file), '.pdf');
+                                } elseif ($file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                                    $isPdf = strtolower($file->getClientOriginalExtension()) === 'pdf' || $file->getMimeType() === 'application/pdf';
+                                    if ($isPdf) {
+                                        // Create a lightweight temporary preview URL without Base64 payload bloat
+                                        $path = 'tmp-previews/' . basename($file->getRealPath()) . '.pdf';
+                                        \Illuminate\Support\Facades\Storage::disk('public')->put(
+                                            $path,
+                                            fopen($file->getRealPath(), 'r')
+                                        );
+                                        $url = \Illuminate\Support\Facades\Storage::disk('public')->url($path);
+                                    } else {
+                                        try {
+                                            $url = $file->temporaryUrl();
+                                        } catch (\Exception $e) {
+                                        }
+                                    }
+                                }
+
+                                if (!$url) {
+                                    if ($isPdf) {
+                                        return new \Illuminate\Support\HtmlString('<div class="text-gray-400 p-8 text-center border-2 border-dashed rounded-lg">PDF file is too large for live preview. Please save to view.</div>');
+                                    }
+                                    return new \Illuminate\Support\HtmlString('<div class="text-gray-400 p-8 text-center border-2 border-dashed rounded-lg">Preview not available</div>');
+                                }
+
+                                if ($isPdf) {
+                                    return new \Illuminate\Support\HtmlString('<iframe src="' . $url . '" style="width: 100%; height: 75vh;" class="rounded-lg shadow border-0"></iframe>');
+                                }
+
+                                return new \Illuminate\Support\HtmlString('<img src="' . $url . '" style="width: 100%; max-height: 75vh; object-fit: contain;" class="rounded-lg shadow border" />');
+                            })
+
+
+
+                    ]),
 
                     Fieldset::make('Details')->columnSpanFull()
                         ->schema([
@@ -352,7 +409,10 @@ class GoodsReceivedNoteResource extends Resource
                         ]),
 
 
-                ])->columnSpanFull()
+                ])
+                    ->columns(2)
+                    ->columnSpanFull(),
+
             ]);
     }
 
