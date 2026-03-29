@@ -987,11 +987,11 @@ if (!function_exists('getMonthOptionsBasedOnSettings')) {
     function getMonthOptionsBasedOnSettings()
     {
         $options = [];
-        $currentDate = Carbon::now();
-        $useStandard = setting('use_standard_end_of_month', true); // Default: true
+        $currentDate = Carbon::now()->startOfMonth();
+        $useStandard = setting('use_standard_end_of_month') ?? true; // Default: true
 
         for ($i = 0; $i < 12; $i++) {
-            $monthDate = $currentDate->copy()->subMonthsNoOverflow($i); // Get past months
+            $monthDate = $currentDate->copy()->subMonths($i); // Get past months
 
             if ($useStandard) {
                 // Standard month format (Full name with year)
@@ -1016,7 +1016,7 @@ if (!function_exists('getMonthOptionsBasedOnWithStatis')) {
     function getMonthOptionsBasedOnWithStatis()
     {
         $options = [];
-        $currentDate = new DateTime();
+        $currentDate = (new DateTime())->modify('first day of this month');
         for ($i = 0; $i < 12; $i++) {
             $monthDate = (clone $currentDate)->sub(new DateInterval("P{$i}M")); // Subtract months
             $monthName = $monthDate->format('F Y'); // Full month name with year
