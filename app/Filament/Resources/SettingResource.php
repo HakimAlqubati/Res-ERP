@@ -111,10 +111,12 @@ class SettingResource extends Resource
                                     TextInput::make("hours_count_after_period_before")
                                         ->label('Allowed hours pre-period')
                                         ->numeric()
+                                        ->integer()
                                         ->required(),
                                     TextInput::make("hours_count_after_period_after")
                                         ->label('Allowed hours post-period')
                                         ->numeric()
+                                        ->integer()
                                         ->required(),
 
                                     TextInput::make("early_attendance_minutes")
