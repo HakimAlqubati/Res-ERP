@@ -73,6 +73,7 @@ final class MissedCheckinHandler implements WarningHandler
         $date  = $this->options['date'] ? Carbon::parse($this->options['date']) : Carbon::today();
         $grace = (int) ($this->options['grace'] ?? 15);
 
+
         // فلاتر الهرمية
         $filters = [];
         foreach (['branch_id', 'department_id', 'supervisor_ids'] as $k) {
@@ -156,63 +157,150 @@ final class MissedCheckinHandler implements WarningHandler
 
                 foreach ($shifts as $s) {
                     $periodId = $s['period']->id;
-                    $deadline = $s['grace_deadline'];
+                    $deadline = $s['grace_deadline']; // مهلة المشرف (مثلاً 15 دقيقة من البداية)
 
-
-                    // نحاول جلب بداية ونهاية الفترة ككائنات Carbon
                     /** @var \Carbon\CarbonInterface|null $start */
                     /** @var \Carbon\CarbonInterface|null $end */
                     $start = $s['start'] ?? null;
                     $end   = $s['end']   ?? ($s['period']->end ?? null);
 
-                    AppLog::write("[StartEnd Time] Employee: {$emp->name}, Start: {$start->format('Y-m-d H:i:s')}, End: {$end->format('Y-m-d H:i:s')}", AppLog::LEVEL_INFO, 'attendance');
-                    // إن لم تتوفر البداية/النهاية نتجاوز هذه الفترة بحذر
                     if (!$start || !$end) {
                         continue;
                     }
 
-                    // DEBUG: طباعة الأوقات للتشخيص
                     $now = now();
-                    AppLog::write(
-                        "[MissedCheckin Time Check] Employee: {$emp->name}, Now: {$now->format('Y-m-d H:i:s')}, Start: {$start->format('Y-m-d H:i:s')}, End: {$end->format('Y-m-d H:i:s')}",
-                        AppLog::LEVEL_INFO,
-                        'attendance'
-                    );
-                    // dd($start,$end);
-                    // شرطك: لا ترسل (ولا تحسب مخالفة) إلا إذا الوقت الحالي بين بداية ونهاية الفترة
-                    if ($now->lt($start) || $now->gt($end)) {
-                        continue; // خارج نطاق الفترة: لا إرسال
-                    }
-                    // لا نحكم قبل انتهاء المهلة
-                    if (now()->lessThan($deadline)) {
+
+                    // تحديد موعد إرسال إشعار الموظف (نهاية الشيفت + 30 دقيقة)
+                    $employeeReminderTime = $end->copy()->addMinutes(30);
+
+                    // 1. النافذة الزمنية الموسّعة:
+                    // نتوقف فقط إذا لم يبدأ الشيفت بعد، أو إذا مر وقت طويل جداً (مثلاً ساعة) بعد موعد تذكير الموظف
+                    $maxAllowedTime = $employeeReminderTime->copy()->addMinutes(60);
+                    if ($now->lt($start) || $now->gt($maxAllowedTime)) {
                         continue;
                     }
 
-                    // يوجد checkin قبل المهلة؟ إذًا لا تُحتسب Missed
-                    if ($this->probe->hasCheckinBefore($emp, $periodId, $deadline)) {
-                        continue;
+                    // =========================================================
+                    // 👔 أولاً: مسار المشرف (يجمع البيانات أثناء وقت الشيفت فقط)
+                    // =========================================================
+                    if ($now->lessThanOrEqualTo($end)) {
+
+                        // هل انتهت مهلة السماح؟ وهل لم يبصم الموظف قبل المهلة؟
+                        if ($now->greaterThanOrEqualTo($deadline) && !$this->probe->hasCheckinBefore($emp, $periodId, $deadline)) {
+
+                            $onLeave = false; // TODO: ربط منطق الإجازة
+
+                            $missedByEmp[$emp->id]['employee'] = [
+                                'id'          => $emp->id,
+                                'name'        => $emp->name,
+                                'employee_no' => $emp->employee_no ?? null,
+                                'branch'      => $emp->branch?->name,
+                            ];
+
+                            $missedByEmp[$emp->id]['periods'][] = [
+                                'period_id'      => $periodId,
+                                'period_label'   => $s['period']->name ?? ('Period #' . $periodId),
+                                'shift_start'    => $start->format('Y-m-d H:i:s'),
+                                'grace_deadline' => $deadline->format('Y-m-d H:i:s'),
+                                'reason'         => 'no_checkin_before_grace',
+                                'on_leave'       => $onLeave,
+                            ];
+                        }
                     }
 
-                    // TODO: ربط منطق الإجازة إن وُجد داخل نظامك
-                    $onLeave = false;
+                    // =========================================================
+                    // 👤 ثانياً: مسار الموظف (يعمل فقط بعد انتهاء الشيفت بـ 30 دقيقة)
+                    // =========================================================
+                    if (!empty($this->options['notify_employees'])) {
 
+                        // هل وصلنا إلى موعد التذكير (بعد النهاية بـ 30 دقيقة)؟
+                        if ($now->greaterThanOrEqualTo($employeeReminderTime)) {
 
-                    $missedByEmp[$emp->id]['employee'] = [
-                        'id'          => $emp->id,
-                        'name'        => $emp->name,
-                        'employee_no' => $emp->employee_no ?? null,
-                        'branch'      => $emp->branch?->name,
-                    ];
+                            // هل الموظف لم يبصم طوال فترة الشيفت بالكامل (حتى النهاية)؟
+                            if (!$this->probe->hasCheckinBefore($emp, $periodId, $end)) {
 
-                    $missedByEmp[$emp->id]['periods'][] = [
-                        'period_id'      => $periodId,
-                        'period_label'   => $s['period']->name ?? ('Period #' . $periodId),
-                        'shift_start'    => $s['start']->format('Y-m-d H:i:s'),
-                        'grace_deadline' => $deadline->format('Y-m-d H:i:s'),
-                        'reason'         => 'no_checkin_before_grace',
-                        'on_leave'       => $onLeave,
-                    ];
+                                if ($emp->user instanceof User) {
+                                    $empTitle = "Missed Check-in Reminder";
+                                    $empBody  = "Your shift ended 30 minutes ago, but you haven't checked in today.";
+                                    $empPayload = WarningPayload::make($empTitle, $empBody, WarningLevel::Warning)
+                                        ->ctx([
+                                            'tenant_id' => $tenantId,
+                                            'date'      => $date->toDateString(),
+                                            'period_id' => $periodId,
+                                        ])
+                                        // بصمة فريدة خاصة بالموظف لمنع التكرار
+                                        ->scope("post-shift-miss:tenant-{$tenantId}:emp-{$emp->id}:date-{$date->toDateString()}:period-{$periodId}")
+                                        ->expires(now()->addHours(6));
+
+                                    try {
+                                        Warnings::send($emp->user, $empPayload);
+                                    } catch (\Throwable $e) {
+                                        AppLog::write("Failed to send post-shift reminder to employee {$emp->id}", AppLog::LEVEL_WARNING, 'attendance');
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
+                // foreach ($shifts as $s) {
+                //     $periodId = $s['period']->id;
+                //     $deadline = $s['grace_deadline'];
+
+
+                //     // نحاول جلب بداية ونهاية الفترة ككائنات Carbon
+                //     /** @var \Carbon\CarbonInterface|null $start */
+                //     /** @var \Carbon\CarbonInterface|null $end */
+                //     $start = $s['start'] ?? null;
+                //     $end   = $s['end']   ?? ($s['period']->end ?? null);
+
+                //     AppLog::write("[StartEnd Time] Employee: {$emp->name}, Start: {$start->format('Y-m-d H:i:s')}, End: {$end->format('Y-m-d H:i:s')}", AppLog::LEVEL_INFO, 'attendance');
+                //     // إن لم تتوفر البداية/النهاية نتجاوز هذه الفترة بحذر
+                //     if (!$start || !$end) {
+                //         continue;
+                //     }
+
+                //     // DEBUG: طباعة الأوقات للتشخيص
+                //     $now = now();
+                //     AppLog::write(
+                //         "[MissedCheckin Time Check] Employee: {$emp->name}, Now: {$now->format('Y-m-d H:i:s')}, Start: {$start->format('Y-m-d H:i:s')}, End: {$end->format('Y-m-d H:i:s')}",
+                //         AppLog::LEVEL_INFO,
+                //         'attendance'
+                //     );
+                //     // dd($start,$end);
+                //     // شرطك: لا ترسل (ولا تحسب مخالفة) إلا إذا الوقت الحالي بين بداية ونهاية الفترة
+                //     if ($now->lt($start) || $now->gt($end)) {
+                //         continue; // خارج نطاق الفترة: لا إرسال
+                //     }
+                //     // لا نحكم قبل انتهاء المهلة
+                //     if (now()->lessThan($deadline)) {
+                //         continue;
+                //     }
+
+                //     // يوجد checkin قبل المهلة؟ إذًا لا تُحتسب Missed
+                //     if ($this->probe->hasCheckinBefore($emp, $periodId, $deadline)) {
+                //         continue;
+                //     }
+
+                //     // TODO: ربط منطق الإجازة إن وُجد داخل نظامك
+                //     $onLeave = false;
+
+
+                //     $missedByEmp[$emp->id]['employee'] = [
+                //         'id'          => $emp->id,
+                //         'name'        => $emp->name,
+                //         'employee_no' => $emp->employee_no ?? null,
+                //         'branch'      => $emp->branch?->name,
+                //     ];
+
+                //     $missedByEmp[$emp->id]['periods'][] = [
+                //         'period_id'      => $periodId,
+                //         'period_label'   => $s['period']->name ?? ('Period #' . $periodId),
+                //         'shift_start'    => $s['start']->format('Y-m-d H:i:s'),
+                //         'grace_deadline' => $deadline->format('Y-m-d H:i:s'),
+                //         'reason'         => 'no_checkin_before_grace',
+                //         'on_leave'       => $onLeave,
+                //     ];
+                // }
             }
 
             /**
