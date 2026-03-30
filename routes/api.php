@@ -276,7 +276,8 @@ Route::middleware('auth:api')->group(function () {
 
     Route::get('/branches', function () {
         return Branch::active()
-            ->branches()
+            // ->branches()
+            ->whereIn('type',[Branch::TYPE_BRANCH,Branch::TYPE_HQ])
             ->forBranchManager('id')
             ->get(['id', 'name', 'type'])
 
