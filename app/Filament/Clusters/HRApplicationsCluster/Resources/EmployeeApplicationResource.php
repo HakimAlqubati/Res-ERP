@@ -1411,7 +1411,21 @@ class EmployeeApplicationResource extends Resource
                             })
                             ->default('Y-m-d'),
                         TextInput::make('detail_advance_amount')->numeric()->required()
-                            ->label('Amount'),
+                            ->label('Amount')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                if ($state > 0) {
+                                    $set('detail_monthly_deduction_amount', $state);
+                                    $set('detail_number_of_months_of_deduction', 1);
+
+                                    $startsFrom = $get('detail_deduction_starts_from') ?? now()->toDateString();
+                                    $endsAt = \Carbon\Carbon::parse($startsFrom)
+                                        ->startOfMonth()
+                                        ->endOfMonth()
+                                        ->format('Y-m-d');
+                                    $set('detail_deduction_ends_at', $endsAt);
+                                }
+                            }),
                         TextInput::make('basic_salary')->numeric()->disabled()
                             ->default(0)
                             ->label('Basic salary')
