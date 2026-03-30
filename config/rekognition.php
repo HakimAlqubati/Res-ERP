@@ -5,7 +5,7 @@ return [
     'bucket'               => env('AWS_BUCKET'),
     'collection_id'        => env('REKOGNITION_COLLECTION', 'emps'),
     'face_match_threshold' => (float) env('REKOGNITION_THRESHOLD', 90),
-    'max_faces'            => (int) env('REKOGNITION_MAX_FACES', 5),
+    'max_faces'            => (int) env('REKOGNITION_MAX_FACES', 15),
 
     // مسار رفع الصور داخل S3
     'upload_prefix'        => env('REKOGNITION_UPLOAD_PREFIX', 'uploads'),
