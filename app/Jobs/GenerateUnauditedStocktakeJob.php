@@ -34,17 +34,18 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue
     public $hideZero;
     public $storeId;
     public $userId;
-    // public $tenantId;
+    public $tenantId;
 
-    // public $timeout = 600; // allow for big calculations
+    public $timeout = 900; // allow for big calculations
 
-    public function __construct($startDate, $endDate, $hideZero, $storeId, $userId)
+    public function __construct($startDate, $endDate, $hideZero, $storeId, $userId, $tenantId = null)
     {
         $this->startDate = $startDate;
         $this->endDate = $endDate;
         $this->hideZero = $hideZero;
         $this->storeId = $storeId;
         $this->userId = $userId;
+        $this->tenantId = $tenantId;
 
         // Force connection to landlord database queue
         $this->onConnection('database');
@@ -52,6 +53,13 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue
 
     public function handle(): void
     {
+        if ($this->tenantId) {
+            $tenant = \Spatie\Multitenancy\Models\Tenant::find($this->tenantId);
+            if ($tenant) {
+                $tenant->makeCurrent();
+            }
+        }
+
         Log::info('Generating unaudited stocktake for store: ' . $this->storeId);
         try {
             // 1. Fetch stock inventory using unified service method
