@@ -58,7 +58,7 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue
             $products = \App\Services\StockInventoryReportService::getProductsNotInventoriedBetween(
                 $this->startDate,
                 $this->endDate,
-                150,
+                1000,
                 $this->storeId,
                 true
             );
@@ -67,7 +67,7 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue
             Log::info('startDate ', [$this->startDate]);
             Log::info('endDate ', [$this->endDate]);
             Log::info('storeId ', [$this->storeId]);
-            Log::info('products ', [$products->items()]);
+           
             if (count($products->items()) == 0) {
                 Log::info('No unaudited products found based on your parameters.');
                 $this->notifyUser('Stocktake Generation Failed', 'No unaudited products found based on your parameters.', 'warning');
