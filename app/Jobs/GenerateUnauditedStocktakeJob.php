@@ -88,7 +88,7 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue
             Log::info('Number of products to process: ' . $products->total());
             // 5. Process EACH product, getting inventory quantities
             foreach ($products->items() as $product) {
-                $unitPrices = $product->supplyOutUnitPrices ?? collect();
+                $unitPrices = $product->reportUnitPrices ?? collect();
                 // We use the smallest unit by default, similar to the UI logic
                 $selectedUnit = $unitPrices->sortBy('package_size')->first();
                 $firstUnitId = $selectedUnit?->unit_id;
