@@ -280,6 +280,7 @@ return [
   'gender' => 'الجنس',
   'male' => 'ذكر',
   'female' => 'أنثى',
+  'birthday' => 'تاريخ الميلاد',
   'nationality' => 'الجنسية',
   'employee_address' => 'عنوان الموظف',
   'avatar' => 'الصورة الشخصية',
@@ -331,6 +332,8 @@ return [
   'bank' => 'البنك',
   'enter_bank_name' => 'أدخل اسم البنك',
   'enter_bank_account_number' => 'أدخل رقم الحساب البنكي',
+  'transaction_number' => 'رقم الترنزكشن',
+  'enter_transaction_number' => 'أدخل رقم الترنزكشن',
 
   // ===========================================
   // HRMS - Allowances & Deductions
@@ -1056,6 +1059,9 @@ return [
   // Employee Service Termination
   // ===========================================
   'terminate_service' => 'إنهاء الخدمة',
+  'rehire' => 'إعادة تعيين',
+  'rehire_employee' => 'إعادة تعيين موظف',
+  'employee_rehired_successfully' => 'تم إعادة تعيين الموظف بنجاح',
   'termination_date' => 'تاريخ إنهاء الخدمة',
   'termination_reason' => 'سبب الإنهاء',
   'notes' => 'ملاحظات',
@@ -1073,4 +1079,10 @@ return [
   'weekly_leave' => 'إجازة أسبوعية',
   'error_occurred' => 'حدث خطأ',
   'employee_name' => 'اسم الموظف',
+  'unterminated' => 'غير موقف',
+  'terminated' => 'موقف',
+  'access_denied' => 'ممنوع من الوصول',
+  'undo_approve' => 'إلغاء الموافقة',
+  'undo_approve_confirmation_title' => 'إلغاء الموافقة على طلب الإجازة #{id}',
+  'undo_approve_confirmation_body' => 'هل أنت متأكد من رغبتك في إلغاء الموافقة على طلب الإجازة هذا؟ لا يمكن التراجع عن هذا الإجراء.',
 ];

@@ -20,6 +20,7 @@ class UserResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'avatar' => $this->avatar_image,
             'email' => $this->email,
             'owner_id' => $this->owner_id,
             'role_id' => $this->roles[0]->id,
@@ -37,6 +38,7 @@ class UserResource extends JsonResource
             'managed_stores_ids' => $this->managed_stores_ids,
             'employee' => $this->employee ? tap($this->employee, function ($employee) {
                 $employee->salary = 0;
+                $employee->avatar = $employee->avatar_image   ;
             }) : null,
         ];
     }

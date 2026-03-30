@@ -59,7 +59,7 @@ class OvertimeController extends Controller
             'employees' => 'required|array|min:1',
             'employees.*.employee_id' => 'required|exists:hr_employees,id',
             'employees.*.start_time' => 'required|date_format:H:i',
-            'employees.*.end_time' => 'required|date_format:H:i|after:hr_employees.*.start_time',
+            'employees.*.end_time' => 'required|date_format:H:i', // Removed after rule because it might be cross-day
             'employees.*.hours' => 'required|numeric|min:0',
             'employees.*.notes' => 'nullable|string',
         ];
@@ -77,38 +77,9 @@ class OvertimeController extends Controller
 
         try {
             $data = $validator->validated();
+            $result = $this->overtimeService->storeBulkOvertime($data);
 
-            // Check for existing overtime records before inserting
-            $employeeIds = collect($data['employees'])->pluck('employee_id');
-            $existingRecords = EmployeeOvertime::where('date', $data['date'])
-                ->where('type', $data['type'])
-                ->whereIn('employee_id', $employeeIds)
-                ->with('employee:id,name')
-                ->get();
-
-            if ($existingRecords->isNotEmpty()) {
-                $duplicateNames = $existingRecords->map(function ($record) {
-                    return $record->employee
-                        ? "{$record->employee->name} (#{$record->employee_id})"
-                        : "#{$record->employee_id}";
-                })->implode(', ');
-
-                return response()->json([
-                    'status'  => false,
-                    'message' => "Overtime already exists for the following employees on {$data['date']}: {$duplicateNames}",
-                ], 422);
-            }
-
-            if ($data['type'] === EmployeeOvertime::TYPE_BASED_ON_DAY) {
-                $this->overtimeService->handleOvertimeByDay($data);
-            } elseif ($data['type'] === EmployeeOvertime::TYPE_BASED_ON_MONTH) {
-                $this->overtimeService->handleOverTimeMonth($data);
-            }
-
-            return response()->json([
-                'status'  => true,
-                'message' => 'Overtime records created successfully',
-            ]);
+            return response()->json($result);
         } catch (QueryException $e) {
             if ($e->errorInfo[1] == 1062) {
                 return response()->json([
@@ -125,7 +96,53 @@ class OvertimeController extends Controller
             return response()->json([
                 'status'  => false,
                 'message' => $e->getMessage(),
-            ], 500);
+            ], 422);
+        }
+    }
+
+    /**
+     * Update overtime hours for a specific record.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function update(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'hours' => 'required|numeric|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $overtime = $this->overtimeService->updateHours($id, $request->input('hours'));
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Overtime hours updated successfully.',
+                'data' => $overtime
+            ]);
+        } catch (Exception $e) {
+            $code = $e->getCode() ?: 500;
+            // Handle ModelNotFoundException if needed, or let Exception catch it
+            if ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Overtime record not found.'
+                ], 404);
+            }
+
+            return response()->json([
+                'status'  => false,
+                'message' => $e->getMessage(),
+            ], in_array($code, [403, 404, 422, 500]) ? $code : 500);
         }
     }
 

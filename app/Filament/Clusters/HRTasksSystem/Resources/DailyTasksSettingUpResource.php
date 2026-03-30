@@ -357,7 +357,7 @@ class DailyTasksSettingUpResource extends Resource
     {
 
         if (
-            isSuperAdmin() || (isBranchManager() && $record->assigned_by == auth()?->user()?->employee?->id) ||
+            isSuperAdmin() || isHR() || (isBranchManager() && $record->assigned_by == auth()?->user()?->employee?->id) ||
             (isSystemManager() && $record->assigned_by == auth()?->user()?->employee?->id)
         ) {
             return true;
@@ -367,7 +367,7 @@ class DailyTasksSettingUpResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager()) {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isHR()) {
             return true;
         }
         return false;
@@ -379,10 +379,11 @@ class DailyTasksSettingUpResource extends Resource
         if (
             isSuperAdmin() || (isBranchManager() && $record->assigned_by == auth()?->user()?->id) ||
             (isSystemManager() && $record->assigned_by == auth()?->user()?->id)
-            || isStuff() || isFinanceManager()
+            || isStuff() || isFinanceManager() || isHR()
         ) {
             return true;
         }
         return false;
     }
 }
+

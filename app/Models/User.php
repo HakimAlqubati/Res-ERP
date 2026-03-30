@@ -112,8 +112,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return true;
-        return $this->group === 'Filament Users';
+        return $this->active;
     }
 
     public function manageBranches()
@@ -198,6 +197,10 @@ class User extends Authenticatable implements FilamentUser, Auditable
     {
         return in_array(18, $this->roles->pluck('id')->toArray());
     }
+    public function isHR()
+    {
+        return in_array(19, $this->roles->pluck('id')->toArray());
+    }
     public function isSuperAdmin()
     {
         $roleIds = $this->roles->pluck('id')->toArray();
@@ -253,22 +256,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
 
     public function getIsBranchManagerAttribute() {}
-    // public function canAccessFilament(): bool
-    // {
-    //     return true;
-    // }
-
-    protected static function booted()
-    {
-        // dd(auth()->check());
-        if (auth()->check()) {
-            // if (isBranchManager()) {
-            //     static::addGlobalScope('active', function (Builder $builder) {
-            //         $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
-            //     });
-            // }
-        }
-    }
+  
+ 
 
     public function getHasEmployeeAttribute()
     {

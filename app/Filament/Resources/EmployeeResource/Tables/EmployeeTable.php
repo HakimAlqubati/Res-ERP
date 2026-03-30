@@ -62,6 +62,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Log;
+use App\Models\AppLog;
 use Maatwebsite\Excel\Facades\Excel;
 use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
 
@@ -94,8 +95,10 @@ class EmployeeTable
                 TextColumn::make('name')
                     ->sortable()->searchable()
                     ->label(__('lang.full_name'))->wrap(false)
-                    ->color('primary')->words(3)->limit(15)
-                    ->weight(FontWeight::Bold)->tooltip(fn($state) => $state)
+                    ->color(fn($record): string => $record->active ? 'primary' : 'warning')
+                    // ->words(3)
+                    ->limit(20)
+                    ->weight(FontWeight::Medium)->tooltip(fn($state) => $state)
                     ->searchable(isIndividual: false, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('known_name')
@@ -148,6 +151,11 @@ class EmployeeTable
                     ->label(__('lang.termination_date'))
                     ->date()
                     ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('serviceTermination.termination_reason')
+                    ->label(__('lang.termination_reason'))
+                    ->limit(40)
+                    ->tooltip(fn($state) => $state)
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('salary')->sortable()->label(__('lang.salary'))
                     ->sortable()->searchable()
@@ -269,6 +277,11 @@ class EmployeeTable
                     ->falseIcon('heroicon-o-x-mark')
                     ->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('created_at')
+                    ->label(__('lang.created_at'))
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
             ])->deferFilters(true)
             ->filters([
@@ -290,7 +303,7 @@ class EmployeeTable
                     ->options(getNationalities()),
                 SelectFilter::make('active')
 
-                    ->options([1 => __('lang.active'), 0 => __('lang.inactive')])->default(1)
+                    ->options([1 => __('lang.active'), 0 => __('lang.terminated')])->default(1)
                     ->label(__('lang.active')),
                 SelectFilter::make('employee_type')
                     ->label(__('lang.role_type'))
@@ -402,17 +415,20 @@ class EmployeeTable
                         ])
                         ->databaseTransaction()
                         ->action(function (Employee $record, array $data) {
-                            $record->serviceTermination()->create([
-                                'termination_date'   => $data['termination_date'],
-                                'termination_reason' => $data['termination_reason'],
-                                'notes'              => $data['notes'],
-                                'status'             => \App\Models\EmployeeServiceTermination::STATUS_PENDING,
-                            ]);
+                            try {
+                                app(\App\Modules\HR\Employee\Services\EmployeeLifecycleService::class)->requestTermination($record, $data);
 
-                            Notification::make()
-                                ->title(__('lang.termination_request_created'))
-                                ->success()
-                                ->send();
+                                Notification::make()
+                                    ->title(__('lang.termination_request_created'))
+                                    ->success()
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title(__('lang.error_occurred'))
+                                    ->body($e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
                         }),
 
                     Action::make('manageTermination')
@@ -434,39 +450,68 @@ class EmployeeTable
                                 ->default($record->serviceTermination->notes)
                                 ->disabled(),
                         ])
-                        ->modalSubmitAction(false)
-                        ->modalFooterActions(fn(Employee $record, Action $action) => [
-                            Action::make('approve')
-                                ->label(__('lang.approve_termination'))
-                                ->color('success')
-                                ->requiresConfirmation()
-                                ->action(function () use ($record, $action) {
-                                    $record->serviceTermination->update([
-                                        'status'      => \App\Models\EmployeeServiceTermination::STATUS_APPROVED,
-                                        'approved_at' => now(),
-                                        'approved_by' => auth()->id(),
-                                    ]);
-                                    Notification::make()->title(__('lang.termination_approved_successfully'))->success()->send();
-                                    $action->close();
-                                }),
-                            Action::make('reject')
-                                ->label(__('lang.reject_termination'))
-                                ->color('danger')
-                                ->schema([
-                                    Textarea::make('rejection_reason')->required()->label(__('lang.rejection_reason'))
-                                ])
-                                ->action(function (array $data) use ($record, $action) {
-                                    $record->serviceTermination->update([
-                                        'status'           => \App\Models\EmployeeServiceTermination::STATUS_REJECTED,
-                                        'rejected_at'      => now(),
-                                        'rejected_by'      => auth()->id(),
-                                        'rejection_reason' => $data['rejection_reason'] ?? null
-                                    ]);
-                                    Notification::make()->title(__('lang.termination_rejected_successfully'))->success()->send();
-                                    $action->close();
-                                }),
-                            // $action->cancel(),
-                        ]),
+                        ->label(__('lang.approve_termination'))
+                        ->color('success')
+                        // ->requiresConfirmation()
+                        ->action(function ($record) {
+                            try {
+                                app(\App\Modules\HR\Employee\Services\EmployeeLifecycleService::class)
+                                    ->approveTermination($record->serviceTermination);
+
+                                Notification::make()->title(__('lang.termination_approved_successfully'))->success()->send();
+                            } catch (\Exception $e) {
+                                Notification::make()->title(__('lang.error_occurred'))->body($e->getMessage())->danger()->send();
+                            }
+                        }),
+                    Action::make('reject')
+                        ->label(__('lang.reject_termination'))
+                        ->color('danger')
+                        ->schema([
+                            Textarea::make('rejection_reason')->required()->label(__('lang.rejection_reason'))
+                        ])
+                        ->visible(fn(Employee $record) => $record->serviceTermination()->where('status', 'pending')->exists())
+
+                        ->icon('heroicon-o-x-circle')
+                        ->action(function (array $data, $record) {
+                            try {
+                                app(\App\Modules\HR\Employee\Services\EmployeeLifecycleService::class)
+                                    ->rejectTermination($record->serviceTermination, $data);
+
+                                Notification::make()->title(__('lang.termination_rejected_successfully'))->success()->send();
+                            } catch (\Exception $e) {
+                                Notification::make()->title(__('lang.error_occurred'))->body($e->getMessage())->danger()->send();
+                            }
+                        }),
+                    Action::make('rehire')
+                        ->label(__('lang.rehire'))
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('success')
+                        ->visible(fn(Employee $record) => !$record->active)
+                        ->schema([
+                            DatePicker::make('join_date')
+                                ->label(__('lang.join_date'))
+                                ->required()
+                                ->default(now()),
+                            Textarea::make('notes')
+                                ->label(__('lang.notes')),
+                        ])
+                        ->action(function (Employee $record, array $data) {
+                            try {
+                                app(\App\Modules\HR\Employee\Services\EmployeeLifecycleService::class)->rehire($record, $data);
+
+                                Notification::make()
+                                    ->title(__('lang.employee_rehired_successfully'))
+                                    ->success()
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title(__('lang.error_occurred'))
+                                    ->body($e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
+
                     Action::make('createUser')
                         ->label(__('lang.create_user'))
                         ->icon('heroicon-o-user-plus')

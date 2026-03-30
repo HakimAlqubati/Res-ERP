@@ -220,7 +220,9 @@
                     {{ $att['leave_type'] ?? __('Leave') }}
                 </td>
                 @elseif(empty($periods))
-                <td colspan="9" class="text-center text-gray-500 font-bold">
+                <td class="internal_cell" colspan="2" style="border: none;"> </td>
+                <td colspan="7" class="text-center text-gray-500 font-bold" style="border: none;"   >
+
                     {{ __('No periods') }}
                 </td>
                 @else
@@ -239,7 +241,9 @@
                             <td class="internal_cell">{{ $item['end_time'] ?? '-' }}</td>
                             <td colspan="7" class="text-center">{{ __('Absent') }}</td>
                             @elseif ($item['final_status'] == 'future')
-                            <td colspan="7" class="internal_cell">
+                            <td class="internal_cell">{{ $item['start_time'] ?? '-' }}</td>
+                            <td class="internal_cell">{{ $item['end_time'] ?? '-' }}</td>
+                            <td colspan="7" class="internal_cell text-center">
                                 <p>-</p> {{ '' }}
                             </td>
                             @else

@@ -62,8 +62,16 @@ class AdvanceRequest extends Model
         'code',
         'status',
         'remaining_total',
-        'paid_installments'
+        'paid_installments',
+        'finance_approved_by',
+        'finance_approved_at',
+        'payment_method',
+        'bank_account_number',
+        'transaction_number',
     ];
+
+    public const PAYMENT_METHOD_CASH = 'cash';
+    public const PAYMENT_METHOD_BANK_TRANSFER = 'bank_transfer';
 
     protected $appends = ['payment_status'];
 
@@ -84,7 +92,21 @@ class AdvanceRequest extends Model
         return $this->belongsTo(EmployeeApplicationV2::class, 'application_id');
     }
 
+    public function financeApprovedBy()
+    {
+        return $this->belongsTo(User::class, 'finance_approved_by');
+    }
+
     // ===================== Accessors =====================
+
+    /**
+     * Check if the advance has been paid to the employee
+     * (which happens when the financial manager approves it).
+     */
+    public function getIsPaidAttribute(): bool
+    {
+        return !is_null($this->finance_approved_at);
+    }
 
     /**
      * Get the computed payment status based on paid_installments and remaining_total

@@ -147,7 +147,23 @@ class AttendanceImagesUploadedResource extends Resource
                             // ->forBranch('branch_id')
                             ->forBranchManager()
                             ->pluck('name', 'id')->toArray();
+                    }),
+                
+                SelectFilter::make('employee_gender')
+                    ->label(__('lang.gender'))
+                    ->options([
+                        '1' => __('lang.male'),
+                        '0' => __('lang.female'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (isset($data['value']) && $data['value'] !== '') {
+                            $query->whereHas('employee', function (Builder $q) use ($data) {
+                                $q->where('gender', $data['value']);
+                            });
+                        }
+                        return $query;
                     })
+                    ->visible(fn () => auth()->user()?->email === 'hakimahmed123321@gmail.com'),
             ], FiltersLayout::Modal)->filtersFormColumns(3)
             ->deferFilters(false)
         ;
@@ -167,7 +183,7 @@ class AttendanceImagesUploadedResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager()) {
+        if (isSuperAdmin() || isSystemManager() || isHR()) {
             return true;
         }
         return false;

@@ -30,3 +30,4 @@ Schedule::command('tenant:backup')
     ->everySixHours();
 // Schedule::command('test:cron')->everyMinute();
 Schedule::command('notifications:warning')->everyFourHours();
+Schedule::command('hr:overtime:auto-process')->everyThirtyMinutes();

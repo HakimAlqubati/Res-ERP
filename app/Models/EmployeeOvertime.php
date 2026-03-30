@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use App\Observers\EmployeeOvertimeObserver;
 use Illuminate\Database\Eloquent\Builder;
 use App\Traits\Scopes\BranchScope;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
-
+#[ObservedBy([EmployeeOvertimeObserver::class])]
 class EmployeeOvertime extends Model implements Auditable
 {
     use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope;
@@ -97,11 +99,15 @@ class EmployeeOvertime extends Model implements Auditable
     protected static function booted()
     {
         static::creating(function ($model) {
-            $model->created_by = auth()->id();
-            $model->updated_by = auth()->id();
+            if (auth()->check()) {
+                $model->created_by = auth()->id();
+                $model->updated_by = auth()->id();
+            }
         });
         static::updating(function ($model) {
-            $model->updated_by = auth()->id();
+            if (auth()->check()) {
+                $model->updated_by = auth()->id();
+            }
         });
         // Branch scope logic moved to ApplyBranchScopes middleware
         // to avoid relationship issues during model boot cycle.

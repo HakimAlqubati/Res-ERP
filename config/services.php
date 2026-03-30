@@ -34,7 +34,12 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
-   'python' => [
+    'python' => [
         'base_url' => env('PYTHON_BASE_URL', 'http://18.143.198.215:5000'),
+    ],
+
+    'whatsapp' => [
+        'token' => env('WHATSAPP_TOKEN'),
+        'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
     ],
 ];

@@ -57,7 +57,7 @@ class PeriodHistoriesRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->defaultSort('period_id', 'asc')
+            ->defaultSort('start_date', 'desc')
             ->striped()
             ->recordTitleAttribute('period_id')
             ->columns([
@@ -69,8 +69,8 @@ class PeriodHistoriesRelationManager extends RelationManager
                     ->label('Day'),
 
                 // TextColumn::make('creator.name')->label('Created by'),
-                // TextColumn::make('start_time')->label('Start time'),
-                // TextColumn::make('end_time')->label('End time'),
+                TextColumn::make('start_time')->label('Start time'),
+                TextColumn::make('end_time')->label('End time'),
 
             ])
             ->filters([

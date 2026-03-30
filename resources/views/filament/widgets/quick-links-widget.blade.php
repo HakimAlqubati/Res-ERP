@@ -233,6 +233,7 @@ $currentTenant = CustomTenantModel::find($currentTenant->id);
                     @endif
                 </a>
 
+                @if(!isHR())
                 <a href="{{ route('filament.admin.h-r-salary.resources.month-salaries.index') }}"
                     class="quick-link">
                     <x-heroicon-o-banknotes />
@@ -241,6 +242,17 @@ $currentTenant = CustomTenantModel::find($currentTenant->id);
                     <div class="badge">{{ \App\Models\MonthSalary::count() }}</div>
                     @endif
                 </a>
+                @else
+                <div class="quick-link" style="opacity: 0.5; cursor: not-allowed;" title="{{ __('lang.access_denied') }}">
+                    <x-heroicon-o-banknotes />
+                    <div class="label">{{ __('lang.Payroll') }}</div>
+                    @if($showCounts)
+                    <div class="badge">{{ \App\Models\MonthSalary::count() }}</div>
+                    @endif
+                </div>
+                @endif
+
+
             </div>
         </x-filament::fieldset>
         @endif

@@ -32,13 +32,13 @@ class EmployeeApplicationForm
                         //     $set('basic_salary', $employee?->salary);
                         // })
                         ->disabled(function () {
-                            if (isStuff() || isFinanceManager()) {
+                            if (isStuff() || isFinanceManager() || isHR()) {
                                 return true;
                             }
                             return false;
                         })
                         ->default(function () {
-                            if (isStuff() || isFinanceManager()) {
+                            if (isStuff() || isFinanceManager() || isHR()) {
                                 return auth()->user()->employee->id;
                             }
                         })
@@ -173,3 +173,4 @@ class EmployeeApplicationForm
             ]);
     }
 }
+

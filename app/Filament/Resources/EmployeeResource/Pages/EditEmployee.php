@@ -19,6 +19,35 @@ class EditEmployee extends EditRecord
         return [
             DeleteAction::make(),
             RestoreAction::make(),
+            \Filament\Actions\Action::make('rehire')
+                ->label(__('lang.rehire'))
+                ->color('success')
+                ->icon('heroicon-o-arrow-path')
+                ->visible(fn($record) => !$record->active)
+                ->schema([
+                    \Filament\Forms\Components\DatePicker::make('join_date')
+                        ->label(__('lang.join_date'))
+                        ->default(now())
+                        ->required(),
+                    \Filament\Forms\Components\Textarea::make('notes')
+                        ->label(__('lang.notes')),
+                ])
+                ->action(function (\App\Models\Employee $record, array $data) {
+                    try {
+                        app(\App\Modules\HR\Employee\Services\EmployeeLifecycleService::class)->rehire($record, $data);
+
+                        \Filament\Notifications\Notification::make()
+                            ->title(__('lang.employee_rehired_successfully'))
+                            ->success()
+                            ->send();
+                    } catch (\Exception $e) {
+                        \Filament\Notifications\Notification::make()
+                            ->title(__('lang.error_occurred'))
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                }),
         ];
     }
 
@@ -27,10 +56,7 @@ class EditEmployee extends EditRecord
         return $this->getResource()::getUrl('index');
     }
 
-    public function afterSave()
-    {
-        
-    }
+    public function afterSave() {}
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
@@ -41,9 +67,11 @@ class EditEmployee extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
+        $terminationData = $this->record?->serviceTermination ?? null;
+        $data['termination_date'] = $terminationData?->termination_date;
+        $data['termination_reason'] = $terminationData?->termination_reason;
         return $data;
     }
-
     protected function logPeriodChanges()
     {
         // Get the employee being edited

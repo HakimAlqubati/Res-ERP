@@ -122,7 +122,7 @@ class EmployeeFileTypeResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager()) {
+        if (isSuperAdmin() || isSystemManager() || isHR()) {
             return true;
         }
         return false;
@@ -131,7 +131,7 @@ class EmployeeFileTypeResource extends Resource
 
     public static function canDelete(Model $record): bool
     {
-        if (isSuperAdmin() || isSystemManager()) {
+        if (isSuperAdmin() || isSystemManager() || isHR()) {
             return true;
         }
         return false;
@@ -139,7 +139,7 @@ class EmployeeFileTypeResource extends Resource
 
     public static function canDeleteAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager()) {
+        if (isSuperAdmin() || isSystemManager() || isHR()) {
             return true;
         }
         return false;

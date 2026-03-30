@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\EmployeeServiceTermination;
 use App\Observers\EmployeeObserver;
 use App\Traits\EmployeeAccessorsTrait;
 use App\Traits\EmployeeAttendanceTrait;
@@ -61,6 +62,7 @@ class Employee extends Model implements Auditable
         'working_days',
         'is_indexed_in_aws',
         'is_mtd_applicable',
+        'birthday',
     ];
 
     protected $auditInclude = [
@@ -96,6 +98,7 @@ class Employee extends Model implements Auditable
         'working_days',
         'is_indexed_in_aws',
         'is_mtd_applicable',
+        'birthday',
     ];
 
     protected $casts = [
@@ -132,5 +135,28 @@ class Employee extends Model implements Auditable
     public function scopeActive($query)
     {
         return $query->where('active', true);
+    }
+
+    /**
+     * Scope to find employees eligible for payroll in a specific period.
+     * Eligible if:
+     * 1. Joined before or during the period.
+     * 2. Has salary > 0.
+     * 3. Either Active OR was terminated during/after the period.
+     */
+    public function scopeEligibleForPayroll($query, $year, $month)
+    {
+        $periodStart = \Carbon\Carbon::create($year, $month, 1)->startOfMonth();
+        $periodEnd = $periodStart->copy()->endOfMonth();
+
+        return $query->where('salary', '>', 0)
+            ->where('join_date', '<=', $periodEnd->toDateString())
+            ->where(function ($q) use ($periodStart) {
+                $q->active()
+                    ->orWhereHas('serviceTermination', function ($sub) use ($periodStart) {
+                        $sub->where('status', EmployeeServiceTermination::STATUS_APPROVED)
+                            ->where('termination_date', '>=', $periodStart->toDateString());
+                    });
+            });
     }
 }

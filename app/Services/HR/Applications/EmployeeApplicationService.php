@@ -5,6 +5,7 @@ namespace App\Services\HR\Applications;
 use App\Models\Employee;
 use App\Models\EmployeeApplicationV2;
 use App\Rules\HR\Applications\AdvanceRequestConsistencyRule;
+use App\Exceptions\HR\LeaveApprovalException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -120,8 +121,23 @@ class EmployeeApplicationService
         }
 
         // 8) Handle images
-        if (isset($data['images']) && $data['images'] instanceof \Illuminate\Http\UploadedFile) {
-            $record->addMedia($data['images'])->toMediaCollection('images');
+        if (isset($data['images'])) {
+            $images = is_array($data['images']) ? $data['images'] : [$data['images']];
+            foreach ($images as $image) {
+                if ($image instanceof \Illuminate\Http\UploadedFile) {
+                    $record->addMedia($image)->toMediaCollection('images');
+                }
+            }
+        }
+
+        // 9) Handle files
+        if (isset($data['files'])) {
+            $files = is_array($data['files']) ? $data['files'] : [$data['files']];
+            foreach ($files as $file) {
+                if ($file instanceof \Illuminate\Http\UploadedFile) {
+                    $record->addMedia($file)->toMediaCollection('files');
+                }
+            }
         }
 
         return $record;
@@ -161,9 +177,25 @@ class EmployeeApplicationService
         $record->update($data);
 
         // Handle images
-        if (isset($data['images']) && $data['images'] instanceof \Illuminate\Http\UploadedFile) {
+        if (isset($data['images'])) {
             $record->clearMediaCollection('images');
-            $record->addMedia($data['images'])->toMediaCollection('images');
+            $images = is_array($data['images']) ? $data['images'] : [$data['images']];
+            foreach ($images as $image) {
+                if ($image instanceof \Illuminate\Http\UploadedFile) {
+                    $record->addMedia($image)->toMediaCollection('images');
+                }
+            }
+        }
+
+        // Handle files
+        if (isset($data['files'])) {
+            $record->clearMediaCollection('files');
+            $files = is_array($data['files']) ? $data['files'] : [$data['files']];
+            foreach ($files as $file) {
+                if ($file instanceof \Illuminate\Http\UploadedFile) {
+                    $record->addMedia($file)->toMediaCollection('files');
+                }
+            }
         }
 
         return $record;
@@ -181,7 +213,7 @@ class EmployeeApplicationService
         // side-effects (installment generation, financial transaction) are
         // atomic. Any failure rolls back everything — no orphaned state.
         return DB::transaction(function () use ($id, $userId) {
-            $record = EmployeeApplicationV2::with(['missedCheckinRequest', 'missedCheckoutRequest'])->findOrFail($id);
+            $record = EmployeeApplicationV2::with(['missedCheckinRequest', 'missedCheckoutRequest', 'leaveRequest'])->findOrFail($id);
 
             switch ($record->application_type_id) {
                 case EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST:
@@ -221,6 +253,10 @@ class EmployeeApplicationService
                         throw new \Exception($result->message ?? 'Failed to create departure record');
                     }
                     break;
+
+                case EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST:
+                    app(\App\Services\HR\Applications\LeaveRequest\LeaveApprovalService::class)->process($record);
+                    break;
             }
 
             // Updating status fires Observer::updated(). Because we are inside
@@ -231,6 +267,48 @@ class EmployeeApplicationService
                 'status'      => EmployeeApplicationV2::STATUS_APPROVED,
                 'approved_by' => $userId,
                 'approved_at' => now(),
+            ]);
+
+            return $record;
+        });
+    }
+
+    /**
+     * Rollback an approved application, reverting any side effects (e.g., leave balance)
+     * and resetting the status to 'pending'.
+     *
+     * @param int $id The application ID
+     * @param int $userId The ID of the user performing the rollback
+     * @return EmployeeApplicationV2
+     * @throws \Exception
+     */
+    public function undoApproveApplication(int $id, int $userId)
+    {
+        return DB::transaction(function () use ($id, $userId) {
+            $record = EmployeeApplicationV2::with([
+                'leaveRequest', 
+                'missedCheckinRequest', 
+                'missedCheckoutRequest'
+            ])->findOrFail($id);
+
+            // We only allow undo operations if the application is currently approved
+            if ($record->status !== EmployeeApplicationV2::STATUS_APPROVED) {
+                throw LeaveApprovalException::notApprovedStatus();
+            }
+
+            switch ($record->application_type_id) {
+                case EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST:
+                    app(\App\Services\HR\Applications\LeaveRequest\LeaveApprovalService::class)->undoProcess($record);
+                    break;
+                
+                // Note: Rollback for Attendance & Departure fingerprint requests can be added here if needed
+            }
+
+            // Revert state to pending and clear approval metadata
+            $record->update([
+                'status'      => EmployeeApplicationV2::STATUS_PENDING,
+                'approved_by' => null,
+                'approved_at' => null,
             ]);
 
             return $record;

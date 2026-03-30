@@ -180,9 +180,10 @@ class EmployeeLeaveReportResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isFinanceManager()) {
+        if (isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR()) {
             return true;
         }
         return false;
     }
 }
+

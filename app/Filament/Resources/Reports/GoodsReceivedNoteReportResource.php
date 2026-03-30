@@ -128,4 +128,9 @@ class GoodsReceivedNoteReportResource extends Resource
     {
         return 'GRN Report';
     }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return settingWithDefault('purchase_invoice_from_grn_only', false);
+    }
 }

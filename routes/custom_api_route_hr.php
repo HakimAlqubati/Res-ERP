@@ -40,6 +40,7 @@ use Illuminate\Support\Facades\Storage;
 
 Route::prefix('hr')
     ->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\Api\HR\DashboardController::class, 'index'])->middleware('auth:api');
         // Route::post('/attendance/store', [AttendanceController::class, 'store'])->middleware('auth:api');
         // Route::post('/attendance/storeInOut', [AttendanceController::class, 'storeInOut'])->middleware('auth:api');
         // Route::post('/attendance/storeBulk', [AttendanceController::class, 'storeBulk'])->middleware('auth:api');
@@ -59,7 +60,7 @@ Route::prefix('hr')
         Route::get('/attendancePlan', [AttendanceController::class, 'generate']);
         Route::get('/absentEmployees', [AttendanceController::class, 'absentEmployees']);
         Route::get('/v2/absentEmployees', [AttendanceController::class, 'absentEmployeesV2']);
-        Route::get('/presentEmployees', [AttendanceController::class, 'presentEmployees']);
+        Route::get('/presentEmployees', [AttendanceController::class, 'presentEmployees'])->middleware('auth:api');
         Route::get('/missingCheckout', [AttendanceController::class, 'missingCheckout']);
         Route::get('/v2/missingCheckout', [AttendanceController::class, 'missingCheckoutV2']);
         Route::get('/attendanceImages', [AttendanceController::class, 'attendanceImages']);
@@ -80,6 +81,7 @@ Route::prefix('hr')
             // Route::get('/v2/suggest', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'getSuggestedOvertimeV2']);
             Route::get('/v2/suggest', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'getSuggestedOvertimeV3']);
             Route::post('/', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'store'])->middleware('auth:api');
+            Route::put('/{id}', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'update'])->middleware('auth:api');
             Route::post('/approve', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'approve'])->middleware('auth:api');
             Route::post('/undoApprove', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'undoApproval'])->middleware('auth:api');
 
@@ -99,8 +101,8 @@ Route::prefix('applications')
         Route::put('/{id}', [EmployeeApplicationController::class, 'update']); // PUT /applications/{id}
         Route::delete('/{id}', [EmployeeApplicationController::class, 'destroy']); // DELETE /applications/{id}
 
-        // Actions
         Route::post('/{id}/approve', [EmployeeApplicationController::class, 'approve']); // POST /applications/{id}/approve
+        Route::post('/{id}/rollback', [EmployeeApplicationController::class, 'rollback']); // POST /applications/{id}/rollback
         Route::post('/{id}/reject', [EmployeeApplicationController::class, 'reject']);   // POST /applications/{id}/reject
 
 

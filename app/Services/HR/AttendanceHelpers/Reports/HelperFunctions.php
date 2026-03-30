@@ -43,7 +43,7 @@ class HelperFunctions
                     break;
                 case AttendanceReportStatus::Partial->value:
                     $stats['partial']++;
-                    $stats['absent']++;
+                    // $stats['absent']++;
                     $stats['required_days']++;
                     break;
                 case AttendanceReportStatus::Leave->value:
@@ -105,7 +105,10 @@ class HelperFunctions
             if (isset($data['periods'])) {
                 // Loop through each period for the date
                 foreach ($data['periods'] as $period) {
-                    if (isset($period['attendances']['checkin'])) {
+                    $hasCheckin = !empty($period['attendances']['checkin']);
+                    $hasCheckout = !empty($period['attendances']['checkout']);
+
+                    if ($hasCheckin && $hasCheckout) {
                         // Loop through each checkin record 
                         // Check if the status is 'late_arrival'
                         if (isset($period['attendances']['checkin'][0]['status']) && $period['attendances']['checkin'][0]['status'] === Attendance::STATUS_LATE_ARRIVAL) {

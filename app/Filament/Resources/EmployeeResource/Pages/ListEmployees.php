@@ -16,8 +16,7 @@ class ListEmployees extends ListRecords
     {
         return [
             CreateAction::make()->icon(Heroicon::OutlinedUserPlus)
-            ->visible(fn()=>isSuperAdmin()||isSystemManager())
-            ,
+                ->visible(fn() => isSuperAdmin() || isSystemManager() || isHR()),
         ];
     }
 

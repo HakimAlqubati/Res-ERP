@@ -3,6 +3,7 @@
 return [
     App\Modules\HR\Attendance\Providers\AttendanceServiceProvider::class,
     App\Modules\HR\Payroll\Providers\PayrollServiceProvider::class,
+    App\Modules\Docs\Providers\DocsServiceProvider::class,
     App\Providers\AWS\AwsServiceProvider::class,
     App\Providers\AppServiceProvider::class,
     App\Providers\AuthServiceProvider::class,

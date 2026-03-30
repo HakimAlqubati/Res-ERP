@@ -116,7 +116,7 @@ class MonthlyIncentiveResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager() || isHR()) {
             return true;
         }
         return false;
@@ -139,3 +139,4 @@ class MonthlyIncentiveResource extends Resource
         return false;
     }
 }
+

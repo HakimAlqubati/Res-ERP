@@ -145,7 +145,13 @@ class AttendanceFetcher
                 // --- منطق الحالة ---
                 $hasCheckin  = count($checkInResources) > 0;
                 $hasCheckout = count($checkOutResources) > 0;
-                if (Carbon::parse($date)->gt(Carbon::today())) {
+
+                // المستقبل: إما اليوم لاحق، أو اليوم ذاته لكن وقت الشيفت لم يبدأ بعد
+                $isFutureDate  = Carbon::parse($date)->gt(Carbon::today());
+                $isShiftNotYetStarted = Carbon::parse($date)->isToday()
+                    && Carbon::now()->lt(Carbon::parse("{$date} {$period['start_time']}"));
+
+                if ($isFutureDate || $isShiftNotYetStarted) {
                     $status = AttendanceReportStatus::Future;
                 } elseif (! $hasCheckin && ! $hasCheckout) {
                     $status = AttendanceReportStatus::Absent;
@@ -204,27 +210,27 @@ class AttendanceFetcher
         $stats = HelperFunctions::calculateAttendanceStats($result);
 
         // =========================================================================
-        // منطق تحويل الغياب إلى إجازة أسبوعية تلقائية
-        // كل 6 أيام عمل = يوم إجازة مستحق
+        // منطق الإجازة الأسبوعية
         // =========================================================================
         $isPreviousMonth = $endDate->format('Y-m') < now()->format('Y-m');
-        $result = $this->applyWeeklyLeaveToAbsences($result, $isPreviousMonth);
+        $totalMonthDays  = $stats['required_days'] ?? $stats['total_days'] ?? 0;
+        $absentDays      = $stats['absent'] ?? 0;
 
-        // =========================================================================
-        // حساب نتيجة WeeklyLeaveCalculator النهائية
-        // يجب أن يكون بعد applyWeeklyLeaveToAbsences لتكون weekly_leave_stats معبأة
-        // نستخدم required_days بدل total_days لاستبعاد أيام no_periods
-        // =========================================================================
-        $weeklyLeaveStats = $result->get('weekly_leave_stats', []);
-        $totalMonthDays = $stats['required_days'] ?? $stats['total_days'] ?? 0;
+        // تحويل أيام الغياب بصرياً في التقرير — فقط عند انتهاء الشهر
+        if ($isPreviousMonth) {
+            $result           = $this->applyWeeklyLeaveToAbsences($result);
+            // $weeklyLeaveStats = $result->get('weekly_leave_stats', []);
+            // $absentDays       = $weeklyLeaveStats['remaining_absences'] ?? $absentDays;
+        }
 
-        // $absentDays = $weeklyLeaveStats['remaining_absences'] ?? $stats['absent'] ?? 0;
-        $absentDays =  $stats['absent'] ?? 0;
-
-        $weeklyLeaveCalculator = new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator();
-        $weeklyLeaveResult = $weeklyLeaveCalculator->calculate($totalMonthDays, $absentDays);
-
-        $stats['weekly_leave_calculation'] = $weeklyLeaveResult;
+        // الاحتساب المالي — يعمل دائماً بنفس هيكل الريسبونس
+        // when is_period_ended && is_for_payroll → يُطبَّق احتساب الإجازات الأسبوعية
+        // otherwise → نفس الريسبونس لكن بدون خصم الإجازات (الغياب كما هو)
+        $stats['weekly_leave_calculation'] = (new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator())
+            ->calculate($totalMonthDays, $absentDays, [
+                'is_period_ended' => $isPreviousMonth,
+                'is_for_payroll'  => true,
+            ]);
 
         $result->put('statistics', $stats);
         $result->put('total_duration_hours', $totalDurationHours);
@@ -399,7 +405,6 @@ class AttendanceFetcher
                 'totalHoursFloat' => 0,
             ]);
         }
-
 
         return $result;
     }

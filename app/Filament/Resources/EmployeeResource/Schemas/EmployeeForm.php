@@ -42,171 +42,106 @@ class EmployeeForm
     {
         return $schema
             ->components([
-                // static::avatar()
-                // ->imagePreviewHeight(200)
-                // ,
+
 
                 Wizard::make([
                     Step::make(__('lang.personal_data'))
                         ->icon('heroicon-o-user-circle')
                         ->schema([
-                            Tabs::make('')->columnSpanFull()
-                                ->tabs([
-                                    Tab::make(__('lang.personal_data'))
-                                        ->icon(Heroicon::UserCircle)
-                                        ->schema([Grid::make()->columns(3)
-                                            ->columnSpanFull()
-                                            ->schema([
-                                                TextInput::make('name')->label(__('lang.full_name'))
-                                                    ->dehydrateStateUsing(fn($state) => preg_replace('/\s+/u', ' ', trim((string) $state)))
-                                                    ->rules(['string'])
-                                                    // ->rule(fn() => function (string $attribute, $value, \Closure $fail) {
-                                                    //     $value = preg_replace('/\s+/u', ' ', trim((string) $value));
-                                                    //     $parts = array_values(array_filter(explode(' ', $value)));
-
-                                                    //     // 1) At least two words
-                                                    //     if (count($parts) < 2) {
-                                                    //         return $fail(__('lang.name_must_contain_two_words'));
-                                                    //     }
-
-                                                    //     // 2) Letters only (any language) + spaces/hyphen/apostrophe
-                                                    //     if (!preg_match("/^[\\p{L}\\p{M}\\s'\\-]+$/u", $value)) {
-                                                    //         return $fail(__('lang.name_letters_spaces_only'));
-                                                    //     }
-
-                                                    //     // Helper lists
-                                                    //     $blacklistExact     = ['test', 'tester', 'unknown', 'na', 'n/a', 'none', 'xxx', 'aaaa', 'dd', 'dk', 'as'];
-                                                    //     $whitelistShortLatin = ['al', 'ib', 'bin', 'ibn'];   // common transliterations
-                                                    //     $arabicParticles    = ['بن', 'ابن', 'آل', 'ال'];   // allowed connectors (don’t count as full name)
-                                                    //     $latinVowels        = '/[aeiouy]/i';
-
-                                                    //     // 3) Reject testy/unrealistic tokens
-                                                    //     $lower = mb_strtolower(str_replace(['-', "'"], ' ', $value));
-                                                    //     foreach ($blacklistExact as $bad) {
-                                                    //         if ($lower === $bad || preg_match('/\\b' . preg_quote($bad, '/') . '\\b/u', $lower)) {
-                                                    //             return $fail(__('lang.name_placeholder_unrealistic'));
-                                                    //         }
-                                                    //     }
-
-                                                    //     $hasLongCore    = false; // at least one core word length ≥ 3
-                                                    //     $twoLetterCount = 0;
-
-                                                    //     foreach ($parts as $w) {
-                                                    //         $wTrim = $w;
-
-                                                    //         // Each part ≥ 2 chars
-                                                    //         if (mb_strlen($wTrim) < 2) {
-                                                    //             return $fail(__('lang.each_part_min_2_chars'));
-                                                    //         }
-
-                                                    //         // No single-letter repetition like "dd", "aaa"
-                                                    //         if (preg_match('/^(.)\\1{1,}$/u', $wTrim)) {
-                                                    //             return $fail(__('lang.name_unrealistic_repeated_letters'));
-                                                    //         }
-
-                                                    //         if (mb_strlen($wTrim) === 2) {
-                                                    //             $twoLetterCount++;
-                                                    //         }
-
-                                                    //         $isArabicParticle = in_array($wTrim, $arabicParticles, true);
-                                                    //         $isShortLatinOk   = in_array(mb_strtolower($wTrim), $whitelistShortLatin, true);
-
-                                                    //         if (mb_strlen($wTrim) >= 3 && !$isArabicParticle) {
-                                                    //             $hasLongCore = true;
-                                                    //         }
-
-                                                    //         // For Latin segments: must include a vowel
-                                                    //         if (preg_match('/^[A-Za-z]+$/', $wTrim)) {
-                                                    //             if (!preg_match($latinVowels, $wTrim) && !$isShortLatinOk) {
-                                                    //                 return $fail(__('lang.latin_parts_must_include_vowel'));
-                                                    //             }
-                                                    //             // Avoid long consonant clusters like "dkrv"
-                                                    //             if (preg_match('/[bcdfghjklmnpqrstvwxz]{4,}/i', $wTrim)) {
-                                                    //                 return $fail(__('lang.name_unlikely_consonant_clusters'));
-                                                    //             }
-                                                    //         }
-                                                    //     }
-
-                                                    //     // 7) Avoid names made mostly of 2-letter words unless there is a long core
-                                                    //     if ($twoLetterCount >= (int) ceil(count($parts) * 0.5)) {
-                                                    //         if (!$hasLongCore) {
-                                                    //             return $fail(__('lang.name_too_short_unrealistic'));
-                                                    //         }
-                                                    //     }
-
-                                                    //     // 8) Reasonable total length
-                                                    //     if (mb_strlen($value) < 5) {
-                                                    //         return $fail(__('lang.name_too_short'));
-                                                    //     }
-                                                    // })
-                                                    ->columnSpan(1)->required(),
-                                                TextInput::make('known_name')
-                                                    ->label(__('lang.known_name'))
-                                                    // ->helperText(__('lang.known_name_description'))
-                                                    ->hint(__('lang.known_name_hint'))
-                                                    ->placeholder(__('lang.known_name_example'))
-                                                    ->unique(ignoreRecord: true)
-                                                    ->nullable()
-                                                    ->columnSpan(1),
-                                                TextInput::make('email')
-                                                    ->label(__('lang.email'))
-                                                    ->required()
-                                                    // ->email()
-                                                    ->rule('email')
-                                                    // ->unique(table: 'users', column: 'email', ignoreRecord: true)
-                                                    ->unique(column: 'email', ignoreRecord: true),
-
-                                                TextInput::make('phone_number')
-                                                    ->label(__('lang.phone_number'))
-                                                    ->unique(ignoreRecord: true)
-                                                    ->columnSpan(1)
-
-                                                    // ->numeric()
-                                                    ->maxLength(14)->minLength(8),
-                                                Select::make('gender')
-                                                    ->label(__('lang.gender'))
-                                                    ->options([
-                                                        1 => __('lang.male'),
-                                                        0 => __('lang.female'),
-                                                    ])
-                                                    ->required(),
+                            Grid::make(4)
+                                ->columnSpanFull()
+                                ->schema([
 
 
-                                                Select::make('nationality')
-                                                    ->label(__('lang.nationality'))->live()
-                                                    ->required()
-                                                    ->options(getNationalities())
-                                                    ->preload()
-                                                    ->searchable(),
-
-                                                TextInput::make('mykad_number')->label(__('lang.mykad_number'))->numeric()
-                                                    ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') == setting('default_nationality'))),
-
-                                                Fieldset::make()->columnSpanFull()->label('')
-                                                    ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') != setting('default_nationality')))
-                                                    ->schema([
-                                                        TextInput::make('passport_no')->label(__('lang.passport_no'))->numeric(),
-                                                        Toggle::make('has_employee_pass')->label(__('lang.has_employee_pass'))->inline(false)->live(),
-
-                                                    ]),
-
-                                            ]),]),
-                                    Tab::make(__('lang.address'))
-                                        ->icon(Heroicon::MapPin)
+                                    Grid::make(3)
+                                        ->columnSpan(3)
                                         ->schema([
-                                            Fieldset::make()->label(__('lang.employee_address'))->columnSpanFull()->schema([
-                                                Textarea::make('address')->label('')->columnSpanFull(),
-                                            ]),
+                                            TextInput::make('name')->label(__('lang.full_name'))
+                                                ->dehydrateStateUsing(fn($state) => preg_replace('/\s+/u', ' ', trim((string) $state)))
+                                                ->extraInputAttributes(fn($record) => [
+                                                    'style' => $record && !$record->active ? 'color: #ef4444 !important; font-weight: bold;' : '',
+                                                ])
+                                                ->rules('string')
+                                                ->columnSpan(2)->required(),
+
+                                            TextInput::make('known_name')
+                                                ->label(__('lang.known_name'))
+                                                ->hint(__('lang.known_name_hint'))
+                                                ->placeholder(__('lang.known_name_example'))
+                                                ->unique(ignoreRecord: true)
+                                                ->nullable()
+                                                ->columnSpan(1),
+                                            Fieldset::make()
+                                                ->columnSpanFull()
+                                                ->visible(fn($record) => $record && !$record->active)
+                                                ->schema([
+                                                    DatePicker::make('termination_date')
+                                                        ->columnSpanFull()
+                                                        ->label(__('lang.termination_date'))
+
+                                                        ->disabled(),
+                                                    Textarea::make('termination_reason')
+                                                        ->label(__('lang.termination_reason'))
+                                                        ->columnSpanFull()
+                                                        ->disabled(),
+                                                ]),
+
+                                            TextInput::make('email')
+                                                ->label(__('lang.email'))
+                                                ->required()
+                                                ->rule('email')
+                                                ->unique(column: 'email', ignoreRecord: true)
+                                                ->columnSpan(2),
+
+                                            Select::make('nationality')
+                                                ->label(__('lang.nationality'))->live()
+                                                ->required()
+                                                ->options(getNationalities())
+                                                ->preload()
+                                                ->searchable()
+                                                ->columnSpan(1),
+
+                                            TextInput::make('phone_number')
+                                                ->label(__('lang.phone_number'))
+                                                ->unique(ignoreRecord: true)
+                                                ->columnSpan(1)
+                                                ->maxLength(18)->minLength(8),
+
+                                            Select::make('gender')
+                                                ->label(__('lang.gender'))
+                                                ->options([
+                                                    1 => __('lang.male'),
+                                                    0 => __('lang.female'),
+                                                ])
+                                                ->required()
+                                                ->columnSpan(1),
+
+                                            DatePicker::make('birthday')
+                                                ->label(__('lang.birthday'))
+                                                ->nullable()
+                                                ->columnSpan(1),
+
+                                            TextInput::make('mykad_number')->label(__('lang.mykad_number'))->numeric()
+                                                ->columnSpanFull()
+                                                ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') == setting('default_nationality'))),
+
+                                            Fieldset::make()
+                                                ->columnSpanFull()
+                                                ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') != setting('default_nationality')))
+                                                ->schema([
+                                                    TextInput::make('passport_no')->label(__('lang.passport_no'))->numeric()
+                                                        ->columnSpan(2),
+                                                    Toggle::make('has_employee_pass')->label(__('lang.has_employee_pass'))->inline(false)->live()
+                                                        ->columnSpan(1),
+                                                ])->columns(3),
+
+
                                         ]),
-                                    Tab::make(__('lang.avatar'))
-                                        ->icon(Heroicon::UserCircle)
-                                        ->schema([
 
-                                            static::avatar(),
-
-                                        ])
+                                    static::avatar()
+                                        ->columnSpan(1),
                                 ]),
-
+                            Textarea::make('address')->label('')->columnSpanFull(),
                         ]),
 
                     Step::make(__('lang.employment'))
@@ -223,7 +158,15 @@ class EmployeeForm
                                         Select::make('employee_type')->columnSpan(1)->label(__('lang.role_type'))
                                             ->searchable()
                                             ->live()
-                                            ->options(UserType::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id'))->required(),
+                                            ->options(function () {
+                                                return [0 => __('lang.all')] + UserType::where('active', 1)
+                                                    ->select('id', 'name')
+                                                    ->get()
+                                                    ->pluck('name', 'id')
+                                                    ->toArray();
+                                            })
+                                            ->required()
+                                            ->default(0),
 
                                         Select::make('branch_id')->columnSpan(1)->label(__('lang.branch'))
                                             ->searchable()
@@ -246,23 +189,36 @@ class EmployeeForm
                                             ),
                                         Toggle::make('is_ceo')->label(__('lang.is_ceo'))
                                             ->live()
-                                            ->visible(fn($get): bool => $get('employee_type') == 1)
+                                            ->visible(fn($get): bool => in_array((int) $get('employee_type'), [0, 1]))
                                             ->default(0)->inline(false),
                                         Select::make('manager_id')
                                             ->columnSpan(1)
                                             ->label(__('lang.manager'))
                                             ->searchable()
                                             // ->requiredIf('is_ceo', false)
-                                            ->required(fn(Get $get) => in_array((int) $get('employee_type'), [3, 4]))
+                                            ->required(fn(Get $get) => in_array((int) $get('employee_type'), [2, 3, 4]))
 
                                             ->options(function (Get $get, ?Employee $record) {
                                                 $branchId = $get('branch_id');
+                                                $employeeType = (int) $get('employee_type');
                                                 $currentEmployeeId = $record?->id; // سيكون null في List/Create، ومتوفر في Edit/View
 
+                                                if (in_array($employeeType, [0, 1, 2, 3])) {
+                                                    // إذا كان نوع الموظف 2، يمكن اختيار المدراء من أي فرع بشرط أن يكونوا من نوع 1 أو 2
+                                                    return Employee::active()
+                                                        ->whereIn('employee_type', [1, 2])
+                                                        ->when(
+                                                            $currentEmployeeId,
+                                                            fn($query) =>
+                                                            $query->where('id', '!=', $currentEmployeeId) // استبعاد الموظف الحالي إن كنا في وضع التعديل
+                                                        )
+                                                        ->pluck('name', 'id');
+                                                }
+
                                                 if ($branchId) {
+                                                    // للموظفين الآخرين، تصفية حسب الفرع الحالي وأن يكون المدير من نوع 1، 2، أو 3
                                                     return Employee::active()
                                                         ->forBranch($branchId)
-                                                        // ->employeeTypesManagers()
                                                         ->whereIn('employee_type', [1, 2, 3])
                                                         ->when(
                                                             $currentEmployeeId,
@@ -296,7 +252,7 @@ class EmployeeForm
                                         TextInput::make('working_hours')
                                             ->label(__('lang.working_hours'))
                                             ->helperText('To Calculate the Hour Late')
-                                            ->numeric()->required()->default(6),
+                                            ->numeric()->required()->default(12),
 
                                         TextInput::make('working_days')
                                             ->label(__('lang.working_days_per_month'))
@@ -418,9 +374,9 @@ class EmployeeForm
                                             ))
                                             ->numeric()
                                             ->disabled(fn(): bool => isBranchManager()),
-                                        // TextInput::make('bank_account_number')
-                                        //     ->columnSpan(2)
-                                        //     ->label('Bank account number')->nullable(),
+                                        TextInput::make('bank_account_number')
+                                            ->columnSpan(1)
+                                            ->label('Bank account number')->nullable(),
                                         Toggle::make('discount_exception_if_absent')->columnSpan(1)
                                             ->disabled(fn(): bool => isBranchManager())
                                             ->label(__('lang.no_salary_deduction_for_absences'))->default(0)->inline(false)
@@ -459,7 +415,8 @@ class EmployeeForm
                                             ->minItems(0)         // Set the minimum number of items
                                             // Optional: set the maximum number of items
                                             ->defaultItems(0)     // Default number of items when the form loads
-                                            ->columnSpan('full'), // Adjust the span as necessary
+                                            ->columnSpan('full')
+                                            ->hidden(), // Adjust the span as necessary
                                     ]),
                                     Fieldset::make()->columnSpanFull()->label(__('lang.shift_rfid'))->columnSpanFull()->schema([
                                         Grid::make()->columns(2)->columnSpanFull()->schema([
@@ -567,6 +524,7 @@ class EmployeeForm
         return FileUpload::make('avatar')->columnSpanFull()
             ->image()
             ->label('')
+            ->hiddenLabel()
             // ->avatar()
             ->imageEditor()
 

@@ -48,6 +48,11 @@ class OvertimeReportService
      */
     protected function applyFilters($query, OvertimeReportFilter $filter): void
     {
+        // Exclude inactive employees
+        $query->whereHas('employee', function ($q) {
+            $q->where('active', 1);
+        });
+
         if ($filter->branchId !== null) {
             $query->whereHas('employee', function ($q) use ($filter) {
                 $q->where('branch_id', $filter->branchId);

@@ -49,6 +49,7 @@ class MissingCheckoutService
             'employee',
             fn($q) =>
             $q->where('branch_id', (int) $filters['branch_id'])
+            ->where('active', 1)
         );
 
 

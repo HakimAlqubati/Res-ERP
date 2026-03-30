@@ -11,6 +11,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use function Laravel\Prompts\select;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rules\Unique;
@@ -35,7 +36,10 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Support\Enums\IconPosition;
 use Filament\Support\Icons\Heroicon;
+use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
+use App\Exceptions\HR\PayrollConflictException;
+use Throwable;
 
 class EmployeeOvertimeTable
 {
@@ -47,7 +51,7 @@ class EmployeeOvertimeTable
             ->paginated([10, 25, 50, 100])
             ->columns([
                 TextColumn::make('id')
-                    ->label('')
+                    ->label('ID')
                     ->sortable()
                     ->wrap()
                     ->searchable()->toggleable(isToggledHiddenByDefault: true),
@@ -149,6 +153,7 @@ class EmployeeOvertimeTable
                     ->hidden(fn() => isStuff() || isMaintenanceManager())
                     ->searchable(),
             ], FiltersLayout::Modal)
+            ->filtersFormColumns(4)
             ->recordActions([
                 // Tables\Actions\EditAction::make(),
                 // Action::make('Edit')->visible(fn(): bool => (isSuperAdmin() || isBranchManager()))
@@ -195,28 +200,58 @@ class EmployeeOvertimeTable
                         return true;
                     })
                     ->action(function (Model $record) {
-                        if ($record->approved == 1) {
-                            $record->update(['approved' => 0, 'approved_by' => null, 'approved_at' => null]);
-                        } else {
-                            $record->update(['approved' => 1, 'approved_by' => auth()->user()->id, 'approved_at' => now()]);
+                        try {
+                            DB::transaction(function () use ($record) {
+                                if ($record->approved == 1) {
+                                    $record->update(['approved' => 0, 'approved_by' => null, 'approved_at' => null]);
+                                } else {
+                                    $record->update(['approved' => 1, 'approved_by' => auth()->user()->id, 'approved_at' => now()]);
+                                }
+                            });
+                            Notification::make()->title(__('Done'))->success()->send();
+                        } catch (\Throwable $e) {
+                            Notification::make()->title(__('Faild'))->body($e->getMessage())->danger()->send();
                         }
                     }),
 
                 ActionGroup::make([
-                    DeleteAction::make(),
+                    DeleteAction::make()
+                        ->action(function (Model $record) {
+                            try {
+                                DB::transaction(fn() => $record->delete());
+                                Notification::make()->title(__('Done'))->success()->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()->title(__('Faild'))->body($e->getMessage())->danger()->send();
+                            }
+                        }),
                     ForceDeleteAction::make()->visible(fn(): bool => (isSuperAdmin())),
                     RestoreAction::make()->visible(fn(): bool => (isSuperAdmin())),
                 ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->action(function (Collection $records) {
+                            try {
+                                DB::transaction(fn() => $records->each->delete());
+                                Notification::make()->title(__('Done'))->success()->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()->title(__('Faild'))->body($e->getMessage())->danger()->send();
+                            }
+                        }),
                     ForceDeleteBulkAction::make()->visible(fn(): bool => (isSuperAdmin())),
                     RestoreBulkAction::make()->visible(fn(): bool => (isSuperAdmin())),
                     BulkAction::make('Approve')
                         ->requiresConfirmation()
                         ->icon('heroicon-o-check-badge')
-                        ->action(fn(Collection $records) => $records->each->update(['approved' => 1, 'approved_by' => auth()->user()->id, 'approved_at' => now()]))
+                        ->action(function (Collection $records) {
+                            try {
+                                DB::transaction(fn() => $records->each->update(['approved' => 1, 'approved_by' => auth()->id(), 'approved_at' => now()]));
+                                Notification::make()->title(__('Done'))->success()->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()->title(__('Faild'))->body($e->getMessage())->danger()->send();
+                            }
+                        })
                         ->hidden(function () {
                             if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
                                 return false;
@@ -225,8 +260,15 @@ class EmployeeOvertimeTable
                         }),
                     BulkAction::make('Rollback approved')
                         ->requiresConfirmation()
-                        ->icon('heroicon-o-x-mark')
-                        ->action(fn(Collection $records) => $records->each->update(['approved' => 0, 'approved_by' => null, 'approved_at' => null]))
+                        ->icon('heroicon-o-x-mark') 
+                        ->action(function (Collection $records) {
+                            try {
+                                DB::transaction(fn() => $records->each->update(['approved' => 0, 'approved_by' => null, 'approved_at' => null]));
+                                Notification::make()->title(__('Done'))->success()->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()->title(__('Faild'))->body($e->getMessage())->danger()->send();
+                            }
+                        })
                         ->hidden(function () {
                             if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
                                 return false;

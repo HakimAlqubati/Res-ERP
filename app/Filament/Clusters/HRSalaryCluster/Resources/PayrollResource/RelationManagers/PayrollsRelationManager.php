@@ -44,12 +44,13 @@ class PayrollsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('id')
                     ->alignCenter()->label('ID')->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('employee.employee_no')
-                    ->alignCenter()->label('Employee No')->default('-')
+                    ->alignCenter()->label('Staff No')->default('-')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('employee.name')
                     ->searchable()
                     ->limit(15)
+                    ->label(__('lang.employee'))
                     ->tooltip(fn($state) => $state),
                 Tables\Columns\TextColumn::make('base_salary')
                     ->label('Base')

@@ -310,7 +310,7 @@ class DeductionResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager() || isHR()) {
             return true;
         }
         return false;
@@ -355,3 +355,4 @@ class DeductionResource extends Resource
         ]);
     }
 }
+

@@ -138,8 +138,7 @@ class EmployeeApplicationObserver
      */
     private function isAdvanceApproval(EmployeeApplicationV2 $app): bool
     {
-        return $app->wasChanged('status')
-            && $app->status === EmployeeApplicationV2::STATUS_APPROVED
-            && $app->application_type_id === EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST;
+        // Now handled directly by the Financial Manager approval action.
+        return false;
     }
 }

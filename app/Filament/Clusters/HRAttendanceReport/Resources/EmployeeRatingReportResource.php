@@ -113,9 +113,12 @@ class EmployeeRatingReportResource extends Resource
             'view' => ViewDetails::route('/view'),
         ];
     }
+    protected static bool $shouldRegisterNavigation = false;
 
     public static function getEloquentQuery(): Builder
     {
+        $query = Employee::query();
+        return $query;
         $query = TaskRating::select(
             DB::raw('SUM(hr_task_rating.rating_value) as rating_value'),
             DB::raw('count(hr_task_rating.task_id) as count_task'),
@@ -142,6 +145,7 @@ class EmployeeRatingReportResource extends Resource
 
     public static function canViewAny(): bool
     {
+        return 0;
         if (isSuperAdmin() || isSystemManager() || isBranchManager()) {
             return true;
         }
