@@ -63,7 +63,8 @@ class EmployeeApplicationForm
                             ->forBranchManager()
                             ->limit(5)
                             ->get()
-                            ->mapWithKeys(fn($e) => [$e->id => "{$e->id} - {$e->name}"])),
+                            ->mapWithKeys(fn($e) => [$e->id => "{$e->id} - {$e->name}"]))
+                        ->preload(),
 
                     DatePicker::make('application_date')
                         ->label(__('lang.request_date'))
@@ -94,6 +95,7 @@ class EmployeeApplicationForm
                         ->label(__('lang.request_type'))
                         ->hiddenOn('edit')
                         ->live()->required()
+                        ->default(request()->query('type'))
                         ->options(EmployeeApplicationV2::APPLICATION_TYPES)
                         ->icons([
                             EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST                => 'heroicon-o-banknotes',
@@ -173,4 +175,3 @@ class EmployeeApplicationForm
             ]);
     }
 }
-
