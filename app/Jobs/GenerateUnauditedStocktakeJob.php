@@ -21,6 +21,7 @@ use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class GenerateUnauditedStocktakeJob implements ShouldQueue
 {
@@ -92,10 +93,21 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue
             ]);
 
             $detailsBatch = [];
+            $totalProducts = count($products->items());
 
             Log::info('Number of products to process: ' . $products->total());
+
             // 5. Process EACH product, getting inventory quantities
-            foreach ($products->items() as $product) {
+            foreach ($products->items() as $index => $product) {
+                // Update Progress (Loop 1)
+                if ($index % 50 === 0 || $index === $totalProducts - 1) {
+                    Cache::put("stocktake_progress_{$this->userId}", [
+                        'current' => $index + 1,
+                        'total' => $totalProducts,
+                        'status' => 'Preparing products...',
+                    ], 600);
+                }
+
                 $unitPrices = $product->reportUnitPrices ?? collect();
                 // We use the smallest unit by default, similar to the UI logic
                 $selectedUnit = $unitPrices->sortBy('package_size')->first();
@@ -135,11 +147,21 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue
                 ->get();
 
             if ($insertedDetails->isNotEmpty()) {
+                $totalAdjustments = $insertedDetails->count();
                 DB::beginTransaction();
                 try {
                     $reasonId = StockAdjustmentReason::getFirstId();
 
-                    foreach ($insertedDetails as $detail) {
+                    foreach ($insertedDetails as $index => $detail) {
+                        // Update Progress (Loop 2 - The Heavy one)
+                        if ($index % 10 === 0 || $index === $totalAdjustments - 1) {
+                            Cache::put("stocktake_progress_{$this->userId}", [
+                                'current' => $index + 1,
+                                'total' => $totalAdjustments,
+                                'status' => 'Adjusting inventory (FIFO)...',
+                            ], 600);
+                        }
+
                         $qtyToDeduct = abs($detail->difference);
 
                         // 1. Create the adjustment detail log
@@ -215,6 +237,9 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue
             ]);
 
             $this->notifyUser('Stocktake Generation Failed', 'An error occurred during background generation. Check logs for details.', 'danger');
+        } finally {
+            // Always clear progress at the end
+            Cache::forget("stocktake_progress_{$this->userId}");
         }
     }
 

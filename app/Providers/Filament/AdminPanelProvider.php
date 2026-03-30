@@ -369,6 +369,10 @@ class AdminPanelProvider extends PanelProvider
             )
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_AFTER,
+                fn(): string => \Livewire\Livewire::mount('topbar.stocktake-progress-tracker')
+            )
+            ->renderHook(
+                PanelsRenderHook::GLOBAL_SEARCH_AFTER,
                 fn(): string =>
                 view('filament.partials.topbar-quick-links')->render(),
                 // view('filament.partials.topbar-quick-hints')->render(),
