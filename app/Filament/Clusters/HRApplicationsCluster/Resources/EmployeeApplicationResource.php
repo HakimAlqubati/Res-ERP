@@ -1409,7 +1409,7 @@ class EmployeeApplicationResource extends Resource
                                     ->endOfMonth()->format('Y-m-d');
                                 $set('detail_deduction_starts_from', $endNextMonth);
                             })
-                            ->default('Y-m-d'),
+                            ->default(now()->toDateString()),
                         TextInput::make('detail_advance_amount')->numeric()->required()
                             ->label('Amount')
                             ->live(onBlur: true)
@@ -1418,12 +1418,11 @@ class EmployeeApplicationResource extends Resource
                                     $set('detail_monthly_deduction_amount', $state);
                                     $set('detail_number_of_months_of_deduction', 1);
 
-                                    $startsFrom = $get('detail_deduction_starts_from') ?? now()->toDateString();
-                                    $endsAt = \Carbon\Carbon::parse($startsFrom)
-                                        ->startOfMonth()
-                                        ->endOfMonth()
-                                        ->format('Y-m-d');
-                                    $set('detail_deduction_ends_at', $endsAt);
+                                    $date = $get('detail_date') ?? now()->toDateString();
+                                    $startsFrom = \Carbon\Carbon::parse($date)->endOfMonth()->format('Y-m-d');
+                                    
+                                    $set('detail_deduction_starts_from', $startsFrom);
+                                    $set('detail_deduction_ends_at', $startsFrom);
                                 }
                             }),
                         TextInput::make('basic_salary')->numeric()->disabled()
@@ -1461,7 +1460,6 @@ class EmployeeApplicationResource extends Resource
                             DatePicker::make('detail_deduction_starts_from')
                                 // ->minDate(now()->toDateString())
                                 ->label('Deduction starts from')
-                                ->default('Y-m-d')
                                 ->live()
                                 ->afterStateUpdated(function ($get, $set, $state) {
 
@@ -1473,8 +1471,7 @@ class EmployeeApplicationResource extends Resource
                                     $set('detail_deduction_ends_at', $endNextMonth);
                                 }),
                             DatePicker::make('detail_deduction_ends_at')->minDate(now()->toDateString())
-                                ->label('Deduction ends at')
-                                ->default('Y-m-d'),
+                                ->label('Deduction ends at'),
                         ]),
                         TextInput::make('detail_number_of_months_of_deduction')->live(onBlur: true)
                             ->numeric()
