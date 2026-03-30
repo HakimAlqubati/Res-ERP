@@ -36,10 +36,10 @@
         <button onclick="window.print()" class="bg-primary-600 text-white px-4 py-2 rounded shadow">
             🖨️ Print Report
         </button>
-        <button onclick="exportTableToExcel('report-table', 'missing_inventory_report')"
+        <!-- <button onclick="exportTableToExcel('report-table', 'missing_inventory_report')"
             class="bg-primary-600 text-white px-4 py-2 rounded shadow">
             📥 Export to Excel
-        </button>
+        </button> -->
     </div>
     <table class="w-full text-sm text-left pretty table-striped reports" id="report-table">
         <thead class="fixed-header">
