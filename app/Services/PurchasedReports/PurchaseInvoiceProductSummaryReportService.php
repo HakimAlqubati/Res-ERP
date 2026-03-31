@@ -156,10 +156,14 @@ class PurchaseInvoiceProductSummaryReportService
 
             // نحول كل الكميات للوحدة الصغيرة
             foreach ($entries as $entry) {
-                $multiplier = $entry->package_size / $smallestPackageSize;
+                $packageSize = (float) $entry->package_size;
+                if ($packageSize <= 0) {
+                    continue;
+                }
+                $multiplier = $packageSize / $smallestPackageSize;
                 $convertedQty = $entry->qty * $multiplier;
                 $totalQty += $convertedQty;
-                $totalCost = $entry->price / $entry->package_size;
+                $totalCost = $entry->price / $packageSize;
             }
 
             $final[] = [
