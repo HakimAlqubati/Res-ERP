@@ -105,6 +105,7 @@ class Employee extends Model implements Auditable
         'bank_information'  => 'array',
         'changes'           => 'array',
         'is_mtd_applicable' => 'boolean',
+        'is_ceo'            => 'boolean',
     ];
 
     // ─────────────────────────────────────────────────────────────

@@ -10,6 +10,19 @@ use Illuminate\Support\Facades\Storage;
 
 class EmployeeObserver
 {
+
+    /**
+     * Handle the Employee "saving" event.
+     */
+    public function saving(Employee $employee): void
+    {
+        if ($employee->is_ceo) {
+            Employee::where('is_ceo', true)
+                ->where('id', '!=', $employee->id)
+                ->update(['is_ceo' => false]);
+        }
+    }
+
     /**
      * Handle the Employee "created" event.
      */
