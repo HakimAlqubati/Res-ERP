@@ -725,6 +725,55 @@ if (!function_exists('sendNotification')) {
     }
 }
 
+if (!function_exists('sendWhatsAppMessage')) {
+    function sendWhatsAppMessage($to, $message = '', array $options = [])
+    {
+        try {
+            $name = 'User';
+            $phoneNumber = $to;
+
+            // If an object (User/Employee model) is passed, extract name and phone
+            if (is_object($to)) {
+                $name = $to->name ?? 'User';
+                $phoneNumber = $to->phone_number ?? $to->phone ?? '';
+            }
+
+            // If no parameters are explicitly provided in options, construct them using name and message
+            if (!isset($options['parameters'])) {
+                $options['parameters'] = [
+                    ['type' => 'text', 'text' => $name],
+                    ['type' => 'text', 'text' => $message],
+                    ['type' => 'text', 'text' => $options['details'] ?? 'you can now view and download the full PDF from your dashboard']
+                ];
+            }
+
+            $response = \App\Facades\WhatsApp::sendMessage($phoneNumber, $message, $options);
+
+            if ($response) {
+                return json_encode([
+                    'status' => 'success',
+                    'message' => 'WhatsApp message sent successfully',
+                    'data' => $response
+                ]);
+            }
+
+            return json_encode([
+                'status' => 'error',
+                'message' => 'Failed to send WhatsApp message',
+            ]);
+        } catch (\Exception $e) {
+            $errorResponse = json_encode([
+                'status' => 'error',
+                'message' => 'Failed to send WhatsApp message',
+                'error' => $e->getMessage(),
+            ]);
+            \App\Models\AppLog::write('Failed to send WhatsApp message: ' . $e->getMessage(), \App\Models\AppLog::LEVEL_ERROR);
+
+            return $errorResponse;
+        }
+    }
+}
+
 if (!function_exists('formUserForExistingEmployee')) {
     function formUserForExistingEmployee()
     {

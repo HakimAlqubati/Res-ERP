@@ -29,17 +29,39 @@ class WhatsAppService
     }
 
     /**
-     * Send a text message via WhatsApp Meta API.
+     * Send a WhatsApp message via WhatsApp Meta API.
      *
-     * @param string $to The recipient phone number (with country code, but no '+', e.g., '967773030069')
-     * @param string $message The body of the text message
-     * @return array|null Returns the API response array on success, or null on failure.
+     * @param string $to The recipient phone number
+     * @param string $message The primary message content or template subject
+     * @param array $options Additional options: 'template', 'parameters', 'language'
+     * @return array|null
      */
-    public function sendMessage(string $to, string $message): ?array
+    public function sendMessage(string $to, string $message, array $options = []): ?array
     {
         if (empty($this->token) || empty($this->phoneNumberId)) {
             Log::error('WhatsAppService: Token or Phone Number ID is missing in configuration.');
             return null;
+        }
+
+        $templateName = $options['template'] ?? 'workbench_notifier_3';
+        $languageCode = $options['language'] ?? 'en';
+        $parameters = $options['parameters'] ?? [];
+
+        // Default mapping for templates if no parameters provided
+        if (empty($parameters)) {
+            if ($templateName === 'workbench_notifier_3') {
+                $parameters = [
+                    ['type' => 'text', 'text' => 'Hakim Al-Qubati'],
+                    ['type' => 'text', 'text' => $message],
+                    ['type' => 'text', 'text' => 'you can now view and download the full PDF from your dashboard']
+                ];
+            } elseif ($templateName === 'workbench_advance_notifier') {
+                $parameters = [
+                    ['type' => 'text', 'text' => 'Manager'],       // Default Manager Name
+                    ['type' => 'text', 'text' => 'Employee Name'], // Default Employee Name
+                    ['type' => 'text', 'text' => $message]         // Use $message as the Amount/Details
+                ];
+            }
         }
 
         $endpoint = "{$this->baseUrl}{$this->phoneNumberId}/messages";
@@ -47,13 +69,20 @@ class WhatsAppService
         $response = Http::withToken($this->token)
             ->post($endpoint, [
                 'messaging_product' => 'whatsapp',
-                'recipient_type' => 'individual',
                 'to' => $to,
-                'type' => 'text',
-                'text' => [
-                    'preview_url' => false,
-                    'body' => $message,
-                ],
+                'type' => 'template',
+                'template' => [
+                    'name' => $templateName,
+                    'language' => [
+                        'code' => $languageCode
+                    ],
+                    'components' => [
+                        [
+                            'type' => 'body',
+                            'parameters' => $parameters
+                        ]
+                    ]
+                ]
             ]);
 
         if ($response->failed()) {

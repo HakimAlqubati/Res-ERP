@@ -5,7 +5,7 @@ namespace App\Facades;
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @method static array|null sendMessage(string $to, string $message)
+ * @method static array|null sendMessage(string $to, string $message, array $options = [])
  * 
  * @see \App\Services\WhatsAppService
  */
