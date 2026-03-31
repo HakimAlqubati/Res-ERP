@@ -45,13 +45,19 @@ class MissingCheckoutService
 
         // ── 3. Apply optional filters ───────────────────────────────────────────────
 
-        $query->whereHas(
-            'employee',
-            fn($q) =>
-            $q->where('branch_id', (int) $filters['branch_id'])
-            ->where('active', 1)
-        );
-
+        if (!empty($filters['branch_id'])) {
+            $query->whereHas(
+                'employee',
+                fn($q) =>
+                $q->where('branch_id', (int) $filters['branch_id'])
+                ->where('active', 1)
+            );
+        } else {
+            $query->whereHas(
+                'employee',
+                fn($q) => $q->where('active', 1)
+            );
+        }
 
         if (!empty($filters['department_id'])) {
             $query->whereHas(

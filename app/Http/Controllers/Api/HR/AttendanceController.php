@@ -338,7 +338,7 @@ class AttendanceController extends Controller
             'date'          => 'sometimes|required|date',
             'from_date'     => 'required_without:date|date',
             'to_date'       => 'required_without:date|date|after_or_equal:from_date',
-            'branch_id'     => 'required|integer',
+            'branch_id'     => 'nullable|integer',
             'department_id' => 'nullable|integer',
         ]);
 
