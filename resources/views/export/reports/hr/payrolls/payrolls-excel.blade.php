@@ -4,20 +4,35 @@
             <th>{{ __('Employee No') }}</th>
             <th>{{ __('Employee Name') }}</th>
             <th>{{ __('Base Salary') }}</th>
-            <th>{{ __('Allowances') }}</th>
-            <th>{{ __('Deductions') }}</th>
+            @foreach($additionColumns as $col)
+                <th>{{ __($col) }}</th>
+            @endforeach
+            <th>{{ __('Total Allowances') }}</th>
+            @foreach($deductionColumns as $col)
+                <th>{{ __($col) }}</th>
+            @endforeach
+            <th>{{ __('Total Deductions') }}</th>
             <th>{{ __('Net Salary') }}</th>
         </tr>
     </thead>
     <tbody>
-        @foreach ($payrolls as $payroll)
+        @foreach ($rows as $row)
         <tr>
-            <td>{{ $payroll->employee?->employee_no }}</td>
-            <td>{{ $payroll->employee?->name }}</td>
-            <td>{{ $payroll->base_salary }}</td>
-            <td>{{ $payroll->transactions()->where('operation', '+')->sum('amount') }}</td>
-            <td>{{ $payroll->transactions()->where('operation', '-')->where('type', '!=', \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_CARRY_FORWARD->value)->sum('amount') }}</td>
-            <td>{{ $payroll->net_salary }}</td>
+            <td>{{ $row['employee_no'] }}</td>
+            <td>{{ $row['employee_name'] }}</td>
+            <td>{{ $row['base_salary'] }}</td>
+
+            @foreach($additionColumns as $col)
+                <td>{{ $row['additions'][$col] ?? 0 }}</td>
+            @endforeach
+            <td>{{ $row['total_additions'] }}</td>
+
+            @foreach($deductionColumns as $col)
+                <td>{{ $row['deductions'][$col] ?? 0 }}</td>
+            @endforeach
+            <td>{{ $row['total_deductions'] }}</td>
+
+            <td>{{ $row['net_salary'] }}</td>
         </tr>
         @endforeach
     </tbody>
