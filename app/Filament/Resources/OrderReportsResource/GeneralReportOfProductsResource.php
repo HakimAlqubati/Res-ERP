@@ -59,6 +59,7 @@ class GeneralReportOfProductsResource extends Resource
         return $table->deferFilters(false)
             ->filters([
                 SelectFilter::make("category_id")
+                    ->multiple()
                     ->label(__('Category'))
                     ->placeholder('Select Category')
                     ->searchable()
@@ -104,7 +105,7 @@ class GeneralReportOfProductsResource extends Resource
         
         $categoriesQuery = Category::where('active', 1)->notForPos();
         if ($category_id) {
-            $categoriesQuery->where('id', $category_id);
+            $categoriesQuery->whereIn('id', (array) $category_id);
         }
         $categories = $categoriesQuery->pluck('name', 'id');
 

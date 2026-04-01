@@ -37,7 +37,12 @@ class ListGeneralReportOfProducts extends ListRecords
     protected function getViewData(): array
     {
         $branch_id = $this->getTable()->getFilters()['branch_id']->getState()['value'] ?? null;
-        $category_id = $this->getTable()->getFilters()['category_id']->getState()['value'] ?? null;
+        
+        $catState = $this->getTable()->getFilters()['category_id']->getState() ?? [];
+        $category_id = $catState['values'] ?? (isset($catState['value']) ? (array) $catState['value'] : null);
+        if (empty($category_id)) {
+            $category_id = null;
+        }
 
         $start_date = $this->getTable()->getFilters()['date']->getState()['start_date'];
         $end_date = $this->getTable()->getFilters()['date']->getState()['end_date'];
