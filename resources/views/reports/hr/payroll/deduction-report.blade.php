@@ -251,7 +251,13 @@
 
             var workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, wb, "Deductions Report");
-            XLSX.writeFile(workbook, "deductions_report.xlsx");
+            
+            var reportTitle = "{{ preg_replace('/[^A-Za-z0-9_\-]/', '_', $reportData['report_title']) }}";
+            var fromDate = "{{ $reportData['from_date'] }}";
+            var toDate = "{{ $reportData['to_date'] }}";
+            var fileName = "Deductions_" + reportTitle + "_" + fromDate + "_to_" + toDate + ".xlsx";
+            
+            XLSX.writeFile(workbook, fileName);
         }
     </script>
 </x-filament-panels::page>

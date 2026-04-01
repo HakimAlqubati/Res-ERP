@@ -22,8 +22,9 @@ class ListPayrollDeductionReports extends ListRecords
         
         $groupingState = $filters['grouping_filter']->getState() ?? [];
         $groupByState = $groupingState['group_by'] ?? DeductionReportFilterDTO::GROUP_BY_EMPLOYEE;
-        $employeeId = $groupingState['employee_id'] ?? null;
-        $branchId = $groupingState['branch_id'] ?? null;
+        
+        $employeeId = $groupByState === DeductionReportFilterDTO::GROUP_BY_EMPLOYEE ? ($groupingState['employee_id'] ?? null) : null;
+        $branchId = $groupByState === DeductionReportFilterDTO::GROUP_BY_BRANCH ? ($groupingState['branch_id'] ?? null) : null;
         
         // Infer branch from employee if grouped by employee and none selected
         if ($employeeId && !$branchId) {
@@ -75,14 +76,6 @@ class ListPayrollDeductionReports extends ListRecords
     
     public function getView(): string
     {
-        $filters = $this->getTable()->getFilters();
-        $groupingState = $filters['grouping_filter']->getState() ?? [];
-        $groupBy = $groupingState['group_by'] ?? DeductionReportFilterDTO::GROUP_BY_EMPLOYEE;
-        
-        if ($groupBy === DeductionReportFilterDTO::GROUP_BY_BRANCH) {
-            return 'reports.hr.payroll.deduction-report-branch';
-        }
-        
         return 'reports.hr.payroll.deduction-report';
     }
 }

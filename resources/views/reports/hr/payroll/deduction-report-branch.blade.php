@@ -202,7 +202,7 @@
 
     @else
     <div class="please_select_message_div" style="text-align: center; padding: 40px;">
-        <h1 class="please_select_message_text" style="font-size: 1.5rem; color: #555;">{{ __('Please select an Employee and a Date Range') }}</h1>
+        <h1 class="please_select_message_text" style="font-size: 1.5rem; color: #555;">{{ __('Please select a Branch and a Date Range') }}</h1>
     </div>
     @endif
 
