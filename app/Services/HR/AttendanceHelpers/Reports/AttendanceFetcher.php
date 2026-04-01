@@ -499,12 +499,15 @@ class AttendanceFetcher
             ])) {
                 $totalWorkDays++;
             }
-            // إذا كان غائباً أو لديه حضور جزئي أو حضور بلا انصراف، أضفه لقائمة الغيابات
-            elseif (in_array($status, [
-                AttendanceReportStatus::Absent->value,
-                // AttendanceReportStatus::Partial->value,
-                // AttendanceReportStatus::IncompleteCheckinOnly->value,
-            ])) {
+            // إذا كان غائباً أو لديه حضور جزئي أو حضور بلا انصراف، أضفه لقائمة الغيابات (حسب الإعدادات)
+            elseif (
+                $status === AttendanceReportStatus::Absent->value ||
+                ((setting('count_partial_as_absent') ?? true) && in_array($status, [
+                    AttendanceReportStatus::Partial->value,
+                    AttendanceReportStatus::IncompleteCheckinOnly->value,
+                    AttendanceReportStatus::IncompleteCheckoutOnly->value,
+                ]))
+            ) {
                 $absentDates[] = $date;
             }
         }

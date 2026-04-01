@@ -111,10 +111,12 @@ class SettingResource extends Resource
                                     TextInput::make("hours_count_after_period_before")
                                         ->label('Allowed hours pre-period')
                                         ->numeric()
+                                        ->integer()
                                         ->required(),
                                     TextInput::make("hours_count_after_period_after")
                                         ->label('Allowed hours post-period')
                                         ->numeric()
+                                        ->integer()
                                         ->required(),
 
                                     TextInput::make("early_attendance_minutes")
@@ -216,6 +218,10 @@ class SettingResource extends Resource
                                         ->label('Flix Early Departure')
                                         ->helperText('No deductions will be applied for early departure if the total hours worked equal or exceed the required daily hours')
                                         ->default(false),
+                                    Toggle::make('skip_late_early_deduction_all_employees')
+                                        ->label('Global Skip Lateness and Early Departure')
+                                        ->helperText('If enabled, lateness and early departure deductions will not be applied to any employee')
+                                        ->default(false),
                                     Fieldset::make()->label('End of Month Day')->columnSpanFull()->schema([
                                         Toggle::make('use_standard_end_of_month')
                                             ->label('Use Standard End of Month')
@@ -231,6 +237,11 @@ class SettingResource extends Resource
                                             ->visible(fn(Get $get) => ! $get('use_standard_end_of_month')) // Only visible if 'use_standard_end_of_month' is false
                                             ->required(),
                                     ]),
+
+                                    Toggle::make('count_partial_as_absent')
+                                        ->label('Count Partial/Incomplete Attendance as Absent')
+                                        ->helperText('If enabled, employees with incomplete or partial attendance will be marked as absent in reports.')
+                                        ->default(true),
 
                                 ]),
 

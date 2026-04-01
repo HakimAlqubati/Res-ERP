@@ -193,6 +193,28 @@ class EmployeeApplicationController extends Controller
     }
 
     /**
+     * 🟢 Revert application approval (Rollback).
+     */
+    public function rollback($id, Request $request, EmployeeApplicationService $service)
+    {
+        try {
+            $record = $service->undoApproveApplication($id, $request->user()->id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Application approval has been successfully reversed',
+                'data'    => new EmployeeApplicationResource($record),
+            ]);
+        } catch (Throwable $th) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reverse the application approval',
+                'error'   => $th->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * 🟢 Reject application.
      */
     public function reject($id, Request $request, EmployeeApplicationService $service)

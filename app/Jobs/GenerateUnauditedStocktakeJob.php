@@ -34,17 +34,18 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue
     public $hideZero;
     public $storeId;
     public $userId;
-    // public $tenantId;
+    public $tenantId;
 
-    // public $timeout = 600; // allow for big calculations
+    public $timeout = 900; // allow for big calculations
 
-    public function __construct($startDate, $endDate, $hideZero, $storeId, $userId)
+    public function __construct($startDate, $endDate, $hideZero, $storeId, $userId, $tenantId = null)
     {
         $this->startDate = $startDate;
         $this->endDate = $endDate;
         $this->hideZero = $hideZero;
         $this->storeId = $storeId;
         $this->userId = $userId;
+        $this->tenantId = $tenantId;
 
         // Force connection to landlord database queue
         $this->onConnection('database');
@@ -52,13 +53,20 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue
 
     public function handle(): void
     {
+        if ($this->tenantId) {
+            $tenant = \Spatie\Multitenancy\Models\Tenant::find($this->tenantId);
+            if ($tenant) {
+                $tenant->makeCurrent();
+            }
+        }
+
         Log::info('Generating unaudited stocktake for store: ' . $this->storeId);
         try {
             // 1. Fetch stock inventory using unified service method
             $products = \App\Services\StockInventoryReportService::getProductsNotInventoriedBetween(
                 $this->startDate,
                 $this->endDate,
-                150,
+                1000,
                 $this->storeId,
                 true
             );
@@ -67,7 +75,7 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue
             Log::info('startDate ', [$this->startDate]);
             Log::info('endDate ', [$this->endDate]);
             Log::info('storeId ', [$this->storeId]);
-            Log::info('products ', [$products->items()]);
+           
             if (count($products->items()) == 0) {
                 Log::info('No unaudited products found based on your parameters.');
                 $this->notifyUser('Stocktake Generation Failed', 'No unaudited products found based on your parameters.', 'warning');
@@ -88,7 +96,7 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue
             Log::info('Number of products to process: ' . $products->total());
             // 5. Process EACH product, getting inventory quantities
             foreach ($products->items() as $product) {
-                $unitPrices = $product->supplyOutUnitPrices ?? collect();
+                $unitPrices = $product->reportUnitPrices ?? collect();
                 // We use the smallest unit by default, similar to the UI logic
                 $selectedUnit = $unitPrices->sortBy('package_size')->first();
                 $firstUnitId = $selectedUnit?->unit_id;

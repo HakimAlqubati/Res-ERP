@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\HR\ImageRecognize;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\HR\ImageRecognize\IdentifyEmployeeRequest;
+use App\Services\HR\ImageRecognize\FaceRecognitionServiceV2;
 use App\Services\HR\ImageRecognize\FaceRecognitionService;
 use Illuminate\Http\JsonResponse;
 use App\Models\AppLog;
@@ -11,7 +12,8 @@ use App\Models\AppLog;
 class EmployeeIdentificationController extends Controller
 {
     public function __construct(
-        protected FaceRecognitionService $service
+        // protected FaceRecognitionService $service
+        protected FaceRecognitionServiceV2 $service
     ) {}
 
     public function identify(IdentifyEmployeeRequest $request): JsonResponse

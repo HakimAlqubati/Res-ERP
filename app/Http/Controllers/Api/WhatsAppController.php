@@ -30,19 +30,13 @@ class WhatsAppController extends Controller
             ], 422);
         }
 
-        $response = WhatsApp::sendMessage($request->to, $request->message);
+        // Try to find the employee by phone number to leverage the model-aware helper for personalized names
+        $employee = \App\Models\Employee::where('phone_number', $request->to)->first();
+        $target = $employee ?? $request->to;
 
-        if ($response) {
-            return response()->json([
-                'success' => true,
-                'message' => 'WhatsApp message sent successfully',
-                'data' => $response
-            ]);
-        }
+        $response = sendWhatsAppMessage($target, $request->message);
+        $responseData = json_decode($response, true);
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to send WhatsApp message. Please check logs for details.'
-        ], 500);
+        return response()->json($responseData, ($responseData['status'] ?? 'error') === 'success' ? 200 : 500);
     }
 }

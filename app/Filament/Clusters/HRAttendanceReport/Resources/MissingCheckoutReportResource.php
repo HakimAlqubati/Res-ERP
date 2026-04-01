@@ -62,7 +62,7 @@ class MissingCheckoutReportResource extends Resource
                             ->required(),
                         DatePicker::make('date_to')
                             ->label(__('lang.end_date'))
-                            ->default(Carbon::today()->endOfMonth())
+                            ->default(Carbon::today()->subDay())
                             ->required(),
                     ]),
 

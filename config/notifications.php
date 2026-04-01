@@ -26,10 +26,10 @@ return [
         'email' => [
             'enabled' => env('WARNING_EMAIL_ENABLED', false),
         ],
+        'fcm' => [
+            'enabled' => env('WARNING_FCM_ENABLED', false),
+        ],
         // Future channels:
-        // 'fcm' => [
-        //     'enabled' => env('WARNING_FCM_ENABLED', false),
-        // ],
         // 'sms' => [
         //     'enabled' => env('WARNING_SMS_ENABLED', false),
         // ],

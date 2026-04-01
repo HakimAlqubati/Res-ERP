@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use App\Observers\EmployeeOvertimeObserver;
 use Illuminate\Database\Eloquent\Builder;
 use App\Traits\Scopes\BranchScope;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
-
+#[ObservedBy([EmployeeOvertimeObserver::class])]
 class EmployeeOvertime extends Model implements Auditable
 {
     use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope;

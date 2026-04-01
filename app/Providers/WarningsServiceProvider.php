@@ -30,10 +30,10 @@ final class WarningsServiceProvider extends ServiceProvider
               
             }
 
-            // Future: Add more channels here
-            // if (config('notifications.channels.fcm.enabled', false)) {
-            //     $composite->addSender(new FCMWarningSender());
-            // }
+            // Firebase channel
+            if (config('notifications.channels.fcm.enabled', false)) {
+                $composite->addSender(new \App\Services\Warnings\FirebaseWarningSender());
+            }
 
             return $composite;
         });

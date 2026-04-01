@@ -10,6 +10,19 @@ use Illuminate\Support\Facades\Storage;
 
 class EmployeeObserver
 {
+
+    /**
+     * Handle the Employee "saving" event.
+     */
+    public function saving(Employee $employee): void
+    {
+        if ($employee->is_ceo) {
+            Employee::where('is_ceo', true)
+                ->where('id', '!=', $employee->id)
+                ->update(['is_ceo' => false]);
+        }
+    }
+
     /**
      * Handle the Employee "created" event.
      */
@@ -48,7 +61,9 @@ class EmployeeObserver
             // إنشاء اليوزر
             $user = User::create($userData);
 
-            // $user->assignRole(8);
+            if ($user->user_type == 4) {
+                $user->assignRole(8);
+            }
             // ربط user_id بالموظف
             $employee->user_id = $user->id;
             $employee->save();

@@ -86,11 +86,11 @@ class BranchAttendanceSummaryResource extends Resource
     }
 
     protected static bool $shouldRegisterNavigation = true;
-    public static function shouldRegisterNavigation(): bool
-    {
-        if (isHakimOrAdel()) {
-            return true;
-        }
-        return false;
-    }
+    // public static function shouldRegisterNavigation(): bool
+    // {
+    //     if (isHakimOrAdel()) {
+    //         return true;
+    //     }
+    //     return false;
+    // }
 }

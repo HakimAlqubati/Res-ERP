@@ -9,6 +9,7 @@ use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationRes
 use App\Models\EmployeeApplicationV2;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -19,7 +20,18 @@ class ListEmployeeApplications extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()
+            ->icon(Heroicon::OutlinedPlusCircle)
+                ->url(function (): string {
+                    $parameters = [];
+                    if ($this->activeTab) {
+                        $typeId = array_search($this->activeTab, EmployeeApplicationV2::APPLICATION_TYPE_NAMES);
+                        if ($typeId) {
+                            $parameters['type'] = $typeId;
+                        }
+                    }
+                    return EmployeeApplicationResource::getUrl('create', $parameters);
+                }),
         ];
     }
     public function getTabs(): array

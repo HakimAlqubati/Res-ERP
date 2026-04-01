@@ -401,6 +401,17 @@ class EmployeeApplicationTable
                     }
                     return false;
                 }),
+                EmployeeApplicationResource::undoApproveLeaveRequest()->hidden(function ($record) {
+                    if (isstuff() || isFinanceManager() || isHR()) {
+                        return true;
+                    }
+                    if (isset(Auth::user()->employee)) {
+                        if ($record->employee_id == Auth::user()->employee->id) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }),
                 EmployeeApplicationResource::rejectLeaveRequest()->hidden(function ($record) {
                     if (isstuff() || isFinanceManager() || isHR()) {
                         return true;

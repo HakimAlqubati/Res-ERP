@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\Warnings\NotificationOrchestrator;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class SendWarningNotifications extends Command
 {
@@ -15,6 +16,7 @@ class SendWarningNotifications extends Command
 
     public function handle(NotificationOrchestrator $runner): int
     {
+    
         $options = [
             'user'  => $this->option('user'),
             'limit' => (int)($this->option('limit') ?: 100),

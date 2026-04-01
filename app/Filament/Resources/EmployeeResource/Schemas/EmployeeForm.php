@@ -189,7 +189,13 @@ class EmployeeForm
                                             ),
                                         Toggle::make('is_ceo')->label(__('lang.is_ceo'))
                                             ->live()
-                                            ->visible(fn($get): bool => in_array((int) $get('employee_type'), [0, 1]))
+                                            ->visible(fn($get, ?Employee $record): bool => 
+                                                in_array((int) $get('employee_type'), [0, 1]) && 
+                                                (
+                                                    ($record && $record->is_ceo) || 
+                                                    !Employee::where('is_ceo', true)->exists()
+                                                )
+                                            )
                                             ->default(0)->inline(false),
                                         Select::make('manager_id')
                                             ->columnSpan(1)

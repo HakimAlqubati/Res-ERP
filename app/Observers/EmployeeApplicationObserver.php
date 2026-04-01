@@ -51,6 +51,7 @@ class EmployeeApplicationObserver
 
             $typeName = EmployeeApplicationV2::APPLICATION_TYPE_NAMES[$app->application_type_id] ?? 'Application';
 
+            // Send standard internal warning notification
             Warnings::send(
                 $managerUser,
                 WarningPayload::make(
@@ -73,6 +74,21 @@ class EmployeeApplicationObserver
                     ->scope("emp-app-{$app->id}")
                     ->expires(now()->addHours(24))
             );
+
+            // Send WhatsApp notification for Advance Requests
+            if ($app->application_type_id === EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST) {
+                $advanceRequest = $app->advanceRequest;
+                $amount = $advanceRequest ? ($advanceRequest->advance_amount . ' ' . ($advanceRequest->currency ?? 'USD')) : 'Unknown Amount';
+                
+                sendWhatsAppMessage($managerUser, $amount, [
+                    'template' => 'workbench_advance_notifier',
+                    'parameters' => [
+                        ['type' => 'text', 'text' => $managerUser->name],
+                        ['type' => 'text', 'text' => $employee->name],
+                        ['type' => 'text', 'text' => $amount]
+                    ]
+                ]);
+            }
         } catch (\Throwable $e) {
             Log::warning('[EmployeeApplicationObserver] Failed to notify manager.', [
                 'application_id' => $app->id ?? null,

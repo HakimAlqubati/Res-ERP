@@ -1082,4 +1082,7 @@ return [
   'unterminated' => 'غير موقف',
   'terminated' => 'موقف',
   'access_denied' => 'ممنوع من الوصول',
+  'undo_approve' => 'إلغاء الموافقة',
+  'undo_approve_confirmation_title' => 'إلغاء الموافقة على طلب الإجازة #{id}',
+  'undo_approve_confirmation_body' => 'هل أنت متأكد من رغبتك في إلغاء الموافقة على طلب الإجازة هذا؟ لا يمكن التراجع عن هذا الإجراء.',
 ];

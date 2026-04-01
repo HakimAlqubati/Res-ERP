@@ -20,6 +20,7 @@ class PayrollForm
      */
     public static function getSchema(): array
     {
+        // dd(getMonthOptionsBasedOnSettings());
         return [
             Fieldset::make()->columnSpanFull()->label('Set Branch, Month and payment date')->columns(3)->schema([
                 TextInput::make('note_that')->label('Note that!')->columnSpan(3)->hiddenOn('view')
@@ -40,6 +41,7 @@ class PayrollForm
                 Select::make('name')->label('Month')->hiddenOn('view')
                     ->required()
                     ->options(fn() => getMonthOptionsBasedOnSettings())
+                    ->live()
                     ->default(now()->format('F'))
                     ->rule(function (callable $get) {
                         return function (string $attribute, $value, \Closure $fail) use ($get) {
@@ -49,7 +51,7 @@ class PayrollForm
                             }
 
                             [$monthName, $year] = explode(' ', $value);
-                            $monthNumber = \Carbon\Carbon::parse($monthName)->month;
+                            $monthNumber = \Carbon\Carbon::parse("1 $value")->month;
 
                             $allEmployees = $get('all_employees');
                             $employeeIds = $get('employee_ids') ?? [];
@@ -99,9 +101,21 @@ class PayrollForm
                         ->options(function (Get $get) {
                             $branchId = $get('branch_id');
                             if (!$branchId) return [];
-                            return Employee::where('branch_id', $branchId)
-                                // ->active()
-                                ->where('salary', '>', 0)
+
+                            $monthValue = $get('name');
+                            if (!$monthValue) {
+                                // Fallback to current month if not selected
+                                $monthNumber = now()->month;
+                                $year = now()->year;
+                            } else {
+                                [$monthName, $year] = explode(' ', $monthValue);
+                                $monthNumber = \Carbon\Carbon::parse("1 $monthValue")->month;
+                                $year = (int) $year;
+                            }
+
+                            return Employee::query()
+                                ->eligibleForPayroll($year, $monthNumber)
+                                ->where('branch_id', $branchId)
                                 ->pluck('name', 'id');
                         })
                         ->columnSpanFull()
