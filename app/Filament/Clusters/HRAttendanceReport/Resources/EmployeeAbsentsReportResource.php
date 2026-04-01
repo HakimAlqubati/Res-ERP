@@ -11,6 +11,8 @@ use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportRe
 use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\Employee;
+use Carbon\Carbon;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\TimePicker;
@@ -61,26 +63,29 @@ class EmployeeAbsentsReportResource extends Resource
                     ->placeholder('Select Branch')
                     ->label(__('lang.branch'))->options(Branch::where('active', 1)
                         ->select('name', 'id')
-
                         ->get()->pluck('name', 'id'))
-
                     ->default(function () {
                         if (isBranchManager()) {
                             return auth()->user()?->branch_id;
                         }
                     })
                     ->searchable(),
-                Filter::make('filter_date')->label('')->schema([
-                    DatePicker::make('date')
-                        ->label(__('lang.date'))->default(date('Y-m-d')),
-                    Hidden::make('current_time')
-                        ->default(now()->timezone('Asia/Kuala_Lumpur')->format('H:i')),
-                    // TimePicker::make('current_time')
-                    //     ->label(__('lang.current_time'))
-                    //     ->default(now()->timezone('Asia/Kuala_Lumpur')->format('H:i'))
-                    //     ->withoutSeconds(),
-                ]),
+                Filter::make('date_range')
+                    ->schema([
+                        DatePicker::make('start_date')->live()
+                            ->afterStateUpdated(function (Set $set, $state) {
+                                if ($state) {
+                                    $endNextMonthData = getEndOfMonthDate(Carbon::parse($state)->year, Carbon::parse($state)->month);
+                                    $set('end_date', $endNextMonthData['end_month']);
+                                }
+                            })
+                            ->label(__('lang.start_date'))
+                            ->default(now()->startOfMonth()->format('Y-m-d')),
 
+                        DatePicker::make('end_date')
+                            ->label(__('lang.end_date'))
+                            ->default(now()->format('Y-m-d')),
+                    ]),
             ], FiltersLayout::AboveContent)
             ->recordActions([
                 EditAction::make(),
