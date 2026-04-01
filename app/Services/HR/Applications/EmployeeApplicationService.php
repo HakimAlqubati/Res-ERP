@@ -121,8 +121,13 @@ class EmployeeApplicationService
         }
 
         // 8) Handle images
-        if (isset($data['images']) && $data['images'] instanceof \Illuminate\Http\UploadedFile) {
-            $record->addMedia($data['images'])->toMediaCollection('images');
+        if (isset($data['images'])) {
+            $images = is_array($data['images']) ? $data['images'] : [$data['images']];
+            foreach ($images as $image) {
+                if ($image instanceof \Illuminate\Http\UploadedFile) {
+                    $record->addMedia($image)->toMediaCollection('images');
+                }
+            }
         }
 
         // 9) Handle files
@@ -172,9 +177,14 @@ class EmployeeApplicationService
         $record->update($data);
 
         // Handle images
-        if (isset($data['images']) && $data['images'] instanceof \Illuminate\Http\UploadedFile) {
+        if (isset($data['images'])) {
             $record->clearMediaCollection('images');
-            $record->addMedia($data['images'])->toMediaCollection('images');
+            $images = is_array($data['images']) ? $data['images'] : [$data['images']];
+            foreach ($images as $image) {
+                if ($image instanceof \Illuminate\Http\UploadedFile) {
+                    $record->addMedia($image)->toMediaCollection('images');
+                }
+            }
         }
 
         // Handle files
