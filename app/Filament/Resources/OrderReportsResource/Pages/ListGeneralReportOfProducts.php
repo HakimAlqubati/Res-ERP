@@ -37,6 +37,7 @@ class ListGeneralReportOfProducts extends ListRecords
     protected function getViewData(): array
     {
         $branch_id = $this->getTable()->getFilters()['branch_id']->getState()['value'] ?? null;
+        $category_id = $this->getTable()->getFilters()['category_id']->getState()['value'] ?? null;
 
         $start_date = $this->getTable()->getFilters()['date']->getState()['start_date'];
         $end_date = $this->getTable()->getFilters()['date']->getState()['end_date'];
@@ -46,7 +47,7 @@ class ListGeneralReportOfProducts extends ListRecords
         $total_price = 0;
 
         // $report_data  = $this->getReportData($start_date, $end_date, $branch_id);
-        $report_data  = GeneralReportOfProductsResource::processReportData($start_date, $end_date, $branch_id);
+        $report_data  = GeneralReportOfProductsResource::processReportData($start_date, $end_date, $branch_id, $category_id);
 
 
         // dd($report_data);
@@ -65,15 +66,7 @@ class ListGeneralReportOfProducts extends ListRecords
         return [
             'report_data' => $report_data['data'],
             'branch_id' => $branch_id,
-            'start_date' => $start_date,
-            'end_date' => $end_date,
-            'total_quantity' =>  $total_quantity,
-            'total_price' =>  $total_price
-        ];
-
-        return [
-            'report_data' => $report_data['data'],
-            'branch_id' => $branch_id,
+            'category_id' => $category_id,
             'start_date' => $start_date,
             'end_date' => $end_date,
             'total_quantity' =>  $total_quantity,
@@ -173,6 +166,7 @@ class ListGeneralReportOfProducts extends ListRecords
         $data = [
             'report_data' => $data['report_data'],
             'branch_id' => $data['branch_id'],
+            'category_id' => $data['category_id'] ?? null,
             'start_date' => $data['start_date'],
             'end_date' => $data['end_date'],
             'total_quantity' => $data['total_quantity'],

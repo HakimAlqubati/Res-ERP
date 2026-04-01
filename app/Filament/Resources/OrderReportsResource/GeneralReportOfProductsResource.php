@@ -58,6 +58,11 @@ class GeneralReportOfProductsResource extends Resource
     {
         return $table->deferFilters(false)
             ->filters([
+                SelectFilter::make("category_id")
+                    ->label(__('Category'))
+                    ->placeholder('Select Category')
+                    ->searchable()
+                    ->options(Category::where('active', 1)->notForPos()->pluck('name', 'id')),
                 SelectFilter::make("branch_id")->placeholder('Select')
                     ->label(__('lang.branch'))
                     ->searchable()
@@ -93,10 +98,15 @@ class GeneralReportOfProductsResource extends Resource
 
 
 
-    public static function processReportData($start_date, $end_date, $branch_id)
+    public static function processReportData($start_date, $end_date, $branch_id, $category_id = null)
     {   // جلب المخزن المرتبط بالفرع
         $storeId = Branch::where('id', $branch_id)->value('store_id');
-        $categories = Category::where('active', 1)->notForPos()->pluck('name', 'id');
+        
+        $categoriesQuery = Category::where('active', 1)->notForPos();
+        if ($category_id) {
+            $categoriesQuery->where('id', $category_id);
+        }
+        $categories = $categoriesQuery->pluck('name', 'id');
 
         $final_result['data'] = [];
         $grand_total_amount = 0.0;   // مجموع remaining_value عبر كل الفئات
