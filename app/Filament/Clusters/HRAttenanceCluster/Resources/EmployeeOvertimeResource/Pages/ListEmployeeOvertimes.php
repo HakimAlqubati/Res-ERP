@@ -41,6 +41,7 @@ class ListEmployeeOvertimes extends ListRecords
                             ->options(\App\Models\EmployeeOvertime::getTypes())
                             ->default(\App\Models\EmployeeOvertime::TYPE_BASED_ON_MONTH)
                             ->required()
+                            ->live()
                             ->rules([
                                 fn($get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {
                                     $items = $get('items');
@@ -113,10 +114,8 @@ class ListEmployeeOvertimes extends ListRecords
                                     'class' => 'text-center',
                                 ])
                                 ->numeric()
-                                // ->step(0.1)
-                                ->required()
-                            // ->hidden(fn($get) => $get('../../type') === \App\Models\EmployeeOvertime::TYPE_BASED_ON_MONTH)
-                            ,
+                                ->required(fn($get) => $get('../../type') !== \App\Models\EmployeeOvertime::TYPE_BASED_ON_MONTH)
+                                ->hidden(fn($get) => $get('../../type') === \App\Models\EmployeeOvertime::TYPE_BASED_ON_MONTH),
 
 
                             \Filament\Forms\Components\Hidden::make('employee_id'),
@@ -137,7 +136,12 @@ class ListEmployeeOvertimes extends ListRecords
                         foreach ($data['items'] as $item) {
                             if (!$item['is_selected']) continue;
 
-                            $hours = $item['hours'];
+                            $employee = \App\Models\Employee::find($item['employee_id']);
+                            $hours = $item['hours'] ?? 0;
+
+                            if ($data['type'] === \App\Models\EmployeeOvertime::TYPE_BASED_ON_MONTH) {
+                                $hours = $employee?->working_hours ?? 8;
+                            }
 
                             \App\Models\EmployeeOvertime::create([
                                 'employee_id' => $item['employee_id'],
