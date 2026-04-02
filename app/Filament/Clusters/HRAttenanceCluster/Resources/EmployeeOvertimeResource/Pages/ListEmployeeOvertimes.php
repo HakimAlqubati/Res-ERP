@@ -52,29 +52,38 @@ class ListEmployeeOvertimes extends ListRecords
 
                     \Filament\Forms\Components\Repeater::make('items')
                         ->label('Staff List (Present on Date)')
-                        // ->table([
-                        //     TableColumn::make('is_selected'),
-                        //     TableColumn::make('employee_name'),
-                        //     TableColumn::make('hours'),
-                        // ])
+                        ->table([
+                            TableColumn::make('Select')
+                                ->alignCenter()
+                                ->width('30%'),
+                            TableColumn::make('Employee')
+                                ->alignCenter()
+                                ->width('40%'),
+                            TableColumn::make('Hours')
+                                ->alignCenter()
+                                ->width('30%'),
+                        ])
                         ->schema([
-                            Grid::make(3)->schema([
-                                \Filament\Forms\Components\Checkbox::make('is_selected')
-                                    ->label('Select')
-                                    ->default(true),
 
-                                \Filament\Forms\Components\Placeholder::make('employee_name_label')
-                                    ->label('Employee')
-                                    ->content(fn($get) => $get('employee_name')),
+                            \Filament\Forms\Components\Checkbox::make('is_selected')
+                                ->label('Select')
+                                ->extraAttributes([
+                                    'class' => 'text-center',
+                                ])
+                                ->default(true),
 
-                                \Filament\Forms\Components\TextInput::make('hours')
-                                    ->label('Hours')
-                                    // ->numeric()
-                                    // ->step(0.1)
-                                    ->required()
-                                    // ->hidden(fn($get) => $get('../../type') === \App\Models\EmployeeOvertime::TYPE_BASED_ON_MONTH)
-                                    ,
-                            ]),
+                            \Filament\Forms\Components\Placeholder::make('employee_name_label')
+                                ->label('Employee')
+                                ->content(fn($get) => $get('employee_name')),
+
+                            \Filament\Forms\Components\TextInput::make('hours')
+                                ->label('Hours')
+                                // ->numeric()
+                                // ->step(0.1)
+                                ->required()
+                            // ->hidden(fn($get) => $get('../../type') === \App\Models\EmployeeOvertime::TYPE_BASED_ON_MONTH)
+                            ,
+
 
                             \Filament\Forms\Components\Hidden::make('employee_id'),
                             \Filament\Forms\Components\Hidden::make('employee_name'),
@@ -146,7 +155,7 @@ class ListEmployeeOvertimes extends ListRecords
 
         foreach ($employees as $employee) {
             $report = $attendanceReport->get($employee->id);
-            
+
             if (!isset($report['attendance_report'])) {
                 continue;
             }
