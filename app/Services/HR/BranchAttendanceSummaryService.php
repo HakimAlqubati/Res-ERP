@@ -142,11 +142,7 @@ class BranchAttendanceSummaryService
             $totalDays  = $stats['required_days'] ?? $monthDays;
             $absentDays = $stats['absent'] ?? 0;
 
-            $weeklyCalc = $this->weeklyLeaveCalculator->calculate($totalDays, $absentDays, [
-                'is_period_ended' => true,
-                'is_for_payroll'  => true,
-            ]);
-            $weeklyResult = $weeklyCalc['result'] ?? [];
+            $weeklyResult = $stats['weekly_leave_calculation']['result'] ?? [];
 
 
 
