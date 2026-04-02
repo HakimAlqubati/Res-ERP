@@ -41,7 +41,35 @@ class ListEmployeeOvertimes extends ListRecords
                             ->options(\App\Models\EmployeeOvertime::getTypes())
                             ->default(\App\Models\EmployeeOvertime::TYPE_BASED_ON_MONTH)
                             ->required()
-                            ->live(),
+                            ->rules([
+                                fn ($get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {                                    $items = $get('items');
+                                    $date = $get('date');
+
+                                    if (!is_array($items) || !$date || !$value) {
+                                        return;
+                                    }
+
+                                    $selectedEmployees = collect($items)
+                                        ->where('is_selected', true)
+                                        ->mapWithKeys(fn($item) => [$item['employee_id'] => $item['employee_name'] ?? 'Unknown']);
+
+                                    if ($selectedEmployees->isEmpty()) {
+                                        return;
+                                    }
+
+                                    $existingIds = \App\Models\EmployeeOvertime::query()
+                                        ->where('date', $date)
+                                        ->where('type', $value)
+                                        ->whereIn('employee_id', $selectedEmployees->keys()->toArray())
+                                        ->pluck('employee_id')
+                                        ->toArray();
+
+                                    if (!empty($existingIds)) {
+                                        $names = collect($existingIds)->map(fn($id) => $selectedEmployees[$id] ?? $id)->implode(' - ');
+                                        $fail(__("Duplicate entry: The following employees already have an overtime record for this date and type: :names", ['names' => $names]));
+                                    }
+                                },
+                            ]),
                     ]),
 
                     \Filament\Forms\Components\Textarea::make('reason')
@@ -79,7 +107,7 @@ class ListEmployeeOvertimes extends ListRecords
 
                             \Filament\Forms\Components\TextInput::make('hours')
                                 ->label('Hours')
-                          
+
                                 ->extraInputAttributes([
                                     'class' => 'text-center',
                                 ])
