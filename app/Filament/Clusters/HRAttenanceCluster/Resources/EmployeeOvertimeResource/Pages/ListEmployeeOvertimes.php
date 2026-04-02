@@ -39,7 +39,7 @@ class ListEmployeeOvertimes extends ListRecords
                         \Filament\Forms\Components\Select::make('type')
                             ->label('Type')
                             ->options(\App\Models\EmployeeOvertime::getTypes())
-                            ->default(\App\Models\EmployeeOvertime::TYPE_BASED_ON_DAY)
+                            ->default(\App\Models\EmployeeOvertime::TYPE_BASED_ON_MONTH)
                             ->required()
                             ->live(),
                     ]),
@@ -55,10 +55,10 @@ class ListEmployeeOvertimes extends ListRecords
                         ->table([
                             TableColumn::make('Select')
                                 ->alignCenter()
-                                ->width('30%'),
+                                ->width('20%'),
                             TableColumn::make('Employee')
                                 ->alignCenter()
-                                ->width('40%'),
+                                ->width('50%'),
                             TableColumn::make('Hours')
                                 ->alignCenter()
                                 ->width('30%'),
@@ -73,12 +73,17 @@ class ListEmployeeOvertimes extends ListRecords
                                 ->default(true),
 
                             \Filament\Forms\Components\Placeholder::make('employee_name_label')
-                                ->label('Employee')
+                                ->label('')
+                                ->hiddenLabel()
                                 ->content(fn($get) => $get('employee_name')),
 
                             \Filament\Forms\Components\TextInput::make('hours')
                                 ->label('Hours')
-                                // ->numeric()
+                          
+                                ->extraInputAttributes([
+                                    'class' => 'text-center',
+                                ])
+                                ->numeric()
                                 // ->step(0.1)
                                 ->required()
                             // ->hidden(fn($get) => $get('../../type') === \App\Models\EmployeeOvertime::TYPE_BASED_ON_MONTH)
