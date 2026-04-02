@@ -131,7 +131,7 @@ class BranchAttendanceSummaryService
         try {
             $approvedOvertimeHours = (float) ($employee->total_overtime ?? 0);
             // 1. Fetch attendance data (the main data source)
-            // $attendanceData  = $this->attendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
+            $attendanceData  = $this->attendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
             $attendanceData  = $this->cachedAttendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
             $attendanceArray = $attendanceData->toArray();
 
@@ -142,7 +142,10 @@ class BranchAttendanceSummaryService
             $totalDays  = $stats['required_days'] ?? $monthDays;
             $absentDays = $stats['absent'] ?? 0;
 
-            $weeklyCalc = $this->weeklyLeaveCalculator->calculate($totalDays, $absentDays);
+            $weeklyCalc = $this->weeklyLeaveCalculator->calculate($totalDays, $absentDays, [
+                'is_period_ended' => true,
+                'is_for_payroll'  => true,
+            ]);
             $weeklyResult = $weeklyCalc['result'] ?? [];
 
 
