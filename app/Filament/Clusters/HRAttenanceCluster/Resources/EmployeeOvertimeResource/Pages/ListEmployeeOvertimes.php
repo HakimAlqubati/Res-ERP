@@ -42,7 +42,8 @@ class ListEmployeeOvertimes extends ListRecords
                             ->default(\App\Models\EmployeeOvertime::TYPE_BASED_ON_MONTH)
                             ->required()
                             ->rules([
-                                fn ($get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {                                    $items = $get('items');
+                                fn($get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {
+                                    $items = $get('items');
                                     $date = $get('date');
 
                                     if (!is_array($items) || !$date || !$value) {
@@ -130,35 +131,49 @@ class ListEmployeeOvertimes extends ListRecords
                 ->action(function (array $data) {
                     $createdCount = 0;
 
-                    foreach ($data['items'] as $item) {
-                        if (!$item['is_selected']) continue;
+                    \Illuminate\Support\Facades\DB::beginTransaction();
 
-                        $employee = \App\Models\Employee::find($item['employee_id']);
-                        $hours = $item['hours'] ?? 0;
+                    try {
+                        foreach ($data['items'] as $item) {
+                            if (!$item['is_selected']) continue;
 
-                        if ($data['type'] === \App\Models\EmployeeOvertime::TYPE_BASED_ON_MONTH) {
-                            $hours = $employee?->working_hours ?? 8;
+                            $hours = $item['hours'];
+
+                            \App\Models\EmployeeOvertime::create([
+                                'employee_id' => $item['employee_id'],
+                                'branch_id'   => $data['branch_id'],
+                                'type'        => $data['type'],
+                                'date'        => $data['date'],
+                                'hours'       => $hours,
+                                'reason'      => $data['reason'],
+                                'status'      => \App\Models\EmployeeOvertime::STATUS_PENDING,
+                                'created_by'  => \Illuminate\Support\Facades\Auth::id(),
+                            ]);
+
+                            $createdCount++;
                         }
 
-                        \App\Models\EmployeeOvertime::create([
-                            'employee_id' => $item['employee_id'],
-                            'branch_id'   => $data['branch_id'],
-                            'type'        => $data['type'],
-                            'date'        => $data['date'],
-                            'hours'       => $hours,
-                            'reason'      => $data['reason'],
-                            'status'      => \App\Models\EmployeeOvertime::STATUS_PENDING,
-                            'created_by'  => \Illuminate\Support\Facades\Auth::id(),
-                        ]);
+                        \Illuminate\Support\Facades\DB::commit();
 
-                        $createdCount++;
+                        \Filament\Notifications\Notification::make()
+                            ->title("Success: Created {$createdCount} overtime records.")
+                            ->success()
+                            ->send();
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\DB::rollBack();
+
+                        \Filament\Notifications\Notification::make()
+                            ->title("Error: Failed to create overtime records.")
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
                     }
-
-                    \Filament\Notifications\Notification::make()
-                        ->title("Success: Created {$createdCount} overtime records.")
-                        ->success()
-                        ->send();
-                }),
+                })
+                ->visible(
+                    fn() => isSuperAdmin()
+                        || isSystemManager()
+                        || isBranchManager()
+                ),
             CreateAction::make()
                 ->label('Manage Staff Overtime')
                 ->hidden(fn() => isBranchUser()),
