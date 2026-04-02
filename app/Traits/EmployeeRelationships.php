@@ -135,6 +135,13 @@ trait EmployeeRelationships
             ->day();
     }
 
+    public function dailyOvertimes()
+    {
+        return $this->hasMany(EmployeeOvertime::class, 'employee_id')
+            ->where('approved', 1)
+            ->month();
+    }
+
     public function overtimesByDate($date)
     {
         return $this->hasMany(EmployeeOvertime::class, 'employee_id')

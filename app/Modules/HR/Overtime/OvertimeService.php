@@ -32,6 +32,7 @@ class OvertimeService
                     'branch_id'   => $data['branch_id'],
                     'created_by'  => auth()->id(),
                     'type'        => EmployeeOvertime::TYPE_BASED_ON_DAY,
+                    'status'      => EmployeeOvertime::STATUS_PENDING,
 
                 ]);
             }
@@ -75,6 +76,7 @@ class OvertimeService
                         'branch_id'   => $data['branch_id'],
                         'created_by'  => auth()->id(),
                         'type'        => EmployeeOvertime::TYPE_BASED_ON_MONTH,
+                        'status'      => EmployeeOvertime::STATUS_PENDING,
 
                     ]);
                 }
@@ -245,6 +247,7 @@ class OvertimeService
             if (!$overtime->approved) {
                 $overtime->update([
                     'approved'    => 1,
+                    'status'      => EmployeeOvertime::STATUS_APPROVED,
                     'approved_by' => auth()->id(),
                     'approved_at' => now(),
                 ]);
@@ -271,6 +274,7 @@ class OvertimeService
             if ($overtime->approved) {
                 $overtime->update([
                     'approved'    => 0,
+                    'status'      => EmployeeOvertime::STATUS_PENDING,
                     'approved_by' => null,
                     'approved_at' => null,
                 ]);
@@ -295,8 +299,11 @@ class OvertimeService
 
         foreach ($overtimes as $overtime) {
             if (!$overtime->approved) {
-                // Rejection means deleting the pending record
-                $overtime->delete();
+                $overtime->update([
+                    'status'      => EmployeeOvertime::STATUS_REJECTED,
+                    'rejected_by' => auth()->id(),
+                    'rejected_at' => now(),
+                ]);
             }
         }
 
