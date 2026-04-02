@@ -63,6 +63,7 @@ class DashboardService
             'pending_advance'  => $appCounts->get(EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST, 0),
             'pending_meal'     => $appCounts->get(EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST, 0),
             'missing_checkouts_count' => $missingCheckoutsCount,
+            'absents_count' => 0,
         ];
     }
 
