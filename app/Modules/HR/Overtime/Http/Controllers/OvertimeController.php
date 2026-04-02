@@ -24,6 +24,18 @@ class OvertimeController extends Controller
     public function index(Request $request)
     {
         try {
+            $validator = Validator::make($request->all(), [
+                'status' => 'nullable|in:' . implode(',', EmployeeOvertime::STATUSES),
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Validation Error',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
             $overtime = $this->overtimeService->getOvertime($request->all());
             return response()->json([
                 'status' => true,
@@ -362,6 +374,18 @@ class OvertimeController extends Controller
     public function report(Request $request)
     {
         try {
+            $validator = Validator::make($request->all(), [
+                'status' => 'nullable|in:' . implode(',', EmployeeOvertime::STATUSES),
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Validation Error',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
             $filter = \App\Modules\HR\Overtime\Reports\DTOs\OvertimeReportFilter::fromArray($request->all());
             $report = app(\App\Modules\HR\Overtime\Reports\OvertimeReportService::class)->generate($filter);
 

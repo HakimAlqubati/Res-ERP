@@ -72,7 +72,7 @@ trait EmployeeAttendanceTrait
         // Skip calculation if employee already has an approved overtime for this date
         $hasApprovedOvertime = EmployeeOvertime::where('employee_id', $employee->id)
             ->where('date', $date)
-            ->where('approved', 1)
+            ->where('status', EmployeeOvertime::STATUS_APPROVED)
             ->exists();
 
         if ($hasApprovedOvertime) {
