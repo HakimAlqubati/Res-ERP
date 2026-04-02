@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeRes
 use Filament\Actions\CreateAction;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeResource;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Grid;
 
@@ -51,6 +52,11 @@ class ListEmployeeOvertimes extends ListRecords
 
                     \Filament\Forms\Components\Repeater::make('items')
                         ->label('Staff List (Present on Date)')
+                        // ->table([
+                        //     TableColumn::make('is_selected'),
+                        //     TableColumn::make('employee_name'),
+                        //     TableColumn::make('hours'),
+                        // ])
                         ->schema([
                             Grid::make(3)->schema([
                                 \Filament\Forms\Components\Checkbox::make('is_selected')
@@ -63,18 +69,19 @@ class ListEmployeeOvertimes extends ListRecords
 
                                 \Filament\Forms\Components\TextInput::make('hours')
                                     ->label('Hours')
-                                    ->numeric()
-                                    ->step(0.1)
+                                    // ->numeric()
+                                    // ->step(0.1)
                                     ->required()
-                                    ->hidden(fn($get) => $get('../../type') === \App\Models\EmployeeOvertime::TYPE_BASED_ON_MONTH),
+                                    // ->hidden(fn($get) => $get('../../type') === \App\Models\EmployeeOvertime::TYPE_BASED_ON_MONTH)
+                                    ,
                             ]),
 
                             \Filament\Forms\Components\Hidden::make('employee_id'),
                             \Filament\Forms\Components\Hidden::make('employee_name'),
                         ])
-                        // ->addable(false)
-                        // ->deletable(false)
-                        // ->reorderable(false)
+                        ->addable(false)
+                        ->deletable(false)
+                        ->reorderable(false)
                         ->columnSpanFull()
                         ->itemLabel(fn(array $state): ?string => $state['employee_name'] ?? null),
                 ])
@@ -133,15 +140,38 @@ class ListEmployeeOvertimes extends ListRecords
         /** @var \App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateService $attendanceService */
         $attendanceService = app(\App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateService::class);
         $attendanceReport = $attendanceService->fetchAttendances($employees, $date);
-        dd($attendanceReport);
+
         $items = [];
+        $dateString = is_string($date) ? substr($date, 0, 10) : $date->toDateString();
+
         foreach ($employees as $employee) {
             $report = $attendanceReport->get($employee->id);
-            $isPresent = $report['attendance_report']['present'] ?? false;
-            dd($report, $isPresent);
+            
+            if (!isset($report['attendance_report'])) {
+                continue;
+            }
+
+            $attendanceData = $report['attendance_report'];
+            $dayData = $attendanceData->get($dateString);
+
+            if (!$dayData) {
+                continue;
+            }
+
+            $dayStatus = $dayData['day_status'] ?? null;
+            $isPresent = in_array($dayStatus, [
+                \App\Enums\HR\Attendance\AttendanceReportStatus::Present->value,
+                \App\Enums\HR\Attendance\AttendanceReportStatus::IncompleteCheckinOnly->value,
+                \App\Enums\HR\Attendance\AttendanceReportStatus::IncompleteCheckoutOnly->value,
+                \App\Enums\HR\Attendance\AttendanceReportStatus::Partial->value,
+            ]);
+
             if ($isPresent) {
-                // Get overtime hours from attendance if any
-                $otHours = $report['attendance_report']['overtime_hours'] ?? 0;
+                $otHours = 0;
+                $totalApprovedOvertime = $attendanceData->get('total_approved_overtime');
+                if ($totalApprovedOvertime && preg_match('/^(\d+):(\d+):(\d+)$/', $totalApprovedOvertime, $matches)) {
+                    $otHours = round($matches[1] + ($matches[2] / 60) + ($matches[3] / 3600), 2);
+                }
 
                 $items[] = [
                     'employee_id'   => $employee->id,
@@ -150,7 +180,6 @@ class ListEmployeeOvertimes extends ListRecords
                     'is_selected'   => true,
                 ];
             }
-            dd($isPresent);
         }
 
         $set('items', $items);
