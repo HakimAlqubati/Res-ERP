@@ -36,4 +36,22 @@
         </tr>
         @endforeach
     </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="2" style="font-weight: bold; text-align: right;">{{ __('Total') }}</td>
+            <td style="font-weight: bold;">{{ $totals['base_salary'] }}</td>
+
+            @foreach($additionColumns as $col)
+                <td style="font-weight: bold;">{{ $totals['additions'][$col] ?? 0 }}</td>
+            @endforeach
+            <td style="font-weight: bold;">{{ $totals['total_additions'] }}</td>
+
+            @foreach($deductionColumns as $col)
+                <td style="font-weight: bold;">{{ $totals['deductions'][$col] ?? 0 }}</td>
+            @endforeach
+            <td style="font-weight: bold;">{{ $totals['total_deductions'] }}</td>
+
+            <td style="font-weight: bold;">{{ $totals['net_salary'] }}</td>
+        </tr>
+    </tfoot>
 </table>

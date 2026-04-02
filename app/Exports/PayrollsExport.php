@@ -48,6 +48,22 @@ class PayrollsExport implements FromView
         $additionHeaders = $additionColumns->unique()->filter()->values();
         $deductionHeaders = $deductionColumns->unique()->filter()->values();
 
+        $totals = [
+            'base_salary' => 0,
+            'total_additions' => 0,
+            'total_deductions' => 0,
+            'net_salary' => 0,
+            'additions' => [],
+            'deductions' => [],
+        ];
+
+        foreach ($additionHeaders as $col) {
+            $totals['additions'][$col] = 0;
+        }
+        foreach ($deductionHeaders as $col) {
+            $totals['deductions'][$col] = 0;
+        }
+
         // Pass 2: Prepare rows
         $rows = [];
         foreach ($this->payrolls as $payroll) {
@@ -96,6 +112,18 @@ class PayrollsExport implements FromView
                 }
             }
 
+            $totals['base_salary'] += $row['base_salary'] ?? 0;
+            $totals['net_salary'] += $row['net_salary'] ?? 0;
+            $totals['total_additions'] += $row['total_additions'] ?? 0;
+            $totals['total_deductions'] += $row['total_deductions'] ?? 0;
+
+            foreach ($additionHeaders as $col) {
+                $totals['additions'][$col] += $row['additions'][$col] ?? 0;
+            }
+            foreach ($deductionHeaders as $col) {
+                $totals['deductions'][$col] += $row['deductions'][$col] ?? 0;
+            }
+
             $rows[] = $row;
         }
 
@@ -103,6 +131,7 @@ class PayrollsExport implements FromView
             'additionColumns' => $additionHeaders,
             'deductionColumns' => $deductionHeaders,
             'rows' => $rows,
+            'totals' => $totals,
         ]);
     }
 }
