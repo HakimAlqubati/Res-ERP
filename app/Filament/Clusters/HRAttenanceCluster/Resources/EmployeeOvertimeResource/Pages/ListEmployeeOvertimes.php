@@ -123,22 +123,22 @@ class ListEmployeeOvertimes extends ListRecords
             return;
         }
 
-        $employees = \App\Models\Employee::where('branch_id', $branchId)->active()->get();
+        $employees = \App\Models\Employee::select('id', 'name', 'working_hours')
+            ->where('branch_id', $branchId)->active()->get();
 
         if ($employees->isEmpty()) {
             $set('items', []);
             return;
         }
-
         /** @var \App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateService $attendanceService */
         $attendanceService = app(\App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateService::class);
         $attendanceReport = $attendanceService->fetchAttendances($employees, $date);
-
+        dd($attendanceReport);
         $items = [];
         foreach ($employees as $employee) {
             $report = $attendanceReport->get($employee->id);
             $isPresent = $report['attendance_report']['present'] ?? false;
-
+            dd($report, $isPresent);
             if ($isPresent) {
                 // Get overtime hours from attendance if any
                 $otHours = $report['attendance_report']['overtime_hours'] ?? 0;
@@ -150,6 +150,7 @@ class ListEmployeeOvertimes extends ListRecords
                     'is_selected'   => true,
                 ];
             }
+            dd($isPresent);
         }
 
         $set('items', $items);
