@@ -281,6 +281,29 @@ class OvertimeService
     }
 
     /**
+     * Reject overtime
+     *
+     * @param array|int $ids
+     * @return \Illuminate\Database\Eloquent\Collection
+     * @throws Exception
+     */
+    public function reject(array|int $ids)
+    {
+        $ids = is_array($ids) ? $ids : [$ids];
+
+        $overtimes = EmployeeOvertime::whereIn('id', $ids)->get();
+
+        foreach ($overtimes as $overtime) {
+            if (!$overtime->approved) {
+                // Rejection means deleting the pending record
+                $overtime->delete();
+            }
+        }
+
+        return $overtimes;
+    }
+
+    /**
      * Update overtime hours for a specific record.
      *
      * @param int $id

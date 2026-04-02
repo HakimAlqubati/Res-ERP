@@ -209,6 +209,37 @@ class OvertimeController extends Controller
     }
 
     /**
+     * Reject overtime (Bulk)
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function reject(Request $request)
+    {
+        try {
+            $ids = $request->input('ids');
+            if (empty($ids) || !is_array($ids)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'ids array is required'
+                ], 422);
+            }
+
+            $overtime = $this->overtimeService->reject($ids);
+            return response()->json([
+                'status'  => true,
+                'message' => 'Overtime rejected successfully',
+                'data'    => $overtime,
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'status'  => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Get suggested overtime for employees
      *
      * @param Request $request
