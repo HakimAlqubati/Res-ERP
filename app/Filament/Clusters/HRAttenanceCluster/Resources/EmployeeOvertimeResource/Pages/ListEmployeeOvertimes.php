@@ -6,6 +6,7 @@ use Filament\Actions\CreateAction;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Schemas\Components\Grid;
 
 class ListEmployeeOvertimes extends ListRecords
 {
@@ -18,50 +19,62 @@ class ListEmployeeOvertimes extends ListRecords
                 ->label('Quick Add')
                 ->color('success')
                 ->icon('heroicon-o-plus-circle')
-                ->form([
-                    \Filament\Forms\Components\Placeholder::make('info')
-                        ->content('Easily add manual overtime (Hourly or Daily) for employees.')
-                        ->label(''),
-                    \Filament\Forms\Components\Select::make('employee_id')
-                        ->label('Employee')
-                        ->relationship('employee', 'name')
-                        ->searchable()
-                        ->required()
-                        ->live()
-                        ->afterStateUpdated(function ($state, $set) {
-                            $employee = \App\Models\Employee::find($state);
-                            if ($employee) {
-                                $set('branch_id', $employee->branch_id);
-                            }
-                        }),
-                    \Filament\Forms\Components\Hidden::make('branch_id'),
-                    \Filament\Forms\Components\Select::make('type')
-                        ->label('Type')
-                        ->options(\App\Models\EmployeeOvertime::getTypes())
-                        ->default(\App\Models\EmployeeOvertime::TYPE_BASED_ON_DAY)
-                        ->required(),
-                    \Filament\Forms\Components\DatePicker::make('date')
-                        ->label('Date')
-                        ->default(now())
-                        ->required(),
-                    \Filament\Forms\Components\TextInput::make('hours')
-                        ->label('Value (Hours or Days)')
-                        ->helperText('Enter hours if Hourly, or number of days if Daily (e.g. 1 for Eid).')
-                        ->numeric()
-                        ->step(0.1)
-                        ->minValue(0.1)
-                        ->required(),
+
+                ->schema([
+                    Grid::make(4)->columnSpanFull()->schema([
+
+                        \Filament\Forms\Components\Select::make('employee_id')
+                            ->label('Employee')
+                            ->relationship('employee', 'name')
+                            ->searchable()
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function ($state, $set) {
+                                $employee = \App\Models\Employee::find($state);
+                                if ($employee) {
+                                    $set('branch_id', $employee->branch_id);
+                                }
+                            }),
+                        \Filament\Forms\Components\Hidden::make('branch_id'),
+                        \Filament\Forms\Components\Select::make('type')
+                            ->label('Type')
+                            ->options(\App\Models\EmployeeOvertime::getTypes())
+                            ->default(\App\Models\EmployeeOvertime::TYPE_BASED_ON_DAY)
+                            ->required()
+                            ->live(),
+                        \Filament\Forms\Components\DatePicker::make('date')
+                            ->label('Date')
+                            ->default(now())
+                            ->required(),
+                        \Filament\Forms\Components\TextInput::make('hours')
+                            ->label('Hours (Value)')
+                            ->helperText('Enter overtime hours.')
+                            ->numeric()
+                            ->step(0.1)
+                            ->minValue(0.1)
+                            ->required()
+                            ->hidden(fn($get) => $get('type') === \App\Models\EmployeeOvertime::TYPE_BASED_ON_MONTH),
+                    ]),
                     \Filament\Forms\Components\Textarea::make('reason')
                         ->label('Reason/Notes')
-                        ->rows(2),
+                        ->rows(2)
+                        ->required(),
                 ])
                 ->action(function (array $data) {
+                    $employee = \App\Models\Employee::find($data['employee_id']);
+                    $hours = $data['hours'] ?? 0;
+
+                    // If type is Daily, use employee working hours as default value
+                    if ($data['type'] === \App\Models\EmployeeOvertime::TYPE_BASED_ON_MONTH) {
+                        $hours = $employee?->working_hours ?? 8;
+                    }
+
                     \App\Models\EmployeeOvertime::create([
                         'employee_id' => $data['employee_id'],
-                        'branch_id'   => $data['branch_id'] ?? \App\Models\Employee::find($data['employee_id'])?->branch_id,
+                        'branch_id'   => $data['branch_id'] ?? $employee?->branch_id,
                         'type'        => $data['type'],
                         'date'        => $data['date'],
-                        'hours'       => $data['hours'],
+                        'hours'       => $hours,
                         'reason'      => $data['reason'],
                         'status'      => \App\Models\EmployeeOvertime::STATUS_PENDING,
                         'created_by'  => \Illuminate\Support\Facades\Auth::id(),
