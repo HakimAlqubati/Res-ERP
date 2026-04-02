@@ -19,9 +19,9 @@ class ListEmployeeAbsentReports extends ListRecords
             ?? current($this->getTable()->getFilter('branch_id')->getState() ?: [])
             ?? null;
 
-        // Handle date filter which might be structured differently depending on Filament version or setup
-        $dateFilterState = $this->getTable()->getFilters()['filter_date']?->getState() ?? [];
-        $date = $dateFilterState['date'] ?? date('Y-m-d');
+        $dateFilterState = $this->getTable()->getFilters()['date_range']?->getState() ?? [];
+        $dateFrom = $dateFilterState['start_date'] ?? now()->startOfMonth()->format('Y-m-d');
+        $dateTo = $dateFilterState['end_date'] ?? now()->format('Y-m-d');
 
         $data = collect([]);
 
@@ -30,24 +30,25 @@ class ListEmployeeAbsentReports extends ListRecords
 
             $today = now()->timezone('Asia/Kuala_Lumpur')->format('Y-m-d');
 
-            if ($date === $today) {
+            if ($dateFrom === $today && $dateTo === $today) {
                 // If checking today's absentees, only show those whose shift has already started
                 $filters['current_time'] = now()->timezone('Asia/Kuala_Lumpur')->format('H:i');
-            } elseif ($date > $today) {
+            } elseif ($dateFrom > $today || $dateTo > $today) {
                 // Future dates shouldn't show absentees, pass a very early time to prevent match
                 $filters['current_time'] = '00:00';
             }
             // For past dates, we do NOT set current_time, so all absent shifts are included.
 
-            /** @var \App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesService $service */
-            $service = app(\App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesService::class);
-            $data = $service->getAbsentEmployees($date, $filters);
+            /** @var \App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesV2Service $service */
+            $service = app(\App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesV2Service::class);
+            $data = $service->getAbsentEmployees($dateFrom, $dateTo, $filters);
         }
 
         return [
-            'report_data' => $data,
-            'branch_id'   => $branchId,
-            'date'        => $date,
+            'report_data'   => $data,
+            'branch_id'     => $branchId,
+            'date_from'     => $dateFrom,
+            'date_to'       => $dateTo,
         ];
     }
 }

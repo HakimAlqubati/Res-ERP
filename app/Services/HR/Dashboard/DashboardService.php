@@ -25,23 +25,13 @@ class DashboardService
 
         $missingCheckoutsCount = 0;
         if (Carbon::parse($yesterday)->gte(Carbon::parse($startOfMonth))) {
-            $missingCheckoutsCount = Attendance::query()
-                ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
-                ->where('accepted', 1)
-                ->whereBetween('check_date', [$startOfMonth, $yesterday])
-                ->whereNotExists(function ($sub) {
-                    $sub->from('hr_attendances as co')
-                        ->whereColumn('co.employee_id', 'hr_attendances.employee_id')
-                        ->whereColumn('co.period_id',   'hr_attendances.period_id')
-                        ->whereColumn('co.check_date',  'hr_attendances.check_date')
-                        ->where('co.check_type',  Attendance::CHECKTYPE_CHECKOUT)
-                        ->where('co.accepted',    1)
-                        ->whereNull('co.deleted_at');
-                })
-                ->when($dto->branchId, fn($q) => $q->where('branch_id', $dto->branchId))
-                ->whereHas('employee', fn($q) => $q->where('active', 1))
-                ->get(['employee_id', 'period_id', 'check_date'])
-                ->unique(fn($r) => $r->employee_id . '_' . $r->period_id . '_' . $r->check_date)
+            $filters = [];
+            if ($dto->branchId) {
+                $filters['branch_id'] = $dto->branchId;
+            }
+
+            $missingCheckoutsCount = app(MissingCheckoutService::class)
+                ->getMissingCheckouts($startOfMonth, $yesterday, $filters)
                 ->count();
         }
 

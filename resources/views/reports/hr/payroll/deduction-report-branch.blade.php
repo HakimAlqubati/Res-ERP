@@ -157,15 +157,7 @@
         </thead>
 
         <tbody>
-            @forelse ($reportData['employees_deductions'] as $empData)
-            <!-- Employee Header Row -->
-            <tr>
-                <td colspan="2" style="background-color: #e5e7eb !important; color: #111827 !important; font-weight: bold; text-align: center; padding: 12px; font-size: 1.1em;">
-                    {{ $empData['employee_name'] }}
-                </td>
-            </tr>
-
-            @foreach ($empData['monthly_deductions'] as $monthData)
+            @forelse ($reportData['monthly_deductions'] as $monthData)
             <!-- Month Header Row -->
             <tr>
                 <td colspan="2" style="background-color: #f0fdf4 !important; color: #0b7a5a !important; font-weight: bold; text-align: left; padding-left: 15px;">
@@ -187,17 +179,6 @@
                     {{ formatMoneyWithCurrency($monthData['month_total']) }}
                 </td>
             </tr>
-            @endforeach
-
-            <!-- Employee Footer Row -->
-            <tr>
-                <td style="text-align: right; font-weight: bold; background-color: #d1d5db !important; color: #111827 !important;">
-                    {{ __('Total Deductions for Employee') }} ({{ $empData['employee_name'] }})
-                </td>
-                <td style="text-align: right; font-weight: bold; background-color: #d1d5db !important; color: #d9534f !important;">
-                    {{ formatMoneyWithCurrency($empData['total_deductions']) }}
-                </td>
-            </tr>
             @empty
             <tr>
                 <td colspan="2" style="text-align: center; padding: 2rem; color: #6b7280; font-weight: bold;">
@@ -207,7 +188,7 @@
             @endforelse
         </tbody>
 
-        @if(count($reportData['employees_deductions']) > 0)
+        @if(count($reportData['monthly_deductions']) > 0)
         <tfoot>
             <tr>
                 <td style="text-align: right; font-weight: bold; background-color:#eaeaea; color:#000;">{{ __('Grand Total Deductions') }}</td>
@@ -221,7 +202,7 @@
 
     @else
     <div class="please_select_message_div" style="text-align: center; padding: 40px;">
-        <h1 class="please_select_message_text" style="font-size: 1.5rem; color: #555;">{{ __('Please select an Employee and a Date Range') }}</h1>
+        <h1 class="please_select_message_text" style="font-size: 1.5rem; color: #555;">{{ __('Please select a Branch and a Date Range') }}</h1>
     </div>
     @endif
 
@@ -251,13 +232,7 @@
 
             var workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, wb, "Deductions Report");
-            
-            var reportTitle = "{{ preg_replace('/[^A-Za-z0-9_\-]/', '_', $reportData['report_title']) }}";
-            var fromDate = "{{ $reportData['from_date'] }}";
-            var toDate = "{{ $reportData['to_date'] }}";
-            var fileName = "Deductions_" + reportTitle + "_" + fromDate + "_to_" + toDate + ".xlsx";
-            
-            XLSX.writeFile(workbook, fileName);
+            XLSX.writeFile(workbook, "deductions_report.xlsx");
         }
     </script>
 </x-filament-panels::page>

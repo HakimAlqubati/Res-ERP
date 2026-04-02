@@ -23,7 +23,7 @@ class AbsentEmployeesV2Service
      * @return Collection مجموعة تحتوي بيانات الغيابات لكل موظف
      */
     public function getAbsentEmployees($dateFrom, $dateTo, array $filters = []): Collection
-    { 
+    {
         $dateFrom = $dateFrom instanceof Carbon ? $dateFrom : Carbon::parse($dateFrom);
         $dateTo   = $dateTo instanceof Carbon ? $dateTo : Carbon::parse($dateTo);
 
@@ -42,7 +42,7 @@ class AbsentEmployeesV2Service
 
         foreach ($employees as $employee) {
             $report = $this->attendanceFetcher->fetchEmployeeAttendances($employee, $dateFrom, $dateTo);
-            
+
             $absentDays = collect();
 
             foreach ($report as $key => $dayData) {
@@ -50,7 +50,7 @@ class AbsentEmployeesV2Service
                 if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $key)) {
                     $isAbsent = isset($dayData['day_status']) &&
                         $dayData['day_status'] === AttendanceReportStatus::Absent->value;
-                    
+
                     if ($isAbsent) {
                         // Optional filter for current_time on today's date
                         if (!empty($filters['current_time']) && Carbon::parse($key)->isToday()) {

@@ -20,15 +20,18 @@ class ListPayrollDeductionReports extends ListRecords
         // Extract filters state
         $filters = $this->getTable()->getFilters();
         
-        $employeeId = $filters['employee_id']->getState()['value'] ?? null;
+        $groupingState = $filters['grouping_filter']->getState() ?? [];
+        $groupByState = $groupingState['group_by'] ?? DeductionReportFilterDTO::GROUP_BY_EMPLOYEE;
         
-        // Infer branch from employee if selected
-        $branchId = null;
-        if ($employeeId) {
+        $employeeId = $groupByState === DeductionReportFilterDTO::GROUP_BY_EMPLOYEE ? ($groupingState['employee_id'] ?? null) : null;
+        $branchId = $groupByState === DeductionReportFilterDTO::GROUP_BY_BRANCH ? ($groupingState['branch_id'] ?? null) : null;
+        
+        // Infer branch from employee if grouped by employee and none selected
+        if ($employeeId && !$branchId) {
             $employee = \App\Models\Employee::find($employeeId);
             $branchId = $employee ? $employee->branch_id : null;
         }
-        
+
         $dateRange = $filters['date_range']->getState();
         $fromDate = $dateRange['from_date'] ?? now()->startOfMonth()->format('Y-m-d');
         $toDate = $dateRange['to_date'] ?? now()->endOfMonth()->format('Y-m-d');
@@ -52,12 +55,14 @@ class ListPayrollDeductionReports extends ListRecords
                 'employee_id' => $employeeId,
                 'branch_id' => $branchId,
                 'include_employer_contribution' => $includeEmployerContribution,
-                'deduction_types' => $deductionTypes
+                'deduction_types' => $deductionTypes,
+                'group_by' => $groupByState
             ]);
 
             // Execute the specific report class
             $reportService = new DeductionReport();
             $reportData = $reportService->getSummary($dto);
+            $reportData['group_by'] = $groupByState; // For view reference
 
         } catch (Exception $e) {
             $reportData = null;
@@ -67,5 +72,10 @@ class ListPayrollDeductionReports extends ListRecords
         return [
             'reportData' => $reportData,
         ];
+    }
+    
+    public function getView(): string
+    {
+        return 'reports.hr.payroll.deduction-report';
     }
 }

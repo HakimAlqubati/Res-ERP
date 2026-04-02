@@ -10,13 +10,14 @@
                 <th colspan="2" class="no_border_right_left">
                     <p>{{ __('Employee Absence Report') }}</p>
                 </th>
-                <th colspan="2" class="no_border_right_left">
-                    <p>{{ __('Date: ') . $date }}</p>
+                <th colspan="3" class="no_border_right_left">
+                    <p>{{ __('Date From: ') . $date_from }} | {{ __('Date To: ') . $date_to }}</p>
                 </th>
             </tr>
             <tr>
                 <th>{{ __('No.') }}</th>
                 <th>{{ __('Employee Name') }}</th>
+                <th>{{ __('Date') }}</th>
                 <th>{{ __('Start Time') }}</th>
                 <th>{{ __('End Time') }}</th>
             </tr>
@@ -25,27 +26,32 @@
             @if (count($report_data) > 0)
             @php $rowNumber = 1; @endphp
             @foreach ($report_data as $item)
-            @php
-            $employeeName = $item['employee']['name'] ?? 'N/A';
-            // The service returns data where attendance_report contains keys for dates.
-            // We use the selected date to pick the report.
-            $dayData = $item['attendance_report'][$date] ?? [];
-            $periods = $dayData['periods'] ?? [];
-            @endphp
+                @php
+                $employeeName = $item['employee_name'] ?? 'N/A';
+                $absences = $item['absences'] ?? [];
+                @endphp
 
-            @foreach ($periods as $period)
-            <tr>
-                <td>{{ $rowNumber++ }}</td>
-                <td>{{ $employeeName }}</td>
-                <td>{{ $period['start_time'] ?? '-' }}</td>
-                <td>{{ $period['end_time'] ?? '-' }}</td>
-            </tr>
-            @endforeach
+                @foreach ($absences as $dayData)
+                    @php
+                    $date = $dayData['date'] ?? '-';
+                    $periods = $dayData['periods'] ?? [];
+                    @endphp
+
+                    @foreach ($periods as $period)
+                    <tr>
+                        <td>{{ $rowNumber++ }}</td>
+                        <td>{{ $employeeName }}</td>
+                        <td>{{ $date }}</td>
+                        <td>{{ $period['start_time'] ?? '-' }}</td>
+                        <td>{{ $period['end_time'] ?? '-' }}</td>
+                    </tr>
+                    @endforeach
+                @endforeach
             @endforeach
             @else
             <tr>
-                <td colspan="4" style="text-align: center;">
-                    {{ __('No employees absent for this date.') }}
+                <td colspan="5" style="text-align: center;">
+                    {{ __('No employees absent for this date range.') }}
                 </td>
             </tr>
             @endif

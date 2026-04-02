@@ -16,8 +16,93 @@ class PayrollsExport implements FromView
 
     public function view(): View
     {
+        $this->payrolls->load('transactions', 'employee');
+
+        $additionColumns = collect();
+        $deductionColumns = collect();
+
+        // Pass 1: Gather all unique column headers
+        foreach ($this->payrolls as $payroll) {
+            foreach ($payroll->transactions as $transaction) {
+                $typeVal = $transaction->type instanceof \BackedEnum ? $transaction->type->value : $transaction->type;
+                
+                // Exclude basic salary as it has its own fixed column
+                if ($typeVal === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_SALARY->value) {
+                    continue;
+                }
+
+                $columnName = $transaction->description ?: $typeVal;
+                
+                if (empty($columnName)) continue;
+
+                if ($transaction->operation === '+') {
+                    $additionColumns->push($columnName);
+                } elseif ($transaction->operation === '-') {
+                    if ($typeVal !== \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_CARRY_FORWARD->value) {
+                        $deductionColumns->push($columnName);
+                    }
+                }
+            }
+        }
+
+        $additionHeaders = $additionColumns->unique()->filter()->values();
+        $deductionHeaders = $deductionColumns->unique()->filter()->values();
+
+        // Pass 2: Prepare rows
+        $rows = [];
+        foreach ($this->payrolls as $payroll) {
+            $row = [
+                'employee_no' => $payroll->employee?->employee_no,
+                'employee_name' => $payroll->employee?->name,
+                'base_salary' => $payroll->base_salary,
+                'net_salary' => $payroll->net_salary,
+                'additions' => [],
+                'total_additions' => 0,
+                'deductions' => [],
+                'total_deductions' => 0,
+            ];
+
+            // Initialize dynamic columns with 0
+            foreach ($additionHeaders as $col) {
+                $row['additions'][$col] = 0;
+            }
+            foreach ($deductionHeaders as $col) {
+                $row['deductions'][$col] = 0;
+            }
+
+            // Populate transaction data
+            foreach ($payroll->transactions as $transaction) {
+                $typeVal = $transaction->type instanceof \BackedEnum ? $transaction->type->value : $transaction->type;
+                
+                // Exclude basic salary as it has its own fixed column
+                if ($typeVal === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_SALARY->value) {
+                    continue;
+                }
+
+                $columnName = $transaction->description ?: $typeVal;
+
+                if ($transaction->operation === '+') {
+                    if (isset($row['additions'][$columnName])) {
+                        $row['additions'][$columnName] += $transaction->amount;
+                    }
+                    $row['total_additions'] += $transaction->amount;
+                } elseif ($transaction->operation === '-') {
+                    if ($typeVal !== \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_CARRY_FORWARD->value) {
+                        if (isset($row['deductions'][$columnName])) {
+                            $row['deductions'][$columnName] += $transaction->amount;
+                        }
+                        $row['total_deductions'] += $transaction->amount;
+                    }
+                }
+            }
+
+            $rows[] = $row;
+        }
+
         return view('export.reports.hr.payrolls.payrolls-excel', [
-            'payrolls' => $this->payrolls,
+            'additionColumns' => $additionHeaders,
+            'deductionColumns' => $deductionHeaders,
+            'rows' => $rows,
         ]);
     }
 }

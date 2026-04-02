@@ -38,12 +38,16 @@ class DeductionReport
             }
         });
 
-        if ($filters->employeeId) {
-            $query->where('employee_id', $filters->employeeId);
-        } elseif ($filters->branchId) {
-            $query->whereHas('employee', function ($q) use ($filters) {
-                $q->where('branch_id', $filters->branchId);
-            });
+        if ($filters->groupBy === DeductionReportFilterDTO::GROUP_BY_EMPLOYEE) {
+            if ($filters->employeeId) {
+                $query->where('employee_id', $filters->employeeId);
+            }
+        } elseif ($filters->groupBy === DeductionReportFilterDTO::GROUP_BY_BRANCH) {
+            if ($filters->branchId) {
+                $query->whereHas('employee', function ($q) use ($filters) {
+                    $q->where('branch_id', $filters->branchId);
+                });
+            }
         }
 
         /** @var Collection<int, SalaryTransaction> $transactions */
@@ -82,7 +86,36 @@ class DeductionReport
         })->values()->all();
 
         // Details per employee if needed for the view
-        // Optional feature: we can group by employee so the view can display employee specific rows.
+        $employeesDeductions = $transactions->groupBy('employee_id')->map(function ($employeeTransactions, $employeeId) {
+            $employeeName = $employeeTransactions->first()->employee?->name ?? 'Unknown';
+
+            $employeeMonthly = $employeeTransactions->groupBy(function (SalaryTransaction $tx) {
+                return \Carbon\Carbon::parse($tx->date)->format('Y-m');
+            })->sortKeys()->map(function ($monthTransactions, $monthKey) {
+                $deductionsList = $monthTransactions->groupBy(function (SalaryTransaction $tx) {
+                    return $tx->description ?: ucfirst(str_replace('_', ' ', $tx->sub_type ?? $tx->type));
+                })->map(function ($group, $name) {
+                    return [
+                        'deduction_name' => $name,
+                        'deduction_amount' => round(abs((float) $group->sum('amount')), 2)
+                    ];
+                })->values()->all();
+
+                return [
+                    'month' => $monthKey,
+                    'month_name' => \Carbon\Carbon::createFromFormat('Y-m', $monthKey)->translatedFormat('F Y'),
+                    'deductions_list' => $deductionsList,
+                    'month_total' => round(abs((float) $monthTransactions->sum('amount')), 2)
+                ];
+            })->values()->all();
+
+            return [
+                'employee_id' => $employeeId,
+                'employee_name' => $employeeName,
+                'monthly_deductions' => $employeeMonthly,
+                'total_deductions' => round(abs((float) $employeeTransactions->sum('amount')), 2)
+            ];
+        })->values()->all();
 
         $reportTitle = $this->resolveReportTitle($filters);
 
@@ -93,6 +126,7 @@ class DeductionReport
             'employee_id' => $filters->employeeId,
             'branch_id' => $filters->branchId,
             'monthly_deductions' => $monthlyDeductions,
+            'employees_deductions' => $employeesDeductions,
             'grand_total' => round(abs((float) $transactions->sum('amount')), 2),
             'transactions' => $transactions, // Just in case detailed view is needed
         ];
@@ -110,6 +144,7 @@ class DeductionReport
             'employee_id' => $filters->employeeId,
             'branch_id' => $filters->branchId,
             'monthly_deductions' => [],
+            'employees_deductions' => [],
             'grand_total' => 0.0,
             'transactions' => collect(),
         ];

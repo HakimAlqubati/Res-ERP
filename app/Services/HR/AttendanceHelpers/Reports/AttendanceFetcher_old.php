@@ -11,7 +11,7 @@ use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
-class AttendanceFetcher
+class AttendanceFetcher_old
 {
     protected EmployeePeriodHistoryService $periodHistoryService;
     public HelperFunctions $helperFunctions;
@@ -32,15 +32,6 @@ class AttendanceFetcher
      */
     public function fetchEmployeeAttendances(Employee $employee, Carbon $startDate, Carbon $endDate): Collection
     {
-
-        // 1. [التوسيع] حفظ النطاق الأصلي والعودة لبداية الشهر لضمان الرصيد
-        $originalStartDate = $startDate->copy();
-        $isPreviousMonth = $endDate->format('Y-m') < now()->format('Y-m');
-
-        if ($isPreviousMonth && $startDate->format('d') !== '01') {
-            $startDate = $endDate->copy()->startOfMonth();
-        }
-
         // 1. استخرج الفترات لكل يوم
         $periodsByDay = $this->periodHistoryService->getEmployeePeriodsByDateRange($employee, $startDate, $endDate);
 
@@ -205,7 +196,6 @@ class AttendanceFetcher
                     $actualSeconds += ($h * 3600) + ($m * 60) + $s;
                 }
             }
-
             $actualDuration = gmdate('H:i:s', $actualSeconds);
 
             $result->put($date, [
@@ -217,89 +207,36 @@ class AttendanceFetcher
             ]);
         }
 
-        // $stats = HelperFunctions::calculateAttendanceStats($result);
+        $stats = HelperFunctions::calculateAttendanceStats($result);
 
-        // // =========================================================================
-        // // منطق الإجازة الأسبوعية
-        // // =========================================================================
-        // $isPreviousMonth = $endDate->format('Y-m') < now()->format('Y-m');
-        // $totalMonthDays  = $stats['required_days'] ?? $stats['total_days'] ?? 0;
-        // $absentDays      = $stats['absent'] ?? 0;
+        // =========================================================================
+        // منطق الإجازة الأسبوعية
+        // =========================================================================
+        $isPreviousMonth = $endDate->format('Y-m') < now()->format('Y-m');
+        $totalMonthDays  = $stats['required_days'] ?? $stats['total_days'] ?? 0;
+        $absentDays      = $stats['absent'] ?? 0;
 
-        // // تحويل أيام الغياب بصرياً في التقرير — فقط عند انتهاء الشهر
-        // if ($isPreviousMonth) {
-        //     $result           = $this->applyWeeklyLeaveToAbsences($result);
-        //     // $weeklyLeaveStats = $result->get('weekly_leave_stats', []);
-        //     // $absentDays       = $weeklyLeaveStats['remaining_absences'] ?? $absentDays;
-        // }
+        // تحويل أيام الغياب بصرياً في التقرير — فقط عند انتهاء الشهر
+        if ($isPreviousMonth) {
+            $result           = $this->applyWeeklyLeaveToAbsences($result);
+            // $weeklyLeaveStats = $result->get('weekly_leave_stats', []);
+            // $absentDays       = $weeklyLeaveStats['remaining_absences'] ?? $absentDays;
+        }
 
-        // // الاحتساب المالي — يعمل دائماً بنفس هيكل الريسبونس
-        // // when is_period_ended && is_for_payroll → يُطبَّق احتساب الإجازات الأسبوعية
-        // // otherwise → نفس الريسبونس لكن بدون خصم الإجازات (الغياب كما هو)
-        // $stats['weekly_leave_calculation'] = (new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator())
-        //     ->calculate($totalMonthDays, $absentDays, [
-        //         'is_period_ended' => $isPreviousMonth,
-        //         'is_for_payroll'  => true,
-        //     ]);
-
-        // $result->put('statistics', $stats);
-        // $result->put('total_duration_hours', $totalDurationHours);
-
-
-        // 2. حساب الإحصائيات (للشهر كاملاً) لغرض المحاسب المالي (WeeklyLeaveCalculator) فقط
-        $fullMonthStats = HelperFunctions::calculateAttendanceStats($result);
-        $totalMonthDays = $fullMonthStats['required_days'] ?? $fullMonthStats['total_days'] ?? 0;
-        $absentDays     = $fullMonthStats['absent'] ?? 0;
-
-        // 3. الاحتساب المالي — يعمل بناءً على الشهر كاملاً ليعطي الخصم/الإضافي الحقيقي
-        $payrollCalculation = (new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator())
+        // الاحتساب المالي — يعمل دائماً بنفس هيكل الريسبونس
+        // when is_period_ended && is_for_payroll → يُطبَّق احتساب الإجازات الأسبوعية
+        // otherwise → نفس الريسبونس لكن بدون خصم الإجازات (الغياب كما هو)
+        $stats['weekly_leave_calculation'] = (new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator())
             ->calculate($totalMonthDays, $absentDays, [
                 'is_period_ended' => $isPreviousMonth,
                 'is_for_payroll'  => true,
             ]);
 
-        if ($isPreviousMonth) {
-            $result = $this->applyWeeklyLeaveToAbsences($result);
-        }
-
-
-        // 4. [القص] العودة للفلتر الأصلي الذي اختاره المستخدم في الواجهة
-        if ($isPreviousMonth && $originalStartDate->gt($startDate)) {
-            $result = $result->filter(function ($value, $key) use ($originalStartDate) {
-                // نحتفظ فقط بالتواريخ التي تقع ضمن الفلتر الأصلي
-                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $key)) {
-                    return \Carbon\Carbon::parse($key)->gte($originalStartDate);
-                }
-                return true; // الاحتفاظ بأي مفاتيح أخرى
-            });
-
-            // 5. إعادة ضبط إجمالي "الساعات المفترضة" لكي لا تظهر ساعات شهر كامل في تقرير 5 أيام
-            $totalDurationHours = 0;
-            foreach ($periodsByDay['days'] as $date => $data) {
-                if (\Carbon\Carbon::parse($date)->gte($originalStartDate)) {
-                    foreach ($data['periods'] as $period) {
-                        $start = \Carbon\Carbon::parse($period['start_time']);
-                        $end = \Carbon\Carbon::parse($period['end_time']);
-                        if ($end->lessThan($start)) {
-                            $end->addDay(); // معالجة الشفت الليلي
-                        }
-                        $totalDurationHours += $start->diffInMinutes($end) / 60;
-                    }
-                }
-            }
-            $totalDurationHours = round($totalDurationHours, 2);
-        }
-
-        // 6. إعادة حساب إحصائيات العرض (لكي تظهر للمستخدم أرقام الأيام المفلترة فقط)
-        $displayStats = HelperFunctions::calculateAttendanceStats($result);
-        $displayStats['weekly_leave_calculation'] = $payrollCalculation;
-
-        $result->put('statistics', $displayStats);
+        $result->put('statistics', $stats);
         $result->put('total_duration_hours', $totalDurationHours);
 
+        // جمع total actual secods
         $totalActualSeconds = 0;
-
-
         foreach ($result as $key => $day) {
             // فقط الأيام، وليست عناصر الإحصائيات أو التجميع
             if (
