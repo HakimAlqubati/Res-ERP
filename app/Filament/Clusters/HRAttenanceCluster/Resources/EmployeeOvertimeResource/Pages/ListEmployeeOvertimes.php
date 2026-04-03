@@ -22,19 +22,21 @@ class ListEmployeeOvertimes extends ListRecords
                 ->icon('heroicon-o-users')
                 ->schema([
                     Grid::make(3)->schema([
-                        \Filament\Forms\Components\Select::make('branch_id')
-                            ->label('Branch')
-                            ->options(\App\Models\Branch::pluck('name', 'id'))
-                            ->required()
-                            ->live()
-                            ->afterStateUpdated(fn($set, $state, $get) => $this->updateStaffList($set, $state, $get('date'))),
-
                         \Filament\Forms\Components\DatePicker::make('date')
                             ->label('Date')
                             ->required()
                             ->default(now())
                             ->live()
                             ->afterStateUpdated(fn($set, $state, $get) => $this->updateStaffList($set, $get('branch_id'), $state)),
+
+
+
+                        \Filament\Forms\Components\Select::make('branch_id')
+                            ->label('Branch')
+                            ->options(\App\Models\Branch::pluck('name', 'id'))
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(fn($set, $state, $get) => $this->updateStaffList($set, $state, $get('date'))),
 
                         \Filament\Forms\Components\Select::make('type')
                             ->label('Type')
