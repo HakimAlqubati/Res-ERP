@@ -238,6 +238,32 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
 
         $overTimeDays = $statistics['weekly_leave_calculation']['result']['overtime_days'];
         $overtimeDaysAmount = ($overTimeDays * $rates->dailyRate) ?? 0;
+
+        // Fetch manual daily overtime records (Eid, etc.)
+        $manualOvertimeRecords = $employee->dailyOvertimes()
+            ->whereYear('date', $periodYear)
+            ->whereMonth('date', $periodMonth)
+            ->get();
+
+        $manualOvertimeAmount = 0;
+        $manualOvertimeTransactions = [];
+
+        foreach ($manualOvertimeRecords as $record) {
+            $recordAmount = (float) $rates->dailyRate;
+            $manualOvertimeAmount += $recordAmount;
+
+            $manualOvertimeTransactions[] = [
+                'type'        => \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_ALLOWANCE,
+                'sub_type'    => \App\Enums\HR\Payroll\SalaryTransactionSubType::OVERTIME_DAYS,
+                'amount'      => $recordAmount,
+                'operation'   => '+',
+                'description' => $record->reason ?? 'Manual Daily Overtime',
+                'unit'        => 'day',
+                'qty'         => 1,
+                'rate'        => $this->round($rates->dailyRate),
+                'multiplier'  => 1.0,
+            ];
+        }
         // --------------------------------------------------------------------
 
         // Calculate totals
@@ -249,7 +275,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         }
 
         $this->grossSalary = $this->round(
-            $this->baseSalary + $overtime['amount'] + $allowances['total'] + $overtimeDaysAmount + ($monthlyIncentives['total'] ?? 0)
+            $this->baseSalary + $overtime['amount'] + $allowances['total'] + $overtimeDaysAmount + $manualOvertimeAmount + ($monthlyIncentives['total'] ?? 0)
         );
         $this->totalDeductions = $this->round(
             $deductions->absenceDeduction +
@@ -331,6 +357,13 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
                 'rate'        => $this->round($rates->dailyRate),
                 'multiplier'  => 1.0,
             ];
+        }
+
+        // Add Manual Daily Overtime Transactions
+        if (!empty($manualOvertimeTransactions)) {
+            foreach ($manualOvertimeTransactions as $manualTx) {
+                $transactions[] = $manualTx;
+            }
         }
 
         // 9. Carry Forward: if net salary is negative, cap at 0 and record debt

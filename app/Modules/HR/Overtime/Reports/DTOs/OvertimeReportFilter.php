@@ -17,10 +17,14 @@ final class OvertimeReportFilter
         public readonly ?int $employeeId = null,
         public readonly ?string $dateFrom = null,
         public readonly ?string $dateTo = null,
-        public readonly ?bool $approved = null,
+        public readonly ?string $status = null,
         public readonly int $perPage = 15,
         public readonly int $page = 1,
-    ) {}
+    ) {
+        if ($this->status !== null && !in_array($this->status, \App\Models\EmployeeOvertime::STATUSES)) {
+            throw new \InvalidArgumentException("Invalid status: {$this->status}. Must be one of: " . implode(', ', \App\Models\EmployeeOvertime::STATUSES));
+        }
+    }
 
     /**
      * Create from an associative array (e.g. request input).
@@ -32,7 +36,7 @@ final class OvertimeReportFilter
             employeeId: isset($data['employee_id'])  ? (int) $data['employee_id']  : null,
             dateFrom: $data['date_from']  ?? null,
             dateTo: $data['date_to']    ?? null,
-            approved: isset($data['approved'])     ? filter_var($data['approved'], FILTER_VALIDATE_BOOLEAN) : null,
+            status: $data['status']     ?? null,
             perPage: isset($data['per_page'])     ? (int) $data['per_page'] : 15,
             page: isset($data['page'])         ? (int) $data['page'] : 1,
         );
@@ -47,6 +51,6 @@ final class OvertimeReportFilter
             || $this->employeeId !== null
             || $this->dateFrom !== null
             || $this->dateTo !== null
-            || $this->approved !== null;
+            || $this->status !== null;
     }
 }

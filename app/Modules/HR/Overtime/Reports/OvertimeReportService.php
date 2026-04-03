@@ -71,8 +71,8 @@ class OvertimeReportService
             $query->whereDate('date', '<=', $filter->dateTo);
         }
 
-        if ($filter->approved !== null) {
-            $query->where('approved', $filter->approved);
+        if ($filter->status !== null) {
+            $query->where('status', $filter->status);
         }
     }
 
@@ -84,8 +84,8 @@ class OvertimeReportService
         return [
             'total_records'        => (clone $query)->count(),
             'total_hours'          => round((float) (clone $query)->sum('hours'), 2),
-            'approved_count'       => (clone $query)->where('approved', 1)->count(),
-            'pending_count'        => (clone $query)->where('approved', 0)->count(),
+            'approved_count'       => (clone $query)->where('status', EmployeeOvertime::STATUS_APPROVED)->count(),
+            'pending_count'        => (clone $query)->where('status', EmployeeOvertime::STATUS_PENDING)->count(),
             'unique_employees'     => (clone $query)->distinct('employee_id')->count('employee_id'),
         ];
     }

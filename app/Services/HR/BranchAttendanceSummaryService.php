@@ -71,6 +71,10 @@ class BranchAttendanceSummaryService
                 $query->whereYear('date', $year)
                     ->whereMonth('date', $month);
             }], 'hours')
+            ->withSum(['dailyOvertimes as manual_overtime_days' => function ($query) use ($year, $month) {
+                $query->whereYear('date', $year)
+                    ->whereMonth('date', $month);
+            }], 'hours')
             // ->limit(20) 
             ->chunk(10, function ($employees) use (&$currentStaff, &$newStaff, $terminatedEmployeeIds, $year, $month, $periodStart, $periodEnd, $monthDays) {
 
@@ -161,7 +165,7 @@ class BranchAttendanceSummaryService
                 'name'         => $employee->name,
                 'salary'       => $employee->salary,
                 'overtime'     => [
-                    'days'  => $weeklyResult['overtime_days'] ?? 0,
+                    'days'  => ($weeklyResult['overtime_days'] ?? 0) + ($employee->manual_overtime_days ?? 0),
                     'hours' => (float) $approvedOvertimeHours,
                 ],
                 'deductions'   => [

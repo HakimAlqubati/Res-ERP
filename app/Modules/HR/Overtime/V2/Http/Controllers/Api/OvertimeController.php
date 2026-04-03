@@ -24,6 +24,18 @@ class OvertimeController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
+            $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+                'status' => 'nullable|in:' . implode(',', \App\Models\EmployeeOvertime::STATUSES),
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Validation Error',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
             // Retrieve grouped overtime data
             $groupedData = $this->overtimeService->getGroupedByDate($request->all());
 

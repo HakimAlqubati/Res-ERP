@@ -131,15 +131,22 @@ trait EmployeeRelationships
     public function overtimes()
     {
         return $this->hasMany(EmployeeOvertime::class, 'employee_id')
-            ->where('approved', 1)
+            ->where('status', EmployeeOvertime::STATUS_APPROVED)
             ->day();
+    }
+
+    public function dailyOvertimes()
+    {
+        return $this->hasMany(EmployeeOvertime::class, 'employee_id')
+            ->where('status', EmployeeOvertime::STATUS_APPROVED)
+            ->month();
     }
 
     public function overtimesByDate($date)
     {
         return $this->hasMany(EmployeeOvertime::class, 'employee_id')
             ->day()
-            ->where('approved', 1)
+            ->where('status', EmployeeOvertime::STATUS_APPROVED)
             ->where('date', $date);
     }
 
@@ -150,7 +157,7 @@ trait EmployeeRelationships
 
         return $this->hasMany(EmployeeOvertime::class, 'employee_id')
             ->day()
-            ->where('approved', 1)
+            ->where('status', EmployeeOvertime::STATUS_APPROVED)
             ->whereBetween('date', [$startOfMonth, $endOfMonth]);
     }
 

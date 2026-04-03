@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\HR\AttendanceHelpers\Reports;
 
 use App\Models\Employee;
@@ -42,8 +43,8 @@ class EmployeesAttendanceOnDateService
         } else {
             // إذا تم تمرير معرفات الموظفين (IDs)
             $employeeIds = is_array($employeeIdsOrEmployees)
-            ? $employeeIdsOrEmployees
-            : collect($employeeIdsOrEmployees)->toArray();
+                ? $employeeIdsOrEmployees
+                : collect($employeeIdsOrEmployees)->toArray();
 
             // استخدم chunk لتقسيم الموظفين إلى دفعات (مثلاً 100 لكل دفعة)
             Employee::whereIn('id', $employeeIds)
@@ -63,5 +64,4 @@ class EmployeesAttendanceOnDateService
 
         return $results;
     }
-
 }

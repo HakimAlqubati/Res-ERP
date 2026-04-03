@@ -181,31 +181,31 @@ class EmployeeOvertimeForm
                                     }
 
                                     // Populate the Repeater with employees
-                                    $set('employees_with_month', array_map(function ($employee) use ($state) {
-                                        // $options  = [];
-                                        // if (strpos($state, '-') !== false) {
-                                        //     $yearAndMonthArr = explode('-', $state);
-                                        //     $options = [];
-                                        //     $year = $yearAndMonthArr[0];
-                                        //     $month = $yearAndMonthArr[1];
-                                        //     $daysInMonth = Carbon::create($year, $month)->daysInMonth;
-                                        //     for ($day = 1; $day <= $daysInMonth; $day++) {
-                                        //         $date = Carbon::create($year, $month, $day)->format('Y-m-d');
-                                        //         $options[$date] = $date;
-                                        //     }
-                                        // }
-                                        return [
-                                            'employee_id' => $employee['employee_id'],
+                                    // $set('employees_with_month', array_map(function ($employee) use ($state) {
+                                    //     // $options  = [];
+                                    //     // if (strpos($state, '-') !== false) {
+                                    //     //     $yearAndMonthArr = explode('-', $state);
+                                    //     //     $options = [];
+                                    //     //     $year = $yearAndMonthArr[0];
+                                    //     //     $month = $yearAndMonthArr[1];
+                                    //     //     $daysInMonth = Carbon::create($year, $month)->daysInMonth;
+                                    //     //     for ($day = 1; $day <= $daysInMonth; $day++) {
+                                    //     //         $date = Carbon::create($year, $month, $day)->format('Y-m-d');
+                                    //     //         $options[$date] = $date;
+                                    //     //     }
+                                    //     // }
+                                    //     return [
+                                    //         'employee_id' => $employee['employee_id'],
 
-                                            //     return $options;
-                                            'dates'       => [],
-                                            // 'start_time' => $employee['start_time'],
-                                            // 'end_time' => $employee['end_time'],
+                                    //         //     return $options;
+                                    //         'dates'       => [],
+                                    //         // 'start_time' => $employee['start_time'],
+                                    //         // 'end_time' => $employee['end_time'],
 
-                                            // 'notes' => null,
-                                            // 'hours' => $employee['overtime_hours'],
-                                        ];
-                                    }, $employeesWithWeekEndOvertime));
+                                    //         // 'notes' => null,
+                                    //         // 'hours' => $employee['overtime_hours'],
+                                    //     ];
+                                    // }, $employeesWithWeekEndOvertime));
                                 }),
 
                         ]),
