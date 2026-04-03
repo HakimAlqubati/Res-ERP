@@ -94,11 +94,12 @@ class OvertimeReportResource extends Resource
                             ->default($currentMonthData['end_month']),
                     ]),
 
-                SelectFilter::make('approved')
-                    ->label(__('lang.approved'))
+                SelectFilter::make('status')
+                    ->label(__('lang.status'))
                     ->options([
-                        '1' => __('lang.yes'),
-                        '0' => __('lang.no'),
+                        EmployeeOvertime::STATUS_PENDING  => __('lang.pending'),
+                        EmployeeOvertime::STATUS_APPROVED => __('lang.approved'),
+                        EmployeeOvertime::STATUS_REJECTED => __('lang.rejected'),
                     ]),
 
             ], FiltersLayout::AboveContent)

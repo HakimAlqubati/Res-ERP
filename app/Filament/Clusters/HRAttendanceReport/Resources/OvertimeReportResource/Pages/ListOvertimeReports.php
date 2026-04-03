@@ -18,14 +18,14 @@ class ListOvertimeReports extends ListRecords
         $employeeId = $this->getTable()->getFilters()['employee_id']->getState()['value'] ?? null;
         $dateFrom   = $this->getTable()->getFilters()['date_range']->getState()['date_from'] ?? null;
         $dateTo     = $this->getTable()->getFilters()['date_range']->getState()['date_to'] ?? null;
-        $approved   = $this->getTable()->getFilters()['approved']->getState()['value'] ?? null;
+        $status = $this->getTable()->getFilters()['status']->getState()['value'] ?? null;
 
         $filter = new OvertimeReportFilter(
             branchId: $branchId ? (int) $branchId : null,
             employeeId: $employeeId ? (int) $employeeId : null,
             dateFrom: $dateFrom,
             dateTo: $dateTo,
-            approved: $approved !== null && $approved !== '' ? (bool) $approved : null,
+            status: $status !== null && $status !== '' ? (string) $status : null,
         );
 
         $report = app(OvertimeReportService::class)->generate($filter);
