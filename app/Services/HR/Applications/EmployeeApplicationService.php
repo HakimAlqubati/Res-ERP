@@ -138,7 +138,12 @@ class EmployeeApplicationService
             $files = is_array($data['files']) ? $data['files'] : [$data['files']];
             foreach ($files as $file) {
                 if ($file instanceof \Illuminate\Http\UploadedFile) {
-                    $record->addMedia($file)->toMediaCollection('files');
+                    // إذا كان الملف صورة → ضغطه، وإلا ارفعه كما هو
+                    if (str_starts_with($file->getMimeType(), 'image/')) {
+                        $this->compressAndAddImage($record, $file, 'files');
+                    } else {
+                        $record->addMedia($file)->toMediaCollection('files');
+                    }
                 }
             }
         }
@@ -164,32 +169,34 @@ class EmployeeApplicationService
      */
     /**
      * ضغط الصورة وتصغيرها قبل رفعها إلى Media Library.
-     * - أقصى عرض: 1600px مع الحفاظ على النسبة
-     * - جودة JPEG: 80%
+     * - أقصى عرض: 1200px مع الحفاظ على النسبة
+     * - تحويل إلى WebP بجودة 70%
+     *
+     * @param string $collection اسم الـ Media Collection ('images' أو 'files')
      */
-    private function compressAndAddImage($record, \Illuminate\Http\UploadedFile $image): void
+    private function compressAndAddImage($record, \Illuminate\Http\UploadedFile $image, string $collection = 'images'): void
     {
         // 1. تهيئة المعالج بالطريقة الرسمية لـ V4
         $manager = ImageManager::usingDriver(Driver::class);
 
+        // 2. قراءة الصورة
         $img = $manager->decode($image->getRealPath());
 
-        // Resize
+        // 3. تصغير مع الحفاظ على التناسب
         $img->scaleDown(width: 1200);
 
-     
-        // تحويل إلى WebP (أفضل خيار)
+        // 4. تحويل إلى WebP بجودة 70
         $encodedImage = $img->encodeUsingFormat(Format::WEBP, quality: 70);
 
         // 5. حفظ البيانات الثنائية في ملف مؤقت
-        $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid('img_') . '.jpg';
+        $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid('img_') . '.webp';
         file_put_contents($tempPath, (string) $encodedImage);
 
         // 6. رفع الملف المؤقت إلى Media Library
         $record->addMedia($tempPath)
             ->usingName(pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME))
-            ->usingFileName(uniqid('img_') . '.jpg')
-            ->toMediaCollection('images');
+            ->usingFileName(uniqid('img_') . '.webp')
+            ->toMediaCollection($collection);
     }
 
     private function validateAdvanceRequest(array $details): void
@@ -226,7 +233,12 @@ class EmployeeApplicationService
             $files = is_array($data['files']) ? $data['files'] : [$data['files']];
             foreach ($files as $file) {
                 if ($file instanceof \Illuminate\Http\UploadedFile) {
-                    $record->addMedia($file)->toMediaCollection('files');
+                    // إذا كان الملف صورة → ضغطه، وإلا ارفعه كما هو
+                    if (str_starts_with($file->getMimeType(), 'image/')) {
+                        $this->compressAndAddImage($record, $file, 'files');
+                    } else {
+                        $record->addMedia($file)->toMediaCollection('files');
+                    }
                 }
             }
         }
