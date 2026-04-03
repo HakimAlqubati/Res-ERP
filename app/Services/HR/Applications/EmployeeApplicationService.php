@@ -9,6 +9,9 @@ use App\Exceptions\HR\LeaveApprovalException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Format;
 
 class EmployeeApplicationService
 {
@@ -125,7 +128,7 @@ class EmployeeApplicationService
             $images = is_array($data['images']) ? $data['images'] : [$data['images']];
             foreach ($images as $image) {
                 if ($image instanceof \Illuminate\Http\UploadedFile) {
-                    $record->addMedia($image)->toMediaCollection('images');
+                    $this->compressAndAddImage($record, $image);
                 }
             }
         }
@@ -159,6 +162,36 @@ class EmployeeApplicationService
      *
      * @throws ValidationException
      */
+    /**
+     * ضغط الصورة وتصغيرها قبل رفعها إلى Media Library.
+     * - أقصى عرض: 1600px مع الحفاظ على النسبة
+     * - جودة JPEG: 80%
+     */
+    private function compressAndAddImage($record, \Illuminate\Http\UploadedFile $image): void
+    {
+        // 1. تهيئة المعالج بالطريقة الرسمية لـ V4
+        $manager = ImageManager::usingDriver(Driver::class);
+
+        $img = $manager->decode($image->getRealPath());
+
+        // Resize
+        $img->scaleDown(width: 1200);
+
+     
+        // تحويل إلى WebP (أفضل خيار)
+        $encodedImage = $img->encodeUsingFormat(Format::WEBP, quality: 70);
+
+        // 5. حفظ البيانات الثنائية في ملف مؤقت
+        $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid('img_') . '.jpg';
+        file_put_contents($tempPath, (string) $encodedImage);
+
+        // 6. رفع الملف المؤقت إلى Media Library
+        $record->addMedia($tempPath)
+            ->usingName(pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME))
+            ->usingFileName(uniqid('img_') . '.jpg')
+            ->toMediaCollection('images');
+    }
+
     private function validateAdvanceRequest(array $details): void
     {
         $validator = Validator::make(
@@ -182,7 +215,7 @@ class EmployeeApplicationService
             $images = is_array($data['images']) ? $data['images'] : [$data['images']];
             foreach ($images as $image) {
                 if ($image instanceof \Illuminate\Http\UploadedFile) {
-                    $record->addMedia($image)->toMediaCollection('images');
+                    $this->compressAndAddImage($record, $image);
                 }
             }
         }
@@ -286,8 +319,8 @@ class EmployeeApplicationService
     {
         return DB::transaction(function () use ($id, $userId) {
             $record = EmployeeApplicationV2::with([
-                'leaveRequest', 
-                'missedCheckinRequest', 
+                'leaveRequest',
+                'missedCheckinRequest',
                 'missedCheckoutRequest'
             ])->findOrFail($id);
 
@@ -300,8 +333,8 @@ class EmployeeApplicationService
                 case EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST:
                     app(\App\Services\HR\Applications\LeaveRequest\LeaveApprovalService::class)->undoProcess($record);
                     break;
-                
-                // Note: Rollback for Attendance & Departure fingerprint requests can be added here if needed
+
+                    // Note: Rollback for Attendance & Departure fingerprint requests can be added here if needed
             }
 
             // Revert state to pending and clear approval metadata
