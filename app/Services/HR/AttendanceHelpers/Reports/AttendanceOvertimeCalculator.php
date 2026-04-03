@@ -28,10 +28,9 @@ class AttendanceOvertimeCalculator
             ->sum('hours');                                         // تأكد أن الساعات مخزنة كـ float
 
         // 5. تطبيق نفس لوجيك الهيلبر
-        // if ($isActualLargerThanSupposed && $approvedOvertimeDB > 0) {
-        if ($approvedOvertimeDB > 0) {
+        if ($isActualLargerThanSupposed && $approvedOvertimeDB > 0) {
             // لو الموظف عمل أوفر تايم ومسجّل بنظام الاوفر تايم
-            $res = $this->formatFloatToDuration($approvedOvertimeDB + ($actualHours));
+            $res = $this->formatFloatToDuration($approvedOvertimeDB + ($supposedDuration));
             // dd(
             //     $approvedOvertimeDB,
             //     $actualHours,
