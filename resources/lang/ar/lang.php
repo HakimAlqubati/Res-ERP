@@ -96,6 +96,7 @@ return [
   'stores' => 'المخازن',
   'start_date' => 'من تاريخ',
   'end_date' => 'إلى تاريخ',
+  'date_range' => 'فترة زمنية',
   'unit_price' => 'سعر الوحدة',
   'date_is_unspecified' => 'التاريخ غير محدد',
   'inventory_management' => 'نظام إدارة المخزون',

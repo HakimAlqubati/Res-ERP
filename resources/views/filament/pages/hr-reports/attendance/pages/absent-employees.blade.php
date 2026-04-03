@@ -11,7 +11,13 @@
                     <p>{{ __('Employee Absence Report') }}</p>
                 </th>
                 <th colspan="3" class="no_border_right_left">
-                    <p>{{ __('Date From: ') . $date_from }} | {{ __('Date To: ') . $date_to }}</p>
+                    <p>
+                        @if($date_from === $date_to)
+                            {{ __('Date: ') . $date_from }}
+                        @else
+                            {{ __('Date From: ') . $date_from }} | {{ __('Date To: ') . $date_to }}
+                        @endif
+                    </p>
                 </th>
             </tr>
             <tr>

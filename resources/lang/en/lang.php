@@ -96,6 +96,7 @@ return [
     'stores'                                      => 'Stores Setting',
     'start_date'                                  => 'Start date',
     'end_date'                                    => 'End date',
+    'date_range'                                  => 'Date Range',
     'unit_price'                                  => 'Unit price',
     'date_is_unspecified'                         => 'Date is unspecified',
     'inventory_management'                        => 'Inventory management',
