@@ -31,7 +31,7 @@ class AttendanceOvertimeCalculator
         // if ($isActualLargerThanSupposed && $approvedOvertimeDB > 0) {
         if ($approvedOvertimeDB > 0) {
             // لو الموظف عمل أوفر تايم ومسجّل بنظام الاوفر تايم
-            $res = $this->formatFloatToDuration($approvedOvertimeDB + ($supposedDuration));
+            $res = $this->formatFloatToDuration($approvedOvertimeDB + ($actualHours));
             // dd(
             //     $approvedOvertimeDB,
             //     $actualHours,
