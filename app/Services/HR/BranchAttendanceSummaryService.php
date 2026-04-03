@@ -69,18 +69,16 @@ class BranchAttendanceSummaryService
             ->select('id', 'name', 'employee_no', 'salary', 'join_date', 'working_days', 'working_hours', 'discount_exception_if_attendance_late')
             ->withSum(['overtimes as total_overtime' => function ($query) use ($year, $month) {
                 $query->whereYear('date', $year)
-                    ->whereMonth('date', $month);
+                    ->whereMonth('date', $month)
+                    ->where('type', \App\Models\EmployeeOvertime::TYPE_BASED_ON_DAY);
             }], 'hours')
-            ->withSum(['dailyOvertimes as manual_overtime_days' => function ($query) use ($year, $month) {
+            ->withCount(['dailyOvertimes as manual_overtime_days' => function ($query) use ($year, $month) {
                 $query->whereYear('date', $year)
                     ->whereMonth('date', $month);
-            }], 'hours')
-            // ->limit(20) 
+            }])
             ->chunk(10, function ($employees) use (&$currentStaff, &$newStaff, $terminatedEmployeeIds, $year, $month, $periodStart, $periodEnd, $monthDays) {
 
                 $filtered = $employees->filter(fn($emp) => !in_array($emp->id, $terminatedEmployeeIds));
-
-                if ($filtered->isEmpty()) return;
 
                 foreach ($filtered as $employee) {
                     $row = $this->processEmployee($employee, $periodStart, $periodEnd, $year, $month, $monthDays);

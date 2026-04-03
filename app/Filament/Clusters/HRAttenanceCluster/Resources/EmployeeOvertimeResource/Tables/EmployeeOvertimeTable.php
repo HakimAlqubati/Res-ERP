@@ -65,6 +65,12 @@ class EmployeeOvertimeTable
                     ->sortable()
                     ->wrap()
                     ->searchable()->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('type')
+                    ->label('Type')
+                    ->sortable()
+                    ->wrap()
+                    ->formatStateUsing(fn($state) => EmployeeOvertime::getTypes()[$state] ?? $state)
+                    ->searchable()->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('date')
                     ->label('Date')
@@ -90,14 +96,11 @@ class EmployeeOvertimeTable
                     // ->icon(Heroicon::Clock)
                     ->iconPosition(IconPosition::After),
 
-                IconColumn::make('status')->toggleable(isToggledHiddenByDefault: false)
-                    ->label('Approved')
-                    ->icon(fn (string $state): string => match ($state) {
-                        EmployeeOvertime::STATUS_APPROVED => 'heroicon-o-check-badge',
-                        EmployeeOvertime::STATUS_REJECTED => 'heroicon-o-x-mark',
-                        default => 'heroicon-o-clock',
-                    })
-                    ->color(fn (string $state): string => match ($state) {
+                TextColumn::make('status')->toggleable(isToggledHiddenByDefault: false)
+                    ->label('Status')
+                    ->sortable()
+                    ->formatStateUsing(fn($state) => EmployeeOvertime::STATUSES[$state] ?? $state)
+                    ->color(fn(string $state): string => match ($state) {
                         EmployeeOvertime::STATUS_APPROVED => 'success',
                         EmployeeOvertime::STATUS_REJECTED => 'danger',
                         default => 'gray',
@@ -271,7 +274,7 @@ class EmployeeOvertimeTable
                         }),
                     BulkAction::make('Rollback approved')
                         ->requiresConfirmation()
-                        ->icon('heroicon-o-x-mark') 
+                        ->icon('heroicon-o-x-mark')
                         ->action(function (Collection $records) {
                             try {
                                 DB::transaction(fn() => $records->each->update(['status' => EmployeeOvertime::STATUS_PENDING, 'approved_by' => null, 'approved_at' => null]));
