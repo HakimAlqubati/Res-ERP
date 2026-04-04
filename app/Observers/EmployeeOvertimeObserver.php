@@ -70,9 +70,9 @@ class EmployeeOvertimeObserver
         }
 
         // 3. Specific check for "Undo Approval": only allowed from Approved
-        if ($newStatus === EmployeeOvertime::STATUS_PENDING && $oldStatus !== EmployeeOvertime::STATUS_APPROVED) {
-            throw new \Exception("Only approved overtime can be undone.", 422);
-        }
+        // if ($newStatus === EmployeeOvertime::STATUS_PENDING && $oldStatus !== EmployeeOvertime::STATUS_APPROVED) {
+        //     throw new \Exception("Only approved overtime can be undone.", 422);
+        // }
 
         // 4. Detect rollback: status field transitioning from approved to something else (already handled by rule above, but check payroll)
         if (
