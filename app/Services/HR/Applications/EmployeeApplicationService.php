@@ -128,7 +128,7 @@ class EmployeeApplicationService
             $images = is_array($data['images']) ? $data['images'] : [$data['images']];
             foreach ($images as $image) {
                 if ($image instanceof \Illuminate\Http\UploadedFile) {
-                    $this->compressAndAddImage($record, $image);
+                    // $this->compressAndAddImage($record, $image);
                 }
             }
         }
@@ -140,7 +140,7 @@ class EmployeeApplicationService
                 if ($file instanceof \Illuminate\Http\UploadedFile) {
                     // إذا كان الملف صورة → ضغطه، وإلا ارفعه كما هو
                     if (str_starts_with($file->getMimeType(), 'image/')) {
-                        $this->compressAndAddImage($record, $file, 'files');
+                        // $this->compressAndAddImage($record, $file, 'files');
                     } else {
                         $record->addMedia($file)->toMediaCollection('files');
                     }
@@ -176,19 +176,20 @@ class EmployeeApplicationService
      */
     private function compressAndAddImage($record, \Illuminate\Http\UploadedFile $image, string $collection = 'images'): void
     {
-        // 1. تهيئة المعالج بالطريقة الرسمية لـ V4
-        $manager = ImageManager::usingDriver(Driver::class);
+        // 1. تهيئة المعالج للإصدار الثالث
+        $manager = new ImageManager(new Driver());
 
-        // 2. قراءة الصورة
-        $img = $manager->decode($image->getRealPath());
+        // 2. قراءة الصورة (في V3 نستخدم read بدلاً من decode)
+        $img = $manager->read($image->getRealPath());
 
-        // 3. تصغير مع الحفاظ على التناسب
+        // 3. تصغير الصورة مع الحفاظ على التناسب
+        // ملاحظة: دالة scaleDown موجودة أيضاً في V3
         $img->scaleDown(width: 1200);
 
-        // 4. تحويل إلى WebP بجودة 70
-        $encodedImage = $img->encodeUsingFormat(Format::WEBP, quality: 70);
+        // 4. التحويل إلى WebP بجودة 70 (الطريقة أسهل في V3)
+        $encodedImage = $img->toWebp(70);
 
-        // 5. حفظ البيانات الثنائية في ملف مؤقت
+        // 5. حفظ البيانات في ملف مؤقت
         $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid('img_') . '.webp';
         file_put_contents($tempPath, (string) $encodedImage);
 
@@ -222,7 +223,7 @@ class EmployeeApplicationService
             $images = is_array($data['images']) ? $data['images'] : [$data['images']];
             foreach ($images as $image) {
                 if ($image instanceof \Illuminate\Http\UploadedFile) {
-                    $this->compressAndAddImage($record, $image);
+                    // $this->compressAndAddImage($record, $image);
                 }
             }
         }
@@ -235,7 +236,7 @@ class EmployeeApplicationService
                 if ($file instanceof \Illuminate\Http\UploadedFile) {
                     // إذا كان الملف صورة → ضغطه، وإلا ارفعه كما هو
                     if (str_starts_with($file->getMimeType(), 'image/')) {
-                        $this->compressAndAddImage($record, $file, 'files');
+                        // $this->compressAndAddImage($record, $file, 'files');
                     } else {
                         $record->addMedia($file)->toMediaCollection('files');
                     }
