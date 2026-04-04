@@ -19,7 +19,7 @@ class OvertimeService
     public function getGroupedByDate(array $filters = []): Collection
     {
         $query = EmployeeOvertime::query()
-            ->with(['employee:id,name', 'approvedBy:id,name', 'createdBy:id,name']);
+            ->with(['employee:id,name', 'approvedBy:id,name', 'createdBy:id,name','rejectedBy:id,name']);
 
         // Apply Filters
         if (isset($filters['employee_id'])) {
