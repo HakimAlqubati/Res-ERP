@@ -7,6 +7,7 @@ use App\Facades\Warnings;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource;
 use App\Models\EmployeeApplicationV2;
 use App\Services\HR\Applications\AdvanceRequest\AdvanceApprovalService;
+use App\Services\HR\Payroll\PayrollLockGuard;
 use App\Services\Warnings\WarningPayload;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -24,11 +25,25 @@ class EmployeeApplicationObserver
 {
     public function __construct(
         private readonly AdvanceApprovalService $advanceApprovalService,
+        private readonly PayrollLockGuard       $payrollLockGuard,
     ) {}
 
     // =========================================================================
     //  Event Hooks
     // =========================================================================
+
+    /**
+     * Reject the application early when the employee's payroll for the
+     * relevant month has already been processed.
+     *
+     * Throwing here aborts the INSERT and rolls back any wrapping transaction.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function creating(EmployeeApplicationV2 $app): void
+    {
+        $this->payrollLockGuard->ensurePayrollNotLocked($app);
+    }
 
     /**
      * Notify the employee's manager when a new application is submitted.
