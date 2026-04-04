@@ -3,6 +3,7 @@
 namespace App\Services\HR\Dashboard;
 
 use App\DTOs\HR\Dashboard\DashboardFilterDTO;
+use App\Models\AppLog;
 use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\Employee;
@@ -125,6 +126,8 @@ class DashboardService
         $absentEmployeesToday = app(AbsentEmployeesV2Service::class)
             ->getAbsentEmployees($today, $today, $absentFilters);
 
+
+        AppLog::write('absent_employees_today', $absentEmployeesToday);
         // Group absent count by branch_id for O(1) lookups inside the loop
         $absentCountByBranch = $absentEmployeesToday
             ->groupBy('branch_id')
