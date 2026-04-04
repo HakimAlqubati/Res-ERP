@@ -701,7 +701,7 @@ class EmployeeApplicationResource extends Resource
                         'approved_by' => auth()->user()->id,
                         'approved_at' => now(),
                     ]);
-                    
+
                     DB::commit();
                     showSuccessNotifiMessage('Done');
                 } catch (Exception $th) {
@@ -743,19 +743,19 @@ class EmployeeApplicationResource extends Resource
             ->label(__('lang.undo_approve'))
             ->button()
             ->visible(fn($record): bool => (
-                $record->status === EmployeeApplicationV2::STATUS_APPROVED && 
+                $record->status === EmployeeApplicationV2::STATUS_APPROVED &&
                 $record->application_type_id === EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST
             ))
             ->color('warning')
             ->icon('heroicon-o-arrow-path')
             ->requiresConfirmation()
-            ->modalHeading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_title' , ['id' => '#'.$record->id]))
+            ->modalHeading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_title', ['id' => '#' . $record->id]))
             ->modalSubheading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_body'))
             ->action(function (EmployeeApplicationV2 $record) {
                 try {
                     app(\App\Services\HR\Applications\EmployeeApplicationService::class)
                         ->undoApproveApplication($record->id, auth()->id());
-                    
+
                     showSuccessNotifiMessage(__('lang.done'));
                 } catch (\Exception $th) {
                     showWarningNotifiMessage(__('lang.failed'), $th->getMessage());
@@ -1468,7 +1468,7 @@ class EmployeeApplicationResource extends Resource
 
                                     $date = $get('detail_date') ?? now()->toDateString();
                                     $startsFrom = \Carbon\Carbon::parse($date)->endOfMonth()->format('Y-m-d');
-                                    
+
                                     $set('detail_deduction_starts_from', $startsFrom);
                                     $set('detail_deduction_ends_at', $startsFrom);
                                 }
@@ -1637,6 +1637,19 @@ class EmployeeApplicationResource extends Resource
                         DatePicker::make('date')->maxDate(now()->toDateString())
                             ->label('Date')->required()
                             ->default('Y-m-d')
+                            // ->rules([
+                            //     fn($get) => function ($attribute, $value, $fail) use ($get) {
+                            //         $date = \Carbon\Carbon::parse($value);
+                            //         if ($empId = $get('../employee_id')) {
+                            //             try {
+                            //                 app(\App\Services\HR\Payroll\PayrollLockGuard::class)
+                            //                     ->checkLock((int) $empId, $date->year, $date->month);
+                            //             } catch (\Illuminate\Validation\ValidationException $e) {
+                            //                 $fail(collect($e->errors())->first()[0]);
+                            //             }
+                            //         }
+                            //     }
+                            // ])
                             ->maxDate(now()->toDateString())
                         // ->minDate(fn($get): string => (Carbon::parse($get('../application_date'))->startOfMonth()->toDateString()))
                         ,
@@ -1728,4 +1741,3 @@ class EmployeeApplicationResource extends Resource
         return $query->forBranchManager();
     }
 }
-

@@ -42,7 +42,16 @@ class EmployeeApplicationObserver
      */
     public function creating(EmployeeApplicationV2 $app): void
     {
-        $this->payrollLockGuard->ensurePayrollNotLocked($app);
+        $date = $app->application_date
+            ? \Carbon\Carbon::parse($app->application_date)
+            : \Carbon\Carbon::today();
+
+        $this->payrollLockGuard->checkLock(
+            $app->employee_id,
+            $date->year,
+            $date->month,
+            'application_date'
+        );
     }
 
     /**
