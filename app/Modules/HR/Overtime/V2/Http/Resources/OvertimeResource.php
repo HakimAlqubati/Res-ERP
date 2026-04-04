@@ -29,6 +29,8 @@ class OvertimeResource extends JsonResource
             'approved_by' => $this->approvedBy ? $this->approvedBy->name : null,
             'created_by' => $this->createdBy ? $this->createdBy->name : null,
             'approved_at' => $this->approved_at,
+            'rejected_by' => $this->rejectedBy ? $this->rejectedBy->name : null,
+            'rejected_at' => $this->rejected_at,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
