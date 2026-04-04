@@ -118,6 +118,8 @@ return [
     'system_settings'                             => 'System settings',
     'transfer_date'                               => 'Transfer date',
     'attachment'                                  => 'Attachment',
+    'attachments'                                 => 'Attachments',
+    'files'                                       => 'Files',
     'download_attachment'                         => 'Download attachment',
     'has_attachment'                              => 'Has attachment?',
     'whatsapp_number'                             => 'WhatsApp number',

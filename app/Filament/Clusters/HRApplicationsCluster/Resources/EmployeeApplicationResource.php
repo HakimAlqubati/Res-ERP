@@ -60,6 +60,10 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Filters\TrashedFilter;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use Filament\Forms\Components\FileUpload;
+
+
 
 class EmployeeApplicationResource extends Resource
 {
@@ -633,6 +637,50 @@ class EmployeeApplicationResource extends Resource
                 return [
                     Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
                 ];
+            });
+    }
+
+    public static function attachmentsAction(): Action
+    {
+        return Action::make('attachments')
+            ->label(__('lang.attachments'))
+            ->icon('heroicon-o-paper-clip')
+            ->color('info')
+            ->form([
+                Fieldset::make(__('lang.attachments'))->schema([
+                    FileUpload::make('new_images')
+                        ->label(__('lang.images'))
+                        ->multiple()
+                        ->image()
+                        ->imageEditor()
+                        ->imageResizeTargetWidth(1200)
+                        ->directory('temp-attachments')
+                        ->columnSpan(1),
+                    FileUpload::make('new_files')
+                        ->label(__('lang.files'))
+                        ->multiple()
+                        ->directory('temp-attachments')
+                        ->columnSpan(1),
+                ])->columns(2),
+            ])
+            ->action(function (EmployeeApplicationV2 $record, array $data) {
+                // Add new images
+                if (!empty($data['new_images'])) {
+                    foreach ($data['new_images'] as $imagePath) {
+                        $record->addMedia(storage_path('app/public/' . $imagePath))
+                            ->toMediaCollection('images');
+                    }
+                }
+
+                // Add new files
+                if (!empty($data['new_files'])) {
+                    foreach ($data['new_files'] as $filePath) {
+                        $record->addMedia(storage_path('app/public/' . $filePath))
+                            ->toMediaCollection('files');
+                    }
+                }
+
+                Notification::make()->success()->title(__('lang.done'))->send();
             });
     }
 
