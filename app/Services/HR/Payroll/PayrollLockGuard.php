@@ -2,37 +2,42 @@
 
 namespace App\Services\HR\Payroll;
 
-use App\Models\EmployeeApplicationV2;
 use App\Models\Payroll;
-use App\Models\PayrollRun;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Guards employee applications against being created after a payroll run
+ * Guards any HR operation against being performed after a payroll run
  * has already been finalised for the relevant month.
  *
  * This is a pure, stateless service — no side-effects, no persistence.
+ * Use checkLock(employeeId, year, month, errorField) from any context: 
+ * applications, attendance, overtime, recalculations, etc.
  */
 final class PayrollLockGuard
 {
     /**
-     * Assert that no payroll has been processed for the employee in the
-     * month/year that the application falls in.
+     * Assert that no payroll has been processed for the given employee
+     * in the specified month/year.
+     *
+     * Callers are responsible for resolving the year/month from their
+     * own context (application date, attendance date, overtime date, etc.).
+     *
+     * @param int $employeeId The ID of the employee.
+     * @param int $year The year of the operation.
+     * @param int $month The month of the operation.
+     * @param string $errorField The validation error key to use if locked (default is 'date').
      *
      * @throws \Illuminate\Validation\ValidationException  when the payroll period is already locked.
      */
-    public function ensurePayrollNotLocked(EmployeeApplicationV2 $application): void
+    public function checkLock(int $employeeId, int $year, int $month, string $errorField = 'date'): void
     {
-        [$year, $month] = $this->resolvePeriod($application);
-
-        $isLocked = $this->hasExistingPayroll($application->employee_id, $year, $month);
-
-        if ($isLocked) {
+        if ($this->hasExistingPayroll($employeeId, $year, $month)) {
             $period = $this->monthLabel($year, $month);
+
             throw ValidationException::withMessages([
-                'application_date' => "Locked: Payroll for {$period} is already finalized. " .
-                    "Cannot submit new requests for this employee in this period.",
+                $errorField => "Locked: Payroll for {$period} is already finalized. " .
+                    "Cannot process records for this employee in this period.",
             ]);
         }
     }
@@ -40,21 +45,6 @@ final class PayrollLockGuard
     // -------------------------------------------------------------------------
     //  Private helpers
     // -------------------------------------------------------------------------
-
-    /**
-     * Derive [year, month] from the application's date field,
-     * falling back to today when the field is absent.
-     *
-     * @return array{int, int}
-     */
-    private function resolvePeriod(EmployeeApplicationV2 $application): array
-    {
-        $date = $application->application_date
-            ? Carbon::parse($application->application_date)
-            : Carbon::today();
-
-        return [$date->year, $date->month];
-    }
 
     /**
      * Check whether an active Payroll record exists for the given employee
