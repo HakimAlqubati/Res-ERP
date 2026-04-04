@@ -8,9 +8,11 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeApplicationV2;
 use App\Models\EmployeeOvertime;
+use App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesV2Service;
 use App\Services\HR\AttendanceHelpers\Reports\MissingCheckoutService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+
 
 class DashboardService
 {
@@ -176,24 +178,22 @@ class DashboardService
     }
 
     /**
-     * احسب عدد الغائبين اليوم بناءً على تقرير الحضور (PresentEmployeesService).
-     * الغياب = إجمالي الموظفين النشطين - الحاضرون الآن
+     * احسب عدد الغائبين اليوم باستخدام AbsentEmployeesV2Service
+     * للحصول على نتيجة دقيقة تأخذ بعين الاعتبار الورديات والإجازات والعطل.
      */
     private function getTodayAbsentsCount(DashboardFilterDTO $dto): int
     {
         $baseDate = $dto->dateTime ? $dto->dateTime->clone() : Carbon::now();
+        $today    = $baseDate->toDateString();
 
-        // إجمالي الموظفين النشطين
-        $totalEmployees = Employee::where('active', 1)
-            ->when($dto->branchId, fn($q) => $q->where('branch_id', $dto->branchId))
+        $filters = [];
+        if ($dto->branchId) {
+            $filters['branch_id'] = $dto->branchId;
+        }
+        $filters['current_time'] = $baseDate->format('H:i:s');
+
+        return app(AbsentEmployeesV2Service::class)
+            ->getAbsentEmployees($today, $today, $filters)
             ->count();
-
-        // الحاضرون الآن (يعتمد على overnight shifts أيضاً)
-        $presentService = app(\App\Services\HR\AttendanceHelpers\Reports\PresentEmployeesService::class);
-        $presentCount = $presentService
-            ->getPresentEmployees($baseDate, $dto->branchId ? ['branch_id' => $dto->branchId] : [])
-            ->count();
-
-        return max(0, $totalEmployees - $presentCount);
     }
 }
