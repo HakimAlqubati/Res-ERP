@@ -127,7 +127,7 @@ class DashboardService
             ->getAbsentEmployees($today, $today, $absentFilters);
 
 
-        AppLog::write('absent_employees_today', $absentEmployeesToday);
+        // AppLog::write('absent_employees_today', $absentEmployeesToday);
         // Group absent count by branch_id for O(1) lookups inside the loop
         $absentCountByBranch = $absentEmployeesToday
             ->groupBy('branch_id')
