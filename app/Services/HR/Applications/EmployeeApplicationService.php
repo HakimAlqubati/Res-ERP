@@ -128,7 +128,7 @@ class EmployeeApplicationService
             $images = is_array($data['images']) ? $data['images'] : [$data['images']];
             foreach ($images as $image) {
                 if ($image instanceof \Illuminate\Http\UploadedFile) {
-                    // $this->compressAndAddImage($record, $image);
+                    $this->compressAndAddImage($record, $image);
                 }
             }
         }
@@ -140,7 +140,7 @@ class EmployeeApplicationService
                 if ($file instanceof \Illuminate\Http\UploadedFile) {
                     // إذا كان الملف صورة → ضغطه، وإلا ارفعه كما هو
                     if (str_starts_with($file->getMimeType(), 'image/')) {
-                        // $this->compressAndAddImage($record, $file, 'files');
+                        $this->compressAndAddImage($record, $file, 'files');
                     } else {
                         $record->addMedia($file)->toMediaCollection('files');
                     }
@@ -223,7 +223,7 @@ class EmployeeApplicationService
             $images = is_array($data['images']) ? $data['images'] : [$data['images']];
             foreach ($images as $image) {
                 if ($image instanceof \Illuminate\Http\UploadedFile) {
-                    // $this->compressAndAddImage($record, $image);
+                    $this->compressAndAddImage($record, $image);
                 }
             }
         }
@@ -236,7 +236,7 @@ class EmployeeApplicationService
                 if ($file instanceof \Illuminate\Http\UploadedFile) {
                     // إذا كان الملف صورة → ضغطه، وإلا ارفعه كما هو
                     if (str_starts_with($file->getMimeType(), 'image/')) {
-                        // $this->compressAndAddImage($record, $file, 'files');
+                        $this->compressAndAddImage($record, $file, 'files');
                     } else {
                         $record->addMedia($file)->toMediaCollection('files');
                     }
