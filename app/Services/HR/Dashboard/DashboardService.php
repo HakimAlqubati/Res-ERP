@@ -63,7 +63,7 @@ class DashboardService
             'pending_advance'  => $appCounts->get(EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST, 0),
             'pending_meal'     => $appCounts->get(EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST, 0),
             'missing_checkouts_count' => $missingCheckoutsCount,
-            'absents_count' => 0,
+            'absents_count'           => $this->getTodayAbsentsCount($dto),
         ];
     }
 
@@ -173,5 +173,27 @@ class DashboardService
             'today_attendance' => $todayAttendance,
             'last_7_days_attendance' => $last7DaysAttendance,
         ];
+    }
+
+    /**
+     * احسب عدد الغائبين اليوم بناءً على تقرير الحضور (PresentEmployeesService).
+     * الغياب = إجمالي الموظفين النشطين - الحاضرون الآن
+     */
+    private function getTodayAbsentsCount(DashboardFilterDTO $dto): int
+    {
+        $baseDate = $dto->dateTime ? $dto->dateTime->clone() : Carbon::now();
+
+        // إجمالي الموظفين النشطين
+        $totalEmployees = Employee::where('active', 1)
+            ->when($dto->branchId, fn($q) => $q->where('branch_id', $dto->branchId))
+            ->count();
+
+        // الحاضرون الآن (يعتمد على overnight shifts أيضاً)
+        $presentService = app(\App\Services\HR\AttendanceHelpers\Reports\PresentEmployeesService::class);
+        $presentCount = $presentService
+            ->getPresentEmployees($baseDate, $dto->branchId ? ['branch_id' => $dto->branchId] : [])
+            ->count();
+
+        return max(0, $totalEmployees - $presentCount);
     }
 }
