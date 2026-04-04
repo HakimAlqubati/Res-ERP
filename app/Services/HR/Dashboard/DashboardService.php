@@ -49,7 +49,7 @@ class DashboardService
             ->pluck('count', 'application_type_id');
 
         // Overtime
-        $overtimeQuery = EmployeeOvertime::where('approved', 0);
+        $overtimeQuery = EmployeeOvertime::where('status', EmployeeOvertime::STATUS_PENDING);
         if ($dto->branchId) {
             $overtimeQuery->where('branch_id', $dto->branchId);
         }
