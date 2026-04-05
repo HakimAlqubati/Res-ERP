@@ -22,6 +22,27 @@ class EmployeeOvertimeObserver
         private readonly PayrollLockGuard $payrollLockGuard,
     ) {}
 
+    /**
+     * Prevent creating overtime records if the payroll month is locked.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function creating(EmployeeOvertime $employeeOvertime): void
+    {
+        if (empty($employeeOvertime->date)) {
+            return;
+        }
+
+        $date = Carbon::parse($employeeOvertime->date);
+
+        $this->payrollLockGuard->checkLock(
+            (int) $employeeOvertime->employee_id,
+            $date->year,
+            $date->month,
+            'date'
+        );
+    }
+
 
     /**
      * @throws \Exception
@@ -77,12 +98,13 @@ class EmployeeOvertimeObserver
         }
 
         // 3. Block approval if the payroll period is already finalized for this employee.
-        if (
-            $employeeOvertime->isDirty('status') &&
+        $isTransitioningToApproved = $employeeOvertime->isDirty('status') &&
             $newStatus === EmployeeOvertime::STATUS_APPROVED &&
-            $oldStatus !== EmployeeOvertime::STATUS_APPROVED &&
-            !empty($employeeOvertime->date)
-        ) {
+            $oldStatus !== EmployeeOvertime::STATUS_APPROVED;
+
+        $isDateChanging = $employeeOvertime->isDirty('date');
+
+        if (($isTransitioningToApproved || $isDateChanging) && !empty($employeeOvertime->date)) {
             $date = Carbon::parse($employeeOvertime->date);
 
             $this->payrollLockGuard->checkLock(
@@ -112,6 +134,17 @@ class EmployeeOvertimeObserver
      */
     public function deleting(EmployeeOvertime $employeeOvertime): void
     {
+        if (!empty($employeeOvertime->date)) {
+            $date = Carbon::parse($employeeOvertime->date);
+
+            $this->payrollLockGuard->checkLock(
+                (int) $employeeOvertime->employee_id,
+                $date->year,
+                $date->month,
+                'date'
+            );
+        }
+
         $this->ensureNoConflictWithPayroll($employeeOvertime);
     }
 

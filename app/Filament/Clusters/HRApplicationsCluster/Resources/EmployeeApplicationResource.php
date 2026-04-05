@@ -1639,6 +1639,7 @@ class EmployeeApplicationResource extends Resource
                             ->default('Y-m-d')
                             ->rules([
                                 fn($get) => function ($attribute, $value, $fail) use ($get) {
+                                   return;
                                     $date = \Carbon\Carbon::parse($value);
                                     if ($empId = $get('../employee_id')) {
                                         try {
