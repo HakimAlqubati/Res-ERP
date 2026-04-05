@@ -5,17 +5,24 @@ namespace App\Observers;
 use App\Exceptions\HR\PayrollConflictException;
 use App\Models\EmployeeOvertime;
 use App\Models\PayrollRun;
+use App\Services\HR\Payroll\PayrollLockGuard;
 use Carbon\Carbon;
 
 /**
  * Observer for EmployeeOvertime model.
- * 
+ *
  * Enforces business rules relating to payroll cycles:
+ * - Prevents approving overtime if the payroll period is already finalized.
  * - Prevents rolling back approved overtime if a payroll run for that period exists.
  * - Prevents deleting overtime records if a payroll run for that period exists.
  */
 class EmployeeOvertimeObserver
 {
+    public function __construct(
+        private readonly PayrollLockGuard $payrollLockGuard,
+    ) {}
+
+
     /**
      * @throws \Exception
      */
@@ -60,7 +67,7 @@ class EmployeeOvertimeObserver
         if ($oldStatus === EmployeeOvertime::STATUS_APPROVED) {
             // Specific check for Rejecting an Approved record
             if ($newStatus === EmployeeOvertime::STATUS_REJECTED) {
-                 throw new \Exception("Cannot reject approved overtime.", 422);
+                throw new \Exception("Cannot reject approved overtime.", 422);
             }
 
             // Only allow transition to PENDING (rollback)
@@ -69,12 +76,24 @@ class EmployeeOvertimeObserver
             }
         }
 
-        // 3. Specific check for "Undo Approval": only allowed from Approved
-        // if ($newStatus === EmployeeOvertime::STATUS_PENDING && $oldStatus !== EmployeeOvertime::STATUS_APPROVED) {
-        //     throw new \Exception("Only approved overtime can be undone.", 422);
-        // }
+        // 3. Block approval if the payroll period is already finalized for this employee.
+        if (
+            $employeeOvertime->isDirty('status') &&
+            $newStatus === EmployeeOvertime::STATUS_APPROVED &&
+            $oldStatus !== EmployeeOvertime::STATUS_APPROVED &&
+            !empty($employeeOvertime->date)
+        ) {
+            $date = Carbon::parse($employeeOvertime->date);
 
-        // 4. Detect rollback: status field transitioning from approved to something else (already handled by rule above, but check payroll)
+            $this->payrollLockGuard->checkLock(
+                (int) $employeeOvertime->employee_id,
+                $date->year,
+                $date->month,
+                'date'
+            );
+        }
+
+        // 4. Detect rollback: status field transitioning from approved to something else.
         if (
             $employeeOvertime->isDirty('status') &&
             $newStatus !== EmployeeOvertime::STATUS_APPROVED &&

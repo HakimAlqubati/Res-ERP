@@ -59,6 +59,7 @@ final class PayrollLockGuard
             ->where('employee_id', $employeeId)
             ->where('year', $year)
             ->where('month', $month)
+            ->withTrashed()
             ->whereNotIn('status', [Payroll::STATUS_CANCELLED])
             ->exists();
     }

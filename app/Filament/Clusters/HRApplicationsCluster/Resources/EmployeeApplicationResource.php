@@ -1637,19 +1637,19 @@ class EmployeeApplicationResource extends Resource
                         DatePicker::make('date')->maxDate(now()->toDateString())
                             ->label('Date')->required()
                             ->default('Y-m-d')
-                            // ->rules([
-                            //     fn($get) => function ($attribute, $value, $fail) use ($get) {
-                            //         $date = \Carbon\Carbon::parse($value);
-                            //         if ($empId = $get('../employee_id')) {
-                            //             try {
-                            //                 app(\App\Services\HR\Payroll\PayrollLockGuard::class)
-                            //                     ->checkLock((int) $empId, $date->year, $date->month);
-                            //             } catch (\Illuminate\Validation\ValidationException $e) {
-                            //                 $fail(collect($e->errors())->first()[0]);
-                            //             }
-                            //         }
-                            //     }
-                            // ])
+                            ->rules([
+                                fn($get) => function ($attribute, $value, $fail) use ($get) {
+                                    $date = \Carbon\Carbon::parse($value);
+                                    if ($empId = $get('../employee_id')) {
+                                        try {
+                                            app(\App\Services\HR\Payroll\PayrollLockGuard::class)
+                                                ->checkLock((int) $empId, $date->year, $date->month);
+                                        } catch (\Illuminate\Validation\ValidationException $e) {
+                                            $fail(collect($e->errors())->first()[0]);
+                                        }
+                                    }
+                                }
+                            ])
                             ->maxDate(now()->toDateString())
                         // ->minDate(fn($get): string => (Carbon::parse($get('../application_date'))->startOfMonth()->toDateString()))
                         ,
