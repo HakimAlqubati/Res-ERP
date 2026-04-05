@@ -216,35 +216,8 @@ class AttendanceFetcher
                 'day_status'            => $dayStatus,
             ]);
         }
-
-        // $stats = HelperFunctions::calculateAttendanceStats($result);
-
-        // // =========================================================================
-        // // منطق الإجازة الأسبوعية
-        // // =========================================================================
-        // $isPreviousMonth = $endDate->format('Y-m') < now()->format('Y-m');
-        // $totalMonthDays  = $stats['required_days'] ?? $stats['total_days'] ?? 0;
-        // $absentDays      = $stats['absent'] ?? 0;
-
-        // // تحويل أيام الغياب بصرياً في التقرير — فقط عند انتهاء الشهر
-        // if ($isPreviousMonth) {
-        //     $result           = $this->applyWeeklyLeaveToAbsences($result);
-        //     // $weeklyLeaveStats = $result->get('weekly_leave_stats', []);
-        //     // $absentDays       = $weeklyLeaveStats['remaining_absences'] ?? $absentDays;
-        // }
-
-        // // الاحتساب المالي — يعمل دائماً بنفس هيكل الريسبونس
-        // // when is_period_ended && is_for_payroll → يُطبَّق احتساب الإجازات الأسبوعية
-        // // otherwise → نفس الريسبونس لكن بدون خصم الإجازات (الغياب كما هو)
-        // $stats['weekly_leave_calculation'] = (new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator())
-        //     ->calculate($totalMonthDays, $absentDays, [
-        //         'is_period_ended' => $isPreviousMonth,
-        //         'is_for_payroll'  => true,
-        //     ]);
-
-        // $result->put('statistics', $stats);
-        // $result->put('total_duration_hours', $totalDurationHours);
-
+ 
+      
 
         // 2. حساب الإحصائيات (للشهر كاملاً) لغرض المحاسب المالي (WeeklyLeaveCalculator) فقط
         $fullMonthStats = HelperFunctions::calculateAttendanceStats($result);
