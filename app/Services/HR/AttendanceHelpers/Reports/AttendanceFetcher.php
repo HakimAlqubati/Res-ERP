@@ -254,11 +254,12 @@ class AttendanceFetcher
         // 3. الاحتساب المالي — يعمل بناءً على الشهر كاملاً ليعطي الخصم/الإضافي الحقيقي
         $payrollCalculation = (new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator())
             ->calculate($totalMonthDays, $absentDays, [
-                'is_period_ended' => $isPreviousMonth,
-                'is_for_payroll'  => true,
+                'is_period_ended'       => $isPreviousMonth,
+                'is_for_payroll'        => true,
+                'has_auto_weekly_leave' => $employee->has_auto_weekly_leave,
             ]);
 
-        if ($isPreviousMonth) {
+        if ($isPreviousMonth && $employee->has_auto_weekly_leave) {
             $result = $this->applyWeeklyLeaveToAbsences($result);
         }
 

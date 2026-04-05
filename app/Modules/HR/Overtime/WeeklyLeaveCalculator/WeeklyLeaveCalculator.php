@@ -30,7 +30,8 @@ class WeeklyLeaveCalculator
         try {
             $isPeriodEnded    = (bool) ($context['is_period_ended'] ?? false);
             $isForPayroll     = (bool) ($context['is_for_payroll']  ?? false);
-            $applyWeeklyLeave = $isPeriodEnded && $isForPayroll;
+            $hasAutoLeave     = (bool) ($context['has_auto_weekly_leave'] ?? true);
+            $applyWeeklyLeave = $isPeriodEnded && $isForPayroll && $hasAutoLeave;
 
             // حماية: الغياب لا يتجاوز إجمالي الأيام
             if ($absentDays > $totalMonthDays) {

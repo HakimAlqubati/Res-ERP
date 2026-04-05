@@ -372,6 +372,7 @@ return [
     'no_salary_deduction_for_absences' => 'No Salary Deduction for Absences',
     'exempt_from_late_attendance_deduction' => 'Exempt from Late Attendance Deduction',
     'is_mtd_applicable' => 'MTD Applicable',
+    'has_auto_weekly_leave' => 'Auto Weekly Leave',
 
     // ===========================================
     // HRMS - Attendance & Shifts
@@ -798,6 +799,7 @@ return [
     'select_employee_check_type' => 'Select staff and check type',
     'check_type' => 'Check type',
     'notes' => 'Notes',
+
     'approved' => 'Approved',
     'rejected' => 'Rejected',
     'period' => 'Period',
