@@ -104,6 +104,7 @@ class OvertimeService
             ->where('type', $data['type'])
             ->whereIn('employee_id', $employeeIds)
             ->with('employee:id,name')
+            ->withTrashed()
             ->get();
 
         if ($existingRecords->isNotEmpty()) {
