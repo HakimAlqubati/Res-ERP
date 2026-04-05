@@ -237,9 +237,12 @@ class FinancialTransactionsTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                    ForceDeleteBulkAction::make(),
-                    RestoreBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->visible(fn() => isSuperAdmin() || isHakimOrAdel()),
+                    ForceDeleteBulkAction::make()
+                        ->visible(fn() => isSuperAdmin() || isHakimOrAdel()),
+                    RestoreBulkAction::make()
+                        ->visible(fn() => isSuperAdmin()),
                 ]),
             ]);
     }
