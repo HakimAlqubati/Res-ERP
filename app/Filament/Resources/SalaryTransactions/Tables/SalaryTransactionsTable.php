@@ -65,12 +65,14 @@ class SalaryTransactionsTable
                     ->label(__('Type'))
                     // ->alignCenter()
                     ->sortable()
-                    ->searchable(),
+                    ->searchable()
+                    ,
                 TextColumn::make('sub_type')
                     ->label(__('Sub Type'))->toggleable()
                     // ->alignCenter()
                     ->sortable()
-                    ->searchable(),
+                    ->searchable()
+                    ,
 
                 // المبلغ
                 TextColumn::make('amount')->alignCenter()
@@ -114,7 +116,7 @@ class SalaryTransactionsTable
                 TextColumn::make('referenceable.name')
                     ->label(__('Deduction'))
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ->searchable()
+                    // ->searchable()
                     ->sortable(),
                 TextColumn::make('notes')
                     ->label(__('Notes'))
