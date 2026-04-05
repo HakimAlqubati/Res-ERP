@@ -35,6 +35,9 @@ class PayrollsExport implements FromView
                 }
 
                 $columnName = $transaction->description ?: $typeVal;
+                if (str_contains($columnName, 'Advance installment')) {
+                    $columnName = 'Advance Installment';
+                }
 
                 if (empty($columnName)) continue;
 
@@ -107,6 +110,9 @@ class PayrollsExport implements FromView
                 }
 
                 $columnName = $transaction->description ?: $typeVal;
+                if (str_contains($columnName, 'Advance installment')) {
+                    $columnName = 'Advance Installment';
+                }
 
                 if ($transaction->operation === '+') {
                     if (isset($row['additions'][$columnName])) {

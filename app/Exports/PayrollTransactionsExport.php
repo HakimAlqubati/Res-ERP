@@ -18,8 +18,15 @@ class PayrollTransactionsExport implements FromView
 
     public function view(): View
     {
+        $transactions = $this->transactions->map(function ($tx) {
+            if (str_contains($tx->description ?? '', 'Advance installment')) {
+                $tx->description = 'Advance Installment';
+            }
+            return $tx;
+        });
+
         return view('export.reports.hr.payrolls.payroll-transactions-excel', [
-            'transactions' => $this->transactions,
+            'transactions' => $transactions,
             'employeeName' => $this->employeeName,
         ]);
     }
