@@ -8,13 +8,15 @@
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
         
         :root {
-            --primary: #0d7c66;
-            --primary-light: #0d7c661a;
-            --bg-body: #f8fafc;
-            --bg-sidebar: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
+            --primary: #14b8a6;
+            --primary-light: #14b8a61a;
+            --bg-body: #0f172a;
+            --bg-sidebar: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --hover-bg: #334155;
+            --shadow-color: rgba(0,0,0,0.3);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -56,7 +58,7 @@
             padding: 2rem 1.5rem;
             border-bottom: 1px solid var(--border-color);
             text-align: center;
-            background: linear-gradient(to bottom, #ffffff, #f8fafc);
+            background: linear-gradient(to bottom, var(--bg-sidebar), var(--bg-body));
         }
         
         .sidebar-header img {
@@ -94,7 +96,7 @@
         }
 
         .nav-link:hover {
-            background-color: #f1f5f9;
+            background-color: var(--hover-bg);
             color: var(--text-main);
         }
 
@@ -125,7 +127,7 @@
         }
 
         .topbar {
-            background-color: #ffffff;
+            background-color: var(--bg-sidebar);
             border-bottom: 1px solid var(--border-color);
             padding: 1rem 3.5rem;
             display: flex;
@@ -148,7 +150,7 @@
 
         .toggle-btn {
             position: relative;
-            background: #ffffff;
+            background: var(--bg-sidebar);
             border: 1px solid var(--border-color);
             color: var(--text-muted);
             cursor: pointer;
@@ -196,7 +198,7 @@
             align-items: center;
             gap: 0.5rem;
             padding: 0.5rem 1.15rem;
-            background-color: #fff;
+            background-color: var(--bg-sidebar);
             border: 1px solid var(--border-color);
             border-radius: 0.375rem;
             color: var(--text-main);
@@ -262,7 +264,7 @@
 
         /* Accordion Styles */
         details.accordion {
-            background: #ffffff;
+            background: var(--bg-sidebar);
             border: 1px solid var(--border-color);
             border-radius: 0.75rem;
             margin-bottom: 1.25rem;

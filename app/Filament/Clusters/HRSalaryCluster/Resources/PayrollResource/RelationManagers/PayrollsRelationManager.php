@@ -10,6 +10,7 @@ use App\Models\Payroll;
 use App\Models\SalaryTransaction;
 use App\Services\HR\SalaryHelpers\SalarySlipService;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -73,6 +74,12 @@ class PayrollsRelationManager extends RelationManager
                         return formatMoneyWithCurrency($amount);
                     }),
 
+                Tables\Columns\IconColumn::make('is_paid')
+                    ->label(__('Paid'))
+                    ->boolean()->alignCenter(),
+                TextColumn::make('payment_date')
+                    ->label(__('Payment Date'))
+                    ->date('Y-m-d')->alignCenter()->sortable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('net_salary')
                     ->label(__('Net Salary'))->alignCenter()
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
@@ -88,8 +95,32 @@ class PayrollsRelationManager extends RelationManager
             ->selectable()
             ->recordActions([
 
-                ForceDeleteAction::make(),
-                DeleteAction::make(),
+                ActionGroup::make([
+                    ForceDeleteAction::make(),
+                    DeleteAction::make(),
+                    Action::make('pdfTransactions')
+                        ->label('Transactions')
+                        ->button()->tooltip('Export Transactions PDF')
+                        ->color('primary')
+                        ->icon(Heroicon::DocumentArrowDown)
+                        ->action(function (Payroll $record) {
+                            return app(\App\Modules\HR\Payroll\Reports\TransactionsReport::class)->generate($record->id);
+                        }),
+
+                    Action::make('excelPayroll')
+                        ->label('Excel')
+                        ->button()
+                        ->tooltip('Export Transactions to Excel')
+                        ->color('info')
+                        ->icon('heroicon-o-arrow-down-on-square-stack')
+                        ->action(function (Payroll $record) {
+                            $transactions = $record->transactions()->get();
+                            $employeeName = $record->employee?->name ?? 'Employee';
+                            $fileName = 'transactions-' . $employeeName . '.xlsx';
+                            return Excel::download(new PayrollTransactionsExport($transactions, $employeeName), $fileName);
+                        }),
+                    self::quickShowAction(),
+                ]),
 
                 Action::make('pdfSalarySlip')
                     ->label('Salary Slip')
@@ -101,29 +132,16 @@ class PayrollsRelationManager extends RelationManager
                         return app(\App\Modules\HR\Payroll\Reports\SalarySlipReport::class)->generate($record->id);
                     }),
 
-                Action::make('pdfTransactions')
-                    ->label('Transactions')
-                    ->button()->tooltip('Export Transactions PDF')
-                    ->color('primary')
-                    ->icon(Heroicon::DocumentArrowDown)
-                    ->action(function (Payroll $record) {
-                        return app(\App\Modules\HR\Payroll\Reports\TransactionsReport::class)->generate($record->id);
-                    }),
 
-                Action::make('excelPayroll')
-                    ->label('Excel')
-                    ->button()
-                    ->tooltip('Export Transactions to Excel')
-                    ->color('info')
-                    ->icon('heroicon-o-arrow-down-on-square-stack')
-                    ->action(function (Payroll $record) {
-                        $transactions = $record->transactions()->get();
-                        $employeeName = $record->employee?->name ?? 'Employee';
-                        $fileName = 'transactions-' . $employeeName . '.xlsx';
-                        return Excel::download(new PayrollTransactionsExport($transactions, $employeeName), $fileName);
-                    }),
 
-                self::quickShowAction(),
+
+                Action::make('markAsPaid')
+                    ->label(__('Mark as Paid'))
+                    ->icon('heroicon-o-check-circle')
+                    ->color('info')->button()
+                    ->requiresConfirmation()
+                    ->visible(fn(Payroll $record): bool => $record->status === Payroll::STATUS_APPROVED && !$record->is_paid)
+                    ->action(fn(Payroll $record) => $record->markAsPaid()),
 
             ])
 
@@ -158,6 +176,12 @@ class PayrollsRelationManager extends RelationManager
                         $fileName = 'payrolls-' . $this->getOwnerRecord()->name . '.xlsx';
                         return Excel::download(new PayrollsExport($payrolls), $fileName);
                     }),
+                BulkAction::make('markAsPaidBulk')
+                    ->label(__('Mark as Paid'))
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->action(fn(Collection $records) => $records->each->markAsPaid()),
                 DeleteBulkAction::make(),
             ]);
     }

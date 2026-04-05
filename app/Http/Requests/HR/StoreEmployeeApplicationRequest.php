@@ -18,9 +18,9 @@ class StoreEmployeeApplicationRequest extends FormRequest
     {
         return [
             'images'   => 'nullable|array',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp',
             'files'    => 'nullable|array',
-            'files.*'  => 'mimes:jpeg,png,jpg,gif,pdf|max:10240',
+            'files.*'  => 'mimes:jpeg,png,jpg,gif,pdf,webp|max:10240',
             'employee_id'        => 'required|exists:hr_employees,id',
             'application_type_id' => 'required|integer|in:1,2,3,4',
             'application_date'   => 'required|date',

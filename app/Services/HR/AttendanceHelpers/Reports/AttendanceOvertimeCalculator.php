@@ -23,10 +23,14 @@ class AttendanceOvertimeCalculator
         // 3. هل الموظف تجاوز الوقت المفترض؟
         $isActualLargerThanSupposed = $actualHours > $supposedDuration;
 
+
         // 4. اجلب الأوفر تايم المعتمد لليوم والفترة
         $approvedOvertimeDB = $employee->overtimesByDate($date) // احذف هذا السطر إذا ما عندك period_id بجدول الاوفر تايم
             ->sum('hours');                                         // تأكد أن الساعات مخزنة كـ float
 
+        if ($date == "2026-03-25") {
+            // dd($approvedOvertimeDB, $date);
+        }
         // 5. تطبيق نفس لوجيك الهيلبر
         if ($isActualLargerThanSupposed && $approvedOvertimeDB > 0) {
             // لو الموظف عمل أوفر تايم ومسجّل بنظام الاوفر تايم
@@ -35,14 +39,15 @@ class AttendanceOvertimeCalculator
             //     $approvedOvertimeDB,
             //     $actualHours,
             //     $supposedDuration,
-            //     $res
+            //     $res 
             // );
             return $res;
         } elseif ($isActualLargerThanSupposed && $approvedOvertimeDB == 0) {
             return $this->formatFloatToDuration($supposedDuration);
         } else {
             if (is_numeric($actualHours) && $actualHours > 0) {
-                return $this->formatFloatToDuration($actualHours);
+                // dd($actualHours , $approvedOvertimeDB);
+                return $this->formatFloatToDuration($actualHours+ $approvedOvertimeDB);
             }
             return $this->formatFloatToDuration(0);
         }

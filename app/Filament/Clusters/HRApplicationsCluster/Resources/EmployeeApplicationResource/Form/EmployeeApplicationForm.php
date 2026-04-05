@@ -8,6 +8,7 @@ use App\Models\EmployeeApplicationV2;
 use DateTime;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\ToggleButtons;
 
@@ -172,6 +173,24 @@ class EmployeeApplicationForm
                         // ->rows(5)
                         ->columnSpanFull(),
                 ]),
+
+                Fieldset::make(__('lang.attachments'))->columnSpanFull()->schema([
+                    SpatieMediaLibraryFileUpload::make('images')
+                        ->label(__('lang.images'))
+                        ->collection('images')
+                        ->multiple()
+                        ->image()
+                        ->imageEditor()
+                        ->imageResizeTargetWidth(1200)
+                        ->imageResizeMode('contain')
+                        ->columnSpan(1),
+
+                    SpatieMediaLibraryFileUpload::make('files')
+                        ->label(__('lang.files'))
+                        ->collection('files')
+                        ->multiple()
+                        ->columnSpan(1),
+                ])->columns(2),
             ]);
     }
 }

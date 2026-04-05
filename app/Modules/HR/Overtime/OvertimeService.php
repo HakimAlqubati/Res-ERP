@@ -32,6 +32,7 @@ class OvertimeService
                     'branch_id'   => $data['branch_id'],
                     'created_by'  => auth()->id(),
                     'type'        => EmployeeOvertime::TYPE_BASED_ON_DAY,
+                    'status'      => EmployeeOvertime::STATUS_PENDING,
 
                 ]);
             }
@@ -75,6 +76,7 @@ class OvertimeService
                         'branch_id'   => $data['branch_id'],
                         'created_by'  => auth()->id(),
                         'type'        => EmployeeOvertime::TYPE_BASED_ON_MONTH,
+                        'status'      => EmployeeOvertime::STATUS_PENDING,
 
                     ]);
                 }
@@ -102,16 +104,17 @@ class OvertimeService
             ->where('type', $data['type'])
             ->whereIn('employee_id', $employeeIds)
             ->with('employee:id,name')
+            ->withTrashed()
             ->get();
 
         if ($existingRecords->isNotEmpty()) {
             $existingEmployeeIds = $existingRecords->pluck('employee_id')->toArray();
-            
+
             // Filter out existing employees
             $data['employees'] = array_filter($data['employees'], function ($employee) use ($existingEmployeeIds) {
                 return !in_array($employee['employee_id'], $existingEmployeeIds);
             });
-            
+
             // Re-index array
             $data['employees'] = array_values($data['employees']);
 
@@ -142,8 +145,8 @@ class OvertimeService
         }
 
         $skippedCount = $existingRecords->count();
-        $message = $skippedCount > 0 
-            ? "Overtime records created successfully. Skipped {$skippedCount} existing records." 
+        $message = $skippedCount > 0
+            ? "Overtime records created successfully. Skipped {$skippedCount} existing records."
             : 'Overtime records created successfully';
 
         return [
@@ -239,19 +242,23 @@ class OvertimeService
     {
         $ids = is_array($ids) ? $ids : [$ids];
 
-        $overtimes = EmployeeOvertime::whereIn('id', $ids)->get();
+        return \DB::transaction(function () use ($ids) {
+            try {
+                $overtimes = EmployeeOvertime::whereIn('id', $ids)->get();
 
-        foreach ($overtimes as $overtime) {
-            if (!$overtime->approved) {
-                $overtime->update([
-                    'approved'    => 1,
-                    'approved_by' => auth()->id(),
-                    'approved_at' => now(),
-                ]);
+                foreach ($overtimes as $overtime) {
+                    $overtime->update([
+                        'status'      => EmployeeOvertime::STATUS_APPROVED,
+                        'approved_by' => auth()->id(),
+                        'approved_at' => now(),
+                    ]);
+                }
+
+                return $overtimes;
+            } catch (\Exception $e) {
+                throw new \Exception($e->getMessage());
             }
-        }
-
-        return $overtimes;
+        });
     }
 
     /**
@@ -265,19 +272,61 @@ class OvertimeService
     {
         $ids = is_array($ids) ? $ids : [$ids];
 
-        $overtimes = EmployeeOvertime::whereIn('id', $ids)->get();
+        return \DB::transaction(function () use ($ids) {
+            try {
+                $overtimes = EmployeeOvertime::whereIn('id', $ids)
+                    ->where('status', EmployeeOvertime::STATUS_APPROVED)
+                    ->get();
+                if ($overtimes->isEmpty()) {
+                    throw new \Exception("No approved overtime found.");
+                }
+                foreach ($overtimes as $overtime) {
+                    $overtime->update([
+                        'status'      => EmployeeOvertime::STATUS_PENDING,
+                        'approved_by' => null,
+                        'approved_at' => null,
+                    ]);
+                }
 
-        foreach ($overtimes as $overtime) {
-            if ($overtime->approved) {
-                $overtime->update([
-                    'approved'    => 0,
-                    'approved_by' => null,
-                    'approved_at' => null,
-                ]);
+                return $overtimes;
+            } catch (\Exception $e) {
+                throw new \Exception($e->getMessage());
             }
-        }
+        });
+    }
 
-        return $overtimes;
+    /**
+     * Reject overtime
+     *
+     * @param array|int $ids
+     * @return \Illuminate\Database\Eloquent\Collection
+     * @throws Exception
+     */
+    public function reject(array|int $ids)
+    {
+        $ids = is_array($ids) ? $ids : [$ids];
+
+        return \DB::transaction(function () use ($ids) {
+            try {
+                $overtimes = EmployeeOvertime::whereIn('id', $ids)
+                    ->where('status', EmployeeOvertime::STATUS_PENDING)
+                    ->get();
+                if ($overtimes->isEmpty()) {
+                    throw new \Exception("No pending overtime found.");
+                }
+                foreach ($overtimes as $overtime) {
+                    $overtime->update([
+                        'status'      => EmployeeOvertime::STATUS_REJECTED,
+                        'rejected_by' => auth()->id(),
+                        'rejected_at' => now(),
+                    ]);
+                }
+
+                return $overtimes;
+            } catch (\Exception $e) {
+                throw new \Exception($e->getMessage());
+            }
+        });
     }
 
     /**
@@ -292,7 +341,7 @@ class OvertimeService
     {
         $overtime = EmployeeOvertime::findOrFail($id);
 
-        if ($overtime->approved) {
+        if ($overtime->status === EmployeeOvertime::STATUS_APPROVED) {
             throw new Exception('Cannot update an approved overtime record. Please undo the approval first.', 403);
         }
 
@@ -312,7 +361,7 @@ class OvertimeService
     public function getOvertime(array $filters = [])
     {
         $query = EmployeeOvertime::query()
-            ->with(['employee:id,name', 'approvedBy:id,name', 'createdBy:id,name']);
+            ->with(['employee:id,name', 'approvedBy:id,name', 'createdBy:id,name','rejectedBy:id,name']);
 
         if (isset($filters['employee_id'])) {
             $query->where('employee_id', $filters['employee_id']);
@@ -326,8 +375,10 @@ class OvertimeService
             $query->whereDate('date', '<=', $filters['date_to']);
         }
 
-        if (isset($filters['approved'])) {
-            $query->where('approved', filter_var($filters['approved'], FILTER_VALIDATE_BOOLEAN));
+        if (isset($filters['status'])) {
+            if (in_array($filters['status'], EmployeeOvertime::STATUSES)) {
+                $query->where('status', $filters['status']);
+            }
         }
 
         if (isset($filters['branch_id'])) {
@@ -393,7 +444,7 @@ class OvertimeService
     public function getSuggestedOvertimeV2(string $fromDate, string $toDate, int $branchId): array
     {
         $employees = Employee::where('branch_id', $branchId)
-            ->where('active', 1) 
+            ->where('active', 1)
             ->get();
 
         $groupedOvertime = [];
@@ -439,7 +490,7 @@ class OvertimeService
 
         // 2. التحميل المسبق (Eager Loading) لكل البيانات المطلوبة بنطاق التواريخ
         $employees = Employee::where('branch_id', $branchId)
-            ->where('active', 1) 
+            ->where('active', 1)
             ->with([
 
                 'attendances' => function ($query) use ($fromDate, $toDate) {
@@ -461,7 +512,7 @@ class OvertimeService
                 // افترض أن العلاقة في موديل الموظف لجدول EmployeeOvertime اسمها overtimes
                 'overtimes' => function ($query) use ($fromDate, $toDate) {
                     $query->whereBetween('date', [$fromDate, $toDate])
-                        ->where('approved', 1);
+                        ->where('status', EmployeeOvertime::STATUS_APPROVED);
                 }
             ])
             ->get();

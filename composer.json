@@ -20,6 +20,7 @@
         "filament/tables": "^4.0",
         "filament/widgets": "^4.0",
         "google/apiclient": "^2.18",
+        "intervention/image": "^3.0",
         "irazasyed/larasupport": "^1.1",
         "kreait/firebase-php": "^7.18",
         "laravel-notification-channels/fcm": "^5.1",

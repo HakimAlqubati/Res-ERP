@@ -20,8 +20,15 @@ class ListEmployeeAbsentReports extends ListRecords
             ?? null;
 
         $dateFilterState = $this->getTable()->getFilters()['date_range']?->getState() ?? [];
-        $dateFrom = $dateFilterState['start_date'] ?? now()->startOfMonth()->format('Y-m-d');
-        $dateTo = $dateFilterState['end_date'] ?? now()->format('Y-m-d');
+        $type = $dateFilterState['type'] ?? 'single';
+
+        if ($type === 'single') {
+            $dateFrom = $dateFilterState['date'] ?? now()->format('Y-m-d');
+            $dateTo = $dateFrom;
+        } else {
+            $dateFrom = $dateFilterState['start_date'] ?? now()->startOfMonth()->format('Y-m-d');
+            $dateTo = $dateFilterState['end_date'] ?? now()->format('Y-m-d');
+        }
 
         $data = collect([]);
 

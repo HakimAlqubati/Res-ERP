@@ -84,6 +84,7 @@ Route::prefix('hr')
             Route::put('/{id}', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'update'])->middleware('auth:api');
             Route::post('/approve', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'approve'])->middleware('auth:api');
             Route::post('/undoApprove', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'undoApproval'])->middleware('auth:api');
+            Route::post('/reject', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'reject'])->middleware('auth:api');
 
             Route::get('/summary', [\App\Modules\HR\Overtime\V2\Http\Controllers\Api\OvertimeController::class, 'index']);
         })->middleware('auth:api');

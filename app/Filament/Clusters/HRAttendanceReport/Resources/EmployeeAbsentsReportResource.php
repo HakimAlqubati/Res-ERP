@@ -72,19 +72,33 @@ class EmployeeAbsentsReportResource extends Resource
                     ->searchable(),
                 Filter::make('date_range')
                     ->schema([
-                        DatePicker::make('start_date')->live()
-                            ->afterStateUpdated(function (Set $set, $state) {
-                                if ($state) {
-                                    $endNextMonthData = getEndOfMonthDate(Carbon::parse($state)->year, Carbon::parse($state)->month);
-                                    $set('end_date', $endNextMonthData['end_month']);
-                                }
-                            })
+                        \Filament\Forms\Components\Select::make('type')
+                            ->label(__('lang.type'))
+                            ->options([
+                                'single' => __('lang.date'),
+                                'range'  => __('lang.date_range'),
+                            ])
+                            ->default('single')
+                            ->live(),
+
+                        DatePicker::make('date')
+                            ->label(__('lang.date'))
+                            ->default(now()->format('Y-m-d'))
+                            ->hidden(fn($get) => $get('type') !== 'single')
+                            ->live()
+                            ,
+
+                        DatePicker::make('start_date')
                             ->label(__('lang.start_date'))
-                            ->default(now()->startOfMonth()->format('Y-m-d')),
+                            ->default(now()->startOfMonth()->format('Y-m-d'))
+                            ->hidden(fn($get) => $get('type') !== 'range')
+                            ->live(),
 
                         DatePicker::make('end_date')
                             ->label(__('lang.end_date'))
-                            ->default(now()->format('Y-m-d')),
+                            ->default(now()->format('Y-m-d'))
+                            ->hidden(fn($get) => $get('type') !== 'range')
+                            ->live(),
                     ]),
             ], FiltersLayout::AboveContent)
             ->recordActions([

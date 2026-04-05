@@ -19,7 +19,7 @@ class OvertimeService
     public function getGroupedByDate(array $filters = []): Collection
     {
         $query = EmployeeOvertime::query()
-            ->with(['employee:id,name', 'approvedBy:id,name', 'createdBy:id,name']);
+            ->with(['employee:id,name', 'approvedBy:id,name', 'createdBy:id,name','rejectedBy:id,name']);
 
         // Apply Filters
         if (isset($filters['employee_id'])) {
@@ -34,8 +34,10 @@ class OvertimeService
             $query->whereDate('date', '<=', $filters['date_to']);
         }
 
-        if (isset($filters['approved'])) {
-            $query->where('approved', filter_var($filters['approved'], FILTER_VALIDATE_BOOLEAN));
+        if (isset($filters['status'])) {
+            if (in_array($filters['status'], EmployeeOvertime::STATUSES)) {
+                $query->where('status', $filters['status']);
+            }
         }
 
         if (isset($filters['branch_id'])) {
@@ -65,7 +67,7 @@ class OvertimeService
     {
         $overtime = EmployeeOvertime::findOrFail($id);
 
-        if ($overtime->approved) {
+        if ($overtime->status === EmployeeOvertime::STATUS_APPROVED) {
             throw new \Exception('Cannot update an approved overtime record. Please undo the approval first.', 403);
         }
 

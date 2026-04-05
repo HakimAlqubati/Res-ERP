@@ -3,14 +3,17 @@
 namespace App\Services\HR\Dashboard;
 
 use App\DTOs\HR\Dashboard\DashboardFilterDTO;
+use App\Models\AppLog;
 use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeApplicationV2;
 use App\Models\EmployeeOvertime;
+use App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesV2Service;
 use App\Services\HR\AttendanceHelpers\Reports\MissingCheckoutService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+
 
 class DashboardService
 {
@@ -49,7 +52,7 @@ class DashboardService
             ->pluck('count', 'application_type_id');
 
         // Overtime
-        $overtimeQuery = EmployeeOvertime::where('approved', 0);
+        $overtimeQuery = EmployeeOvertime::where('status', EmployeeOvertime::STATUS_PENDING);
         if ($dto->branchId) {
             $overtimeQuery->where('branch_id', $dto->branchId);
         }
@@ -63,6 +66,7 @@ class DashboardService
             'pending_advance'  => $appCounts->get(EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST, 0),
             'pending_meal'     => $appCounts->get(EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST, 0),
             'missing_checkouts_count' => $missingCheckoutsCount,
+            'absents_count'           => $this->getTodayAbsentsCount($dto),
         ];
     }
 
@@ -110,6 +114,36 @@ class DashboardService
         $presentService = app(\App\Services\HR\AttendanceHelpers\Reports\PresentEmployeesService::class);
         $livePresentEmployees = $presentService->getPresentEmployees($baseDate, $dto->branchId ? ['branch_id' => $dto->branchId] : []);
         $livePresentGrouped = $livePresentEmployees->groupBy('branchId');
+
+        // Pre-fetch today's real absent count per branch via AbsentEmployeesV2Service
+        // (accounts for shifts, approved leaves, holidays — not just total - present)
+        $absentFilters = [];
+        if ($dto->branchId) {
+            $absentFilters['branch_id'] = $dto->branchId;
+        }
+        $absentFilters['current_time'] = $baseDate->format('H:i:s');
+
+        $absentEmployeesToday = app(AbsentEmployeesV2Service::class)
+            ->getAbsentEmployees($today, $today, $absentFilters);
+
+        AppLog::write(
+            'absent_employees_today',
+            AppLog::LEVEL_INFO,
+            'DashboardService',
+            [
+                'base_date' => $baseDate->format('Y-m-d H:i:s'),
+                'absent_employees_today' => $absentEmployeesToday,
+                'absent_filters' => $absentFilters,
+                'today' => $today,
+                'baseDate' => $baseDate,
+                'dto' => $dto,
+            ]
+        );
+        // Group absent count by branch_id for O(1) lookups inside the loop
+        $absentCountByBranch = $absentEmployeesToday
+            ->groupBy('branch_id')
+            ->map(fn($group) => $group->count());
+
         foreach ($branches as $branch) {
             $bId = $branch->id;
             $totalEmployees = $employeeCounts->get($bId, 0);
@@ -120,7 +154,7 @@ class DashboardService
             $branchLivePresent = $livePresentGrouped->get($bId, collect());
             $todayPresent = $branchLivePresent->count();
             $todayLate = $branchLivePresent->where('status', Attendance::STATUS_LATE_ARRIVAL)->count();
-            $todayAbsent = max(0, $totalEmployees - $todayPresent);
+            $todayAbsent = $absentCountByBranch->get($bId, 0);
             $todayPercentage = $totalEmployees > 0 ? round(($todayPresent / $totalEmployees) * 100, 2) : 0;
 
             $todayAttendance[] = [
@@ -138,17 +172,16 @@ class DashboardService
             foreach ($dates as $date) {
                 if ($date === $today) {
                     $presentCount = $todayPresent;
-
-                    $lateCount = $todayLate;
-                    $absentCount = $todayAbsent;
-                    $percentage = $todayPercentage;
+                    $lateCount    = $todayLate;
+                    $absentCount  = $todayAbsent;
+                    $percentage   = $todayPercentage;
                 } else {
                     $dayData = $branchDayData->get($date, collect());
 
                     $presentCount = $dayData->unique('employee_id')->count();
-                    $lateCount = $dayData->where('status', Attendance::STATUS_LATE_ARRIVAL)->unique('employee_id')->count();
-                    $absentCount = max(0, $totalEmployees - $presentCount);
-                    $percentage = $totalEmployees > 0 ? round(($presentCount / $totalEmployees) * 100, 2) : 0;
+                    $lateCount    = $dayData->where('status', Attendance::STATUS_LATE_ARRIVAL)->unique('employee_id')->count();
+                    $absentCount  = max(0, $totalEmployees - $presentCount);
+                    $percentage   = $totalEmployees > 0 ? round(($presentCount / $totalEmployees) * 100, 2) : 0;
                 }
 
                 $history[] = [
@@ -168,9 +201,30 @@ class DashboardService
             ];
         }
 
+
         return [
             'today_attendance' => $todayAttendance,
             'last_7_days_attendance' => $last7DaysAttendance,
         ];
+    }
+
+    /**
+     * احسب عدد الغائبين اليوم باستخدام AbsentEmployeesV2Service
+     * للحصول على نتيجة دقيقة تأخذ بعين الاعتبار الورديات والإجازات والعطل.
+     */
+    private function getTodayAbsentsCount(DashboardFilterDTO $dto): int
+    {
+        $baseDate = $dto->dateTime ? $dto->dateTime->clone() : Carbon::now();
+        $today    = $baseDate->toDateString();
+
+        $filters = [];
+        if ($dto->branchId) {
+            $filters['branch_id'] = $dto->branchId;
+        }
+        $filters['current_time'] = $baseDate->format('H:i:s');
+
+        return app(AbsentEmployeesV2Service::class)
+            ->getAbsentEmployees($today, $today, $filters)
+            ->count();
     }
 }

@@ -9,6 +9,9 @@ use App\Exceptions\HR\LeaveApprovalException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Format;
 
 class EmployeeApplicationService
 {
@@ -125,7 +128,7 @@ class EmployeeApplicationService
             $images = is_array($data['images']) ? $data['images'] : [$data['images']];
             foreach ($images as $image) {
                 if ($image instanceof \Illuminate\Http\UploadedFile) {
-                    $record->addMedia($image)->toMediaCollection('images');
+                    $this->compressAndAddImage($record, $image);
                 }
             }
         }
@@ -135,7 +138,12 @@ class EmployeeApplicationService
             $files = is_array($data['files']) ? $data['files'] : [$data['files']];
             foreach ($files as $file) {
                 if ($file instanceof \Illuminate\Http\UploadedFile) {
-                    $record->addMedia($file)->toMediaCollection('files');
+                    // إذا كان الملف صورة → ضغطه، وإلا ارفعه كما هو
+                    if (str_starts_with($file->getMimeType(), 'image/')) {
+                        $this->compressAndAddImage($record, $file, 'files');
+                    } else {
+                        $record->addMedia($file)->toMediaCollection('files');
+                    }
                 }
             }
         }
@@ -159,6 +167,39 @@ class EmployeeApplicationService
      *
      * @throws ValidationException
      */
+    /**
+     * ضغط الصورة وتصغيرها قبل رفعها إلى Media Library.
+     * - أقصى عرض: 1200px مع الحفاظ على النسبة
+     * - تحويل إلى WebP بجودة 70%
+     *
+     * @param string $collection اسم الـ Media Collection ('images' أو 'files')
+     */
+    private function compressAndAddImage($record, \Illuminate\Http\UploadedFile $image, string $collection = 'images'): void
+    {
+        // 1. تهيئة المعالج للإصدار الثالث
+        $manager = new ImageManager(new Driver());
+
+        // 2. قراءة الصورة (في V3 نستخدم read بدلاً من decode)
+        $img = $manager->read($image->getRealPath());
+
+        // 3. تصغير الصورة مع الحفاظ على التناسب
+        // ملاحظة: دالة scaleDown موجودة أيضاً في V3
+        $img->scaleDown(width: 1200);
+
+        // 4. التحويل إلى WebP بجودة 70 (الطريقة أسهل في V3)
+        $encodedImage = $img->toWebp(70);
+
+        // 5. حفظ البيانات في ملف مؤقت
+        $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid('img_') . '.webp';
+        file_put_contents($tempPath, (string) $encodedImage);
+
+        // 6. رفع الملف المؤقت إلى Media Library
+        $record->addMedia($tempPath)
+            ->usingName(pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME))
+            ->usingFileName(uniqid('img_') . '.webp')
+            ->toMediaCollection($collection);
+    }
+
     private function validateAdvanceRequest(array $details): void
     {
         $validator = Validator::make(
@@ -182,7 +223,7 @@ class EmployeeApplicationService
             $images = is_array($data['images']) ? $data['images'] : [$data['images']];
             foreach ($images as $image) {
                 if ($image instanceof \Illuminate\Http\UploadedFile) {
-                    $record->addMedia($image)->toMediaCollection('images');
+                    $this->compressAndAddImage($record, $image);
                 }
             }
         }
@@ -193,7 +234,12 @@ class EmployeeApplicationService
             $files = is_array($data['files']) ? $data['files'] : [$data['files']];
             foreach ($files as $file) {
                 if ($file instanceof \Illuminate\Http\UploadedFile) {
-                    $record->addMedia($file)->toMediaCollection('files');
+                    // إذا كان الملف صورة → ضغطه، وإلا ارفعه كما هو
+                    if (str_starts_with($file->getMimeType(), 'image/')) {
+                        $this->compressAndAddImage($record, $file, 'files');
+                    } else {
+                        $record->addMedia($file)->toMediaCollection('files');
+                    }
                 }
             }
         }
@@ -286,8 +332,8 @@ class EmployeeApplicationService
     {
         return DB::transaction(function () use ($id, $userId) {
             $record = EmployeeApplicationV2::with([
-                'leaveRequest', 
-                'missedCheckinRequest', 
+                'leaveRequest',
+                'missedCheckinRequest',
                 'missedCheckoutRequest'
             ])->findOrFail($id);
 
@@ -300,8 +346,8 @@ class EmployeeApplicationService
                 case EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST:
                     app(\App\Services\HR\Applications\LeaveRequest\LeaveApprovalService::class)->undoProcess($record);
                     break;
-                
-                // Note: Rollback for Attendance & Departure fingerprint requests can be added here if needed
+
+                    // Note: Rollback for Attendance & Departure fingerprint requests can be added here if needed
             }
 
             // Revert state to pending and clear approval metadata

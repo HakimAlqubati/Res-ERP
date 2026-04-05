@@ -43,6 +43,8 @@ class Payroll extends Model
         'currency',
         'status',
         'pay_date',
+        'is_paid',
+        'payment_date',
         'notes',
         'created_by',
         'approved_by',
@@ -104,6 +106,37 @@ class Payroll extends Model
     public function run()
     {
         return $this->belongsTo(\App\Models\PayrollRun::class, 'payroll_run_id');
+    }
+
+    /**
+     * Mark the payroll as paid.
+     *
+     * @param string|null $date
+     * @return bool
+     */
+    public function markAsPaid($date = null): bool
+    {
+        return $this->update([
+            'is_paid'      => true,
+            'payment_date' => $date ?? now(),
+            'status'       => self::STATUS_PAID,
+        ]);
+    }
+
+    /**
+     * Scope for paid payrolls.
+     */
+    public function scopePaid($query)
+    {
+        return $query->where('is_paid', true);
+    }
+
+    /**
+     * Scope for unpaid payrolls.
+     */
+    public function scopeUnpaid($query)
+    {
+        return $query->where('is_paid', false);
     }
 
     protected function netSalary(): Attribute

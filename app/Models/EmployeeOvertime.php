@@ -16,6 +16,16 @@ class EmployeeOvertime extends Model implements Auditable
     use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope;
     protected $table = 'hr_employee_overtime';
 
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_APPROVED = 'approved';
+    public const STATUS_REJECTED = 'rejected';
+
+    public const STATUSES = [
+        self::STATUS_PENDING,
+        self::STATUS_APPROVED,
+        self::STATUS_REJECTED,
+    ];
+
     // Fillable fields for mass assignment
     protected $fillable = [
         'employee_id',
@@ -25,13 +35,15 @@ class EmployeeOvertime extends Model implements Auditable
         'hours',
         'rate',
         'reason',
-        'approved',
+        'status',
         'approved_by',
         'notes',
         'created_by',
         'updated_by',
         'branch_id',
         'approved_at',
+        'rejected_by',
+        'rejected_at',
         'type',
     ];
     protected $auditInclude = [
@@ -42,7 +54,7 @@ class EmployeeOvertime extends Model implements Auditable
         'hours',
         'rate',
         'reason',
-        'approved',
+        'status',
         'approved_by',
         'notes',
         'created_by',
@@ -66,7 +78,7 @@ class EmployeeOvertime extends Model implements Auditable
     {
         return [
             EmployeeOvertime::TYPE_BASED_ON_DAY => 'Hourly',
-            // EmployeeOvertime::TYPE_BASED_ON_MONTH => 'Daily',
+            EmployeeOvertime::TYPE_BASED_ON_MONTH => 'Daily',
         ];
     }
     // Relationships
@@ -80,6 +92,12 @@ class EmployeeOvertime extends Model implements Auditable
     public function approvedBy()
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    // Relationship with the User model (for rejection)
+    public function rejectedBy()
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
     }
 
     // Relationship with the User model (who created the overtime entry)

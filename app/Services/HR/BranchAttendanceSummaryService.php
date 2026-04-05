@@ -69,14 +69,16 @@ class BranchAttendanceSummaryService
             ->select('id', 'name', 'employee_no', 'salary', 'join_date', 'working_days', 'working_hours', 'discount_exception_if_attendance_late')
             ->withSum(['overtimes as total_overtime' => function ($query) use ($year, $month) {
                 $query->whereYear('date', $year)
-                    ->whereMonth('date', $month);
+                    ->whereMonth('date', $month)
+                    ->where('type', \App\Models\EmployeeOvertime::TYPE_BASED_ON_DAY);
             }], 'hours')
-            // ->limit(20) 
+            ->withCount(['dailyOvertimes as manual_overtime_days' => function ($query) use ($year, $month) {
+                $query->whereYear('date', $year)
+                    ->whereMonth('date', $month);
+            }])
             ->chunk(10, function ($employees) use (&$currentStaff, &$newStaff, $terminatedEmployeeIds, $year, $month, $periodStart, $periodEnd, $monthDays) {
 
                 $filtered = $employees->filter(fn($emp) => !in_array($emp->id, $terminatedEmployeeIds));
-
-                if ($filtered->isEmpty()) return;
 
                 foreach ($filtered as $employee) {
                     $row = $this->processEmployee($employee, $periodStart, $periodEnd, $year, $month, $monthDays);
@@ -131,7 +133,7 @@ class BranchAttendanceSummaryService
         try {
             $approvedOvertimeHours = (float) ($employee->total_overtime ?? 0);
             // 1. Fetch attendance data (the main data source)
-            // $attendanceData  = $this->attendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
+            $attendanceData  = $this->attendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
             $attendanceData  = $this->cachedAttendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
             $attendanceArray = $attendanceData->toArray();
 
@@ -142,8 +144,7 @@ class BranchAttendanceSummaryService
             $totalDays  = $stats['required_days'] ?? $monthDays;
             $absentDays = $stats['absent'] ?? 0;
 
-            $weeklyCalc = $this->weeklyLeaveCalculator->calculate($totalDays, $absentDays);
-            $weeklyResult = $weeklyCalc['result'] ?? [];
+            $weeklyResult = $stats['weekly_leave_calculation']['result'] ?? [];
 
 
 
@@ -162,7 +163,7 @@ class BranchAttendanceSummaryService
                 'name'         => $employee->name,
                 'salary'       => $employee->salary,
                 'overtime'     => [
-                    'days'  => $weeklyResult['overtime_days'] ?? 0,
+                    'days'  => ($weeklyResult['overtime_days'] ?? 0) + ($employee->manual_overtime_days ?? 0),
                     'hours' => (float) $approvedOvertimeHours,
                 ],
                 'deductions'   => [

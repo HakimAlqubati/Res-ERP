@@ -10,8 +10,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
+use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 #[ObservedBy([EmployeeApplicationObserver::class])]
 class EmployeeApplicationV2 extends Model implements Auditable, HasMedia
 {
@@ -160,5 +162,32 @@ class EmployeeApplicationV2 extends Model implements Auditable, HasMedia
     public function getPaidInstallmentsCountAttribute()
     {
         return $this->advanceInstallments()->where('is_paid', true)->count();
+    }
+    /**
+     * Define the media collections.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('images')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+
+        $this->addMediaCollection('files')
+            ->acceptsMimeTypes(['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png', 'image/webp']);
+    }
+
+    /**
+     * Define the media conversions (Optimization/Resizing).
+     * This replicates the API service logic using Spatie's internal Intervention Image integration.
+     */
+    public function registerMediaConversions(Media $media = null): void
+    {
+        $this->addMediaConversion('optimized')
+            ->width(1200)
+            ->height(1200)
+            ->fit(Fit::Max, 1200, 1200)
+            ->format('webp')
+            ->quality(70)
+            ->performOnCollections('images', 'files')
+            ->nonQueued();
     }
 }

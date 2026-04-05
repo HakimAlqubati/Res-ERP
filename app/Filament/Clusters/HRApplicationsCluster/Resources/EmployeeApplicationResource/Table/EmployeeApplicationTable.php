@@ -25,6 +25,7 @@ use Filament\Tables\Filters\TrashedFilter;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource;
 use App\Models\Employee;
 use Filament\Actions\ActionGroup;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Enums\FiltersLayout;
 
 class EmployeeApplicationTable
@@ -155,6 +156,23 @@ class EmployeeApplicationTable
         }
         $columns[] = TextColumn::make('approvedBy.name')
             ->label(__('lang.approved_by'));
+        $columns[] = SpatieMediaLibraryImageColumn::make('images')
+            ->label(__('lang.images'))
+            ->collection('images')
+            ->conversion('optimized')
+            ->size(40)
+            ->circular()
+            ->toggleable(isToggledHiddenByDefault: true)
+            ->alignCenter(true)
+            ->limit(3);
+
+        $columns[] = SpatieMediaLibraryImageColumn::make('files')
+            ->label(__('lang.files'))
+            ->collection('files')
+            ->size(40)
+            ->toggleable(isToggledHiddenByDefault: true)
+            ->alignCenter(true)
+            ->limit(3);
         return $table->defaultSort('id', 'desc')
             ->paginated([10, 25, 50, 100])
             ->striped()
@@ -211,6 +229,8 @@ class EmployeeApplicationTable
             ], FiltersLayout::Modal)
             ->recordActions([
                 ActionGroup::make([
+                    EmployeeApplicationResource::attachmentsAction(),
+
                     EmployeeApplicationResource::advancedRequestDetails()
                         ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST)),
 
@@ -489,4 +509,3 @@ class EmployeeApplicationTable
             ]);
     }
 }
-

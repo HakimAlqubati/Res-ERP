@@ -58,9 +58,12 @@ class EmployeeForm
                                         ->schema([
                                             TextInput::make('name')->label(__('lang.full_name'))
                                                 ->dehydrateStateUsing(fn($state) => preg_replace('/\s+/u', ' ', trim((string) $state)))
-                                                ->extraInputAttributes(fn($record) => [
-                                                    'style' => $record && !$record->active ? 'color: #ef4444 !important; font-weight: bold;' : '',
-                                                ])
+                                                ->extraInputAttributes(function ($record) {
+                                                    if ($record && !$record->active) {
+                                                        return ['style' => 'color: #ef4444 !important; font-weight: bold;'];
+                                                    }
+                                                    return [];
+                                                })
                                                 ->rules('string')
                                                 ->columnSpan(2)->required(),
 

@@ -408,7 +408,7 @@ class InventoryResource extends Resource
     }
     public static function canForceDelete(Model $record): bool
     {
-        if (isSuperAdmin()) {
+        if (isSuperAdmin() || isHakimOrAdel()) {
             return true;
         }
         return false;
@@ -416,7 +416,7 @@ class InventoryResource extends Resource
 
     public static function canForceDeleteAny(): bool
     {
-        if (isSuperAdmin()) {
+        if (isSuperAdmin() || isHakimOrAdel()) {
             return true;
         }
         return false;

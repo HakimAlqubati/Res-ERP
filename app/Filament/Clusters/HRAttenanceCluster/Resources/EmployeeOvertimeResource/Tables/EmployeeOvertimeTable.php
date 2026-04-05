@@ -65,6 +65,12 @@ class EmployeeOvertimeTable
                     ->sortable()
                     ->wrap()
                     ->searchable()->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('type')
+                    ->label('Type')
+                    ->sortable()
+                    ->wrap()
+                    ->formatStateUsing(fn($state) => EmployeeOvertime::getTypes()[$state] ?? $state)
+                    ->searchable()->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('date')
                     ->label('Date')
@@ -90,10 +96,16 @@ class EmployeeOvertimeTable
                     // ->icon(Heroicon::Clock)
                     ->iconPosition(IconPosition::After),
 
-                IconColumn::make('approved')->toggleable(isToggledHiddenByDefault: false)
-                    ->boolean()->alignCenter(true)
-                    ->trueIcon('heroicon-o-check-badge')
-                    ->falseIcon('heroicon-o-x-mark'),
+                TextColumn::make('status')->toggleable(isToggledHiddenByDefault: false)
+                    ->label('Status')
+                    ->sortable()
+                    ->formatStateUsing(fn($state) => EmployeeOvertime::STATUSES[$state] ?? $state)
+                    ->color(fn(string $state): string => match ($state) {
+                        EmployeeOvertime::STATUS_APPROVED => 'success',
+                        EmployeeOvertime::STATUS_REJECTED => 'danger',
+                        default => 'gray',
+                    })
+                    ->alignCenter(true),
                 TextColumn::make('approvedBy.name')
                     ->label('Approved by')
                     ->wrap()->toggleable(isToggledHiddenByDefault: false),
@@ -110,11 +122,13 @@ class EmployeeOvertimeTable
                     ->label('Branch')->multiple()
                     ->options(Branch::where('active', 1)->forBranchManager('id')->get()->pluck('name', 'id')),
                 SelectFilter::make('type')->label('Type')->options(EmployeeOvertime::getTypes()),
-                SelectFilter::make('approved')
+                SelectFilter::make('status')
                     ->label('Status')->multiple()
                     ->options(
                         [
-                            1 => 'Approved',
+                            EmployeeOvertime::STATUS_PENDING => 'Pending',
+                            EmployeeOvertime::STATUS_APPROVED => 'Approved',
+                            EmployeeOvertime::STATUS_REJECTED => 'Rejected',
                         ]
                     ),
 
@@ -168,23 +182,23 @@ class EmployeeOvertimeTable
                 Action::make('Approve')
                     ->databaseTransaction()
                     ->label(function ($record) {
-                        if ($record->approved == 1) {
+                        if ($record->status === EmployeeOvertime::STATUS_APPROVED) {
                             return 'Rollback approved';
                         } else {
                             return 'Approve';
                         }
                     })
                     ->icon(function ($record) {
-                        if ($record->approved == 1) {
+                        if ($record->status === EmployeeOvertime::STATUS_APPROVED) {
                             return 'heroicon-o-x-mark';
                         } else {
                             return 'heroicon-o-check-badge';
                         }
                     })->color(function ($record) {
-                        if ($record->approved == 1) {
+                        if ($record->status === EmployeeOvertime::STATUS_APPROVED) {
                             return 'gray';
                         } else {
-                            return 'info';
+                            return 'success';
                         }
                     })
                     ->button()
@@ -202,10 +216,10 @@ class EmployeeOvertimeTable
                     ->action(function (Model $record) {
                         try {
                             DB::transaction(function () use ($record) {
-                                if ($record->approved == 1) {
-                                    $record->update(['approved' => 0, 'approved_by' => null, 'approved_at' => null]);
+                                if ($record->status === EmployeeOvertime::STATUS_APPROVED) {
+                                    $record->update(['status' => EmployeeOvertime::STATUS_PENDING, 'approved_by' => null, 'approved_at' => null]);
                                 } else {
-                                    $record->update(['approved' => 1, 'approved_by' => auth()->user()->id, 'approved_at' => now()]);
+                                    $record->update(['status' => EmployeeOvertime::STATUS_APPROVED, 'approved_by' => auth()->user()->id, 'approved_at' => now()]);
                                 }
                             });
                             Notification::make()->title(__('Done'))->success()->send();
@@ -246,7 +260,7 @@ class EmployeeOvertimeTable
                         ->icon('heroicon-o-check-badge')
                         ->action(function (Collection $records) {
                             try {
-                                DB::transaction(fn() => $records->each->update(['approved' => 1, 'approved_by' => auth()->id(), 'approved_at' => now()]));
+                                DB::transaction(fn() => $records->each->update(['status' => EmployeeOvertime::STATUS_APPROVED, 'approved_by' => auth()->id(), 'approved_at' => now()]));
                                 Notification::make()->title(__('Done'))->success()->send();
                             } catch (\Throwable $e) {
                                 Notification::make()->title(__('Faild'))->body($e->getMessage())->danger()->send();
@@ -260,10 +274,10 @@ class EmployeeOvertimeTable
                         }),
                     BulkAction::make('Rollback approved')
                         ->requiresConfirmation()
-                        ->icon('heroicon-o-x-mark') 
+                        ->icon('heroicon-o-x-mark')
                         ->action(function (Collection $records) {
                             try {
-                                DB::transaction(fn() => $records->each->update(['approved' => 0, 'approved_by' => null, 'approved_at' => null]));
+                                DB::transaction(fn() => $records->each->update(['status' => EmployeeOvertime::STATUS_PENDING, 'approved_by' => null, 'approved_at' => null]));
                                 Notification::make()->title(__('Done'))->success()->send();
                             } catch (\Throwable $e) {
                                 Notification::make()->title(__('Faild'))->body($e->getMessage())->danger()->send();

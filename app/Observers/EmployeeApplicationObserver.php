@@ -7,6 +7,7 @@ use App\Facades\Warnings;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource;
 use App\Models\EmployeeApplicationV2;
 use App\Services\HR\Applications\AdvanceRequest\AdvanceApprovalService;
+use App\Services\HR\Payroll\PayrollLockGuard;
 use App\Services\Warnings\WarningPayload;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -24,11 +25,34 @@ class EmployeeApplicationObserver
 {
     public function __construct(
         private readonly AdvanceApprovalService $advanceApprovalService,
+        private readonly PayrollLockGuard       $payrollLockGuard,
     ) {}
 
     // =========================================================================
     //  Event Hooks
     // =========================================================================
+
+    /**
+     * Reject the application early when the employee's payroll for the
+     * relevant month has already been processed.
+     *
+     * Throwing here aborts the INSERT and rolls back any wrapping transaction.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function creating(EmployeeApplicationV2 $app): void
+    {
+        $date = $app->application_date
+            ? \Carbon\Carbon::parse($app->application_date)
+            : \Carbon\Carbon::today();
+
+        $this->payrollLockGuard->checkLock(
+            $app->employee_id,
+            $date->year,
+            $date->month,
+            'application_date'
+        );
+    }
 
     /**
      * Notify the employee's manager when a new application is submitted.
@@ -99,6 +123,33 @@ class EmployeeApplicationObserver
     }
 
     /**
+     * Prevent approving or modifying an application if the payroll month is locked.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function updating(EmployeeApplicationV2 $app): void
+    {
+        // 1. If transitioning to approved: always check.
+        $isTransitioningToApproved = $app->isDirty('status') && $app->status === EmployeeApplicationV2::STATUS_APPROVED;
+
+        // 2. If the date is changing: check the NEW date.
+        $isDateChanging = $app->isDirty('application_date');
+
+        if ($isTransitioningToApproved || $isDateChanging) {
+            $date = $app->application_date
+                ? \Carbon\Carbon::parse($app->application_date)
+                : \Carbon\Carbon::today();
+
+            $this->payrollLockGuard->checkLock(
+                $app->employee_id,
+                $date->year,
+                $date->month,
+                'application_date'
+            );
+        }
+    }
+
+    /**
      * When an advance-request application transitions to STATUS_APPROVED,
      * trigger installment generation and financial transaction creation.
      *
@@ -143,6 +194,25 @@ class EmployeeApplicationObserver
             // Re-throw so Filament / API controllers can roll back and surface the error.
             throw $e;
         }
+    }
+
+    /**
+     * Prevent deleting an application if the payroll month is locked.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function deleting(EmployeeApplicationV2 $app): void
+    {
+        $date = $app->application_date
+            ? \Carbon\Carbon::parse($app->application_date)
+            : \Carbon\Carbon::today();
+
+        $this->payrollLockGuard->checkLock(
+            $app->employee_id,
+            $date->year,
+            $date->month,
+            'application_date'
+        );
     }
 
     // =========================================================================
