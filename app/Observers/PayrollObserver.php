@@ -12,6 +12,27 @@ use Illuminate\Support\Facades\Log;
 class PayrollObserver
 {
     /**
+     * Handle the Payroll "updating" event.
+     *
+     * @param Payroll $payroll
+     * @return void
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function updating(Payroll $payroll): void
+    {
+        // 1. منع تغيير حالة الدفع (is_paid) أو تاريخ الدفع (payment_date) إلا إذا كان الراتب معتمداً أو مدفوعاً بالفعل 
+        if ($payroll->isDirty(['is_paid', 'payment_date'])) {
+            $originalStatus = $payroll->getOriginal('status');
+
+            if ($originalStatus !== Payroll::STATUS_APPROVED && $originalStatus !== Payroll::STATUS_PAID) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'is_paid' => 'Payment details cannot be modified unless the payroll status is "Approved". Current status: ' . ($originalStatus ?? 'unknown'),
+                ]);
+            }
+        }
+    }
+
+    /**
      * Handle the Payroll "deleted" event.
      */
     public function deleted(Payroll $payroll): void
