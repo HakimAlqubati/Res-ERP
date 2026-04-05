@@ -413,4 +413,17 @@ class Attendance extends Model implements Auditable
         return $this->belongsTo(Attendance::class, 'checkinrecord_id', 'id')
             ->where('check_type', self::CHECKTYPE_CHECKIN);
     }
+
+    public function getSourceLabelAttribute()
+    {
+        if (!$this->source_type) {
+            return '-';
+        }
+
+        return match ($this->source_type) {
+            'App\Models\AttendanceImagesUploaded' => 'Camera',
+            'App\Models\EmployeeApplicationV2' => "Request #{$this->source_id}",
+            default => str_replace(['App\Models\\', 'App\Modules\HR\Attendance\Models\\'], '', $this->source_type) . " #{$this->source_id}",
+        };
+    }
 }
