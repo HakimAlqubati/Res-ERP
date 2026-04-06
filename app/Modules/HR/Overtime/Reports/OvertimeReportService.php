@@ -37,6 +37,22 @@ class OvertimeReportService
         $paginatedRecords = $query->orderBy('date', 'desc')
             ->paginate($filter->perPage, ['*'], 'page', $filter->page);
 
+        $paginatedRecords->getCollection()->transform(function ($item) {
+            $item->status_badge_class = match ($item->status) {
+                EmployeeOvertime::STATUS_APPROVED => 'badge-approved',
+                EmployeeOvertime::STATUS_REJECTED => 'badge-rejected',
+                default => 'badge-pending',
+            };
+
+            $item->status_label = match ($item->status) {
+                EmployeeOvertime::STATUS_APPROVED => __('lang.approved'),
+                EmployeeOvertime::STATUS_REJECTED => __('lang.rejected'),
+                default => __('lang.pending'),
+            };
+
+            return $item;
+        });
+
         return [
             'items'   => $paginatedRecords,
             'summary' => $this->buildSummary($summaryQuery),
@@ -86,6 +102,7 @@ class OvertimeReportService
             'total_hours'          => round((float) (clone $query)->sum('hours'), 2),
             'approved_count'       => (clone $query)->where('status', EmployeeOvertime::STATUS_APPROVED)->count(),
             'pending_count'        => (clone $query)->where('status', EmployeeOvertime::STATUS_PENDING)->count(),
+            'rejected_count'       => (clone $query)->where('status', EmployeeOvertime::STATUS_REJECTED)->count(),
             'unique_employees'     => (clone $query)->distinct('employee_id')->count('employee_id'),
         ];
     }

@@ -69,6 +69,16 @@
             color: #854d0e;
         }
 
+        .badge-rejected {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
         .btn-export {
             border: 1px solid #22c55e;
             border-radius: 6px;
@@ -129,6 +139,10 @@
             <div class="label">{{ __('lang.pending') }}</div>
         </div>
         <div class="overtime-summary-card">
+            <div class="value">{{ $summary['rejected_count'] }}</div>
+            <div class="label">{{ __('lang.rejected') }}</div>
+        </div>
+        <div class="overtime-summary-card">
             <div class="value">{{ $summary['unique_employees'] }}</div>
             <div class="label">{{ __('lang.employees') }}</div>
         </div>
@@ -171,11 +185,7 @@
                 <td>{{ $item->end_time ?? '-' }}</td>
                 <td>{{ $item->hours }}</td>
                 <td>
-                    @if ($item->approved)
-                    <span class="badge-approved">{{ __('lang.approved') }}</span>
-                    @else
-                    <span class="badge-pending">{{ __('lang.pending') }}</span>
-                    @endif
+                    <span class="{{ $item->status_badge_class }}">{{ $item->status_label }}</span>
                 </td>
                 <td>{{ $item->approvedBy->name ?? '-' }}</td>
                 <td>{{ $item->notes ?? '-' }}</td>
