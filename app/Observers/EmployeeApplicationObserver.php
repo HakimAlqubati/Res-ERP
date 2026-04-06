@@ -42,16 +42,16 @@ class EmployeeApplicationObserver
      */
     public function creating(EmployeeApplicationV2 $app): void
     {
-        $date = $app->application_date
-            ? \Carbon\Carbon::parse($app->application_date)
-            : \Carbon\Carbon::today();
+        // $date = $app->application_date
+        //     ? \Carbon\Carbon::parse($app->application_date)
+        //     : \Carbon\Carbon::today();
 
-        $this->payrollLockGuard->checkLock(
-            $app->employee_id,
-            $date->year,
-            $date->month,
-            'application_date'
-        );
+        // $this->payrollLockGuard->checkLock(
+        //     $app->employee_id,
+        //     $date->year,
+        //     $date->month,
+        //     'application_date'
+        // );
     }
 
     /**
@@ -135,18 +135,18 @@ class EmployeeApplicationObserver
         // 2. If the date is changing: check the NEW date.
         $isDateChanging = $app->isDirty('application_date');
 
-        if ($isTransitioningToApproved || $isDateChanging) {
-            $date = $app->application_date
-                ? \Carbon\Carbon::parse($app->application_date)
-                : \Carbon\Carbon::today();
+        // if ($isTransitioningToApproved || $isDateChanging) {
+        //     $date = $app->application_date
+        //         ? \Carbon\Carbon::parse($app->application_date)
+        //         : \Carbon\Carbon::today();
 
-            $this->payrollLockGuard->checkLock(
-                $app->employee_id,
-                $date->year,
-                $date->month,
-                'application_date'
-            );
-        }
+        //     $this->payrollLockGuard->checkLock(
+        //         $app->employee_id,
+        //         $date->year,
+        //         $date->month,
+        //         'application_date'
+        //     );
+        // }
     }
 
     /**
@@ -203,16 +203,16 @@ class EmployeeApplicationObserver
      */
     public function deleting(EmployeeApplicationV2 $app): void
     {
-        $date = $app->application_date
-            ? \Carbon\Carbon::parse($app->application_date)
-            : \Carbon\Carbon::today();
+        // $date = $app->application_date
+        //     ? \Carbon\Carbon::parse($app->application_date)
+        //     : \Carbon\Carbon::today();
 
-        $this->payrollLockGuard->checkLock(
-            $app->employee_id,
-            $date->year,
-            $date->month,
-            'application_date'
-        );
+        // $this->payrollLockGuard->checkLock(
+        //     $app->employee_id,
+        //     $date->year,
+        //     $date->month,
+        //     'application_date'
+        // );
     }
 
     // =========================================================================
