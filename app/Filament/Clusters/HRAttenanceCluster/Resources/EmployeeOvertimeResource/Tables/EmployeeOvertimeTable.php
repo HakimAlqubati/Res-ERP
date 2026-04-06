@@ -183,7 +183,7 @@ class EmployeeOvertimeTable
                     ->databaseTransaction()
                     ->label(function ($record) {
                         if ($record->status === EmployeeOvertime::STATUS_APPROVED) {
-                            return 'Rollback approved';
+                            return 'Revoke approved';
                         } else {
                             return 'Approve';
                         }
@@ -275,7 +275,7 @@ class EmployeeOvertimeTable
                             }
                             return true;
                         }),
-                    BulkAction::make('Rollback approved')
+                    BulkAction::make('Revoke approved')
                         ->requiresConfirmation()
                         ->icon('heroicon-o-x-mark')
                         ->action(function (Collection $records) {
