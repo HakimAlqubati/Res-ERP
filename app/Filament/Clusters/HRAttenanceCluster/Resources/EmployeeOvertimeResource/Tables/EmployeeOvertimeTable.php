@@ -205,6 +205,9 @@ class EmployeeOvertimeTable
                     ->requiresConfirmation()
                     ->size(Size::Small)
                     ->hidden(function ($record) {
+                        if ($record->status == EmployeeOvertime::STATUS_REJECTED) {
+                            return true;
+                        }
                         // if ($record->approved == 1) {
                         //     return true;
                         // }
