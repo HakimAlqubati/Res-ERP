@@ -89,7 +89,7 @@ class EmployeeApplicationForm
                             $set('leaveRequest.detail_to_date', $get('application_date'));
                             $set('leaveRequest.detail_days_count', 1);
                         })
-                        // ->required()
+                        ->required()
                         ,
 
                     ToggleButtons::make('application_type_id')
