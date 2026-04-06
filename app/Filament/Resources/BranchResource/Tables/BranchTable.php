@@ -39,7 +39,7 @@ class BranchTable
     public static function configure(Table $table): Table
     {
         return $table->striped()
-            ->recordUrl(fn(Branch $record): string => BranchResource::getUrl('view', ['record' => $record]))    
+            ->recordUrl(fn(Branch $record): string => BranchResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('id')->label(__('lang.branch_id'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
                 SpatieMediaLibraryImageColumn::make('default')->label('')->size(50)
@@ -91,6 +91,7 @@ class BranchTable
                         ->label('Sync Financial Transfers')
                         ->icon('heroicon-o-arrow-path')
                         ->color('info')
+                        ->visible(fn() => isHakimOrAdel())
                         ->requiresConfirmation()
                         ->modalHeading('Sync Transfer Orders to Financial Transactions')
                         ->modalDescription(fn($record) => "This will sync all transfer orders for branch: {$record->name}")
@@ -142,127 +143,104 @@ class BranchTable
                                     ->send();
                             }
                         }),
-                ]),
 
-                Action::make('addStore')
-                    ->label('Add Store')
-                    ->icon('heroicon-o-plus-circle')
-                    ->visible(fn(Model $record) => ! $record->store && $record->type != Branch::TYPE_HQ)
-                    ->schema([
-                        TextInput::make('name')
-                            ->label('Store Name')
-                            ->default(fn(Model $record) => $record->name . ' Store')
-                            ->required(),
+                    Action::make('addStore')
+                        ->label('Add Store')
+                        ->icon('heroicon-o-plus-circle')
+                        ->visible(fn(Model $record) => ! $record->store && $record->type != Branch::TYPE_HQ)
+                        ->schema([
+                            TextInput::make('name')
+                                ->label('Store Name')
+                                ->default(fn(Model $record) => $record->name . ' Store')
+                                ->required(),
 
-                        Toggle::make('active')
-                            ->label('Active')
-                            ->default(true),
-                    ])
-                    ->action(function (Model $record, array $data) {
-                        try {
-                            //code...
-                            $store = Store::create([
-                                'name'      => $data['name'],
-                                'active'    => $data['active'],
-                                'branch_id' => $record->id,
-                            ]);
-                            $record->update(['store_id' => $store->id]);
-                        } catch (Throwable $th) {
-                            throw $th;
-                        }
-                    })
-                    ->modalHeading('Create and Link Store')
-                    ->color('primary')
-                    ->button(),
-                Action::make('add_area')
-                    ->modalHeading('')
-                    ->modalWidth('lg') // Adjust modal size
-                    ->button()
-                    ->icon('heroicon-o-plus')
-                    ->label('Add area')->schema([
-                        Repeater::make('branch_areas')
-                            ->minItems(1)
-                            ->maxItems(1)
-                            ->disableItemCreation(true)
-                            ->disableItemDeletion(true)
+                            Toggle::make('active')
+                                ->label('Active')
+                                ->default(true),
+                        ])
+                        ->action(function (Model $record, array $data) {
+                            try {
+                                //code...
+                                $store = Store::create([
+                                    'name'      => $data['name'],
+                                    'active'    => $data['active'],
+                                    'branch_id' => $record->id,
+                                ]);
+                                $record->update(['store_id' => $store->id]);
+                            } catch (Throwable $th) {
+                                throw $th;
+                            }
+                        })
+                        ->modalHeading('Create and Link Store')
+                        ->color('primary')
+                    // ->button()
+                    ,
 
-                            ->schema([
-                                TextInput::make('name')->label('Area name')->required()->helperText('Type the name of area'),
-                                Textarea::make('description')->label('Description')->helperText('More information about the area, like floor, location ...etc'),
-                            ])
-                            ->afterStateUpdated(function ($state, $record) {
 
-                                // Custom logic to handle saving without deleting existing records
-                                $branch = $record; // Get the branch being updated
-                                $existingAreas = $branch->areas->pluck('id')->toArray(); // Existing area IDs
 
-                                foreach ($state as $areaData) {
-                                    if (!isset($areaData['id'])) {
-                                        // If it's a new area, create it
-                                        $branch->areas()->create($areaData);
-                                    } else {
+                    Action::make('add_area')
+                        ->modalHeading('')
+                        ->modalWidth('lg') // Adjust modal size
+                        // ->button()
+                        ->icon('heroicon-o-plus')
+                        ->label('Add area')->schema([
+                            Repeater::make('branch_areas')
+                                ->minItems(1)
+                                ->maxItems(1)
+                                ->disableItemCreation(true)
+                                ->disableItemDeletion(true)
+
+                                ->schema([
+                                    TextInput::make('name')->label('Area name')->required()->helperText('Type the name of area'),
+                                    Textarea::make('description')->label('Description')->helperText('More information about the area, like floor, location ...etc'),
+                                ])
+                                ->afterStateUpdated(function ($state, $record) {
+
+                                    // Custom logic to handle saving without deleting existing records
+                                    $branch = $record; // Get the branch being updated
+                                    $existingAreas = $branch->areas->pluck('id')->toArray(); // Existing area IDs
+
+                                    foreach ($state as $areaData) {
+                                        if (!isset($areaData['id'])) {
+                                            // If it's a new area, create it
+                                            $branch->areas()->create($areaData);
+                                        } else {
+                                        }
                                     }
-                                }
-                            }),
-                    ]),
-                Action::make('quick_edit')
-                    ->label(__('Quick Edit'))
-                    ->icon('heroicon-o-pencil-square')
-                    ->modalHeading(__('Quick Edit Branch'))
-                    ->modalWidth('lg')
-                    ->schema(function ($record) {
-                        return [
-                            TextInput::make('name')->required()->label(__('lang.name'))->default($record->name),
-                            Select::make('manager_id')
-                                ->label(__('lang.branch_manager'))->default($record->manager_id)
-                                ->options(User::whereHas('roles', fn($q) => $q->where('id', 7))
-                                    ->pluck('name', 'id')),
-                            Select::make('store_id')
-                                ->label(__('stock.store_id'))->default($record->store_id)
-                                ->options(Store::active()->centralKitchen()->pluck('name', 'id'))
-                                ->searchable()
-                                ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN),
+                                }),
+                        ]),
+                    Action::make('quick_edit')
+                        ->label(__('Quick Edit'))
+                        ->icon('heroicon-o-pencil-square')
+                        ->modalHeading(__('Quick Edit Branch'))
+                        ->modalWidth('lg')
+                        ->schema(function ($record) {
+                            return [
+                                TextInput::make('name')->required()->label(__('lang.name'))->default($record->name),
+                                Select::make('manager_id')
+                                    ->label(__('lang.branch_manager'))->default($record->manager_id)
+                                    ->options(User::whereHas('roles', fn($q) => $q->where('id', 7))
+                                        ->pluck('name', 'id')),
+                                Select::make('store_id')
+                                    ->label(__('stock.store_id'))->default($record->store_id)
+                                    ->options(Store::active()->centralKitchen()->pluck('name', 'id'))
+                                    ->searchable()
+                                    ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN),
 
-                        ];
-                    })
-                    ->action(function (Model $record, array $data) {
-                        $record->update($data);
-                        Notification::make()
-                            ->title(__('Updated successfully'))
-                            ->success()
-                            ->send();
-                    }),
-                Action::make('zero_stock')
-                    ->label(__('stock.zero_stock'))
-                    ->icon('heroicon-o-archive-box-x-mark')
-                    ->color('danger')
-                    ->requiresConfirmation()
-                    ->modalHeading(__('stock.zero_stock_heading'))
-                    ->modalDescription(fn($record) => __('stock.zero_stock_confirmation', ['branch' => $record->name]))
-                    ->visible(fn(Model $record) => (bool)$record->store_id && isSuperAdmin())
-                    ->action(function (Model $record) {
-                        try {
-                            \Illuminate\Support\Facades\DB::table('inventory_transactions')
-                                ->where('store_id', $record->store_id)
-                                // ->where('movement_type','in')
-                                ->whereNull('deleted_at')
-                                ->update(['deleted_at' => now()]);
-
+                            ];
+                        })
+                        ->action(function (Model $record, array $data) {
+                            $record->update($data);
                             Notification::make()
-                                ->title(__('stock.zero_stock_success', ['count' => '...']))
+                                ->title(__('Updated successfully'))
                                 ->success()
                                 ->send();
-                        } catch (Throwable $e) {
-                            Notification::make()
-                                ->title(__('stock.zero_stock_failed'))
-                                ->body($e->getMessage())
-                                ->danger()
-                                ->send();
-                        }
-                    })->hidden(),
-                EditAction::make(),
-                DeleteAction::make(),
-                RestoreAction::make(),
+                        }),
+                    EditAction::make(),
+                    DeleteAction::make(),
+                    RestoreAction::make(),
+                ]),
+
             ])
             ->toolbarActions([
                 DeleteBulkAction::make(),
