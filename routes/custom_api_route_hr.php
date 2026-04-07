@@ -330,6 +330,9 @@ Route::prefix('hr')
         Route::get('/leaveTypes/{leaveType}', [LeaveTypeController::class, 'show']);      // single
         Route::get('/leaveTypes-weekly', [LeaveTypeController::class, 'weekly']);         // first active weekly/monthly
         Route::get('/leaveTypes-monthly-days-sum', [LeaveTypeController::class, 'monthlyDaysSum']); // sum with default=4
+        Route::get('/penalties', [\App\Http\Controllers\Api\HR\PenaltyDeductionController::class, 'index']);
+        Route::post('/penalties', [\App\Http\Controllers\Api\HR\PenaltyDeductionController::class, 'store']);
+        Route::get('/penalties/{id}', [\App\Http\Controllers\Api\HR\PenaltyDeductionController::class, 'show']);
     });
 
 Route::get('/testWeeklyLeaveCalculator', function () {
