@@ -31,6 +31,9 @@ enum SalaryTransactionSubType: string
         // ترحيل (Carry Forward)
     case CARRY_FORWARD = 'carry_forward';           // مبلغ مرحّل على الموظف
 
+        // أجور مقدمة (Advance Wages)
+    case ADVANCE_WAGE = 'advance_wage';             // أجر مقدم (جزء من الراتب صُرف مسبقاً)
+
     public function parentType(): SalaryTransactionType
     {
         return match ($this) {
@@ -55,6 +58,8 @@ enum SalaryTransactionSubType: string
             self::SALARY_CORRECTION => SalaryTransactionType::TYPE_ADJUSTMENT,
 
             self::CARRY_FORWARD => SalaryTransactionType::TYPE_CARRY_FORWARD,
+
+            self::ADVANCE_WAGE  => SalaryTransactionType::TYPE_ADVANCE_WAGE,
         };
     }
 }

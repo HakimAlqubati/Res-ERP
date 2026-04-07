@@ -14,7 +14,8 @@ enum SalaryTransactionType: string
     case TYPE_PENALTY   = 'penalty';
     case TYPE_OTHER     = 'other';
     case TYPE_NET_SALARY = 'net_salary';
-    case TYPE_ADJUSTMENT = 'adjustment';   // Salary Adjustment
+    case TYPE_ADJUSTMENT = 'adjustment';        // Salary Adjustment
     case TYPE_EMPLOYER_CONTRIBUTION = 'employer_contribution';
     case TYPE_CARRY_FORWARD = 'carry_forward';
+    case TYPE_ADVANCE_WAGE  = 'advance_wage';    // Advance Wages (prepaid salary)
 }
