@@ -333,6 +333,9 @@ Route::prefix('hr')
         Route::get('/penalties', [\App\Http\Controllers\Api\HR\PenaltyDeductionController::class, 'index']);
         Route::post('/penalties', [\App\Http\Controllers\Api\HR\PenaltyDeductionController::class, 'store']);
         Route::get('/penalties/{id}', [\App\Http\Controllers\Api\HR\PenaltyDeductionController::class, 'show']);
+
+        Route::get('/deductions', [\App\Http\Controllers\Api\HR\DeductionController::class, 'index']);
+        Route::get('/deductions/{id}', [\App\Http\Controllers\Api\HR\DeductionController::class, 'show']);
     });
 
 Route::get('/testWeeklyLeaveCalculator', function () {
