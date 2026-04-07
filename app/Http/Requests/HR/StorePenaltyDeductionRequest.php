@@ -26,6 +26,13 @@ class StorePenaltyDeductionRequest extends FormRequest
      */
     public function rules()
     {
+        $currentYear = (int) date('Y');
+        $currentMonth = (int) date('n');
+        $inputYear = (int) $this->input('year');
+
+        // If the year is the current year, max month is the current month. Otherwise, it's 12.
+        $maxMonth = ($inputYear === $currentYear) ? $currentMonth : 12;
+
         return [
             'employee_id'       => ['required', 'exists:hr_employees,id'],
             'deduction_id'      => [
@@ -35,8 +42,8 @@ class StorePenaltyDeductionRequest extends FormRequest
                 })
             ],
             'date'              => ['required', 'date'],
-            'month'             => ['required', 'integer', 'min:1', 'max:12'],
-            'year'              => ['required', 'integer', 'min:2000'],
+            'month'             => ['required', 'integer', 'min:1', "max:{$maxMonth}"],
+            'year'              => ['required', 'integer', 'min:2000', "max:{$currentYear}"],
             'penalty_amount'    => ['required', 'numeric', 'min:0'],
             'description'       => ['nullable', 'string', 'max:500'],
             'status'            => ['nullable', 'string', 'in:' . implode(',', [
