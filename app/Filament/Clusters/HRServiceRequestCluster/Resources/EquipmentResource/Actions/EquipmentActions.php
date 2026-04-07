@@ -19,7 +19,7 @@ class EquipmentActions
             ->label(__('Sync Purchase Cost'))
             ->icon('heroicon-o-currency-dollar')
             ->color('success')
-            ->button()
+            // ->button()
             ->visible(fn($record) => !$record->has_purchase_cost_synced && $record->purchase_price > 0)
             ->requiresConfirmation()
             ->modalHeading(__('Sync Purchase Cost'))
