@@ -29,6 +29,7 @@ use App\Modules\HR\Payroll\Calculators\OvertimeCalculator;
 use App\Modules\HR\Payroll\Calculators\PenaltyCalculator;
 use App\Modules\HR\Payroll\Calculators\AllowanceCalculator;
 use App\Modules\HR\Payroll\Calculators\AdvanceInstallmentCalculator;
+use App\Modules\HR\Payroll\Calculators\AdvanceWageCalculator;
 use App\Modules\HR\Payroll\Calculators\MealRequestCalculator;
 use App\Modules\HR\Payroll\Calculators\GeneralDeductionCalculator;
 use App\Modules\HR\Payroll\Calculators\TransactionBuilder;
@@ -77,6 +78,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         protected PenaltyCalculator $penaltyCalculator,
         protected AllowanceCalculator $allowanceCalculator,
         protected AdvanceInstallmentCalculator $advanceInstallmentCalculator,
+        protected AdvanceWageCalculator $advanceWageCalculator,
         protected MealRequestCalculator $mealRequestCalculator,
         protected GeneralDeductionCalculator $generalDeductionCalculator,
         protected TransactionBuilder $transactionBuilder,
@@ -226,7 +228,10 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         // 6. Calculate advance installments
         $advanceInstallments = $this->advanceInstallmentCalculator->calculate($context);
 
-        // 6b. Calculate meal requests
+        // 6b. Calculate advance wages (pre-paid salary to be deducted)
+        $advanceWages = $this->advanceWageCalculator->calculate($context);
+
+        // 6c. Calculate meal requests
         $mealRequests = $this->mealRequestCalculator->calculate($context);
 
         // 6c. Calculate monthly incentives
@@ -283,6 +288,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
                 $deductions->earlyDepartureDeduction +
                 $penalties['total'] +
                 $advanceInstallments['total'] +
+                $advanceWages['total'] +
                 $mealRequests['total'] +
                 $deductions->missingHoursDeduction
         );
@@ -336,6 +342,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             allowances: $allowances,
             penalties: $penalties,
             advanceInstallments: $advanceInstallments,
+            advanceWages: $advanceWages,
             mealRequests: $mealRequests,
             dynamicDeductions: $dynamicDeductions,
             monthlyIncentives: $monthlyIncentives,
@@ -456,6 +463,8 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             'penalties'              => $penalties['items'],
             'advance_installments_total' => $this->round($advanceInstallments['total']),
             'advance_installments'   => $advanceInstallments['items'],
+            'advance_wages_total'    => $this->round($advanceWages['total']),
+            'advance_wages'          => $advanceWages['items'],
             'meal_requests_total'    => $this->round($mealRequests['total']),
             'meal_requests'          => $mealRequests['items'],
             'monthly_incentives_total' => $this->round($monthlyIncentives['total'] ?? 0),

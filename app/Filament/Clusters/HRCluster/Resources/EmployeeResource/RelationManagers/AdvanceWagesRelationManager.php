@@ -1,0 +1,225 @@
+<?php
+
+namespace App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers;
+
+use App\Models\AdvanceWage;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
+use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
+
+class AdvanceWagesRelationManager extends RelationManager
+{
+    protected static string $relationship = 'advanceWages';
+
+    protected static ?string $title = 'Advance Wages';
+
+    public static function getBadge(Model $ownerRecord, string $pageClass): ?string
+    {
+        $count = $ownerRecord->advanceWages()->where('status', AdvanceWage::STATUS_PENDING)->count();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getBadgeColor(Model $ownerRecord, string $pageClass): ?string
+    {
+        return 'warning';
+    }
+
+    public function form(Schema $schema): Schema
+    {
+        return $schema->components([
+
+            TextInput::make('amount')
+                ->label(__('Amount'))
+                ->numeric()
+                ->minValue(0.01)
+                ->maxValue(fn () => $this->getOwnerRecord()->salary ?? 99999)
+                ->required()
+                ->columnSpan(1),
+
+            Select::make('year')
+                ->label(__('Year'))
+                ->options(collect(range(now()->year - 1, now()->year + 1))->mapWithKeys(fn ($y) => [$y => $y]))
+                ->default(now()->year)
+                ->required()
+                ->columnSpan(1),
+
+            Select::make('month')
+                ->label(__('Month'))
+                ->options(collect(range(1, 12))->mapWithKeys(fn ($m) => [$m => now()->setMonth($m)->translatedFormat('F')]))
+                ->default(now()->month)
+                ->required()
+                ->columnSpan(1),
+
+            Select::make('status')
+                ->label(__('Status'))
+                ->options(AdvanceWage::statuses())
+                ->default(AdvanceWage::STATUS_PENDING)
+                ->required()
+                ->columnSpan(1)
+                ->visibleOn('edit'),
+
+            TextInput::make('reason')
+                ->label(__('Reason'))
+                ->maxLength(255)
+                ->columnSpanFull(),
+
+            Textarea::make('notes')
+                ->label(__('Notes'))
+                ->rows(3)
+                ->columnSpanFull(),
+
+        ])->columns(2);
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->recordTitleAttribute('amount')
+            ->striped()
+            ->defaultSort('created_at', 'desc')
+            ->columns([
+                TextColumn::make('year')
+                    ->label(__('Year'))
+                    ->sortable(),
+
+                TextColumn::make('month')
+                    ->label(__('Month'))
+                    ->formatStateUsing(fn ($state) => now()->setMonth($state)->translatedFormat('F'))
+                    ->sortable(),
+
+                TextColumn::make('amount')
+                    ->label(__('Amount'))
+                    ->money(fn () => $this->getOwnerRecord()->branch?->currency ?? 'MYR')
+                    ->sortable(),
+
+                TextColumn::make('reason')
+                    ->label(__('Reason'))
+                    ->limit(40)
+                    ->tooltip(fn ($record) => $record->reason)
+                    ->placeholder('—'),
+
+                TextColumn::make('status')
+                    ->label(__('Status'))
+                    ->badge()
+                    ->color(fn (string $state) => match ($state) {
+                        AdvanceWage::STATUS_PENDING   => 'warning',
+                        AdvanceWage::STATUS_SETTLED   => 'success',
+                        AdvanceWage::STATUS_CANCELLED => 'danger',
+                        default                       => 'gray',
+                    })
+                    ->formatStateUsing(fn ($state) => AdvanceWage::statuses()[$state] ?? $state),
+
+                TextColumn::make('settledPayroll.name')
+                    ->label(__('Settled In'))
+                    ->placeholder('—')
+                    ->toggleable(),
+
+                TextColumn::make('settled_at')
+                    ->label(__('Settled At'))
+                    ->dateTime('Y-m-d')
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('creator.name')
+                    ->label(__('Created By'))
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('created_at')
+                    ->label(__('Created At'))
+                    ->dateTime('Y-m-d H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                SelectFilter::make('status')
+                    ->label(__('Status'))
+                    ->options(AdvanceWage::statuses()),
+
+                SelectFilter::make('year')
+                    ->label(__('Year'))
+                    ->options(collect(range(now()->year - 2, now()->year))->mapWithKeys(fn ($y) => [$y => $y])),
+
+                SelectFilter::make('month')
+                    ->label(__('Month'))
+                    ->options(collect(range(1, 12))->mapWithKeys(fn ($m) => [$m => now()->setMonth($m)->translatedFormat('F')])),
+            ])
+            ->headerActions([
+                CreateAction::make()
+                    ->mutateFormDataUsing(function (array $data): array {
+                        $data['created_by'] = auth()->id();
+                        $data['branch_id']  = $this->getOwnerRecord()->branch_id;
+                        return $data;
+                    })
+                    ->successNotification(
+                        Notification::make()->success()->title(__('Advance wage recorded successfully.'))
+                    ),
+            ])
+            ->recordActions([
+                Action::make('edit')
+                    ->label(__('Edit'))
+                    ->icon('heroicon-o-pencil-square')
+                    ->url(fn (AdvanceWage $record) => null)
+                    ->fillForm(fn (AdvanceWage $record): array => $record->toArray())
+                    ->schema(fn () => $this->form($this->makeSchema())->getComponents())
+                    ->action(function (AdvanceWage $record, array $data): void {
+                        $record->update($data);
+                        Notification::make()->success()->title(__('Updated successfully.'))->send();
+                    })
+                    ->visible(fn (AdvanceWage $record) => $record->status === AdvanceWage::STATUS_PENDING),
+
+                Action::make('cancel')
+                    ->label(__('Cancel'))
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->visible(fn (AdvanceWage $record) => $record->canBeCancelled())
+                    ->action(function (AdvanceWage $record): void {
+                        $record->cancel();
+                        Notification::make()->success()->title(__('Advance wage cancelled.'))->send();
+                    }),
+
+                Action::make('delete')
+                    ->label(__('Delete'))
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->visible(fn (AdvanceWage $record) => $record->status === AdvanceWage::STATUS_PENDING)
+                    ->action(function (AdvanceWage $record): void {
+                        $record->delete();
+                        Notification::make()->success()->title(__('Deleted successfully.'))->send();
+                    }),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([]),
+            ]);
+    }
+
+    protected function canCreate(): bool
+    {
+        return isSuperAdmin() || isHR() || isSystemManager() || isBranchManager();
+    }
+
+    protected function canEdit(Model $record): bool
+    {
+        return $record->status === AdvanceWage::STATUS_PENDING
+            && (isSuperAdmin() || isHR() || isSystemManager());
+    }
+
+    protected function canDelete(Model $record): bool
+    {
+        return $record->status === AdvanceWage::STATUS_PENDING
+            && (isSuperAdmin() || isHR() || isSystemManager());
+    }
+}
