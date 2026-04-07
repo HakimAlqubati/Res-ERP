@@ -27,7 +27,7 @@ class AttendanceObserver
      */
     public function creating(Attendance $attendance): void
     {
-        $this->guardPeriod($attendance);
+        // $this->guardPeriod($attendance);
     }
 
     // -------------------------------------------------------------------------

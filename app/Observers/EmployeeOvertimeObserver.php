@@ -29,18 +29,18 @@ class EmployeeOvertimeObserver
      */
     public function creating(EmployeeOvertime $employeeOvertime): void
     {
-        if (empty($employeeOvertime->date)) {
-            return;
-        }
+        // if (empty($employeeOvertime->date)) {
+        //     return;
+        // }
 
-        $date = Carbon::parse($employeeOvertime->date);
+        // $date = Carbon::parse($employeeOvertime->date);
 
-        $this->payrollLockGuard->checkLock(
-            (int) $employeeOvertime->employee_id,
-            $date->year,
-            $date->month,
-            'date'
-        );
+        // $this->payrollLockGuard->checkLock(
+        //     (int) $employeeOvertime->employee_id,
+        //     $date->year,
+        //     $date->month,
+        //     'date'
+        // );
     }
 
 
@@ -104,16 +104,16 @@ class EmployeeOvertimeObserver
 
         $isDateChanging = $employeeOvertime->isDirty('date');
 
-        if (($isTransitioningToApproved || $isDateChanging) && !empty($employeeOvertime->date)) {
-            $date = Carbon::parse($employeeOvertime->date);
+        // if (($isTransitioningToApproved || $isDateChanging) && !empty($employeeOvertime->date)) {
+        //     $date = Carbon::parse($employeeOvertime->date);
 
-            $this->payrollLockGuard->checkLock(
-                (int) $employeeOvertime->employee_id,
-                $date->year,
-                $date->month,
-                'date'
-            );
-        }
+        //     $this->payrollLockGuard->checkLock(
+        //         (int) $employeeOvertime->employee_id,
+        //         $date->year,
+        //         $date->month,
+        //         'date'
+        //     );
+        // }
 
         // 4. Detect rollback: status field transitioning from approved to something else.
         if (
@@ -134,16 +134,16 @@ class EmployeeOvertimeObserver
      */
     public function deleting(EmployeeOvertime $employeeOvertime): void
     {
-        if (!empty($employeeOvertime->date)) {
-            $date = Carbon::parse($employeeOvertime->date);
+        // if (!empty($employeeOvertime->date)) {
+        //     $date = Carbon::parse($employeeOvertime->date);
 
-            $this->payrollLockGuard->checkLock(
-                (int) $employeeOvertime->employee_id,
-                $date->year,
-                $date->month,
-                'date'
-            );
-        }
+        //     $this->payrollLockGuard->checkLock(
+        //         (int) $employeeOvertime->employee_id,
+        //         $date->year,
+        //         $date->month,
+        //         'date'
+        //     );
+        // }
 
         $this->ensureNoConflictWithPayroll($employeeOvertime);
     }

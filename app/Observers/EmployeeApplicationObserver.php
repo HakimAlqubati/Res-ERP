@@ -42,16 +42,16 @@ class EmployeeApplicationObserver
      */
     public function creating(EmployeeApplicationV2 $app): void
     {
-        $date = $app->application_date
-            ? \Carbon\Carbon::parse($app->application_date)
-            : \Carbon\Carbon::today();
+        // $date = $app->application_date
+        //     ? \Carbon\Carbon::parse($app->application_date)
+        //     : \Carbon\Carbon::today();
 
-        $this->payrollLockGuard->checkLock(
-            $app->employee_id,
-            $date->year,
-            $date->month,
-            'application_date'
-        );
+        // $this->payrollLockGuard->checkLock(
+        //     $app->employee_id,
+        //     $date->year,
+        //     $date->month,
+        //     'application_date'
+        // );
     }
 
     /**
@@ -103,7 +103,7 @@ class EmployeeApplicationObserver
             if ($app->application_type_id === EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST) {
                 $advanceRequest = $app->advanceRequest;
                 $amount = $advanceRequest ? ($advanceRequest->advance_amount . ' ' . ($advanceRequest->currency ?? 'USD')) : 'Unknown Amount';
-                
+
                 sendWhatsAppMessage($managerUser, $amount, [
                     'template' => 'workbench_advance_notifier',
                     'parameters' => [
@@ -135,18 +135,18 @@ class EmployeeApplicationObserver
         // 2. If the date is changing: check the NEW date.
         $isDateChanging = $app->isDirty('application_date');
 
-        if ($isTransitioningToApproved || $isDateChanging) {
-            $date = $app->application_date
-                ? \Carbon\Carbon::parse($app->application_date)
-                : \Carbon\Carbon::today();
+        // if ($isTransitioningToApproved || $isDateChanging) {
+        //     $date = $app->application_date
+        //         ? \Carbon\Carbon::parse($app->application_date)
+        //         : \Carbon\Carbon::today();
 
-            $this->payrollLockGuard->checkLock(
-                $app->employee_id,
-                $date->year,
-                $date->month,
-                'application_date'
-            );
-        }
+        //     $this->payrollLockGuard->checkLock(
+        //         $app->employee_id,
+        //         $date->year,
+        //         $date->month,
+        //         'application_date'
+        //     );
+        // }
     }
 
     /**
@@ -174,14 +174,14 @@ class EmployeeApplicationObserver
                         'Your advance request has been approved.',
                         WarningLevel::Info
                     )
-                    ->ctx([
-                        'application_id' => $app->id,
-                        'employee_id'    => $app->employee_id,
-                        'type_id'        => $app->application_type_id,
-                    ])
-                    ->url(rtrim(EmployeeApplicationResource::getUrl(), '/') . '?tab=Advance+request')
-                    ->scope("emp-app-approved-{$app->id}")
-                    ->expires(now()->addDays(3))
+                        ->ctx([
+                            'application_id' => $app->id,
+                            'employee_id'    => $app->employee_id,
+                            'type_id'        => $app->application_type_id,
+                        ])
+                        ->url(rtrim(EmployeeApplicationResource::getUrl(), '/') . '?tab=Advance+request')
+                        ->scope("emp-app-approved-{$app->id}")
+                        ->expires(now()->addDays(3))
                 );
             }
         } catch (\Throwable $e) {
@@ -203,16 +203,16 @@ class EmployeeApplicationObserver
      */
     public function deleting(EmployeeApplicationV2 $app): void
     {
-        $date = $app->application_date
-            ? \Carbon\Carbon::parse($app->application_date)
-            : \Carbon\Carbon::today();
+        // $date = $app->application_date
+        //     ? \Carbon\Carbon::parse($app->application_date)
+        //     : \Carbon\Carbon::today();
 
-        $this->payrollLockGuard->checkLock(
-            $app->employee_id,
-            $date->year,
-            $date->month,
-            'application_date'
-        );
+        // $this->payrollLockGuard->checkLock(
+        //     $app->employee_id,
+        //     $date->year,
+        //     $date->month,
+        //     'application_date'
+        // );
     }
 
     // =========================================================================
