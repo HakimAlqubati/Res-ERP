@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRSalaryCluster\Resources;
 
+use App\Exports\PayrollsExport;
 use App\Filament\Clusters\HRSalaryCluster;
 use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\Pages;
 use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\PayrollActions;
@@ -9,6 +10,7 @@ use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\PayrollForm;
 use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\PayrollTable;
 use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\RelationManagers\PayrollsRelationManager;
 use App\Models\PayrollRun;
+use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -25,6 +27,7 @@ use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PayrollResource extends Resource
 {
@@ -75,7 +78,15 @@ class PayrollResource extends Resource
             ->filtersFormColumns(4)
             ->recordActions([
                 ActionGroup::make([
-
+                    Action::make('exportExcel')
+                        ->label('Export Excel')
+                        ->color('info')
+                        ->icon('heroicon-o-arrow-down-on-square-stack')
+                        ->action(function (PayrollRun $record) {
+                            $payrolls = $record->payrolls()->with('employee')->get();
+                            $fileName = 'payrolls-' . $record->name . '.xlsx';
+                            return Excel::download(new PayrollsExport($payrolls), $fileName);
+                        }),
                     PayrollActions::earlyInstallmentPaymentAction(),
                     PayrollActions::pdfSalarySlipAction(),
                     PayrollActions::approveAction(),

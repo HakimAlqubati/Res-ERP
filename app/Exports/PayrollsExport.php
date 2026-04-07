@@ -77,6 +77,7 @@ class PayrollsExport implements FromView
             $row = [
                 'employee_no'           => $payroll->employee?->employee_no,
                 'employee_name'         => $payroll->employee?->name,
+                'branch_name'           => $payroll->employee?->branch?->name,
                 'base_salary'           => $payroll->base_salary,
                 'net_salary'            => $payroll->net_salary,
                 'employer_contribution' => 0,
