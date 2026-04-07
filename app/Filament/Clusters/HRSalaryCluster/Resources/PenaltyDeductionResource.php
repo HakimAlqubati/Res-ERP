@@ -159,7 +159,9 @@ class PenaltyDeductionResource extends Resource
                 TextColumn::make('month')
                     ->label('Month')
                     ->getStateUsing(function ($record) {
-                        return getMonthArrayWithKeys()[$record->month];
+                        $months = getMonthArrayWithKeys();
+                        $monthKey = str_pad((string) $record->month, 2, '0', STR_PAD_LEFT);
+                        return $months[$monthKey] ?? $record->month;
                     })->toggleable()
                     ->alignCenter(true)
                     ->sortable(),

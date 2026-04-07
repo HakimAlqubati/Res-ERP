@@ -38,7 +38,8 @@ class StorePenaltyDeductionRequest extends FormRequest
             'deduction_id'      => [
                 'required',
                 Rule::exists('hr_deductions', 'id')->where(function ($query) {
-                    $query->where('is_penalty', true);
+                    $query->where('is_penalty', true)
+                          ->whereNull('deleted_at');
                 })
             ],
             'date'              => ['required', 'date'],
