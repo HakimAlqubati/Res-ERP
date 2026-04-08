@@ -20,18 +20,15 @@ use Illuminate\Support\Collection;
  */
 class AttendanceDayProcessor
 {
-    private AttendanceStatisticsInjector $statsInjector;
     private DurationCalculator $durationCalculator;
     private OvertimeCalculator $overtimeCalculator;
     private StatusResolver $statusResolver;
 
     public function __construct(
-        AttendanceStatisticsInjector $statsInjector,
         DurationCalculator $durationCalculator,
         OvertimeCalculator $overtimeCalculator,
         StatusResolver $statusResolver
     ) {
-        $this->statsInjector = $statsInjector;
         $this->durationCalculator = $durationCalculator;
         $this->overtimeCalculator = $overtimeCalculator;
         $this->statusResolver = $statusResolver;
@@ -54,9 +51,10 @@ class AttendanceDayProcessor
      * @param bool $isFuture Determine if the evaluated day is strictly in the future.
      * @param bool $isToday Determine if the evaluated day is today.
      * @param bool $discountException Determine if the employee is excluded from late attendance deductions.
+     * @param AttendanceStatisticsInjector $statsInjector The stateful injector to accumulate statistics.
      * @return array An array representing the completely processed and formatted day report.
      */
-    public function processDay(string $dateStr, string $dayName, string $dayShort, Collection $dayHistories, Collection $dayAttendances, Collection $dayOvertimes, Collection $workPeriodMap, bool $isFuture, bool $isToday, bool $discountException): array
+    public function processDay(string $dateStr, string $dayName, string $dayShort, Collection $dayHistories, Collection $dayAttendances, Collection $dayOvertimes, Collection $workPeriodMap, bool $isFuture, bool $isToday, bool $discountException, AttendanceStatisticsInjector $statsInjector): array
     {
         $periods = collect();
         $dayActualSeconds = 0;
@@ -87,13 +85,14 @@ class AttendanceDayProcessor
             if ($checkOutCol->isNotEmpty()) {
                 $lastCheckoutResource = (new CheckOutAttendanceResource($checkOutCol->last(), $approvedOvertime, $dateStr))->toArray(request());
                 $lastCheckoutResource['period_end_at'] = $endTime;
+                $lastCheckoutResource['approved_overtime'] = $approvedOvertime;
                 
                 if (!empty($lastCheckoutResource['total_actual_duration_hourly'])) {
                     [$ah, $am, $as] = explode(':', $lastCheckoutResource['total_actual_duration_hourly']);
                     $dayActualSeconds += ($ah * 3600) + ($am * 60) + $as;
                 }
                 
-                $this->statsInjector->accumulatePeriodStats($lastCheckoutResource, $discountException);
+                $statsInjector->accumulatePeriodStats($lastCheckoutResource, $discountException);
             }
 
             $checkInResources = $checkInCol->map(fn($item) => (new CheckInAttendanceResource($item, $lastCheckoutResource))->toArray(request()))->all();
@@ -110,7 +109,6 @@ class AttendanceDayProcessor
             $checkOut = $checkOutResources;
             if ($lastCheckoutResource) {
                 $checkOut['lastcheckout'] = $lastCheckoutResource;
-                $checkOut['lastcheckout']['approved_overtime'] = $approvedOvertime;
             }
 
             $hasIn = count($checkInResources) > 0;
@@ -132,8 +130,8 @@ class AttendanceDayProcessor
             ]);
         }
 
-        $this->statsInjector->addTotalDurationSeconds($totalDurationSeconds);
-        $this->statsInjector->addTotalActualSeconds($dayActualSeconds);
+        $statsInjector->addTotalDurationSeconds($totalDurationSeconds);
+        $statsInjector->addTotalActualSeconds($dayActualSeconds);
 
         return [
             'date' => $dateStr, 'day_name' => $dayName, 'periods' => $periods,

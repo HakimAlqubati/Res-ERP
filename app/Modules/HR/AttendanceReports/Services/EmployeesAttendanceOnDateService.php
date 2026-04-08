@@ -93,7 +93,8 @@ class EmployeesAttendanceOnDateService
                         $workPeriodMap,
                         $isFuture,
                         $isToday,
-                        $employee->discount_exception_if_attendance_late
+                        $employee->discount_exception_if_attendance_late,
+                        $this->statsInjector
                     );
                     $report->put($dateStr, $dayReport);
                 }
