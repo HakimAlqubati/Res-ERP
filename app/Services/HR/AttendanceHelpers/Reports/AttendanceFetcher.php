@@ -506,7 +506,7 @@ class AttendanceFetcher
      * - بعد الاقتراض، يحتاج لإكمال 6 أيام عمل للتأهل لإجازة جديدة
      * - إذا غاب مرة أخرى قبل إكمال 6 أيام عمل، يُحسب كغياب حقيقي
      */
-    protected function applyWeeklyLeaveToAbsences(Collection $result, bool $isPreviousMonth = true): Collection
+    public function applyWeeklyLeaveToAbsences(Collection $result, bool $isPreviousMonth = true): Collection
     {
         $workDaysPerLeave = \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::WORK_DAYS_PER_LEAVE;
 
