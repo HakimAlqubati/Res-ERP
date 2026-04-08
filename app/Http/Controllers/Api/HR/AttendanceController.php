@@ -8,8 +8,7 @@ use App\Models\Employee;
 use App\Services\HR\Attendance\AttendancePlanService;
 use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
-use App\Modules\HR\AttendanceReports\Services\EmployeesAttendanceOnDateService;
-use App\Modules\HR\AttendanceReports\Services\EmployeeAttendanceRangeService;
+use App\Modules\HR\AttendanceReports\Contracts\AttendanceReportInterface;
 use App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesService;
 use App\Services\HR\AttendanceHelpers\Reports\PresentEmployeesService;
 use App\Services\HR\AttendanceHelpers\Reports\MissingCheckoutService;
@@ -28,21 +27,21 @@ class AttendanceController extends Controller
 {
     protected AttendanceServiceV2 $attendanceService;
     protected $attendanceFetcher;
-    protected EmployeesAttendanceOnDateService $employeesAttendanceOnDateService;
+    protected AttendanceReportInterface $reportManager;
     protected AbsentEmployeesService $absentEmployeesService;
     protected PresentEmployeesService $presentEmployeesService;
     protected MissingCheckoutService $missingCheckoutService;
 
     public function __construct(
         AttendanceServiceV2 $attendanceService,
-        EmployeesAttendanceOnDateService $employeesAttendanceOnDateService,
+        AttendanceReportInterface $reportManager,
         AbsentEmployeesService $absentEmployeesService,
         PresentEmployeesService $presentEmployeesService,
         MissingCheckoutService $missingCheckoutService
     ) {
         $this->attendanceService                   = $attendanceService;
         $this->attendanceFetcher                   = new AttendanceFetcher(new EmployeePeriodHistoryService());
-        $this->employeesAttendanceOnDateService    = $employeesAttendanceOnDateService;
+        $this->reportManager                       = $reportManager;
         $this->absentEmployeesService              = $absentEmployeesService;
         $this->presentEmployeesService             = $presentEmployeesService;
         $this->missingCheckoutService              = $missingCheckoutService;
@@ -78,7 +77,7 @@ class AttendanceController extends Controller
 
 
 
-    public function employeeAttendance(Request $request, EmployeeAttendanceRangeService $rangeService)
+    public function employeeAttendance(Request $request)
     {
         try {
             $employee_id = $request->input('employee_id');
@@ -107,7 +106,7 @@ class AttendanceController extends Controller
             $showDay = $request->input('show_day', false);
 
             // جلب بيانات الحضور باستخدام الخدمة المحسنة V2
-            $data = $rangeService->fetchRange($employee, $startDate, $endDate);
+            $data = $this->reportManager->getEmployeeRangeReport($employee, $startDate, $endDate);
 
             // تحويل الساعات الإجمالية إلى صيغة h m للتوافق مع الفرونت إند
             $totalSupposed = $data->get('total_duration_hours', 0);
@@ -224,7 +223,7 @@ class AttendanceController extends Controller
         }
 
         // استخدام Service V2 المُحسَّن (6 استعلامات فقط بدلاً من N×11)
-        $attendanceReports = $this->employeesAttendanceOnDateService->fetchAttendances($employeeIds, $date);
+        $attendanceReports = $this->reportManager->getEmployeesDateReport($employeeIds, $date);
 
         return response()->json([
             'status' => 'success',
