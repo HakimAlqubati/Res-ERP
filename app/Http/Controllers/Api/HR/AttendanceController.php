@@ -9,6 +9,7 @@ use App\Services\HR\Attendance\AttendancePlanService;
 use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
 use App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateService;
+use App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateServiceV2;
 use App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesService;
 use App\Services\HR\AttendanceHelpers\Reports\PresentEmployeesService;
 use App\Services\HR\AttendanceHelpers\Reports\MissingCheckoutService;
@@ -28,6 +29,7 @@ class AttendanceController extends Controller
     protected AttendanceServiceV2 $attendanceService;
     protected $attendanceFetcher;
     protected EmployeesAttendanceOnDateService $employeesAttendanceOnDateService;
+    protected EmployeesAttendanceOnDateServiceV2 $employeesAttendanceOnDateServiceV2;
     protected AbsentEmployeesService $absentEmployeesService;
     protected PresentEmployeesService $presentEmployeesService;
     protected MissingCheckoutService $missingCheckoutService;
@@ -35,16 +37,18 @@ class AttendanceController extends Controller
     public function __construct(
         AttendanceServiceV2 $attendanceService,
         EmployeesAttendanceOnDateService $employeesAttendanceOnDateService,
+        EmployeesAttendanceOnDateServiceV2 $employeesAttendanceOnDateServiceV2,
         AbsentEmployeesService $absentEmployeesService,
         PresentEmployeesService $presentEmployeesService,
         MissingCheckoutService $missingCheckoutService
     ) {
-        $this->attendanceService          = $attendanceService;
-        $this->attendanceFetcher          = new AttendanceFetcher(new EmployeePeriodHistoryService());
-        $this->employeesAttendanceOnDateService = $employeesAttendanceOnDateService;
-        $this->absentEmployeesService     = $absentEmployeesService;
-        $this->presentEmployeesService    = $presentEmployeesService;
-        $this->missingCheckoutService     = $missingCheckoutService;
+        $this->attendanceService                   = $attendanceService;
+        $this->attendanceFetcher                   = new AttendanceFetcher(new EmployeePeriodHistoryService());
+        $this->employeesAttendanceOnDateService    = $employeesAttendanceOnDateService;
+        $this->employeesAttendanceOnDateServiceV2  = $employeesAttendanceOnDateServiceV2;
+        $this->absentEmployeesService              = $absentEmployeesService;
+        $this->presentEmployeesService             = $presentEmployeesService;
+        $this->missingCheckoutService              = $missingCheckoutService;
     }
     public function store(Request $request)
     {
@@ -182,21 +186,55 @@ class AttendanceController extends Controller
         }
     }
 
+    /**
+     * GET /api/hr/employeesAttendanceOnDate
+     *
+     * يقبل الفلترة بطريقتين:
+     *   أ) ?employee_ids[]=1&employee_ids[]=2&date=2026-03-11  (الطريقة القديمة)
+     *   ب) ?branch_id=9&date=2026-03-11                        (الطريقة الجديدة، أسرع)
+     *
+     * يستخدم ServiceV2 الذي يُقلِّل الاستعلامات إلى 6 بدلاً من 750+
+     */
     public function employeesAttendanceOnDate(Request $request)
     {
         $validated = $request->validate([
-            'employee_ids' => 'required|array',
+            'employee_id'  => 'required_without_all:branch_id,employee_ids|integer',
+            'employee_ids' => 'required_without_all:branch_id,employee_id|array',
+            'branch_id'    => 'required_without_all:employee_ids,employee_id|integer|exists:branches,id',
             'date'         => 'required|date',
         ]);
 
-        $employeeIds = $validated['employee_ids'];
         $date = $validated['date'];
 
-        $attendanceReports = $this->employeesAttendanceOnDateService->fetchAttendances($employeeIds, $date);
+        // تحديد معرّفات الموظفين بحسب الأولوية: موظف واحد، فرع، مجموعة موظفين
+        $employeeIds = [];
+        if (!empty($validated['employee_id'])) {
+            $employeeIds = [$validated['employee_id']];
+        } elseif (!empty($validated['branch_id'])) {
+            $employeeIds = Employee::where('branch_id', $validated['branch_id'])
+                ->where('active', 1)
+                ->pluck('id')
+                ->toArray();
+        } elseif (!empty($validated['employee_ids'])) {
+            $employeeIds = $validated['employee_ids'];
+        }
+
+        if (empty($employeeIds)) {
+            return response()->json([
+                'status' => 'success',
+                'data'   => [],
+                'count'  => 0,
+            ]);
+        }
+
+        // استخدام Service V2 المُحسَّن (6 استعلامات فقط بدلاً من N×11)
+        $attendanceReports = $this->employeesAttendanceOnDateServiceV2->fetchAttendances($employeeIds, $date);
 
         return response()->json([
-            'status'  => 'success',
-            'data'    => $attendanceReports,
+            'status' => 'success',
+            'count'  => $attendanceReports->count(),
+            'date'   => $date,
+            'data'   => $attendanceReports,
         ]);
     }
 

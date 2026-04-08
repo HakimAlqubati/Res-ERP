@@ -10,6 +10,7 @@ use App\Models\WorkPeriod;
 use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
 use App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateService;
+use App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateServiceV2;
 use Carbon\Carbon;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Model;
@@ -85,9 +86,10 @@ class ListEmployeesAttednaceReport extends ListRecords
             ->paginate(100);
         $employeeIds = $employeesPaginator->pluck('id')->toArray();
 
-        $service = new EmployeesAttendanceOnDateService(new AttendanceFetcher(new EmployeePeriodHistoryService()));
+        // $service = new EmployeesAttendanceOnDateService(new AttendanceFetcher(new EmployeePeriodHistoryService()));
+        $service = app(EmployeesAttendanceOnDateServiceV2::class);
         $reports = $service->fetchAttendances($employeeIds, $date);
-
+ 
         // بعد جلب التقارير:
         $employees = $reports->map(function ($item) {
             // تحويل attendance_report إلى مصفوفة (لأنها Collection)
