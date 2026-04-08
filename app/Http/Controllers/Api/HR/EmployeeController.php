@@ -108,8 +108,11 @@ class EmployeeController extends Controller
             ->when(request('job_title'), function ($query, $jobTitle) {
                 $query->where('job_title', 'like', "%{$jobTitle}%");
             })
+            ->where('active', 1)
+            ->forBranchManager()
+
             // ->whereNotNull('avatar')
-            ->active() // scopeActive من الموديل
+            // ->active() // scopeActive من الموديل
             ->paginate($perPage)
             ->appends(request()->query())
             ->through(function ($emp) {

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\EmployeeResource\Pages;
 
 use App\Filament\Resources\EmployeeResource;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -24,6 +25,11 @@ class ViewEmployee extends ViewRecord
   {
     return [
       EditAction::make(),
+      DeleteAction::make()
+        ->visible(
+          fn() => EmployeeResource::canDeleteAny()
+            && EmployeeResource::canDelete($this->record)
+        ),
       \Filament\Actions\Action::make('rehire')
         ->label(__('lang.rehire'))
         ->color('success')
