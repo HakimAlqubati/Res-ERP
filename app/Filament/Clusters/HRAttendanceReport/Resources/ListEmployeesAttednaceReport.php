@@ -9,7 +9,7 @@ use App\Models\WeeklyHoliday;
 use App\Models\WorkPeriod;
 use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
-use App\Services\HR\AttendanceHelpers\Reports\V2\EmployeesAttendanceOnDateServiceV2;
+use App\Modules\HR\AttendanceReports\Services\EmployeesAttendanceOnDateService;
 use Carbon\Carbon;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Model;
@@ -86,7 +86,7 @@ class ListEmployeesAttednaceReport extends ListRecords
         $employeeIds = $employeesPaginator->pluck('id')->toArray();
 
         // $service = new EmployeesAttendanceOnDateService(new AttendanceFetcher(new EmployeePeriodHistoryService()));
-        $service = app(EmployeesAttendanceOnDateServiceV2::class);
+        $service = app(EmployeesAttendanceOnDateService::class);
         $reports = $service->fetchAttendances($employeeIds, $date);
  
         // بعد جلب التقارير:

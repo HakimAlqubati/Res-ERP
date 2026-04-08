@@ -1,13 +1,23 @@
 <?php
 
-namespace App\Services\HR\AttendanceHelpers\Reports\V2;
+namespace App\Modules\HR\AttendanceReports\Services;
 
 use App\Models\Employee;
+use App\Modules\HR\AttendanceReports\Data\AttendanceDataFetcher;
+use App\Modules\HR\AttendanceReports\Processors\AttendanceDayProcessor;
+use App\Modules\HR\AttendanceReports\Processors\AttendanceStatisticsInjector;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
-class EmployeeAttendanceRangeServiceV2
+/**
+ * Class EmployeeAttendanceRangeService
+ * 
+ * An orchestrator service class responsible for generating comprehensive attendance reports 
+ * spanning a wide date range for a single selected employee. It maximizes performance by computing
+ * daily iterations in-memory against pre-fetched grouped datasets.
+ */
+class EmployeeAttendanceRangeService
 {
     private AttendanceDataFetcher $fetcher;
     private AttendanceDayProcessor $processor;
@@ -23,6 +33,17 @@ class EmployeeAttendanceRangeServiceV2
         $this->statsInjector = $statsInjector;
     }
 
+    /**
+     * Orchestrate the extraction and processing logic over the specified date range.
+     * 
+     * Applies iterative looping securely, injecting individual daily structures and global 
+     * range statistics matching the UI requirements seamlessly.
+     * 
+     * @param Employee $employee The singular targeted employee model.
+     * @param Carbon $startDate The bounds mapping the beginning of the evaluation.
+     * @param Carbon $endDate The limits mapping the ending of the evaluation bounds.
+     * @return Collection The sequential collection of evaluated day reports and inclusive metadata.
+     */
     public function fetchRange(Employee $employee, Carbon $startDate, Carbon $endDate): Collection
     {
         $startDateStr = $startDate->toDateString();
@@ -30,7 +51,7 @@ class EmployeeAttendanceRangeServiceV2
         $empId        = $employee->id;
 
         $data = $this->fetcher->fetchForSingleEmployeeRange($empId, $startDateStr, $endDateStr);
-        extract($data); 
+        extract($data);
 
         $report = collect();
         $tempDate = $startDate->copy();
@@ -66,15 +87,15 @@ class EmployeeAttendanceRangeServiceV2
             $dayOvertimes = ($overtimes->get($currentDateStr) ?? collect());
 
             $dayReport = $this->processor->processDay(
-                $currentDateStr, 
-                $currentDayName, 
-                $currentDayShort, 
-                $dayHistories, 
-                $dayAttendances, 
-                $dayOvertimes, 
-                $workPeriodMap, 
-                $isFuture, 
-                $isToday, 
+                $currentDateStr,
+                $currentDayName,
+                $currentDayShort,
+                $dayHistories,
+                $dayAttendances,
+                $dayOvertimes,
+                $workPeriodMap,
+                $isFuture,
+                $isToday,
                 $employee->discount_exception_if_attendance_late
             );
 
@@ -85,7 +106,7 @@ class EmployeeAttendanceRangeServiceV2
         $isPreviousMonth = $startDate->format('Y-m') < now()->format('Y-m');
         if ($isPreviousMonth && $employee->has_auto_weekly_leave) {
             $fetcher = new AttendanceFetcher(new \App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService());
-            $fetcher->applyWeeklyLeaveToAbsencesV2($report, $isPreviousMonth);
+            $fetcher->applyWeeklyLeaveToAbsences($report, $isPreviousMonth);
         }
 
         $this->statsInjector->inject($report, $employee);

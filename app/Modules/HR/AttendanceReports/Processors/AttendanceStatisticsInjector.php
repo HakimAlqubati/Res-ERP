@@ -1,11 +1,18 @@
 <?php
 
-namespace App\Services\HR\AttendanceHelpers\Reports\V2;
+namespace App\Modules\HR\AttendanceReports\Processors;
 
 use App\Models\Employee;
 use App\Services\HR\AttendanceHelpers\Reports\HelperFunctions;
 use Illuminate\Support\Collection;
 
+/**
+ * Class AttendanceStatisticsInjector
+ * 
+ * Manages the stateful accumulation of attendance statistics (duration, overtime, late hours, etc.)
+ * across multiple periods/days, and handles injecting these aggregated metrics directly into the 
+ * final report payload using predefined formulas and regex parsing rules.
+ */
 class AttendanceStatisticsInjector
 {
     private bool  $flexHoursEarlyDeparture;
@@ -42,6 +49,16 @@ class AttendanceStatisticsInjector
         $this->totalActualSeconds += $seconds;
     }
 
+    /**
+     * Accumulate statistical metrics from a specific period's last checkout resource.
+     * 
+     * This method tracks total overtimes, missing hours, and evaluates early departure deductions 
+     * based on flexible hour margins and threshold settings.
+     * 
+     * @param array $lastCo The transformed resource array of the final check-out.
+     * @param bool $discountException Determines if the employee explicitly skips late deductions.
+     * @return void
+     */
     public function accumulatePeriodStats(array $lastCo, bool $discountException): void
     {
         if (!empty($lastCo['approved_overtime'])) {
@@ -85,6 +102,15 @@ class AttendanceStatisticsInjector
         }
     }
 
+    /**
+     * Inject the aggregated statistics natively into the final attendance report collection.
+     * 
+     * Formats all accumulated integers and standardizes the output schema securely.
+     * 
+     * @param Collection $report The final report collection acting securely as the output payload.
+     * @param Employee $employee The targeted employee to evaluate exemption rules.
+     * @return void
+     */
     public function inject(Collection $report, Employee $employee): void
     {
         $report->put('statistics', HelperFunctions::calculateAttendanceStats($report));

@@ -1,24 +1,61 @@
 <?php
 
-namespace App\Services\HR\AttendanceHelpers\Reports\V2;
+namespace App\Modules\HR\AttendanceReports\Processors;
 
 use App\Enums\HR\Attendance\AttendanceReportStatus;
 use App\Http\Resources\CheckInAttendanceResource;
 use App\Http\Resources\CheckOutAttendanceResource;
 use App\Models\Attendance;
-use App\Models\WorkPeriod;
+use App\Modules\HR\AttendanceReports\Calculators\DurationCalculator;
+use App\Modules\HR\AttendanceReports\Calculators\OvertimeCalculator;
+use App\Modules\HR\AttendanceReports\Calculators\StatusResolver;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
+/**
+ * Class AttendanceDayProcessor
+ * 
+ * Encapsulates the core business logic required to process and calculate
+ * attendance logs, shifts, delays, and overtimes for a specific employee on a single day.
+ */
 class AttendanceDayProcessor
 {
     private AttendanceStatisticsInjector $statsInjector;
+    private DurationCalculator $durationCalculator;
+    private OvertimeCalculator $overtimeCalculator;
+    private StatusResolver $statusResolver;
 
-    public function __construct(AttendanceStatisticsInjector $statsInjector)
-    {
+    public function __construct(
+        AttendanceStatisticsInjector $statsInjector,
+        DurationCalculator $durationCalculator,
+        OvertimeCalculator $overtimeCalculator,
+        StatusResolver $statusResolver
+    ) {
         $this->statsInjector = $statsInjector;
+        $this->durationCalculator = $durationCalculator;
+        $this->overtimeCalculator = $overtimeCalculator;
+        $this->statusResolver = $statusResolver;
     }
 
+    /**
+     * Build the attendance breakdown for a single day.
+     * 
+     * Iterates over all assigned work periods, matching check-ins and check-outs, calculating
+     * actual durations, delays, missing hours, and approved overtimes using in-memory data.
+     * It then accumulates the day's metrics into the Statistics Injector.
+     * 
+     * @param string $dateStr Target date in 'Y-m-d' format.
+     * @param string $dayName The localized name of the day (e.g., 'Monday').
+     * @param string $dayShort The short lowercase standard name of the day (e.g., 'mon').
+     * @param Collection $dayHistories The work period histories active for this specific day.
+     * @param Collection $dayAttendances The check-in and check-out logs for this specific day.
+     * @param Collection $dayOvertimes Pre-fetched approved overtimes for this specific day.
+     * @param Collection $workPeriodMap A keyed collection mapping work period IDs to Period objects.
+     * @param bool $isFuture Determine if the evaluated day is strictly in the future.
+     * @param bool $isToday Determine if the evaluated day is today.
+     * @param bool $discountException Determine if the employee is excluded from late attendance deductions.
+     * @return array An array representing the completely processed and formatted day report.
+     */
     public function processDay(string $dateStr, string $dayName, string $dayShort, Collection $dayHistories, Collection $dayAttendances, Collection $dayOvertimes, Collection $workPeriodMap, bool $isFuture, bool $isToday, bool $discountException): array
     {
         $periods = collect();
@@ -33,7 +70,7 @@ class AttendanceDayProcessor
 
             $startTime = $history->start_time ?? $workPeriod->start_at;
             $endTime   = $history->end_time   ?? $workPeriod->end_at;
-            $supposedDur = $this->calcSupposedDuration($startTime, $endTime, (bool)$workPeriod->day_and_night);
+            $supposedDur = $this->durationCalculator->calcSupposedDuration($startTime, $endTime, (bool)$workPeriod->day_and_night);
 
             if (!empty($supposedDur)) {
                 [$dh, $dm, $ds] = explode(':', $supposedDur);
@@ -44,7 +81,7 @@ class AttendanceDayProcessor
             $checkInCol = $periodRecords->where('check_type', Attendance::CHECKTYPE_CHECKIN)->values();
             $checkOutCol = $periodRecords->where('check_type', Attendance::CHECKTYPE_CHECKOUT)->values();
 
-            $approvedOvertime = $this->calcApprovedOvertimeFromMemory($periodRecords, $workPeriod, $dayOvertimes);
+            $approvedOvertime = $this->overtimeCalculator->calcApprovedOvertimeFromMemory($periodRecords, $workPeriod, $dayOvertimes);
 
             $lastCheckoutResource = null;
             if ($checkOutCol->isNotEmpty()) {
@@ -101,86 +138,8 @@ class AttendanceDayProcessor
         return [
             'date' => $dateStr, 'day_name' => $dayName, 'periods' => $periods,
             'actual_duration_hours' => gmdate('H:i:s', $dayActualSeconds),
-            'day_status' => $this->resolveDayStatus($periods->pluck('final_status')->all()),
+            'day_status' => $this->statusResolver->resolveDayStatus($periods->pluck('final_status')->all()),
         ];
-    }
-
-    private function calcApprovedOvertimeFromMemory(Collection $periodAttendances, WorkPeriod $workPeriod, Collection $periodOvertimes): string
-    {
-        $totalMinutes = 0;
-        $records = $periodAttendances->sortBy('id')->values();
-
-        for ($i = 0; $i < $records->count(); $i++) {
-            $current = $records[$i];
-            if ($current->check_type !== Attendance::CHECKTYPE_CHECKIN) continue;
-            
-            $next = $records[$i + 1] ?? null;
-            if ($next && $next->check_type === Attendance::CHECKTYPE_CHECKOUT) {
-                $in  = Carbon::parse("{$current->check_date} {$current->check_time}");
-                $out = Carbon::parse("{$next->check_date} {$next->check_time}");
-                if ($out->lt($in)) $out->addDay();
-                
-                $totalMinutes += $in->diffInMinutes($out);
-                $i++;
-            }
-        }
-
-        $actualHours = $totalMinutes / 60;
-        $supposedHours = $this->getSupposedDurationHours($workPeriod);
-        $isActualLargerThanSupposed = $actualHours > $supposedHours;
-        $approvedOvertimeHours = $periodOvertimes->sum('hours');
-
-        if ($isActualLargerThanSupposed && $approvedOvertimeHours > 0) {
-            return $this->formatFloatToHMS($approvedOvertimeHours + $supposedHours);
-        } elseif ($isActualLargerThanSupposed) {
-            return $this->formatFloatToHMS($supposedHours);
-        } else {
-            return $this->formatFloatToHMS($actualHours > 0 ? $actualHours + $approvedOvertimeHours : 0);
-        }
-    }
-
-    private function getSupposedDurationHours(WorkPeriod $workPeriod): float
-    {
-        try {
-            $start = Carbon::parse($workPeriod->start_at);
-            $end   = Carbon::parse($workPeriod->end_at);
-            if ($end->lte($start) || (bool) $workPeriod->day_and_night) $end->addDay();
-            return $start->diffInMinutes($end) / 60;
-        } catch (\Exception $e) {
-            return 0.0;
-        }
-    }
-
-    private function formatFloatToHMS(float $hours): string
-    {
-        $h = floor($hours);
-        $m = round(($hours - $h) * 60);
-        return sprintf('%dh %dm', $h, $m);
-    }
-
-    private function calcSupposedDuration(string $startTime, string $endTime, bool $dayAndNight): string
-    {
-        try {
-            $start = Carbon::createFromFormat('H:i:s', Carbon::parse($startTime)->format('H:i:s'));
-            $end   = Carbon::createFromFormat('H:i:s', Carbon::parse($endTime)->format('H:i:s'));
-            if ($dayAndNight || $end->lte($start)) $end->addDay();
-            return gmdate('H:i:s', $start->diffInSeconds($end));
-        } catch (\Exception $e) {
-            return '00:00:00';
-        }
-    }
-
-    private function resolveDayStatus(array $allPeriodsStatus): string
-    {
-        if (empty($allPeriodsStatus)) return AttendanceReportStatus::NoPeriods->value;
-        $unique = array_unique($allPeriodsStatus);
-        if (count($unique) === 1) {
-            $first = $unique[0];
-            if ($first === AttendanceReportStatus::Future->value)  return AttendanceReportStatus::Future->value;
-            if ($first === AttendanceReportStatus::Absent->value)  return AttendanceReportStatus::Absent->value;
-            if ($first === AttendanceReportStatus::Present->value) return AttendanceReportStatus::Present->value;
-        }
-        return AttendanceReportStatus::Partial->value;
     }
 
     public function buildTerminatedDay(string $dateStr, string $dayName): array

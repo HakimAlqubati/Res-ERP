@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\HR\AttendanceHelpers\Reports\V2;
+namespace App\Modules\HR\AttendanceReports\Data;
 
 use App\Models\EmployeePeriodHistory;
 use App\Models\Attendance;
@@ -9,10 +9,22 @@ use App\Models\EmployeeOvertime;
 use App\Models\WorkPeriod;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Class AttendanceDataFetcher
+ * 
+ * Responsible for handling all database interactions for the Attendance V2 module.
+ * It strictly performs optimized, eager-loaded queries to fetch histories, branches,
+ * attendances, leaves, and overtimes to prevent N+1 query performance issues.
+ */
 class AttendanceDataFetcher
 {
     /**
-     * @return array
+     * Fetch attendance-related data for multiple employees on a single specific date.
+     * 
+     * @param array $employeeIds Array of target employee IDs.
+     * @param string $dateStr The target date in 'Y-m-d' format.
+     * @return array An associative array containing collections of 'histories', 'attendances', 
+     *               'leaves', 'terminations', 'overtimes', and 'workPeriodMap' indexed optimally.
      */
     public function fetchForMultiEmployeesSingleDate(array $employeeIds, string $dateStr): array
     {
@@ -72,6 +84,15 @@ class AttendanceDataFetcher
         return compact('histories', 'attendances', 'leaves', 'terminations', 'overtimes', 'workPeriodMap');
     }
 
+    /**
+     * Fetch attendance-related data for a single employee spanning a specific date range.
+     * 
+     * @param int $employeeId The target employee ID.
+     * @param string $startDateStr The start date in 'Y-m-d' format.
+     * @param string $endDateStr The end date in 'Y-m-d' format.
+     * @return array An associative array containing deeply nested collections of 'histories',
+     *               'attendances', 'leaves', 'terminations', 'overtimes', and 'workPeriodMap'.
+     */
     public function fetchForSingleEmployeeRange(int $employeeId, string $startDateStr, string $endDateStr): array
     {
         $histories = EmployeePeriodHistory::with('workPeriod')
