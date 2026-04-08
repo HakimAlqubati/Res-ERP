@@ -110,6 +110,30 @@ class EmployeeAttendanceRangeService
             $fetcher->applyWeeklyLeaveToAbsences($report, $isPreviousMonth);
         }
 
+        $isFullMonth = $startDate->day === 1
+            && $endDate->day === $endDate->daysInMonth
+            && $startDate->month === $endDate->month
+            && $startDate->year === $endDate->year;
+
+        $earliestHistoryStart = $histories->min('start_date');
+        $employeeStartedFromBeginning = $earliestHistoryStart !== null
+            && Carbon::parse($earliestHistoryStart)->lte($startDate);
+
+        if ($isFullMonth && $employeeStartedFromBeginning && $report->count() > 4) {
+            $deductionSeconds = 0;
+            $chunks = $report->values()->chunk(7);
+
+            foreach ($chunks as $week) {
+                if ($week->count() < 7) continue;
+                $lastDay = $week->last();
+                if (isset($lastDay['daily_supposed_seconds'])) {
+                    $deductionSeconds += $lastDay['daily_supposed_seconds'];
+                }
+            }
+
+            $this->statsInjector->subtractTotalDurationSeconds($deductionSeconds);
+        }
+
         $this->statsInjector->inject($report, $employee);
 
         return $report;

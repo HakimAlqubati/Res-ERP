@@ -44,6 +44,11 @@ class AttendanceStatisticsInjector
         $this->totalDurationSeconds += $seconds;
     }
 
+    public function subtractTotalDurationSeconds(int $seconds): void
+    {
+        $this->totalDurationSeconds = max(0, $this->totalDurationSeconds - $seconds);
+    }
+
     public function addTotalActualSeconds(int $seconds): void
     {
         $this->totalActualSeconds += $seconds;

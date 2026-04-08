@@ -137,6 +137,7 @@ class AttendanceDayProcessor
             'date' => $dateStr, 'day_name' => $dayName, 'periods' => $periods,
             'actual_duration_hours' => gmdate('H:i:s', $dayActualSeconds),
             'day_status' => $this->statusResolver->resolveDayStatus($periods->pluck('final_status')->all()),
+            'daily_supposed_seconds' => $totalDurationSeconds,
         ];
     }
 
