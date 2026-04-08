@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use App\Observers\AdvanceWageObserver;
+
+#[ObservedBy([AdvanceWageObserver::class])]
 
 class AdvanceWage extends Model
 {
@@ -167,13 +171,5 @@ class AdvanceWage extends Model
             ->sum('amount');
     }
 
-    protected static function boot()
-    {
-        parent::boot();
 
-        static::creating(function ($model) {
-            $model->status = self::STATUS_SETTLED;
-            $model->created_by = auth()->id();
-        });
-    }
 }

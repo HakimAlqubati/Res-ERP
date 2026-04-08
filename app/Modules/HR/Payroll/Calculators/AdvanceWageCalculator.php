@@ -35,7 +35,7 @@ class AdvanceWageCalculator
         $rows = AdvanceWage::query()
             ->forEmployee($context->employee->id)
             ->forPeriod($context->periodYear, $context->periodMonth)
-            ->pending()
+            // ->pending()
             ->get(['id', 'amount', 'reason', 'notes', 'approved_at']);
 
         if ($rows->isEmpty()) {

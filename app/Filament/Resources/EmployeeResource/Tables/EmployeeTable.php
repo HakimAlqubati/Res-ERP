@@ -48,6 +48,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use App\Models\EmployeeServiceTermination;
 use Filament\Notifications\Notification;
 use Filament\Support\Enums\FontWeight;
@@ -551,6 +552,64 @@ class EmployeeTable
                                 ->success()
                                 ->send();
                         }),
+                    Action::make('advanceWage')
+                        ->label(__('Advance Wage'))
+                        ->icon('heroicon-o-banknotes')
+                        ->color('success')
+                        ->visible(fn(Employee $record) => $record->active)
+                        ->schema([
+                            Grid::make(3)->schema([
+                                TextInput::make('amount')
+                                    ->label(__('Amount'))
+                                    ->numeric()
+                                    ->minValue(0.01)
+                                    ->maxValue(fn(Employee $record) => $record->salary ?? 99999)
+                                    ->required()
+                                    ->columnSpan(1),
+
+                                Select::make('year')
+                                    ->label(__('Year'))
+                                    ->options(collect(range(now()->year - 1, now()->year + 1))->mapWithKeys(fn($y) => [$y => $y]))
+                                    ->default(now()->year)
+                                    ->required()
+                                    ->columnSpan(1),
+
+                                Select::make('month')
+                                    ->label(__('Month'))
+                                    ->options(collect(range(1, 12))->mapWithKeys(fn($m) => [$m => now()->setMonth($m)->translatedFormat('F')]))
+                                    ->default(now()->month)
+                                    ->required()
+                                    ->columnSpan(1),
+
+                            ])->columnSpanFull(),
+
+                            TextInput::make('reason')
+                                ->label(__('Reason'))->required()
+                                ->maxLength(255)
+                                ->columnSpanFull(),
+                        ])
+                        ->action(function (Employee $record, array $data) {
+                            try {
+                                $record->advanceWages()->create([
+                                    'amount' => $data['amount'],
+                                    'year' => $data['year'],
+                                    'month' => $data['month'],
+                                    'reason' => $data['reason'],
+                                    'branch_id' => $record->branch_id,
+                                ]);
+
+                                Notification::make()
+                                    ->title(__('Advance wage recorded successfully.'))
+                                    ->success()
+                                    ->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()
+                                    ->title(__('Error'))
+                                    ->body($e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
                     Action::make('checkInstallments')->label(__('lang.check_advanced_installments'))->button()
                         // ->hidden()
                         ->color('info')
@@ -613,6 +672,8 @@ class EmployeeTable
                     ViewAction::make(),
                     DeleteAction::make(),
                     RestoreAction::make(),
+
+
                 ]),
             ])
             ->toolbarActions([
