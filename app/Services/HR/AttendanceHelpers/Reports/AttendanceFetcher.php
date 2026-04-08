@@ -365,7 +365,7 @@ class AttendanceFetcher
         ]);
 
         $totalEarlyDepartureSeconds = 0;
-        $minEarlyDepartureMinutes = (int) setting('early_depature_deduction_minutes', 0);
+        $minEarlyDepartureMinutes = (int) \App\Models\Setting::getSetting('early_depature_deduction_minutes', 0);
         foreach ($result as $key => $day) {
             if (
                 is_array($day)
@@ -539,7 +539,7 @@ class AttendanceFetcher
             // إذا كان غائباً أو لديه حضور جزئي أو حضور بلا انصراف، أضفه لقائمة الغيابات (حسب الإعدادات)
             elseif (
                 $status === AttendanceReportStatus::Absent->value ||
-                ((setting('count_partial_as_absent') ?? true) && in_array($status, [
+                ((\App\Models\Setting::getSetting('count_partial_as_absent') ?? true) && in_array($status, [
                     AttendanceReportStatus::Partial->value,
                     AttendanceReportStatus::IncompleteCheckinOnly->value,
                     AttendanceReportStatus::IncompleteCheckoutOnly->value,
@@ -609,5 +609,269 @@ class AttendanceFetcher
         ]);
 
         return $result;
+    }
+    /**
+     * نسخة محسنة من جلب الحضور تدعم البيانات المحملة مسبقاً (Batch)
+     */
+    public function fetchEmployeeAttendancesBatch(
+        Employee $employee,
+        Carbon $date,
+        array $preloadedData = []
+    ): Collection {
+        $dateString = $date->toDateString();
+
+        // 1. استخدام البيانات المحملة مسبقاً أو جلبها إذا لم توجد (لضمان التوافق)
+        $periodsByDay  = $preloadedData['periods'] ?? $this->periodHistoryService->getEmployeePeriodsByDateRange($employee, $date, $date);
+        $leaveApplications = $preloadedData['leaves'] ?? $this->getEmployeeLeaves($employee, $date, $date);
+        $termination   = $preloadedData['termination'] ?? $employee->serviceTermination()->where('status', \App\Models\EmployeeServiceTermination::STATUS_APPROVED)->first();
+        $allAttendances = $preloadedData['attendances'] ?? collect();
+        $allOvertimes   = $preloadedData['overtimes'] ?? collect();
+
+        $result = collect();
+
+        // منطق إنهاء الخدمة
+        if ($termination && $date->gt($termination->termination_date)) {
+            $result->put($dateString, [
+                'date'          => $dateString,
+                'day_name'      => $date->translatedFormat('l'),
+                'periods'       => collect(),
+                'day_status'    => AttendanceReportStatus::Terminated->value,
+                'leave_type'    => 'Terminated',
+                'leave_type_id' => null,
+            ]);
+            return $result;
+        }
+
+        // منطق الإجازات
+        $leaveFound = $leaveApplications->first(fn($l) => $date->between($l->from_date, $l->to_date));
+        if ($leaveFound) {
+            $result->put($dateString, [
+                'date'          => $dateString,
+                'day_name'      => $date->translatedFormat('l'),
+                'periods'       => [],
+                'day_status'    => AttendanceReportStatus::Leave->value,
+                'leave_type'    => $leaveFound->transaction_description,
+                'leave_type_id' => $leaveFound->leave_type,
+            ]);
+            return $result;
+        }
+
+        $periods            = collect();
+        $overtimeCalculator = new \App\Services\HR\AttendanceHelpers\Reports\AttendanceOvertimeCalculator();
+
+        $dayPeriods = $periodsByDay['days'][$dateString]['periods'] ?? collect();
+
+        foreach ($dayPeriods as $period) {
+            $attendanceRecords = $allAttendances->where('period_id', $period['period_id'])
+                ->sortBy('check_time')
+                ->values();
+
+            $checkInCollection  = $attendanceRecords->where('check_type', Attendance::CHECKTYPE_CHECKIN)->values();
+            $checkOutCollection = $attendanceRecords->where('check_type', Attendance::CHECKTYPE_CHECKOUT)->values();
+
+            // حساب الساعات الإضافية المعتمدة من البيانات المحملة
+            $approvedOvertimeHours = $allOvertimes->where('period_id', $period['period_id'])->sum('hours');
+            $approvedOvertime = $overtimeCalculator->formatFloatToDuration($approvedOvertimeHours);
+
+            // استكمال معالجة Resources (مبسطة لتجنب N+1 داخل الـ Resources)
+            $lastCheckoutModel    = $checkOutCollection->last();
+            $lastCheckoutResource = $lastCheckoutModel ? (new CheckOutAttendanceResource($lastCheckoutModel, $approvedOvertime, $dateString))->toArray(request()) : null;
+
+            if ($lastCheckoutResource) {
+                $lastCheckoutResource['period_end_at'] = $period['end_time'];
+            }
+
+            $checkInResources = $checkInCollection->map(function ($item) use ($lastCheckoutResource) {
+                return (new CheckInAttendanceResource($item, $lastCheckoutResource))->toArray(request());
+            })->all();
+
+            $checkIn = $checkInResources;
+            $firstCheckoutModel    = $checkOutCollection->first();
+            $firstCheckoutResource = $firstCheckoutModel ? (new CheckOutAttendanceResource($firstCheckoutModel))->toArray(request()) : null;
+
+            if ($firstCheckoutResource) {
+                $firstCheckoutResource['period_end_at'] = $period['end_time'];
+                $checkIn['firstcheckout']                      = $firstCheckoutResource;
+                $checkIn['firstcheckout']['approved_overtime'] = $approvedOvertime;
+            }
+
+            $checkOutResources = $checkOutCollection->map(function ($item) use ($employee, $period, $dateString, $overtimeCalculator, $approvedOvertime) {
+                return (new CheckOutAttendanceResource($item, $approvedOvertime, $dateString))->toArray(request());
+            })->all();
+
+            $checkOut = $checkOutResources;
+            if ($lastCheckoutResource) {
+                $checkOut['lastcheckout']                      = $lastCheckoutResource;
+                $checkOut['lastcheckout']['approved_overtime'] = $approvedOvertime;
+            }
+
+            $hasCheckin  = count($checkInResources) > 0;
+            $hasCheckout = count($checkOutResources) > 0;
+            $isFutureDate  = $date->gt(Carbon::today());
+            $isShiftNotYetStarted = $date->isToday() && Carbon::now()->lt(Carbon::parse("{$dateString} {$period['start_time']}"));
+
+            if ($isFutureDate || $isShiftNotYetStarted) {
+                $status = AttendanceReportStatus::Future;
+            } elseif (! $hasCheckin && ! $hasCheckout) {
+                $status = AttendanceReportStatus::Absent;
+            } elseif ($hasCheckin && ! $hasCheckout) {
+                $status = AttendanceReportStatus::IncompleteCheckinOnly;
+            } elseif (! $hasCheckin && $hasCheckout) {
+                $status = AttendanceReportStatus::IncompleteCheckoutOnly;
+            } else {
+                $status = AttendanceReportStatus::Present;
+            }
+
+            $periods->push([
+                'period_id'    => $period['period_id'],
+                'period_name'  => $period['name'],
+                'start_time'   => $period['start_time'],
+                'end_time'     => $period['end_time'],
+                'attendances'  => ['checkin' => $checkIn, 'checkout' => $checkOut],
+                'final_status' => $status->value,
+            ]);
+        }
+
+        $allPeriodsStatus = $periods->pluck('final_status')->all();
+        if (empty($allPeriodsStatus)) {
+            $dayStatus = AttendanceReportStatus::NoPeriods->value;
+        } elseif (count(array_unique($allPeriodsStatus)) === 1) {
+            $dayStatus = $allPeriodsStatus[0];
+        } else {
+            $dayStatus = AttendanceReportStatus::Partial->value;
+        }
+
+        $actualSeconds = 0;
+        foreach ($periods as $p) {
+            $lastCheckout = $p['attendances']['checkout']['lastcheckout'] ?? null;
+            if ($lastCheckout && ! empty($lastCheckout['total_actual_duration_hourly'])) {
+                list($h, $m, $s) = explode(':', $lastCheckout['total_actual_duration_hourly']);
+                $actualSeconds += ($h * 3600) + ($m * 60) + $s;
+            }
+        }
+
+        $result->put($dateString, [
+            'date'                  => $dateString,
+            'day_name'              => $date->translatedFormat('l'),
+            'periods'               => $periods,
+            'actual_duration_hours' => gmdate('H:i:s', $actualSeconds),
+            'day_status'            => $dayStatus,
+        ]);
+
+        // Apply weekly leave if applicable (for previous month and enabled for employee)
+        $isPreviousMonth = $date->format('Y-m') < now()->format('Y-m');
+        if ($isPreviousMonth && $employee->has_auto_weekly_leave) {
+            $result = $this->applyWeeklyLeaveToAbsences($result, $isPreviousMonth);
+        }
+
+        // Calculate statistics for the result
+        $this->calculateStatisticsBatch($employee, $result, $dayPeriods);
+
+        return $result;
+    }
+
+    /**
+     * حساب إحصائيات الحضور لمجموعة نتائج (نسخة مبسطة تعتمد على الكود الأصلي)
+     */
+    protected function calculateStatisticsBatch(Employee $employee, Collection $result, Collection $periodsForStats): void
+    {
+        // 1. حساب إجمالي الساعات المفترضة
+        $totalDurationHours = 0;
+        foreach ($periodsForStats as $period) {
+            $start = \Carbon\Carbon::parse($period['start_time']);
+            $end = \Carbon\Carbon::parse($period['end_time']);
+            if ($end->lessThan($start)) {
+                $end->addDay();
+            }
+            $totalDurationHours += $start->diffInMinutes($end) / 60;
+        }
+        $totalDurationHours = round($totalDurationHours, 2);
+
+        // 2. إحصائيات الحضور الأساسية
+        $displayStats = HelperFunctions::calculateAttendanceStats($result);
+        
+        // ملاحظة: حساب الإجازة الأسبوعية (payrollCalculation) يتم عادة في المدى الطويل
+        // هنا سنضيفها كخالية إذا لم تكن موجودة أو نحاذي المنطق الأصلي
+        $result->put('statistics', $displayStats);
+        $result->put('total_duration_hours', $totalDurationHours);
+
+        // 3. إجمالي الساعات الفعلية
+        $totalActualSeconds = 0;
+        foreach ($result as $key => $day) {
+            if (is_array($day) && isset($day['actual_duration_hours']) && preg_match('/^\d{2}:\d{2}:\d{2}$/', $day['actual_duration_hours'])) {
+                list($h, $m, $s) = explode(':', $day['actual_duration_hours']);
+                $totalActualSeconds += ($h * 3600) + ($m * 60) + $s;
+            }
+        }
+        $result->put('total_actual_duration_hours', gmdate('H:i:s', $totalActualSeconds));
+
+        // 4. إضافي الساعات المعتمد
+        $totalApprovedOvertimeSeconds = 0;
+        foreach ($result as $day) {
+            if (is_array($day) && isset($day['periods'])) {
+                foreach ($day['periods'] as $period) {
+                    $lastCheckout = $period['attendances']['checkout']['lastcheckout'] ?? null;
+                    if ($lastCheckout && !empty($lastCheckout['approved_overtime'])) {
+                        $value = $lastCheckout['approved_overtime'];
+                        if (preg_match('/^\d{2}:\d{2}:\d{2}$/', $value)) {
+                            list($h, $m, $s) = explode(':', $value);
+                            $totalApprovedOvertimeSeconds += ($h * 3600) + ($m * 60) + $s;
+                        } else {
+                            $totalApprovedOvertimeSeconds += $this->parseHourMinuteString($value);
+                        }
+                    }
+                }
+            }
+        }
+        $result->put('total_approved_overtime', gmdate('H:i:s', $totalApprovedOvertimeSeconds));
+
+        // 5. الساعات الناقصة
+        $totalMissingHoursSeconds = 0;
+        foreach ($result as $day) {
+            if (is_array($day) && isset($day['periods'])) {
+                foreach ($day['periods'] as $period) {
+                    $lastCheckout = $period['attendances']['checkout']['lastcheckout'] ?? null;
+                    if ($lastCheckout && isset($lastCheckout['missing_hours']['total_minutes'])) {
+                        $totalMissingHoursSeconds += ($lastCheckout['missing_hours']['total_minutes'] * 60);
+                    }
+                }
+            }
+        }
+        $result->put('total_missing_hours', [
+            'total_minutes' => $totalMissingHoursSeconds / 60,
+            'formatted'     => gmdate('H:i:s', $totalMissingHoursSeconds),
+            'total_seconds' => (float)$totalMissingHoursSeconds,
+            'total_hours'   => round($totalMissingHoursSeconds / 3600, 2),
+        ]);
+
+        // 6. الانصراف المبكر
+        $totalEarlyDepartureSeconds = 0;
+        $minEarlyDepartureMinutes = (int) \App\Models\Setting::getSetting('early_depature_deduction_minutes', 0);
+        foreach ($result as $day) {
+            if (is_array($day) && isset($day['periods'])) {
+                foreach ($day['periods'] as $period) {
+                    $lastCheckout = $period['attendances']['checkout']['lastcheckout'] ?? null;
+                    if ($lastCheckout && isset($lastCheckout['early_departure_minutes'])) {
+                        $minutes = (int) $lastCheckout['early_departure_minutes'];
+                        if (!$employee->discount_exception_if_attendance_late && $minutes >= $minEarlyDepartureMinutes && $minutes > 0) {
+                            $totalEarlyDepartureSeconds += $minutes * 60;
+                        }
+                    }
+                }
+            }
+        }
+        $result->put('total_early_departure_minutes', [
+            'total_minutes' => $totalEarlyDepartureSeconds / 60,
+            'formatted'     => gmdate('H:i:s', $totalEarlyDepartureSeconds),
+            'total_seconds' => $totalEarlyDepartureSeconds,
+            'total_hours'   => round($totalEarlyDepartureSeconds / 3600, 2),
+        ]);
+
+        // 7. التأخير
+        if (!$employee->discount_exception_if_attendance_late) {
+            $result->put('late_hours', $this->helperFunctions->calculateTotalLateArrival($result));
+        } else {
+            $result->put('late_hours', ['totalMinutes' => 0, 'totalHoursFloat' => 0]);
+        }
     }
 }

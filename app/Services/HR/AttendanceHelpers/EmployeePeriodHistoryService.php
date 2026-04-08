@@ -164,4 +164,85 @@ class EmployeePeriodHistoryService
     {
         return is_object($day) && property_exists($day, 'value') ? $day->value : $day;
     }
+
+    /**
+     * إرجاع الفترات الفعّالة لمجموعة من الموظفين في تاريخ محدد (Batch)
+     */
+    public function getEmployeesPeriodsByDateBatch(Collection|array $employeeIds, Carbon $date): Collection
+    {
+        $employeeIds = is_array($employeeIds) ? $employeeIds : $employeeIds->toArray();
+        $results = collect();
+
+        // 1. جلب جميع السجلات التاريخية للموظفين المحددين في هذا التاريخ
+        $histories = EmployeePeriodHistory::with('workPeriod')
+            ->active()
+            ->whereIn('employee_id', $employeeIds)
+            ->where('start_date', '<=', $date->toDateString())
+            ->where(function ($query) use ($date) {
+                $query->whereNull('end_date')
+                    ->orWhere('end_date', '>=', $date->toDateString());
+            })
+            ->get()
+            ->groupBy('employee_id');
+
+        $currentDay = strtolower($date->format('D'));
+        $currentDayName = $date->translatedFormat('l');
+
+        foreach ($employeeIds as $empId) {
+            $employeeHistories = $histories->get($empId, collect());
+
+            $matchingPeriods = $employeeHistories->filter(function ($history) use ($date, $currentDay) {
+                return $this->getDayOfWeekValue($history->day_of_week) === $currentDay;
+            })->map(function ($history) {
+                $startRaw = $history->start_time ?? $history?->workPeriod?->start_at;
+                $endRaw   = $history->end_time ?? $history?->workPeriod?->end_at;
+
+                try {
+                    $start = Carbon::parse($startRaw)->format('H:i:s');
+                    $end = Carbon::parse($endRaw)->format('H:i:s');
+                    
+                    $startCarbon = Carbon::createFromFormat('H:i:s', $start);
+                    $endCarbon   = Carbon::createFromFormat('H:i:s', $end);
+
+                    if ($history?->workPeriod?->day_and_night == 1) {
+                        $endCarbon->addDay();
+                    }
+
+                    $diffInSeconds    = $startCarbon->diffInSeconds($endCarbon);
+                    $supposedDuration = gmdate('H:i:s', $diffInSeconds);
+                } catch (\Exception $e) {
+                    $supposedDuration = '00:00:00';
+                }
+
+                return [
+                    'period_id'         => $history->period_id,
+                    'name'              => optional($history->workPeriod)->name,
+                    'start_time'        => $history->start_time ?? $history?->workPeriod?->start_at,
+                    'end_time'          => $history->end_time ?? $history?->workPeriod?->end_at,
+                    'supposed_duration' => $supposedDuration,
+                ];
+            });
+
+            $totalSeconds = $matchingPeriods->reduce(function ($carry, $period) {
+                list($h, $m, $s) = explode(':', $period['supposed_duration']);
+                return $carry + ($h * 3600) + ($m * 60) + $s;
+            }, 0);
+
+            $dailyDuration = gmdate('H:i:s', $totalSeconds);
+
+            $results->put($empId, [
+                'days' => collect([
+                    $date->toDateString() => [
+                        'date'                 => $date->toDateString(),
+                        'day_name'             => $currentDayName,
+                        'daily_duration_hours' => $dailyDuration,
+                        'periods'              => $matchingPeriods->values(),
+                    ]
+                ]),
+                'total_duration_hours' => $dailyDuration, // بما أنه يوم واحد، الإجمالي هو نفسه اليومي
+            ]);
+        }
+
+        return $results;
+    }
 }

@@ -185,13 +185,32 @@ class AttendanceController extends Controller
     public function employeesAttendanceOnDate(Request $request)
     {
         $validated = $request->validate([
-            'employee_ids' => 'required|array',
+            'employee_ids' => 'nullable|array',
+            'branch_id'    => 'nullable|integer',
             'date'         => 'required|date',
         ]);
 
-        $employeeIds = $validated['employee_ids'];
         $date = $validated['date'];
+        
+        // جلب معرفات الموظفين بناءً على الفرع أو القائمة المرسلة
+        if ($request->filled('branch_id')) {
+            $employeeIds = \App\Models\Employee::where('branch_id', $validated['branch_id'])
+                ->active()
+                ->pluck('id')
+                ->toArray();
+        } else {
+            $employeeIds = $validated['employee_ids'] ?? [];
+        }
 
+        if (empty($employeeIds)) {
+            return response()->json([
+                'status'  => 'success',
+                'data'    => collect()
+            ]);
+        }
+
+        // استخدام الدالة المحسنة الجديدة
+        // $attendanceReports = $this->employeesAttendanceOnDateService->fetchAttendancesOptimized($employeeIds, $date);
         $attendanceReports = $this->employeesAttendanceOnDateService->fetchAttendances($employeeIds, $date);
 
         return response()->json([
