@@ -27,7 +27,7 @@ class AbsentEmployeesV2Service
         $dateFrom = $dateFrom instanceof Carbon ? $dateFrom : Carbon::parse($dateFrom);
         $dateTo   = $dateTo instanceof Carbon ? $dateTo : Carbon::parse($dateTo);
 
-        $employeesQuery = Employee::query();
+        $employeesQuery = Employee::query()->where('active', 1);
 
         if (!empty($filters['branch_id'])) {
             $employeesQuery->where('branch_id', $filters['branch_id']);
