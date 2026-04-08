@@ -664,6 +664,8 @@ return [
   'attendance_by_employee' => 'الحضور حسب الموظف',
   'missing_checkout_report' => 'تقرير نسيان الانصراف',
   'missing_checkout' => 'نسيان الانصراف',
+  'shift_report' => 'تقرير الشفتات',
+  'please_select_branch_and_shift' => 'يرجى اختيار الفرع والشفت',
   'my_attendance' => 'سجل حضوري',
   'absence_report' => 'تقرير الغياب',
   'branch_attendance_summary' => 'ملخص حضور الفرع',

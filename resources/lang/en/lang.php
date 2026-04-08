@@ -682,6 +682,8 @@ return [
     'attendance_by_employee' => 'Attendance by staff',
     'missing_checkout_report' => 'Missing Checkout Report',
     'missing_checkout' => 'Missing Checkout',
+    'shift_report' => 'Shift Report',
+    'please_select_branch_and_shift' => 'Please select a Branch and Shift',
     'my_attendance' => 'My attendance',
     'absence_report' => 'Absence Report',
     'branch_attendance_summary' => 'Branch Attendance Summary',
