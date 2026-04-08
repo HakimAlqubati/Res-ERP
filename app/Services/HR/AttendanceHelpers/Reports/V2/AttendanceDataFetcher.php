@@ -1,0 +1,131 @@
+<?php
+
+namespace App\Services\HR\AttendanceHelpers\Reports\V2;
+
+use App\Models\EmployeePeriodHistory;
+use App\Models\Attendance;
+use App\Models\EmployeeServiceTermination;
+use App\Models\EmployeeOvertime;
+use App\Models\WorkPeriod;
+use Illuminate\Support\Facades\DB;
+
+class AttendanceDataFetcher
+{
+    /**
+     * @return array
+     */
+    public function fetchForMultiEmployeesSingleDate(array $employeeIds, string $dateStr): array
+    {
+        $histories = EmployeePeriodHistory::with('workPeriod')
+            ->where('active', 1)
+            ->whereIn('employee_id', $employeeIds)
+            ->where('start_date', '<=', $dateStr)
+            ->where(function ($q) use ($dateStr) {
+                $q->whereNull('end_date')->orWhere('end_date', '>=', $dateStr);
+            })
+            ->get();
+
+        $attendances = Attendance::where('deleted_at', null)
+            ->where('accepted', 1)
+            ->whereIn('employee_id', $employeeIds)
+            ->where('check_date', $dateStr)
+            ->orderBy('id')
+            ->get()
+            ->groupBy('employee_id');
+
+        $leaves = DB::table('hr_employee_applications')
+            ->join('hr_leave_requests', 'hr_employee_applications.id', '=', 'hr_leave_requests.application_id')
+            ->join('hr_leave_types', 'hr_leave_requests.leave_type', '=', 'hr_leave_types.id')
+            ->where('hr_employee_applications.application_type_id', 1)
+            ->where('hr_employee_applications.status', 'approved')
+            ->whereIn('hr_employee_applications.employee_id', $employeeIds)
+            ->where('hr_leave_requests.start_date', '<=', $dateStr)
+            ->where('hr_leave_requests.end_date', '>=', $dateStr)
+            ->select(
+                'hr_employee_applications.employee_id',
+                'hr_leave_requests.start_date as from_date',
+                'hr_leave_requests.end_date as to_date',
+                'hr_leave_requests.leave_type',
+                'hr_leave_types.name as transaction_description'
+            )
+            ->get()
+            ->keyBy('employee_id');
+
+        $terminations = DB::table('hr_employee_service_terminations')
+            ->whereIn('employee_id', $employeeIds)
+            ->where('status', EmployeeServiceTermination::STATUS_APPROVED)
+            ->where('termination_date', '<', $dateStr)
+            ->pluck('termination_date', 'employee_id');
+
+        $overtimes = EmployeeOvertime::whereIn('employee_id', $employeeIds)
+            ->where('status', EmployeeOvertime::STATUS_APPROVED)
+            ->where('date', $dateStr)
+            ->select('employee_id', 'hours', 'date')
+            ->get()
+            ->groupBy('employee_id');
+
+        $workPeriodIds = $histories->pluck('period_id')->unique()->toArray();
+        $workPeriodMap = WorkPeriod::whereIn('id', $workPeriodIds)
+            ->get(['id', 'name', 'start_at', 'end_at', 'day_and_night'])
+            ->keyBy('id');
+
+        return compact('histories', 'attendances', 'leaves', 'terminations', 'overtimes', 'workPeriodMap');
+    }
+
+    public function fetchForSingleEmployeeRange(int $employeeId, string $startDateStr, string $endDateStr): array
+    {
+        $histories = EmployeePeriodHistory::with('workPeriod')
+            ->where('active', 1)
+            ->where('employee_id', $employeeId)
+            ->where('start_date', '<=', $endDateStr)
+            ->where(function ($q) use ($startDateStr) {
+                $q->whereNull('end_date')->orWhere('end_date', '>=', $startDateStr);
+            })
+            ->get();
+
+        $attendances = Attendance::where('deleted_at', null)
+            ->where('accepted', 1)
+            ->where('employee_id', $employeeId)
+            ->whereBetween('check_date', [$startDateStr, $endDateStr])
+            ->orderBy('id')
+            ->get()
+            ->groupBy('check_date');
+
+        $leaves = DB::table('hr_employee_applications')
+            ->join('hr_leave_requests', 'hr_employee_applications.id', '=', 'hr_leave_requests.application_id')
+            ->join('hr_leave_types', 'hr_leave_requests.leave_type', '=', 'hr_leave_types.id')
+            ->where('hr_employee_applications.application_type_id', 1)
+            ->where('hr_employee_applications.status', 'approved')
+            ->where('hr_employee_applications.employee_id', $employeeId)
+            ->where(function ($q) use ($startDateStr, $endDateStr) {
+                $q->where('hr_leave_requests.start_date', '<=', $endDateStr)
+                  ->where('hr_leave_requests.end_date', '>=', $startDateStr);
+            })
+            ->select(
+                'hr_leave_requests.start_date as from_date',
+                'hr_leave_requests.end_date as to_date',
+                'hr_leave_requests.leave_type',
+                'hr_leave_types.name as transaction_description'
+            )
+            ->get();
+
+        $terminations = DB::table('hr_employee_service_terminations')
+            ->where('employee_id', $employeeId)
+            ->where('status', EmployeeServiceTermination::STATUS_APPROVED)
+            ->first();
+
+        $overtimes = EmployeeOvertime::where('employee_id', $employeeId)
+            ->where('status', EmployeeOvertime::STATUS_APPROVED)
+            ->whereBetween('date', [$startDateStr, $endDateStr])
+            ->select('hours', 'date')
+            ->get()
+            ->groupBy('date');
+
+        $workPeriodIds = $histories->pluck('period_id')->unique()->toArray();
+        $workPeriodMap = WorkPeriod::whereIn('id', $workPeriodIds)
+            ->get(['id', 'name', 'start_at', 'end_at', 'day_and_night'])
+            ->keyBy('id');
+
+        return compact('histories', 'attendances', 'leaves', 'terminations', 'overtimes', 'workPeriodMap');
+    }
+}

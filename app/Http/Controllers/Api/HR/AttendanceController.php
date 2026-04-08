@@ -8,8 +8,8 @@ use App\Models\Employee;
 use App\Services\HR\Attendance\AttendancePlanService;
 use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
-use App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateService;
-use App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateServiceV2;
+use App\Services\HR\AttendanceHelpers\Reports\V2\EmployeesAttendanceOnDateServiceV2;
+use App\Services\HR\AttendanceHelpers\Reports\V2\EmployeeAttendanceRangeServiceV2;
 use App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesService;
 use App\Services\HR\AttendanceHelpers\Reports\PresentEmployeesService;
 use App\Services\HR\AttendanceHelpers\Reports\MissingCheckoutService;
@@ -28,7 +28,6 @@ class AttendanceController extends Controller
 {
     protected AttendanceServiceV2 $attendanceService;
     protected $attendanceFetcher;
-    protected EmployeesAttendanceOnDateService $employeesAttendanceOnDateService;
     protected EmployeesAttendanceOnDateServiceV2 $employeesAttendanceOnDateServiceV2;
     protected AbsentEmployeesService $absentEmployeesService;
     protected PresentEmployeesService $presentEmployeesService;
@@ -36,7 +35,6 @@ class AttendanceController extends Controller
 
     public function __construct(
         AttendanceServiceV2 $attendanceService,
-        EmployeesAttendanceOnDateService $employeesAttendanceOnDateService,
         EmployeesAttendanceOnDateServiceV2 $employeesAttendanceOnDateServiceV2,
         AbsentEmployeesService $absentEmployeesService,
         PresentEmployeesService $presentEmployeesService,
@@ -44,7 +42,6 @@ class AttendanceController extends Controller
     ) {
         $this->attendanceService                   = $attendanceService;
         $this->attendanceFetcher                   = new AttendanceFetcher(new EmployeePeriodHistoryService());
-        $this->employeesAttendanceOnDateService    = $employeesAttendanceOnDateService;
         $this->employeesAttendanceOnDateServiceV2  = $employeesAttendanceOnDateServiceV2;
         $this->absentEmployeesService              = $absentEmployeesService;
         $this->presentEmployeesService             = $presentEmployeesService;
@@ -81,7 +78,7 @@ class AttendanceController extends Controller
 
 
 
-    public function employeeAttendance(Request $request)
+    public function employeeAttendance(Request $request, EmployeeAttendanceRangeServiceV2 $rangeServiceV2)
     {
         try {
             $employee_id = $request->input('employee_id');
@@ -109,13 +106,12 @@ class AttendanceController extends Controller
             // إظهار الحقول الإضافية
             $showDay = $request->input('show_day', false);
 
-            // جلب بيانات الحضور
-            $data = $this->attendanceFetcher->fetchEmployeeAttendances($employee, $startDate, $endDate);
+            // جلب بيانات الحضور باستخدام الخدمة المحسنة V2
+            $data = $rangeServiceV2->fetchRange($employee, $startDate, $endDate);
 
-            // قيم افتراضية
-            $totalSupposed = '0 h 0 m';
-            $totalWorked   = 0;
-            $totalApproved = 0;
+            // تحويل الساعات الإجمالية إلى صيغة h m للتوافق مع الفرونت إند
+            $totalSupposed = $data->get('total_duration_hours', 0);
+            $totalSupposedFormatted = floor($totalSupposed) . ' h ' . round(($totalSupposed - floor($totalSupposed)) * 60) . ' m';
 
             return response()->json([
                 'status'                      => 'success',
@@ -124,12 +120,12 @@ class AttendanceController extends Controller
                 'employee_id'                 => $employee_id,
                 'start_date'                  => $startDate->format('Y-m-d'),
                 'end_date'                    => $endDate->format('Y-m-d'),
-                'totalSupposed'               => $totalSupposed,
-                'totalWorked'                 => $this->formatDuration($totalWorked),
-                'totalApproved'               => $this->formatDuration($totalApproved),
-                'total_actual_duration_hours' => $data['total_actual_duration_hours'] ?? 0,
-                'total_duration_hours'        => $data['total_duration_hours'] ?? 0,
-                'total_approved_overtime'     => $data['total_approved_overtime'] ?? 0,
+                'totalSupposed'               => $totalSupposedFormatted,
+                'totalWorked'                 => $data->get('total_actual_duration_hours', '00:00:00'),
+                'totalApproved'               => $data->get('total_approved_overtime', '00:00:00'),
+                'total_actual_duration_hours' => $data->get('total_actual_duration_hours', '00:00:00'),
+                'total_duration_hours'        => $data->get('total_duration_hours', 0),
+                'total_approved_overtime'     => $data->get('total_approved_overtime', '00:00:00'),
             ]);
         } catch (\Throwable $e) {
             return response()->json([
