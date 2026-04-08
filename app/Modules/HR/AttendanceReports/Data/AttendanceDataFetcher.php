@@ -71,6 +71,7 @@ class AttendanceDataFetcher
 
         $overtimes = EmployeeOvertime::whereIn('employee_id', $employeeIds)
             ->where('status', EmployeeOvertime::STATUS_APPROVED)
+            ->day()
             ->where('date', $dateStr)
             ->select('employee_id', 'hours', 'date')
             ->get()
@@ -137,6 +138,7 @@ class AttendanceDataFetcher
 
         $overtimes = EmployeeOvertime::where('employee_id', $employeeId)
             ->where('status', EmployeeOvertime::STATUS_APPROVED)
+            ->day()
             ->whereBetween('date', [$startDateStr, $endDateStr])
             ->select('hours', 'date')
             ->get()

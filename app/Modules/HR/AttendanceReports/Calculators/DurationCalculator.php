@@ -22,12 +22,22 @@ class DurationCalculator
     public function getSupposedDurationHours(WorkPeriod $workPeriod): float
     {
         try {
-            $start = Carbon::parse($workPeriod->start_at);
-            $end   = Carbon::parse($workPeriod->end_at);
-            if ($end->lte($start) || (bool) $workPeriod->day_and_night) {
-                $end->addDay();
+            $supposed = $workPeriod->supposed_duration;
+            if (!$supposed) {
+                return 0.0;
             }
-            return $start->diffInMinutes($end) / 60;
+
+            if (is_numeric($supposed)) {
+                return (float) $supposed;
+            }
+
+            if (preg_match('/^(\d+):(\d+)(?::(\d+))?$/', $supposed, $matches)) {
+                $hours = (float) $matches[1];
+                $mins  = (float) $matches[2];
+                return $hours + ($mins / 60);
+            }
+
+            return 0.0;
         } catch (\Exception $e) {
             return 0.0;
         }
