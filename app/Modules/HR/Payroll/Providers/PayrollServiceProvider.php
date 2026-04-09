@@ -83,7 +83,7 @@ class PayrollServiceProvider extends ServiceProvider
 
         $this->app->singleton(PayrollSimulatorInterface::class, function ($app) {
             return new PayrollSimulationService(
-                $app->make(\App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher::class),
+                $app->make(\App\Modules\HR\AttendanceReports\Contracts\AttendanceReportInterface::class),
                 $app->make(SalaryCalculatorInterface::class)
             );
         });
