@@ -7,13 +7,15 @@ use App\Models\Employee;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
+use App\Modules\HR\AttendanceReports\Contracts\AttendanceReportInterface;
+
 class AbsentEmployeesV2Service
 {
-    protected AttendanceFetcher $attendanceFetcher;
+    protected AttendanceReportInterface $reportManager;
 
-    public function __construct(AttendanceFetcher $attendanceFetcher)
+    public function __construct(AttendanceReportInterface $reportManager)
     {
-        $this->attendanceFetcher = $attendanceFetcher;
+        $this->reportManager = $reportManager;
     }
 
     /**
@@ -40,8 +42,16 @@ class AbsentEmployeesV2Service
         $employees = $employeesQuery->get();
         $results = collect();
 
+        $chunkReportMap = collect();
+        $employees->chunk(50)->each(function ($chunk) use (&$chunkReportMap, $dateFrom, $dateTo) {
+            $chunkReports = $this->reportManager->getEmployeesRangeReport($chunk, $dateFrom, $dateTo);
+            foreach ($chunkReports as $empId => $report) {
+                $chunkReportMap->put($empId, $report);
+            }
+        });
+
         foreach ($employees as $employee) {
-            $report = $this->attendanceFetcher->fetchEmployeeAttendances($employee, $dateFrom, $dateTo);
+            $report = $chunkReportMap->get($employee->id) ?? collect();
 
             $absentDays = collect();
 
