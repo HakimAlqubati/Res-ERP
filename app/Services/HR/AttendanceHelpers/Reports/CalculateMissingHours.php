@@ -12,11 +12,35 @@ class CalculateMissingHours
         $approvedOvertime,
         $date,
         $employeeId,
-        $totalActualDurationHourly = null
+        $totalActualDurationHourly = null,
+        $employeeDiscountException = null,
+        $dayAttendancesCol = null
     ) {
-        if ($employeeId) {
+        if ($employeeDiscountException === true) {
+            return [
+                'formatted'     => '0 h 0 m',
+                'total_hours'   => 0,
+                'total_minutes' => 0,
+                'is_multiple'   => false,
+            ];
+        } elseif ($employeeDiscountException === null && $employeeId) {
             $employee = \App\Models\Employee::find($employeeId);
             if ($employee && $employee->discount_exception_if_attendance_late) {
+                return [
+                    'formatted'     => '0 h 0 m',
+                    'total_hours'   => 0,
+                    'total_minutes' => 0,
+                    'is_multiple'   => false,
+                ];
+            }
+        }
+
+        // Add check: if we worked more or equal to the supposed duration, missing hours should be zero
+        if ($supposedDuration && $totalActualDurationHourly) {
+            $actualHoursFloat = \App\Services\HR\AttendanceHelpers\Reports\HelperFunctions::timeToHoursFloat((string) $totalActualDurationHourly);
+            $supposedHoursFloat = \App\Services\HR\AttendanceHelpers\Reports\HelperFunctions::timeToHoursFloat((string) $supposedDuration);
+
+            if ($actualHoursFloat >= $supposedHoursFloat) {
                 return [
                     'formatted' => '0 h 0 m',
                     'total_hours' => 0,
@@ -26,35 +50,20 @@ class CalculateMissingHours
             }
         }
 
-        // Add check: if we worked more or equal to the supposed duration, missing hours should be zero
-        if ($supposedDuration && $totalActualDurationHourly) {
-            $helper = new \App\Services\HR\AttendanceHelpers\Reports\HelperFunctions();
-            $reflection = new \ReflectionClass($helper);
-            $method = $reflection->getMethod('timeToHoursForLateArrival');
-            $method->setAccessible(true);
-            try {
-                $actualHoursFloat = $method->invoke($helper, $totalActualDurationHourly);
-                $supposedHoursFloat = $method->invoke($helper, $supposedDuration);
-
-                if ($actualHoursFloat >= $supposedHoursFloat) {
-                    return [
-                        'formatted' => '0 h 0 m',
-                        'total_hours' => 0,
-                        'total_minutes' => 0,
-                        'is_multiple' => false,
-                    ];
-                }
-            } catch (\Exception $e) {
-                // If parsing fails, just continue with the regular gap calculation
-            }
+        if ($dayAttendancesCol !== null) {
+            $attendances = collect($dayAttendancesCol)
+                ->where('accepted', 1)
+                ->whereNotNull('check_time')
+                ->sortBy('check_time')
+                ->values();
+        } else {
+            $attendances = Attendance::where('check_date', $date)
+                ->where('employee_id', $employeeId)
+                ->where('accepted', 1)
+                ->whereNotNull('check_time')
+                ->orderBy('check_time')
+                ->get();
         }
-
-        $attendances = Attendance::where('check_date', $date)
-            ->where('employee_id', $employeeId)
-            ->where('accepted', 1)
-            ->whereNotNull('check_time')
-            ->orderBy('check_time')
-            ->get();
 
         $checkins = $attendances->where('check_type', Attendance::CHECKTYPE_CHECKIN)->values();
         $checkouts = $attendances->where('check_type', Attendance::CHECKTYPE_CHECKOUT)->values();
@@ -95,22 +104,14 @@ class CalculateMissingHours
 
         // Capping missing minutes: You cannot miss more minutes than (supposed - actual)
         if ($supposedDuration && $totalActualDurationHourly) {
-            $helper = new \App\Services\HR\AttendanceHelpers\Reports\HelperFunctions();
-            $reflection = new \ReflectionClass($helper);
-            $method = $reflection->getMethod('timeToHoursForLateArrival');
-            $method->setAccessible(true);
-            try {
-                $actualHoursFloat = $method->invoke($helper, $totalActualDurationHourly);
-                $supposedHoursFloat = $method->invoke($helper, $supposedDuration);
+            $actualHoursFloat = \App\Services\HR\AttendanceHelpers\Reports\HelperFunctions::timeToHoursFloat((string) $totalActualDurationHourly);
+            $supposedHoursFloat = \App\Services\HR\AttendanceHelpers\Reports\HelperFunctions::timeToHoursFloat((string) $supposedDuration);
 
-                $maxMissingHours = max(0, $supposedHoursFloat - $actualHoursFloat);
-                $maxMissingMinutes = $maxMissingHours * 60;
+            $maxMissingHours = max(0, $supposedHoursFloat - $actualHoursFloat);
+            $maxMissingMinutes = $maxMissingHours * 60;
 
-                if ($totalMissingMinutes > $maxMissingMinutes) {
-                    $totalMissingMinutes = $maxMissingMinutes;
-                }
-            } catch (\Exception $e) {
-                // If parsing fails, just keep the original totalMissingMinutes
+            if ($totalMissingMinutes > $maxMissingMinutes) {
+                $totalMissingMinutes = $maxMissingMinutes;
             }
         }
 

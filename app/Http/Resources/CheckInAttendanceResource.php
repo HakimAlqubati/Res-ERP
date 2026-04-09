@@ -22,25 +22,16 @@ class CheckInAttendanceResource extends JsonResource
         $delayMinutes = $this->delay_minutes;
 
         if ($delayMinutes > 0 && isset($this->checkoutData['total_actual_duration_hourly']) && isset($this->checkoutData['supposed_duration_hourly'])) {
-            $helper = new \App\Services\HR\AttendanceHelpers\Reports\HelperFunctions();
-            $reflection = new \ReflectionClass($helper);
-            $method = $reflection->getMethod('timeToHoursForLateArrival');
-            $method->setAccessible(true);
+            $actualHoursFloat = \App\Services\HR\AttendanceHelpers\Reports\HelperFunctions::timeToHoursFloat((string) $this->checkoutData['total_actual_duration_hourly']);
+            $supposedHoursFloat = \App\Services\HR\AttendanceHelpers\Reports\HelperFunctions::timeToHoursFloat((string) $this->checkoutData['supposed_duration_hourly']);
 
-            try {
-                $actualHoursFloat = $method->invoke($helper, $this->checkoutData['total_actual_duration_hourly']);
-                $supposedHoursFloat = $method->invoke($helper, $this->checkoutData['supposed_duration_hourly']);
+            $diffMinutes = max(0, ($supposedHoursFloat - $actualHoursFloat) * 60);
 
-                $diffMinutes = max(0, ($supposedHoursFloat - $actualHoursFloat) * 60);
-
-                // We only adjust if the diff is LESS than the delay.
-                // If they stayed late, diffMinutes will be small.
-                // If they stayed MORE than supposed, diffMinutes will be 0.
-                if ($diffMinutes < $delayMinutes) {
-                    $delayMinutes = (int) round($diffMinutes);
-                }
-            } catch (\Exception $e) {
-                // Keep original delay if parsing fails
+            // We only adjust if the diff is LESS than the delay.
+            // If they stayed late, diffMinutes will be small.
+            // If they stayed MORE than supposed, diffMinutes will be 0.
+            if ($diffMinutes < $delayMinutes) {
+                $delayMinutes = (int) round($diffMinutes);
             }
         }
 

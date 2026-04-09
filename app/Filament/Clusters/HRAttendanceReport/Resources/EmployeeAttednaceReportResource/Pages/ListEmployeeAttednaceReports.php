@@ -7,7 +7,7 @@ use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportRe
 use App\Models\Employee;
 use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
-use App\Services\HR\AttendanceHelpers\Reports\HelperFunctions;
+use App\Modules\HR\AttendanceReports\Contracts\AttendanceReportInterface;
 use Carbon\Carbon;
 use Filament\Resources\Pages\ListRecords;
 
@@ -27,10 +27,10 @@ class ListEmployeeAttednaceReports extends ListRecords
 
     public function showDetails($date, $employeeId, $periodId)
     {
+        $reportManager = app(AttendanceReportInterface::class);
 
-        $attendanceFetcher      = new AttendanceFetcher(new EmployeePeriodHistoryService());
-        $attendanceDetails      = $attendanceFetcher->getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
-         $this->modalData = [
+        $attendanceDetails      = $reportManager->getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
+        $this->modalData = [
             'data' => $attendanceDetails->toArray(),
             'date' => $date,
         ];
@@ -55,15 +55,11 @@ class ListEmployeeAttednaceReports extends ListRecords
         $startDate = Carbon::parse($startDate);
         $endDate   = Carbon::parse($endDate);
         // $data     = $historyService->getEmployeePeriodsByDateRange($employee, $startDate, $endDate);
-        $attendanceFetcher = new AttendanceFetcher(new EmployeePeriodHistoryService());
-        $data              = $employee ? $attendanceFetcher->fetchEmployeeAttendances($employee, $startDate, $endDate) : [];
-        $chartData         = HelperFunctions::getAttendanceChartData($data, $employee);
+        $reportManager = app(AttendanceReportInterface::class);
+        $data          = $employee ? $reportManager->getEmployeeRangeReport($employee, $startDate, $endDate) : collect();
 
-        // Initialize total counters
-        $totalSupposed = '0 h 0 m';
-        $totalWorked   = 0;
-        $totalApproved = 0;
-        $totalMinutes  = 0;
+        $totalSupposedValue = $employee && $data->has('total_duration_hours') ? $data->get('total_duration_hours', 0) : 0;
+        $totalSupposedFormatted = floor($totalSupposedValue) . ' h ' . round(($totalSupposedValue - floor($totalSupposedValue)) * 60) . ' m';
 
         return [
             'report_data'   => $data,
@@ -71,14 +67,13 @@ class ListEmployeeAttednaceReports extends ListRecords
             'employee_id'   => $employee_id,
             'start_date'    => $startDate?->format('Y-m-d') ?? '',
             'end_date'      => $endDate?->format('Y-m-d') ?? '',
-            'totalSupposed' => $totalSupposed,
-            'totalWorked'   => $this->formatDuration($totalWorked),
-            'totalApproved' => $this->formatDuration($totalApproved),
-            'chartData'     => $chartData['chartData'],
-            'employee_name' => $chartData['employee_name'],
-            'total_actual_duration_hours' => $data['total_actual_duration_hours'] ?? 0,
-            'total_duration_hours' => $data['total_duration_hours'] ?? 0,
-            'total_approved_overtime' => $data['total_approved_overtime'] ?? 0,
+            'totalSupposed' => $totalSupposedFormatted,
+            'totalWorked'   => $employee && $data->has('total_actual_duration_hours') ? $data->get('total_actual_duration_hours', '00:00:00') : '00:00:00',
+            'totalApproved' => $employee && $data->has('total_approved_overtime') ? $data->get('total_approved_overtime', '00:00:00') : '00:00:00',
+            'employee_name' => $employee?->name,
+            'total_actual_duration_hours' => $employee && $data->has('total_actual_duration_hours') ? $data->get('total_actual_duration_hours', '00:00:00') : '00:00:00',
+            'total_duration_hours' => $employee && $data->has('total_duration_hours') ? $data->get('total_duration_hours', 0) : 0,
+            'total_approved_overtime' => $employee && $data->has('total_approved_overtime') ? $data->get('total_approved_overtime', '00:00:00') : '00:00:00',
         ];
     }
 

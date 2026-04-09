@@ -6,13 +6,15 @@ use App\Models\Employee;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
+use App\Modules\HR\AttendanceReports\Contracts\AttendanceReportInterface;
+
 class EmployeesAttendanceOnDateService
 {
-    protected AttendanceFetcher $attendanceFetcher;
+    protected AttendanceReportInterface $reportManager;
 
-    public function __construct(AttendanceFetcher $attendanceFetcher)
+    public function __construct(AttendanceReportInterface $reportManager)
     {
-        $this->attendanceFetcher = $attendanceFetcher;
+        $this->reportManager = $reportManager;
     }
 
     /**
@@ -28,10 +30,10 @@ class EmployeesAttendanceOnDateService
         $results = collect();
 
         if ($employeeIdsOrEmployees instanceof Collection && $employeeIdsOrEmployees->first() instanceof Employee) {
-            // إذا تم تمرير مجموعة Employees بالفعل
             $employees = $employeeIdsOrEmployees;
+            $chunkReports = $this->reportManager->getEmployeesRangeReport($employees, $date, $date);
             foreach ($employees as $employee) {
-                $report = $this->attendanceFetcher->fetchEmployeeAttendances($employee, $date, $date);
+                $report = $chunkReports->get($employee->id) ?? collect();
                 $results->put($employee->id, [
                     'employee'          => [
                         'id'   => $employee->id,
@@ -49,8 +51,9 @@ class EmployeesAttendanceOnDateService
             // استخدم chunk لتقسيم الموظفين إلى دفعات (مثلاً 100 لكل دفعة)
             Employee::whereIn('id', $employeeIds)
                 ->chunk(100, function ($chunkedEmployees) use ($date, &$results) {
+                    $chunkReports = $this->reportManager->getEmployeesRangeReport($chunkedEmployees, $date, $date);
                     foreach ($chunkedEmployees as $employee) {
-                        $report = $this->attendanceFetcher->fetchEmployeeAttendances($employee, $date, $date);
+                        $report = $chunkReports->get($employee->id) ?? collect();
                         $results->put($employee->id, [
                             'employee'          => [
                                 'id'   => $employee->id,

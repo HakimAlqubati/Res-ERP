@@ -2,6 +2,7 @@
 
 return [
     App\Modules\HR\Attendance\Providers\AttendanceServiceProvider::class,
+    App\Modules\HR\AttendanceReports\Providers\AttendanceReportServiceProvider::class,
     App\Modules\HR\Payroll\Providers\PayrollServiceProvider::class,
     App\Modules\Docs\Providers\DocsServiceProvider::class,
     App\Providers\AWS\AwsServiceProvider::class,
