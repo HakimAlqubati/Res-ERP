@@ -123,11 +123,7 @@ class EmployeeAttendanceRangeService
             $tempDate->addDay();
         }
 
-        $isPreviousMonth = $startDate->format('Y-m') < now()->format('Y-m');
-        if ($isPreviousMonth && $employee->has_auto_weekly_leave) {
-            $fetcher = new AttendanceFetcher(new \App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService());
-            $fetcher->applyWeeklyLeaveToAbsences($report, $isPreviousMonth);
-        }
+        // (The weekly leave mutation must be done AFTER stats injection to avoid corrupting Payroll numbers)
 
         $isFullMonth = $startDate->day === 1
             && $endDate->day === $endDate->daysInMonth
@@ -155,6 +151,92 @@ class EmployeeAttendanceRangeService
 
         $this->statsInjector->inject($report, $employee);
 
+        $isPreviousMonth = $startDate->format('Y-m') < now()->format('Y-m');
+        if ($isPreviousMonth && $employee->has_auto_weekly_leave) {
+            $this->applyAutoWeeklyLeaves($report);
+        }
+
         return $report;
+    }
+
+    /**
+     * Replaces absences with auto weekly leave based on accrued work days.
+     * This is strictly for UI representation and is applied AFTER statistics injection
+     * so it does not interfere with the core payroll calculations.
+     */
+    private function applyAutoWeeklyLeaves(Collection $report): void
+    {
+        $workDaysPerLeave = \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::WORK_DAYS_PER_LEAVE;
+        $countPartialAsAbsent = setting('count_partial_as_absent') ?? true;
+
+        $dates = $report->keys()->filter(fn($key) => preg_match('/^\d{4}-\d{2}-\d{2}$/', $key))->sort()->values();
+
+        $totalWorkDays = 0;
+        $absentDates = [];
+
+        foreach ($dates as $date) {
+            $day = $report->get($date);
+            if (!is_array($day) || !isset($day['day_status'])) {
+                continue;
+            }
+
+            $status = $day['day_status'];
+
+            if (in_array($status, [
+                \App\Enums\HR\Attendance\AttendanceReportStatus::Present->value,
+                \App\Enums\HR\Attendance\AttendanceReportStatus::IncompleteCheckoutOnly->value,
+            ])) {
+                $totalWorkDays++;
+            } elseif (
+                $status === \App\Enums\HR\Attendance\AttendanceReportStatus::Absent->value ||
+                ($countPartialAsAbsent && in_array($status, [
+                    \App\Enums\HR\Attendance\AttendanceReportStatus::Partial->value,
+                    \App\Enums\HR\Attendance\AttendanceReportStatus::IncompleteCheckinOnly->value,
+                    \App\Enums\HR\Attendance\AttendanceReportStatus::IncompleteCheckoutOnly->value,
+                ]))
+            ) {
+                $absentDates[] = $date;
+            }
+        }
+
+        $totalEntitledLeaves = floor($totalWorkDays / $workDaysPerLeave);
+        $workDaysTowardsNext = $totalWorkDays % $workDaysPerLeave;
+        $leavesToUse         = min($totalEntitledLeaves, count($absentDates));
+        $usedLeaves          = 0;
+
+        foreach ($absentDates as $date) {
+            if ($usedLeaves >= $leavesToUse) {
+                break;
+            }
+
+            $day = $report->get($date);
+
+            $day['day_status']        = \App\Enums\HR\Attendance\AttendanceReportStatus::WeeklyLeave->value;
+            $day['weekly_leave_auto'] = true;
+            $day['leave_type']        = 'Weekly Leave (Auto)';
+
+            if (isset($day['periods'])) {
+                $periods = $day['periods'];
+                if ($periods instanceof \Illuminate\Support\Collection) {
+                    $periods = $periods->toArray();
+                }
+                foreach ($periods as $key => $period) {
+                    $periods[$key]['final_status'] = \App\Enums\HR\Attendance\AttendanceReportStatus::WeeklyLeave->value;
+                }
+                $day['periods'] = $periods;
+            }
+
+            $report->put($date, $day);
+            $usedLeaves++;
+        }
+
+        $report->put('weekly_leave_stats', [
+            'total_work_days'        => $totalWorkDays,
+            'entitled_leaves'        => $totalEntitledLeaves,
+            'used_leaves'            => $usedLeaves,
+            'remaining_leaves'       => $totalEntitledLeaves - $usedLeaves,
+            'remaining_absences'     => count($absentDates) - $usedLeaves,
+            'work_days_towards_next' => $workDaysTowardsNext,
+        ]);
     }
 }

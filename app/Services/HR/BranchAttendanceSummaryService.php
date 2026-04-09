@@ -4,7 +4,6 @@ namespace App\Services\HR;
 
 use App\Models\Employee;
 use App\Models\EmployeeServiceTermination;
-use App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator;
 use App\Modules\HR\AttendanceReports\Contracts\AttendanceReportInterface;
 use Carbon\Carbon;
 
@@ -22,12 +21,10 @@ class BranchAttendanceSummaryService
 {
 
     protected AttendanceReportInterface $reportManager;
-    protected WeeklyLeaveCalculator     $weeklyLeaveCalculator;
 
     public function __construct(AttendanceReportInterface $reportManager)
     {
-        $this->reportManager         = $reportManager;
-        $this->weeklyLeaveCalculator = new WeeklyLeaveCalculator();
+        $this->reportManager = $reportManager;
     }
 
     /**
@@ -62,7 +59,7 @@ class BranchAttendanceSummaryService
         // Process active employees in DB-level chunks
         Employee::where('branch_id', $branchId)
             ->where('active', 1)
-            ->select('id', 'name', 'employee_no', 'salary', 'join_date', 'working_days', 'working_hours', 'discount_exception_if_attendance_late')
+            ->select('id', 'name', 'employee_no', 'salary', 'join_date', 'working_days', 'working_hours', 'discount_exception_if_attendance_late', 'has_auto_weekly_leave')
             ->withSum(['overtimes as total_overtime' => function ($query) use ($year, $month) {
                 $query->whereYear('date', $year)
                     ->whereMonth('date', $month)
@@ -75,7 +72,7 @@ class BranchAttendanceSummaryService
             ->chunk(50, function ($employees) use (&$currentStaff, &$newStaff, $terminatedEmployeeIds, $year, $month, $periodStart, $periodEnd, $monthDays) {
 
                 $filtered = $employees->filter(fn($emp) => !in_array($emp->id, $terminatedEmployeeIds));
-                
+
                 // Optimized: Fetch all attendance data for the entire chunk in one bulk request
                 $chunkReportMap = $this->reportManager->getEmployeesRangeReport($filtered, $periodStart, $periodEnd);
 
@@ -136,10 +133,10 @@ class BranchAttendanceSummaryService
         int $year,
         int $month,
         int $monthDays
-    ): array { 
+    ): array {
         try {
             $approvedOvertimeHours = (float) ($employee->total_overtime ?? 0);
-            
+
             // 1. Convert collection to array (already fetched in bulk by parent loop)
             $attendanceArray = $attendanceData->toArray();
 
@@ -150,7 +147,7 @@ class BranchAttendanceSummaryService
             $absentDays = $stats['absent'] ?? 0;
 
             $weeklyResult = $stats['weekly_leave_calculation']['result'] ?? [];
-
+            // dd($weeklyResult);
             // 4. Deduction hours: sum of missing hours, late, and early departure
             $missingMinutes        = $attendanceArray['total_missing_hours']['total_minutes'] ?? 0;
             $earlyDepartureMinutes = $attendanceArray['total_early_departure_minutes']['total_minutes'] ?? 0;

@@ -23,6 +23,7 @@ class AttendanceStatisticsInjector
     public int $totalApprovedOvertimeSeconds = 0;
     public int $totalMissingSeconds = 0;
     public int $totalEarlyDepartureSeconds = 0;
+    public int $totalLateMinutes = 0;
 
     public function __construct()
     {
@@ -37,6 +38,7 @@ class AttendanceStatisticsInjector
         $this->totalApprovedOvertimeSeconds = 0;
         $this->totalMissingSeconds = 0;
         $this->totalEarlyDepartureSeconds = 0;
+        $this->totalLateMinutes = 0;
     }
 
     public function addTotalDurationSeconds(int $seconds): void
@@ -52,6 +54,11 @@ class AttendanceStatisticsInjector
     public function addTotalActualSeconds(int $seconds): void
     {
         $this->totalActualSeconds += $seconds;
+    }
+
+    public function accumulateLateArrival(int $delayMinutes): void
+    {
+        $this->totalLateMinutes += $delayMinutes;
     }
 
     /**
@@ -71,7 +78,9 @@ class AttendanceStatisticsInjector
             if (preg_match('/^(\d+):(\d+):(\d+)$/', $val, $mx)) {
                 $this->totalApprovedOvertimeSeconds += ($mx[1] * 3600) + ($mx[2] * 60) + $mx[3];
             } else {
-                $h = 0; $m = 0; $s = 0;
+                $h = 0;
+                $m = 0;
+                $s = 0;
                 if (preg_match('/(\d+)\s*h/', $val, $mh)) $h = (int)$mh[1];
                 if (preg_match('/(\d+)\s*m/', $val, $mm)) $m = (int)$mm[1];
                 if (preg_match('/(\d+)\s*s/', $val, $ms)) $s = (int)$ms[1];
@@ -89,12 +98,8 @@ class AttendanceStatisticsInjector
                 $shouldDeduct = true;
                 if ($this->flexHoursEarlyDeparture) {
                     if (isset($lastCo['total_actual_duration_hourly']) && isset($lastCo['supposed_duration_hourly'])) {
-                        $helper = new HelperFunctions();
-                        $reflection = new \ReflectionClass($helper);
-                        $method = $reflection->getMethod('timeToHoursForLateArrival');
-                        $method->setAccessible(true);
-                        $actualHoursFloat = $method->invoke($helper, $lastCo['total_actual_duration_hourly']);
-                        $supposedHoursFloat = $method->invoke($helper, $lastCo['supposed_duration_hourly']);
+                        $actualHoursFloat = $this->timeToHoursFloat($lastCo['total_actual_duration_hourly']);
+                        $supposedHoursFloat = $this->timeToHoursFloat($lastCo['supposed_duration_hourly']);
                         if ($actualHoursFloat >= ($supposedHoursFloat - (HelperFunctions::FLEXIBLE_HOURS_MARGIN_MINUTES / 60))) {
                             $shouldDeduct = false;
                         }
@@ -119,11 +124,10 @@ class AttendanceStatisticsInjector
     public function inject(Collection $report, Employee $employee): void
     {
         $stats = HelperFunctions::calculateAttendanceStats($report);
-
         // Restore legacy: Inject the Golden Equation weekly leave calculation
         $calculator = new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator();
         $stats['weekly_leave_calculation'] = $calculator->calculate(
-            $stats['total_days'] ?? 0,
+            $stats['required_days'] ?? $stats['total_days'] ?? 0,
             $stats['absent'] ?? 0,
             [
                 'is_period_ended'       => true,
@@ -136,7 +140,7 @@ class AttendanceStatisticsInjector
         $report->put('total_duration_hours', round($this->totalDurationSeconds / 3600, 2));
         $report->put('total_actual_duration_hours', $this->secsToHMS($this->totalActualSeconds));
         $report->put('total_approved_overtime', $this->secsToHMS($this->totalApprovedOvertimeSeconds));
-        
+
         $report->put('total_missing_hours', [
             'total_minutes' => $this->totalMissingSeconds / 60,
             'formatted'     => $this->secsToHMS($this->totalMissingSeconds),
@@ -151,14 +155,36 @@ class AttendanceStatisticsInjector
                 'total_seconds' => $this->totalEarlyDepartureSeconds,
                 'total_hours'   => round($this->totalEarlyDepartureSeconds / 3600, 2),
             ]);
-            $report->put('late_hours', (new HelperFunctions())->calculateTotalLateArrival($report));
+            $report->put('late_hours', [
+                'totalMinutes'    => $this->totalLateMinutes,
+                'totalHoursFloat' => round($this->totalLateMinutes / 60, 1),
+            ]);
         } else {
             $report->put('total_early_departure_minutes', [
-                'total_minutes' => 0, 'formatted' => '00:00:00',
-                'total_seconds' => 0, 'total_hours' => 0,
+                'total_minutes' => 0,
+                'formatted'     => '00:00:00',
+                'total_seconds' => 0,
+                'total_hours'   => 0,
             ]);
             $report->put('late_hours', ['totalMinutes' => 0, 'totalHoursFloat' => 0]);
         }
+    }
+
+    private function timeToHoursFloat(string $time): float
+    {
+        if (preg_match('/^\d{1,2}:\d{1,2}:\d{1,2}$/', $time)) {
+            $parts = explode(':', $time);
+            return $parts[0] + ($parts[1] / 60) + ($parts[2] / 3600);
+        }
+
+        if (preg_match('/(\d+)\s*h\s*(\d*)\s*m*/i', $time, $matches)) {
+            $hours = isset($matches[1]) ? (int) $matches[1] : 0;
+            $minutes = isset($matches[2]) ? (int) $matches[2] : 0;
+            $minutes += (int) setting('early_attendance_minutes', 0);
+            return $hours + ($minutes / 60);
+        }
+
+        return 0.0;
     }
 
     private function secsToHMS(int $seconds): string

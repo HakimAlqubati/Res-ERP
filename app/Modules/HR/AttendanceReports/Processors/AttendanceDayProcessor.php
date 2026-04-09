@@ -98,6 +98,13 @@ class AttendanceDayProcessor
             $checkInResources = $checkInCol->map(fn($item) => (new CheckInAttendanceResource($item, $lastCheckoutResource))->toArray(request()))->all();
             $checkOutResources = $checkOutCol->map(fn($item) => (new CheckOutAttendanceResource($item, $approvedOvertime, $dateStr))->toArray(request()))->all();
 
+            $hasIn = count($checkInResources) > 0;
+            $hasOut = count($checkOutResources) > 0;
+
+            if (!$discountException && $hasIn && $hasOut && isset($checkInResources[0]['status']) && $checkInResources[0]['status'] === Attendance::STATUS_LATE_ARRIVAL) {
+                $statsInjector->accumulateLateArrival((int) ($checkInResources[0]['delay_minutes'] ?? 0));
+            }
+
             $checkIn = $checkInResources;
             if ($checkOutCol->isNotEmpty()) {
                 $fco = (new CheckOutAttendanceResource($checkOutCol->first()))->toArray(request());
@@ -111,8 +118,6 @@ class AttendanceDayProcessor
                 $checkOut['lastcheckout'] = $lastCheckoutResource;
             }
 
-            $hasIn = count($checkInResources) > 0;
-            $hasOut = count($checkOutResources) > 0;
             $isNotStarted = $isToday && $nowCarbon->lt(Carbon::parse("{$dateStr} {$startTime}"));
 
             if ($isFuture || $isNotStarted) $st = AttendanceReportStatus::Future;
