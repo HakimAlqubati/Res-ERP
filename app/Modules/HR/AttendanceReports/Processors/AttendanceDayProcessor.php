@@ -60,6 +60,11 @@ class AttendanceDayProcessor
         $dayActualSeconds = 0;
         $nowCarbon = Carbon::now();
         $totalDurationSeconds = 0;
+
+        $flatDayAttendances = collect();
+        foreach ($dayAttendances as $atts) {
+            $flatDayAttendances = $flatDayAttendances->merge($atts);
+        }
         
         foreach ($dayHistories->values() as $history) {
             $periodId = $history->period_id;
@@ -83,7 +88,7 @@ class AttendanceDayProcessor
 
             $lastCheckoutResource = null;
             if ($checkOutCol->isNotEmpty()) {
-                $lastCheckoutResource = (new CheckOutAttendanceResource($checkOutCol->last(), $approvedOvertime, $dateStr))->toArray(request());
+                $lastCheckoutResource = (new CheckOutAttendanceResource($checkOutCol->last(), $approvedOvertime, $dateStr, $discountException, $flatDayAttendances))->toArray(request());
                 $lastCheckoutResource['period_end_at'] = $endTime;
                 $lastCheckoutResource['approved_overtime'] = $approvedOvertime;
                 
@@ -96,7 +101,7 @@ class AttendanceDayProcessor
             }
 
             $checkInResources = $checkInCol->map(fn($item) => (new CheckInAttendanceResource($item, $lastCheckoutResource))->toArray(request()))->all();
-            $checkOutResources = $checkOutCol->map(fn($item) => (new CheckOutAttendanceResource($item, $approvedOvertime, $dateStr))->toArray(request()))->all();
+            $checkOutResources = $checkOutCol->map(fn($item) => (new CheckOutAttendanceResource($item, $approvedOvertime, $dateStr, $discountException, $flatDayAttendances))->toArray(request()))->all();
 
             $hasIn = count($checkInResources) > 0;
             $hasOut = count($checkOutResources) > 0;
@@ -107,7 +112,7 @@ class AttendanceDayProcessor
 
             $checkIn = $checkInResources;
             if ($checkOutCol->isNotEmpty()) {
-                $fco = (new CheckOutAttendanceResource($checkOutCol->first()))->toArray(request());
+                $fco = (new CheckOutAttendanceResource($checkOutCol->first(), $approvedOvertime, $dateStr, $discountException, $flatDayAttendances))->toArray(request());
                 $fco['period_end_at'] = $endTime;
                 $fco['approved_overtime'] = $approvedOvertime;
                 $checkIn['firstcheckout'] = $fco;
