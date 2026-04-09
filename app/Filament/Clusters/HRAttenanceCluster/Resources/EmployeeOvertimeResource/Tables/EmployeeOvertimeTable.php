@@ -183,7 +183,7 @@ class EmployeeOvertimeTable
                     ->databaseTransaction()
                     ->label(function ($record) {
                         if ($record->status === EmployeeOvertime::STATUS_APPROVED) {
-                            return 'Rollback approved';
+                            return 'Revoke approved';
                         } else {
                             return 'Approve';
                         }
@@ -205,6 +205,9 @@ class EmployeeOvertimeTable
                     ->requiresConfirmation()
                     ->size(Size::Small)
                     ->hidden(function ($record) {
+                        if ($record->status == EmployeeOvertime::STATUS_REJECTED) {
+                            return true;
+                        }
                         // if ($record->approved == 1) {
                         //     return true;
                         // }
@@ -272,7 +275,7 @@ class EmployeeOvertimeTable
                             }
                             return true;
                         }),
-                    BulkAction::make('Rollback approved')
+                    BulkAction::make('Revoke approved')
                         ->requiresConfirmation()
                         ->icon('heroicon-o-x-mark')
                         ->action(function (Collection $records) {

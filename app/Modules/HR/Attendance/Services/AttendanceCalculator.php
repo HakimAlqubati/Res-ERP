@@ -33,7 +33,9 @@ class AttendanceCalculator
 
         $checkTime = $context->requestTime;
         $shiftStart = $context->shiftInfo->start;
-        $graceMinutes = $this->config->getGraceMinutes();
+        
+        $earlyGraceMinutes = $this->config->getGraceMinutes();
+        $lateGraceMinutes = $this->config->getLateArrivalGraceMinutes();
 
         if ($checkTime->lt($shiftStart)) {
             // الموظف حضر قبل بداية الشيفت
@@ -41,7 +43,7 @@ class AttendanceCalculator
             $context->earlyArrivalMinutes = $earlyMinutes;
 
             $context->setStatus(
-                $earlyMinutes <= $graceMinutes
+                $earlyMinutes <= $earlyGraceMinutes
                     ? AttendanceStatus::ON_TIME
                     : AttendanceStatus::EARLY_ARRIVAL
             );
@@ -53,7 +55,7 @@ class AttendanceCalculator
                 $context->delayMinutes = $delayMinutes;
 
                 $context->setStatus(
-                    $delayMinutes <= $graceMinutes
+                    $delayMinutes <= $lateGraceMinutes
                         ? AttendanceStatus::ON_TIME
                         : AttendanceStatus::LATE_ARRIVAL
                 );

@@ -72,7 +72,7 @@ class BranchAttendanceSummaryResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager()) {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isHR()) {
             return true;
         }
         return false;

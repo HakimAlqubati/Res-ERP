@@ -399,6 +399,9 @@ class EmployeeForm
                                         Toggle::make('is_mtd_applicable')->columnSpan(1)
                                             ->disabled(fn(): bool => isBranchManager())
                                             ->label(__('lang.is_mtd_applicable'))->default(1)->inline(false),
+                                        Toggle::make('has_auto_weekly_leave')->columnSpan(1)
+                                            ->disabled(fn(): bool => isBranchManager())
+                                            ->label(__('lang.has_auto_weekly_leave'))->default(1)->inline(false),
 
                                         Repeater::make('bank_information')
                                             ->disabled(fn(): bool => isBranchManager())

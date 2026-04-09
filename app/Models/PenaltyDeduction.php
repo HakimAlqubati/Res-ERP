@@ -195,4 +195,13 @@ class PenaltyDeduction extends Model implements Auditable
     {
         return $this->morphOne(SalaryTransaction::class, 'referenceable', 'reference_type', 'reference_id');
     }
+
+    protected static function booted()
+    {
+        static::creating(function ($penalty) {
+            if ($penalty->created_by == null) {
+                $penalty->created_by = auth()->id();
+            }
+        });
+    }
 }

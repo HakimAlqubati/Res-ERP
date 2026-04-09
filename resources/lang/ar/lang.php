@@ -354,6 +354,7 @@ return [
   'no_salary_deduction_for_absences' => 'بدون خصم راتب للغياب',
   'exempt_from_late_attendance_deduction' => 'معفى من خصم التأخير',
   'is_mtd_applicable' => 'خاضع لـMTD',
+  'has_auto_weekly_leave' => 'إجازة أسبوعية تلقائية',
 
   // ===========================================
   // HRMS - Attendance & Shifts
@@ -663,6 +664,8 @@ return [
   'attendance_by_employee' => 'الحضور حسب الموظف',
   'missing_checkout_report' => 'تقرير نسيان الانصراف',
   'missing_checkout' => 'نسيان الانصراف',
+  'shift_report' => 'تقرير الشفتات',
+  'please_select_branch_and_shift' => 'يرجى اختيار الفرع والشفت',
   'my_attendance' => 'سجل حضوري',
   'absence_report' => 'تقرير الغياب',
   'branch_attendance_summary' => 'ملخص حضور الفرع',
@@ -1080,6 +1083,7 @@ return [
   'termination_request_created' => 'تم إنشاء طلب إنهاء الخدمة بنجاح',
   'subtotal' => 'المجموع الفرعي',
   'weekly_leave' => 'إجازة أسبوعية',
+  'source' => 'المصدر',
   'error_occurred' => 'حدث خطأ',
   'employee_name' => 'اسم الموظف',
   'unterminated' => 'غير موقف',

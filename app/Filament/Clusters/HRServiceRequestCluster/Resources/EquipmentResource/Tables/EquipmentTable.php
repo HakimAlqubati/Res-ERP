@@ -9,6 +9,7 @@ use App\Models\BranchArea;
 use App\Models\Equipment;
 use App\Models\EquipmentType;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -35,7 +36,11 @@ class EquipmentTable
             ->filters(static::getFilters(), layout: FiltersLayout::Modal)
             ->filtersFormColumns(4)
             ->recordUrl(fn(Equipment $record): string => EquipmentResource::getUrl('view', ['record' => $record]))
-            ->recordActions(static::getRecordActions())
+            ->recordActions(
+                ActionGroup::make(
+                    static::getRecordActions()
+                )
+            )
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
@@ -196,7 +201,7 @@ class EquipmentTable
             EditAction::make(),
             Action::make('downloadSticker')
                 ->label('QR Code')
-                ->button()
+                // ->button()
                 ->color('success')
                 ->icon('heroicon-o-arrow-down-tray')
                 ->action(function (Equipment $record) {

@@ -62,6 +62,7 @@ class Employee extends Model implements Auditable
         'working_days',
         'is_indexed_in_aws',
         'is_mtd_applicable',
+        'has_auto_weekly_leave',
         'birthday',
     ];
 
@@ -98,6 +99,7 @@ class Employee extends Model implements Auditable
         'working_days',
         'is_indexed_in_aws',
         'is_mtd_applicable',
+        'has_auto_weekly_leave',
         'birthday',
     ];
 
@@ -105,6 +107,7 @@ class Employee extends Model implements Auditable
         'bank_information'  => 'array',
         'changes'           => 'array',
         'is_mtd_applicable' => 'boolean',
+        'has_auto_weekly_leave' => 'boolean',
         // 'is_ceo'            => 'boolean',
     ];
 

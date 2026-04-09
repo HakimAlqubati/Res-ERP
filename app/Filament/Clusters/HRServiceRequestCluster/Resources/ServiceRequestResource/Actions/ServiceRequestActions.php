@@ -44,7 +44,8 @@ class ServiceRequestActions
      */
     public static function getMoveStatusAction(): Action
     {
-        return Action::make('Move')->button()
+        return Action::make('Move')
+            // ->button()
             ->disabled(function ($record) {
                 if ($record->status == ServiceRequest::STATUS_CLOSED) {
                     return true;
@@ -94,7 +95,7 @@ class ServiceRequestActions
                 }
                 return false;
             })
-            ->button()
+            // ->button()
             ->hidden(function () {
                 if (isStuff()) {
                     return true;
@@ -145,7 +146,8 @@ class ServiceRequestActions
      */
     public static function getAddCommentAction(): Action
     {
-        return Action::make('AddComment')->button()
+        return Action::make('AddComment')
+        // ->button()
             ->disabled(function ($record) {
                 if ($record->status == ServiceRequest::STATUS_CLOSED) {
                     return true;
@@ -243,7 +245,7 @@ class ServiceRequestActions
                     'log_type'    => ServiceRequestLog::LOG_TYPE_IMAGES_ADDED,
                 ]);
             })
-            ->button()
+            // ->button()
             ->icon('heroicon-m-newspaper')
             ->color('success');
     }
@@ -265,7 +267,7 @@ class ServiceRequestActions
             ->modalWidth('lg')
             ->modalSubmitAction(false)
             ->modalCancelActionLabel('Close')
-            ->button()
+            // ->button()
             ->icon('heroicon-o-camera')
             ->modalContent(function ($record) {
                 return view('filament.resources.service_requests.gallery', [

@@ -137,27 +137,20 @@ class HelperFunctions
         ];
     }
 
-    protected function timeToHoursForLateArrival(string $time): float
+    public static function timeToHoursFloat(string $time): float
     {
-        // Check if the time is in "H:i:s" format
         if (preg_match('/^\d{1,2}:\d{1,2}:\d{1,2}$/', $time)) {
-            $carbonTime = \Carbon\Carbon::createFromFormat('H:i:s', $time);
-
-            return $carbonTime->hour
-                + ($carbonTime->minute / 60)
-                + ($carbonTime->second / 3600);
+            $parts = explode(':', $time);
+            return (float) ($parts[0] + ($parts[1] / 60) + ($parts[2] / 3600));
         }
 
-        // Check if the time is in "X h Y m" format
         if (preg_match('/(\d+)\s*h\s*(\d*)\s*m*/i', $time, $matches)) {
             $hours = isset($matches[1]) ? (int) $matches[1] : 0;
             $minutes = isset($matches[2]) ? (int) $matches[2] : 0;
-            $minutes +=  setting('early_attendance_minutes');
-
-            return $hours + ($minutes / 60);
+            $minutes += (int) setting('early_attendance_minutes', 0);
+            return (float) ($hours + ($minutes / 60));
         }
 
-        // If format is invalid
-        throw new \InvalidArgumentException("Invalid time format. Expected 'H:i:s' or 'X h Y m'.");
+        return 0.0;
     }
 }

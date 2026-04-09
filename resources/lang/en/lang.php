@@ -372,6 +372,7 @@ return [
     'no_salary_deduction_for_absences' => 'No Salary Deduction for Absences',
     'exempt_from_late_attendance_deduction' => 'Exempt from Late Attendance Deduction',
     'is_mtd_applicable' => 'MTD Applicable',
+    'has_auto_weekly_leave' => 'Auto Weekly Leave',
 
     // ===========================================
     // HRMS - Attendance & Shifts
@@ -681,6 +682,8 @@ return [
     'attendance_by_employee' => 'Attendance by staff',
     'missing_checkout_report' => 'Missing Checkout Report',
     'missing_checkout' => 'Missing Checkout',
+    'shift_report' => 'Shift Report',
+    'please_select_branch_and_shift' => 'Please select a Branch and Shift',
     'my_attendance' => 'My attendance',
     'absence_report' => 'Absence Report',
     'branch_attendance_summary' => 'Branch Attendance Summary',
@@ -798,6 +801,7 @@ return [
     'select_employee_check_type' => 'Select staff and check type',
     'check_type' => 'Check type',
     'notes' => 'Notes',
+
     'approved' => 'Approved',
     'rejected' => 'Rejected',
     'period' => 'Period',
@@ -1098,6 +1102,7 @@ return [
     'termination_request_created' => 'Termination request created successfully',
     'subtotal' => 'Subtotal',
     'weekly_leave' => 'Weekly Leave',
+    'source' => 'Source',
     'error_occurred' => 'Error Occurred',
     'employee_name' => 'Staff Name',
     'unterminated' => 'Unterminated',

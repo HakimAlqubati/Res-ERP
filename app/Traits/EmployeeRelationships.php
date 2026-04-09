@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Models\AdvanceWage;
 use App\Models\ApplicationTransaction;
 use App\Models\Attendance;
 use App\Models\Department;
@@ -236,5 +237,10 @@ trait EmployeeRelationships
     public function employeeType()
     {
         return $this->belongsTo(UserType::class, 'employee_type');
+    }
+
+    public function advanceWages()
+    {
+        return $this->hasMany(AdvanceWage::class, 'employee_id');
     }
 }

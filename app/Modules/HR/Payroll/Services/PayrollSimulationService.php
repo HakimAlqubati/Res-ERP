@@ -9,10 +9,12 @@ use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
 use Carbon\Carbon;
 use App\Modules\HR\Payroll\Contracts\PayrollSimulatorInterface;
 
+use App\Modules\HR\AttendanceReports\Contracts\AttendanceReportInterface;
+
 class PayrollSimulationService implements PayrollSimulatorInterface
 {
     public function __construct(
-        protected AttendanceFetcher $attendanceFetcher,
+        protected AttendanceReportInterface $reportManager,
         protected SalaryCalculatorService $salaryCalculatorService
     ) {}
 
@@ -33,6 +35,14 @@ class PayrollSimulationService implements PayrollSimulatorInterface
         }
 
         $monthDays    = $periodStart->daysInMonth;
+
+        $chunkReportMap = collect();
+        $employees->chunk(50)->each(function ($chunk) use (&$chunkReportMap, $periodStart, $periodEnd) {
+            $chunkReports = $this->reportManager->getEmployeesRangeReport($chunk, $periodStart, $periodEnd);
+            foreach ($chunkReports as $empId => $report) {
+                $chunkReportMap->put($empId, $report);
+            }
+        });
 
         foreach ($employees as $employee) {
             $monthlySalary = $employee->salary;
@@ -55,8 +65,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
             if ($dailyHours <= 0 || $workDays <= 0) {
                 throw new \Exception("Missing or invalid working_hours or working_days for employee [{$employee->name}] (Employee No: {$employee->employee_no}) in branch [{$employee->branch?->name}]");
             }
-
-            $attendanceData  = $this->attendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
+            $attendanceData  = $chunkReportMap->get($employee->id) ?? collect();
             $attendanceArray = $attendanceData->toArray();
 
             $totalDuration         = $attendanceArray['total_duration_hours'] ?? '0:00:00';
@@ -148,6 +157,14 @@ class PayrollSimulationService implements PayrollSimulatorInterface
         $periodEnd   = Carbon::parse($run->period_end_date)->endOfDay();
         $monthDays   = Carbon::create($run->year, $run->month, 1)->daysInMonth;
 
+        $chunkReportMap = collect();
+        $employees->chunk(50)->each(function ($chunk) use (&$chunkReportMap, $periodStart, $periodEnd) {
+            $chunkReports = $this->reportManager->getEmployeesRangeReport($chunk, $periodStart, $periodEnd);
+            foreach ($chunkReports as $empId => $report) {
+                $chunkReportMap->put($empId, $report);
+            }
+        });
+
         foreach ($employees as $employee) {
             $monthlySalary = (float) ($employee->salary ?? 0);
 
@@ -171,7 +188,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
             }
 
             // Attendance for the run's exact period
-            $attendanceData  = $this->attendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
+            $attendanceData  = $chunkReportMap->get($employee->id) ?? collect();
             $attendanceArray = (array) $attendanceData->toArray();
 
             $totalDuration         = $attendanceArray['total_duration_hours']        ?? '0:00:00';

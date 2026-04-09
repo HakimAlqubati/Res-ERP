@@ -20,17 +20,29 @@ class PayrollsExport implements FromView
 
         $additionColumns = collect();
         $deductionColumns = collect();
+        $employerContributionColumns = collect();
 
         // Pass 1: Gather all unique column headers
         foreach ($this->payrolls as $payroll) {
             foreach ($payroll->transactions as $transaction) {
                 $typeVal = $transaction->type instanceof \BackedEnum ? $transaction->type->value : $transaction->type;
 
-                // Exclude basic salary and employer contribution as they have their own fixed columns
-                if (
-                    $typeVal === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_SALARY->value ||
-                    $typeVal === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value
-                ) {
+                // Exclude basic salary — it has its own fixed column
+                if ($typeVal === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_SALARY->value) {
+                    continue;
+                }
+
+                // Employer contributions: collect as dynamic columns
+                if ($typeVal === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value) {
+                    $colName = $transaction->description ?: $typeVal;
+                    if (!empty($colName)) {
+                        $employerContributionColumns->push($colName);
+                    }
+                    continue;
+                }
+
+                // Advance wages: fixed column — excluded from dynamic columns
+                if ($typeVal === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_ADVANCE_WAGE->value) {
                     continue;
                 }
 
@@ -53,15 +65,17 @@ class PayrollsExport implements FromView
 
         $additionHeaders = $additionColumns->unique()->filter()->values();
         $deductionHeaders = $deductionColumns->unique()->filter()->values();
+        $employerContributionHeaders = $employerContributionColumns->unique()->filter()->values();
 
         $totals = [
-            'base_salary'             => 0,
-            'total_additions'         => 0,
-            'total_deductions'        => 0,
-            'employer_contribution'   => 0,
-            'net_salary'              => 0,
-            'additions'               => [],
-            'deductions'              => [],
+            'base_salary'            => 0,
+            'total_additions'        => 0,
+            'total_deductions'       => 0,
+            'employer_contributions' => [],
+            'advance_wages'          => 0,
+            'net_salary'             => 0,
+            'additions'              => [],
+            'deductions'             => [],
         ];
 
         foreach ($additionHeaders as $col) {
@@ -70,6 +84,9 @@ class PayrollsExport implements FromView
         foreach ($deductionHeaders as $col) {
             $totals['deductions'][$col] = 0;
         }
+        foreach ($employerContributionHeaders as $col) {
+            $totals['employer_contributions'][$col] = 0;
+        }
 
         // Pass 2: Prepare rows
         $rows = [];
@@ -77,6 +94,7 @@ class PayrollsExport implements FromView
             $row = [
                 'employee_no'           => $payroll->employee?->employee_no,
                 'employee_name'         => $payroll->employee?->name,
+                'branch_name'           => $payroll->employee?->branch?->name,
                 'base_salary'           => $payroll->base_salary,
                 'net_salary'            => $payroll->net_salary,
                 'employer_contribution' => 0,
@@ -84,6 +102,16 @@ class PayrollsExport implements FromView
                 'total_additions'       => 0,
                 'deductions'            => [],
                 'total_deductions'      => 0,
+                'employee_no'            => $payroll->employee?->employee_no,
+                'employee_name'          => $payroll->employee?->name,
+                'base_salary'            => $payroll->base_salary,
+                'net_salary'             => $payroll->net_salary,
+                'employer_contributions' => [],
+                'advance_wages'          => 0,
+                'additions'              => [],
+                'total_additions'        => 0,
+                'deductions'             => [],
+                'total_deductions'       => 0,
             ];
 
             // Initialize dynamic columns with 0
@@ -92,6 +120,9 @@ class PayrollsExport implements FromView
             }
             foreach ($deductionHeaders as $col) {
                 $row['deductions'][$col] = 0;
+            }
+            foreach ($employerContributionHeaders as $col) {
+                $row['employer_contributions'][$col] = 0;
             }
 
             // Populate transaction data
@@ -103,9 +134,18 @@ class PayrollsExport implements FromView
                     continue;
                 }
 
-                // Handle employer contribution separately
+                // Handle employer contributions as dynamic columns
                 if ($typeVal === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value) {
-                    $row['employer_contribution'] += $transaction->amount;
+                    $colName = $transaction->description ?: $typeVal;
+                    if (isset($row['employer_contributions'][$colName])) {
+                        $row['employer_contributions'][$colName] += $transaction->amount;
+                    }
+                    continue;
+                }
+
+                // Handle advance wages as a fixed column
+                if ($typeVal === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_ADVANCE_WAGE->value) {
+                    $row['advance_wages'] += $transaction->amount;
                     continue;
                 }
 
@@ -129,11 +169,11 @@ class PayrollsExport implements FromView
                 }
             }
 
-            $totals['base_salary']           += $row['base_salary'] ?? 0;
-            $totals['net_salary']            += $row['net_salary'] ?? 0;
-            $totals['employer_contribution'] += $row['employer_contribution'] ?? 0;
-            $totals['total_additions']       += $row['total_additions'] ?? 0;
-            $totals['total_deductions']      += $row['total_deductions'] ?? 0;
+            $totals['base_salary']      += $row['base_salary'] ?? 0;
+            $totals['net_salary']       += $row['net_salary'] ?? 0;
+            $totals['advance_wages']    += $row['advance_wages'] ?? 0;
+            $totals['total_additions']  += $row['total_additions'] ?? 0;
+            $totals['total_deductions'] += $row['total_deductions'] ?? 0;
 
             foreach ($additionHeaders as $col) {
                 $totals['additions'][$col] += $row['additions'][$col] ?? 0;
@@ -141,15 +181,19 @@ class PayrollsExport implements FromView
             foreach ($deductionHeaders as $col) {
                 $totals['deductions'][$col] += $row['deductions'][$col] ?? 0;
             }
+            foreach ($employerContributionHeaders as $col) {
+                $totals['employer_contributions'][$col] += $row['employer_contributions'][$col] ?? 0;
+            }
 
             $rows[] = $row;
         }
 
         return view('export.reports.hr.payrolls.payrolls-excel', [
-            'additionColumns'  => $additionHeaders,
-            'deductionColumns' => $deductionHeaders,
-            'rows'             => $rows,
-            'totals'           => $totals,
+            'additionColumns'             => $additionHeaders,
+            'deductionColumns'            => $deductionHeaders,
+            'employerContributionColumns' => $employerContributionHeaders,
+            'rows'                        => $rows,
+            'totals'                      => $totals,
         ]);
     }
 }

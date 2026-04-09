@@ -120,8 +120,13 @@ class SettingResource extends Resource
                                         ->required(),
 
                                     TextInput::make("early_attendance_minutes")
-                                        ->label('Early arrival minutes')
+                                        ->label('Early arrival grace minutes')
                                         // ->helperText('The number of minutes before the scheduled start time that is considered early attendance.')
+                                        ->numeric()
+                                        ->required(),
+                                    TextInput::make("late_attendance_grace_minutes")
+                                        ->label('Late arrival grace minutes')
+                                        // ->helperText('The number of minutes after the scheduled start time that is allowed before considering the employee late.')
                                         ->numeric()
                                         ->required(),
                                     TextInput::make("pre_end_hours_for_check_in_out")
@@ -130,7 +135,7 @@ class SettingResource extends Resource
                                         ->numeric()
                                         ->required(),
                                     TextInput::make("early_depature_deduction_minutes")
-                                        ->label('Early depature deduction minutes')
+                                        ->label('Early departure grace minutes')
                                         ->numeric()
                                         ->required(),
                                     TextInput::make("attendance_duplicate_check_minutes")

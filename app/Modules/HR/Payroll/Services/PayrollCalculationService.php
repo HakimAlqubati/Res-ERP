@@ -2,6 +2,7 @@
 
 namespace App\Modules\HR\Payroll\Services;
 
+use App\Models\AdvanceWage;
 use App\Models\Employee;
 use App\Models\Payroll;
 use App\Models\PayrollRun;
@@ -141,5 +142,34 @@ class PayrollCalculationService
                 );
             }
         }
+
+        // تسوية الأجور المقدمة التي تم بناء حركاتها
+        $this->settleAdvanceWages($transactions, $payroll->id);
+    }
+
+    /**
+     * تسوية الأجور المقدمة بعد حفظ الـ Payroll.
+     */
+    protected function settleAdvanceWages(array $transactions, int $payrollId): void
+    {
+        $advanceWageIds = collect($transactions)
+            ->filter(fn($txn) => ($txn['reference_type'] ?? null) === AdvanceWage::class)
+            ->pluck('reference_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($advanceWageIds)) {
+            return;
+        }
+
+        AdvanceWage::whereIn('id', $advanceWageIds)
+            ->where('status', AdvanceWage::STATUS_PENDING)
+            ->update([
+                'status'             => AdvanceWage::STATUS_SETTLED,
+                'settled_payroll_id' => $payrollId,
+                'settled_at'         => now(),
+            ]);
     }
 }

@@ -32,6 +32,7 @@ use App\Modules\HR\Payroll\Calculators\OvertimeCalculator;
 use App\Modules\HR\Payroll\Calculators\PenaltyCalculator;
 use App\Modules\HR\Payroll\Calculators\AllowanceCalculator;
 use App\Modules\HR\Payroll\Calculators\AdvanceInstallmentCalculator;
+use App\Modules\HR\Payroll\Calculators\AdvanceWageCalculator;
 use App\Modules\HR\Payroll\Calculators\MealRequestCalculator;
 use App\Modules\HR\Payroll\Calculators\GeneralDeductionCalculator;
 use App\Modules\HR\Payroll\Calculators\TransactionBuilder;
@@ -51,6 +52,7 @@ class PayrollServiceProvider extends ServiceProvider
         $this->app->singleton(PenaltyCalculator::class);
         $this->app->singleton(AllowanceCalculator::class);
         $this->app->singleton(AdvanceInstallmentCalculator::class);
+        $this->app->singleton(AdvanceWageCalculator::class);
         $this->app->singleton(MealRequestCalculator::class);
         $this->app->singleton(GeneralDeductionCalculator::class);
         $this->app->singleton(TransactionBuilder::class);
@@ -71,6 +73,7 @@ class PayrollServiceProvider extends ServiceProvider
                 $app->make(PenaltyCalculator::class),
                 $app->make(AllowanceCalculator::class),
                 $app->make(AdvanceInstallmentCalculator::class),
+                $app->make(AdvanceWageCalculator::class),
                 $app->make(MealRequestCalculator::class),
                 $app->make(GeneralDeductionCalculator::class),
                 $app->make(TransactionBuilder::class),
@@ -83,7 +86,7 @@ class PayrollServiceProvider extends ServiceProvider
 
         $this->app->singleton(PayrollSimulatorInterface::class, function ($app) {
             return new PayrollSimulationService(
-                $app->make(\App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher::class),
+                $app->make(\App\Modules\HR\AttendanceReports\Contracts\AttendanceReportInterface::class),
                 $app->make(SalaryCalculatorInterface::class)
             );
         });

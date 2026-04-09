@@ -444,7 +444,5 @@
     ])
     @endif
 
-    @include('components.hr.attendances-reports.attendance-stats-chart-modal', [
-    'chartData' => $chartData,
-    ])
+
 </x-filament-panels::page>

@@ -234,6 +234,10 @@ class AttendnaceResource extends Resource
                     ->summarize(Sum::make()->query(fn(\Illuminate\Database\Query\Builder $query) => $query->where('early_departure_minutes', '>', 20))),
                 // TextColumn::make('attendance_type')->alignCenter(true),
                 TextColumn::make('created_at')->alignCenter(true)->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('source_label')
+                    ->label('Aattendance Type')
+                    ->toggleable()
+                    ->alignCenter(true),
 
 
             ])
@@ -521,7 +525,7 @@ class AttendnaceResource extends Resource
 
     public static function canForceDelete(Model $record): bool
     {
-        if (isSuperAdmin()) {
+        if (isSuperAdmin() && isHakimOrAdel()) {
             return true;
         }
         return false;
@@ -529,7 +533,7 @@ class AttendnaceResource extends Resource
 
     public static function canForceDeleteAny(): bool
     {
-        if (isSuperAdmin()) {
+        if (isSuperAdmin() && isHakimOrAdel()) {
             return true;
         }
         return false;
