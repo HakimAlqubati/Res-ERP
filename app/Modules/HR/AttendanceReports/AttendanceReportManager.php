@@ -41,7 +41,10 @@ class AttendanceReportManager implements AttendanceReportInterface
     {
         return $this->dateService->fetchAttendances($employeeIdsOrEmployees, $date);
     }
-
+    public function getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date): Collection
+    {
+        return $this->fetcher->getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
+    }
     public function getEmployeesRangeReport($employees, Carbon $startDate, Carbon $endDate): Collection
     {
         $employees = collect($employees);

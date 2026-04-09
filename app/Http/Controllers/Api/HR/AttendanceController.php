@@ -7,8 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Services\HR\Attendance\AttendancePlanService;
 use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
-use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
-use App\Modules\HR\AttendanceReports\Contracts\AttendanceReportInterface;
+ use App\Modules\HR\AttendanceReports\Contracts\AttendanceReportInterface;
 use App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesService;
 use App\Services\HR\AttendanceHelpers\Reports\PresentEmployeesService;
 use App\Services\HR\AttendanceHelpers\Reports\MissingCheckoutService;
@@ -40,8 +39,7 @@ class AttendanceController extends Controller
         MissingCheckoutService $missingCheckoutService
     ) {
         $this->attendanceService                   = $attendanceService;
-        $this->attendanceFetcher                   = new AttendanceFetcher(new EmployeePeriodHistoryService());
-        $this->reportManager                       = $reportManager;
+         $this->reportManager                       = $reportManager;
         $this->absentEmployeesService              = $absentEmployeesService;
         $this->presentEmployeesService             = $presentEmployeesService;
         $this->missingCheckoutService              = $missingCheckoutService;
@@ -154,7 +152,7 @@ class AttendanceController extends Controller
             $date       = $request->input('date');
 
             // Fetch raw attendance records using AttendanceFetcher
-            $attendances = $this->attendanceFetcher->getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
+            $attendances = $this->reportManager->getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
 
             // Use the calculator service
             $result = \App\Services\HR\AttendanceHelpers\Reports\AttendanceDetailsCalculator::calculateDetailedBreakdown(

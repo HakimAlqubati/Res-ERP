@@ -27,9 +27,9 @@ class ListEmployeeAttednaceReports extends ListRecords
 
     public function showDetails($date, $employeeId, $periodId)
     {
+        $reportManager = app(AttendanceReportInterface::class);
 
-        $attendanceFetcher      = new AttendanceFetcher(new EmployeePeriodHistoryService());
-        $attendanceDetails      = $attendanceFetcher->getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
+        $attendanceDetails      = $reportManager->getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
         $this->modalData = [
             'data' => $attendanceDetails->toArray(),
             'date' => $date,
@@ -57,7 +57,7 @@ class ListEmployeeAttednaceReports extends ListRecords
         // $data     = $historyService->getEmployeePeriodsByDateRange($employee, $startDate, $endDate);
         $reportManager = app(AttendanceReportInterface::class);
         $data          = $employee ? $reportManager->getEmployeeRangeReport($employee, $startDate, $endDate) : collect();
- 
+
         $totalSupposedValue = $employee && $data->has('total_duration_hours') ? $data->get('total_duration_hours', 0) : 0;
         $totalSupposedFormatted = floor($totalSupposedValue) . ' h ' . round(($totalSupposedValue - floor($totalSupposedValue)) * 60) . ' m';
 

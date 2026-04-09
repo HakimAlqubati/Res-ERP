@@ -121,7 +121,7 @@ class AttendanceDataFetcher
             ->where('hr_employee_applications.employee_id', $employeeId)
             ->where(function ($q) use ($startDateStr, $endDateStr) {
                 $q->where('hr_leave_requests.start_date', '<=', $endDateStr)
-                  ->where('hr_leave_requests.end_date', '>=', $startDateStr);
+                    ->where('hr_leave_requests.end_date', '>=', $startDateStr);
             })
             ->select(
                 'hr_leave_requests.start_date as from_date',
@@ -188,7 +188,7 @@ class AttendanceDataFetcher
             ->whereIn('hr_employee_applications.employee_id', $employeeIds)
             ->where(function ($q) use ($startDateStr, $endDateStr) {
                 $q->where('hr_leave_requests.start_date', '<=', $endDateStr)
-                  ->where('hr_leave_requests.end_date', '>=', $startDateStr);
+                    ->where('hr_leave_requests.end_date', '>=', $startDateStr);
             })
             ->select(
                 'hr_employee_applications.employee_id',
@@ -219,11 +219,25 @@ class AttendanceDataFetcher
             $allPeriodIds = $allPeriodIds->merge($empHistories->pluck('period_id'));
         }
         $workPeriodIds = $allPeriodIds->unique()->toArray();
-        
+
         $workPeriodMap = WorkPeriod::whereIn('id', $workPeriodIds)
             ->get(['id', 'name', 'start_at', 'end_at', 'day_and_night'])
             ->keyBy('id');
 
         return compact('histories', 'attendances', 'leaves', 'terminations', 'overtimes', 'workPeriodMap');
+    }
+
+
+    public function getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date)
+    {
+        $attenance = Attendance::where('employee_id', $employeeId)
+            ->accepted()
+            ->where('period_id', $periodId)
+            ->where('check_date', $date)
+            ->select('check_time', 'check_type', 'period_id')
+            ->orderBy('id', 'asc')
+            // ->groupBy('period_id')
+            ->get();
+        return $attenance;
     }
 }

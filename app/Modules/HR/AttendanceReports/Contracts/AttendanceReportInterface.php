@@ -41,4 +41,6 @@ interface AttendanceReportInterface
      * @return Collection Indexed sequential reports (employee_id => report).
      */
     public function getEmployeesRangeReport($employees, Carbon $startDate, Carbon $endDate): Collection;
+
+    public function getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
 }
