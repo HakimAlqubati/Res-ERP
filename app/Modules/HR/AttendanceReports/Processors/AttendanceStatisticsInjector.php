@@ -118,7 +118,21 @@ class AttendanceStatisticsInjector
      */
     public function inject(Collection $report, Employee $employee): void
     {
-        $report->put('statistics', HelperFunctions::calculateAttendanceStats($report));
+        $stats = HelperFunctions::calculateAttendanceStats($report);
+
+        // Restore legacy: Inject the Golden Equation weekly leave calculation
+        $calculator = new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator();
+        $stats['weekly_leave_calculation'] = $calculator->calculate(
+            $stats['total_days'] ?? 0,
+            $stats['absent'] ?? 0,
+            [
+                'is_period_ended'       => true,
+                'is_for_payroll'        => true,
+                'has_auto_weekly_leave' => (bool) $employee->has_auto_weekly_leave
+            ]
+        );
+
+        $report->put('statistics', $stats);
         $report->put('total_duration_hours', round($this->totalDurationSeconds / 3600, 2));
         $report->put('total_actual_duration_hours', $this->secsToHMS($this->totalActualSeconds));
         $report->put('total_approved_overtime', $this->secsToHMS($this->totalApprovedOvertimeSeconds));

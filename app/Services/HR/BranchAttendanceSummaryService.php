@@ -151,9 +151,6 @@ class BranchAttendanceSummaryService
 
             $weeklyResult = $stats['weekly_leave_calculation']['result'] ?? [];
 
-dd($weeklyResult);
-
-
             // 4. Deduction hours: sum of missing hours, late, and early departure
             $missingMinutes        = $attendanceArray['total_missing_hours']['total_minutes'] ?? 0;
             $earlyDepartureMinutes = $attendanceArray['total_early_departure_minutes']['total_minutes'] ?? 0;
