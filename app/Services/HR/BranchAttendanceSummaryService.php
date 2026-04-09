@@ -30,7 +30,7 @@ class BranchAttendanceSummaryService
     public function __construct()
     {
         $this->attendanceFetcher = new AttendanceFetcher(new EmployeePeriodHistoryService());
-        $this->cachedAttendanceFetcher = new CachedAttendanceFetcher($this->attendanceFetcher);
+        // $this->cachedAttendanceFetcher = new CachedAttendanceFetcher($this->attendanceFetcher);
         $this->weeklyLeaveCalculator = new WeeklyLeaveCalculator();
     }
 
@@ -107,6 +107,26 @@ class BranchAttendanceSummaryService
             $terminatedStaff[] = $row;
         }
 
+        $calculateTotals = function ($staffList) {
+            $totals = [
+                'present_days' => 0,
+                'overtime_days' => 0,
+                'overtime_hours' => 0,
+                'deduction_days' => 0,
+                'deduction_hours' => 0,
+                'salary' => 0,
+            ];
+            foreach ($staffList as $row) {
+                $totals['present_days'] += (float) ($row['attendance']['present_days'] ?? 0);
+                $totals['overtime_days'] += (float) ($row['overtime']['days'] ?? 0);
+                $totals['overtime_hours'] += (float) ($row['overtime']['hours'] ?? 0);
+                $totals['deduction_days'] += (float) ($row['deductions']['days'] ?? 0);
+                $totals['deduction_hours'] += (float) ($row['deductions']['hours'] ?? 0);
+                $totals['salary'] += (float) ($row['salary'] ?? 0);
+            }
+            return $totals;
+        };
+
         return [
             'branch_id'        => $branchId,
             'year'             => $year,
@@ -115,6 +135,11 @@ class BranchAttendanceSummaryService
             'current_staff'    => $currentStaff,
             'new_staff'        => $newStaff,
             'terminated_staff' => $terminatedStaff,
+            'totals'           => [
+                'current_staff'    => $calculateTotals($currentStaff),
+                'new_staff'        => $calculateTotals($newStaff),
+                'terminated_staff' => $calculateTotals($terminatedStaff),
+            ],
         ];
     }
 
@@ -134,7 +159,7 @@ class BranchAttendanceSummaryService
             $approvedOvertimeHours = (float) ($employee->total_overtime ?? 0);
             // 1. Fetch attendance data (the main data source)
             $attendanceData  = $this->attendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
-            $attendanceData  = $this->cachedAttendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
+            // $attendanceData  = $this->cachedAttendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
             $attendanceArray = $attendanceData->toArray();
 
             $reportData = $attendanceArray['report_data'] ?? $attendanceArray;

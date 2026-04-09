@@ -140,6 +140,19 @@
             </tr>
             @endforelse
         </tbody>
+        @if(count($report['current_staff']) > 0)
+        <tfoot style="font-weight: bold; background-color: #f3f4f6;">
+            <tr>
+                <td colspan="2" style="text-align:right;">Total</td>
+                <td class="text-center">{{ $report['totals']['current_staff']['present_days'] }}</td>
+                <td class="text-center">{{ $report['totals']['current_staff']['overtime_days'] }}</td>
+                <td class="text-center">{{ $report['totals']['current_staff']['overtime_hours'] }}</td>
+                <td class="text-center">{{ $report['totals']['current_staff']['deduction_days'] }}</td>
+                <td class="text-center">{{ $report['totals']['current_staff']['deduction_hours'] }}</td>
+                <td></td>
+            </tr>
+        </tfoot>
+        @endif
     </table>
 
     {{-- ========== NEW STAFF ========== --}}
@@ -194,6 +207,20 @@
                 @endfor
                 @endforelse
         </tbody>
+        @if(count($report['new_staff']) > 0)
+        <tfoot style="font-weight: bold; background-color: #f3f4f6;">
+            <tr>
+                <td colspan="2" style="text-align:right;">Total</td>
+                <td class="text-center">{{ $report['totals']['new_staff']['present_days'] }}</td>
+                <td class="text-center">{{ $report['totals']['new_staff']['overtime_days'] }}</td>
+                <td class="text-center">{{ $report['totals']['new_staff']['overtime_hours'] }}</td>
+                <td class="text-center">{{ $report['totals']['new_staff']['deduction_days'] }}</td>
+                <td class="text-center">{{ $report['totals']['new_staff']['deduction_hours'] }}</td>
+                <td class="text-center">{{ $report['totals']['new_staff']['salary'] }}</td>
+                <td></td>
+            </tr>
+        </tfoot>
+        @endif
     </table>
 
     {{-- ========== TERMINATED STAFF ========== --}}
@@ -248,6 +275,20 @@
                 @endfor
                 @endforelse
         </tbody>
+        @if(count($report['terminated_staff']) > 0)
+        <tfoot style="font-weight: bold; background-color: #f3f4f6;">
+            <tr>
+                <td colspan="2" style="text-align:right;">Total</td>
+                <td class="text-center">{{ $report['totals']['terminated_staff']['present_days'] }}</td>
+                <td class="text-center">{{ $report['totals']['terminated_staff']['overtime_days'] }}</td>
+                <td class="text-center">{{ $report['totals']['terminated_staff']['overtime_hours'] }}</td>
+                <td class="text-center">{{ $report['totals']['terminated_staff']['deduction_days'] }}</td>
+                <td class="text-center">{{ $report['totals']['terminated_staff']['deduction_hours'] }}</td>
+                <td></td>
+                <td></td>
+            </tr>
+        </tfoot>
+        @endif
     </table>
 
     {{-- ========== SIGNATURES ========== --}}

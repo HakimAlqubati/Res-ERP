@@ -37,6 +37,14 @@ class AttendanceConfig
     }
 
     /**
+     * دقائق السماحية للتأخير
+     */
+    public function getLateArrivalGraceMinutes(): int
+    {
+        return (int) Setting::getSetting('late_attendance_grace_minutes', 0);
+    }
+
+    /**
      * دقائق السماحية للانصراف المبكر
      */
     public function getEarlyDepartureGraceMinutes(): int
