@@ -5,9 +5,7 @@ namespace App\Services\HR;
 use App\Models\Employee;
 use App\Models\EmployeeServiceTermination;
 use App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator;
-use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
-use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
-use App\Services\HR\AttendanceHelpers\Reports\CachedAttendanceFetcher;
+use App\Modules\HR\AttendanceReports\Contracts\AttendanceReportInterface;
 use Carbon\Carbon;
 
 /**
@@ -23,14 +21,12 @@ use Carbon\Carbon;
 class BranchAttendanceSummaryService
 {
 
-    protected AttendanceFetcher $attendanceFetcher;
-    protected CachedAttendanceFetcher $cachedAttendanceFetcher;
-    protected WeeklyLeaveCalculator $weeklyLeaveCalculator;
+    protected AttendanceReportInterface $reportManager;
+    protected WeeklyLeaveCalculator     $weeklyLeaveCalculator;
 
-    public function __construct()
+    public function __construct(AttendanceReportInterface $reportManager)
     {
-        $this->attendanceFetcher = new AttendanceFetcher(new EmployeePeriodHistoryService());
-        $this->cachedAttendanceFetcher = new CachedAttendanceFetcher($this->attendanceFetcher);
+        $this->reportManager         = $reportManager;
         $this->weeklyLeaveCalculator = new WeeklyLeaveCalculator();
     }
 
@@ -39,7 +35,7 @@ class BranchAttendanceSummaryService
      */
     public function generate(int $branchId, int $year, int $month, int $chunkSize = 5): array
     {
-        set_time_limit(300);
+        // set_time_limit(300);
 
         $periodStart = Carbon::create($year, $month, 1)->startOfMonth();
         $periodEnd   = Carbon::create($year, $month, 1)->endOfMonth();
@@ -129,16 +125,15 @@ class BranchAttendanceSummaryService
         int $year,
         int $month,
         int $monthDays
-    ): array {
+    ): array { 
         try {
             $approvedOvertimeHours = (float) ($employee->total_overtime ?? 0);
-            // 1. Fetch attendance data (the main data source)
-            $attendanceData  = $this->attendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
-            $attendanceData  = $this->cachedAttendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
+            
+            // 1. Fetch attendance data using the unified modular report manager
+            $attendanceData  = $this->reportManager->getEmployeeRangeReport($employee, $periodStart, $periodEnd);
             $attendanceArray = $attendanceData->toArray();
 
-            $reportData = $attendanceArray['report_data'] ?? $attendanceArray;
-            $stats = $reportData['statistics'] ?? ($attendanceArray['statistics'] ?? []);
+            $stats = $attendanceArray['statistics'] ?? [];
 
             // 2. Weekly leave calculation (overtime_days / deduction_days)
             $totalDays  = $stats['required_days'] ?? $monthDays;
@@ -150,9 +145,9 @@ class BranchAttendanceSummaryService
 
 
             // 4. Deduction hours: sum of missing hours, late, and early departure
-            $missingMinutes        = $reportData['total_missing_hours']['total_minutes'] ?? 0;
-            $earlyDepartureMinutes = $reportData['total_early_departure_minutes']['total_minutes'] ?? 0;
-            $lateMinutes           = $reportData['late_hours']['totalMinutes'] ?? 0;
+            $missingMinutes        = $attendanceArray['total_missing_hours']['total_minutes'] ?? 0;
+            $earlyDepartureMinutes = $attendanceArray['total_early_departure_minutes']['total_minutes'] ?? 0;
+            $lateMinutes           = $attendanceArray['late_hours']['totalMinutes'] ?? 0;
 
             $deductionMinutes = $missingMinutes + $earlyDepartureMinutes + $lateMinutes;
             $deductionHours = round($deductionMinutes / 60, 2);
