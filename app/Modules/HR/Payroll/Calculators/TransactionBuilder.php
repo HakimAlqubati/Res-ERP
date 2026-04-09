@@ -35,6 +35,7 @@ class TransactionBuilder
         array $allowances,
         array $penalties,
         array $advanceInstallments,
+        array $advanceWages,
         array $mealRequests,
         array $dynamicDeductions,
         array $monthlyIncentives = [],
@@ -247,6 +248,20 @@ class TransactionBuilder
                 'reference_id'   => $adv['installment_id'] ?? null,
                 'application_id'     => $adv['application_id'] ?? null,
                 'advance_request_id' => $adv['advance_request_id'] ?? null,
+            ];
+        }
+
+        // 12b. الأجور المقدمة
+        foreach ($advanceWages['items'] ?? [] as $aw) {
+            $tx[] = [
+                'type'           => \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_ADVANCE_WAGE,
+                'sub_type'       => \App\Enums\HR\Payroll\SalaryTransactionSubType::ADVANCE_WAGE->value,
+                'amount'         => $this->round((float)$aw['amount']),
+                'operation'      => '-',
+                'description'    => $aw['reason'] ?? 'Advance wage',
+                'notes'          => $aw['notes'] ?? null,
+                'reference_type' => \App\Models\AdvanceWage::class,
+                'reference_id'   => $aw['advance_wage_id'],
             ];
         }
 

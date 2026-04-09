@@ -12,6 +12,7 @@ use App\Filament\Resources\EmployeeResource\Pages\EditEmployee;
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\Pages\CheckInstallments;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\Pages\OrgChart;
+use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\AdvanceWagesRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\BranchLogRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\EmployeeFaceDataRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodHistoriesRelationManager;
@@ -85,8 +86,8 @@ class EmployeeResource extends Resource
             PeriodRelationManager::class,
             PeriodHistoriesRelationManager::class,
             BranchLogRelationManager::class,
+            AdvanceWagesRelationManager::class,
             // EmployeeFaceDataRelationManager::class,
-            // EmployeePeriodDaysRelationManager::class,
         ];
     }
 
