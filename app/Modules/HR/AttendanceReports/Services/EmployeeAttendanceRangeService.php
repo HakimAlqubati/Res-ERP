@@ -51,6 +51,22 @@ class EmployeeAttendanceRangeService
         $empId        = $employee->id;
 
         $data = $this->fetcher->fetchForSingleEmployeeRange($empId, $startDateStr, $endDateStr);
+
+        return $this->processRangeWithData($employee, $startDate, $endDate, $data);
+    }
+
+    /**
+     * Process the attendance report using a pre-fetched dataset.
+     * This is the CORE logic of the range report, extracted for bulk reuse.
+     * 
+     * @param Employee $employee Target employee model.
+     * @param Carbon $startDate Start bounds.
+     * @param Carbon $endDate End bounds.
+     * @param array $data Pre-fetched collections (histories, attendances, etc.).
+     * @return Collection Processed report.
+     */
+    public function processRangeWithData(Employee $employee, Carbon $startDate, Carbon $endDate, array $data): Collection
+    {
         extract($data);
 
         $report = collect();
@@ -65,7 +81,9 @@ class EmployeeAttendanceRangeService
             $isFuture = $tempDate->gt(Carbon::today());
             $isToday  = $tempDate->isToday();
 
-            if ($terminations && Carbon::parse($terminations->termination_date)->lt($tempDate)) {
+            // Terminated logic
+            $termDate = is_array($terminations) ? ($terminations[$employee->id] ?? null) : ($terminations->termination_date ?? null);
+            if ($termDate && Carbon::parse($termDate)->lt($tempDate)) {
                 $report->put($currentDateStr, $this->processor->buildTerminatedDay($currentDateStr, $currentDayName));
                 $tempDate->addDay();
                 continue;
@@ -78,9 +96,10 @@ class EmployeeAttendanceRangeService
                 continue;
             }
 
-            $dayHistories = $histories->filter(function ($h) use ($currentDayShort, $currentDateStr) {
+            $currentDateStrFixed = $currentDateStr;
+            $dayHistories = $histories->filter(function ($h) use ($currentDayShort, $currentDateStrFixed) {
                 $dayVal = is_object($h->day_of_week) && property_exists($h->day_of_week, 'value') ? $h->day_of_week->value : $h->day_of_week;
-                return $dayVal === $currentDayShort && $h->start_date <= $currentDateStr && (is_null($h->end_date) || $h->end_date >= $currentDateStr);
+                return $dayVal === $currentDayShort && $h->start_date <= $currentDateStrFixed && (is_null($h->end_date) || $h->end_date >= $currentDateStrFixed);
             });
 
             $dayAttendances = ($attendances->get($currentDateStr) ?? collect())->groupBy('period_id');

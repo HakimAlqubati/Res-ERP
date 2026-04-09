@@ -72,12 +72,16 @@ class BranchAttendanceSummaryService
                 $query->whereYear('date', $year)
                     ->whereMonth('date', $month);
             }])
-            ->chunk(10, function ($employees) use (&$currentStaff, &$newStaff, $terminatedEmployeeIds, $year, $month, $periodStart, $periodEnd, $monthDays) {
+            ->chunk(50, function ($employees) use (&$currentStaff, &$newStaff, $terminatedEmployeeIds, $year, $month, $periodStart, $periodEnd, $monthDays) {
 
                 $filtered = $employees->filter(fn($emp) => !in_array($emp->id, $terminatedEmployeeIds));
+                
+                // Optimized: Fetch all attendance data for the entire chunk in one bulk request
+                $chunkReportMap = $this->reportManager->getEmployeesRangeReport($filtered, $periodStart, $periodEnd);
 
                 foreach ($filtered as $employee) {
-                    $row = $this->processEmployee($employee, $periodStart, $periodEnd, $year, $month, $monthDays);
+                    $employeeReport = $chunkReportMap->get($employee->id) ?? collect();
+                    $row = $this->processEmployee($employee, $employeeReport, $periodStart, $periodEnd, $year, $month, $monthDays);
 
                     // Classify: new staff if joined this month
                     $isNew = $employee->join_date
@@ -94,13 +98,19 @@ class BranchAttendanceSummaryService
 
         // Process terminated employees
         $terminatedStaff = [];
-        foreach ($terminatedRecords as $record) {
-            $emp = $record->employee;
-            if (!$emp) continue;
+        if ($terminatedRecords->isNotEmpty()) {
+            $terminatedEmployees = $terminatedRecords->pluck('employee')->filter();
+            $terminatedReportMap = $this->reportManager->getEmployeesRangeReport($terminatedEmployees, $periodStart, $periodEnd);
 
-            $row = $this->processEmployee($emp, $periodStart, $periodEnd, $year, $month, $monthDays);
-            $row['termination_date'] = Carbon::parse($record->termination_date)->format('Y-m-d');
-            $terminatedStaff[] = $row;
+            foreach ($terminatedRecords as $record) {
+                $emp = $record->employee;
+                if (!$emp) continue;
+
+                $empReport = $terminatedReportMap->get($emp->id) ?? collect();
+                $row = $this->processEmployee($emp, $empReport, $periodStart, $periodEnd, $year, $month, $monthDays);
+                $row['termination_date'] = Carbon::parse($record->termination_date)->format('Y-m-d');
+                $terminatedStaff[] = $row;
+            }
         }
 
         return [
@@ -120,6 +130,7 @@ class BranchAttendanceSummaryService
      */
     protected function processEmployee(
         Employee $employee,
+        \Illuminate\Support\Collection $attendanceData,
         Carbon $periodStart,
         Carbon $periodEnd,
         int $year,
@@ -129,8 +140,7 @@ class BranchAttendanceSummaryService
         try {
             $approvedOvertimeHours = (float) ($employee->total_overtime ?? 0);
             
-            // 1. Fetch attendance data using the unified modular report manager
-            $attendanceData  = $this->reportManager->getEmployeeRangeReport($employee, $periodStart, $periodEnd);
+            // 1. Convert collection to array (already fetched in bulk by parent loop)
             $attendanceArray = $attendanceData->toArray();
 
             $stats = $attendanceArray['statistics'] ?? [];
@@ -141,7 +151,7 @@ class BranchAttendanceSummaryService
 
             $weeklyResult = $stats['weekly_leave_calculation']['result'] ?? [];
 
-
+dd($weeklyResult);
 
 
             // 4. Deduction hours: sum of missing hours, late, and early departure

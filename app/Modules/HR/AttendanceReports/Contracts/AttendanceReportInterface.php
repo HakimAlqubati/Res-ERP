@@ -31,4 +31,14 @@ interface AttendanceReportInterface
      * @return Collection Indexed sequential mapped employee attendance reports.
      */
     public function getEmployeesDateReport($employeeIdsOrEmployees, $date): Collection;
+
+    /**
+     * Retrieve aggregate range reports for multiple employees efficiently.
+     * 
+     * @param \Illuminate\Support\Collection|array $employees Targeted employees.
+     * @param Carbon $startDate Start bounds.
+     * @param Carbon $endDate End bounds.
+     * @return Collection Indexed sequential reports (employee_id => report).
+     */
+    public function getEmployeesRangeReport($employees, Carbon $startDate, Carbon $endDate): Collection;
 }
