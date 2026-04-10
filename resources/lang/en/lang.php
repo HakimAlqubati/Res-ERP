@@ -519,6 +519,8 @@ return [
     'gross_salary' => 'Gross Salary',
     'total_deductions' => 'Total Deductions',
     'total_allowances' => 'Total Allowances',
+    'employees_count' => 'Staff',
+    'total_salaries' => 'Total',
 
     // ===========================================
     // HRMS - Holidays

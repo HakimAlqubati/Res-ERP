@@ -501,6 +501,8 @@ return [
   'gross_salary' => 'إجمالي الراتب',
   'total_deductions' => 'إجمالي الخصومات',
   'total_allowances' => 'إجمالي البدلات',
+  'employees_count' => 'الموظفين',
+  'total_salaries' => 'الإجمالي',
 
   // ===========================================
   // HRMS - Holidays

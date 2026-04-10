@@ -31,9 +31,18 @@ class PayrollTable
                     return $months[$key] ?? '';
                 })
                 ->sortable(),
+            TextColumn::make('payrolls_count')
+                ->label(__('lang.employees_count'))
+                ->counts('payrolls')
+                ->alignCenter()
+                ->sortable(),
+            TextColumn::make('total_net')
+                ->label(__('lang.total_salaries'))
+                ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
+                ->sortable(),
             TextColumn::make('creator.name')
                 ->label(__('Created By'))
-                ->sortable()        
+                ->sortable()
                 ->toggleable(isToggledHiddenByDefault: true),
             TextColumn::make('approver.name')
                 ->label(__('Approved By'))
