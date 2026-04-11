@@ -3,8 +3,6 @@
 namespace App\Modules\HR\Payroll\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use App\Models\PayrollRun;
-use App\Modules\HR\Payroll\Observers\PayrollRunObserver;
 
 // Services
 use App\Modules\HR\Payroll\Services\PayrollRunService;
@@ -128,6 +126,5 @@ class PayrollServiceProvider extends ServiceProvider
 
         // Register Observer for PayrollRun model
         // Note: This uses the module's observer, not the original one
-        // PayrollRun::observe(PayrollRunObserver::class);
     }
 }
