@@ -14,6 +14,11 @@ class EmployeeBranchLog extends Model
     protected $table = 'hr_employee_branch_logs';
     protected $fillable = ['employee_id', 'branch_id', 'start_at', 'end_at', 'created_by'];
 
+    protected $casts = [
+        'start_at' => 'datetime',
+        'end_at'   => 'datetime',
+    ];
+
     // Define the relationship with the Employee model
     public function employee()
     {

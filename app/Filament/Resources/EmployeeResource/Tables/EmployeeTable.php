@@ -48,6 +48,9 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
+
+use Filament\Forms\Components\ViewField;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use App\Models\EmployeeServiceTermination;
@@ -69,7 +72,10 @@ use Maatwebsite\Excel\Facades\Excel;
 use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
 use App\Rules\HR\Payroll\AdvanceWageLimitRule;
 use App\Models\AdvanceWage;
-
+use Filament\Forms\Components\Repeater\TableColumn;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use App\Services\HR\EmployeeBranchTransferService;
 
 class EmployeeTable
 {
@@ -105,6 +111,8 @@ class EmployeeTable
                     ->weight(FontWeight::Medium)->tooltip(fn($state) => $state)
                     ->searchable(isIndividual: false, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: false),
+
+
                 TextColumn::make('known_name')
                     ->sortable()->searchable()
                     ->label(__('lang.known_name'))
@@ -115,6 +123,12 @@ class EmployeeTable
                     ->sortable()
                     ->wrap()
                     ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('branch_logs_count')
+                    ->label(__('lang.branch_logs_count'))
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->counts('branchLogs')
+                    ->alignCenter()
+                    ->default(0),
                 TextColumn::make('manager.name')
                     ->label(__('lang.manager'))
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -686,58 +700,95 @@ class EmployeeTable
                         // ->icon('heroicon-o-annotation') // Icon for the button
                         ->modalHeading(__('lang.change_employee_branch')) // Modal heading
                         ->modalButton('Save')                    // Button inside the modal
+                        ->fillForm(fn(Employee $record): array => $record->load('branchLogs')->toArray())
                         ->schema([
-                            Grid::make(3)
+                            Tabs::make('Tabs')
                                 ->columnSpanFull()
-                                ->schema([
-                                    Select::make('branch_id')
-                                        ->label(__('lang.select_new_branch'))
-                                        ->searchable()
-                                        ->options(Branch::query()
-                                            ->where('active', true)
-                                            ->pluck('name', 'id'))
-                                        ->required()
-                                        ->preload()
-                                        ->rules([
-                                            fn (Get $get, Employee $record) => new \App\Rules\HR\Employee\BranchChangeRule(
-                                                $record->branch_id,
-                                                $record->id,
-                                                $get('start_at'),
-                                                $get('end_at')
-                                            )
+                                ->tabs([
+                                    Tab::make(__('lang.transfer_preview'))
+                                        ->icon('heroicon-o-exclamation-triangle')
+                                        ->schema([
+                                            ViewField::make('_transfer_preview')
+                                                ->view('components.employee.branch-transfer-preview')
+                                                ->columnSpanFull()
                                         ]),
-                                    DatePicker::make('start_at')
-                                        ->label(__('lang.start_date'))
-                                        ->default(now())
-                                        ->required(),
-                                    DatePicker::make('end_at')
-                                        ->label(__('lang.end_date')),
+                                    Tab::make(__('lang.change_branch'))
+                                        ->icon('heroicon-o-arrow-path')
+                                        ->schema([
+                                            Grid::make(3)
+                                                ->schema([
+                                                    Select::make('branch_id')
+                                                        ->label(__('lang.select_new_branch'))
+                                                        ->searchable()
+                                                        ->options(Branch::query()
+                                                            ->where('active', true)
+                                                            ->pluck('name', 'id'))
+                                                        ->required()
+                                                        ->preload()
+                                                        ->live()
+                                                        ->rules([
+                                                            fn(Get $get, Employee $record) => new \App\Rules\HR\Employee\BranchChangeRule(
+                                                                $record->branch_id,
+                                                                $record->id,
+                                                                $get('start_at'),
+                                                                $get('end_at')
+                                                            )
+                                                        ]),
+                                                    DatePicker::make('start_at')
+                                                        ->label(__('lang.start_date'))
+                                                        ->default(now())
+                                                        ->live()
+                                                        ->required(),
+                                                    DatePicker::make('end_at')
+                                                        ->label(__('lang.end_date')),
+                                                ])
+                                        ]),
+                                    Tab::make(__('lang.branch_logs_count'))
+                                        ->icon('heroicon-o-list-bullet')
+                                        ->schema([
+                                            Repeater::make('branchLogs')
+                                                ->relationship()
+                                                ->table([
+                                                    TableColumn::make(__('Branch'))->width('33%'),
+                                                    TableColumn::make(__('Start Date'))->width('33%'),
+                                                    TableColumn::make(__('End Date'))->width('33%'),
+                                                    // TableColumn::make(__('Created By'))->width('30%'),
+                                                ])
+                                                ->schema([
+                                                    Select::make('branch_id')
+                                                        ->label(__('lang.branch'))
+                                                        ->options(Branch::all()->pluck('name', 'id'))
+                                                        ->disabled()
+                                                        ->columnSpan(1),
+                                                    DatePicker::make('start_at')
+                                                        ->label(__('lang.start_date'))
+                                                        ->disabled()
+                                                        ->columnSpan(1),
+                                                    DatePicker::make('end_at')
+                                                        ->label(__('lang.end_date'))
+                                                        ->disabled()
+                                                        ->columnSpan(1),
+                                                    TextInput::make('created_by')->hidden()
+                                                        ->label(__('lang.created_by'))
+                                                        ->formatStateUsing(fn($state, $record) => $record?->createdBy?->name ?? '-')
+                                                        ->disabled()
+                                                        ->columnSpan(1),
+                                                ])
+                                                ->columns(4)
+                                                ->addable(false)
+                                                ->deletable(false)
+                                                ->reorderable(false)
+                                                ->columnSpanFull()
+                                        ]),
                                 ])
                         ])
-                        ->action(function (array $data, $record) {
-                            $newBranchId = $data['branch_id'];
-                            $startAt = $data['start_at'];
-                            $endAt = $data['end_at'] ?? null;
-                            $employee = $record;
-
-                            // Close current branch log if exists
-                            $employee->branchLogs()
-                                ->whereNull('end_at')
-                                ->update(['end_at' => $startAt]);
-
-                            // Create the employee branch log
-                            $employee->branchLogs()->create([
-                                'employee_id' => $employee->id,
-                                'branch_id'   => $newBranchId,
-                                'start_at'    => $startAt,
-                                'end_at'      => $endAt,
-                                'created_by'  => auth()->user()->id,
-                            ]);
-
-                            // Update the employee's branch
-                            $employee->update([
-                                'branch_id' => $newBranchId,
-                            ]);
+                        ->action(function (array $data, Employee $record) {
+                            app(EmployeeBranchTransferService::class)->execute(
+                                employee:    $record,
+                                newBranchId: (int) $data['branch_id'],
+                                startAt:     $data['start_at'],
+                                endAt:       $data['end_at'] ?? null,
+                            );
 
                             Notification::make()
                                 ->title(__('lang.success'))

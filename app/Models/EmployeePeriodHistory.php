@@ -15,6 +15,7 @@ class EmployeePeriodHistory extends Model implements Auditable
     protected $fillable = [
         'employee_id',
         'period_id',
+        'branch_id',
         'start_date',
         'end_date',
         'start_time',
@@ -28,6 +29,7 @@ class EmployeePeriodHistory extends Model implements Auditable
     protected $auditInclude = [
         'employee_id',
         'period_id',
+        'branch_id',
         'start_date',
         'end_date',
         'start_time',

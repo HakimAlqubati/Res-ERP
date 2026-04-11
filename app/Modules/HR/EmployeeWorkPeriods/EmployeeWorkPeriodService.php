@@ -79,6 +79,7 @@ class EmployeeWorkPeriodService
                         'start_time'  => $periodStartAt,
                         'end_time'    => $periodEndAt,
                         'day_of_week' => $dayOfWeek,
+                        'branch_id' => $employee->branch_id,
                     ]);
                 }
             }
@@ -116,6 +117,7 @@ class EmployeeWorkPeriodService
                     'start_time'  => $employeePeriod->workPeriod->start_at,
                     'end_time'    => $employeePeriod->workPeriod->end_at,
                     'day_of_week' => $day,
+                    'branch_id' => $employeePeriod?->employee?->branch_id,
                 ]);
             }
             DB::commit();
