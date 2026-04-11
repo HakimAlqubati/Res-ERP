@@ -27,8 +27,8 @@ class AdvanceWagesRelationManager extends RelationManager
     public static function getBadge(Model $ownerRecord, string $pageClass): ?string
     {
         $count = $ownerRecord->advanceWages()
-        // ->where('status', AdvanceWage::STATUS_PENDING)
-        ->count();
+            // ->where('status', AdvanceWage::STATUS_PENDING)
+            ->count();
 
         return $count > 0 ? (string) $count : null;
     }
@@ -70,7 +70,7 @@ class AdvanceWagesRelationManager extends RelationManager
 
             TextInput::make('reason')
                 ->label(__('Reason'))
-                ->maxLength(255)
+                ->maxLength(255)->required()
                 ->columnSpanFull(),
 
 
@@ -206,10 +206,26 @@ class AdvanceWagesRelationManager extends RelationManager
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
-                    // ->visible(fn(AdvanceWage $record) => $record->canBeCancelled())
+                    ->visible(fn(AdvanceWage $record) => in_array(
+                        $record->status,
+                        [AdvanceWage::STATUS_PENDING, AdvanceWage::STATUS_SETTLED]
+                    ))
                     ->action(function (AdvanceWage $record): void {
                         $record->cancel();
                         Notification::make()->success()->title(__('Advance wage cancelled.'))->send();
+                    }),
+                Action::make('approve')
+                    ->label(__('Approve'))
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->visible(fn(AdvanceWage $record) => in_array(
+                        $record->status,
+                        [AdvanceWage::STATUS_PENDING, AdvanceWage::STATUS_CANCELLED]
+                    ))
+                    ->action(function (AdvanceWage $record): void {
+                        $record->update(['status' => AdvanceWage::STATUS_SETTLED]);
+                        Notification::make()->success()->title(__('Advance wage approved.'))->send();
                     }),
 
                 Action::make('delete')

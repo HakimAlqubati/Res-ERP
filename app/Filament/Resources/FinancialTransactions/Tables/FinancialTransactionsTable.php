@@ -102,6 +102,21 @@ class FinancialTransactionsTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
+                TextColumn::make('amount')
+                    ->label('Amount')
+                    // ->money(getDefaultCurrency())
+                    ->sortable()
+                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
+                    ->summarize([
+                        \Filament\Tables\Columns\Summarizers\Sum::make()->label('')
+                            ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state)),
+                    ]),
+
+                TextColumn::make('branch.name')
+                    ->label('Branch')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('transaction_date')
                     ->label('Date')
                     ->date()
@@ -132,21 +147,7 @@ class FinancialTransactionsTable
                     ->formatStateUsing(fn($state) => FinancialTransaction::TYPES[$state] ?? $state)
                     ->sortable(),
 
-                TextColumn::make('amount')
-                    ->label('Amount')
-                    // ->money(getDefaultCurrency())
-                    ->sortable()
-                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
-                    ->summarize([
-                        \Filament\Tables\Columns\Summarizers\Sum::make()->label('')
-                            ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state)),
-                    ]),
 
-                TextColumn::make('branch.name')
-                    ->label('Branch')
-                    ->searchable()
-                    ->sortable()
-                    ->toggleable(),
 
                 BadgeColumn::make('status')
                     ->label('Status')

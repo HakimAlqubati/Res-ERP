@@ -3,9 +3,14 @@
 namespace App\Observers;
 
 use App\Models\AdvanceWage;
+use App\Models\FinancialCategory;
+use App\Models\FinancialTransaction;
+use App\Enums\FinancialCategoryCode;
 use App\Modules\HR\Payroll\Contracts\PayrollSimulatorInterface;
 use App\Services\HR\Payroll\PayrollLockGuard;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class AdvanceWageObserver
 {
@@ -49,7 +54,7 @@ class AdvanceWageObserver
      */
     public function created(AdvanceWage $advanceWage): void
     {
-        //
+        $this->syncToFinancial($advanceWage);
     }
 
     /**
@@ -65,7 +70,7 @@ class AdvanceWageObserver
      */
     public function updated(AdvanceWage $advanceWage): void
     {
-        //
+        $this->syncToFinancial($advanceWage);
     }
 
     /**
@@ -81,7 +86,13 @@ class AdvanceWageObserver
      */
     public function deleted(AdvanceWage $advanceWage): void
     {
-        //
+        try {
+            FinancialTransaction::where('reference_type', AdvanceWage::class)
+                ->where('reference_id', $advanceWage->id)
+                ->delete();
+        } catch (\Exception $e) {
+            Log::error("Failed to delete financial transaction for AdvanceWage #{$advanceWage->id}: " . $e->getMessage());
+        }
     }
 
     /**
@@ -121,5 +132,52 @@ class AdvanceWageObserver
             (int) $advanceWage->month,
             'amount'
         );
+    }
+
+    /**
+     * Synchronize the AdvanceWage with the financial transactions table.
+     */
+    private function syncToFinancial(AdvanceWage $advanceWage): void
+    {
+        try {
+            // Only sync settled advance wages
+            if ($advanceWage->status !== AdvanceWage::STATUS_SETTLED) {
+                // If it was settled before and now it's not, we might want to delete the transaction
+                FinancialTransaction::where('reference_type', AdvanceWage::class)
+                    ->where('reference_id', $advanceWage->id)
+                    ->delete();
+                return;
+            }
+
+            $salaryCategory = FinancialCategory::findByCode(FinancialCategoryCode::PAYROLL_SALARIES);
+
+            if (!$salaryCategory) {
+                Log::warning("Financial category for salaries (" . FinancialCategoryCode::PAYROLL_SALARIES . ") not found during AdvanceWage sync.");
+                return;
+            }
+
+            $transactionDate = Carbon::create($advanceWage->year, $advanceWage->month, 1);
+
+            FinancialTransaction::updateOrCreate(
+                [
+                    'reference_type' => AdvanceWage::class,
+                    'reference_id'   => $advanceWage->id,
+                ],
+                [
+                    'branch_id'        => $advanceWage->branch_id,
+                    'category_id'      => $salaryCategory->id,
+                    'amount'           => $advanceWage->amount,
+                    'type'             => FinancialTransaction::TYPE_EXPENSE,
+                    'transaction_date' => $transactionDate,
+                    'status'           => FinancialTransaction::STATUS_PAID,
+                    'description'      => __('Advance Wage') . ': ' . ($advanceWage->employee?->name ?? 'Employee #' . $advanceWage->employee_id) . " ({$advanceWage->year}/{$advanceWage->month})",
+                    'created_by'       => auth()->id() ?? $advanceWage->created_by ?? 1,
+                    'month'            => $advanceWage->month,
+                    'year'             => $advanceWage->year,
+                ]
+            );
+        } catch (\Exception $e) {
+            Log::error("Failed to sync AdvanceWage #{$advanceWage->id} to financial transactions: " . $e->getMessage());
+        }
     }
 }
