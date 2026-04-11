@@ -167,6 +167,7 @@ class FinancialTransactionsTable
                 TextColumn::make('description')
                     ->label('Description')
                     ->limit(50)
+                    ->tooltip(fn($state) => $state)
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('reference_type')

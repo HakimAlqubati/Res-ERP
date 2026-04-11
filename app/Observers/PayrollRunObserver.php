@@ -6,7 +6,7 @@ use App\Enums\HR\Payroll\SalaryTransactionSubType;
 use App\Models\AdvanceRequest;
 use App\Models\EmployeeAdvanceInstallment;
 use App\Models\PayrollRun;
-use App\Services\Financial\PayrollFinancialSyncService;
+use App\Modules\HR\Payroll\Contracts\PayrollFinancialSyncInterface;
 
 
 /**
@@ -18,7 +18,7 @@ use App\Services\Financial\PayrollFinancialSyncService;
 class PayrollRunObserver
 {
     public function __construct(
-        protected PayrollFinancialSyncService $syncService
+        protected PayrollFinancialSyncInterface $syncService
     ) {}
 
     /**
@@ -51,7 +51,7 @@ class PayrollRunObserver
 
             // Sync with financial system
             try {
-                $result = $this->syncService->syncPayrollRun($payrollRun->id);
+                $this->syncService->syncPayrollRun($payrollRun->id);
             } catch (\Exception $e) {
                 // Silent fail - error already handled by syncService
             }
