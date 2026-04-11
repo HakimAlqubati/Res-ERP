@@ -22,12 +22,18 @@ class AdvanceWage extends Model
     const STATUS_SETTLED   = 'settled';
     const STATUS_CANCELLED = 'cancelled';
 
+    public const PAYMENT_METHOD_CASH = 'cash';
+    public const PAYMENT_METHOD_BANK_TRANSFER = 'bank_transfer';
+
     protected $fillable = [
         'employee_id',
         'branch_id',
         'year',
         'month',
         'amount',
+        'payment_method',
+        'bank_account_number',
+        'transaction_number',
         'status',
         'reason',
         'notes',
@@ -121,6 +127,14 @@ class AdvanceWage extends Model
             self::STATUS_PENDING   => __('Pending'),
             self::STATUS_SETTLED   => __('Settled'),
             self::STATUS_CANCELLED => __('Cancelled'),
+        ];
+    }
+
+    public static function paymentMethods(): array
+    {
+        return [
+            self::PAYMENT_METHOD_CASH          => __('lang.cash'),
+            self::PAYMENT_METHOD_BANK_TRANSFER  => __('lang.bank_transfer'),
         ];
     }
 

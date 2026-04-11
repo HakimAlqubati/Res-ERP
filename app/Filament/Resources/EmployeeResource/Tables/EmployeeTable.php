@@ -10,6 +10,7 @@ use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Tables\Filters\TrashedFilter;
 use App\Exports\EmployeesExport;
 use App\Imports\EmployeeImport;
@@ -67,6 +68,7 @@ use App\Models\AppLog;
 use Maatwebsite\Excel\Facades\Excel;
 use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
 use App\Rules\HR\Payroll\AdvanceWageLimitRule;
+use App\Models\AdvanceWage;
 
 
 class EmployeeTable
@@ -594,6 +596,33 @@ class EmployeeTable
 
                             ])->columnSpanFull(),
 
+                            Grid::make(3)->schema([
+                                Select::make('payment_method')
+                                    ->label(__('lang.payment_method'))
+                                    ->options(AdvanceWage::paymentMethods())
+                                    ->default(AdvanceWage::PAYMENT_METHOD_CASH)
+                                    ->required()
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, Set $set, Employee $record) {
+                                        if ($state === AdvanceWage::PAYMENT_METHOD_BANK_TRANSFER) {
+                                            $set('bank_account_number', $record->bank_account_number);
+                                        }
+                                    })
+                                    ->columnSpan(1),
+
+                                TextInput::make('bank_account_number')
+                                    ->label(__('lang.bank_account_number'))
+                                    ->visible(fn(Get $get) => $get('payment_method') === AdvanceWage::PAYMENT_METHOD_BANK_TRANSFER)
+                                    ->required(fn(Get $get) => $get('payment_method') === AdvanceWage::PAYMENT_METHOD_BANK_TRANSFER)
+                                    ->columnSpan(1),
+
+                                TextInput::make('transaction_number')
+                                    ->label(__('lang.transaction_number'))
+                                    ->visible(fn(Get $get) => $get('payment_method') === AdvanceWage::PAYMENT_METHOD_BANK_TRANSFER)
+                                    ->required(fn(Get $get) => $get('payment_method') === AdvanceWage::PAYMENT_METHOD_BANK_TRANSFER)
+                                    ->columnSpan(1),
+                            ])->columnSpanFull(),
+
                             TextInput::make('reason')
                                 ->label(__('Reason'))->required()
                                 ->maxLength(255)
@@ -606,6 +635,9 @@ class EmployeeTable
                                     'year' => $data['year'],
                                     'month' => $data['month'],
                                     'reason' => $data['reason'],
+                                    'payment_method' => $data['payment_method'],
+                                    'bank_account_number' => $data['bank_account_number'] ?? null,
+                                    'transaction_number' => $data['transaction_number'] ?? null,
                                     'branch_id' => $record->branch_id,
                                 ]);
 

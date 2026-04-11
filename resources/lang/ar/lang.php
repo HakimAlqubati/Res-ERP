@@ -335,8 +335,11 @@ return [
   'bank' => 'البنك',
   'enter_bank_name' => 'أدخل اسم البنك',
   'enter_bank_account_number' => 'أدخل رقم الحساب البنكي',
-  'transaction_number' => 'رقم الترنزكشن',
-  'enter_transaction_number' => 'أدخل رقم الترنزكشن',
+  'transaction_number' => 'رقم العملية',
+  'enter_transaction_number' => 'أدخل رقم العملية',
+  'payment_method' => 'وسيلة الدفع',
+  'cash' => 'نقداً',
+  'bank_transfer' => 'تحويل بنكي',
 
   // ===========================================
   // HRMS - Allowances & Deductions

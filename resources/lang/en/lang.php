@@ -355,6 +355,9 @@ return [
     'enter_bank_account_number' => 'Enter bank account number',
     'transaction_number' => 'Transaction Number',
     'enter_transaction_number' => 'Enter transaction number',
+    'payment_method' => 'Payment Method',
+    'cash' => 'Cash',
+    'bank_transfer' => 'Bank Transfer',
 
     // ===========================================
     // HRMS - Allowances & Deductions
