@@ -687,22 +687,50 @@ class EmployeeTable
                         ->modalHeading(__('lang.change_employee_branch')) // Modal heading
                         ->modalButton('Save')                    // Button inside the modal
                         ->schema([
-                            Select::make('branch_id')
-                                ->label(__('lang.select_new_branch'))
-                                ->options(Branch::all()->pluck('name', 'id')) // Assuming you have a `Branch` model with `id` and `name`
-                                ->required(),
+                            Grid::make(3)
+                                ->columnSpanFull()
+                                ->schema([
+                                    Select::make('branch_id')
+                                        ->label(__('lang.select_new_branch'))
+                                        ->searchable()
+                                        ->options(Branch::query()
+                                            ->where('active', true)
+                                            ->pluck('name', 'id'))
+                                        ->required()
+                                        ->preload()
+                                        ->rules([
+                                            fn (Get $get, Employee $record) => new \App\Rules\HR\Employee\BranchChangeRule(
+                                                $record->branch_id,
+                                                $record->id,
+                                                $get('start_at'),
+                                                $get('end_at')
+                                            )
+                                        ]),
+                                    DatePicker::make('start_at')
+                                        ->label(__('lang.start_date'))
+                                        ->default(now())
+                                        ->required(),
+                                    DatePicker::make('end_at')
+                                        ->label(__('lang.end_date')),
+                                ])
                         ])
                         ->action(function (array $data, $record) {
-                            // This is where you handle the logic to update the employee's branch and log the change
-
                             $newBranchId = $data['branch_id'];
-                            $employee    = $record; // The current employee record
+                            $startAt = $data['start_at'];
+                            $endAt = $data['end_at'] ?? null;
+                            $employee = $record;
+
+                            // Close current branch log if exists
+                            $employee->branchLogs()
+                                ->whereNull('end_at')
+                                ->update(['end_at' => $startAt]);
 
                             // Create the employee branch log
                             $employee->branchLogs()->create([
                                 'employee_id' => $employee->id,
                                 'branch_id'   => $newBranchId,
-                                'start_at'    => now(),
+                                'start_at'    => $startAt,
+                                'end_at'      => $endAt,
                                 'created_by'  => auth()->user()->id,
                             ]);
 
@@ -710,7 +738,13 @@ class EmployeeTable
                             $employee->update([
                                 'branch_id' => $newBranchId,
                             ]);
-                        })->hidden(),
+
+                            Notification::make()
+                                ->title(__('lang.success'))
+                                ->body(__('lang.branch_changed_successfully') ?? 'Branch changed successfully')
+                                ->success()
+                                ->send();
+                        }),
                     EditAction::make(),
                     ViewAction::make(),
                     DeleteAction::make(),

@@ -180,6 +180,7 @@ class EmployeeForm
                                                 // عند تغيير الفرع -> أفرغ قيمة owner_id
                                                 $set('manager_id', null);
                                             })
+                                            ->disabledOn('edit')
                                             ->options(
                                                 Branch::query()
                                                     ->select('id', 'name')
@@ -192,12 +193,13 @@ class EmployeeForm
                                             ),
                                         Toggle::make('is_ceo')->label(__('lang.is_ceo'))
                                             ->live()
-                                            ->visible(fn($get, ?Employee $record): bool => 
-                                                in_array((int) $get('employee_type'), [0, 1]) && 
-                                                (
-                                                    ($record && $record->is_ceo) || 
-                                                    !Employee::where('is_ceo', true)->exists()
-                                                )
+                                            ->visible(
+                                                fn($get, ?Employee $record): bool =>
+                                                in_array((int) $get('employee_type'), [0, 1]) &&
+                                                    (
+                                                        ($record && $record->is_ceo) ||
+                                                        !Employee::where('is_ceo', true)->exists()
+                                                    )
                                             )
                                             ->default(0)->inline(false),
                                         Select::make('manager_id')
