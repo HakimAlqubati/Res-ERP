@@ -929,7 +929,7 @@ return [
     'Purchases' => 'Purchases',
     'Inventory' => 'Inventory',
     'Human Resources' => 'Human Resources',
-    'Employees' => 'Staffs',
+    'Employees' => 'Staff',
     'Attendance' => 'Attendance',
     'Departments' => 'Departments',
     'Tasks' => 'Tasks',
