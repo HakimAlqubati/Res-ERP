@@ -132,7 +132,7 @@ return [
     'order_date'                                  => 'Order date',
     'product_approved_by_store'                   => 'Updated product by (Store)',
     'ordered_product'                             => 'Orderd product from (Branch)',
-    'employees'                                   => 'Staffs',
+    'employees'                                   => 'Staff',
     'tasks_ms'                                    => 'Task management',
     'departments_and_employees'                   => 'Human Resource',
     'attenance_management'                        => 'Attenance management',
