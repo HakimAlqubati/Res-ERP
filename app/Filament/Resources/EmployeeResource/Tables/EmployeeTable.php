@@ -66,6 +66,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\AppLog;
 use Maatwebsite\Excel\Facades\Excel;
 use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
+use App\Rules\HR\Payroll\AdvanceWageLimitRule;
 
 
 class EmployeeTable
@@ -563,8 +564,16 @@ class EmployeeTable
                                     ->label(__('Amount'))
                                     ->numeric()
                                     ->minValue(0.01)
-                                    ->maxValue(fn(Employee $record) => $record->salary ?? 99999)
+                                    // ->maxValue(fn(Employee $record) => $record->salary ?? 99999)
                                     ->required()
+                                    ->live(onBlur: true)
+                                    ->rules([
+                                        fn(Get $get, Employee $record) => new AdvanceWageLimitRule(
+                                            $record->id,
+                                            $get('year'),
+                                            $get('month')
+                                        )
+                                    ])
                                     ->columnSpan(1),
 
                                 Select::make('year')
@@ -572,6 +581,7 @@ class EmployeeTable
                                     ->options(collect(range(now()->year - 1, now()->year + 1))->mapWithKeys(fn($y) => [$y => $y]))
                                     ->default(now()->year)
                                     ->required()
+                                    ->live()
                                     ->columnSpan(1),
 
                                 Select::make('month')
@@ -579,6 +589,7 @@ class EmployeeTable
                                     ->options(collect(range(1, 12))->mapWithKeys(fn($m) => [$m => now()->setMonth($m)->translatedFormat('F')]))
                                     ->default(now()->month)
                                     ->required()
+                                    ->live()
                                     ->columnSpan(1),
 
                             ])->columnSpanFull(),
