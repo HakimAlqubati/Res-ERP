@@ -10,6 +10,7 @@ use App\Modules\HR\Payroll\Services\PayrollCalculationService;
 use App\Modules\HR\Payroll\Services\PayrollSimulationService;
 use App\Modules\HR\Payroll\Services\PayrollFinancialSyncService;
 use App\Modules\HR\Payroll\Services\SalaryCalculatorService;
+use App\Modules\HR\Payroll\Services\BranchTransferPayrollResolver;
 
 // Repositories
 use App\Modules\HR\Payroll\Repositories\PayrollRepository;
@@ -100,9 +101,12 @@ class PayrollServiceProvider extends ServiceProvider
             );
         });
 
+        $this->app->singleton(BranchTransferPayrollResolver::class);
+
         $this->app->singleton(PayrollRunnerInterface::class, function ($app) {
             return new PayrollRunService(
-                $app->make(PayrollCalculationService::class)
+                $app->make(PayrollCalculationService::class),
+                $app->make(BranchTransferPayrollResolver::class)
             );
         });
         $this->app->singleton(PayrollRunService::class, function ($app) {

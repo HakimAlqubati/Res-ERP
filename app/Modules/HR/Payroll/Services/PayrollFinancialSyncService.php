@@ -7,6 +7,7 @@ use App\Enums\HR\Payroll\SalaryTransactionType;
 use App\Models\Branch;
 use App\Models\Deduction;
 use App\Models\Payroll;
+use App\Models\PayrollBranchSplit;
 use App\Models\PayrollRun;
 use App\Models\SalaryTransaction;
 use App\Models\FinancialCategory;
@@ -115,21 +116,69 @@ class PayrollFinancialSyncService implements PayrollFinancialSyncInterface
                 $basicSalaryExpense = floatval($totalNetSalary) - floatval($detailedEarningsAmount);
 
                 if ($basicSalaryExpense > 0) {
-                    // Create main salary expense transaction
-                    FinancialTransaction::create([
-                        'branch_id' => $payrollRun->branch_id,
-                        'category_id' => $salaryCategory->id,
-                        'amount' => max(0, $basicSalaryExpense),
-                        'type' => FinancialTransaction::TYPE_EXPENSE,
-                        'transaction_date' => \Carbon\Carbon::create($payrollRun->year, $payrollRun->month, 1)->endOfMonth(),
-                        'status' => FinancialTransaction::STATUS_PAID,
-                        'description' => "Basic Salaries - Payroll Run: {$payrollRun->name} - {$payrollRun->year}/{$payrollRun->month}",
-                        'reference_type' => PayrollRun::class,
-                        'reference_id' => $payrollRun->id,
-                        'created_by' => auth()->id() ?? $payrollRun->created_by ?? 1,
-                        'month' => $payrollRun->month,
-                        'year' => $payrollRun->year,
-                    ]);
+                    // تحقّق من وجود splits لموظفين انتقلوا بين الفروع خلال هذه الفترة
+                    $splits = PayrollBranchSplit::whereIn('payroll_id', $payrollIds)->get();
+
+                    if ($splits->isNotEmpty()) {
+                        // ———— توزيع التكلفة بين الفروع المختلفة ————
+                        $splitTotal = $splits->sum('allocated_amount');
+
+                        // إنشاء معاملة مالية لكل فرع حسب حصته
+                        foreach ($splits->groupBy('branch_id') as $branchId => $branchSplits) {
+                            $branchAmount = round((float) $branchSplits->sum('allocated_amount'), 2);
+                            if ($branchAmount <= 0) continue;
+
+                            FinancialTransaction::create([
+                                'branch_id'        => $branchId,
+                                'category_id'      => $salaryCategory->id,
+                                'amount'           => $branchAmount,
+                                'type'             => FinancialTransaction::TYPE_EXPENSE,
+                                'transaction_date' => \Carbon\Carbon::create($payrollRun->year, $payrollRun->month, 1)->endOfMonth(),
+                                'status'           => FinancialTransaction::STATUS_PAID,
+                                'description'      => "Branch Transfer Share - {$payrollRun->name} ({$payrollRun->year}/{$payrollRun->month})",
+                                'reference_type'   => PayrollRun::class,
+                                'reference_id'     => $payrollRun->id,
+                                'created_by'       => auth()->id() ?? $payrollRun->created_by ?? 1,
+                                'month'            => $payrollRun->month,
+                                'year'             => $payrollRun->year,
+                            ]);
+                        }
+
+                        // المبلغ المتبقي (= موظفون لم ينتقلوا) يذهب للفرع الرئيسي
+                        $remainingExpense = round($basicSalaryExpense - $splitTotal, 2);
+                        if ($remainingExpense > 0) {
+                            FinancialTransaction::create([
+                                'branch_id'        => $payrollRun->branch_id,
+                                'category_id'      => $salaryCategory->id,
+                                'amount'           => $remainingExpense,
+                                'type'             => FinancialTransaction::TYPE_EXPENSE,
+                                'transaction_date' => \Carbon\Carbon::create($payrollRun->year, $payrollRun->month, 1)->endOfMonth(),
+                                'status'           => FinancialTransaction::STATUS_PAID,
+                                'description'      => "Basic Salaries - Payroll Run: {$payrollRun->name} - {$payrollRun->year}/{$payrollRun->month}",
+                                'reference_type'   => PayrollRun::class,
+                                'reference_id'     => $payrollRun->id,
+                                'created_by'       => auth()->id() ?? $payrollRun->created_by ?? 1,
+                                'month'            => $payrollRun->month,
+                                'year'             => $payrollRun->year,
+                            ]);
+                        }
+                    } else {
+                        // ———— لا انتقال — السلوك الأصلي ————
+                        FinancialTransaction::create([
+                            'branch_id'        => $payrollRun->branch_id,
+                            'category_id'      => $salaryCategory->id,
+                            'amount'           => max(0, $basicSalaryExpense),
+                            'type'             => FinancialTransaction::TYPE_EXPENSE,
+                            'transaction_date' => \Carbon\Carbon::create($payrollRun->year, $payrollRun->month, 1)->endOfMonth(),
+                            'status'           => FinancialTransaction::STATUS_PAID,
+                            'description'      => "Basic Salaries - Payroll Run: {$payrollRun->name} - {$payrollRun->year}/{$payrollRun->month}",
+                            'reference_type'   => PayrollRun::class,
+                            'reference_id'     => $payrollRun->id,
+                            'created_by'       => auth()->id() ?? $payrollRun->created_by ?? 1,
+                            'month'            => $payrollRun->month,
+                            'year'             => $payrollRun->year,
+                        ]);
+                    }
                 }
 
                 // 2. Group Earning Transactions by Financial Category
