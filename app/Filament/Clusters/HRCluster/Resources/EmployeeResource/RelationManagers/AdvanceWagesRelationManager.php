@@ -26,7 +26,9 @@ class AdvanceWagesRelationManager extends RelationManager
 
     public static function getBadge(Model $ownerRecord, string $pageClass): ?string
     {
-        $count = $ownerRecord->advanceWages()->where('status', AdvanceWage::STATUS_PENDING)->count();
+        $count = $ownerRecord->advanceWages()
+        // ->where('status', AdvanceWage::STATUS_PENDING)
+        ->count();
 
         return $count > 0 ? (string) $count : null;
     }
