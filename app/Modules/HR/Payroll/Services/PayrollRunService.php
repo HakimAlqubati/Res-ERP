@@ -7,7 +7,7 @@ use App\Enums\HR\Payroll\SalaryTransactionType;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\Payroll;
-use App\Models\PayrollRun;
+use App\Models\PayrollRun;            // ← تأكد من الاستيراد
 use App\Models\SalaryTransaction;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -19,7 +19,6 @@ class PayrollRunService implements PayrollRunnerInterface
 {
     public function __construct(
         protected PayrollCalculationService $calculator,
-        protected BranchTransferPayrollResolver $transferResolver,
     ) {}
 
     private string $year;
@@ -196,17 +195,6 @@ class PayrollRunService implements PayrollRunnerInterface
                     $payroll
                 );
 
-                // 5) توثيق توزيع عبء الراتب بين الفروع (للموظفين المنتقلين)
-                //    طبقة محاسبية بحتة — لا تؤثر على الحساب أبداً
-                $this->transferResolver->buildSplits(
-                    payroll:     $payroll,
-                    employee:    $employee,
-                    periodStart: $periodStart,
-                    periodEnd:   $periodEnd,
-                    netSalary:   (float)($calc['net_salary'] ?? 0),
-                    mode:        settingWithDefault('branch_transfer_salary_mode', 'pro_rated'),
-                );
-
                 // لا حاجة لجمعها يدويا هنا لأنه سيتم حسابها في النهاية من قاعدة البيانات لكل الرواتب المرتبطة
 
                 $rows[] = [
@@ -271,27 +259,10 @@ class PayrollRunService implements PayrollRunnerInterface
 
     protected function eligibleEmployees(int $branchId, ?array $employeeIds = null): Collection
     {
-        $periodStart = Carbon::create((int)$this->year, (int)$this->month, 1)->startOfMonth();
-        $periodEnd   = $periodStart->copy()->endOfMonth();
-
         return Employee::query()
             ->eligibleForPayroll((int)$this->year, (int)$this->month)
-            ->withoutGlobalScopes()
-            ->where(function ($q) use ($branchId, $periodStart, $periodEnd) {
-                // الموظفون المنتسبون حالياً لهذا الفرع
-                $q->where('branch_id', $branchId)
-                // أو كانوا فيه خلال أي جزء من فترة الراتب (انتقال)
-                  ->orWhereHas('branchLogs', function ($bl) use ($branchId, $periodStart, $periodEnd) {
-                      $bl->where('branch_id', $branchId)
-                         ->where('start_at', '<=', $periodEnd)
-                         ->where(function ($bl2) use ($periodStart) {
-                             $bl2->whereNull('end_at')
-                                 ->orWhere('end_at', '>=', $periodStart);
-                         });
-                  });
-            })
+            ->where('branch_id', $branchId)
             ->when($employeeIds, fn($q) => $q->whereIn('id', $employeeIds))
-            ->get()
-            ->unique('id'); // تجنّب التكرار لو الموظف مطابق للشرطين
+            ->get();
     }
 }
