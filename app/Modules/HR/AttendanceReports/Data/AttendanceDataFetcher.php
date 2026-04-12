@@ -37,7 +37,8 @@ class AttendanceDataFetcher
             })
             ->get();
 
-        $attendances = Attendance::where('deleted_at', null)
+        $attendances = Attendance::with('branch')
+            ->where('deleted_at', null)
             ->where('accepted', 1)
             ->whereIn('employee_id', $employeeIds)
             ->where('check_date', $dateStr)
@@ -105,7 +106,8 @@ class AttendanceDataFetcher
             })
             ->get();
 
-        $attendances = Attendance::where('deleted_at', null)
+        $attendances = Attendance::with('branch')
+            ->where('deleted_at', null)
             ->where('accepted', 1)
             ->where('employee_id', $employeeId)
             ->whereBetween('check_date', [$startDateStr, $endDateStr])
@@ -172,7 +174,8 @@ class AttendanceDataFetcher
             ->get()
             ->groupBy('employee_id');
 
-        $attendances = Attendance::where('deleted_at', null)
+        $attendances = Attendance::with('branch')
+            ->where('deleted_at', null)
             ->where('accepted', 1)
             ->whereIn('employee_id', $employeeIds)
             ->whereBetween('check_date', [$startDateStr, $endDateStr])

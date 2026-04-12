@@ -190,6 +190,11 @@ class Attendance extends Model implements Auditable
         return $this->belongsTo(WorkPeriod::class, 'period_id');
     }
 
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
+    }
+
     /**
      * Polymorphic relationship to the source that created this attendance.
      * e.g. EmployeeApplicationV2 (missed check-in/out), AttendanceImagesUploaded (webcam)

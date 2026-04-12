@@ -705,13 +705,13 @@ class EmployeeTable
                             Tabs::make('Tabs')
                                 ->columnSpanFull()
                                 ->tabs([
-                                    Tab::make(__('lang.transfer_preview'))
-                                        ->icon('heroicon-o-exclamation-triangle')
-                                        ->schema([
-                                            ViewField::make('_transfer_preview')
-                                                ->view('components.employee.branch-transfer-preview')
-                                                ->columnSpanFull()
-                                        ]),
+                                    // Tab::make(__('lang.transfer_preview'))
+                                    //     ->icon('heroicon-o-exclamation-triangle')
+                                    //     ->schema([
+                                    //         ViewField::make('_transfer_preview')
+                                    //             ->view('components.employee.branch-transfer-preview')
+                                    //             ->columnSpanFull()
+                                    //     ]),
                                     Tab::make(__('lang.change_branch'))
                                         ->icon('heroicon-o-arrow-path')
                                         ->schema([
@@ -784,10 +784,10 @@ class EmployeeTable
                         ])
                         ->action(function (array $data, Employee $record) {
                             app(EmployeeBranchTransferService::class)->execute(
-                                employee:    $record,
+                                employee: $record,
                                 newBranchId: (int) $data['branch_id'],
-                                startAt:     $data['start_at'],
-                                endAt:       $data['end_at'] ?? null,
+                                startAt: $data['start_at'],
+                                endAt: $data['end_at'] ?? null,
                             );
 
                             Notification::make()

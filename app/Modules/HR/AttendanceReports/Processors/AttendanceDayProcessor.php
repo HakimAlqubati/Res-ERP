@@ -65,7 +65,7 @@ class AttendanceDayProcessor
         foreach ($dayAttendances as $atts) {
             $flatDayAttendances = $flatDayAttendances->merge($atts);
         }
-        
+
         foreach ($dayHistories->values() as $history) {
             $periodId = $history->period_id;
             $workPeriod = $workPeriodMap->get($periodId);
@@ -91,12 +91,12 @@ class AttendanceDayProcessor
                 $lastCheckoutResource = (new CheckOutAttendanceResource($checkOutCol->last(), $approvedOvertime, $dateStr, $discountException, $flatDayAttendances))->toArray(request());
                 $lastCheckoutResource['period_end_at'] = $endTime;
                 $lastCheckoutResource['approved_overtime'] = $approvedOvertime;
-                
+
                 if (!empty($lastCheckoutResource['total_actual_duration_hourly'])) {
                     [$ah, $am, $as] = explode(':', $lastCheckoutResource['total_actual_duration_hourly']);
                     $dayActualSeconds += ($ah * 3600) + ($am * 60) + $as;
                 }
-                
+
                 $statsInjector->accumulatePeriodStats($lastCheckoutResource, $discountException);
             }
 
@@ -117,7 +117,7 @@ class AttendanceDayProcessor
                 $fco['approved_overtime'] = $approvedOvertime;
                 $checkIn['firstcheckout'] = $fco;
             }
-            
+
             $checkOut = $checkOutResources;
             if ($lastCheckoutResource) {
                 $checkOut['lastcheckout'] = $lastCheckoutResource;
@@ -132,8 +132,10 @@ class AttendanceDayProcessor
             else $st = AttendanceReportStatus::Present;
 
             $periods->push([
-                'period_id' => $periodId, 'period_name' => $workPeriod->name,
-                'start_time' => $startTime, 'end_time' => $endTime,
+                'period_id' => $periodId,
+                'period_name' => $workPeriod->name,
+                'start_time' => $startTime,
+                'end_time' => $endTime,
                 'attendances' => ['checkin' => $checkIn, 'checkout' => $checkOut],
                 'final_status' => $st->value,
                 'supposed_duration' => $supposedDur
@@ -143,8 +145,16 @@ class AttendanceDayProcessor
         $statsInjector->addTotalDurationSeconds($totalDurationSeconds);
         $statsInjector->addTotalActualSeconds($dayActualSeconds);
 
+        // Extract branch info from the first available attendance (prioritizing check-ins)
+        $firstIn = $flatDayAttendances->firstWhere('check_type', Attendance::CHECKTYPE_CHECKIN);
+        $displayAttendance = $firstIn ?? $flatDayAttendances->first();
+
         return [
-            'date' => $dateStr, 'day_name' => $dayName, 'periods' => $periods,
+            'date' => $dateStr,
+            'day_name' => $dayName,
+            'branch_id' => $displayAttendance?->branch_id,
+            'branch_name' => $displayAttendance?->branch?->name,
+            'periods' => $periods,
             'actual_duration_hours' => gmdate('H:i:s', $dayActualSeconds),
             'day_status' => $this->statusResolver->resolveDayStatus($periods->pluck('final_status')->all()),
             'daily_supposed_seconds' => $totalDurationSeconds,

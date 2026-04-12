@@ -61,7 +61,7 @@ class EmployeeBranchTransferService
             ->periodHistories()
             ->where(function ($q) use ($transferDate) {
                 $q->whereNull('end_date')
-                  ->orWhere('end_date', '>=', $transferDate);
+                    ->orWhere('end_date', '>=', $transferDate);
             })
             ->with('workPeriod')
             ->get();
@@ -71,12 +71,12 @@ class EmployeeBranchTransferService
         $newBranch     = Branch::find($newBranchId);
 
         $operations = $this->buildOperationsList(
-            employee:              $employee,
+            employee: $employee,
             activePeriodHistories: $activePeriodHistories,
-            currentBranch:         $currentBranch,
-            newBranch:             $newBranch,
-            openBranchLog:         $openBranchLog,
-            transferDate:          $transferDate,
+            currentBranch: $currentBranch,
+            newBranch: $newBranch,
+            openBranchLog: $openBranchLog,
+            transferDate: $transferDate,
         );
 
         return compact(
@@ -106,7 +106,7 @@ class EmployeeBranchTransferService
         if ($activePeriodHistories->isNotEmpty()) {
             $count   = $activePeriodHistories->count();
             $periods = $activePeriodHistories
-                ->map(fn ($h) => $h->workPeriod?->name ?? "#$h->id")
+                ->map(fn($h) => $h->workPeriod?->name ?? "#$h->id")
                 ->join(', ');
 
             $ops[] = [
@@ -187,6 +187,7 @@ class EmployeeBranchTransferService
 
             $closureDate = Carbon::parse($startAt)->subDay()->toDateString();
 
+            // dd($newBranchId,$startAt,$endAt,$closureDate);
             // ① حذف سجلات الفترات الحالية (hr_employee_periods) — الأساس
             $employee->employeePeriods()->delete();
 
@@ -194,7 +195,7 @@ class EmployeeBranchTransferService
             $employee->periodHistories()
                 ->where(function ($q) use ($startAt) {
                     $q->whereNull('end_date')
-                      ->orWhere('end_date', '>=', $startAt);
+                        ->orWhere('end_date', '>=', $startAt);
                 })
                 ->update([
                     'branch_id'  => $employee->branch_id, // Snapshot للفرع القديم
@@ -205,7 +206,9 @@ class EmployeeBranchTransferService
             // ③ إغلاق سجل الفرع المفتوح
             $employee->branchLogs()
                 ->whereNull('end_at')
-                ->update(['end_at' => $startAt]);
+                ->update([
+                    'end_at' => $closureDate,
+                ]);
 
             // ④ إنشاء سجل فرع جديد
             EmployeeBranchLog::create([
