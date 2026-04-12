@@ -120,7 +120,7 @@ class ResetEmployeeBranchLogs extends Command
                     'branch_id'   => $employee->branch_id,
                     'start_at'    => $startAt,
                     'end_at'      => null,
-                    'created_by'  => 1, // Default system user
+                    // 'created_by'  => 1, // Default system user
                 ]);
                 $count++;
             }
