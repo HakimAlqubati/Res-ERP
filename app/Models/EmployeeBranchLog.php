@@ -87,4 +87,28 @@ class EmployeeBranchLog extends Model
             ->pluck('employee_id')
             ->toArray();
     }
+
+    /**
+     * جلب فترة البداية والنهاية الفعلية للموظف داخل فرع معين خلال فترة زمنية محددة.
+     */
+    public static function getAssignmentRange(int $employeeId, int $branchId, Carbon $periodStart, Carbon $periodEnd): ?array
+    {
+        $log = static::where('employee_id', $employeeId)
+            ->where('branch_id', $branchId)
+            ->where('start_at', '<=', $periodEnd->toDateString())
+            ->where(function ($q) use ($periodStart) {
+                $q->whereNull('end_at')
+                  ->orWhere('end_at', '>=', $periodStart->toDateString());
+            })
+            ->first();
+
+        if (!$log) {
+            return null;
+        }
+
+        return [
+            'start' => Carbon::parse($log->start_at)->max($periodStart),
+            'end'   => Carbon::parse($log->end_at ?? $periodEnd)->min($periodEnd),
+        ];
+    }
 }

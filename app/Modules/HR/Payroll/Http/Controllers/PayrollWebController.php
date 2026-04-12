@@ -29,7 +29,7 @@ class PayrollWebController extends Controller
             'employee_ids'   => [$employeeId],
             'year'           => $request->input('year', 2026),
             'month'          => $request->input('month', 3),
-            'branch_id' => $request->input('branch_id', null),
+            'branch_id' => $request->input('branch_id'),
         ];
         // $validated = $request->validate([
         //     'employee_ids'   => 'nullable|array|min:1',
