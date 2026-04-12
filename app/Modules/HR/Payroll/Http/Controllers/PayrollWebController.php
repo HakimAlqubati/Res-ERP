@@ -28,7 +28,8 @@ class PayrollWebController extends Controller
         $validated = [
             'employee_ids'   => [$employeeId],
             'year'           => $request->input('year', 2026),
-            'month'          => $request->input('month', 1),
+            'month'          => $request->input('month', 3),
+            'branch_id' => $request->input('branch_id', null),
         ];
         // $validated = $request->validate([
         //     'employee_ids'   => 'nullable|array|min:1',
@@ -40,7 +41,8 @@ class PayrollWebController extends Controller
         $results = $this->simulationService->simulateForEmployees(
             $validated['employee_ids'],
             $validated['year'],
-            $validated['month']
+            $validated['month'],
+            $validated['branch_id']
         );
         // dd($results);
 

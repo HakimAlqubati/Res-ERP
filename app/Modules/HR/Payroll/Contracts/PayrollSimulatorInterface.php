@@ -19,7 +19,7 @@ interface PayrollSimulatorInterface
      * @param int $month Month of the period
      * @return array Simulation results for each employee
      */
-    public function simulateForEmployees(array $employeeIds, int $year, int $month): array;
+    public function simulateForEmployees(array $employeeIds, int $year, int $month, ?int $branchId = null): array;
 
     /**
      * Simulate payroll for employees within a specific PayrollRun context.

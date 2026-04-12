@@ -3,6 +3,7 @@
 namespace App\Modules\HR\Payroll\Services;
 
 use App\Models\Employee;
+use App\Models\EmployeeBranchLog;
 use App\Models\PayrollRun;
 use App\Models\Setting;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
@@ -21,11 +22,10 @@ class PayrollSimulationService implements PayrollSimulatorInterface
     /**
      * محاكاة احتساب الرواتب لمجموعة موظفين بدون حفظ في قاعدة البيانات
      */
-    public function simulateForEmployees(array $employeeIds, int $year, int $month): array
+    public function simulateForEmployees(array $employeeIds, int $year, int $month, ?int $branchId = null): array
     {
         $results = [];
 
-        $employees    = Employee::whereIn('id', $employeeIds)->get();
         $periodStart  = Carbon::create($year, $month, 1)->startOfMonth();
         $periodEnd    = Carbon::create($year, $month, 1)->endOfMonth();
 
@@ -34,6 +34,15 @@ class PayrollSimulationService implements PayrollSimulatorInterface
             $periodEnd = now()->endOfDay();
         }
 
+        $employeesQuery = Employee::whereIn('id', $employeeIds);
+        if (isset($branchId)) {
+            $idsInBranch = EmployeeBranchLog::getEmployeesForBranchInRange($branchId, $periodStart, $periodEnd);
+            $employeesQuery->whereIn('id', $idsInBranch);
+        }
+
+        $employees = $employeesQuery->get();
+
+        // dd($employees);
         $monthDays    = $periodStart->daysInMonth;
 
         $chunkReportMap = collect();
