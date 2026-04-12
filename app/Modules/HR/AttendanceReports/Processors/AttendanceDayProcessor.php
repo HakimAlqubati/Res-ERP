@@ -145,15 +145,14 @@ class AttendanceDayProcessor
         $statsInjector->addTotalDurationSeconds($totalDurationSeconds);
         $statsInjector->addTotalActualSeconds($dayActualSeconds);
 
-        // Extract branch info from the first available attendance (prioritizing check-ins)
-        $firstIn = $flatDayAttendances->firstWhere('check_type', Attendance::CHECKTYPE_CHECKIN);
-        $displayAttendance = $firstIn ?? $flatDayAttendances->first();
+        // Extract branch info from the day history record(s)
+        $firstHistory = $dayHistories->first();
 
         return [
             'date' => $dateStr,
             'day_name' => $dayName,
-            'branch_id' => $displayAttendance?->branch_id,
-            'branch_name' => $displayAttendance?->branch?->name,
+            'branch_id' => $firstHistory?->branch_id,
+            'branch_name' => $firstHistory?->branch?->name,
             'periods' => $periods,
             'actual_duration_hours' => gmdate('H:i:s', $dayActualSeconds),
             'day_status' => $this->statusResolver->resolveDayStatus($periods->pluck('final_status')->all()),

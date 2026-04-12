@@ -71,4 +71,20 @@ class EmployeeBranchLog extends Model
 
         return max(0, (int) $from->diffInDays($to) + 1);
     }
+
+    /**
+     * جلب قائمة معرّفات الموظفين (employee_ids) الذين كانوا ينتمون لهذا الفرع في هذه الفترة.
+     */
+    public static function getEmployeesForBranchInRange(int $branchId, Carbon $startDate, Carbon $endDate): array
+    {
+        return static::where('branch_id', $branchId)
+            ->where('start_at', '<=', $endDate->toDateString())
+            ->where(function ($q) use ($startDate) {
+                $q->whereNull('end_at')
+                  ->orWhere('end_at', '>=', $startDate->toDateString());
+            })
+            ->distinct()
+            ->pluck('employee_id')
+            ->toArray();
+    }
 }

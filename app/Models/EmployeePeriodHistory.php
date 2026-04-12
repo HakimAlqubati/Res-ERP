@@ -90,4 +90,12 @@ class EmployeePeriodHistory extends Model implements Auditable
     {
         return $query->where('active', true);
     }
+
+    /**
+     * Get the branch that the employee period history belongs to.
+     */
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
 }

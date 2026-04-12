@@ -28,7 +28,7 @@ class AttendanceDataFetcher
      */
     public function fetchForMultiEmployeesSingleDate(array $employeeIds, string $dateStr): array
     {
-        $histories = EmployeePeriodHistory::with('workPeriod')
+        $histories = EmployeePeriodHistory::with(['workPeriod', 'branch'])
             ->where('active', 1)
             ->whereIn('employee_id', $employeeIds)
             ->where('start_date', '<=', $dateStr)
@@ -97,7 +97,7 @@ class AttendanceDataFetcher
      */
     public function fetchForSingleEmployeeRange(int $employeeId, string $startDateStr, string $endDateStr): array
     {
-        $histories = EmployeePeriodHistory::with('workPeriod')
+        $histories = EmployeePeriodHistory::with(['workPeriod', 'branch'])
             ->where('active', 1)
             ->where('employee_id', $employeeId)
             ->where('start_date', '<=', $endDateStr)
@@ -164,7 +164,7 @@ class AttendanceDataFetcher
      */
     public function fetchForMultiEmployeesRange(array $employeeIds, string $startDateStr, string $endDateStr): array
     {
-        $histories = EmployeePeriodHistory::with('workPeriod')
+        $histories = EmployeePeriodHistory::with(['workPeriod', 'branch'])
             ->where('active', 1)
             ->whereIn('employee_id', $employeeIds)
             ->where('start_date', '<=', $endDateStr)
