@@ -47,6 +47,7 @@ class CreatePenaltyDeduction extends CreateRecord
             showWarningNotifiMessage($exception->getMessage());
             $this->rollBackDatabaseTransaction();
 
+            return;
             // throw $exception;
         }
 
