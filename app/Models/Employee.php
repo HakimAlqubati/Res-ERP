@@ -126,7 +126,7 @@ class Employee extends Model implements Auditable
             return $this->salary_allocation_rule;
         }
 
-        $systemSetting = \App\Models\Setting::getPayload('hr_payroll', 'payroll_salary_allocation_rule');
+        $systemSetting = settingWithDefault('payroll_salary_allocation_rule', \App\Enums\HR\Payroll\SalaryAllocationRule::PROPORTIONAL->value);
 
         return \App\Enums\HR\Payroll\SalaryAllocationRule::tryFrom($systemSetting) 
             ?? \App\Enums\HR\Payroll\SalaryAllocationRule::PROPORTIONAL;
