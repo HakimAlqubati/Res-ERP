@@ -60,12 +60,9 @@ class ListGeneralReportOfProducts extends ListRecords
             $report_data  = GeneralReportOfProductsResource::processReportData($start_date, $end_date, $branch_id, $category_id);
 
             if (isset($report_data['data']) && count($report_data['data']) > 0) {
-                // إضافة اسم الفرع للصنف لتفريقه في الجدول إذا كان هناك تحديد فروع متفرقة
                 $branch_name = $branch_id ? Branch::find($branch_id)?->name : '';
                 foreach ($report_data['data'] as $item) {
-                    if ($branch_name) {
-                        $item->category = $item->category . ' <br><small class="text-gray-500">(' . $branch_name . ')</small>';
-                    }
+                    $item->branch_name = $branch_name; // خاصية منفصلة تظهر في عمود مستقل بالـ View
                     $all_report_data[] = $item;
                 }
             }
@@ -91,14 +88,17 @@ class ListGeneralReportOfProducts extends ListRecords
 
 
         // dd($branch_id,$dd);
+        $filtered_branch_ids = array_filter($branch_ids, fn($id) => !is_null($id));
+
         return [
-            'report_data' => $all_report_data,
-            'branch_id' => is_array($branch_ids) ? implode(',', $branch_ids) : $branch_ids,
-            'category_id' => $category_id,
-            'start_date' => $start_date,
-            'end_date' => $end_date,
-            'total_quantity' =>  number_format($total_quantity, 2),
-            'total_price' =>  $total_price_formatted
+            'report_data'  => $all_report_data,
+            'branch_id'    => is_array($branch_ids) ? implode(',', $branch_ids) : $branch_ids,
+            'branch_count' => count($filtered_branch_ids), // عدد الفروع المختارة لإظهار العمود أو إخفائه
+            'category_id'  => $category_id,
+            'start_date'   => $start_date,
+            'end_date'     => $end_date,
+            'total_quantity' => number_format($total_quantity, 2),
+            'total_price'    => $total_price_formatted
         ];
     }
 
