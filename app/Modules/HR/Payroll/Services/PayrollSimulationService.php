@@ -86,11 +86,8 @@ class PayrollSimulationService implements PayrollSimulatorInterface
      */
     private function buildSegments(Collection $employees, Carbon $periodStart, Carbon $periodEnd, ?int $branchId): Collection
     {
-        $rule = SalaryAllocationRule::tryFrom(Setting::getSetting('payroll_salary_allocation_rule'))
-            ?? SalaryAllocationRule::PROPORTIONAL;
-
         return $employees->flatMap(
-            fn(Employee $employee) => EmployeeBranchLog::getSalarySegments($employee, $periodStart, $periodEnd, $branchId, $rule)
+            fn(Employee $employee) => EmployeeBranchLog::getSalarySegments($employee, $periodStart, $periodEnd, $branchId)
                 ->map(fn($seg) => ['employee' => $employee, 'log' => (object) $seg])
         );
     }

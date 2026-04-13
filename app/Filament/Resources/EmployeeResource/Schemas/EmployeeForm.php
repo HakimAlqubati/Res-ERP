@@ -378,6 +378,14 @@ class EmployeeForm
                                             ->label(__('lang.salary'))
                                             ->numeric()
                                             ->inputMode('decimal')->disabled(fn(): bool => isBranchManager()),
+                                        
+                                        Select::make('salary_allocation_rule')
+                                            ->label(__('Salary Allocation Rule (Override)'))
+                                            ->options(\App\Enums\HR\Payroll\SalaryAllocationRule::class)
+                                            ->placeholder(__('Use System Default')) // Fallback to system general setting
+                                            ->disabled(fn(): bool => isBranchManager())
+                                            ->columnSpan(1),
+
                                         TextInput::make('tax_identification_number')
                                             ->label(__('lang.tax_identification_number'))->required()
                                             ->visible(fn($get): bool => ($get('nationality') != null && ($get('nationality') == setting('default_nationality'))

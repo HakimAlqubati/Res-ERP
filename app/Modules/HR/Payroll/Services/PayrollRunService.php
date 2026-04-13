@@ -198,11 +198,10 @@ class PayrollRunService implements PayrollRunnerInterface
      */
     private function buildSegments(int $branchId, int $year, int $month, Carbon $periodStart, Carbon $periodEnd, ?array $employeeIds = null): Collection
     {
-        $rule      = SalaryAllocationRule::tryFrom(Setting::getSetting('payroll_salary_allocation_rule')) ?? SalaryAllocationRule::PROPORTIONAL;
         $employees = $this->eligibleEmployees($branchId, $year, $month, $periodStart, $periodEnd, $employeeIds);
 
         return $employees->flatMap(
-            fn(Employee $employee) => EmployeeBranchLog::getSalarySegments($employee, $periodStart, $periodEnd, $branchId, $rule)
+            fn(Employee $employee) => EmployeeBranchLog::getSalarySegments($employee, $periodStart, $periodEnd, $branchId)
                 ->map(fn($seg) => ['employee' => $employee, 'log' => (object) $seg])
         );
     }

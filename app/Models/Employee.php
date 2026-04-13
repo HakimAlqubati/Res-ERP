@@ -64,6 +64,7 @@ class Employee extends Model implements Auditable
         'is_mtd_applicable',
         'has_auto_weekly_leave',
         'birthday',
+        'salary_allocation_rule',
     ];
 
     protected $auditInclude = [
@@ -104,12 +105,32 @@ class Employee extends Model implements Auditable
     ];
 
     protected $casts = [
-        'bank_information'  => 'array',
-        'changes'           => 'array',
-        'is_mtd_applicable' => 'boolean',
-        'has_auto_weekly_leave' => 'boolean',
-        // 'is_ceo'            => 'boolean',
+        'bank_information'       => 'array',
+        'changes'                => 'array',
+        'is_mtd_applicable'      => 'boolean',
+        'has_auto_weekly_leave'  => 'boolean',
+        'salary_allocation_rule' => \App\Enums\HR\Payroll\SalaryAllocationRule::class,
     ];
+
+    // ─────────────────────────────────────────────────────────────
+    // Helpers
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Get the effective salary allocation rule for the employee.
+     * Fallbacks to system setting if no employee override exists.
+     */
+    public function getEffectiveSalaryAllocationRule(): \App\Enums\HR\Payroll\SalaryAllocationRule
+    {
+        if ($this->salary_allocation_rule) {
+            return $this->salary_allocation_rule;
+        }
+
+        $systemSetting = \App\Models\Setting::getPayload('hr_payroll', 'payroll_salary_allocation_rule');
+
+        return \App\Enums\HR\Payroll\SalaryAllocationRule::tryFrom($systemSetting) 
+            ?? \App\Enums\HR\Payroll\SalaryAllocationRule::PROPORTIONAL;
+    }
 
     // ─────────────────────────────────────────────────────────────
     // Constants

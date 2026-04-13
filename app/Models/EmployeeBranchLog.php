@@ -126,7 +126,7 @@ class EmployeeBranchLog extends Model
         ?int $targetBranchId = null,
         ?SalaryAllocationRule $rule = null
     ): Collection {
-        $rule = $rule ?? SalaryAllocationRule::PROPORTIONAL;
+        $rule = $rule ?? $employee->getEffectiveSalaryAllocationRule();
 
         // 1. جلب كل السجلات التي تتقاطع مع فترة الراتب
         $logs = static::where('employee_id', $employee->id)
