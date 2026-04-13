@@ -9,6 +9,7 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeApplicationV2;
 use App\Models\EmployeeOvertime;
+use App\Models\ServiceRequest;
 use App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesV2Service;
 use App\Services\HR\AttendanceHelpers\Reports\MissingCheckoutService;
 use Carbon\Carbon;
@@ -205,6 +206,27 @@ class DashboardService
         return [
             'today_attendance' => $todayAttendance,
             'last_7_days_attendance' => $last7DaysAttendance,
+        ];
+    }
+
+    /**
+     * Get maintenance alerts from Service Requests
+     */
+    public function getMaintenanceAlerts(DashboardFilterDTO $dto): array
+    {
+        $stats = ServiceRequest::query()
+            ->when($dto->branchId, fn($q) => $q->where('branch_id', $dto->branchId))
+            ->selectRaw("
+                COUNT(CASE WHEN status != '" . ServiceRequest::STATUS_CLOSED . "' THEN 1 END) as open_count,
+                COUNT(CASE WHEN urgency = '" . ServiceRequest::URGENCY_HIGH . "' AND status != '" . ServiceRequest::STATUS_CLOSED . "' THEN 1 END) as high_priority_count,
+                COUNT(CASE WHEN status = '" . ServiceRequest::STATUS_IN_PROGRESS . "' THEN 1 END) as in_progress_count
+            ")
+            ->first();
+// dd($stats);
+        return [
+            'open'          => (int) ($stats->open_count ?? 0),
+            'high_priority' => (int) ($stats->high_priority_count ?? 0),
+            'in_progress'   => (int) ($stats->in_progress_count ?? 0),
         ];
     }
 
