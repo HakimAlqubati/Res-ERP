@@ -25,9 +25,9 @@ enum SalaryAllocationRule: string
     public function label(): string
     {
         return match ($this) {
-            self::PROPORTIONAL => __('Proportional (Split by days)'),
-            self::FIRST_BRANCH => __('First Branch Assignment (Source)'),
-            self::LAST_BRANCH  => __('Last Branch Assignment (Recipient)'),
+            self::PROPORTIONAL => __('Each Branch Pays for Its Working Days'),
+            self::FIRST_BRANCH => __('First Branch Pays Full Salary'),
+            self::LAST_BRANCH  => __('Last Branch Pays Full Salary'),
         };
     }
 
