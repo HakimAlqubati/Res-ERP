@@ -28,6 +28,7 @@ class AdvanceWage extends Model
     protected $fillable = [
         'employee_id',
         'branch_id',
+        'date',
         'year',
         'month',
         'amount',
@@ -46,6 +47,7 @@ class AdvanceWage extends Model
 
     protected $casts = [
         'amount'      => 'decimal:2',
+        'date'        => 'date:Y-m-d',
         'year'        => 'integer',
         'month'       => 'integer',
         'settled_at'  => 'datetime',

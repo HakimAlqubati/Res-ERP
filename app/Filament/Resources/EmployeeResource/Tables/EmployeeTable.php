@@ -580,33 +580,25 @@ class EmployeeTable
                                     ->label(__('Amount'))
                                     ->numeric()
                                     ->minValue(0.01)
-                                    // ->maxValue(fn(Employee $record) => $record->salary ?? 99999)
                                     ->required()
                                     ->live(onBlur: true)
                                     ->rules([
                                         fn(Get $get, Employee $record) => new AdvanceWageLimitRule(
                                             $record->id,
-                                            $get('year'),
-                                            $get('month')
+                                            (int) now()->setDateFrom(\Carbon\Carbon::parse($get('date') ?: now()))->year,
+                                            (int) now()->setDateFrom(\Carbon\Carbon::parse($get('date') ?: now()))->month,
                                         )
                                     ])
                                     ->columnSpan(1),
 
-                                Select::make('year')
-                                    ->label(__('Year'))
-                                    ->options(collect(range(now()->year - 1, now()->year + 1))->mapWithKeys(fn($y) => [$y => $y]))
-                                    ->default(now()->year)
+                                DatePicker::make('date')
+                                    ->label(__('Date'))
+                                    ->default(now()->toDateString())
                                     ->required()
                                     ->live()
-                                    ->columnSpan(1),
-
-                                Select::make('month')
-                                    ->label(__('Month'))
-                                    ->options(collect(range(1, 12))->mapWithKeys(fn($m) => [$m => now()->setMonth($m)->translatedFormat('F')]))
-                                    ->default(now()->month)
-                                    ->required()
-                                    ->live()
-                                    ->columnSpan(1),
+                                    ->native(false)
+                                    ->displayFormat('Y-m-d')
+                                    ->columnSpan(2),
 
                             ])->columnSpanFull(),
 
@@ -646,13 +638,13 @@ class EmployeeTable
                             try {
                                 $record->advanceWages()->create([
                                     'amount' => $data['amount'],
-                                    'year' => $data['year'],
-                                    'month' => $data['month'],
+                                    'date' => $data['date'],
                                     'reason' => $data['reason'],
                                     'payment_method' => $data['payment_method'],
                                     'bank_account_number' => $data['bank_account_number'] ?? null,
                                     'transaction_number' => $data['transaction_number'] ?? null,
                                     'branch_id' => $record->branch_id,
+                                    'created_by' => auth()->id(),
                                 ]);
 
                                 Notification::make()

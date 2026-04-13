@@ -7,6 +7,7 @@ use App\Rules\HR\Payroll\AdvanceWageLimitRule;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -50,33 +51,25 @@ class AdvanceWagesRelationManager extends RelationManager
                     ->label(__('Amount'))
                     ->numeric()
                     ->minValue(0.01)
-                    // ->maxValue(fn() => $this->getOwnerRecord()->salary ?? 99999)
                     ->required()
                     ->live(onBlur: true)
                     ->rules([
                         fn(Get $get) => new AdvanceWageLimitRule(
                             $this->getOwnerRecord()->id,
-                            $get('year'),
-                            $get('month')
+                            (int) now()->setDateFrom(\Carbon\Carbon::parse($get('date') ?: now()))->year,
+                            (int) now()->setDateFrom(\Carbon\Carbon::parse($get('date') ?: now()))->month,
                         )
                     ])
                     ->columnSpan(1),
 
-                Select::make('year')
-                    ->label(__('Year'))
-                    ->options(collect(range(now()->year - 1, now()->year + 1))->mapWithKeys(fn($y) => [$y => $y]))
-                    ->default(now()->year)
+                DatePicker::make('date')
+                    ->label(__('Date'))
+                    ->default(now()->toDateString())
                     ->required()
                     ->live()
-                    ->columnSpan(1),
-
-                Select::make('month')
-                    ->label(__('Month'))
-                    ->options(collect(range(1, 12))->mapWithKeys(fn($m) => [$m => now()->setMonth($m)->translatedFormat('F')]))
-                    ->default(now()->month)
-                    ->required()
-                    ->live()
-                    ->columnSpan(1),
+                    ->native(false)
+                    ->displayFormat('Y-m-d')
+                    ->columnSpan(2),
 
             ])->columnSpanFull(),
 
@@ -124,13 +117,9 @@ class AdvanceWagesRelationManager extends RelationManager
             ->striped()
             ->defaultSort('created_at', 'desc')
             ->columns([
-                TextColumn::make('year')
-                    ->label(__('Year'))
-                    ->sortable(),
-
-                TextColumn::make('month')
-                    ->label(__('Month'))
-                    ->formatStateUsing(fn($state) => now()->setMonth($state)->translatedFormat('F'))
+                TextColumn::make('date')
+                    ->label(__('Date'))
+                    ->date('Y-m-d')
                     ->sortable(),
 
                 TextColumn::make('amount')
@@ -195,15 +184,14 @@ class AdvanceWagesRelationManager extends RelationManager
                     ->action(function (array $data, CreateAction $action): void {
                         try {
                             $this->getOwnerRecord()->advanceWages()->create([
-                                'amount' => $data['amount'],
-                                'year' => $data['year'],
-                                'month' => $data['month'],
-                                'reason' => $data['reason'] ?? null,
-                                'payment_method' => $data['payment_method'],
+                                'amount'              => $data['amount'],
+                                'date'                => $data['date'],
+                                'reason'              => $data['reason'] ?? null,
+                                'payment_method'      => $data['payment_method'],
                                 'bank_account_number' => $data['bank_account_number'] ?? null,
-                                'transaction_number' => $data['transaction_number'] ?? null,
-                                'branch_id' => $this->getOwnerRecord()->branch_id,
-                                'created_by' => auth()->id(),
+                                'transaction_number'  => $data['transaction_number'] ?? null,
+                                'branch_id'           => $this->getOwnerRecord()->branch_id,
+                                'created_by'          => auth()->id(),
                             ]);
 
                             Notification::make()
