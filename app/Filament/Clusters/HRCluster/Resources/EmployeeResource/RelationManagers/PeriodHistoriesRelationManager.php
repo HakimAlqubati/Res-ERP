@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationMan
 
 use App\Enums\DayOfWeek;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\Concerns\CanCustomizeProcess;
 use Filament\Actions\CreateAction;
@@ -156,6 +157,73 @@ class PeriodHistoriesRelationManager extends RelationManager
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('bulkEditDates')
+                        ->label('Edit Dates')
+                        ->icon('heroicon-o-calendar-days')
+                        ->color(Color::Blue)
+                        ->visible(fn(): bool => isSuperAdmin() || isBranchManager())
+                        ->form([
+                            DatePicker::make('start_date')
+                                ->label('Start Date')
+                                ->required(),
+                            DatePicker::make('end_date')
+                                ->label('End Date'),
+                        ])
+                        ->before(function (BulkAction $action, \Illuminate\Database\Eloquent\Collection $records) {
+                            // ── التحقق 1: كل السجلات يجب أن تملك نفس period_id ──
+                            $uniquePeriods = $records->pluck('period_id')->unique();
+                            if ($uniquePeriods->count() > 1) {
+                                Notification::make()
+                                    ->title('Invalid Selection')
+                                    ->body('All selected records must belong to the same shift (period). Found: ' . $uniquePeriods->implode(', '))
+                                    ->danger()
+                                    ->send();
+                                $action->cancel();
+                                return;
+                            }
+
+                            // ── التحقق 2: كل السجلات يجب أن تكون في نفس الفترة (نفس start_date month/year) ──
+                            $uniqueMonths = $records->map(function ($record) {
+                                return \Carbon\Carbon::parse($record->start_date)->format('Y-m');
+                            })->unique();
+
+                            if ($uniqueMonths->count() > 1) {
+                                Notification::make()
+                                    ->title('Invalid Selection')
+                                    ->body('All selected records must be in the same month/period. Found months: ' . $uniqueMonths->implode(', '))
+                                    ->danger()
+                                    ->send();
+                                $action->cancel();
+                                return;
+                            }
+                        })
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records, array $data): void {
+                            DB::beginTransaction();
+                            try {
+                                foreach ($records as $record) {
+                                    $updateData = array_filter([
+                                        'start_date' => $data['start_date'] ?? null,
+                                        'end_date'   => $data['end_date'] ?? null,
+                                    ], fn($v) => !is_null($v));
+
+                                    $record->update($updateData);
+                                }
+
+                                DB::commit();
+                                Notification::make()
+                                    ->title('Updated successfully!')
+                                    ->body('Updated ' . $records->count() . ' records.')
+                                    ->success()
+                                    ->send();
+                            } catch (\Throwable $e) {
+                                DB::rollBack();
+                                Notification::make()
+                                    ->title('Error')
+                                    ->body('An error occurred: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
                     // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
