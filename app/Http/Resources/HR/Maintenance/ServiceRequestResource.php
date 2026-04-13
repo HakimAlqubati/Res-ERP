@@ -17,6 +17,7 @@ class ServiceRequestResource extends JsonResource
             'branch_area'   => $this->whenLoaded('branchArea'),
             'assigned_to'   => $this->assigned_to,
             'assignee'      => $this->whenLoaded('assignedTo'),
+            'assigned_to_name' => $this?->assignedTo?->name,
             'urgency'       => $this->urgency,
             'impact'        => $this->impact,
             'status'        => $this->status,
@@ -25,8 +26,8 @@ class ServiceRequestResource extends JsonResource
             'equipment'     => $this->whenLoaded('equipment'),
             'photos_count'  => $this->photos_count ?? $this->photos()->count(),
             'first_photo'   => $this->first_photo_url,
-            'created_by'    => $this->created_by,
-            'updated_by'    => $this->updated_by,
+            'created_by'    => $this?->createdBy?->name,
+            'updated_by'    => $this?->updatedBy?->name,
             'created_at'    => $this->created_at,
             'updated_at'    => $this->updated_at,
         ];

@@ -12,6 +12,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Support\Colors\Color;
 use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
@@ -46,6 +47,14 @@ class ServiceRequestTable
     public static function getColumns(): array
     {
         return [
+
+            SpatieMediaLibraryImageColumn::make('attachments')
+                ->collection('attachments')
+                ->label('')
+                ->size(50)
+                ->circular()
+                ->alignCenter(true)
+                ->limit(3),
             TextColumn::make('id')
                 ->sortable()
                 ->searchable(isIndividual: false)
@@ -93,13 +102,6 @@ class ServiceRequestTable
                 ])
                 ->toggleable(isToggledHiddenByDefault: false),
 
-            ImageColumn::make('first_photo_url')
-                ->label('Photo')
-                ->width(50)
-                ->height(50)
-                ->disabledClick(true)
-                ->toggleable(isToggledHiddenByDefault: false)
-                ->getStateUsing(fn($record) => $record->photos()->first()?->image_path),
 
             TextColumn::make('impact')
                 ->badge()

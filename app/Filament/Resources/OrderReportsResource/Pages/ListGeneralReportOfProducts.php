@@ -36,7 +36,11 @@ class ListGeneralReportOfProducts extends ListRecords
 
     protected function getViewData(): array
     {
-        $branch_id = $this->getTable()->getFilters()['branch_id']->getState()['value'] ?? null;
+        $branchState = $this->getTable()->getFilters()['branch_id']->getState() ?? [];
+        $branch_ids = $branchState['values'] ?? (isset($branchState['value']) ? (array) $branchState['value'] : null);
+        if (empty($branch_ids)) {
+            $branch_ids = [null]; // للبحث الشامل إذا لم يحدد فرع معين
+        }
         
         $catState = $this->getTable()->getFilters()['category_id']->getState() ?? [];
         $category_id = $catState['values'] ?? (isset($catState['value']) ? (array) $catState['value'] : null);
@@ -47,35 +51,54 @@ class ListGeneralReportOfProducts extends ListRecords
         $start_date = $this->getTable()->getFilters()['date']->getState()['start_date'];
         $end_date = $this->getTable()->getFilters()['date']->getState()['end_date'];
 
-        $report_data['data'] = [];
+        $all_report_data = [];
         $total_quantity = 0;
         $total_price = 0;
+ 
+        // تنفيذ foreach حول الفروع المختارة وجمع نتائجها
+        foreach ($branch_ids as $branch_id) {
+            $report_data  = GeneralReportOfProductsResource::processReportData($start_date, $end_date, $branch_id, $category_id);
 
-        // $report_data  = $this->getReportData($start_date, $end_date, $branch_id);
-        $report_data  = GeneralReportOfProductsResource::processReportData($start_date, $end_date, $branch_id, $category_id);
+            if (isset($report_data['data']) && count($report_data['data']) > 0) {
+                // إضافة اسم الفرع للصنف لتفريقه في الجدول إذا كان هناك تحديد فروع متفرقة
+                $branch_name = $branch_id ? Branch::find($branch_id)?->name : '';
+                foreach ($report_data['data'] as $item) {
+                    if ($branch_name) {
+                        $item->category = $item->category . ' <br><small class="text-gray-500">(' . $branch_name . ')</small>';
+                    }
+                    $all_report_data[] = $item;
+                }
+            }
+
+            if (isset($report_data['total_price'])) {
+                // تنظيف النصوص المعالجة مسبقاً لاستخراج الرقم وإضافته للمجموع (لأنها تعود مع رمز العملة والفواصل)
+                $price_clean = filter_var(str_replace(',', '', $report_data['total_price']), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+                $total_price += (float) $price_clean;
+            }
+            if (isset($report_data['total_quantity'])) {
+                $qty_clean = filter_var(str_replace(',', '', $report_data['total_quantity']), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+                $total_quantity += (float) $qty_clean;
+            }
+        }
 
 
         // dd($report_data);
         $start_date = (!is_null($start_date) ? date('Y-m-d', strtotime($start_date))  : __('lang.date_is_unspecified'));
         $end_date = (!is_null($end_date) ? date('Y-m-d', strtotime($end_date))  : __('lang.date_is_unspecified'));
-        if (isset($report_data['total_price'])) {
-            $total_price = $report_data['total_price'];
-        }
-        if (isset($report_data['total_quantity'])) {
-            $total_quantity = $report_data['total_quantity'];
-        }
 
+        // إعادة فورمات المجموع الكلي
+        $total_price_formatted = getDefaultCurrency() . ' ' . number_format($total_price, 2);
 
 
         // dd($branch_id,$dd);
         return [
-            'report_data' => $report_data['data'],
-            'branch_id' => $branch_id,
+            'report_data' => $all_report_data,
+            'branch_id' => is_array($branch_ids) ? implode(',', $branch_ids) : $branch_ids,
             'category_id' => $category_id,
             'start_date' => $start_date,
             'end_date' => $end_date,
-            'total_quantity' =>  $total_quantity,
-            'total_price' =>  $total_price
+            'total_quantity' =>  number_format($total_quantity, 2),
+            'total_price' =>  $total_price_formatted
         ];
     }
 

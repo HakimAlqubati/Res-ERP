@@ -1,6 +1,10 @@
 <x-filament::page>
     {{ $this->getTableFiltersForm() }}
-    @if (isset($branch_id) && is_numeric($branch_id))
+    @if (isset($branch_id) && $branch_id !== '')
+        @php
+            $b_ids = explode(',', $branch_id);
+            $branch_names = \App\Models\Branch::whereIn('id', $b_ids)->pluck('name')->implode('، ');
+        @endphp
         <table class="w-full text-sm text-left pretty  reports" id="report-table">
             <thead class="fixed-header" style="top:64px;">
 
@@ -10,8 +14,7 @@
                 <tr class="header_report">
                     <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
                         <p>{{ __('lang.general_report_of_products') }}</p>
-                        <p>({{ isset($branch_id) && is_numeric($branch_id) ? \App\Models\Branch::find($branch_id)->name : __('lang.choose_branch') }})
-                        </p>
+                        <p>({{ $branch_names }})</p>
                     </th>
                     <th class="no_border_right_left">
                         <p>{{ __('lang.start_date') . ': ' . $start_date }}</p>
@@ -39,7 +42,7 @@
 
                         <td>
                             <a target="_blank" href="{{ url($data?->url_report_details) }}">
-                                {{ $data?->category }}</a>
+                                {!! $data?->category !!}</a>
                         </td>
                         <td> {{ $data?->quantity }} </td>
                         @if (!isStoreManager())
