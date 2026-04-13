@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers;
 
 use App\Models\AdvanceWage;
+use App\Rules\HR\Payroll\AdvanceWageLimitRule;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -11,8 +12,11 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
+use App\Services\HR\Payroll\PayrollLockGuard;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -29,8 +33,7 @@ class AdvanceWagesRelationManager extends RelationManager
         $count = $ownerRecord->advanceWages()
             // ->where('status', AdvanceWage::STATUS_PENDING)
             ->count();
-
-        return $count > 0 ? (string) $count : null;
+        return $count;
     }
 
     public static function getBadgeColor(Model $ownerRecord, string $pageClass): ?string
@@ -47,8 +50,16 @@ class AdvanceWagesRelationManager extends RelationManager
                     ->label(__('Amount'))
                     ->numeric()
                     ->minValue(0.01)
-                    ->maxValue(fn() => $this->getOwnerRecord()->salary ?? 99999)
+                    // ->maxValue(fn() => $this->getOwnerRecord()->salary ?? 99999)
                     ->required()
+                    ->live(onBlur: true)
+                    ->rules([
+                        fn(Get $get) => new AdvanceWageLimitRule(
+                            $this->getOwnerRecord()->id,
+                            $get('year'),
+                            $get('month')
+                        )
+                    ])
                     ->columnSpan(1),
 
                 Select::make('year')
@@ -56,6 +67,7 @@ class AdvanceWagesRelationManager extends RelationManager
                     ->options(collect(range(now()->year - 1, now()->year + 1))->mapWithKeys(fn($y) => [$y => $y]))
                     ->default(now()->year)
                     ->required()
+                    ->live()
                     ->columnSpan(1),
 
                 Select::make('month')
@@ -63,10 +75,37 @@ class AdvanceWagesRelationManager extends RelationManager
                     ->options(collect(range(1, 12))->mapWithKeys(fn($m) => [$m => now()->setMonth($m)->translatedFormat('F')]))
                     ->default(now()->month)
                     ->required()
+                    ->live()
                     ->columnSpan(1),
 
             ])->columnSpanFull(),
 
+            Grid::make(3)->schema([
+                Select::make('payment_method')
+                    ->label(__('lang.payment_method'))
+                    ->options(AdvanceWage::paymentMethods())
+                    ->default(AdvanceWage::PAYMENT_METHOD_CASH)
+                    ->required()
+                    ->live()
+                    ->afterStateUpdated(function ($state, Set $set) {
+                        if ($state === AdvanceWage::PAYMENT_METHOD_BANK_TRANSFER) {
+                            $set('bank_account_number', $this->getOwnerRecord()->bank_account_number);
+                        }
+                    })
+                    ->columnSpan(1),
+
+                TextInput::make('bank_account_number')
+                    ->label(__('lang.bank_account_number'))
+                    ->visible(fn(Get $get) => $get('payment_method') === AdvanceWage::PAYMENT_METHOD_BANK_TRANSFER)
+                    ->required(fn(Get $get) => $get('payment_method') === AdvanceWage::PAYMENT_METHOD_BANK_TRANSFER)
+                    ->columnSpan(1),
+
+                TextInput::make('transaction_number')
+                    ->label(__('lang.transaction_number'))
+                    ->visible(fn(Get $get) => $get('payment_method') === AdvanceWage::PAYMENT_METHOD_BANK_TRANSFER)
+                    ->required(fn(Get $get) => $get('payment_method') === AdvanceWage::PAYMENT_METHOD_BANK_TRANSFER)
+                    ->columnSpan(1),
+            ])->columnSpanFull(),
 
             TextInput::make('reason')
                 ->label(__('Reason'))
@@ -160,6 +199,9 @@ class AdvanceWagesRelationManager extends RelationManager
                                 'year' => $data['year'],
                                 'month' => $data['month'],
                                 'reason' => $data['reason'] ?? null,
+                                'payment_method' => $data['payment_method'],
+                                'bank_account_number' => $data['bank_account_number'] ?? null,
+                                'transaction_number' => $data['transaction_number'] ?? null,
                                 'branch_id' => $this->getOwnerRecord()->branch_id,
                                 'created_by' => auth()->id(),
                             ]);
@@ -198,6 +240,11 @@ class AdvanceWagesRelationManager extends RelationManager
                                 ->send();
                         }
                     })
+                    ->disabled(fn (AdvanceWage $record) => app(PayrollLockGuard::class)->isLocked(
+                        (int) $record->employee_id,
+                        (int) $record->year,
+                        (int) $record->month
+                    ))
                 // ->visible(fn(AdvanceWage $record) => $record->status === AdvanceWage::STATUS_PENDING)
                 ,
 
@@ -213,7 +260,12 @@ class AdvanceWagesRelationManager extends RelationManager
                     ->action(function (AdvanceWage $record): void {
                         $record->cancel();
                         Notification::make()->success()->title(__('Advance wage cancelled.'))->send();
-                    }),
+                    })
+                    ->disabled(fn (AdvanceWage $record) => app(PayrollLockGuard::class)->isLocked(
+                        (int) $record->employee_id,
+                        (int) $record->year,
+                        (int) $record->month
+                    )),
                 Action::make('approve')
                     ->label(__('Approve'))
                     ->icon('heroicon-o-check-circle')
@@ -226,7 +278,12 @@ class AdvanceWagesRelationManager extends RelationManager
                     ->action(function (AdvanceWage $record): void {
                         $record->update(['status' => AdvanceWage::STATUS_SETTLED]);
                         Notification::make()->success()->title(__('Advance wage approved.'))->send();
-                    }),
+                    })
+                    ->disabled(fn (AdvanceWage $record) => app(PayrollLockGuard::class)->isLocked(
+                        (int) $record->employee_id,
+                        (int) $record->year,
+                        (int) $record->month
+                    )),
 
                 Action::make('delete')
                     ->label(__('Delete'))
@@ -237,7 +294,12 @@ class AdvanceWagesRelationManager extends RelationManager
                     ->action(function (AdvanceWage $record): void {
                         $record->delete();
                         Notification::make()->success()->title(__('Deleted successfully.'))->send();
-                    }),
+                    })
+                    ->disabled(fn (AdvanceWage $record) => app(PayrollLockGuard::class)->isLocked(
+                        (int) $record->employee_id,
+                        (int) $record->year,
+                        (int) $record->month
+                    )),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([]),

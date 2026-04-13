@@ -39,9 +39,9 @@ class AdvanceWageObserver
         // Validate amount against net salary
         $simulator = app(PayrollSimulatorInterface::class);
         $results = $simulator->simulateForEmployees([$advanceWage->employee_id], (int) $advanceWage->year, (int) $advanceWage->month);
-        
+
         $netSalary = (float) ($results[0]['data']['net_salary'] ?? 0);
-        
+
         if ((float)$advanceWage->amount > $netSalary) {
             throw ValidationException::withMessages([
                 'amount' => __('The amount exceeds the employee\'s net salary for this period (:amount).', ['amount' => formatMoneyWithCurrency($netSalary)]),
@@ -125,7 +125,7 @@ class AdvanceWageObserver
         if (empty($advanceWage->year) || empty($advanceWage->month) || empty($advanceWage->employee_id)) {
             return;
         }
-
+        // dd($advanceWage->year, $advanceWage->month, $advanceWage->employee_id);
         $this->payrollLockGuard->checkLock(
             (int) $advanceWage->employee_id,
             (int) $advanceWage->year,

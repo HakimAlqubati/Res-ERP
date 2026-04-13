@@ -32,7 +32,7 @@ final class PayrollLockGuard
      */
     public function checkLock(int $employeeId, int $year, int $month, string $errorField = 'date'): void
     {
-        if ($this->hasExistingPayroll($employeeId, $year, $month)) {
+        if ($this->isLocked($employeeId, $year, $month)) {
             $period = $this->monthLabel($year, $month);
 
             throw ValidationException::withMessages([
@@ -40,6 +40,15 @@ final class PayrollLockGuard
                     "Cannot process records for this employee in this period.",
             ]);
         }
+    }
+
+    /**
+     * Check whether a payroll has been processed for the given employee
+     * in the specified month/year.
+     */
+    public function isLocked(int $employeeId, int $year, int $month): bool
+    {
+        return $this->hasExistingPayroll($employeeId, $year, $month);
     }
 
     // -------------------------------------------------------------------------
