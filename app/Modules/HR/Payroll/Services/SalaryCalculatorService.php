@@ -181,15 +181,16 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
 
         // Create calculation context
         $context = new CalculationContext(
-            employee: $employee,
-            employeeData: $employeeData,
-            salary: $salary,
-            workingDays: (int)$payableDays,
-            dailyHours: $dailyHours,
-            monthDays: $monthDays,
-            periodYear: $periodYear,
-            periodMonth: $periodMonth, // Using provided month
-            periodEndDate: $periodEnd ? $periodEnd->toDateString() : null,
+            employee:        $employee,
+            employeeData:    $employeeData,
+            salary:          $salary,
+            workingDays:     (int)$payableDays,
+            dailyHours:      $dailyHours,
+            monthDays:       $monthDays,
+            periodYear:      $periodYear,
+            periodMonth:     $periodMonth,
+            periodEndDate:   $periodEnd ? $periodEnd->toDateString() : null,
+            periodStartDate: $periodStart?->toDateString(),   // ← بداية فترة الفرع الدقيقة
         );
 
 

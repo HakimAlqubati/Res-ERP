@@ -32,11 +32,14 @@ class AdvanceWageCalculator
             return ['items' => [], 'total' => 0.0];
         }
 
+        // جلب الأجور المقدمة مقيدةً بفترة الفرع الفعلية (Segment-Aware)
+        // إذا انتقل الموظف بين فرعين، يُخصم كل فرع فقط الأجور المقدمة التي تقع ضمن فترته
         $rows = AdvanceWage::query()
             ->forEmployee($context->employee->id)
-            ->forPeriod($context->periodYear, $context->periodMonth)
+            ->whereBetween('date', [$context->periodStart(), $context->periodEnd()])
             ->settled()
             ->get(['id', 'amount', 'reason', 'notes', 'approved_at']);
+
 
         if ($rows->isEmpty()) {
             return ['items' => [], 'total' => 0.0];
