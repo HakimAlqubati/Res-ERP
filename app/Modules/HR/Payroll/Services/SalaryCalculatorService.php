@@ -107,6 +107,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         ?int $periodYear = null,
         ?int $periodMonth = null,
         ?Carbon $periodEnd = null,
+        ?Carbon $periodStart = null,
     ): array {
         $this->resetState();
 
@@ -244,10 +245,12 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         $overTimeDays = $statistics['weekly_leave_calculation']['result']['overtime_days'];
         $overtimeDaysAmount = ($overTimeDays * $rates->dailyRate) ?? 0;
 
-        // Fetch manual daily overtime records (Eid, etc.)
+        // جلب الإضافي اليومي اليدوي (بالأيام) مقيّدًا بفترة الفرع الفعلية
+        $segmentStart = $periodStart ?? Carbon::create($periodYear, $periodMonth, 1)->startOfMonth();
+        $segmentEnd   = $periodEnd   ?? Carbon::create($periodYear, $periodMonth, 1)->endOfMonth();
+
         $manualOvertimeRecords = $employee->dailyOvertimes()
-            ->whereYear('date', $periodYear)
-            ->whereMonth('date', $periodMonth)
+            ->whereBetween('date', [$segmentStart->toDateString(), $segmentEnd->toDateString()])
             ->get();
 
         $manualOvertimeAmount = 0;

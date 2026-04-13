@@ -3,13 +3,22 @@
 namespace App\Models;
 
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Employee;
+use App\Enums\HR\Payroll\SalaryAllocationRule;
 use Illuminate\Database\Eloquent\Model;
 
 class EmployeeBranchLog extends Model
 {
     use HasFactory;
+
+    // - [x] إنشاء الـ Enum الاحترافي `SalaryAllocationRule` (PROPORTIONAL, FIRST_BRANCH, LAST_BRANCH)
+    // - [x] إضافة محرك توزيع الرواتب `getSalarySegments` في موديل `EmployeeBranchLog`
+    // - [x] تحديث `PayrollSimulationService` لاستخدام المنطق الموحد ودعم الفترات المخصصة
+    // - [x] تحديث `PayrollRunService` لدعم الموظفين المنتقلين وتعدد الفترات
+    // - [x] التحقق واصلاح أخطاء الـ Type Hinting
 
     protected $table = 'hr_employee_branch_logs';
     protected $fillable = ['employee_id', 'branch_id', 'start_at', 'end_at', 'created_by'];
@@ -42,12 +51,8 @@ class EmployeeBranchLog extends Model
 
     /**
      * جلب سجلات الفرع الفعّالة للموظف التي تتقاطع مع فترة الراتب.
-     *
-     * السجل "فعّال" إذا كان:
-     *   - بدأ قبل نهاية الفترة، و
-     *   - لم ينتهِ بعد (end_at = null) أو انتهى بعد بداية الفترة
      */
-    public static function getForPeriod(int $employeeId, Carbon $periodStart, Carbon $periodEnd): Collection
+    public static function getForPeriod(int $employeeId, Carbon $periodStart, Carbon $periodEnd): EloquentCollection
     {
         return static::where('employee_id', $employeeId)
             ->where('start_at', '<=', $periodEnd)
@@ -61,8 +66,6 @@ class EmployeeBranchLog extends Model
 
     /**
      * حساب عدد الأيام المتقاطعة بين هذا السجل وفترة الراتب.
-     *
-     * مثال: سجل من 5 يناير إلى 20 يناير، فترة الراتب 1–31 يناير → 16 يوم
      */
     public function daysOverlapWith(Carbon $periodStart, Carbon $periodEnd): int
     {
@@ -110,5 +113,75 @@ class EmployeeBranchLog extends Model
             'start' => Carbon::parse($log->start_at)->max($periodStart),
             'end'   => Carbon::parse($log->end_at ?? $periodEnd)->min($periodEnd),
         ];
+    }
+
+    /**
+     * محرك توزيع الرواتب (Salary Allocation Engine):
+     * يحدد فترات الاستحقاق للفرع بناءً على القاعدة المختارة.
+     */
+    public static function getSalarySegments(
+        Employee $employee,
+        Carbon $periodStart,
+        Carbon $periodEnd,
+        ?int $targetBranchId = null,
+        ?SalaryAllocationRule $rule = null
+    ): Collection {
+        $rule = $rule ?? SalaryAllocationRule::PROPORTIONAL;
+
+        // 1. جلب كل السجلات التي تتقاطع مع فترة الراتب
+        $logs = static::where('employee_id', $employee->id)
+            ->where('start_at', '<=', $periodEnd->toDateTimeString())
+            ->where(function ($q) use ($periodStart) {
+                $q->whereNull('end_at')
+                    ->orWhere('end_at', '>=', $periodStart->toDateTimeString());
+            })
+            ->orderBy('start_at')
+            ->get();
+
+        if ($logs->isEmpty()) {
+            return collect();
+        }
+
+        $segments = collect();
+
+        switch ($rule) {
+            case SalaryAllocationRule::PROPORTIONAL:
+                foreach ($logs as $log) {
+                    if ($targetBranchId && $log->branch_id != $targetBranchId) {
+                        continue;
+                    }
+
+                    $segments->push([
+                        'branch_id' => (int) $log->branch_id,
+                        'start'     => Carbon::parse($log->start_at)->max($periodStart),
+                        'end'       => Carbon::parse($log->end_at ?? $periodEnd)->min($periodEnd),
+                    ]);
+                }
+                break;
+
+            case SalaryAllocationRule::FIRST_BRANCH:
+                $firstLog = $logs->first();
+                if (is_null($targetBranchId) || $firstLog->branch_id == $targetBranchId) {
+                    $segments->push([
+                        'branch_id' => (int) $firstLog->branch_id,
+                        'start'     => $periodStart->copy(),
+                        'end'       => $periodEnd->copy(),
+                    ]);
+                }
+                break;
+
+            case SalaryAllocationRule::LAST_BRANCH:
+                $lastLog = $logs->last();
+                if (is_null($targetBranchId) || $lastLog->branch_id == $targetBranchId) {
+                    $segments->push([
+                        'branch_id' => (int) $lastLog->branch_id,
+                        'start'     => $periodStart->copy(),
+                        'end'       => $periodEnd->copy(),
+                    ]);
+                }
+                break;
+        }
+
+        return $segments;
     }
 }

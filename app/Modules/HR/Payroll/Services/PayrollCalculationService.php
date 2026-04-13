@@ -4,58 +4,16 @@ namespace App\Modules\HR\Payroll\Services;
 
 use App\Models\AdvanceWage;
 use App\Models\Employee;
-use App\Models\Payroll;
 use App\Models\PayrollRun;
-use App\Modules\HR\Payroll\Repositories\PayrollRepository;
+use App\Models\Payroll;
 use App\Modules\HR\Payroll\Repositories\SalaryTransactionRepository;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class PayrollCalculationService
 {
     public function __construct(
-        protected PayrollRepository $payrollRepo,
         protected SalaryTransactionRepository $transactionRepo,
-        protected PayrollSimulationService $payrollSimulator
     ) {}
-
-
-
-    // إمّا: احذفها تمامًا 
-    // أو: خلِّها لا تعتمد على runService
-
-    public function calculateForEmployee(Employee $employee, int $year, int $month): array
-    {
-        // بديل بدون أي استدعاء لـ PayrollRunService
-        $simulationResults = $this->payrollSimulator->simulateForEmployees([$employee->id], $year, $month);
-        $simulation = $simulationResults[0] ?? null;
-
-        if (!$simulation || !$simulation['success']) {
-            return [
-                'success' => false,
-                'message' => $simulation['message'] ?? 'Payroll simulation failed.',
-            ];
-        }
-
-        // رجِّع نفس الـ shape الذي يتوقعه PayrollRunService
-        return [
-            'success'          => true,
-            'base_salary'      => $simulation['data']['base_salary']      ?? 0,
-            'overtime_amount'  => $simulation['data']['overtime_amount']  ?? 0,
-            'total_allowances' => $simulation['data']['total_allowances'] ?? 0,
-            'total_deductions' => $simulation['total_deduction'] ?? 0,
-            'gross_salary'     => $simulation['data']['gross_salary']     ?? 0,
-            'net_salary'       => $simulation['data']['net_salary']       ?? 0,
-            // لو تحتاج معاملات مفصلة:
-            'transactions'     => $simulation['transactions']     ?? [],
-            'penalties'        => $simulation['penalties']       ?? [],
-            'penalty_total'   => $simulation['penalty_total'] ?? 0,
-            'period_start'     => $simulation['data']['period_start']      ?? null,
-            'period_end'       => $simulation['data']['period_end']        ?? null,
-            'daily_rate_method' => $simulation['daily_rate_method'] ?? '',
-        ];
-    }
-
 
     /**
      * Persist salary transactions for a payroll item.

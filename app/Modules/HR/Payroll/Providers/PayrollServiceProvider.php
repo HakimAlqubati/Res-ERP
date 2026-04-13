@@ -94,15 +94,14 @@ class PayrollServiceProvider extends ServiceProvider
 
         $this->app->singleton(PayrollCalculationService::class, function ($app) {
             return new PayrollCalculationService(
-                $app->make(PayrollRepositoryInterface::class),
                 $app->make(SalaryTransactionRepositoryInterface::class),
-                $app->make(PayrollSimulatorInterface::class)
             );
         });
 
         $this->app->singleton(PayrollRunnerInterface::class, function ($app) {
             return new PayrollRunService(
-                $app->make(PayrollCalculationService::class)
+                $app->make(PayrollSimulationService::class),
+                $app->make(PayrollCalculationService::class),
             );
         });
         $this->app->singleton(PayrollRunService::class, function ($app) {
