@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Clusters\HRSalaryCluster\Resources;
 
 use Filament\Pages\Enums\SubNavigationPosition;
@@ -41,47 +42,48 @@ class PenaltyDeductionResource extends Resource
     protected static ?string $cluster = HRSalaryCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 3;
- 
+
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-                Fieldset::make()->columnSpanFull()->label('')->columns(4)->schema([
-                    Select::make('year')
-                        ->options([
-                            date('Y') - 1 => date('Y') - 1,
-                            date('Y')     => date('Y'),
-                            date('Y') + 1 => date('Y') + 1,
-                        ])
-                        ->default(date('Y'))
-                        ->required(),
+            Fieldset::make()->columnSpanFull()->label('')->columns(4)->schema([
+                Select::make('year')
+                    ->options([
+                        date('Y') - 1 => date('Y') - 1,
+                        date('Y')     => date('Y'),
+                        date('Y') + 1 => date('Y') + 1,
+                    ])
+                    ->default(date('Y'))
+                    ->required(),
 
-                    Select::make('month')
-                        ->options(getMonthArrayWithKeys())
-                        ->default(date('m'))
-                        ->required(),
+                Select::make('month')
+                    ->options(getMonthArrayWithKeys())
+                    ->default(date('m'))
+                    ->required(),
 
-                    Forms\Components\Select::make('employee_id')
-                        ->options(function ($search = null) {
-                            return Employee::query()
-                                ->where('active', 1)
+                Forms\Components\Select::make('employee_id')
+                    ->label(__('lang.employee'))
+                    ->options(function ($search = null) {
+                        return Employee::query()
+                            ->where('active', 1)
                             // ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
-                                ->limit(20)
-                                ->get()
-                                ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
-                        })
-                        ->getSearchResultsUsing(function ($search = null) {
-                            return Employee::query()
-                                ->where('active', 1)
-                                ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
-                                ->limit(20)
-                                ->get()
-                                ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
-                        })
-                        ->searchable()
-                        ->preload()->live()
-                        ->required(),
-                    Select::make('deduction_id')->label('Deduction')
-                        ->live()->afterStateUpdated(function ($get, $set, $state) {
+                            ->limit(20)
+                            ->get()
+                            ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
+                    })
+                    ->getSearchResultsUsing(function ($search = null) {
+                        return Employee::query()
+                            ->where('active', 1)
+                            ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
+                            ->limit(20)
+                            ->get()
+                            ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
+                    })
+                    ->searchable()
+                    ->preload()->live()
+                    ->required(),
+                Select::make('deduction_id')->label('Deduction')
+                    ->live()->afterStateUpdated(function ($get, $set, $state) {
                         $deduction     = Deduction::find($state);
                         $defaultAmount = 0;
                         if ($deduction->is_percentage) {
@@ -93,27 +95,27 @@ class PenaltyDeductionResource extends Resource
                         $set('penalty_amount', 0);
                         $set('deduction_type', PenaltyDeduction::DEDUCTION_TYPE_FIXED_AMOUNT);
                     })
-                        ->options(Deduction::penalty()->get()->pluck('name', 'id'))
-                        ->required(),
-                ]),
-                Fieldset::make()->label('')->columnSpanFull()->columns(4)->schema([
+                    ->options(Deduction::penalty()->get()->pluck('name', 'id'))
+                    ->required(),
+            ]),
+            Fieldset::make()->label('')->columnSpanFull()->columns(4)->schema([
 
-                    DatePicker::make('date')->label('Date')->default(now()->toDateString())->maxDate(now()->toDateString()),
-                    Select::make('deduction_type')
-                        ->options(PenaltyDeduction::getDeductionTypeOptions())->default(PenaltyDeduction::DEDUCTION_TYPE_FIXED_AMOUNT)
-                        ->required()
-                        ->live()
-                        ->afterStateUpdated(function ($set, $get, $state) {
-                            if (in_array($state, [PenaltyDeduction::DEDUCTION_TYPE_FIXED_AMOUNT, PenaltyDeduction::DEDUCTION_TYPE_SPECIFIC_PERCENTAGE])) {
-                                $set('penalty_amount', 0);
-                            }
-                        }),
+                DatePicker::make('date')->label('Date')->default(now()->toDateString())->maxDate(now()->toDateString()),
+                Select::make('deduction_type')
+                    ->options(PenaltyDeduction::getDeductionTypeOptions())->default(PenaltyDeduction::DEDUCTION_TYPE_FIXED_AMOUNT)
+                    ->required()
+                    ->live()
+                    ->afterStateUpdated(function ($set, $get, $state) {
+                        if (in_array($state, [PenaltyDeduction::DEDUCTION_TYPE_FIXED_AMOUNT, PenaltyDeduction::DEDUCTION_TYPE_SPECIFIC_PERCENTAGE])) {
+                            $set('penalty_amount', 0);
+                        }
+                    }),
 
-                    TextInput::make('percentage')->label('Specify percentage')
-                        ->helperText('Percentage of employee basic salary')
-                        ->visible(fn($get): bool => $get('deduction_type') == PenaltyDeduction::DEDUCTION_TYPE_SPECIFIC_PERCENTAGE)
-                        ->numeric()->minValue(0.5)
-                        ->maxValue(100)->required()->live()->afterStateUpdated(function ($get, $set, $state) {
+                TextInput::make('percentage')->label('Specify percentage')
+                    ->helperText('Percentage of employee basic salary')
+                    ->visible(fn($get): bool => $get('deduction_type') == PenaltyDeduction::DEDUCTION_TYPE_SPECIFIC_PERCENTAGE)
+                    ->numeric()->minValue(0.5)
+                    ->maxValue(100)->required()->live()->afterStateUpdated(function ($get, $set, $state) {
                         $employee = Employee::find($get('employee_id'));
                         if ($employee) {
                             $salary           = $employee->salary;
@@ -121,16 +123,16 @@ class PenaltyDeductionResource extends Resource
                             $set('penalty_amount', $percentageAmount);
                         }
                     }),
-                    Forms\Components\TextInput::make('penalty_amount')
+                Forms\Components\TextInput::make('penalty_amount')
 
-                        ->numeric()
-                        ->required(),
+                    ->numeric()
+                    ->required(),
 
-                    Textarea::make('description')
-                        ->label('Reason')->columnSpanFull()
-                        ->required(),
-                ]),
-            ]);
+                Textarea::make('description')
+                    ->label('Reason')->columnSpanFull()
+                    ->required(),
+            ]),
+        ]);
     }
 
     public static function table(Table $table): Table
