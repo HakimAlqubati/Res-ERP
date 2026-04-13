@@ -47,35 +47,48 @@ class PenaltyDeductionResource extends Resource
     {
         return $schema->components([
             Fieldset::make()->columnSpanFull()->label('')->columns(4)->schema([
-                Select::make('year')
-                    ->options([
-                        date('Y') - 1 => date('Y') - 1,
-                        date('Y')     => date('Y'),
-                        date('Y') + 1 => date('Y') + 1,
-                    ])
-                    ->default(date('Y'))
-                    ->required(),
-
-                Select::make('month')
-                    ->options(getMonthArrayWithKeys())
-                    ->default(date('m'))
-                    ->required(),
+                DatePicker::make('date')
+                    ->label('Date')
+                    ->default(now()->toDateString())
+                    ->maxDate(now()->toDateString())
+                    ->required()
+                    ->live()
+                    ->afterStateUpdated(function ($set, $state) {
+                        if ($state) {
+                            $date = \Carbon\Carbon::parse($state);
+                            $set('year', $date->year);
+                            $set('month', $date->month);
+                        }
+                    }),
 
                 Forms\Components\Select::make('employee_id')
                     ->label(__('lang.employee'))
-                    ->options(function ($search = null) {
+                    ->options(function ($get) {
+                        $id = $get('employee_id');
                         return Employee::query()
-                            ->where('active', 1)
-                            // ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
-                            ->limit(20)
+                            ->where(function ($query) use ($id) {
+                                $query->where('active', 1);
+                                if ($id) {
+                                    $query->orWhere('id', $id);
+                                }
+                            })
+                            ->orderByRaw("CASE WHEN id = ? THEN 0 ELSE 1 END", [$id])
+                            ->limit(5)
                             ->get()
                             ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
                     })
-                    ->getSearchResultsUsing(function ($search = null) {
+                    ->getSearchResultsUsing(function ($get, $search = null) {
+                        $id = $get('employee_id');
                         return Employee::query()
-                            ->where('active', 1)
+                            ->where(function ($query) use ($id) {
+                                $query->where('active', 1);
+                                if ($id) {
+                                    $query->orWhere('id', $id);
+                                }
+                            })
                             ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
-                            ->limit(20)
+                            ->orderByRaw("CASE WHEN id = ? THEN 0 ELSE 1 END", [$id])
+                            ->limit(5)
                             ->get()
                             ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
                     })
@@ -100,7 +113,6 @@ class PenaltyDeductionResource extends Resource
             ]),
             Fieldset::make()->label('')->columnSpanFull()->columns(4)->schema([
 
-                DatePicker::make('date')->label('Date')->default(now()->toDateString())->maxDate(now()->toDateString()),
                 Select::make('deduction_type')
                     ->options(PenaltyDeduction::getDeductionTypeOptions())->default(PenaltyDeduction::DEDUCTION_TYPE_FIXED_AMOUNT)
                     ->required()
