@@ -65,6 +65,7 @@ class GeneralReportOfProductsResource extends Resource
                     ->searchable()
                     ->options(Category::where('active', 1)->notForPos()->pluck('name', 'id')),
                 SelectFilter::make("branch_id")->placeholder('Select')
+                    ->multiple()
                     ->label(__('lang.branch'))
                     ->searchable()
                     ->options(Branch::whereIn(
