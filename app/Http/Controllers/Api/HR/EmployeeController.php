@@ -41,6 +41,9 @@ class EmployeeController extends Controller
             ->when(request('employee_no'), function ($query, $employeeNo) {
                 $query->where('employee_no', $employeeNo);
             })
+            ->when(request('role_id'), function ($query, $roleId) {
+                $query->whereUserRole($roleId);
+            })
             ->when(request('name'), function ($query, $name) {
                 $query->where('name', 'like', "%{$name}%");
             })
@@ -101,6 +104,9 @@ class EmployeeController extends Controller
             })
             ->when(request('employee_no'), function ($query, $employeeNo) {
                 $query->where('employee_no', $employeeNo);
+            })
+            ->when(request('role_id'), function ($query, $roleId) {
+                $query->whereUserRole($roleId);
             })
             ->when(request('name'), function ($query, $name) {
                 $query->where('name', 'like', "%{$name}%");
