@@ -181,6 +181,7 @@ class PayrollsRelationManager extends RelationManager
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
+                    ->visible(fn (\Filament\Resources\RelationManagers\RelationManager $livewire) => $livewire->getOwnerRecord()->status === \App\Models\PayrollRun::STATUS_APPROVED)
                     ->action(fn(Collection $records) => $records->each->markAsPaid()),
                 DeleteBulkAction::make(),
             ]);

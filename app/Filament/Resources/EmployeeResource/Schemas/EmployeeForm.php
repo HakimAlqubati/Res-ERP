@@ -380,7 +380,8 @@ class EmployeeForm
                                             ->inputMode('decimal')->disabled(fn(): bool => isBranchManager()),
                                         
                                         Select::make('salary_allocation_rule')
-                                            ->label(__('Salary Allocation Rule (Override)'))
+                                            ->label(__('Salary Allocation Override (Branch Transfers)'))
+                                            ->helperText(__('Overrides the default system rule for this specific employee when transferred between branches.'))
                                             ->options(\App\Enums\HR\Payroll\SalaryAllocationRule::class)
                                             ->placeholder(__('Use System Default')) // Fallback to system general setting
                                             ->disabled(fn(): bool => isBranchManager())
