@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use OwenIt\Auditing\Contracts\Auditable;
 
-// #[ObservedBy([\App\Observers\EmployeePeriodObserver::class])]
+#[ObservedBy([\App\Observers\EmployeePeriodObserver::class])]
 class EmployeePeriod extends Model implements Auditable
 {
     use HasFactory, \OwenIt\Auditing\Auditable;
