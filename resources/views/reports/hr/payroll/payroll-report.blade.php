@@ -178,7 +178,7 @@
     @else
     <div class="please_select_message_div" style="text-align: center; padding: 60px;">
         <div class="flex flex-col items-center justify-center space-y-4">
-            <x-heroicon-o-document-magnifying-glass class="w-16 h-16 text-gray-400" />
+            <!-- <x-heroicon-o-document-magnifying-glass class="w-16 h-16 text-gray-400" /> -->
             <h1 class="please_select_message_text" style="font-size: 1.25rem; color: #6b7280;">
                 {{ $branchId && $period ? __('No payroll records found for the selected period.') : __('Please select a Branch and a Month') }}
             </h1>
