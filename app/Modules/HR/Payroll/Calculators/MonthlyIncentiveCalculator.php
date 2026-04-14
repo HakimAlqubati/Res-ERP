@@ -54,6 +54,31 @@ class MonthlyIncentiveCalculator
             ];
 
             $totalAmount += $amount;
+        } 
+        // جلب المكافآت المعتمدة (Employee Reward System)
+        $approvedRewards = $context->employee->rewards()
+            ->where('status', \App\Models\EmployeeReward::STATUS_APPROVED)
+            ->where('month', $context->periodMonth)
+            ->where('year', $context->periodYear)
+            ->with('rewardType:id,name')
+            ->get();
+
+        foreach ($approvedRewards as $reward) {
+            $amount = (float) $reward->reward_amount;
+
+            if ($amount <= 0) {
+                continue;
+            }
+
+            $incentiveItems[] = [
+                'id'            => $reward->incentive_id,
+                'employee_reward_id' => $reward->id,
+                'name'          => ($reward->rewardType->name ?? 'Reward') . ' (Special)',
+                'amount'        => $this->round($amount),
+                'type'          => 'special_reward',
+            ];
+
+            $totalAmount += $amount;
         }
 
         return [

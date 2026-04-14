@@ -14,6 +14,7 @@ use App\Models\EmployeeDeduction;
 use App\Models\EmployeeFaceData;
 use App\Models\EmployeeFile;
 use App\Models\EmployeeMonthlyIncentive;
+use App\Models\EmployeeReward;
 use App\Models\EmployeeOvertime;
 use App\Models\EmployeePeriod;
 use App\Models\EmployeePeriodDay;
@@ -243,6 +244,11 @@ trait EmployeeRelationships
     public function advanceWages()
     {
         return $this->hasMany(AdvanceWage::class, 'employee_id');
+    }
+
+    public function rewards()
+    {
+        return $this->hasMany(EmployeeReward::class);
     }
 
     
