@@ -120,13 +120,13 @@
                                 </button>
                             </div>
 
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 10px; flex: 1;">
-                                <img src="{{ url('/storage/workbench.png') }}" alt="Logo" style="width: 50px; height: 50px; object-fit: contain;">
+                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; flex: 1;">
                                 <span style="font-size: 16px; font-weight: bold;">{{ $displayName }}</span>
+                                <span style="font-size: 13px; font-weight: 600; color: #666;">{{ __('Period') . ': ' . $period }}</span>
                             </div>
 
-                            <div style="text-align: center; flex-shrink: 0; line-height: 1.8;">
-                                <span style="font-weight: 600;">{{ __('Period') . ': ' . $period }}</span>
+                            <div style="flex-shrink: 0; text-align: right;">
+                                <img src="{{ url('/storage/workbench.png') }}" alt="Logo" style="width: 50px; height: 50px; object-fit: contain;">
                             </div>
                         </div>
                     </th>
