@@ -23,6 +23,10 @@ use App\Modules\HR\Payroll\Contracts\PayrollFinancialSyncInterface;
 use App\Modules\HR\Payroll\Contracts\PayrollRepositoryInterface;
 use App\Modules\HR\Payroll\Contracts\SalaryTransactionRepositoryInterface;
 
+// Reports
+use App\Modules\HR\PayrollReports\Contracts\PayrollReportServiceInterface;
+use App\Modules\HR\PayrollReports\Services\PayrollReportService;
+
 // Calculators
 use App\Modules\HR\Payroll\Calculators\RateCalculator;
 use App\Modules\HR\Payroll\Calculators\AttendanceDeductionCalculator;
@@ -110,6 +114,10 @@ class PayrollServiceProvider extends ServiceProvider
 
         $this->app->singleton(PayrollFinancialSyncInterface::class, PayrollFinancialSyncService::class);
         $this->app->singleton(PayrollFinancialSyncService::class);
+
+        // ===== Reports =====
+        $this->app->singleton(PayrollReportServiceInterface::class, PayrollReportService::class);
+        $this->app->singleton(PayrollReportService::class);
     }
 
     /**

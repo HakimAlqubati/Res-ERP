@@ -392,4 +392,9 @@ Route::prefix('hr')
         Route::get('/payrolls/{payroll}/salary-slip-pdf', function ($payrollId) {
             return app(\App\Modules\HR\Payroll\Reports\SalarySlipReport::class)->generate($payrollId);
         })->name('api.hr.payrolls.salary-slip-pdf');
+
+        // Detailed Payroll Report
+        Route::get('/payroll-report', [\App\Modules\HR\PayrollReports\Http\Controllers\PayrollReportController::class, 'getReport'])
+            ->middleware('auth:api')
+            ->name('api.hr.payrolls.report');
     });
