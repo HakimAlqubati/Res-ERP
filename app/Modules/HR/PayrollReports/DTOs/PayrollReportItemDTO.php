@@ -57,6 +57,43 @@ class PayrollReportItemDTO implements \JsonSerializable
         );
     }
 
+    /**
+     * Map from aggregated DB row (usually a generic object or an Eloquent model acting as a plain object)
+     */
+    public static function fromAggregatedRow(object $row): self
+    {
+        $netSalary = (float) $row->total_additions - (float) $row->total_deductions_all;
+        if ($netSalary < 0) {
+            $netSalary = 0;
+        }
+
+        // Gross salary sum of all additions except maybe specifics, but conventionally total_additions is gross.
+        // If they need strict Base + Allowances + Bonus + Overtime:
+        $grossSalary = (float) $row->total_additions;
+
+        return new self(
+            id: (int) $row->payroll_id,
+            employeeId: (int) $row->employee_id,
+            employeeName: $row->employee_name ?? 'Unknown',
+            employeeCode: $row->employee_code,
+            branchId: $row->branch_id ? (int) $row->branch_id : null,
+            branchName: $row->branch_name ?? 'N/A',
+            year: (int) $row->year,
+            month: (int) $row->month,
+            baseSalary: (float) $row->calculated_base_salary,
+            totalAllowances: (float) $row->calculated_allowances,
+            totalBonus: (float) $row->calculated_bonus,
+            totalOvertime: (float) $row->calculated_overtime,
+            totalDeductions: (float) $row->calculated_deductions,
+            totalAdvances: (float) $row->calculated_advances,
+            totalPenalties: (float) $row->calculated_penalties,
+            grossSalary: $grossSalary,
+            netSalary: $netSalary,
+            status: $row->status ?? 'unknown',
+            payDate: $row->pay_date ? \Carbon\Carbon::parse($row->pay_date)->format('Y-m-d') : null,
+        );
+    }
+
     public function jsonSerialize(): array
     {
         return [
