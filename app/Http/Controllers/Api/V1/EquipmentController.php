@@ -16,17 +16,17 @@ class EquipmentController extends Controller
     {
         $q = Equipment::query()
             ->with(['type.category', 'branch'])
-            ->when($req->input('filter.search'), fn($x, $v) => $x->where(function ($q) use ($v) {
+            ->when($req->input('search'), fn($x, $v) => $x->where(function ($q) use ($v) {
                 $q->where('name', 'like', "%$v%")
                     ->orWhere('asset_tag', 'like', "%$v%")
                     ->orWhere('serial_number', 'like', "%$v%");
             }))
-            ->when($req->input('filter.status'), fn($x, $v) => $x->where('status', $v))
-            ->when($req->input('filter.type_id'), fn($x, $v) => $x->where('type_id', $v))
-            ->when($req->input('filter.category_id'), fn($x, $v) => $x->whereHas('type', fn($qq) => $qq->where('category_id', $v)))
-            ->when($req->input('filter.branch_id'), fn($x, $v) => $x->where('branch_id', $v))
-            ->when($req->input('filter.qr_code'), fn($x, $v) => $x->where('qr_code', $v))
-            ->when($req->input('filter.branch_area_id'), fn($x, $v) => $x->where('branch_area_id', $v));
+            ->when($req->input('status'), fn($x, $v) => $x->where('status', $v))
+            ->when($req->input('type_id'), fn($x, $v) => $x->where('type_id', $v))
+            ->when($req->input('category_id'), fn($x, $v) => $x->whereHas('type', fn($qq) => $qq->where('category_id', $v)))
+            ->when($req->input('branch_id'), fn($x, $v) => $x->where('branch_id', $v))
+            ->when($req->input('qr_code'), fn($x, $v) => $x->where('qr_code', $v))
+            ->when($req->input('branch_area_id'), fn($x, $v) => $x->where('branch_area_id', $v));
 
         // sort
         $sort = $req->input('sort', '-created_at');
@@ -271,7 +271,7 @@ class EquipmentController extends Controller
             $catModel = app(\App\Models\EquipmentCategory::class);
 
             $q = $catModel->newQuery()
-                ->when($req->input('filter.search'), fn($x, $v) => $x->where('name', 'like', "%$v%"))
+                ->when($req->input('search'), fn($x, $v) => $x->where('name', 'like', "%$v%"))
                 ->orderBy('name', 'asc');
 
             $per = min((int) $req->input('per_page', 15), 100);
@@ -306,8 +306,8 @@ class EquipmentController extends Controller
 
             $q = $typeModel->newQuery()
                 ->with('category')
-                ->when($req->input('filter.search'), fn($x, $v) => $x->where('name', 'like', "%$v%"))
-                ->when($req->input('filter.category_id'), fn($x, $v) => $x->where('category_id', $v))
+                ->when($req->input('search'), fn($x, $v) => $x->where('name', 'like', "%$v%"))
+                ->when($req->input('category_id'), fn($x, $v) => $x->where('category_id', $v))
                 ->orderBy('name', 'asc');
 
             $per = min((int) $req->input('per_page', 15), 100);
