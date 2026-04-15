@@ -16,6 +16,20 @@ class EmployeeServiceTerminationObserver
         if (auth()->check()) {
             $employeeServiceTermination->created_by = auth()->id();
         }
+
+        // Prevent creating multiple terminations if one is already pending or approved.
+        $hasActiveTermination = EmployeeServiceTermination::where('employee_id', $employeeServiceTermination->employee_id)
+            ->whereIn('status', [
+                EmployeeServiceTermination::STATUS_PENDING, 
+                EmployeeServiceTermination::STATUS_APPROVED
+            ])
+            ->exists();
+
+        if ($hasActiveTermination) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'employee_id' => 'Employee already has an active termination request.'
+            ]);
+        }
     }
 
     /**

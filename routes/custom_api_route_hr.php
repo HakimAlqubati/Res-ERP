@@ -164,6 +164,13 @@ Route::prefix('hr')
         Route::apiResource('/advanceWages', \App\Modules\HR\AdvanceWages\Http\Controllers\AdvanceWageController::class);
         Route::post('/advanceWages/{advanceWage}/approve', [\App\Modules\HR\AdvanceWages\Http\Controllers\AdvanceWageController::class, 'approve']);
         Route::post('/advanceWages/{advanceWage}/cancel', [\App\Modules\HR\AdvanceWages\Http\Controllers\AdvanceWageController::class, 'cancel']);
+
+        // Service Terminations
+        Route::get('/terminations', [\App\Http\Controllers\Api\HR\EmployeeServiceTerminationController::class, 'index']);
+        Route::get('/terminations/{termination}', [\App\Http\Controllers\Api\HR\EmployeeServiceTerminationController::class, 'show']);
+        Route::post('/employees/{employee}/terminations/request', [\App\Http\Controllers\Api\HR\EmployeeServiceTerminationController::class, 'store']);
+        Route::post('/terminations/{termination}/approve', [\App\Http\Controllers\Api\HR\EmployeeServiceTerminationController::class, 'approve']);
+        Route::post('/terminations/{termination}/reject', [\App\Http\Controllers\Api\HR\EmployeeServiceTerminationController::class, 'reject']);
     });
 Route::prefix('aws/employee-liveness')->group(function () {
     // بدء جلسة التحقق (startSession)
