@@ -14,6 +14,13 @@ class ServiceRequestCommentResource extends JsonResource
             'comment'   => $this->comment,
             'user'      => ['id' => $user?->id, 'name' => $user?->name],
             'created_at' => $this->created_at,
+            'images'     => $this->getMedia('attachments')->map(function ($media) {
+                return [
+                    'id' => $media->id,
+                    'url' => $media->getUrl(),
+                    'name' => $media->file_name,
+                ];
+            }),
         ];
     }
 }
