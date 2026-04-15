@@ -49,6 +49,11 @@ class AppServiceProvider extends ServiceProvider
         $loader = AliasLoader::getInstance();
         $loader->alias('Debugbar', Debugbar::class);
         // $this->app->bind(BaseNotification::class, NotificationAttendanceCheck::class);
+        
+        $this->app->bind(
+            \App\Modules\HR\AdvanceWages\Interfaces\AdvanceWageServiceInterface::class,
+            \App\Modules\HR\AdvanceWages\Services\AdvanceWageService::class
+        );
     }
 
     /**

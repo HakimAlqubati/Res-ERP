@@ -159,6 +159,11 @@ Route::prefix('hr')
 
         Route::get('/employees/{id}/leaveBalances', [EmployeeController::class, 'leaveBalances']);
         Route::get('/employees/leaveBalances', [EmployeeController::class, 'leaveBalancesAll']);
+
+        // Advance Wages
+        Route::apiResource('/advanceWages', \App\Modules\HR\AdvanceWages\Http\Controllers\AdvanceWageController::class);
+        Route::post('/advanceWages/{advanceWage}/approve', [\App\Modules\HR\AdvanceWages\Http\Controllers\AdvanceWageController::class, 'approve']);
+        Route::post('/advanceWages/{advanceWage}/cancel', [\App\Modules\HR\AdvanceWages\Http\Controllers\AdvanceWageController::class, 'cancel']);
     });
 Route::prefix('aws/employee-liveness')->group(function () {
     // بدء جلسة التحقق (startSession)
