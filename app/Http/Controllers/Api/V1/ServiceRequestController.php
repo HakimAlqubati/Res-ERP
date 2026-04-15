@@ -20,18 +20,18 @@ class ServiceRequestController extends Controller
     {
         $q = ServiceRequest::query()
             ->with(['branch', 'branchArea', 'assignedTo', 'equipment'])
-            ->when($req->input('filter.search'), function ($x, $v) {
+            ->when($req->input('search'), function ($x, $v) {
                 $x->where(function ($q) use ($v) {
                     $q->where('description', 'like', "%{$v}%")
                         ->orWhere('id', $v);
                 });
             })
-            ->when($req->input('filter.status'), fn($x, $v) => $x->where('status', $v))
-            ->when($req->input('filter.urgency'), fn($x, $v) => $x->where('urgency', $v))
-            ->when($req->input('filter.impact'),  fn($x, $v) => $x->where('impact',  $v))
-            ->when($req->input('filter.branch_id'), fn($x, $v) => $x->where('branch_id', $v))
-            ->when($req->input('filter.assigned_to'), fn($x, $v) => $x->where('assigned_to', $v))
-            ->when($req->input('filter.equipment_id'), fn($x, $v) => $x->where('equipment_id', $v));
+            ->when($req->input('status'), fn($x, $v) => $x->where('status', $v))
+            ->when($req->input('urgency'), fn($x, $v) => $x->where('urgency', $v))
+            ->when($req->input('impact'),  fn($x, $v) => $x->where('impact',  $v))
+            ->when($req->input('branch_id'), fn($x, $v) => $x->where('branch_id', $v))
+            ->when($req->input('assigned_to'), fn($x, $v) => $x->where('assigned_to', $v))
+            ->when($req->input('equipment_id'), fn($x, $v) => $x->where('equipment_id', $v));
 
         // sort
         $sort = $req->input('sort', '-created_at');
