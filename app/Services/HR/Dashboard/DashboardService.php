@@ -59,6 +59,13 @@ class DashboardService
         }
         $pendingOvertimeCount = $overtimeQuery->count();
 
+        // New Service Requests
+        $srQuery = ServiceRequest::where('status', ServiceRequest::STATUS_NEW);
+        if ($dto->branchId) {
+            $srQuery->where('branch_id', $dto->branchId);
+        }
+        $newServiceRequestsCount = $srQuery->count();
+
         return [
             'pending_leaves'   => $appCounts->get(EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST, 0),
             'pending_checkin'  => $appCounts->get(EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST, 0),
@@ -66,6 +73,7 @@ class DashboardService
             'pending_overtime' => $pendingOvertimeCount,
             'pending_advance'  => $appCounts->get(EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST, 0),
             'pending_meal'     => $appCounts->get(EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST, 0),
+            'new_service_request' => $newServiceRequestsCount,
             'missing_checkouts_count' => $missingCheckoutsCount,
             'absents_count'           => $this->getTodayAbsentsCount($dto),
         ];
