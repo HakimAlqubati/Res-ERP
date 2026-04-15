@@ -551,6 +551,43 @@ class EmployeeTable
                                     ->send();
                             }
                         }),
+
+                    Action::make('quickEdit')
+                        ->label('Quick Edit')
+                        ->icon('heroicon-o-pencil-square')
+                        ->color('info')
+                        ->fillForm(fn(Employee $record): array => [
+                            'name' => $record->name,
+                            'email' => $record->email,
+                            'branch_id' => $record->branch_id,
+                        ])
+                        ->schema([
+                            TextInput::make('name')
+                                ->label(__('lang.full_name'))
+                                ->required()
+                                ->maxLength(255),
+                            TextInput::make('email')
+                                ->label(__('lang.email'))
+                                ->email()
+                                ->required()
+                                ->maxLength(255),
+                            Select::make('branch_id')
+                                ->label(__('lang.branch'))
+                                ->options(Branch::active()->pluck('name', 'id'))
+                                ->required()
+                                ->searchable()
+                                ->preload(),
+                        ])
+                        ->action(function (array $data, Employee $record): void {
+                            $record->update($data);
+                            Notification::make()
+                                ->title(__('lang.updated_successfully'))
+                                ->success()
+                                ->send();
+                        })
+                        ->visible(fn() => isHakimOrAdel()),
+
+
                     Action::make('quick_edit_avatar')
                         ->label(__('lang.edit_avatar'))
                         ->icon('heroicon-o-camera')
