@@ -126,7 +126,8 @@ class SalarySlipReport
             return $t->type !== SalaryTransactionType::TYPE_CARRY_FORWARD->value;
         })->sum('amount');
 
-        $net = max($gross - $totalDeductions, 0);
+        // $net = max($gross - $totalDeductions, 0);
+        $net = $gross - $totalDeductions;
         $totalEmployer = $employerContrib->sum('amount');
 
         // Helper for words (placeholder)
