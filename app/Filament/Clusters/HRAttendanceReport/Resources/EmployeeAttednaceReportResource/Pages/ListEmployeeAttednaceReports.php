@@ -72,7 +72,7 @@ class ListEmployeeAttednaceReports extends ListRecords
             'totalApproved' => $employee && $data->has('total_approved_overtime') ? $data->get('total_approved_overtime', '00:00:00') : '00:00:00',
             'employee_name' => $employee?->name,
             'total_actual_duration_hours' => $employee && $data->has('total_actual_duration_hours') ? $data->get('total_actual_duration_hours', '00:00:00') : '00:00:00',
-            'total_duration_hours' => $employee && $data->has('total_duration_hours') ? $data->get('total_duration_hours', 0) : 0,
+            'total_duration_hours' => $employee && $data->has('total_duration_hours') ? $data->get('total_duration_hours', 0) . ':00:00' : '00:00:00',
             'total_approved_overtime' => $employee && $data->has('total_approved_overtime') ? $data->get('total_approved_overtime', '00:00:00') : '00:00:00',
         ];
     }
