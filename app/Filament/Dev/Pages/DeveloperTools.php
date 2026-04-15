@@ -99,11 +99,27 @@ class DeveloperTools extends Page
                         showWarningNotifiMessage("❌ Error: " . $th->getMessage());
                     }
                 }),
+
+            Action::make('reset_hr_logs')
+                ->label('👥 Reset HR Branch Logs')
+                ->icon('heroicon-m-arrow-path')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->modalHeading('Reset Employee Branch Logs')
+                ->modalDescription('This will clear all employee branch logs and create a default one based on current branch and join date for all active tenants and landlord. Are you sure?')
+                ->action(function () {
+                    try {
+                        Artisan::call('hr:reset-branch-logs');
+                        showSuccessNotifiMessage('✅ Employee branch logs reset successfully.');
+                    } catch (Throwable $th) {
+                        showWarningNotifiMessage("❌ Error: " . $th->getMessage());
+                    }
+                }),
          
         ];
     }
     public static function shouldRegisterNavigation(): bool
     {
-        return false;
+        return true;
     }
 }

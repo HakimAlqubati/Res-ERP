@@ -38,4 +38,10 @@ class MaintenanceWidget extends Widget
         $count = Artisan::call('attendance:link-images', ['--days' => 60]);
         Notification::make()->title("Attendance Images Linked. Updated: {$count} records")->success()->send();
     }
+
+    public function resetEmployeeBranchLogs()
+    {
+        Artisan::call('hr:reset-branch-logs');
+        Notification::make()->title('Employee Branch Logs Reset Successfully')->success()->send();
+    }
 }

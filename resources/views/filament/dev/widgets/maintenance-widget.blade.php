@@ -17,6 +17,11 @@
                 Clear Config
             </x-filament::button>
 
+            <x-filament::button wire:click="resetEmployeeBranchLogs" color="danger" icon="heroicon-m-arrow-path" 
+                onclick="return confirm('Are you sure you want to reset all employee branch logs? This will affect all tenants.')">
+                Reset Branch Logs
+            </x-filament::button>
+
             @if(1>2)
             <x-filament::button wire:click="linkAttendanceImages" color="success" icon="heroicon-m-link">
                 Link Images (60 Days)
