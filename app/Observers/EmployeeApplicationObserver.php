@@ -129,23 +129,31 @@ class EmployeeApplicationObserver
      */
     public function updating(EmployeeApplicationV2 $app): void
     {
-        // 1. If transitioning to approved: always check.
-        $isTransitioningToApproved = $app->isDirty('status') && $app->status === EmployeeApplicationV2::STATUS_APPROVED;
+        // 1. Determine the date to check against (Original date in DB)
+        // To prevent modifying any data in an already locked month.
+        $originalDate = $app->getOriginal('application_date') 
+            ? \Carbon\Carbon::parse($app->getOriginal('application_date')) 
+            : ($app->application_date ? \Carbon\Carbon::parse($app->application_date) : \Carbon\Carbon::today());
 
-        // 2. If the date is changing: check the NEW date.
-        $isDateChanging = $app->isDirty('application_date');
+        $this->payrollLockGuard->checkLock(
+            $app->employee_id,
+            $originalDate->year,
+            $originalDate->month,
+            'application_date'
+        );
 
-        if ($isTransitioningToApproved || $isDateChanging) {
-            $date = $app->application_date
-                ? \Carbon\Carbon::parse($app->application_date)
-                : \Carbon\Carbon::today();
-
-            $this->payrollLockGuard->checkLock(
-                $app->employee_id,
-                $date->year,
-                $date->month,
-                'application_date'
-            );
+        // 2. If the application_date itself is changing, ensure the NEW date is also not in a locked month.
+        if ($app->isDirty('application_date') && !empty($app->application_date)) {
+            $newDate = \Carbon\Carbon::parse($app->application_date);
+            
+            if ($newDate->month !== $originalDate->month || $newDate->year !== $originalDate->year) {
+                $this->payrollLockGuard->checkLock(
+                    $app->employee_id,
+                    $newDate->year,
+                    $newDate->month,
+                    'application_date'
+                );
+            }
         }
     }
 

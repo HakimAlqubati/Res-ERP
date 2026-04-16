@@ -57,6 +57,7 @@ final class PayrollLockGuard
             $targetDate = $appData['missedCheckoutRequest']['date'] 
                        ?? $appData['missed_checkout_request']['date'] ?? null;
         } elseif ($applicationTypeId == \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST) {
+           dd($appData);
             $targetDate = $appData['leaveRequest']['detail_from_date'] 
                        ?? $appData['leave_request']['detail_from_date'] ?? null;
         }
