@@ -115,7 +115,7 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
                                 $service = new EmployeeWorkPeriodService();
                                 $service->assignPeriodsToEmployee($existingEmployee, [
                                     'periods' => [$shiftId],
-                                    'start_date' => date('Y-m-d'), // سيتم تعيين تاريخ اليوم كتاريخ بداية
+                                    'start_date' => $existingEmployee?->join_date, // سيتم تعيين تاريخ اليوم كتاريخ بداية
                                     'end_date' => null,
                                     'period_days' => ['sat', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri'], // كل أيام الأسبوع
                                 ]);
