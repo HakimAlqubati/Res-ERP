@@ -688,6 +688,7 @@ return [
   // ===========================================
   // Attendance Reports
   // ===========================================
+  'attendance_report' => 'تقرير الحضور',
   'attendance_reports' => 'تقارير الحضور',
   'attendance_by_employee' => 'الحضور حسب الموظف',
   'missing_checkout_report' => 'تقرير نسيان الانصراف',

@@ -706,6 +706,7 @@ return [
     // ===========================================
     // Attendance Reports
     // ===========================================
+    'attendance_report' => 'Attendance Report',
     'attendance_reports' => 'Attendance Reports',
     'attendance_by_employee' => 'Attendance by staff',
     'missing_checkout_report' => 'Missing Checkout Report',
