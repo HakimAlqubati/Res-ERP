@@ -89,20 +89,53 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
 
         try {
             // التحقق من وجود الاسم
-            if (!isset($row['name']) || empty($row['name'])) {
-                $errorMessage = "Row {$rowNumber}: Employee name is missing or empty";
-                $this->logError('MISSING_NAME', $errorMessage, $row);
+            if (!isset($row['email']) || empty($row['email'])) {
+                $errorMessage = "Row {$rowNumber}: Employee email is missing or empty";
+                $this->logError('MISSING_EMAIL', $errorMessage, $row);
                 return null;
             }
-
+            $existingEmployee = Employee::where('email', $row['email'])->first();
             // التحقق من تكرار الاسم - إذا موجود نعتبره existing وليس خطأ
-            if (Employee::where('name', $row['name'])->exists()) {
+            if ($existingEmployee) {
                 $this->existingCount++;
                 $this->processedRowsCount++;
 
                 // حفظ اسم المدير للمراجعة في المرحلة الثانية حتى للموظفين الموجودين مسبقاً
-                $this->managerMappings[$row['name']] = $row['manager'] ?? null;
+                $this->managerMappings[$row['email']] = $row['manager'] ?? null;
+                if (!empty($row['work_shift_1'])) {
+                    $shiftId = $row['work_shift_1'];
 
+                    // 1. جلب الشيفت من قاعدة البيانات للتحقق منه
+                    $workPeriod = \App\Models\WorkPeriod::find($shiftId);
+
+                    if ($workPeriod) {
+                        // 2. التحقق مما إذا كان الشيفت ينتمي لنفس فرع الموظف أو متاح لجميع الفروع
+                        if ($workPeriod->branch_id == $existingEmployee->branch_id || $workPeriod->all_branches) {
+                            try {
+                                $service = new EmployeeWorkPeriodService();
+                                $service->assignPeriodsToEmployee($existingEmployee, [
+                                    'periods' => [$shiftId],
+                                    'start_date' => date('Y-m-d'), // سيتم تعيين تاريخ اليوم كتاريخ بداية
+                                    'end_date' => null,
+                                    'period_days' => ['sat', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri'], // كل أيام الأسبوع
+                                ]);
+                            } catch (Exception $e) {
+                                // تسجيل الخطأ إذا فشل الربط للموظف الموجود
+                                $this->logError('SHIFT_ASSIGN_ERROR', "Failed to assign shift to existing employee '{$row['name']}': " . $e->getMessage(), $row, $e);
+                            }
+                        } else {
+                            // 3. تسجيل خطأ في حال كان الشيفت ينتمي لفرع مختلف
+                            $this->logError(
+                                'SHIFT_BRANCH_MISMATCH',
+                                "Shift ID {$shiftId} belongs to branch {$workPeriod->branch_id}, but employee '{$row['name']}' belongs to branch {$existingEmployee->branch_id}.",
+                                $row
+                            );
+                        }
+                    } else {
+                        // 4. تسجيل خطأ في حال كان رقم الشيفت المدخل غير موجود في النظام نهائياً
+                        $this->logError('SHIFT_NOT_FOUND', "Shift ID {$shiftId} does not exist in the database for employee '{$row['name']}'.", $row);
+                    }
+                }
                 return null;
             }
 
