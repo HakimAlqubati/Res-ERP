@@ -6,6 +6,7 @@ use Exception;
 use App\Models\Employee;
 use App\Models\AppLog;
 use App\Models\UserType;
+use App\Modules\HR\EmployeeWorkPeriods\EmployeeWorkPeriodService;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -154,7 +155,7 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
                 // Handle Work Shift Assignment
                 if (!empty($row['work_shift_1'])) {
                     try {
-                        $service = new \App\Services\HR\EmployeeWorkPeriodService();
+                        $service = new EmployeeWorkPeriodService();
                         $service->assignPeriodsToEmployee($employee, [
                             'periods' => [$row['work_shift_1']], // Work Period ID
                             'start_date' => '2026-01-01',
