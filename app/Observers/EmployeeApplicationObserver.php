@@ -129,10 +129,13 @@ class EmployeeApplicationObserver
      */
     public function updating(EmployeeApplicationV2 $app): void
     {
+        $this->checkApplicationModelLock($app);
+
+
         // 1. Determine the date to check against (Original date in DB)
         // To prevent modifying any data in an already locked month.
-        $originalDate = $app->getOriginal('application_date') 
-            ? \Carbon\Carbon::parse($app->getOriginal('application_date')) 
+        $originalDate = $app->getOriginal('application_date')
+            ? \Carbon\Carbon::parse($app->getOriginal('application_date'))
             : ($app->application_date ? \Carbon\Carbon::parse($app->application_date) : \Carbon\Carbon::today());
 
         $this->payrollLockGuard->checkLock(
@@ -145,7 +148,7 @@ class EmployeeApplicationObserver
         // 2. If the application_date itself is changing, ensure the NEW date is also not in a locked month.
         if ($app->isDirty('application_date') && !empty($app->application_date)) {
             $newDate = \Carbon\Carbon::parse($app->application_date);
-            
+
             if ($newDate->month !== $originalDate->month || $newDate->year !== $originalDate->year) {
                 $this->payrollLockGuard->checkLock(
                     $app->employee_id,
@@ -234,5 +237,31 @@ class EmployeeApplicationObserver
     {
         // Now handled directly by the Financial Manager approval action.
         return false;
+    }
+
+    public function checkApplicationModelLock(\App\Models\EmployeeApplicationV2 $app): void
+    {
+        $targetDate = null;
+        switch ($app->application_type_id) {
+            case \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST:
+                $targetDate = $app->missedCheckinRequest?->date;
+                break;
+            case \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST:
+                $targetDate = $app->missedCheckoutRequest?->date;
+                break;
+            case \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST:
+                $targetDate = $app->leaveRequest?->start_date;
+                break;
+            case \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST:
+                $targetDate = $app->application_date;
+                break;
+            default:
+                $targetDate = $app->application_date;
+                break;
+        }   
+        if ($targetDate) {
+            $parsedDate = \Carbon\Carbon::parse($targetDate);
+            $this->payrollLockGuard->checkLock($app->employee_id, $parsedDate->year, $parsedDate->month, 'application_date');
+        }
     }
 }

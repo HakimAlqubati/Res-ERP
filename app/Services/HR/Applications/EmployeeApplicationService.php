@@ -23,22 +23,22 @@ class EmployeeApplicationService
     {
         // 1) جلب الموظف
         $employee = Employee::findOrFail($data['employee_id']);
-        
+
         // 2) تعيين branch_id تلقائياً
         if (!isset($data['branch_id']) && $employee->branch) {
             $data['branch_id'] = $employee->branch->id;
         }
-        
+
         // 3) تعيين application_type_name تلقائياً
         if (!isset($data['application_type_name'])) {
             $data['application_type_name'] =
-            EmployeeApplicationV2::APPLICATION_TYPES[$data['application_type_id']] ?? 'Unknown';
+                EmployeeApplicationV2::APPLICATION_TYPES[$data['application_type_id']] ?? 'Unknown';
         }
-        
+
         // 4) تعيين created_by والمبدئية
         $data['created_by'] = $data['created_by'] ?? auth()->id();
         $data['status']     = $data['status'] ?? EmployeeApplicationV2::STATUS_PENDING;
-        
+
         // 5) Validate advance-request fields before persisting anything
         if (($data['application_type_id'] ?? null) == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST) {
             $this->validateAdvanceRequest($data['advance_request'] ?? []);
@@ -50,7 +50,7 @@ class EmployeeApplicationService
             $data['application_type_id'],
             $data
         );
-        
+
         // 7) إنشاء السجل الأساسي
         $record = EmployeeApplicationV2::create($data);
 
@@ -381,4 +381,6 @@ class EmployeeApplicationService
 
         return $record;
     }
+
+  
 }
