@@ -204,11 +204,20 @@ class EmployeeBranchTransferService
                 ]);
 
             // ③ إغلاق سجل الفرع المفتوح
-            $employee->branchLogs()
-                ->whereNull('end_at')
-                ->update([
-                    'end_at' => $closureDate,
+            $openLog = $employee->branchLogs()->whereNull('end_at')->first();
+            if ($openLog) {
+                $finalEndAt = Carbon::parse($closureDate);
+                $logStartAt = Carbon::parse($openLog->start_at);
+
+                // التأكد من أن تاريخ النهاية لا يقل عن تاريخ البداية
+                if ($finalEndAt->isBefore($logStartAt)) {
+                    $finalEndAt = $logStartAt;
+                }
+
+                $openLog->update([
+                    'end_at' => $finalEndAt->toDateString(),
                 ]);
+            }
 
             // ④ إنشاء سجل فرع جديد
             EmployeeBranchLog::create([
