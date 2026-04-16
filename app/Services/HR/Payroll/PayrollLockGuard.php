@@ -49,17 +49,17 @@ final class PayrollLockGuard
     public function checkApplicationTargetDateLock(int $employeeId, int $applicationTypeId, array $appData): void
     {
         $targetDate = null;
-        
+
         if ($applicationTypeId == \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST) {
-            $targetDate = $appData['missedCheckinRequest']['date'] 
-                       ?? $appData['missed_checkin_request']['date'] ?? null;
+            $targetDate = $appData['missedCheckinRequest']['date']
+                ?? $appData['missed_checkin_request']['date'] ?? null;
         } elseif ($applicationTypeId == \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST) {
-            $targetDate = $appData['missedCheckoutRequest']['date'] 
-                       ?? $appData['missed_checkout_request']['date'] ?? null;
+            $targetDate = $appData['missedCheckoutRequest']['date']
+                ?? $appData['missed_checkout_request']['date'] ?? null;
         } elseif ($applicationTypeId == \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST) {
-           dd($appData);
-            $targetDate = $appData['leaveRequest']['detail_from_date'] 
-                       ?? $appData['leave_request']['detail_from_date'] ?? null;
+
+            $targetDate = $appData['leaveRequest']['detail_from_date']
+                ?? $appData['leave_request']['detail_from_date'] ?? null;
         }
 
         if ($targetDate) {
