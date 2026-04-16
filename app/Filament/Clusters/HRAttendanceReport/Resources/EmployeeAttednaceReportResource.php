@@ -59,6 +59,9 @@ class EmployeeAttednaceReportResource extends Resource
                 SelectFilter::make('employee_id')
                     ->placeholder(__('lang.choose'))
                     ->label(__('lang.employee'))
+                    ->default(function () {
+                        return $_GET['tableFilters']['employee_id'] ?? null;
+                    })
                     ->options(function ($search = null) {
                         return Employee::query()
                             ->select('id', 'name')

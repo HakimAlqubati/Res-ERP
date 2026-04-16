@@ -161,7 +161,7 @@ class AdminPanelProvider extends PanelProvider
                                 (isSuperAdmin() || isFinanceManager()) ? BranchSalesReportResource::getNavigationItems() : [],
                                 (isSuperAdmin()) ? FinancialCategoryResource::getNavigationItems() : [],
                                 (isSuperAdmin()) ? FinancialTransactionResource::getNavigationItems() : [],
-                                (isSuperAdmin()) ? FinancialReportsCluster::getNavigationItems() : [],
+                                (isSuperAdmin() || isFinanceManager()) ? FinancialReportsCluster::getNavigationItems() : [],
                             )),
                         NavigationGroup::make(__('lang.user_and_roles'))->collapsed(1)
                             ->items(array_merge(
