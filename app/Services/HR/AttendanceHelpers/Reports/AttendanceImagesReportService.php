@@ -68,9 +68,17 @@ class AttendanceImagesReportService
         $sortOrder = $request->input('sort_order', 'asc');
         $sortOrder = strtolower($sortOrder) === 'desc' ? 'desc' : 'asc';
 
-        // Sorting by check_date, employee_id
+        // Sorting by check_date, first check-in time, employee_id, chronological order
         $attendances = $query->orderBy('check_date', $sortOrder)
+            ->orderByRaw("COALESCE((
+                SELECT MIN(sub.check_time) 
+                FROM hr_attendances as sub 
+                WHERE sub.employee_id = hr_attendances.employee_id 
+                  AND sub.check_date = hr_attendances.check_date
+                  AND sub.check_type = 'checkin'
+            ), '23:59:59') ASC")
             ->orderBy('employee_id')
+            ->orderBy('id', 'asc')
             ->paginate($perPage);
 
         // Map and filter logic
