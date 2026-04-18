@@ -13,9 +13,7 @@ use Illuminate\Http\Request;
 
 class EmployeeServiceTerminationController extends Controller
 {
-    public function __construct(protected EmployeeLifecycleService $lifecycleService)
-    {
-    }
+    public function __construct(protected EmployeeLifecycleService $lifecycleService) {}
 
     /**
      * Get a list of all terminations.
@@ -24,7 +22,19 @@ class EmployeeServiceTerminationController extends Controller
     {
         $perPage = min((int) $request->input('per_page', 15), 100);
 
-        $query = EmployeeServiceTermination::query()->with(['employee', 'createdBy', 'approvedBy', 'rejectedBy']);
+        $query = EmployeeServiceTermination::query()
+            ->select('hr_employee_service_terminations.*')
+            ->join(
+                'hr_employees',
+                'hr_employees.id',
+                'hr_employee_service_terminations.employee_id'
+            );
+
+        if (isBranchManager()) {
+            $query->where('hr_employees.branch_id', auth()->user()->branch_id);
+        }
+
+        $query->with(['employee', 'createdBy', 'approvedBy', 'rejectedBy']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
