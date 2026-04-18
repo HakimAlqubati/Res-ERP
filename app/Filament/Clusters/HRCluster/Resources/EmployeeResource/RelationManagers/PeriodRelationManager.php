@@ -122,6 +122,7 @@ class PeriodRelationManager extends RelationManager
                     }),
 
                 TextColumn::make('creator.name')->label('Created by')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('created_at')->label('Created at')->toggleable(isToggledHiddenByDefault: true),
 
             ])
             ->filters([
