@@ -874,6 +874,38 @@ class EmployeeTable
 
                         showSuccessNotifiMessage("{$activatedCount} employees activated.");
                     }),
+                BulkAction::make('createUser')
+                    ->label(__('lang.create_user'))
+                    ->icon('heroicon-o-user-plus')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->deselectRecordsAfterCompletion()
+                    ->action(function (\Illuminate\Support\Collection $records) {
+                        $createdCount = 0;
+                        $skippedCount = 0;
+
+                        foreach ($records as $record) {
+                            try {
+                                if (! $record->has_user && empty($record->user_id)) {
+                                    $user = $record->createLinkedUser([]);
+                                    if ($user) {
+                                        $createdCount++;
+                                    }
+                                } else {
+                                    $skippedCount++;
+                                }
+                            } catch (\Throwable $e) {
+                                report($e);
+                            }
+                        }
+
+                        if ($createdCount > 0) {
+                            showSuccessNotifiMessage("{$createdCount} users created successfully." . ($skippedCount > 0 ? " ({$skippedCount} skipped)" : ""));
+                        } else {
+                            showWarningNotifiMessage("No users were created. Selected employees might already have accounts.");
+                        }
+                    })
+                    ->visible(fn() => isHakimOrAdel()),
                 ForceDeleteBulkAction::make()->visible(fn() => isSuperAdmin()),
             ]);
     }
