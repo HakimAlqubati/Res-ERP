@@ -31,7 +31,14 @@ class ServiceRequestController extends Controller
             ->when($req->filled('urgency'), fn($x) => $x->where('urgency', $req->input('urgency')))
             ->when($req->filled('impact'),  fn($x) => $x->where('impact',  $req->input('impact')))
             ->when($req->filled('branch_id'), fn($x) => $x->where('branch_id', $req->input('branch_id')))
-            ->when($req->filled('assigned_to'), fn($x) => $x->where('assigned_to', $req->input('assigned_to')))
+            ->when($req->has('assigned_to'), function ($x) use ($req) {
+                $v = $req->input('assigned_to');
+                if ($v === 'unassigned' || $v === 'null') {
+                    $x->whereNull('assigned_to');
+                } elseif ($v !== null && $v !== '') {
+                    $x->where('assigned_to', $v);
+                }
+            })
             ->when($req->filled('equipment_id'), fn($x) => $x->where('equipment_id', $req->input('equipment_id')));
 
         // sort
@@ -43,7 +50,14 @@ class ServiceRequestController extends Controller
         $q->orderBy($col, $dir);
 
         $per = min((int) $req->input('per_page', 15), 100);
-        return ServiceRequestResource::collection($q->paginate($per));
+        $paginator = $q->paginate($per);
+
+        $resource = ServiceRequestResource::collection($paginator)->response()->getData(true);
+
+        return response()->json(array_merge(
+            ['count' => $paginator->total()],
+            $resource
+        ));
     }
 
     public function show(ServiceRequest $serviceRequest)
