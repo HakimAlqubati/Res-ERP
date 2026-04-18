@@ -16,4 +16,9 @@ class ViewAttendnace extends ViewRecord
         ];
     }
 
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $data['source'] = $this?->record?->source_label ?? '';
+        return $data;
+    }
 }

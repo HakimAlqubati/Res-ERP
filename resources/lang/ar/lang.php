@@ -1122,4 +1122,5 @@ return [
   'undo_approve_confirmation_title' => 'إلغاء الموافقة على طلب الإجازة #{id}',
   'undo_approve_confirmation_body' => 'هل أنت متأكد من رغبتك في إلغاء الموافقة على طلب الإجازة هذا؟ لا يمكن التراجع عن هذا الإجراء.',
   'branch_logs_count' => 'عدد سجلات الفروع',
+  'attendance_type' => 'نوع التحضير',
 ];

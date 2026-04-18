@@ -104,53 +104,39 @@ class AttendnaceResource extends Resource
                     ]),
                 ]),
 
-                Fieldset::make()->columnSpanFull()->label(__('lang.select_employee_check_type'))->schema([
-                    Select::make('employee_id')
-                        ->label(__('lang.employee'))
-                        ->live()
-                        ->searchable()
-                        // ->default(auth()->user()?->employee?->id)
-                        // ->disabled()
-                        ->relationship('employee', 'name')
-                        ->afterStateUpdated(function (Get $get, Set $set) {
-                            $employee_id = $get('employee_id');
-                            $check_date = $get('check_date');
-                            $check_time = $get('check_time');
-                            // $employee_periods = Employee::find($employee_id)?->periods->select('id')->pluck('id')->toArray();
-                            // dd( $employee_periods);
-                            $employee_attendance = Attendance::where('employee_id', $employee_id)->where('check_date', $check_date)->select('check_type', 'check_time', 'check_date')->get()->toArray();
-                            if (count($employee_attendance) == 0) {
-                                $set('check_type', Attendance::CHECKTYPE_CHECKIN);
-                            } else if (count($employee_attendance) == 1) {
-                                $set('check_type', Attendance::CHECKTYPE_CHECKOUT);
-                            } else if (count($employee_attendance) == 2) {
-                                $set('check_type', Attendance::CHECKTYPE_CHECKIN);
-                            } else if (count($employee_attendance) == 3) {
-                                $set('check_type', Attendance::CHECKTYPE_CHECKOUT);
-                            } else if (count($employee_attendance) == 4) {
-                                $set('check_type', Attendance::CHECKTYPE_CHECKIN);
-                            } else if (count($employee_attendance) == 5) {
-                                $set('check_type', Attendance::CHECKTYPE_CHECKOUT);
-                            }
-                        })
-                        ->required(),
-                    ToggleButtons::make('check_type')
-                        ->label('Check type')
-                        ->inline()
-                        // ->default(function(Get $get,Set $set){
-                        //     $employee_id = $get('employee_id');
-                        //     $set('notes',$employee_id);
-                        //     // dd()
-                        // })
-                        ->options(Attendance::getCheckTypes())
-                        ->required(),
+                Fieldset::make()->columnSpanFull()
+                    ->label(__('lang.select_employee_check_type'))
+                    ->columns(4)
+                    ->schema([
+                        Select::make('employee_id')
+                            ->label(__('lang.employee'))
+                            ->live()
+                            ->searchable()
 
-                ]),
+                            ->relationship('employee', 'name')
 
-                Textarea::make('notes')
-                    ->label('Notes')
-                    ->columnSpanFull()
-                    ->nullable(),
+                            ->required(),
+
+                        Select::make('period_id')
+                            ->label(__('lang.shift'))
+                            ->live()
+                            ->searchable()
+
+                            ->relationship('period', 'name')
+
+                            ->required(),
+
+                        ToggleButtons::make('check_type')
+                            ->label('Check type')
+                            ->inline()
+                            ->options(Attendance::getCheckTypes())
+                            ->required(),
+
+                            TextInput::make('source')->label(__('lang.attendance_type'))
+
+                    ]),
+
+
 
             ]);
     }
@@ -235,7 +221,7 @@ class AttendnaceResource extends Resource
                 // TextColumn::make('attendance_type')->alignCenter(true),
                 TextColumn::make('created_at')->alignCenter(true)->sortable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('source_label')
-                    ->label('Aattendance Type')
+                    ->label(__('lang.attendance_type'))
                     ->toggleable()
                     ->alignCenter(true),
 

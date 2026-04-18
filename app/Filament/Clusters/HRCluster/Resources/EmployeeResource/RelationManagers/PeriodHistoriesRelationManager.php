@@ -72,6 +72,8 @@ class PeriodHistoriesRelationManager extends RelationManager
                 // TextColumn::make('creator.name')->label('Created by'),
                 TextColumn::make('start_time')->label('Start time'),
                 TextColumn::make('end_time')->label('End time'),
+                TextColumn::make('creator.name')->label('Creator')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
             ])
             ->filters([

@@ -1141,4 +1141,5 @@ return [
     'undo_approve_confirmation_title' => 'Undo Approve Leave Request #{id}',
     'undo_approve_confirmation_body' => 'Are you sure you want to undo the approval of this leave request? This action cannot be undone.',
     'branch_logs_count' => 'Transfers',
+    'attendance_type' => 'Attendance Type',
 ];
