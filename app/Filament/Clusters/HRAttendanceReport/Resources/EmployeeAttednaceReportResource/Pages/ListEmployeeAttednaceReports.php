@@ -47,7 +47,8 @@ class ListEmployeeAttednaceReports extends ListRecords
             $employee_id = auth()->user()?->employee?->id;
         }
 
-        $employee  = Employee::find($employee_id);
+        $employee  = Employee::with('branch:id,name')->find($employee_id);
+        $branchName = $employee?->branch?->name ?? '';
         $startDate = $this->getTable()->getFilters()['date_range']->getState()['start_date'];
         $endDate   = $this->getTable()->getFilters()['date_range']->getState()['end_date'];
         $showDay   = $this->getTable()->getFilters()['show_extra_fields']->getState()['show_day'];
@@ -57,12 +58,12 @@ class ListEmployeeAttednaceReports extends ListRecords
         // $data     = $historyService->getEmployeePeriodsByDateRange($employee, $startDate, $endDate);
         $reportManager = app(AttendanceReportInterface::class);
         $data          = $employee ? $reportManager->getEmployeeRangeReport($employee, $startDate, $endDate) : collect();
-
         $totalSupposedValue = $employee && $data->has('total_duration_hours') ? $data->get('total_duration_hours', 0) : 0;
         $totalSupposedFormatted = floor($totalSupposedValue) . ' h ' . round(($totalSupposedValue - floor($totalSupposedValue)) * 60) . ' m';
 
         return [
             'report_data'   => $data,
+            'branch_name'   => $branchName,
             'show_day'      => $showDay,
             'employee_id'   => $employee_id,
             'start_date'    => $startDate?->format('Y-m-d') ?? '',

@@ -161,6 +161,14 @@ class EmployeeTable
                     ->copyMessageDuration(1500)
                     ->color('primary')
                     ->weight(FontWeight::Bold),
+                TextColumn::make('periods.name')
+                    ->label(__('lang.shift'))
+                    ->separator(', ')
+
+                    ->badge()
+                    ->color('primary')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->searchable(),
                 TextColumn::make('join_date')->sortable()->label(__('lang.start_date'))
                     ->sortable()->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)

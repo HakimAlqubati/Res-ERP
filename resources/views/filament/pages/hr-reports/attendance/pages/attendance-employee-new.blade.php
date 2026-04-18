@@ -163,6 +163,8 @@
                             <span style="font-weight: 600;">{{ __('lang.start_date') . ': ' . $start_date }}</span>
                             <br>
                             <span style="font-weight: 600;">{{ __('lang.end_date') . ': ' . $end_date }}</span>
+                            <br>
+                            <span style="font-weight: 600;">{{ __('lang.branch') . ': ' . $branch_name }}</span>
                         </div>
 
                         {{-- Far Right: Logo --}}
