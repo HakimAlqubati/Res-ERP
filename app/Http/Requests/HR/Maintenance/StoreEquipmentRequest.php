@@ -23,6 +23,10 @@ class StoreEquipmentRequest extends FormRequest
             'last_serviced' => ['nullable', 'date'],
             'next_service_date' => ['nullable', 'date'],
             'warranty_years' => ['required', 'integer', 'min:1'],
+            'warranty_end_date' => ['nullable', 'date'],
+            'purchase_price' => ['nullable', 'numeric'],
+            'model' => ['nullable', 'string'],
+            'make' => ['nullable', 'string'],
         ];
     }
 }
