@@ -23,7 +23,14 @@ class PenaltyDeductionService
             'approver:id,name',
             'rejector:id,name'
         ]);
-
+        $query->join(
+            'hr_employees',
+            'hr_employees.id',
+            'hr_penalty_deductions.employee_id'
+        );
+        if (isBranchManager()) {
+            $query->where('hr_employees.branch_id', auth()->user()->branch_id);
+        }
         if (!empty($filters['employee_id'])) {
             $query->where('employee_id', $filters['employee_id']);
         }
