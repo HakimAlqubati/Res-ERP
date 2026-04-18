@@ -89,6 +89,11 @@ class ServiceRequestTable
                     'info'    => ServiceRequest::STATUS_IN_PROGRESS,
                     'success' => ServiceRequest::STATUS_CLOSED,
                 ]),
+            TextColumn::make('logs_count')
+                ->counts('logs')
+                ->label('Activities')->badge()
+                ->toggleable(isToggledHiddenByDefault: true)
+                ->alignCenter(),
 
             TextColumn::make('urgency')
                 ->badge()
