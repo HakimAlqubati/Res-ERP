@@ -264,7 +264,7 @@ class EquipmentController extends Controller
     public function uploadMedia(Request $req, Equipment $equipment)
     {
         $req->validate(['file' => ['required', 'file', 'max:10240']]); // 10MB
-        $media = $equipment->addMediaFromRequest('file')->toMediaCollection('attachments');
+        $media = $equipment->addMediaFromRequest('file')->toMediaCollection('default');
         return response()->json(['data' => ['id' => $media->id, 'url' => $media->getUrl()]]);
     }
 

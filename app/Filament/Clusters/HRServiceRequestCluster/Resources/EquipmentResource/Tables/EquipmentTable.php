@@ -58,7 +58,7 @@ class EquipmentTable
                 ->width(10)
                 ->circular()->alignCenter(true)->getStateUsing(function () {
                     return null;
-                })->limit(2),
+                })->limit(3),
 
             TextColumn::make('name')->toggleable()
                 ->searchable()
