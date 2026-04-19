@@ -30,6 +30,8 @@ class ViewEmployee extends ViewRecord
           fn() => EmployeeResource::canDeleteAny()
             && EmployeeResource::canDelete($this->record)
         ),
+      \App\Filament\Resources\EmployeeResource\EmployeeActions::changeBranch(),
+
       \Filament\Actions\Action::make('rehire')
         ->label(__('lang.rehire'))
         ->color('success')
@@ -69,7 +71,7 @@ class ViewEmployee extends ViewRecord
           'tableFilters[date_range][end_date]' => now()->endOfMonth()->toDateString(),
         ]))
         ->openUrlInNewTab(),
-        
+
     ];
   }
 }
