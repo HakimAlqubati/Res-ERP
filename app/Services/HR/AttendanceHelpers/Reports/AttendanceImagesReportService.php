@@ -76,7 +76,7 @@ class AttendanceImagesReportService
                 WHERE sub.employee_id = hr_attendances.employee_id 
                   AND sub.check_date = hr_attendances.check_date
                   AND sub.check_type = 'checkin'
-            ), '23:59:59') ASC")
+            ), '00:00:00') DESC")
             ->orderBy('employee_id')
             ->orderBy('id', 'asc')
             ->paginate($perPage);
