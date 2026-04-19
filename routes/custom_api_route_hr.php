@@ -348,6 +348,11 @@ Route::prefix('hr')
 
         Route::get('/deductions', [\App\Http\Controllers\Api\HR\DeductionController::class, 'index']);
         Route::get('/deductions/{id}', [\App\Http\Controllers\Api\HR\DeductionController::class, 'show']);
+
+        // Employee Rewards
+        Route::apiResource('/rewards', \App\Http\Controllers\Api\HR\EmployeeRewardController::class);
+        Route::post('/rewards/{id}/approve', [\App\Http\Controllers\Api\HR\EmployeeRewardController::class, 'approve'])->name('rewards.approve');
+        Route::post('/rewards/{id}/reject', [\App\Http\Controllers\Api\HR\EmployeeRewardController::class, 'reject'])->name('rewards.reject');
     });
 
 Route::get('/testWeeklyLeaveCalculator', function () {

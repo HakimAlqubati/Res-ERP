@@ -54,6 +54,11 @@ class AppServiceProvider extends ServiceProvider
             \App\Modules\HR\AdvanceWages\Interfaces\AdvanceWageServiceInterface::class,
             \App\Modules\HR\AdvanceWages\Services\AdvanceWageService::class
         );
+
+        $this->app->bind(
+            \App\Services\HR\Rewards\Contracts\EmployeeRewardServiceInterface::class,
+            \App\Services\HR\Rewards\EmployeeRewardService::class
+        );
     }
 
     /**
