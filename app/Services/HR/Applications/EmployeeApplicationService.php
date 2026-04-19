@@ -128,6 +128,23 @@ class EmployeeApplicationService
                     ]);
                 }
                 break;
+
+            case EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST:
+                $details = $data['meal_request'] ?? null;
+                if ($details) {
+                    $record->mealRequest()->create([
+                        'application_id' => $record->id,
+                        'employee_id'    => $record->employee_id,
+                        'branch_id'      => $record->branch_id,
+                        'meal_details'   => $details['detail_meal_details'] ?? null,
+                        'cost'           => $details['detail_cost'] ?? 0,
+                        'notes'          => $data['notes'] ?? null,
+                        'date'           => $data['application_date'] ?? null,
+                        'created_by'     => $record->created_by,
+                        'status'         => $record->status,
+                    ]);
+                }
+                break;
         }
 
         // 8) Handle images

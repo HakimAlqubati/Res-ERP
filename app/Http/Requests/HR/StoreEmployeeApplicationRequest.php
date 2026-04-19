@@ -22,7 +22,7 @@ class StoreEmployeeApplicationRequest extends FormRequest
             'files'    => 'nullable|array',
             'files.*'  => 'mimes:jpeg,png,jpg,gif,pdf,webp|max:10240',
             'employee_id'        => 'required|exists:hr_employees,id',
-            'application_type_id' => 'required|integer|in:1,2,3,4',
+            'application_type_id' => 'required|integer|in:1,2,3,4,5',
             'application_date'   => 'required|date',
             'notes'              => 'nullable|string|max:1000',
 
