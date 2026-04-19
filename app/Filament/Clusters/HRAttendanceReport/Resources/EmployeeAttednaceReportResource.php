@@ -113,6 +113,9 @@ class EmployeeAttednaceReportResource extends Resource
                         Toggle::make('show_day')
                             ->inline(false)
                             ->label(__('lang.show_day')),
+                        Toggle::make('show_branch')
+                            ->inline(false)
+                            ->label(__('lang.branch')),
                     ]),
 
             ], FiltersLayout::AboveContent)

@@ -69,7 +69,7 @@ class ResetEmployeeBranchLogs extends Command
     protected function processTenant($tenant)
     {
         $this->line("Processing Tenant: [{$tenant->id}] {$tenant->name}");
-        
+
         try {
             $tenant->makeCurrent();
             $this->syncLogs();
@@ -99,7 +99,7 @@ class ResetEmployeeBranchLogs extends Command
         try {
             // 1. Get all employees who have a branch assigned
             $employees = Employee::whereNotNull('branch_id')->get();
-            
+
             if ($employees->isEmpty()) {
                 $this->line("No employees found.");
                 return;
@@ -114,6 +114,9 @@ class ResetEmployeeBranchLogs extends Command
                 // Using join_date if available, otherwise now.
                 $startAt = $employee->join_date ? Carbon::parse($employee->join_date) : Carbon::now();
 
+                $employee->periodHistories()->update([
+                    'branch_id' => $employee->branch_id
+                ]);
                 // Create default branch log
                 EmployeeBranchLog::create([
                     'employee_id' => $employee->id,

@@ -52,6 +52,7 @@ class ListEmployeeAttednaceReports extends ListRecords
         $startDate = $this->getTable()->getFilters()['date_range']->getState()['start_date'];
         $endDate   = $this->getTable()->getFilters()['date_range']->getState()['end_date'];
         $showDay   = $this->getTable()->getFilters()['show_extra_fields']->getState()['show_day'];
+        $showBranch = $this->getTable()->getFilters()['show_extra_fields']->getState()['show_branch'] ?? false;
         // $historyService = new EmployeePeriodHistoryService();
         $startDate = Carbon::parse($startDate);
         $endDate   = Carbon::parse($endDate);
@@ -65,6 +66,7 @@ class ListEmployeeAttednaceReports extends ListRecords
             'report_data'   => $data,
             'branch_name'   => $branchName,
             'show_day'      => $showDay,
+            'show_branch'   => $showBranch,
             'employee_id'   => $employee_id,
             'start_date'    => $startDate?->format('Y-m-d') ?? '',
             'end_date'      => $endDate?->format('Y-m-d') ?? '',
