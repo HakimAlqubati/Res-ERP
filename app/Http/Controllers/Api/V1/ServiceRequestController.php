@@ -218,7 +218,14 @@ class ServiceRequestController extends Controller
     public function uploadMedia(Request $req, ServiceRequest $serviceRequest)
     {
         $req->validate(['file' => ['required', 'file', 'max:10240']]); // 10MB
-        $media = $serviceRequest->addMediaFromRequest('file')->toMediaCollection('attachments');
+        $file = $req->file('file');
+
+        // إذا كان الملف صورة → ضغطه، وإلا ارفعه كما هو
+        if (str_starts_with($file->getMimeType(), 'image/')) {
+            $media = compressAndAddImage($serviceRequest, $file, 'attachments');
+        } else {
+            $media = $serviceRequest->addMediaFromRequest('file')->toMediaCollection('attachments');
+        }
         return response()->json(['data' => ['id' => $media->id, 'url' => $media->getUrl()]]);
     }
 
@@ -236,9 +243,9 @@ class ServiceRequestController extends Controller
         $data = $req->validate([
             'comment' => ['required', 'string', 'max:2000'],
             'images'  => ['nullable', 'array', 'max:5'],
-            'images.*'=> ['image', 'max:10240'],
+            'images.*' => ['image', 'max:10240'],
         ]);
-        
+
         $comment = $serviceRequest->comments()->create([
             'comment' => $data['comment'],
             'created_by' => auth()->id(),
@@ -255,7 +262,7 @@ class ServiceRequestController extends Controller
             'description' => mb_strimwidth($data['comment'], 0, 120, '…'),
             'created_by'  => auth()->id(),
         ]);
-        
+
         return new ServiceRequestCommentResource($comment->load('user'));
     }
 

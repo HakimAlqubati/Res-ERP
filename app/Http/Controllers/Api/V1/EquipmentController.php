@@ -264,7 +264,15 @@ class EquipmentController extends Controller
     public function uploadMedia(Request $req, Equipment $equipment)
     {
         $req->validate(['file' => ['required', 'file', 'max:10240']]); // 10MB
-        $media = $equipment->addMediaFromRequest('file')->toMediaCollection('default');
+        $file = $req->file('file');
+        
+        // إذا كان الملف صورة → ضغطه، وإلا ارفعه كما هو
+        if (str_starts_with($file->getMimeType(), 'image/')) {
+            $media = compressAndAddImage($equipment, $file, 'default');
+        } else {
+            $media = $equipment->addMediaFromRequest('file')->toMediaCollection('default');
+        }
+        
         return response()->json(['data' => ['id' => $media->id, 'url' => $media->getUrl()]]);
     }
 

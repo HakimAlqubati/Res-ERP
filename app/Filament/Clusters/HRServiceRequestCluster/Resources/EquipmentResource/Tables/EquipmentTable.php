@@ -54,11 +54,19 @@ class EquipmentTable
     public static function getColumns(): array
     {
         return [
-            SpatieMediaLibraryImageColumn::make('attachments')->label('')
-                ->width(10)
-                ->circular()->alignCenter(true)->getStateUsing(function () {
-                    return null;
-                })->limit(3),
+            ImageColumn::make('attachments')
+                ->label('')
+                ->circular()
+                ->alignCenter()
+                ->stacked()
+                ->limit(3)
+                ->getStateUsing(function (Equipment $record) {
+                    return $record->getMedia('default')
+                        ->sortByDesc('created_at')
+                        ->take(3)
+                        ->map(fn($media) => $media->getUrl())
+                        ->toArray();
+                }),
 
             TextColumn::make('name')->toggleable()
                 ->searchable()

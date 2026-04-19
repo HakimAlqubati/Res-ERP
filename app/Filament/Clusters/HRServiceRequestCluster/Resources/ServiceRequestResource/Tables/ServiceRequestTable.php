@@ -48,13 +48,20 @@ class ServiceRequestTable
     {
         return [
 
-            SpatieMediaLibraryImageColumn::make('attachments')
-                ->collection('attachments')
+            ImageColumn::make('attachments')
                 ->label('')
                 ->size(50)
                 ->circular()
-                ->alignCenter(true)
-                ->limit(3),
+                ->alignCenter()
+                ->stacked()
+                ->limit(3)
+                ->getStateUsing(function ($record) {
+                    return $record->getMedia('attachments')
+                        ->sortByDesc('created_at')
+                        ->take(3)
+                        ->map(fn($media) => $media->getUrl())
+                        ->toArray();
+                }),
             TextColumn::make('id')
                 ->sortable()
                 ->searchable(isIndividual: false)
