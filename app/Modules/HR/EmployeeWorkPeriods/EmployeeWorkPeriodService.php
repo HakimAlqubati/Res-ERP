@@ -79,7 +79,7 @@ class EmployeeWorkPeriodService
                         'start_time'  => $periodStartAt,
                         'end_time'    => $periodEndAt,
                         'day_of_week' => $dayOfWeek,
-                        'branch_id' => $employee->branch_id,
+                        'branch_id' => $employee?->branch_id,
                     ]);
                 }
             }
