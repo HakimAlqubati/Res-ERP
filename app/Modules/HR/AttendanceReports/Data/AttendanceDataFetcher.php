@@ -135,9 +135,12 @@ class AttendanceDataFetcher
 
         $terminations = DB::table('hr_employee_service_terminations')
             ->where('employee_id', $employeeId)
+            ->select('hr_employee_service_terminations.*', 'hr_employees.active')
             ->where('status', EmployeeServiceTermination::STATUS_APPROVED)
-            ->first();
+            ->join('hr_employees', 'hr_employees.id', '=', 'hr_employee_service_terminations.employee_id')
+            ->where('hr_employees.active', 0)
 
+            ->first();
         $overtimes = EmployeeOvertime::where('employee_id', $employeeId)
             ->where('status', EmployeeOvertime::STATUS_APPROVED)
             ->day()
