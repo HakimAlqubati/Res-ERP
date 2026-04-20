@@ -23,7 +23,7 @@ class StoreEmployeeRewardRequest extends FormRequest
     {
         return [
             'employee_id'   => 'required|exists:hr_employees,id',
-            'incentive_id'  => 'required|exists:hr_monthly_incentives,id',
+            'incentive_id'  => 'required|exists:hr_monthly_incentives,id,active,1,deleted_at,NULL',
             'reward_amount' => 'required|numeric|min:0.01',
             'reason'        => 'required|string|max:1000',
             'date'          => 'required|date',

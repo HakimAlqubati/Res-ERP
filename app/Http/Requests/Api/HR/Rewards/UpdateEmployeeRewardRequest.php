@@ -23,7 +23,7 @@ class UpdateEmployeeRewardRequest extends FormRequest
     {
         return [
             'employee_id'   => 'sometimes|required|exists:hr_employees,id',
-            'incentive_id'  => 'sometimes|required|exists:hr_monthly_incentives,id',
+            'incentive_id'  => 'required|exists:hr_monthly_incentives,id,active,1,deleted_at,NULL',
             'reward_amount' => 'sometimes|required|numeric|min:0.01',
             'reason'        => 'sometimes|required|string|max:1000',
             'date'          => 'sometimes|required|date',
