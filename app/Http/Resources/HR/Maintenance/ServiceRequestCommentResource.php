@@ -17,7 +17,7 @@ class ServiceRequestCommentResource extends JsonResource
             'images'     => $this->getMedia('attachments')->map(function ($media) {
                 return [
                     'id' => $media->id,
-                    'url' => $media->getUrl(),
+                    'url' => $media->getFullUrl(),
                     'name' => $media->file_name,
                 ];
             }),
