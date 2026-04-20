@@ -135,12 +135,6 @@
             margin-top: 20px;
             font-size: 13px;
         }
-
-        .sign {
-            margin-top: 40px;
-            font-size: 12.5px;
-            color: #444;
-        }
     </style>
 </head>
 
@@ -238,7 +232,6 @@
 
             <p class="note"><strong>Net Salary:</strong> {{ formatMoneyWithCurrency($net) }}</p>
 
-            <div class="sign">Employee Signature</div>
 
         </div>
     </div>
