@@ -53,10 +53,13 @@ class DashboardService
             ->pluck('count', 'application_type_id');
 
         // Overtime
-        $overtimeQuery = EmployeeOvertime::where('status', EmployeeOvertime::STATUS_PENDING);
+        $overtimeQuery = EmployeeOvertime::where('status', EmployeeOvertime::STATUS_PENDING)
+            ->forBranchManager()
+            ->forEmployee();
         if ($dto->branchId) {
             $overtimeQuery->where('branch_id', $dto->branchId);
         }
+
         $pendingOvertimeCount = $overtimeQuery->count();
 
         // New Service Requests
@@ -84,7 +87,9 @@ class DashboardService
      */
     public function getAttendanceSummaries(DashboardFilterDTO $dto): array
     {
-        $branchesQuery = Branch::where('active', 1)->where('is_hidden', 0);
+        $branchesQuery = Branch::where('active', 1)->where('is_hidden', 0)
+            ->forBranchManager('id')
+            ->forEmployee('id');
         if ($dto->branchId) {
             $branchesQuery->where('id', $dto->branchId);
         }
@@ -230,7 +235,7 @@ class DashboardService
                 COUNT(CASE WHEN status = '" . ServiceRequest::STATUS_IN_PROGRESS . "' THEN 1 END) as in_progress_count
             ")
             ->first();
-// dd($stats);
+        // dd($stats);
         return [
             'open'          => (int) ($stats->open_count ?? 0),
             'high_priority' => (int) ($stats->high_priority_count ?? 0),

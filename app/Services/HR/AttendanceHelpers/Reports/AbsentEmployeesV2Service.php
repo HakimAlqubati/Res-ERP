@@ -30,6 +30,8 @@ class AbsentEmployeesV2Service
         $dateTo   = $dateTo instanceof Carbon ? $dateTo : Carbon::parse($dateTo);
 
         $employeesQuery = Employee::query()
+            ->forBranchManager()
+            ->forEmployee()
             // ->where('active', 1)
         ;
 
