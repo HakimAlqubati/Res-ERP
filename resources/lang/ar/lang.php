@@ -1123,4 +1123,5 @@ return [
   'undo_approve_confirmation_body' => 'هل أنت متأكد من رغبتك في إلغاء الموافقة على طلب الإجازة هذا؟ لا يمكن التراجع عن هذا الإجراء.',
   'branch_logs_count' => 'عدد سجلات الفروع',
   'attendance_type' => 'نوع التحضير',
+  'cannot_process_financial_clearance' => 'لا يمكن إتمام المخالصة المالية. الموظف لديه أقساط سلف غير مدفوعة تبلغ: :amount',
 ];

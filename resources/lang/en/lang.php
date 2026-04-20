@@ -1142,4 +1142,5 @@ return [
     'undo_approve_confirmation_body' => 'Are you sure you want to undo the approval of this leave request? This action cannot be undone.',
     'branch_logs_count' => 'Transfers',
     'attendance_type' => 'Attendance Type',
+    'cannot_process_financial_clearance' => 'Cannot process financial clearance. The employee has outstanding advance installments amounting to: :amount',
 ];

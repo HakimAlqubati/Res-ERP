@@ -132,7 +132,8 @@ class EmployeeForm
                                                 ->columnSpanFull()
                                                 ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') != setting('default_nationality')))
                                                 ->schema([
-                                                    TextInput::make('passport_no')->label(__('lang.passport_no'))->numeric()
+                                                    TextInput::make('passport_no')->label(__('lang.passport_no'))
+                                                        // ->numeric()
                                                         ->columnSpan(2),
                                                     Toggle::make('has_employee_pass')->label(__('lang.has_employee_pass'))->inline(false)->live()
                                                         ->columnSpan(1),
@@ -259,7 +260,9 @@ class EmployeeForm
                                         DatePicker::make('join_date')
                                             ->default(now())
                                             ->columnSpan(1)->label(__('lang.start_date'))->required()
-                                            ->maxDate(now()->toDateString()),
+                                        // ->maxDate(now()->toDateString())
+                                        ,
+
                                         TextInput::make('working_hours')
                                             ->label(__('lang.working_hours'))
                                             ->helperText('To Calculate the Hour Late')
@@ -378,7 +381,7 @@ class EmployeeForm
                                             ->label(__('lang.salary'))
                                             ->numeric()
                                             ->inputMode('decimal')->disabled(fn(): bool => isBranchManager()),
-                                        
+
                                         Select::make('salary_allocation_rule')
                                             ->label(__('Salary Allocation Override (Branch Transfers)'))
                                             ->helperText(__('Overrides the default system rule for this specific employee when transferred between branches.'))

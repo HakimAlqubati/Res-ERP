@@ -410,7 +410,20 @@ class EmployeeTable
                             DatePicker::make('termination_date')
                                 ->label(__('lang.termination_date'))
                                 ->required()
-                                ->default(now()),
+                                ->default(now())
+                                ->rules([
+                                    fn(Employee $record) => function (string $attribute, $value, Closure $fail) use ($record) {
+                                        $unpaidBalance = (float) $record->advancedInstallments()
+                                            ->where('is_paid', false)
+                                            ->sum('installment_amount');
+
+                                        if ($unpaidBalance > 0) {
+                                            $fail(__('lang.cannot_process_financial_clearance', [
+                                                'amount' => number_format($unpaidBalance, 2)
+                                            ]) ?: 'Cannot process financial clearance. The employee has outstanding advance installments amounting to: ' . number_format($unpaidBalance, 2));
+                                        }
+                                    },
+                                ]),
                             Textarea::make('termination_reason')
                                 ->label(__('lang.termination_reason'))
                                 ->required(),
