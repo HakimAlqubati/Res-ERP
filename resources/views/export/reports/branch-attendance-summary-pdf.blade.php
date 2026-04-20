@@ -98,7 +98,7 @@
         @endif
         <p>Date: {{ \Carbon\Carbon::create($year, $month, 1)->endOfMonth()->format('M jS Y') }}</p>
         <p style="font-weight: bold; font-size: 13px;">{{ $branchName }}</p>
-        <h2>ATTENDANCE REPORT &mdash; {{ \Carbon\Carbon::create($year, $month)->format('M') }}</h2>
+        <h2>ATTENDANCE REPORT &mdash; {{ \Carbon\Carbon::create($year, $month)->format('M Y') }}</h2>
     </div>
 
     {{-- ========== CURRENT STAFF ========== --}}
