@@ -349,6 +349,11 @@ Route::prefix('hr')
         Route::get('/deductions', [\App\Http\Controllers\Api\HR\DeductionController::class, 'index']);
         Route::get('/deductions/{id}', [\App\Http\Controllers\Api\HR\DeductionController::class, 'show']);
 
+        // Bonus / Incentives Types
+        Route::get('/bonusTypes', function () {
+            return \App\Models\MonthlyIncentive::select('id', 'name', 'description')->get();
+        });
+
         // Employee Rewards
         Route::apiResource('/rewards', \App\Http\Controllers\Api\HR\EmployeeRewardController::class);
         Route::post('/rewards/{id}/approve', [\App\Http\Controllers\Api\HR\EmployeeRewardController::class, 'approve'])->name('rewards.approve');
