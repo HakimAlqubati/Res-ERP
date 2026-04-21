@@ -9,6 +9,8 @@ class FinancialCategoryCode
     const SALES = 'sales';
     const DIRECT_PURCHASE = 'direct_purchase';
     const CLOSING_STOCK = 'closing_stock';
+    const OPENING_STOCK = 'opening_stock';
+
 
     // Payroll related codes
     const PAYROLL_SALARIES = 'payroll_salaries';     // صافي الرواتب
@@ -24,6 +26,7 @@ class FinancialCategoryCode
             self::TRANSFERS => 'Transfers',
             self::SALES => 'Sales',
             self::CLOSING_STOCK => 'Closing Stock',
+            self::OPENING_STOCK => 'Opening Stock',
             self::DIRECT_PURCHASE => 'Direct Purchase',
             self::PAYROLL_SALARIES => 'Payroll Salaries',
         ];
