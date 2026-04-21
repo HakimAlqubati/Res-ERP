@@ -52,7 +52,7 @@ class PenaltyDeductionService
             $query->where('description', 'like', "%{$search}%");
         }
 
-        $query->orderBy('id', 'desc');
+        $query->orderBy('hr_penalty_deductions.id', 'desc');
 
         return $query->paginate($perPage);
     }
