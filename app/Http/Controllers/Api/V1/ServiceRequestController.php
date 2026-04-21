@@ -269,7 +269,14 @@ class ServiceRequestController extends Controller
     public function logs(Request $req, ServiceRequest $serviceRequest)
     {
         $per = min((int)$req->input('per_page', 15), 100);
-        $logs = $serviceRequest->logs()->latest()->paginate($per);
+        $logs = $serviceRequest->logs()->with('createdBy')->latest()->paginate($per);
+
+        $logs->getCollection()->transform(function ($log) {
+            $log->created_by_name = $log->createdBy?->name ?? '';
+            $log->makeHidden('createdBy');
+            return $log;
+        });
+
         return response()->json(['data' => $logs]);
     }
 
