@@ -12,6 +12,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Support\Colors\Color;
 use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
@@ -46,6 +47,21 @@ class ServiceRequestTable
     public static function getColumns(): array
     {
         return [
+
+            ImageColumn::make('attachments')
+                ->label('')
+                ->size(50)
+                ->circular()
+                ->alignCenter()
+                ->stacked()
+                ->limit(3)
+                ->getStateUsing(function ($record) {
+                    return $record->getMedia('attachments')
+                        ->sortByDesc('created_at')
+                        ->take(3)
+                        ->map(fn($media) => $media->getUrl())
+                        ->toArray();
+                }),
             TextColumn::make('id')
                 ->sortable()
                 ->searchable(isIndividual: false)
@@ -80,6 +96,11 @@ class ServiceRequestTable
                     'info'    => ServiceRequest::STATUS_IN_PROGRESS,
                     'success' => ServiceRequest::STATUS_CLOSED,
                 ]),
+            TextColumn::make('logs_count')
+                ->counts('logs')
+                ->label('Activities')->badge()
+                ->toggleable(isToggledHiddenByDefault: true)
+                ->alignCenter(),
 
             TextColumn::make('urgency')
                 ->badge()
@@ -93,13 +114,6 @@ class ServiceRequestTable
                 ])
                 ->toggleable(isToggledHiddenByDefault: false),
 
-            ImageColumn::make('first_photo_url')
-                ->label('Photo')
-                ->width(50)
-                ->height(50)
-                ->disabledClick(true)
-                ->toggleable(isToggledHiddenByDefault: false)
-                ->getStateUsing(fn($record) => $record->photos()->first()?->image_path),
 
             TextColumn::make('impact')
                 ->badge()

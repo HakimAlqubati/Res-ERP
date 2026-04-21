@@ -6,6 +6,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\RestoreAction;
 use App\Filament\Resources\EmployeeResource;
 use App\Models\Employee;
+use Filament\Actions\ViewAction;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\Storage;
@@ -18,6 +19,7 @@ class EditEmployee extends EditRecord
     {
         return [
             DeleteAction::make(),
+            ViewAction::make(),
             RestoreAction::make(),
             \Filament\Actions\Action::make('rehire')
                 ->label(__('lang.rehire'))

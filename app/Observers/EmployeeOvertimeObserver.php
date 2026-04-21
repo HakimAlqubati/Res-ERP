@@ -4,7 +4,7 @@ namespace App\Observers;
 
 use App\Exceptions\HR\PayrollConflictException;
 use App\Models\EmployeeOvertime;
-use App\Models\PayrollRun;
+use App\Models\Payroll;
 use App\Services\HR\Payroll\PayrollLockGuard;
 use Carbon\Carbon;
 
@@ -163,10 +163,10 @@ class EmployeeOvertimeObserver
 
         $date = Carbon::parse($employeeOvertime->date);
 
-        $conflictExists = PayrollRun::query()
+        $conflictExists = Payroll::query()
             ->where('year', $date->year)
             ->where('month', $date->month)
-            ->where('branch_id', $employeeOvertime->branch_id)
+            ->where('employee_id', $employeeOvertime->employee_id)
             ->exists();
 
         if ($conflictExists) {

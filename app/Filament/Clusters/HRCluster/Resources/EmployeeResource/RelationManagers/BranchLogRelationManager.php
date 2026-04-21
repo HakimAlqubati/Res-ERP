@@ -65,6 +65,7 @@ class BranchLogRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('branch_id')
             ->striped()
+            ->defaultSort('id','desc')
             ->columns([ 
                 TextColumn::make('id')->label('ID'),
                 TextColumn::make('branch.name')->label('Branch'),

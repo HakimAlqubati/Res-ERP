@@ -17,6 +17,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Str;
@@ -71,6 +72,12 @@ class CommentsRelationManager extends RelationManager
             ->recordTitleAttribute('comment')
             ->columns([
                 TextColumn::make('comment')->wrap(),
+                SpatieMediaLibraryImageColumn::make('attachments')
+                    ->collection('attachments')
+                    ->label('Images')
+                    ->circular()
+                    ->stacked()
+                    ->limit(3),
                 TextColumn::make('user.name'),
                 TextColumn::make('created_at'),
             ])
@@ -138,14 +145,9 @@ class CommentsRelationManager extends RelationManager
                             }),
                     ])
                     ->action(function (array $data, $record): void {
-                        $comment = $record;
                         if (isset($data['image_path']) && is_array($data['image_path']) && count($data['image_path']) > 0) {
                             foreach ($data['image_path'] as $file) {
-                                $comment->photos()->create([
-                                    'file_name' => $file,
-                                    'file_path' => $file,
-                                    'created_by' => auth()->user()->id,
-                                ]);
+                                $record->addMedia(storage_path('app/public/' . $file))->toMediaCollection('attachments');
                             }
                         }
                     })
@@ -155,11 +157,11 @@ class CommentsRelationManager extends RelationManager
 
                 Action::make('viewGallery')
                     ->hidden(function ($record) {
-                        return $record->photos_count <= 0 ? true : false;
+                        return $record->getMedia('attachments')->isEmpty();
                     })
                     ->label('Browse photos')
                     ->label(function ($record) {
-                        return $record->photos_count;
+                        return $record->getMedia('attachments')->count();
                     })
                     ->modalHeading('Comment photos')
                     ->modalWidth('lg') // Adjust modal size
@@ -169,8 +171,7 @@ class CommentsRelationManager extends RelationManager
                     ->button()
                     ->icon('heroicon-o-camera')
                     ->modalContent(function ($record) {
-                        
-                        return view('filament.resources.service_requests.gallery-comment-task', ['photos' => $record->photos]);
+                        return view('filament.resources.service_requests.gallery-comment-task', ['photos' => $record->getMedia('attachments')->map(fn($m) => (object)['image_path' => str_replace(url('storage').'/', '', $m->getUrl())])]);
                     }),
 
             ])

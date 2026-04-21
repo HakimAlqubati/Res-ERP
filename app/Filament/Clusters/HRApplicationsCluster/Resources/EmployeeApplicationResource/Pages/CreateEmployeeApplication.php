@@ -69,6 +69,15 @@ class CreateEmployeeApplication extends CreateRecord
 
             $this->isCreating = false;
 
+            // إظهار رسالة الفاليديشن كإشعار (Notification) للمستخدم مباشرة
+            $errorMessage = collect($exception->errors())->flatten()->first() ?: $exception->getMessage();
+
+            Notification::make()
+                ->title(__('lang.error') ?? 'Error')
+                ->body($errorMessage)
+                ->danger()
+                ->send();
+
             throw $exception;
         } catch (\Throwable $exception) {
             $this->rollBackDatabaseTransaction();
@@ -135,6 +144,14 @@ class CreateEmployeeApplication extends CreateRecord
 
         $data['application_type_id'] = $data['application_type_id'];
         $data['application_type_name'] = $applicationType;
+
+        // One-line clean target date payroll lock check:
+        app(\App\Services\HR\Payroll\PayrollLockGuard::class)->checkApplicationTargetDateLock(
+            $data['employee_id'],
+            $data['application_type_id'],
+            $this->data
+        );
+
         $year = Carbon::parse($data['application_date'])->year;
         $month = Carbon::parse($data['application_date'])->month;
 

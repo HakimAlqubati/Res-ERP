@@ -1203,3 +1203,40 @@ if (!function_exists('sendBackupFailureEmail')) {
         }
     }
 }
+
+if (!function_exists('compressAndAddImage')) {
+    /**
+     * ضغط الصورة وتصغيرها قبل رفعها إلى Media Library.
+     * - أقصى عرض: 1200px مع الحفاظ على النسبة
+     * - تحويل إلى WebP بجودة 70%
+     *
+     * @param mixed $record
+     * @param \Illuminate\Http\UploadedFile $image
+     * @param string $collection
+     */
+    function compressAndAddImage($record, \Illuminate\Http\UploadedFile $image, string $collection = 'images')
+    {
+        // 1. تهيئة المعالج للإصدار الثالث
+        $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+
+        // 2. قراءة الصورة (في V3 نستخدم read بدلاً من decode)
+        $img = $manager->read($image->getRealPath());
+
+        // 3. تصغير الصورة مع الحفاظ على التناسب
+        // ملاحظة: دالة scaleDown موجودة أيضاً في V3
+        $img->scaleDown(width: 1200);
+
+        // 4. التحويل إلى WebP بجودة 70 (الطريقة أسهل في V3)
+        $encodedImage = $img->toWebp(70);
+
+        // 5. حفظ البيانات في ملف مؤقت
+        $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . uniqid('img_') . '.webp';
+        file_put_contents($tempPath, (string) $encodedImage);
+
+        // 6. رفع الملف المؤقت إلى Media Library
+        return $record->addMedia($tempPath)
+            ->usingName(pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME))
+            ->usingFileName(uniqid('img_') . '.webp')
+            ->toMediaCollection($collection);
+    }
+}

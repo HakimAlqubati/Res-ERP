@@ -79,7 +79,7 @@ class FinancialCategoryResource extends Resource
 
     public static function canAccess(): bool
     {
-        if (isSuperAdmin()) {
+        if (isSuperAdmin() || isFinanceManager()) {
             return true;
         }
         return false;

@@ -5,6 +5,8 @@ namespace App\Filament\Clusters\HRAttendanceReport\Resources;
 use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeesAttednaceReportResource;
 use App\Models\Employee;
 use App\Modules\HR\AttendanceReports\Contracts\AttendanceReportInterface;
+use App\Models\EmployeeBranchLog;
+use Carbon\Carbon;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Model;
 
@@ -61,7 +63,10 @@ class ListEmployeesAttednaceReport extends ListRecords
             ];
         }
 
-        $employeesPaginator = Employee::where('branch_id', $branch_id)
+        $dateCarbon = Carbon::parse($date);
+        $employeeIdsInBranch = EmployeeBranchLog::getEmployeesForBranchInRange($branch_id, $dateCarbon, $dateCarbon);
+
+        $employeesPaginator = Employee::whereIn('id', $employeeIdsInBranch)
             ->active()
             ->select('id', 'name')
             ->paginate(100);

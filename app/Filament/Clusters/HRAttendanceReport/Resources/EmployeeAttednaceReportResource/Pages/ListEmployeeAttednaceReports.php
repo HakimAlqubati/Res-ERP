@@ -47,23 +47,26 @@ class ListEmployeeAttednaceReports extends ListRecords
             $employee_id = auth()->user()?->employee?->id;
         }
 
-        $employee  = Employee::find($employee_id);
+        $employee  = Employee::with('branch:id,name')->find($employee_id);
+        $branchName = $employee?->branch?->name ?? '';
         $startDate = $this->getTable()->getFilters()['date_range']->getState()['start_date'];
         $endDate   = $this->getTable()->getFilters()['date_range']->getState()['end_date'];
         $showDay   = $this->getTable()->getFilters()['show_extra_fields']->getState()['show_day'];
+        $showBranch = $this->getTable()->getFilters()['show_extra_fields']->getState()['show_branch'] ?? false;
         // $historyService = new EmployeePeriodHistoryService();
         $startDate = Carbon::parse($startDate);
         $endDate   = Carbon::parse($endDate);
         // $data     = $historyService->getEmployeePeriodsByDateRange($employee, $startDate, $endDate);
         $reportManager = app(AttendanceReportInterface::class);
         $data          = $employee ? $reportManager->getEmployeeRangeReport($employee, $startDate, $endDate) : collect();
-
         $totalSupposedValue = $employee && $data->has('total_duration_hours') ? $data->get('total_duration_hours', 0) : 0;
         $totalSupposedFormatted = floor($totalSupposedValue) . ' h ' . round(($totalSupposedValue - floor($totalSupposedValue)) * 60) . ' m';
 
         return [
             'report_data'   => $data,
+            'branch_name'   => $branchName,
             'show_day'      => $showDay,
+            'show_branch'   => $showBranch,
             'employee_id'   => $employee_id,
             'start_date'    => $startDate?->format('Y-m-d') ?? '',
             'end_date'      => $endDate?->format('Y-m-d') ?? '',
@@ -72,7 +75,7 @@ class ListEmployeeAttednaceReports extends ListRecords
             'totalApproved' => $employee && $data->has('total_approved_overtime') ? $data->get('total_approved_overtime', '00:00:00') : '00:00:00',
             'employee_name' => $employee?->name,
             'total_actual_duration_hours' => $employee && $data->has('total_actual_duration_hours') ? $data->get('total_actual_duration_hours', '00:00:00') : '00:00:00',
-            'total_duration_hours' => $employee && $data->has('total_duration_hours') ? $data->get('total_duration_hours', 0) : 0,
+            'total_duration_hours' => $employee && $data->has('total_duration_hours') ? $data->get('total_duration_hours', 0) . ':00:00' : '00:00:00',
             'total_approved_overtime' => $employee && $data->has('total_approved_overtime') ? $data->get('total_approved_overtime', '00:00:00') : '00:00:00',
         ];
     }

@@ -132,7 +132,7 @@ return [
     'order_date'                                  => 'Order date',
     'product_approved_by_store'                   => 'Updated product by (Store)',
     'ordered_product'                             => 'Orderd product from (Branch)',
-    'employees'                                   => 'Staffs',
+    'employees'                                   => 'Staff',
     'tasks_ms'                                    => 'Task management',
     'departments_and_employees'                   => 'Human Resource',
     'attenance_management'                        => 'Attenance management',
@@ -355,6 +355,9 @@ return [
     'enter_bank_account_number' => 'Enter bank account number',
     'transaction_number' => 'Transaction Number',
     'enter_transaction_number' => 'Enter transaction number',
+    'payment_method' => 'Payment Method',
+    'cash' => 'Cash',
+    'bank_transfer' => 'Bank Transfer',
 
     // ===========================================
     // HRMS - Allowances & Deductions
@@ -456,6 +459,29 @@ return [
     'change_branch' => 'Change Branch',
     'change_employee_branch' => 'Change Staff Branch',
     'select_new_branch' => 'Select New Branch',
+    'branch_changed_successfully'         => 'Branch changed successfully',
+    'transfer_preview'                      => 'Transfer Preview',
+    'select_branch_and_date_to_preview'     => 'Please select the new branch and transfer date in the "Change Branch" tab to see a preview of all operations.',
+    'transfer_preview_title'                => 'Branch Transfer Operations',
+    'period_histories_will_be_closed'       => ':count active shift(s) will be closed',
+    'period_histories_closure_detail'       => 'Shifts: :periods — will be closed on :date (day before transfer)',
+    'new_shift_required'                    => 'New shift assignment required',
+    'new_shift_required_detail'             => 'After transfer, you must assign a new shift for the employee at branch: :branch',
+    'no_active_period_histories'            => 'No active shifts to close',
+    'no_active_period_histories_detail'     => 'The employee has no active shift assignments that need to be closed.',
+    'open_branch_log_will_be_closed'        => 'Current branch log will be closed',
+    'open_branch_log_closure_detail'        => 'The open branch log for ":branch" will be closed on :date',
+    'new_branch_log_will_be_created'        => 'New branch log will be created',
+    'new_branch_log_detail'                 => 'A new branch log will be created for ":branch" starting :date',
+    'employee_branch_will_be_updated'       => 'Employee main branch will be updated',
+    'employee_branch_update_detail'         => 'Employee branch will change from ":from" to ":to"',
+    'shifts_to_be_closed'                   => 'Shifts to be closed',
+    'new_end_date'                          => 'New End Date',
+    'open'                                  => 'Open',
+    'cannot_select_current_branch' => 'Cannot select the current branch as the new branch',
+    'branch_period_overlap' => 'There is an overlap in the employee\'s branch assignment periods',
+    'start_date_before_current_branch_start' => 'Start date cannot be before the current branch start date (:date)',
+    'end_date_must_be_after_start_date' => 'End date must be after start date',
     'check_advanced_installments' => 'Check Advanced Installments',
     'aws_indexing' => 'AWS Indexing',
     'selected_employees_activated' => 'Selected staff activated',
@@ -519,6 +545,8 @@ return [
     'gross_salary' => 'Gross Salary',
     'total_deductions' => 'Total Deductions',
     'total_allowances' => 'Total Allowances',
+    'employees_count' => 'Staff',
+    'total_salaries' => 'Total',
 
     // ===========================================
     // HRMS - Holidays
@@ -678,6 +706,7 @@ return [
     // ===========================================
     // Attendance Reports
     // ===========================================
+    'attendance_report' => 'Attendance Report',
     'attendance_reports' => 'Attendance Reports',
     'attendance_by_employee' => 'Attendance by staff',
     'missing_checkout_report' => 'Missing Checkout Report',
@@ -929,7 +958,7 @@ return [
     'Purchases' => 'Purchases',
     'Inventory' => 'Inventory',
     'Human Resources' => 'Human Resources',
-    'Employees' => 'Staffs',
+    'Employees' => 'Staff',
     'Attendance' => 'Attendance',
     'Departments' => 'Departments',
     'Tasks' => 'Tasks',
@@ -1111,4 +1140,8 @@ return [
     'undo_approve' => 'Undo Approve',
     'undo_approve_confirmation_title' => 'Undo Approve Leave Request #{id}',
     'undo_approve_confirmation_body' => 'Are you sure you want to undo the approval of this leave request? This action cannot be undone.',
+    'branch_logs_count' => 'Transfers',
+    'attendance_type' => 'Attendance Type',
+    'cannot_process_financial_clearance' => 'Cannot process financial clearance. The employee has outstanding advance installments amounting to: :amount',
+    'approved_successfully' => 'Approved Successfully',
 ];

@@ -41,6 +41,9 @@ class EmployeeController extends Controller
             ->when(request('employee_no'), function ($query, $employeeNo) {
                 $query->where('employee_no', $employeeNo);
             })
+            ->when(request('role_id'), function ($query, $roleId) {
+                $query->whereUserRole($roleId);
+            })
             ->when(request('name'), function ($query, $name) {
                 $query->where('name', 'like', "%{$name}%");
             })
@@ -87,6 +90,7 @@ class EmployeeController extends Controller
             'phone_number',
             'email',
         )
+        ->with('branch:id,name')
             ->when(request('branch_id'), function ($query, $branchId) {
                 $query->where('branch_id', $branchId);
             })
@@ -102,6 +106,9 @@ class EmployeeController extends Controller
             ->when(request('employee_no'), function ($query, $employeeNo) {
                 $query->where('employee_no', $employeeNo);
             })
+            ->when(request('role_id'), function ($query, $roleId) {
+                $query->whereUserRole($roleId);
+            })
             ->when(request('name'), function ($query, $name) {
                 $query->where('name', 'like', "%{$name}%");
             })
@@ -110,7 +117,7 @@ class EmployeeController extends Controller
             })
             ->where('active', 1)
             ->forBranchManager()
-
+            ->forEmployee('id')
             // ->whereNotNull('avatar')
             // ->active() // scopeActive من الموديل
             ->paginate($perPage)

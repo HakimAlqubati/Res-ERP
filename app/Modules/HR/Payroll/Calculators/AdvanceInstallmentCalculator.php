@@ -34,9 +34,10 @@ class AdvanceInstallmentCalculator
             ];
         }
 
-        // حدود الشهر
-        $start = $context->periodStart();
-        $end = $context->periodEnd();
+        // حدود الشهر الكاملة — الأقساط مجدولة شهرياً ومستقلة عن الفرع
+        // لا نستخدم periodStart() هنا حتى لا تضيع الأقساط عند الانتقال بين الفروع
+        $start = sprintf('%04d-%02d-01', $context->periodYear, $context->periodMonth);
+        $end   = $context->periodEnd(); // نهاية الشهر دائماً
 
         // جلب أقساط الموظف المجدولة وغير المسددة ضمن الشهر
         // نستبعد الأقساط المؤجلة (skipped) أو الملغاة (cancelled)

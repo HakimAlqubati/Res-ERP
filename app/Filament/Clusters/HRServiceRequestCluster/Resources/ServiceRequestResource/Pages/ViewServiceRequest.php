@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequest
 
 use Filament\Actions\DeleteAction;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource;
+use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\Actions\ServiceRequestActions;
 use App\Models\ServiceRequestLog;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
@@ -16,7 +17,9 @@ class ViewServiceRequest extends ViewRecord
     {
         return [
             DeleteAction::make(),
+            ServiceRequestActions::getMoveStatusAction(),
+            ServiceRequestActions::getReAssignAction(),
+            // ServiceRequestActions::getAddPhotosAction(),
         ];
     }
-  
 }

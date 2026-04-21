@@ -14,6 +14,7 @@ use App\Models\EmployeeDeduction;
 use App\Models\EmployeeFaceData;
 use App\Models\EmployeeFile;
 use App\Models\EmployeeMonthlyIncentive;
+use App\Models\EmployeeReward;
 use App\Models\EmployeeOvertime;
 use App\Models\EmployeePeriod;
 use App\Models\EmployeePeriodDay;
@@ -28,6 +29,7 @@ use App\Models\User;
 use App\Models\UserType;
 use App\Models\WorkPeriod;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Trait containing all relationship methods for Employee model.
@@ -242,5 +244,32 @@ trait EmployeeRelationships
     public function advanceWages()
     {
         return $this->hasMany(AdvanceWage::class, 'employee_id');
+    }
+
+    public function rewards()
+    {
+        return $this->hasMany(EmployeeReward::class);
+    }
+
+    
+    /**
+     * Scope to filter employees by their associated user's role.
+     * Supports role ID (numeric) or role Name (string).
+     */
+    public function scopeWhereUserRole(Builder $query, $role): Builder
+    {
+        return $query->whereHas('user.roles', function ($q) use ($role) {
+            $roles = is_array($role) ? $role : [$role];
+
+            $q->where(function ($sub) use ($roles) {
+                foreach ($roles as $r) {
+                    if (is_numeric($r)) {
+                        $sub->orWhere('roles.id', $r);
+                    } else {
+                        $sub->orWhere('roles.name', $r);
+                    }
+                }
+            });
+        });
     }
 }

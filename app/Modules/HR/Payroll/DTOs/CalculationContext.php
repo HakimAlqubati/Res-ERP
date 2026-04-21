@@ -21,6 +21,7 @@ final class CalculationContext
         public ?int $periodYear,
         public ?int $periodMonth,
         public ?string $periodEndDate = null,
+        public ?string $periodStartDate = null,   // ← بداية فترة الفرع (segment)
         public ?RateResult $rates = null,
     ) {}
 
@@ -30,25 +31,27 @@ final class CalculationContext
     public function withRates(RateResult $rates): self
     {
         return new self(
-            employee: $this->employee,
-            employeeData: $this->employeeData,
-            salary: $this->salary,
-            workingDays: $this->workingDays,
-            dailyHours: $this->dailyHours,
-            monthDays: $this->monthDays,
-            periodYear: $this->periodYear,
-            periodMonth: $this->periodMonth,
-            periodEndDate: $this->periodEndDate,
-            rates: $rates,
+            employee:        $this->employee,
+            employeeData:    $this->employeeData,
+            salary:          $this->salary,
+            workingDays:     $this->workingDays,
+            dailyHours:      $this->dailyHours,
+            monthDays:       $this->monthDays,
+            periodYear:      $this->periodYear,
+            periodMonth:     $this->periodMonth,
+            periodEndDate:   $this->periodEndDate,
+            periodStartDate: $this->periodStartDate,   // ← حفظ قيمة الـ segment
+            rates:           $rates,
         );
     }
 
     /**
-     * الحصول على بداية الفترة
+     * بداية فترة العمل — تُعطي الأولوية لبداية فترة الفرع (segment) إن وُجدت.
      */
     public function periodStart(): string
     {
-        return sprintf('%04d-%02d-01', $this->periodYear, $this->periodMonth);
+        return $this->periodStartDate
+            ?? sprintf('%04d-%02d-01', $this->periodYear, $this->periodMonth);
     }
 
     /**

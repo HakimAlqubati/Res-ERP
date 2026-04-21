@@ -9,12 +9,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 use App\Observers\AttendanceObserver;
+use App\Traits\Scopes\BranchScope;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 
 #[ObservedBy([AttendanceObserver::class])]
 class Attendance extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+    use HasFactory,
+        SoftDeletes,
+        \OwenIt\Auditing\Auditable
+        , BranchScope
+    ;
 
     protected $auditInclude = [
         'employee_id',
@@ -188,6 +193,11 @@ class Attendance extends Model implements Auditable
     public function period()
     {
         return $this->belongsTo(WorkPeriod::class, 'period_id');
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
     }
 
     /**
@@ -413,6 +423,26 @@ class Attendance extends Model implements Auditable
         return $this->belongsTo(Attendance::class, 'checkinrecord_id', 'id')
             ->where('check_type', self::CHECKTYPE_CHECKIN);
     }
+
+    public function resolveSupposedStatus(): string
+    {
+        if ($this->check_type === self::CHECKTYPE_CHECKIN) {
+            $resource = new \App\Http\Resources\CheckInAttendanceResource($this);
+            return (function () {
+                return $this->resolveSupposedStatus();
+            })->call($resource);
+        }
+
+        if ($this->check_type === self::CHECKTYPE_CHECKOUT) {
+            $resource = new \App\Http\Resources\CheckOutAttendanceResource($this);
+            return (function () {
+                return $this->resolveSupposedStatus();
+            })->call($resource);
+        }
+
+        return $this->status ?? '';
+    }
+
 
     public function getSourceLabelAttribute()
     {

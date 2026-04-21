@@ -132,7 +132,8 @@ class EmployeeForm
                                                 ->columnSpanFull()
                                                 ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') != setting('default_nationality')))
                                                 ->schema([
-                                                    TextInput::make('passport_no')->label(__('lang.passport_no'))->numeric()
+                                                    TextInput::make('passport_no')->label(__('lang.passport_no'))
+                                                        // ->numeric()
                                                         ->columnSpan(2),
                                                     Toggle::make('has_employee_pass')->label(__('lang.has_employee_pass'))->inline(false)->live()
                                                         ->columnSpan(1),
@@ -180,6 +181,7 @@ class EmployeeForm
                                                 // عند تغيير الفرع -> أفرغ قيمة owner_id
                                                 $set('manager_id', null);
                                             })
+                                            ->disabledOn('edit')
                                             ->options(
                                                 Branch::query()
                                                     ->select('id', 'name')
@@ -192,12 +194,13 @@ class EmployeeForm
                                             ),
                                         Toggle::make('is_ceo')->label(__('lang.is_ceo'))
                                             ->live()
-                                            ->visible(fn($get, ?Employee $record): bool => 
-                                                in_array((int) $get('employee_type'), [0, 1]) && 
-                                                (
-                                                    ($record && $record->is_ceo) || 
-                                                    !Employee::where('is_ceo', true)->exists()
-                                                )
+                                            ->visible(
+                                                fn($get, ?Employee $record): bool =>
+                                                in_array((int) $get('employee_type'), [0, 1]) &&
+                                                    (
+                                                        ($record && $record->is_ceo) ||
+                                                        !Employee::where('is_ceo', true)->exists()
+                                                    )
                                             )
                                             ->default(0)->inline(false),
                                         Select::make('manager_id')
@@ -257,7 +260,9 @@ class EmployeeForm
                                         DatePicker::make('join_date')
                                             ->default(now())
                                             ->columnSpan(1)->label(__('lang.start_date'))->required()
-                                            ->maxDate(now()->toDateString()),
+                                        // ->maxDate(now()->toDateString())
+                                        ,
+
                                         TextInput::make('working_hours')
                                             ->label(__('lang.working_hours'))
                                             ->helperText('To Calculate the Hour Late')
@@ -376,6 +381,15 @@ class EmployeeForm
                                             ->label(__('lang.salary'))
                                             ->numeric()
                                             ->inputMode('decimal')->disabled(fn(): bool => isBranchManager()),
+
+                                        Select::make('salary_allocation_rule')
+                                            ->label(__('Salary Allocation Override (Branch Transfers)'))
+                                            ->helperText(__('Overrides the default system rule for this specific employee when transferred between branches.'))
+                                            ->options(\App\Enums\HR\Payroll\SalaryAllocationRule::class)
+                                            ->placeholder(__('Use System Default')) // Fallback to system general setting
+                                            ->disabled(fn(): bool => isBranchManager())
+                                            ->columnSpan(1),
+
                                         TextInput::make('tax_identification_number')
                                             ->label(__('lang.tax_identification_number'))->required()
                                             ->visible(fn($get): bool => ($get('nationality') != null && ($get('nationality') == setting('default_nationality'))

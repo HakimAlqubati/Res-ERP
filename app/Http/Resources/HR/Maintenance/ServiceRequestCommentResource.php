@@ -13,7 +13,14 @@ class ServiceRequestCommentResource extends JsonResource
             'id'        => $this->id,
             'comment'   => $this->comment,
             'user'      => ['id' => $user?->id, 'name' => $user?->name],
-            'created_at' => $this->created_at,
+            'created_at' =>  \Carbon\Carbon::parse($this->created_at)->format('Y-m-d H:i:s'),
+            'images'     => $this->getMedia('attachments')->map(function ($media) {
+                return [
+                    'id' => $media->id,
+                    'url' => $media->getFullUrl(),
+                    'name' => $media->file_name,
+                ];
+            }),
         ];
     }
 }

@@ -335,8 +335,11 @@ return [
   'bank' => 'البنك',
   'enter_bank_name' => 'أدخل اسم البنك',
   'enter_bank_account_number' => 'أدخل رقم الحساب البنكي',
-  'transaction_number' => 'رقم الترنزكشن',
-  'enter_transaction_number' => 'أدخل رقم الترنزكشن',
+  'transaction_number' => 'رقم العملية',
+  'enter_transaction_number' => 'أدخل رقم العملية',
+  'payment_method' => 'وسيلة الدفع',
+  'cash' => 'نقداً',
+  'bank_transfer' => 'تحويل بنكي',
 
   // ===========================================
   // HRMS - Allowances & Deductions
@@ -438,6 +441,29 @@ return [
   'change_branch' => 'تغيير الفرع',
   'change_employee_branch' => 'تغيير فرع الموظف',
   'select_new_branch' => 'اختر الفرع الجديد',
+  'branch_changed_successfully'         => 'تم تغيير الفرع بنجاح',
+  'transfer_preview'                      => 'معاينة النقل',
+  'select_branch_and_date_to_preview'     => 'الرجاء اختيار الفرع الجديد وتاريخ النقل في تبويب "تغيير الفرع" لمعاينة جميع العمليات التي ستتم.',
+  'transfer_preview_title'                => 'عمليات نقل الفرع',
+  'period_histories_will_be_closed'       => 'سيتم إغلاق :count شيفت/شيفتات نشطة',
+  'period_histories_closure_detail'       => 'الشيفتات: :periods — سيتم إغلاقها في تاريخ :date (يوم قبل النقل)',
+  'new_shift_required'                    => 'يجب تعيين شيفت جديدة',
+  'new_shift_required_detail'             => 'بعد النقل، يجب عليك تعيين شيفت جديدة للموظف في الفرع: :branch',
+  'no_active_period_histories'            => 'لا توجد شيفتات نشطة لإغلاقها',
+  'no_active_period_histories_detail'     => 'لا يوجد للموظف أي شيفتات نشطة تحتاج إلى إغلاق.',
+  'open_branch_log_will_be_closed'        => 'سيتم إغلاق سجل الفرع الحالي',
+  'open_branch_log_closure_detail'        => 'سيتم إغلاق سجل الفرع المفتوح لـ ":branch" في تاريخ :date',
+  'new_branch_log_will_be_created'        => 'سيتم إنشاء سجل فرع جديد',
+  'new_branch_log_detail'                 => 'سيتم إنشاء سجل فرع جديد لـ ":branch" ابتداءً من :date',
+  'employee_branch_will_be_updated'       => 'سيتم تحديث الفرع الرئيسي للموظف',
+  'employee_branch_update_detail'         => 'سيتغير فرع الموظف من ":from" إلى ":to"',
+  'shifts_to_be_closed'                   => 'الشيفتات التي سيتم إغلاقها',
+  'new_end_date'                          => 'تاريخ الانتهاء الجديد',
+  'open'                                  => 'مفتوح',
+  'cannot_select_current_branch' => 'لا يمكن اختيار الفرع الحالي كفرع جديد',
+  'branch_period_overlap' => 'يوجد تداخل في فترات تعيين الفروع للموظف',
+  'start_date_before_current_branch_start' => 'تاريخ البداية لا يمكن أن يكون قبل تاريخ بداية الفرع الحالي (:date)',
+  'end_date_must_be_after_start_date' => 'تاريخ النهاية يجب أن يكون بعد تاريخ البداية',
   'check_advanced_installments' => 'التحقق من أقساط السلف',
   'aws_indexing' => 'فهرسة AWS',
   'selected_employees_activated' => 'تم تفعيل الموظفين المحددين',
@@ -501,6 +527,8 @@ return [
   'gross_salary' => 'إجمالي الراتب',
   'total_deductions' => 'إجمالي الخصومات',
   'total_allowances' => 'إجمالي البدلات',
+  'employees_count' => 'الموظفين',
+  'total_salaries' => 'الإجمالي',
 
   // ===========================================
   // HRMS - Holidays
@@ -660,6 +688,7 @@ return [
   // ===========================================
   // Attendance Reports
   // ===========================================
+  'attendance_report' => 'تقرير الحضور',
   'attendance_reports' => 'تقارير الحضور',
   'attendance_by_employee' => 'الحضور حسب الموظف',
   'missing_checkout_report' => 'تقرير نسيان الانصراف',
@@ -1092,4 +1121,8 @@ return [
   'undo_approve' => 'إلغاء الموافقة',
   'undo_approve_confirmation_title' => 'إلغاء الموافقة على طلب الإجازة #{id}',
   'undo_approve_confirmation_body' => 'هل أنت متأكد من رغبتك في إلغاء الموافقة على طلب الإجازة هذا؟ لا يمكن التراجع عن هذا الإجراء.',
+  'branch_logs_count' => 'عدد سجلات الفروع',
+  'attendance_type' => 'نوع التحضير',
+  'cannot_process_financial_clearance' => 'لا يمكن إتمام المخالصة المالية. الموظف لديه أقساط سلف غير مدفوعة تبلغ: :amount',
+  'approved_successfully' => 'تمت الموافقة بنجاح',
 ];

@@ -16,8 +16,21 @@ class PenaltyDeductionService
      */
     public function getPenaltiesList(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = PenaltyDeduction::query()->with('deduction:id,name');
-
+        $query = PenaltyDeduction::query()->with([
+            'deduction:id,name',
+            'employee:id,name',
+            'creator:id,name',
+            'approver:id,name',
+            'rejector:id,name'
+        ]);
+        $query->join(
+            'hr_employees',
+            'hr_employees.id',
+            'hr_penalty_deductions.employee_id'
+        );
+        if (isBranchManager()) {
+            $query->where('hr_employees.branch_id', auth()->user()->branch_id);
+        }
         if (!empty($filters['employee_id'])) {
             $query->where('employee_id', $filters['employee_id']);
         }
@@ -39,7 +52,7 @@ class PenaltyDeductionService
             $query->where('description', 'like', "%{$search}%");
         }
 
-        $query->orderBy('date', 'desc');
+        $query->orderBy('hr_penalty_deductions.id', 'desc');
 
         return $query->paginate($perPage);
     }
@@ -63,6 +76,12 @@ class PenaltyDeductionService
      */
     public function getPenaltyById(int $id): ?PenaltyDeduction
     {
-        return PenaltyDeduction::with('deduction:id,name')->find($id);
+        return PenaltyDeduction::with([
+            'deduction:id,name',
+            'employee:id,name',
+            'creator:id,name',
+            'approver:id,name',
+            'rejector:id,name'
+        ])->find($id);
     }
 }

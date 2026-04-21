@@ -10,6 +10,7 @@ use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Tables\Filters\TrashedFilter;
 use App\Exports\EmployeesExport;
 use App\Imports\EmployeeImport;
@@ -47,6 +48,9 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
+
+use Filament\Forms\Components\ViewField;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use App\Models\EmployeeServiceTermination;
@@ -66,7 +70,12 @@ use Illuminate\Support\Facades\Log;
 use App\Models\AppLog;
 use Maatwebsite\Excel\Facades\Excel;
 use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
-
+use App\Rules\HR\Payroll\AdvanceWageLimitRule;
+use App\Models\AdvanceWage;
+use Filament\Forms\Components\Repeater\TableColumn;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use App\Services\HR\EmployeeBranchTransferService;
 
 class EmployeeTable
 {
@@ -102,6 +111,8 @@ class EmployeeTable
                     ->weight(FontWeight::Medium)->tooltip(fn($state) => $state)
                     ->searchable(isIndividual: false, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: false),
+
+
                 TextColumn::make('known_name')
                     ->sortable()->searchable()
                     ->label(__('lang.known_name'))
@@ -112,6 +123,12 @@ class EmployeeTable
                     ->sortable()
                     ->wrap()
                     ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('branch_logs_count')
+                    ->label(__('lang.branch_logs_count'))
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->counts('branchLogs')
+                    ->alignCenter()
+                    ->default(0),
                 TextColumn::make('manager.name')
                     ->label(__('lang.manager'))
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -144,6 +161,14 @@ class EmployeeTable
                     ->copyMessageDuration(1500)
                     ->color('primary')
                     ->weight(FontWeight::Bold),
+                TextColumn::make('periods.name')
+                    ->label(__('lang.shift'))
+                    ->separator(', ')
+
+                    ->badge()
+                    ->color('primary')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->searchable(),
                 TextColumn::make('join_date')->sortable()->label(__('lang.start_date'))
                     ->sortable()->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -260,6 +285,7 @@ class EmployeeTable
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark')
                     ->alignCenter(true)
+                    ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->label(__('lang.created_at'))
@@ -384,7 +410,20 @@ class EmployeeTable
                             DatePicker::make('termination_date')
                                 ->label(__('lang.termination_date'))
                                 ->required()
-                                ->default(now()),
+                                ->default(now())
+                                ->rules([
+                                    fn(Employee $record) => function (string $attribute, $value, Closure $fail) use ($record) {
+                                        $unpaidBalance = (float) $record->advancedInstallments()
+                                            ->where('is_paid', false)
+                                            ->sum('installment_amount');
+
+                                        if ($unpaidBalance > 0) {
+                                            $fail(__('lang.cannot_process_financial_clearance', [
+                                                'amount' => number_format($unpaidBalance, 2)
+                                            ]) ?: 'Cannot process financial clearance. The employee has outstanding advance installments amounting to: ' . number_format($unpaidBalance, 2));
+                                        }
+                                    },
+                                ]),
                             Textarea::make('termination_reason')
                                 ->label(__('lang.termination_reason'))
                                 ->required(),
@@ -534,6 +573,43 @@ class EmployeeTable
                                     ->send();
                             }
                         }),
+
+                    Action::make('quickEdit')
+                        ->label('Quick Edit')
+                        ->icon('heroicon-o-pencil-square')
+                        ->color('info')
+                        ->fillForm(fn(Employee $record): array => [
+                            'name' => $record->name,
+                            'email' => $record->email,
+                            'branch_id' => $record->branch_id,
+                        ])
+                        ->schema([
+                            TextInput::make('name')
+                                ->label(__('lang.full_name'))
+                                ->required()
+                                ->maxLength(255),
+                            TextInput::make('email')
+                                ->label(__('lang.email'))
+                                ->email()
+                                ->required()
+                                ->maxLength(255),
+                            Select::make('branch_id')
+                                ->label(__('lang.branch'))
+                                ->options(Branch::active()->pluck('name', 'id'))
+                                ->required()
+                                ->searchable()
+                                ->preload(),
+                        ])
+                        ->action(function (array $data, Employee $record): void {
+                            $record->update($data);
+                            Notification::make()
+                                ->title(__('lang.updated_successfully'))
+                                ->success()
+                                ->send();
+                        })
+                        ->visible(fn() => isHakimOrAdel()),
+
+
                     Action::make('quick_edit_avatar')
                         ->label(__('lang.edit_avatar'))
                         ->icon('heroicon-o-camera')
@@ -563,24 +639,53 @@ class EmployeeTable
                                     ->label(__('Amount'))
                                     ->numeric()
                                     ->minValue(0.01)
-                                    ->maxValue(fn(Employee $record) => $record->salary ?? 99999)
                                     ->required()
+                                    ->live(onBlur: true)
+                                    ->rules([
+                                        fn(Get $get, Employee $record) => new AdvanceWageLimitRule(
+                                            $record->id,
+                                            (int) now()->setDateFrom(\Carbon\Carbon::parse($get('date') ?: now()))->year,
+                                            (int) now()->setDateFrom(\Carbon\Carbon::parse($get('date') ?: now()))->month,
+                                        )
+                                    ])
                                     ->columnSpan(1),
 
-                                Select::make('year')
-                                    ->label(__('Year'))
-                                    ->options(collect(range(now()->year - 1, now()->year + 1))->mapWithKeys(fn($y) => [$y => $y]))
-                                    ->default(now()->year)
+                                DatePicker::make('date')
+                                    ->label(__('Date'))
+                                    ->default(now()->toDateString())
                                     ->required()
+                                    ->live()
+                                    ->native(false)
+                                    ->displayFormat('Y-m-d')
+                                    ->columnSpan(2),
+
+                            ])->columnSpanFull(),
+
+                            Grid::make(3)->schema([
+                                Select::make('payment_method')
+                                    ->label(__('lang.payment_method'))
+                                    ->options(AdvanceWage::paymentMethods())
+                                    ->default(AdvanceWage::PAYMENT_METHOD_CASH)
+                                    ->required()
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, Set $set, Employee $record) {
+                                        if ($state === AdvanceWage::PAYMENT_METHOD_BANK_TRANSFER) {
+                                            $set('bank_account_number', $record->bank_account_number);
+                                        }
+                                    })
                                     ->columnSpan(1),
 
-                                Select::make('month')
-                                    ->label(__('Month'))
-                                    ->options(collect(range(1, 12))->mapWithKeys(fn($m) => [$m => now()->setMonth($m)->translatedFormat('F')]))
-                                    ->default(now()->month)
-                                    ->required()
+                                TextInput::make('bank_account_number')
+                                    ->label(__('lang.bank_account_number'))
+                                    ->visible(fn(Get $get) => $get('payment_method') === AdvanceWage::PAYMENT_METHOD_BANK_TRANSFER)
+                                    ->required(fn(Get $get) => $get('payment_method') === AdvanceWage::PAYMENT_METHOD_BANK_TRANSFER)
                                     ->columnSpan(1),
 
+                                TextInput::make('transaction_number')
+                                    ->label(__('lang.transaction_number'))
+                                    ->visible(fn(Get $get) => $get('payment_method') === AdvanceWage::PAYMENT_METHOD_BANK_TRANSFER)
+                                    ->required(fn(Get $get) => $get('payment_method') === AdvanceWage::PAYMENT_METHOD_BANK_TRANSFER)
+                                    ->columnSpan(1),
                             ])->columnSpanFull(),
 
                             TextInput::make('reason')
@@ -592,10 +697,13 @@ class EmployeeTable
                             try {
                                 $record->advanceWages()->create([
                                     'amount' => $data['amount'],
-                                    'year' => $data['year'],
-                                    'month' => $data['month'],
+                                    'date' => $data['date'],
                                     'reason' => $data['reason'],
+                                    'payment_method' => $data['payment_method'],
+                                    'bank_account_number' => $data['bank_account_number'] ?? null,
+                                    'transaction_number' => $data['transaction_number'] ?? null,
                                     'branch_id' => $record->branch_id,
+                                    'created_by' => auth()->id(),
                                 ]);
 
                                 Notification::make()
@@ -637,37 +745,7 @@ class EmployeeTable
                             ]);
                         })->hidden(),
                     // Add the Change Branch action
-                    Action::make('changeBranch')->icon('heroicon-o-arrow-path-rounded-square')
-                        ->label(__('lang.change_branch')) // Label for the action button
-                        ->visible(isSystemManager() || isSuperAdmin())
-                        // ->icon('heroicon-o-annotation') // Icon for the button
-                        ->modalHeading(__('lang.change_employee_branch')) // Modal heading
-                        ->modalButton('Save')                    // Button inside the modal
-                        ->schema([
-                            Select::make('branch_id')
-                                ->label(__('lang.select_new_branch'))
-                                ->options(Branch::all()->pluck('name', 'id')) // Assuming you have a `Branch` model with `id` and `name`
-                                ->required(),
-                        ])
-                        ->action(function (array $data, $record) {
-                            // This is where you handle the logic to update the employee's branch and log the change
-
-                            $newBranchId = $data['branch_id'];
-                            $employee    = $record; // The current employee record
-
-                            // Create the employee branch log
-                            $employee->branchLogs()->create([
-                                'employee_id' => $employee->id,
-                                'branch_id'   => $newBranchId,
-                                'start_at'    => now(),
-                                'created_by'  => auth()->user()->id,
-                            ]);
-
-                            // Update the employee's branch
-                            $employee->update([
-                                'branch_id' => $newBranchId,
-                            ]);
-                        })->hidden(),
+                    \App\Filament\Resources\EmployeeResource\EmployeeActions::changeBranch(),
                     EditAction::make(),
                     ViewAction::make(),
                     DeleteAction::make(),
@@ -716,6 +794,38 @@ class EmployeeTable
 
                         showSuccessNotifiMessage("{$activatedCount} employees activated.");
                     }),
+                BulkAction::make('createUser')
+                    ->label(__('lang.create_user'))
+                    ->icon('heroicon-o-user-plus')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->deselectRecordsAfterCompletion()
+                    ->action(function (\Illuminate\Support\Collection $records) {
+                        $createdCount = 0;
+                        $skippedCount = 0;
+
+                        foreach ($records as $record) {
+                            try {
+                                if (! $record->has_user && empty($record->user_id)) {
+                                    $user = $record->createLinkedUser([]);
+                                    if ($user) {
+                                        $createdCount++;
+                                    }
+                                } else {
+                                    $skippedCount++;
+                                }
+                            } catch (\Throwable $e) {
+                                report($e);
+                            }
+                        }
+
+                        if ($createdCount > 0) {
+                            showSuccessNotifiMessage("{$createdCount} users created successfully." . ($skippedCount > 0 ? " ({$skippedCount} skipped)" : ""));
+                        } else {
+                            showWarningNotifiMessage("No users were created. Selected employees might already have accounts.");
+                        }
+                    })
+                    ->visible(fn() => isHakimOrAdel()),
                 ForceDeleteBulkAction::make()->visible(fn() => isSuperAdmin()),
             ]);
     }

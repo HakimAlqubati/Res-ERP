@@ -9,6 +9,7 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeApplicationV2;
 use App\Models\EmployeeOvertime;
+use App\Models\ServiceRequest;
 use App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesV2Service;
 use App\Services\HR\AttendanceHelpers\Reports\MissingCheckoutService;
 use Carbon\Carbon;
@@ -52,11 +53,21 @@ class DashboardService
             ->pluck('count', 'application_type_id');
 
         // Overtime
-        $overtimeQuery = EmployeeOvertime::where('status', EmployeeOvertime::STATUS_PENDING);
+        $overtimeQuery = EmployeeOvertime::where('status', EmployeeOvertime::STATUS_PENDING)
+            ->forBranchManager()
+            ->forEmployee();
         if ($dto->branchId) {
             $overtimeQuery->where('branch_id', $dto->branchId);
         }
+
         $pendingOvertimeCount = $overtimeQuery->count();
+
+        // New Service Requests
+        $srQuery = ServiceRequest::where('status', ServiceRequest::STATUS_NEW);
+        if ($dto->branchId) {
+            $srQuery->where('branch_id', $dto->branchId);
+        }
+        $newServiceRequestsCount = $srQuery->count();
 
         return [
             'pending_leaves'   => $appCounts->get(EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST, 0),
@@ -65,6 +76,7 @@ class DashboardService
             'pending_overtime' => $pendingOvertimeCount,
             'pending_advance'  => $appCounts->get(EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST, 0),
             'pending_meal'     => $appCounts->get(EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST, 0),
+            'new_service_request' => $newServiceRequestsCount,
             'missing_checkouts_count' => $missingCheckoutsCount,
             'absents_count'           => $this->getTodayAbsentsCount($dto),
         ];
@@ -75,7 +87,9 @@ class DashboardService
      */
     public function getAttendanceSummaries(DashboardFilterDTO $dto): array
     {
-        $branchesQuery = Branch::where('active', 1)->where('is_hidden', 0);
+        $branchesQuery = Branch::where('active', 1)->where('is_hidden', 0)
+            ->forBranchManager('id')
+            ->forEmployee('id');
         if ($dto->branchId) {
             $branchesQuery->where('id', $dto->branchId);
         }
@@ -205,6 +219,27 @@ class DashboardService
         return [
             'today_attendance' => $todayAttendance,
             'last_7_days_attendance' => $last7DaysAttendance,
+        ];
+    }
+
+    /**
+     * Get maintenance alerts from Service Requests
+     */
+    public function getMaintenanceAlerts(DashboardFilterDTO $dto): array
+    {
+        $stats = ServiceRequest::query()
+            ->when($dto->branchId, fn($q) => $q->where('branch_id', $dto->branchId))
+            ->selectRaw("
+                COUNT(CASE WHEN status != '" . ServiceRequest::STATUS_CLOSED . "' THEN 1 END) as open_count,
+                COUNT(CASE WHEN urgency = '" . ServiceRequest::URGENCY_HIGH . "' AND status != '" . ServiceRequest::STATUS_CLOSED . "' THEN 1 END) as high_priority_count,
+                COUNT(CASE WHEN status = '" . ServiceRequest::STATUS_IN_PROGRESS . "' THEN 1 END) as in_progress_count
+            ")
+            ->first();
+        // dd($stats);
+        return [
+            'open'          => (int) ($stats->open_count ?? 0),
+            'high_priority' => (int) ($stats->high_priority_count ?? 0),
+            'in_progress'   => (int) ($stats->in_progress_count ?? 0),
         ];
     }
 

@@ -28,7 +28,7 @@ class AttendanceDataFetcher
      */
     public function fetchForMultiEmployeesSingleDate(array $employeeIds, string $dateStr): array
     {
-        $histories = EmployeePeriodHistory::with('workPeriod')
+        $histories = EmployeePeriodHistory::with(['workPeriod', 'branch'])
             ->where('active', 1)
             ->whereIn('employee_id', $employeeIds)
             ->where('start_date', '<=', $dateStr)
@@ -37,7 +37,8 @@ class AttendanceDataFetcher
             })
             ->get();
 
-        $attendances = Attendance::where('deleted_at', null)
+        $attendances = Attendance::with('branch')
+            ->where('deleted_at', null)
             ->where('accepted', 1)
             ->whereIn('employee_id', $employeeIds)
             ->where('check_date', $dateStr)
@@ -96,7 +97,7 @@ class AttendanceDataFetcher
      */
     public function fetchForSingleEmployeeRange(int $employeeId, string $startDateStr, string $endDateStr): array
     {
-        $histories = EmployeePeriodHistory::with('workPeriod')
+        $histories = EmployeePeriodHistory::with(['workPeriod', 'branch'])
             ->where('active', 1)
             ->where('employee_id', $employeeId)
             ->where('start_date', '<=', $endDateStr)
@@ -105,7 +106,8 @@ class AttendanceDataFetcher
             })
             ->get();
 
-        $attendances = Attendance::where('deleted_at', null)
+        $attendances = Attendance::with('branch')
+            ->where('deleted_at', null)
             ->where('accepted', 1)
             ->where('employee_id', $employeeId)
             ->whereBetween('check_date', [$startDateStr, $endDateStr])
@@ -133,9 +135,12 @@ class AttendanceDataFetcher
 
         $terminations = DB::table('hr_employee_service_terminations')
             ->where('employee_id', $employeeId)
+            ->select('hr_employee_service_terminations.*', 'hr_employees.active')
             ->where('status', EmployeeServiceTermination::STATUS_APPROVED)
-            ->first();
+            ->join('hr_employees', 'hr_employees.id', '=', 'hr_employee_service_terminations.employee_id')
+            ->where('hr_employees.active', 0)
 
+            ->first();
         $overtimes = EmployeeOvertime::where('employee_id', $employeeId)
             ->where('status', EmployeeOvertime::STATUS_APPROVED)
             ->day()
@@ -162,7 +167,7 @@ class AttendanceDataFetcher
      */
     public function fetchForMultiEmployeesRange(array $employeeIds, string $startDateStr, string $endDateStr): array
     {
-        $histories = EmployeePeriodHistory::with('workPeriod')
+        $histories = EmployeePeriodHistory::with(['workPeriod', 'branch'])
             ->where('active', 1)
             ->whereIn('employee_id', $employeeIds)
             ->where('start_date', '<=', $endDateStr)
@@ -172,7 +177,8 @@ class AttendanceDataFetcher
             ->get()
             ->groupBy('employee_id');
 
-        $attendances = Attendance::where('deleted_at', null)
+        $attendances = Attendance::with('branch')
+            ->where('deleted_at', null)
             ->where('accepted', 1)
             ->whereIn('employee_id', $employeeIds)
             ->whereBetween('check_date', [$startDateStr, $endDateStr])

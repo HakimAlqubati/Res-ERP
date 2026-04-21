@@ -102,7 +102,7 @@ class EmployeeApplicationObserver
             // Send WhatsApp notification for Advance Requests
             if ($app->application_type_id === EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST) {
                 $advanceRequest = $app->advanceRequest;
-                $amount = $advanceRequest ? ($advanceRequest->advance_amount . ' ' . ($advanceRequest->currency ?? 'USD')) : 'Unknown Amount';
+                $amount = $advanceRequest ? ($advanceRequest->advance_amount) : 'Unknown Amount';
 
                 sendWhatsAppMessage($managerUser, $amount, [
                     'template' => 'workbench_advance_notifier',
@@ -129,23 +129,34 @@ class EmployeeApplicationObserver
      */
     public function updating(EmployeeApplicationV2 $app): void
     {
-        // 1. If transitioning to approved: always check.
-        $isTransitioningToApproved = $app->isDirty('status') && $app->status === EmployeeApplicationV2::STATUS_APPROVED;
+        $this->checkApplicationModelLock($app);
 
-        // 2. If the date is changing: check the NEW date.
-        $isDateChanging = $app->isDirty('application_date');
 
-        if ($isTransitioningToApproved || $isDateChanging) {
-            $date = $app->application_date
-                ? \Carbon\Carbon::parse($app->application_date)
-                : \Carbon\Carbon::today();
+        // 1. Determine the date to check against (Original date in DB)
+        // To prevent modifying any data in an already locked month.
+        $originalDate = $app->getOriginal('application_date')
+            ? \Carbon\Carbon::parse($app->getOriginal('application_date'))
+            : ($app->application_date ? \Carbon\Carbon::parse($app->application_date) : \Carbon\Carbon::today());
 
-            $this->payrollLockGuard->checkLock(
-                $app->employee_id,
-                $date->year,
-                $date->month,
-                'application_date'
-            );
+        $this->payrollLockGuard->checkLock(
+            $app->employee_id,
+            $originalDate->year,
+            $originalDate->month,
+            'application_date'
+        );
+
+        // 2. If the application_date itself is changing, ensure the NEW date is also not in a locked month.
+        if ($app->isDirty('application_date') && !empty($app->application_date)) {
+            $newDate = \Carbon\Carbon::parse($app->application_date);
+
+            if ($newDate->month !== $originalDate->month || $newDate->year !== $originalDate->year) {
+                $this->payrollLockGuard->checkLock(
+                    $app->employee_id,
+                    $newDate->year,
+                    $newDate->month,
+                    'application_date'
+                );
+            }
         }
     }
 
@@ -157,6 +168,15 @@ class EmployeeApplicationObserver
      */
     public function updated(EmployeeApplicationV2 $app): void
     {
+        // 1. Notify Financial Managers via WhatsApp on "Manager Approved" status
+        if (
+            $app->isDirty('status')
+            && $app->status === EmployeeApplicationV2::STATUS_APPROVED
+            && $app->application_type_id === EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST
+        ) {
+            $this->notifyFinancialManagersOfAdvanceApproved($app);
+        }
+
         if (! $this->isAdvanceApproval($app)) {
             return;
         }
@@ -226,5 +246,74 @@ class EmployeeApplicationObserver
     {
         // Now handled directly by the Financial Manager approval action.
         return false;
+    }
+
+    public function checkApplicationModelLock(\App\Models\EmployeeApplicationV2 $app): void
+    {
+        $targetDate = null;
+        switch ($app->application_type_id) {
+            case \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST:
+                $targetDate = $app->missedCheckinRequest?->date;
+                break;
+            case \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST:
+                $targetDate = $app->missedCheckoutRequest?->date;
+                break;
+            case \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST:
+                $targetDate = $app->leaveRequest?->start_date;
+                break;
+            case \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST:
+                $targetDate = $app->application_date;
+                break;
+            default:
+                $targetDate = $app->application_date;
+                break;
+        }
+        if ($targetDate) {
+            $parsedDate = \Carbon\Carbon::parse($targetDate);
+            $this->payrollLockGuard->checkLock($app->employee_id, $parsedDate->year, $parsedDate->month, 'application_date');
+        }
+    }
+
+    /**
+     * Notify all Financial Managers that an Advance Request has been approved by the manager.
+     *
+     * @param EmployeeApplicationV2 $app
+     * @return void
+     */
+    private function notifyFinancialManagersOfAdvanceApproved(EmployeeApplicationV2 $app): void
+    {
+        try {
+            $employeeName = $app->employee?->name ?? 'Unknown Employee';
+            $managerName = auth()->user()?->name ?? 'Manager';
+
+            $advanceRequest = $app->advanceRequest;
+            $amount = $advanceRequest ? ($advanceRequest->advance_amount) : 'Unknown Amount';
+
+            $whatsappService = app(\App\Services\WhatsApp\Contracts\WhatsAppServiceInterface::class);
+
+            // Fetch Financial Managers (role ID 16 based on User::isFinanceManager)
+            $financeManagers = \App\Models\User::whereHas('roles', function ($query) {
+                $query->where('roles.id', 16);
+            })->whereNotNull('phone_number')->get();
+            Log::info('financial managers', $financeManagers->toArray());
+            foreach ($financeManagers as $manager) {
+                if (!empty($manager->phone_number)) {
+                    $whatsappService->sendTemplate(
+                        to: $manager->phone_number,
+                        templateName: 'workbench_advance_notifier',
+                        parameters: [
+                            $managerName,
+                            $employeeName,
+                            $amount
+                        ]
+                    );
+                }
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[EmployeeApplicationObserver] Failed to send WhatsApp to Financial Managers.', [
+                'application_id' => $app->id,
+                'error'          => $e->getMessage(),
+            ]);
+        }
     }
 }

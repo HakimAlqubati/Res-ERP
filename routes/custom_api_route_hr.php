@@ -86,7 +86,7 @@ Route::prefix('hr')
             Route::post('/undoApprove', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'undoApproval'])->middleware('auth:api');
             Route::post('/reject', [\App\Modules\HR\Overtime\Http\Controllers\OvertimeController::class, 'reject'])->middleware('auth:api');
 
-            Route::get('/summary', [\App\Modules\HR\Overtime\V2\Http\Controllers\Api\OvertimeController::class, 'index']);
+            Route::get('/summary', [\App\Modules\HR\Overtime\V2\Http\Controllers\Api\OvertimeController::class, 'index'])->middleware('auth:api');
         })->middleware('auth:api');
     });
 
@@ -159,6 +159,18 @@ Route::prefix('hr')
 
         Route::get('/employees/{id}/leaveBalances', [EmployeeController::class, 'leaveBalances']);
         Route::get('/employees/leaveBalances', [EmployeeController::class, 'leaveBalancesAll']);
+
+        // Advance Wages
+        Route::apiResource('/advanceWages', \App\Modules\HR\AdvanceWages\Http\Controllers\AdvanceWageController::class);
+        Route::post('/advanceWages/{advanceWage}/approve', [\App\Modules\HR\AdvanceWages\Http\Controllers\AdvanceWageController::class, 'approve']);
+        Route::post('/advanceWages/{advanceWage}/cancel', [\App\Modules\HR\AdvanceWages\Http\Controllers\AdvanceWageController::class, 'cancel']);
+
+        // Service Terminations
+        Route::get('/terminations', [\App\Http\Controllers\Api\HR\EmployeeServiceTerminationController::class, 'index']);
+        Route::get('/terminations/{termination}', [\App\Http\Controllers\Api\HR\EmployeeServiceTerminationController::class, 'show']);
+        Route::post('/employees/{employee}/terminations/request', [\App\Http\Controllers\Api\HR\EmployeeServiceTerminationController::class, 'store']);
+        Route::post('/terminations/{termination}/approve', [\App\Http\Controllers\Api\HR\EmployeeServiceTerminationController::class, 'approve']);
+        Route::post('/terminations/{termination}/reject', [\App\Http\Controllers\Api\HR\EmployeeServiceTerminationController::class, 'reject']);
     });
 Route::prefix('aws/employee-liveness')->group(function () {
     // بدء جلسة التحقق (startSession)
@@ -215,7 +227,9 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
 
 
 Route::get('employees/simple-list', [EmployeeController::class, 'simpleList']);
-Route::get('employees/v2/simple-list', [EmployeeController::class, 'simpleListV2']);
+Route::get('employees/v2/simple-list', [EmployeeController::class, 'simpleListV2'])
+->middleware('auth:api')
+;
 
 Route::post('/face-images', [FaceImageController::class, 'store']);
 
@@ -336,6 +350,16 @@ Route::prefix('hr')
 
         Route::get('/deductions', [\App\Http\Controllers\Api\HR\DeductionController::class, 'index']);
         Route::get('/deductions/{id}', [\App\Http\Controllers\Api\HR\DeductionController::class, 'show']);
+
+        // Bonus / Incentives Types
+        Route::get('/bonusTypes', function () {
+            return \App\Models\MonthlyIncentive::select('id', 'name', 'description')->get();
+        });
+
+        // Employee Rewards
+        Route::apiResource('/rewards', \App\Http\Controllers\Api\HR\EmployeeRewardController::class);
+        Route::post('/rewards/{id}/approve', [\App\Http\Controllers\Api\HR\EmployeeRewardController::class, 'approve'])->name('rewards.approve');
+        Route::post('/rewards/{id}/reject', [\App\Http\Controllers\Api\HR\EmployeeRewardController::class, 'reject'])->name('rewards.reject');
     });
 
 Route::get('/testWeeklyLeaveCalculator', function () {
@@ -392,4 +416,9 @@ Route::prefix('hr')
         Route::get('/payrolls/{payroll}/salary-slip-pdf', function ($payrollId) {
             return app(\App\Modules\HR\Payroll\Reports\SalarySlipReport::class)->generate($payrollId);
         })->name('api.hr.payrolls.salary-slip-pdf');
+
+        // Detailed Payroll Report
+        Route::get('/payroll-report', [\App\Modules\HR\PayrollReports\Http\Controllers\PayrollReportController::class, 'getReport'])
+            ->middleware('auth:api')
+            ->name('api.hr.payrolls.report');
     });

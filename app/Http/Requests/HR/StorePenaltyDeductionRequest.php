@@ -28,7 +28,13 @@ class StorePenaltyDeductionRequest extends FormRequest
     {
         $currentYear = (int) date('Y');
         $currentMonth = (int) date('n');
-        $inputYear = (int) $this->input('year');
+        
+        // Resolve year for maxMonth validation: use input or extract from date
+        $inputYear = $this->input('year');
+        if (empty($inputYear) && $this->input('date')) {
+            $inputYear = (int) \Carbon\Carbon::parse($this->input('date'))->year;
+        }
+        $inputYear = (int) $inputYear;
 
         // If the year is the current year, max month is the current month. Otherwise, it's 12.
         $maxMonth = ($inputYear === $currentYear) ? $currentMonth : 12;
@@ -43,8 +49,8 @@ class StorePenaltyDeductionRequest extends FormRequest
                 })
             ],
             'date'              => ['required', 'date'],
-            'month'             => ['required', 'integer', 'min:1', "max:{$maxMonth}"],
-            'year'              => ['required', 'integer', 'min:2000', "max:{$currentYear}"],
+            'month'             => ['nullable', 'integer', 'min:1', "max:{$maxMonth}"],
+            'year'              => ['nullable', 'integer', 'min:2000', "max:{$currentYear}"],
             'penalty_amount'    => ['required', 'numeric', 'min:0'],
             'description'       => ['nullable', 'string', 'max:500'],
             'status'            => ['nullable', 'string', 'in:' . implode(',', [
@@ -62,6 +68,20 @@ class StorePenaltyDeductionRequest extends FormRequest
      */
     protected function prepareForValidation()
     {
+        // 1. Fill month/year from date if they are missing
+        if ($this->date && (empty($this->month) || empty($this->year))) {
+            try {
+                $date = \Carbon\Carbon::parse($this->date);
+                $this->merge([
+                    'month' => $this->month ?? (int) $date->month,
+                    'year'  => $this->year ?? (int) $date->year,
+                ]);
+            } catch (\Exception $e) {
+                // Invalid date will be caught by validation rules
+            }
+        }
+
+        // 2. Set default status
         if (empty($this->status)) {
             $this->merge([
                 'status' => PenaltyDeduction::STATUS_PENDING,

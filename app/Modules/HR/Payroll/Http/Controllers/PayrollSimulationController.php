@@ -26,18 +26,21 @@ class PayrollSimulationController extends Controller
             'employee_ids.*' => 'integer|exists:hr_employees,id',
             'year'           => 'required|integer|min:2000',
             'month'          => 'required|integer|between:1,12',
+            'branch_id' => 'nullable|integer|exists:branches,id',
         ]);
 
         $results = $this->simulationService->simulateForEmployees(
             $validated['employee_ids'],
             $validated['year'],
-            $validated['month']
+            $validated['month'],
+            $validated['branch_id'] ?? null,
         );
 
         return response()->json([
-            'success' => true,
-            'message' => 'Salary simulation completed.',
-            'data'    => $results,
+            'success'         => true,
+            'message'         => 'Salary simulation completed.',
+            'employees_count' => count($results),
+            'data'            => $results,
         ]);
     }
 

@@ -20,12 +20,14 @@ use App\Filament\Clusters\HRCluster\Resources\MonthlyIncentiveResource\Pages;
 use App\Filament\Clusters\HRCluster\Resources\MonthlyIncentiveResource\RelationManagers;
 use App\Filament\Clusters\HRSalaryCluster;
 use App\Filament\Clusters\HRSalarySettingCluster;
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\MonthlyIncentive;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -54,18 +56,18 @@ class MonthlyIncentiveResource extends Resource
         return $schema
             ->components([
                 Fieldset::make()->columns(3)->columnSpanFull()->schema([
-                TextInput::make('name')->required(),
-                // Financial Category Link
-                Forms\Components\Select::make('financial_category_id')
-                    ->label(__('Financial Category'))
-                    ->relationship('financialCategory', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->placeholder(__('Select to create financial transaction'))
-                    ->helperText(__('If selected, a separate financial transaction will be created when payroll is processed')),
-                Toggle::make('active')->inline(false)->default(true),
+                    TextInput::make('name')->required(),
+                    // Financial Category Link
+                    Forms\Components\Select::make('financial_category_id')
+                        ->label(__('Financial Category'))
+                        ->relationship('financialCategory', 'name')
+                        ->searchable()
+                        ->preload()
+                        ->placeholder(__('Select to create financial transaction'))
+                        ->helperText(__('If selected, a separate financial transaction will be created when payroll is processed')),
+                    Toggle::make('active')->inline(false)->default(true),
 
-                Textarea::make('description')->columnSpanFull(),
+                    Textarea::make('description')->columnSpanFull(),
                 ])
 
             ]);
@@ -75,12 +77,15 @@ class MonthlyIncentiveResource extends Resource
     {
         return $table
             ->columns([
+                SoftDeleteColumn::make(),
                 TextColumn::make('name')->sortable()->searchable(),
                 TextColumn::make('description'),
                 // Tables\Columns\IconColumn::make('active'),
             ])
             ->filters([
-                //
+
+                TrashedFilter::make()
+                    ->visible(fn(): bool => (isSystemManager() || isSuperAdmin())),
             ])
             ->recordActions([
                 EditAction::make(),
@@ -138,5 +143,12 @@ class MonthlyIncentiveResource extends Resource
         }
         return false;
     }
-}
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
+    }
+}

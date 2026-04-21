@@ -133,7 +133,7 @@
             $employee = \App\Models\Employee::find($employee_id);
             @endphp
             <tr class="header_report">
-                <th colspan="11" style="padding: 12px 16px;">
+                <th colspan="{{ (10 - ($show_branch ? 2 : 0)) + ($show_day ? 1 : 0) + ($show_branch ? 1 : 0) }}" style="padding: 12px 16px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">
                         {{-- Left: Buttons --}}
                         <div style="display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;">
@@ -163,6 +163,8 @@
                             <span style="font-weight: 600;">{{ __('lang.start_date') . ': ' . $start_date }}</span>
                             <br>
                             <span style="font-weight: 600;">{{ __('lang.end_date') . ': ' . $end_date }}</span>
+                            <br>
+                            <span style="font-weight: 600;">{{ __('lang.branch') . ': ' . $branch_name }}</span>
                         </div>
 
                         {{-- Far Right: Logo --}}
@@ -175,18 +177,24 @@
             <tr>
                 <th rowspan="2" style="display: {{ $show_day ? 'table-cell' : 'none' }};">{{ __('lang.day') }}
                 </th>
+                <th rowspan="2" style="display: {{ $show_branch ? 'table-cell' : 'none' }};">{{ __('lang.branch') }}
+                </th>
                 <th rowspan="2">{{ __('lang.date') }}</th>
                 <th colspan="2">{{ __('lang.shift_data') }}</th>
-                <th colspan="4">{{ __('lang.checkin_checkout_data') }}</th>
+                <th colspan="{{ $show_branch ? 2 : 4 }}">{{ __('lang.checkin_checkout_data') }}</th>
                 <th colspan="3">{{ __('lang.work_hours_summary') }}</th>
             </tr>
             <tr>
                 <th class="internal_cell">{{ __('lang.from') }}</th>
                 <th class="internal_cell">{{ __('lang.to') }}</th>
                 <th class="internal_cell">{{ __('lang.check_in') }}</th>
+                @if (!$show_branch)
                 <th class="internal_cell">{{ __('lang.status') }}</th>
+                @endif
                 <th class="internal_cell">{{ __('lang.check_out') }}</th>
+                @if (!$show_branch)
                 <th class="internal_cell">{{ __('lang.status') }}</th>
+                @endif
                 <th class="internal_cell">{{ __('lang.supposed') }}</th>
                 <th class="internal_cell">{{ __('lang.total_hours_worked') }}</th>
                 <th class="internal_cell">{{ __('lang.approved') }}</th>
@@ -216,8 +224,11 @@
                 @if ($show_day)
                 <td>{{ $data['day_name'] ?? ($data['day'] ?? '') }}</td>
                 @endif
+                @if ($show_branch)
+                <td>{{ $data['branch_name'] ?? '' }}</td>
+                @endif
                 <td>{{ $date }}</td>
-                <td colspan="9" class="text-center text-gray-500 font-bold">
+                <td colspan="{{ $show_branch ? 7 : 9 }}" class="text-center text-gray-500 font-bold">
                     {{ $data['leave_type'] }}
                 </td>
             </tr>
@@ -250,6 +261,11 @@
                     {{ $data['day_name'] ?? ($data['day'] ?? '') }}
                 </td>
                 @endif
+                @if ($show_branch)
+                <td rowspan="{{ count($periods) }}">
+                    {{ $data['branch_name'] ?? '' }}
+                </td>
+                @endif
                 <td rowspan="{{ count($periods) }}">
                     {{ $date }}
                 </td>
@@ -264,15 +280,15 @@
                 </td>
 
                 @if ($period['final_status'] == 'absent')
-                <td colspan="8">
+                <td colspan="{{ $show_branch ? 6 : 8 }}">
                     {{ __('lang.absent') }}
                 </td>
                 @elseif ($period['final_status'] == 'future')
-                <td colspan="8">
+                <td colspan="{{ $show_branch ? 6 : 8 }}">
                     {{ '-' }}
                 </td>
                 @elseif ($period['final_status'] == 'weekly_leave')
-                <td colspan="8">
+                <td colspan="{{ $show_branch ? 6 : 8 }}">
                     {{ __('lang.weekly_leave') }}
                 </td>
                 @else
@@ -280,20 +296,23 @@
                     {{ $firstCheckin }}
                 </td>
 
+                @if (!$show_branch)
                 <td>
                     {{ /*$firstCheckinStatus */
                     $firstCheckinStatusLabel
                     }}
                 </td>
+                @endif
 
                 <td>
                     {{ $lastCheckout }}
                 </td>
 
+                @if (!$show_branch)
                 <td>
-
                     {{$lastCheckoutStatusLabel}}
                 </td>
+                @endif
 
                 <td>
                     {{ $period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'] ?? '-' }}
@@ -333,8 +352,11 @@
                 @if ($show_day)
                 <td>{{ $data['day_name'] ?? ($data['day'] ?? '') }}</td>
                 @endif
+                @if ($show_branch)
+                <td>{{ $data['branch_name'] ?? '' }}</td>
+                @endif
                 <td>{{ $date }}</td>
-                <td colspan="9" class="text-center text-gray-500 font-bold">
+                <td colspan="{{ $show_branch ? 7 : 9 }}" class="text-center text-gray-500 font-bold">
                     @if(isset($data['day_status']) )
                     {{ $data['day_status'] }}
                     @else
@@ -348,7 +370,7 @@
 
         <tfoot>
             <tr>
-                <td colspan="{{ $show_day ? 8 : 7 }}" class="text-center font-bold">{{ __('lang.total') }}</td>
+                <td colspan="{{ (7 - ($show_branch ? 2 : 0)) + ($show_day ? 1 : 0) + ($show_branch ? 1 : 0) }}" class="text-center font-bold">{{ __('lang.total') }}</td>
                 <td class="text-center">{{ $total_duration_hours }}</td>
                 <td class="text-center">{{ $total_actual_duration_hours }}</td>
                 <td class="text-center">{{ $total_approved_overtime }}</td>

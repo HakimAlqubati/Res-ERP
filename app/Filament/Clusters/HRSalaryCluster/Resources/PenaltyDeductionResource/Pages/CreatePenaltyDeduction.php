@@ -18,7 +18,7 @@ class CreatePenaltyDeduction extends CreateRecord
     {
         $data = $this->form->getState();
         try {
-            app(MonthClosureService::class)->ensureMonthIsOpenByYearMonth($data['year'], $data['month']);
+            // app(MonthClosureService::class)->ensureMonthIsOpen($data['date']);
             $this->beginDatabaseTransaction();
 
             $this->callHook('beforeValidate');
@@ -47,6 +47,7 @@ class CreatePenaltyDeduction extends CreateRecord
             showWarningNotifiMessage($exception->getMessage());
             $this->rollBackDatabaseTransaction();
 
+            return;
             // throw $exception;
         }
 

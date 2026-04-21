@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\HR;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\HR\StorePenaltyDeductionRequest;
+use App\Http\Resources\HR\PenaltyDeductionResource;
 use App\Modules\HR\Payroll\Services\PenaltyDeductionService;
 use Illuminate\Http\Request;
 
@@ -26,16 +27,7 @@ class PenaltyDeductionController extends Controller
             $request->integer('per_page', 15)
         );
 
-        return response()->json([
-            'success' => true,
-            'data'    => $penalties->items(),
-            'meta'    => [
-                'current_page' => $penalties->currentPage(),
-                'last_page'    => $penalties->lastPage(),
-                'per_page'     => $penalties->perPage(),
-                'total'        => $penalties->total(),
-            ],
-        ]);
+        return PenaltyDeductionResource::collection($penalties);
     }
 
     /**
@@ -48,11 +40,13 @@ class PenaltyDeductionController extends Controller
     {
         $penalty = $this->penaltyService->createPenalty($request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Penalty deduction created successfully.',
-            'data'    => $penalty,
-        ], 201);
+        return (new PenaltyDeductionResource($penalty))
+            ->additional([
+                'success' => true,
+                'message' => 'Penalty deduction created successfully.',
+            ])
+            ->response()
+            ->setStatusCode(201);
     }
 
     /**
@@ -72,9 +66,6 @@ class PenaltyDeductionController extends Controller
             ], 404);
         }
 
-        return response()->json([
-            'success' => true,
-            'data'    => $penalty,
-        ]);
+        return new PenaltyDeductionResource($penalty);
     }
 }

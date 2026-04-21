@@ -32,6 +32,8 @@ class MissingCheckoutService
             ->with(['employee:id,name,branch_id', 'period:id,name,start_at,end_at'])
             ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
             ->where('accepted', 1)
+            ->forBranchManager()
+            ->forEmployee()
             ->whereBetween('check_date', [$dateFrom, $dateTo])
             ->whereNotExists(function ($sub) use ($dateFrom, $dateTo) {
                 $sub->from('hr_attendances as co')

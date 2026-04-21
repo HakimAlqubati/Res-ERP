@@ -7,6 +7,7 @@ use App\Models\Employee;
 use App\Models\EmployeeServiceTermination;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Exception;
 
 /**
@@ -25,6 +26,8 @@ class EmployeeLifecycleService
      */
     public function requestTermination(Employee $employee, array $data): EmployeeServiceTermination
     {
+        $this->ensureFinancialClearance($employee);
+
         return DB::transaction(function () use ($employee, $data) {
             $termination = $employee->serviceTermination()->create([
                 'termination_date'   => $data['termination_date'],
@@ -52,6 +55,8 @@ class EmployeeLifecycleService
      */
     public function approveTermination(EmployeeServiceTermination $termination): void
     {
+        $this->ensureFinancialClearance($termination->employee);
+
         DB::beginTransaction();
         try {
             $termination->update([
@@ -166,6 +171,29 @@ class EmployeeLifecycleService
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
+        }
+    }
+
+    /**
+     * Guard against terminating an employee with uncleared financial obligations.
+     * Throws a ValidationException which is gracefully natively handled by Filament and APIs.
+     *
+     * @param Employee $employee
+     * @throws ValidationException
+     */
+    protected function ensureFinancialClearance(Employee $employee): void
+    {
+        // Leverage Eloquent relations rather than raw static calls
+        $unpaidBalance = (float) $employee->advancedInstallments()
+            ->where('is_paid', false)
+            ->sum('installment_amount');
+
+        if ($unpaidBalance > 0) {
+            throw ValidationException::withMessages([
+                'financial_clearance' => __('Cannot process financial clearance. The employee has outstanding advance installments amounting to: :amount', [
+                    'amount' => number_format($unpaidBalance, 2)
+                ]),
+            ]);
         }
     }
 }

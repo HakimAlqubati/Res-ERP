@@ -32,7 +32,7 @@ final class PayrollLockGuard
      */
     public function checkLock(int $employeeId, int $year, int $month, string $errorField = 'date'): void
     {
-        if ($this->hasExistingPayroll($employeeId, $year, $month)) {
+        if ($this->isLocked($employeeId, $year, $month)) {
             $period = $this->monthLabel($year, $month);
 
             throw ValidationException::withMessages([
@@ -40,6 +40,41 @@ final class PayrollLockGuard
                     "Cannot process records for this employee in this period.",
             ]);
         }
+    }
+
+    /**
+     * Checks the lock by automatically extracting the relevant target date
+     * from the application request data (works for both Filament and API).
+     */
+    public function checkApplicationTargetDateLock(int $employeeId, int $applicationTypeId, array $appData): void
+    {
+        $targetDate = null;
+
+        if ($applicationTypeId == \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST) {
+            $targetDate = $appData['missedCheckinRequest']['date']
+                ?? $appData['missed_checkin_request']['date'] ?? null;
+        } elseif ($applicationTypeId == \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST) {
+            $targetDate = $appData['missedCheckoutRequest']['date']
+                ?? $appData['missed_checkout_request']['date'] ?? null;
+        } elseif ($applicationTypeId == \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST) {
+
+            $targetDate = $appData['leaveRequest']['detail_from_date']
+                ?? $appData['leave_request']['detail_from_date'] ?? null;
+        }
+
+        if ($targetDate) {
+            $parsedDate = \Carbon\Carbon::parse($targetDate);
+            $this->checkLock($employeeId, $parsedDate->year, $parsedDate->month, 'application_date');
+        }
+    }
+
+    /**
+     * Check whether a payroll has been processed for the given employee
+     * in the specified month/year.
+     */
+    public function isLocked(int $employeeId, int $year, int $month): bool
+    {
+        return $this->hasExistingPayroll($employeeId, $year, $month);
     }
 
     // -------------------------------------------------------------------------

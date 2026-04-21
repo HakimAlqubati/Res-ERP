@@ -20,18 +20,26 @@ class ServiceRequestController extends Controller
     {
         $q = ServiceRequest::query()
             ->with(['branch', 'branchArea', 'assignedTo', 'equipment'])
-            ->when($req->input('filter.search'), function ($x, $v) {
+            ->when($req->filled('search'), function ($x) use ($req) {
+                $v = $req->input('search');
                 $x->where(function ($q) use ($v) {
                     $q->where('description', 'like', "%{$v}%")
                         ->orWhere('id', $v);
                 });
             })
-            ->when($req->input('filter.status'), fn($x, $v) => $x->where('status', $v))
-            ->when($req->input('filter.urgency'), fn($x, $v) => $x->where('urgency', $v))
-            ->when($req->input('filter.impact'),  fn($x, $v) => $x->where('impact',  $v))
-            ->when($req->input('filter.branch_id'), fn($x, $v) => $x->where('branch_id', $v))
-            ->when($req->input('filter.assigned_to'), fn($x, $v) => $x->where('assigned_to', $v))
-            ->when($req->input('filter.equipment_id'), fn($x, $v) => $x->where('equipment_id', $v));
+            ->when($req->filled('status'), fn($x) => $x->where('status', $req->input('status')))
+            ->when($req->filled('urgency'), fn($x) => $x->where('urgency', $req->input('urgency')))
+            ->when($req->filled('impact'),  fn($x) => $x->where('impact',  $req->input('impact')))
+            ->when($req->filled('branch_id'), fn($x) => $x->where('branch_id', $req->input('branch_id')))
+            ->when($req->has('assigned_to'), function ($x) use ($req) {
+                $v = $req->input('assigned_to');
+                if ($v === 'unassigned' || $v === 'null') {
+                    $x->whereNull('assigned_to');
+                } elseif ($v !== null && $v !== '') {
+                    $x->where('assigned_to', $v);
+                }
+            })
+            ->when($req->filled('equipment_id'), fn($x) => $x->where('equipment_id', $req->input('equipment_id')));
 
         // sort
         $sort = $req->input('sort', '-created_at');
@@ -42,7 +50,14 @@ class ServiceRequestController extends Controller
         $q->orderBy($col, $dir);
 
         $per = min((int) $req->input('per_page', 15), 100);
-        return ServiceRequestResource::collection($q->paginate($per));
+        $paginator = $q->paginate($per);
+
+        $resource = ServiceRequestResource::collection($paginator)->response()->getData(true);
+
+        return response()->json(array_merge(
+            ['count' => $paginator->total()],
+            $resource
+        ));
     }
 
     public function show(ServiceRequest $serviceRequest)
@@ -64,10 +79,9 @@ class ServiceRequestController extends Controller
             $sr = DB::transaction(function () use ($data) {
                 $sr = ServiceRequest::create($data);
                 $sr->logs()->create([
-                    'action'      => 'created',
+                    'log_type'    => ServiceRequestLog::LOG_TYPE_CREATED,
                     'description' => 'Service request created',
-                    'user_id'     => auth()->id(),
-                    'created_by'     => auth()->id(),
+                    'created_by'  => auth()->id(),
                 ]);
                 // إلى سجل الجهاز (لو مرتبط)
                 $sr->logToEquipment(\App\Models\EquipmentLog::ACTION_SERVICED, 'Service request created');
@@ -95,10 +109,9 @@ class ServiceRequestController extends Controller
             $sr = DB::transaction(function () use ($serviceRequest, $data) {
                 $serviceRequest->update($data);
                 $serviceRequest->logs()->create([
-                    'action'      => 'updated',
+                    'log_type'    => ServiceRequestLog::LOG_TYPE_UPDATED,
                     'description' => 'Service request updated',
-                    'user_id'     => auth()->id(),
-                    'created_by' => auth()->id(),
+                    'created_by'  => auth()->id(),
                 ]);
                 $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, 'Service request updated');
                 return $serviceRequest->load(['branch', 'branchArea', 'assignedTo', 'equipment']);
@@ -127,16 +140,16 @@ class ServiceRequestController extends Controller
     public function assign(Request $req, ServiceRequest $serviceRequest)
     {
         $data = $req->validate([
-            'assigned_to' => ['required', 'integer', 'exists:employees,id'],
+            'assigned_to' => ['required', 'integer', 'exists:hr_employees,id'],
             'note'        => ['nullable', 'string', 'max:1000'],
         ]);
 
         $sr = DB::transaction(function () use ($serviceRequest, $data) {
             $serviceRequest->update(['assigned_to' => $data['assigned_to']]);
             $serviceRequest->logs()->create([
-                'action'      => 'assigned',
+                'log_type'    => ServiceRequestLog::LOG_TYPE_REASSIGN_TO_USER,
                 'description' => $data['note'] ?? 'Assigned',
-                'user_id'     => auth()->id(),
+                'created_by'  => auth()->id(),
             ]);
             $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, 'Request assigned');
             return $serviceRequest->load('assignedTo');
@@ -156,9 +169,9 @@ class ServiceRequestController extends Controller
         $sr = DB::transaction(function () use ($serviceRequest, $data) {
             $serviceRequest->update(['status' => $data['status']]);
             $serviceRequest->logs()->create([
-                'action'      => 'status_changed',
+                'log_type'    => ServiceRequestLog::LOG_TYPE_STATUS_CHANGED,
                 'description' => 'Status: ' . $data['status'] . ($data['note'] ? " - {$data['note']}" : ''),
-                'user_id'     => auth()->id(),
+                'created_by'  => auth()->id(),
             ]);
             $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, 'Status changed: ' . $data['status']);
             return $serviceRequest;
@@ -171,9 +184,9 @@ class ServiceRequestController extends Controller
     {
         $serviceRequest->update(['accepted' => true]);
         $serviceRequest->logs()->create([
-            'action'      => 'accepted',
+            'log_type'    => ServiceRequestLog::LOG_TYPE_UPDATED,
             'description' => 'Request accepted',
-            'user_id'     => auth()->id(),
+            'created_by'  => auth()->id(),
         ]);
         return response()->json(['success' => true, 'message' => 'Accepted', 'data' => new ServiceRequestResource($serviceRequest)]);
     }
@@ -183,9 +196,9 @@ class ServiceRequestController extends Controller
         $data = $req->validate(['equipment_id' => ['required', 'integer', 'exists:equipments,id']]);
         $serviceRequest->update(['equipment_id' => $data['equipment_id']]);
         $serviceRequest->logs()->create([
-            'action' => 'equipment_attached',
+            'log_type'    => ServiceRequestLog::LOG_TYPE_UPDATED,
             'description' => 'Equipment attached',
-            'user_id' => auth()->id(),
+            'created_by'  => auth()->id(),
         ]);
         $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, 'Request linked');
         return response()->json(['success' => true, 'message' => 'Equipment attached', 'data' => new ServiceRequestResource($serviceRequest->load('equipment'))]);
@@ -195,9 +208,9 @@ class ServiceRequestController extends Controller
     {
         $serviceRequest->update(['equipment_id' => null]);
         $serviceRequest->logs()->create([
-            'action' => 'equipment_detached',
+            'log_type'    => ServiceRequestLog::LOG_TYPE_UPDATED,
             'description' => 'Equipment detached',
-            'user_id' => auth()->id(),
+            'created_by'  => auth()->id(),
         ]);
         return response()->json(['success' => true, 'message' => 'Equipment detached', 'data' => new ServiceRequestResource($serviceRequest)]);
     }
@@ -205,7 +218,14 @@ class ServiceRequestController extends Controller
     public function uploadMedia(Request $req, ServiceRequest $serviceRequest)
     {
         $req->validate(['file' => ['required', 'file', 'max:10240']]); // 10MB
-        $media = $serviceRequest->addMediaFromRequest('file')->toMediaCollection('attachments');
+        $file = $req->file('file');
+
+        // إذا كان الملف صورة → ضغطه، وإلا ارفعه كما هو
+        if (str_starts_with($file->getMimeType(), 'image/')) {
+            $media = compressAndAddImage($serviceRequest, $file, 'attachments');
+        } else {
+            $media = $serviceRequest->addMediaFromRequest('file')->toMediaCollection('attachments');
+        }
         return response()->json(['data' => ['id' => $media->id, 'url' => $media->getUrl()]]);
     }
 
@@ -220,24 +240,43 @@ class ServiceRequestController extends Controller
 
     public function addComment(Request $req, ServiceRequest $serviceRequest)
     {
-        $data = $req->validate(['comment' => ['required', 'string', 'max:2000']]);
+        $data = $req->validate([
+            'comment' => ['required', 'string', 'max:2000'],
+            'images'  => ['nullable', 'array', 'max:5'],
+            'images.*' => ['image', 'max:10240'],
+        ]);
+
         $comment = $serviceRequest->comments()->create([
             'comment' => $data['comment'],
-            'user_id' => auth()->id(),
-        ]);
-        $serviceRequest->logs()->create([
-            'action' => 'commented',
-            'description' => mb_strimwidth($data['comment'], 0, 120, '…'),
-            'user_id' => auth()->id(),
             'created_by' => auth()->id(),
         ]);
+
+        if ($req->hasFile('images')) {
+            foreach ($req->file('images') as $image) {
+                $comment->addMedia($image)->toMediaCollection('attachments');
+            }
+        }
+
+        $serviceRequest->logs()->create([
+            'log_type'    => \App\Models\ServiceRequestLog::LOG_TYPE_COMMENT_ADDED,
+            'description' => mb_strimwidth($data['comment'], 0, 120, '…'),
+            'created_by'  => auth()->id(),
+        ]);
+
         return new ServiceRequestCommentResource($comment->load('user'));
     }
 
     public function logs(Request $req, ServiceRequest $serviceRequest)
     {
         $per = min((int)$req->input('per_page', 15), 100);
-        $logs = $serviceRequest->logs()->latest()->paginate($per);
+        $logs = $serviceRequest->logs()->with('createdBy')->latest()->paginate($per);
+
+        $logs->getCollection()->transform(function ($log) {
+            $log->created_by_name = $log->createdBy?->name ?? '';
+            $log->makeHidden('createdBy');
+            return $log;
+        });
+
         return response()->json(['data' => $logs]);
     }
 

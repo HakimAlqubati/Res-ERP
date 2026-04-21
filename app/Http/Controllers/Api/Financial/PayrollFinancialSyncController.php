@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\Financial;
 
 use App\Http\Controllers\Controller;
-use App\Services\Financial\PayrollFinancialSyncService;
+use App\Modules\HR\Payroll\Contracts\PayrollFinancialSyncInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,7 +15,7 @@ use Illuminate\Http\Request;
 class PayrollFinancialSyncController extends Controller
 {
     public function __construct(
-        protected PayrollFinancialSyncService $syncService
+        protected PayrollFinancialSyncInterface $syncService
     ) {}
 
     /**

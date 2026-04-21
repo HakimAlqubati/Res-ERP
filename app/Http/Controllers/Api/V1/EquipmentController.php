@@ -16,17 +16,20 @@ class EquipmentController extends Controller
     {
         $q = Equipment::query()
             ->with(['type.category', 'branch'])
-            ->when($req->input('filter.search'), fn($x, $v) => $x->where(function ($q) use ($v) {
-                $q->where('name', 'like', "%$v%")
-                    ->orWhere('asset_tag', 'like', "%$v%")
-                    ->orWhere('serial_number', 'like', "%$v%");
-            }))
-            ->when($req->input('filter.status'), fn($x, $v) => $x->where('status', $v))
-            ->when($req->input('filter.type_id'), fn($x, $v) => $x->where('type_id', $v))
-            ->when($req->input('filter.category_id'), fn($x, $v) => $x->whereHas('type', fn($qq) => $qq->where('category_id', $v)))
-            ->when($req->input('filter.branch_id'), fn($x, $v) => $x->where('branch_id', $v))
-            ->when($req->input('filter.qr_code'), fn($x, $v) => $x->where('qr_code', $v))
-            ->when($req->input('filter.branch_area_id'), fn($x, $v) => $x->where('branch_area_id', $v));
+            ->when($req->filled('search'), function ($x) use ($req) {
+                $v = $req->input('search');
+                $x->where(function ($q) use ($v) {
+                    $q->where('name', 'like', "%$v%")
+                        ->orWhere('asset_tag', 'like', "%$v%")
+                        ->orWhere('serial_number', 'like', "%$v%");
+                });
+            })
+            ->when($req->filled('status'), fn($x) => $x->where('status', $req->input('status')))
+            ->when($req->filled('type_id'), fn($x) => $x->where('type_id', $req->input('type_id')))
+            ->when($req->filled('category_id'), fn($x) => $x->whereHas('type', fn($qq) => $qq->where('category_id', $req->input('category_id'))))
+            ->when($req->filled('branch_id'), fn($x) => $x->where('branch_id', $req->input('branch_id')))
+            ->when($req->filled('qr_code'), fn($x) => $x->where('qr_code', $req->input('qr_code')))
+            ->when($req->filled('branch_area_id'), fn($x) => $x->where('branch_area_id', $req->input('branch_area_id')));
 
         // sort
         $sort = $req->input('sort', '-created_at');
@@ -261,7 +264,15 @@ class EquipmentController extends Controller
     public function uploadMedia(Request $req, Equipment $equipment)
     {
         $req->validate(['file' => ['required', 'file', 'max:10240']]); // 10MB
-        $media = $equipment->addMediaFromRequest('file')->toMediaCollection('attachments');
+        $file = $req->file('file');
+        
+        // إذا كان الملف صورة → ضغطه، وإلا ارفعه كما هو
+        if (str_starts_with($file->getMimeType(), 'image/')) {
+            $media = compressAndAddImage($equipment, $file, 'default');
+        } else {
+            $media = $equipment->addMediaFromRequest('file')->toMediaCollection('default');
+        }
+        
         return response()->json(['data' => ['id' => $media->id, 'url' => $media->getUrl()]]);
     }
 
@@ -271,7 +282,7 @@ class EquipmentController extends Controller
             $catModel = app(\App\Models\EquipmentCategory::class);
 
             $q = $catModel->newQuery()
-                ->when($req->input('filter.search'), fn($x, $v) => $x->where('name', 'like', "%$v%"))
+                ->when($req->input('search'), fn($x, $v) => $x->where('name', 'like', "%$v%"))
                 ->orderBy('name', 'asc');
 
             $per = min((int) $req->input('per_page', 15), 100);
@@ -306,8 +317,8 @@ class EquipmentController extends Controller
 
             $q = $typeModel->newQuery()
                 ->with('category')
-                ->when($req->input('filter.search'), fn($x, $v) => $x->where('name', 'like', "%$v%"))
-                ->when($req->input('filter.category_id'), fn($x, $v) => $x->where('category_id', $v))
+                ->when($req->input('search'), fn($x, $v) => $x->where('name', 'like', "%$v%"))
+                ->when($req->input('category_id'), fn($x, $v) => $x->where('category_id', $v))
                 ->orderBy('name', 'asc');
 
             $per = min((int) $req->input('per_page', 15), 100);

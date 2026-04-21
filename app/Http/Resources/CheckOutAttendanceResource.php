@@ -50,6 +50,7 @@ class CheckOutAttendanceResource extends JsonResource
 
         return [
             'id'                       => $this->id,
+            'branch_id'                => $this->branch_id,
             'check_time'               => $this->check_time,
             'late_departure_minutes'   => $this->late_departure_minutes,
             'early_departure_minutes'  => $earlyDepartureMinutes,

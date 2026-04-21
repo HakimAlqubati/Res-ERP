@@ -15,6 +15,7 @@ class EmployeePeriodHistory extends Model implements Auditable
     protected $fillable = [
         'employee_id',
         'period_id',
+        'branch_id',
         'start_date',
         'end_date',
         'start_time',
@@ -28,6 +29,7 @@ class EmployeePeriodHistory extends Model implements Auditable
     protected $auditInclude = [
         'employee_id',
         'period_id',
+        'branch_id',
         'start_date',
         'end_date',
         'start_time',
@@ -87,5 +89,13 @@ class EmployeePeriodHistory extends Model implements Auditable
     public function scopeActive($query)
     {
         return $query->where('active', true);
+    }
+
+    /**
+     * Get the branch that the employee period history belongs to.
+     */
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
     }
 }

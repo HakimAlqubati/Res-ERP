@@ -12,6 +12,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Fieldset;
+use App\Models\EmployeeBranchLog;
+use Carbon\Carbon;
 
 class PayrollForm
 {
@@ -113,9 +115,15 @@ class PayrollForm
                                 $year = (int) $year;
                             }
 
+                            $date = Carbon::parse("1 $monthValue");
+                            $startDate = $date->copy()->startOfMonth();
+                            $endDate = $date->copy()->endOfMonth();
+
+                            $idsInLog = EmployeeBranchLog::getEmployeesForBranchInRange($branchId, $startDate, $endDate);
+
                             return Employee::query()
                                 ->eligibleForPayroll($year, $monthNumber)
-                                ->where('branch_id', $branchId)
+                                ->whereIn('id', $idsInLog)
                                 ->pluck('name', 'id');
                         })
                         ->columnSpanFull()

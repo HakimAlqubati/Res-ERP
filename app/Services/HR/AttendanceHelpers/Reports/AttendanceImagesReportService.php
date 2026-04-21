@@ -68,9 +68,17 @@ class AttendanceImagesReportService
         $sortOrder = $request->input('sort_order', 'asc');
         $sortOrder = strtolower($sortOrder) === 'desc' ? 'desc' : 'asc';
 
-        // Sorting by check_date, employee_id
+        // Sorting by check_date, first check-in time, employee_id, chronological order
         $attendances = $query->orderBy('check_date', $sortOrder)
+            ->orderByRaw("COALESCE((
+                SELECT MIN(sub.check_time) 
+                FROM hr_attendances as sub 
+                WHERE sub.employee_id = hr_attendances.employee_id 
+                  AND sub.check_date = hr_attendances.check_date
+                  AND sub.check_type = 'checkin'
+            ), '00:00:00') DESC")
             ->orderBy('employee_id')
+            ->orderBy('id', 'asc')
             ->paginate($perPage);
 
         // Map and filter logic
@@ -113,25 +121,7 @@ class AttendanceImagesReportService
                 }
             }
 
-            $attendanceStatus = $attendance->status;
-
-            if ($attendance->check_type == Attendance::CHECKTYPE_CHECKOUT) {
-                if ($attendanceStatus === Attendance::STATUS_EARLY_DEPARTURE) {
-                    $earlyMinutes = (int) ($attendance->early_departure_minutes ?? 0);
-                    $graceMinutes = (int) settingWithDefault('early_depature_deduction_minutes', 0);
-
-                    if ($earlyMinutes <= $graceMinutes) {
-                        $attendanceStatus = Attendance::STATUS_ON_TIME;
-                    }
-                } elseif ($attendanceStatus === Attendance::STATUS_LATE_DEPARTURE) {
-                    $lateMinutes = (int) ($attendance->late_departure_minutes ?? 0);
-                    $graceMinutes = (int) settingWithDefault('early_depature_deduction_minutes', 0);
-
-                    if ($lateMinutes <= $graceMinutes) {
-                        $attendanceStatus = Attendance::STATUS_ON_TIME;
-                    }
-                }
-            }
+            $attendanceStatus = $attendance->resolveSupposedStatus();
 
             $isImageUpload = $source && str_contains($attendance->source_type, 'AttendanceImagesUploaded');
             $defaultImage = 'https://ui-avatars.com/api/?name=Missed+Checked&color=FFFFFF&background=0d7c66&length=14&font-size=0.15';

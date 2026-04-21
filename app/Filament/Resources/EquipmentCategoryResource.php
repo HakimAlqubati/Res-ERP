@@ -34,7 +34,7 @@ class EquipmentCategoryResource extends Resource
 
     protected static ?string $cluster = HRServiceRequestCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 2;
 
     protected static ?string $label = 'Equipment Category';
     protected static ?string $pluralLabel = 'Equipment Categories';

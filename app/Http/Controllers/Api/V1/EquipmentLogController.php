@@ -10,7 +10,7 @@ class EquipmentLogController extends Controller
 {
     public function index(Request $req)
     {
-        $q = \App\Models\EquipmentLog::query()
+        $q = \App\Models\EquipmentLog::query()->with(['equipment', 'performedBy'])
             ->when($req->input('equipment_id'), fn($x,$v)=>$x->where('equipment_id',$v))
             ->when($req->input('action'), fn($x,$v)=>$x->where('action',$v))
             ->when($req->input('from'), fn($x,$v)=>$x->where('created_at','>=',$v))
@@ -22,7 +22,7 @@ class EquipmentLogController extends Controller
 
     public function byEquipment(\App\Models\Equipment $equipment)
     {
-        return EquipmentLogResource::collection($equipment->logs()->orderByDesc('created_at')->paginate(15));
+        return EquipmentLogResource::collection($equipment->logs()->with(['equipment', 'performedBy'])->orderByDesc('created_at')->paginate(15));
     }
 
     public function store(Request $req, \App\Models\Equipment $equipment)

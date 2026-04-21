@@ -25,11 +25,13 @@ class DashboardController extends Controller
 
         $pendingCounts = $this->dashboardService->getPendingCounts($dto);
         $attendanceData = $this->dashboardService->getAttendanceSummaries($dto);
+        $maintenanceAlerts = $this->dashboardService->getMaintenanceAlerts($dto);
 
         return response()->json([
             'success' => true,
             'data' => [
                 'pending_requests'       => $pendingCounts,
+                'maintenance_alerts'     => $maintenanceAlerts,
                 'today_attendance'       => $attendanceData['today_attendance'],
                 'last_7_days_attendance' => $attendanceData['last_7_days_attendance'],
             ]

@@ -9,6 +9,7 @@ use App\Models\Equipment;
 use App\Models\ServiceRequest;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Utilities\Get;
@@ -258,9 +259,10 @@ class ServiceRequestForm
     /**
      * Media upload field - الصور
      */
-    public static function getMediaField(): FileUpload
+    public static function getMediaField(): SpatieMediaLibraryFileUpload
     {
-        return FileUpload::make('images')
+        return SpatieMediaLibraryFileUpload::make('attachments')
+            ->collection('attachments')
             ->disk('public')
             ->label('')
             ->directory('service-requests')

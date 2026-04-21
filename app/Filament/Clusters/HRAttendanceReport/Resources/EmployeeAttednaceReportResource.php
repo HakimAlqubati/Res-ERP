@@ -59,6 +59,9 @@ class EmployeeAttednaceReportResource extends Resource
                 SelectFilter::make('employee_id')
                     ->placeholder(__('lang.choose'))
                     ->label(__('lang.employee'))
+                    ->default(function () {
+                        return $_GET['tableFilters']['employee_id'] ?? null;
+                    })
                     ->options(function ($search = null) {
                         return Employee::query()
                             ->select('id', 'name')
@@ -110,6 +113,9 @@ class EmployeeAttednaceReportResource extends Resource
                         Toggle::make('show_day')
                             ->inline(false)
                             ->label(__('lang.show_day')),
+                        Toggle::make('show_branch')
+                            ->inline(false)
+                            ->label(__('lang.branch')),
                     ]),
 
             ], FiltersLayout::AboveContent)

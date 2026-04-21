@@ -44,7 +44,14 @@ class EmployeeApplicationService
             $this->validateAdvanceRequest($data['advance_request'] ?? []);
         }
 
-        // 6) إنشاء السجل الأساسي
+        // 6) Payroll Lock Check based on Target Date (API structure)
+        app(\App\Services\HR\Payroll\PayrollLockGuard::class)->checkApplicationTargetDateLock(
+            $data['employee_id'],
+            $data['application_type_id'],
+            $data
+        );
+
+        // 7) إنشاء السجل الأساسي
         $record = EmployeeApplicationV2::create($data);
 
         // 7) إنشاء الـ relations حسب نوع الطلب
@@ -118,6 +125,23 @@ class EmployeeApplicationService
                         'date' => $data['application_date'],
                         'number_of_months_of_deduction' => $details['detail_number_of_months_of_deduction'] ?? null,
                         'reason' => $data['notes'],
+                    ]);
+                }
+                break;
+
+            case EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST:
+                $details = $data['meal_request'] ?? null;
+                if ($details) {
+                    $record->mealRequest()->create([
+                        'application_id' => $record->id,
+                        'employee_id'    => $record->employee_id,
+                        'branch_id'      => $record->branch_id,
+                        'meal_details'   => $details['detail_meal_details'] ?? null,
+                        'cost'           => $details['detail_cost'] ?? 0,
+                        'notes'          => $data['notes'] ?? null,
+                        'date'           => $data['application_date'] ?? null,
+                        'created_by'     => $record->created_by,
+                        'status'         => $record->status,
                     ]);
                 }
                 break;
@@ -374,4 +398,6 @@ class EmployeeApplicationService
 
         return $record;
     }
+
+  
 }

@@ -3,9 +3,14 @@
 namespace App\Observers;
 
 use App\Models\AdvanceWage;
+use App\Models\FinancialCategory;
+use App\Models\FinancialTransaction;
+use App\Enums\FinancialCategoryCode;
 use App\Modules\HR\Payroll\Contracts\PayrollSimulatorInterface;
 use App\Services\HR\Payroll\PayrollLockGuard;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class AdvanceWageObserver
 {
@@ -28,15 +33,22 @@ class AdvanceWageObserver
             $advanceWage->created_by = \Illuminate\Support\Facades\Auth::id();
         }
 
+        // استخراج السنة والشهر تلقائياً من تاريخ الأجر المقدم
+        if ($advanceWage->date) {
+            $date = Carbon::parse($advanceWage->date);
+            $advanceWage->year  = $date->year;
+            $advanceWage->month = $date->month;
+        }
+
         // Guard against finalized payroll periods
         $this->guardPeriod($advanceWage);
 
         // Validate amount against net salary
         $simulator = app(PayrollSimulatorInterface::class);
         $results = $simulator->simulateForEmployees([$advanceWage->employee_id], (int) $advanceWage->year, (int) $advanceWage->month);
-        
+
         $netSalary = (float) ($results[0]['data']['net_salary'] ?? 0);
-        
+
         if ((float)$advanceWage->amount > $netSalary) {
             throw ValidationException::withMessages([
                 'amount' => __('The amount exceeds the employee\'s net salary for this period (:amount).', ['amount' => formatMoneyWithCurrency($netSalary)]),
@@ -49,7 +61,7 @@ class AdvanceWageObserver
      */
     public function created(AdvanceWage $advanceWage): void
     {
-        //
+        $this->syncToFinancial($advanceWage);
     }
 
     /**
@@ -65,7 +77,7 @@ class AdvanceWageObserver
      */
     public function updated(AdvanceWage $advanceWage): void
     {
-        //
+        $this->syncToFinancial($advanceWage);
     }
 
     /**
@@ -81,7 +93,13 @@ class AdvanceWageObserver
      */
     public function deleted(AdvanceWage $advanceWage): void
     {
-        //
+        try {
+            FinancialTransaction::where('reference_type', AdvanceWage::class)
+                ->where('reference_id', $advanceWage->id)
+                ->delete();
+        } catch (\Exception $e) {
+            Log::error("Failed to delete financial transaction for AdvanceWage #{$advanceWage->id}: " . $e->getMessage());
+        }
     }
 
     /**
@@ -114,12 +132,59 @@ class AdvanceWageObserver
         if (empty($advanceWage->year) || empty($advanceWage->month) || empty($advanceWage->employee_id)) {
             return;
         }
-
+        // dd($advanceWage->year, $advanceWage->month, $advanceWage->employee_id);
         $this->payrollLockGuard->checkLock(
             (int) $advanceWage->employee_id,
             (int) $advanceWage->year,
             (int) $advanceWage->month,
             'amount'
         );
+    }
+
+    /**
+     * Synchronize the AdvanceWage with the financial transactions table.
+     */
+    private function syncToFinancial(AdvanceWage $advanceWage): void
+    {
+        try {
+            // Only sync settled advance wages
+            if ($advanceWage->status !== AdvanceWage::STATUS_SETTLED) {
+                // If it was settled before and now it's not, we might want to delete the transaction
+                FinancialTransaction::where('reference_type', AdvanceWage::class)
+                    ->where('reference_id', $advanceWage->id)
+                    ->delete();
+                return;
+            }
+
+            $salaryCategory = FinancialCategory::findByCode(FinancialCategoryCode::PAYROLL_SALARIES);
+
+            if (!$salaryCategory) {
+                Log::warning("Financial category for salaries (" . FinancialCategoryCode::PAYROLL_SALARIES . ") not found during AdvanceWage sync.");
+                return;
+            }
+
+            $transactionDate = Carbon::create($advanceWage->year, $advanceWage->month, 1);
+
+            FinancialTransaction::updateOrCreate(
+                [
+                    'reference_type' => AdvanceWage::class,
+                    'reference_id'   => $advanceWage->id,
+                ],
+                [
+                    'branch_id'        => $advanceWage->branch_id,
+                    'category_id'      => $salaryCategory->id,
+                    'amount'           => $advanceWage->amount,
+                    'type'             => FinancialTransaction::TYPE_EXPENSE,
+                    'transaction_date' => $transactionDate,
+                    'status'           => FinancialTransaction::STATUS_PAID,
+                    'description'      => __('Advance Wage') . ': ' . ($advanceWage->employee?->name ?? 'Employee #' . $advanceWage->employee_id) . " ({$advanceWage->year}/{$advanceWage->month})",
+                    'created_by'       => auth()->id() ?? $advanceWage->created_by ?? 1,
+                    'month'            => $advanceWage->month,
+                    'year'             => $advanceWage->year,
+                ]
+            );
+        } catch (\Exception $e) {
+            Log::error("Failed to sync AdvanceWage #{$advanceWage->id} to financial transactions: " . $e->getMessage());
+        }
     }
 }

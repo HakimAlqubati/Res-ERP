@@ -135,12 +135,6 @@
             margin-top: 20px;
             font-size: 13px;
         }
-
-        .sign {
-            margin-top: 40px;
-            font-size: 12.5px;
-            color: #444;
-        }
     </style>
 </head>
 
@@ -169,10 +163,27 @@
                 </tr>
             </table>
 
-            <h2 class="title">SALARY SLIP</h2>
-            <p class="month">
-                {{ \Carbon\Carbon::create($payroll->year, $payroll->month, 1)->translatedFormat('F Y') }}
-            </p>
+            <table style="width: 100%; margin-top: 10px; margin-bottom: 20px;">
+                <tr>
+                    <td style="width: 30%;"></td>
+                    <td style="width: 40%; text-align: center; vertical-align: middle;">
+                        <h2 class="title" style="margin: 0 0 5px 0;">SALARY SLIP</h2>
+                        <p class="month" style="margin: 0;">
+                            {{ \Carbon\Carbon::create($payroll->year, $payroll->month, 1)->translatedFormat('F Y') }}
+                        </p>
+                    </td>
+                    <td style="width: 30%; text-align: right; vertical-align: middle;">
+                        <table align="right" style="border: 2px solid #0d7c66;">
+                            <tr>
+                                <td style="padding: 10px 15px; font-weight: 900; font-size: 16px; background-color: #fafafa;">
+                                    Net Salary: {{ formatMoneyWithCurrency($net) }}
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+
 
             <!-- Employee Info -->
             <table class="info">
@@ -194,52 +205,56 @@
                 </tr>
             </table>
 
-            <!-- Pay Table -->
-            <table class="pay">
+            <!-- Earnings Table -->
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 30px; font-size: 13px;">
                 <thead>
                     <tr>
-                        <th style="width:50%">Description</th>
-                        <th style="width:25%">Earnings</th>
-                        <th style="width:25%">Deductions</th>
+                        <th style="border-bottom: 2px solid #aebac1; text-align: left; padding: 8px 5px; color: #0d7c66; font-weight: bold; width: 70%;">Employee Earnings / Reimbursements</th>
+                        <th style="border-bottom: 2px solid #aebac1; text-align: right; padding: 8px 5px; color: #333; font-weight: bold; width: 30%;">Current</th>
                     </tr>
                 </thead>
                 <tbody>
-
-                    {{-- Earnings rows --}}
                     @foreach (($earnings ?? collect()) as $e)
                     @php
                     $eDesc = $e->description ?: ucfirst(str_replace('_', ' ', $e->sub_type ?? ($e->type ?? '')));
                     @endphp
-                    <tr @if($e->type === 'carry_forward') style="background-color: #ffe6e6;" @endif>
-                        <td>{{ $eDesc }}</td>
-                        <td>{{ formatMoneyWithCurrency($e->amount) }}</td>
-                        <td></td>
+                    <tr>
+                        <td style="padding: 8px 5px; color: #333; border-bottom: 1px solid #f9f9f9;">{{ $eDesc }}</td>
+                        <td style="padding: 8px 5px; text-align: right; color: #333; border-bottom: 1px solid #f9f9f9;">{{ formatMoneyWithCurrency($e->amount) }}</td>
                     </tr>
                     @endforeach
-
-                    {{-- Deduction rows (interleaved with matching employer) --}}
-                    @foreach (($deductionRows ?? collect()) as $row)
-                    <tr @if($row->bgColor) style="background-color: {{ $row->bgColor }};" @endif>
-                        <td>{{ $row->description }}</td>
-                        <td></td>
-                        <td>{{ formatMoneyWithCurrency($row->amount) }}</td>
-                    </tr>
-                    @endforeach
-
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td><strong>Total</strong></td>
-                        <td><strong>{{ formatMoneyWithCurrency($gross) }}</strong></td>
-                        <td><strong>{{ formatMoneyWithCurrency($totalDeductions) }}</strong></td>
+                        <td style="padding: 12px 5px 8px 5px; font-weight: 800; color: #222;">Gross Pay</td>
+                        <td style="padding: 12px 5px 8px 5px; text-align: right; font-weight: 800; color: #0d7c66;">{{ formatMoneyWithCurrency($gross) }}</td>
                     </tr>
                 </tfoot>
             </table>
 
-            <p class="note"><strong>Net Salary:</strong> {{ formatMoneyWithCurrency($net) }}</p>
-
-            <div class="sign">Employee Signature</div>
-
+            <!-- Deductions Table -->
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 13px;">
+                <thead>
+                    <tr>
+                        <th style="border-bottom: 2px solid #aebac1; text-align: left; padding: 8px 5px; color: #0d7c66; font-weight: bold; width: 70%;">Employee Deductions</th>
+                        <th style="border-bottom: 2px solid #aebac1; text-align: right; padding: 8px 5px; color: #333; font-weight: bold; width: 30%;">Current</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (($deductionRows ?? collect()) as $row)
+                    <tr @if($row->bgColor) style="background-color: {{ $row->bgColor }};" @endif>
+                        <td style="padding: 8px 5px; color: #333; border-bottom: 1px solid #f9f9f9;">{{ $row->description }}</td>
+                        <td style="padding: 8px 5px; text-align: right; color: #333; border-bottom: 1px solid #f9f9f9;">{{ formatMoneyWithCurrency($row->amount) }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td style="padding: 12px 5px 8px 5px; font-weight: 800; color: #222;">Total Deductions</td>
+                        <td style="padding: 12px 5px 8px 5px; text-align: right; font-weight: 800; color: #0d7c66;">{{ formatMoneyWithCurrency($totalDeductions) }}</td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
     </div>
 </body>

@@ -3,8 +3,6 @@
 namespace App\Modules\HR\Payroll\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use App\Models\PayrollRun;
-use App\Modules\HR\Payroll\Observers\PayrollRunObserver;
 
 // Services
 use App\Modules\HR\Payroll\Services\PayrollRunService;
@@ -24,6 +22,10 @@ use App\Modules\HR\Payroll\Contracts\PayrollSimulatorInterface;
 use App\Modules\HR\Payroll\Contracts\PayrollFinancialSyncInterface;
 use App\Modules\HR\Payroll\Contracts\PayrollRepositoryInterface;
 use App\Modules\HR\Payroll\Contracts\SalaryTransactionRepositoryInterface;
+
+// Reports
+use App\Modules\HR\PayrollReports\Contracts\PayrollReportServiceInterface;
+use App\Modules\HR\PayrollReports\Services\PayrollReportService;
 
 // Calculators
 use App\Modules\HR\Payroll\Calculators\RateCalculator;
@@ -96,15 +98,14 @@ class PayrollServiceProvider extends ServiceProvider
 
         $this->app->singleton(PayrollCalculationService::class, function ($app) {
             return new PayrollCalculationService(
-                $app->make(PayrollRepositoryInterface::class),
                 $app->make(SalaryTransactionRepositoryInterface::class),
-                $app->make(PayrollSimulatorInterface::class)
             );
         });
 
         $this->app->singleton(PayrollRunnerInterface::class, function ($app) {
             return new PayrollRunService(
-                $app->make(PayrollCalculationService::class)
+                $app->make(PayrollSimulationService::class),
+                $app->make(PayrollCalculationService::class),
             );
         });
         $this->app->singleton(PayrollRunService::class, function ($app) {
@@ -113,6 +114,10 @@ class PayrollServiceProvider extends ServiceProvider
 
         $this->app->singleton(PayrollFinancialSyncInterface::class, PayrollFinancialSyncService::class);
         $this->app->singleton(PayrollFinancialSyncService::class);
+
+        // ===== Reports =====
+        $this->app->singleton(PayrollReportServiceInterface::class, PayrollReportService::class);
+        $this->app->singleton(PayrollReportService::class);
     }
 
     /**
@@ -128,6 +133,5 @@ class PayrollServiceProvider extends ServiceProvider
 
         // Register Observer for PayrollRun model
         // Note: This uses the module's observer, not the original one
-        // PayrollRun::observe(PayrollRunObserver::class);
     }
 }
