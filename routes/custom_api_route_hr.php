@@ -227,7 +227,9 @@ Route::prefix('v1')->middleware(['auth:api'])->group(function () {
 
 
 Route::get('employees/simple-list', [EmployeeController::class, 'simpleList']);
-Route::get('employees/v2/simple-list', [EmployeeController::class, 'simpleListV2']);
+Route::get('employees/v2/simple-list', [EmployeeController::class, 'simpleListV2'])
+->middleware('auth:api')
+;
 
 Route::post('/face-images', [FaceImageController::class, 'store']);
 

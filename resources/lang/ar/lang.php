@@ -1124,4 +1124,5 @@ return [
   'branch_logs_count' => 'عدد سجلات الفروع',
   'attendance_type' => 'نوع التحضير',
   'cannot_process_financial_clearance' => 'لا يمكن إتمام المخالصة المالية. الموظف لديه أقساط سلف غير مدفوعة تبلغ: :amount',
+  'approved_successfully' => 'تمت الموافقة بنجاح',
 ];
