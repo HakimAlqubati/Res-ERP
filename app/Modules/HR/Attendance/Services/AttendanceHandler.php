@@ -83,8 +83,10 @@ class AttendanceHandler
 
         // التحقق من وجود سجل دخول عند الخروج
         if ($context->isCheckOut() && !$context->lastCheckIn) {
-            throw new \App\Modules\HR\Attendance\Exceptions\MissingCheckInException(
-                $shiftInfo->period->name ?? null
+            $this->createAutoMissedCheckoutRequest($context);
+
+            return AttendanceResultDTO::autoRequestCreated(
+                __('lang.auto_missed_checkout_request_created_success', ['default' => 'تم إنشاء طلب نسيان دخول تلقائياً لعدم وجود بصمة، يرجى مراجعته من الموارد البشرية.'])
             );
         }
 
@@ -101,6 +103,34 @@ class AttendanceHandler
             message: $this->getSuccessMessage($context->checkType),
             record: $record->fresh()
         );
+    }
+
+    /**
+     * إنشاء طلب نسيان خروج تلقائي
+     */
+    private function createAutoMissedCheckoutRequest(AttendanceContextDTO $context): void
+    {
+        $application = \App\Models\EmployeeApplicationV2::create([
+            'employee_id' => $context->employee->id,
+            'branch_id' => $context->employee->branch_id,
+            'application_date' => $context->requestTime->toDateString(),
+            'status' => \App\Models\EmployeeApplicationV2::STATUS_PENDING,
+            'application_type_id' => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
+            'application_type_name' => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_NAMES[\App\Models\EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST],
+            'created_by' => auth()->id() ?? $context->employee->user_id ?? 0,
+            'is_auto_generated' => true,
+        ]);
+
+        \App\Models\MissedCheckOutRequest::create([
+            'application_id' => $application->id,
+            'application_type_id' => $application->application_type_id,
+            'application_type_name' => $application->application_type_name,
+            'employee_id' => $context->employee->id,
+            'date' => $context->shiftDate ?? $context->requestTime->toDateString(),
+            'time' => $context->requestTime->format('H:i'),
+            'reason' => __('lang.auto_generated_reason_missing_checkin', ['default' => 'تم الإنشاء تلقائياً بسبب تسجيل انصراف بدون بصمة دخول']),
+            'is_auto_generated' => true,
+        ]);
     }
 
     /**

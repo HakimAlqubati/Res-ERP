@@ -35,6 +35,18 @@ final readonly class AttendanceResultDTO
     }
 
     /**
+     * إنشاء نتيجة تفيد بإنشاء طلب تلقائي
+     */
+    public static function autoRequestCreated(string $message): self
+    {
+        return new self(
+            success: true,
+            message: $message,
+            record: null,
+        );
+    }
+
+    /**
      * إنشاء نتيجة فشل
      */
     public static function failure(string $message, bool $typeRequired = false): self

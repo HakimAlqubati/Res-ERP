@@ -1124,4 +1124,7 @@ return [
   'branch_logs_count' => 'عدد سجلات الفروع',
   'attendance_type' => 'نوع التحضير',
   'cannot_process_financial_clearance' => 'لا يمكن إتمام المخالصة المالية. الموظف لديه أقساط سلف غير مدفوعة تبلغ: :amount',
+  'approved_successfully' => 'تمت الموافقة بنجاح',
+  'auto_missed_checkout_request_created_success' => 'تم إنشاء طلب انصراف تلقائياً لعدم وجود بصمة حضور سابقة، يرجى مراجعته مع الموارد البشرية.',
+  'auto_generated_reason_missing_checkin' => 'تم الإنشاء تلقائياً بسبب تسجيل انصراف بدون بصمة دخول سابقة',
 ];
