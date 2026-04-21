@@ -154,9 +154,9 @@ class FinancialReportService
         $directPurchase = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::DIRECT_PURCHASE);
         $closingStock   = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::CLOSING_STOCK);
         $openingStock   = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::OPENING_STOCK);
-        if ($closingStock <= 0) {
-            $closingStock = $openingStock + $transfers + $directPurchase;
-        }
+        // if ($closingStock <= 0) {
+        //     $closingStock = $openingStock + $transfers + $directPurchase;
+        // }
 
         // COGS = Opening Stock + Transfers + Direct Purchase + Dynamic COGS - Closing Stock
         $costOfGoodsSold = ($openingStock + $transfers + $directPurchase + $dynamicCogsAmount) - $closingStock;
