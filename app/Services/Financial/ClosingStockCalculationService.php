@@ -3,13 +3,11 @@
 namespace App\Services\Financial;
 
 use App\Enums\FinancialCategoryCode;
+use App\Models\Branch;
 use App\Models\FinancialCategory;
 use App\Models\FinancialTransaction;
-use App\Models\InventoryTransaction;
 use App\Models\StockInventory;
-use App\Models\Branch;
-use Illuminate\Support\Facades\DB;
-
+use Carbon\Carbon;
 use App\Services\PurchasedReports\PurchaseInvoiceProductSummaryReportService;
 
 class ClosingStockCalculationService
@@ -68,46 +66,100 @@ class ClosingStockCalculationService
     }
 
     /**
-     * Create a Closing Stock financial transaction for the finalized inventory.
-     *
-     * @param StockInventory $inventory
-     * @return ?FinancialTransaction
+     * Single entry point called by the Observer.
+     * Performs one valuation pass and creates both Closing and Opening transactions.
      */
-    public function createClosingStockTransaction(StockInventory $inventory): ?FinancialTransaction
+    public function createStockValueTransactions(StockInventory $inventory): void
+    {
+        $amount = $this->calculateClosingStockValue($inventory);
+
+        $this->createClosingStockTransaction($inventory, $amount);
+        $this->createOpeningStockTransaction($inventory, $amount);
+    }
+
+    /**
+     * Record "Closing Stock" — reduces COGS for the current period (credit / income).
+     * Dated on the inventory date itself.
+     * Keyed on reference_type + reference_id + category_id to prevent duplicates.
+     */
+    public function createClosingStockTransaction(StockInventory $inventory, ?float $amount = null): ?FinancialTransaction
     {
         try {
-            // 1. Calculate Total Value
-            $amount = $this->calculateClosingStockValue($inventory);
-
-            // 2. Get Closing Stock Category
-            $category = FinancialCategory::findByCode(FinancialCategoryCode::CLOSING_STOCK);
-
-            if (!$category) {
+            $amount   ??= $this->calculateClosingStockValue($inventory);
+            $category   = FinancialCategory::findByCode(FinancialCategoryCode::CLOSING_STOCK);
+            $branchId   = $this->resolveBranchId($inventory);
+            $date       = Carbon::parse($inventory->inventory_date);
+            if (! $category) {
                 return null;
             }
 
-            // 3. Determine Branch
-            // Try to find a branch associated with this store
-            $branch = Branch::where('store_id', $inventory->store_id)->first();
-            $branchId = $branch ? $branch->id : null;
-
-            // 4. Create Transaction
-            return FinancialTransaction::create([
-                'branch_id' => $branchId,
-                'category_id' => $category->id,
-                'amount' => $amount,
-                'type' => FinancialCategory::TYPE_INCOME, // Closing stock reduces COGS, so it's treated as income/credit
-                'transaction_date' => $inventory->inventory_date,
-                'status' => FinancialTransaction::STATUS_PAID, // It's an accounting entry, effectively "paid"/realized
-                'description' => "Closing Stock - Inventory #{$inventory->id} - Store: " . ($inventory->store->name ?? 'N/A'),
-                'created_by' => auth()->id() ?? $inventory->created_by,
-                'reference_type' => StockInventory::class,
-                'reference_id' => $inventory->id,
-                'month' => \Carbon\Carbon::parse($inventory->inventory_date)->month,
-                'year' => \Carbon\Carbon::parse($inventory->inventory_date)->year,
-            ]);
-        } catch (\Exception $e) {
+            return FinancialTransaction::updateOrCreate(
+                [
+                    'reference_type' => StockInventory::class,
+                    'reference_id'   => $inventory->id,
+                    'category_id'    => $category->id,
+                ],
+                [
+                    'branch_id'        => $branchId,
+                    'amount'           => $amount,
+                    'type'             => FinancialCategory::TYPE_INCOME,
+                    'transaction_date' => $date->toDateString(),
+                    'status'           => FinancialTransaction::STATUS_PAID,
+                    'description'      => "Closing Stock — Inventory #{$inventory->id} — Store: " . ($inventory->store->name ?? 'N/A'),
+                    'created_by'       => auth()->id() ?? $inventory->created_by,
+                    'month'            => $date->month,
+                    'year'             => $date->year,
+                ]
+            );
+        } catch (\Exception) {
             return null;
         }
+    }
+
+    /**
+     * Record "Opening Stock" — adds to COGS for the next period (debit / expense).
+     * Always dated on the 1st of the following month (not +1 day).
+     * Keyed on reference_type + reference_id + category_id to prevent duplicates.
+     */
+    public function createOpeningStockTransaction(StockInventory $inventory, float $amount): ?FinancialTransaction
+    {
+        try {
+            $category = FinancialCategory::findByCode(FinancialCategoryCode::OPENING_STOCK);
+            $branchId = $this->resolveBranchId($inventory);
+            $date     = Carbon::parse($inventory->inventory_date)->startOfMonth()->addMonth();
+            if (! $category) {
+                return null;
+            }
+
+            return FinancialTransaction::updateOrCreate(
+                [
+                    'reference_type' => StockInventory::class,
+                    'reference_id'   => $inventory->id,
+                    'category_id'    => $category->id,
+                ],
+                [
+                    'branch_id'        => $branchId,
+                    'amount'           => $amount,
+                    'type'             => FinancialCategory::TYPE_EXPENSE,
+                    'transaction_date' => $date->toDateString(),
+                    'status'           => FinancialTransaction::STATUS_PAID,
+                    'description'      => "Opening Stock — Inventory #{$inventory->id} — Store: " . ($inventory->store->name ?? 'N/A'),
+                    'created_by'       => auth()->id() ?? $inventory->created_by,
+                    'month'            => $date->month,
+                    'year'             => $date->year,
+                ]
+            );
+        } catch (\Exception) {
+            return null;
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    private function resolveBranchId(StockInventory $inventory): ?int
+    {
+        return Branch::where('store_id', $inventory->store_id)->value('id');
     }
 }

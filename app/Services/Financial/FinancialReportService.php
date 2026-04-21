@@ -125,6 +125,7 @@ class FinancialReportService
                         \App\Enums\FinancialCategoryCode::TRANSFERS,
                         \App\Enums\FinancialCategoryCode::DIRECT_PURCHASE,
                         \App\Enums\FinancialCategoryCode::CLOSING_STOCK,
+                        \App\Enums\FinancialCategoryCode::OPENING_STOCK,
                     ]);
             })
             ->with('category')
@@ -149,17 +150,18 @@ class FinancialReportService
         }
 
         // 3. Get specific category amounts for Gross Profit calculation
-        $transfers = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::TRANSFERS);
+        $transfers      = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::TRANSFERS);
         $directPurchase = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::DIRECT_PURCHASE);
-        $closingStock = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::CLOSING_STOCK);
+        $closingStock   = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::CLOSING_STOCK);
+        $openingStock   = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::OPENING_STOCK);
+        if ($closingStock <= 0) {
+            $closingStock = $openingStock;
+        }
+        // COGS = Opening Stock + Transfers + Direct Purchase + Dynamic COGS - Closing Stock
+        $costOfGoodsSold = ($openingStock + $transfers + $directPurchase + $dynamicCogsAmount) - $closingStock;
 
-        // 4. Calculate Gross Profit: ((Transfers + Direct Purchase + Dynamic COGS) - Closing Stock) ÷ Sales
-        // 1. حساب تكلفة البضاعة المباعة (للعرض في التقرير فقط) مضافاً لها حسابات تكاليف المبيعات الديناميكية 
-        $costOfGoodsSold = ($transfers + $directPurchase + $dynamicCogsAmount) - $closingStock;
-
-        // 2. حساب إجمالي الربح بناءً على معادلة الصورة المرفقة
-        // Equation: Sales + Closing Stock - Transfers - Direct Purchase - Dynamic COGS
-        $grossProfitValue = ($totalRevenue + $closingStock) - $directPurchase - $transfers - $dynamicCogsAmount;
+        // Gross Profit = Revenue - COGS
+        $grossProfitValue = $totalRevenue - $costOfGoodsSold;
 
         // dd($grossProfitValue,$totalRevenue,$closingStock,$directPurchase,$transfers);
         // 3. حساب نسبة الربح (Gross Profit Ratio)
@@ -177,19 +179,17 @@ class FinancialReportService
                 'details' => [],
             ],
             'cost_of_goods_sold' => [
-                'transfers' => (float) $transfers,
-                'transfers_formatted' => formatMoneyWithCurrency($transfers),
-                'direct_purchase' => (float) $directPurchase,
+                'opening_stock'           => (float) $openingStock,
+                'opening_stock_formatted' => formatMoneyWithCurrency($openingStock),
+                'transfers'               => (float) $transfers,
+                'transfers_formatted'     => formatMoneyWithCurrency($transfers),
+                'direct_purchase'         => (float) $directPurchase,
                 'direct_purchase_formatted' => formatMoneyWithCurrency($directPurchase),
-                'closing_stock' => (float) $closingStock,
+                'closing_stock'           => (float) $closingStock,
                 'closing_stock_formatted' => formatMoneyWithCurrency($closingStock),
-                'dynamic_details' => $dynamicCogsDetails,
-                // 'total' => (float) $grossProfitValue,
-                // 'total_formatted' => formatMoneyWithCurrency($grossProfitValue),
-
-                'total' => (float) $costOfGoodsSold,
-                'total_formatted' => formatMoneyWithCurrency($costOfGoodsSold),
-
+                'dynamic_details'         => $dynamicCogsDetails,
+                'total'                   => (float) $costOfGoodsSold,
+                'total_formatted'         => formatMoneyWithCurrency($costOfGoodsSold),
             ],
             'gross_profit' => [
                 'value' => (float) $grossProfitValue,

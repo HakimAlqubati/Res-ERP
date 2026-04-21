@@ -26,8 +26,8 @@ class StockInventoryObserver
     {
         // Check if 'finalized' was changed from false to true
         if ($stockInventory->wasChanged('finalized') && $stockInventory->finalized == true) {
-            // 1. Create Financial Transaction
-            $this->calculationService->createClosingStockTransaction($stockInventory);
+            // 1. Create Closing + Opening Stock transactions (single valuation pass)
+            $this->calculationService->createStockValueTransactions($stockInventory);
 
             // 2. Generate Stock Adjustments for differences
             $this->adjustmentService->createFromInventory($stockInventory);

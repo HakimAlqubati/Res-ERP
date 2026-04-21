@@ -449,6 +449,18 @@
                     </td>
                 </tr>
 
+                <tr class="table-row">
+                    <td class="row-label">
+                        <div style="font-weight: 600;">{{ __('Opening Stock') }}</div>
+                        <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 0rem;">
+                            {{ __('Opening Stock Inventory') }}
+                        </div>
+                    </td>
+                    <td class="row-value" style="color: #059669;">
+                        {{ $report['cost_of_goods_sold']['opening_stock_formatted'] ?? number_format($report['cost_of_goods_sold']['opening_stock'] ?? 0, 2) }}
+                    </td>
+                </tr>
+
                 {{-- Cost of Goods Sold Components --}}
                 <tr class="table-row">
                     <td class="row-label">
@@ -461,6 +473,7 @@
                         {{ $report['cost_of_goods_sold']['closing_stock_formatted'] ?? number_format($report['cost_of_goods_sold']['closing_stock'] ?? 0, 2) }}
                     </td>
                 </tr>
+
 
 
                 <tr class="table-row">

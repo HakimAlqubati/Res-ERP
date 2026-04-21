@@ -99,12 +99,13 @@ class MultiBranchFinancialReportService
         $result = $this->getMultiBranchIncomeStatement($branchIds, $startDate, $endDate);
 
         $rows = [
-            'revenue' => ['label' => __('Total Sales Revenue'), 'values' => [], 'raw_values' => []],
-            'closing_stock' => ['label' => __('Closing Stock'), 'values' => [], 'raw_values' => []],
-            'direct_purchase' => ['label' => __('Direct Purchase'), 'values' => [], 'raw_values' => []],
-            'transfers' => ['label' => __('Transfers'), 'values' => [], 'raw_values' => []],
-            'gross_profit' => ['label' => __('Gross Profit'), 'values' => [], 'raw_values' => []],
-            'gross_margin' => ['label' => __('Gross Margin %'), 'values' => [], 'raw_values' => []],
+            'revenue'         => ['label' => __('Total Sales Revenue'), 'values' => [], 'raw_values' => []],
+            'opening_stock'   => ['label' => __('Opening Stock'),        'values' => [], 'raw_values' => []],
+            'closing_stock'   => ['label' => __('Closing Stock'),        'values' => [], 'raw_values' => []],
+            'direct_purchase' => ['label' => __('Direct Purchase'),      'values' => [], 'raw_values' => []],
+            'transfers'       => ['label' => __('Transfers'),            'values' => [], 'raw_values' => []],
+            'gross_profit'    => ['label' => __('Gross Profit'),         'values' => [], 'raw_values' => []],
+            'gross_margin'    => ['label' => __('Gross Margin %'),       'values' => [], 'raw_values' => []],
         ];
 
         $headers = [];
@@ -117,22 +118,25 @@ class MultiBranchFinancialReportService
 
             $data = $branch['data'];
 
-            $rows['revenue']['values'][$branchId] = $data['revenue']['total_formatted'];
-            $rows['revenue']['raw_values'][$branchId] = $data['revenue']['total'] ?? 0;
+            $rows['revenue']['values'][$branchId]           = $data['revenue']['total_formatted'];
+            $rows['revenue']['raw_values'][$branchId]       = $data['revenue']['total'] ?? 0;
 
-            $rows['closing_stock']['values'][$branchId] = $data['cost_of_goods_sold']['closing_stock_formatted'];
+            $rows['opening_stock']['values'][$branchId]     = $data['cost_of_goods_sold']['opening_stock_formatted'] ?? formatMoneyWithCurrency(0);
+            $rows['opening_stock']['raw_values'][$branchId] = $data['cost_of_goods_sold']['opening_stock'] ?? 0;
+
+            $rows['closing_stock']['values'][$branchId]     = $data['cost_of_goods_sold']['closing_stock_formatted'];
             $rows['closing_stock']['raw_values'][$branchId] = $data['cost_of_goods_sold']['closing_stock'] ?? 0;
 
-            $rows['direct_purchase']['values'][$branchId] = $data['cost_of_goods_sold']['direct_purchase_formatted'];
+            $rows['direct_purchase']['values'][$branchId]     = $data['cost_of_goods_sold']['direct_purchase_formatted'];
             $rows['direct_purchase']['raw_values'][$branchId] = $data['cost_of_goods_sold']['direct_purchase'] ?? 0;
 
-            $rows['transfers']['values'][$branchId] = $data['cost_of_goods_sold']['transfers_formatted'];
+            $rows['transfers']['values'][$branchId]     = $data['cost_of_goods_sold']['transfers_formatted'];
             $rows['transfers']['raw_values'][$branchId] = $data['cost_of_goods_sold']['transfers'] ?? 0;
 
-            $rows['gross_profit']['values'][$branchId] = $data['gross_profit']['value_formatted'];
+            $rows['gross_profit']['values'][$branchId]     = $data['gross_profit']['value_formatted'];
             $rows['gross_profit']['raw_values'][$branchId] = $data['gross_profit']['value'] ?? 0;
 
-            $rows['gross_margin']['values'][$branchId] = $data['gross_profit']['ratio_formatted'];
+            $rows['gross_margin']['values'][$branchId]     = $data['gross_profit']['ratio_formatted'];
             $rows['gross_margin']['raw_values'][$branchId] = $data['gross_profit']['ratio'] ?? 0;
         }
 
@@ -145,22 +149,25 @@ class MultiBranchFinancialReportService
             ];
 
             $totals = $result['totals'];
-            $rows['revenue']['values']['total'] = $totals['revenue']['total_formatted'];
-            $rows['revenue']['raw_values']['total'] = $totals['revenue']['total'] ?? 0;
+            $rows['revenue']['values']['total']           = $totals['revenue']['total_formatted'];
+            $rows['revenue']['raw_values']['total']       = $totals['revenue']['total'] ?? 0;
 
-            $rows['closing_stock']['values']['total'] = $totals['cost_of_goods_sold']['closing_stock_formatted'];
+            $rows['opening_stock']['values']['total']     = $totals['cost_of_goods_sold']['opening_stock_formatted'] ?? formatMoneyWithCurrency(0);
+            $rows['opening_stock']['raw_values']['total'] = $totals['cost_of_goods_sold']['opening_stock'] ?? 0;
+
+            $rows['closing_stock']['values']['total']     = $totals['cost_of_goods_sold']['closing_stock_formatted'];
             $rows['closing_stock']['raw_values']['total'] = $totals['cost_of_goods_sold']['closing_stock'] ?? 0;
 
-            $rows['direct_purchase']['values']['total'] = $totals['cost_of_goods_sold']['direct_purchase_formatted'];
+            $rows['direct_purchase']['values']['total']     = $totals['cost_of_goods_sold']['direct_purchase_formatted'];
             $rows['direct_purchase']['raw_values']['total'] = $totals['cost_of_goods_sold']['direct_purchase'] ?? 0;
 
-            $rows['transfers']['values']['total'] = $totals['cost_of_goods_sold']['transfers_formatted'];
+            $rows['transfers']['values']['total']     = $totals['cost_of_goods_sold']['transfers_formatted'];
             $rows['transfers']['raw_values']['total'] = $totals['cost_of_goods_sold']['transfers'] ?? 0;
 
-            $rows['gross_profit']['values']['total'] = $totals['gross_profit']['value_formatted'];
+            $rows['gross_profit']['values']['total']     = $totals['gross_profit']['value_formatted'];
             $rows['gross_profit']['raw_values']['total'] = $totals['gross_profit']['value'] ?? 0;
 
-            $rows['gross_margin']['values']['total'] = $totals['gross_profit']['ratio_formatted'];
+            $rows['gross_margin']['values']['total']     = $totals['gross_profit']['ratio_formatted'];
             $rows['gross_margin']['raw_values']['total'] = $totals['gross_profit']['ratio'] ?? 0;
         }
 
@@ -198,19 +205,17 @@ class MultiBranchFinancialReportService
     private function initializeTotals(): array
     {
         return [
-            'revenue' => ['total' => 0],
+            'revenue'          => ['total' => 0],
             'cost_of_goods_sold' => [
-                'transfers' => 0,
+                'opening_stock'   => 0,
+                'transfers'       => 0,
                 'direct_purchase' => 0,
-                'closing_stock' => 0,
-                'total' => 0,
+                'closing_stock'   => 0,
+                'total'           => 0,
             ],
-            'gross_profit' => [
-                'value' => 0,
-                'ratio' => 0,
-            ],
-            'expenses' => ['total' => 0],
-            'net_profit' => 0,
+            'gross_profit' => ['value' => 0, 'ratio' => 0],
+            'expenses'     => ['total' => 0],
+            'net_profit'   => 0,
         ];
     }
 
@@ -219,14 +224,15 @@ class MultiBranchFinancialReportService
      */
     private function accumulateTotals(array &$totals, array $report): void
     {
-        $totals['revenue']['total'] += $report['revenue']['total'] ?? 0;
-        $totals['cost_of_goods_sold']['transfers'] += $report['cost_of_goods_sold']['transfers'] ?? 0;
-        $totals['cost_of_goods_sold']['direct_purchase'] += $report['cost_of_goods_sold']['direct_purchase'] ?? 0;
-        $totals['cost_of_goods_sold']['closing_stock'] += $report['cost_of_goods_sold']['closing_stock'] ?? 0;
-        $totals['cost_of_goods_sold']['total'] += $report['cost_of_goods_sold']['total'] ?? 0;
-        $totals['gross_profit']['value'] += $report['gross_profit']['value'] ?? 0;
-        $totals['expenses']['total'] += $report['expenses']['total'] ?? 0;
-        $totals['net_profit'] += $report['net_profit'] ?? 0;
+        $totals['revenue']['total']                          += $report['revenue']['total'] ?? 0;
+        $totals['cost_of_goods_sold']['opening_stock']       += $report['cost_of_goods_sold']['opening_stock'] ?? 0;
+        $totals['cost_of_goods_sold']['transfers']           += $report['cost_of_goods_sold']['transfers'] ?? 0;
+        $totals['cost_of_goods_sold']['direct_purchase']     += $report['cost_of_goods_sold']['direct_purchase'] ?? 0;
+        $totals['cost_of_goods_sold']['closing_stock']       += $report['cost_of_goods_sold']['closing_stock'] ?? 0;
+        $totals['cost_of_goods_sold']['total']               += $report['cost_of_goods_sold']['total'] ?? 0;
+        $totals['gross_profit']['value']                     += $report['gross_profit']['value'] ?? 0;
+        $totals['expenses']['total']                         += $report['expenses']['total'] ?? 0;
+        $totals['net_profit']                                += $report['net_profit'] ?? 0;
     }
 
     /**
@@ -236,30 +242,32 @@ class MultiBranchFinancialReportService
     {
         return [
             'revenue' => [
-                'total' => $totals['revenue']['total'],
+                'total'           => $totals['revenue']['total'],
                 'total_formatted' => formatMoneyWithCurrency($totals['revenue']['total']),
             ],
             'cost_of_goods_sold' => [
-                'transfers' => $totals['cost_of_goods_sold']['transfers'],
-                'transfers_formatted' => formatMoneyWithCurrency($totals['cost_of_goods_sold']['transfers']),
-                'direct_purchase' => $totals['cost_of_goods_sold']['direct_purchase'],
+                'opening_stock'           => $totals['cost_of_goods_sold']['opening_stock'],
+                'opening_stock_formatted' => formatMoneyWithCurrency($totals['cost_of_goods_sold']['opening_stock']),
+                'transfers'               => $totals['cost_of_goods_sold']['transfers'],
+                'transfers_formatted'     => formatMoneyWithCurrency($totals['cost_of_goods_sold']['transfers']),
+                'direct_purchase'         => $totals['cost_of_goods_sold']['direct_purchase'],
                 'direct_purchase_formatted' => formatMoneyWithCurrency($totals['cost_of_goods_sold']['direct_purchase']),
-                'closing_stock' => $totals['cost_of_goods_sold']['closing_stock'],
+                'closing_stock'           => $totals['cost_of_goods_sold']['closing_stock'],
                 'closing_stock_formatted' => formatMoneyWithCurrency($totals['cost_of_goods_sold']['closing_stock']),
-                'total' => $totals['cost_of_goods_sold']['total'],
-                'total_formatted' => formatMoneyWithCurrency($totals['cost_of_goods_sold']['total']),
+                'total'                   => $totals['cost_of_goods_sold']['total'],
+                'total_formatted'         => formatMoneyWithCurrency($totals['cost_of_goods_sold']['total']),
             ],
             'gross_profit' => [
-                'value' => $totals['gross_profit']['value'],
+                'value'           => $totals['gross_profit']['value'],
                 'value_formatted' => formatMoneyWithCurrency($totals['gross_profit']['value']),
-                'ratio' => $totals['gross_profit']['ratio'],
+                'ratio'           => $totals['gross_profit']['ratio'],
                 'ratio_formatted' => number_format($totals['gross_profit']['ratio'], 2) . '%',
             ],
             'expenses' => [
-                'total' => $totals['expenses']['total'],
+                'total'           => $totals['expenses']['total'],
                 'total_formatted' => formatMoneyWithCurrency($totals['expenses']['total']),
             ],
-            'net_profit' => $totals['net_profit'],
+            'net_profit'           => $totals['net_profit'],
             'net_profit_formatted' => formatMoneyWithCurrency($totals['net_profit']),
         ];
     }
