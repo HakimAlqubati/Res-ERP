@@ -16,7 +16,7 @@ class ServiceRequestLog extends Model
         'log_type',
     ];
 
-    protected $appends = ['created_by_name'];
+    // protected $appends = ['created_by_name'];
     const LOG_TYPE_CREATED = 'created';
     const LOG_TYPE_UPDATED = 'updated';
     const LOG_TYPE_REASSIGN_TO_USER = 'reassign_to_user';

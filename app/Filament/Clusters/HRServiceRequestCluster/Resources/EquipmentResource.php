@@ -30,7 +30,7 @@ class EquipmentResource extends Resource
 
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 4;
 
     /**
      * Configure the form schema

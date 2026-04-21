@@ -90,6 +90,7 @@ class EmployeeController extends Controller
             'phone_number',
             'email',
         )
+        ->with('branch:id,name')
             ->when(request('branch_id'), function ($query, $branchId) {
                 $query->where('branch_id', $branchId);
             })
@@ -116,7 +117,7 @@ class EmployeeController extends Controller
             })
             ->where('active', 1)
             ->forBranchManager()
-
+            ->forEmployee('id')
             // ->whereNotNull('avatar')
             // ->active() // scopeActive من الموديل
             ->paginate($perPage)

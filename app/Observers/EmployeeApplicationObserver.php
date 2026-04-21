@@ -102,7 +102,7 @@ class EmployeeApplicationObserver
             // Send WhatsApp notification for Advance Requests
             if ($app->application_type_id === EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST) {
                 $advanceRequest = $app->advanceRequest;
-                $amount = $advanceRequest ? ($advanceRequest->advance_amount . ' ' . ($advanceRequest->currency ?? 'USD')) : 'Unknown Amount';
+                $amount = $advanceRequest ? ($advanceRequest->advance_amount) : 'Unknown Amount';
 
                 sendWhatsAppMessage($managerUser, $amount, [
                     'template' => 'workbench_advance_notifier',
@@ -168,6 +168,15 @@ class EmployeeApplicationObserver
      */
     public function updated(EmployeeApplicationV2 $app): void
     {
+        // 1. Notify Financial Managers via WhatsApp on "Manager Approved" status
+        if (
+            $app->isDirty('status')
+            && $app->status === EmployeeApplicationV2::STATUS_APPROVED
+            && $app->application_type_id === EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST
+        ) {
+            $this->notifyFinancialManagersOfAdvanceApproved($app);
+        }
+
         if (! $this->isAdvanceApproval($app)) {
             return;
         }
@@ -258,10 +267,53 @@ class EmployeeApplicationObserver
             default:
                 $targetDate = $app->application_date;
                 break;
-        }   
+        }
         if ($targetDate) {
             $parsedDate = \Carbon\Carbon::parse($targetDate);
             $this->payrollLockGuard->checkLock($app->employee_id, $parsedDate->year, $parsedDate->month, 'application_date');
+        }
+    }
+
+    /**
+     * Notify all Financial Managers that an Advance Request has been approved by the manager.
+     *
+     * @param EmployeeApplicationV2 $app
+     * @return void
+     */
+    private function notifyFinancialManagersOfAdvanceApproved(EmployeeApplicationV2 $app): void
+    {
+        try {
+            $employeeName = $app->employee?->name ?? 'Unknown Employee';
+            $managerName = auth()->user()?->name ?? 'Manager';
+
+            $advanceRequest = $app->advanceRequest;
+            $amount = $advanceRequest ? ($advanceRequest->advance_amount) : 'Unknown Amount';
+
+            $whatsappService = app(\App\Services\WhatsApp\Contracts\WhatsAppServiceInterface::class);
+
+            // Fetch Financial Managers (role ID 16 based on User::isFinanceManager)
+            $financeManagers = \App\Models\User::whereHas('roles', function ($query) {
+                $query->where('roles.id', 16);
+            })->whereNotNull('phone_number')->get();
+            Log::info('financial managers', $financeManagers->toArray());
+            foreach ($financeManagers as $manager) {
+                if (!empty($manager->phone_number)) {
+                    $whatsappService->sendTemplate(
+                        to: $manager->phone_number,
+                        templateName: 'workbench_advance_notifier',
+                        parameters: [
+                            $managerName,
+                            $employeeName,
+                            $amount
+                        ]
+                    );
+                }
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[EmployeeApplicationObserver] Failed to send WhatsApp to Financial Managers.', [
+                'application_id' => $app->id,
+                'error'          => $e->getMessage(),
+            ]);
         }
     }
 }

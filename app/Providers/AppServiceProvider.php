@@ -59,6 +59,11 @@ class AppServiceProvider extends ServiceProvider
             \App\Services\HR\Rewards\Contracts\EmployeeRewardServiceInterface::class,
             \App\Services\HR\Rewards\EmployeeRewardService::class
         );
+
+        $this->app->bind(
+            \App\Services\WhatsApp\Contracts\WhatsAppServiceInterface::class,
+            \App\Services\WhatsApp\WhatsAppService::class
+        );
     }
 
     /**

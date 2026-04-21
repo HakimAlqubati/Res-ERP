@@ -424,6 +424,26 @@ class Attendance extends Model implements Auditable
             ->where('check_type', self::CHECKTYPE_CHECKIN);
     }
 
+    public function resolveSupposedStatus(): string
+    {
+        if ($this->check_type === self::CHECKTYPE_CHECKIN) {
+            $resource = new \App\Http\Resources\CheckInAttendanceResource($this);
+            return (function () {
+                return $this->resolveSupposedStatus();
+            })->call($resource);
+        }
+
+        if ($this->check_type === self::CHECKTYPE_CHECKOUT) {
+            $resource = new \App\Http\Resources\CheckOutAttendanceResource($this);
+            return (function () {
+                return $this->resolveSupposedStatus();
+            })->call($resource);
+        }
+
+        return $this->status ?? '';
+    }
+
+
     public function getSourceLabelAttribute()
     {
         if (!$this->source_type) {
