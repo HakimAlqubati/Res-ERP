@@ -226,15 +226,9 @@ class ServiceRequestActions
                 return false;
             })
             ->schema([
-                // Schema can be added here if needed
+                \App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\Forms\ServiceRequestForm::getMediaField()
             ])
             ->action(function (array $data, $record): void {
-                // إضافة الصور إلى media collection
-                if (isset($data['images']) && is_array($data['images'])) {
-                    foreach ($data['images'] as $file) {
-                        $record->addMedia($file)->toMediaCollection('images');
-                    }
-                }
                 $record->logToEquipment(
                     EquipmentLog::ACTION_UPDATED,
                     'New Images added to service request #' . $record->id
