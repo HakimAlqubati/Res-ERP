@@ -121,25 +121,7 @@ class AttendanceImagesReportService
                 }
             }
 
-            $attendanceStatus = $attendance->status;
-
-            if ($attendance->check_type == Attendance::CHECKTYPE_CHECKOUT) {
-                if ($attendanceStatus === Attendance::STATUS_EARLY_DEPARTURE) {
-                    $earlyMinutes = (int) ($attendance->early_departure_minutes ?? 0);
-                    $graceMinutes = (int) settingWithDefault('early_depature_deduction_minutes', 0);
-
-                    if ($earlyMinutes <= $graceMinutes) {
-                        $attendanceStatus = Attendance::STATUS_ON_TIME;
-                    }
-                } elseif ($attendanceStatus === Attendance::STATUS_LATE_DEPARTURE) {
-                    $lateMinutes = (int) ($attendance->late_departure_minutes ?? 0);
-                    $graceMinutes = (int) settingWithDefault('early_depature_deduction_minutes', 0);
-
-                    if ($lateMinutes <= $graceMinutes) {
-                        $attendanceStatus = Attendance::STATUS_ON_TIME;
-                    }
-                }
-            }
+            $attendanceStatus = $attendance->resolveSupposedStatus();
 
             $isImageUpload = $source && str_contains($attendance->source_type, 'AttendanceImagesUploaded');
             $defaultImage = 'https://ui-avatars.com/api/?name=Missed+Checked&color=FFFFFF&background=0d7c66&length=14&font-size=0.15';
