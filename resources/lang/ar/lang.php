@@ -358,6 +358,7 @@ return [
   'exempt_from_late_attendance_deduction' => 'معفى من خصم التأخير',
   'is_mtd_applicable' => 'خاضع لـMTD',
   'has_auto_weekly_leave' => 'إجازة أسبوعية تلقائية',
+  'can_add_branch_order' => 'يمكنه إضافة طلب فرع',
 
   // ===========================================
   // HRMS - Attendance & Shifts

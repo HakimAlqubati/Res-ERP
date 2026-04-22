@@ -277,6 +277,9 @@ class EmployeeForm
                                             ->extraInputAttributes(['onkeypress' => 'return event.charCode >= 48 && event.charCode <= 57'])
                                         // ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee')
                                         ,
+                                        Toggle::make('can_add_branch_order')->columnSpan(1)
+                                            ->disabled(fn(): bool => isBranchManager())
+                                            ->label(__('lang.can_add_branch_order'))->default(0)->inline(false),
 
                                     ]),
                                 ]),

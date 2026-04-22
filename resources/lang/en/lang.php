@@ -376,6 +376,7 @@ return [
     'exempt_from_late_attendance_deduction' => 'Exempt from Late Attendance Deduction',
     'is_mtd_applicable' => 'MTD Applicable',
     'has_auto_weekly_leave' => 'Auto Weekly Leave',
+    'can_add_branch_order' => 'Can add branch order',
 
     // ===========================================
     // HRMS - Attendance & Shifts
