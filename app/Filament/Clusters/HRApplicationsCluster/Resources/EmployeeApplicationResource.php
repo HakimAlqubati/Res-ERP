@@ -436,7 +436,7 @@ class EmployeeApplicationResource extends Resource
                     $advanceRequest->transaction_number  = $data['transaction_number'] ?? null;
 
                     // ✅ تحديث بيانات الأقساط بالقيم التي عدّلها المدير المالي
-                    // advance_amount: غير قابل للتعديل — يُستخدم دائماً المبلغ الأصلي
+                    $advanceRequest->advance_amount                = $data['advance_amount'] ?? $advanceRequest->advance_amount;
                     $advanceRequest->monthly_deduction_amount      = $data['monthly_deduction_amount'] ?? $advanceRequest->monthly_deduction_amount;
                     $advanceRequest->number_of_months_of_deduction = $data['number_of_months_of_deduction'] ?? $advanceRequest->number_of_months_of_deduction;
                     $advanceRequest->deduction_starts_from         = $data['deduction_starts_from'] ?? $advanceRequest->deduction_starts_from;
@@ -501,7 +501,14 @@ class EmployeeApplicationResource extends Resource
                             ->numeric()
                             ->suffix($currency)
                             ->prefixIcon('heroicon-o-banknotes')
-                            ->disabled()
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                if ($state > 0) {
+                                    $set('monthly_deduction_amount', $state);
+                                    $set('number_of_months_of_deduction', 1);
+                                    static::_recalcDeductionEnd($get, $set, 1);
+                                }
+                            })
                             ->dehydrated(),
 
                         TextInput::make('monthly_deduction_amount')
