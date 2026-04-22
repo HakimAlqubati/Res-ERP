@@ -59,7 +59,7 @@ class SalarySlipReport
 
             // Try to find matching employer contribution
             $matchingEc = null;
-            
+
             // Generate a base slug for matching, removing "(employer)" strings
             $dBaseName = trim(str_ireplace(['(employer)', 'employer'], '', $dDesc));
             $dSlug = Str::slug($dBaseName);
@@ -82,7 +82,7 @@ class SalarySlipReport
                     $matchingEc = $ec;
                     break;
                 }
-                
+
                 // 3. Match if one slug contains the other
                 if (!empty($dSlug) && !empty($ecSlug) && (Str::contains($ecSlug, $dSlug) || Str::contains($dSlug, $ecSlug))) {
                     $matchingEc = $ec;
@@ -164,7 +164,12 @@ class SalarySlipReport
     {
         $data = $this->getData($payrollId);
         $payroll = $data['payroll'];
-
+        if (isStuff() &&  $payroll->status !== Payroll::STATUS_APPROVED) {
+            return response()->json([
+                'success' => false,
+                'message' => __('lang.cannot_view_unapproved_salary_slip')
+            ]);
+        }
         $pdf = LaravelMpdf::loadView('reports.hr.payroll.salary-slip-pdf', $data);
 
         $filename = sprintf(
@@ -189,6 +194,12 @@ class SalarySlipReport
     public function json($payrollId)
     {
         $data = $this->getData($payrollId);
+        if (isStuff() &&  $data['payroll']->status !== Payroll::STATUS_APPROVED) {
+            return response()->json([
+                'success' => false,
+                'message' => __('lang.cannot_view_unapproved_salary_slip')
+            ]);
+        }
         return response()->json([
             'success' => true,
             'data' => $data,

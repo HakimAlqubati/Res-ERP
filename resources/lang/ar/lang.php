@@ -923,6 +923,7 @@ return [
   'approved_and_installments_created' => 'تمت الموافقة وإنشاء الأقساط',
   'installments_already_exist' => 'الأقساط موجودة مسبقاً',
   'missing_advance_data' => 'بيانات السلفة مفقودة',
+  'cannot_view_unapproved_salary_slip' => 'لا يمكنك عرض مسير الراتب هذا لأنه لم يتم اعتماده بعد.',
 
   // ===========================================
   // Quick Links Widget / Dashboard
