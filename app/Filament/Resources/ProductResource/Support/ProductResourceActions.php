@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 final class ProductResourceActions
 {
-     /**
+    /**
      * Recalculate unit prices based on the updated basic price.
      *
      * @param float $basicPrice
@@ -164,29 +164,28 @@ final class ProductResourceActions
     ): bool {
         if (! $record) {
             return false;
-        }
-
+        } 
         $productId = $record->id ?? null;
         if (! $productId) {
             return false;
         }
 
         return OrderDetails::where('product_id', $productId)
-            ->where('unit_id', $unitPrice->unit_id)->exists()
+            ->where('unit_id', $unitPrice?->unit_id)->exists()
             || PurchaseInvoiceDetail::where('product_id', $productId)
-            ->where('unit_id', $unitPrice->unit_id)
+            ->where('unit_id', $unitPrice?->unit_id)
             ->exists()
             || InventoryTransaction::where('product_id', $productId)
-            ->where('unit_id', $unitPrice->unit_id)
+            ->where('unit_id', $unitPrice?->unit_id)
             ->exists()
             || StockIssueOrderDetail::where('product_id', $productId)
-            ->where('unit_id', $unitPrice->unit_id)
+            ->where('unit_id', $unitPrice?->unit_id)
             ->exists()
             || GoodsReceivedNoteDetail::where('product_id', $productId)
-            ->where('unit_id', $unitPrice->unit_id)
+            ->where('unit_id', $unitPrice?->unit_id)
             ->exists()
             || ProductItem::where('product_id', $productId)
-            ->where('unit_id', $unitPrice->unit_id)
+            ->where('unit_id', $unitPrice?->unit_id)
             ->exists();
     }
 
