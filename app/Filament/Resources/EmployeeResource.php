@@ -125,6 +125,7 @@ class EmployeeResource extends Resource
         return parent::getEloquentQuery()
             // ->where('role_id',8)
             ->forBranchManager()
+            ->with(['branch:id,name'])
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

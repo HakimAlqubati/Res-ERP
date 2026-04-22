@@ -115,6 +115,13 @@ class UserResource extends Resource
     {
         return true;
     }
+    public static function canDeleteAny(): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
 
     public static function getGlobalSearchResultsLimit(): int
     {
