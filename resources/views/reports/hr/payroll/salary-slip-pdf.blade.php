@@ -165,14 +165,8 @@
 
             <table style="width: 100%; margin-top: 10px; margin-bottom: 20px;">
                 <tr>
-                    <td style="width: 30%;"></td>
-                    <td style="width: 40%; text-align: center; vertical-align: middle;">
-                        <h2 class="title" style="margin: 0 0 5px 0;">SALARY SLIP</h2>
-                        <p class="month" style="margin: 0;">
-                            {{ \Carbon\Carbon::create($payroll->year, $payroll->month, 1)->translatedFormat('F Y') }}
-                        </p>
-                    </td>
-                    <td style="width: 30%; text-align: right; vertical-align: middle;">
+                    <td style="width: 30%;">
+
                         <table align="right" style="border: 2px solid #0d7c66;">
                             <tr>
                                 <td style="padding: 10px 15px; font-weight: 900; font-size: 16px; background-color: #fafafa;">
@@ -180,6 +174,16 @@
                                 </td>
                             </tr>
                         </table>
+
+                    </td>
+                    <td style="width: 40%; text-align: center; vertical-align: middle;">
+                        <h2 class="title" style="margin: 0 0 5px 0;">SALARY SLIP</h2>
+                        <p class="month" style="margin: 0;">
+                            {{ \Carbon\Carbon::create($payroll->year, $payroll->month, 1)->translatedFormat('F Y') }}
+                        </p>
+                    </td>
+                    <td style="width: 30%; text-align: right; vertical-align: middle;">
+
                     </td>
                 </tr>
             </table>
@@ -242,10 +246,12 @@
                 </thead>
                 <tbody>
                     @foreach (($deductionRows ?? collect()) as $row)
+                    @if(!($row->isEmployer ?? false))
                     <tr @if($row->bgColor) style="background-color: {{ $row->bgColor }};" @endif>
                         <td style="padding: 8px 5px; color: #333; border-bottom: 1px solid #f9f9f9;">{{ $row->description }}</td>
                         <td style="padding: 8px 5px; text-align: right; color: #333; border-bottom: 1px solid #f9f9f9;">{{ formatMoneyWithCurrency($row->amount) }}</td>
                     </tr>
+                    @endif
                     @endforeach
                 </tbody>
                 <tfoot>
@@ -255,6 +261,38 @@
                     </tr>
                 </tfoot>
             </table>
+
+            <!-- Employer Contributions Table -->
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 13px;">
+                <thead>
+                    <tr>
+                        <th style="border-bottom: 2px solid #aebac1; text-align: left; padding: 8px 5px; color: #0d7c66; font-weight: bold; width: 70%;">Company Contributions</th>
+                        <th style="border-bottom: 2px solid #aebac1; text-align: right; padding: 8px 5px; color: #333; font-weight: bold; width: 30%;">Current</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (($employerContrib ?? collect()) as $ec)
+                    @php
+                    $ecDesc = $ec->description ?: ucfirst(str_replace('_', ' ', $ec->sub_type ?? ($ec->type ?? '')));
+                    @endphp
+                    <tr>
+                        <td style="padding: 8px 5px; color: #333; border-bottom: 1px solid #f9f9f9;">{{ $ecDesc }}</td>
+                        <td style="padding: 8px 5px; text-align: right; color: #333; border-bottom: 1px solid #f9f9f9;">{{ formatMoneyWithCurrency($ec->amount) }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td style="padding: 12px 5px 8px 5px; font-weight: 800; color: #222;">Total Contributions</td>
+                        <td style="padding: 12px 5px 8px 5px; text-align: right; font-weight: 800; color: #0d7c66;">{{ formatMoneyWithCurrency($totalEmployer) }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div style="margin-top: 80px; text-align: center; font-size: 14px; color: #444;">
+                <p style="margin-bottom: 50px;">This payslip is computer generated. No signature is required.</p>
+                <p>Printed on: <strong>{{ now()->format('d/m/Y') }}</strong></p>
+            </div>
         </div>
     </div>
 </body>
