@@ -3,6 +3,7 @@
 namespace App\Modules\HR\Attendance\Services;
 
 use App\Models\Attendance;
+use App\Modules\HR\Attendance\Actions\CreateMissedCheckoutRequestAction;
 use App\Modules\HR\Attendance\Actions\DetermineCheckTypeAction;
 use App\Modules\HR\Attendance\Contracts\AttendanceRepositoryInterface;
 use App\Modules\HR\Attendance\Contracts\ShiftResolverInterface;
@@ -32,6 +33,7 @@ class AttendanceHandler
         private DetermineCheckTypeAction $determineCheckType,
         private AttendanceCalculator $calculator,
         private AttendanceRepositoryInterface $repository,
+        private CreateMissedCheckoutRequestAction $createMissedCheckoutRequest,
     ) {}
 
     /**
@@ -58,10 +60,6 @@ class AttendanceHandler
         if (!$shiftInfo) {
             throw new NoShiftFoundException();
         }
-
-        if (!$shiftInfo) {
-            throw new NoShiftFoundException();
-        }
         $context->setShiftInfo($shiftInfo);
 
         // 2. تحديد نوع العملية (دخول/خروج)
@@ -81,12 +79,12 @@ class AttendanceHandler
             $context = $this->determineCheckType->execute($context);
         }
 
-        // التحقق من وجود سجل دخول عند الخروج
+        // Check-out with no open check-in: auto-create a missed checkout request for HR review.
         if ($context->isCheckOut() && !$context->lastCheckIn) {
-            $this->createAutoMissedCheckoutRequest($context);
+            $this->createMissedCheckoutRequest->execute($context);
 
             return AttendanceResultDTO::autoRequestCreated(
-                __('lang.auto_missed_checkout_request_created_success', ['default' => 'تم إنشاء طلب نسيان دخول تلقائياً لعدم وجود بصمة، يرجى مراجعته من الموارد البشرية.'])
+                __('lang.auto_missed_checkout_request_created_success', ['default' => 'Auto-generated missed check-out request created. HR will review it shortly.'])
             );
         }
 
@@ -105,33 +103,6 @@ class AttendanceHandler
         );
     }
 
-    /**
-     * إنشاء طلب نسيان خروج تلقائي
-     */
-    private function createAutoMissedCheckoutRequest(AttendanceContextDTO $context): void
-    {
-        $application = \App\Models\EmployeeApplicationV2::create([
-            'employee_id' => $context->employee->id,
-            'branch_id' => $context->employee->branch_id,
-            'application_date' => $context->requestTime->toDateString(),
-            'status' => \App\Models\EmployeeApplicationV2::STATUS_PENDING,
-            'application_type_id' => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
-            'application_type_name' => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_NAMES[\App\Models\EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST],
-            'created_by' => auth()->id() ?? $context->employee->user_id ?? 0,
-            'is_auto_generated' => true,
-        ]);
-
-        \App\Models\MissedCheckOutRequest::create([
-            'application_id' => $application->id,
-            'application_type_id' => $application->application_type_id,
-            'application_type_name' => $application->application_type_name,
-            'employee_id' => $context->employee->id,
-            'date' => $context->shiftDate ?? $context->requestTime->toDateString(),
-            'time' => $context->requestTime->format('H:i'),
-            'reason' => __('lang.auto_generated_reason_missing_checkin', ['default' => 'تم الإنشاء تلقائياً بسبب تسجيل انصراف بدون بصمة دخول']),
-            'is_auto_generated' => true,
-        ]);
-    }
 
     /**
      * حساب التأخير أو المغادرة المبكرة

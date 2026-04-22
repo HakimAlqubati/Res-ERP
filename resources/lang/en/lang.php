@@ -1145,6 +1145,6 @@ return [
     'attendance_type' => 'Attendance Type',
     'cannot_process_financial_clearance' => 'Cannot process financial clearance. The employee has outstanding advance installments amounting to: :amount',
     'approved_successfully' => 'Approved Successfully',
-    'auto_missed_checkout_request_created_success' => 'A missed check-out request was automatically created because no check-in was found. Please review it with HR.',
+    'auto_missed_checkout_request_created_success' => 'Missed check-out request submitted to HR.',
     'auto_generated_reason_missing_checkin' => 'Automatically generated due to check-out attempt without a prior check-in',
 ];
