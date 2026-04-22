@@ -26,6 +26,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Wizard;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
@@ -62,12 +63,12 @@ class SettingResource extends Resource
                 Tabs::make('settings')->columnSpanFull()
                     ->tabs([
                         Tab::make('Company Info')
-                        // ->hidden(function () {
-                        //     if (isFinanceManager()) {
-                        //         return true;
-                        //     }
-                        //     return false;
-                        // })
+                            // ->hidden(function () {
+                            //     if (isFinanceManager()) {
+                            //         return true;
+                            //     }
+                            //     return false;
+                            // })
                             ->icon('heroicon-o-building-office')
                             ->schema([
                                 Fieldset::make()->columns(3)->label('Company Info')->schema([
@@ -463,110 +464,121 @@ class SettingResource extends Resource
                             ->hidden(fn(): bool => isFinanceManager() || isHR())
                             ->icon('heroicon-o-shopping-cart')
                             ->schema([
-                                Fieldset::make('')->columnSpanFull()->label('Purchase Settings')->columns(3)->schema([
-                                    Toggle::make('purchase_invoice_no_required_and_disabled_on_edit')
-                                        ->inline(false)
-                                        ->label('Up: Purchase Invoice Number')
-                                        ->offIcon('heroicon-s-user')
-                                        ->onColor('success')
-                                        ->offColor('danger')
-                                        ->helperText('Purchase Invoice Number is mandatory and becomes non-editable once entered.')
-                                        ->default(false),
-                                ]),
-                                Fieldset::make('GRN Workflow Settings')->columnSpanFull()->columns(2)->schema([
-                                    Toggle::make('purchase_invoice_from_grn_only')
-                                        ->inline(false)->columnSpanFull()
-                                        ->label('Enable GRN')
-                                        // ->helperText('If enabled, purchase invoices can be created through GRN.')
-                                        ->default(false),
-                                    Select::make('grn_entry_role_id')->multiple()
-                                        ->label('Role Allowed to Create GRN')
-                                        ->options(Role::pluck('name', 'id')->toArray())
-                                        ->searchable()
-                                        ->required(),
-                                    Select::make('grn_approver_role_id')->multiple()
-                                        ->label('Role Allowed to Approve GRN')
-                                        ->options(Role::pluck('name', 'id')->toArray())
-                                        ->searchable()
-                                        ->required(),
-                                    // Toggle::make('grn_affects_inventory')->inline(false)
-                                    //     ->label('Affect Inventory Upon GRN Creation')
-                                    //     ->default(false)
-                                    //     ->helperText('If enabled, GRN will directly impact stock levels.'),
-                                    // Toggle::make('purchase_invoice_affects_inventory')
-                                    //     ->label('Affect Inventory Upon Purchase Invoice Creation')
-                                    //     ->default(true)
-                                    //     ->inline(false)
-                                    //     ->helperText('If disabled, purchase invoice details will not be added to inventory.'),
-                                    // Toggle::make('affect_inventory_from_grn_only')
-                                    //     ->label('Update Inventory from GRN Only')
-                                    //     ->helperText('If enabled, inventory will be updated from GRN only. If disabled, it will be updated from Purchase Invoice.')
-                                    //     ->default(true)
-                                    //     ->inline(false),
-                                ]),
-
-                                Fieldset::make('')->columnSpanFull()->label('Orders Settings')->columns(3)->schema([
-                                    // Select::make('calculating_orders_price_method')
-                                    //     ->label(__('system_settings.calculating_orders_price_method'))
-                                    //     ->options([
-                                    //         'from_unit_prices' => __('system_settings.from_unit_prices'),
-                                    //         'fifo' => __('system_settings.fifo'),
-                                    //     ])
-                                    //     ->default('from_unit_prices') // Default to 1 second
-                                    //     ->helperText('Choose method calculating orders.')
-                                    //     ->native(false)
-                                    //     ->required(),
-                                    TextInput::make('currency_symbol')->label(__('system_settings.currency_symbol')),
-                                    TextInput::make('limit_days_orders')->numeric()->label(__('system_settings.limit_days_orders')),
-                                    Grid::make()->columns(2)->schema([
-                                        // Toggle::make('completed_order_if_not_qty')->inline(false)
-                                        //     ->label(__('system_settings.completed_order_if_not_qty'))
-                                        //     // ->onIcon('heroicon-s-lightning-bolt')
-                                        //     ->offIcon('heroicon-s-user')
-                                        //     ->onColor('success')
-                                        //     ->offColor('danger')
-                                        //     ->helperText(__('system_settings.note_if_order_completed_if_not_qty')),
-                                        Toggle::make('enable_user_orders_to_store')->inline(false)
-                                            ->label(__('system_settings.enable_user_orders_to_store'))
-                                            // ->onIcon('heroicon-s-lightning-bolt')
-                                            ->offIcon('heroicon-s-user')
-                                            ->onColor('success')
-                                            ->offColor('danger')
-                                            ->helperText(__('system_settings.enable_user_orders_to_store')),
-                                        Toggle::make('create_auto_order_when_stock_empty')
-                                            ->inline(false)
-                                            ->label('Auto-create order if stock is unavailable')
-                                            ->helperText('Automatically create a new order  if inventory is empty and update original quantity to zero.')
-                                            ->default(false),
+                                Tabs::make('stock')->columnSpanFull()->schema([
+                                    Tab::make('Purchase Settings')->schema([
+                                        Grid::make()->columnSpanFull()->columns(3)->schema([
+                                            Toggle::make('purchase_invoice_no_required_and_disabled_on_edit')
+                                                ->inline(false)
+                                                ->label('Up: Purchase Invoice Number')
+                                                ->offIcon('heroicon-s-user')
+                                                ->onColor('success')
+                                                ->offColor('danger')
+                                                ->helperText('Purchase Invoice Number is mandatory and becomes non-editable once entered.')
+                                                ->default(false),
+                                        ]),
                                     ]),
+                                    Tab::make('GRN Workflow Settings')->columnSpanFull()->schema([
+                                        Grid::make()->columnSpanFull()->columns(2)->schema([
+                                            Toggle::make('purchase_invoice_from_grn_only')
+                                                ->inline(false)->columnSpanFull()
+                                                ->label('Enable GRN')
+                                                // ->helperText('If enabled, purchase invoices can be created through GRN.')
+                                                ->default(false),
+                                            Select::make('grn_entry_role_id')->multiple()
+                                                ->label('Role Allowed to Create GRN')
+                                                ->options(Role::pluck('name', 'id')->toArray())
+                                                ->searchable()
+                                                ->required(),
+                                            Select::make('grn_approver_role_id')->multiple()
+                                                ->label('Role Allowed to Approve GRN')
+                                                ->options(Role::pluck('name', 'id')->toArray())
+                                                ->searchable()
+                                                ->required(),
+                                            // Toggle::make('grn_affects_inventory')->inline(false)
+                                            //     ->label('Affect Inventory Upon GRN Creation')
+                                            //     ->default(false)
+                                            //     ->helperText('If enabled, GRN will directly impact stock levels.'),
+                                            // Toggle::make('purchase_invoice_affects_inventory')
+                                            //     ->label('Affect Inventory Upon Purchase Invoice Creation')
+                                            //     ->default(true)
+                                            //     ->inline(false)
+                                            //     ->helperText('If disabled, purchase invoice details will not be added to inventory.'),
+                                            // Toggle::make('affect_inventory_from_grn_only')
+                                            //     ->label('Update Inventory from GRN Only')
+                                            //     ->helperText('If enabled, inventory will be updated from GRN only. If disabled, it will be updated from Purchase Invoice.')
+                                            //     ->default(true)
+                                            //     ->inline(false),
+                                        ]),
 
-                                    Fieldset::make('Toggle Dashboard Sections')->columnSpanFull()->columns(2)->schema([
-                                        Toggle::make('show_dashboard_grns')->label('Show GRNs Section')->default(true),
-                                        Toggle::make('show_dashboard_invoices')->label('Show Invoices Section')->default(false),
-                                        Toggle::make('show_dashboard_branch_orders')->label('Show Branch Orders Section')->default(false),
-                                        Toggle::make('show_dashboard_manufacturing')->label('Show Manufacturing Section')->default(true),
                                     ]),
+                                    Tab::make('Orders Settings')->columnSpanFull()->schema([
+                                        Grid::make()->columnSpanFull()->columns(3)->schema([
+                                            // Select::make('calculating_orders_price_method')
+                                            //     ->label(__('system_settings.calculating_orders_price_method'))
+                                            //     ->options([
+                                            //         'from_unit_prices' => __('system_settings.from_unit_prices'),
+                                            //         'fifo' => __('system_settings.fifo'),
+                                            //     ])
+                                            //     ->default('from_unit_prices') // Default to 1 second
+                                            //     ->helperText('Choose method calculating orders.')
+                                            //     ->native(false)
+                                            //     ->required(),
+                                            TextInput::make('currency_symbol')->label(__('system_settings.currency_symbol')),
+                                            TextInput::make('limit_days_orders')->numeric()->label(__('system_settings.limit_days_orders')),
+                                            Grid::make()->columns(2)->schema([
+                                                // Toggle::make('completed_order_if_not_qty')->inline(false)
+                                                //     ->label(__('system_settings.completed_order_if_not_qty'))
+                                                //     // ->onIcon('heroicon-s-lightning-bolt')
+                                                //     ->offIcon('heroicon-s-user')
+                                                //     ->onColor('success')
+                                                //     ->offColor('danger')
+                                                //     ->helperText(__('system_settings.note_if_order_completed_if_not_qty')),
+                                                Toggle::make('enable_user_orders_to_store')->inline(false)
+                                                    ->label(__('system_settings.enable_user_orders_to_store'))
+                                                    // ->onIcon('heroicon-s-lightning-bolt')
+                                                    ->offIcon('heroicon-s-user')
+                                                    ->onColor('success')
+                                                    ->offColor('danger')
+                                                    ->helperText(__('system_settings.enable_user_orders_to_store')),
+                                                Toggle::make('create_auto_order_when_stock_empty')
+                                                    ->inline(false)
+                                                    ->label('Auto-create order if stock is unavailable')
+                                                    ->helperText('Automatically create a new order  if inventory is empty and update original quantity to zero.')
+                                                    ->default(false),
+                                            ]),
 
-                                    Fieldset::make('Halal Logo Settings')->columnSpanFull()->columns(2)->schema([
-                                        Toggle::make('use_global_halal_logo')
-                                            ->label('Use One Halal Logo for All Products')
-                                            ->helperText('If enabled, a single uploaded halal logo will be used for all products in the label report.')
-                                            ->inline(false)
-                                            ->live()
-                                            ->default(false),
+                                            Fieldset::make('Toggle Dashboard Sections')->columnSpanFull()->columns(2)->schema([
+                                                Toggle::make('show_dashboard_grns')->label('Show GRNs Section')->default(true),
+                                                Toggle::make('show_dashboard_invoices')->label('Show Invoices Section')->default(false),
+                                                Toggle::make('show_dashboard_branch_orders')->label('Show Branch Orders Section')->default(false),
+                                                Toggle::make('show_dashboard_manufacturing')->label('Show Manufacturing Section')->default(true),
+                                            ]),
 
-                                        FileUpload::make('global_halal_logo')
-                                            ->label('Global Halal Logo')
-                                            ->directory('halal_logos')
-                                            ->image()->disk('public')
-                                            ->visibility('public')
-                                            ->visible(fn(Get $get): bool => (bool) $get('use_global_halal_logo'))
-                                            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                                return 'global_halal_logo_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
-                                            }),
-                                    ]),
+                                            Fieldset::make('Halal Logo Settings')->columnSpanFull()->columns(2)->schema([
+                                                Toggle::make('use_global_halal_logo')
+                                                    ->label('Use One Halal Logo for All Products')
+                                                    ->helperText('If enabled, a single uploaded halal logo will be used for all products in the label report.')
+                                                    ->inline(false)
+                                                    ->live()
+                                                    ->default(false),
 
+                                                FileUpload::make('global_halal_logo')
+                                                    ->label('Global Halal Logo')
+                                                    ->directory('halal_logos')
+                                                    ->image()->disk('public')
+                                                    ->visibility('public')
+                                                    ->visible(fn(Get $get): bool => (bool) $get('use_global_halal_logo'))
+                                                    ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                                        return 'global_halal_logo_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+                                                    }),
+                                            ]),
+
+                                        ]),
+                                    ])
                                 ]),
+
+
+
                             ]),
                         Tab::make('Users Settings')
                             ->label(__('lang.users_settings'))
