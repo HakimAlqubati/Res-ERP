@@ -16,8 +16,11 @@ class EditUser extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            DeleteAction::make(),
-            RestoreAction::make(),
+            DeleteAction::make()
+                ->visible(fn() => UserResource::canDeleteAny()),
+            RestoreAction::make()
+                // ->visible(fn() => isSuperAdmin())
+                ,
         ];
     }
 

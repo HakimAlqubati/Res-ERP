@@ -938,6 +938,7 @@ return [
     'departure_fingerprint_request' => 'Departure Fingerprint Request',
     'missed_checkin_request' => 'Missed Check-in Request',
     'missed_checkout_request' => 'Missed Check-out Request',
+    'cannot_view_unapproved_salary_slip' => 'You cannot view this salary slip because it has not been approved yet.',
     'no_checkin_cannot_approve' => 'There is no check-in, so you cannot approve this request.',
     'approved_and_installments_created' => 'Approved and installments created.',
     'installments_already_exist' => 'Installments already exist.',

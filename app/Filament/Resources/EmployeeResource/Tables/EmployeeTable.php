@@ -92,10 +92,11 @@ class EmployeeTable
                 TextColumn::make('id')
                     ->sortable()
                     ->label(__('lang.id'))->alignCenter()->toggleable(isToggledHiddenByDefault: true),
-                // TextColumn::make('avatar_image')->copyable()->label('avatar_image')->alignCenter()->toggleable(isToggledHiddenByDefault: true),
-                ImageColumn::make('avatar_image')->label('')
-                    ->circular(),
-                TextColumn::make('avatar')->copyable()->label('avatar name')->toggleable(isToggledHiddenByDefault: true)->hidden(),
+                ImageColumn::make('avatar')->label('Avatar')
+                    ->circular()
+                    ->disk('s3')
+                    ->toggleable()
+                    ->defaultImageUrl(asset('imgs/avatar.png')),
                 TextColumn::make('employee_no')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label(__('lang.employee_no'))->alignCenter()
