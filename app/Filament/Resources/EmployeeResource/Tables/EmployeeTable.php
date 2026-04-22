@@ -92,9 +92,10 @@ class EmployeeTable
                 TextColumn::make('id')
                     ->sortable()
                     ->label(__('lang.id'))->alignCenter()->toggleable(isToggledHiddenByDefault: true),
-                ImageColumn::make('avatar')->label('')
+                ImageColumn::make('avatar')->label('Avatar')
                     ->circular()
                     ->disk('s3')
+                    ->toggleable()
                     ->defaultImageUrl(asset('imgs/avatar.png')),
                 TextColumn::make('employee_no')
                     ->toggleable(isToggledHiddenByDefault: true)
