@@ -572,8 +572,8 @@ class EmployeeForm
                 $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
                 $img = $manager->read($file->getRealPath());
                 $img->scaleDown(width: 1200);
-                $encodedImage = $img->toWebp(70);
-                $filename = 'employees/' . Str::random(15) . '.png';
+                $encodedImage = $img->toJpeg(70);
+                $filename = 'employees/' . Str::random(15) . '.jpeg';
                 \Illuminate\Support\Facades\Storage::disk('s3')->put($filename, (string) $encodedImage, 'public');
                 return $filename;
             })
