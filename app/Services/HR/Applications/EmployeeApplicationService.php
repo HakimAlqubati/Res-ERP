@@ -135,7 +135,7 @@ class EmployeeApplicationService
                     $record->mealRequest()->create([
                         'application_id' => $record->id,
                         'employee_id'    => $record->employee_id,
-                        'branch_id'      => $record->branch_id,
+                        'branch_id'      => $details['branch_id'],
                         'meal_details'   => $details['detail_meal_details'] ?? $details['meal_details'] ?? null,
                         'cost'           => $details['detail_cost'] ?? $details['cost'] ?? 0,
                         'notes'          => $data['notes'] ?? null,
