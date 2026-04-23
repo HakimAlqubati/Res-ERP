@@ -76,7 +76,7 @@ class ServiceRequestActions
                 if ($move) {
                     $record->logs()->create([
                         'created_by'  => auth()->user()->id,
-                        'description' => 'status changed from ' . $prevStatus . ' to ' . $record->status,
+                        'description' => 'Service request changed to : ' . $record->status,
                         'log_type'    => ServiceRequestLog::LOG_TYPE_STATUS_CHANGED,
                     ]);
                 }
@@ -128,9 +128,9 @@ class ServiceRequestActions
                 ]);
 
                 if ($reassign) {
-                    $description = 'Assigned to ' . $newAssigned;
+                    $description = 'Service request assigned to : ' . $newAssigned;
                     if (! is_null($prevAssigned)) {
-                        $description = 'Reassigned from ' . $prevAssigned . ' to ' . $newAssigned;
+                        $description = 'Service request reassigned to : ' . $newAssigned;
                     }
                     $record->logs()->create([
                         'created_by'  => auth()->user()->id,

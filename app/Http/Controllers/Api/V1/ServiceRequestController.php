@@ -145,10 +145,17 @@ class ServiceRequestController extends Controller
         ]);
 
         $sr = DB::transaction(function () use ($serviceRequest, $data) {
+            $prevAssigned = $serviceRequest->assigned_to;
             $serviceRequest->update(['assigned_to' => $data['assigned_to']]);
+            
+            $newAssigned = \App\Models\Employee::find($data['assigned_to'])?->name;
+            $defaultMsg = $prevAssigned 
+                ? "Service request reassigned to : {$newAssigned}" 
+                : "Service request assigned to : {$newAssigned}";
+
             $serviceRequest->logs()->create([
                 'log_type'    => ServiceRequestLog::LOG_TYPE_REASSIGN_TO_USER,
-                'description' => $data['note'] ?? "Ticket assigned to employee #{$data['assigned_to']}",
+                'description' => $data['note'] ?? $defaultMsg,
                 'created_by'  => auth()->id(),
             ]);
             $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, "Service request #{$serviceRequest->id} has been assigned for maintenance");
@@ -170,7 +177,7 @@ class ServiceRequestController extends Controller
             $serviceRequest->update(['status' => $data['status']]);
             $serviceRequest->logs()->create([
                 'log_type'    => ServiceRequestLog::LOG_TYPE_STATUS_CHANGED,
-                'description' => "Status transitioned to '{$data['status']}'" . ($data['note'] ? " (Remark: {$data['note']})" : ""),
+                'description' => "Service request changed to : {$data['status']}" . ($data['note'] ? " (Remark: {$data['note']})" : ""),
                 'created_by'  => auth()->id(),
             ]);
             $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, "Service request #{$serviceRequest->id} transitioned to '{$data['status']}' status");
