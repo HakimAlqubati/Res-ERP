@@ -287,9 +287,11 @@ class ServiceRequestController extends Controller
         $logs = $serviceRequest->logs()->with('createdBy')->latest()->paginate($per);
 
         $logs->getCollection()->transform(function ($log) {
-            $log->created_by_name = $log->createdBy?->name ?? '';
-            $log->makeHidden('createdBy');
-            return $log;
+            $arr = $log->attributesToArray();
+            $arr['created_by_name'] = $log->createdBy?->name ?? '';
+            $arr['created_at'] = $log->created_at ? $log->created_at->format('Y-m-d H:i:s') : null;
+            $arr['updated_at'] = $log->updated_at ? $log->updated_at->format('Y-m-d H:i:s') : null;
+            return $arr;
         });
 
         return response()->json(['data' => $logs]);
