@@ -23,6 +23,12 @@ class EmployeeIdentificationController extends Controller
         try {
             $match = $this->service->identify($file);
 
+            if (!$match->found) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Not Found',
+                ]);
+            }
 
             return response()->json([
                 'status' => 'success',
