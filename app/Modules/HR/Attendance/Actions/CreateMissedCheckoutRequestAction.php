@@ -5,6 +5,7 @@ namespace App\Modules\HR\Attendance\Actions;
 use App\Models\EmployeeApplicationV2;
 use App\Models\MissedCheckOutRequest;
 use App\Modules\HR\Attendance\DTOs\AttendanceContextDTO;
+use App\Modules\HR\Attendance\Exceptions\DuplicateMissedCheckoutRequestException;
 
 /**
  * Action: Create an Auto-Generated Missed Checkout Request
@@ -31,6 +32,17 @@ class CreateMissedCheckoutRequestAction
      */
     public function execute(AttendanceContextDTO $context): void
     {
+        // Guard: prevent duplicate requests for the same employee on the same date.
+        $date =  $context->requestTime->toDateString();
+
+        $alreadyExists = MissedCheckOutRequest::where('employee_id', $context->employee->id)
+            ->where('date', $date)
+            ->exists();
+
+        if ($alreadyExists) {
+            throw new DuplicateMissedCheckoutRequestException();
+        }
+
         $application = $this->createApplication($context);
         $this->createMissedCheckoutDetail($application, $context);
     }
@@ -53,9 +65,7 @@ class CreateMissedCheckoutRequestAction
             'application_date'     => $context->requestTime->toDateString(),
             'status'               => EmployeeApplicationV2::STATUS_PENDING,
             'application_type_id'  => EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
-            'application_type_name'=> EmployeeApplicationV2::APPLICATION_TYPE_NAMES[
-                EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST
-            ],
+            'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST],
             'created_by'           => auth()->id() ?? $context->employee->user_id ?? 0,
             'is_auto_generated'    => true,
         ]);
@@ -73,9 +83,9 @@ class CreateMissedCheckoutRequestAction
         MissedCheckOutRequest::create([
             'application_id'       => $application->id,
             'application_type_id'  => $application->application_type_id,
-            'application_type_name'=> $application->application_type_name,
+            'application_type_name' => $application->application_type_name,
             'employee_id'          => $context->employee->id,
-            'date'                 => $context->shiftDate ?? $context->requestTime->toDateString(),
+            'date'                 => $context->requestTime->toDateString(),
             'time'                 => $context->requestTime->format('H:i'),
             'reason'               => __('lang.auto_generated_reason_missing_checkin', [
                 'default' => 'Auto-generated: check-out recorded without a matching check-in fingerprint.',

@@ -57,5 +57,5 @@ return [
     'shift_conflict_detected' => 'يوجد تعارض بين الورديات. يرجى اختيار العملية المطلوبة.',
     'checkout_from_shift' => 'تسجيل انصراف من :shift',
     'checkin_to_shift' => 'تسجيل دخول إلى :shift',
-
+    'duplicate_missed_checkout_request' => 'تم تسجيل طلب انصراف مفقود بالفعل',
 ];

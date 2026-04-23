@@ -15,6 +15,7 @@ use App\Modules\HR\Attendance\Events\CheckOutRecorded;
 use App\Modules\HR\Attendance\Events\LateArrivalDetected;
 use App\Modules\HR\Attendance\Exceptions\NoShiftFoundException;
 use App\Modules\HR\Attendance\DTOs\ShiftInfoDTO;
+use App\Modules\HR\Attendance\Enums\AttendanceType;
 
 /**
  * معالج عمليات الحضور
@@ -80,7 +81,10 @@ class AttendanceHandler
         }
 
         // Check-out with no open check-in: auto-create a missed checkout request for HR review.
-        if ($context->isCheckOut() && !$context->lastCheckIn) {
+        if (
+            $context->isCheckOut() && !$context->lastCheckIn
+            && $context->attendanceType->value != AttendanceType::REQUEST->value
+        ) {
             $this->createMissedCheckoutRequest->execute($context);
 
             return AttendanceResultDTO::autoRequestCreated(
