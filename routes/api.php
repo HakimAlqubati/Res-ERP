@@ -278,7 +278,7 @@ Route::middleware('auth:api')->group(function () {
         return Branch::active()
             // ->branches()
             ->whereIn('type',[Branch::TYPE_BRANCH,Branch::TYPE_HQ])
-            ->forBranchManager('id')
+            // ->forBranchManager('id')
             ->get(['id', 'name', 'type'])
 
             ->makeHidden([
@@ -325,6 +325,13 @@ Route::get('/app/settings', [SettingController::class, 'show']);
 Route::get('/company-logo', [SettingController::class, 'getCompanyLogo']);
 Route::get('/tenant/modules', [SettingController::class, 'getTenantModules']);
 Route::get('/quote', [QuoteController::class, 'index']);
+
+Route::get('/allbranches', function () {
+    return response()->json([
+        'success' => true,
+        'data' => Branch::query()->get(['id', 'name']),
+    ]);
+});
 
 require base_path('routes/ocr.php');
 require base_path('routes/custom_api_route_hr.php');
