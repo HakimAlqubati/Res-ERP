@@ -31,7 +31,7 @@ class AbsentEmployeesV2Service
 
         $employeesQuery = Employee::query()
             ->forBranchManager()
-            ->forEmployee()
+            ->forEmployee('id')
             // ->where('active', 1)
         ;
 
@@ -45,7 +45,7 @@ class AbsentEmployeesV2Service
 
         $employees = $employeesQuery->get();
         $results = collect();
-
+        
         $chunkReportMap = collect();
         $employees->chunk(50)->each(function ($chunk) use (&$chunkReportMap, $dateFrom, $dateTo) {
             $chunkReports = $this->reportManager->getEmployeesRangeReport($chunk, $dateFrom, $dateTo);

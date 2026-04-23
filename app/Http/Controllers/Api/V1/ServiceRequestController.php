@@ -108,9 +108,17 @@ class ServiceRequestController extends Controller
 
             $sr = DB::transaction(function () use ($serviceRequest, $data) {
                 $serviceRequest->update($data);
+                $description = "Service request details were modified";
+                $logType = ServiceRequestLog::LOG_TYPE_UPDATED;
+
+                if ($serviceRequest->wasChanged('status')) {
+                    $description = "Service request changed to : {$serviceRequest->status}";
+                    $logType = ServiceRequestLog::LOG_TYPE_STATUS_CHANGED;
+                }
+
                 $serviceRequest->logs()->create([
-                    'log_type'    => ServiceRequestLog::LOG_TYPE_UPDATED,
-                    'description' => "Service request details were modified",
+                    'log_type'    => $logType,
+                    'description' => $description,
                     'created_by'  => auth()->id(),
                 ]);
                 $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, "Service request #{$serviceRequest->id} details were modified");
@@ -145,10 +153,17 @@ class ServiceRequestController extends Controller
         ]);
 
         $sr = DB::transaction(function () use ($serviceRequest, $data) {
+            $prevAssigned = $serviceRequest->assigned_to;
             $serviceRequest->update(['assigned_to' => $data['assigned_to']]);
+            
+            $newAssigned = \App\Models\Employee::find($data['assigned_to'])?->name;
+            $defaultMsg = $prevAssigned 
+                ? "Service request reassigned to : {$newAssigned}" 
+                : "Service request assigned to : {$newAssigned}";
+
             $serviceRequest->logs()->create([
                 'log_type'    => ServiceRequestLog::LOG_TYPE_REASSIGN_TO_USER,
-                'description' => $data['note'] ?? "Ticket assigned to employee #{$data['assigned_to']}",
+                'description' => $data['note'] ?? $defaultMsg,
                 'created_by'  => auth()->id(),
             ]);
             $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, "Service request #{$serviceRequest->id} has been assigned for maintenance");
@@ -170,7 +185,7 @@ class ServiceRequestController extends Controller
             $serviceRequest->update(['status' => $data['status']]);
             $serviceRequest->logs()->create([
                 'log_type'    => ServiceRequestLog::LOG_TYPE_STATUS_CHANGED,
-                'description' => "Status transitioned to '{$data['status']}'" . ($data['note'] ? " (Remark: {$data['note']})" : ""),
+                'description' => "Service request changed to : {$data['status']}" . ($data['note'] ? " (Remark: {$data['note']})" : ""),
                 'created_by'  => auth()->id(),
             ]);
             $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, "Service request #{$serviceRequest->id} transitioned to '{$data['status']}' status");
@@ -272,9 +287,11 @@ class ServiceRequestController extends Controller
         $logs = $serviceRequest->logs()->with('createdBy')->latest()->paginate($per);
 
         $logs->getCollection()->transform(function ($log) {
-            $log->created_by_name = $log->createdBy?->name ?? '';
-            $log->makeHidden('createdBy');
-            return $log;
+            $arr = $log->attributesToArray();
+            $arr['created_by_name'] = $log->createdBy?->name ?? '';
+            $arr['created_at'] = $log->created_at ? $log->created_at->format('Y-m-d H:i:s') : null;
+            $arr['updated_at'] = $log->updated_at ? $log->updated_at->format('Y-m-d H:i:s') : null;
+            return $arr;
         });
 
         return response()->json(['data' => $logs]);

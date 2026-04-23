@@ -59,10 +59,10 @@ Route::prefix('hr')
 
         Route::get('/attendancePlan', [AttendanceController::class, 'generate']);
         Route::get('/absentEmployees', [AttendanceController::class, 'absentEmployees']);
-        Route::get('/v2/absentEmployees', [AttendanceController::class, 'absentEmployeesV2']);
+        Route::get('/v2/absentEmployees', [AttendanceController::class, 'absentEmployeesV2'])->middleware('auth:api');
         Route::get('/presentEmployees', [AttendanceController::class, 'presentEmployees'])->middleware('auth:api');
         Route::get('/missingCheckout', [AttendanceController::class, 'missingCheckout']);
-        Route::get('/v2/missingCheckout', [AttendanceController::class, 'missingCheckoutV2']);
+        Route::get('/v2/missingCheckout', [AttendanceController::class, 'missingCheckoutV2'])->middleware('auth:api');
         Route::get('/attendanceImages', [AttendanceController::class, 'attendanceImages']);
         Route::get('/v2/attendanceImages', [AttendanceController::class, 'attendanceImagesV2']);
 
