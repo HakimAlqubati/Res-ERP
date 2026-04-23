@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\EmployeeResource\Schemas;
 
-
+use App\Filament\Forms\Components\PhoneInput;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
@@ -104,11 +104,33 @@ class EmployeeForm
                                                 ->searchable()
                                                 ->columnSpan(1),
 
-                                            TextInput::make('phone_number')
+                                            PhoneInput::make('phone_number')
                                                 ->label(__('lang.phone_number'))
                                                 ->unique(ignoreRecord: true)
                                                 ->columnSpan(1)
-                                                ->maxLength(18)->minLength(8),
+                                                ->required()
+                                                ->defaultCountry('ye') // اليمن كدولة افتراضية
+                                                ->onlyCountries(['sa', 'ye', 'ae', 'my']) // حصر القائمة في السعودية، اليمن، والإمارات
+                                                ->countryValidations([
+                                                    'sa' => [
+                                                        // السعودية: يجب أن يبدأ بـ 5
+                                                        'starts_with' => ['+9665'],
+                                                        'length' => 13,
+                                                    ],
+                                                    'my' => [
+                                                        // ماليزيا: أرقام الجوال تبدأ بـ 1
+                                                        'starts_with' => ['+601'],
+                                                        'length' => 12,
+                                                    ],
+                                                    'ye' => [
+                                                        // اليمن: تحديد دقيق للشركات (77، 73، 71، 70) ومنع أرقام الهاتف الثابت
+                                                        'starts_with' => ['+96777', '+96773', '+96771', '+96770'],
+                                                        'length' => 13,
+                                                    ],
+                                                    []
+                                                ])
+                                            // ->maxLength(18)->minLength(8)
+                                            ,
 
                                             Select::make('gender')
                                                 ->label(__('lang.gender'))
