@@ -80,11 +80,11 @@ class ServiceRequestController extends Controller
                 $sr = ServiceRequest::create($data);
                 $sr->logs()->create([
                     'log_type'    => ServiceRequestLog::LOG_TYPE_CREATED,
-                    'description' => 'Service request created',
+                    'description' => "New service request submitted ({$sr->urgency} urgency)",
                     'created_by'  => auth()->id(),
                 ]);
                 // إلى سجل الجهاز (لو مرتبط)
-                $sr->logToEquipment(\App\Models\EquipmentLog::ACTION_SERVICED, 'Service request created');
+                $sr->logToEquipment(\App\Models\EquipmentLog::ACTION_SERVICED, "Service request #{$sr->id} generated for this equipment");
                 return $sr->load(['branch', 'branchArea', 'assignedTo', 'equipment']);
             });
 
@@ -110,10 +110,10 @@ class ServiceRequestController extends Controller
                 $serviceRequest->update($data);
                 $serviceRequest->logs()->create([
                     'log_type'    => ServiceRequestLog::LOG_TYPE_UPDATED,
-                    'description' => 'Service request updated',
+                    'description' => "Service request details were modified",
                     'created_by'  => auth()->id(),
                 ]);
-                $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, 'Service request updated');
+                $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, "Service request #{$serviceRequest->id} details were modified");
                 return $serviceRequest->load(['branch', 'branchArea', 'assignedTo', 'equipment']);
             });
 
@@ -148,10 +148,10 @@ class ServiceRequestController extends Controller
             $serviceRequest->update(['assigned_to' => $data['assigned_to']]);
             $serviceRequest->logs()->create([
                 'log_type'    => ServiceRequestLog::LOG_TYPE_REASSIGN_TO_USER,
-                'description' => $data['note'] ?? 'Assigned',
+                'description' => $data['note'] ?? "Ticket assigned to employee #{$data['assigned_to']}",
                 'created_by'  => auth()->id(),
             ]);
-            $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, 'Request assigned');
+            $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, "Service request #{$serviceRequest->id} has been assigned for maintenance");
             return $serviceRequest->load('assignedTo');
         });
 
@@ -170,10 +170,10 @@ class ServiceRequestController extends Controller
             $serviceRequest->update(['status' => $data['status']]);
             $serviceRequest->logs()->create([
                 'log_type'    => ServiceRequestLog::LOG_TYPE_STATUS_CHANGED,
-                'description' => 'Status: ' . $data['status'] . ($data['note'] ? " - {$data['note']}" : ''),
+                'description' => "Status transitioned to '{$data['status']}'" . ($data['note'] ? " (Remark: {$data['note']})" : ""),
                 'created_by'  => auth()->id(),
             ]);
-            $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, 'Status changed: ' . $data['status']);
+            $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, "Service request #{$serviceRequest->id} transitioned to '{$data['status']}' status");
             return $serviceRequest;
         });
 
@@ -185,7 +185,7 @@ class ServiceRequestController extends Controller
         $serviceRequest->update(['accepted' => true]);
         $serviceRequest->logs()->create([
             'log_type'    => ServiceRequestLog::LOG_TYPE_UPDATED,
-            'description' => 'Request accepted',
+            'description' => "Task accepted by the assigned personnel",
             'created_by'  => auth()->id(),
         ]);
         return response()->json(['success' => true, 'message' => 'Accepted', 'data' => new ServiceRequestResource($serviceRequest)]);
@@ -197,10 +197,10 @@ class ServiceRequestController extends Controller
         $serviceRequest->update(['equipment_id' => $data['equipment_id']]);
         $serviceRequest->logs()->create([
             'log_type'    => ServiceRequestLog::LOG_TYPE_UPDATED,
-            'description' => 'Equipment attached',
+            'description' => "Equipment #{$data['equipment_id']} linked to this service ticket",
             'created_by'  => auth()->id(),
         ]);
-        $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, 'Request linked');
+        $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, "Associated with service request #{$serviceRequest->id}");
         return response()->json(['success' => true, 'message' => 'Equipment attached', 'data' => new ServiceRequestResource($serviceRequest->load('equipment'))]);
     }
 
@@ -209,7 +209,7 @@ class ServiceRequestController extends Controller
         $serviceRequest->update(['equipment_id' => null]);
         $serviceRequest->logs()->create([
             'log_type'    => ServiceRequestLog::LOG_TYPE_UPDATED,
-            'description' => 'Equipment detached',
+            'description' => "Equipment linkage removed from this ticket",
             'created_by'  => auth()->id(),
         ]);
         return response()->json(['success' => true, 'message' => 'Equipment detached', 'data' => new ServiceRequestResource($serviceRequest)]);

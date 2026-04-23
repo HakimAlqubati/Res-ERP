@@ -137,6 +137,20 @@ class AttendanceImagesUploadedResource extends Resource
                                 fn(Builder $query, $date): Builder => $query->whereDate('datetime', '<=', $date),
                             );
                     }),
+                SelectFilter::make('branch_id')
+                    ->label(__('lang.branch'))
+                    ->options(fn() => \App\Models\Branch::active()->forBranchManager('id')->pluck('name', 'id')->toArray())
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['values'],
+                            fn(Builder $query, $values): Builder => $query->whereHas('employee', function (Builder $q) use ($values) {
+                                $q->whereIn('branch_id', $values);
+                            }),
+                        );
+                    })
+                    ->multiple()
+                    ->searchable()
+                    ->preload(),
                 SelectFilter::make('employee_id')->label(__('lang.employee'))
                     ->searchable()
                     ->preload()

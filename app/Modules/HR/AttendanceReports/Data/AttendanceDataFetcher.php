@@ -68,6 +68,8 @@ class AttendanceDataFetcher
             ->whereIn('employee_id', $employeeIds)
             ->where('status', EmployeeServiceTermination::STATUS_APPROVED)
             ->where('termination_date', '<', $dateStr)
+            ->join('hr_employees','hr_employees.id','=','hr_employee_service_terminations.employee_id')
+            ->where('hr_employees.active', 0)
             ->pluck('termination_date', 'employee_id');
 
         $overtimes = EmployeeOvertime::whereIn('employee_id', $employeeIds)

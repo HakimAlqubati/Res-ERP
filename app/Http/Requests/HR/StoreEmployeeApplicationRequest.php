@@ -46,6 +46,11 @@ class StoreEmployeeApplicationRequest extends FormRequest
             // 🟢 Departure Fingerprint (Check-out)
             'missed_checkout_request.date' => 'required_if:application_type_id,4|date',
             'missed_checkout_request.time' => 'required_if:application_type_id,4|date_format:H:i',
+
+            // 🟢 Meal Request
+            'meal_request.detail_meal_details' => 'required_if:application_type_id,5|string|max:1000',
+            'meal_request.cost'                => 'required_if:application_type_id,5|numeric|min:0',
+            'meal_request.detail_cost'         => 'nullable|numeric|min:0',
         ];
     }
 

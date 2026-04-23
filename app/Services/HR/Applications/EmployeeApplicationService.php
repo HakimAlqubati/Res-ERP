@@ -66,7 +66,7 @@ class EmployeeApplicationService
                         'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST],
                         'date'                  => $details['date'],
                         'time'                  => $details['time'],
-                        'reason'                => $notes['notes'] ?? null,
+                        'reason'                => $data['notes'] ?? null,
                     ]);
                 }
                 break;
@@ -136,8 +136,8 @@ class EmployeeApplicationService
                         'application_id' => $record->id,
                         'employee_id'    => $record->employee_id,
                         'branch_id'      => $record->branch_id,
-                        'meal_details'   => $details['detail_meal_details'] ?? null,
-                        'cost'           => $details['detail_cost'] ?? 0,
+                        'meal_details'   => $details['detail_meal_details'] ?? $details['meal_details'] ?? null,
+                        'cost'           => $details['detail_cost'] ?? $details['cost'] ?? 0,
                         'notes'          => $data['notes'] ?? null,
                         'date'           => $data['application_date'] ?? null,
                         'created_by'     => $record->created_by,
