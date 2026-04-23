@@ -345,6 +345,7 @@ class EmployeeForm
                                                 ->label(__('lang.attach_file'))
                                                 ->downloadable()
                                                 ->previewable()
+                                                ->maxSize(5000)
                                                 // ->required()
                                                 ->imageEditor()
                                                 ->circleCropper(),
