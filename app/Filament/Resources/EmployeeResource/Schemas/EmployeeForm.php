@@ -583,7 +583,7 @@ class EmployeeForm
                 }
             })
             // ->imagePreviewHeight('250')
-            // ->maxSize(1000)
+            ->maxSize(5000)
             ->columnSpan(2)
             ->reactive();
     }
