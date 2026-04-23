@@ -108,7 +108,7 @@ class EmployeeForm
                                                 ->label(__('lang.phone_number'))
                                                 ->unique(ignoreRecord: true)
                                                 ->columnSpan(1)
-                                                ->required()
+                                                // ->required()
                                                 ->defaultCountry('ye') // اليمن كدولة افتراضية
                                                 ->onlyCountries(['sa', 'ye', 'ae', 'my']) // حصر القائمة في السعودية، اليمن، والإمارات
                                                 ->countryValidations([
