@@ -108,9 +108,17 @@ class ServiceRequestController extends Controller
 
             $sr = DB::transaction(function () use ($serviceRequest, $data) {
                 $serviceRequest->update($data);
+                $description = "Service request details were modified";
+                $logType = ServiceRequestLog::LOG_TYPE_UPDATED;
+
+                if ($serviceRequest->wasChanged('status')) {
+                    $description = "Service request changed to : {$serviceRequest->status}";
+                    $logType = ServiceRequestLog::LOG_TYPE_STATUS_CHANGED;
+                }
+
                 $serviceRequest->logs()->create([
-                    'log_type'    => ServiceRequestLog::LOG_TYPE_UPDATED,
-                    'description' => "Service request details were modified",
+                    'log_type'    => $logType,
+                    'description' => $description,
                     'created_by'  => auth()->id(),
                 ]);
                 $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, "Service request #{$serviceRequest->id} details were modified");
