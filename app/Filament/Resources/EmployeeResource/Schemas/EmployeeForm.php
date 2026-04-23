@@ -568,12 +568,17 @@ class EmployeeForm
             ])
             // ->disk('s3') // Change disk to S3
             ->directory('employees')
-            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                return Str::random(15) . "." . $file->getClientOriginalExtension();
+            ->saveUploadedFileUsing(function (TemporaryUploadedFile $file): string {
+                $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+                $img = $manager->read($file->getRealPath());
+                $img->scaleDown(width: 1200);
+                $encodedImage = $img->toWebp(70);
+                $filename = 'employees/' . Str::random(15) . '.png';
+                \Illuminate\Support\Facades\Storage::disk('s3')->put($filename, (string) $encodedImage, 'public');
+                return $filename;
             })
             // ->imagePreviewHeight('250')
-            // ->resize(5)
-            ->maxSize(1000)
+            // ->maxSize(1000)
             ->columnSpan(2)
             ->reactive();
     }
