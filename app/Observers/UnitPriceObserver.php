@@ -17,6 +17,11 @@ class UnitPriceObserver
         }
 
         DB::afterCommit(function () use ($unitPrice) {
+            $componentProduct = $unitPrice->product()->select('id', 'name', 'code')->first();
+            $componentLabel = $componentProduct
+                ? trim(($componentProduct->code ? $componentProduct->code . ' - ' : '') . $componentProduct->name)
+                : ('Product #' . $unitPrice->product_id);
+
             $matchingItems = ProductItem::query()
                 ->where('product_id', $unitPrice->product_id)
                 ->where('unit_id', $unitPrice->unit_id)
@@ -45,7 +50,7 @@ class UnitPriceObserver
                     'new_price' => $newPrice,
                     'source_type' => UnitPrice::class,
                     'source_id' => $unitPrice->id,
-                    'note' => 'Updated from UnitPrice observer',
+                    'note' => 'Updated because component product price changed: ' . $componentLabel,
                     'date' => now(),
                 ]);
 
