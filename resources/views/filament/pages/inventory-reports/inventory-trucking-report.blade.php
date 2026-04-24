@@ -25,7 +25,7 @@
                 <th colspan="4" class="no_border_right_left" style="text-align: center;">
                     <h3>({{ 'Inventory Tracking' }})</h3>
                 </th>
-                <th colspan="2" style="text-align: center;"
+                <th colspan="3" style="text-align: center;"
                     class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}">
                     <img class="circle-image" src="{{ asset('/storage/' . setting('company_logo') . '') }}"
                         alt="">
@@ -35,24 +35,28 @@
                 <th>{{ 'Date' }}</th>
                 <th>{{ 'Batch Number' }}</th>
                 <th>{{ 'Transaction Type' }}</th>
+                <th>{{ 'Movement Type' }}</th>
                 <th>{{ 'Transaction ID' }}</th>
                 <th>{{ 'Unit' }}</th>
                 <th>{{ 'Qty per Pack' }}</th>
                 <th>{{ 'Qty' }}</th>
                 <th>{{ 'Store' }}</th>
-                <th colspan="2">{{ 'Notes' }}</th>
+                <th colspan="3">{{ 'Notes' }}</th>
             </tr>
         </thead>
         <tbody>
             @php
             $totalQty = 0;
-            @endphp
+            @endphp 
             @foreach ($reportData as $data)
             <tr>
                 <td> {{ $data->movement_date }} </td>
                 <td> {{ $data->batch_number }} </td>
                 <td>
                     {{ $data->formatted_transactionable_type }}
+                </td>
+                <td>
+                    {{ $data->movement_type }}
                 </td>
                 <td> {{ $data->transactionable_id }} </td>
                 <td title="{{ $data->unit_id }}">

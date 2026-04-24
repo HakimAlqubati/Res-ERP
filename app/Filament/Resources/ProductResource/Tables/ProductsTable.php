@@ -185,11 +185,16 @@ class ProductsTable
                     }),
                 TextColumn::make('product_items_count')->label('Items No')
                     ->toggleable(isToggledHiddenByDefault: true)->default('-')->alignCenter(true),
-           
-                    TextColumn::make('created_at')
+                TextColumn::make('final_price')->label('Final Price')
+                    ->alignCenter(true)
+                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('created_at')
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ->label('Created At')
-                    ])
+                    ->label('Created At'),
+
+            ])
+
             ->filters([
                 Filter::make('active')->label(__('lang.active'))
                     ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
