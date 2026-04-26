@@ -192,19 +192,15 @@
             <!-- Employee Info -->
             <table class="info">
                 <tr>
-                    <td class="label">Name:</td>
+                    <td class="label"><strong>Name:</strong></td>
                     <td>{{ $payroll->employee?->name ?? '-' }}</td>
-                </tr>
-                <tr>
-                    <td class="label">ID No:</td>
+                    <td class="label"><strong>ID No:</strong></td>
                     <td>{{ $payroll->employee?->employee_no ?? '-' }}</td>
                 </tr>
                 <tr>
-                    <td class="label">Job:</td>
+                    <td class="label"><strong>Job:</strong></td>
                     <td>{{ $payroll->employee?->job_title ?? '-' }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Branch:</td>
+                    <td class="label"><strong>Branch:</strong></td>
                     <td>{{ $payroll->employee?->branch?->name ?? '-' }}</td>
                 </tr>
             </table>
@@ -289,8 +285,8 @@
                 </tfoot>
             </table>
 
-            <div style="margin-top: 80px; text-align: center; font-size: 14px; color: #444;">
-                <p style="margin-bottom: 50px;">This payslip is computer generated. No signature is required.</p>
+            <div style="margin-top: 20px; text-align: center; font-size: 14px; color: #444;">
+                <p style="margin-bottom: 20px;">This payslip is computer generated. No signature is required.</p>
                 <p>Printed on: <strong>{{ now()->format('d/m/Y') }}</strong></p>
             </div>
         </div>
