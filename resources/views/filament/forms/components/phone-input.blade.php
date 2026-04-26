@@ -123,7 +123,7 @@
 
                     // 3. تصفير الحقل عند تغيير الدولة لتجنب إرسال أرقام لدولة أخرى
                     input.addEventListener('countrychange', () => {
-                        input.value = '';
+                     
                         updateState();
                     });
 
