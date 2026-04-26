@@ -2,9 +2,15 @@
 
 namespace App\Filament\Resources;
 
+use Aws\DynamoDb\DynamoDbClient;
+use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\Log;
+
+
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Resources\FaceRecognitionResource\Pages;
 use App\Models\FaceRecognition;
+use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Pages\Enums\SubNavigationPosition;
@@ -66,9 +72,13 @@ class FaceRecognitionResource extends Resource
                 //     ->label('Base URL')
                 //     ->options(fn() => FaceRecognition::query()->pluck('base_url', 'base_url')->filter()->unique()->toArray()),
             ])
-            ->actions([
-                // Since it's read-only from DynamoDB via Sushi, we probably don't want edit/delete here unless we implement it
-                // Tables\Actions\EditAction::make(),
+            ->recordActions([
+                Action::make('delete_from_aws')
+                    ->label('Delete From AWS')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->action(fn(FaceRecognition $record) => static::deleteFromAws($record))
             ])
             ->bulkActions([
                 // Tables\Actions\BulkActionGroup::make([
@@ -113,10 +123,48 @@ class FaceRecognitionResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->where('base_url', url('/'))
+            // ->where('base_url', url('/'))
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
     }
     protected static bool $shouldRegisterNavigation = true;
+
+
+    public static function deleteFromAws(FaceRecognition $record): void
+    {
+        try {
+            $client = new DynamoDbClient([
+                'region'  => env('AWS_DEFAULT_REGION'),
+                'version' => 'latest',
+            ]);
+
+            // 1. Delete from AWS DynamoDB
+            $client->deleteItem([
+                'TableName' => 'face_recognition',
+                'Key' => [
+                    'RekognitionId' => ['S' => $record->id]
+                ]
+            ]);
+
+            // 2. Delete from local Sushi cache (SQLite) to update UI
+            $record->delete();
+
+            Notification::make()
+                ->title('Deleted successfully')
+                ->body('The face record has been removed from AWS and the local system.')
+                ->success()
+                ->send();
+        } catch (\Exception $e) {
+            Log::error('AWS DynamoDB Deletion Failed: ' . $e->getMessage(), [
+                'rekognition_id' => $record->id
+            ]);
+
+            Notification::make()
+                ->title('Deletion failed')
+                ->body('An error occurred while removing the record from AWS. Check the logs for details.')
+                ->danger()
+                ->send();
+        }
+    }
 }
