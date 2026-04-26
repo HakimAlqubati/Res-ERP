@@ -10,6 +10,8 @@ class FaceRecognition extends Model
 {
     use Sushi;
 
+    protected $keyType = 'string';
+    public $incrementing = false;
     protected $schema = [
         'id' => 'string', // RekognitionId
         'name' => 'string',
