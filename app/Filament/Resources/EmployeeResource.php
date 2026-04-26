@@ -194,12 +194,26 @@ class EmployeeResource extends Resource
             ])
             ->disk('s3') // Change disk to S3
             ->directory('employees')
-            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                return Str::random(15) . "." . $file->getClientOriginalExtension();
+            ->saveUploadedFileUsing(function (TemporaryUploadedFile $file): string {
+                try {
+                    $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+                    $img = $manager->read($file->get());
+                    $img->scaleDown(width: 1200);
+                    $encodedImage = $img->toJpeg(70);
+                    $filename = 'employees/' . Str::random(15) . '.jpeg';
+                    \Illuminate\Support\Facades\Storage::disk('s3')->put($filename, (string) $encodedImage, 'public');
+                    return $filename;
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Avatar Upload Error: ' . $e->getMessage());
+                    throw $e;
+                }
             })
+            // ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+            //     return Str::random(15) . "." . $file->getClientOriginalExtension();
+            // })
             // ->imagePreviewHeight('250')
             // ->resize(5)
-            ->maxSize(1000)
+            ->maxSize(5000)
             ->columnSpan(2)
             ->reactive();
     }
