@@ -7,11 +7,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <style>
+        @page {
+            margin: 10mm;
+            size: auto; /* Or specific size like 210mm 1000mm if needed */
+        }
+
         body {
             font-family: 'cairo', sans-serif;
-            font-size: 14px;
-            line-height: 1.45;
+            font-size: 13px;
+            line-height: 1.2;
             color: #222;
+            margin: 0;
+            padding: 0;
         }
 
         .wrap {
@@ -28,8 +35,8 @@
         .head-table {
             width: 100%;
             border-bottom: 1px solid #e6e6e6;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
         }
 
         .head-table td {
@@ -75,14 +82,14 @@
             text-align: center;
             font-size: 12px;
             color: #444;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
 
         /* Info table */
         .info {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
 
         .info td {
@@ -206,7 +213,7 @@
             </table>
 
             <!-- Earnings Table -->
-            <table style="width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 30px; font-size: 13px;">
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 10px; font-size: 13px; page-break-inside: avoid;">
                 <thead>
                     <tr>
                         <th style="border-bottom: 2px solid #aebac1; text-align: left; padding: 8px 5px; color: #0d7c66; font-weight: bold; width: 70%;">Employee Earnings / Reimbursements</th>
@@ -233,7 +240,7 @@
             </table>
 
             <!-- Deductions Table -->
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 13px;">
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 13px; page-break-inside: avoid;">
                 <thead>
                     <tr>
                         <th style="border-bottom: 2px solid #aebac1; text-align: left; padding: 8px 5px; color: #0d7c66; font-weight: bold; width: 70%;">Employee Deductions</th>
@@ -259,7 +266,7 @@
             </table>
 
             <!-- Employer Contributions Table -->
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 13px;">
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 13px; page-break-inside: avoid;">
                 <thead>
                     <tr>
                         <th style="border-bottom: 2px solid #aebac1; text-align: left; padding: 8px 5px; color: #0d7c66; font-weight: bold; width: 70%;">Company Contributions</th>
