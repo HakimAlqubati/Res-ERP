@@ -68,7 +68,7 @@ class EmployeeRewardService implements EmployeeRewardServiceInterface
             });
         }
 
-        return $query->latest('date')->paginate($perPage);
+        return $query->latest('id')->paginate($perPage);
     }
 
     /**

@@ -52,6 +52,7 @@ class StoreEmployeeApplicationRequest extends FormRequest
             'meal_request.cost'                => 'required_if:application_type_id,5|numeric|min:0',
             'meal_request.detail_cost'         => 'nullable|numeric|min:0',
             'meal_request.branch_id'           => 'required_if:application_type_id,5|exists:branches,id',
+            'meal_request.date'           => 'nullable|date',
         ];
     }
 

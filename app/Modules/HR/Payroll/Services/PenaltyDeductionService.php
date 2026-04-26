@@ -33,6 +33,9 @@ class PenaltyDeductionService
         if (isBranchManager()) {
             $query->where('hr_employees.branch_id', auth()->user()->branch_id);
         }
+        if (isStuff()) {
+            $query->where('employee_id', auth()->user()->branch_id);
+        }
         if (!empty($filters['employee_id'])) {
             $query->where('employee_id', $filters['employee_id']);
         }

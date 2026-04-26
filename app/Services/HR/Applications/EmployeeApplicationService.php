@@ -139,7 +139,7 @@ class EmployeeApplicationService
                         'meal_details'   => $details['detail_meal_details'] ?? $details['meal_details'] ?? null,
                         'cost'           => $details['detail_cost'] ?? $details['cost'] ?? 0,
                         'notes'          => $data['notes'] ?? null,
-                        'date'           => $data['application_date'] ?? null,
+                        'date'           => $details['date'] ?? $data['application_date'],
                         'created_by'     => $record->created_by,
                         'status'         => $record->status,
                     ]);
@@ -398,6 +398,4 @@ class EmployeeApplicationService
 
         return $record;
     }
-
-  
 }

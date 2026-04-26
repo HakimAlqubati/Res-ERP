@@ -277,8 +277,8 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/branches', function () {
         return Branch::active()
             // ->branches()
-            ->whereIn('type',[Branch::TYPE_BRANCH,Branch::TYPE_HQ])
-            // ->forBranchManager('id')
+            ->whereIn('type', [Branch::TYPE_BRANCH, Branch::TYPE_HQ])
+            ->forBranchManager('id') 
             ->get(['id', 'name', 'type'])
 
             ->makeHidden([
@@ -292,7 +292,9 @@ Route::middleware('auth:api')->group(function () {
                 'total_paid',
                 'total_sales',
             ]);
-    });
+    })
+        ->middleware('auth:api')
+    ;
 
     // New route: list users, optional filter by branch_id
     Route::get('/users', function (Request $request) {
