@@ -39,7 +39,7 @@ class BranchTable
     public static function configure(Table $table): Table
     {
         return $table->striped()
-            ->recordUrl(fn(Branch $record): string => BranchResource::getUrl('view', ['record' => $record]))
+            // ->recordUrl(fn(Branch $record): string => BranchResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('id')->label(__('lang.branch_id'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
                 SpatieMediaLibraryImageColumn::make('default')->label('')->size(50)

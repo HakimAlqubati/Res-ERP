@@ -366,6 +366,7 @@ return [
   'attendance' => 'الحضور',
   'shift' => 'الوردية',
   'shifts' => 'الورديات',
+  'shift_id' => 'رقم الوردية',
   'shift_rfid' => 'الوردية - RFID',
   'employee_rfid' => 'RFID الموظف',
   'rfid' => 'RFID',

@@ -71,7 +71,7 @@ class WorkPeriodResource extends Resource
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
 
-    protected static function getFormSchema(): array
+    public static function getFormSchema(): array
     {
         return [
 

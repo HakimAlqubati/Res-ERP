@@ -12,6 +12,7 @@ use App\Models\ResellerSaleItem;
 use App\Models\ResellerSalePaidAmount;
 use App\Models\Store;
 use App\Models\User;
+use App\Models\WorkPeriod;
 
 trait BranchRelations
 {
@@ -77,5 +78,10 @@ trait BranchRelations
             'id',
             'id'
         );
+    }
+
+    public function workPeriods()
+    {
+        return $this->hasMany(WorkPeriod::class, 'branch_id');
     }
 }

@@ -144,6 +144,11 @@ class WorkPeriod extends Model implements Auditable
         );
     }
 
+    public function employeePeriods()
+    {
+        return $this->hasMany(EmployeePeriod::class, 'period_id');
+    }
+
     public static function calculateDayAndNight($startAt, $endAt): bool
     {
         // Logic to set default based on time fields
