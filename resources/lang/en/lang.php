@@ -641,6 +641,7 @@ return [
     'images' => 'Images',
     'branch_area' => 'Branch area',
     'equipment' => 'Equipment',
+    'equipments' => 'Equipments',
     'description_helper' => 'Description of service request',
     'to_reassign_go_to_table' => 'To reassign, go to table page',
     'urgency' => 'Urgency',
