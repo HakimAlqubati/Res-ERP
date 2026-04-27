@@ -89,4 +89,55 @@ class PenaltyDeductionService
             'rejector:id,name'
         ])->find($id);
     }
+
+    /**
+     * Approve a penalty deduction.
+     *
+     * @param int $id
+     * @param int $approvedBy
+     * @return PenaltyDeduction|null
+     * @throws \Exception
+     */
+    public function approvePenalty(int $id, int $approvedBy): ?PenaltyDeduction
+    {
+        $penalty = $this->getPenaltyById($id);
+
+        if (!$penalty) {
+            return null;
+        }
+
+        if ($penalty->status !== PenaltyDeduction::STATUS_PENDING) {
+            throw new \Exception(__('Only pending penalties can be approved.'));
+        }
+
+        $penalty->approvePenalty($approvedBy, now());
+
+        return $penalty;
+    }
+
+    /**
+     * Reject a penalty deduction.
+     *
+     * @param int $id
+     * @param int $rejectedBy
+     * @param string $rejectedReason
+     * @return PenaltyDeduction|null
+     * @throws \Exception
+     */
+    public function rejectPenalty(int $id, int $rejectedBy, string $rejectedReason): ?PenaltyDeduction
+    {
+        $penalty = $this->getPenaltyById($id);
+
+        if (!$penalty) {
+            return null;
+        }
+
+        if ($penalty->status !== PenaltyDeduction::STATUS_PENDING) {
+            throw new \Exception(__('Only pending penalties can be rejected.'));
+        }
+
+        $penalty->rejectPenalty($rejectedBy, $rejectedReason, now());
+
+        return $penalty;
+    }
 }

@@ -331,7 +331,7 @@ Route::get('/quote', [QuoteController::class, 'index']);
 Route::get('/allbranches', function () {
     return response()->json([
         'success' => true,
-        'data' => Branch::query()->get(['id', 'name']),
+        'data' => Branch::query()->active()->get(['id', 'name']),
     ]);
 });
 

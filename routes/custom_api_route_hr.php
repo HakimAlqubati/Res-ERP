@@ -347,6 +347,8 @@ Route::prefix('hr')
         Route::get('/penalties', [\App\Http\Controllers\Api\HR\PenaltyDeductionController::class, 'index']);
         Route::post('/penalties', [\App\Http\Controllers\Api\HR\PenaltyDeductionController::class, 'store']);
         Route::get('/penalties/{id}', [\App\Http\Controllers\Api\HR\PenaltyDeductionController::class, 'show']);
+        Route::post('/penalties/{id}/approve', [\App\Http\Controllers\Api\HR\PenaltyDeductionController::class, 'approve']);
+        Route::post('/penalties/{id}/reject', [\App\Http\Controllers\Api\HR\PenaltyDeductionController::class, 'reject']);
 
         Route::get('/deductions', [\App\Http\Controllers\Api\HR\DeductionController::class, 'index']);
         Route::get('/deductions/{id}', [\App\Http\Controllers\Api\HR\DeductionController::class, 'show']);

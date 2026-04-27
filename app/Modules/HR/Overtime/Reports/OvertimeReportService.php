@@ -27,6 +27,8 @@ class OvertimeReportService
     public function generate(OvertimeReportFilter $filter): array
     {
         $query = EmployeeOvertime::query()
+            ->forBranchManager()
+            ->forEmployee()
             ->with(['employee:id,name,employee_no,branch_id', 'employee.branch:id,name', 'approvedBy:id,name']);
 
         $this->applyFilters($query, $filter);
