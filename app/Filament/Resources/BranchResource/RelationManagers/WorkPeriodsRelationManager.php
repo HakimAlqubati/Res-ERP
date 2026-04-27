@@ -16,6 +16,10 @@ class WorkPeriodsRelationManager extends RelationManager
 {
     protected static string $relationship = 'workPeriods';
     protected static ?string $title       = 'Shifts';
+    protected static ?string $modelLabel = 'Shift';
+        protected static ?string $pluralLabel = 'Shifts';
+    protected static ?string $label = 'Shift';
+
 
     public static function getBadge(Model $ownerRecord, string $pageClass): ?string
     {
@@ -26,7 +30,7 @@ class WorkPeriodsRelationManager extends RelationManager
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-            ...WorkPeriodResource::getFormSchema()
+            ...WorkPeriodResource::getFormSchema($this->getOwnerRecord()->id)
         ]);
     }
     public static function getBadgeColor(Model $ownerRecord, string $pageClass): ?string
