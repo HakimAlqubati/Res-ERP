@@ -21,7 +21,6 @@ class ServiceRequest extends Model implements Auditable, HasMedia
         'description',
         'branch_id',
         'branch_area_id',
-        'assigned_to',
         'urgency',
         'impact',
         'status',
@@ -34,7 +33,6 @@ class ServiceRequest extends Model implements Auditable, HasMedia
         'description',
         'branch_id',
         'branch_area_id',
-        'assigned_to',
         'urgency',
         'impact',
         'status',
@@ -91,9 +89,24 @@ class ServiceRequest extends Model implements Auditable, HasMedia
         return $this->belongsTo(BranchArea::class, 'branch_area_id');
     }
 
-    public function assignedTo()
+    /**
+     * جميع الموظفين المُسندة إليهم الطلب (many-to-many)
+     */
+    public function assignees()
     {
-        return $this->belongsTo(Employee::class, 'assigned_to');
+        return $this->belongsToMany(Employee::class, 'hr_service_request_employees')
+                    ->withPivot('is_primary')
+                    ->withTimestamps();
+    }
+
+    /**
+     * الموظف الرئيسي المسؤول عن الطلب
+     */
+    public function primaryAssignee()
+    {
+        return $this->belongsToMany(Employee::class, 'hr_service_request_employees')
+                    ->wherePivot('is_primary', true)
+                    ->withTimestamps();
     }
 
     public function createdBy()
@@ -166,15 +179,19 @@ class ServiceRequest extends Model implements Auditable, HasMedia
         }
         if (isStuff()) {
             static::addGlobalScope('active', function (Builder $builder) {
-                $builder->where('assigned_to', auth()->user()->employee->id)
-                    ->orWhere('created_by', auth()->user()->id)
-                ; // Add your default query here
+                $empId = auth()->user()->employee?->id;
+                $builder->where(function ($q) use ($empId) {
+                    $q->whereHas('assignees', fn($a) => $a->where('hr_employees.id', $empId))
+                      ->orWhere('created_by', auth()->user()->id);
+                });
             });
         } elseif (isFinanceManager() && auth()->user()->has_employee) {
             static::addGlobalScope(function (Builder $builder) {
-                $builder->where('assigned_to', auth()->user()->employee->id)
-                    ->orWhere('created_by', auth()->user()->id)
-                ; // Add your default query here
+                $empId = auth()->user()->employee?->id;
+                $builder->where(function ($q) use ($empId) {
+                    $q->whereHas('assignees', fn($a) => $a->where('hr_employees.id', $empId))
+                      ->orWhere('created_by', auth()->user()->id);
+                });
             });
         }
 

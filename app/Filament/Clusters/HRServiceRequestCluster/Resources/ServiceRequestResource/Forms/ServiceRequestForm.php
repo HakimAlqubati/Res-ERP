@@ -156,7 +156,7 @@ class ServiceRequestForm
                     ->where('branch_id', $get('branch_id'))
                     ->where('branch_area_id', $get('branch_area_id'))
                     ->pluck('name', 'id');
-            })->required()
+            })->required(false)
             ->searchable();
     }
 
@@ -172,20 +172,29 @@ class ServiceRequestForm
     }
 
     /**
-     * Assigned to select field
+     * Assignees multi-select field — يدعم اختيار موظفين متعددين
      */
     public static function getAssignedToField(): Select
     {
-        return Select::make('assigned_to')
-            ->options(fn(Get $get): Collection => Employee::query()
-                ->where('active', 1)
-                ->where('branch_id', $get('branch_id'))
-                ->pluck('name', 'id'))
-            ->searchable()
+        return Select::make('assignees')
+            ->label('Assigned To')
+            ->relationship('assignees', 'name')
+            ->getSearchResultsUsing(fn(string $search, Get $get): Collection =>
+                Employee::query()
+                    ->where('active', 1)
+                    ->where('branch_id', $get('branch_id'))
+                    ->where('name', 'like', "%{$search}%")
+                    ->pluck('name', 'id')
+            )
+            ->getOptionLabelsUsing(fn(array $values): array =>
+                Employee::whereIn('id', $values)->pluck('name', 'id')->all()
+            )
+            ->multiple()
+            ->searchable() 
             ->hidden(fn() => request()->has('equipment_id'))
             ->helperText(function (Model $record = null) {
                 if ($record) {
-                    return 'To reassign, go to table page ';
+                    return 'To reassign, go to the table page';
                 }
             })
             ->nullable();

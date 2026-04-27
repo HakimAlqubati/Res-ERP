@@ -15,9 +15,19 @@ class ServiceRequestResource extends JsonResource
             'branch'        => $this->whenLoaded('branch'),
             'branch_area_id'=> $this->branch_area_id,
             'branch_area'   => $this->whenLoaded('branchArea'),
-            'assigned_to'   => $this->assigned_to,
-            'assignee'      => $this->whenLoaded('assignedTo'),
-            'assigned_to_name' => $this?->assignedTo?->name,
+            'assignees'     => $this->whenLoaded('assignees', fn() =>
+                $this->assignees->map(fn($e) => [
+                    'id'         => $e->id,
+                    'name'       => $e->name,
+                    'is_primary' => (bool) $e->pivot->is_primary,
+                ])
+            ),
+            'primary_assignee' => $this->whenLoaded('assignees', fn() =>
+                $this->assignees->firstWhere('pivot.is_primary', true)
+                    ? ['id' => $this->assignees->firstWhere('pivot.is_primary', true)->id,
+                       'name' => $this->assignees->firstWhere('pivot.is_primary', true)->name]
+                    : null
+            ),
             'urgency'       => $this->urgency,
             'impact'        => $this->impact,
             'status'        => $this->status,

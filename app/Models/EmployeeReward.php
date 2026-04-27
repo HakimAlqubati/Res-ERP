@@ -127,9 +127,15 @@ class EmployeeReward extends Model implements Auditable
                 $reward->created_by = auth()->id();
             }
 
-            if ($reward->date) {
+            if(empty($reward->branch_id)){
+                $reward->branch_id = $reward->employee->branch_id;
+            }
+            if (empty($reward->month)) {
                 $date = \Carbon\Carbon::parse($reward->date);
-                $reward->month = $date->month;
+                $reward->month = $date->month; 
+            }
+            if ($reward->date) {
+                $date = \Carbon\Carbon::parse($reward->date); 
                 $reward->year = $date->year;
             }
         });

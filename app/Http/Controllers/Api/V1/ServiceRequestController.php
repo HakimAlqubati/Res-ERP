@@ -19,7 +19,7 @@ class ServiceRequestController extends Controller
     public function index(Request $req)
     {
         $q = ServiceRequest::query()
-            ->with(['branch', 'branchArea', 'assignedTo', 'equipment'])
+            ->with(['branch', 'branchArea', 'assignees', 'equipment'])
             ->when($req->filled('search'), function ($x) use ($req) {
                 $v = $req->input('search');
                 $x->where(function ($q) use ($v) {
@@ -34,9 +34,9 @@ class ServiceRequestController extends Controller
             ->when($req->has('assigned_to'), function ($x) use ($req) {
                 $v = $req->input('assigned_to');
                 if ($v === 'unassigned' || $v === 'null') {
-                    $x->whereNull('assigned_to');
+                    $x->whereDoesntHave('assignees');
                 } elseif ($v !== null && $v !== '') {
-                    $x->where('assigned_to', $v);
+                    $x->whereHas('assignees', fn($a) => $a->where('hr_employees.id', $v));
                 }
             })
             ->when($req->filled('equipment_id'), fn($x) => $x->where('equipment_id', $req->input('equipment_id')));
@@ -63,7 +63,7 @@ class ServiceRequestController extends Controller
     public function show(ServiceRequest $serviceRequest)
     {
         return new ServiceRequestResource(
-            $serviceRequest->load(['branch', 'branchArea', 'assignedTo', 'equipment'])
+            $serviceRequest->load(['branch', 'branchArea', 'assignees', 'equipment'])
         );
     }
 
@@ -76,16 +76,33 @@ class ServiceRequestController extends Controller
             $data = $req->validated();
             $data['created_by'] = auth()->id();
 
-            $sr = DB::transaction(function () use ($data) {
+            $employeeIds = $data['employee_ids'] ?? [];
+            $primaryId   = $data['primary_employee_id'] ?? null;
+            unset($data['employee_ids'], $data['primary_employee_id']);
+
+            $sr = DB::transaction(function () use ($data, $employeeIds, $primaryId) {
                 $sr = ServiceRequest::create($data);
+
+                // إسناد الموظفين عبر جدول الوسيط
+                if (! empty($employeeIds)) {
+                    $syncData = [];
+                    foreach ($employeeIds as $empId) {
+                        $syncData[$empId] = ['is_primary' => ($empId == $primaryId)];
+                    }
+                    // تأكد أن الموظف الرئيسي موجود في القائمة
+                    if ($primaryId && ! isset($syncData[$primaryId])) {
+                        $syncData[$primaryId] = ['is_primary' => true];
+                    }
+                    $sr->assignees()->sync($syncData);
+                }
+
                 $sr->logs()->create([
                     'log_type'    => ServiceRequestLog::LOG_TYPE_CREATED,
                     'description' => "New service request submitted ({$sr->urgency} urgency)",
                     'created_by'  => auth()->id(),
                 ]);
-                // إلى سجل الجهاز (لو مرتبط)
                 $sr->logToEquipment(\App\Models\EquipmentLog::ACTION_SERVICED, "Service request #{$sr->id} generated for this equipment");
-                return $sr->load(['branch', 'branchArea', 'assignedTo', 'equipment']);
+                return $sr->load(['branch', 'branchArea', 'assignees', 'equipment']);
             });
 
             return response()->json([
@@ -106,8 +123,25 @@ class ServiceRequestController extends Controller
             $data = $req->validated();
             $data['updated_by'] = auth()->id();
 
-            $sr = DB::transaction(function () use ($serviceRequest, $data) {
+            $employeeIds = $data['employee_ids'] ?? null;
+            $primaryId   = $data['primary_employee_id'] ?? null;
+            unset($data['employee_ids'], $data['primary_employee_id']);
+
+            $sr = DB::transaction(function () use ($serviceRequest, $data, $employeeIds, $primaryId) {
                 $serviceRequest->update($data);
+
+                // تحديث الموظفين إن أُرسلوا
+                if ($employeeIds !== null) {
+                    $syncData = [];
+                    foreach ($employeeIds as $empId) {
+                        $syncData[$empId] = ['is_primary' => ($empId == $primaryId)];
+                    }
+                    if ($primaryId && ! isset($syncData[$primaryId])) {
+                        $syncData[$primaryId] = ['is_primary' => true];
+                    }
+                    $serviceRequest->assignees()->sync($syncData);
+                }
+
                 $description = "Service request details were modified";
                 $logType = ServiceRequestLog::LOG_TYPE_UPDATED;
 
@@ -122,7 +156,7 @@ class ServiceRequestController extends Controller
                     'created_by'  => auth()->id(),
                 ]);
                 $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, "Service request #{$serviceRequest->id} details were modified");
-                return $serviceRequest->load(['branch', 'branchArea', 'assignedTo', 'equipment']);
+                return $serviceRequest->load(['branch', 'branchArea', 'assignees', 'equipment']);
             });
 
             return response()->json([
@@ -148,18 +182,32 @@ class ServiceRequestController extends Controller
     public function assign(Request $req, ServiceRequest $serviceRequest)
     {
         $data = $req->validate([
-            'assigned_to' => ['required', 'integer', 'exists:hr_employees,id'],
-            'note'        => ['nullable', 'string', 'max:1000'],
+            'employee_ids'        => ['required', 'array'],
+            'employee_ids.*'      => ['integer', 'exists:hr_employees,id'],
+            'primary_employee_id' => ['nullable', 'integer', 'exists:hr_employees,id'],
+            'note'                => ['nullable', 'string', 'max:1000'],
         ]);
 
         $sr = DB::transaction(function () use ($serviceRequest, $data) {
-            $prevAssigned = $serviceRequest->assigned_to;
-            $serviceRequest->update(['assigned_to' => $data['assigned_to']]);
-            
-            $newAssigned = \App\Models\Employee::find($data['assigned_to'])?->name;
-            $defaultMsg = $prevAssigned 
-                ? "Service request reassigned to : {$newAssigned}" 
-                : "Service request assigned to : {$newAssigned}";
+            $employeeIds = $data['employee_ids'];
+            $primaryId   = $data['primary_employee_id'] ?? null;
+
+            $syncData = [];
+            foreach ($employeeIds as $empId) {
+                $syncData[$empId] = ['is_primary' => ($empId == $primaryId)];
+            }
+            if ($primaryId && ! isset($syncData[$primaryId])) {
+                $syncData[$primaryId] = ['is_primary' => true];
+            }
+
+            $serviceRequest->assignees()->sync($syncData);
+
+            $names       = \App\Models\Employee::whereIn('id', array_keys($syncData))->pluck('name')->join(', ');
+            $primaryName = $primaryId ? \App\Models\Employee::find($primaryId)?->name : null;
+            $defaultMsg  = "Service request assigned to: {$names}";
+            if ($primaryName) {
+                $defaultMsg .= " (Primary: {$primaryName})";
+            }
 
             $serviceRequest->logs()->create([
                 'log_type'    => ServiceRequestLog::LOG_TYPE_REASSIGN_TO_USER,
@@ -167,7 +215,7 @@ class ServiceRequestController extends Controller
                 'created_by'  => auth()->id(),
             ]);
             $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, "Service request #{$serviceRequest->id} has been assigned for maintenance");
-            return $serviceRequest->load('assignedTo');
+            return $serviceRequest->load('assignees');
         });
 
         return response()->json(['success' => true, 'message' => 'Assigned successfully', 'data' => new ServiceRequestResource($sr)]);
@@ -272,11 +320,11 @@ class ServiceRequestController extends Controller
             }
         }
 
-        $serviceRequest->logs()->create([
-            'log_type'    => \App\Models\ServiceRequestLog::LOG_TYPE_COMMENT_ADDED,
-            'description' => mb_strimwidth($data['comment'], 0, 120, '…'),
-            'created_by'  => auth()->id(),
-        ]);
+        // $serviceRequest->logs()->create([
+        //     'log_type'    => \App\Models\ServiceRequestLog::LOG_TYPE_COMMENT_ADDED,
+        //     'description' => mb_strimwidth($data['comment'], 0, 120, '…'),
+        //     'created_by'  => auth()->id(),
+        // ]);
 
         return new ServiceRequestCommentResource($comment->load('user'));
     }

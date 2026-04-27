@@ -84,62 +84,88 @@ class ServiceRequestActions
     }
 
     /**
-     * ReAssign action - إجراء إعادة التعيين
+     * ReAssign action - إجراء إعادة التعيين (موظفون متعددون)
      */
     public static function getReAssignAction(): Action
     {
         return Action::make('ReAssign')
             ->disabled(function ($record) {
-                if ($record->status == ServiceRequest::STATUS_CLOSED) {
-                    return true;
-                }
-                return false;
+                return $record->status == ServiceRequest::STATUS_CLOSED;
             })
-            // ->button()
             ->hidden(function () {
-                if (isStuff()) {
-                    return true;
-                }
-                return false;
+                return isStuff();
             })
             ->schema(function ($record) {
+                $currentIds = $record->assignees->pluck('id')->toArray();
+                $primaryId  = $record->assignees->where('pivot.is_primary', true)->first()?->id;
+
                 return [
                     Fieldset::make()->schema([
-                        Select::make('assigned_to')->label('')->columnSpanFull()
-                            ->options(Employee::query()
-                                ->where('active', 1)
-                                ->where('branch_id', $record->branch_id)
-                                ->pluck('name', 'id'))
+                        Select::make('employee_ids')
+                            ->label('Assignees')
+                            ->columnSpanFull()
+                            ->options(
+                                Employee::query()
+                                    ->where('active', 1)
+                                    ->where('branch_id', $record->branch_id)
+                                    ->pluck('name', 'id')
+                            )
+                            ->default($currentIds)
+                            ->multiple()
                             ->searchable()
                             ->nullable(),
+
+                        Select::make('primary_employee_id')
+                            ->label('Primary Assignee (Responsible)')
+                            ->columnSpanFull()
+                            ->options(
+                                Employee::query()
+                                    ->where('active', 1)
+                                    ->where('branch_id', $record->branch_id)
+                                    ->pluck('name', 'id')
+                            )
+                            ->default($primaryId)
+                            ->searchable()
+                            ->nullable()
+                            ->helperText('The primary assignee is the main responsible person for this request'),
                     ]),
                 ];
             })
             ->icon('heroicon-m-arrows-right-left')
             ->color('info')
             ->action(function (array $data, $record): void {
-                $prevAssigned = null;
-                if (! is_null($record?->assigned_to)) {
-                    $prevAssigned = $record?->assignedTo?->name;
-                }
-                $newAssigned = Employee::find($data['assigned_to'])?->name;
-                $reassign    = $record->update([
-                    'assigned_to' => $data['assigned_to'],
-                ]);
+                $employeeIds     = $data['employee_ids'] ?? [];
+                $primaryId       = $data['primary_employee_id'] ?? null;
 
-                if ($reassign) {
-                    $description = 'Service request assigned to : ' . $newAssigned;
-                    if (! is_null($prevAssigned)) {
-                        $description = 'Service request reassigned to : ' . $newAssigned;
-                    }
-                    $record->logs()->create([
-                        'created_by'  => auth()->user()->id,
-                        'description' => $description,
-                        'log_type'    => ServiceRequestLog::LOG_TYPE_REASSIGN_TO_USER,
-                    ]);
+                // بناء بيانات الـ sync مع is_primary
+                $syncData = [];
+                foreach ($employeeIds as $empId) {
+                    $syncData[$empId] = ['is_primary' => ($empId == $primaryId)];
                 }
+
+                // إذا تم تحديد موظف رئيسي غير موجود في القائمة، أضفه تلقائياً
+                if ($primaryId && ! in_array($primaryId, $employeeIds)) {
+                    $syncData[$primaryId] = ['is_primary' => true];
+                }
+
+                $record->assignees()->sync($syncData);
+
+                // سجل الـ Log
+                $names = Employee::whereIn('id', array_keys($syncData))->pluck('name')->join(', ');
+                $primaryName = $primaryId ? Employee::find($primaryId)?->name : null;
+                $description = 'Service request assigned to: ' . ($names ?: 'N/A');
+                if ($primaryName) {
+                    $description .= " (Primary: {$primaryName})";
+                }
+
+                $record->logs()->create([
+                    'created_by'  => auth()->user()->id,
+                    'description' => $description,
+                    'log_type'    => ServiceRequestLog::LOG_TYPE_REASSIGN_TO_USER,
+                ]);
             });
     }
+
 
     /**
      * Add comment action - إجراء إضافة تعليق
