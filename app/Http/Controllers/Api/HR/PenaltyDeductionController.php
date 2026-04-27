@@ -23,7 +23,7 @@ class PenaltyDeductionController extends Controller
     public function index(Request $request)
     {
         $penalties = $this->penaltyService->getPenaltiesList(
-            $request->only(['employee_id', 'year', 'month', 'status', 'q']),
+            $request->only(['employee_id', 'year', 'month', 'status', 'q','branch_id']),
             $request->integer('per_page', 15)
         );
 

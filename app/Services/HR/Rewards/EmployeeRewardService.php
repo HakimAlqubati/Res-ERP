@@ -15,6 +15,7 @@ class EmployeeRewardService implements EmployeeRewardServiceInterface
      */
     public function getRewardsList(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
+       
         $query = EmployeeReward::query()->with([
             'employee:id,name,branch_id',
             'rewardType:id,name',
@@ -24,11 +25,7 @@ class EmployeeRewardService implements EmployeeRewardServiceInterface
         ]);
 
         // Filter by branch if user is branch manager
-        if (isBranchManager()) {
-            $query->whereHas('employee', function ($q) {
-                $q->where('branch_id', auth()->user()->branch_id);
-            });
-        }
+     
 
         if (!empty($filters['employee_id'])) {
             $query->where('employee_id', $filters['employee_id']);
@@ -44,6 +41,9 @@ class EmployeeRewardService implements EmployeeRewardServiceInterface
 
         if (!empty($filters['year'])) {
             $query->where('year', $filters['year']);
+        }
+        if (!empty($filters['branch_id'])) {
+            $query->where('branch_id', $filters['branch_id']);
         }
 
         if (!empty($filters['month'])) {

@@ -8,18 +8,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 use App\Observers\PenaltyDeductionObserver;
+use App\Traits\Scopes\BranchScope;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 
 #[ObservedBy([PenaltyDeductionObserver::class])]
 class PenaltyDeduction extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable,BranchScope;
 
     // The table associated with the model.
     protected $table = 'hr_penalty_deductions';
 
     // Fillable fields for mass assignment
     protected $fillable = [
+        'branch_id',
         'employee_id',
         'deduction_id',
         'penalty_amount',
@@ -38,6 +40,7 @@ class PenaltyDeduction extends Model implements Auditable
         'rejected_at',
     ];
     protected $auditInclude = [
+        'branch_id',
         'employee_id',
         'deduction_id',
         'penalty_amount',
@@ -60,6 +63,10 @@ class PenaltyDeduction extends Model implements Auditable
     public function employee()
     {
         return $this->belongsTo(Employee::class, 'employee_id');
+    }
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
     }
 
     public function deduction()

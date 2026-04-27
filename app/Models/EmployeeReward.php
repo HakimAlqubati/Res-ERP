@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
+use App\Traits\Scopes\BranchScope;
 
 class EmployeeReward extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope;
 
     protected $table = 'hr_employee_rewards';
 
@@ -19,6 +20,7 @@ class EmployeeReward extends Model implements Auditable
     const STATUS_REJECTED = 'rejected';
 
     protected $fillable = [
+        'branch_id',
         'employee_id',
         'incentive_id',
         'reward_amount',
@@ -43,7 +45,12 @@ class EmployeeReward extends Model implements Auditable
     ];
 
     // Relationships
-    
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
+    }
+
     public function employee()
     {
         return $this->belongsTo(Employee::class);
