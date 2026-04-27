@@ -38,7 +38,7 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 class EmployeeForm
 {
 
-    public static function configure(Schema $schema): Schema
+    public static function configure(Schema $schema, $branchId = null): Schema
     {
         return $schema
             ->components([
@@ -204,6 +204,8 @@ class EmployeeForm
                                                 $set('manager_id', null);
                                             })
                                             ->disabledOn('edit')
+                                            ->default($branchId)
+                                            ->hidden($branchId !== null)
                                             ->options(
                                                 Branch::query()
                                                     ->select('id', 'name')
