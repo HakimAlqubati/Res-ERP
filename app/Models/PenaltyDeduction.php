@@ -233,6 +233,10 @@ class PenaltyDeduction extends Model implements Auditable
             if ($penalty->created_by == null) {
                 $penalty->created_by = auth()->id();
             }
+            if ($penalty->branch_id == null) {
+                $penalty->branch_id = $penalty->employee->branch_id;
+            }
+          
         });
     }
 }

@@ -41,6 +41,7 @@ class StorePenaltyDeductionRequest extends FormRequest
 
         return [
             'employee_id'       => ['required', 'exists:hr_employees,id'],
+            'branch_id' => ['nullable', 'exists:hr_branches,id'],
             'deduction_id'      => [
                 'required',
                 Rule::exists('hr_deductions', 'id')->where(function ($query) {
