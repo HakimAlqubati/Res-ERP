@@ -257,8 +257,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
 
     public function getIsBranchManagerAttribute() {}
-  
- 
+
+
 
     public function getHasEmployeeAttribute()
     {
@@ -417,5 +417,11 @@ class User extends Authenticatable implements FilamentUser, Auditable
         return $this->activities()->latest('created_at')->first()?->created_at;
     }
 
-    
+    public function getCanCreateAdvanceAttribute()
+    {
+        if (isStuff()) {
+            return false;
+        }
+        return true;
+    }
 }
