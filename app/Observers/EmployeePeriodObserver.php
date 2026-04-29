@@ -53,6 +53,7 @@ class EmployeePeriodObserver
      */
     private function checkLock(EmployeePeriod $period): void
     {
+        return;
         if (! $period->start_date) {
             return;
         }
