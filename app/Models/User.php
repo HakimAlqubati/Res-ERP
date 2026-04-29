@@ -420,7 +420,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
     public function getCanCreateAdvanceAttribute()
     {
         if (isStuff()) {
-            return false;
+            return setting('can_create_advance', false);
         }
         return true;
     }

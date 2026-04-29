@@ -42,7 +42,7 @@ class EmployeeApplicationObserver
      */
     public function creating(EmployeeApplicationV2 $app): void
     {
-        if (isStuff()) {
+        if (!auth()->user()->can_create_advance) {
             if (
                 $app->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST
                 || $app->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST
