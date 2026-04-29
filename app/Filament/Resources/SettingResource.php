@@ -265,6 +265,12 @@ class SettingResource extends Resource
                                                 ->helperText('If enabled, employees with incomplete or partial attendance will be marked as absent in reports.')
                                                 ->default(true),
 
+                                            Toggle::make('can_create_advance')
+                                                ->label('Allow Creating Advances')
+                                                ->helperText('If enabled, employees are allowed to create salary advance requests.')
+                                                ->inline(false)
+                                                ->default(true),
+
                                         ]),
                                     ]),
                                     Tab::make('Face Rekognation')->schema([

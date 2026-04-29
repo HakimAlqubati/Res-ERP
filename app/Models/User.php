@@ -102,7 +102,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
     protected $appends                = [
         'managed_stores_ids',
         'is_attendance',
-        'avatar_image'
+        'avatar_image',
+        'can_create_advance'
     ];
     public static $filamentUserColumn = 'is_filament_user'; // The name of a boolean column in your database.
 
@@ -256,8 +257,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
 
     public function getIsBranchManagerAttribute() {}
-  
- 
+
+
 
     public function getHasEmployeeAttribute()
     {
@@ -414,5 +415,13 @@ class User extends Authenticatable implements FilamentUser, Auditable
     public function getLastActivityAttribute()
     {
         return $this->activities()->latest('created_at')->first()?->created_at;
+    }
+
+    public function getCanCreateAdvanceAttribute()
+    {
+        if (isStuff()) {
+            return setting('can_create_advance', false);
+        }
+        return true;
     }
 }

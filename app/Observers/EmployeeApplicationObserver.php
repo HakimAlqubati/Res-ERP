@@ -42,6 +42,16 @@ class EmployeeApplicationObserver
      */
     public function creating(EmployeeApplicationV2 $app): void
     {
+        if (!auth()->user()->can_create_advance) {
+            if (
+                $app->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST
+                || $app->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST
+            ) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'errors' => ['Cannot Create Advance Request']
+                ]);
+            }
+        }
         $date = $app->application_date
             ? \Carbon\Carbon::parse($app->application_date)
             : \Carbon\Carbon::today();

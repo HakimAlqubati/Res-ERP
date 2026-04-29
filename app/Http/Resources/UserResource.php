@@ -40,6 +40,7 @@ class UserResource extends JsonResource
                 $employee->salary = 0;
                 $employee->avatar = $employee->avatar_image   ;
             }) : null,
+            'can_create_advance' => (bool)$this->can_create_advance,
         ];
     }
 }

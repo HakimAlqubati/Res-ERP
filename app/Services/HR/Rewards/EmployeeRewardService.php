@@ -16,7 +16,10 @@ class EmployeeRewardService implements EmployeeRewardServiceInterface
     public function getRewardsList(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
        
-        $query = EmployeeReward::query()->with([
+        $query = EmployeeReward::query()
+        ->forBranchManager()
+        ->forEmployee()
+        ->with([
             'employee:id,name,branch_id',
             'rewardType:id,name',
             'creator:id,name',
