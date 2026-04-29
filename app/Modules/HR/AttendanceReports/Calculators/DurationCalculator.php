@@ -75,6 +75,12 @@ class DurationCalculator
     {
         $h = floor($hours);
         $m = round(($hours - $h) * 60);
+        
+        if ($m == 60) {
+            $h += 1;
+            $m = 0;
+        }
+        
         return sprintf('%dh %dm', $h, $m);
     }
 }
