@@ -102,7 +102,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
     protected $appends                = [
         'managed_stores_ids',
         'is_attendance',
-        'avatar_image'
+        'avatar_image',
+        'can_create_advance'
     ];
     public static $filamentUserColumn = 'is_filament_user'; // The name of a boolean column in your database.
 
@@ -415,4 +416,6 @@ class User extends Authenticatable implements FilamentUser, Auditable
     {
         return $this->activities()->latest('created_at')->first()?->created_at;
     }
+
+    
 }
