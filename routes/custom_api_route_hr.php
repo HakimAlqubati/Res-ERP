@@ -64,7 +64,7 @@ Route::prefix('hr')
         Route::get('/missingCheckout', [AttendanceController::class, 'missingCheckout']);
         Route::get('/v2/missingCheckout', [AttendanceController::class, 'missingCheckoutV2'])->middleware('auth:api');
         Route::get('/attendanceImages', [AttendanceController::class, 'attendanceImages']);
-        Route::get('/v2/attendanceImages', [AttendanceController::class, 'attendanceImagesV2']);
+        Route::get('/v2/attendanceImages', [AttendanceController::class, 'attendanceImagesV2'])->middleware('auth:api');
 
         // Route::post('/attendance/plan/execute', [AttendancePlanController::class, 'execute'])->middleware('auth:api');
         Route::post('/faceRecognition', [AttendanceController::class, 'identifyEmployeeFromImage']);
