@@ -60,7 +60,9 @@ class EmployeeForm
                                                 ->dehydrateStateUsing(fn($state) => preg_replace('/\s+/u', ' ', trim((string) $state)))
                                                 ->extraInputAttributes(function ($record) {
                                                     if ($record && !$record->active) {
-                                                        return ['style' => 'color: #ef4444 !important; font-weight: bold;'];
+                                                        return [
+                                                            'style' => 'color: #ef4444 !important; -webkit-text-fill-color: #ef4444 !important; font-weight: bold;'
+                                                        ];
                                                     }
                                                     return [];
                                                 })
@@ -347,7 +349,7 @@ class EmployeeForm
                                                 ->label(__('lang.attach_file'))
                                                 ->downloadable()
                                                 ->previewable()
-                                                ->maxSize(5000)
+                                                ->maxSize(20000)
                                                 // ->required()
                                                 ->imageEditor()
                                                 ->circleCropper(),

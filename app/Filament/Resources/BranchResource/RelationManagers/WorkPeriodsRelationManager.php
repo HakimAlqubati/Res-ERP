@@ -58,17 +58,18 @@ class WorkPeriodsRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                TextColumn::make('id')->label(__('lang.shift_id'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('name')->label(__('lang.name'))->searchable(),
-                TextColumn::make('start_at')->label(__('lang.start_date')),
-                TextColumn::make('end_at')->label(__('lang.end_date')),
+                TextColumn::make('id')->label(__('lang.shift_id'))->alignCenter(true)->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('name')->label(__('lang.name'))->sortable()->searchable(),
+                TextColumn::make('start_at')->label(__('lang.start_date'))->sortable(),
+                TextColumn::make('end_at')->label(__('lang.end_date'))->sortable(),
                 TextColumn::make('supposed_duration')
-                    ->label('Duration')->toggleable()->alignCenter(),
+                    ->label('Duration')->sortable()->toggleable()->alignCenter(),
                 TextColumn::make('employee_periods_count')
                     ->counts('employeePeriods')
-                    ->label('Employees No')
+                    ->label('Staff No')
+                    ->sortable()
                     ->alignCenter(),
-                IconColumn::make('active')->boolean()->label(__('lang.active'))->alignCenter(true),
+                IconColumn::make('active')->boolean()->label(__('lang.active'))->sortable()->alignCenter(true),
 
             ])
             ->headerActions([
