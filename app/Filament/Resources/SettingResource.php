@@ -267,7 +267,7 @@ class SettingResource extends Resource
 
                                             Toggle::make('can_create_advance')
                                                 ->label('Allow Creating Advances')
-                                                ->helperText('If enabled, employees are allowed to create salary advance requests.')
+                                                ->helperText('If enabled, employees (with Staff role) are allowed to create salary advance requests.')
                                                 ->inline(false)
                                                 ->default(true),
 
