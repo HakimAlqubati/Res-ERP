@@ -95,7 +95,7 @@ class AttendanceRepository implements AttendanceRepositoryInterface
      */
     public function getCheckoutsForDay(
         int $employeeId,
-        int $periodId,
+        ?int $periodId =null,
         string $date,
         ?int $exceptId = null
     ): Collection {
