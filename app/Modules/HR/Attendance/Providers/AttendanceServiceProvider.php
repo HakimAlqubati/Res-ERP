@@ -39,6 +39,13 @@ class AttendanceServiceProvider extends ServiceProvider
             ShiftResolverInterface::class,
             ShiftResolver::class
         );
+
+        // تسجيل ShiftlessAttendanceHandler كـ singleton
+        // (لا حالة داخلية — singleton آمن ويوفر overhead الـ instantiation)
+        $this->app->singleton(
+            \App\Modules\HR\Attendance\Services\ShiftlessAttendanceHandler::class,
+            \App\Modules\HR\Attendance\Services\ShiftlessAttendanceHandler::class
+        );
     }
 
     /**

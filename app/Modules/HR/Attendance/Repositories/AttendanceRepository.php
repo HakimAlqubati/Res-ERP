@@ -110,6 +110,24 @@ class AttendanceRepository implements AttendanceRepositoryInterface
     }
 
     /**
+     * البحث عن سجل دخول مفتوح للموظف بدون شيفت (period_id IS NULL)
+     *
+     * يُستخدم في تدفق الحضور بدون وردية (Shiftless Attendance)
+     */
+    public function findOpenShiftlessCheckIn(int $employeeId, string $date): ?Attendance
+    {
+        return Attendance::query()
+            ->where('employee_id', $employeeId)
+            ->whereNull('period_id')
+            ->where('check_date', $date)
+            ->where('check_type', CheckType::CHECKIN->value)
+            ->where('accepted', 1)
+            ->whereDoesntHave('checkout')
+            ->latest('id')
+            ->first();
+    }
+
+    /**
      * البحث عن سجل حضور بالمعرف
      */
     public function find(int $id): ?Attendance

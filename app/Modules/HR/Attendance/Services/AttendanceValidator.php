@@ -35,11 +35,21 @@ class AttendanceValidator
 
     /**
      * التحقق من صحة طلب الحضور
-     * 
+     *
      * @throws \App\Modules\HR\Attendance\Exceptions\AttendanceException
      */
     public function validate(Employee $employee, Carbon $requestTime, ?string $requestType = null, ?int $periodId = null, bool $skipDuplicateTimestampCheck = false, bool $isRequest = false): void
     {
+        // ─── Shiftless Guard ──────────────────────────────────────────────
+        // إذا لم يكن للموظف وردية والوضع يسمح بالحضور بدونها،
+        // نتخطى جميع قواعد التحقق المبنية على الشيفت.
+        // AttendanceHandler سيُفوِّض إلى ShiftlessAttendanceHandler
+        // الذي يملك قواعد التحقق الخاصة به.
+        // ─────────────────────────────────────────────────────────────────
+        if ($this->shouldSkipForShiftless($employee, $requestTime, $periodId)) {
+            return;
+        }
+
         $this->validateWithContext($employee, $requestTime, $requestType, $periodId, $skipDuplicateTimestampCheck, $isRequest);
     }
 
@@ -105,5 +115,30 @@ class AttendanceValidator
             // → يتطلب تحديد نوع العملية (checkin/checkout) صراحةً
             new NearShiftEndRule($this->config),
         ];
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Shiftless Guard
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * هل يجب تخطي التحقق لأن الموظف بدون شيفت والوضع يسمح بذلك؟
+     *
+     * يتحقق من شرطين:
+     * 1. لا يوجد شيفت للموظف في هذا الوقت
+     * 2. إعداد shiftless_attendance_mode يسمح بالحضور بدون شيفت
+     */
+    private function shouldSkipForShiftless(
+        Employee $employee,
+        Carbon $requestTime,
+        ?int $periodId
+    ): bool {
+        if (!$this->config->getShiftlessAttendanceMode()->isAllowed()) {
+            return false;
+        }
+
+        $shiftInfo = $this->shiftResolver->resolve($employee, $requestTime, $this->repository, $periodId);
+
+        return $shiftInfo === null;
     }
 }

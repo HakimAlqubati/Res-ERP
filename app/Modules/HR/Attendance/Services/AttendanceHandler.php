@@ -35,6 +35,7 @@ class AttendanceHandler
         private AttendanceCalculator $calculator,
         private AttendanceRepositoryInterface $repository,
         private CreateMissedCheckoutRequestAction $createMissedCheckoutRequest,
+        private ShiftlessAttendanceHandler $shiftlessHandler,
     ) {}
 
     /**
@@ -59,7 +60,13 @@ class AttendanceHandler
         }
 
         if (!$shiftInfo) {
-            throw new NoShiftFoundException();
+            // ─── Strategy Delegation ───────────────────────────────────────
+            // لا توجد وردية للموظف في هذا الوقت.
+            // نُفوِّض للـ ShiftlessAttendanceHandler الذي يقرر بناءً على
+            // إعداد shiftless_attendance_mode: DENY / ALLOW / REQUIRE_TYPE
+            // ──────────────────────────────────────────────────────────────
+            
+            return $this->shiftlessHandler->handle($context);
         }
         $context->setShiftInfo($shiftInfo);
 
@@ -91,7 +98,6 @@ class AttendanceHandler
                 __('lang.auto_missed_checkout_request_created_success', ['default' => 'Auto-generated missed check-out request created. HR will review it shortly.'])
             );
         }
-
         // 3. حساب التأخير/المغادرة
         $context = $this->calculate($context);
 

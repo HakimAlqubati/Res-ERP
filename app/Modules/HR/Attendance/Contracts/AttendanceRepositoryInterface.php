@@ -56,6 +56,13 @@ interface AttendanceRepositoryInterface
     ): Collection;
 
     /**
+     * البحث عن سجل دخول مفتوح للموظف بدون شيفت (period_id IS NULL)
+     *
+     * يُستخدم حصراً في تدفق الحضور بدون وردية (Shiftless Attendance)
+     */
+    public function findOpenShiftlessCheckIn(int $employeeId, string $date): ?Attendance;
+
+    /**
      * البحث عن سجل حضور بالمعرف
      */
     public function find(int $id): ?Attendance;

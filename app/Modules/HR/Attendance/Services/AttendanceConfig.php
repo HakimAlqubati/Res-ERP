@@ -77,17 +77,28 @@ class AttendanceConfig
     }
 
     /**
+     * وضع تسجيل الحضور للموظفين بدون شيفت
+     *
+     * افتراضياً: DENY (لا تغيير في السلوك الحالي)
+     */
+    public function getShiftlessAttendanceMode(): \App\Modules\HR\Attendance\Enums\ShiftlessAttendanceMode
+    {
+        return \App\Modules\HR\Attendance\Enums\ShiftlessAttendanceMode::fromSetting();
+    }
+
+    /**
      * الحصول على جميع الإعدادات كمصفوفة
      */
     public function toArray(): array
     {
         return [
-            'allowed_hours_before' => $this->getAllowedHoursBefore(),
-            'allowed_hours_after' => $this->getAllowedHoursAfter(),
-            'grace_minutes' => $this->getGraceMinutes(),
-            'pre_end_hours' => $this->getPreEndHoursForCheckInOut(),
-            'lock_timeout' => $this->getLockTimeout(),
-            'lock_wait_time' => $this->getLockWaitTime(),
+            'allowed_hours_before'     => $this->getAllowedHoursBefore(),
+            'allowed_hours_after'      => $this->getAllowedHoursAfter(),
+            'grace_minutes'            => $this->getGraceMinutes(),
+            'pre_end_hours'            => $this->getPreEndHoursForCheckInOut(),
+            'lock_timeout'             => $this->getLockTimeout(),
+            'lock_wait_time'           => $this->getLockWaitTime(),
+            'shiftless_mode'           => $this->getShiftlessAttendanceMode()->value,
         ];
     }
 }
