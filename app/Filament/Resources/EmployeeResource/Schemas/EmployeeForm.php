@@ -570,6 +570,27 @@ class EmployeeForm
                                         ]),
                                 ]),
                         ]),
+                    Step::make('Last Updated')
+                        ->icon(Heroicon::CalendarDateRange)
+                        ->visibleOn(['edit', 'view'])
+                        ->schema([
+                            Grid::make(2)->columnSpanFull()->schema([
+                                Textinput::make('updated_at')
+                                    ->label(__('lang.updated_at'))
+                                    ->disabled()
+                                    ->formatStateUsing(function ($state) {
+                                        return $state ? \Carbon\Carbon::parse($state)->format('Y-m-d H:i:s') : '-';
+                                    }),
+                                Textinput::make('updated_by')
+                                    ->label('Updated By')
+                                    ->disabled()
+                                    ->formatStateUsing(function ($state) {
+                                        if (!$state) return '-';
+                                        $user = \App\Models\User::find($state);
+                                        return $user?->name ?? '-';
+                                    }),
+                            ])
+                        ])
                 ])->columnSpanFull()->skippable(),
 
             ]);
