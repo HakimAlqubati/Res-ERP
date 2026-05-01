@@ -54,7 +54,7 @@ class BranchLogRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                Section::make('Branch Assignment')
+                Section::make('Branch Assignment')->columnSpanFull()
                     ->description('Manage employee movement between branches.')
                     ->schema([
                         Select::make('branch_id')
@@ -123,6 +123,7 @@ class BranchLogRelationManager extends RelationManager
                         $data['created_by'] = auth()->id();
                         return $data;
                     })
+                    ->visible(fn() => isHakimOrAdel())
                     ->successNotificationTitle('Branch log entry created'),
             ])
             ->actions([
