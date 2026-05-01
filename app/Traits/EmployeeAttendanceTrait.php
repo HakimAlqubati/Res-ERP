@@ -281,18 +281,31 @@ trait EmployeeAttendanceTrait
             return $startValid && $endValid;
         });
 
-        if ($activePeriods->isEmpty()) {
-            return [];
-        }
-
         // 3. جلب بصمات هذا اليوم فقط (يجب استخدام values لإعادة الفهرسة وتجنب أخطاء الـ Loop)
         $attendances = $this->attendances
             ->where('check_date', $date)
             ->sortBy('id') // 👈 إجبار الترتيب بالتسلسل الصحيح
             ->values();
+
         if ($attendances->count() < 2) {
             return [];
         }
+
+        // --- NO SHIFT VIRTUAL PERIOD INJECTION ---
+        // If the employee has attendances but no active periods, they are working ad-hoc (No Shift).
+        // We inject a virtual period of 0 hours, so ALL worked hours are considered overtime.
+        if ($activePeriods->isEmpty()) {
+            $virtualPeriod = new \App\Models\WorkPeriod();
+            $virtualPeriod->id = -1;
+            $virtualPeriod->supposed_duration = '00:00';
+
+            $virtualHistory = new \App\Models\EmployeePeriodHistory();
+            $virtualHistory->period_id = -1;
+            $virtualHistory->setRelation('workPeriod', $virtualPeriod);
+
+            $activePeriods->push($virtualHistory);
+        }
+        // -----------------------------------------
 
         $totalMinutes = 0;
         $firstCheckInTime = null;
