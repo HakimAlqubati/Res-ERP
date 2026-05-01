@@ -2,19 +2,21 @@
 
 namespace App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers;
 
-use Filament\Schemas\Schema;
 use Filament\Actions\BulkActionGroup;
-use App\Models\Attendance;
-use App\Models\EmployeePeriod;
-use App\Models\EmployeePeriodHistory;
-use App\Models\WorkPeriod;
-use Filament\Forms\Components\CheckboxList;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
+use Filament\Schemas\Components\Grid;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Schemas\Components\Fieldset;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
@@ -27,65 +29,111 @@ class BranchLogRelationManager extends RelationManager
 {
     protected static string $relationship = 'branchLogs';
     protected static ?string $title = 'Branch Logs';
-    // protected static ?string $badge = count($this->ownerRecord->periods);
-       public static function getBadge(Model $ownerRecord, string $pageClass): ?string
+
+    public static function getBadge(Model $ownerRecord, string $pageClass): ?string
     {
-        // مثال: عدد الشفتات لهذا الموظف
-        return $ownerRecord->branchLogs()->count();
+        return (string) $ownerRecord->branchLogs()->count();
     }
 
     public static function getBadgeColor(Model $ownerRecord, string $pageClass): ?string
     {
-        // تقدر ترجع لون حسب الحالة
         $count = $ownerRecord->branchLogs()->count();
-
-        if ($count === 0) {
-            return 'primary';
-        }
-
-        if ($count < 3) {
-            return 'warning';
-        }
-
-        return 'success';
+        return match (true) {
+            $count === 0 => 'gray',
+            $count < 3 => 'warning',
+            default => 'success',
+        };
     }
 
     public static function getBadgeTooltip(Model $ownerRecord, string $pageClass): ?string
     {
         return "Branch Logs Count: " . $ownerRecord->branchLogs()->count();
     }
-    
+
+    public function form(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Section::make('Branch Assignment')
+                    ->description('Manage employee movement between branches.')
+                    ->schema([
+                        Select::make('branch_id')
+                            ->label('Target Branch')
+                            ->relationship('branch', 'name')
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->columnSpanFull(),
+
+                        Grid::make(2)
+                            ->schema([
+                                DatePicker::make('start_at')
+                                    ->label('Transfer Date')
+                                    ->required()
+                                    ->default(now())
+                                    ->native(false)
+                                    ->displayFormat('Y-m-d')
+                                    ->suffixIcon('heroicon-m-calendar-days'),
+
+                                DatePicker::make('end_at')
+                                    ->label('End Date (Optional)')
+                                    ->native(false)
+                                    ->displayFormat('Y-m-d')
+                                    ->afterOrEqual('start_at')
+                                    ->suffixIcon('heroicon-m-calendar-days'),
+                            ]),
+                    ])
+                    ->compact(),
+            ]);
+    }
+
     public function table(Table $table): Table
     {
-
-        // $explodeHost = explode('.', request()->getHost());
-
-        // $count = count($explodeHost);
-        // dd($this->ownerRecord,$this->ownerRecord->branch_id,$count);
         return $table
-            ->recordTitleAttribute('branch_id')
+            ->recordTitleAttribute('branch.name')
             ->striped()
-            ->defaultSort('id','desc')
-            ->columns([ 
-                TextColumn::make('id')->label('ID'),
-                TextColumn::make('branch.name')->label('Branch'),
-                TextColumn::make('start_at')->label('Start Date')
-                    ->date('Y-m-d'), // Format the date
-                TextColumn::make('end_at')->label('End Date')
+            ->defaultSort('start_at', 'desc')
+            ->columns([
+                TextColumn::make('id')->label('ID')->sortable(),
+                TextColumn::make('branch.name')
+                    ->label('Branch')
+                    ->weight('bold')
+                    ->searchable(),
+                TextColumn::make('start_at')
+                    ->label('Start Date')
                     ->date('Y-m-d')
-                    , // Allow nullable dates for ongoing records
-                TextColumn::make('createdBy.name')->label('Created By')
-                    ->searchable() // Make the creator searchable in the table
-
+                    ->sortable(),
+                TextColumn::make('end_at')
+                    ->label('End Date')
+                    ->date('Y-m-d')
+                    ->placeholder('Active/Ongoing')
+                    ->sortable(),
+                TextColumn::make('createdBy.name')
+                    ->label('Created By')
+                    ->size('xs')
+                    ->color('gray'),
             ])
             ->filters([
                 //
             ])
-           
-            
-            ->toolbarActions([
+            ->headerActions([
+                CreateAction::make()
+                    ->icon('heroicon-m-plus')
+                    ->mutateFormDataUsing(function (array $data): array {
+                        $data['created_by'] = auth()->id();
+                        return $data;
+                    })
+                    ->successNotificationTitle('Branch log entry created'),
+            ])
+            ->actions([
+                EditAction::make()
+                    ->icon('heroicon-m-pencil-square')
+                    ->successNotificationTitle('Log entry updated'),
+                DeleteAction::make(),
+            ])
+            ->bulkActions([
                 BulkActionGroup::make([
-                    // Tables\Actions\DeleteBulkAction::make(),
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
