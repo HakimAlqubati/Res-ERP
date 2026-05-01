@@ -273,26 +273,26 @@ trait EmployeeAttendanceTrait
         if ($this->overtimes->where('date', $date)->isNotEmpty()) {
             return [];
         }
-
+        
         // 2. فلترة الفترات النشطة لهذا اليوم من الـ Collection
         $activePeriods = $this->periodHistories->filter(function ($history) use ($date) {
             $startValid = is_null($history->start_date) || $history->start_date <= $date;
             $endValid = is_null($history->end_date) || $history->end_date >= $date;
             return $startValid && $endValid;
         });
-
+        
         if ($activePeriods->isEmpty()) {
-            return [];
+            // return [];
         }
-
+        
         // 3. جلب بصمات هذا اليوم فقط (يجب استخدام values لإعادة الفهرسة وتجنب أخطاء الـ Loop)
         $attendances = $this->attendances
-            ->where('check_date', $date)
-            ->sortBy('id') // 👈 إجبار الترتيب بالتسلسل الصحيح
-            ->values();
+        ->where('check_date', $date)
+        ->sortBy('id') // 👈 إجبار الترتيب بالتسلسل الصحيح
+        ->values();
         if ($attendances->count() < 2) {
             return [];
-        }
+        } 
 
         $totalMinutes = 0;
         $firstCheckInTime = null;
@@ -313,6 +313,7 @@ trait EmployeeAttendanceTrait
                 }
 
                 $totalMinutes += $in->diffInMinutes($out);
+                
 
                 // حفظ أول وقت دخول كبداية للإضافي، وتحديث آخر وقت خروج كنهاية
                 $firstCheckInTime = $firstCheckInTime ?? $in;
@@ -322,7 +323,7 @@ trait EmployeeAttendanceTrait
                 $i++;
             }
         }
-
+dd($totalMinutes);
         if ($totalMinutes === 0) {
             return [];
         }
