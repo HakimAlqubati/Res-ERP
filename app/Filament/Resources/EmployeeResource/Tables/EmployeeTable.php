@@ -827,7 +827,7 @@ class EmployeeTable
                         }
                     })
                     ->visible(fn() => isHakimOrAdel()),
-                ForceDeleteBulkAction::make()->visible(fn() => isSuperAdmin()),
+                ForceDeleteBulkAction::make()->visible(fn() => EmployeeResource::canForceDeleteAny()),
             ]);
     }
 }

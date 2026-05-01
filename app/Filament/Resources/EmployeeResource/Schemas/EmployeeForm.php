@@ -96,6 +96,17 @@ class EmployeeForm
                                                 ->required()
                                                 ->rule('email')
                                                 ->unique(column: 'email', ignoreRecord: true)
+                                                ->rules([
+                                                    fn($record) => function (string $attribute, $value, Closure $fail) use ($record) {
+                                                        $query = \App\Models\User::where('email', $value)->withTrashed();
+                                                        if ($record && $record->user_id) {
+                                                            $query->where('id', '!=', $record->user_id);
+                                                        }
+                                                        if ($query->exists()) {
+                                                            $fail("The email {$value} is already used by another user.");
+                                                        }
+                                                    },
+                                                ])
                                                 ->columnSpan(2),
 
                                             Select::make('nationality')
@@ -122,7 +133,7 @@ class EmployeeForm
                                                     'my' => [
                                                         // ماليزيا: أرقام الجوال تبدأ بـ 1
                                                         'starts_with' => ['+601'],
-                                                        'length' => 13,
+                                                        'length' => [12, 13],
                                                     ],
                                                     'ye' => [
                                                         // اليمن: تحديد دقيق للشركات (77، 73، 71، 70) ومنع أرقام الهاتف الثابت
@@ -244,12 +255,15 @@ class EmployeeForm
                                                 if (in_array($employeeType, [0, 1, 2, 3])) {
                                                     // إذا كان نوع الموظف 2، يمكن اختيار المدراء من أي فرع بشرط أن يكونوا من نوع 1 أو 2
                                                     return Employee::active()
-                                                        ->whereIn('employee_type', [1, 2])
+                                                        ->whereIn('employee_type', [1, 2, 0])
                                                         ->when(
                                                             $currentEmployeeId,
                                                             fn($query) =>
                                                             $query->where('id', '!=', $currentEmployeeId) // استبعاد الموظف الحالي إن كنا في وضع التعديل
                                                         )
+                                                        ->whereHas('user.roles', function ($query) {
+                                                            $query->whereIn('roles.id', [3, 4, 14, 16, 15]);
+                                                        })
                                                         ->pluck('name', 'id');
                                                 }
 
@@ -257,7 +271,10 @@ class EmployeeForm
                                                     // للموظفين الآخرين، تصفية حسب الفرع الحالي وأن يكون المدير من نوع 1، 2، أو 3
                                                     return Employee::active()
                                                         ->forBranch($branchId)
-                                                        ->whereIn('employee_type', [1, 2, 3])
+                                                        ->whereIn('employee_type', [1, 2, 3, 0])
+                                                        ->whereHas('user.roles', function ($query) {
+                                                            $query->whereIn('roles.id', [3, 4, 14, 16, 15]);
+                                                        })
                                                         ->when(
                                                             $currentEmployeeId,
                                                             fn($query) =>
@@ -589,6 +606,13 @@ class EmployeeForm
                                         $user = \App\Models\User::find($state);
                                         return $user?->name ?? '-';
                                     }),
+                                Textinput::make('created_at')
+                                    ->label(__('lang.created_at'))
+                                    ->disabled()
+                                    ->formatStateUsing(function ($state) {
+                                        return $state ? \Carbon\Carbon::parse($state)->format('Y-m-d H:i:s') : '-';
+                                    }),
+
                             ])
                         ])
                 ])->columnSpanFull()->skippable(),

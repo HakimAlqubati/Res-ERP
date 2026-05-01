@@ -94,7 +94,8 @@
                         const rules = this.validations[countryData.iso2];
 
                         if (rules && rules.length) {
-                            const maxDigits = rules.length - (countryData.dialCode.length + 1);
+                            const maxLengthValue = Array.isArray(rules.length) ? Math.max(...rules.length) : rules.length;
+                            const maxDigits = maxLengthValue - (countryData.dialCode.length + 1);
                             const currentDigits = input.value.replace(/\D/g, '');
 
                             // إيقاف إدخال أي رقم جديد إذا تم الوصول للحد الأقصى
@@ -110,7 +111,8 @@
                         const rules = this.validations[countryData.iso2];
 
                         if (rules && rules.length) {
-                            const maxDigits = rules.length - (countryData.dialCode.length + 1);
+                            const maxLengthValue = Array.isArray(rules.length) ? Math.max(...rules.length) : rules.length;
+                            const maxDigits = maxLengthValue - (countryData.dialCode.length + 1);
                             const currentDigits = input.value.replace(/\D/g, '');
 
                             if (currentDigits.length > maxDigits) {

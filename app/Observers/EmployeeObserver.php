@@ -32,8 +32,10 @@ class EmployeeObserver
         // تخطي إنشاء المستخدم إذا كان البريد الإلكتروني فارغاً (مثل حالة الاستيراد من Excel)
         if (!$employee->user_id && !empty($employee->email)) {
 
-            $existingUser = User::where('email', $employee->email)->first();
-            if ($existingUser) {
+            $existingUser = User::where('email', $employee->email)
+            ->withTrashed()
+            ->first();
+            if ($existingUser) { 
                 throw new Exception("The email {$employee->email} is already used by another user.");
             }
 
