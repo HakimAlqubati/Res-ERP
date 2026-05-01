@@ -39,9 +39,13 @@ class AttendanceConfig
     /**
      * دقائق السماحية للتأخير
      */
-    public function getLateArrivalGraceMinutes(): int
+    public function getLateArrivalGraceMinutes(?\App\Models\Employee $employee = null): int
     {
-        return (int) Setting::getSetting('late_attendance_grace_minutes', 0);
+        if ($employee && $employee->branch && $employee->branch->type === \App\Models\Branch::TYPE_HQ) {
+            return 30;
+        }
+
+        return (int) Setting::getSetting('late_attendance_grace_minutes', 10);
     }
 
     /**
