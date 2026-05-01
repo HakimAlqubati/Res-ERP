@@ -46,8 +46,12 @@ class PhoneInput extends Field
                             $matchedCountry = true;
 
                             // التحقق من الطول
-                            if ($length && strlen($value) !== $length) {
-                                $fail("Invalid length. Expected {$length} characters.");
+                            if ($length) {
+                                $lengths = (array) $length;
+                                if (!in_array(strlen($value), $lengths)) {
+                                    $expected = implode(' or ', $lengths);
+                                    $fail("Invalid length. Expected {$expected} characters.");
+                                }
                             }
                             break 2; // إيقاف البحث فوراً بمجرد تطابق كود الدولة
                         }
