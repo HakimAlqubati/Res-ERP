@@ -589,6 +589,13 @@ class EmployeeForm
                                         $user = \App\Models\User::find($state);
                                         return $user?->name ?? '-';
                                     }),
+                                Textinput::make('created_at')
+                                    ->label(__('lang.created_at'))
+                                    ->disabled()
+                                    ->formatStateUsing(function ($state) {
+                                        return $state ? \Carbon\Carbon::parse($state)->format('Y-m-d H:i:s') : '-';
+                                    }),
+
                             ])
                         ])
                 ])->columnSpanFull()->skippable(),
