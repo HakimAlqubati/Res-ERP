@@ -293,7 +293,7 @@ class EmployeeResource extends Resource
     }
     public static function canForceDelete(Model $record): bool
     {
-        if (isSuperAdmin()) {
+        if (isHakimOrAdel()) {
             return true;
         }
         return false;
@@ -301,7 +301,7 @@ class EmployeeResource extends Resource
 
     public static function canForceDeleteAny(): bool
     {
-        if (isSuperAdmin()) {
+        if (isHakimOrAdel()) {
             return true;
         }
         return false;
