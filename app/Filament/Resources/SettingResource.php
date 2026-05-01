@@ -147,6 +147,11 @@ class SettingResource extends Resource
                                                 ->numeric()
                                                 ->default(15)
                                                 ->required(),
+
+                                            Toggle::make("allow_attendance_without_shift")
+                                                ->label('Allow attendance without shift')
+                                                ->default(false),
+
                                             Fieldset::make()->columns(2)->columnSpanFull()->schema([
                                                 Select::make("period_allowed_to_calculate_overtime")
                                                     ->label('Overtime calculation period')

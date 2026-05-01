@@ -36,6 +36,11 @@ interface AttendanceRepositoryInterface
     public function findOpenCheckIn(int $employeeId, int $periodId, string $date): ?Attendance;
 
     /**
+     * البحث عن سجل دخول مفتوح لموظف بدون وردية (مسجلات بدون period_id)
+     */
+    public function findOpenNoShiftCheckIn(int $employeeId, string $date): ?Attendance;
+
+    /**
      * جلب سجلات الحضور اليومية للموظف
      */
     public function getDailyRecords(int $employeeId, string $date): Collection;
@@ -50,7 +55,7 @@ interface AttendanceRepositoryInterface
      */
     public function getCheckoutsForDay(
         int $employeeId,
-        int $periodId,
+        ?int $periodId,
         string $date,
         ?int $exceptId = null
     ): Collection;

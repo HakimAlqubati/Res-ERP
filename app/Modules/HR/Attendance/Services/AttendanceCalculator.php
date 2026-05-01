@@ -26,16 +26,16 @@ class AttendanceCalculator
      */
     public function calculateCheckIn(AttendanceContextDTO $context): AttendanceContextDTO
     {
-        // حماية: تأكد من وجود معلومات الوردية
+        // موظف بدون شيفت: لا توجد مقارنة زمنية، نحدد الحالة مباشرة
         if (!$context->shiftInfo) {
-            throw new \InvalidArgumentException('Shift info is required for check-in calculation.');
+            return $context->setStatus(AttendanceStatus::NO_SHIFT);
         }
 
-        $checkTime = $context->requestTime;
-        $shiftStart = $context->shiftInfo->start;
+        $checkTime    = $context->requestTime;
+        $shiftStart   = $context->shiftInfo->start;
 
         $earlyGraceMinutes = $this->config->getGraceMinutes();
-        $lateGraceMinutes = $this->config->getLateArrivalGraceMinutes($context->employee);
+        $lateGraceMinutes  = $this->config->getLateArrivalGraceMinutes($context->employee);
 
         if ($checkTime->lt($shiftStart)) {
             // الموظف حضر قبل بداية الشيفت
@@ -72,13 +72,17 @@ class AttendanceCalculator
      */
     public function calculateCheckOut(AttendanceContextDTO $context): AttendanceContextDTO
     {
-        // حماية: تأكد من وجود معلومات الوردية
+        // موظف بدون شيفت: نحسب المدة الفعلية فقط إن وجد check-in
         if (!$context->shiftInfo) {
-            throw new \InvalidArgumentException('Shift info is required for check-out calculation.');
+            if ($context->lastCheckIn) {
+                $context->actualMinutes = $this->calculateActualMinutes($context);
+            }
+
+            return $context->setStatus(AttendanceStatus::NO_SHIFT);
         }
 
         $checkTime = $context->requestTime;
-        $shiftEnd = $context->shiftInfo->end;
+        $shiftEnd  = $context->shiftInfo->end;
 
         // حساب المدة الفعلية إذا كان هناك سجل دخول
         if ($context->lastCheckIn) {

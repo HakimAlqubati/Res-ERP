@@ -158,10 +158,10 @@ class AttendanceContextDTO
     {
         return [
             'employee_id' => $this->employee->id,
-            'period_id' => $this->workPeriod?->id,
-            'check_date' => $this->shiftDate,
-            'check_time' => $this->requestTime->toTimeString(),
-            'day' => $this->shiftDayName,
+            'period_id'   => $this->workPeriod?->id,
+            'check_date'  => $this->shiftDate ?? $this->requestTime->toDateString(),
+            'check_time'  => $this->requestTime->toTimeString(),
+            'day'         => $this->shiftDayName ?? strtolower($this->requestTime->format('D')),
             'check_type' => $this->checkType?->value,
             'branch_id' => $this->employee->branch_id,
             'created_by' => auth()->id() ?? 0,
