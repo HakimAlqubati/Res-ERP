@@ -528,7 +528,6 @@ class OvertimeService
             foreach ($employees as $employee) {
                 // استدعاء دالة الحساب التي تعمل على الـ Collections المحملة مسبقاً
                 $result = $employee->calculateOvertimeInMemory($dateString, $allowedOffset, $halfHourRule);
-                dd($result,$dateString,$allowedOffset,$halfHourRule);
                 if (!empty($result)) {
                     $dailyOvertime[] = [
                         'employee_id' => $employee->id,
