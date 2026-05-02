@@ -361,7 +361,7 @@ class OvertimeService
     public function getOvertime(array $filters = [])
     {
         $query = EmployeeOvertime::query()
-            ->with(['employee:id,name', 'approvedBy:id,name', 'createdBy:id,name','rejectedBy:id,name']);
+            ->with(['employee:id,name', 'approvedBy:id,name', 'createdBy:id,name', 'rejectedBy:id,name']);
 
         if (isset($filters['employee_id'])) {
             $query->where('employee_id', $filters['employee_id']);
@@ -516,7 +516,7 @@ class OvertimeService
                 }
             ])
             ->get();
-
+        dd($employees);
         $groupedOvertime = [];
         $periodDates = \Carbon\CarbonPeriod::create($fromDate, $toDate);
 
