@@ -491,7 +491,7 @@ class OvertimeService
         // 2. التحميل المسبق (Eager Loading) لكل البيانات المطلوبة بنطاق التواريخ
         $employees = Employee::where('branch_id', $branchId)
             ->where('active', 1)
-            ->where('id',89)
+            ->where('id', 89)
             ->with([
 
                 'attendances' => function ($query) use ($fromDate, $toDate) {
@@ -517,7 +517,6 @@ class OvertimeService
                 }
             ])
             ->get();
-        dd($employees);
         $groupedOvertime = [];
         $periodDates = \Carbon\CarbonPeriod::create($fromDate, $toDate);
 
@@ -529,7 +528,7 @@ class OvertimeService
             foreach ($employees as $employee) {
                 // استدعاء دالة الحساب التي تعمل على الـ Collections المحملة مسبقاً
                 $result = $employee->calculateOvertimeInMemory($dateString, $allowedOffset, $halfHourRule);
-
+                dd($result);
                 if (!empty($result)) {
                     $dailyOvertime[] = [
                         'employee_id' => $employee->id,
