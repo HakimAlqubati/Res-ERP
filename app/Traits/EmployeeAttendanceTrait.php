@@ -345,12 +345,12 @@ trait EmployeeAttendanceTrait
         foreach ($activePeriods as $history) {
             $period = $history->workPeriod;
             if (!$period) continue;
-dd('sdf');
             [$hours, $minutes] = explode(':', $period->supposed_duration);
             $supposedDurationMinutes = ((int)$hours * 60) + (int)$minutes;
-
+            
             if ($totalMinutes >= ($supposedDurationMinutes + $allowedOffset)) {
                 $overtimeMinutes = $totalMinutes - $supposedDurationMinutes;
+                dd('sdf');
 
                 // 👈 هنا الحل: استخدام معادلتك الأصلية لإجبار التقريب لأقرب نصف ساعة دائماً
                 $overtimeHours = round(($overtimeMinutes / 60) * 2) / 2;
