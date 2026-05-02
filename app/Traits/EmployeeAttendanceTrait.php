@@ -347,7 +347,7 @@ trait EmployeeAttendanceTrait
             if (!$period) continue;
             [$hours, $minutes] = explode(':', $period->supposed_duration);
             $supposedDurationMinutes = ((int)$hours * 60) + (int)$minutes;
-            
+            dd($totalMinutes,$supposedDurationMinutes,$allowedOffset);
             if ($totalMinutes >= ($supposedDurationMinutes + $allowedOffset)) {
                 $overtimeMinutes = $totalMinutes - $supposedDurationMinutes;
                 dd('sdf');
