@@ -345,7 +345,7 @@ trait EmployeeAttendanceTrait
         foreach ($activePeriods as $history) {
             $period = $history->workPeriod;
             if (!$period) continue;
-
+dd('sdf');
             [$hours, $minutes] = explode(':', $period->supposed_duration);
             $supposedDurationMinutes = ((int)$hours * 60) + (int)$minutes;
 
