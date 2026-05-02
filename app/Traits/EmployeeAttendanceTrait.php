@@ -281,6 +281,7 @@ trait EmployeeAttendanceTrait
             return $startValid && $endValid;
         });
 
+        dd($activePeriods, $this->periodHistories, $date);
         // 3. جلب بصمات هذا اليوم فقط (يجب استخدام values لإعادة الفهرسة وتجنب أخطاء الـ Loop)
         $attendances = $this->attendances
             ->where('check_date', $date)

@@ -195,8 +195,9 @@ class ListEmployeeOvertimes extends ListRecords
                             ->label('Date')
                             ->required()
                             ->default(now())
-                            ->native(false)
-                            ->displayFormat('Y-m-d'),
+                            // ->native(false)
+                            // ->displayFormat('Y-m-d')
+                            ,
                         \Filament\Forms\Components\Select::make('branch_id')
                             ->label('Branch')
                             ->options(\App\Models\Branch::active()->pluck('name', 'id'))
