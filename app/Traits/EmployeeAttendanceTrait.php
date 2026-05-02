@@ -363,7 +363,15 @@ trait EmployeeAttendanceTrait
                 // حساب التنسيق النصي بنفس طريقتك الأصلية
                 $remainingMinutes = $overtimeMinutes % 60;
                 $formattedOvertime = "{$overtimeHours} h {$remainingMinutes} m";
-
+                dd([
+                    'employee_id'               => $this->id,
+                    'period_id'                 => $period->id,
+                    'supposed_duration_minutes' => (int) $overtimeMinutes,
+                    'overtime_hours'            => $overtimeHours, // 👈 النتيجة الآن ستتطابق
+                    'overtime'                  => $formattedOvertime,
+                    'overtime_start_time'       => $firstCheckInTime?->toTimeString(),
+                    'overtime_end_time'         => $lastCheckOutTime?->toTimeString(),
+                ]);
                 return [
                     'employee_id'               => $this->id,
                     'period_id'                 => $period->id,
