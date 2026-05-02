@@ -41,6 +41,6 @@ class StockAdjustmentReason extends Model implements Auditable
      */
     public static function getFirstId()
     {
-        return self::query()->value('id');
+        return self::query()->active()->value('id');
     }
 }

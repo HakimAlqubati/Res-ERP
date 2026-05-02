@@ -266,7 +266,8 @@ class DetailsRelationManager extends RelationManager
                         return [
                             Grid::make()->columns(2)->columnSpanFull()->schema([
                                 Select::make('reason_id')
-                                    ->label('Reason')->default(StockAdjustmentReason::getFirstId())
+                                    ->label('Reason')
+                                    ->default(StockAdjustmentReason::getFirstId())
                                     ->options(StockAdjustmentReason::active()->pluck('name', 'id'))->searchable()
                                     ->required()
                                     ->live()

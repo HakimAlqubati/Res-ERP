@@ -115,14 +115,7 @@ class ProductCostingService
             }
         }
 
-        // Update unit prices after updating all component prices
-        $finalPrice = $product->productItems->sum('total_price_after_waste') ?? 0;
-
-        foreach ($product->unitPrices as $unitPrice) {
-            $packageSize = $unitPrice->package_size ?: 1;
-            $unitPrice->price = round($packageSize * $finalPrice, 2);
-            $unitPrice->save();
-        }
+        self::recalculateManufacturingProductFromItems($productId);
 
         return $updatedCount;
     }
@@ -177,15 +170,31 @@ class ProductCostingService
             $updatedCount++;
         }
 
-        // تحديث سعر المنتج المركب بعد تحديث المكونات
-        $finalPrice = $product->productItems->sum('total_price_after_waste') ?? 0;
+        self::recalculateManufacturingProductFromItems($product->id);
+
+        return $updatedCount;
+    }
+
+    public static function recalculateManufacturingProductFromItems(int $productId): void
+    {
+        $product = Product::with(['productItems', 'unitPrices'])->find($productId);
+
+        if (! $product || ! $product->is_manufacturing) {
+            return;
+        }
+
+        $finalPrice = (float) ($product->productItems->sum('total_price_after_waste') ?? 0);
 
         foreach ($product->unitPrices as $unitPrice) {
             $packageSize = $unitPrice->package_size ?: 1;
-            $unitPrice->price = round($packageSize * $finalPrice, 2);
+            $newPrice = round($packageSize * $finalPrice, 2);
+
+            if (round((float) $unitPrice->price, 2) === $newPrice) {
+                continue;
+            }
+
+            $unitPrice->price = $newPrice;
             $unitPrice->save();
         }
-
-        return $updatedCount;
     }
 }

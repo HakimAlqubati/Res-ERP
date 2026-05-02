@@ -57,10 +57,10 @@ class EquipmentController extends Controller
         try {
             $data = $req->validated();
 
-            if (empty($data['asset_tag'])) {
-                $data['asset_tag'] = app(\App\Services\HR\Maintenance\AssetTagGenerator::class)
-                    ->generate($data['type_id']);
-            }
+            // if (empty($data['asset_tag'])) {
+            //     $data['asset_tag'] = app(\App\Services\HR\Maintenance\AssetTagGenerator::class)
+            //         ->generate($data['type_id']);
+            // }
 
             $eq = DB::transaction(function () use ($data) {
                 $eq = Equipment::create($data);

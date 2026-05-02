@@ -358,6 +358,7 @@ return [
   'exempt_from_late_attendance_deduction' => 'معفى من خصم التأخير',
   'is_mtd_applicable' => 'خاضع لـMTD',
   'has_auto_weekly_leave' => 'إجازة أسبوعية تلقائية',
+  'can_add_branch_order' => 'يمكنه إضافة طلب فرع',
 
   // ===========================================
   // HRMS - Attendance & Shifts
@@ -365,6 +366,7 @@ return [
   'attendance' => 'الحضور',
   'shift' => 'الوردية',
   'shifts' => 'الورديات',
+  'shift_id' => 'رقم الوردية',
   'shift_rfid' => 'الوردية - RFID',
   'employee_rfid' => 'RFID الموظف',
   'rfid' => 'RFID',
@@ -620,7 +622,8 @@ return [
   'basic_data' => 'البيانات الأساسية',
   'images' => 'الصور',
   'branch_area' => 'منطقة الفرع',
-  'equipment' => 'المعدات',
+  'equipment' => 'المعدة',
+  'equipments' => 'المعدات',
   'description_helper' => 'وصف طلب الخدمة',
   'to_reassign_go_to_table' => 'لإعادة التعيين، اذهب إلى صفحة الجدول',
   'urgency' => 'الاستعجال',
@@ -1126,4 +1129,6 @@ return [
   'attendance_type' => 'نوع التحضير',
   'cannot_process_financial_clearance' => 'لا يمكن إتمام المخالصة المالية. الموظف لديه أقساط سلف غير مدفوعة تبلغ: :amount',
   'approved_successfully' => 'تمت الموافقة بنجاح',
+  'auto_missed_checkout_request_created_success' => 'تم إنشاء طلب انصراف تلقائياً لعدم وجود بصمة حضور سابقة، يرجى مراجعته مع الموارد البشرية.',
+  'auto_generated_reason_missing_checkin' => 'تم الإنشاء تلقائياً بسبب تسجيل انصراف بدون بصمة دخول سابقة',
 ];

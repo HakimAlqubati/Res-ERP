@@ -71,7 +71,7 @@ class WorkPeriodResource extends Resource
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
 
-    protected static function getFormSchema(): array
+    public static function getFormSchema($branchId = null): array
     {
         return [
 
@@ -99,6 +99,8 @@ class WorkPeriodResource extends Resource
                                 Branch::TYPE_HQ
                             ])->select('name', 'id')->get()->pluck('name', 'id'))
                         ->label(__('lang.branch'))->required()
+                        ->default($branchId) // تعيين القيمة الافتراضية
+                        ->hidden($branchId !== null)
                         ->searchable(),
                     Toggle::make('active')
                         ->label(__('lang.active'))
@@ -345,7 +347,7 @@ class WorkPeriodResource extends Resource
         return false;
     }
 
- 
+
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery()

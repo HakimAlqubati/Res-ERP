@@ -25,21 +25,10 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
     private $processedRowsCount = 0;
     private $currentRowNumber = 1;
     private $importErrors = [];
-    private $lastEmployeeId = null;
     private $userTypesCache = [];
     private $managerMappings = [];
 
-    /**
-     * الحصول على الرقم الوظيفي التالي
-     */
-    private function getNextEmployeeNo(): int
-    {
-        if ($this->lastEmployeeId === null) {
-            $this->lastEmployeeId = Employee::withTrashed()->latest('id')->first()?->id ?? 0;
-        }
-        $this->lastEmployeeId++;
-        return $this->lastEmployeeId;
-    }
+
 
     /**
      * تحويل الاسم إلى معرف نوع المستخدم (UserType)
@@ -159,10 +148,7 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
 
             $this->processedRowsCount++;
 
-            // توليد رقم الموظف آلياً بشكل تصاعدي
-            $employeeNo = $this->getNextEmployeeNo();
-
-            return Employee::withoutEvents(function () use ($row, $joinDate, $employeeNo) {
+            return Employee::withoutEvents(function () use ($row, $joinDate) {
                 $data = [
                     'name' => $row['name'],
                     'phone_number' => $row['phone_number'] ?? null,
@@ -176,11 +162,26 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
                     'join_date' => $joinDate,
                     'working_days' => $row['working_days'] ?? null,
                     'working_hours' => $row['working_hours'] ?? null,
-                    'employee_no' => $employeeNo,
                     'employee_type' => $this->parseEmployeeType($row['roletype'] ?? null),
                 ];
 
                 $employee = Employee::create($data);
+
+                // تحديث رقم الموظف ليكون نفس ال id
+                $employee->update(['employee_no' => $employee->id]);
+
+                // إنشاء حساب مستخدم مرتبط للموظف
+                $employee->createLinkedUser();
+
+                // إضافة سجل الفرع (Branch Log)
+                if ($employee->branch_id) {
+                    $employee->branchLogs()->create([
+                        'branch_id'  => $employee->branch_id,
+                        'start_at'   => $employee->join_date ?? now(),
+                        'end_at'     => null,
+                        'created_by' => auth()->id(),
+                    ]);
+                }
 
                 // حفظ اسم المدير للمراجعة في المرحلة الثانية
                 $this->managerMappings[$row['name']] = $row['manager'] ?? null;

@@ -25,12 +25,12 @@ class EquipmentForm
     /**
      * Configure the form schema
      */
-    public static function configure(Schema $schema): Schema
+    public static function configure(Schema $schema, $branchId = null): Schema
     {
         return $schema
             ->components([
                 Wizard::make([
-                    static::getBasicDataStep(),
+                    static::getBasicDataStep($branchId),
                     static::getDatesStep(),
                     static::getImagesStep(),
                 ])->skippable()->columnSpanFull(),
@@ -40,7 +40,7 @@ class EquipmentForm
     /**
      * Step 1: Basic Data - البيانات الأساسية
      */
-    public static function getBasicDataStep(): Step
+    public static function getBasicDataStep($branchId = null): Step
     {
         return Step::make('Basic data')
             ->icon('heroicon-o-bars-3-center-left')
@@ -85,7 +85,9 @@ class EquipmentForm
                                 ->select('id', 'name')
                                 ->get()
                                 ->pluck('name', 'id'))
-                            ->required()->live()->prefixIcon('heroicon-s-ellipsis-horizontal')->prefixIconColor('primary'),
+                            ->required()->live()->prefixIcon('heroicon-s-ellipsis-horizontal')->prefixIconColor('primary')
+                            ->default($branchId)
+                            ->hidden($branchId !== null),
                         Select::make('branch_area_id')
                             ->required()
                             ->label('Branch area')

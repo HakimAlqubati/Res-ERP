@@ -65,7 +65,32 @@ class Employee extends Model implements Auditable
         'has_auto_weekly_leave',
         'birthday',
         'salary_allocation_rule',
+        'can_add_branch_order',
+        'created_by',
+        'updated_by',
     ];
+
+    // ─────────────────────────────────────────────────────────────
+    // Boot
+    // ─────────────────────────────────────────────────────────────
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function (self $model) {
+            if (auth()->check()) {
+                $model->created_by = $model->created_by ?? auth()->id();
+                $model->updated_by = $model->updated_by ?? auth()->id();
+            }
+        });
+
+        static::updating(function (self $model) {
+            if (auth()->check()) {
+                $model->updated_by = auth()->id();
+            }
+        });
+    }
 
     protected $auditInclude = [
         'name',
@@ -102,6 +127,7 @@ class Employee extends Model implements Auditable
         'is_mtd_applicable',
         'has_auto_weekly_leave',
         'birthday',
+        'can_add_branch_order',
     ];
 
     protected $casts = [
@@ -109,8 +135,23 @@ class Employee extends Model implements Auditable
         'changes'                => 'array',
         'is_mtd_applicable'      => 'boolean',
         'has_auto_weekly_leave'  => 'boolean',
+        'can_add_branch_order'   => 'boolean',
         'salary_allocation_rule' => \App\Enums\HR\Payroll\SalaryAllocationRule::class,
     ];
+
+    // ─────────────────────────────────────────────────────────────
+    // Relationships
+    // ─────────────────────────────────────────────────────────────
+
+    public function createdBy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'created_by');
+    }
+
+    public function updatedBy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'updated_by');
+    }
 
     // ─────────────────────────────────────────────────────────────
     // Helpers

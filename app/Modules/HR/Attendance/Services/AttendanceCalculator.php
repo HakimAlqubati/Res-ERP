@@ -33,9 +33,9 @@ class AttendanceCalculator
 
         $checkTime = $context->requestTime;
         $shiftStart = $context->shiftInfo->start;
-        
+
         $earlyGraceMinutes = $this->config->getGraceMinutes();
-        $lateGraceMinutes = $this->config->getLateArrivalGraceMinutes();
+        $lateGraceMinutes = $this->config->getLateArrivalGraceMinutes($context->employee);
 
         if ($checkTime->lt($shiftStart)) {
             // الموظف حضر قبل بداية الشيفت

@@ -17,6 +17,7 @@ class EmployeeRewardResource extends JsonResource
         return [
             'id'              => $this->id,
             'employee_id'     => $this->employee_id,
+            'branch_id'     => $this->branch_id,
             'employee_name'   => $this->employee?->name,
             'incentive_id'    => $this->incentive_id,
             'reward_type'     => $this->rewardType?->name,

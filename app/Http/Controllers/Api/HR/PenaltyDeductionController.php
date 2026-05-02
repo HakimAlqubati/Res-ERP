@@ -23,7 +23,7 @@ class PenaltyDeductionController extends Controller
     public function index(Request $request)
     {
         $penalties = $this->penaltyService->getPenaltiesList(
-            $request->only(['employee_id', 'year', 'month', 'status', 'q']),
+            $request->only(['employee_id', 'year', 'month', 'status', 'q','branch_id']),
             $request->integer('per_page', 15)
         );
 
@@ -62,10 +62,77 @@ class PenaltyDeductionController extends Controller
         if (!$penalty) {
             return response()->json([
                 'success' => false,
-                'message' => 'Penalty deduction not found.',
+                'message' => __('Penalty deduction not found.'),
             ], 404);
         }
 
         return new PenaltyDeductionResource($penalty);
+    }
+
+    /**
+     * Approve the specified penalty deduction.
+     *
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function approve($id)
+    {
+        try {
+            $penalty = $this->penaltyService->approvePenalty($id, auth()->id());
+
+            if (!$penalty) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('Penalty deduction not found.'),
+                ], 404);
+            }
+
+            return (new PenaltyDeductionResource($penalty))
+                ->additional([
+                    'success' => true,
+                    'message' => __('Penalty deduction approved successfully.'),
+                ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Reject the specified penalty deduction.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function reject(Request $request, $id)
+    {
+        $request->validate([
+            'rejected_reason' => 'required|string|max:500',
+        ]);
+
+        try {
+            $penalty = $this->penaltyService->rejectPenalty($id, auth()->id(), $request->input('rejected_reason'));
+
+            if (!$penalty) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('Penalty deduction not found.'),
+                ], 404);
+            }
+
+            return (new PenaltyDeductionResource($penalty))
+                ->additional([
+                    'success' => true,
+                    'message' => __('Penalty deduction rejected successfully.'),
+                ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
     }
 }

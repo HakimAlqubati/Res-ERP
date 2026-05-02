@@ -20,12 +20,18 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class AreasRelationManager extends RelationManager
 {
     protected static string $relationship = 'areas';
 
+    public static function getBadge(Model $ownerRecord, string $pageClass): ?string
+    {
+        // مثال: عدد الشفتات لهذا الموظف
+        return $ownerRecord->areas()->count();
+    }
     public function form(Schema $schema): Schema
     {
         return $schema

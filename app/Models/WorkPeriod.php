@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class WorkPeriod extends Model implements Auditable
@@ -120,6 +121,9 @@ class WorkPeriod extends Model implements Auditable
     protected static function booted()
     {
         static::creating(function ($workPeriod) {
+            if(empty($workPeriod->created_by)){
+                $workPeriod->created_by = Auth::user()->id;
+            }
             if (empty($workPeriod->days)) {
                 $workPeriod->days = json_encode(['sat', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri']);
             }
@@ -142,6 +146,11 @@ class WorkPeriod extends Model implements Auditable
             'id',                   // Local key on WorkPeriod
             'id'                    // Local key on EmployeePeriod
         );
+    }
+
+    public function employeePeriods()
+    {
+        return $this->hasMany(EmployeePeriod::class, 'period_id');
     }
 
     public static function calculateDayAndNight($startAt, $endAt): bool

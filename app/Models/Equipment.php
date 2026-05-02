@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource\Services\EquipmentCodeGenerator;
 use App\Models\Traits\HR\Maintenance\HasEquipmentLogs;
 use App\Traits\Scopes\BranchScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -126,20 +127,24 @@ class Equipment extends Model implements Auditable, HasMedia
         static::creating(function ($equipment) {
             $equipment->created_by = Auth::id();
             $equipment->qr_code = 'QR-' . date('YmdHis') . '-' . Auth::id();
+            if (empty($equipment->asset_tag) && isset($equipment->type_id)) {
+              $equipment->asset_tag =  EquipmentCodeGenerator::generate($equipment->type_id);
+             }
         });
 
         static::created(function ($equipment) {
             $equipment->addLog(
                 EquipmentLog::ACTION_CREATED,
-                'Equipment created',
+                "Equipment registered in the system (Asset Tag: " . ($equipment->asset_tag ?? 'N/A') . ")",
                 $equipment->created_by
             );
         });
         static::updated(function ($equipment) {
+            $changedFields = implode(', ', array_diff(array_keys($equipment->getDirty()), ['updated_at']));
             EquipmentLog::create([
                 'equipment_id' => $equipment->id,
                 'action'       => EquipmentLog::ACTION_UPDATED,
-                'description'  => 'Equipment updated',
+                'description'  => $changedFields ? "Equipment profile modified (Updates: {$changedFields})" : "Equipment profile modified",
                 'performed_by' => auth()->id(),
             ]);
         });

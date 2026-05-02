@@ -23,6 +23,7 @@ class MissedCheckOutRequest extends Model implements Auditable, HasMedia
         'date',
         'time',
         'reason',
+        'is_auto_generated',
     ];
     protected $auditInclude = [
         'application_id',

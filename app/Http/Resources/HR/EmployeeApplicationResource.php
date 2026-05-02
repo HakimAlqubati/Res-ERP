@@ -34,6 +34,7 @@ class EmployeeApplicationResource extends JsonResource
             'advanceRequest'    => $this->advanceRequest,
             'missedCheckinRequest'    => $this->missedCheckinRequest,
             'missedCheckoutRequest'    => $this->missedCheckoutRequest,
+            'mealRequest'           => $this->mealRequest,
             'images'            => $this->getMedia('images')->map(fn($media) => $media->getFullUrl()),
             'files'             => $this->getMedia('files')->map(fn($media) => $media->getFullUrl()),
             'createdAt'         => $this->created_at?->toDateTimeString(),

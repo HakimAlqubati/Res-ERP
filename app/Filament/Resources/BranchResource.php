@@ -2,6 +2,9 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\BranchResource\RelationManagers\WorkPeriodsRelationManager;
+use App\Filament\Resources\BranchResource\RelationManagers\EmployeesRelationManager;
+use App\Filament\Resources\BranchResource\RelationManagers\EquipmentsRelationManager;
 use Filament\Schemas\Schema;
 
 
@@ -63,6 +66,9 @@ class BranchResource extends Resource
     {
         return [
             AreasRelationManager::class,
+            WorkPeriodsRelationManager::class,
+            EmployeesRelationManager::class,
+            EquipmentsRelationManager::class,
         ];
     }
 

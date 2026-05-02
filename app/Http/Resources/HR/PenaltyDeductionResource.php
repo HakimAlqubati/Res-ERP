@@ -17,6 +17,7 @@ class PenaltyDeductionResource extends JsonResource
         return [
             'id'              => $this->id,
             'employee_id'      => $this->employee_id,
+            'branch_id'      => $this->branch_id,
             'employee_name'    => $this->employee?->name,
             'employeeName' => $this->employee?->name,
             'deduction_id'    => $this->deduction_id,

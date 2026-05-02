@@ -24,7 +24,7 @@ class StoreEquipmentRequest extends FormRequest
             'service_interval_days' => ['nullable', 'integer', 'min:0'],
             'last_serviced' => ['nullable', 'date'],
             'next_service_date' => ['nullable', 'date'],
-            'warranty_years' => ['required', 'integer', 'min:1'],
+            'warranty_years' => ['required', 'numeric', 'min:1'],
             'warranty_end_date' => ['nullable', 'date'],
             'purchase_price' => ['nullable', 'numeric'],
             'model' => ['nullable', 'string'],

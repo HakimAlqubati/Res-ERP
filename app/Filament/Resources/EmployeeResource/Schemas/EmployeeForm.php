@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\EmployeeResource\Schemas;
 
-
+use App\Filament\Forms\Components\PhoneInput;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
@@ -38,7 +38,7 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 class EmployeeForm
 {
 
-    public static function configure(Schema $schema): Schema
+    public static function configure(Schema $schema, $branchId = null): Schema
     {
         return $schema
             ->components([
@@ -60,7 +60,9 @@ class EmployeeForm
                                                 ->dehydrateStateUsing(fn($state) => preg_replace('/\s+/u', ' ', trim((string) $state)))
                                                 ->extraInputAttributes(function ($record) {
                                                     if ($record && !$record->active) {
-                                                        return ['style' => 'color: #ef4444 !important; font-weight: bold;'];
+                                                        return [
+                                                            'style' => 'color: #ef4444 !important; -webkit-text-fill-color: #ef4444 !important; font-weight: bold;'
+                                                        ];
                                                     }
                                                     return [];
                                                 })
@@ -94,6 +96,17 @@ class EmployeeForm
                                                 ->required()
                                                 ->rule('email')
                                                 ->unique(column: 'email', ignoreRecord: true)
+                                                ->rules([
+                                                    fn($record) => function (string $attribute, $value, Closure $fail) use ($record) {
+                                                        $query = \App\Models\User::where('email', $value)->withTrashed();
+                                                        if ($record && $record->user_id) {
+                                                            $query->where('id', '!=', $record->user_id);
+                                                        }
+                                                        if ($query->exists()) {
+                                                            $fail("The email {$value} is already used by another user.");
+                                                        }
+                                                    },
+                                                ])
                                                 ->columnSpan(2),
 
                                             Select::make('nationality')
@@ -104,11 +117,33 @@ class EmployeeForm
                                                 ->searchable()
                                                 ->columnSpan(1),
 
-                                            TextInput::make('phone_number')
+                                            PhoneInput::make('phone_number')
                                                 ->label(__('lang.phone_number'))
                                                 ->unique(ignoreRecord: true)
                                                 ->columnSpan(1)
-                                                ->maxLength(18)->minLength(8),
+                                                // ->required()
+                                                ->defaultCountry('my') // اليمن كدولة افتراضية
+                                                ->onlyCountries(['sa', 'ye', 'ae', 'my']) // حصر القائمة في السعودية، اليمن، والإمارات
+                                                ->countryValidations([
+                                                    'sa' => [
+                                                        // السعودية: يجب أن يبدأ بـ 5
+                                                        'starts_with' => ['+9665'],
+                                                        'length' => 13,
+                                                    ],
+                                                    'my' => [
+                                                        // ماليزيا: أرقام الجوال تبدأ بـ 1
+                                                        'starts_with' => ['+601'],
+                                                        'length' => [12, 13],
+                                                    ],
+                                                    'ye' => [
+                                                        // اليمن: تحديد دقيق للشركات (77، 73، 71، 70) ومنع أرقام الهاتف الثابت
+                                                        'starts_with' => ['+96777', '+96773', '+96771', '+96770'],
+                                                        'length' => 13,
+                                                    ],
+                                                    []
+                                                ])
+                                            // ->maxLength(18)->minLength(8)
+                                            ,
 
                                             Select::make('gender')
                                                 ->label(__('lang.gender'))
@@ -182,6 +217,8 @@ class EmployeeForm
                                                 $set('manager_id', null);
                                             })
                                             ->disabledOn('edit')
+                                            ->default($branchId)
+                                            ->hidden($branchId !== null)
                                             ->options(
                                                 Branch::query()
                                                     ->select('id', 'name')
@@ -218,12 +255,15 @@ class EmployeeForm
                                                 if (in_array($employeeType, [0, 1, 2, 3])) {
                                                     // إذا كان نوع الموظف 2، يمكن اختيار المدراء من أي فرع بشرط أن يكونوا من نوع 1 أو 2
                                                     return Employee::active()
-                                                        ->whereIn('employee_type', [1, 2])
+                                                        ->whereIn('employee_type', [1, 2, 0])
                                                         ->when(
                                                             $currentEmployeeId,
                                                             fn($query) =>
                                                             $query->where('id', '!=', $currentEmployeeId) // استبعاد الموظف الحالي إن كنا في وضع التعديل
                                                         )
+                                                        ->whereHas('user.roles', function ($query) {
+                                                            $query->whereIn('roles.id', [3, 4, 14, 16, 15]);
+                                                        })
                                                         ->pluck('name', 'id');
                                                 }
 
@@ -231,7 +271,10 @@ class EmployeeForm
                                                     // للموظفين الآخرين، تصفية حسب الفرع الحالي وأن يكون المدير من نوع 1، 2، أو 3
                                                     return Employee::active()
                                                         ->forBranch($branchId)
-                                                        ->whereIn('employee_type', [1, 2, 3])
+                                                        ->whereIn('employee_type', [1, 2, 3, 0])
+                                                        ->whereHas('user.roles', function ($query) {
+                                                            $query->whereIn('roles.id', [3, 4, 14, 16, 15]);
+                                                        })
                                                         ->when(
                                                             $currentEmployeeId,
                                                             fn($query) =>
@@ -277,6 +320,9 @@ class EmployeeForm
                                             ->extraInputAttributes(['onkeypress' => 'return event.charCode >= 48 && event.charCode <= 57'])
                                         // ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee')
                                         ,
+                                        Toggle::make('can_add_branch_order')->columnSpan(1)
+                                            ->disabled(fn(): bool => isBranchManager())
+                                            ->label(__('lang.can_add_branch_order'))->default(0)->inline(false),
 
                                     ]),
                                 ]),
@@ -320,6 +366,7 @@ class EmployeeForm
                                                 ->label(__('lang.attach_file'))
                                                 ->downloadable()
                                                 ->previewable()
+                                                ->maxSize(20000)
                                                 // ->required()
                                                 ->imageEditor()
                                                 ->circleCropper(),
@@ -540,6 +587,34 @@ class EmployeeForm
                                         ]),
                                 ]),
                         ]),
+                    Step::make('Last Updated')
+                        ->icon(Heroicon::CalendarDateRange)
+                        ->visibleOn(['edit', 'view'])
+                        ->schema([
+                            Grid::make(2)->columnSpanFull()->schema([
+                                Textinput::make('updated_at')
+                                    ->label(__('lang.updated_at'))
+                                    ->disabled()
+                                    ->formatStateUsing(function ($state) {
+                                        return $state ? \Carbon\Carbon::parse($state)->format('Y-m-d H:i:s') : '-';
+                                    }),
+                                Textinput::make('updated_by')
+                                    ->label('Updated By')
+                                    ->disabled()
+                                    ->formatStateUsing(function ($state) {
+                                        if (!$state) return '-';
+                                        $user = \App\Models\User::find($state);
+                                        return $user?->name ?? '-';
+                                    }),
+                                Textinput::make('created_at')
+                                    ->label(__('lang.created_at'))
+                                    ->disabled()
+                                    ->formatStateUsing(function ($state) {
+                                        return $state ? \Carbon\Carbon::parse($state)->format('Y-m-d H:i:s') : '-';
+                                    }),
+
+                            ])
+                        ])
                 ])->columnSpanFull()->skippable(),
 
             ]);
@@ -565,12 +640,22 @@ class EmployeeForm
             ])
             // ->disk('s3') // Change disk to S3
             ->directory('employees')
-            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                return Str::random(15) . "." . $file->getClientOriginalExtension();
+            ->saveUploadedFileUsing(function (TemporaryUploadedFile $file): string {
+                try {
+                    $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+                    $img = $manager->read($file->get());
+                    $img->scaleDown(width: 1200);
+                    $encodedImage = $img->toJpeg(70);
+                    $filename = 'employees/' . Str::random(15) . '.jpeg';
+                    \Illuminate\Support\Facades\Storage::disk('s3')->put($filename, (string) $encodedImage, 'public');
+                    return $filename;
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Avatar Upload Error: ' . $e->getMessage());
+                    throw $e;
+                }
             })
             // ->imagePreviewHeight('250')
-            // ->resize(5)
-            ->maxSize(1000)
+            ->maxSize(20000)
             ->columnSpan(2)
             ->reactive();
     }

@@ -40,7 +40,8 @@ trait HasNewUserForm
                 Grid::make()->columns(3)->columnSpanFull()->schema([
                     Fieldset::make()->columnSpanFull()->label('Personal data')->schema([
                         TextInput::make('name')->required()->unique(ignoreRecord: true),
-                        TextInput::make('email')->required()->unique(ignoreRecord: true)->email()->required(),
+                        TextInput::make('email')->required()->unique(ignoreRecord: true)
+                            ->email()->required(),
                         TextInput::make('phone_number')
                             ->unique(ignoreRecord: true)
                             ->columnSpan(1)
@@ -101,8 +102,8 @@ trait HasNewUserForm
                             ->label('User type')
                             ->options(function () {
                                 return
-                                 [0 => 'All'] +
-                                 UserType::select('name', 'id')->get()->pluck('name', 'id')->toArray();
+                                    [0 => 'All'] +
+                                    UserType::select('name', 'id')->get()->pluck('name', 'id')->toArray();
                             })
                             ->default(0)
                             ->required()
@@ -158,10 +159,8 @@ trait HasNewUserForm
                                 'array'    => 'The roles list format is invalid.',
                                 'required' => 'Please select at least one role.',
                             ])
- 
-                            ->live()
-                       
-                        ,
+
+                            ->live(),
                     ]),
                 Grid::make()->columnSpanFull()->columns(2)->schema([
 

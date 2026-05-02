@@ -6,10 +6,17 @@ use App\Filament\Resources\BranchResource;
 use App\Models\Branch;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Support\Exceptions\Halt;
+use Illuminate\Contracts\Support\Htmlable;
 
 class EditBranch extends EditRecord
 {
     protected static string $resource = BranchResource::class;
+
+    public function getTitle(): string | Htmlable
+    {
+        return __('lang.edit') . ' ' . $this->record->name;
+    }
+
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
@@ -26,5 +33,10 @@ class EditBranch extends EditRecord
             }
         }
         return $data;
+    }
+
+    public function hasCombinedRelationManagerTabsWithContent(): bool
+    {
+        return true;
     }
 }

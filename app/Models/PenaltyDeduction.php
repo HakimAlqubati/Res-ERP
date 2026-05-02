@@ -8,18 +8,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 use App\Observers\PenaltyDeductionObserver;
+use App\Traits\Scopes\BranchScope;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 
 #[ObservedBy([PenaltyDeductionObserver::class])]
 class PenaltyDeduction extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable,BranchScope;
 
     // The table associated with the model.
     protected $table = 'hr_penalty_deductions';
 
     // Fillable fields for mass assignment
     protected $fillable = [
+        'branch_id',
         'employee_id',
         'deduction_id',
         'penalty_amount',
@@ -38,6 +40,7 @@ class PenaltyDeduction extends Model implements Auditable
         'rejected_at',
     ];
     protected $auditInclude = [
+        'branch_id',
         'employee_id',
         'deduction_id',
         'penalty_amount',
@@ -60,6 +63,10 @@ class PenaltyDeduction extends Model implements Auditable
     public function employee()
     {
         return $this->belongsTo(Employee::class, 'employee_id');
+    }
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
     }
 
     public function deduction()
@@ -97,7 +104,7 @@ class PenaltyDeduction extends Model implements Auditable
             $existingPenalty->penalty_amount = $penaltyAmount;
             $existingPenalty->description    = $description;
             $existingPenalty->deduction_type = $deductionType; // Update the deduction type
-            $existingPenalty->status         = 'pending';      // Reset status to pending for review
+            $existingPenalty->status         = self::STATUS_PENDING;      // Reset status to pending for review
             $existingPenalty->created_by     = $createdBy;
             $existingPenalty->save();
         } else {
@@ -110,7 +117,7 @@ class PenaltyDeduction extends Model implements Auditable
                 'month'          => $month,
                 'year'           => $year,
                 'deduction_type' => $deductionType, // Set the deduction type
-                'status'         => 'pending',
+                'status'         => self::STATUS_PENDING,
                 'created_by'     => $createdBy,
             ]);
         }
@@ -119,7 +126,7 @@ class PenaltyDeduction extends Model implements Auditable
     // Approve the penalty deduction
     public function approvePenalty($approvedBy, $approvedAt)
     {
-        $this->status      = 'approved';
+        $this->status      = self::STATUS_APPROVED;
         $this->approved_by = $approvedBy;
         $this->approved_at = $approvedAt;
         $this->save();
@@ -143,7 +150,7 @@ class PenaltyDeduction extends Model implements Auditable
     // Reject the penalty deduction
     public function rejectPenalty($rejectedBy, $rejectedReason, $rejectedAt)
     {
-        $this->status          = 'rejected';
+        $this->status          = self::STATUS_REJECTED;
         $this->rejected_by     = $rejectedBy;
         $this->rejected_reason = $rejectedReason;
         $this->rejected_at     = $rejectedAt;
@@ -153,29 +160,25 @@ class PenaltyDeduction extends Model implements Auditable
     // Scope to get all pending penalties
     public function scopePending($query)
     {
-        return $query->where('status', 'pending');
+        return $query->where('status', self::STATUS_PENDING);
     }
 
     // Scope to get all approved penalties
     public function scopeApproved($query)
     {
-        return $query->where('status', 'approved');
+        return $query->where('status', self::STATUS_APPROVED);
     }
 
     // Scope to get all rejected penalties
     public function scopeRejected($query)
     {
-        return $query->where('status', 'rejected');
+        return $query->where('status', self::STATUS_REJECTED);
     }
 
     // Helper method to get the full status name (optional)
     public function getStatusLabelAttribute()
     {
-        $statusLabels = [
-            'pending'  => 'Pending',
-            'approved' => 'Approved',
-            'rejected' => 'Rejected',
-        ];
+        $statusLabels = self::getStatusOptions();
 
         return $statusLabels[$this->status] ?? 'Unknown';
     }
@@ -189,6 +192,15 @@ class PenaltyDeduction extends Model implements Auditable
     const STATUS_PENDING  = 'pending';
     const STATUS_APPROVED = 'approved';
     const STATUS_REJECTED = 'rejected';
+
+    public static function getStatusOptions()
+    {
+        return [
+            self::STATUS_PENDING  => 'Pending',
+            self::STATUS_APPROVED => 'Approved',
+            self::STATUS_REJECTED => 'Rejected',
+        ];
+    }
     // Optional: You can define a method to retrieve the list of deduction_type options
     public static function getDeductionTypeOptions()
     {
@@ -221,6 +233,10 @@ class PenaltyDeduction extends Model implements Auditable
             if ($penalty->created_by == null) {
                 $penalty->created_by = auth()->id();
             }
+            if ($penalty->branch_id == null) {
+                $penalty->branch_id = $penalty->employee->branch_id;
+            }
+          
         });
     }
 }

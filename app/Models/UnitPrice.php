@@ -27,6 +27,7 @@ class UnitPrice extends Model implements Auditable
         'usage_scope',
         'selling_price',
         'show_in_invoices',
+        'weight',
     ];
     protected $auditInclude = [
         'unit_id',

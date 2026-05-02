@@ -30,6 +30,8 @@ class SalaryTransactionsTable
 
         // dd($employerContributions);
         return $table->striped()
+            ->paginated([10, 25, 50, 100])
+
             ->recordUrl(fn(SalaryTransaction $record): string => SalaryTransactionResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('employee.name')
@@ -65,14 +67,12 @@ class SalaryTransactionsTable
                     ->label(__('Type'))
                     // ->alignCenter()
                     ->sortable()
-                    ->searchable()
-                    ,
+                    ->searchable(),
                 TextColumn::make('sub_type')
                     ->label(__('Sub Type'))->toggleable()
                     // ->alignCenter()
                     ->sortable()
-                    ->searchable()
-                    ,
+                    ->searchable(),
 
                 // المبلغ
                 TextColumn::make('amount')->alignCenter()

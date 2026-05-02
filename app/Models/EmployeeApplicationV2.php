@@ -41,6 +41,7 @@ class EmployeeApplicationV2 extends Model implements Auditable, HasMedia
         'rejected_at',
         'details',
         'rejected_reason',
+        'is_auto_generated',
     ];
 
     protected $auditInclude = [

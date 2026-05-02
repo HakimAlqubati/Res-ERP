@@ -3,6 +3,7 @@
 namespace App\Modules\HR\Attendance\Services;
 
 use App\Models\Attendance;
+use App\Modules\HR\Attendance\Actions\CreateMissedCheckoutRequestAction;
 use App\Modules\HR\Attendance\Actions\DetermineCheckTypeAction;
 use App\Modules\HR\Attendance\Contracts\AttendanceRepositoryInterface;
 use App\Modules\HR\Attendance\Contracts\ShiftResolverInterface;
@@ -14,6 +15,7 @@ use App\Modules\HR\Attendance\Events\CheckOutRecorded;
 use App\Modules\HR\Attendance\Events\LateArrivalDetected;
 use App\Modules\HR\Attendance\Exceptions\NoShiftFoundException;
 use App\Modules\HR\Attendance\DTOs\ShiftInfoDTO;
+use App\Modules\HR\Attendance\Enums\AttendanceType;
 
 /**
  * معالج عمليات الحضور
@@ -32,6 +34,7 @@ class AttendanceHandler
         private DetermineCheckTypeAction $determineCheckType,
         private AttendanceCalculator $calculator,
         private AttendanceRepositoryInterface $repository,
+        private CreateMissedCheckoutRequestAction $createMissedCheckoutRequest,
     ) {}
 
     /**
@@ -58,10 +61,6 @@ class AttendanceHandler
         if (!$shiftInfo) {
             throw new NoShiftFoundException();
         }
-
-        if (!$shiftInfo) {
-            throw new NoShiftFoundException();
-        }
         $context->setShiftInfo($shiftInfo);
 
         // 2. تحديد نوع العملية (دخول/خروج)
@@ -81,10 +80,15 @@ class AttendanceHandler
             $context = $this->determineCheckType->execute($context);
         }
 
-        // التحقق من وجود سجل دخول عند الخروج
-        if ($context->isCheckOut() && !$context->lastCheckIn) {
-            throw new \App\Modules\HR\Attendance\Exceptions\MissingCheckInException(
-                $shiftInfo->period->name ?? null
+        // Check-out with no open check-in: auto-create a missed checkout request for HR review.
+        if (
+            $context->isCheckOut() && !$context->lastCheckIn
+            && $context->attendanceType->value != AttendanceType::REQUEST->value
+        ) {
+            $this->createMissedCheckoutRequest->execute($context);
+
+            return AttendanceResultDTO::autoRequestCreated(
+                __('lang.auto_missed_checkout_request_created_success', ['default' => 'Auto-generated missed check-out request created. HR will review it shortly.'])
             );
         }
 
@@ -102,6 +106,7 @@ class AttendanceHandler
             record: $record->fresh()
         );
     }
+
 
     /**
      * حساب التأخير أو المغادرة المبكرة

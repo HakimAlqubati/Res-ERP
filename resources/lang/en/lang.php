@@ -376,6 +376,7 @@ return [
     'exempt_from_late_attendance_deduction' => 'Exempt from Late Attendance Deduction',
     'is_mtd_applicable' => 'MTD Applicable',
     'has_auto_weekly_leave' => 'Auto Weekly Leave',
+    'can_add_branch_order' => 'Can add branch order',
 
     // ===========================================
     // HRMS - Attendance & Shifts
@@ -383,6 +384,7 @@ return [
     'attendance' => 'Attendance',
     'shift' => 'Shift',
     'shifts' => 'Shifts',
+    'shift_id' => 'Shift ID',
     'shift_rfid' => 'Shift - RFID',
     'employee_rfid' => 'Staff RFID',
     'rfid' => 'RFID',
@@ -639,6 +641,7 @@ return [
     'images' => 'Images',
     'branch_area' => 'Branch area',
     'equipment' => 'Equipment',
+    'equipments' => 'Equipments',
     'description_helper' => 'Description of service request',
     'to_reassign_go_to_table' => 'To reassign, go to table page',
     'urgency' => 'Urgency',
@@ -1145,4 +1148,6 @@ return [
     'attendance_type' => 'Attendance Type',
     'cannot_process_financial_clearance' => 'Cannot process financial clearance. The employee has outstanding advance installments amounting to: :amount',
     'approved_successfully' => 'Approved Successfully',
+    'auto_missed_checkout_request_created_success' => 'Missed check-out request submitted to HR.',
+    'auto_generated_reason_missing_checkin' => 'Automatically generated due to check-out attempt without a prior check-in',
 ];

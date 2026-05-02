@@ -71,7 +71,7 @@ class UserDeviceForm
                             if ($branchId) {
                                 $query->where('branch_id', $branchId);
                             }
-                            return $query->limit(100)->pluck('name', 'id')->toArray();
+                            return $query->pluck('name', 'id')->toArray();
                         })
                         ->searchable()
                         ->required()

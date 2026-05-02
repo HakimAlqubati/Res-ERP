@@ -238,7 +238,10 @@ class PeriodRelationManager extends RelationManager
                             DB::transaction(function () use ($record, $data) {
                                 $period = EmployeePeriod::find($record->pivot_id);
 
-                                $lastAttendance = $this->ownerRecord->attendances()->latest('id')->first();
+                                $lastAttendance = $this->ownerRecord->attendances()
+                                    ->accepted()
+                                    ->whereDate('check_date', '>', now()->toDateString())
+                                    ->latest('id')->first();
                                 if ($lastAttendance && $lastAttendance->check_type === Attendance::CHECKTYPE_CHECKIN) {
                                     Notification::make()
                                         ->title('Validation Error')

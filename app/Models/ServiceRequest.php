@@ -181,7 +181,7 @@ class ServiceRequest extends Model implements Auditable, HasMedia
         static::created(function ($request) {
             $request->logToEquipment(
                 EquipmentLog::ACTION_SERVICED,
-                'Service request created: ' . $request->name
+                "Service request #{$request->id} opened: " . mb_strimwidth($request->description ?? '', 0, 50, '...')
             );
         });
 
@@ -189,7 +189,7 @@ class ServiceRequest extends Model implements Auditable, HasMedia
             if ($request->isDirty('status')) {
                 $request->logToEquipment(
                     EquipmentLog::ACTION_UPDATED,
-                    'Status changed to ' . $request->status . ' for request: ' . $request->name
+                    "Service request #{$request->id} is now marked as '{$request->status}'"
                 );
             }
         });

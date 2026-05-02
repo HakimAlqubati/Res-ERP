@@ -5,6 +5,8 @@ namespace App\Modules\HR\Payroll\Services;
 use App\Models\PenaltyDeduction;
 use Illuminate\Pagination\LengthAwarePaginator;
 
+use function Aws\filter;
+
 class PenaltyDeductionService
 {
     /**
@@ -16,23 +18,34 @@ class PenaltyDeductionService
      */
     public function getPenaltiesList(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = PenaltyDeduction::query()->with([
-            'deduction:id,name',
-            'employee:id,name',
-            'creator:id,name',
-            'approver:id,name',
-            'rejector:id,name'
-        ]);
+        $query = PenaltyDeduction::query()
+            ->forBranchManager()
+            ->forEmployee()
+            ->select('hr_penalty_deductions.*')
+            ->with([
+                'deduction:id,name',
+                'branch:id,name',
+                'employee:id,name',
+                'creator:id,name',
+                'approver:id,name',
+                'rejector:id,name'
+            ]);
         $query->join(
             'hr_employees',
             'hr_employees.id',
             'hr_penalty_deductions.employee_id'
         );
         if (isBranchManager()) {
-            $query->where('hr_employees.branch_id', auth()->user()->branch_id);
+            $query->where('hr_penalty_deductions.branch_id', auth()->user()->branch_id);
+        }
+        if (isStuff()) {
+            $query->where('employee_id', auth()->user()->branch_id);
         }
         if (!empty($filters['employee_id'])) {
             $query->where('employee_id', $filters['employee_id']);
+        }
+        if (!empty($filters['branch_id'])) {
+            $query->where('hr_penalty_deductions.branch_id', $filters['branch_id']);
         }
 
         if (!empty($filters['year'])) {
@@ -83,5 +96,56 @@ class PenaltyDeductionService
             'approver:id,name',
             'rejector:id,name'
         ])->find($id);
+    }
+
+    /**
+     * Approve a penalty deduction.
+     *
+     * @param int $id
+     * @param int $approvedBy
+     * @return PenaltyDeduction|null
+     * @throws \Exception
+     */
+    public function approvePenalty(int $id, int $approvedBy): ?PenaltyDeduction
+    {
+        $penalty = $this->getPenaltyById($id);
+
+        if (!$penalty) {
+            return null;
+        }
+
+        if ($penalty->status !== PenaltyDeduction::STATUS_PENDING) {
+            throw new \Exception(__('Only pending penalties can be approved.'));
+        }
+
+        $penalty->approvePenalty($approvedBy, now());
+
+        return $penalty;
+    }
+
+    /**
+     * Reject a penalty deduction.
+     *
+     * @param int $id
+     * @param int $rejectedBy
+     * @param string $rejectedReason
+     * @return PenaltyDeduction|null
+     * @throws \Exception
+     */
+    public function rejectPenalty(int $id, int $rejectedBy, string $rejectedReason): ?PenaltyDeduction
+    {
+        $penalty = $this->getPenaltyById($id);
+
+        if (!$penalty) {
+            return null;
+        }
+
+        if ($penalty->status !== PenaltyDeduction::STATUS_PENDING) {
+            throw new \Exception(__('Only pending penalties can be rejected.'));
+        }
+
+        $penalty->rejectPenalty($rejectedBy, $rejectedReason, now());
+
+        return $penalty;
     }
 }

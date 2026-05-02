@@ -49,5 +49,5 @@ return [
     'shift_conflict_detected' => 'Shift conflict detected. Please select the desired operation.',
     'checkout_from_shift' => 'Check out from :shift',
     'checkin_to_shift' => 'Check in to :shift',
-
+    'duplicate_missed_checkout_request' => 'Duplicate missed checkout request',
 ];
