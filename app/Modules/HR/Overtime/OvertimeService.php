@@ -491,6 +491,7 @@ class OvertimeService
         // 2. التحميل المسبق (Eager Loading) لكل البيانات المطلوبة بنطاق التواريخ
         $employees = Employee::where('branch_id', $branchId)
             ->where('active', 1)
+            ->where('id',89)
             ->with([
 
                 'attendances' => function ($query) use ($fromDate, $toDate) {
