@@ -177,7 +177,7 @@ class OvertimeService
 
         foreach ($branches as $branch) {
             $suggestions = $this->getSuggestedOvertimeV3($date, $date, $branch->id);
-
+            dd($suggestions);
             if (empty($suggestions) || !isset($suggestions[$date])) {
                 $results[$branch->name] = 0;
                 continue;

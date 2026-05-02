@@ -283,10 +283,10 @@ trait EmployeeAttendanceTrait
 
         // 3. جلب بصمات هذا اليوم فقط (يجب استخدام values لإعادة الفهرسة وتجنب أخطاء الـ Loop)
         $attendances = $this->attendances
-        ->where('check_date', $date)
-        ->sortBy('id') // 👈 إجبار الترتيب بالتسلسل الصحيح
-        ->values();
-        
+            ->where('check_date', $date)
+            ->sortBy('id') // 👈 إجبار الترتيب بالتسلسل الصحيح
+            ->values();
+
         if ($attendances->count() < 2) {
             return [];
         }
@@ -298,16 +298,15 @@ trait EmployeeAttendanceTrait
             $virtualPeriod = new \App\Models\WorkPeriod();
             $virtualPeriod->id = -1;
             $virtualPeriod->supposed_duration = '00:00';
-            
+
             $virtualHistory = new \App\Models\EmployeePeriodHistory();
             $virtualHistory->period_id = -1;
             $virtualHistory->setRelation('workPeriod', $virtualPeriod);
 
             $activePeriods->push($virtualHistory);
         }
-        dd($activePeriods, $this->periodHistories, $date);
         // -----------------------------------------
-        
+
         $totalMinutes = 0;
         $firstCheckInTime = null;
         $lastCheckOutTime = null;
