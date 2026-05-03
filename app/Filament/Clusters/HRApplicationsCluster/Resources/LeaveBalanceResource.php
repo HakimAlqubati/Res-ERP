@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\HRApplicationsCluster\Resources;
 
 use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Support\Icons\Heroicon;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
@@ -39,7 +40,7 @@ class LeaveBalanceResource extends Resource
 {
     protected static ?string $model = LeaveBalance::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::Scale;
 
     protected static ?string $cluster     = HRLeaveManagementCluster::class;
     protected static ?string $modelLabel  = 'Leave balance';
@@ -219,7 +220,8 @@ class LeaveBalanceResource extends Resource
                     ->searchable()
                     ->multiple()
                     ->label('Month')->options(getMonthArrayWithKeys()),
-            ], FiltersLayout::AboveContent)
+            ], FiltersLayout::Modal)
+            ->filtersFormColumns(4)
             ->recordActions([
                 // Tables\Actions\EditAction::make(),
                 Action::make('editBalance')->visible(fn(): bool => isSuperAdmin())->button()

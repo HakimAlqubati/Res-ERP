@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\HRAttenanceCluster\Resources;
 
 use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Support\Icons\Heroicon;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
@@ -36,7 +37,7 @@ class LeaveTypeResource extends Resource
 {
     protected static ?string $model = LeaveType::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::Squares2x2;
 
     protected static ?string $cluster = HRLeaveManagementCluster::class;
 
@@ -112,7 +113,7 @@ class LeaveTypeResource extends Resource
                 SelectFilter::make('type')->options(LeaveType::getTypes()),
                 SelectFilter::make('balance_period')->options(LeaveType::getBalancePeriods())->label('Accural cycle'),
                 SelectFilter::make('branch_id')->relationship('branch', 'name')->label('Branch'),
-            ],FiltersLayout::AboveContent)
+            ],FiltersLayout::Modal)
             ->recordActions([
                 EditAction::make(),
             ])
