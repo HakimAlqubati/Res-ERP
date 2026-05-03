@@ -155,6 +155,7 @@ class AttendanceDayProcessor
             'branch_name' => $firstHistory?->branch?->name,
             'periods' => $periods,
             'actual_duration_hours' => gmdate('H:i:s', $dayActualSeconds),
+            'actual_duration_hours_formatted' => $this->durationCalculator->formatFloatToHMS($dayActualSeconds / 3600),
             'day_status' => $this->statusResolver->resolveDayStatus($periods->pluck('final_status')->all()),
             'daily_supposed_seconds' => $totalDurationSeconds,
         ];
