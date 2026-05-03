@@ -51,6 +51,23 @@ class DeductionResource extends Resource
 
     protected static bool $isGloballySearchable = true;
 
+    public static function getNavigationLabel(): string
+    {
+        return 'Statutory Deductions';
+    }
+    public static function getPluralLabel(): ?string
+    {
+        return 'Statutory Deductions';
+    }
+
+    public static function getModelLabel(): string
+    {
+        return 'Statutory Deduction';
+    }
+    public static function getLabel(): ?string
+    {
+        return 'Statutory Deductions';
+    }
     public static function form(Schema $schema): Schema
     {
 
@@ -355,4 +372,3 @@ class DeductionResource extends Resource
         ]);
     }
 }
-

@@ -238,19 +238,19 @@ class PeriodRelationManager extends RelationManager
                             DB::transaction(function () use ($record, $data) {
                                 $period = EmployeePeriod::find($record->pivot_id);
 
-                                $lastAttendance = $this->ownerRecord->attendances()
+                                $lastCheckDate = $this->ownerRecord->attendances()
                                     ->accepted()
-                                    ->whereDate('check_date', '>', now()->toDateString())
-                                    ->latest('id')->first();
-                                if ($lastAttendance && $lastAttendance->check_type === Attendance::CHECKTYPE_CHECKIN) {
-                                    Notification::make()
-                                        ->title('Validation Error')
-                                        ->body('The employee has a pending check-out. You cannot add new work periods until the check-out is recorded.')
-                                        ->warning()
-                                        ->send();
-                                    return;
-                                }
-                                if ($period) {
+                                    ->where('period_id', $period->period_id)
+                                    ->latest('check_date')->first()?->check_date;
+                                // dd(
+                                //     $lastCheckDate,
+                                //     $data['end_date'],
+                                //     $data['end_date'] >= $lastCheckDate
+                                // );
+
+                                if ($lastCheckDate && $data['end_date'] >= $lastCheckDate) {
+
+
                                     // حذف كل الأيام المرتبطة بهذه الفترة فقط
                                     $period->days()->delete();
 
@@ -267,9 +267,15 @@ class PeriodRelationManager extends RelationManager
 
                                     // Delete the active period record
                                     $period->delete();
+                                    Notification::make()->title(__('lang.deleted_successfully'))->success()->send();
+                                } else {
+                                    Notification::make()
+                                        ->title('Validation Error')
+                                        ->body('Cannot delete shift has attendance logs')
+                                        ->warning()
+                                        ->send();
+                                    return;
                                 }
-
-                                Notification::make()->title(__('lang.deleted_successfully'))->success()->send();
                             });
                         } catch (Exception $e) {
                             Notification::make()->title('Error')->icon('heroicon-o-x-circle')

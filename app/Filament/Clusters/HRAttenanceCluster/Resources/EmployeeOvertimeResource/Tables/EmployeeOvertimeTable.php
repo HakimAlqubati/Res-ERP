@@ -113,6 +113,9 @@ class EmployeeOvertimeTable
                     ->label('Approved at')->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('created_at')->wrap()
                     ->label('Created at')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('rejectedBy.name')
+                    ->label('Rejected by')
+                    ->wrap()->toggleable(isToggledHiddenByDefault: false),
 
             ])
             ->selectable()
@@ -179,6 +182,24 @@ class EmployeeOvertimeTable
                 //         // dd($data['hours'],$data,$record);
                 //         return $record->update(['hours' => $data['hours']]);
                 //     }),
+                Action::make('Reject')
+                    ->databaseTransaction()
+                    ->requiresConfirmation()
+                    ->button()
+                    ->color('danger')
+                    ->label('Reject')
+                    ->icon('heroicon-o-x-mark')
+                    ->action(function ($record) {
+                        // dd($record);
+                        return $record->update([
+                            'status' => EmployeeOvertime::STATUS_REJECTED,
+                            'rejected_by' => auth()->id(),
+                            'rejected_at' => now()
+                        ]);
+                    })
+                    ->visible(fn($record) => ($record->status === EmployeeOvertime::STATUS_PENDING
+                        && isSuperAdmin() || isBranchManager()
+                    )),
                 Action::make('Approve')
                     ->databaseTransaction()
                     ->label(function ($record) {
