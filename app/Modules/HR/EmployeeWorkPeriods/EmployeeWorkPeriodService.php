@@ -227,69 +227,54 @@ class EmployeeWorkPeriodService
         $periodEndAt,
         $periodStartDate,
         $periodEndDate = null,
-        $excludePeriodId = null
+        $excludePeriodId = null // Note: This would exclude WorkPeriod ID if used, as History doesn't store EmployeePeriod ID
     ) {
-        $query = EmployeePeriod::query()
-            ->with([
-                'days' => function ($q) use ($periodDays) {
-                    $q->whereIn('day_of_week', $periodDays);
-                },
-                'workPeriod',
-            ])
+        $query = EmployeePeriodHistory::query()
+            ->with('workPeriod')
             ->where('employee_id', $employeeId)
-            ->where(function ($q) use ($periodStartDate, $periodEndDate) {
-                $q->where(function ($q2) use ($periodStartDate, $periodEndDate) {
-                    // شرط تقاطع الفترات
-                    $q2->whereNull('end_date')->orWhere(function ($q3) use ($periodStartDate, $periodEndDate) {
-                        if ($periodEndDate) {
-                            $q3->where('start_date', '<=', $periodEndDate)
-                                ->where(function ($q4) use ($periodStartDate) {
-                                    $q4->whereNull('end_date')->orWhere('end_date', '>=', $periodStartDate);
-                                });
-                        } else {
-                            $q3->where('end_date', '>=', $periodStartDate)->orWhereNull('end_date');
-                        }
-                    });
-                });
+            ->whereIn('day_of_week', $periodDays);
+
+        $query->where(function ($q) use ($periodStartDate, $periodEndDate) {
+            $q->whereNull('end_date')->orWhere(function ($q2) use ($periodStartDate, $periodEndDate) {
+                if ($periodEndDate) {
+                    $q2->where('start_date', '<=', $periodEndDate)
+                        ->where(function ($q3) use ($periodStartDate) {
+                            $q3->whereNull('end_date')->orWhere('end_date', '>=', $periodStartDate);
+                        });
+                } else {
+                    $q2->where('end_date', '>=', $periodStartDate)->orWhereNull('end_date');
+                }
             });
+        });
 
         if ($excludePeriodId) {
-            $query->where('id', '!=', $excludePeriodId);
+            $query->where('period_id', '!=', $excludePeriodId);
         }
 
-        $overlappingPeriods = $query->get();
+        $overlappingHistories = $query->get();
 
-        // أوقات الفترة الحالية المراد إضافتها
         $currentStart = Carbon::createFromFormat('H:i:s', $periodStartAt);
         $currentEnd   = Carbon::createFromFormat('H:i:s', $periodEndAt);
 
-        // إذا الشيفت جديد يمتد لليوم التالي، عدل النهاية
         $currentWorkPeriodModel = WorkPeriod::where('start_at', $periodStartAt)
             ->where('end_at', $periodEndAt)->first();
 
-        $currentDayAndNight = $currentWorkPeriodModel?->day_and_night ?? 0;
-        if ($currentDayAndNight) {
+        if ($currentWorkPeriodModel?->day_and_night) {
             $currentEnd->addDay();
         }
 
-        foreach ($overlappingPeriods as $period) {
-            $wp = $period->workPeriod;
-            if (! $wp) {
-                continue;
-            }
+        foreach ($overlappingHistories as $history) {
+            $existStart = Carbon::createFromFormat('H:i:s', $history->start_time);
+            $existEnd   = Carbon::createFromFormat('H:i:s', $history->end_time);
 
-            $existStart = Carbon::createFromFormat('H:i:s', $wp->start_at);
-            $existEnd   = Carbon::createFromFormat('H:i:s', $wp->end_at);
-
-            if ($wp->day_and_night) {
+            $wp = $history->workPeriod;
+            if ($wp && $wp->day_and_night) {
                 $existEnd->addDay();
             }
 
-            // تحقق تداخل الأوقات
             $timesOverlap = ($currentStart <= $existEnd) && ($existStart <= $currentEnd);
 
-            // يوجد يوم متداخل && أوقات متداخلة
-            if ($timesOverlap && $period->days->count()) {
+            if ($timesOverlap) {
                 return true;
             }
         }
