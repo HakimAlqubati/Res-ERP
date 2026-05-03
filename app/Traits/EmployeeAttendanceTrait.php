@@ -336,7 +336,12 @@ trait EmployeeAttendanceTrait
             [$hours, $minutes] = explode(':', $period->supposed_duration);
             $supposedDurationMinutes = ((int)$hours * 60) + (int)$minutes;
 
-            if ($totalMinutes >= ($supposedDurationMinutes + $allowedOffset)) {
+            if (
+                $totalMinutes >= ($supposedDurationMinutes + $allowedOffset)
+                && $attendances->where('period_id', $period->id)->count() > 0
+
+            ) {
+
                 $overtimeMinutes = $totalMinutes - $supposedDurationMinutes;
 
                 // 👈 هنا الحل: استخدام معادلتك الأصلية لإجبار التقريب لأقرب نصف ساعة دائماً
