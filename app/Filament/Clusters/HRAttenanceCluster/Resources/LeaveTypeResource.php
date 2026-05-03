@@ -47,11 +47,18 @@ class LeaveTypeResource extends Resource
         return $schema
             ->components([
                 Fieldset::make()->columnSpanFull()->schema([
-                    Grid::make()->columnSpanFull()->columns(7)->schema([
+                    Grid::make()->columnSpanFull()->columns(8)->schema([
                         TextInput::make('name')
                             ->label('Leave type name')
                             ->unique(ignoreRecord: true)->columnSpan(2)
                             ->required(),
+
+                        Select::make('branch_id')
+                            ->label('Branch')
+                            ->relationship('branch', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->nullable(),
 
                         TextInput::make('count_days')
                             ->label('Number of days')
@@ -81,10 +88,13 @@ class LeaveTypeResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->striped()
+        ->defaultSort('id','desc')
             ->columns([
                 TextColumn::make('name')->label('Leave Type')
                 ->toggleable()
                 ,
+                TextColumn::make('branch_label')->label('Branch')
+                    ->toggleable(),
                 TextColumn::make('count_days')->label('Number of Days')->alignCenter(true)->toggleable(),
 
                 TextColumn::make('type_label')->label('Type')->alignCenter(true)->toggleable(),
@@ -101,6 +111,7 @@ class LeaveTypeResource extends Resource
             ->filters([
                 SelectFilter::make('type')->options(LeaveType::getTypes()),
                 SelectFilter::make('balance_period')->options(LeaveType::getBalancePeriods())->label('Accural cycle'),
+                SelectFilter::make('branch_id')->relationship('branch', 'name')->label('Branch'),
             ],FiltersLayout::AboveContent)
             ->recordActions([
                 EditAction::make(),

@@ -23,6 +23,7 @@ class LeaveType extends Model implements Auditable
         'type',
         'balance_period',
         'is_paid',
+        'branch_id',
     ];
     protected $auditInclude = [
         'name',
@@ -34,9 +35,10 @@ class LeaveType extends Model implements Auditable
         'type',
         'balance_period',
         'is_paid',
+        'branch_id',
     ];
 
-    protected $appends = ['type_label', 'balance_period_label'];
+    protected $appends = ['type_label', 'balance_period_label', 'branch_label'];
 
     // Enum constants for 'type'
     const TYPE_YEARLY = 'yearly';
@@ -57,6 +59,11 @@ class LeaveType extends Model implements Auditable
     public function updater()
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     public function leaveBalances()
@@ -97,6 +104,11 @@ class LeaveType extends Model implements Auditable
         return self::getBalancePeriods()[$this->balance_period] ?? 'Unknown Period';
     }
 
+    public function getBranchLabelAttribute()
+    {
+        return $this->branch?->name ?? 'All';
+    }
+
     public static function getTypes()
     {
         return [
@@ -122,6 +134,16 @@ class LeaveType extends Model implements Auditable
             ->where('balance_period', LeaveType::BALANCE_PERIOD_MONTHLY)
             ->where('active', 1)->first()
         ;
+    }
+
+    public function scopeAllBranches($query)
+    {
+        return $query->whereNull('branch_id');
+    }
+
+    public function scopeForBranch($query, $branchId)
+    {
+        return $query->where('branch_id', $branchId);
     }
 
     /**
