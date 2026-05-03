@@ -47,15 +47,15 @@ class EmployeeWorkPeriodService
 
                 // أيام الفترة المراد إدخالها
                 $periodDays = $data['period_days'] ?? [];
-
-                if ($this->isOverlappingDays_(
+                $isOverlapped = $this->isOverlappingDays_(
                     $employee->id,
                     $periodDays,
                     $periodStartAt,
                     $periodEndAt,
                     $data['start_date'],
                     $data['end_date'] ?? null,
-                )) {
+                );
+                if ($isOverlapped) {
                     throw new Exception('❌ Cannot add this Work Period as it overlaps with an existing period.');
                 }
 
@@ -227,12 +227,12 @@ class EmployeeWorkPeriodService
         $periodEndAt,
         $periodStartDate,
         $periodEndDate = null,
-        $excludePeriodId = null // Note: This would exclude WorkPeriod ID if used, as History doesn't store EmployeePeriod ID
+        $excludePeriodId = null
     ) {
+        // نجلب جميع الشيفتات الفعالة للموظف في نطاق التواريخ (بدون تصفية باليوم هنا)
         $query = EmployeePeriodHistory::query()
             ->with('workPeriod')
-            ->where('employee_id', $employeeId)
-            ->whereIn('day_of_week', $periodDays);
+            ->where('employee_id', $employeeId);
 
         $query->where(function ($q) use ($periodStartDate, $periodEndDate) {
             $q->whereNull('end_date')->orWhere(function ($q2) use ($periodStartDate, $periodEndDate) {
@@ -253,29 +253,70 @@ class EmployeeWorkPeriodService
 
         $overlappingHistories = $query->get();
 
-        $currentStart = Carbon::createFromFormat('H:i:s', $periodStartAt);
-        $currentEnd   = Carbon::createFromFormat('H:i:s', $periodEndAt);
-
         $currentWorkPeriodModel = WorkPeriod::where('start_at', $periodStartAt)
             ->where('end_at', $periodEndAt)->first();
+        $isCurrentNight = $currentWorkPeriodModel?->day_and_night ?? false;
 
-        if ($currentWorkPeriodModel?->day_and_night) {
-            $currentEnd->addDay();
+        // دالة مساعدة لتحويل اليوم إلى رقم لإنشاء خط زمني أسبوعي
+        $mapDayToInteger = function ($day) {
+            if ($day instanceof \BackedEnum) {
+                $day = $day->value;
+            } elseif ($day instanceof \UnitEnum) {
+                $day = $day->name;
+            } elseif (is_object($day)) {
+                $day = $day->value ?? $day->name ?? (string)$day;
+            }
+
+            if (is_string($day)) {
+                $dayMap = ['Sunday' => 0, 'Monday' => 1, 'Tuesday' => 2, 'Wednesday' => 3, 'Thursday' => 4, 'Friday' => 5, 'Saturday' => 6];
+                $dayTitle = ucfirst(strtolower($day));
+                if (isset($dayMap[$dayTitle])) return $dayMap[$dayTitle];
+            }
+            if (is_numeric($day)) {
+                return ((int)$day) === 7 ? 0 : (int)$day;
+            }
+
+            try {
+                return Carbon::parse($day)->dayOfWeek;
+            } catch (\Exception $e) {
+                return 0;
+            }
+        };
+
+        // إنشاء فترات زمنية على خط أسبوعي افتراضي (يوم الأحد 1 يناير 2023 كمثال)
+        $newIntervals = [];
+        foreach ($periodDays as $day) {
+            $dayInt = $mapDayToInteger($day);
+            $start = Carbon::createFromFormat('Y-m-d H:i:s', "2023-01-0" . ($dayInt + 1) . " " . $periodStartAt);
+            $end = Carbon::createFromFormat('Y-m-d H:i:s', "2023-01-0" . ($dayInt + 1) . " " . $periodEndAt);
+
+            if ($isCurrentNight) {
+                $end->addDay();
+            }
+
+            // إضافة الفترة الأصلية والفترات المكررة (قبل وبعد بـ 7 أيام) لمعالجة التداخل بين السبت والأحد
+            $newIntervals[] = ['start' => $start->copy(), 'end' => $end->copy()];
+            $newIntervals[] = ['start' => $start->copy()->addDays(7), 'end' => $end->copy()->addDays(7)];
+            $newIntervals[] = ['start' => $start->copy()->subDays(7), 'end' => $end->copy()->subDays(7)];
         }
 
         foreach ($overlappingHistories as $history) {
-            $existStart = Carbon::createFromFormat('H:i:s', $history->start_time);
-            $existEnd   = Carbon::createFromFormat('H:i:s', $history->end_time);
+            $existDayInt = $mapDayToInteger($history->day_of_week);
+
+            $existStart = Carbon::createFromFormat('Y-m-d H:i:s', "2023-01-0" . ($existDayInt + 1) . " " . $history->start_time);
+            $existEnd = Carbon::createFromFormat('Y-m-d H:i:s', "2023-01-0" . ($existDayInt + 1) . " " . $history->end_time);
 
             $wp = $history->workPeriod;
             if ($wp && $wp->day_and_night) {
                 $existEnd->addDay();
             }
 
-            $timesOverlap = ($currentStart <= $existEnd) && ($existStart <= $currentEnd);
-
-            if ($timesOverlap) {
-                return true;
+            // فحص التقاطع بين الفترات الجديدة وفترات الهيستوري
+            foreach ($newIntervals as $interval) {
+                // شرط التداخل: بداية أ < نهاية ب && بداية ب < نهاية أ
+                if ($interval['start'] < $existEnd && $existStart < $interval['end']) {
+                    return true; // تداخل مؤكد!
+                }
             }
         }
         return false;
