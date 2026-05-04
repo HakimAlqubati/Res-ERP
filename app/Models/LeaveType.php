@@ -10,7 +10,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class LeaveType extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, \App\Models\Traits\OldScopesLeaveType;
     protected $table = 'hr_leave_types';
 
     protected $fillable = [
@@ -101,21 +101,6 @@ class LeaveType extends Model implements Auditable
     }
 
 
-    /**
-     * Scope to get the sum of monthly count days, defaulting null values to 4.
-     *
-     * @param Builder $query
-     * @return int
-     */
-    public function scopeGetMonthlyCountDaysSum($query)
-    {
-        return $query->where('type', static::TYPE_WEEKLY)
-            ->where('balance_period', static::BALANCE_PERIOD_MONTHLY)
-            ->get()
-            ->sum(function ($leaveType) {
-                return $leaveType->count_days ?? 4;
-            });
-    }
 
 
     /**
@@ -152,13 +137,6 @@ class LeaveType extends Model implements Auditable
         ];
     }
 
-    public function scopeWeeklyLeave($query)
-    {
-        return $query->where('type', LeaveType::TYPE_WEEKLY)
-            ->where('balance_period', LeaveType::BALANCE_PERIOD_MONTHLY)
-            ->where('active', 1)->first()
-        ;
-    }
 
     /**
      * جميع طلبات الإجازات التي تستخدم هذا النوع
