@@ -157,6 +157,8 @@ class LeaveTypeResource extends Resource
             ->defaultSort('id', 'desc')
             ->columns([
                 SoftDeleteColumn::make(),
+                TextColumn::make('id')->label('ID')
+                    ->toggleable(),
                 TextColumn::make('name')->label('Leave Type')
                     ->toggleable(),
                 TextColumn::make('count_days')->label('Number of Days')->alignCenter(true)->toggleable(),
