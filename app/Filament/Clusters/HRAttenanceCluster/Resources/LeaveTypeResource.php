@@ -47,10 +47,10 @@ class LeaveTypeResource extends Resource
         return $schema
             ->components([
                 Fieldset::make()->columnSpanFull()->schema([
-                    Grid::make()->columnSpanFull()->columns(7)->schema([
+                    Grid::make()->columnSpanFull()->columns(4)->schema([
                         TextInput::make('name')
                             ->label('Leave type name')
-                            ->unique(ignoreRecord: true)->columnSpan(2)
+                            ->unique(ignoreRecord: true)->columnSpan(1)
                             ->required(),
 
                         TextInput::make('count_days')
@@ -58,15 +58,47 @@ class LeaveTypeResource extends Resource
                             ->numeric()
                             ->required(),
 
-                        Select::make('type')->label('Type')->options(LeaveType::getTypes()),
-                        Select::make('balance_period')->label('Accural cycle')->options(LeaveType::getBalancePeriods()),
+                        Select::make('type')->label('Type')->options(LeaveType::getTypes())
+                            ->required(),
+                        Select::make('applicable_to')
+                            ->label('Applicable to')
+                            ->options(LeaveType::getApplicabilityOptions())
+                            ->default(LeaveType::APPLICABLE_ALL)
+                            ->required(),
+                    ]),
+                    Fieldset::make('')->columnSpanFull()->columns(3)->schema([
+
                         Toggle::make('active')
                             ->label('Active')->inline(false)
                             ->default(true),
+
                         Toggle::make('is_paid')
                             ->label('Is paid')->inline(false)
                             ->default(true),
 
+                        Toggle::make('requires_attachment')
+                            ->label('Requires attachment')->inline(false)
+                            ->default(false)
+                            ->helperText('If enabled, the employee will be required to upload an attachment when applying for this leave type.'),
+                    ]),
+                    Fieldset::make('Accural rules')->columnSpanFull()->columns(3)->schema([
+                        Toggle::make('prorate_on_hire')
+                            ->label('Prorate on hire')->inline(false)
+                            ->default(true)
+                            ->helperText('If enabled, the leave balance will be prorated based on the employee\'s joining date.')
+                            ,
+
+                        Toggle::make('carry_forward_allowed')
+                            ->label('Carry forward allowed')->inline(false)
+                            ->default(false)
+                            ->helperText('If enabled, the employee will be able to carry forward the unused leave balance to the next year.')
+                            ->live(),
+
+                        TextInput::make('max_carry_forward')
+                            ->label('Max carry forward')
+                            ->numeric()
+                            ->default(0)
+                            ->visible(fn($get) => $get('carry_forward_allowed')),
                     ]),
                     Textarea::make('description')->columnSpanFull()
                         ->label('Description')
@@ -81,10 +113,10 @@ class LeaveTypeResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->striped()
+            ->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('name')->label('Leave Type')
-                ->toggleable()
-                ,
+                    ->toggleable(),
                 TextColumn::make('count_days')->label('Number of Days')->alignCenter(true)->toggleable(),
 
                 TextColumn::make('type_label')->label('Type')->alignCenter(true)->toggleable(),
@@ -101,7 +133,7 @@ class LeaveTypeResource extends Resource
             ->filters([
                 SelectFilter::make('type')->options(LeaveType::getTypes()),
                 SelectFilter::make('balance_period')->options(LeaveType::getBalancePeriods())->label('Accural cycle'),
-            ],FiltersLayout::AboveContent)
+            ], FiltersLayout::AboveContent)
             ->recordActions([
                 EditAction::make(),
             ])

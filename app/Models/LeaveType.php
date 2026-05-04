@@ -23,6 +23,11 @@ class LeaveType extends Model implements Auditable
         'type',
         'balance_period',
         'is_paid',
+        'requires_attachment',
+        'carry_forward_allowed',
+        'max_carry_forward',
+        'prorate_on_hire',
+        'applicable_to'
     ];
     protected $auditInclude = [
         'name',
@@ -34,10 +39,23 @@ class LeaveType extends Model implements Auditable
         'type',
         'balance_period',
         'is_paid',
+        'requires_attachment',
+        'carry_forward_allowed',
+        'max_carry_forward',
+        'prorate_on_hire',
+        'applicable_to'
     ];
 
     protected $appends = ['type_label', 'balance_period_label'];
 
+    protected $casts = [
+        'requires_attachment' => 'boolean',
+        'carry_forward_allowed' => 'boolean',
+        'prorate_on_hire' => 'boolean',
+        'max_carry_forward' => 'integer',
+        'is_paid' => 'boolean',
+        'active' => 'boolean',
+    ];
     // Enum constants for 'type'
     const TYPE_YEARLY = 'yearly';
     const TYPE_MONTHLY = 'monthly';
@@ -47,6 +65,19 @@ class LeaveType extends Model implements Auditable
     const BALANCE_PERIOD_YEARLY = 'yearly';
     const BALANCE_PERIOD_MONTHLY = 'monthly';
     const BALANCE_PERIOD_OTHER = 'other';
+
+
+    // Enum constants for applicability
+    const APPLICABLE_ALL = 'all';
+    const APPLICABLE_EXPAT_WITH_EP = 'expat_with_ep'; // Expatriate with Employment Pass
+
+    public static function getApplicabilityOptions()
+    {
+        return [
+            self::APPLICABLE_ALL => 'All Employees',
+            self::APPLICABLE_EXPAT_WITH_EP => 'Expats with EP only',
+        ];
+    }
     // Relationship to the user who created the leave type
     public function creator()
     {
@@ -102,8 +133,8 @@ class LeaveType extends Model implements Auditable
         return [
             self::TYPE_YEARLY => 'Annual Leave',
             self::TYPE_MONTHLY => 'Monthly Leave',
-            self::TYPE_WEEKLY => 'Weekly Leave',
-            self::TYPE_SPECIAL => 'Special Leave'
+            // self::TYPE_WEEKLY => 'Weekly Leave',
+            // self::TYPE_SPECIAL => 'Special Leave'
         ];
     }
 
@@ -130,5 +161,33 @@ class LeaveType extends Model implements Auditable
     public function leaveRequests()
     {
         return $this->hasMany(LeaveRequest::class, 'leave_type_id');
+    }
+
+    /**
+     * الفروع المرتبطة بهذا النوع من الإجازات
+     */
+    public function branches()
+    {
+        return $this->belongsToMany(Branch::class, 'hr_branch_leave_types', 'leave_type_id', 'branch_id');
+    }
+
+    /**
+     * 2. حل مشكلة التكرار بين type و balance_period برمجياً
+     * هذا الـ Event يعمل تلقائياً قبل الحفظ أو التعديل
+     */
+    protected static function booted()
+    {
+        static::saving(function ($leaveType) {
+            // ملء حقل balance_period تلقائياً بناءً على الـ type
+            // لتجنب التناقض، وبذلك لن يحتاج المستخدم لإدخاله يدوياً
+            if ($leaveType->type === self::TYPE_YEARLY) {
+                $leaveType->balance_period = self::BALANCE_PERIOD_YEARLY;
+            } elseif (in_array($leaveType->type, [self::TYPE_MONTHLY, self::TYPE_WEEKLY])) {
+                $leaveType->balance_period = self::BALANCE_PERIOD_MONTHLY;
+            } else {
+                // للأنواع الخاصة (Special)
+                $leaveType->balance_period = $leaveType->balance_period ?? self::BALANCE_PERIOD_OTHER;
+            }
+        });
     }
 }

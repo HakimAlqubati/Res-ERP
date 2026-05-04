@@ -14,6 +14,7 @@ use App\Models\Store;
 use App\Models\User;
 use App\Models\WorkPeriod;
 use App\Models\Employee;
+use App\Models\LeaveType;
 
 trait BranchRelations
 {
@@ -89,5 +90,10 @@ trait BranchRelations
     public function employees()
     {
         return $this->hasMany(Employee::class, 'branch_id');
+    }
+
+    public function leaveTypes()
+    {
+        return $this->belongsToMany(LeaveType::class, 'hr_branch_leave_types', 'branch_id', 'leave_type_id');
     }
 }
