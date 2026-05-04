@@ -9,6 +9,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BooleanColumn;
 use Filament\Actions\EditAction;
@@ -21,13 +22,17 @@ use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\LeaveTypeResource\Pages;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\LeaveTypeResource\RelationManagers;
 use App\Filament\Clusters\HRLeaveManagementCluster;
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\LeaveType;
 use Filament\Forms;
 use Filament\Forms\Components\Select;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
 use Filament\Tables;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -46,64 +51,95 @@ class LeaveTypeResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->columnSpanFull()->schema([
-                    Grid::make()->columnSpanFull()->columns(4)->schema([
-                        TextInput::make('name')
-                            ->label('Leave type name')
-                            ->unique(ignoreRecord: true)->columnSpan(1)
-                            ->required(),
+                Wizard::make()->columnSpanFull()->schema([
+                    Step::make('')->columnSpanFull()->schema([
+                        Fieldset::make()->columnSpanFull()->schema([
+                            Grid::make()->columnSpanFull()->columns(4)->schema([
+                                TextInput::make('name')
+                                    ->label('Leave type name')
+                                    ->unique(ignoreRecord: true)->columnSpan(1)
+                                    ->required(),
 
-                        TextInput::make('count_days')
-                            ->label('Number of days')
-                            ->numeric()
-                            ->required(),
+                                TextInput::make('count_days')
+                                    ->label('Number of days')
+                                    ->numeric()
+                                    ->required(),
 
-                        Select::make('type')->label('Type')->options(LeaveType::getTypes())
-                            ->required(),
-                        Select::make('applicable_to')
-                            ->label('Applicable to')
-                            ->options(LeaveType::getApplicabilityOptions())
-                            ->default(LeaveType::APPLICABLE_ALL)
-                            ->required(),
+                                Select::make('type')->label('Type')->options(LeaveType::getTypes())
+                                    ->required(),
+                                Select::make('applicable_to')
+                                    ->label('Applicable to')
+                                    ->options(LeaveType::getApplicabilityOptions())
+                                    ->default(LeaveType::APPLICABLE_ALL)
+                                    ->required(),
+                            ]),
+                            Fieldset::make('Accural rules')->columnSpanFull()->columns(3)->schema([
+                                Toggle::make('prorate_on_hire')
+                                    ->label('Prorate on hire')->inline(false)
+                                    ->default(true)
+                                    ->helperText('If enabled, the leave balance will be prorated based on the employee\'s joining date.'),
+
+                                Toggle::make('carry_forward_allowed')
+                                    ->label('Carry forward allowed')->inline(false)
+                                    ->default(false)
+                                    ->helperText('If enabled, the employee will be able to carry forward the unused leave balance to the next year.')
+                                    ->live(),
+
+                                TextInput::make('max_carry_forward')
+                                    ->label('Max carry forward')
+                                    ->numeric()
+                                    ->default(0)
+                                    ->visible(fn($get) => $get('carry_forward_allowed')),
+                            ]),
+
+                            Fieldset::make('')->columnSpanFull()->columns(4)->schema([
+
+                                Toggle::make('active')
+                                    ->label('Active')->inline(false)
+                                    ->default(true),
+
+                                Toggle::make('is_paid')
+                                    ->label('Is paid')->inline(false)
+                                    ->default(true),
+
+                                Toggle::make('requires_attachment')
+                                    ->label('Requires attachment')->inline(false)
+                                    ->default(false)
+                                    ->helperText('If enabled, the employee will be required to upload an attachment when applying for this leave type.'),
+
+                                Toggle::make('all_branches')
+                                    ->label('All branches')
+                                    ->default(true)
+                                    ->inline(false)
+                                    ->live(),
+                            ]),
+
+                            Fieldset::make('Allowed Branches')
+                                ->columnSpanFull()
+                                ->schema([
+                                    CheckboxList::make('branches')
+                                        ->relationship('branches', 'name')
+                                        ->searchable()
+                                        ->columns(4)
+                                        ->columnSpanFull()
+
+                                        ->bulkToggleable()
+                                        ->required(),
+                                ])
+                                ->visible(fn($get) => ! $get('all_branches')),
+
+
+                        ]),
                     ]),
-                    Fieldset::make('')->columnSpanFull()->columns(3)->schema([
+                    Step::make('Description')->columnSpanFull()->schema([
+                        Textarea::make('description')->columnSpanFull()
+                            ->label('Description')
+                            ->nullable(),
+                    ])
 
-                        Toggle::make('active')
-                            ->label('Active')->inline(false)
-                            ->default(true),
+                ])
+                    ->skippable(true),
 
-                        Toggle::make('is_paid')
-                            ->label('Is paid')->inline(false)
-                            ->default(true),
-
-                        Toggle::make('requires_attachment')
-                            ->label('Requires attachment')->inline(false)
-                            ->default(false)
-                            ->helperText('If enabled, the employee will be required to upload an attachment when applying for this leave type.'),
-                    ]),
-                    Fieldset::make('Accural rules')->columnSpanFull()->columns(3)->schema([
-                        Toggle::make('prorate_on_hire')
-                            ->label('Prorate on hire')->inline(false)
-                            ->default(true)
-                            ->helperText('If enabled, the leave balance will be prorated based on the employee\'s joining date.')
-                            ,
-
-                        Toggle::make('carry_forward_allowed')
-                            ->label('Carry forward allowed')->inline(false)
-                            ->default(false)
-                            ->helperText('If enabled, the employee will be able to carry forward the unused leave balance to the next year.')
-                            ->live(),
-
-                        TextInput::make('max_carry_forward')
-                            ->label('Max carry forward')
-                            ->numeric()
-                            ->default(0)
-                            ->visible(fn($get) => $get('carry_forward_allowed')),
-                    ]),
-                    Textarea::make('description')->columnSpanFull()
-                        ->label('Description')
-                        ->nullable(),
-                ]),
 
 
 
@@ -115,12 +151,13 @@ class LeaveTypeResource extends Resource
         return $table->striped()
             ->defaultSort('id', 'desc')
             ->columns([
+                SoftDeleteColumn::make(),
                 TextColumn::make('name')->label('Leave Type')
                     ->toggleable(),
                 TextColumn::make('count_days')->label('Number of Days')->alignCenter(true)->toggleable(),
 
                 TextColumn::make('type_label')->label('Type')->alignCenter(true)->toggleable(),
-                TextColumn::make('balance_period_label')->label('Accural cycle')->alignCenter(true),
+                // TextColumn::make('balance_period_label')->label('Accural cycle')->alignCenter(true),
                 TextColumn::make('created_at')->label('Created At')->toggleable(isToggledHiddenByDefault: true)->dateTime(),
                 BooleanColumn::make('active')->toggleable()
                     ->label('Active')->alignCenter(true)
@@ -131,9 +168,12 @@ class LeaveTypeResource extends Resource
 
             ])
             ->filters([
+                TrashedFilter::make()
+                    ->visible(fn(): bool => (isSystemManager() || isSuperAdmin() || isBranchManager())),
                 SelectFilter::make('type')->options(LeaveType::getTypes()),
-                SelectFilter::make('balance_period')->options(LeaveType::getBalancePeriods())->label('Accural cycle'),
-            ], FiltersLayout::AboveContent)
+                // SelectFilter::make('balance_period')->options(LeaveType::getBalancePeriods())->label('Accural cycle'),
+            ], FiltersLayout::Modal)
+            ->filtersFormColumns(4)
             ->recordActions([
                 EditAction::make(),
             ])
@@ -171,5 +211,15 @@ class LeaveTypeResource extends Resource
             return true;
         }
         return false;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+
+            ->whereIn('type', [LeaveType::TYPE_YEARLY, LeaveType::TYPE_MONTHLY])
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
     }
 }
