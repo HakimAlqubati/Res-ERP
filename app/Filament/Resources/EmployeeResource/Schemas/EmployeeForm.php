@@ -273,7 +273,7 @@ class EmployeeForm
                                                         ->forBranch($branchId)
                                                         ->whereIn('employee_type', [1, 2, 3, 0])
                                                         ->whereHas('user.roles', function ($query) {
-                                                            $query->whereIn('roles.id', [3, 4, 14, 16, 15]);
+                                                            $query->whereIn('roles.id', [3, 4, 7, 14, 16, 15]);
                                                         })
                                                         ->when(
                                                             $currentEmployeeId,
