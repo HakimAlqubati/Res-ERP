@@ -189,6 +189,9 @@ class LeaveBalanceResource extends Resource
                 TextColumn::make('balance')->alignCenter(true)
                     ->numeric()
                     ->sortable(),
+                TextColumn::make('available_balance')->alignCenter(true)
+                    ->numeric()
+                    ->sortable(),
 
             ])->striped()
             ->filters([
@@ -219,7 +222,8 @@ class LeaveBalanceResource extends Resource
                     ->searchable()
                     ->multiple()
                     ->label('Month')->options(getMonthArrayWithKeys()),
-            ], FiltersLayout::AboveContent)
+            ], FiltersLayout::Modal)
+            ->filtersFormColumns(4)
             ->recordActions([
                 // Tables\Actions\EditAction::make(),
                 Action::make('editBalance')->visible(fn(): bool => isSuperAdmin())->button()

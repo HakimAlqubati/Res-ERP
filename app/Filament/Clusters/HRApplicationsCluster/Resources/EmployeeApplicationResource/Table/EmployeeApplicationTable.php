@@ -227,6 +227,7 @@ class EmployeeApplicationTable
                     ->label(__('lang.branch'))
                     ->options(Branch::select('name', 'id')->selectable()->forBranchManager('id')->pluck('name', 'id')),
             ], FiltersLayout::Modal)
+            ->filtersFormColumns(4)
             ->recordActions([
                 ActionGroup::make([
                     EmployeeApplicationResource::attachmentsAction(),
