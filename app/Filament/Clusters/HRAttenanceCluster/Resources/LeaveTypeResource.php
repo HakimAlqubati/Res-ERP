@@ -90,6 +90,11 @@ class LeaveTypeResource extends Resource
                                     ->numeric()
                                     ->default(0)
                                     ->visible(fn($get) => $get('carry_forward_allowed')),
+
+                                TextInput::make('max_days_per_month')
+                                    ->label('Max days per month')
+                                    ->numeric()
+                                    ->nullable(),
                             ]),
 
                             Fieldset::make('')->columnSpanFull()->columns(4)->schema([
@@ -155,6 +160,7 @@ class LeaveTypeResource extends Resource
                 TextColumn::make('name')->label('Leave Type')
                     ->toggleable(),
                 TextColumn::make('count_days')->label('Number of Days')->alignCenter(true)->toggleable(),
+                TextColumn::make('max_days_per_month')->label('Max/Month')->alignCenter(true)->toggleable(),
 
                 TextColumn::make('type_label')->label('Type')->alignCenter(true)->toggleable(),
                 // TextColumn::make('balance_period_label')->label('Accural cycle')->alignCenter(true),

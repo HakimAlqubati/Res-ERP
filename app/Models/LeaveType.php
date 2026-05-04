@@ -28,7 +28,8 @@ class LeaveType extends Model implements Auditable
         'max_carry_forward',
         'prorate_on_hire',
         'applicable_to',
-        'all_branches'
+        'all_branches',
+        'max_days_per_month'
     ];
     protected $auditInclude = [
         'name',
@@ -45,7 +46,8 @@ class LeaveType extends Model implements Auditable
         'max_carry_forward',
         'prorate_on_hire',
         'applicable_to',
-        'all_branches'
+        'all_branches',
+        'max_days_per_month'
     ];
 
     protected $appends = ['type_label', 'balance_period_label'];
@@ -55,6 +57,7 @@ class LeaveType extends Model implements Auditable
         'carry_forward_allowed' => 'boolean',
         'prorate_on_hire' => 'boolean',
         'max_carry_forward' => 'integer',
+        'max_days_per_month' => 'double',
         'is_paid' => 'boolean',
         'active' => 'boolean',
     ];
