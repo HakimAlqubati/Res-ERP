@@ -262,7 +262,7 @@ class EmployeeForm
                                                             $query->where('id', '!=', $currentEmployeeId) // استبعاد الموظف الحالي إن كنا في وضع التعديل
                                                         )
                                                         ->whereHas('user.roles', function ($query) {
-                                                            $query->whereIn('roles.id', [3, 4, 14, 16, 15]);
+                                                            $query->whereIn('roles.id', [3, 4, 14, 16, 15, 7]);
                                                         })
                                                         ->pluck('name', 'id');
                                                 }
