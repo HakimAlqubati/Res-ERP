@@ -28,6 +28,7 @@ class LeaveBalance extends Model implements Auditable
         'branch_id',
         'created_by',
         'entitled_days',
+        'supposed_days',
         'used_days',
         'pending_days',
     ];
@@ -40,15 +41,17 @@ class LeaveBalance extends Model implements Auditable
         'branch_id',
         'created_by',
         'entitled_days',
+        'supposed_days',
         'used_days',
         'pending_days',
     ];
 
     protected $casts = [
-        'balance' => 'decimal:2',
+        'balance'       => 'decimal:2',
         'entitled_days' => 'decimal:2',
-        'used_days' => 'decimal:2',
-        'pending_days' => 'decimal:2',
+        'supposed_days' => 'decimal:2',
+        'used_days'     => 'decimal:2',
+        'pending_days'  => 'decimal:2',
     ];
 
     /**

@@ -69,6 +69,7 @@ class Init
             ->with(['branches' => function ($query) {
                 $query->select('branches.id'); // Fetch only IDs to minimize memory usage
             }])
+            ->whereIn('type', [LeaveType::TYPE_MONTHLY, LeaveType::TYPE_YEARLY])
             ->where('active', true)
             ->get();
     }
@@ -88,31 +89,47 @@ class Init
             ->active()
             ->select(['id', 'branch_id', 'has_employee_pass', 'join_date'])
             ->chunkById(self::CHUNK_SIZE, function ($employees) use ($leaveTypes, $year, $month) {
-                
+
+                $employeeIds = $employees->pluck('id')->all();
+
+                // Build the consumption map for this chunk in ONE query (zero N+1)
+                $consumptionMap = LeaveConsumptionService::buildConsumptionMap($employeeIds);
+
                 $payload = [];
 
                 foreach ($employees as $employee) {
                     foreach ($leaveTypes as $leaveType) {
-                        
+
                         if (!LeaveEligibilityService::isEligible($employee, $leaveType)) {
                             continue;
                         }
 
                         $targetMonth = $this->resolveTargetMonth($leaveType, $month);
-                        
+
                         $entitledDays = LeaveProrationService::calculateEntitlement(
-                            $leaveType, 
-                            $employee->join_date, 
-                            $year, 
+                            $leaveType,
+                            $employee->join_date,
+                            $year,
                             $targetMonth
                         );
 
+                        // Resolve real consumption from pre-fetched map (no extra query)
+                        $consumption = LeaveConsumptionService::resolve(
+                            $consumptionMap,
+                            $employee->id,
+                            $leaveType->id,
+                            $year
+                        );
+
                         $payload[] = $this->buildPayloadRecord(
-                            $employee->id, 
-                            $leaveType->id, 
-                            $year, 
-                            $targetMonth, 
-                            $entitledDays
+                            $employee->id,
+                            $leaveType->id,
+                            $year,
+                            $targetMonth,
+                            $entitledDays,
+                            (float) $leaveType->count_days,
+                            $consumption['used'],
+                            $consumption['pending']
                         );
                     }
                 }
@@ -131,10 +148,20 @@ class Init
      * @param int      $year
      * @param int|null $month
      * @param float    $entitledDays
+     * @param float    $usedDays      Aggregated from approved leave requests
+     * @param float    $pendingDays   Aggregated from pending leave requests
      * @return array
      */
-    private function buildPayloadRecord(int $employeeId, int $leaveTypeId, int $year, ?int $month, float $entitledDays): array
-    {
+    private function buildPayloadRecord(
+        int $employeeId,
+        int $leaveTypeId,
+        int $year,
+        ?int $month,
+        float $entitledDays,
+        float $supposedDays,
+        float $usedDays = 0.0,
+        float $pendingDays = 0.0
+    ): array {
         $timestamp = now()->toDateTimeString();
 
         return [
@@ -143,8 +170,9 @@ class Init
             'year'          => $year,
             'month'         => $month,
             'entitled_days' => $entitledDays,
-            'used_days'     => 0.0,
-            'pending_days'  => 0.0,
+            'supposed_days' => $supposedDays,
+            'used_days'     => $usedDays,
+            'pending_days'  => $pendingDays,
             'balance'       => $entitledDays, // Legacy support
             'created_at'    => $timestamp,
             'updated_at'    => $timestamp,
@@ -160,8 +188,8 @@ class Init
      */
     private function resolveTargetMonth(LeaveType $leaveType, int $currentMonth): ?int
     {
-        return $leaveType->balance_period === LeaveType::BALANCE_PERIOD_MONTHLY 
-            ? $currentMonth 
+        return $leaveType->balance_period === LeaveType::BALANCE_PERIOD_MONTHLY
+            ? $currentMonth
             : null;
     }
 }

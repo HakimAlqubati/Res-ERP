@@ -186,10 +186,19 @@ class LeaveBalanceResource extends Resource
                     ->formatStateUsing(function ($state) {
                         return getMonthArrayWithKeys()[$state] ?? '';
                     }),
+                TextColumn::make('supposed_days')->alignCenter(true)
+                    ->numeric()
+                    ->sortable(),
                 TextColumn::make('balance')->alignCenter(true)
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('available_balance')->alignCenter(true)
+                    ->numeric()
+                    ->sortable(),
+                TextColumn::make('used_days')->alignCenter(true)
+                    ->numeric()
+                    ->sortable(),
+                TextColumn::make('pending_days')->alignCenter(true)
                     ->numeric()
                     ->sortable(),
 

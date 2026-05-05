@@ -25,9 +25,9 @@ class LeaveProrationService
      * @return float
      */
     public static function calculateEntitlement(
-        LeaveType $leaveType, 
-        string $joinDateString, 
-        int $targetYear, 
+        LeaveType $leaveType,
+        string $joinDateString,
+        int $targetYear,
         ?int $targetMonth = null
     ): float {
         $countDays = (float) $leaveType->count_days;
