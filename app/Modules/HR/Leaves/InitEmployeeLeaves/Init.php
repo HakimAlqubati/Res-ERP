@@ -123,6 +123,7 @@ class Init
 
                         $payload[] = $this->buildPayloadRecord(
                             $employee->id,
+                            $employee->branch_id,
                             $leaveType->id,
                             $year,
                             $targetMonth,
@@ -154,6 +155,7 @@ class Init
      */
     private function buildPayloadRecord(
         int $employeeId,
+        ?int $branchId,
         int $leaveTypeId,
         int $year,
         ?int $month,
@@ -166,6 +168,7 @@ class Init
 
         return [
             'employee_id'   => $employeeId,
+            'branch_id'     => $branchId,
             'leave_type_id' => $leaveTypeId,
             'year'          => $year,
             'month'         => $month,
