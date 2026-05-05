@@ -45,7 +45,7 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
 
         $this->formData = [
             'invoice_no' => null,
-            'date' => now()->format('Y-m-d'),
+            'date' => $this->record->grn_date ? $this->record->grn_date->format('Y-m-d') :  now()->format('Y-m-d'),
             'store_id' => $this->record->store_id,
             'supplier_id' => $this?->record?->supplier_id,
             'payment_method_id' => $this?->record?->payment_method_id,
