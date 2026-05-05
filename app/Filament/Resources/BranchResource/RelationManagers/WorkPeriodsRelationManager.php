@@ -17,7 +17,7 @@ class WorkPeriodsRelationManager extends RelationManager
     protected static string $relationship = 'workPeriods';
     protected static ?string $title       = 'Shifts';
     protected static ?string $modelLabel = 'Shift';
-        protected static ?string $pluralLabel = 'Shifts';
+    protected static ?string $pluralLabel = 'Shifts';
     protected static ?string $label = 'Shift';
 
 
@@ -56,20 +56,21 @@ class WorkPeriodsRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
+        return WorkPeriodResource::table($table);
         return $table
             ->columns([
-                TextColumn::make('id')->label(__('lang.shift_id'))->alignCenter(true)->sortable()->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('name')->label(__('lang.name'))->sortable()->searchable(),
-                TextColumn::make('start_at')->label(__('lang.start_date'))->sortable(),
-                TextColumn::make('end_at')->label(__('lang.end_date'))->sortable(),
-                TextColumn::make('supposed_duration')
-                    ->label('Duration')->sortable()->toggleable()->alignCenter(),
-                TextColumn::make('employee_periods_count')
-                    ->counts('employeePeriods')
-                    ->label('Staff No')
-                    ->sortable()
-                    ->alignCenter(),
-                IconColumn::make('active')->boolean()->label(__('lang.active'))->sortable()->alignCenter(true),
+                // TextColumn::make('id')->label(__('lang.shift_id'))->alignCenter(true)->sortable()->toggleable(isToggledHiddenByDefault: true),
+                // TextColumn::make('name')->label(__('lang.name'))->sortable()->searchable(),
+                // TextColumn::make('start_at')->label(__('lang.start_date'))->sortable(),
+                // TextColumn::make('end_at')->label(__('lang.end_date'))->sortable(),
+                // TextColumn::make('supposed_duration')
+                //     ->label('Duration')->sortable()->toggleable()->alignCenter(),
+                // TextColumn::make('employee_periods_count')
+                //     ->counts('employeePeriods')
+                //     ->label('Staff No')
+                //     ->sortable()
+                //     ->alignCenter(),
+                // IconColumn::make('active')->boolean()->label(__('lang.active'))->sortable()->alignCenter(true),
 
             ])
             ->headerActions([

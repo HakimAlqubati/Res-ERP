@@ -29,6 +29,12 @@ class OvertimeService
             $query->where('employee_id', $filters['employee_id']);
         }
 
+        if (isset($filters['search'])) {
+            $query->whereHas('employee', function ($q) use ($filters) {
+                $q->where('name', 'like', '%' . $filters['search'] . '%');
+            });
+        }
+
         if (isset($filters['date_from'])) {
             $query->whereDate('date', '>=', $filters['date_from']);
         }
