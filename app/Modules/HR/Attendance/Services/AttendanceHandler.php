@@ -35,6 +35,7 @@ class AttendanceHandler
         private AttendanceCalculator $calculator,
         private AttendanceRepositoryInterface $repository,
         private CreateMissedCheckoutRequestAction $createMissedCheckoutRequest,
+        private AttendanceConfig $config,
     ) {}
 
     /**
@@ -59,14 +60,19 @@ class AttendanceHandler
         }
 
         if (!$shiftInfo) {
-            throw new NoShiftFoundException();
+            if (!$this->config->isNoShiftAttendanceAllowed()) {
+                throw new NoShiftFoundException();
+            }
+            // الإعداد مفعّل: نكمل بدون شيفت (period_id = null)
+        } else {
+            $context->setShiftInfo($shiftInfo);
         }
-        $context->setShiftInfo($shiftInfo);
 
         // 2. تحديد نوع العملية (دخول/خروج)
-        $requestedType = $context->getRequestedCheckType();
-        if ($requestedType) {
-            $context->setCheckType($requestedType);
+        // ملاحظة: عند وجود شيفت وnوع صريح يُعالج هنا مباشرة؛
+        // أما حالة بدون شيفت تمر عبر DetermineCheckTypeAction لأنه يعرف كيف يبحث بدون period_id
+        if ($context->getRequestedCheckType() && $context->workPeriod) {
+            $context->setCheckType($context->getRequestedCheckType());
 
             if ($context->isCheckOut()) {
                 $lastCheckIn = $this->repository->findOpenCheckIn(

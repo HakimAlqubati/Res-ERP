@@ -158,7 +158,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
     private function fetchAttendance(Employee $employee, Carbon $start, Carbon $end): array
     {
         $data = $this->reportManager
-            ->getEmployeesRangeReport(collect([$employee]), $start, $end)
+            ->getEmployeesRangeReport(collect([$employee]), $start, $end, true) // 👈 استبعاد التحضيرات no_shift
             ->get($employee->id);
 
         return (array) $data?->toArray();

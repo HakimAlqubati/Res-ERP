@@ -39,6 +39,10 @@ class StrictShiftCompletionRule implements ValidationRuleInterface
             return;
         }
 
+        if (!$checkInRecord->period) {
+            return;
+        }
+
         // حساب حدود الوردية
         $bounds = $this->shiftResolver->calculateBounds($checkInRecord->period, $checkInRecord->check_date);
 

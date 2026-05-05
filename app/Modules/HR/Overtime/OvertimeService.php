@@ -177,7 +177,6 @@ class OvertimeService
 
         foreach ($branches as $branch) {
             $suggestions = $this->getSuggestedOvertimeV3($date, $date, $branch->id);
-
             if (empty($suggestions) || !isset($suggestions[$date])) {
                 $results[$branch->name] = 0;
                 continue;
@@ -361,7 +360,7 @@ class OvertimeService
     public function getOvertime(array $filters = [])
     {
         $query = EmployeeOvertime::query()
-            ->with(['employee:id,name', 'approvedBy:id,name', 'createdBy:id,name','rejectedBy:id,name']);
+            ->with(['employee:id,name', 'approvedBy:id,name', 'createdBy:id,name', 'rejectedBy:id,name']);
 
         if (isset($filters['employee_id'])) {
             $query->where('employee_id', $filters['employee_id']);
@@ -490,7 +489,7 @@ class OvertimeService
 
         // 2. التحميل المسبق (Eager Loading) لكل البيانات المطلوبة بنطاق التواريخ
         $employees = Employee::where('branch_id', $branchId)
-            ->where('active', 1)
+            ->where('active', 1) 
             ->with([
 
                 'attendances' => function ($query) use ($fromDate, $toDate) {
@@ -516,7 +515,6 @@ class OvertimeService
                 }
             ])
             ->get();
-
         $groupedOvertime = [];
         $periodDates = \Carbon\CarbonPeriod::create($fromDate, $toDate);
 
@@ -528,7 +526,6 @@ class OvertimeService
             foreach ($employees as $employee) {
                 // استدعاء دالة الحساب التي تعمل على الـ Collections المحملة مسبقاً
                 $result = $employee->calculateOvertimeInMemory($dateString, $allowedOffset, $halfHourRule);
-
                 if (!empty($result)) {
                     $dailyOvertime[] = [
                         'employee_id' => $employee->id,

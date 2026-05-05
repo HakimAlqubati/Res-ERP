@@ -66,6 +66,22 @@ class AttendanceRepository implements AttendanceRepositoryInterface
     }
 
     /**
+     * البحث عن سجل دخول مفتوح لموظف بدون وردية (مسجلات بدون period_id)
+     */
+    public function findOpenNoShiftCheckIn(int $employeeId, string $date): ?Attendance
+    {
+        return Attendance::query()
+            ->where('employee_id', $employeeId)
+            ->whereNull('period_id')
+            ->where('check_date', $date)
+            ->where('check_type', CheckType::CHECKIN->value)
+            ->where('accepted', 1)
+            ->whereDoesntHave('checkout')
+            ->latest('id')
+            ->first();
+    }
+
+    /**
      * جلب سجلات الحضور اليومية للموظف
      */
     public function getDailyRecords(int $employeeId, string $date): Collection
@@ -95,7 +111,7 @@ class AttendanceRepository implements AttendanceRepositoryInterface
      */
     public function getCheckoutsForDay(
         int $employeeId,
-        int $periodId,
+        ?int $periodId,
         string $date,
         ?int $exceptId = null
     ): Collection {

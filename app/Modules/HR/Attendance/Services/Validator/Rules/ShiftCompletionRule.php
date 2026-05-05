@@ -35,6 +35,10 @@ class ShiftCompletionRule implements ValidationRuleInterface
 
     private function validateShiftNotCompleted($checkIn, $checkOut, ValidationContext $context): void
     {
+        if (!$checkIn->period) {
+            return;
+        }
+
         $bounds = $this->shiftResolver->calculateBounds($checkIn->period, $checkIn->check_date);
         $isGraceExpired = $context->requestTime->gt($bounds['windowEnd']);
 

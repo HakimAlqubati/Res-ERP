@@ -65,6 +65,14 @@ class AttendanceConfig
     }
 
     /**
+     * هل يُسمح بتسجيل الحضور بدون وردية؟
+     */
+    public function isNoShiftAttendanceAllowed(): bool
+    {
+        return (bool) Setting::getSetting('allow_attendance_without_shift', false);
+    }
+
+    /**
      * مدة القفل بالثواني لمنع الطلبات المتزامنة
      */
     public function getLockTimeout(): int

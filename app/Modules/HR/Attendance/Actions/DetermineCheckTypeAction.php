@@ -70,18 +70,24 @@ class DetermineCheckTypeAction
     }
 
     /**
-     * البحث عن سجل دخول مفتوح
+     * البحث عن سجل دخول مفتوح حسب حالة الشيفت
+     * 
+     * إذا كان الموظف بدون شيفت → يبحث بدون period_id
+     * إذا كان لديه شيفت     → يبحث بالشيفت والتاريخ
      */
     private function findOpenCheckIn(AttendanceContextDTO $context): ?\App\Models\Attendance
     {
-        if (!$context->workPeriod || !$context->shiftDate) {
-            return null;
+        $date = $context->shiftDate ?? $context->requestTime->toDateString();
+
+        // موظف بدون شيفت: نبحث عن check-in مفتوح حيث period_id = null
+        if (!$context->workPeriod) {
+            return $this->repository->findOpenNoShiftCheckIn($context->employee->id, $date);
         }
 
         return $this->repository->findOpenCheckIn(
             $context->employee->id,
             $context->workPeriod->id,
-            $context->shiftDate
+            $date
         );
     }
 }

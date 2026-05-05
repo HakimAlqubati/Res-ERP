@@ -105,6 +105,8 @@ class EmployeeAttendanceRangeService
             $dayAttendances = ($attendances->get($currentDateStr) ?? collect())->groupBy('period_id');
             $dayOvertimes = ($overtimes->get($currentDateStr) ?? collect());
 
+            \App\Modules\HR\AttendanceReports\Processors\VirtualPeriodInjector::inject($dayAttendances, $dayHistories, $workPeriodMap);
+
             $dayReport = $this->processor->processDay(
                 $currentDateStr,
                 $currentDayName,

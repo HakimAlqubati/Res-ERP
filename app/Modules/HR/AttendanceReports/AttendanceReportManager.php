@@ -45,11 +45,11 @@ class AttendanceReportManager implements AttendanceReportInterface
     {
         return $this->fetcher->getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
     }
-    public function getEmployeesRangeReport($employees, Carbon $startDate, Carbon $endDate): Collection
+    public function getEmployeesRangeReport($employees, Carbon $startDate, Carbon $endDate, bool $excludeNoShift = false): Collection
     {
         $employees = collect($employees);
         $empIds = $employees->pluck('id')->toArray();
-        $bulkData = $this->fetcher->fetchForMultiEmployeesRange($empIds, $startDate->toDateString(), $endDate->toDateString());
+        $bulkData = $this->fetcher->fetchForMultiEmployeesRange($empIds, $startDate->toDateString(), $endDate->toDateString(), $excludeNoShift);
 
         $results = collect();
         foreach ($employees as $employee) {

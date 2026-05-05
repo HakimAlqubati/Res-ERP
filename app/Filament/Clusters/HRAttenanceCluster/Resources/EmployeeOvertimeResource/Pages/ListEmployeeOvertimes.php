@@ -180,6 +180,56 @@ class ListEmployeeOvertimes extends ListRecords
                         || isSystemManager()
                         || isBranchManager()
                 ),
+            Action::make('auto_process')
+                ->label('Auto Process Suggested Overtime')
+                ->icon('heroicon-o-bolt')
+                ->color('info')
+                ->requiresConfirmation()
+                ->visible(fn() => isHakimOrAdel())
+                ->modalHeading('Process Suggested Overtime')
+                ->modalDescription('The system will automatically calculate and store suggested overtime for the selected date and branch.')
+                ->modalSubmitActionLabel('Process Now')
+                ->form([
+                    Grid::make(2)->schema([
+                        \Filament\Forms\Components\DatePicker::make('date')
+                            ->label('Date')
+                            ->required()
+                            ->default(now())
+                            // ->native(false)
+                            // ->displayFormat('Y-m-d')
+                            ,
+                        \Filament\Forms\Components\Select::make('branch_id')
+                            ->label('Branch')
+                            ->options(\App\Models\Branch::active()->pluck('name', 'id'))
+                            ->required()
+                            ->searchable()
+                            ->preload(),
+                    ]),
+                ])
+                ->action(function (array $data) {
+                    try {
+                        $service = app(\App\Modules\HR\Overtime\OvertimeService::class);
+                        $results = $service->autoProcessSuggestedOvertime($data['date'], (int) $data['branch_id']);
+
+                        $summary = collect($results)->map(function ($result, $branch) {
+                            $status = is_numeric($result) ? "{$result} records created" : $result;
+                            return "**{$branch}**: {$status}";
+                        })->implode("\n");
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Overtime Processing Results')
+                            ->body($summary)
+                            ->success()
+                            ->send();
+                    } catch (\Exception $e) {
+                        \Filament\Notifications\Notification::make()
+                            ->title('Processing Failed')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                })
+                ->visible(fn() => isSuperAdmin() || isSystemManager() || isBranchManager()),
             CreateAction::make()
                 ->label('Manage Staff Overtime')
                 ->hidden(fn() => isBranchUser()),
