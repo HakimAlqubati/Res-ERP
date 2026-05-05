@@ -33,13 +33,14 @@ class Init
      */
     public function handle(): void
     {
-        DB::transaction(function () {
-            $this->clearExistingBalances();
+        $now          = Carbon::now();
+        $currentYear  = $now->year;
+        $currentMonth = $now->month;
+
+        DB::transaction(function () use ($currentYear, $currentMonth) {
+            $this->clearExistingBalances($currentYear, $currentMonth);
 
             $leaveTypes = $this->getPreparedLeaveTypes();
-            $now = Carbon::now();
-            $currentYear = $now->year;
-            $currentMonth = $now->month;
 
             $this->processEmployeesInChunks($leaveTypes, $currentYear, $currentMonth);
         });
@@ -48,14 +49,30 @@ class Init
     }
 
     /**
-     * Flush the current leave balances.
-     * Uses forceDelete() assuming SoftDeletes is active, or truncate() if preferred.
+     * Flush leave balances in a scoped, safe manner:
      *
+     *  - Yearly leave types  → delete all records for the current year (month IS NULL)
+     *  - Monthly leave types → delete records for the current month only,
+     *                          leaving past months' history and consumption intact.
+     *
+     * @param int $year
+     * @param int $month
      * @return void
      */
-    private function clearExistingBalances(): void
+    private function clearExistingBalances(int $year, int $month): void
     {
-        LeaveBalance::query()->forceDelete();
+        // Yearly balances: wipe and re-create for the current year
+        LeaveBalance::query()
+            ->whereNull('month')
+            ->where('year', $year)
+            ->forceDelete();
+
+        // Monthly balances: wipe the current month only — past months are preserved
+        LeaveBalance::query()
+            ->whereNotNull('month')
+            ->where('year', $year)
+            ->where('month', $month)
+            ->forceDelete();
     }
 
     /**

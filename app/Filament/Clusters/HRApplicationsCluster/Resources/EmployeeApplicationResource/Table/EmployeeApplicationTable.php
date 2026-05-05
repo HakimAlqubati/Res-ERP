@@ -7,7 +7,6 @@ use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationRes
 use App\Models\ApplicationTransaction;
 use App\Models\Branch;
 use App\Models\EmployeeApplicationV2;
-use App\Models\LeaveBalance;
 use Carbon\Carbon;
 use Exception;
 use Filament\Actions\BulkActionGroup;
@@ -273,19 +272,7 @@ class EmployeeApplicationTable
                                 $details = $record->leaveRequest;
                                 // dd($details);
                                 if (! is_null($details)) {
-                                    $fromDate     = Carbon::parse($details->start_date);
-                                    $toDate       = Carbon::parse($details->end_date);
-                                    $remaning     = $fromDate->diffInDays($toDate) + 1;
-                                    $leaveBalance = LeaveBalance::where('leave_type_id', $details->leave_type)->where('employee_id', $record->employee_id)
-                                        ->where('year', $details->year)
-                                        ->where('month', $details->month)
-                                        ->first();
 
-                                    if (! is_null($leaveBalance)) {
-                                        $leaveBalance->update([
-                                            'balance' => $remaning + $leaveBalance?->balance,
-                                        ]);
-                                    }
                                     $record->delete();
                                     DB::commit();
                                     showSuccessNotifiMessage('done');

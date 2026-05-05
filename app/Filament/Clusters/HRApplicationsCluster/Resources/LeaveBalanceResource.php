@@ -66,98 +66,7 @@ class LeaveBalanceResource extends Resource
     }
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 2;
-    public static function form(Schema $schema): Schema
-    {
-        return $schema
-            ->components(
-                [
-
-                    Fieldset::make('basic')
-                        ->columns(4)->columnSpanFull()
-                        ->label('Set branch employees, the Leave type and Year')
-                        ->schema([
-
-                            Select::make('branch_id')->label('Branch')
-                                ->helperText('Select to populate the branch employees')
-                                ->required()
-                                ->live()
-                                ->options(Branch::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))
-                                ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                    $employees = Employee::where('branch_id', $state)->where('active', 1)->select('name', 'id as employee_id')->get()->toArray();
-                                    // Populate the Repeater with employees
-                                    $set('employees', array_map(function ($employee) {
-                                        return [
-                                            'employee_id' => $employee['employee_id'],
-
-                                        ];
-                                    }, $employees));
-                                }),
-                            Select::make('leave_type_id')->label('Leave type')
-                                ->required()
-                                ->live()
-                                ->options(LeaveType::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))
-                                ->afterStateUpdated(function (Get $get, Set $set, $state, $livewire) {
-                                    $employees = Employee::where('branch_id', $get('branch_id'))->where('active', 1)->select('name', 'id as employee_id')->get()->toArray();
-                                    $leaveType = LeaveType::find($state);
-                                    foreach ($employees as $index => $employee) {
-                                        $employees[$index]['balance'] = $leaveType->count_days;
-                                    }
-                                    // Set the updated repeater data back to the 'employees' field
-                                    $set('employees', $employees);
-                                }),
-                            Select::make('year')->options([
-                                2024 => 2024,
-                                2025 => 2025,
-                                2026 => 2026,
-                                2027 => 2027,
-                            ])->required(),
-                            Select::make('month')->options(getMonthArrayWithKeys())
-                            // ->multiple()
-                            // ->required()
-                            ,
-                        ]),
-
-                    Repeater::make('employees')
-                        ->label('')
-                        ->columnSpanFull()
-                        ->minItems(2)
-                        ->schema(
-                            [
-                                Grid::make()->columns(2)->schema([
-                                    Select::make('employee_id')
-                                        ->relationship('employee', 'name')
-                                        ->required()
-                                        ->unique(
-                                            ignoreRecord: true,
-                                            modifyRuleUsing: function (Unique $rule, Get $get, $state) {
-                                                return $rule->where('employee_id', $state)
-                                                    ->where('leave_type_id', $get('../../leave_type_id'))
-                                                    ->where('year', $get('../../year'))
-                                                    ->where('month', $get('../../month'))
-                                                ;
-                                            }
-                                        )->validationMessages([
-                                            'unique' => 'Balance already created',
-                                        ]),
-
-                                    TextInput::make('balance')->label('Balance')
-                                        ->numeric()
-                                        ->live()
-                                        ->required()
-                                    // ->maxValue(function (Get $get) {
-                                    //     dd($get('leave_type_id'),$get('employee_id'),$get('basic.branch_id'));
-                                    //     $max = LeaveType::find($get('leave_type_id'))?->count_days ?? 0;
-                                    //     // dd($max);
-                                    //     return $max;
-                                    // })
-                                    ,
-                                ]),
-
-                            ]
-                        ),
-                ]
-            );
-    }
+    
 
     public static function table(Table $table): Table
     {
@@ -192,9 +101,14 @@ class LeaveBalanceResource extends Resource
                     ->numeric()
                     ->sortable(),
                
-                TextColumn::make('available_balance')->alignCenter(true)
+                TextColumn::make('balance')->alignCenter(true)
                     ->numeric()
                     ->label('Balance')
+                    
+                    ,
+                TextColumn::make('available_balance')->alignCenter(true)
+                    ->numeric()
+                    ->label('Balance _')
                     
                     ,
                 TextColumn::make('used_days')->alignCenter(true)
@@ -236,35 +150,7 @@ class LeaveBalanceResource extends Resource
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
             ->recordActions([
-                // Tables\Actions\EditAction::make(),
-                Action::make('editBalance')->visible(fn(): bool => isSuperAdmin())->button()
-                    ->schema(function ($record) {
-                        return [
-                            TextInput::make('balance', $record->balance)->default($record->balance)
-                                ->maxValue($record->leaveType?->count_days ?? 0)
-                                ->rules([
-                                    'required',
-                                    'numeric',
-                                    'max:' . ($record->leaveType?->count_days ?? 0),
-                                ])
-                                ->helperText('Max: ' . ($record->leaveType?->count_days ?? 0)),
-                        ];
-                    })->action(function ($record, $data) {
-                        DB::beginTransaction();
-                        try {
-                            $record->update([
-                                'balance' => $data['balance'],
-                            ]);
-                            DB::commit();
-                            Notification::make()->success()->title('Done')->send();
-                        } catch (\Exception $th) {
-                            //throw $th;
-                            DB::rollBack();
-                            Notification::make()->warning()->body($th->getMessage())->send();
-                        }
-                    })
-                    ->hidden()
-                    ,
+             
 
             ])
             ->toolbarActions([

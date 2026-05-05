@@ -16,7 +16,7 @@ class LeaveBalance extends Model implements Auditable
     // Define the table name if it's different from the convention
     protected $table = 'hr_leave_balances';
 
-    protected $appends = ['available_balance'];
+    protected $appends = ['available_balance', 'balance'];
 
     // Define fillable attributes for mass assignment
     protected $fillable = [
@@ -80,14 +80,7 @@ class LeaveBalance extends Model implements Auditable
             ->first();
     }
 
-    /**
-     * (جديد) المعادلة المحاسبية لحساب الرصيد المتاح 
-     */
-    public function getAvailableBalanceAttribute()
-    {
-        // الرصيد المتاح = إجمالي الاستحقاق - (الأيام المستهلكة + الأيام المعلقة)
-        return $this->entitled_days - ($this->used_days + $this->pending_days);
-    }
+
     public static function getMonthlyBalanceForEmployee($employeeId, $year, $month)
     {
         return self::where('employee_id', $employeeId)
@@ -145,8 +138,18 @@ class LeaveBalance extends Model implements Auditable
         }
     }
 
-    // public function getBalanceAttribute()
-    // {
-    //     return 50;
-    // }
+    /**
+     * (جديد) المعادلة المحاسبية لحساب الرصيد المتاح 
+     */
+    public function getAvailableBalanceAttribute()
+    {
+        // الرصيد المتاح = إجمالي الاستحقاق - (الأيام المستهلكة + الأيام المعلقة)
+        return $this->entitled_days - ($this->used_days + $this->pending_days);
+    }
+
+    public function getBalanceAttribute()
+    {
+        // الرصيد المتاح = إجمالي الاستحقاق - (الأيام المستهلكة + الأيام المعلقة)
+        return $this->available_balance;
+    }
 }
