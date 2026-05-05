@@ -325,7 +325,7 @@ class EmployeeApplicationService
                     break;
 
                 case EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST:
-                    app(\App\Services\HR\Applications\LeaveRequest\LeaveApprovalService::class)->process($record);
+                    // app(\App\Services\HR\Applications\LeaveRequest\LeaveApprovalService::class)->process($record);
                     break;
             }
 

@@ -7,6 +7,7 @@ use App\Facades\Warnings;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource;
 use App\Models\EmployeeApplicationV2;
 use App\Services\HR\Applications\AdvanceRequest\AdvanceApprovalService;
+use App\Services\HR\Applications\LeaveRequest\LeaveApprovalService;
 use App\Services\HR\Payroll\PayrollLockGuard;
 use App\Services\Warnings\WarningPayload;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +26,7 @@ class EmployeeApplicationObserver
 {
     public function __construct(
         private readonly AdvanceApprovalService $advanceApprovalService,
+        private readonly LeaveApprovalService   $leaveApprovalService,
         private readonly PayrollLockGuard       $payrollLockGuard,
     ) {}
 
@@ -178,7 +180,7 @@ class EmployeeApplicationObserver
      */
     public function updated(EmployeeApplicationV2 $app): void
     {
-        // 1. Notify Financial Managers via WhatsApp on "Manager Approved" status
+        // ── Advance Request: WhatsApp notification to Financial Managers ──────
         if (
             $app->isDirty('status')
             && $app->status === EmployeeApplicationV2::STATUS_APPROVED
@@ -187,41 +189,99 @@ class EmployeeApplicationObserver
             $this->notifyFinancialManagersOfAdvanceApproved($app);
         }
 
-        if (! $this->isAdvanceApproval($app)) {
+        // ── Advance Request: installment generation ───────────────────────────
+        if ($this->isAdvanceApproval($app)) {
+            try {
+                DB::transaction(fn() => $this->advanceApprovalService->process($app));
+
+                $employeeUser = $app->employee?->user;
+                if ($employeeUser) {
+                    Warnings::send(
+                        $employeeUser,
+                        WarningPayload::make(
+                            'Advance Request Approved',
+                            'Your advance request has been approved.',
+                            WarningLevel::Info
+                        )
+                            ->ctx([
+                                'application_id' => $app->id,
+                                'employee_id'    => $app->employee_id,
+                                'type_id'        => $app->application_type_id,
+                            ])
+                            ->url(rtrim(EmployeeApplicationResource::getUrl(), '/') . '?tab=Advance+request')
+                            ->scope("emp-app-approved-{$app->id}")
+                            ->expires(now()->addDays(3))
+                    );
+                }
+            } catch (\Throwable $e) {
+                Log::error('[EmployeeApplicationObserver] Failed to process advance approval.', [
+                    'application_id' => $app->id,
+                    'employee_id'    => $app->employee_id,
+                    'error'          => $e->getMessage(),
+                ]);
+                throw $e;
+            }
+        }
+
+        // ── Leave Request: balance update on status transition ────────────────
+        $this->handleLeaveStatusTransition($app);
+    }
+
+    /**
+     * Dispatch the correct LeaveApprovalService method based on the
+     * previous → current status transition.
+     *
+     * Only fires when:
+     *  a) The application type is a leave request.
+     *  b) The `status` field actually changed.
+     */
+    private function handleLeaveStatusTransition(EmployeeApplicationV2 $app): void
+    {
+        if ($app->application_type_id !== EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST) {
             return;
         }
 
-        try {
-            DB::transaction(fn() => $this->advanceApprovalService->process($app));
+        if (! $app->isDirty('status')) {
+            return;
+        }
 
-            // Notify the employee that their advance request was approved
-            $employeeUser = $app->employee?->user;
-            if ($employeeUser) {
-                Warnings::send(
-                    $employeeUser,
-                    WarningPayload::make(
-                        'Advance Request Approved',
-                        'Your advance request has been approved.',
-                        WarningLevel::Info
-                    )
-                        ->ctx([
-                            'application_id' => $app->id,
-                            'employee_id'    => $app->employee_id,
-                            'type_id'        => $app->application_type_id,
-                        ])
-                        ->url(rtrim(EmployeeApplicationResource::getUrl(), '/') . '?tab=Advance+request')
-                        ->scope("emp-app-approved-{$app->id}")
-                        ->expires(now()->addDays(3))
-                );
-            }
+        $previousStatus = $app->getOriginal('status');
+        $currentStatus  = $app->status;
+
+        try {
+            DB::transaction(function () use ($app, $previousStatus, $currentStatus) {
+                match (true) {
+
+                    // ✅ Any status → Approved: add to used_days
+                    $currentStatus === EmployeeApplicationV2::STATUS_APPROVED
+                        => $this->leaveApprovalService->onApproved($app),
+
+                    // ⏳ Any status → Pending: add to pending_days
+                    $currentStatus === EmployeeApplicationV2::STATUS_PENDING
+                        => $this->leaveApprovalService->onPending($app),
+
+                    // ❌ Was Approved → now Rejected: revert used_days
+                    $currentStatus  === EmployeeApplicationV2::STATUS_REJECTED
+                    && $previousStatus === EmployeeApplicationV2::STATUS_APPROVED
+                        => $this->leaveApprovalService->onRejectedFromApproved($app),
+
+                    // ❌ Was Pending → now Rejected: revert pending_days
+                    $currentStatus  === EmployeeApplicationV2::STATUS_REJECTED
+                    && $previousStatus === EmployeeApplicationV2::STATUS_PENDING
+                        => $this->leaveApprovalService->onRejectedFromPending($app),
+
+                    default => null,
+                };
+            });
         } catch (\Throwable $e) {
-            Log::error('[EmployeeApplicationObserver] Failed to process advance approval.', [
-                'application_id' => $app->id,
-                'employee_id'    => $app->employee_id,
-                'error'          => $e->getMessage(),
+            Log::error('[EmployeeApplicationObserver] Failed to update leave balance.', [
+                'application_id'  => $app->id,
+                'employee_id'     => $app->employee_id,
+                'previous_status' => $previousStatus,
+                'current_status'  => $currentStatus,
+                'error'           => $e->getMessage(),
             ]);
 
-            // Re-throw so Filament / API controllers can roll back and surface the error.
             throw $e;
         }
     }

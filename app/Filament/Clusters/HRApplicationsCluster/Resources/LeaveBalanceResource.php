@@ -91,32 +91,33 @@ class LeaveBalanceResource extends Resource
                 TextColumn::make('year')
                     ->alignCenter(true)
                     ->sortable(),
-                // TextColumn::make('month')
-                //     ->alignCenter(true)
-                //     ->sortable()
-                //     ->formatStateUsing(function ($state) {
-                //         return getMonthArrayWithKeys()[$state] ?? '';
-                //     }),
+                TextColumn::make('month')
+                    ->alignCenter(true)
+                    ->sortable()
+                    // ->formatStateUsing(function ($state) {
+                    //     return getMonthArrayWithKeys()[$state] ?? '';
+                    // })
+                    ,
                 TextColumn::make('supposed_days')->alignCenter(true)
                     ->numeric()
                     ->sortable(),
                
-                TextColumn::make('balance')->alignCenter(true)
-                    ->numeric()
-                    ->label('Balance')
+                // TextColumn::make('balance')->alignCenter(true)
+                //     ->numeric()
+                //     ->label('Balance')
                     
-                    ,
+                //     ,
                 TextColumn::make('available_balance')->alignCenter(true)
                     ->numeric()
-                    ->label('Balance _')
+                    ->label('Balance')
                     
                     ,
                 TextColumn::make('used_days')->alignCenter(true)
                     ->numeric()
                     ->sortable(),
-                TextColumn::make('pending_days')->alignCenter(true)
-                    ->numeric()
-                    ->sortable(),
+                // TextColumn::make('pending_days')->alignCenter(true)
+                //     ->numeric()
+                //     ->sortable(),
 
             ])->striped()
             ->filters([
