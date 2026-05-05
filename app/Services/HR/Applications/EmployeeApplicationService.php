@@ -368,7 +368,6 @@ class EmployeeApplicationService
 
             switch ($record->application_type_id) {
                 case EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST:
-                    app(\App\Services\HR\Applications\LeaveRequest\LeaveApprovalService::class)->undoProcess($record);
                     break;
 
                     // Note: Rollback for Attendance & Departure fingerprint requests can be added here if needed
