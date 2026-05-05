@@ -46,7 +46,7 @@ class LeaveTypeResource extends Resource
     protected static ?string $cluster = HRLeaveManagementCluster::class;
 
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 1;
     public static function form(Schema $schema): Schema
     {
         return $schema

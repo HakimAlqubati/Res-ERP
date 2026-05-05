@@ -167,6 +167,7 @@ class LeaveBalanceResource extends Resource
                 TextColumn::make('employee.employee_no')
                     ->label('Employee no')
                     ->numeric()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable()->alignCenter(true)
                     ->sortable(),
                 TextColumn::make('employee.name')
@@ -175,26 +176,27 @@ class LeaveBalanceResource extends Resource
                     ->sortable(),
                 TextColumn::make('leaveType.name')
                     ->numeric()
-                    ->alignCenter(true)
+                    ->toggleable()
+                    // ->alignCenter(true)
                     ->sortable(),
                 TextColumn::make('year')
                     ->alignCenter(true)
                     ->sortable(),
-                TextColumn::make('month')
-                    ->alignCenter(true)
-                    ->sortable()
-                    ->formatStateUsing(function ($state) {
-                        return getMonthArrayWithKeys()[$state] ?? '';
-                    }),
+                // TextColumn::make('month')
+                //     ->alignCenter(true)
+                //     ->sortable()
+                //     ->formatStateUsing(function ($state) {
+                //         return getMonthArrayWithKeys()[$state] ?? '';
+                //     }),
                 TextColumn::make('supposed_days')->alignCenter(true)
                     ->numeric()
                     ->sortable(),
-                TextColumn::make('balance')->alignCenter(true)
-                    ->numeric()
-                    ->sortable(),
+               
                 TextColumn::make('available_balance')->alignCenter(true)
                     ->numeric()
-                    ->sortable(),
+                    ->label('Balance')
+                    
+                    ,
                 TextColumn::make('used_days')->alignCenter(true)
                     ->numeric()
                     ->sortable(),
@@ -260,15 +262,17 @@ class LeaveBalanceResource extends Resource
                             DB::rollBack();
                             Notification::make()->warning()->body($th->getMessage())->send();
                         }
-                    }),
+                    })
+                    ->hidden()
+                    ,
 
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                    ForceDeleteBulkAction::make(),
+                // BulkActionGroup::make([
+                //     DeleteBulkAction::make(),
+                //     ForceDeleteBulkAction::make(),
 
-                ]),
+                // ]),
             ]);
     }
 
