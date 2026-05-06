@@ -352,7 +352,13 @@
                 <td>{{ $date }}</td>
                 <td colspan="{{ $show_branch ? 7 : 9 }}" class="text-center text-gray-500 font-bold">
                     @if(isset($data['day_status']) )
+                    @if ($data['day_status'] == 'terminated')
+                    {{ __('lang.terminated') }}
+
+                    @else
                     {{ $data['day_status'] }}
+                    @endif
+
                     @else
                     {{ __('lang.no_periods') }}
                     @endif

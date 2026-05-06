@@ -83,6 +83,7 @@ class LeaveTypeResource extends Resource
                                             },
                                         ];
                                     })
+                                    ->minValue(1)
                                     ->required(),
 
                                 Select::make('type')->label('Type')->options(LeaveType::getTypes())

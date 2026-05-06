@@ -4,6 +4,7 @@ namespace App\Filament\Resources\UserResource\Tables;
 
 
 use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -89,11 +90,11 @@ class UserTable
 
                 TextColumn::make('phone_number')->label('Phone')->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: true)
                     ->toggleable(isToggledHiddenByDefault: false)->default('_')
-                    // ->copyable()
-                    // ->copyable()
-                    // ->copyMessage('Phone number copied')
-                    // ->copyMessageDuration(1500)
-                    ,
+                // ->copyable()
+                // ->copyable()
+                // ->copyMessage('Phone number copied')
+                // ->copyMessageDuration(1500)
+                ,
 
                 IconColumn::make('active')
                     ->label('Active')
@@ -269,18 +270,21 @@ class UserTable
                     // Add a custom action for updating password
                     Action::make('updatePassword')
                         ->schema([
-                            TextInput::make('password')
-                                ->label('New Password')
-                                ->password()
-                                ->required()
-                                ->minLength(6)
-                                ->suffixIcon('heroicon-o-lock-closed'),
-                            TextInput::make('password_confirmation')
-                                ->label('Confirm New Password')
-                                ->password()
-                                ->required()->suffixIcon('heroicon-o-lock-closed')
-                                ->same('password'),
+                            Grid::make(2)->columnSpanFull()->schema([
+                                TextInput::make('password')
+                                    ->label('New Password')
+                                    ->password()
+                                    ->required()
+                                    ->minLength(6)
+                                    ->suffixIcon('heroicon-o-lock-closed'),
+                                TextInput::make('password_confirmation')
+                                    ->label('Confirm New Password')
+                                    ->password()
+                                    ->required()->suffixIcon('heroicon-o-lock-closed')
+                                    ->same('password'),
+                            ])
                         ])
+                        ->modalHeading(fn($record) => $record->name )
                         ->action(function (User $user, array $data): void {
                             // Update the user's password
                             $user->update([
