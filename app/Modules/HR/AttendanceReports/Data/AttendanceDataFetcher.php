@@ -68,7 +68,7 @@ class AttendanceDataFetcher
             ->whereIn('employee_id', $employeeIds)
             ->where('status', EmployeeServiceTermination::STATUS_APPROVED)
             ->where('termination_date', '<', $dateStr)
-            ->join('hr_employees','hr_employees.id','=','hr_employee_service_terminations.employee_id')
+            ->join('hr_employees', 'hr_employees.id', '=', 'hr_employee_service_terminations.employee_id')
             ->where('hr_employees.active', 0)
             ->pluck('termination_date', 'employee_id');
 
@@ -82,6 +82,7 @@ class AttendanceDataFetcher
 
         $workPeriodIds = $histories->pluck('period_id')->unique()->toArray();
         $workPeriodMap = WorkPeriod::whereIn('id', $workPeriodIds)
+            ->orderBy('start_at', 'asc')
             ->get(['id', 'name', 'start_at', 'end_at', 'day_and_night'])
             ->keyBy('id');
 
@@ -153,6 +154,7 @@ class AttendanceDataFetcher
 
         $workPeriodIds = $histories->pluck('period_id')->unique()->toArray();
         $workPeriodMap = WorkPeriod::whereIn('id', $workPeriodIds)
+            ->orderBy('start_at', 'asc')
             ->get(['id', 'name', 'start_at', 'end_at', 'day_and_night'])
             ->keyBy('id');
 
@@ -189,7 +191,7 @@ class AttendanceDataFetcher
         if ($excludeNoShift) {
             $attendancesQuery->where(function ($q) {
                 $q->whereNull('status')
-                  ->orWhere('status', '!=', \App\Modules\HR\Attendance\Enums\AttendanceStatus::NO_SHIFT->value);
+                    ->orWhere('status', '!=', \App\Modules\HR\Attendance\Enums\AttendanceStatus::NO_SHIFT->value);
             });
         }
 
@@ -236,6 +238,7 @@ class AttendanceDataFetcher
         $workPeriodIds = $allPeriodIds->unique()->toArray();
 
         $workPeriodMap = WorkPeriod::whereIn('id', $workPeriodIds)
+            ->orderBy('start_at', 'asc')
             ->get(['id', 'name', 'start_at', 'end_at', 'day_and_night'])
             ->keyBy('id');
 

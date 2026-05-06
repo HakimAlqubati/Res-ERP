@@ -133,8 +133,7 @@ class AttendanceDayProcessor
             elseif ($hasIn && !$hasOut) $st = AttendanceReportStatus::IncompleteCheckinOnly;
             elseif (!$hasIn && $hasOut) $st = AttendanceReportStatus::IncompleteCheckoutOnly;
             else $st = AttendanceReportStatus::Present;
-
-            $periods->push([
+             $periods->push([
                 'period_id' => $periodId,
                 'period_name' => $workPeriod->name,
                 'start_time' => $startTime,
@@ -150,7 +149,7 @@ class AttendanceDayProcessor
 
         // Extract branch info from the day history record(s)
         $firstHistory = $dayHistories->first();
-
+        $periods = $periods->sortBy('start_time')->values();
         return [
             'date' => $dateStr,
             'day_name' => $dayName,
