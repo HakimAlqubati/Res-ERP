@@ -130,6 +130,88 @@ class Init
     }
 
     /**
+     * Initialize leave balances for a single newly-created leave type across all eligible employees.
+     * تهيئة أرصدة الإجازة لنوع إجازة جديد لجميع الموظفين المؤهلين.
+     *
+     * يُستخدم من داخل LeaveTypeObserver عند إنشاء نوع إجازة جديد.
+     * This method is called from LeaveTypeObserver when a new leave type is created.
+     * It processes all active employees in chunks to avoid memory exhaustion.
+     *
+     * @param  LeaveType $leaveType  نوع الإجازة الجديد
+     * @return void
+     * @throws \Throwable
+     */
+    public function handleForNewLeaveType(LeaveType $leaveType): void
+    {
+        $now          = Carbon::now();
+        $currentYear  = $now->year;
+        $currentMonth = $now->month;
+
+        // تحميل علاقة الفروع مسبقاً لتجنب N+1 داخل LeaveEligibilityService
+        // Eager-load branches relation to prevent N+1 inside LeaveEligibilityService
+        $leaveType->loadMissing(['branches' => function ($query) {
+            $query->select('branches.id');
+        }]);
+
+        $targetMonth = $this->resolveTargetMonth($leaveType, $currentMonth);
+
+        DB::transaction(function () use ($leaveType, $currentYear, $currentMonth, $targetMonth) {
+
+            Employee::query()
+                ->active()
+                ->select(['id', 'branch_id', 'has_employee_pass', 'join_date'])
+                ->chunkById(self::CHUNK_SIZE, function ($employees) use ($leaveType, $currentYear, $currentMonth, $targetMonth) {
+
+                    $employeeIds    = $employees->pluck('id')->all();
+                    $consumptionMap = LeaveConsumptionService::buildConsumptionMap($employeeIds);
+
+                    $payload = [];
+
+                    foreach ($employees as $employee) {
+
+                        // تحقق من أهلية الموظف لهذا النوع من الإجازة
+                        // Check if the employee is eligible for this leave type
+                        if (!LeaveEligibilityService::isEligible($employee, $leaveType)) {
+                            continue;
+                        }
+
+                        $entitledDays = LeaveProrationService::calculateEntitlement(
+                            $leaveType,
+                            $employee->join_date,
+                            $currentYear,
+                            $targetMonth
+                        );
+
+                        $consumption = LeaveConsumptionService::resolve(
+                            $consumptionMap,
+                            $employee->id,
+                            $leaveType->id,
+                            $currentYear
+                        );
+
+                        $payload[] = $this->buildPayloadRecord(
+                            $employee->id,
+                            $employee->branch_id,
+                            $leaveType->id,
+                            $currentYear,
+                            $targetMonth,
+                            $entitledDays,
+                            (float) $leaveType->count_days,
+                            $consumption['used'],
+                            $consumption['pending']
+                        );
+                    }
+
+                    if (!empty($payload)) {
+                        LeaveBalance::insert($payload);
+                    }
+                });
+        });
+
+        Log::info("Leave balances initialized for new leave type [{$leaveType->id}] ({$leaveType->name}).");
+    }
+
+    /**
      * Flush leave balances in a scoped, safe manner:
      *
      *  - Yearly leave types  → delete all records for the current year (month IS NULL)

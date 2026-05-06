@@ -6,6 +6,7 @@ use App\Jobs\InitNewEmployeeLeaveBalancesJob;
 use App\Models\Employee;
 use App\Models\EmployeeBranchLog;
 use App\Models\User;
+use App\Modules\HR\Leaves\InitEmployeeLeaves\Init;
 use Exception;
 use Illuminate\Support\Facades\Storage;
 
@@ -76,6 +77,7 @@ class EmployeeObserver
         // Initialize leave balances in the background without blocking the user
         // نمرر الـ tenantId صراحةً لضمان عمل الجوب على قاعدة البيانات الصحيحة
         // Explicitly pass tenantId so the job runs on the correct tenant database
+         (new Init())->handleForNewEmployee($employee);
         // $tenantId = \Spatie\Multitenancy\Models\Tenant::current()?->id;
         // InitNewEmployeeLeaveBalancesJob::dispatch($employee->id, $tenantId);
     }

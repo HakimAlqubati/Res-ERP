@@ -63,6 +63,26 @@ class LeaveTypeResource extends Resource
                                 TextInput::make('count_days')
                                     ->label('Number of days')
                                     ->numeric()
+                                    ->rules(function (\Filament\Forms\Components\TextInput $component) {
+                                        /** @var LeaveType|null $record */
+                                        $record = $component->getRecord();
+
+                                        // Creating a new leave type — no restriction
+                                        if (!$record?->exists) {
+                                            return [];
+                                        }
+
+                                        return [
+                                            function (string $attribute, $value, \Closure $fail) use ($record) {
+                                                if ((float) $value !== (float) $record->getOriginal('count_days')) {
+                                                    $hasBalances = \App\Models\LeaveBalance::where('leave_type_id', $record->id)->exists();
+                                                    if ($hasBalances) {
+                                                        $fail('Cannot change "Days Count": this leave type has employee balances linked to it and cannot be modified.');
+                                                    }
+                                                }
+                                            },
+                                        ];
+                                    })
                                     ->required(),
 
                                 Select::make('type')->label('Type')->options(LeaveType::getTypes())
