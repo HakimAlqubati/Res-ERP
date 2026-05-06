@@ -210,11 +210,11 @@ class ServiceRequestController extends Controller
     {
         $data = $req->validate(['equipment_id' => ['required', 'integer', 'exists:equipments,id']]);
         $serviceRequest->update(['equipment_id' => $data['equipment_id']]);
-        $serviceRequest->logs()->create([
-            'log_type'    => ServiceRequestLog::LOG_TYPE_UPDATED,
-            'description' => "Equipment #{$data['equipment_id']} linked to this service ticket",
-            'created_by'  => auth()->id(),
-        ]);
+        // $serviceRequest->logs()->create([
+        //     'log_type'    => ServiceRequestLog::LOG_TYPE_UPDATED,
+        //     'description' => "Equipment #{$data['equipment_id']} linked to this service ticket",
+        //     'created_by'  => auth()->id(),
+        // ]);
         $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, "Associated with service request #{$serviceRequest->id}");
         return response()->json(['success' => true, 'message' => 'Equipment attached', 'data' => new ServiceRequestResource($serviceRequest->load('equipment'))]);
     }
