@@ -26,6 +26,18 @@ class DuplicateTimestampRule implements ValidationRuleInterface
         }
 
         $lastCheckTime = Carbon::parse($context->lastRecord->check_date . ' ' . $context->lastRecord->check_time);
+
+        // إذا كان وقت البصمة السابقة (بناءً على تاريخها المنطقي للشيفت) أكبر من وقت الطلب الحالي،
+        // فهذا يعني أن البصمة السابقة تمت فعلياً في اليوم السابق (قبل منتصف الليل) ولكنها أخذت تاريخ الشيفت.
+        // لذا نطرح يوماً لإعادتها لوقتها الفعلي منطقياً للمقارنة.
+
+        if (
+            $context->shiftInfo?->period?->start_at == '00:00:00' &&
+            $lastCheckTime->greaterThan($context->requestTime)
+        ) {
+            $lastCheckTime->subDay();
+        }
+
         $duplicateCheckMinutes = (int) Setting::getSetting('attendance_duplicate_check_minutes', 15);
         $allowedTime = $lastCheckTime->copy()->addMinutes($duplicateCheckMinutes);
 
