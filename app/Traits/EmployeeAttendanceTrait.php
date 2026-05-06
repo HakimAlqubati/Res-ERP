@@ -300,47 +300,49 @@ trait EmployeeAttendanceTrait
             return [];
         }
 
-        $totalMinutes = 0;
-        $firstCheckInTime = null;
-        $lastCheckOutTime = null;
-
-        // 5. حساب دقائق العمل الفِعلية
-        for ($i = 0; $i < $attendances->count() - 1; $i++) {
-            $current = $attendances[$i];
-            $next = $attendances[$i + 1];
-
-            if ($current->check_type === 'checkin' && $next->check_type === 'checkout') {
-                $in  = \Carbon\Carbon::parse("{$current->real_check_date} {$current->check_time}");
-                $out = \Carbon\Carbon::parse("{$next->real_check_date} {$next->check_time}");
-
-                if ($out < $in) {
-                    $out->addDay();
-                }
-
-                $totalMinutes += $in->diffInMinutes($out);
-                $firstCheckInTime = $firstCheckInTime ?? $in;
-                $lastCheckOutTime = $out;
-                $i++;
-            }
-        }
-
-        if ($totalMinutes === 0) {
-            return [];
-        }
-
-        // 6. مقارنة وقت العمل الفعلي بوقت الفترة المقررة للوردية
+        // 5 & 6. حساب الإضافي لكل وردية على حدة بناءً على بصماتها فقط
         foreach ($activePeriods as $history) {
             $period = $history->workPeriod;
             if (!$period) continue;
-            
+
+            // فلترة البصمات الخاصة بهذه الوردية فقط
+            $periodAttendances = $attendances->where('period_id', $period->id)->values();
+
+            if ($periodAttendances->count() < 2) {
+                continue;
+            }
+
+            $totalMinutes = 0;
+            $firstCheckInTime = null;
+            $lastCheckOutTime = null;
+
+            for ($i = 0; $i < $periodAttendances->count() - 1; $i++) {
+                $current = $periodAttendances[$i];
+                $next = $periodAttendances[$i + 1];
+
+                if ($current->check_type === 'checkin' && $next->check_type === 'checkout') {
+                    $in  = \Carbon\Carbon::parse("{$current->real_check_date} {$current->check_time}");
+                    $out = \Carbon\Carbon::parse("{$next->real_check_date} {$next->check_time}");
+
+                    if ($out < $in) {
+                        $out->addDay();
+                    }
+
+                    $totalMinutes += $in->diffInMinutes($out);
+                    $firstCheckInTime = $firstCheckInTime ?? $in;
+                    $lastCheckOutTime = $out;
+                    $i++;
+                }
+            }
+
+            if ($totalMinutes === 0) {
+                continue;
+            }
+
             [$hours, $minutes] = explode(':', $period->supposed_duration);
             $supposedDurationMinutes = ((int)$hours * 60) + (int)$minutes;
 
-            if (
-                $totalMinutes >= ($supposedDurationMinutes + $allowedOffset)
-                && $attendances->where('period_id', $period->id)->count() > 0
-
-            ) {
+            if ($totalMinutes >= ($supposedDurationMinutes + $allowedOffset)) {
 
                 $overtimeMinutes = $totalMinutes - $supposedDurationMinutes;
 
