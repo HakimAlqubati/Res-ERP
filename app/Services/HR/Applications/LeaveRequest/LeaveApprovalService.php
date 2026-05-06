@@ -103,6 +103,31 @@ class LeaveApprovalService
     }
 
     /**
+     * Revert side-effects when an approved leave request is reverted to pending.
+     *
+     * - Decrements used_days and increments pending_days.
+     *
+     * @throws \RuntimeException
+     */
+    public function onRevertedToPendingFromApproved(EmployeeApplicationV2 $application): void
+    {
+        $leaveRequest = $this->guardLeaveRequest($application);
+        $balance      = $this->guardBalance($leaveRequest, $application->id);
+        $days         = (float) $leaveRequest->days_count;
+
+        Log::info('[LeaveApprovalService] Reverting approved to pending.', [
+            'application_id' => $application->id,
+            'days'           => $days,
+            'balance_id'     => $balance->id,
+        ]);
+
+        $usedToRemove = min($balance->used_days, $days);
+        $balance->used_days = max(0, $balance->used_days - $usedToRemove);
+        $balance->pending_days += $days;
+        $balance->saveQuietly();
+    }
+
+    /**
      * Revert side-effects when a pending leave request is rejected or cancelled.
      *
      * - Decrements pending_days by the leave duration.

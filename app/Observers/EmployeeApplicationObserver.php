@@ -256,7 +256,12 @@ class EmployeeApplicationObserver
                     $currentStatus === EmployeeApplicationV2::STATUS_APPROVED
                         => $this->leaveApprovalService->onApproved($app),
 
-                    // ⏳ Any status → Pending: add to pending_days
+                    // 🔄 Was Approved → now Pending: undo approve (move from used to pending)
+                    $currentStatus === EmployeeApplicationV2::STATUS_PENDING
+                    && $previousStatus === EmployeeApplicationV2::STATUS_APPROVED
+                        => $this->leaveApprovalService->onRevertedToPendingFromApproved($app),
+
+                    // ⏳ Any OTHER status → Pending: add to pending_days
                     $currentStatus === EmployeeApplicationV2::STATUS_PENDING
                         => $this->leaveApprovalService->onPending($app),
 
@@ -303,6 +308,29 @@ class EmployeeApplicationObserver
             $date->month,
             'application_date'
         );
+    }
+
+    /**
+     * Restore balance when an application is deleted.
+     */
+    public function deleted(EmployeeApplicationV2 $app): void
+    {
+        if ($app->application_type_id === EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST) {
+            try {
+                DB::transaction(function () use ($app) {
+                    if ($app->status === EmployeeApplicationV2::STATUS_APPROVED) {
+                        $this->leaveApprovalService->onRejectedFromApproved($app);
+                    } elseif ($app->status === EmployeeApplicationV2::STATUS_PENDING) {
+                        $this->leaveApprovalService->onRejectedFromPending($app);
+                    }
+                });
+            } catch (\Throwable $e) {
+                Log::error('[EmployeeApplicationObserver] Failed to restore balance on delete.', [
+                    'application_id' => $app->id,
+                    'error'          => $e->getMessage(),
+                ]);
+            }
+        }
     }
 
     // =========================================================================
