@@ -235,7 +235,7 @@ class LeaveTypeResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSystemManager() || isSuperAdmin()) {
+        if (isSystemManager() || isSuperAdmin() || isHR()) {
             return true;
         }
         return false;
