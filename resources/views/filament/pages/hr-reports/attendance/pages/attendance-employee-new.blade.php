@@ -331,7 +331,7 @@
                         wire:click="showDetails('{{ $date }}', {{ $employee_id }}, {{ $period['period_id'] }})"
                         style="cursor:pointer; border:none; background:none; padding:0;"
                         title="Show all check-in/out details">
-                        <span class="underline">{{ $data['actual_duration_hours_formatted'] }}</span>
+                        <span class="underline">{{ $period['attendances']['checkout']['lastcheckout']['total_actual_druation_hourly_formatted'] ?? '-' }}</span>
                         <span class="star-badge">&#9733;</span>
                     </button>
                 </td>

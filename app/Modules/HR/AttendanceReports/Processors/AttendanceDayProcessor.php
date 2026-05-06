@@ -94,9 +94,12 @@ class AttendanceDayProcessor
 
                 if (!empty($lastCheckoutResource['total_actual_duration_hourly'])) {
                     [$ah, $am, $as] = explode(':', $lastCheckoutResource['total_actual_duration_hourly']);
-                    $dayActualSeconds += ($ah * 3600) + ($am * 60) + $as;
+                    $periodActualSeconds = ($ah * 3600) + ($am * 60) + $as;
+                    $dayActualSeconds += $periodActualSeconds;
+                } else {
+                    $periodActualSeconds = 0;
                 }
-
+                $lastCheckoutResource['total_actual_druation_hourly_formatted'] = $this->durationCalculator->formatFloatToHMS($periodActualSeconds / 3600);
                 $statsInjector->accumulatePeriodStats($lastCheckoutResource, $discountException);
             }
 
