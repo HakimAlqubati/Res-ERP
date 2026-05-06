@@ -49,6 +49,87 @@ class Init
     }
 
     /**
+     * Initialize leave balances for a single newly-created employee.
+     * تهيئة أرصدة الإجازة لموظف جديد تم إضافته للتو.
+     *
+     * تُستخدم هذه الدالة من داخل InitNewEmployeeLeaveBalancesJob،
+     * وتعيد استخدام نفس الخدمات الموجودة دون المساس بمنطق التهيئة الجماعية.
+     *
+     * This method is called from InitNewEmployeeLeaveBalancesJob.
+     * It reuses all existing private services without affecting the bulk initialization logic.
+     *
+     * @param  Employee $employee الموظف الجديد (يجب أن يحتوي على: id, branch_id, has_employee_pass, join_date)
+     * @return void
+     * @throws \Throwable
+     */
+    public function handleForNewEmployee(Employee $employee): void
+    {
+        $now          = Carbon::now();
+        $currentYear  = $now->year;
+        $currentMonth = $now->month;
+
+        DB::transaction(function () use ($employee, $currentYear, $currentMonth) {
+
+            // جلب أنواع الإجازات النشطة مع الفروع المرتبطة بها
+            // Fetch active leave types with their associated branches (eager-loaded)
+            $leaveTypes = $this->getPreparedLeaveTypes();
+
+            // بناء خريطة الاستهلاك لهذا الموظف فقط (query واحدة)
+            // Build the consumption map for this single employee (single query)
+            $consumptionMap = LeaveConsumptionService::buildConsumptionMap([$employee->id]);
+
+            $payload = [];
+
+            foreach ($leaveTypes as $leaveType) {
+
+                // تحقق من أهلية الموظف لهذا النوع من الإجازة
+                // Check if the employee is eligible for this leave type
+                if (!LeaveEligibilityService::isEligible($employee, $leaveType)) {
+                    continue;
+                }
+
+                $targetMonth = $this->resolveTargetMonth($leaveType, $currentMonth);
+
+                // احتساب الأيام المستحقة بالتناسب بناءً على تاريخ الالتحاق
+                // Calculate prorated entitlement based on the employee's joining date
+                $entitledDays = LeaveProrationService::calculateEntitlement(
+                    $leaveType,
+                    $employee->join_date,
+                    $currentYear,
+                    $targetMonth
+                );
+
+                // جلب الاستهلاك الفعلي من الخريطة (صفر في الغالب لموظف جديد)
+                // Resolve actual consumption from the pre-built map (usually zero for a new employee)
+                $consumption = LeaveConsumptionService::resolve(
+                    $consumptionMap,
+                    $employee->id,
+                    $leaveType->id,
+                    $currentYear
+                );
+
+                $payload[] = $this->buildPayloadRecord(
+                    $employee->id,
+                    $employee->branch_id,
+                    $leaveType->id,
+                    $currentYear,
+                    $targetMonth,
+                    $entitledDays,
+                    (float) $leaveType->count_days,
+                    $consumption['used'],
+                    $consumption['pending']
+                );
+            }
+
+            if (!empty($payload)) {
+                LeaveBalance::insert($payload);
+            }
+        });
+
+        Log::info("Leave balances initialized for new employee [{$employee->id}].");
+    }
+
+    /**
      * Flush leave balances in a scoped, safe manner:
      *
      *  - Yearly leave types  → delete all records for the current year (month IS NULL)
