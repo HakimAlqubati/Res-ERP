@@ -215,6 +215,29 @@ class EmployeeApplicationTable
 
             ->filters([
                 TrashedFilter::make(),
+                \Filament\Tables\Filters\Filter::make('application_date')
+                    ->form([
+                        \Filament\Forms\Components\DatePicker::make('date_from')
+                            ->label(__('lang.from'))
+                            // ->default(today())
+                            ,
+                        \Filament\Forms\Components\DatePicker::make('date_to')
+                            ->label(__('lang.to'))
+                            // ->default(today())
+                            ,
+                    ])
+                    ->query(function (\Illuminate\Database\Eloquent\Builder $query, array $data): \Illuminate\Database\Eloquent\Builder {
+                        return $query
+                            ->when(
+                                $data['date_from'],
+                                fn (\Illuminate\Database\Eloquent\Builder $query, $date): \Illuminate\Database\Eloquent\Builder => $query->whereDate('application_date', '>=', $date),
+                            )
+                            ->when(
+                                $data['date_to'],
+                                fn (\Illuminate\Database\Eloquent\Builder $query, $date): \Illuminate\Database\Eloquent\Builder => $query->whereDate('application_date', '<=', $date),
+                            );
+                    })
+                    ,
                 SelectFilter::make('status')->options([
                     EmployeeApplicationV2::STATUS_PENDING  => EmployeeApplicationV2::STATUS_PENDING,
                     EmployeeApplicationV2::STATUS_REJECTED => EmployeeApplicationV2::STATUS_REJECTED,
