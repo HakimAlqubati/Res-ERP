@@ -726,7 +726,7 @@ class EmployeeApplicationResource extends Resource
                 $daysCount = $leaveRequest->days_count;
                 $year      = $leaveRequest->year;
                 $month     = getMonthArrayWithKeys()[$leaveRequest->month] ?? '';
-                $leaveType = LeaveType::find($leaveTypeId)->name;
+                $leaveType = LeaveType::withTrashed()->find($leaveTypeId)->name;
 
                 return [
                     Fieldset::make()->label('Request data')->columns(3)->schema([
@@ -969,7 +969,7 @@ class EmployeeApplicationResource extends Resource
                 $year      = $leaveRequest->year;
                 // $month     = getMonthArrayWithKeys()[$leaveRequest->month] ?? '';
                 $month     =  $leaveRequest->month  ?? '';
-                $leaveType = LeaveType::find($leaveTypeId)->name;
+                $leaveType = LeaveType::withTrashed()->find($leaveTypeId)->name;
 
                 return [
                     Fieldset::make()->columnSpanFull()->label('Request data')->columns(2)->schema([
@@ -1270,7 +1270,7 @@ class EmployeeApplicationResource extends Resource
 
         // Fetch leave types that are active AND the employee still has available balance
         // Available balance = entitled_days - (used_days + pending_days)
-        $leaveTypes = LeaveType::query()
+        $leaveTypes = LeaveType::withTrashed()->query()
             ->where('active', 1)
             ->whereHas('leaveBalances', function ($query) use ($employeeId) {
                 $query->where('employee_id', $employeeId)

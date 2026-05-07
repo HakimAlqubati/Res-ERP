@@ -24,6 +24,7 @@ use App\Filament\Clusters\HRAttenanceCluster\Resources\LeaveTypeResource\Relatio
 use App\Filament\Clusters\HRLeaveManagementCluster;
 use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\LeaveType;
+use Filament\Actions\RestoreBulkAction;
 use Filament\Forms;
 use Filament\Forms\Components\Select;
 use Filament\Resources\Resource;
@@ -208,6 +209,7 @@ class LeaveTypeResource extends Resource
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    RestoreBulkAction::make(),
                     DeleteBulkAction::make(),
                 ]),
             ]);
