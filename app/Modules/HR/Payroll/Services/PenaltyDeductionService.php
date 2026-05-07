@@ -19,7 +19,7 @@ class PenaltyDeductionService
     public function getPenaltiesList(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         $query = PenaltyDeduction::query()
-            ->forBranchManager()
+            // ->forBranchManager()
             ->forEmployee()
             ->select('hr_penalty_deductions.*')
             ->with([
