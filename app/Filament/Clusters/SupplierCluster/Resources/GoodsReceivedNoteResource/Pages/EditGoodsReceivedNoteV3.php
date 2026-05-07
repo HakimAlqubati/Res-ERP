@@ -69,7 +69,7 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
 
                 TextInput::make('invoice_no')
                     ->label('Invoice No')->columnSpan(2)
-                    
+                    ->required()
                     ->statePath('formData.invoice_no'),
 
                 DatePicker::make('date')
@@ -96,6 +96,7 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
                 Textarea::make('description')->label(__('lang.description'))
                     ->placeholder('Enter description')
                     ->columnSpanFull()
+                    ->required()
                     ->statePath('formData.description')
             ]),
 
@@ -138,7 +139,9 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
         try {
             DB::transaction(function () use ($data) {
                 $this->validatePrice($data);
-                 $this->validateInvoiceNo($data['invoice_no']);
+                if (!empty($data['invoice_no'])) {
+                    $this->validateInvoiceNo($data['invoice_no']);
+                }
                 $invoice = PurchaseInvoice::create([
                     'invoice_no' => $data['invoice_no'],
                     'date' => $data['date'],
@@ -159,7 +162,6 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
                     $item['total_price'] = (float) $item['quantity'] * (float) $item['price'];
                     $invoice->purchaseInvoiceDetails()->create($item);
                 }
-
             });
 
             Notification::make()
@@ -191,12 +193,12 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
             }
         }
     }
-protected function validateInvoiceNo(string $invoiceNo)
-{
-    if (PurchaseInvoice::where('invoice_no', $invoiceNo)->exists()) {
-        throw new Exception("Invoice number already exists!");
+    protected function validateInvoiceNo(string $invoiceNo)
+    {
+        if (PurchaseInvoice::where('invoice_no', $invoiceNo)->exists()) {
+            throw new Exception("Invoice number already exists!");
+        }
     }
-}
 
     protected string $view = 'filament.pages.edit-goods-received-note-v3';
 }
