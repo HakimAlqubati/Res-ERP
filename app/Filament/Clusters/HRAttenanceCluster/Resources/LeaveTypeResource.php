@@ -233,7 +233,8 @@ class LeaveTypeResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return static::getEloquentQuery()
+            ->whereNull('deleted_at')->count();
     }
 
     public static function canViewAny(): bool
@@ -247,7 +248,6 @@ class LeaveTypeResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-
             ->whereIn('type', [LeaveType::TYPE_YEARLY, LeaveType::TYPE_MONTHLY])
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,

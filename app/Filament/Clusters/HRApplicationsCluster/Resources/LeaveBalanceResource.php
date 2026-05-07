@@ -2,6 +2,8 @@
 
 namespace App\Filament\Clusters\HRApplicationsCluster\Resources;
 
+use Illuminate\Database\Eloquent\Builder;
+
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Utilities\Get;
@@ -32,6 +34,7 @@ use Filament\Tables;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Unique;
 
@@ -66,12 +69,12 @@ class LeaveBalanceResource extends Resource
     }
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 2;
-    
+
 
     public static function table(Table $table): Table
     {
         return $table
-        ->defaultSort('id','desc')
+            ->defaultSort('id', 'desc')
             ->paginated([10, 25, 50, 100])
             ->columns([
                 TextColumn::make('employee.employee_no')
@@ -95,24 +98,22 @@ class LeaveBalanceResource extends Resource
                 TextColumn::make('month')
                     ->alignCenter(true)
                     ->sortable()
-                    // ->formatStateUsing(function ($state) {
-                    //     return getMonthArrayWithKeys()[$state] ?? '';
-                    // })
-                    ,
+                // ->formatStateUsing(function ($state) {
+                //     return getMonthArrayWithKeys()[$state] ?? '';
+                // })
+                ,
                 TextColumn::make('supposed_days')->alignCenter(true)
                     ->numeric()
                     ->sortable(),
-               
+
                 // TextColumn::make('balance')->alignCenter(true)
                 //     ->numeric()
                 //     ->label('Balance')
-                    
+
                 //     ,
                 TextColumn::make('available_balance')->alignCenter(true)
                     ->numeric()
-                    ->label('Balance')
-                    
-                    ,
+                    ->label('Balance'),
                 TextColumn::make('used_days')->alignCenter(true)
                     ->numeric()
                     ->sortable(),
@@ -151,10 +152,7 @@ class LeaveBalanceResource extends Resource
                     ->label('Month')->options(getMonthArrayWithKeys()),
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
-            ->recordActions([
-             
-
-            ])
+            ->recordActions([])
             ->toolbarActions([
                 // BulkActionGroup::make([
                 //     DeleteBulkAction::make(),
@@ -181,7 +179,7 @@ class LeaveBalanceResource extends Resource
     }
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return static::getEloquentQuery()->count();
     }
 
     public static function canCreate(): bool
@@ -202,4 +200,12 @@ class LeaveBalanceResource extends Resource
     //     return static::$label;
     // }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->whereHas('leaveType')
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
+    }
 }
