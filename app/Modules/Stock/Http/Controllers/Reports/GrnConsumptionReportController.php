@@ -26,4 +26,22 @@ class GrnConsumptionReportController extends Controller
         // Load the view from the stock module's views directory
         return view('stock::reports.grn-consumption.index', compact('report', 'filters'));
     }
+
+    /**
+     * Display the flattened GRN Consumption Report (Products as rows).
+     */
+    public function flattenedIndex(Request $request)
+    {
+        // Allow all smart filters
+        $filters = $request->only([
+            'search', 'grn_number', 'date_from', 'date_to', 
+            'store_id', 'supplier_id', 'has_invoice', 
+            'has_attachment', 'has_notes', 'status', 
+            'product_id', 'older_than_days'
+        ]);
+        
+        $report = $this->reportService->getFlattenedReport($filters, 15);
+
+        return view('stock::reports.grn-consumption.flattened', compact('report', 'filters'));
+    }
 }

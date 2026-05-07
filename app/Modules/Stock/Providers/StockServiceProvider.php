@@ -6,6 +6,8 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
 use App\Modules\Stock\Reports\GrnConsumption\Contracts\GrnConsumptionRepositoryInterface;
 use App\Modules\Stock\Reports\GrnConsumption\Repositories\GrnConsumptionRepository;
+use App\Modules\Stock\Reports\ProductGrnAggregation\Contracts\ProductAggregationRepositoryInterface;
+use App\Modules\Stock\Reports\ProductGrnAggregation\Repositories\ProductAggregationRepository;
 
 class StockServiceProvider extends ServiceProvider
 {
@@ -14,10 +16,16 @@ class StockServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Bind the Repository Interface to its Implementation
+        // Bind the Repository Interface to its Implementation (GRN Level)
         $this->app->bind(
             GrnConsumptionRepositoryInterface::class,
             GrnConsumptionRepository::class
+        );
+
+        // Bind the Repository Interface to its Implementation (Product Aggregation Level)
+        $this->app->bind(
+            ProductAggregationRepositoryInterface::class,
+            ProductAggregationRepository::class
         );
     }
 

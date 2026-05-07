@@ -110,4 +110,38 @@ class GrnConsumptionReportService
 
         return collect($results);
     }
+
+    /**
+     * Get the report flattened (each row is a product with its GRN details).
+     */
+    public function getFlattenedReport(array $filters = [], int $perPage = 15)
+    {
+        $paginatedGrns = $this->getReport($filters, $perPage);
+        
+        $flattened = [];
+        $items = $paginatedGrns instanceof LengthAwarePaginator ? $paginatedGrns->items() : $paginatedGrns;
+
+        foreach ($items as $grnResult) {
+            foreach ($grnResult->items as $item) {
+                $flattened[] = (object) [
+                    'grn_number' => $grnResult->grnNumber,
+                    'grn_date' => $grnResult->grnDate,
+                    'invoice_number' => $grnResult->invoiceNumber,
+                    'product_name' => $item->productName,
+                    'unit_name' => $item->unitName,
+                    'entry_quantity' => $item->entryQuantity,
+                    'remaining_quantity' => $item->remainingQuantity,
+                    'entry_date' => $item->entryDate,
+                    'is_completed' => $item->isCompleted,
+                    'has_started_leaving' => $item->hasStartedLeaving,
+                ];
+            }
+        }
+        
+        if ($paginatedGrns instanceof LengthAwarePaginator) {
+            return $paginatedGrns->setCollection(collect($flattened));
+        }
+
+        return collect($flattened);
+    }
 }
