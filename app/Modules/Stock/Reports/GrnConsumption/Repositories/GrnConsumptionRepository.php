@@ -5,11 +5,16 @@ namespace App\Modules\Stock\Reports\GrnConsumption\Repositories;
 use App\Models\GoodsReceivedNote;
 use App\Models\InventoryTransaction;
 use App\Modules\Stock\Reports\GrnConsumption\Contracts\GrnConsumptionRepositoryInterface;
+use App\Modules\Stock\Reports\GrnConsumption\Filters\GrnConsumptionFilter;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 class GrnConsumptionRepository implements GrnConsumptionRepositoryInterface
 {
+    public function __construct(
+        private readonly GrnConsumptionFilter $filter
+    ) {}
+
     public function getPaginatedGrns(array $filters = [], int $perPage = 15): LengthAwarePaginator|Collection
     {
         $query = GoodsReceivedNote::query()
@@ -22,16 +27,14 @@ class GrnConsumptionRepository implements GrnConsumptionRepositoryInterface
                 'purchaseInvoice'
             ]);
 
-        // أمثلة لفلاتر يمكن إضافتها لاحقاً
-        if (!empty($filters['grn_number'])) {
-            $query->where('grn_number', 'like', '%' . $filters['grn_number'] . '%');
-        }
+        // تطبيق الفلترة الذكية
+        $query = $this->filter->apply($query, $filters);
 
         if ($perPage > 0) {
-            return $query->orderBy('id', 'desc')->paginate($perPage);
+            return $query->paginate($perPage);
         }
 
-        return $query->orderBy('id', 'desc')->get();
+        return $query->get();
     }
 
     public function getOutboundTransactionsForInboundIds(array $inboundIds): Collection
