@@ -30,6 +30,7 @@ use Filament\Forms\Components\Select;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
@@ -42,7 +43,7 @@ class LeaveTypeResource extends Resource
 {
     protected static ?string $model = LeaveType::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::OutlinedCalendarDays;
 
     protected static ?string $cluster = HRLeaveManagementCluster::class;
 

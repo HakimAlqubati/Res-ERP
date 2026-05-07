@@ -30,6 +30,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Fieldset;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
@@ -42,7 +43,7 @@ class LeaveBalanceResource extends Resource
 {
     protected static ?string $model = LeaveBalance::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::Bars3BottomLeft       ;
 
     protected static ?string $cluster     = HRLeaveManagementCluster::class;
     protected static ?string $modelLabel  = 'Leave balance';
