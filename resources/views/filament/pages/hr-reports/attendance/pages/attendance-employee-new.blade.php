@@ -155,7 +155,12 @@
                                 alt="{{ $employee->name }}"
                                 style="width: 90px; height: 90px; border-radius: 12px; object-fit: cover; border: 3px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.18);">
                             @endif
-                            <span style="font-size: 13px; font-weight: bold;">{{ $employee?->name ?? __('lang.choose_branch') }}</span>
+                            <span style="font-size: 13px; font-weight: bold;">
+                                <a href="{{ $employee ? \App\Filament\Resources\EmployeeResource::getUrl('view', ['record' => $employee->id]) : '#' }}" target="_blank">
+                                    {{ $employee?->name ?? __('lang.choose_branch') }}
+                                </a>
+
+                            </span>
                         </div>
 
                         {{-- Right: Dates --}}
@@ -355,6 +360,8 @@
                     @if ($data['day_status'] == 'terminated')
                     {{ __('lang.terminated') }}
 
+                    @elseif($data['day_status']=='no_periods')
+                    {{ __('lang.no_periods') }}
                     @else
                     {{ $data['day_status'] }}
                     @endif

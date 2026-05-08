@@ -11,6 +11,8 @@ class EmployeeServiceTerminationObserver
     /**
      * Handle the EmployeeServiceTermination "creating" event.
      */
+
+    
     public function creating(EmployeeServiceTermination $employeeServiceTermination): void
     {
         if (auth()->check()) {

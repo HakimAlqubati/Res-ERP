@@ -892,7 +892,7 @@ return [
     'work_hours_summary' => 'Work Hours Summary',
     'supposed' => 'Supposed',
     'total_hours_worked' => 'Total Hours Worked',
-    'no_periods' => 'No periods',
+    'no_periods' => 'No Scheduled Shift',
     'total' => 'Total',
     'please_select_employee' => 'Please select a Staff',
     'show_details' => 'Show details',
