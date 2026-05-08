@@ -17,6 +17,18 @@
             <!-- Filter Section -->
             <form class="filter-form" method="GET" action="{{ route('stock.reports.grn-consumption-items.index') }}" style="align-items: flex-end;">
                 <div class="form-group">
+                    <label class="form-label">Store <span style="color: var(--danger);">*</span></label>
+                    <select name="store_id" style="min-width: 150px;" required>
+                        <option value="">-- Select Store --</option>
+                        @foreach($stores as $store)
+                            <option value="{{ $store->id }}" {{ request('store_id') == $store->id ? 'selected' : '' }}>
+                                {{ $store->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="form-group">
                     <label class="form-label">Product</label>
                     <div class="autocomplete-container">
                         <input type="text" class="autocomplete-input" placeholder="All Products" value="{{ $selectedProduct->name ?? '' }}" autocomplete="off">
@@ -115,7 +127,11 @@
                             <tr>
                                 <td colspan="7" class="empty-state">
                                     <svg style="width: 48px; height: 48px; margin: 0 auto 1rem auto; color: var(--text-light);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
-                                    <div>No items found matching the criteria.</div>
+                                    @if(empty(request('store_id')))
+                                        <div>Please select a Store to view the report.</div>
+                                    @else
+                                        <div>No items found matching the criteria.</div>
+                                    @endif
                                 </td>
                             </tr>
                         @endforelse

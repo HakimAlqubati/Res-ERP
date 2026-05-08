@@ -19,13 +19,40 @@ class GrnConsumptionReportController extends Controller
     {
         // Allow filtering by GRN Number and Smart Filters
         $filters = $request->only([
-            'grn_number', 'search', 'date_from', 'date_to', 
-            'store_id', 'supplier_id', 'invoice_status', 
-            'has_attachment', 'has_notes', 'status', 
-            'product_id', 'older_than_days', 'completion_status'
+            'grn_number',
+            'search',
+            'date_from',
+            'date_to',
+            'store_id',
+            'supplier_id',
+            'invoice_status',
+            'has_attachment',
+            'has_notes',
+            'status',
+            'product_id',
+            'older_than_days',
+            'completion_status'
         ]);
-        // Fetch paginated report (15 items per page)
-        $report = $this->reportService->getReport($filters, 15);
+        // Fetch stores for mandatory filter (ONLY default store)
+        $stores = \App\Models\Store::select('id', 'name')
+            ->where('default_store', true)
+            ->active()
+            ->get();
+
+        $defaultStore = $stores->first();
+        if ($defaultStore) {
+            $filters['store_id'] = $defaultStore->id;
+            $request->merge(['store_id' => $defaultStore->id]);
+        }
+
+
+        // Require store_id to fetch data
+        if (empty($filters['store_id'])) {
+            $report = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 15);
+        } else {
+            // Fetch paginated report (15 items per page)
+            $report = $this->reportService->getReport($filters, 15);
+        }
 
         // Fetch selected product name for the autocomplete input
         $selectedProduct = null;
@@ -33,8 +60,11 @@ class GrnConsumptionReportController extends Controller
             $selectedProduct = \App\Models\Product::find($filters['product_id']);
         }
 
+        // Fetch stores for mandatory filter
+        $stores = \App\Models\Store::select('id', 'name')->get();
+
         // Load the view from the stock module's views directory
-        return view('stock::reports.grn-consumption.index', compact('report', 'filters', 'selectedProduct'));
+        return view('stock::reports.grn-consumption.index', compact('report', 'filters', 'selectedProduct', 'stores'));
     }
 
     /**
@@ -44,13 +74,38 @@ class GrnConsumptionReportController extends Controller
     {
         // Allow all smart filters
         $filters = $request->only([
-            'search', 'grn_number', 'date_from', 'date_to', 
-            'store_id', 'supplier_id', 'invoice_status', 
-            'has_attachment', 'has_notes', 'status', 
-            'product_id', 'older_than_days', 'completion_status'
+            'search',
+            'grn_number',
+            'date_from',
+            'date_to',
+            'store_id',
+            'supplier_id',
+            'invoice_status',
+            'has_attachment',
+            'has_notes',
+            'status',
+            'product_id',
+            'older_than_days',
+            'completion_status'
         ]);
-        
-        $report = $this->reportService->getFlattenedReport($filters, 15);
+        // Fetch stores for mandatory filter (ONLY default store)
+        $stores = \App\Models\Store::select('id', 'name')
+            ->where('default_store', true)
+            ->active()
+            ->get();
+
+        $defaultStore = $stores->first();
+        if ($defaultStore) {
+            $filters['store_id'] = $defaultStore->id;
+            $request->merge(['store_id' => $defaultStore->id]);
+        }
+
+        // Require store_id to fetch data
+        if (empty($filters['store_id'])) {
+            $report = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 15);
+        } else {
+            $report = $this->reportService->getFlattenedReport($filters, 15);
+        }
 
         // Fetch selected product name for the autocomplete input
         $selectedProduct = null;
@@ -58,7 +113,7 @@ class GrnConsumptionReportController extends Controller
             $selectedProduct = \App\Models\Product::find($filters['product_id']);
         }
 
-        return view('stock::reports.grn-consumption.flattened', compact('report', 'filters', 'selectedProduct'));
+        return view('stock::reports.grn-consumption.flattened', compact('report', 'filters', 'selectedProduct', 'stores'));
     }
 
     /**
@@ -67,14 +122,14 @@ class GrnConsumptionReportController extends Controller
     public function searchProducts(Request $request)
     {
         $query = \App\Models\Product::select('id', 'name', 'code')->limit(10);
-        
+
         if ($search = $request->get('q')) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('code', 'like', "%{$search}%");
+                    ->orWhere('code', 'like', "%{$search}%");
             });
         }
-        
+
         return response()->json($query->get());
     }
 }
