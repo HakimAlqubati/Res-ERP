@@ -11,7 +11,13 @@
         <div class="card">
             <!-- Filter Section -->
             <form class="filter-form" method="GET" action="{{ route('stock.reports.product-grn-aggregation.index') }}" style="flex-wrap: wrap; align-items: center;">
-                <input type="text" name="search" placeholder="Search by Product name or Code..." value="{{ request('search') }}">
+                <div class="autocomplete-container">
+                    <input type="text" class="autocomplete-input" placeholder="Filter by Product..." value="{{ $selectedProduct->name ?? '' }}" autocomplete="off">
+                    <input type="hidden" name="product_id" value="{{ request('product_id') }}">
+                    <div class="clear-autocomplete">&times;</div>
+                    <div class="autocomplete-dropdown"></div>
+                </div>
+                <input type="text" name="search" placeholder="Search notes or GRN..." value="{{ request('search') }}">
                 <input type="date" name="date_from" value="{{ request('date_from') }}" title="GRN Date From">
                 <input type="date" name="date_to" value="{{ request('date_to') }}" title="GRN Date To">
                 <select name="completion_status" style="padding: 0.6rem 1rem; border: 1px solid var(--border); border-radius: 6px; outline: none; font-size: 0.95rem; min-width: 150px;">

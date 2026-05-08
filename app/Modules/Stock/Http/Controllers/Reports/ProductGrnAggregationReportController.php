@@ -23,7 +23,13 @@ class ProductGrnAggregationReportController extends Controller
         // Fetch paginated report (15 items per page)
         $report = $this->reportService->getReport($filters, 15);
 
+        // Fetch selected product name for the autocomplete input
+        $selectedProduct = null;
+        if (!empty($filters['product_id'])) {
+            $selectedProduct = \App\Models\Product::find($filters['product_id']);
+        }
+
         // Load the view
-        return view('stock::reports.product-grn-aggregation.index', compact('report', 'filters'));
+        return view('stock::reports.product-grn-aggregation.index', compact('report', 'filters', 'selectedProduct'));
     }
 }

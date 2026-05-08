@@ -10,7 +10,14 @@
         <div class="card">
             <!-- Filter Section -->
             <form class="filter-form" method="GET" action="{{ route('stock.reports.grn-consumption.index') }}" style="flex-wrap: wrap; align-items: center;">
+                <div class="autocomplete-container">
+                    <input type="text" class="autocomplete-input" placeholder="Filter by Product..." value="{{ $selectedProduct->name ?? '' }}" autocomplete="off">
+                    <input type="hidden" name="product_id" value="{{ request('product_id') }}">
+                    <div class="clear-autocomplete">&times;</div>
+                    <div class="autocomplete-dropdown"></div>
+                </div>
                 <input type="text" name="grn_number" placeholder="Search by GRN Number..." value="{{ request('grn_number') }}">
+                <input type="text" name="search" placeholder="Search GRN or notes..." value="{{ request('search') }}">
                 <select name="completion_status" style="padding: 0.6rem 1rem; border: 1px solid var(--border); border-radius: 6px; outline: none; font-size: 0.95rem; min-width: 150px;">
                     @foreach(\App\Modules\Stock\Reports\Enums\FilterCompletionStatus::cases() as $case)
                         <option value="{{ $case->value }}" {{ request('completion_status') === $case->value ? 'selected' : '' }}>

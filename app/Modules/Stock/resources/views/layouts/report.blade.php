@@ -189,6 +189,19 @@
         .page-item.active .page-link { background: var(--primary); color: white; border-color: var(--primary); }
         .page-item.disabled .page-link { color: #94a3b8; background: #f8fafc; cursor: not-allowed; border-color: var(--border); }
         
+        /* Autocomplete Styles */
+        .autocomplete-container { position: relative; min-width: 250px; }
+        .autocomplete-input { width: 100%; padding: 0.6rem 1rem; padding-right: 2.5rem; border: 1px solid var(--border); border-radius: 6px; outline: none; transition: all 0.2s; font-size: 0.95rem; background: #fff; }
+        .autocomplete-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        .autocomplete-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid var(--border); border-top: none; border-radius: 0 0 6px 6px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); max-height: 250px; overflow-y: auto; z-index: 50; display: none; }
+        .autocomplete-dropdown.show { display: block; }
+        .autocomplete-option { padding: 0.5rem 1rem; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid #f1f5f9; }
+        .autocomplete-option:last-child { border-bottom: none; }
+        .autocomplete-option:hover { background: #f8fafc; color: var(--primary); }
+        .autocomplete-option .code { font-size: 0.75rem; color: var(--text-light); margin-top: 0.2rem; }
+        .clear-autocomplete { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; font-weight: bold; display: none; padding: 0.2rem; }
+        .clear-autocomplete:hover { color: var(--danger); }
+
         @yield('styles')
     </style>
 </head>
@@ -223,5 +236,80 @@
     <div class="container">
         @yield('content')
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.querySelector('.autocomplete-container');
+            if(!container) return;
+
+            const input = container.querySelector('.autocomplete-input');
+            const hidden = container.querySelector('input[name="product_id"]');
+            const dropdown = container.querySelector('.autocomplete-dropdown');
+            const clearBtn = container.querySelector('.clear-autocomplete');
+            
+            let timeout = null;
+
+            function fetchProducts(query = '') {
+                fetch('{{ route("stock.reports.products.search") }}?q=' + encodeURIComponent(query))
+                    .then(res => res.json())
+                    .then(data => {
+                        dropdown.innerHTML = '';
+                        if(data.length === 0) {
+                            dropdown.innerHTML = '<div class="autocomplete-option" style="cursor:default">No products found</div>';
+                        } else {
+                            data.forEach(prod => {
+                                const div = document.createElement('div');
+                                div.className = 'autocomplete-option';
+                                div.innerHTML = `<div>${prod.product_name}</div><div class="code">${prod.product_code || ''}</div>`;
+                                div.addEventListener('click', () => {
+                                    input.value = prod.product_name;
+                                    hidden.value = prod.product_id;
+                                    dropdown.classList.remove('show');
+                                    clearBtn.style.display = 'block';
+                                });
+                                dropdown.appendChild(div);
+                            });
+                        }
+                    });
+            }
+
+            input.addEventListener('focus', () => {
+                dropdown.classList.add('show');
+                if (dropdown.children.length === 0) {
+                    fetchProducts(input.value);
+                }
+            });
+
+            input.addEventListener('input', (e) => {
+                clearTimeout(timeout);
+                hidden.value = ''; // clear selection if typing
+                clearBtn.style.display = input.value ? 'block' : 'none';
+                dropdown.classList.add('show');
+                dropdown.innerHTML = '<div class="autocomplete-option" style="cursor:default">Searching...</div>';
+                timeout = setTimeout(() => fetchProducts(e.target.value), 300);
+            });
+
+            clearBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                input.value = '';
+                hidden.value = '';
+                clearBtn.style.display = 'none';
+                dropdown.classList.remove('show');
+                fetchProducts('');
+            });
+
+            document.addEventListener('click', (e) => {
+                if(!container.contains(e.target)) {
+                    dropdown.classList.remove('show');
+                }
+            });
+
+            // If we have an initial value, show the clear button
+            if (hidden.value) {
+                clearBtn.style.display = 'block';
+            }
+        });
+    </script>
+    @yield('scripts')
 </body>
 </html>

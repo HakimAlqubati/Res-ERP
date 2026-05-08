@@ -24,12 +24,17 @@ class GrnConsumptionReportController extends Controller
             'has_attachment', 'has_notes', 'status', 
             'product_id', 'older_than_days', 'completion_status'
         ]);
-        
         // Fetch paginated report (15 items per page)
         $report = $this->reportService->getReport($filters, 15);
 
+        // Fetch selected product name for the autocomplete input
+        $selectedProduct = null;
+        if (!empty($filters['product_id'])) {
+            $selectedProduct = \App\Models\Product::find($filters['product_id']);
+        }
+
         // Load the view from the stock module's views directory
-        return view('stock::reports.grn-consumption.index', compact('report', 'filters'));
+        return view('stock::reports.grn-consumption.index', compact('report', 'filters', 'selectedProduct'));
     }
 
     /**
@@ -47,6 +52,29 @@ class GrnConsumptionReportController extends Controller
         
         $report = $this->reportService->getFlattenedReport($filters, 15);
 
-        return view('stock::reports.grn-consumption.flattened', compact('report', 'filters'));
+        // Fetch selected product name for the autocomplete input
+        $selectedProduct = null;
+        if (!empty($filters['product_id'])) {
+            $selectedProduct = \App\Models\Product::find($filters['product_id']);
+        }
+
+        return view('stock::reports.grn-consumption.flattened', compact('report', 'filters', 'selectedProduct'));
+    }
+
+    /**
+     * API endpoint to search products for the filter dropdown.
+     */
+    public function searchProducts(Request $request)
+    {
+        $query = \App\Models\Product::select('id', 'name', 'code')->limit(10);
+        
+        if ($search = $request->get('q')) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('code', 'like', "%{$search}%");
+            });
+        }
+        
+        return response()->json($query->get());
     }
 }

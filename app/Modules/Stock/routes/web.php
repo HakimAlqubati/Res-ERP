@@ -22,3 +22,6 @@ Route::get('/reports/product-grn-aggregation', [ProductGrnAggregationReportContr
 
 Route::get('/reports/grn-consumption-items', [GrnConsumptionReportController::class, 'flattenedIndex'])
     ->name('reports.grn-consumption-items.index');
+
+Route::get('/reports/products/search', [GrnConsumptionReportController::class, 'searchProducts'])
+    ->name('reports.products.search');

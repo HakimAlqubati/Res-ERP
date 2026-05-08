@@ -11,6 +11,12 @@
         <div class="card">
             <!-- Filter Section -->
             <form class="filter-form" method="GET" action="{{ route('stock.reports.grn-consumption-items.index') }}" style="flex-wrap: wrap; align-items: center;">
+                <div class="autocomplete-container">
+                    <input type="text" class="autocomplete-input" placeholder="Filter by Product..." value="{{ $selectedProduct->name ?? '' }}" autocomplete="off">
+                    <input type="hidden" name="product_id" value="{{ request('product_id') }}">
+                    <div class="clear-autocomplete">&times;</div>
+                    <div class="autocomplete-dropdown"></div>
+                </div>
                 <input type="text" name="search" placeholder="Search product, GRN or notes..." value="{{ request('search') }}">
                 <input type="text" name="older_than_days" placeholder="Older than X days" value="{{ request('older_than_days') }}" style="min-width: 150px;">
                 <select name="completion_status" style="padding: 0.6rem 1rem; border: 1px solid var(--border); border-radius: 6px; outline: none; font-size: 0.95rem; min-width: 150px;">
