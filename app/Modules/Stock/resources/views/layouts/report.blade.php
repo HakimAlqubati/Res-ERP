@@ -191,7 +191,22 @@
         
         /* Autocomplete Styles */
         .autocomplete-container { position: relative; min-width: 250px; }
-        .autocomplete-input { width: 100%; padding: 0.6rem 1rem; padding-right: 2.5rem; border: 1px solid var(--border); border-radius: 6px; outline: none; transition: all 0.2s; font-size: 0.95rem; background: #fff; }
+        .autocomplete-input { 
+            width: 100%; 
+            padding: 0.6rem 2.5rem 0.6rem 1rem; /* Space for both clear button and chevron */
+            border: 1px solid var(--border); 
+            border-radius: 6px; 
+            outline: none; 
+            transition: all 0.2s; 
+            font-size: 0.95rem; 
+            background-color: #fff;
+            /* Chevron arrow to make it look like a select */
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 16px 12px;
+            cursor: pointer;
+        }
         .autocomplete-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
         .autocomplete-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid var(--border); border-top: none; border-radius: 0 0 6px 6px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); max-height: 250px; overflow-y: auto; z-index: 50; display: none; }
         .autocomplete-dropdown.show { display: block; }
@@ -199,7 +214,18 @@
         .autocomplete-option:last-child { border-bottom: none; }
         .autocomplete-option:hover { background: #f8fafc; color: var(--primary); }
         .autocomplete-option .code { font-size: 0.75rem; color: var(--text-light); margin-top: 0.2rem; }
-        .clear-autocomplete { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; font-weight: bold; display: none; padding: 0.2rem; }
+        .clear-autocomplete { 
+            position: absolute; 
+            right: 2.2rem; /* Positioned left of the chevron */
+            top: 50%; 
+            transform: translateY(-50%); 
+            cursor: pointer; 
+            color: #94a3b8; 
+            font-weight: bold; 
+            display: none; 
+            padding: 0.2rem;
+            z-index: 10;
+        }
         .clear-autocomplete:hover { color: var(--danger); }
 
         @yield('styles')
