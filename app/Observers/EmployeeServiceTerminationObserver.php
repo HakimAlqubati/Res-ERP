@@ -53,5 +53,23 @@ class EmployeeServiceTerminationObserver
     {
         // Complex side-effects like deactivating employees are now
         // handled explicitly in the EmployeeLifecycleService.
+
+        if ($employeeServiceTermination->isDirty('status') && $employeeServiceTermination->status === EmployeeServiceTermination::STATUS_APPROVED) {
+            $financeManagers = User::whereHas('roles', function ($query) {
+                $query->where('roles.id', 16);
+            })->get();
+
+            foreach ($financeManagers as $manager) {
+                if ($manager->email) {
+                    \Illuminate\Support\Facades\Mail::raw(
+                        "The termination request has been approved for the employee: " . ($employeeServiceTermination->employee->name ?? 'Unknown') . "\nTermination Date: " . ($employeeServiceTermination->termination_date ? $employeeServiceTermination->termination_date->format('Y-m-d') : 'Unknown'),
+                        function ($message) use ($manager) {
+                            $message->to($manager->email)
+                                    ->subject('Notification: Employee Termination Approved');
+                        }
+                    );
+                }
+            }
+        }
     }
 }

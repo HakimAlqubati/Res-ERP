@@ -106,7 +106,16 @@ class EmployeeTable
                 TextColumn::make('name')
                     ->sortable()->searchable()
                     ->label(__('lang.full_name'))->wrap(false)
-                    ->color(fn($record): string => $record->active ? 'primary' : 'warning')
+                    // ->color(fn($record): string => $record->active ? 'primary' : 'warning')
+                    ->color(function ($record) {
+                        if ($record->pendingTerminationRequest) {
+                            return 'warning';
+                        }
+                        if (!$record->active) {
+                            return 'danger';
+                        }
+                        return 'primary';
+                    })
                     // ->words(3)
                     ->limit(20)
                     ->weight(FontWeight::Medium)->tooltip(fn($state) => $state)
