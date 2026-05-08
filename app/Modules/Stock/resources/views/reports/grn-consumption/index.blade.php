@@ -14,32 +14,58 @@
         </div>
 
         <div class="card">
-            <!-- Filter Section -->
-            <form class="filter-form" method="GET" action="{{ route('stock.reports.grn-consumption.index') }}" style="flex-wrap: wrap; align-items: center;">
-                <div class="autocomplete-container">
-                    <input type="text" class="autocomplete-input" placeholder="Filter by Product..." value="{{ $selectedProduct->name ?? '' }}" autocomplete="off">
-                    <input type="hidden" name="product_id" value="{{ request('product_id') }}">
-                    <div class="clear-autocomplete">&times;</div>
-                    <div class="autocomplete-dropdown"></div>
+            <form class="filter-form" method="GET" action="{{ route('stock.reports.grn-consumption.index') }}" style="align-items: flex-end;">
+                <div class="form-group">
+                    <label class="form-label">Product</label>
+                    <div class="autocomplete-container">
+                        <input type="text" class="autocomplete-input" placeholder="All Products" value="{{ $selectedProduct->name ?? '' }}" autocomplete="off">
+                        <input type="hidden" name="product_id" value="{{ request('product_id') }}">
+                        <div class="clear-autocomplete">&times;</div>
+                        <div class="autocomplete-dropdown"></div>
+                    </div>
                 </div>
-                <input type="text" name="grn_number" placeholder="Search by GRN Number..." value="{{ request('grn_number') }}">
-                <input type="text" name="search" placeholder="Search GRN or notes..." value="{{ request('search') }}">
-                <select name="completion_status" style="padding: 0.6rem 1rem; border: 1px solid var(--border); border-radius: 6px; outline: none; font-size: 0.95rem; min-width: 150px;">
-                    @foreach(\App\Modules\Stock\Reports\Enums\FilterCompletionStatus::cases() as $case)
-                        <option value="{{ $case->value }}" {{ request('completion_status') === $case->value ? 'selected' : '' }}>
-                            {{ $case->label() }}
-                        </option>
-                    @endforeach
-                </select>
-                <select name="invoice_status" style="padding: 0.6rem 1rem; border: 1px solid var(--border); border-radius: 6px; outline: none; font-size: 0.95rem; min-width: 150px;">
-                    @foreach(\App\Modules\Stock\Reports\Enums\FilterInvoiceLinkStatus::cases() as $case)
-                        <option value="{{ $case->value }}" {{ request('invoice_status') === $case->value ? 'selected' : '' }}>
-                            {{ $case->label() }}
-                        </option>
-                    @endforeach
-                </select>
-                <button type="submit" class="btn-primary">Filter</button>
-                <a href="{{ route('stock.reports.grn-consumption.index') }}" class="btn-link">Clear</a>
+                
+                <div class="form-group">
+                    <label class="form-label">GRN Number</label>
+                    <input type="text" name="grn_number" placeholder="e.g. GRN-001" value="{{ request('grn_number') }}">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">From Date</label>
+                    <input type="date" name="date_from" value="{{ request('date_from') }}">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">To Date</label>
+                    <input type="date" name="date_to" value="{{ request('date_to') }}">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select name="completion_status" style="min-width: 150px;">
+                        @foreach(\App\Modules\Stock\Reports\Enums\FilterCompletionStatus::cases() as $case)
+                            <option value="{{ $case->value }}" {{ request('completion_status') === $case->value ? 'selected' : '' }}>
+                                {{ $case->label() }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Invoice</label>
+                    <select name="invoice_status" style="min-width: 150px;">
+                        @foreach(\App\Modules\Stock\Reports\Enums\FilterInvoiceLinkStatus::cases() as $case)
+                            <option value="{{ $case->value }}" {{ request('invoice_status') === $case->value ? 'selected' : '' }}>
+                                {{ $case->label() }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.15rem;">
+                    <button type="submit" class="btn-primary">Filter</button>
+                    <a href="{{ route('stock.reports.grn-consumption.index') }}" class="btn-link">Clear</a>
+                </div>
             </form>
 
             <!-- Table Section -->
