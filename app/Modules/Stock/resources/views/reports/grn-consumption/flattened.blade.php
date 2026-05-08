@@ -1,11 +1,16 @@
 @extends('stock::layouts.report')
 
-@section('title', 'Detailed Flat Items Report')
+@section('title', 'Detailed Items')
 
 @section('content')
-        <div class="header">
-            <h1>GRN Item-Level Report</h1>
-            <p>Flattened view displaying each product individually with its corresponding GRN source.</p>
+        <div class="header" style="display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+                <h1>Detailed Items Ledger</h1>
+                <p>A simple list of every single item received across all receipts.</p>
+            </div>
+            <div style="font-size: 1.1rem; font-weight: 600; color: var(--primary);">
+                Total GRNs: {{ $report->total() }}
+            </div>
         </div>
 
         <div class="card">

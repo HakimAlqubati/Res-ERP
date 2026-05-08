@@ -29,52 +29,58 @@
             color: var(--text);
             padding: 0;
             -webkit-font-smoothing: antialiased;
+            display: flex;
+            min-height: 100vh;
         }
 
-        /* Top Navigation */
+        /* Sidebar Navigation */
         .report-nav {
             background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            padding: 0 2rem;
+            border-right: 1px solid var(--border);
+            width: 250px;
             display: flex;
-            align-items: center;
-            height: 4rem;
+            flex-direction: column;
+            padding: 2rem 0;
             position: sticky;
             top: 0;
-            z-index: 10;
+            height: 100vh;
+            flex-shrink: 0;
         }
         .nav-logo {
             font-weight: 700;
             font-size: 1.25rem;
             color: var(--text);
-            margin-right: 2rem;
+            padding: 0 1.5rem;
+            margin-bottom: 2rem;
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
         .nav-tabs {
             display: flex;
-            gap: 1rem;
-            height: 100%;
+            flex-direction: column;
+            gap: 0.5rem;
         }
         .nav-tab {
-            display: inline-flex;
+            display: flex;
             align-items: center;
-            padding: 0 1rem;
+            padding: 0.75rem 1.5rem;
             color: var(--text-light);
             text-decoration: none;
             font-weight: 500;
             font-size: 0.95rem;
-            border-bottom: 2px solid transparent;
+            border-left: 3px solid transparent;
             transition: all 0.2s;
         }
-        .nav-tab:hover { color: var(--text); }
+        .nav-tab:hover { color: var(--text); background: #f8fafc; }
         .nav-tab.active {
             color: var(--primary);
-            border-bottom-color: var(--primary);
+            border-left-color: var(--primary);
+            background: #eff6ff;
         }
 
-        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .main-wrapper { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+        .container { max-width: 1400px; margin: 2rem auto; padding: 0 2rem; width: 100%; }
 
         .header { margin-bottom: 2rem; }
         .header h1 { margin: 0; font-size: 1.75rem; font-weight: 700; color: #1e293b; }
@@ -147,7 +153,7 @@
             
             /* Sticky Header */
             position: sticky;
-            top: 4rem; /* Exactly below the nav bar */
+            top: 0; /* Changed back to 0 since navbar is on the left */
             z-index: 5;
             box-shadow: 0 1px 0 var(--border), 0 -1px 0 var(--border); /* Borders for sticky */
             border-bottom: none;
@@ -246,21 +252,23 @@
             @endphp
             <a href="{{ route('stock.reports.product-grn-aggregation.index') }}" 
                class="nav-tab {{ $currentRoute === 'stock.reports.product-grn-aggregation.index' ? 'active' : '' }}">
-                Aggregated Overview
+                Products Summary
             </a>
             <a href="{{ route('stock.reports.grn-consumption.index') }}" 
                class="nav-tab {{ $currentRoute === 'stock.reports.grn-consumption.index' ? 'active' : '' }}">
-                Hierarchical GRN
+                Receipts & Invoices
             </a>
             <a href="{{ route('stock.reports.grn-consumption-items.index') }}" 
                class="nav-tab {{ $currentRoute === 'stock.reports.grn-consumption-items.index' ? 'active' : '' }}">
-                Detailed Flat Items
+                Detailed Items
             </a>
         </div>
     </nav>
 
-    <div class="container">
-        @yield('content')
+    <div class="main-wrapper">
+        <div class="container">
+            @yield('content')
+        </div>
     </div>
 
     <script>

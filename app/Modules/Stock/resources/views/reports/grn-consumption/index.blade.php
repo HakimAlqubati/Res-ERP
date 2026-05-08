@@ -1,10 +1,16 @@
 @extends('stock::layouts.report')
 
-@section('title', 'Hierarchical GRN Consumption')
+@section('title', 'Receipts & Invoices')
 
 @section('content')
-        <div class="header">
-            <h1>GRN Consumption Tracking</h1>
+        <div class="header" style="display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+                <h1>Receipts & Invoices</h1>
+                <p>Track exactly what products came in each receipt and how much is left.</p>
+            </div>
+            <div style="font-size: 1.1rem; font-weight: 600; color: var(--primary);">
+                Total GRNs: {{ $report->total() }}
+            </div>
         </div>
 
         <div class="card">

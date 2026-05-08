@@ -1,11 +1,16 @@
 @extends('stock::layouts.report')
 
-@section('title', 'Product Consumption Aggregation')
+@section('title', 'Products Summary')
 
 @section('content')
-        <div class="header">
-            <h1>Product Aggregated Consumption</h1>
-            <p>High-performance analytics of stock entry and consumption grouped by Product.</p>
+        <div class="header" style="display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+                <h1>Products Summary</h1>
+                <p>Total received and consumed quantities for each product.</p>
+            </div>
+            <div style="font-size: 1.1rem; font-weight: 600; color: var(--primary);">
+                Total Products: {{ $report->total() }}
+            </div>
         </div>
 
         <div class="card">
