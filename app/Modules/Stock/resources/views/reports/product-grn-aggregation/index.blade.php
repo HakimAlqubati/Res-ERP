@@ -81,13 +81,13 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Product Details</th>
+                            <th>Product</th>
                             <th>Unit</th>
-                            <th class="text-center">GRNs Count</th>
-                            <th class="text-right">Total Entry (Base)</th>
-                            <th class="text-right">Total Consumed</th>
-                            <th class="text-right">Remaining Stock</th>
-                            <th style="width: 25%;">Consumption Rate</th>
+                            <th class="text-center">GRNs</th>
+                            <th class="text-right">IN QTY</th>
+                            <th class="text-right">OUT QTY</th>
+                            <th class="text-right">STOCK</th>
+                            <th>Rate</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -112,13 +112,8 @@
                                 <td class="text-right font-bold" style="color: {{ $item->remainingQtyColor }}; font-size: 1.05rem;">
                                     {{ $item->remainingQty }}
                                 </td>
-                                <td>
-                                    <div class="progress-wrapper">
-                                        <div class="progress-bg">
-                                            <div class="progress-bar {{ $item->progressBarColorClass }}" style="width: {{ $item->consumptionPercentage }}%;"></div>
-                                        </div>
-                                        <div class="progress-text">{{ $item->consumptionPercentage }}%</div>
-                                    </div>
+                                <td class="font-bold">
+                                    {{ $item->consumptionPercentage }}%
                                 </td>
                                 <td>
                                     <span class="{{ $item->statusBadgeClass }}">{{ $item->statusText }}</span>

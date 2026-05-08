@@ -56,47 +56,42 @@ class ProductAggregationFilter
         if (!empty($filters['completion_status']) && $filters['completion_status'] !== \App\Modules\Stock\Reports\Enums\FilterCompletionStatus::ALL->value) {
             $inType = \App\Models\InventoryTransaction::MOVEMENT_IN;
             $outType = \App\Models\InventoryTransaction::MOVEMENT_OUT;
-            $grnClass = \App\Models\GoodsReceivedNote::class;
+            $grnClass = addslashes(\App\Models\GoodsReceivedNote::class);
             
             $operator = $filters['completion_status'] === \App\Modules\Stock\Reports\Enums\FilterCompletionStatus::INCOMPLETE->value ? '>' : '<=';
             
-            $invoiceConditionIn = "";
-            $invoiceConditionOut = "";
+            $inQuery = \Illuminate\Support\Facades\DB::table('inventory_transactions as it')
+                ->join('goods_received_notes as grn', 'it.transactionable_id', '=', 'grn.id')
+                ->select('it.product_id', \Illuminate\Support\Facades\DB::raw('SUM(it.quantity * it.package_size) as total_in'))
+                ->where('it.transactionable_type', \App\Models\GoodsReceivedNote::class)
+                ->where('it.movement_type', $inType)
+                ->whereNull('it.deleted_at')
+                ->whereNull('grn.deleted_at')
+                ->groupBy('it.product_id');
+                
+            $outQuery = \Illuminate\Support\Facades\DB::table('inventory_transactions as out_tx')
+                ->join('inventory_transactions as in_tx', 'out_tx.source_transaction_id', '=', 'in_tx.id')
+                ->join('goods_received_notes as grn', 'in_tx.transactionable_id', '=', 'grn.id')
+                ->select('in_tx.product_id', \Illuminate\Support\Facades\DB::raw('SUM(out_tx.quantity * out_tx.package_size) as total_out'))
+                ->where('in_tx.transactionable_type', \App\Models\GoodsReceivedNote::class)
+                ->where('in_tx.movement_type', $inType)
+                ->where('out_tx.movement_type', $outType)
+                ->whereNull('out_tx.deleted_at')
+                ->whereNull('in_tx.deleted_at')
+                ->whereNull('grn.deleted_at')
+                ->groupBy('in_tx.product_id');
+
+            // Apply all filters (store, date, supplier, search, invoice) automatically
+            $inQuery = $this->applyToRaw($inQuery, $filters);
+            $outQuery = $this->applyToRaw($outQuery, $filters);
+
+            $query->joinSub($inQuery, 'in_totals', 'in_totals.product_id', '=', 'products.id')
+                  ->leftJoinSub($outQuery, 'out_totals', 'out_totals.product_id', '=', 'products.id');
+
+            $query->whereRaw("in_totals.total_in {$operator} COALESCE(out_totals.total_out, 0)");
             
-            if (!empty($filters['invoice_status']) && $filters['invoice_status'] !== \App\Modules\Stock\Reports\Enums\FilterInvoiceLinkStatus::ALL->value) {
-                if ($filters['invoice_status'] === \App\Modules\Stock\Reports\Enums\FilterInvoiceLinkStatus::WITH_INVOICE->value) {
-                    $invoiceConditionIn = " AND grn.purchase_invoice_id IS NOT NULL";
-                    $invoiceConditionOut = " AND grn.purchase_invoice_id IS NOT NULL";
-                } else {
-                    $invoiceConditionIn = " AND grn.purchase_invoice_id IS NULL";
-                    $invoiceConditionOut = " AND grn.purchase_invoice_id IS NULL";
-                }
-            }
-            
-            $query->whereRaw("(
-                SELECT COALESCE(SUM(it.quantity * it.package_size), 0)
-                FROM inventory_transactions it
-                INNER JOIN goods_received_notes grn ON it.transactionable_id = grn.id
-                WHERE it.product_id = products.id
-                AND it.transactionable_type = '{$grnClass}'
-                AND it.movement_type = '{$inType}'
-                AND it.deleted_at IS NULL
-                AND grn.deleted_at IS NULL
-                {$invoiceConditionIn}
-            ) {$operator} (
-                SELECT COALESCE(SUM(out_tx.quantity * out_tx.package_size), 0)
-                FROM inventory_transactions out_tx
-                INNER JOIN inventory_transactions in_tx ON out_tx.source_transaction_id = in_tx.id
-                INNER JOIN goods_received_notes grn ON in_tx.transactionable_id = grn.id
-                WHERE in_tx.product_id = products.id
-                AND in_tx.transactionable_type = '{$grnClass}'
-                AND in_tx.movement_type = '{$inType}'
-                AND out_tx.movement_type = '{$outType}'
-                AND out_tx.deleted_at IS NULL
-                AND in_tx.deleted_at IS NULL
-                AND grn.deleted_at IS NULL
-                {$invoiceConditionOut}
-            )");
+            // To ensure select correctness with joins (avoid overlapping column names)
+            $query->select('products.*');
         }
 
         return $query;

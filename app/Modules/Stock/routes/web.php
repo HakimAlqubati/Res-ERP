@@ -14,14 +14,16 @@ use App\Modules\Stock\Http\Controllers\Reports\ProductGrnAggregationReportContro
 |
 */
 
-Route::get('/reports/grn-consumption', [GrnConsumptionReportController::class, 'index'])
-    ->name('reports.grn-consumption.index');
+Route::middleware(['web', 'auth'])->group(function () {
+    Route::get('/reports/grn-consumption', [GrnConsumptionReportController::class, 'index'])
+        ->name('reports.grn-consumption.index');
 
-Route::get('/reports/product-grn-aggregation', [ProductGrnAggregationReportController::class, 'index'])
-    ->name('reports.product-grn-aggregation.index');
+    Route::get('/reports/product-grn-aggregation', [ProductGrnAggregationReportController::class, 'index'])
+        ->name('reports.product-grn-aggregation.index');
 
-Route::get('/reports/grn-consumption-items', [GrnConsumptionReportController::class, 'flattenedIndex'])
-    ->name('reports.grn-consumption-items.index');
+    Route::get('/reports/grn-consumption-items', [GrnConsumptionReportController::class, 'flattenedIndex'])
+        ->name('reports.grn-consumption-items.index');
 
-Route::get('/reports/products/search', [GrnConsumptionReportController::class, 'searchProducts'])
-    ->name('reports.products.search');
+    Route::get('/reports/products/search', [GrnConsumptionReportController::class, 'searchProducts'])
+        ->name('reports.products.search');
+});
