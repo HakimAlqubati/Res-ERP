@@ -84,7 +84,7 @@
             background: var(--surface);
             border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            overflow: hidden;
+            /* overflow: hidden; removed to allow sticky header relative to window */
         }
 
         /* Forms */
@@ -96,6 +96,7 @@
             background: #fafafa;
             flex-wrap: wrap;
             align-items: center;
+            border-radius: 12px 12px 0 0; /* Add radius back for the top corners */
         }
         .filter-form input, .filter-form select {
             padding: 0.6rem 1rem;
@@ -131,10 +132,26 @@
         .btn-link:hover { color: var(--text); }
 
         /* Tables */
-        .table-responsive { overflow-x: auto; }
+        .table-responsive {
+            /* overflow-x: auto; removed to allow sticky header relative to window */
+        }
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th, td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); }
-        th { background: var(--surface); font-weight: 600; color: var(--text-light); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
+        th { 
+            background: #f8fafc; /* A slightly different shade for the header */
+            font-weight: 600; 
+            color: var(--text-light); 
+            text-transform: uppercase; 
+            font-size: 0.75rem; 
+            letter-spacing: 0.05em;
+            
+            /* Sticky Header */
+            position: sticky;
+            top: 4rem; /* Exactly below the nav bar */
+            z-index: 5;
+            box-shadow: 0 1px 0 var(--border), 0 -1px 0 var(--border); /* Borders for sticky */
+            border-bottom: none;
+        }
         .text-right { text-align: right; }
         .font-bold, .font-semibold { font-weight: 600; }
         .text-muted { color: var(--text-light); font-size: 0.85rem; }
