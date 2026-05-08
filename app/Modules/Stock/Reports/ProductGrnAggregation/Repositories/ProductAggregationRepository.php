@@ -32,6 +32,7 @@ class ProductAggregationRepository implements ProductAggregationRepositoryInterf
 
         $query = DB::table('inventory_transactions as it')
             ->join('goods_received_notes as grn', 'it.transactionable_id', '=', 'grn.id')
+            ->leftJoin('units', 'it.unit_id', '=', 'units.id')
             ->where('it.transactionable_type', GoodsReceivedNote::class)
             ->where('it.movement_type', InventoryTransaction::MOVEMENT_IN)
             ->whereNull('it.deleted_at')
@@ -41,9 +42,16 @@ class ProductAggregationRepository implements ProductAggregationRepositoryInterf
         $query = $this->filter->applyToRaw($query, $filters);
 
         // SUM(quantity * package_size) gives the exact Base Quantity entered
-        return $query->select('it.product_id', DB::raw('SUM(it.quantity * it.package_size) as total_in'))
+        return $query->select(
+                'it.product_id', 
+                DB::raw('MAX(units.name) as unit_name'), 
+                DB::raw('MAX(it.package_size) as package_size'), 
+                DB::raw('SUM(it.quantity * it.package_size) as total_in')
+            )
             ->groupBy('it.product_id')
-            ->pluck('total_in', 'it.product_id')
+            ->get()
+            ->keyBy('product_id')
+            ->map(fn($row) => (array) $row)
             ->toArray();
     }
 

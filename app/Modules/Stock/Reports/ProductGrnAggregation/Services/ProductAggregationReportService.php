@@ -36,7 +36,10 @@ class ProductAggregationReportService
 
         // 3. Map Data
         foreach ($products as $product) {
-            $totalIn = (float) ($inboundTotals[$product->id] ?? 0);
+            $inData = $inboundTotals[$product->id] ?? [];
+            $totalIn = (float) ($inData['total_in'] ?? 0);
+            $unitName = $inData['unit_name'] ?? 'N/A';
+            $packageSize = (float) ($inData['package_size'] ?? 1);
             $totalOut = (float) ($outboundTotals[$product->id] ?? 0);
             $remaining = max(0, $totalIn - $totalOut);
             
@@ -47,6 +50,8 @@ class ProductAggregationReportService
                 productId: $product->id,
                 productName: $product->name ?? 'Unknown',
                 productCode: $product->code ?? 'N/A',
+                unitName: $unitName,
+                packageSize: $packageSize,
                 totalEntryQty: round($totalIn, 4),
                 totalConsumedQty: round($totalOut, 4),
                 remainingQty: round($remaining, 4),

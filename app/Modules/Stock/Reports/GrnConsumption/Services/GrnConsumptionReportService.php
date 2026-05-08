@@ -130,6 +130,7 @@ class GrnConsumptionReportService
                     'invoice_number' => $grnResult->invoiceNumber,
                     'product_name' => $item->productName,
                     'unit_name' => $item->unitName,
+                    'package_size' => $item->packageSize,
                     'entry_quantity' => $item->entryQuantity,
                     'remaining_quantity' => $item->remainingQuantity,
                     'entry_date' => $item->entryDate,

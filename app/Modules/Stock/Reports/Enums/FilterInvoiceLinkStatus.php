@@ -14,9 +14,9 @@ enum FilterInvoiceLinkStatus: string
     public function label(): string
     {
         return match($this) {
-            self::ALL => 'All Invoices',
-            self::WITH_INVOICE => 'Linked to Invoice',
-            self::WITHOUT_INVOICE => 'Not Linked',
+            self::ALL => 'All',
+            self::WITH_INVOICE => 'With Invoice',
+            self::WITHOUT_INVOICE => 'Without Invoice',
         };
     }
 }
