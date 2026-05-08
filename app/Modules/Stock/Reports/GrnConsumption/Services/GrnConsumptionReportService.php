@@ -74,7 +74,7 @@ class GrnConsumptionReportService
 
                 $mappedItems[] = new GrnReportItemDTO(
                     productId: $inTx->product_id,
-                    productName: $inTx->product->name ?? 'Unknown',
+                    productName: $inTx->product->name . ' '.$inTx->product_id ?? 'Unknown',
                     unitName: $inTx->unit->name ?? 'Unknown',
                     entryQuantity: (float) $inTx->quantity,
                     packageSize: $inPackageSize,
