@@ -21,10 +21,15 @@ class GrnConsumptionRepository implements GrnConsumptionRepositoryInterface
 
         $query = GoodsReceivedNote::query()
             ->with([
-                'inventoryTransactions' => function ($q) use ($completionStatus) {
+                'inventoryTransactions' => function ($q) use ($completionStatus, $filters) {
                     // نجلب فقط حركات الدخول (MOVEMENT_IN) التابعة للسند
                     $q->where('movement_type', InventoryTransaction::MOVEMENT_IN)
                       ->with(['product', 'unit']);
+                      
+                    if (!empty($filters['product_id'])) {
+                        $productIds = is_array($filters['product_id']) ? $filters['product_id'] : [$filters['product_id']];
+                        $q->whereIn('product_id', $productIds);
+                    }
                       
                     $outType = InventoryTransaction::MOVEMENT_OUT;
                     if ($completionStatus === \App\Modules\Stock\Reports\Enums\FilterCompletionStatus::INCOMPLETE->value) {
