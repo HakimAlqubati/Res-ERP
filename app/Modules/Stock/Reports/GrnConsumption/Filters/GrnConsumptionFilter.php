@@ -59,12 +59,11 @@ class GrnConsumptionFilter
             $query->where('supplier_id', $filters['supplier_id']);
         }
 
-        // 6. الفلترة الذكية حسب الارتباط بالفاتورة (يقبل yes/no, 1/0, true/false)
-        if (isset($filters['has_invoice']) && $filters['has_invoice'] !== '') {
-            $hasInvoice = filter_var($filters['has_invoice'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-            if ($hasInvoice === true) {
+        // 6. الفلترة الذكية حسب الارتباط بالفاتورة
+        if (!empty($filters['invoice_status']) && $filters['invoice_status'] !== \App\Modules\Stock\Reports\Enums\FilterInvoiceLinkStatus::ALL->value) {
+            if ($filters['invoice_status'] === \App\Modules\Stock\Reports\Enums\FilterInvoiceLinkStatus::WITH_INVOICE->value) {
                 $query->whereNotNull('purchase_invoice_id');
-            } elseif ($hasInvoice === false) {
+            } elseif ($filters['invoice_status'] === \App\Modules\Stock\Reports\Enums\FilterInvoiceLinkStatus::WITHOUT_INVOICE->value) {
                 $query->whereNull('purchase_invoice_id');
             }
         }
@@ -118,21 +117,34 @@ class GrnConsumptionFilter
             $query->orderBy($sortBy, $sortDir);
         }
 
-        // 11. فلترة استبعاد الكميات المنتهية (Exclude Completed) على مستوى قاعدة البيانات
-        if (!empty($filters['exclude_completed']) && filter_var($filters['exclude_completed'], FILTER_VALIDATE_BOOLEAN)) {
+        // 11. الفلترة حسب حالة الاكتمال
+        if (!empty($filters['completion_status']) && $filters['completion_status'] !== \App\Modules\Stock\Reports\Enums\FilterCompletionStatus::ALL->value) {
             $outType = \App\Models\InventoryTransaction::MOVEMENT_OUT;
             $inType = \App\Models\InventoryTransaction::MOVEMENT_IN;
             
-            $query->whereHas('inventoryTransactions', function ($q) use ($inType, $outType) {
-                $q->where('movement_type', $inType)
-                  ->whereRaw("(quantity * package_size) > (
-                      SELECT COALESCE(SUM(out_tx.quantity * out_tx.package_size), 0)
-                      FROM inventory_transactions out_tx
-                      WHERE out_tx.source_transaction_id = inventory_transactions.id
-                      AND out_tx.movement_type = '{$outType}'
-                      AND out_tx.deleted_at IS NULL
-                  )");
-            });
+            if ($filters['completion_status'] === \App\Modules\Stock\Reports\Enums\FilterCompletionStatus::INCOMPLETE->value) {
+                $query->whereHas('inventoryTransactions', function ($q) use ($inType, $outType) {
+                    $q->where('movement_type', $inType)
+                      ->whereRaw("(quantity * package_size) > (
+                          SELECT COALESCE(SUM(out_tx.quantity * out_tx.package_size), 0)
+                          FROM inventory_transactions out_tx
+                          WHERE out_tx.source_transaction_id = inventory_transactions.id
+                          AND out_tx.movement_type = '{$outType}'
+                          AND out_tx.deleted_at IS NULL
+                      )");
+                });
+            } elseif ($filters['completion_status'] === \App\Modules\Stock\Reports\Enums\FilterCompletionStatus::COMPLETED->value) {
+                $query->whereDoesntHave('inventoryTransactions', function ($q) use ($inType, $outType) {
+                    $q->where('movement_type', $inType)
+                      ->whereRaw("(quantity * package_size) > (
+                          SELECT COALESCE(SUM(out_tx.quantity * out_tx.package_size), 0)
+                          FROM inventory_transactions out_tx
+                          WHERE out_tx.source_transaction_id = inventory_transactions.id
+                          AND out_tx.movement_type = '{$outType}'
+                          AND out_tx.deleted_at IS NULL
+                      )");
+                });
+            }
         }
 
         return $query;

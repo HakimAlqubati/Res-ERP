@@ -38,6 +38,14 @@ class ProductAggregationFilter
                       ->orWhere('grn.notes', 'like', $search);
                 });
             }
+            // Apply invoice_status filter
+            if (!empty($filters['invoice_status']) && $filters['invoice_status'] !== \App\Modules\Stock\Reports\Enums\FilterInvoiceLinkStatus::ALL->value) {
+                if ($filters['invoice_status'] === \App\Modules\Stock\Reports\Enums\FilterInvoiceLinkStatus::WITH_INVOICE->value) {
+                    $itQuery->whereNotNull('grn.purchase_invoice_id');
+                } else {
+                    $itQuery->whereNull('grn.purchase_invoice_id');
+                }
+            }
         });
 
         if (!empty($filters['product_id'])) {
@@ -45,10 +53,25 @@ class ProductAggregationFilter
             $query->whereIn('id', $productIds);
         }
 
-        if (!empty($filters['exclude_completed']) && filter_var($filters['exclude_completed'], FILTER_VALIDATE_BOOLEAN)) {
+        if (!empty($filters['completion_status']) && $filters['completion_status'] !== \App\Modules\Stock\Reports\Enums\FilterCompletionStatus::ALL->value) {
             $inType = \App\Models\InventoryTransaction::MOVEMENT_IN;
             $outType = \App\Models\InventoryTransaction::MOVEMENT_OUT;
             $grnClass = \App\Models\GoodsReceivedNote::class;
+            
+            $operator = $filters['completion_status'] === \App\Modules\Stock\Reports\Enums\FilterCompletionStatus::INCOMPLETE->value ? '>' : '<=';
+            
+            $invoiceConditionIn = "";
+            $invoiceConditionOut = "";
+            
+            if (!empty($filters['invoice_status']) && $filters['invoice_status'] !== \App\Modules\Stock\Reports\Enums\FilterInvoiceLinkStatus::ALL->value) {
+                if ($filters['invoice_status'] === \App\Modules\Stock\Reports\Enums\FilterInvoiceLinkStatus::WITH_INVOICE->value) {
+                    $invoiceConditionIn = " AND grn.purchase_invoice_id IS NOT NULL";
+                    $invoiceConditionOut = " AND grn.purchase_invoice_id IS NOT NULL";
+                } else {
+                    $invoiceConditionIn = " AND grn.purchase_invoice_id IS NULL";
+                    $invoiceConditionOut = " AND grn.purchase_invoice_id IS NULL";
+                }
+            }
             
             $query->whereRaw("(
                 SELECT COALESCE(SUM(it.quantity * it.package_size), 0)
@@ -59,7 +82,8 @@ class ProductAggregationFilter
                 AND it.movement_type = '{$inType}'
                 AND it.deleted_at IS NULL
                 AND grn.deleted_at IS NULL
-            ) > (
+                {$invoiceConditionIn}
+            ) {$operator} (
                 SELECT COALESCE(SUM(out_tx.quantity * out_tx.package_size), 0)
                 FROM inventory_transactions out_tx
                 INNER JOIN inventory_transactions in_tx ON out_tx.source_transaction_id = in_tx.id
@@ -71,6 +95,7 @@ class ProductAggregationFilter
                 AND out_tx.deleted_at IS NULL
                 AND in_tx.deleted_at IS NULL
                 AND grn.deleted_at IS NULL
+                {$invoiceConditionOut}
             )");
         }
 
@@ -101,6 +126,15 @@ class ProductAggregationFilter
                   ->orWhere('grn.notes', 'like', $search);
             });
         }
+        
+        if (!empty($filters['invoice_status']) && $filters['invoice_status'] !== \App\Modules\Stock\Reports\Enums\FilterInvoiceLinkStatus::ALL->value) {
+            if ($filters['invoice_status'] === \App\Modules\Stock\Reports\Enums\FilterInvoiceLinkStatus::WITH_INVOICE->value) {
+                $query->whereNotNull('grn.purchase_invoice_id');
+            } else {
+                $query->whereNull('grn.purchase_invoice_id');
+            }
+        }
+        
         return $query;
     }
 }

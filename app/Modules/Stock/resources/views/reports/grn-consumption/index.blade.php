@@ -199,9 +199,20 @@
             <!-- Filter Section -->
             <form class="filter-form" method="GET" action="{{ route('stock.reports.grn-consumption.index') }}" style="flex-wrap: wrap; align-items: center;">
                 <input type="text" name="grn_number" placeholder="Search by GRN Number..." value="{{ request('grn_number') }}">
-                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer; color: var(--text-light); font-weight: 500;">
-                    <input type="checkbox" name="exclude_completed" value="1" {{ request('exclude_completed') ? 'checked' : '' }} style="width: auto; min-width: auto; accent-color: var(--primary);"> Hide Completed
-                </label>
+                <select name="completion_status" style="padding: 0.6rem 1rem; border: 1px solid var(--border); border-radius: 6px; outline: none; font-size: 0.95rem; min-width: 150px;">
+                    @foreach(\App\Modules\Stock\Reports\Enums\FilterCompletionStatus::cases() as $case)
+                        <option value="{{ $case->value }}" {{ request('completion_status') === $case->value ? 'selected' : '' }}>
+                            {{ $case->label() }}
+                        </option>
+                    @endforeach
+                </select>
+                <select name="invoice_status" style="padding: 0.6rem 1rem; border: 1px solid var(--border); border-radius: 6px; outline: none; font-size: 0.95rem; min-width: 150px;">
+                    @foreach(\App\Modules\Stock\Reports\Enums\FilterInvoiceLinkStatus::cases() as $case)
+                        <option value="{{ $case->value }}" {{ request('invoice_status') === $case->value ? 'selected' : '' }}>
+                            {{ $case->label() }}
+                        </option>
+                    @endforeach
+                </select>
                 <button type="submit" class="btn-primary">Filter</button>
                 <a href="{{ route('stock.reports.grn-consumption.index') }}" class="btn-link">Clear</a>
             </form>

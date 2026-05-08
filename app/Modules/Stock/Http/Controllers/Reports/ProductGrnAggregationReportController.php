@@ -18,7 +18,7 @@ class ProductGrnAggregationReportController extends Controller
     public function index(Request $request)
     {
         // Allow smart filtering
-        $filters = $request->only(['search', 'date_from', 'date_to', 'store_id', 'exclude_completed']);
+        $filters = $request->only(['search', 'date_from', 'date_to', 'store_id', 'completion_status', 'invoice_status']);
         
         // Fetch paginated report (15 items per page)
         $report = $this->reportService->getReport($filters, 15);

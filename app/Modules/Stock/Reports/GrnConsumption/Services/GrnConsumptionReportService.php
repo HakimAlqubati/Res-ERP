@@ -126,6 +126,7 @@ class GrnConsumptionReportService
                 $flattened[] = (object) [
                     'grn_number' => $grnResult->grnNumber,
                     'grn_date' => $grnResult->grnDate,
+                    'is_linked_to_invoice' => $grnResult->isLinkedToInvoice,
                     'invoice_number' => $grnResult->invoiceNumber,
                     'product_name' => $item->productName,
                     'unit_name' => $item->unitName,

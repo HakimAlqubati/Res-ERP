@@ -17,18 +17,26 @@ class GrnConsumptionRepository implements GrnConsumptionRepositoryInterface
 
     public function getPaginatedGrns(array $filters = [], int $perPage = 15): LengthAwarePaginator|Collection
     {
-        $excludeCompleted = !empty($filters['exclude_completed']) && filter_var($filters['exclude_completed'], FILTER_VALIDATE_BOOLEAN);
+        $completionStatus = $filters['completion_status'] ?? \App\Modules\Stock\Reports\Enums\FilterCompletionStatus::ALL->value;
 
         $query = GoodsReceivedNote::query()
             ->with([
-                'inventoryTransactions' => function ($q) use ($excludeCompleted) {
+                'inventoryTransactions' => function ($q) use ($completionStatus) {
                     // نجلب فقط حركات الدخول (MOVEMENT_IN) التابعة للسند
                     $q->where('movement_type', InventoryTransaction::MOVEMENT_IN)
                       ->with(['product', 'unit']);
                       
-                    if ($excludeCompleted) {
-                        $outType = InventoryTransaction::MOVEMENT_OUT;
+                    $outType = InventoryTransaction::MOVEMENT_OUT;
+                    if ($completionStatus === \App\Modules\Stock\Reports\Enums\FilterCompletionStatus::INCOMPLETE->value) {
                         $q->whereRaw("(quantity * package_size) > (
+                            SELECT COALESCE(SUM(out_tx.quantity * out_tx.package_size), 0)
+                            FROM inventory_transactions out_tx
+                            WHERE out_tx.source_transaction_id = inventory_transactions.id
+                            AND out_tx.movement_type = '{$outType}'
+                            AND out_tx.deleted_at IS NULL
+                        )");
+                    } elseif ($completionStatus === \App\Modules\Stock\Reports\Enums\FilterCompletionStatus::COMPLETED->value) {
+                        $q->whereRaw("(quantity * package_size) <= (
                             SELECT COALESCE(SUM(out_tx.quantity * out_tx.package_size), 0)
                             FROM inventory_transactions out_tx
                             WHERE out_tx.source_transaction_id = inventory_transactions.id
