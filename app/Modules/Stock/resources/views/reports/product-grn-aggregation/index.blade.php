@@ -173,10 +173,13 @@
 
         <div class="card">
             <!-- Filter Section -->
-            <form class="filter-form" method="GET" action="{{ route('stock.reports.product-grn-aggregation.index') }}">
+            <form class="filter-form" method="GET" action="{{ route('stock.reports.product-grn-aggregation.index') }}" style="flex-wrap: wrap; align-items: center;">
                 <input type="text" name="search" placeholder="Search by Product name or Code..." value="{{ request('search') }}">
                 <input type="date" name="date_from" value="{{ request('date_from') }}" title="GRN Date From">
                 <input type="date" name="date_to" value="{{ request('date_to') }}" title="GRN Date To">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer; color: var(--text-light); font-weight: 500;">
+                    <input type="checkbox" name="exclude_completed" value="1" {{ request('exclude_completed') ? 'checked' : '' }} style="width: auto; min-width: auto; accent-color: var(--primary);"> Hide Completed
+                </label>
                 <button type="submit" class="btn-primary">Filter</button>
                 <a href="{{ route('stock.reports.product-grn-aggregation.index') }}" class="btn-link">Clear</a>
             </form>

@@ -118,6 +118,23 @@ class GrnConsumptionFilter
             $query->orderBy($sortBy, $sortDir);
         }
 
+        // 11. فلترة استبعاد الكميات المنتهية (Exclude Completed) على مستوى قاعدة البيانات
+        if (!empty($filters['exclude_completed']) && filter_var($filters['exclude_completed'], FILTER_VALIDATE_BOOLEAN)) {
+            $outType = \App\Models\InventoryTransaction::MOVEMENT_OUT;
+            $inType = \App\Models\InventoryTransaction::MOVEMENT_IN;
+            
+            $query->whereHas('inventoryTransactions', function ($q) use ($inType, $outType) {
+                $q->where('movement_type', $inType)
+                  ->whereRaw("(quantity * package_size) > (
+                      SELECT COALESCE(SUM(out_tx.quantity * out_tx.package_size), 0)
+                      FROM inventory_transactions out_tx
+                      WHERE out_tx.source_transaction_id = inventory_transactions.id
+                      AND out_tx.movement_type = '{$outType}'
+                      AND out_tx.deleted_at IS NULL
+                  )");
+            });
+        }
+
         return $query;
     }
 }

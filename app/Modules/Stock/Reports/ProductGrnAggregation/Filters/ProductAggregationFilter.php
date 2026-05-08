@@ -45,6 +45,35 @@ class ProductAggregationFilter
             $query->whereIn('id', $productIds);
         }
 
+        if (!empty($filters['exclude_completed']) && filter_var($filters['exclude_completed'], FILTER_VALIDATE_BOOLEAN)) {
+            $inType = \App\Models\InventoryTransaction::MOVEMENT_IN;
+            $outType = \App\Models\InventoryTransaction::MOVEMENT_OUT;
+            $grnClass = \App\Models\GoodsReceivedNote::class;
+            
+            $query->whereRaw("(
+                SELECT COALESCE(SUM(it.quantity * it.package_size), 0)
+                FROM inventory_transactions it
+                INNER JOIN goods_received_notes grn ON it.transactionable_id = grn.id
+                WHERE it.product_id = products.id
+                AND it.transactionable_type = '{$grnClass}'
+                AND it.movement_type = '{$inType}'
+                AND it.deleted_at IS NULL
+                AND grn.deleted_at IS NULL
+            ) > (
+                SELECT COALESCE(SUM(out_tx.quantity * out_tx.package_size), 0)
+                FROM inventory_transactions out_tx
+                INNER JOIN inventory_transactions in_tx ON out_tx.source_transaction_id = in_tx.id
+                INNER JOIN goods_received_notes grn ON in_tx.transactionable_id = grn.id
+                WHERE in_tx.product_id = products.id
+                AND in_tx.transactionable_type = '{$grnClass}'
+                AND in_tx.movement_type = '{$inType}'
+                AND out_tx.movement_type = '{$outType}'
+                AND out_tx.deleted_at IS NULL
+                AND in_tx.deleted_at IS NULL
+                AND grn.deleted_at IS NULL
+            )");
+        }
+
         return $query;
     }
 

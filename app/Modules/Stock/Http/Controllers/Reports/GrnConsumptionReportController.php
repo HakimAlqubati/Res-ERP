@@ -18,7 +18,12 @@ class GrnConsumptionReportController extends Controller
     public function index(Request $request)
     {
         // Allow filtering by GRN Number
-        $filters = $request->only(['grn_number']);
+        $filters = $request->only([
+            'grn_number', 'search', 'date_from', 'date_to', 
+            'store_id', 'supplier_id', 'has_invoice', 
+            'has_attachment', 'has_notes', 'status', 
+            'product_id', 'older_than_days', 'exclude_completed'
+        ]);
         
         // Fetch paginated report (15 items per page)
         $report = $this->reportService->getReport($filters, 15);
@@ -37,7 +42,7 @@ class GrnConsumptionReportController extends Controller
             'search', 'grn_number', 'date_from', 'date_to', 
             'store_id', 'supplier_id', 'has_invoice', 
             'has_attachment', 'has_notes', 'status', 
-            'product_id', 'older_than_days'
+            'product_id', 'older_than_days', 'exclude_completed'
         ]);
         
         $report = $this->reportService->getFlattenedReport($filters, 15);
