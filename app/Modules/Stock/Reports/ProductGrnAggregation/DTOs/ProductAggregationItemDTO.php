@@ -20,7 +20,8 @@ class ProductAggregationItemDTO
         public readonly float $totalConsumedQty,
         public readonly float $remainingQty,
         public readonly float $consumptionPercentage,
-        public readonly bool $isFullyConsumed
+        public readonly bool $isFullyConsumed,
+        public readonly int $grnsCount
     ) {
         $this->remainingQtyColor = $this->remainingQty > 0 ? 'var(--primary)' : 'var(--text-light)';
         

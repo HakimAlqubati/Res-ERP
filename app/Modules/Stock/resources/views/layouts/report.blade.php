@@ -191,6 +191,7 @@
             border-bottom: none;
         }
         .text-right { text-align: right; }
+        .text-center { text-align: center; }
         .font-bold, .font-semibold { font-weight: 600; }
         .text-muted { color: var(--text-light); font-size: 0.85rem; }
 

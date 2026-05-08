@@ -38,6 +38,7 @@ class ProductAggregationReportService
         foreach ($products as $product) {
             $inData = $inboundTotals[$product->id] ?? [];
             $totalIn = (float) ($inData['total_in'] ?? 0);
+            $grnsCount = (int) ($inData['grns_count'] ?? 0);
             $unitName = $inData['unit_name'] ?? 'N/A';
             $packageSize = (float) ($inData['package_size'] ?? 1);
             $totalOut = (float) ($outboundTotals[$product->id] ?? 0);
@@ -56,7 +57,8 @@ class ProductAggregationReportService
                 totalConsumedQty: round($totalOut, 4),
                 remainingQty: round($remaining, 4),
                 consumptionPercentage: $percentage,
-                isFullyConsumed: ($remaining <= 0 && $totalIn > 0)
+                isFullyConsumed: ($remaining <= 0 && $totalIn > 0),
+                grnsCount: $grnsCount
             );
         }
 

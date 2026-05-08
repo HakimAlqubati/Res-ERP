@@ -46,7 +46,8 @@ class ProductAggregationRepository implements ProductAggregationRepositoryInterf
                 'it.product_id', 
                 DB::raw('MAX(units.name) as unit_name'), 
                 DB::raw('MAX(it.package_size) as package_size'), 
-                DB::raw('SUM(it.quantity * it.package_size) as total_in')
+                DB::raw('SUM(it.quantity * it.package_size) as total_in'),
+                DB::raw('COUNT(DISTINCT grn.id) as grns_count')
             )
             ->groupBy('it.product_id')
             ->get()

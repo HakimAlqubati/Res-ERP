@@ -71,6 +71,7 @@
                         <tr>
                             <th>Product Details</th>
                             <th>Unit</th>
+                            <th class="text-center">GRNs Count</th>
                             <th class="text-right">Total Entry (Base)</th>
                             <th class="text-right">Total Consumed</th>
                             <th class="text-right">Remaining Stock</th>
@@ -88,6 +89,9 @@
                                 <td>
                                     <div>{{ $item->unitName }}</div>
                                     <div class="text-muted" style="font-size: 0.8rem;">Pack: {{ $item->packageSize }}</div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge gray">{{ $item->grnsCount }}</span>
                                 </td>
                                 <td class="text-right font-bold">{{ $item->totalEntryQty }}</td>
                                 <td class="text-right" style="color: var(--danger); font-weight: 500;">
