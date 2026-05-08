@@ -2,8 +2,14 @@
 
 namespace App\Modules\Stock\Reports\GrnConsumption\DTOs;
 
+use Carbon\Carbon;
+
 class GrnConsumptionResultDTO
 {
+    public readonly string $formattedGrnDate;
+    public readonly string $statusBadgeClass;
+    public readonly string $statusText;
+
     public function __construct(
         public readonly int $grnId,
         public readonly string $grnNumber,
@@ -13,7 +19,14 @@ class GrnConsumptionResultDTO
         /** @var GrnReportItemDTO[] */
         public readonly array $items,
         public readonly bool $isFullyCompleted // هل تم استهلاك كامل السند؟
-    ) {}
+    ) {
+        $this->formattedGrnDate = $this->grnDate ? Carbon::parse($this->grnDate)->format('Y-m-d') : 'No Date';
+        
+        $status = $this->isFullyCompleted ? \App\Modules\Stock\Reports\Enums\GrnConsumptionStatus::FULLY_COMPLETED : \App\Modules\Stock\Reports\Enums\GrnConsumptionStatus::IN_PROGRESS;
+        
+        $this->statusBadgeClass = $status->badgeClass();
+        $this->statusText = $status->label();
+    }
 
     public function toArray(): array
     {

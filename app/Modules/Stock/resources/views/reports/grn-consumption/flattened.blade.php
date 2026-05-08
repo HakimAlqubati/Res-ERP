@@ -179,19 +179,13 @@
                                         <div class="text-muted">Inv: {{ $item->invoice_number }}</div>
                                     @endif
                                 </td>
-                                <td>{{ $item->entry_date ? \Carbon\Carbon::parse($item->entry_date)->format('M d, Y') : 'N/A' }}</td>
+                                <td>{{ $item->formatted_entry_date }}</td>
                                 <td class="text-right font-bold">{{ $item->entry_quantity }}</td>
-                                <td class="text-right font-bold" style="color: {{ $item->remaining_quantity > 0 ? 'var(--primary)' : 'var(--text-light)' }};">
+                                <td class="text-right font-bold" style="color: {{ $item->remaining_quantity_color }};">
                                     {{ $item->remaining_quantity }}
                                 </td>
                                 <td>
-                                    @if($item->is_completed)
-                                        <span class="badge green">Completed</span>
-                                    @elseif($item->has_started_leaving)
-                                        <span class="badge yellow">Consuming</span>
-                                    @else
-                                        <span class="badge gray">Untouched</span>
-                                    @endif
+                                    <span class="{{ $item->status_badge_class }}">{{ $item->status_text }}</span>
                                 </td>
                             </tr>
                         @empty

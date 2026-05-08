@@ -226,18 +226,14 @@
                                 <td colspan="5">
                                     <span style="font-size: 1.05rem;">📦 GRN: #{{ $grnResult->grnNumber }}</span>
                                     <span style="color: var(--text-light); font-size: 0.85rem; margin-left: 0.5rem; font-weight: normal;">
-                                        ({{ $grnResult->grnDate ?? 'No Date' }})
+                                        ({{ $grnResult->formattedGrnDate }})
                                     </span>
                                     @if($grnResult->isLinkedToInvoice)
                                         <span class="badge blue" style="margin-left: 1rem;">Invoice: #{{ $grnResult->invoiceNumber }}</span>
                                     @endif
                                 </td>
                                 <td>
-                                    @if($grnResult->isFullyCompleted)
-                                        <span class="badge green">Fully Completed</span>
-                                    @else
-                                        <span class="badge yellow">In Progress</span>
-                                    @endif
+                                    <span class="{{ $grnResult->statusBadgeClass }}">{{ $grnResult->statusText }}</span>
                                 </td>
                             </tr>
                             
@@ -247,18 +243,12 @@
                                     <td style="padding-left: 3rem;">{{ $item->productName }}</td>
                                     <td>{{ $item->unitName }}</td>
                                     <td class="text-right">{{ $item->entryQuantity }}</td>
-                                    <td class="text-right font-semibold" style="color: {{ $item->remainingQuantity > 0 ? 'var(--primary)' : 'var(--text-light)' }};">
+                                    <td class="text-right font-semibold" style="color: {{ $item->remainingQuantityColor }};">
                                         {{ $item->remainingQuantity }}
                                     </td>
-                                    <td>{{ $item->entryDate ? \Carbon\Carbon::parse($item->entryDate)->format('M d, Y') : 'N/A' }}</td>
+                                    <td>{{ $item->formattedEntryDate }}</td>
                                     <td>
-                                        @if($item->isCompleted)
-                                            <span class="badge green">Completed</span>
-                                        @elseif($item->hasStartedLeaving)
-                                            <span class="badge yellow">Consuming</span>
-                                        @else
-                                            <span class="badge gray">Untouched</span>
-                                        @endif
+                                        <span class="{{ $item->statusBadgeClass }}">{{ $item->statusText }}</span>
                                     </td>
                                 </tr>
                             @endforeach

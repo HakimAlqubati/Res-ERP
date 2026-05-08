@@ -208,30 +208,19 @@
                                 <td class="text-right" style="color: var(--danger); font-weight: 500;">
                                     {{ $item->totalConsumedQty }}
                                 </td>
-                                <td class="text-right font-bold" style="color: {{ $item->remainingQty > 0 ? 'var(--primary)' : 'var(--text-light)' }}; font-size: 1.05rem;">
+                                <td class="text-right font-bold" style="color: {{ $item->remainingQtyColor }}; font-size: 1.05rem;">
                                     {{ $item->remainingQty }}
                                 </td>
                                 <td>
-                                    @php
-                                        $barColor = 'low';
-                                        if ($item->consumptionPercentage > 50) $barColor = 'med';
-                                        if ($item->consumptionPercentage > 85) $barColor = 'high';
-                                    @endphp
                                     <div class="progress-wrapper">
                                         <div class="progress-bg">
-                                            <div class="progress-bar {{ $barColor }}" style="width: {{ $item->consumptionPercentage }}%;"></div>
+                                            <div class="progress-bar {{ $item->progressBarColorClass }}" style="width: {{ $item->consumptionPercentage }}%;"></div>
                                         </div>
                                         <div class="progress-text">{{ $item->consumptionPercentage }}%</div>
                                     </div>
                                 </td>
                                 <td>
-                                    @if($item->isFullyConsumed)
-                                        <span class="badge green">100% Consumed</span>
-                                    @elseif($item->consumptionPercentage > 0)
-                                        <span class="badge" style="background: #e0f2fe; color: #0284c7;">Active</span>
-                                    @else
-                                        <span class="badge gray">Untouched</span>
-                                    @endif
+                                    <span class="{{ $item->statusBadgeClass }}">{{ $item->statusText }}</span>
                                 </td>
                             </tr>
                         @empty

@@ -134,6 +134,10 @@ class GrnConsumptionReportService
                     'entry_date' => $item->entryDate,
                     'is_completed' => $item->isCompleted,
                     'has_started_leaving' => $item->hasStartedLeaving,
+                    'formatted_entry_date' => $item->formattedEntryDate,
+                    'status_badge_class' => $item->statusBadgeClass,
+                    'status_text' => $item->statusText,
+                    'remaining_quantity_color' => $item->remainingQuantityColor,
                 ];
             }
         }

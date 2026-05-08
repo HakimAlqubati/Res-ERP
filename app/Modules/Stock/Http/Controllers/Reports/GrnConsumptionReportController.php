@@ -46,7 +46,7 @@ class GrnConsumptionReportController extends Controller
         ]);
         
         $report = $this->reportService->getFlattenedReport($filters, 15);
-
+dd($report);
         return view('stock::reports.grn-consumption.flattened', compact('report', 'filters'));
     }
 }
