@@ -159,25 +159,8 @@ class ServiceRequest extends Model implements Auditable, HasMedia
 
     protected static function booted()
     {
-        if (isBranchManager()) {
-            static::addGlobalScope('active', function (Builder $builder) {
-                $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
-            });
-        }
-        if (isStuff()) {
-            static::addGlobalScope('active', function (Builder $builder) {
-                $builder->where('assigned_to', auth()->user()->employee->id)
-                    ->orWhere('created_by', auth()->user()->id)
-                ; // Add your default query here
-            });
-        } elseif (isFinanceManager() && auth()->user()->has_employee) {
-            static::addGlobalScope(function (Builder $builder) {
-                $builder->where('assigned_to', auth()->user()->employee->id)
-                    ->orWhere('created_by', auth()->user()->id)
-                ; // Add your default query here
-            });
-        }
-
+        
+    
         static::created(function ($request) {
             $request->logToEquipment(
                 EquipmentLog::ACTION_SERVICED,
