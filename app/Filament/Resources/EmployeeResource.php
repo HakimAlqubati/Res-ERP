@@ -86,7 +86,7 @@ class EmployeeResource extends Resource
             PeriodRelationManager::class,
             PeriodHistoriesRelationManager::class,
             BranchLogRelationManager::class,
-            AdvanceWagesRelationManager::class,
+            // AdvanceWagesRelationM        anager::class,
             // EmployeeFaceDataRelationManager::class,
         ];
     }

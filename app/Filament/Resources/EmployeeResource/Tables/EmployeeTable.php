@@ -122,23 +122,14 @@ class EmployeeTable
                     ->searchable(isIndividual: false, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: false),
 
-
-                TextColumn::make('known_name')
-                    ->sortable()->searchable()
-                    ->label(__('lang.known_name'))
-                    ->toggleable(isToggledHiddenByDefault: true),
+ 
                 TextColumn::make('branch.name')
                     ->label(__('lang.branch'))
                     ->searchable()
                     ->sortable()
                     ->wrap()
                     ->toggleable(isToggledHiddenByDefault: false),
-                TextColumn::make('branch_logs_count')
-                    ->label(__('lang.branch_logs_count'))
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->counts('branchLogs')
-                    ->alignCenter()
-                    ->default(0),
+
                 TextColumn::make('manager.name')
                     ->label(__('lang.manager'))
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -199,17 +190,7 @@ class EmployeeTable
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: false)->alignCenter(true),
-                TextColumn::make('periodsCount')
-                    ->default(0)
 
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->alignCenter(true)
-                    ->toggleable(isToggledHiddenByDefault: true)
-
-                    ->color('info') // لإظهار أن النص قابل للنقر
-                // اختياري: أيقونة مشاهدة
-
-                ,
 
                 TextColumn::make('working_hours')->label(__('lang.working_hours'))->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: false)->alignCenter(true)
@@ -222,10 +203,7 @@ class EmployeeTable
                     }),
                 TextColumn::make('working_days')->label(__('lang.working_days'))->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: false)->alignCenter(true),
-                TextColumn::make('position.title')->limit(20)
-                    ->label(__('lang.position_type'))
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->searchable(),
+                
                 TextColumn::make('job_title')
                     ->label(__('lang.job_title'))
                     ->sortable()->searchable()
@@ -236,10 +214,7 @@ class EmployeeTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('department.name')
-                    ->label(__('lang.department'))
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->searchable(),
+
                 TextColumn::make('unrequired_documents_count')->label(__('lang.unrequired_docs'))->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->formatStateUsing(function ($state) {
@@ -259,36 +234,20 @@ class EmployeeTable
                     ->falseIcon('heroicon-o-x-mark')
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),
-                IconColumn::make('has_user')->boolean()
-                    ->trueIcon('heroicon-o-check-badge')
-                    ->falseIcon(
-                        Heroicon::XMark
-                    )
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->url(function ($record) {
-                        if ($record->user) {
-                            return url('admin/users/' . $record?->user_id . '/edit');
-                        }
-                    })->openUrlInNewTab()
-                    ->tooltip(__('lang.make_sure_user_not_soft_deleted'))
-                    ->alignCenter(),
-                TextColumn::make('rfid')
-                    ->label('RFID')
-                    ->searchable()
-                    ->sortable()
-                    ->copyable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+
+
                 TextColumn::make('nationality')->sortable()->searchable()
                     ->label(__('lang.nationality'))
                     ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
-                TextColumn::make('gender_title')->sortable()
-                    ->label(__('lang.gender'))
-                    ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
-                IconColumn::make('is_citizen')
-                    ->label(__('lang.is_citizen'))
+           
+                IconColumn::make('has_auto_weekly_leave')
+                    ->label(__('lang.has_auto_weekly_leave'))
+                    ->boolean()
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark')
-                    ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
+                    ->alignCenter(true)
+                    ->sortable() 
+                    ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('is_indexed_in_aws')
                     ->label(__('lang.is_indexed_in_aws'))
                     ->boolean()
@@ -296,6 +255,7 @@ class EmployeeTable
                     ->falseIcon('heroicon-o-x-mark')
                     ->alignCenter(true)
                     ->sortable()
+                    ->visible(fn() => isHakimOrAdel())
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->label(__('lang.created_at'))

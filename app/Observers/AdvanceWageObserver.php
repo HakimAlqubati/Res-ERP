@@ -40,6 +40,11 @@ class AdvanceWageObserver
             $advanceWage->month = $date->month;
         }
 
+        // Set the branch from the employee if not provided
+        if (!$advanceWage->branch_id && $advanceWage->employee_id) {
+            $advanceWage->branch_id = $advanceWage->employee?->branch_id;
+        }
+
         // Guard against finalized payroll periods
         $this->guardPeriod($advanceWage);
 

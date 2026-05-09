@@ -233,20 +233,22 @@ class EmployeeForm
                                             ->live()
                                             ->visible(
                                                 fn($get, ?Employee $record): bool =>
-                                                in_array((int) $get('employee_type'), [0, 1]) &&
-                                                    (
-                                                        ($record && $record->is_ceo) ||
-                                                        !Employee::where('is_ceo', true)->exists()
-                                                    )
+                                                in_array((int) $get('employee_type'), [0, 1])
+                                                //  &&
+                                                //     (
+                                                //         ($record && $record->is_ceo) ||
+                                                // !Employee::where('is_ceo', true)->exists()
+                                                //     )
                                             )
                                             ->default(0)->inline(false),
                                         Select::make('manager_id')
                                             ->columnSpan(1)
                                             ->label(__('lang.manager'))
                                             ->searchable()
+                                            ->hidden(fn($get) => $get('is_ceo'))
                                             // ->requiredIf('is_ceo', false)
-                                            ->required(fn(Get $get) => in_array((int) $get('employee_type'), [2, 3, 4]))
-
+                                            // ->required(fn(Get $get) => in_array((int) $get('employee_type'), [2, 3, 4]))
+                                            ->required()
                                             ->options(function (Get $get, ?Employee $record) {
                                                 $branchId = $get('branch_id');
                                                 $employeeType = (int) $get('employee_type');
