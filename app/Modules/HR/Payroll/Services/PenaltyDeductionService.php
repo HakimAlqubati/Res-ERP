@@ -30,11 +30,12 @@ class PenaltyDeductionService
                 'approver:id,name',
                 'rejector:id,name'
             ]);
-        $query->join(
-            'hr_employees',
-            'hr_employees.id',
-            'hr_penalty_deductions.employee_id'
-        );
+        // $query->join(
+        //     'hr_employees',
+        //     'hr_employees.id',
+        //     'hr_penalty_deductions.employee_id'
+        // )
+        ;
         
 
         if (!empty($filters['employee_id'])) {

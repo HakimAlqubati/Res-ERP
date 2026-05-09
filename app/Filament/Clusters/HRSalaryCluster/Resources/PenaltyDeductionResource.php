@@ -160,6 +160,10 @@ class PenaltyDeductionResource extends Resource
                     ->label('Employee')
                     ->searchable()->toggleable()
                     ->sortable(),
+                TextColumn::make('branch.name')
+                    ->label('Branch')
+                    ->searchable()->toggleable()
+                    ->sortable(),
                 TextColumn::make('deduction.name')
                     ->label('Deduction')
                     ->searchable()->toggleable()
