@@ -34,6 +34,13 @@ class GrnConsumptionReportController extends Controller
             'completion_status',
             'sort_by'
         ]);
+
+        // Default completion status to incomplete if not specified
+        if (!$request->has('completion_status')) {
+            $filters['completion_status'] = \App\Modules\Stock\Reports\Enums\FilterCompletionStatus::INCOMPLETE->value;
+            $request->merge(['completion_status' => $filters['completion_status']]);
+        }
+
         // Fetch stores for mandatory filter (ONLY default store)
         $stores = \App\Models\Store::select('id', 'name')
             ->where('default_store', true)
@@ -90,6 +97,13 @@ class GrnConsumptionReportController extends Controller
             'completion_status',
             'sort_by'
         ]);
+
+        // Default completion status to incomplete if not specified
+        if (!$request->has('completion_status')) {
+            $filters['completion_status'] = \App\Modules\Stock\Reports\Enums\FilterCompletionStatus::INCOMPLETE->value;
+            $request->merge(['completion_status' => $filters['completion_status']]);
+        }
+
         // Fetch stores for mandatory filter (ONLY default store)
         $stores = \App\Models\Store::select('id', 'name')
             ->where('default_store', true)

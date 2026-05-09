@@ -17,10 +17,10 @@ class GrnConsumptionReportService
     {
         // 1. جلب سندات الاستلام مع حركات الإدخال الخاصة بها
         $grns = $this->repository->getPaginatedGrns($filters, $perPage);
-        
+
         $allInboundIds = [];
         $grnItemsMap = [];
-        
+
         $grnCollection = $grns instanceof LengthAwarePaginator ? $grns->getCollection() : $grns;
 
         // تجميع كل معرفات الإدخال (IDs) لتجنب استعلامات N+1
@@ -33,7 +33,7 @@ class GrnConsumptionReportService
 
         // 2. جلب حركات الخروج (Out) التي تشير إلى حركات الإدخال في استعلام واحد
         $outTransactions = $this->repository->getOutboundTransactionsForInboundIds($allInboundIds);
-        
+
         // 3. تجميع حركات الخروج بالذاكرة بناءً على مصدرها (source_transaction_id)
         $outTxGrouped = $outTransactions->groupBy('source_transaction_id');
 
@@ -53,7 +53,7 @@ class GrnConsumptionReportService
                 // حساب الكمية الأساسية المخرجة المرتبطة بهذا الإدخال (من حقل source_transaction_id)
                 $relatedOuts = $outTxGrouped->get($inTx->id) ?? collect();
                 $totalBaseOut = 0.0;
-                
+
                 foreach ($relatedOuts as $outTx) {
                     $outPackageSize = max((float) $outTx->package_size, 1);
                     $totalBaseOut += ((float) $outTx->quantity) * $outPackageSize;
@@ -61,7 +61,7 @@ class GrnConsumptionReportService
 
                 // حساب الكمية المتبقية الأساسية
                 $remainingBaseQty = max(0, $totalBaseIn - $totalBaseOut);
-                
+
                 // تحويل المتبقي ليعرض بالوحدة الأصلية للإدخال
                 $remainingQty = round($remainingBaseQty / $inPackageSize, 4);
 
@@ -71,10 +71,9 @@ class GrnConsumptionReportService
                 if (!$isCompleted) {
                     $allCompleted = false; // إذا كان هناك منتج واحد غير مكتمل، فالسند غير مكتمل
                 }
-
                 $mappedItems[] = new GrnReportItemDTO(
                     productId: $inTx->product_id,
-                    productName: $inTx->product->name . ' '.$inTx->product_id ?? 'Unknown',
+                    productName: $inTx->product->name . ' ' . $inTx->product_id ?? 'Unknown',
                     unitName: $inTx->unit->name ?? 'Unknown',
                     entryQuantity: (float) $inTx->quantity,
                     packageSize: $inPackageSize,
@@ -87,11 +86,11 @@ class GrnConsumptionReportService
 
             // إذا كان السند لا يحتوي على أصناف (شاذ)، نعتبره غير مكتمل لتجنب أخطاء العرض
             if ($inTransactions->isEmpty()) {
-                $allCompleted = false; 
+                $allCompleted = false;
             }
 
             $isLinkedToInvoice = !is_null($grn->purchase_invoice_id);
-            
+
             $results[] = new GrnConsumptionResultDTO(
                 grnId: $grn->id,
                 grnNumber: $grn->grn_number ?? (string) $grn->id,
@@ -117,7 +116,7 @@ class GrnConsumptionReportService
     public function getFlattenedReport(array $filters = [], int $perPage = 15)
     {
         $paginatedGrns = $this->getReport($filters, $perPage);
-        
+
         $flattened = [];
         $items = $paginatedGrns instanceof LengthAwarePaginator ? $paginatedGrns->items() : $paginatedGrns;
 
@@ -143,7 +142,7 @@ class GrnConsumptionReportService
                 ];
             }
         }
-        
+
         if ($paginatedGrns instanceof LengthAwarePaginator) {
             return $paginatedGrns->setCollection(collect($flattened));
         }

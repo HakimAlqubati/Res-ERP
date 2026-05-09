@@ -326,11 +326,11 @@
             </a>
             <a href="{{ route('stock.reports.grn-consumption.index') }}" 
                class="nav-tab {{ $currentRoute === 'stock.reports.grn-consumption.index' ? 'active' : '' }}">
-                Receipts & Invoices
+                By GRN
             </a>
             <a href="{{ route('stock.reports.grn-consumption-items.index') }}" 
                class="nav-tab {{ $currentRoute === 'stock.reports.grn-consumption-items.index' ? 'active' : '' }}">
-                Detailed Items
+                By Product
             </a>
 
             <!-- Theme Switcher -->
