@@ -53,6 +53,7 @@ class EmployeePeriodObserver
      */
     private function checkLock(EmployeePeriod $period): void
     {
+
         return;
         if (! $period->start_date) {
             return;
@@ -66,5 +67,29 @@ class EmployeePeriodObserver
             $date->month,
             'start_date'
         );
+    }
+
+    /**
+     * Prevent modification of the period if the employee has existing attendance records.
+     *
+     * @param EmployeePeriod $period
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    private function preventModificationIfAttendanceExists(EmployeePeriod $period): void
+    {
+        if (!$period->employee_id || !$period->start_date) {
+            return;
+        }
+
+        $attendanceExists = \App\Models\Attendance::where('employee_id', $period->employee_id)
+            ->where('check_date', $period->start_date)
+            ->exists();
+
+        if ($attendanceExists) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'start_date' => "Locked: Attendance records already exist for this employee on {$period->start_date}. " .
+                    "You cannot create or modify a shift for a day that has existing attendance logs.",
+            ]);
+        }
     }
 }
