@@ -80,6 +80,15 @@
                     </select>
                 </div>
 
+                <div class="form-group">
+                    <label class="form-label">Sort By</label>
+                    <select name="sort_by" style="min-width: 150px;">
+                        <option value="">Latest</option>
+                        <option value="remaining_desc" {{ request('sort_by') === 'remaining_desc' ? 'selected' : '' }}>Highest Remaining</option>
+                        <option value="remaining_asc" {{ request('sort_by') === 'remaining_asc' ? 'selected' : '' }}>Lowest Remaining</option>
+                    </select>
+                </div>
+
                 <div style="display: flex; gap: 0.5rem; margin-bottom: 0.15rem;">
                     <button type="submit" class="btn-primary">Filter</button>
                     <a href="{{ route('stock.reports.grn-consumption-items.index') }}" class="btn-link">Clear</a>
@@ -96,7 +105,16 @@
                             <th>Source GRN</th>
                             <th>Entry Date</th>
                             <th class="text-right">Entry Qty</th>
-                            <th class="text-right">Remaining Qty</th>
+                            <th class="text-right">
+                                @php
+                                    $currentSort = request('sort_by');
+                                    $nextSort = $currentSort === 'remaining_desc' ? 'remaining_asc' : 'remaining_desc';
+                                    $sortIcon = $currentSort === 'remaining_desc' ? '↓' : ($currentSort === 'remaining_asc' ? '↑' : '↕');
+                                @endphp
+                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => $nextSort]) }}" style="color: inherit; text-decoration: none;">
+                                    Remaining Qty {{ $sortIcon }}
+                                </a>
+                            </th>
                             <th>Status</th>
                         </tr>
                     </thead>

@@ -21,7 +21,13 @@ class ProductAggregationRepository implements ProductAggregationRepositoryInterf
         $query = Product::query();
         $query = $this->filter->applyToEloquent($query, $filters);
         
-        return $query->orderBy('id', 'desc')->paginate($perPage);
+        if (!empty($filters['sort_by']) && $filters['sort_by'] === 'remaining_desc') {
+            $query->orderByRaw('(in_totals.total_in - COALESCE(out_totals.total_out, 0)) DESC');
+        } else {
+            $query->orderBy('id', 'desc');
+        }
+
+        return $query->paginate($perPage);
     }
 
     public function getInboundAggregations(array $productIds, array $filters = []): array

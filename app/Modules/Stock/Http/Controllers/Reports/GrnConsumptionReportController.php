@@ -31,7 +31,8 @@ class GrnConsumptionReportController extends Controller
             'status',
             'product_id',
             'older_than_days',
-            'completion_status'
+            'completion_status',
+            'sort_by'
         ]);
         // Fetch stores for mandatory filter (ONLY default store)
         $stores = \App\Models\Store::select('id', 'name')
@@ -86,7 +87,8 @@ class GrnConsumptionReportController extends Controller
             'status',
             'product_id',
             'older_than_days',
-            'completion_status'
+            'completion_status',
+            'sort_by'
         ]);
         // Fetch stores for mandatory filter (ONLY default store)
         $stores = \App\Models\Store::select('id', 'name')

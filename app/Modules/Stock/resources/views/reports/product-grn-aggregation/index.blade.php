@@ -69,6 +69,14 @@
                         @endforeach
                     </select>
                 </div>
+
+                <div class="form-group">
+                    <label class="form-label">Sort By</label>
+                    <select name="sort_by" style="min-width: 150px;">
+                        <option value="">Latest ID</option>
+                        <option value="remaining_desc" {{ request('sort_by') === 'remaining_desc' ? 'selected' : '' }}>Highest STOCK</option>
+                    </select>
+                </div>
                 
                 <div style="display: flex; gap: 0.5rem; margin-bottom: 0.15rem;">
                     <button type="submit" class="btn-primary">Filter</button>
@@ -86,7 +94,16 @@
                             <th class="text-center">GRNs</th>
                             <th class="text-right">IN QTY</th>
                             <th class="text-right">OUT QTY</th>
-                            <th class="text-right">STOCK</th>
+                            <th class="text-right">
+                                @php
+                                    $currentSort = request('sort_by');
+                                    $nextSort = $currentSort === 'remaining_desc' ? 'remaining_asc' : 'remaining_desc';
+                                    $sortIcon = $currentSort === 'remaining_desc' ? '↓' : ($currentSort === 'remaining_asc' ? '↑' : '↕');
+                                @endphp
+                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => $nextSort]) }}" style="color: inherit; text-decoration: none;">
+                                    STOCK {{ $sortIcon }}
+                                </a>
+                            </th>
                             <th>Rate</th>
                             <th>Status</th>
                         </tr>

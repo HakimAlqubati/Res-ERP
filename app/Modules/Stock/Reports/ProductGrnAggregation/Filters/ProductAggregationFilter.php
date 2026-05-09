@@ -53,12 +53,13 @@ class ProductAggregationFilter
             $query->whereIn('id', $productIds);
         }
 
-        if (!empty($filters['completion_status']) && $filters['completion_status'] !== \App\Modules\Stock\Reports\Enums\FilterCompletionStatus::ALL->value) {
+        $needsTotalsJoin = (!empty($filters['completion_status']) && $filters['completion_status'] !== \App\Modules\Stock\Reports\Enums\FilterCompletionStatus::ALL->value) 
+                           || (!empty($filters['sort_by']) && $filters['sort_by'] === 'remaining_desc');
+
+        if ($needsTotalsJoin) {
             $inType = \App\Models\InventoryTransaction::MOVEMENT_IN;
             $outType = \App\Models\InventoryTransaction::MOVEMENT_OUT;
             $grnClass = addslashes(\App\Models\GoodsReceivedNote::class);
-            
-            $operator = $filters['completion_status'] === \App\Modules\Stock\Reports\Enums\FilterCompletionStatus::INCOMPLETE->value ? '>' : '<=';
             
             $inQuery = \Illuminate\Support\Facades\DB::table('inventory_transactions as it')
                 ->join('goods_received_notes as grn', 'it.transactionable_id', '=', 'grn.id')
@@ -88,7 +89,11 @@ class ProductAggregationFilter
             $query->joinSub($inQuery, 'in_totals', 'in_totals.product_id', '=', 'products.id')
                   ->leftJoinSub($outQuery, 'out_totals', 'out_totals.product_id', '=', 'products.id');
 
-            $query->whereRaw("in_totals.total_in {$operator} COALESCE(out_totals.total_out, 0)");
+            // 1. If filtering by completion status
+            if (!empty($filters['completion_status']) && $filters['completion_status'] !== \App\Modules\Stock\Reports\Enums\FilterCompletionStatus::ALL->value) {
+                $operator = $filters['completion_status'] === \App\Modules\Stock\Reports\Enums\FilterCompletionStatus::INCOMPLETE->value ? '>' : '<=';
+                $query->whereRaw("in_totals.total_in {$operator} COALESCE(out_totals.total_out, 0)");
+            }
             
             // To ensure select correctness with joins (avoid overlapping column names)
             $query->select('products.*');

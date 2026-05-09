@@ -18,7 +18,7 @@ class ProductGrnAggregationReportController extends Controller
     public function index(Request $request)
     {
         // Allow smart filtering
-        $filters = $request->only(['search', 'date_from', 'date_to', 'store_id', 'completion_status', 'invoice_status', 'product_id']);
+        $filters = $request->only(['search', 'date_from', 'date_to', 'store_id', 'completion_status', 'invoice_status', 'product_id', 'sort_by']);
         
         // Fetch stores for mandatory filter (ONLY default store)
         $stores = \App\Models\Store::select('id', 'name')
