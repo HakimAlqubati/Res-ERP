@@ -19,11 +19,13 @@ class OvertimeService
     public function getGroupedByDate(array $filters = []): Collection
     {
         $query = EmployeeOvertime::query()
+            ->forBranchManager()
+            ->forEmployee()
             ->with(['employee:id,name', 'approvedBy:id,name', 'createdBy:id,name', 'rejectedBy:id,name']);
 
-        if (isBranchManager()) {
-            $query->where('branch_id', auth()->user()->branch_id);
-        }
+        // if (isBranchManager()) {
+        //     $query->where('branch_id', auth()->user()->branch_id);
+        // }
         // Apply Filters
         if (isset($filters['employee_id'])) {
             $query->where('employee_id', $filters['employee_id']);
