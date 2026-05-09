@@ -19,6 +19,12 @@ class EmployeeServiceTerminationObserver
             $employeeServiceTermination->created_by = auth()->id();
         }
 
+        if (!$employeeServiceTermination->branch_id) {
+            // Retrieve employee if not already loaded
+            $employeeServiceTermination->loadMissing('employee');
+            $employeeServiceTermination->branch_id = $employeeServiceTermination->employee?->branch_id;
+        }
+
         // Prevent creating multiple terminations if one is already pending or approved.
         $hasActiveTermination = EmployeeServiceTermination::where('employee_id', $employeeServiceTermination->employee_id)
             ->whereIn('status', [

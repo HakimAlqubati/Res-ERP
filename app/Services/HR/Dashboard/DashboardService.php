@@ -73,23 +73,28 @@ class DashboardService
         $newServiceRequestsCount = $srQuery->count();
 
         // Employee Service Terminations
-        $terminationQuery = EmployeeServiceTermination::where('status', EmployeeServiceTermination::STATUS_PENDING);
+        $terminationQuery = EmployeeServiceTermination::where('status', EmployeeServiceTermination::STATUS_PENDING)
+            ->forBranchManager()
+            ->forEmployee();
         if ($dto->branchId) {
-            $terminationQuery->whereHas('employee', function ($q) use ($dto) {
-                $q->where('branch_id', $dto->branchId);
-            });
+            $terminationQuery->where('branch_id', $dto->branchId);
         }
         $pendingTerminationsCount = $terminationQuery->count();
 
         // Employee Rewards
-        $rewardQuery = EmployeeReward::where('status', EmployeeReward::STATUS_PENDING);
+        $rewardQuery = EmployeeReward::where('status', EmployeeReward::STATUS_PENDING)
+            ->forBranchManager()
+            ->forEmployee();
         if ($dto->branchId) {
             $rewardQuery->where('branch_id', $dto->branchId);
         }
         $pendingRewardsCount = $rewardQuery->count();
 
         // Penalty Deductions
-        $penaltyQuery = PenaltyDeduction::where('status', PenaltyDeduction::STATUS_PENDING);
+        $penaltyQuery = PenaltyDeduction::where('status', PenaltyDeduction::STATUS_PENDING)
+            ->forBranchManager()
+            ->forEmployee();
+
         if ($dto->branchId) {
             $penaltyQuery->where('branch_id', $dto->branchId);
         }

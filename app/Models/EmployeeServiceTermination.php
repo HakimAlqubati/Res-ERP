@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Observers\EmployeeServiceTerminationObserver;
+use App\Traits\Scopes\BranchScope;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,12 +12,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[ObservedBy([EmployeeServiceTerminationObserver::class])]
 class EmployeeServiceTermination extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes,BranchScope;
 
     protected $table = 'hr_employee_service_terminations';
 
     protected $fillable = [
         'employee_id',
+        'branch_id',
         'termination_date',
         'termination_reason',
         'notes',
@@ -44,7 +46,12 @@ class EmployeeServiceTermination extends Model
 
     public function employee()
     {
-        return $this->belongsTo(Employee::class);
+        return $this->belongsTo(Employee::class)->withTrashed();
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(\App\Models\Branch::class);
     }
 
     public function createdBy()
