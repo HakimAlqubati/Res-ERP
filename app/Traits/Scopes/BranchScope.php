@@ -18,10 +18,10 @@ trait BranchScope
         if (auth()->check() && (isSuperAdmin() || isSystemManager())) {
             return $query;
         }
-        if (auth()->check() && isBranchManager() && isSystemManager()) {   
+        if (auth()->check() && isBranchManager() && isSystemManager()) {
             return $query;
-        }  
-        if (auth()->check() && isBranchManager()) {     
+        }
+        if (auth()->check() && isBranchManager()) {
             return $query->where($branchColumn, auth()->user()->branch_id);
         }
 
