@@ -257,6 +257,7 @@ class EmployeeApplicationResource extends Resource
                                 ->default($record?->missedCheckoutRequest?->time)
                                 ->label('Time')->readOnly(),
                         ]),
+                    static::getAttachmentsPlaceholder($record),
                 ];
             });
     }
@@ -380,6 +381,7 @@ class EmployeeApplicationResource extends Resource
                         ->rows(2)
                         ->columnSpanFull(),
 
+                    static::getAttachmentsPlaceholder($record),
                 ];
             })
         ;
@@ -604,6 +606,7 @@ class EmployeeApplicationResource extends Resource
                             ->prefixIcon('heroicon-o-hashtag'),
                     ]),
 
+                    static::getAttachmentsPlaceholder($record),
                 ];
             });
     }
@@ -738,6 +741,8 @@ class EmployeeApplicationResource extends Resource
                         TextInput::make('detail_month')->default($month)->label('Month'),
                         TextInput::make('days_count')->default($daysCount),
                     ]),
+
+                    static::getAttachmentsPlaceholder($record),
                 ];
             })
         ;
@@ -796,6 +801,9 @@ class EmployeeApplicationResource extends Resource
             ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST))
             ->color('success')
             ->icon('heroicon-o-check')
+            ->modalHeading(fn($record) => 'Request #' . $record->id)
+            ->modalIcon(fn($record) => Heroicon::FingerPrint)
+            ->modalDescription('Approve Attendance Request')
             ->action(function ($record, $data) {
                 // Logic for approving attendance fingerprint requests
                 DB::beginTransaction();
@@ -875,6 +883,8 @@ class EmployeeApplicationResource extends Resource
 
 
                     Fieldset::make()->label('Request data')->columns(2)->schema([
+                        TextInput::make('employee')->default($record?->employee?->name)
+                            ->disabled()->columnSpanFull(),
                         DatePicker::make('request_check_date')
                             ->default($record?->missedCheckinRequest?->date)
                             ->label('Date')
@@ -891,6 +901,8 @@ class EmployeeApplicationResource extends Resource
                                 // Trigger check on initial load using default/hydrated values
                                 $checkShiftAvailability($get, $set);
                             }),
+                        TextInput::make('notes')->default($record?->notes ?? '')
+                            ->disabled()->columnSpanFull(),
                     ]),
 
 
@@ -911,6 +923,7 @@ class EmployeeApplicationResource extends Resource
                         ->helperText('Select a shift to proceed')
                         ->columnSpanFull(),
 
+                    static::getAttachmentsPlaceholder($record),
                 ];
             });
     }
@@ -945,6 +958,7 @@ class EmployeeApplicationResource extends Resource
                         TimePicker::make('request_check_time')->default($details->time)->label('Time'),
                     ]),
 
+                    static::getAttachmentsPlaceholder($record),
                 ];
             })
             ->modalSubmitAction(false)
@@ -954,10 +968,13 @@ class EmployeeApplicationResource extends Resource
 
     public static function LeaveRequesttDetails(): Action
     {
-        return Action::make('LeaveRequesttDetails')->label('Details')->button()
+        return Action::make('LeaveRequesttDetails')
+            ->label('Details')
+            ->button()
             ->color('info')
             ->icon('heroicon-m-newspaper')
-
+            ->modalHeading(fn($record) => 'Details #' . $record->id)
+            ->modalDescription(fn() => 'Leave Request')
             ->disabledSchema()
             ->schema(function ($record) {
                 $leaveRequest = $record?->leaveRequest;
@@ -973,13 +990,21 @@ class EmployeeApplicationResource extends Resource
 
                 return [
                     Fieldset::make()->columnSpanFull()->label('Request data')->columns(2)->schema([
-                        TextInput::make('employee')->columnSpan(2)->default($record?->employee?->name),
-                        TextInput::make('leave')->default($leaveType),
-                        TextInput::make('days_count')->default($daysCount),
-                        DatePicker::make('from_date')->default($fromDate)->label('From date'),
-                        DatePicker::make('to_date')->default($toDate)->label('To date'),
-                        TextInput::make('detail_year')->default($year)->label('Year'),
-                        TextInput::make('detail_month')->default($month)->label('Month'),
+                        Grid::make(4)->columnSpanFull()->schema([
+                            TextInput::make('employee')->columnSpan(2)->default($record?->employee?->name),
+                            TextInput::make('leave')->default($leaveType),
+                            TextInput::make('days_count')->default($daysCount),
+                            DatePicker::make('from_date')->default($fromDate)->label('From date'),
+                            DatePicker::make('to_date')->default($toDate)->label('To date'),
+                            TextInput::make('detail_year')->default($year)->label('Year'),
+                            TextInput::make('detail_month')->default($month)->label('Month'),
+                            TextInput::make('notes')
+                                ->columnSpanFull()
+                                ->default($record?->notes ?? '')->label('notes'),
+
+                        ]),
+
+                        static::getAttachmentsPlaceholder($record),
                     ]),
                 ];
             })
@@ -997,7 +1022,7 @@ class EmployeeApplicationResource extends Resource
             ->disabledForm()
             ->modalIcon('heroicon-m-newspaper')
             ->modalHeading('Advance Request Details')
-            ->modalWidth('xl')
+            // ->modalWidth('xl')
 
             ->schema(function ($record) {
                 $advanceDetails = $record->advanceRequest;
@@ -1009,24 +1034,56 @@ class EmployeeApplicationResource extends Resource
                 $numberOfMonthsOfDeduction = $advanceDetails->number_of_months_of_deduction;
                 $notes                     = $record?->notes;
                 return [
-                    Fieldset::make()->label('Request data')->columns(3)->schema([
-                        TextInput::make('employee')->default($record?->employee?->name),
-                        DatePicker::make('date')->default($detailDate)->label('Advance date'),
-                        TextInput::make('advance_amount')->default($advanceAmount),
-                        TextInput::make('deductionStartsFrom')->label('Deducation starts from')->default($deductionStartsFrom),
-                        TextInput::make('deductionEndsAt')->label('Deducation ends at')->default($deductionEndsAt),
-                        TextInput::make('numberOfMonthsOfDeduction')->label('Number of months of deduction')->default($numberOfMonthsOfDeduction),
-                        TextInput::make('monthlyDeductionAmount')->label('Monthly deduction amount')->default($monthlyDeductionAmount),
+                    Fieldset::make()->label('Request data')->columns(4)->schema([
+                        TextInput::make('employee')
+                            ->columnSpan(2)
+                            ->default($record?->employee?->name),
+                        DatePicker::make('date')->default($detailDate)->label('Date'),
+                        TextInput::make('advance_amount')->default($advanceAmount)->label('Amount'),
+                        TextInput::make('deductionStartsFrom')->label('Starts')->default($deductionStartsFrom),
+                        TextInput::make('deductionEndsAt')->label('Ends')->default($deductionEndsAt),
+                        TextInput::make('numberOfMonthsOfDeduction')->label('Months')->default($numberOfMonthsOfDeduction),
+                        TextInput::make('monthlyDeductionAmount')->label('Monthly')->default($monthlyDeductionAmount),
+                        TextInput::make('test')->label('Notes')->columnSpanFull()->default($notes),
 
                     ]),
-                    Fieldset::make()->label('Notes')->columns(2)->schema([
-                        TextInput::make('test')->label('Notes')->columnSpanFull()->default($notes),
-                    ]),
+
+
+                    static::getAttachmentsPlaceholder($record),
                 ];
             })
             ->modalSubmitAction(false)
-            ->modalCancelAction(false)
-        ;
+            ->modalCancelAction(false);
+    }
+
+    public static function attendanceRequestDetails(): Action
+    {
+        return Action::make('attendanceRequestDetails')
+            ->label(__('lang.details'))
+            ->button()
+            ->color('info')
+            ->icon('heroicon-m-newspaper')
+            ->visible(fn($record): bool => $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST)
+            ->disabledForm()
+            ->modalHeading(fn($record) => 'Details #' . $record->id)
+            ->modalDescription('Missed Checkin Request')
+            ->schema(function ($record) {
+                $details = $record->missedCheckinRequest;
+                return [
+                    Fieldset::make()->disabled(false)->label('Request data')->columns(2)->schema([
+                        TextInput::make('employee')->default($record?->employee?->name)
+                            ->columnSpanFull(),
+                        DatePicker::make('request_check_date')->default($details?->date)->label('Date'),
+                        TimePicker::make('request_check_time')->default($details?->time)->label('Time'),
+                        TextInput::make('notes')->default($record?->notes)->label('Notes')->columnSpanFull(),
+
+                    ]),
+
+                    static::getAttachmentsPlaceholder($record),
+                ];
+            })
+            ->modalSubmitAction(false)
+            ->modalCancelAction(false);
     }
 
     public static function exportAdvanceRequestPdf(): Action
@@ -1257,6 +1314,8 @@ class EmployeeApplicationResource extends Resource
                             ->default($mealRequest?->notes)
                             ->columnSpanFull(),
                     ]),
+
+                    static::getAttachmentsPlaceholder($record),
                 ];
             })
             ->modalSubmitAction(false)
@@ -1755,5 +1814,44 @@ class EmployeeApplicationResource extends Resource
             $q->whereNull('deleted_at'); // ignore soft-deleted employees
         });
         return $query->forBranchManager();
+    }
+
+    private static function getAttachmentsPlaceholder($record): \Filament\Forms\Components\Placeholder
+    {
+        return \Filament\Forms\Components\Placeholder::make('attachments_preview')
+            ->label(__('lang.attachments'))
+            ->columnSpanFull()
+            ->content(function () use ($record) {
+                if (!$record) {
+                    return '—';
+                }
+
+                $mediaItems = $record->getMedia('images')->merge($record->getMedia('files'));
+
+                if ($mediaItems->isEmpty()) {
+                    return '—';
+                }
+
+                $html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 8px;">';
+                foreach ($mediaItems as $media) {
+                    // Skip if not an image
+                    if (! str_starts_with($media->mime_type, 'image/')) {
+                        continue;
+                    }
+
+                    $url = $media->getUrl();
+                    $html .= "
+                        <div style='position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #e5e7eb;'>
+                            <img src='{$url}' 
+                                 alt='Attachment' 
+                                 style='width: 100%; height: 100%; object-fit: cover; cursor: pointer;' 
+                                 onclick='window.open(\"{$url}\", \"_blank\")'
+                                 onerror='this.parentElement.style.display=\"none\"'>
+                        </div>";
+                }
+                $html .= '</div>';
+
+                return new \Illuminate\Support\HtmlString($html);
+            });
     }
 }

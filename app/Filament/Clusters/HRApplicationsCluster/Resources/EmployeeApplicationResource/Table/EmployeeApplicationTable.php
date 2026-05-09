@@ -484,6 +484,8 @@ class EmployeeApplicationTable
                     ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST)),
                 EmployeeApplicationResource::departureRequesttDetails()
                     ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST)),
+                EmployeeApplicationResource::attendanceRequestDetails()
+                    ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST)),
 
 
                 EmployeeApplicationResource::approveMealRequest()->hidden(function ($record) {
