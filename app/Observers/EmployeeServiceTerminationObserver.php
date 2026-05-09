@@ -35,6 +35,28 @@ class EmployeeServiceTerminationObserver
     }
 
     /**
+     * Handle the EmployeeServiceTermination "created" event.
+     */
+    public function created(EmployeeServiceTermination $employeeServiceTermination): void
+    {
+        $hrUsers = User::whereHas('roles', function ($query) {
+            $query->where('roles.id', 19);
+        })->get();
+
+        foreach ($hrUsers as $hr) {
+            if ($hr->email) {
+                \Illuminate\Support\Facades\Mail::raw(
+                    "A new termination request has been created for the employee: " . ($employeeServiceTermination->employee->name ?? 'Unknown') . "\nTermination Date: " . ($employeeServiceTermination->termination_date ? $employeeServiceTermination->termination_date->format('Y-m-d') : 'Unknown'),
+                    function ($message) use ($hr) {
+                        $message->to($hr->email)
+                                ->subject('Notification: New Employee Termination Request');
+                    }
+                );
+            }
+        }
+    }
+
+    /**
      * Handle the EmployeeServiceTermination "updating" event.
      */
     public function updating(EmployeeServiceTermination $employeeServiceTermination): void
