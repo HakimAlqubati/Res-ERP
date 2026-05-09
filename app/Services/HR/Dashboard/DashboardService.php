@@ -66,7 +66,9 @@ class DashboardService
         $pendingOvertimeCount = $overtimeQuery->count();
 
         // New Service Requests
-        $srQuery = ServiceRequest::where('status', ServiceRequest::STATUS_NEW);
+        $srQuery = ServiceRequest::where('status', ServiceRequest::STATUS_NEW)
+            ->forBranchManager()
+            ->forEmployee();
         if ($dto->branchId) {
             $srQuery->where('branch_id', $dto->branchId);
         }
