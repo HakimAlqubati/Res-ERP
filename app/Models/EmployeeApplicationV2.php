@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Observers\EmployeeApplicationObserver;
+use App\Modules\HR\ApprovalPolicies\Contracts\ApprovableRecord;
+use App\Modules\HR\ApprovalPolicies\Traits\HasApprovalWorkflow;
 use App\Traits\EmployeeApplicationAccessors;
 use App\Traits\Scopes\BranchScope;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -15,9 +17,9 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 #[ObservedBy([EmployeeApplicationObserver::class])]
-class EmployeeApplicationV2 extends Model implements Auditable, HasMedia
+class EmployeeApplicationV2 extends Model implements Auditable, HasMedia, ApprovableRecord
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope, EmployeeApplicationAccessors, InteractsWithMedia;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope, EmployeeApplicationAccessors, InteractsWithMedia, HasApprovalWorkflow;
 
     protected $appends = [
         'leave_type_name',
@@ -154,6 +156,21 @@ class EmployeeApplicationV2 extends Model implements Auditable, HasMedia
     public function mealRequest()
     {
         return $this->hasOne(EmployeeMealRequest::class, 'application_id');
+    }
+
+    public function approvalEmployee(): ?Employee
+    {
+        return $this->employee;
+    }
+
+    public function approvalBranchId(): ?int
+    {
+        return $this->branch_id;
+    }
+
+    public function approvalApplicationTypeId(): ?int
+    {
+        return $this->application_type_id;
     }
 
     // ─────────────────────────────────────────────────────────────

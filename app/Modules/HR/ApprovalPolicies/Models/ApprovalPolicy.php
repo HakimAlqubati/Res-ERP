@@ -1,0 +1,36 @@
+<?php
+
+namespace App\Modules\HR\ApprovalPolicies\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class ApprovalPolicy extends Model
+{
+    protected $table = 'hr_approval_policies';
+
+    protected $fillable = [
+        'name',
+        'approvable_type',
+        'application_type_id',
+        'branch_id',
+        'mode',
+        'levels',
+        'custom_approver_user_ids',
+        'final_handler',
+        'active',
+    ];
+
+    protected $casts = [
+        'application_type_id' => 'integer',
+        'branch_id' => 'integer',
+        'levels' => 'integer',
+        'custom_approver_user_ids' => 'array',
+        'active' => 'boolean',
+    ];
+
+    public function steps(): HasMany
+    {
+        return $this->hasMany(ApprovalStep::class, 'approval_policy_id');
+    }
+}
