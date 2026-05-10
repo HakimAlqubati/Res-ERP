@@ -11,6 +11,10 @@ use OwenIt\Auditing\Contracts\Auditable;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use App\Observers\ServiceRequestObserver;
+
+#[ObservedBy(ServiceRequestObserver::class)]
 class ServiceRequest extends Model implements Auditable, HasMedia
 {
     use HasFactory, \OwenIt\Auditing\Auditable, InteractsWithMedia, BranchScope;
@@ -157,26 +161,6 @@ class ServiceRequest extends Model implements Auditable, HasMedia
         return $this->costs()->sum('amount');
     }
 
-    protected static function booted()
-    {
-        
-    
-        static::created(function ($request) {
-            $request->logToEquipment(
-                EquipmentLog::ACTION_SERVICED,
-                "Service request #{$request->id} opened: " . mb_strimwidth($request->description ?? '', 0, 50, '...')
-            );
-        });
-
-        static::updated(function ($request) {
-            if ($request->isDirty('status')) {
-                $request->logToEquipment(
-                    EquipmentLog::ACTION_UPDATED,
-                    "Service request #{$request->id} is now marked as '{$request->status}'"
-                );
-            }
-        });
-    }
 
     // Scope for accepted service requests
     public function scopeAccepted($query)
