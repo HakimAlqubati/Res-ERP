@@ -6,6 +6,8 @@ use Filament\Pages\Enums\SubNavigationPosition;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendanceImagesUploadedResource\Pages\ListAttendanceImagesUploadeds;
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendanceImagesUploadedResource\Pages;
+use App\Filament\Resources\EmployeeResource;
+use App\Filament\Resources\EmployeeResource\Pages\ViewEmployee;
 use App\Models\AttendanceImagesUploaded;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
@@ -71,6 +73,8 @@ class AttendanceImagesUploadedResource extends Resource
                         ),
                     TextColumn::make('employee.name')->label(__('lang.employee'))->default('--')->searchable()
                         ->color('primary')
+                        ->url(fn($record) => EmployeeResource::getUrl('view', ['record' => $record->employee_id]))
+                        ->openUrlInNewTab()
                         ->weight(FontWeight::Bold),
                     TextColumn::make('datetime')->label(__('lang.date'))
                         ->date('Y-m-d')
@@ -162,7 +166,7 @@ class AttendanceImagesUploadedResource extends Resource
                             ->forBranchManager()
                             ->pluck('name', 'id')->toArray();
                     }),
-                
+
                 SelectFilter::make('employee_gender')
                     ->label(__('lang.gender'))
                     ->options([
@@ -177,7 +181,7 @@ class AttendanceImagesUploadedResource extends Resource
                         }
                         return $query;
                     })
-                    ->visible(fn () => auth()->user()?->email === 'hakimahmed123321@gmail.com'),
+                    ->visible(fn() => auth()->user()?->email === 'hakimahmed123321@gmail.com'),
             ], FiltersLayout::Modal)->filtersFormColumns(3)
             ->deferFilters(false)
         ;
