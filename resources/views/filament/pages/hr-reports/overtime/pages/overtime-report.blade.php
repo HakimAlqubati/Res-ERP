@@ -207,7 +207,7 @@
         <table class="w-full text-xs text-left pretty reports" id="overtime-report-table">
             <thead>
                 <tr class="header_report">
-                    <th colspan="8">
+                    <th colspan="{{ $branch_id ? 7 : 8 }}">
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">
                             {{-- Left: Actions --}}
                             <div style="display: flex; flex-direction: column; gap: 6px;" class="no-print">
@@ -267,7 +267,7 @@
 
                 {{-- Summary Cards Row --}}
                 <tr class="summary_row no-print">
-                    <th colspan="8" style="padding: 0 12px 10px 12px; background: white;">
+                    <th colspan="{{ $branch_id ? 7 : 8 }}" style="padding: 0 12px 10px 12px; background: white;">
                         <div class="overtime-summary-grid" style="margin-bottom: 0; gap: 8px;">
                             <div class="overtime-summary-card" style="padding: 8px; border-radius: 10px;">
                                 <div class="value" style="font-size: 16px;">{{ $summary['total_records'] }}</div>
@@ -298,21 +298,25 @@
                 </tr>
 
                 <tr class="column_headers">
-                    <th class="text-left" style="width: 20%;">{{ __('lang.employee') }}</th>
-                    <th class="text-left" style="width: 15%;">{{ __('lang.branch') }}</th>
-                    <th class="text-center" style="width: 12%;">{{ __('lang.date') }}</th>
-                    <th class="text-center" style="width: 10%;">{{ __('lang.start_time') }}</th>
-                    <th class="text-center" style="width: 10%;">{{ __('lang.end_time') }}</th>
-                    <th class="text-center" style="width: 8%;">{{ __('lang.hours') }}</th>
-                    <th class="text-center" style="width: 12%;">{{ __('lang.status') }}</th>
-                    <th class="text-center" style="width: 13%;">{{ __('lang.approved_by') }}</th>
+                    <th class="text-left" style="width: {{ $branch_id ? '35%' : '25%' }};">{{ __('lang.employee') }}</th>
+                    @if (!$branch_id)
+                        <th class="text-left" style="width: 12%;">{{ __('lang.branch') }}</th>
+                    @endif
+                    <th class="text-center" style="width: 9%;">{{ __('lang.date') }}</th>
+                    <th class="text-center" style="width: 7%;">{{ __('lang.start_time') }}</th>
+                    <th class="text-center" style="width: 7%;">{{ __('lang.end_time') }}</th>
+                    <th class="text-center" style="width: 5%;">{{ __('lang.hours') }}</th>
+                    <th class="text-center" style="width: 10%;">{{ __('lang.status') }}</th>
+                    <th class="text-center" style="width: {{ $branch_id ? '27%' : '25%' }};">{{ __('lang.approved_by') }}</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($items as $index => $item)
                 <tr>
                     <td class="font-medium text-gray-900 text-left">{{ $item->employee->name ?? '-' }}</td>
-                    <td class="text-left">{{ $item->employee->branch->name ?? '-' }}</td>
+                    @if (!$branch_id)
+                        <td class="text-left">{{ $item->employee->branch->name ?? '-' }}</td>
+                    @endif
                     <td class="text-center">{{ $item->date }}</td>
                     <td class="text-center">{{ $item->start_time ?? '-' }}</td>
                     <td class="text-center">{{ $item->end_time ?? '-' }}</td>
@@ -326,7 +330,7 @@
             </tbody>
             <tfoot class="bg-gray-50">
                 <tr style="font-weight: 700;">
-                    <td colspan="5" class="text-right">{{ __('lang.total') }}</td>
+                    <td colspan="{{ $branch_id ? 4 : 5 }}" class="text-right">{{ __('lang.total') }}</td>
                     <td class="text-center">{{ $summary['total_hours'] }}</td>
                     <td colspan="2"></td>
                 </tr>
@@ -364,7 +368,7 @@
             });
 
             var wscols = [];
-            for (var i = 0; i < 8; i++) {
+            for (var i = 0; i < {{ $branch_id ? 7 : 8 }}; i++) {
                 wscols.push({
                     wch: 20
                 });

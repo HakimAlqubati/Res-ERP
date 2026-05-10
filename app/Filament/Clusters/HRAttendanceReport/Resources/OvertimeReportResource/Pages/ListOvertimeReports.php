@@ -48,6 +48,7 @@ class ListOvertimeReports extends ListRecords
             'items'        => $report['items'],
             'summary'      => $report['summary'],
             'branch_name'  => $branchName,
+            'branch_id'    => $branchId,
             'employee'     => $employee,
             'start_date'   => $dateFrom ?? '-',
             'end_date'     => $dateTo ?? '-',
