@@ -11,7 +11,7 @@
 
         .header_report {
             background: white !important;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
         .header_report th {
@@ -34,7 +34,7 @@
         }
 
         .pretty.reports tbody tr:nth-child(even) {
-            background-color: #f9fafb;
+            background-color: #0d7c66;
         }
 
         .pretty.reports tbody td {
@@ -51,7 +51,9 @@
         }
 
         /* Buttons Styling */
-        .btn-print, .btn-primary, .btn-secondary {
+        .btn-print,
+        .btn-primary,
+        .btn-secondary {
             border-radius: 7px;
             padding: 7px 12px;
             font-size: 12px;
@@ -61,7 +63,7 @@
             gap: 7px;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
 
         .btn-primary {
@@ -73,7 +75,7 @@
         .btn-primary:hover {
             background-color: #059669;
             transform: translateY(-1px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .btn-secondary {
@@ -85,13 +87,39 @@
         .btn-secondary:hover {
             background-color: #2563eb;
             transform: translateY(-1px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         /* Status Badges */
-        .badge-approved { background-color: #dcfce7; color: #166534; padding: 3px 9px; border-radius: 9999px; font-size: 10px; font-weight: 700; border: 1px solid #bbf7d0; }
-        .badge-pending { background-color: #fef9c3; color: #854d0e; padding: 3px 9px; border-radius: 9999px; font-size: 10px; font-weight: 700; border: 1px solid #fef08a; }
-        .badge-rejected { background-color: #fee2e2; color: #991b1b; padding: 3px 9px; border-radius: 9999px; font-size: 10px; font-weight: 700; border: 1px solid #fecaca; }
+        .badge-approved {
+            background-color: #dcfce7;
+            color: #166534;
+            padding: 3px 9px;
+            border-radius: 9999px;
+            font-size: 10px;
+            font-weight: 700;
+            border: 1px solid #bbf7d0;
+        }
+
+        .badge-pending {
+            background-color: #fef9c3;
+            color: #854d0e;
+            padding: 3px 9px;
+            border-radius: 9999px;
+            font-size: 10px;
+            font-weight: 700;
+            border: 1px solid #fef08a;
+        }
+
+        .badge-rejected {
+            background-color: #fee2e2;
+            color: #991b1b;
+            padding: 3px 9px;
+            border-radius: 9999px;
+            font-size: 10px;
+            font-weight: 700;
+            border: 1px solid #fecaca;
+        }
 
         /* Summary Grid */
         .overtime-summary-grid {
@@ -115,15 +143,46 @@
             transform: translateY(-2px);
         }
 
-        .overtime-summary-card .value { font-size: 28px; font-weight: 800; color: #111827; line-height: 1; }
-        .overtime-summary-card .label { font-size: 12px; color: #6b7280; margin-top: 8px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.025em; }
+        .overtime-summary-card .value {
+            font-size: 28px;
+            font-weight: 800;
+            color: #111827;
+            line-height: 1;
+        }
+
+        .overtime-summary-card .label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 8px;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+        }
 
         @media print {
-            body * { visibility: hidden; }
-            #overtime-report-table, #overtime-report-table * { visibility: visible; }
-            #overtime-report-table { position: absolute; top: 0; left: 0; width: 100%; }
-            .no-print { display: none !important; }
-            .pretty.reports thead { position: static; }
+            body * {
+                visibility: hidden;
+            }
+
+            #overtime-report-table,
+            #overtime-report-table * {
+                visibility: visible;
+            }
+
+            #overtime-report-table {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .pretty.reports thead {
+                position: static;
+            }
         }
     </style>
 
@@ -159,11 +218,11 @@
                                     <span style="font-size: 12px; font-weight: 700; color: #374151;">
                                         {{ __('lang.branch') }}:
                                         @if($employee)
-                                            {{ $employee->branch->name ?? '-' }}
+                                        {{ $employee->branch->name ?? '-' }}
                                         @elseif($branch_name && $branch_name !== '-')
-                                            {{ $branch_name }}
+                                        {{ $branch_name }}
                                         @else
-                                            {{ __('lang.all_branches') ?? 'All Branches' }}
+                                        {{ __('lang.all_branches') ?? 'All Branches' }}
                                         @endif
                                     </span>
                                     <span style="font-size: 11px; color: #6b7280; font-weight: 600;">
@@ -173,12 +232,12 @@
                                         {{ __('lang.end_date') }}: {{ $end_date }}
                                     </span>
                                     @if($employee)
-                                        <span style="font-size: 11px; color: #4b5563; font-weight: 600;">
-                                            {{ __('lang.employee') }}:
-                                            <a href="{{ \App\Filament\Resources\EmployeeResource::getUrl('view', ['record' => $employee->id]) }}" target="_blank" class="hover:text-emerald-600 transition-colors">
-                                                {{ $employee->name }}
-                                            </a>
-                                        </span>
+                                    <span style="font-size: 11px; color: #4b5563; font-weight: 600;">
+                                        {{ __('lang.employee') }}:
+                                        <a href="{{ \App\Filament\Resources\EmployeeResource::getUrl('view', ['record' => $employee->id]) }}" target="_blank" class="hover:text-emerald-600 transition-colors">
+                                            {{ $employee->name }}
+                                        </a>
+                                    </span>
                                     @endif
                                 </div>
                             </div>
@@ -268,8 +327,7 @@
     <div class="mt-4 no-print">
         <x-filament::pagination
             :paginator="$items"
-            class="px-3 py-3 sm:px-6"
-        />
+            class="px-3 py-3 sm:px-6" />
     </div>
 
     @else
@@ -285,15 +343,21 @@
         function exportOvertimeToExcel() {
             var elt = document.getElementById('overtime-report-table');
             var clone = elt.cloneNode(true);
-            
+
             // Remove the header report row from the excel export to keep it clean
             var headerReport = clone.querySelector('.header_report');
             if (headerReport) headerReport.remove();
 
-            var wb = XLSX.utils.table_to_sheet(clone, { raw: true });
-            
+            var wb = XLSX.utils.table_to_sheet(clone, {
+                raw: true
+            });
+
             var wscols = [];
-            for (var i = 0; i < 10; i++) { wscols.push({ wch: 20 }); }
+            for (var i = 0; i < 10; i++) {
+                wscols.push({
+                    wch: 20
+                });
+            }
             wb['!cols'] = wscols;
 
             var workbook = XLSX.utils.book_new();
