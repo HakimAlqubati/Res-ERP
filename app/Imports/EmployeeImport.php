@@ -172,16 +172,7 @@ class EmployeeImport implements ToModel, WithHeadingRow, SkipsOnError, SkipsEmpt
 
                 // إنشاء حساب مستخدم مرتبط للموظف
                 $employee->createLinkedUser();
-
-                // إضافة سجل الفرع (Branch Log)
-                if ($employee->branch_id) {
-                    $employee->branchLogs()->create([
-                        'branch_id'  => $employee->branch_id,
-                        'start_at'   => $employee->join_date ?? now(),
-                        'end_at'     => null,
-                        'created_by' => auth()->id(),
-                    ]);
-                }
+ 
 
                 // حفظ اسم المدير للمراجعة في المرحلة الثانية
                 $this->managerMappings[$row['name']] = $row['manager'] ?? null;
