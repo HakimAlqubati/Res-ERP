@@ -57,3 +57,27 @@ Route::get('/debug-inventory-sql', function () {
         'data_sample' => is_array($results) ? array_slice($results, 0, 3) : $results, // أول 3 نتائج فقط
     ]);
 });
+
+
+Route::get('/test-pending-applications', function () {
+    $filters = [
+        'year'         => request('year', now()->year),
+        'month'        => request('month', now()->month),
+        'branch_id'    => request('branch_id'),
+        'employee_ids' => request('employee_ids') ? explode(',', request('employee_ids')) : null,
+    ];
+
+    $checker = app(\App\Modules\HR\EmployeeApplications\Checker\MonthlyPendingApplicationChecker::class);
+    
+    // Use the new dashboard summary method
+    $summary = $checker->getDashboardSummary($filters);
+
+    return response()->json([
+        'status' => 'success',
+        'filters' => $filters,
+        'result' => $summary
+    ]);
+});
+
+
+

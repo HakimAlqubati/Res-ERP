@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 class PendingApplicationQuery
 {
     /**
-     * Builds the Eloquent query based on provided filter criteria.
+     * Builds the main EmployeeApplicationV2 query.
      */
     public function build(CheckerFilterDTO $filter): Builder
     {
@@ -22,30 +22,45 @@ class PendingApplicationQuery
 
         return EmployeeApplicationV2::query()
             ->where('status', EmployeeApplicationV2::STATUS_PENDING)
-            
-            // Scope-based filtering
             ->when($filter->employeeIds, fn(Builder $q) => $q->whereIn('employee_id', $filter->employeeIds))
             ->when($filter->branchId, fn(Builder $q) => $q->where('branch_id', $filter->branchId))
-            
-            // Date boundary filtering (Master + Specific Children)
             ->where(function (Builder $query) use ($startDate, $endDate) {
                 $query->whereBetween('application_date', [$startDate, $endDate])
                     ->orWhereHas('leaveRequest', fn($q) => 
-                        $q->where('start_date', '<=', $endDate)
-                          ->where('end_date', '>=', $startDate)
+                        $q->where('start_date', '<=', $endDate)->where('end_date', '>=', $startDate)
                     )
-                    ->orWhereHas('missedCheckinRequest', fn($q) => 
-                        $q->whereBetween('date', [$startDate, $endDate])
-                    )
-                    ->orWhereHas('missedCheckoutRequest', fn($q) => 
-                        $q->whereBetween('date', [$startDate, $endDate])
-                    )
-                    ->orWhereHas('advanceRequest', fn($q) => 
-                        $q->whereBetween('date', [$startDate, $endDate])
-                    )
-                    ->orWhereHas('mealRequest', fn($q) => 
-                        $q->whereBetween('date', [$startDate, $endDate])
-                    );
+                    ->orWhereHas('missedCheckinRequest', fn($q) => $q->whereBetween('date', [$startDate, $endDate]))
+                    ->orWhereHas('missedCheckoutRequest', fn($q) => $q->whereBetween('date', [$startDate, $endDate]))
+                    ->orWhereHas('advanceRequest', fn($q) => $q->whereBetween('date', [$startDate, $endDate]))
+                    ->orWhereHas('mealRequest', fn($q) => $q->whereBetween('date', [$startDate, $endDate]));
             });
+    }
+
+    /**
+     * Query for pending Advance Wages.
+     */
+    public function getAdvanceWageQuery(CheckerFilterDTO $filter): Builder
+    {
+        return \App\Models\AdvanceWage::query()
+            ->where('status', \App\Models\AdvanceWage::STATUS_PENDING)
+            ->where('year', $filter->year)
+            ->where('month', $filter->month)
+            ->when($filter->employeeIds, fn($q) => $q->whereIn('employee_id', $filter->employeeIds))
+            ->when($filter->branchId, fn($q) => $q->where('branch_id', $filter->branchId));
+    }
+
+    /**
+     * Query for pending Overtime requests.
+     */
+    public function getOvertimeQuery(CheckerFilterDTO $filter): Builder
+    {
+        $startDate = Carbon::createFromDate($filter->year, $filter->month, 1)->startOfMonth()->toDateString();
+        $endDate = Carbon::createFromDate($filter->year, $filter->month, 1)->endOfMonth()->toDateString();
+
+        return \App\Models\EmployeeOvertime::query()
+            ->where('status', \App\Models\EmployeeOvertime::STATUS_PENDING)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->when($filter->employeeIds, fn($q) => $q->whereIn('employee_id', $filter->employeeIds))
+            ->when($filter->branchId, fn($q) => $q->where('branch_id', $filter->branchId));
     }
 }
