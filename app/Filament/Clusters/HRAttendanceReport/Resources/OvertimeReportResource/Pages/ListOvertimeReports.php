@@ -39,7 +39,7 @@ class ListOvertimeReports extends ListRecords
             dateFrom: $dateFrom,
             dateTo: $dateTo,
             status: $status !== null && $status !== '' ? (string) $status : null,
-            page: (int) request()->get('page', 1)
+            page: (int) $this->getTablePage()
         );
 
         $report = app(OvertimeReportService::class)->generate($filter);
