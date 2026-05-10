@@ -68,12 +68,13 @@ class DepartmentResource extends Resource
                             ->searchable()
                             ->options(function ($get) {
                                 if ($get('is_global') == 1) {
-                                    return Employee::employeeTypesManagers()->active()->whereDoesntHave('managedDepartment')
+                                    return Employee::employeeTypesManagers()->active()
+                                        // ->whereDoesntHave('managedDepartment')
                                         ->select('id', 'name')->get()->pluck('name', 'id');
                                 } else {
                                     return Employee::forBranch($get('branch_id'))
                                         ->employeeTypesManagers()
-                                        ->whereDoesntHave('managedDepartment')
+                                        // ->whereDoesntHave('managedDepartment')
                                         ->active()
                                         ->select('id', 'name')->get()->pluck('name', 'id');
                                 }

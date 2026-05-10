@@ -193,15 +193,8 @@ trait EmployeeRelationships
         return $this->hasMany(Employee::class, 'manager_id', 'id');
     }
 
-    public function managedDepartment()
-    {
-        return $this->hasOne(Department::class, 'manager_id');
-    }
-
-    public function managers()
-    {
-        return $this->hasManyThrough(Employee::class, Department::class, 'id', 'department_id', 'department_id', 'manager_id');
-    }
+ 
+ 
 
     public function periodDays()
     {
