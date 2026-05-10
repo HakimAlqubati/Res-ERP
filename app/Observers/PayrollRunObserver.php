@@ -18,8 +18,33 @@ use App\Modules\HR\Payroll\Contracts\PayrollFinancialSyncInterface;
 class PayrollRunObserver
 {
     public function __construct(
-        protected PayrollFinancialSyncInterface $syncService
+        protected PayrollFinancialSyncInterface $syncService,
+        protected \App\Modules\HR\EmployeeApplications\Checker\MonthlyPendingApplicationChecker $checker
     ) {}
+
+    /**
+     * Prevent creating a payroll run if there are pending applications for the period.
+     * 
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function creating(PayrollRun $payrollRun): void
+    {
+        $filters = [
+            'year' => $payrollRun->year,
+            'month' => $payrollRun->month,
+            'branch_id' => $payrollRun->branch_id,
+        ];
+
+        $summary = $this->checker->getDashboardSummary($filters);
+
+        if ($summary['has_pending']) {
+            $message = "Cannot create payroll. Please approve or reject all pending employee applications for this period first.";
+
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'error' => $message
+            ]);
+        }
+    }
 
     /**
      * Handle the PayrollRun "updated" event.
