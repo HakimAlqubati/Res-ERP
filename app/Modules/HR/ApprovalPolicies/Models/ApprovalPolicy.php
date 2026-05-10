@@ -2,7 +2,9 @@
 
 namespace App\Modules\HR\ApprovalPolicies\Models;
 
+use App\Models\Branch;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ApprovalPolicy extends Model
@@ -32,5 +34,10 @@ class ApprovalPolicy extends Model
     public function steps(): HasMany
     {
         return $this->hasMany(ApprovalStep::class, 'approval_policy_id');
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
     }
 }
