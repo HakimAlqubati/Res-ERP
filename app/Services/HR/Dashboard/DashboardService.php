@@ -264,6 +264,8 @@ class DashboardService
     public function getMaintenanceAlerts(DashboardFilterDTO $dto): array
     {
         $stats = ServiceRequest::query()
+            ->forBranchManager()
+            ->forEmployee()
             ->when($dto->branchId, fn($q) => $q->where('branch_id', $dto->branchId))
             ->selectRaw("
                 COUNT(CASE WHEN status != '" . ServiceRequest::STATUS_CLOSED . "' THEN 1 END) as open_count,
