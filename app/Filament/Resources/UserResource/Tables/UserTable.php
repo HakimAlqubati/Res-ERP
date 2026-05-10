@@ -194,7 +194,46 @@ class UserTable
                     ),
             ], FiltersLayout::Modal)
             ->recordActions([
+                Action::make('sendFirebaseNotification')
+                    ->label('Send Notification')
+                    ->icon('heroicon-o-paper-airplane')
+                    ->color('info')
+                    ->visible(fn() => auth()->user()->email === 'hakimahmed123321@gmail.com')
+                    ->form([
+                        \Filament\Forms\Components\TextInput::make('title')
+                            ->label('Notification Title')
+                            ->required(),
+                        \Filament\Forms\Components\Textarea::make('body')
+                            ->label('Notification Body')
+                            ->required(),
+                    ])
+                    ->action(function ($record, array $data) {
+                        if (!$record->fcm_token) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('User has no device token')
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+
+                        $response = sendNotification($record->fcm_token, $data['title'], $data['body']);
+                        $result = json_decode($response, true);
+
+                        if (isset($result['status']) && $result['status'] === 'success') {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Notification sent successfully')
+                                ->success()
+                                ->send();
+                        } else {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Failed to send notification')
+                                ->body($result['message'] ?? 'Unknown error')
+                                ->danger()
+                                ->send();
+                        }
+                    }),
                 ActionGroup::make([
+
                     EditAction::make(),
                     DeleteAction::make(),
                     RestoreAction::make(),
@@ -284,7 +323,7 @@ class UserTable
                                     ->same('password'),
                             ])
                         ])
-                        ->modalHeading(fn($record) => $record->name )
+                        ->modalHeading(fn($record) => $record->name)
                         ->action(function (User $user, array $data): void {
                             // Update the user's password
                             $user->update([
