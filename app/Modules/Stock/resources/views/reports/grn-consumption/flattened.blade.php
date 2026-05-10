@@ -9,7 +9,7 @@
                 <p>A simple list of every single item received across all receipts.</p>
             </div>
             <div style="font-size: 1.1rem; font-weight: 600; color: var(--primary);">
-                Total GRNs: {{ $report->total() }}
+                Remaining GRNs: {{ $report->total() }}
             </div>
         </div>
 

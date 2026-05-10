@@ -9,7 +9,7 @@
                 <p>Track exactly what products came in each receipt and how much is left.</p>
             </div>
             <div style="font-size: 1.1rem; font-weight: 600; color: var(--primary);">
-                Total GRNs: {{ $report->total() }}
+                Remaining GRNs: {{ $report->total() }}
             </div>
         </div>
 
