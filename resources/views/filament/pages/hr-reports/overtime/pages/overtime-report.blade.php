@@ -9,6 +9,36 @@
             border-spacing: 0;
         }
 
+        #overtime-report-table {
+            table-layout: fixed;
+            width: {{ $branch_id ? 'clamp(860px, 88vw, 980px)' : 'clamp(980px, 92vw, 1160px)' }};
+            min-width: {{ $branch_id ? '860px' : '980px' }};
+            max-width: none;
+        }
+
+        #overtime-report-table .col-staff { width: clamp(170px, 18vw, 230px); }
+        #overtime-report-table .col-branch { width: clamp(130px, 12vw, 170px); }
+        #overtime-report-table .col-date { width: 8rem; }
+        #overtime-report-table .col-time { width: 6.3rem; }
+        #overtime-report-table .col-hours { width: 4.5rem; }
+        #overtime-report-table .col-status { width: 8rem; }
+        #overtime-report-table .col-approved { width: clamp(180px, 20vw, 260px); }
+
+        #overtime-report-table th,
+        #overtime-report-table td {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #overtime-report-table td {
+            white-space: nowrap;
+        }
+
+        #overtime-report-table td.text-left {
+            white-space: normal;
+            word-break: break-word;
+        }
+
         .header_report {
             background: white !important;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
@@ -205,6 +235,18 @@
     @if ($summary['total_records'] > 0)
     <div class="overflow-x-auto bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden">
         <table class="w-full text-xs text-left pretty reports" id="overtime-report-table">
+            <colgroup>
+                <col class="col-staff">
+                @if (!$branch_id)
+                    <col class="col-branch">
+                @endif
+                <col class="col-date">
+                <col class="col-time">
+                <col class="col-time">
+                <col class="col-hours">
+                <col class="col-status">
+                <col class="col-approved">
+            </colgroup>
             <thead>
                 <tr class="header_report">
                     <th colspan="{{ $branch_id ? 7 : 8 }}">
@@ -298,16 +340,16 @@
                 </tr>
 
                 <tr class="column_headers">
-                    <th class="text-left" style="width: {{ $branch_id ? '35%' : '25%' }};">{{ __('lang.employee') }}</th>
+                    <th class="text-left">{{ __('lang.employee') }}</th>
                     @if (!$branch_id)
-                        <th class="text-left" style="width: 12%;">{{ __('lang.branch') }}</th>
+                        <th class="text-left">{{ __('lang.branch') }}</th>
                     @endif
-                    <th class="text-center" style="width: 9%;">{{ __('lang.date') }}</th>
-                    <th class="text-center" style="width: 7%;">{{ __('lang.start_time') }}</th>
-                    <th class="text-center" style="width: 7%;">{{ __('lang.end_time') }}</th>
-                    <th class="text-center" style="width: 5%;">{{ __('lang.hours') }}</th>
-                    <th class="text-center" style="width: 10%;">{{ __('lang.status') }}</th>
-                    <th class="text-center" style="width: {{ $branch_id ? '27%' : '25%' }};">{{ __('lang.approved_by') }}</th>
+                    <th class="text-center">{{ __('lang.date') }}</th>
+                    <th class="text-center">{{ __('lang.start_time') }}</th>
+                    <th class="text-center">{{ __('lang.end_time') }}</th>
+                    <th class="text-center">{{ __('lang.hours') }}</th>
+                    <th class="text-center">{{ __('lang.status') }}</th>
+                    <th class="text-center">{{ __('lang.approved_by') }}</th>
                 </tr>
             </thead>
             <tbody>
