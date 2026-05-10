@@ -78,8 +78,16 @@ class EmployeeObserver
         // نمرر الـ tenantId صراحةً لضمان عمل الجوب على قاعدة البيانات الصحيحة
         // Explicitly pass tenantId so the job runs on the correct tenant database
          (new Init())->handleForNewEmployee($employee);
-        // $tenantId = \Spatie\Multitenancy\Models\Tenant::current()?->id;
-        // InitNewEmployeeLeaveBalancesJob::dispatch($employee->id, $tenantId);
+
+        // إنشاء سجل الفرع الأول بناءً على تاريخ الانضمام
+        if ($employee->branch_id) {
+            $employee->branchLogs()->create([
+                'branch_id'  => $employee->branch_id,
+                'start_at'   => $employee->join_date ?? now(),
+                'end_at'     => null,
+                'created_by' => auth()->id(),
+            ]);
+        }
     }
 
     /**
