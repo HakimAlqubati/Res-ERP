@@ -114,6 +114,7 @@ return [
     'please_select_branch'                        => 'Please Select a Branch',
     'please_select_product'                       => 'Please Select a Product',
     'all_stores'                                  => 'All Stores',
+    'all_branches'                                => 'All Branches',
     'all_suppliers'                               => 'All suppliers',
     'system_settings'                             => 'System settings',
     'transfer_date'                               => 'Transfer date',

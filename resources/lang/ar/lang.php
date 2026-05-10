@@ -114,6 +114,7 @@ return [
   'please_select_branch' => 'يرجى اختيار فرع',
   'please_select_product' => 'يرجى اختيار منتج',
   'all_stores' => 'كل المخازن',
+  'all_branches' => 'كافة الفروع',
   'all_suppliers' => 'كل الموردين',
   'transfer_date' => 'تاريخ المناقلة',
   'attachment' => 'المرفق',

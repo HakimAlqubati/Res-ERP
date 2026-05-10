@@ -5,18 +5,37 @@
         /* Base Table Styling - Matching Attendance Report */
         table {
             width: 100%;
-            border-collapse: inherit;
-            border-spacing: initial;
+            border-collapse: separate;
+            border-spacing: 0;
         }
 
-        .pretty.reports thead th {
-            background-color: #f3f4f6;
+        .pretty.reports thead {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+        }
+
+        .header_report {
+            background: white !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .header_report th {
+            padding: 16px !important;
+            border-bottom: 1px solid #e5e7eb !important;
+        }
+
+        .column_headers th {
+            position: sticky;
+            top: 195px; /* Adjust based on height of header_report + summary_row */
+            background-color: #f3f4f6 !important;
             color: #374151;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            padding: 12px 16px;
-            border-bottom: 2px solid #e5e7eb;
+            padding: 12px 16px !important;
+            border-bottom: 2px solid #d1d5db !important;
+            z-index: 20;
         }
 
         .pretty.reports tbody tr:nth-child(even) {
@@ -30,153 +49,171 @@
 
         /* Buttons Styling */
         .btn-print, .btn-primary, .btn-secondary {
-            border-radius: 6px;
-            padding: 8px 16px;
+            border-radius: 8px;
+            padding: 10px 18px;
             font-size: 13px;
-            font-weight: 500;
+            font-weight: 600;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
+            gap: 10px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
 
         .btn-primary {
-            background-color: #22c55e;
+            background-color: #10b981;
             color: white;
-            border: 1px solid #16a34a;
+            border: 1px solid #059669;
         }
 
         .btn-primary:hover {
-            background-color: #16a34a;
+            background-color: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         .btn-secondary {
-            background-color: #f3f4f6;
-            color: #374151;
-            border: 1px solid #d1d5db;
+            background-color: #3b82f6;
+            color: white;
+            border: 1px solid #2563eb;
         }
 
         .btn-secondary:hover {
-            background-color: #e5e7eb;
+            background-color: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         /* Status Badges */
-        .badge-approved { background-color: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 600; }
-        .badge-pending { background-color: #fef9c3; color: #854d0e; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 600; }
-        .badge-rejected { background-color: #fee2e2; color: #991b1b; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 600; }
+        .badge-approved { background-color: #dcfce7; color: #166534; padding: 6px 14px; border-radius: 9999px; font-size: 11px; font-weight: 700; border: 1px solid #bbf7d0; }
+        .badge-pending { background-color: #fef9c3; color: #854d0e; padding: 6px 14px; border-radius: 9999px; font-size: 11px; font-weight: 700; border: 1px solid #fef08a; }
+        .badge-rejected { background-color: #fee2e2; color: #991b1b; padding: 6px 14px; border-radius: 9999px; font-size: 11px; font-weight: 700; border: 1px solid #fecaca; }
 
         /* Summary Grid */
         .overtime-summary-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
             margin-bottom: 24px;
         }
 
         .overtime-summary-card {
             background: white;
-            padding: 20px;
-            border-radius: 12px;
+            padding: 24px;
+            border-radius: 16px;
             text-align: center;
             border: 1px solid #e5e7eb;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s;
         }
 
-        .overtime-summary-card .value { font-size: 24px; font-weight: 700; color: #111827; }
-        .overtime-summary-card .label { font-size: 12px; color: #6b7280; margin-top: 4px; text-transform: uppercase; }
+        .overtime-summary-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .overtime-summary-card .value { font-size: 28px; font-weight: 800; color: #111827; line-height: 1; }
+        .overtime-summary-card .label { font-size: 12px; color: #6b7280; margin-top: 8px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.025em; }
 
         @media print {
             body * { visibility: hidden; }
             #overtime-report-table, #overtime-report-table * { visibility: visible; }
             #overtime-report-table { position: absolute; top: 0; left: 0; width: 100%; }
             .no-print { display: none !important; }
+            .pretty.reports thead { position: static; }
         }
     </style>
 
-    {{-- Summary Cards --}}
+    {{-- Report Content --}}
     @if ($summary['total_records'] > 0)
-    <div class="overtime-summary-grid no-print">
-        <div class="overtime-summary-card">
-            <div class="value">{{ $summary['total_records'] }}</div>
-            <div class="label">{{ __('lang.total_records') }}</div>
-        </div>
-        <div class="overtime-summary-card">
-            <div class="value">{{ $summary['total_hours'] }}</div>
-            <div class="label">{{ __('lang.total_hours') }}</div>
-        </div>
-        <div class="overtime-summary-card">
-            <div class="value">{{ $summary['approved_count'] }}</div>
-            <div class="label">{{ __('lang.approved') }}</div>
-        </div>
-        <div class="overtime-summary-card">
-            <div class="value">{{ $summary['pending_count'] }}</div>
-            <div class="label">{{ __('lang.pending') }}</div>
-        </div>
-        <div class="overtime-summary-card">
-            <div class="value">{{ $summary['rejected_count'] }}</div>
-            <div class="label">{{ __('lang.rejected') }}</div>
-        </div>
-        <div class="overtime-summary-card">
-            <div class="value">{{ $summary['unique_employees'] }}</div>
-            <div class="label">{{ __('lang.employees') }}</div>
-        </div>
-    </div>
-
-    {{-- Report Table Container --}}
-    <div class="overflow-x-auto bg-white rounded-xl border border-gray-200 shadow-sm">
+    <div class="overflow-x-auto bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden">
         <table class="w-full text-sm text-left pretty reports" id="overtime-report-table">
             <thead>
                 <tr class="header_report">
-                    <th colspan="10" style="padding: 16px; background: #f9fafb;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+                    <th colspan="10">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 24px;">
                             {{-- Left: Actions --}}
                             <div style="display: flex; flex-direction: column; gap: 8px;" class="no-print">
-                                <button onclick="exportOvertimeToExcel()" class="btn btn-primary">
-                                    &#128200; {{ __('lang.to_excel') }}
+                                <button onclick="exportOvertimeToExcel()" class="btn btn-primary" style="min-width: 140px;">
+                                    <span style="font-size: 18px;">📊</span> {{ __('lang.to_excel') }}
                                 </button>
-                                <button onclick="window.print()" class="btn btn-secondary" style="background-color: #3b82f6; border-color: #2563eb; color: white;">
-                                    &#128438; {{ __('lang.print') }}
+                                <button onclick="window.print()" class="btn btn-secondary" style="min-width: 140px;">
+                                    <span style="font-size: 18px;">🖨️</span> {{ __('lang.print') }}
                                 </button>
                             </div>
 
                             {{-- Center: Employee Context --}}
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 12px; flex: 1;">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 16px; flex: 1;">
                                 @if ($employee)
                                 <img src="{{ $employee->avatar_image }}"
                                     alt="{{ $employee->name }}"
-                                    style="width: 80px; height: 80px; border-radius: 12px; object-fit: cover; border: 3px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                                    style="width: 85px; height: 85px; border-radius: 16px; object-fit: cover; border: 4px solid #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.12);">
                                 @endif
-                                <div style="display: flex; flex-direction: column; text-align: {{ app()->getLocale() == 'ar' ? 'right' : 'left' }};">
-                                    <span style="font-size: 16px; font-weight: 700; color: #111827;">
+                                <div style="display: flex; flex-direction: column; text-align: center;">
+                                    <span style="font-size: 20px; font-weight: 800; color: #111827; letter-spacing: -0.025em;">
                                         @if($employee)
-                                            <a href="{{ \App\Filament\Resources\EmployeeResource::getUrl('view', ['record' => $employee->id]) }}" target="_blank" class="hover:underline">
+                                            <a href="{{ \App\Filament\Resources\EmployeeResource::getUrl('view', ['record' => $employee->id]) }}" target="_blank" class="hover:text-emerald-600 transition-colors">
                                                 {{ $employee->name }}
                                             </a>
                                         @elseif($branch_name && $branch_name !== '-')
                                             {{ $branch_name }}
                                         @else
-                                            All Branches
+                                            {{ __('lang.all_branches') ?? 'All Branches' }}
                                         @endif
                                     </span>
-                                    <span style="font-size: 12px; color: #6b7280; font-weight: 500;">{{ __('lang.overtime_report') }}</span>
+                                    <span style="font-size: 12px; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px;">{{ __('lang.overtime_report') }}</span>
                                 </div>
                             </div>
 
                             {{-- Right: Metadata --}}
-                            <div style="text-align: right; flex-shrink: 0; line-height: 1.6; color: #374151;">
-                                <div style="font-weight: 600;"><span style="color: #6b7280;">{{ __('lang.date') }}:</span> {{ $start_date }} - {{ $end_date }}</div>
-                                <div style="font-weight: 600;"><span style="color: #6b7280;">{{ __('lang.branch') }}:</span> {{ $branch_name }}</div>
+                            <div style="text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }}; flex-shrink: 0; line-height: 2; color: #374151;">
+                                <div style="font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+                                    <span style="color: #9ca3af; font-size: 10px;"></span> {{ $start_date }} - {{ $end_date }}
+                                </div>
+                             
                             </div>
 
                             {{-- Far Right: Logo --}}
-                            <div style="flex-shrink: 0;">
-                                <img src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="Logo" style="height: 50px;">
+                            <div style="flex-shrink: 0; padding-left: 10px;">
+                                <img src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="Logo" style="height: 65px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));">
                             </div>
                         </div>
                     </th>
                 </tr>
-                <tr>
+
+                {{-- Summary Cards Row --}}
+                <tr class="summary_row no-print">
+                    <th colspan="10" style="padding: 0 16px 20px 16px; background: white;">
+                        <div class="overtime-summary-grid" style="margin-bottom: 0; gap: 12px;">
+                            <div class="overtime-summary-card" style="padding: 12px; border-radius: 12px;">
+                                <div class="value" style="font-size: 20px;">{{ $summary['total_records'] }}</div>
+                                <div class="label" style="font-size: 10px; margin-top: 4px;">{{ __('lang.total_records') }}</div>
+                            </div>
+                            <div class="overtime-summary-card" style="padding: 12px; border-radius: 12px;">
+                                <div class="value" style="font-size: 20px;">{{ $summary['total_hours'] }}</div>
+                                <div class="label" style="font-size: 10px; margin-top: 4px;">{{ __('lang.total_hours') }}</div>
+                            </div>
+                            <div class="overtime-summary-card" style="padding: 12px; border-radius: 12px;">
+                                <div class="value" style="font-size: 20px;">{{ $summary['approved_count'] }}</div>
+                                <div class="label" style="font-size: 10px; margin-top: 4px;">{{ __('lang.approved') }}</div>
+                            </div>
+                            <div class="overtime-summary-card" style="padding: 12px; border-radius: 12px;">
+                                <div class="value" style="font-size: 20px;">{{ $summary['pending_count'] }}</div>
+                                <div class="label" style="font-size: 10px; margin-top: 4px;">{{ __('lang.pending') }}</div>
+                            </div>
+                            <div class="overtime-summary-card" style="padding: 12px; border-radius: 12px;">
+                                <div class="value" style="font-size: 20px;">{{ $summary['rejected_count'] }}</div>
+                                <div class="label" style="font-size: 10px; margin-top: 4px;">{{ __('lang.rejected') }}</div>
+                            </div>
+                            <div class="overtime-summary-card" style="padding: 12px; border-radius: 12px;">
+                                <div class="value" style="font-size: 20px;">{{ $summary['unique_employees'] }}</div>
+                                <div class="label" style="font-size: 10px; margin-top: 4px;">{{ __('lang.employees') }}</div>
+                            </div>
+                        </div>
+                    </th>
+                </tr>
+
+                <tr class="column_headers">
                     <th>#</th>
                     <th>{{ __('lang.employee') }}</th>
                     <th>{{ __('lang.branch') }}</th>
