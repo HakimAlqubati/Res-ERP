@@ -13,6 +13,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
@@ -26,7 +27,7 @@ class ApprovalPoliciesTable
             ->recordTitleAttribute('name')
             ->striped()
             ->defaultSort('created_at', 'desc')
-            ->modifyQueryUsing(fn (Builder $query) => $query->with('branch')->withCount('policySteps'))
+            ->modifyQueryUsing(fn(Builder $query) => $query->with('branch')->withCount('policySteps'))
             ->columns([
                 TextColumn::make('name')
                     ->label(__('Name'))
@@ -37,8 +38,8 @@ class ApprovalPoliciesTable
                 TextColumn::make('approvable_type')
                     ->label(__('Subject'))
                     ->badge()
-                    ->formatStateUsing(fn (?string $state): string => self::approvableTypeLabel($state))
-                    ->color(fn (?string $state): string => match ($state) {
+                    ->formatStateUsing(fn(?string $state): string => self::approvableTypeLabel($state))
+                    ->color(fn(?string $state): string => match ($state) {
                         EmployeeApplicationV2::class => 'info',
                         EmployeeOvertime::class => 'warning',
                         AdvanceWage::class => 'success',
@@ -47,7 +48,7 @@ class ApprovalPoliciesTable
 
                 TextColumn::make('application_type_id')
                     ->label(__('Application Type'))
-                    ->formatStateUsing(fn ($state): string => $state
+                    ->formatStateUsing(fn($state): string => $state
                         ? (EmployeeApplicationV2::APPLICATION_TYPE_NAMES[(int) $state] ?? (string) $state)
                         : __('All'))
                     ->placeholder(__('All')),
@@ -61,12 +62,14 @@ class ApprovalPoliciesTable
                 TextColumn::make('policy_steps_count')
                     ->label(__('Route Steps'))
                     ->alignCenter()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable()
+                    ,
 
-                IconColumn::make('active')
+                ToggleColumn::make('active')
                     ->label(__('Active'))
-                    ->boolean(),
-
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('created_at')
                     ->label(__('Created At'))
                     ->dateTime('Y-m-d H:i')
