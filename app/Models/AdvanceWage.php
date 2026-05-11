@@ -9,13 +9,14 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use App\Observers\AdvanceWageObserver;
 use App\Modules\HR\ApprovalPolicies\Contracts\ApprovableRecord;
+use App\Modules\HR\ApprovalPolicies\Traits\EnforcesApprovalWorkflow;
 use App\Modules\HR\ApprovalPolicies\Traits\HasApprovalWorkflow;
 
 #[ObservedBy([AdvanceWageObserver::class])]
 
 class AdvanceWage extends Model implements ApprovableRecord
 {
-    use SoftDeletes, HasApprovalWorkflow;
+    use SoftDeletes, HasApprovalWorkflow, EnforcesApprovalWorkflow;
 
     protected $table = 'hr_advance_wages';
 
@@ -93,6 +94,16 @@ class AdvanceWage extends Model implements ApprovableRecord
     public function approvalApplicationTypeId(): ?int
     {
         return null;
+    }
+
+    public function approvalStatusColumn(): ?string
+    {
+        return 'status';
+    }
+
+    public function approvalApprovedStatuses(): array
+    {
+        return [self::STATUS_SETTLED];
     }
 
     public function settledPayroll(): BelongsTo

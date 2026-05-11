@@ -6,6 +6,7 @@ use App\Models\EmployeeApplicationV2;
 use App\Models\User;
 use App\Modules\HR\ApprovalPolicies\Contracts\ApprovableRecord;
 use App\Modules\HR\ApprovalPolicies\Contracts\FinalApprovalHandler;
+use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowGuard;
 use App\Services\HR\Applications\EmployeeApplicationService;
 use Illuminate\Database\Eloquent\Model;
 
@@ -13,6 +14,7 @@ class EmployeeApplicationFinalApprovalHandler implements FinalApprovalHandler
 {
     public function __construct(
         private readonly EmployeeApplicationService $applicationService,
+        private readonly ApprovalWorkflowGuard $guard,
     ) {
     }
 
@@ -22,6 +24,6 @@ class EmployeeApplicationFinalApprovalHandler implements FinalApprovalHandler
             return;
         }
 
-        $this->applicationService->approveApplication($record->id, $approvedBy->id);
+        $this->guard->withoutGuard(fn () => $this->applicationService->approveApplication($record->id, $approvedBy->id));
     }
 }

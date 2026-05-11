@@ -6,6 +6,7 @@ use App\Observers\EmployeeOvertimeObserver;
 use Illuminate\Database\Eloquent\Builder;
 use App\Traits\Scopes\BranchScope;
 use App\Modules\HR\ApprovalPolicies\Contracts\ApprovableRecord;
+use App\Modules\HR\ApprovalPolicies\Traits\EnforcesApprovalWorkflow;
 use App\Modules\HR\ApprovalPolicies\Traits\HasApprovalWorkflow;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,7 +16,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 #[ObservedBy([EmployeeOvertimeObserver::class])]
 class EmployeeOvertime extends Model implements Auditable, ApprovableRecord
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope, HasApprovalWorkflow;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope, HasApprovalWorkflow, EnforcesApprovalWorkflow;
     protected $table = 'hr_employee_overtime';
 
     public const STATUS_PENDING = 'pending';
@@ -103,6 +104,11 @@ class EmployeeOvertime extends Model implements Auditable, ApprovableRecord
     public function approvalApplicationTypeId(): ?int
     {
         return null;
+    }
+
+    public function approvalApprovedStatuses(): array
+    {
+        return [self::STATUS_APPROVED];
     }
 
     // Relationship with the User model (for approval)

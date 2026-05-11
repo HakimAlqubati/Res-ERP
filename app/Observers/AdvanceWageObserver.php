@@ -7,7 +7,9 @@ use App\Models\FinancialCategory;
 use App\Models\FinancialTransaction;
 use App\Enums\FinancialCategoryCode;
 use App\Modules\HR\Payroll\Contracts\PayrollSimulatorInterface;
+use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker;
 use App\Services\HR\Payroll\PayrollLockGuard;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -23,11 +25,6 @@ class AdvanceWageObserver
      */
     public function creating(AdvanceWage $advanceWage): void
     {
-        // Set default status to settled if not provided
-        if (!$advanceWage->status) {
-            $advanceWage->status = AdvanceWage::STATUS_SETTLED;
-        }
-
         // Set the creator
         if (!$advanceWage->created_by) {
             $advanceWage->created_by = \Illuminate\Support\Facades\Auth::id();
@@ -43,6 +40,18 @@ class AdvanceWageObserver
         // Set the branch from the employee if not provided
         if (!$advanceWage->branch_id && $advanceWage->employee_id) {
             $advanceWage->branch_id = $advanceWage->employee?->branch_id;
+        }
+
+        $requiresApproval = app(ApprovalWorkflowRequirementChecker::class)->hasActivePolicy($advanceWage);
+
+        if (!$advanceWage->status) {
+            $advanceWage->status = $requiresApproval
+                ? AdvanceWage::STATUS_PENDING
+                : AdvanceWage::STATUS_SETTLED;
+        }
+
+        if ($requiresApproval && $advanceWage->status === AdvanceWage::STATUS_SETTLED) {
+            throw new AuthorizationException('This advance wage must be approved through the approval workflow.');
         }
 
         // Guard against finalized payroll periods
