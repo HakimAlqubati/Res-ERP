@@ -122,7 +122,7 @@ class EmployeeTable
                     ->searchable(isIndividual: false, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: false),
 
- 
+
                 TextColumn::make('branch.name')
                     ->label(__('lang.branch'))
                     ->searchable()
@@ -203,7 +203,7 @@ class EmployeeTable
                     }),
                 TextColumn::make('working_days')->label(__('lang.working_days'))->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: false)->alignCenter(true),
-                
+
                 TextColumn::make('job_title')
                     ->label(__('lang.job_title'))
                     ->sortable()->searchable()
@@ -239,14 +239,14 @@ class EmployeeTable
                 TextColumn::make('nationality')->sortable()->searchable()
                     ->label(__('lang.nationality'))
                     ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
-           
+
                 IconColumn::make('has_auto_weekly_leave')
                     ->label(__('lang.has_auto_weekly_leave'))
                     ->boolean()
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark')
                     ->alignCenter(true)
-                    ->sortable() 
+                    ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('is_indexed_in_aws')
                     ->label(__('lang.is_indexed_in_aws'))
@@ -308,7 +308,10 @@ class EmployeeTable
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('warning')
                     ->action(function () {
-                        $data = Employee::where('active', 1)->select('id', 'employee_no', 'name', 'branch_id', 'job_title')->get();
+                        $data = Employee::where('active', 1)
+                            ->forBranchManager()
+                            ->with(['branch', 'manager', 'periods', 'serviceTermination', 'employeeType'])
+                            ->get();
                         return Excel::download(new EmployeesExport($data), 'employees.xlsx');
                     }),
                 Action::make('export_employees_pdf')
@@ -316,7 +319,10 @@ class EmployeeTable
                     ->icon('heroicon-o-document-text')
                     ->color('primary')
                     ->action(function () {
-                        $data = Employee::where('active', 1)->select('id', 'employee_no', 'name', 'branch_id', 'job_title')->get();
+                        $data = Employee::where('active', 1)
+                            ->forBranchManager()
+                            ->with(['branch', 'manager', 'periods', 'serviceTermination', 'employeeType'])
+                            ->get();
                         $pdf  = PDF::loadView('export.reports.hr.employees.export-employees-as-pdf', ['data' => $data]);
                         return response()->streamDownload(function () use ($pdf) {
                             echo $pdf->output();
