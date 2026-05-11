@@ -5,6 +5,8 @@ namespace App\Observers;
 use App\Exceptions\HR\PayrollConflictException;
 use App\Models\EmployeeOvertime;
 use App\Models\Payroll;
+use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker;
+use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService;
 use App\Services\HR\Payroll\PayrollLockGuard;
 use Carbon\Carbon;
 
@@ -179,7 +181,9 @@ class EmployeeOvertimeObserver
      */
     public function created(EmployeeOvertime $employeeOvertime): void
     {
-        //
+        if (app(ApprovalWorkflowRequirementChecker::class)->hasActivePolicy($employeeOvertime)) {
+            app(ApprovalWorkflowService::class)->createFor($employeeOvertime);
+        }
     }
 
     /**

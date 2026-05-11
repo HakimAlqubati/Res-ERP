@@ -8,10 +8,12 @@ use App\Models\EmployeeApplicationV2;
 use App\Models\EmployeeOvertime;
 use App\Models\User;
 use App\Modules\HR\ApprovalPolicies\Enums\ApprovalMode;
+use App\Modules\HR\ApprovalPolicies\Enums\ApprovalPolicyStepType;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -24,6 +26,10 @@ class ApprovalPolicyForm
     {
         return $schema
             ->components([
+                Hidden::make('mode')
+                    ->default(ApprovalMode::CONFIGURED_STEPS)
+                    ->dehydrated(),
+
                 Section::make(__('Approval Policy'))
                     ->schema([
                         Grid::make(2)->schema([
@@ -70,57 +76,60 @@ class ApprovalPolicyForm
                     ])
                     ->columns(1),
 
-                Section::make(__('Approval Route'))
+                Section::make(__('Approval Route Template'))
                     ->schema([
-                        Grid::make(3)->schema([
-                            Select::make('mode')
-                                ->label(__('Approval Mode'))
-                                ->options(self::modeOptions())
-                                ->required()
-                                ->live()
-                                ->afterStateUpdated(function (?string $state, Set $set): void {
-                                    if ($state !== ApprovalMode::MANAGER_CHAIN) {
-                                        $set('levels', null);
-                                    }
+                        Repeater::make('policySteps')
+                            ->label(__('Route Steps'))
+                            ->relationship('policySteps')
+                            ->schema([
+                                Grid::make(3)->schema([
+                                    Select::make('approver_type')
+                                        ->label(__('Approver Type'))
+                                        ->options(self::stepTypeOptions())
+                                        ->required()
+                                        ->live()
+                                        ->afterStateUpdated(function (?string $state, Set $set): void {
+                                            if ($state !== ApprovalPolicyStepType::CUSTOM_USER) {
+                                                $set('approver_user_id', null);
+                                            }
 
-                                    if ($state !== ApprovalMode::CUSTOM_USERS) {
-                                        $set('custom_approver_user_ids', null);
-                                    }
-                                }),
+                                            if ($state !== ApprovalPolicyStepType::MANAGER_LEVEL) {
+                                                $set('manager_level', null);
+                                            }
+                                        }),
 
-                            TextInput::make('levels')
-                                ->label(__('Manager Levels'))
-                                ->numeric()
-                                ->minValue(1)
-                                ->step(1)
-                                ->nullable()
-                                ->helperText(__('Leave empty to walk the full manager chain.'))
-                                ->visible(fn (Get $get): bool => $get('mode') === ApprovalMode::MANAGER_CHAIN),
+                                    Select::make('approver_user_id')
+                                        ->label(__('Approver'))
+                                        ->options(fn (): array => User::query()
+                                            ->orderBy('name')
+                                            ->pluck('name', 'id')
+                                            ->all())
+                                        ->searchable()
+                                        ->preload()
+                                        ->required(fn (Get $get): bool => $get('approver_type') === ApprovalPolicyStepType::CUSTOM_USER)
+                                        ->visible(fn (Get $get): bool => $get('approver_type') === ApprovalPolicyStepType::CUSTOM_USER),
 
-                            Select::make('custom_approver_user_ids')
-                                ->label(__('Custom Approvers'))
-                                ->options(fn (): array => User::query()
-                                    ->orderBy('name')
-                                    ->pluck('name', 'id')
-                                    ->all())
-                                ->multiple()
-                                ->searchable()
-                                ->preload()
-                                ->required(fn (Get $get): bool => $get('mode') === ApprovalMode::CUSTOM_USERS)
-                                ->visible(fn (Get $get): bool => $get('mode') === ApprovalMode::CUSTOM_USERS),
-                        ]),
+                                    TextInput::make('manager_level')
+                                        ->label(__('Manager Level'))
+                                        ->numeric()
+                                        ->minValue(1)
+                                        ->step(1)
+                                        ->required(fn (Get $get): bool => $get('approver_type') === ApprovalPolicyStepType::MANAGER_LEVEL)
+                                        ->visible(fn (Get $get): bool => $get('approver_type') === ApprovalPolicyStepType::MANAGER_LEVEL),
+                                ]),
+                            ])
+                            ->required()
+                            ->minItems(1)
+                            ->defaultItems(1)
+                            ->orderColumn('step_order')
+                            ->reorderable()
+                            ->reorderableWithDragAndDrop()
+                            ->reorderableWithButtons()
+                            ->collapsible()
+                            ->cloneable()
+                            ->columnSpanFull(),
                     ]),
 
-                Fieldset::make(__('Advanced'))
-                    ->schema([
-                        TextInput::make('final_handler')
-                            ->label(__('Final Approval Handler'))
-                            ->maxLength(255)
-                            ->placeholder('App\\Modules\\HR\\ApprovalPolicies\\Handlers\\...')
-                            ->helperText(__('Optional. Leave empty to use the default handler for this subject.'))
-                            ->columnSpanFull(),
-                    ])
-                    ->columns(1),
             ])
             ->columns(1);
     }
@@ -134,13 +143,13 @@ class ApprovalPolicyForm
         ];
     }
 
-    private static function modeOptions(): array
+    private static function stepTypeOptions(): array
     {
         return [
-            ApprovalMode::DIRECT_MANAGER => __('Direct Manager'),
-            ApprovalMode::BRANCH_MANAGER => __('Branch Manager'),
-            ApprovalMode::MANAGER_CHAIN => __('Manager Chain'),
-            ApprovalMode::CUSTOM_USERS => __('Custom Users'),
+            ApprovalPolicyStepType::DIRECT_MANAGER => __('Direct Manager'),
+            ApprovalPolicyStepType::BRANCH_MANAGER => __('Branch Manager'),
+            ApprovalPolicyStepType::MANAGER_LEVEL => __('Manager Chain Level'),
+            ApprovalPolicyStepType::CUSTOM_USER => __('Custom User'),
         ];
     }
 }

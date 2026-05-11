@@ -8,6 +8,7 @@ use App\Models\FinancialTransaction;
 use App\Enums\FinancialCategoryCode;
 use App\Modules\HR\Payroll\Contracts\PayrollSimulatorInterface;
 use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker;
+use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService;
 use App\Services\HR\Payroll\PayrollLockGuard;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
@@ -75,6 +76,10 @@ class AdvanceWageObserver
      */
     public function created(AdvanceWage $advanceWage): void
     {
+        if (app(ApprovalWorkflowRequirementChecker::class)->hasActivePolicy($advanceWage)) {
+            app(ApprovalWorkflowService::class)->createFor($advanceWage);
+        }
+
         $this->syncToFinancial($advanceWage);
     }
 

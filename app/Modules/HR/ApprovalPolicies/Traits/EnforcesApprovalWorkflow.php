@@ -4,6 +4,7 @@ namespace App\Modules\HR\ApprovalPolicies\Traits;
 
 use App\Modules\HR\ApprovalPolicies\Contracts\ApprovableRecord;
 use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowGuard;
+use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowMessageBuilder;
 use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
@@ -36,7 +37,7 @@ trait EnforcesApprovalWorkflow
         }
 
         throw new AuthorizationException(
-            'This record must be approved through the approval workflow.'
+            app(ApprovalWorkflowMessageBuilder::class)->directApprovalBlocked($record)
         );
     }
 
@@ -62,5 +63,4 @@ trait EnforcesApprovalWorkflow
 
         return false;
     }
-
 }

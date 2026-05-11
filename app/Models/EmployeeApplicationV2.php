@@ -17,10 +17,18 @@ use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+
 #[ObservedBy([EmployeeApplicationObserver::class])]
 class EmployeeApplicationV2 extends Model implements Auditable, HasMedia, ApprovableRecord
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope, EmployeeApplicationAccessors, InteractsWithMedia, HasApprovalWorkflow, EnforcesApprovalWorkflow;
+    use HasFactory,
+        SoftDeletes,
+        \OwenIt\Auditing\Auditable,
+        BranchScope,
+        EmployeeApplicationAccessors,
+        InteractsWithMedia,
+        HasApprovalWorkflow,
+        EnforcesApprovalWorkflow;
 
     protected $appends = [
         'leave_type_name',

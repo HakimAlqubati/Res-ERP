@@ -8,8 +8,10 @@ use App\Models\User;
 use App\Modules\HR\ApprovalPolicies\Contracts\ApprovableRecord;
 use App\Modules\HR\ApprovalPolicies\DTOs\ApprovalApprover;
 use App\Modules\HR\ApprovalPolicies\Enums\ApprovalMode;
+use App\Modules\HR\ApprovalPolicies\Enums\ApprovalPolicyStepType;
 use App\Modules\HR\ApprovalPolicies\Exceptions\ApprovalWorkflowException;
 use App\Modules\HR\ApprovalPolicies\Models\ApprovalPolicy;
+use App\Modules\HR\ApprovalPolicies\Models\ApprovalPolicyStep;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
@@ -25,6 +27,7 @@ class ApprovalApproverResolver
             ApprovalMode::BRANCH_MANAGER => $this->branchManager($record),
             ApprovalMode::MANAGER_CHAIN => $this->managerChain($record, $policy->levels),
             ApprovalMode::CUSTOM_USERS => $this->customUsers($policy),
+            ApprovalMode::CONFIGURED_STEPS => $this->configuredSteps($record, $policy),
             default => collect(),
         };
 
@@ -133,5 +136,37 @@ class ApprovalApproverResolver
             ->filter(fn (int $userId) => $existingUserIds->has($userId))
             ->map(fn (int $userId) => new ApprovalApprover($userId))
             ->values();
+    }
+
+    private function configuredSteps(Model&ApprovableRecord $record, ApprovalPolicy $policy): Collection
+    {
+        $policy->loadMissing('policySteps');
+
+        return $policy->policySteps
+            ->map(fn (ApprovalPolicyStep $step) => $this->resolveConfiguredStep($record, $step))
+            ->filter()
+            ->values();
+    }
+
+    private function resolveConfiguredStep(Model&ApprovableRecord $record, ApprovalPolicyStep $step): ?ApprovalApprover
+    {
+        return match ($step->approver_type) {
+            ApprovalPolicyStepType::DIRECT_MANAGER => $this->directManager($record)->first(),
+            ApprovalPolicyStepType::BRANCH_MANAGER => $this->branchManager($record)->first(),
+            ApprovalPolicyStepType::MANAGER_LEVEL => $this->managerAtLevel($record, $step->manager_level),
+            ApprovalPolicyStepType::CUSTOM_USER => $step->approver_user_id
+                ? new ApprovalApprover((int) $step->approver_user_id)
+                : null,
+            default => null,
+        };
+    }
+
+    private function managerAtLevel(Model&ApprovableRecord $record, ?int $level): ?ApprovalApprover
+    {
+        if (! $level || $level < 1) {
+            return null;
+        }
+
+        return $this->managerChain($record, $level)->last();
     }
 }

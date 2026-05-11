@@ -19,7 +19,6 @@ class ApprovalPolicy extends Model
         'mode',
         'levels',
         'custom_approver_user_ids',
-        'final_handler',
         'active',
     ];
 
@@ -34,6 +33,11 @@ class ApprovalPolicy extends Model
     public function steps(): HasMany
     {
         return $this->hasMany(ApprovalStep::class, 'approval_policy_id');
+    }
+
+    public function policySteps(): HasMany
+    {
+        return $this->hasMany(ApprovalPolicyStep::class, 'approval_policy_id')->orderBy('step_order');
     }
 
     public function branch(): BelongsTo

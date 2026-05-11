@@ -18,8 +18,8 @@ class ApprovalWorkflowService
         private readonly ApprovalStepCreator $stepCreator,
         private readonly FinalApprovalHandlerResolver $finalApprovalHandlerResolver,
         private readonly RejectionHandlerResolver $rejectionHandlerResolver,
-    ) {
-    }
+        private readonly ApprovalWorkflowRequirementChecker $requirementChecker,
+    ) {}
 
     public function createFor(Model&ApprovableRecord $record, bool $replaceExisting = false): void
     {
@@ -41,6 +41,8 @@ class ApprovalWorkflowService
 
     public function canUserApprove(Model&ApprovableRecord $record, User $user): bool
     {
+        $this->ensureStepsExist($record);
+
         $step = $this->currentStep($record);
 
         return $step && (int) $step->approver_user_id === (int) $user->id;
@@ -51,14 +53,15 @@ class ApprovalWorkflowService
      */
     public function assertUserCanApprove(Model&ApprovableRecord $record, User $user): ApprovalStep
     {
-        $step = $this->currentStep($record);
+        $this->ensureStepsExist($record);
 
+        $step = $this->currentStep($record);
         if (! $step) {
             throw new AuthorizationException('No pending approval step for this record.');
         }
 
         if ((int) $step->approver_user_id !== (int) $user->id) {
-            throw new AuthorizationException('You are not the current approver for this record.');
+            throw new AuthorizationException($this->notCurrentApproverMessage($step));
         }
 
         return $step;
@@ -70,6 +73,8 @@ class ApprovalWorkflowService
     public function approve(Model&ApprovableRecord $record, User $user, ?string $notes = null): Model
     {
         return DB::transaction(function () use ($record, $user, $notes) {
+            $this->ensureStepsExist($record);
+
             $step = $this->currentStepForUpdate($record);
 
             if (! $step) {
@@ -77,7 +82,7 @@ class ApprovalWorkflowService
             }
 
             if ((int) $step->approver_user_id !== (int) $user->id) {
-                throw new AuthorizationException('You are not the current approver for this record.');
+                throw new AuthorizationException($this->notCurrentApproverMessage($step));
             }
 
             $step->update([
@@ -87,8 +92,7 @@ class ApprovalWorkflowService
             ]);
 
             if (! $this->hasPendingSteps($record)) {
-                $policy = $step->policy;
-                $handler = $this->finalApprovalHandlerResolver->resolve($record, $policy);
+                $handler = $this->finalApprovalHandlerResolver->resolve($record);
                 $handler?->handle($record, $user);
             }
 
@@ -102,6 +106,8 @@ class ApprovalWorkflowService
     public function reject(Model&ApprovableRecord $record, User $user, ?string $notes = null): Model
     {
         return DB::transaction(function () use ($record, $user, $notes) {
+            $this->ensureStepsExist($record);
+
             $step = $this->currentStepForUpdate($record);
 
             if (! $step) {
@@ -109,7 +115,7 @@ class ApprovalWorkflowService
             }
 
             if ((int) $step->approver_user_id !== (int) $user->id) {
-                throw new AuthorizationException('You are not the current approver for this record.');
+                throw new AuthorizationException($this->notCurrentApproverMessage($step));
             }
 
             $step->update([
@@ -135,6 +141,7 @@ class ApprovalWorkflowService
     private function currentStepForUpdate(Model&ApprovableRecord $record): ?ApprovalStep
     {
         return ApprovalStep::query()
+            ->with(['approverUser:id,name', 'approverEmployee:id,name'])
             ->where('approvable_type', $record::class)
             ->where('approvable_id', $record->getKey())
             ->where('status', ApprovalStepStatus::PENDING)
@@ -152,4 +159,25 @@ class ApprovalWorkflowService
             ->exists();
     }
 
+    private function ensureStepsExist(Model&ApprovableRecord $record): void
+    {
+        if ($record->approvalSteps()->exists()) {
+            return;
+        }
+
+        if ($this->requirementChecker->hasActivePolicy($record)) {
+            $this->createFor($record);
+        }
+    }
+
+    private function notCurrentApproverMessage(ApprovalStep $step): string
+    {
+        $step->loadMissing(['approverUser:id,name', 'approverEmployee:id,name']);
+
+        $approverName = $step->approverEmployee?->name
+            ?: $step->approverUser?->name
+            ?: "User #{$step->approver_user_id}";
+
+        return "Waiting for {$approverName} to approve step #{$step->step_order}.";
+    }
 }

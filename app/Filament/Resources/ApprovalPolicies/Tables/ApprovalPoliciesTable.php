@@ -26,7 +26,7 @@ class ApprovalPoliciesTable
             ->recordTitleAttribute('name')
             ->striped()
             ->defaultSort('created_at', 'desc')
-            ->modifyQueryUsing(fn (Builder $query) => $query->with('branch'))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with('branch')->withCount('policySteps'))
             ->columns([
                 TextColumn::make('name')
                     ->label(__('Name'))
@@ -58,30 +58,10 @@ class ApprovalPoliciesTable
                     ->searchable()
                     ->placeholder(__('Global')),
 
-                TextColumn::make('mode')
-                    ->label(__('Mode'))
-                    ->badge()
-                    ->formatStateUsing(fn (?string $state): string => self::modeLabel($state))
-                    ->color(fn (?string $state): string => match ($state) {
-                        ApprovalMode::DIRECT_MANAGER => 'info',
-                        ApprovalMode::BRANCH_MANAGER => 'success',
-                        ApprovalMode::MANAGER_CHAIN => 'warning',
-                        ApprovalMode::CUSTOM_USERS => 'gray',
-                        default => 'gray',
-                    }),
-
-                TextColumn::make('levels')
-                    ->label(__('Levels'))
-                    ->getStateUsing(fn (ApprovalPolicy $record): string => $record->mode === ApprovalMode::MANAGER_CHAIN
-                        ? ($record->levels ? (string) $record->levels : __('Full chain'))
-                        : '-'),
-
-                TextColumn::make('custom_approver_user_ids')
-                    ->label(__('Custom Users'))
-                    ->getStateUsing(fn (ApprovalPolicy $record): string => is_array($record->custom_approver_user_ids) && count($record->custom_approver_user_ids) > 0
-                        ? (string) count($record->custom_approver_user_ids)
-                        : '-')
-                    ->alignCenter(),
+                TextColumn::make('policy_steps_count')
+                    ->label(__('Route Steps'))
+                    ->alignCenter()
+                    ->sortable(),
 
                 IconColumn::make('active')
                     ->label(__('Active'))
@@ -101,10 +81,6 @@ class ApprovalPoliciesTable
                 SelectFilter::make('application_type_id')
                     ->label(__('Employee Application Type'))
                     ->options(EmployeeApplicationV2::APPLICATION_TYPE_NAMES),
-
-                SelectFilter::make('mode')
-                    ->label(__('Mode'))
-                    ->options(self::modeOptions()),
 
                 SelectFilter::make('branch_id')
                     ->label(__('Branch'))
@@ -135,23 +111,8 @@ class ApprovalPoliciesTable
         ];
     }
 
-    private static function modeOptions(): array
-    {
-        return [
-            ApprovalMode::DIRECT_MANAGER => __('Direct Manager'),
-            ApprovalMode::BRANCH_MANAGER => __('Branch Manager'),
-            ApprovalMode::MANAGER_CHAIN => __('Manager Chain'),
-            ApprovalMode::CUSTOM_USERS => __('Custom Users'),
-        ];
-    }
-
     private static function approvableTypeLabel(?string $state): string
     {
         return self::approvableTypeOptions()[$state] ?? class_basename((string) $state);
-    }
-
-    private static function modeLabel(?string $state): string
-    {
-        return self::modeOptions()[$state] ?? (string) $state;
     }
 }

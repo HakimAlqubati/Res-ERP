@@ -11,6 +11,7 @@ use App\Filament\Resources\ApprovalPolicies\Tables\ApprovalPoliciesTable;
 use App\Modules\HR\ApprovalPolicies\Models\ApprovalPolicy;
 use BackedEnum;
 use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -69,5 +70,13 @@ class ApprovalPolicyResource extends Resource
             'create' => CreateApprovalPolicy::route('/create'),
             'edit' => EditApprovalPolicy::route('/{record}/edit'),
         ];
+    }
+    public static function getRecordSubNavigation(Page $page): array
+    {
+        return $page->generateNavigationItems([
+            ListApprovalPolicies::class,
+            CreateApprovalPolicy::class,
+            EditApprovalPolicy::class,
+        ]);
     }
 }

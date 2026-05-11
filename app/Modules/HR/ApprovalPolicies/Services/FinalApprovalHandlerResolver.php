@@ -9,7 +9,6 @@ use App\Modules\HR\ApprovalPolicies\Contracts\FinalApprovalHandler;
 use App\Modules\HR\ApprovalPolicies\Handlers\AdvanceWageFinalApprovalHandler;
 use App\Modules\HR\ApprovalPolicies\Handlers\EmployeeApplicationFinalApprovalHandler;
 use App\Modules\HR\ApprovalPolicies\Handlers\EmployeeOvertimeFinalApprovalHandler;
-use App\Modules\HR\ApprovalPolicies\Models\ApprovalPolicy;
 use Illuminate\Database\Eloquent\Model;
 
 class FinalApprovalHandlerResolver
@@ -23,9 +22,9 @@ class FinalApprovalHandlerResolver
         AdvanceWage::class => AdvanceWageFinalApprovalHandler::class,
     ];
 
-    public function resolve(Model $record, ?ApprovalPolicy $policy = null): ?FinalApprovalHandler
+    public function resolve(Model $record): ?FinalApprovalHandler
     {
-        $handlerClass = $policy?->final_handler ?: ($this->defaultHandlers[$record::class] ?? null);
+        $handlerClass = $this->defaultHandlers[$record::class] ?? null;
 
         if (! $handlerClass) {
             return null;

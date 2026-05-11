@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('mode');
             $table->unsignedSmallInteger('levels')->nullable();
             $table->json('custom_approver_user_ids')->nullable();
-            $table->string('final_handler')->nullable();
             $table->boolean('active')->default(true);
             $table->timestamps();
 
