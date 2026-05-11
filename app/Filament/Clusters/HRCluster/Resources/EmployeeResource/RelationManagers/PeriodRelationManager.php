@@ -248,7 +248,9 @@ class PeriodRelationManager extends RelationManager
                                 //     $data['end_date'] >= $lastCheckDate
                                 // );
 
-                                if ($lastCheckDate && $data['end_date'] >= $lastCheckDate) {
+                                // الاحتمال الأول: يوجد تحضيرات وتاريخ الانتهاء سليم
+                                // الاحتمال الثاني: لا يوجد أي تحضيرات بالمرة
+                                if (($lastCheckDate && $data['end_date'] >= $lastCheckDate) || empty($lastCheckDate)) {
 
 
                                     // حذف كل الأيام المرتبطة بهذه الفترة فقط
