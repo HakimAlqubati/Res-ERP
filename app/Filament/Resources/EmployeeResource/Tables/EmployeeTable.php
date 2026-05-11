@@ -279,9 +279,22 @@ class EmployeeTable
                     ->label(__('lang.nationality'))
                     ->options(getNationalities()),
                 SelectFilter::make('active')
-
-                    ->options([1 => __('lang.active'), 0 => __('lang.terminated')])->default(1)
-                    ->label(__('lang.active')),
+                    ->options([
+                        1 => __('lang.active'),
+                        0 => __('lang.terminated'),
+                        'pending_termination' => __('lang.termination_requests'),
+                    ])
+                    ->default(1)
+                    ->label(__('lang.active'))
+                    ->query(function ($query, array $data) {
+                        if ($data['value'] === '1') {
+                            $query->where('active', 1);
+                        } elseif ($data['value'] === '0') {
+                            $query->where('active', 0);
+                        } elseif ($data['value'] === 'pending_termination') {
+                            $query->whereHas('pendingTerminationRequest');
+                        }
+                    }),
                 SelectFilter::make('employee_type')
                     ->label(__('lang.role_type'))
                     ->options(UserType::where('active', 1)->pluck('name', 'id')->toArray())
@@ -300,6 +313,7 @@ class EmployeeTable
                     ->label(__('lang.my_employees'))
                     ->toggle()
                     ->query(fn($query) => $query->where('manager_id', auth()->user()?->employee?->id)),
+
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
             ->headerActions([
@@ -433,21 +447,26 @@ class EmployeeTable
                             DatePicker::make('termination_date')
                                 ->label(__('lang.termination_date'))
                                 ->default($record->serviceTermination->termination_date)
-                                ->disabled(),
+                                ->required(),
                             Textarea::make('termination_reason')
                                 ->label(__('lang.termination_reason'))
                                 ->default($record->serviceTermination->termination_reason)
-                                ->disabled(),
+                                ->required(),
                             Textarea::make('notes')
                                 ->label(__('lang.notes'))
-                                ->default($record->serviceTermination->notes)
-                                ->disabled(),
+                                ->default($record->serviceTermination->notes),
                         ])
                         ->label(__('lang.approve_termination'))
                         ->color('success')
                         // ->requiresConfirmation()
-                        ->action(function ($record) {
+                        ->action(function ($record, array $data) {
                             try {
+                                $record->serviceTermination->update([
+                                    'termination_date' => $data['termination_date'],
+                                    'termination_reason' => $data['termination_reason'],
+                                    'notes' => $data['notes'] ?? null,
+                                ]);
+
                                 app(\App\Modules\HR\Employee\Services\EmployeeLifecycleService::class)
                                     ->approveTermination($record->serviceTermination);
 

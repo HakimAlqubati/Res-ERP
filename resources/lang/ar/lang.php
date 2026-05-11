@@ -705,6 +705,7 @@ return [
   'current_staff' => 'الموظفين الحاليين',
   'new_staff' => 'الموظفين الجدد',
   'terminated_staff' => 'الموظفين المنتهية خدماتهم',
+  'termination_requests' => 'طلبات إنهاء الخدمة',
   'no_data' => 'لا توجد بيانات',
   'start_date' => 'تاريخ البداية',
   'end_date' => 'تاريخ النهاية',
