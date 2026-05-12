@@ -99,19 +99,22 @@ class ApprovalPolicyForm
                                 ->label(__('Route Steps'))
                                 ->relationship('policySteps')
                                 ->columnSpanFull()
-                                ->table([
-                                    TableColumn::make(__('Approver Type'))->width('18rem'),
-                                    TableColumn::make(__('Approver User'))->alignCenter()->width('24rem'),
-                                    TableColumn::make(__('Approval Role'))->alignCenter()->width('18rem'),
-                                    TableColumn::make(__('Manager Level'))->alignCenter()->width('18rem'),
+                                // ->table([
+                                //     TableColumn::make(__('Approver Type'))->width('18rem'),
+                                //     TableColumn::make(__('Approver User'))->alignCenter()->width('24rem'),
+                                //     TableColumn::make(__('Approval Role'))->alignCenter()->width('18rem'),
+                                //     TableColumn::make(__('Manager Level'))->alignCenter()->width('18rem'),
 
 
-                                ])
+                                // ])
+                                ->columns(3)
                                 ->schema([
 
                                     Select::make('approver_type')
                                         ->label(__('Approver Type'))
                                         ->options(self::stepTypeOptions())
+                                        ->searchable()
+                                        ->optionsLimit(8)
                                         ->required()
                                         ->live()
                                         ->afterStateUpdated(function (?string $state, Set $set): void {
@@ -135,7 +138,7 @@ class ApprovalPolicyForm
                                             ->pluck('name', 'id')
                                             ->all())
                                         ->searchable()
-                                        ->preload()
+                                        ->optionsLimit(8)
                                         ->required(fn(Get $get): bool => $get('approver_type') === ApprovalPolicyStepType::CUSTOM_USER)
                                         ->visible(fn(Get $get): bool => $get('approver_type') === ApprovalPolicyStepType::CUSTOM_USER),
 
@@ -146,7 +149,7 @@ class ApprovalPolicyForm
                                             ->pluck('name', 'id')
                                             ->all())
                                         ->searchable()
-                                        ->preload()
+                                        ->optionsLimit(8)
                                         ->required(fn(Get $get): bool => $get('approver_type') === ApprovalPolicyStepType::CUSTOM_ROLE)
                                         ->visible(fn(Get $get): bool => $get('approver_type') === ApprovalPolicyStepType::CUSTOM_ROLE),
 
