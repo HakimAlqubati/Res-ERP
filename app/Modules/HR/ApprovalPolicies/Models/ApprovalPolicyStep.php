@@ -5,6 +5,7 @@ namespace App\Modules\HR\ApprovalPolicies\Models;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Permission\Models\Role;
 
 class ApprovalPolicyStep extends Model
 {
@@ -15,6 +16,7 @@ class ApprovalPolicyStep extends Model
         'step_order',
         'approver_type',
         'approver_user_id',
+        'approver_role_id',
         'manager_level',
     ];
 
@@ -22,6 +24,7 @@ class ApprovalPolicyStep extends Model
         'approval_policy_id' => 'integer',
         'step_order' => 'integer',
         'approver_user_id' => 'integer',
+        'approver_role_id' => 'integer',
         'manager_level' => 'integer',
     ];
 
@@ -33,5 +36,10 @@ class ApprovalPolicyStep extends Model
     public function approverUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approver_user_id');
+    }
+
+    public function approverRole(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'approver_role_id');
     }
 }

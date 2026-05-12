@@ -19,6 +19,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Spatie\Permission\Models\Role;
 
 class ApprovalPolicyForm
 {
@@ -93,6 +94,10 @@ class ApprovalPolicyForm
                                                 $set('approver_user_id', null);
                                             }
 
+                                            if ($state !== ApprovalPolicyStepType::CUSTOM_ROLE) {
+                                                $set('approver_role_id', null);
+                                            }
+
                                             if ($state !== ApprovalPolicyStepType::MANAGER_LEVEL) {
                                                 $set('manager_level', null);
                                             }
@@ -108,6 +113,17 @@ class ApprovalPolicyForm
                                         ->preload()
                                         ->required(fn (Get $get): bool => $get('approver_type') === ApprovalPolicyStepType::CUSTOM_USER)
                                         ->visible(fn (Get $get): bool => $get('approver_type') === ApprovalPolicyStepType::CUSTOM_USER),
+
+                                    Select::make('approver_role_id')
+                                        ->label(__('Role'))
+                                        ->options(fn (): array => Role::query()
+                                            ->orderBy('name')
+                                            ->pluck('name', 'id')
+                                            ->all())
+                                        ->searchable()
+                                        ->preload()
+                                        ->required(fn (Get $get): bool => $get('approver_type') === ApprovalPolicyStepType::CUSTOM_ROLE)
+                                        ->visible(fn (Get $get): bool => $get('approver_type') === ApprovalPolicyStepType::CUSTOM_ROLE),
 
                                     TextInput::make('manager_level')
                                         ->label(__('Manager Level'))
@@ -150,6 +166,7 @@ class ApprovalPolicyForm
             ApprovalPolicyStepType::BRANCH_MANAGER => __('Branch Manager'),
             ApprovalPolicyStepType::MANAGER_LEVEL => __('Manager Chain Level'),
             ApprovalPolicyStepType::CUSTOM_USER => __('Custom User'),
+            ApprovalPolicyStepType::CUSTOM_ROLE => __('Custom Role'),
         ];
     }
 }

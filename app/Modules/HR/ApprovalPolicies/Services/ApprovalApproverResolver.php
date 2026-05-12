@@ -32,8 +32,10 @@ class ApprovalApproverResolver
         };
 
         $approvers = $approvers
-            ->filter(fn (ApprovalApprover $approver) => $approver->userId > 0)
-            ->unique('userId')
+            ->filter(fn (ApprovalApprover $approver) => $approver->userId || $approver->roleId)
+            ->unique(fn (ApprovalApprover $approver) => $approver->roleId
+                ? "role:{$approver->roleId}"
+                : "user:{$approver->userId}")
             ->values();
 
         if ($approvers->isEmpty()) {
@@ -156,6 +158,9 @@ class ApprovalApproverResolver
             ApprovalPolicyStepType::MANAGER_LEVEL => $this->managerAtLevel($record, $step->manager_level),
             ApprovalPolicyStepType::CUSTOM_USER => $step->approver_user_id
                 ? new ApprovalApprover((int) $step->approver_user_id)
+                : null,
+            ApprovalPolicyStepType::CUSTOM_ROLE => $step->approver_role_id
+                ? new ApprovalApprover(null, null, (int) $step->approver_role_id)
                 : null,
             default => null,
         };

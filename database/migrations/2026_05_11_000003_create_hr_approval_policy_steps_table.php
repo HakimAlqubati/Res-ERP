@@ -14,6 +14,7 @@ return new class extends Migration
             $table->unsignedSmallInteger('step_order')->default(1);
             $table->string('approver_type');
             $table->foreignId('approver_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('approver_role_id')->nullable()->constrained('roles')->nullOnDelete();
             $table->unsignedSmallInteger('manager_level')->nullable();
             $table->timestamps();
 

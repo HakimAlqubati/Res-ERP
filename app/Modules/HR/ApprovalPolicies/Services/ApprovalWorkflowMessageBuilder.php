@@ -12,7 +12,7 @@ class ApprovalWorkflowMessageBuilder
     {
 
         $currentStep = $record->approvalSteps()
-            ->with(['approverUser:id,name', 'approverEmployee:id,name'])
+            ->with(['approverUser:id,name', 'approverEmployee:id,name', 'approverRole:id,name'])
             ->where('status', ApprovalStepStatus::PENDING)
             ->orderBy('step_order')
             ->first();
@@ -23,6 +23,7 @@ class ApprovalWorkflowMessageBuilder
 
         $approverName = $currentStep->approverEmployee?->name
             ?: $currentStep->approverUser?->name
+            ?: ($currentStep->approverRole?->name ? "any {$currentStep->approverRole->name}" : null)
             ?: "User #{$currentStep->approver_user_id}";
 
         return "This record is waiting for approval step #{$currentStep->step_order}. The current approver is {$approverName}. Please approve it through the approval workflow.";

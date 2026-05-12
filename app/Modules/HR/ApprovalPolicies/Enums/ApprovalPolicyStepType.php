@@ -8,6 +8,7 @@ final class ApprovalPolicyStepType
     public const BRANCH_MANAGER = 'branch_manager';
     public const MANAGER_LEVEL = 'manager_level';
     public const CUSTOM_USER = 'custom_user';
+    public const CUSTOM_ROLE = 'custom_role';
 
     public static function values(): array
     {
@@ -16,6 +17,7 @@ final class ApprovalPolicyStepType
             self::BRANCH_MANAGER,
             self::MANAGER_LEVEL,
             self::CUSTOM_USER,
+            self::CUSTOM_ROLE,
         ];
     }
 }

@@ -26,6 +26,7 @@ class ApprovalStepCreator
                 'step_order' => $index + 1,
                 'approver_employee_id' => $approver->employeeId,
                 'approver_user_id' => $approver->userId,
+                'approver_role_id' => $approver->roleId,
                 'status' => ApprovalStepStatus::PENDING,
                 'created_at' => now(),
                 'updated_at' => now(),

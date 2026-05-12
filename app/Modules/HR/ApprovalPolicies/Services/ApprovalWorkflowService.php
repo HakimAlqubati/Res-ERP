@@ -45,7 +45,7 @@ class ApprovalWorkflowService
 
         $step = $this->currentStep($record);
 
-        return $step && (int) $step->approver_user_id === (int) $user->id;
+        return $step && $this->userCanApproveStep($step, $user);
     }
 
     /**
@@ -60,7 +60,7 @@ class ApprovalWorkflowService
             throw new AuthorizationException('No pending approval step for this record.');
         }
 
-        if ((int) $step->approver_user_id !== (int) $user->id) {
+        if (! $this->userCanApproveStep($step, $user)) {
             throw new AuthorizationException($this->notCurrentApproverMessage($step));
         }
 
@@ -81,7 +81,7 @@ class ApprovalWorkflowService
                 throw new AuthorizationException('No pending approval step for this record.');
             }
 
-            if ((int) $step->approver_user_id !== (int) $user->id) {
+            if (! $this->userCanApproveStep($step, $user)) {
                 throw new AuthorizationException($this->notCurrentApproverMessage($step));
             }
 
@@ -114,7 +114,7 @@ class ApprovalWorkflowService
                 throw new AuthorizationException('No pending approval step for this record.');
             }
 
-            if ((int) $step->approver_user_id !== (int) $user->id) {
+            if (! $this->userCanApproveStep($step, $user)) {
                 throw new AuthorizationException($this->notCurrentApproverMessage($step));
             }
 
@@ -141,7 +141,7 @@ class ApprovalWorkflowService
     private function currentStepForUpdate(Model&ApprovableRecord $record): ?ApprovalStep
     {
         return ApprovalStep::query()
-            ->with(['approverUser:id,name', 'approverEmployee:id,name'])
+            ->with(['approverUser:id,name', 'approverEmployee:id,name', 'approverRole:id,name'])
             ->where('approvable_type', $record::class)
             ->where('approvable_id', $record->getKey())
             ->where('status', ApprovalStepStatus::PENDING)
@@ -172,12 +172,28 @@ class ApprovalWorkflowService
 
     private function notCurrentApproverMessage(ApprovalStep $step): string
     {
-        $step->loadMissing(['approverUser:id,name', 'approverEmployee:id,name']);
+        $step->loadMissing(['approverUser:id,name', 'approverEmployee:id,name', 'approverRole:id,name']);
 
         $approverName = $step->approverEmployee?->name
             ?: $step->approverUser?->name
+            ?: ($step->approverRole?->name ? "any {$step->approverRole->name}" : null)
             ?: "User #{$step->approver_user_id}";
 
         return "Waiting for {$approverName} to approve step #{$step->step_order}.";
+    }
+
+    private function userCanApproveStep(ApprovalStep $step, User $user): bool
+    {
+        if ($step->approver_user_id && (int) $step->approver_user_id === (int) $user->id) {
+            return true;
+        }
+
+        if (! $step->approver_role_id) {
+            return false;
+        }
+
+        return $user->roles()
+            ->where('roles.id', $step->approver_role_id)
+            ->exists();
     }
 }

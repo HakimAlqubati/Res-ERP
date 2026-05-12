@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Spatie\Permission\Models\Role;
 
 class ApprovalStep extends Model
 {
@@ -19,6 +20,7 @@ class ApprovalStep extends Model
         'step_order',
         'approver_employee_id',
         'approver_user_id',
+        'approver_role_id',
         'status',
         'approved_at',
         'rejected_at',
@@ -30,6 +32,7 @@ class ApprovalStep extends Model
         'step_order' => 'integer',
         'approver_employee_id' => 'integer',
         'approver_user_id' => 'integer',
+        'approver_role_id' => 'integer',
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
     ];
@@ -52,5 +55,10 @@ class ApprovalStep extends Model
     public function approverUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approver_user_id');
+    }
+
+    public function approverRole(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'approver_role_id');
     }
 }

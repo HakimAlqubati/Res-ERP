@@ -14,7 +14,8 @@ return new class extends Migration
             $table->foreignId('approval_policy_id')->nullable()->constrained('hr_approval_policies')->nullOnDelete();
             $table->unsignedSmallInteger('step_order');
             $table->foreignId('approver_employee_id')->nullable()->constrained('hr_employees')->nullOnDelete();
-            $table->foreignId('approver_user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('approver_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('approver_role_id')->nullable()->constrained('roles')->nullOnDelete();
             $table->string('status')->default('pending');
             $table->timestamp('approved_at')->nullable();
             $table->timestamp('rejected_at')->nullable();
