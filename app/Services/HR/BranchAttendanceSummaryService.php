@@ -44,9 +44,11 @@ class BranchAttendanceSummaryService
 
         $monthDays = $periodStart->daysInMonth;
 
+        $employeeIdsInBranch = \App\Models\EmployeeBranchLog::getEmployeesForBranchInRange($branchId, $periodStart, $periodEnd);
+
         // Terminated records this month
         $terminatedRecords = EmployeeServiceTermination::where('status', EmployeeServiceTermination::STATUS_APPROVED)
-            ->whereHas('employee', fn($q) => $q->where('branch_id', $branchId))
+            ->whereIn('employee_id', $employeeIdsInBranch)
             ->whereBetween('termination_date', [$periodStart, $periodEnd])
             ->with('employee:id,name,employee_no,salary,join_date,working_days,working_hours,discount_exception_if_attendance_late')
             ->get();
@@ -57,7 +59,7 @@ class BranchAttendanceSummaryService
         $newStaff        = [];
 
         // Process active employees in DB-level chunks
-        Employee::where('branch_id', $branchId)
+        Employee::whereIn('id', $employeeIdsInBranch)
             ->where('active', 1)
             ->select('id', 'name', 'employee_no', 'salary', 'join_date', 'working_days', 'working_hours', 'discount_exception_if_attendance_late', 'has_auto_weekly_leave')
             ->withSum(['overtimes as total_overtime' => function ($query) use ($year, $month) {
