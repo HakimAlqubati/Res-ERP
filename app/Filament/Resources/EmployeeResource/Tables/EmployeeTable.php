@@ -173,7 +173,7 @@ class EmployeeTable
                     ->label(__('lang.currently_shift_hours'))
                     ->badge()
                     ->color('info')->alignCenter()
-                    ->toggleable(isToggledHiddenByDefault: false)
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(false),
                 TextColumn::make('join_date')->sortable()->label(__('lang.start_date'))
                     ->sortable()->searchable()
