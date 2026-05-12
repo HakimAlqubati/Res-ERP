@@ -17,6 +17,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class ApprovalPolicyResource extends Resource
 {
@@ -84,5 +85,31 @@ class ApprovalPolicyResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
+    }
+
+
+    public static function canCreate(): bool
+    {
+        return isSuperAdmin() || isSystemManager();
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return isSuperAdmin() || isSystemManager();
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return isSuperAdmin() || isSystemManager();
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return isSuperAdmin() || isSystemManager();
+    }
+
+    public static function canViewAny(): bool
+    {
+        return isSuperAdmin() || isSystemManager();
     }
 }
