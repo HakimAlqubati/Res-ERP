@@ -26,6 +26,31 @@ trait EmployeeAccessorsTrait
         })->count();
     }
 
+    public function getTotalPeriodsHoursAttribute()
+    {
+        $totalMinutes = 0;
+
+        foreach ($this->periods as $period) {
+            if (!$period->start_at || !$period->end_at) {
+                continue;
+            }
+
+            $start = \Carbon\Carbon::parse($period->start_at);
+            $end   = \Carbon\Carbon::parse($period->end_at);
+
+            if ($end->lt($start)) {
+                $end->addDay();
+            }
+
+            $totalMinutes += $start->diffInMinutes($end);
+        }
+
+        $hours = intdiv($totalMinutes, 60);
+        $minutes = $totalMinutes % 60;
+
+        return sprintf('%02d:%02d', $hours, $minutes);
+    }
+
     public function getAvatarImageAttribute()
     {
         if ($this->avatar && Storage::disk('s3')->exists($this->avatar)) {

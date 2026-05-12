@@ -167,9 +167,17 @@ class EmployeeTable
                     ->separator(', ')
 
                     ->badge()
+                    ->limit(20)
+                    ->tooltip(fn($state) => $state)
                     ->color('primary')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
+                // TextColumn::make('total_periods_hours')
+                //     ->label(__('lang.total_shift_hours') ?? 'Total Shift Hours')
+                //     ->badge()
+                //     ->color('info')
+                //     ->toggleable(isToggledHiddenByDefault: true)
+                //     ->sortable(false),
                 TextColumn::make('join_date')->sortable()->label(__('lang.start_date'))
                     ->sortable()->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
