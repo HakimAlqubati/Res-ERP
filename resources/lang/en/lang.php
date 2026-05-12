@@ -384,6 +384,8 @@ return [
     // ===========================================
     'attendance' => 'Attendance',
     'shift' => 'Shift',
+    'total_shift_hours' => 'Total Shift Hours',
+    'currently_shift_hours' => 'Shift Hours',
     'shifts' => 'Shifts',
     'shift_id' => 'Shift ID',
     'shift_rfid' => 'Shift - RFID',

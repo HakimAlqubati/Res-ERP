@@ -200,6 +200,43 @@ trait EmployeeAccessorsTrait
         ]);
     }
 
+    /**
+     * خاصية لجلب إجمالي الساعات المتوقعة للشهر الحالي.
+     * يمكن الوصول لها عبر $employee->total_supposed_hours
+     */
+    public function getTotalSupposedHoursAttribute()
+    {
+        $startDate = \Carbon\Carbon::now()->startOfMonth();
+        $endDate   = \Carbon\Carbon::now()->endOfMonth();
+
+        $calculator = new \App\Modules\HR\AttendanceReports\Calculators\TotalSupposedHoursCalculator();
+        return $calculator->calculate($this, $startDate, $endDate, true);
+    }
+
+    /**
+     * دالة مساعدة لجلب إجمالي الساعات المتوقعة لأي نطاق زمني محدد مع الموظف.
+     * $employee->getTotalSupposedHoursRange('2026-02-01', '2026-02-28');
+     */
+    public function getTotalSupposedHoursRange($startDate, $endDate, bool $formatted = true)
+    {
+        $calculator = new \App\Modules\HR\AttendanceReports\Calculators\TotalSupposedHoursCalculator();
+        return $calculator->calculate($this, $startDate, $endDate, $formatted);
+    }
+
+    /**
+     * خاصية لجلب متوسط عدد ساعات العمل اليومية للشهر الحالي (رقمية مقربة لأقرب رقم صحيح).
+     * يتم حسابها بقسمة: إجمالي الساعات المتوقعة / صافي أيام العمل (بعد خصم الإجازات والإجازات الأسبوعية إن وجدت)
+     * يمكن الوصول لها عبر $employee->average_daily_supposed_hours
+     */
+    public function getAverageDailySupposedHoursAttribute(): int
+    {
+        $startDate = \Carbon\Carbon::now()->startOfMonth();
+        $endDate   = \Carbon\Carbon::now()->endOfMonth();
+
+        $calculator = new \App\Modules\HR\AttendanceReports\Calculators\TotalSupposedHoursCalculator();
+        return $calculator->calculateAverageDailyHours($this, $startDate, $endDate);
+    }
+
     public function getApprovedPenaltyDeductionsForPeriod($year, $month)
     {
         return $this->approvedPenaltyDeductions()
