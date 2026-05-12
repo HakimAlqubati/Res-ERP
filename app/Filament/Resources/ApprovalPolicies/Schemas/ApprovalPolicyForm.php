@@ -15,6 +15,7 @@ use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Wizard;
@@ -39,52 +40,56 @@ class ApprovalPolicyForm
                         ->icon('heroicon-o-information-circle')
                         ->columnSpanFull()
                         ->schema([
-                            Grid::make(2)
-                                ->columnSpanFull()
-                                ->schema([
-                                    TextInput::make('name')
-                                        ->label(__('Name'))
-                                        ->maxLength(255)
-                                        ->placeholder(__('Example: Leave approval - branch manager')),
+                            Fieldset::make()->columnSpanFull()->schema([
+                                Grid::make(3)
+                                    ->columnSpanFull()
+                                    ->schema([
+                                        TextInput::make('name')
+                                            ->label(__('Name'))
+                                            ->maxLength(255)
+                                            ->placeholder(__('Example: Leave approval - branch manager')),
 
-                                    Toggle::make('active')
-                                        ->label(__('Active'))
-                                        ->default(true)
-                                        ->inline(false),
-                                ]),
 
-                            Grid::make(3)
-                                ->columnSpanFull()
-                                ->schema([
-                                    Select::make('approvable_type')
-                                        ->label(__('Approval Subject'))
-                                        ->options(self::approvableTypeOptions())
-                                        ->required()
-                                        ->searchable()
-                                        ->live()
-                                        ->afterStateUpdated(function (Set $set): void {
-                                            $set('application_type_id', null);
-                                        }),
+                                        Select::make('branch_id')
+                                            ->label(__('Branch'))
+                                            ->placeholder('All')
+                                            ->options(fn(): array => Branch::query()
+                                                ->orderBy('name')
+                                                ->pluck('name', 'id')
+                                                ->all())
+                                            ->searchable()
+                                            ->nullable()
+                                            ->helperText(__('Select all to apply this policy to every branch.')),
+                                        Toggle::make('active')
+                                            ->label(__('Active'))
+                                            ->default(true)
+                                            ->inline(false),
 
-                                    Select::make('application_type_id')
-                                        ->label(__('Employee Application Type'))
-                                        ->options(EmployeeApplicationV2::APPLICATION_TYPE_NAMES)
-                                        ->searchable()
-                                        ->nullable()
-                                        ->helperText(__('Leave empty to apply to all employee application types.'))
-                                        ->visible(fn(Get $get): bool => $get('approvable_type') === EmployeeApplicationV2::class),
+                                    ]),
 
-                                    Select::make('branch_id')
-                                        ->label(__('Branch'))
-                                        ->placeholder('All')
-                                        ->options(fn(): array => Branch::query()
-                                            ->orderBy('name')
-                                            ->pluck('name', 'id')
-                                            ->all())
-                                        ->searchable()
-                                        ->nullable()
-                                        ->helperText(__('Select all to apply this policy to every branch.')),
-                                ]),
+                                Grid::make(2)
+                                    ->columnSpanFull()
+                                    ->schema([
+                                        Select::make('approvable_type')
+                                            ->label(__('Approval Subject'))
+                                            ->options(self::approvableTypeOptions())
+                                            ->required()
+                                            ->searchable()
+                                            ->live()
+                                            ->afterStateUpdated(function (Set $set): void {
+                                                $set('application_type_id', null);
+                                            }),
+
+                                        Select::make('application_type_id')
+                                            ->label(__('Employee Application Type'))
+                                            ->options(EmployeeApplicationV2::APPLICATION_TYPE_NAMES)
+                                            ->searchable()
+                                            ->nullable()
+                                            ->helperText(__('Leave empty to apply to all employee application types.'))
+                                            ->visible(fn(Get $get): bool => $get('approvable_type') === EmployeeApplicationV2::class),
+
+                                    ]),
+                            ])
                         ]),
 
                     Step::make(__('Workflow Steps'))
@@ -94,13 +99,13 @@ class ApprovalPolicyForm
                                 ->label(__('Route Steps'))
                                 ->relationship('policySteps')
                                 ->columnSpanFull()
-                                  ->table([
+                                ->table([
                                     TableColumn::make(__('Approver Type'))->width('18rem'),
                                     TableColumn::make(__('Approver User'))->alignCenter()->width('24rem'),
                                     TableColumn::make(__('Approval Role'))->alignCenter()->width('18rem'),
                                     TableColumn::make(__('Manager Level'))->alignCenter()->width('18rem'),
 
-                                 
+
                                 ])
                                 ->schema([
 
