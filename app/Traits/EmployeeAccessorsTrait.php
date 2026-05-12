@@ -179,6 +179,18 @@ trait EmployeeAccessorsTrait
         return $this->periods()->count();
     }
 
+    public function getFullPeriodNamesAttribute()
+    {
+        return $this->relationLoaded('periods')
+            ? $this->periods->pluck('name')->implode(', ')
+            : $this->periods()->pluck('name')->implode(', ');
+    }
+
+    public function getPeriodNamesAttribute()
+    {
+        return \Illuminate\Support\Str::limit($this->full_period_names, 40, '...');
+    }
+
     public function logPeriodChange(array $periodIds, $action)
     {
         EmployeePeriodLog::create([

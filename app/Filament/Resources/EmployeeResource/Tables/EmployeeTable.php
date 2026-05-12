@@ -162,16 +162,13 @@ class EmployeeTable
                     ->copyMessageDuration(1500)
                     ->color('primary')
                     ->weight(FontWeight::Bold),
-                TextColumn::make('periods.name')
+                TextColumn::make('period_names')
                     ->label(__('lang.shift'))
-                    ->separator(', ')
-
                     ->badge()
-                    ->limit(20)
-                    ->tooltip(fn($state) => $state)
+                    ->tooltip(fn($record) => $record->full_period_names)
                     ->color('primary')
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ->searchable(),
+                    ,
                 // TextColumn::make('total_periods_hours')
                 //     ->label(__('lang.total_shift_hours') ?? 'Total Shift Hours')
                 //     ->badge()
