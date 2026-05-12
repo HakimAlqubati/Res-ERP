@@ -122,7 +122,7 @@ class EmployeeTable
                     ->searchable(isIndividual: false, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: false),
 
- 
+
                 TextColumn::make('branch.name')
                     ->label(__('lang.branch'))
                     ->searchable()
@@ -167,9 +167,17 @@ class EmployeeTable
                     ->separator(', ')
 
                     ->badge()
+                    ->limit(20)
+                    ->tooltip(fn($state) => $state)
                     ->color('primary')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
+                // TextColumn::make('total_periods_hours')
+                //     ->label(__('lang.total_shift_hours') ?? 'Total Shift Hours')
+                //     ->badge()
+                //     ->color('info')
+                //     ->toggleable(isToggledHiddenByDefault: true)
+                //     ->sortable(false),
                 TextColumn::make('join_date')->sortable()->label(__('lang.start_date'))
                     ->sortable()->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -203,7 +211,7 @@ class EmployeeTable
                     }),
                 TextColumn::make('working_days')->label(__('lang.working_days'))->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: false)->alignCenter(true),
-                
+
                 TextColumn::make('job_title')
                     ->label(__('lang.job_title'))
                     ->sortable()->searchable()
@@ -239,14 +247,14 @@ class EmployeeTable
                 TextColumn::make('nationality')->sortable()->searchable()
                     ->label(__('lang.nationality'))
                     ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
-           
+
                 IconColumn::make('has_auto_weekly_leave')
                     ->label(__('lang.has_auto_weekly_leave'))
                     ->boolean()
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark')
                     ->alignCenter(true)
-                    ->sortable() 
+                    ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('is_indexed_in_aws')
                     ->label(__('lang.is_indexed_in_aws'))
@@ -279,9 +287,22 @@ class EmployeeTable
                     ->label(__('lang.nationality'))
                     ->options(getNationalities()),
                 SelectFilter::make('active')
-
-                    ->options([1 => __('lang.active'), 0 => __('lang.terminated')])->default(1)
-                    ->label(__('lang.active')),
+                    ->options([
+                        1 => __('lang.active'),
+                        0 => __('lang.terminated'),
+                        'pending_termination' => __('lang.termination_requests'),
+                    ])
+                    ->default(1)
+                    ->label(__('lang.active'))
+                    ->query(function ($query, array $data) {
+                        if ($data['value'] === '1') {
+                            $query->where('active', 1);
+                        } elseif ($data['value'] === '0') {
+                            $query->where('active', 0);
+                        } elseif ($data['value'] === 'pending_termination') {
+                            $query->whereHas('pendingTerminationRequest');
+                        }
+                    }),
                 SelectFilter::make('employee_type')
                     ->label(__('lang.role_type'))
                     ->options(UserType::where('active', 1)->pluck('name', 'id')->toArray())
@@ -300,6 +321,7 @@ class EmployeeTable
                     ->label(__('lang.my_employees'))
                     ->toggle()
                     ->query(fn($query) => $query->where('manager_id', auth()->user()?->employee?->id)),
+
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
             ->headerActions([
@@ -308,7 +330,10 @@ class EmployeeTable
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('warning')
                     ->action(function () {
-                        $data = Employee::where('active', 1)->select('id', 'employee_no', 'name', 'branch_id', 'job_title')->get();
+                        $data = Employee::where('active', 1)
+                            ->forBranchManager()
+                            ->with(['branch', 'manager', 'periods', 'serviceTermination', 'employeeType'])
+                            ->get();
                         return Excel::download(new EmployeesExport($data), 'employees.xlsx');
                     }),
                 Action::make('export_employees_pdf')
@@ -316,7 +341,10 @@ class EmployeeTable
                     ->icon('heroicon-o-document-text')
                     ->color('primary')
                     ->action(function () {
-                        $data = Employee::where('active', 1)->select('id', 'employee_no', 'name', 'branch_id', 'job_title')->get();
+                        $data = Employee::where('active', 1)
+                            ->forBranchManager()
+                            ->with(['branch', 'manager', 'periods', 'serviceTermination', 'employeeType'])
+                            ->get();
                         $pdf  = PDF::loadView('export.reports.hr.employees.export-employees-as-pdf', ['data' => $data]);
                         return response()->streamDownload(function () use ($pdf) {
                             echo $pdf->output();
@@ -427,21 +455,26 @@ class EmployeeTable
                             DatePicker::make('termination_date')
                                 ->label(__('lang.termination_date'))
                                 ->default($record->serviceTermination->termination_date)
-                                ->disabled(),
+                                ->required(),
                             Textarea::make('termination_reason')
                                 ->label(__('lang.termination_reason'))
                                 ->default($record->serviceTermination->termination_reason)
-                                ->disabled(),
+                                ->required(),
                             Textarea::make('notes')
                                 ->label(__('lang.notes'))
-                                ->default($record->serviceTermination->notes)
-                                ->disabled(),
+                                ->default($record->serviceTermination->notes),
                         ])
                         ->label(__('lang.approve_termination'))
                         ->color('success')
                         // ->requiresConfirmation()
-                        ->action(function ($record) {
+                        ->action(function ($record, array $data) {
                             try {
+                                $record->serviceTermination->update([
+                                    'termination_date' => $data['termination_date'],
+                                    'termination_reason' => $data['termination_reason'],
+                                    'notes' => $data['notes'] ?? null,
+                                ]);
+
                                 app(\App\Modules\HR\Employee\Services\EmployeeLifecycleService::class)
                                     ->approveTermination($record->serviceTermination);
 

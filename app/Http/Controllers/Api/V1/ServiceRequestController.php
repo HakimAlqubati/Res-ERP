@@ -212,11 +212,11 @@ class ServiceRequestController extends Controller
     {
         $data = $req->validate(['equipment_id' => ['required', 'integer', 'exists:equipments,id']]);
         $serviceRequest->update(['equipment_id' => $data['equipment_id']]);
-        // $serviceRequest->logs()->create([
-        //     'log_type'    => ServiceRequestLog::LOG_TYPE_UPDATED,
-        //     'description' => "Equipment #{$data['equipment_id']} linked to this service ticket",
-        //     'created_by'  => auth()->id(),
-        // ]);
+        $serviceRequest->logs()->create([
+            'log_type'    => ServiceRequestLog::LOG_TYPE_UPDATED,
+            'description' => "Equipment #{$data['equipment_id']} linked to this service ticket",
+            'created_by'  => auth()->id(),
+        ]);
         $serviceRequest->logToEquipment(\App\Models\EquipmentLog::ACTION_UPDATED, "Associated with service request #{$serviceRequest->id}");
         return response()->json(['success' => true, 'message' => 'Equipment attached', 'data' => new ServiceRequestResource($serviceRequest->load('equipment'))]);
     }
@@ -224,11 +224,7 @@ class ServiceRequestController extends Controller
     public function detachEquipment(ServiceRequest $serviceRequest)
     {
         $serviceRequest->update(['equipment_id' => null]);
-        $serviceRequest->logs()->create([
-            'log_type'    => ServiceRequestLog::LOG_TYPE_UPDATED,
-            'description' => "Equipment linkage removed from this ticket",
-            'created_by'  => auth()->id(),
-        ]);
+
         return response()->json(['success' => true, 'message' => 'Equipment detached', 'data' => new ServiceRequestResource($serviceRequest)]);
     }
 
@@ -274,11 +270,6 @@ class ServiceRequestController extends Controller
             }
         }
 
-        $serviceRequest->logs()->create([
-            'log_type'    => \App\Models\ServiceRequestLog::LOG_TYPE_COMMENT_ADDED,
-            'description' => mb_strimwidth($data['comment'], 0, 120, '…'),
-            'created_by'  => auth()->id(),
-        ]);
 
         return new ServiceRequestCommentResource($comment->load('user'));
     }

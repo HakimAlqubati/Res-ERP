@@ -9,7 +9,7 @@
                 <p>Track exactly what products came in each receipt and how much is left.</p>
             </div>
             <div style="font-size: 1.1rem; font-weight: 600; color: var(--primary);">
-                Total GRNs: {{ $report->total() }}
+                Remaining GRNs: {{ $report->total() }}
             </div>
         </div>
 
@@ -116,7 +116,7 @@
                             <!-- GRN Header Row -->
                             <tr class="grn-row">
                                 <td colspan="5">
-                                    <span style="font-size: 1.05rem;">📦 GRN: #{{ $grnResult->grnNumber }}</span>
+                                    <span style="font-size: 1.05rem;">GRN: #{{ $grnResult->grnNumber }}</span>
                                     <span style="color: var(--text-light); font-size: 0.85rem; margin-left: 0.5rem; font-weight: normal;">
                                         ({{ $grnResult->formattedGrnDate }})
                                     </span>

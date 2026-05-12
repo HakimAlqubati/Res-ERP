@@ -136,7 +136,10 @@ class EmployeeAttendanceRangeService
         $employeeStartedFromBeginning = $earliestHistoryStart !== null
             && Carbon::parse($earliestHistoryStart)->lte($startDate);
 
-        if ($isFullMonth && $employeeStartedFromBeginning && $report->count() > 4) {
+        if (
+            $isFullMonth && $employeeStartedFromBeginning && $report->count() > 4
+            && $employee->has_auto_weekly_leave
+        ) {
             $deductionSeconds = 0;
             $chunks = $report->values()->chunk(7);
 

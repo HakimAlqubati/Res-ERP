@@ -213,7 +213,15 @@
 
             <tr>
                 <td>
-                    <p class="emp_name">{{ $emp['name'] }}</p>
+                    <p class="emp_name">
+                        <a href="{{ \App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource::getUrl('index', [
+                            'tableFilters[employee_id]' => $emp['id'],
+                            'tableFilters[date_range][start_date]' => \Carbon\Carbon::parse($date)->startOfMonth()->toDateString(),
+                            'tableFilters[date_range][end_date]' => \Carbon\Carbon::parse($date)->endOfMonth()->toDateString(),
+                        ]) }}" target="_blank" class="text-blue-600 hover:text-blue-900 underline transition font-medium">
+                            {{ $emp['name'] }}
+                        </a>
+                    </p>
                 </td>
                 @if ($status === 'leave')
                 <td colspan="9" class="text-center text-gray-500 font-bold">

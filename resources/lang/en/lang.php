@@ -723,6 +723,7 @@ return [
     'current_staff' => 'Current Staff',
     'new_staff' => 'New Staff',
     'terminated_staff' => 'Terminated Staff',
+    'termination_requests' => 'Termination Requests',
     'no_data' => 'No data',
     'start_date' => 'Start Date',
     'end_date' => 'End Date',
