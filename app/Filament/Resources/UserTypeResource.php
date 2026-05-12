@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Clusters\HRUserTypeCluster;
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
@@ -20,6 +21,7 @@ use App\Models\Role;
 use App\Models\UserType;
 use Filament\Forms;
 use Filament\Forms\Components\Select;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
@@ -38,6 +40,11 @@ class UserTypeResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Role Assignment';
 
+        protected static ?string $cluster = HRUserTypeCluster::class;
+
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
+    protected static ?int $navigationSort = 2;
     public static function form(Schema $schema): Schema
     {
         return $schema

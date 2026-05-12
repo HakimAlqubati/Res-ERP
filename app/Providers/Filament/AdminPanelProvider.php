@@ -18,6 +18,7 @@ use App\Filament\Clusters\HRSalarySettingCluster;
 use App\Filament\Clusters\HRServiceRequestCluster;
 use App\Filament\Clusters\HRTaskReport;
 use App\Filament\Clusters\HRTasksSystem;
+use App\Filament\Clusters\HRUserTypeCluster;
 use App\Filament\Clusters\InventoryCluster;
 use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\InventoryReportCluster;
@@ -166,7 +167,7 @@ class AdminPanelProvider extends PanelProvider
                         NavigationGroup::make(__('lang.user_and_roles'))->collapsed(1)
                             ->items(array_merge(
                                 (isSuperAdmin() || isSystemManager() || isBranchManager()) ?   UserResource::getNavigationItems() : [],
-                                (isSuperAdmin()) ?   UserTypeResource::getNavigationItems() : [],
+                                (isSuperAdmin()) ?   HRUserTypeCluster::getNavigationItems() : [],
                                 // isSuperAdmin() || isSystemManager() ? RoleResource::getNavigationItems() : []
                             )),
                         NavigationGroup::make(__('lang.branches'))->collapsed(1)

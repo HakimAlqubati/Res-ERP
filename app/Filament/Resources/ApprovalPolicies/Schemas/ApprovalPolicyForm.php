@@ -66,13 +66,14 @@ class ApprovalPolicyForm
 
                             Select::make('branch_id')
                                 ->label(__('Branch'))
+                                ->placeholder('All')
                                 ->options(fn (): array => Branch::query()
                                     ->orderBy('name')
                                     ->pluck('name', 'id')
                                     ->all())
                                 ->searchable()
                                 ->nullable()
-                                ->helperText(__('Leave empty to use this policy as a global fallback.')),
+                                ->helperText(__('Select all to apply this policy to every branch.')),
                         ]),
                     ])
                     ->columns(1),
