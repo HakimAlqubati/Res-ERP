@@ -138,7 +138,7 @@ class EmployeeAttendanceRangeService
 
         if (
             $isFullMonth && $employeeStartedFromBeginning && $report->count() > 4
-            // && $employee->has_auto_weekly_leave
+            && $employee->has_auto_weekly_leave
         ) {
             $deductionSeconds = 0;
             $chunks = $report->values()->chunk(7);
