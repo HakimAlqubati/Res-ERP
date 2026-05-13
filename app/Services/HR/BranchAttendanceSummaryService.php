@@ -168,6 +168,7 @@ class BranchAttendanceSummaryService
 
             $presentDays = 0;
             $absentDays  = 0;
+            $weeklyLeaveDays = 0;
             $totalDays   = 0;
             $missingMinutes = 0;
             $earlyDepartureMinutes = 0;
@@ -196,6 +197,8 @@ class BranchAttendanceSummaryService
                     \App\Enums\HR\Attendance\AttendanceReportStatus::IncompleteCheckinOnly->value,
                 ])) {
                     $absentDays++;
+                } elseif ($status === \App\Enums\HR\Attendance\AttendanceReportStatus::WeeklyLeave->value) {
+                    $weeklyLeaveDays++;
                 }
 
                 if (!empty($dayData['periods'])) {
@@ -224,11 +227,13 @@ class BranchAttendanceSummaryService
                 }
                 $entitledLeaves = floor($presentDays / $workDaysPerLeave);
 
-                if ($entitledLeaves >= $absentDays) {
+                $totalOffDays = $absentDays + $weeklyLeaveDays;
+
+                if ($entitledLeaves >= $totalOffDays) {
                     $weeklyLeaveDeductionDays = 0;
-                    $autoOvertimeDays = $entitledLeaves - $absentDays;
+                    $autoOvertimeDays = $entitledLeaves - $totalOffDays;
                 } else {
-                    $weeklyLeaveDeductionDays = $absentDays - $entitledLeaves;
+                    $weeklyLeaveDeductionDays = $totalOffDays - $entitledLeaves;
                 }
             }
 
