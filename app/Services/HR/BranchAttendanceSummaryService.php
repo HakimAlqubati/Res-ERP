@@ -231,7 +231,7 @@ class BranchAttendanceSummaryService
 
                 if ($entitledLeaves >= $totalOffDays) {
                     $weeklyLeaveDeductionDays = 0;
-                    $autoOvertimeDays = $entitledLeaves - $totalOffDays;
+                    $autoOvertimeDays = min(4, $entitledLeaves - $totalOffDays);
                 } else {
                     $weeklyLeaveDeductionDays = $totalOffDays - $entitledLeaves;
                 }
