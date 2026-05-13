@@ -1298,10 +1298,13 @@ class EmployeeApplicationResource extends Resource
             ->schema(function ($record) {
                 $mealRequest = $record->mealRequest;
                 return [
-                    Fieldset::make(__('lang.notes'))->columns(2)->schema([
+                    Fieldset::make(__('lang.notes'))->columns(3)->schema([
                         TextInput::make('employee_name')
                             ->label(__('lang.employee'))
                             ->default($record->employee?->name),
+                        DatePicker::make('date')
+                            ->label(__('lang.request_date'))
+                            ->default($mealRequest?->date),
                         TextInput::make('cost')
                             ->label(__('lang.cost'))
                             ->default($mealRequest?->cost),
