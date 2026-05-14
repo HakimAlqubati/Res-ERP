@@ -437,7 +437,7 @@ class EmployeeApplicationResource extends Resource
                         \Filament\Notifications\Notification::make()
                             ->danger()
                             ->title(__('lang.error') ?: 'Error')
-                            ->body(__('lang.payroll_already_processed') ?: 'Cannot process records for this employee in this period.')
+                            ->body('Cannot process records for this employee in this period.')
                             ->send();
 
                         DB::rollBack();
