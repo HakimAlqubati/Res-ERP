@@ -116,4 +116,64 @@ class EmployeeActions
                     ->send();
             });
     }
+
+    public static function active(): Action
+    {
+        return Action::make('active')
+            ->label(__('lang.active'))
+            ->color('success')
+            ->icon('heroicon-o-check-circle')
+            ->requiresConfirmation()
+            ->visible(fn(Employee $record) => !$record->active)
+            ->action(function (Employee $record) {
+                \Illuminate\Support\Facades\DB::beginTransaction();
+                try {
+                    $record->update(['active' => true]);
+                    \Illuminate\Support\Facades\DB::commit();
+                    
+                    Notification::make()
+                        ->title(__('lang.success'))
+                        ->success()
+                        ->send();
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\DB::rollBack();
+                    
+                    Notification::make()
+                        ->title(__('lang.error'))
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+                }
+            });
+    }
+
+    public static function inactive(): Action
+    {
+        return Action::make('inactive')
+            ->label(__('lang.inactive'))
+            ->color('danger')
+            ->icon('heroicon-o-x-circle')
+            ->requiresConfirmation()
+            ->visible(fn(Employee $record) => $record->active)
+            ->action(function (Employee $record) {
+                \Illuminate\Support\Facades\DB::beginTransaction();
+                try {
+                    $record->update(['active' => false]);
+                    \Illuminate\Support\Facades\DB::commit();
+                    
+                    Notification::make()
+                        ->title(__('lang.success'))
+                        ->success()
+                        ->send();
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\DB::rollBack();
+                    
+                    Notification::make()
+                        ->title(__('lang.error'))
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+                }
+            });
+    }
 }

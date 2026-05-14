@@ -56,6 +56,11 @@ trait HasNewUserForm
                             ])
                             // ->default(1)
                             ->required(),
+                            
+                        \Filament\Forms\Components\Checkbox::make('active')
+                            ->label(__('lang.active'))
+                            ->default(true)
+                            ->inline(false),
 
                         Select::make('nationality')
                             ->label('Nationality')

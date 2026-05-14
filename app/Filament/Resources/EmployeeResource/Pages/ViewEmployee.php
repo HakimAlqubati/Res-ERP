@@ -31,12 +31,14 @@ class ViewEmployee extends ViewRecord
             && EmployeeResource::canDelete($this->record)
         ),
       \App\Filament\Resources\EmployeeResource\EmployeeActions::changeBranch(),
+      \App\Filament\Resources\EmployeeResource\EmployeeActions::active(),
+      \App\Filament\Resources\EmployeeResource\EmployeeActions::inactive(),
 
       \Filament\Actions\Action::make('rehire')
         ->label(__('lang.rehire'))
         ->color('success')
         ->icon('heroicon-o-arrow-path')
-        ->visible(fn($record) => !$record->active)
+        ->visible(fn($record) => !$record->active && $record->serviceTermination?->status === \App\Models\EmployeeServiceTermination::STATUS_APPROVED)
         ->schema([
           \Filament\Forms\Components\DatePicker::make('join_date')
             ->label(__('lang.join_date'))
@@ -70,6 +72,14 @@ class ViewEmployee extends ViewRecord
           'tableFilters[date_range][start_date]' => now()->startOfMonth()->toDateString(),
           'tableFilters[date_range][end_date]' => now()->endOfMonth()->toDateString(),
         ]))
+        ->openUrlInNewTab(),
+
+      \Filament\Actions\Action::make('show_user_page')
+        ->label(__('User Page'))
+        ->color('gray')
+        ->icon('heroicon-o-user')
+        ->url(fn($record) => $record->user_id ? \App\Filament\Resources\UserResource::getUrl('edit', ['record' => $record->user_id]) : null)
+        ->visible(fn($record) => $record->user_id !== null)
         ->openUrlInNewTab(),
 
     ];
