@@ -422,29 +422,27 @@ class EmployeeApplicationResource extends Resource
             ->modalSubmitActionLabel('Approve & Pay')
 
             ->action(function ($record, array $data) {
-                // Determine the correct record and advance request early for the check
-                $classType = get_class($record);
-                $tempRecord = $classType == AdvanceRequest::class ? EmployeeApplicationV2::find($record->application_id ?? $record->id) : $record;
-                $advanceRequest = $tempRecord->advanceRequest ?? $record->advanceRequest;
-
-                $deductionDate = \Carbon\Carbon::parse($data['deduction_starts_from'] ?? $advanceRequest->deduction_starts_from);
-                if (app(\App\Services\HR\Payroll\PayrollLockGuard::class)->isLocked($advanceRequest->employee_id, $deductionDate->year, $deductionDate->month)) {
-                    \Filament\Notifications\Notification::make()
-                        ->danger()
-                        ->title(__('lang.error') ?: 'Error')
-                        ->body(__('lang.payroll_already_processed') ?: 'Payroll is already processed for this period.')
-                        ->send();
-                    return;
-                }
-
                 DB::beginTransaction();
                 try {
                     // Approve as Financial Manager
+                    $classType = get_class($record);
                     if ($classType == AdvanceRequest::class) {
                         $record = $record->application;
                         $record = EmployeeApplicationV2::find($record->id);
                     }
                     $advanceRequest = $record->advanceRequest;
+
+                    $deductionDate = \Carbon\Carbon::parse($data['deduction_starts_from'] ?? $advanceRequest->deduction_starts_from);
+                    if (app(\App\Services\HR\Payroll\PayrollLockGuard::class)->isLocked($advanceRequest->employee_id, $deductionDate->year, $deductionDate->month)) {
+                        \Filament\Notifications\Notification::make()
+                            ->danger()
+                            ->title(__('lang.error') ?: 'Error')
+                            ->body(__('lang.payroll_already_processed') ?: 'Payroll is already processed for this period.')
+                            ->send();
+
+                        DB::rollBack();
+                        return;
+                    }
 
                     $advanceRequest->finance_approved_by = auth()->id();
                     $advanceRequest->finance_approved_at = now();
