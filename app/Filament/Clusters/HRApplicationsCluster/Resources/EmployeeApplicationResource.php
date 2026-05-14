@@ -636,12 +636,28 @@ class EmployeeApplicationResource extends Resource
             ->color('danger')
             ->icon('heroicon-o-x-circle')
             ->action(function ($record, $data) {
-                $record->update([
-                    'status'      => EmployeeApplicationV2::STATUS_REJECTED,
-                    'rejected_by' => auth()->user()->id,
-                    'rejected_at' => now(),
-                    'rejected_reason' => $data['rejected_reason'],
-                ]);
+                try {
+                    \Illuminate\Support\Facades\DB::transaction(function () use ($record, $data) {
+                        $record->update([
+                            'status'      => EmployeeApplicationV2::STATUS_REJECTED,
+                            'rejected_by' => auth()->user()->id,
+                            'rejected_at' => now(),
+                            'rejected_reason' => $data['rejected_reason'],
+                        ]);
+                    });
+
+                    \Filament\Notifications\Notification::make()
+                        ->title(__('lang.rejected_successfully') ?: 'Rejected Successfully')
+                        ->success()
+                        ->send();
+
+                } catch (\Exception $e) {
+                    \Filament\Notifications\Notification::make()
+                        ->title(__('lang.error') ?: 'Error')
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+                }
             })
             ->schema(function ($record) {
                 return [
