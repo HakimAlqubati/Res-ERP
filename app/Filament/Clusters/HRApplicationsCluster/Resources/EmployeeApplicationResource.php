@@ -431,6 +431,12 @@ class EmployeeApplicationResource extends Resource
                         $record = EmployeeApplicationV2::find($record->id);
                     }
                     $advanceRequest = $record->advanceRequest;
+                    
+                    $deductionDate = \Carbon\Carbon::parse($data['deduction_starts_from'] ?? $advanceRequest->deduction_starts_from);
+                    if (app(\App\Services\HR\Payroll\PayrollLockGuard::class)->isLocked($advanceRequest->employee_id, $deductionDate->year, $deductionDate->month)) {
+                        throw new \Exception(__('lang.payroll_already_processed') ?: 'Payroll is already processed for this period.');
+                    }
+
                     $advanceRequest->finance_approved_by = auth()->id();
                     $advanceRequest->finance_approved_at = now();
                     $advanceRequest->payment_method      = $data['payment_method'] ?? null;
@@ -650,7 +656,6 @@ class EmployeeApplicationResource extends Resource
                         ->title(__('lang.rejected_successfully') ?: 'Rejected Successfully')
                         ->success()
                         ->send();
-
                 } catch (\Exception $e) {
                     \Filament\Notifications\Notification::make()
                         ->title(__('lang.error') ?: 'Error')
