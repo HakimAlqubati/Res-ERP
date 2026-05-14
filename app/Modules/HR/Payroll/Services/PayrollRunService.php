@@ -100,8 +100,18 @@ class PayrollRunService implements PayrollRunnerInterface
     {
         [$periodStart, $periodEnd] = $this->computePeriod($input->year, $input->month);
 
-        $run      = $this->resolvePayrollRun($input, $periodStart, $periodEnd);
         $segments = $this->buildSegments($input->branchId, $input->year, $input->month, $periodStart, $periodEnd, $input->employeeIds);
+
+        if ($segments->isEmpty()) {
+            return [
+                'success' => false,
+                'message' => 'No eligible employees found for this branch and payroll period.',
+                'meta'    => ['branch_id' => $input->branchId, 'year' => $input->year, 'month' => $input->month],
+                'rows'    => [],
+            ];
+        }
+
+        $run = $this->resolvePayrollRun($input, $periodStart, $periodEnd);
 
         $created = 0;
         $updated = 0;
@@ -201,9 +211,25 @@ class PayrollRunService implements PayrollRunnerInterface
         $employees = $this->eligibleEmployees($branchId, $year, $month, $periodStart, $periodEnd, $employeeIds);
 
         return $employees->flatMap(
-            fn(Employee $employee) => EmployeeBranchLog::getSalarySegments($employee, $periodStart, $periodEnd, $branchId)
+            fn(Employee $employee) => EmployeeBranchLog::getSalarySegments(
+                $employee,
+                $periodStart,
+                $periodEnd,
+                $this->segmentTargetBranchId($employee, $branchId),
+            )
                 ->map(fn($seg) => ['employee' => $employee, 'log' => (object) $seg])
         );
+    }
+
+    /**
+     * For proportional allocation, one payroll run may contain payroll rows for all
+     * branch periods of an employee who touched the selected branch in the month.
+     */
+    private function segmentTargetBranchId(Employee $employee, int $branchId): ?int
+    {
+        return $employee->getEffectiveSalaryAllocationRule() === SalaryAllocationRule::PROPORTIONAL
+            ? null
+            : $branchId;
     }
 
     /**
@@ -217,7 +243,30 @@ class PayrollRunService implements PayrollRunnerInterface
             ->eligibleForPayroll($year, $month)
             ->whereIn('id', $idsInLog)
             ->when($employeeIds, fn($q) => $q->whereIn('id', $employeeIds))
-            ->get();
+            ->get()
+            ->filter(fn(Employee $employee) => $this->isEmployeeOwnedByBranchForPayroll($employee, $branchId, $periodStart, $periodEnd))
+            ->values();
+    }
+
+    /**
+     * Proportional salaries are generated only from the employee's last/current
+     * branch in the payroll period; that run then creates the branch split rows.
+     */
+    private function isEmployeeOwnedByBranchForPayroll(Employee $employee, int $branchId, Carbon $periodStart, Carbon $periodEnd): bool
+    {
+        if ($employee->getEffectiveSalaryAllocationRule() !== SalaryAllocationRule::PROPORTIONAL) {
+            return true;
+        }
+
+        $ownerSegment = EmployeeBranchLog::getSalarySegments(
+            $employee,
+            $periodStart,
+            $periodEnd,
+            null,
+            SalaryAllocationRule::LAST_BRANCH,
+        )->first();
+
+        return (int) ($ownerSegment['branch_id'] ?? 0) === $branchId;
     }
 
     /**

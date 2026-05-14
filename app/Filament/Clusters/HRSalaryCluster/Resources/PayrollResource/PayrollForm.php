@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource;
 
+use App\Enums\HR\Payroll\SalaryAllocationRule;
 use App\Models\Branch;
 use App\Models\Employee;
 use Filament\Forms\Components\CheckboxList;
@@ -115,7 +116,7 @@ class PayrollForm
                                 $year = (int) $year;
                             }
 
-                            $date = Carbon::parse("1 $monthValue");
+                            $date = Carbon::create((int) $year, (int) $monthNumber, 1);
                             $startDate = $date->copy()->startOfMonth();
                             $endDate = $date->copy()->endOfMonth();
 
@@ -124,6 +125,8 @@ class PayrollForm
                             return Employee::query()
                                 ->eligibleForPayroll($year, $monthNumber)
                                 ->whereIn('id', $idsInLog)
+                                ->get()
+                                ->filter(fn(Employee $employee) => self::isEmployeeOwnedByBranchForPayroll($employee, (int) $branchId, $startDate, $endDate))
                                 ->pluck('name', 'id');
                         })
                         ->columnSpanFull()
@@ -132,5 +135,22 @@ class PayrollForm
 
             Textarea::make('notes')->label('Notes')->columnSpanFull(),
         ];
+    }
+
+    private static function isEmployeeOwnedByBranchForPayroll(Employee $employee, int $branchId, Carbon $periodStart, Carbon $periodEnd): bool
+    {
+        if ($employee->getEffectiveSalaryAllocationRule() !== SalaryAllocationRule::PROPORTIONAL) {
+            return true;
+        }
+
+        $ownerSegment = EmployeeBranchLog::getSalarySegments(
+            $employee,
+            $periodStart,
+            $periodEnd,
+            null,
+            SalaryAllocationRule::LAST_BRANCH,
+        )->first();
+
+        return (int) ($ownerSegment['branch_id'] ?? 0) === $branchId;
     }
 }

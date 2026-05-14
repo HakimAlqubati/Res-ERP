@@ -78,7 +78,9 @@ class PayrollSimulationService implements PayrollSimulatorInterface
             $query->whereIn('id', $idsInBranch);
         }
 
-        return $query->get();
+        return $query->get()
+            ->filter(fn(Employee $employee) => $this->isEmployeeOwnedByBranchForPayroll($employee, $branchId, $periodStart, $periodEnd))
+            ->values();
     }
 
     /**
@@ -87,9 +89,46 @@ class PayrollSimulationService implements PayrollSimulatorInterface
     private function buildSegments(Collection $employees, Carbon $periodStart, Carbon $periodEnd, ?int $branchId): Collection
     {
         return $employees->flatMap(
-            fn(Employee $employee) => EmployeeBranchLog::getSalarySegments($employee, $periodStart, $periodEnd, $branchId)
+            fn(Employee $employee) => EmployeeBranchLog::getSalarySegments(
+                $employee,
+                $periodStart,
+                $periodEnd,
+                $this->segmentTargetBranchId($employee, $branchId),
+            )
                 ->map(fn($seg) => ['employee' => $employee, 'log' => (object) $seg])
         );
+    }
+
+    /**
+     * For proportional allocation, the selected last/current branch owns the
+     * simulation, while the result still contains all branch split periods.
+     */
+    private function segmentTargetBranchId(Employee $employee, ?int $branchId): ?int
+    {
+        if (! $branchId) {
+            return null;
+        }
+
+        return $employee->getEffectiveSalaryAllocationRule() === SalaryAllocationRule::PROPORTIONAL
+            ? null
+            : $branchId;
+    }
+
+    private function isEmployeeOwnedByBranchForPayroll(Employee $employee, ?int $branchId, Carbon $periodStart, Carbon $periodEnd): bool
+    {
+        if (! $branchId || $employee->getEffectiveSalaryAllocationRule() !== SalaryAllocationRule::PROPORTIONAL) {
+            return true;
+        }
+
+        $ownerSegment = EmployeeBranchLog::getSalarySegments(
+            $employee,
+            $periodStart,
+            $periodEnd,
+            null,
+            SalaryAllocationRule::LAST_BRANCH,
+        )->first();
+
+        return (int) ($ownerSegment['branch_id'] ?? 0) === $branchId;
     }
 
     /**
