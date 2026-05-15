@@ -18,7 +18,7 @@ class ServiceRequestObserver
         );
 
         if ($serviceRequest->assigned_to) {
-            $this->sendEmailNotification($serviceRequest);
+            $this->sendNotifications($serviceRequest);
         }
     }
 
@@ -35,23 +35,46 @@ class ServiceRequestObserver
         }
 
         if ($serviceRequest->isDirty('assigned_to') && $serviceRequest->assigned_to) {
-            $this->sendEmailNotification($serviceRequest);
+            $this->sendNotifications($serviceRequest);
         }
     }
 
     /**
-     * Send email notification to the assigned employee.
+     * Send email and firebase notifications to the assigned employee.
      */
-    protected function sendEmailNotification(ServiceRequest $serviceRequest): void
+    protected function sendNotifications(ServiceRequest $serviceRequest): void
     {
         $employee = $serviceRequest->assignedTo;
-        if ($employee && $employee->email) {
-            \Illuminate\Support\Facades\Mail::raw(
-                "A new service request #{$serviceRequest->id} has been assigned to you.\nDescription: " . ($serviceRequest->description ?? 'No description') . "\nStatus: " . $serviceRequest->status,
-                function ($message) use ($employee, $serviceRequest) {
-                    $message->to($employee->email)
-                            ->subject("Notification: Service Request #{$serviceRequest->id} Assigned");
-                }
+
+        if (!$employee) {
+            return;
+        }
+
+        $subject = "Notification: Service Request #{$serviceRequest->id} Assigned";
+        $body = "A new service request #{$serviceRequest->id} has been assigned to you.\nDescription: " . ($serviceRequest->description ?? 'No description') . "\nStatus: " . $serviceRequest->status;
+
+        // // Send Email
+        // if ($employee->email) {
+        //     \Illuminate\Support\Facades\Mail::raw(
+        //         $body,
+        //         function ($message) use ($employee, $subject) {
+        //             $message->to($employee->email)
+        //                     ->subject($subject);
+        //         }
+        //     );
+        // }
+
+        // Send Firebase Notification
+        if ($employee->user && $employee->user->fcm_token) {
+            sendNotification(
+                $employee->user->fcm_token,
+                $subject,
+                $body,
+                [
+                    'service_request_id' => $serviceRequest->id,
+                    'status' => $serviceRequest->status,
+                    'type' => 'service_request_assigned'
+                ]
             );
         }
     }
