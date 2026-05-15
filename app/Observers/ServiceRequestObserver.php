@@ -34,6 +34,7 @@ class ServiceRequestObserver
                 EquipmentLog::ACTION_UPDATED,
                 "Service request #{$serviceRequest->id} is now marked as '{$serviceRequest->status}'"
             );
+            $this->notifyStatusChange($serviceRequest);
         }
 
         if ($serviceRequest->isDirty('assigned_to') && $serviceRequest->assigned_to) {
@@ -103,6 +104,44 @@ class ServiceRequestObserver
                         'service_request_id' => $serviceRequest->id,
                         'status' => $serviceRequest->status,
                         'type' => 'service_request_created'
+                    ]
+                );
+            }
+        }
+    }
+
+    /**
+     * Send firebase notifications on status change to Branch Manager and Maintenance Managers.
+     */
+    protected function notifyStatusChange(ServiceRequest $serviceRequest): void
+    {
+        $subject = "Service Request #{$serviceRequest->id} Status Updated";
+        $body = "The status of service request #{$serviceRequest->id} has been changed to '{$serviceRequest->status}'.";
+
+        $usersToNotify = collect();
+
+        // 1. Branch Manager
+        if ($serviceRequest->branch && $serviceRequest->branch->user) {
+            $usersToNotify->push($serviceRequest->branch->user);
+        }
+
+        // 2. Maintenance Managers (Role 14)
+        $maintenanceManagers = \App\Models\User::whereHas('roles', function ($query) {
+            $query->where('roles.id', 14);
+        })->get();
+
+        $usersToNotify = $usersToNotify->merge($maintenanceManagers)->unique('id');
+
+        foreach ($usersToNotify as $user) {
+            if ($user->fcm_token) {
+                sendNotification(
+                    $user->fcm_token,
+                    $subject,
+                    $body,
+                    [
+                        'service_request_id' => $serviceRequest->id,
+                        'status' => $serviceRequest->status,
+                        'type' => 'service_request_status_updated'
                     ]
                 );
             }
