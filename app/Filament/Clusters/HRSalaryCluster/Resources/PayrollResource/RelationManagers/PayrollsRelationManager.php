@@ -242,7 +242,7 @@ class PayrollsRelationManager extends RelationManager
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->visible(fn (\Filament\Resources\RelationManagers\RelationManager $livewire) => $livewire->getOwnerRecord()->status === \App\Models\PayrollRun::STATUS_APPROVED)
+                    ->visible(fn(\Filament\Resources\RelationManagers\RelationManager $livewire) => $livewire->getOwnerRecord()->status === \App\Models\PayrollRun::STATUS_APPROVED)
                     ->action(function (Collection $records): void {
                         $ids = $records
                             ->flatMap(fn(Payroll $record) => $this->payrollIdsForDisplay($record))
@@ -259,7 +259,9 @@ class PayrollsRelationManager extends RelationManager
                             ]);
                     }),
                 DeleteBulkAction::make()
-                    ->visible(fn(): bool => $this->isShowingBranchSplits()),
+                    ->visible(fn(): bool => isSuperAdmin())
+                // ->visible(fn(): bool => $this->isShowingBranchSplits())
+                ,
             ]);
     }
 
