@@ -525,8 +525,12 @@ Route::get('/send-test-email', function () {
 });
 
 
-Route::get('/test-email', function () {
+Route::get('/testEmails', function () {
 
+    $maintenanceManagers = \App\Models\User::whereHas('roles', function ($query) {
+        $query->where('roles.id', 14);
+    })->get();
+    dd($maintenanceManagers);
     Mail::raw('هذه رسالة تجريبية من لارافل عبر ميل تراب', function ($message) {
         $message->to('hakimahmed123321@gmail.com')
             ->subject('تجدربة Mailtrap');
