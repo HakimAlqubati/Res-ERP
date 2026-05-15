@@ -259,7 +259,7 @@ class PayrollsRelationManager extends RelationManager
                             ]);
                     }),
                 DeleteBulkAction::make()
-                    ->visible(fn(): bool => isSuperAdmin())
+                    ->visible(fn(): bool => isSuperAdmin() && $this->isShowingBranchSplits())
                 // ->visible(fn(): bool => $this->isShowingBranchSplits())
                 ,
             ]);
