@@ -20,6 +20,8 @@ class ServiceRequestObserver
         if ($serviceRequest->assigned_to) {
             $this->sendNotifications($serviceRequest);
         }
+
+        $this->notifyMaintenanceManagers($serviceRequest);
     }
 
     /**
@@ -76,6 +78,34 @@ class ServiceRequestObserver
                     'type' => 'service_request_assigned'
                 ]
             );
+        }
+    }
+
+    /**
+     * Send firebase notifications to maintenance managers (Role 14).
+     */
+    protected function notifyMaintenanceManagers(ServiceRequest $serviceRequest): void
+    {
+        $maintenanceManagers = \App\Models\User::whereHas('roles', function ($query) {
+            $query->where('roles.id', 14);
+        })->get();
+
+        $subject = "New Service Request #{$serviceRequest->id}";
+        $body = "A new service request has been created.\nDescription: " . mb_strimwidth($serviceRequest->description ?? 'No description', 0, 100, '...');
+
+        foreach ($maintenanceManagers as $manager) {
+            if ($manager->fcm_token) {
+                sendNotification(
+                    $manager->fcm_token,
+                    $subject,
+                    $body,
+                    [
+                        'service_request_id' => $serviceRequest->id,
+                        'status' => $serviceRequest->status,
+                        'type' => 'service_request_created'
+                    ]
+                );
+            }
         }
     }
 }
