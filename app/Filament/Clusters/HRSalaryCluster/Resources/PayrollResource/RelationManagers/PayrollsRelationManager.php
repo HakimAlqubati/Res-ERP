@@ -20,6 +20,7 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\Summarizers\Summarizer;
 use Filament\Tables\Columns\TextColumn;
@@ -39,8 +40,48 @@ class PayrollsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table->striped()
+            ->defaultKeySort(false)
 
             ->recordTitleAttribute('employee')
+            ->modifyQueryUsing(function (Builder $query): Builder {
+                if ($this->isShowingBranchSplits()) {
+                    return $query;
+                }
+
+                return $query
+                    ->selectRaw('
+                        MIN(id) as id,
+                        payroll_run_id,
+                        employee_id,
+                        MIN(branch_id) as branch_id,
+                        year,
+                        month,
+                        MIN(period_start_date) as period_start_date,
+                        MAX(period_end_date) as period_end_date,
+                        SUM(base_salary) as base_salary,
+                        SUM(total_allowances) as total_allowances,
+                        SUM(total_bonus) as total_bonus,
+                        SUM(overtime_amount) as overtime_amount,
+                        SUM(total_deductions) as total_deductions,
+                        SUM(total_advances) as total_advances,
+                        SUM(total_penalties) as total_penalties,
+                        SUM(total_insurance) as total_insurance,
+                        SUM(employer_share) as employer_share,
+                        SUM(employee_share) as employee_share,
+                        SUM(taxes_amount) as taxes_amount,
+                        SUM(other_deductions) as other_deductions,
+                        SUM(gross_salary) as gross_salary,
+                        SUM(net_salary) as net_salary,
+                        MIN(currency) as currency,
+                        MIN(status) as status,
+                        MAX(is_paid) as is_paid,
+                        MAX(payment_date) as payment_date,
+                        MIN(created_at) as created_at,
+                        MAX(updated_at) as updated_at,
+                        1 as is_grouped_row
+                    ')
+                    ->groupBy('payroll_run_id', 'employee_id', 'year', 'month');
+            })
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->alignCenter()->label('ID')->toggleable(isToggledHiddenByDefault: true),
@@ -67,7 +108,8 @@ class PayrollsRelationManager extends RelationManager
                     ->numeric()
                     ->sortable()
                     ->getStateUsing(function (Payroll $record) {
-                        $amount  = $record->transactions()
+                        $amount  = SalaryTransaction::query()
+                            ->whereIn('payroll_id', $this->payrollIdsForDisplay($record))
                             ->where('operation', '-')
                             ->where('type', '!=', \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_CARRY_FORWARD->value)
                             ->sum('amount');
@@ -82,6 +124,7 @@ class PayrollsRelationManager extends RelationManager
                     ->date('Y-m-d')->alignCenter()->sortable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('net_salary')
                     ->label(__('Net Salary'))->alignCenter()
+                    ->getStateUsing(fn(Payroll $record) => (float) $record->getRawOriginal('net_salary'))
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->sortable()
                     ->summarize(Sum::make()),
@@ -92,12 +135,19 @@ class PayrollsRelationManager extends RelationManager
                     ->dateTime(),
 
             ])
+            ->filters([
+                Filter::make('show_branch_splits')
+                    ->label('Show branch splits')
+                    ->toggle(),
+            ])
             ->selectable()
             ->recordActions([
 
                 ActionGroup::make([
-                    ForceDeleteAction::make(),
-                    DeleteAction::make(),
+                    ForceDeleteAction::make()
+                        ->visible(fn(): bool => $this->isShowingBranchSplits()),
+                    DeleteAction::make()
+                        ->visible(fn(): bool => $this->isShowingBranchSplits()),
                     Action::make('pdfTransactions')
                         ->label('Transactions')
                         ->button()->tooltip('Export Transactions PDF')
@@ -114,7 +164,9 @@ class PayrollsRelationManager extends RelationManager
                         ->color('info')
                         ->icon('heroicon-o-arrow-down-on-square-stack')
                         ->action(function (Payroll $record) {
-                            $transactions = $record->transactions()->get();
+                            $transactions = SalaryTransaction::query()
+                                ->whereIn('payroll_id', $this->payrollIdsForDisplay($record))
+                                ->get();
                             $employeeName = $record->employee?->name ?? 'Employee';
                             $fileName = 'transactions-' . $employeeName . '.xlsx';
                             return Excel::download(new PayrollTransactionsExport($transactions, $employeeName), $fileName);
@@ -141,7 +193,15 @@ class PayrollsRelationManager extends RelationManager
                     ->color('info')->button()
                     ->requiresConfirmation()
                     ->visible(fn(Payroll $record): bool => $record->status === Payroll::STATUS_APPROVED && !$record->is_paid)
-                    ->action(fn(Payroll $record) => $record->markAsPaid()),
+                    ->action(function (Payroll $record): void {
+                        Payroll::query()
+                            ->whereIn('id', $this->payrollIdsForDisplay($record))
+                            ->update([
+                                'is_paid'      => true,
+                                'payment_date' => now(),
+                                'status'       => Payroll::STATUS_PAID,
+                            ]);
+                    }),
 
             ])
 
@@ -150,6 +210,7 @@ class PayrollsRelationManager extends RelationManager
                     ->label('Delete')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
+                    ->visible(fn(): bool => $this->isShowingBranchSplits())
                     ->requiresConfirmation()
                     ->action(function (Collection $records) {
                         try {
@@ -182,8 +243,23 @@ class PayrollsRelationManager extends RelationManager
                     ->color('success')
                     ->requiresConfirmation()
                     ->visible(fn (\Filament\Resources\RelationManagers\RelationManager $livewire) => $livewire->getOwnerRecord()->status === \App\Models\PayrollRun::STATUS_APPROVED)
-                    ->action(fn(Collection $records) => $records->each->markAsPaid()),
-                DeleteBulkAction::make(),
+                    ->action(function (Collection $records): void {
+                        $ids = $records
+                            ->flatMap(fn(Payroll $record) => $this->payrollIdsForDisplay($record))
+                            ->unique()
+                            ->values()
+                            ->all();
+
+                        Payroll::query()
+                            ->whereIn('id', $ids)
+                            ->update([
+                                'is_paid'      => true,
+                                'payment_date' => now(),
+                                'status'       => Payroll::STATUS_PAID,
+                            ]);
+                    }),
+                DeleteBulkAction::make()
+                    ->visible(fn(): bool => $this->isShowingBranchSplits()),
             ]);
     }
 
@@ -209,7 +285,8 @@ class PayrollsRelationManager extends RelationManager
             ->modalCancelActionLabel('Close')
             ->disabledForm()
             ->schema(function (Payroll $record): array {
-                $rows = $record->transactions()
+                $rows = SalaryTransaction::query()
+                    ->whereIn('payroll_id', self::payrollIdsForRecord($record))
                     ->orderByRaw("FIELD(operation, '+', '-')")
                     ->orderBy('type')
                     ->get()
@@ -242,5 +319,32 @@ class PayrollsRelationManager extends RelationManager
                         ->columns(8),
                 ];
             });
+    }
+
+    private function isShowingBranchSplits(): bool
+    {
+        return (bool) data_get($this->getTableFilterState('show_branch_splits'), 'isActive', false);
+    }
+
+    private function payrollIdsForDisplay(Payroll $record): array
+    {
+        if (! (bool) $record->getAttribute('is_grouped_row')) {
+            return [$record->id];
+        }
+
+        return self::payrollIdsForRecord($record);
+    }
+
+    private static function payrollIdsForRecord(Payroll $record): array
+    {
+        if (! $record->payroll_run_id || ! $record->employee_id) {
+            return [$record->id];
+        }
+
+        return Payroll::query()
+            ->where('payroll_run_id', $record->payroll_run_id)
+            ->where('employee_id', $record->employee_id)
+            ->pluck('id')
+            ->all();
     }
 }
