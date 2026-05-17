@@ -35,12 +35,12 @@ class EmployeeOvertimeObserver
 
         $date = Carbon::parse($employeeOvertime->date);
 
-        // $this->payrollLockGuard->checkLock(
-        //     (int) $employeeOvertime->employee_id,
-        //     $date->year,
-        //     $date->month,
-        //     'date'
-        // );
+        $this->payrollLockGuard->checkLock(
+            (int) $employeeOvertime->employee_id,
+            $date->year,
+            $date->month,
+            'date'
+        );
     }
 
 
