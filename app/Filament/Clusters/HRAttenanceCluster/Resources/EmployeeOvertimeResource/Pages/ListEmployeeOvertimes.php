@@ -185,40 +185,57 @@ class ListEmployeeOvertimes extends ListRecords
                 ->icon('heroicon-o-bolt')
                 ->color('info')
                 ->requiresConfirmation()
-                ->visible(fn() => isHakimOrAdel())
                 ->modalHeading('Process Suggested Overtime')
-                ->modalDescription('The system will automatically calculate and store suggested overtime for the selected date and branch.')
+                ->modalDescription('The system will automatically calculate and store suggested overtime for the selected date range and branch.')
                 ->modalSubmitActionLabel('Process Now')
-                ->form([
+                ->schema([
                     Grid::make(2)->schema([
-                        \Filament\Forms\Components\DatePicker::make('date')
-                            ->label('Date')
+                        \Filament\Forms\Components\DatePicker::make('from_date')
+                            ->label('From Date')
                             ->required()
-                            ->default(now())
-                            // ->native(false)
-                            // ->displayFormat('Y-m-d')
-                            ,
+                            ->default(now()),
+                        \Filament\Forms\Components\DatePicker::make('to_date')
+                            ->label('To Date')
+                            ->required()
+                            ->default(now()),
                         \Filament\Forms\Components\Select::make('branch_id')
                             ->label('Branch')
                             ->options(\App\Models\Branch::active()->pluck('name', 'id'))
                             ->required()
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->columnSpanFull(),
                     ]),
                 ])
                 ->action(function (array $data) {
                     try {
                         $service = app(\App\Modules\HR\Overtime\OvertimeService::class);
-                        $results = $service->autoProcessSuggestedOvertime($data['date'], (int) $data['branch_id']);
+                        $totalResults = [];
 
-                        $summary = collect($results)->map(function ($result, $branch) {
+                        $startDate = \Illuminate\Support\Carbon::parse($data['from_date']);
+                        $endDate = \Illuminate\Support\Carbon::parse($data['to_date']);
+
+                        for ($date = $startDate; $date->lte($endDate); $date->addDay()) {
+                            $results = $service->autoProcessSuggestedOvertime($date->format('Y-m-d'), (int) $data['branch_id']);
+
+                            foreach ($results as $branch => $result) {
+                                if (is_numeric($result)) {
+                                    $current = isset($totalResults[$branch]) && is_numeric($totalResults[$branch]) ? $totalResults[$branch] : 0;
+                                    $totalResults[$branch] = $current + (int) $result;
+                                } else {
+                                    $totalResults[$branch] = $result;
+                                }
+                            }
+                        }
+
+                        $summary = collect($totalResults)->map(function ($result, $branch) {
                             $status = is_numeric($result) ? "{$result} records created" : $result;
                             return "**{$branch}**: {$status}";
                         })->implode("\n");
 
                         \Filament\Notifications\Notification::make()
                             ->title('Overtime Processing Results')
-                            ->body($summary)
+                            ->body($summary ?: 'No records processed.')
                             ->success()
                             ->send();
                     } catch (\Exception $e) {
