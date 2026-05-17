@@ -429,7 +429,11 @@ class EmployeeForm
                                         TextInput::make('salary')
                                             ->label(__('lang.salary'))
                                             ->numeric()
-                                            ->inputMode('decimal')->disabled(fn(): bool => isBranchManager()),
+                                            ->inputMode('decimal')
+                                            ->disabled(
+                                                fn(): bool => isBranchManager() && !(isSuperAdmin()
+                                                    || isSystemManager())
+                                            ),
 
                                         Select::make('salary_allocation_rule')
                                             ->label(__('Salary Allocation Override (Branch Transfers)'))

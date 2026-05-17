@@ -33,7 +33,7 @@ class PayrollForm
                     ->default('Staffs who have not had their work periods added, will not appear on the payroll.'),
                 Select::make('branch_id')->label('Choose branch')
                     ->disabledOn('view')->searchable()
-                    ->options(Branch::branches()
+                    ->options(Branch::query()
                         ->forBranchManager('id')
                         ->select('id', 'name')
                         ->get()
