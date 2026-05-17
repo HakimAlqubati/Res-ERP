@@ -40,6 +40,7 @@ class PayrollsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table->striped()
+            ->deferFilters(false)
             ->defaultKeySort(false)
 
             ->recordTitleAttribute('employee')
@@ -145,9 +146,15 @@ class PayrollsRelationManager extends RelationManager
 
                 ActionGroup::make([
                     ForceDeleteAction::make()
-                        ->visible(fn(): bool => $this->isShowingBranchSplits()),
+                        ->action(function (Payroll $record): void {
+                            $ids = $this->payrollIdsForDisplay($record);
+                            Payroll::query()->whereIn('id', $ids)->forceDelete();
+                        })->label('Force Delete'),
                     DeleteAction::make()
-                        ->visible(fn(): bool => $this->isShowingBranchSplits()),
+                        ->action(function (Payroll $record): void {
+                            $ids = $this->payrollIdsForDisplay($record);
+                            Payroll::query()->whereIn('id', $ids)->delete();
+                        })->label('Delete'),
                     Action::make('pdfTransactions')
                         ->label('Transactions')
                         ->button()->tooltip('Export Transactions PDF')
@@ -210,12 +217,20 @@ class PayrollsRelationManager extends RelationManager
                     ->label('Delete')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
-                    ->visible(fn(): bool => $this->isShowingBranchSplits())
                     ->requiresConfirmation()
                     ->action(function (Collection $records) {
                         try {
                             \Illuminate\Support\Facades\DB::beginTransaction();
-                            $records->each(fn($record) => $record->forceDelete());
+
+                            // Collect all real payroll IDs for every selected (possibly grouped) record
+                            $ids = $records
+                                ->flatMap(fn(Payroll $record) => $this->payrollIdsForDisplay($record))
+                                ->unique()
+                                ->values()
+                                ->all();
+
+                            Payroll::query()->whereIn('id', $ids)->forceDelete();
+
                             \Illuminate\Support\Facades\DB::commit();
                             showSuccessNotifiMessage(__('lang.deleted_successfully'));
                         } catch (\Exception $e) {
@@ -259,9 +274,7 @@ class PayrollsRelationManager extends RelationManager
                             ]);
                     }),
                 DeleteBulkAction::make()
-                    ->visible(fn(): bool => isSuperAdmin() && $this->isShowingBranchSplits())
-                // ->visible(fn(): bool => $this->isShowingBranchSplits())
-                ,
+                    ->visible(fn(): bool => isSuperAdmin()),
             ]);
     }
 
