@@ -424,6 +424,8 @@ return [
     // HRMS - Status & Actions
     // ===========================================
     'inactive' => 'Inactive',
+    'enable_account' => 'Enable Account',
+    'disable_account' => 'Disable Account',
     'activate' => 'Activate',
     'deactivate' => 'Deactivate',
     'create' => 'Create',

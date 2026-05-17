@@ -120,7 +120,7 @@ class EmployeeActions
     public static function active(): Action
     {
         return Action::make('active')
-            ->label(__('lang.active'))
+            ->label(__('lang.enable_account'))
             ->color('success')
             ->icon('heroicon-o-check-circle')
             ->requiresConfirmation()
@@ -150,7 +150,7 @@ class EmployeeActions
     public static function inactive(): Action
     {
         return Action::make('inactive')
-            ->label(__('lang.inactive'))
+            ->label(__('lang.disable_account'))
             ->color('danger')
             ->icon('heroicon-o-x-circle')
             ->requiresConfirmation()

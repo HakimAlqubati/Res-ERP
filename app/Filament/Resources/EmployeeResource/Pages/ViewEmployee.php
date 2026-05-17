@@ -24,7 +24,7 @@ class ViewEmployee extends ViewRecord
   protected function getHeaderActions(): array
   {
     return [
-      EditAction::make(),
+      // EditAction::make(),
       DeleteAction::make()
         ->visible(
           fn() => EmployeeResource::canDeleteAny()

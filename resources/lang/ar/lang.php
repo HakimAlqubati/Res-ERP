@@ -406,6 +406,8 @@ return [
   // HRMS - Status & Actions
   // ===========================================
   'inactive' => 'غير فعال',
+  'enable_account' => 'تفعيل الحساب',
+  'disable_account' => 'تعطيل الحساب',
   'activate' => 'تفعيل',
   'deactivate' => 'إلغاء التفعيل',
   'create' => 'إنشاء',
