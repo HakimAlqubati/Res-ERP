@@ -115,11 +115,16 @@ class DeveloperTools extends Page
                         showWarningNotifiMessage("❌ Error: " . $th->getMessage());
                     }
                 }),
-         
+
         ];
     }
     public static function shouldRegisterNavigation(): bool
     {
-        return true;
+        return false;
     }
+
+    // public static function canAccess(): bool
+    // {
+    //     return false;
+    // }
 }
