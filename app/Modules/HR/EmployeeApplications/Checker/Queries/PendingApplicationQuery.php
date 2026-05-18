@@ -17,8 +17,7 @@ class PendingApplicationQuery
      */
     public function build(CheckerFilterDTO $filter): Builder
     {
-        $startDate = Carbon::createFromDate($filter->year, $filter->month, 1)->startOfMonth()->toDateString();
-        $endDate = Carbon::createFromDate($filter->year, $filter->month, 1)->endOfMonth()->toDateString();
+        [$startDate, $endDate] = $this->resolveDateRange($filter);
 
         return EmployeeApplicationV2::query()
             ->where('status', EmployeeApplicationV2::STATUS_PENDING)
@@ -26,7 +25,9 @@ class PendingApplicationQuery
             ->when($filter->branchId, fn(Builder $q) => $q->where('branch_id', $filter->branchId))
             ->where(function (Builder $query) use ($startDate, $endDate) {
                 $query->whereBetween('application_date', [$startDate, $endDate])
-                    ->orWhereHas('leaveRequest', fn($q) => 
+                    ->orWhereHas(
+                        'leaveRequest',
+                        fn($q) =>
                         $q->where('start_date', '<=', $endDate)->where('end_date', '>=', $startDate)
                     )
                     ->orWhereHas('missedCheckinRequest', fn($q) => $q->whereBetween('date', [$startDate, $endDate]))
@@ -45,6 +46,7 @@ class PendingApplicationQuery
             ->where('status', \App\Models\AdvanceWage::STATUS_PENDING)
             ->where('year', $filter->year)
             ->where('month', $filter->month)
+            ->when($filter->day, fn($q) => $q->whereDay('date', $filter->day))
             ->when($filter->employeeIds, fn($q) => $q->whereIn('employee_id', $filter->employeeIds))
             ->when($filter->branchId, fn($q) => $q->where('branch_id', $filter->branchId));
     }
@@ -54,13 +56,29 @@ class PendingApplicationQuery
      */
     public function getOvertimeQuery(CheckerFilterDTO $filter): Builder
     {
-        $startDate = Carbon::createFromDate($filter->year, $filter->month, 1)->startOfMonth()->toDateString();
-        $endDate = Carbon::createFromDate($filter->year, $filter->month, 1)->endOfMonth()->toDateString();
+        [$startDate, $endDate] = $this->resolveDateRange($filter);
 
         return \App\Models\EmployeeOvertime::query()
             ->where('status', \App\Models\EmployeeOvertime::STATUS_PENDING)
             ->whereBetween('date', [$startDate, $endDate])
             ->when($filter->employeeIds, fn($q) => $q->whereIn('employee_id', $filter->employeeIds))
             ->when($filter->branchId, fn($q) => $q->where('branch_id', $filter->branchId));
+    }
+
+    /**
+     * Resolves the start and end date based on whether a specific day is provided.
+     * If `day` is set, returns a single-day range; otherwise returns the full month.
+     */
+    private function resolveDateRange(CheckerFilterDTO $filter): array
+    {
+        if ($filter->day) {
+            $date = Carbon::createFromDate($filter->year, $filter->month, $filter->day)->toDateString();
+            return [$date, $date];
+        }
+
+        $startDate = Carbon::createFromDate($filter->year, $filter->month, 1)->startOfMonth()->toDateString();
+        $endDate   = Carbon::createFromDate($filter->year, $filter->month, 1)->endOfMonth()->toDateString();
+
+        return [$startDate, $endDate];
     }
 }
