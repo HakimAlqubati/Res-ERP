@@ -28,4 +28,16 @@ class CheckerFilterDTO
             branchId: isset($data['branch_id']) ? (int) $data['branch_id'] : null,
         );
     }
+
+    public function toArray(): array
+    {
+        return [
+            'year'         => $this->year,
+            'month'        => $this->month,
+            'day'          => $this->day,
+            'employee_ids' => $this->employeeIds,
+            'branch_id'    => $this->branchId,
+        ];
+    }
+
 }

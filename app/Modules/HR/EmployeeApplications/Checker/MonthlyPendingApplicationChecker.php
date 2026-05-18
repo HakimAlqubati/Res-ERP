@@ -26,10 +26,25 @@ class MonthlyPendingApplicationChecker
     public function check(array $filters): bool
     {
         $filterDto = CheckerFilterDTO::fromArray($filters);
-        
+
         return $this->queryBuilder->build($filterDto)->exists()
             || $this->queryBuilder->getAdvanceWageQuery($filterDto)->exists()
             || $this->queryBuilder->getOvertimeQuery($filterDto)->exists();
+    }
+
+    /**
+     * Returns the total count of pending applications from all sources.
+     *
+     * @param array $filters
+     * @return int
+     */
+    public function getTotalCount(array $filters): int
+    {
+        $filterDto = CheckerFilterDTO::fromArray($filters);
+
+        return $this->queryBuilder->build($filterDto)->count()
+            + $this->queryBuilder->getAdvanceWageQuery($filterDto)->count()
+            + $this->queryBuilder->getOvertimeQuery($filterDto)->count();
     }
 
     /**
