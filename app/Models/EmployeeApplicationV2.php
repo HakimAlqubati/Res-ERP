@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Observers\EmployeeApplicationObserver;
 use App\Traits\EmployeeApplicationAccessors;
 use App\Traits\Scopes\BranchScope;
+use App\Traits\Scopes\StatusScope;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,10 +15,17 @@ use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+
 #[ObservedBy([EmployeeApplicationObserver::class])]
 class EmployeeApplicationV2 extends Model implements Auditable, HasMedia
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope, EmployeeApplicationAccessors, InteractsWithMedia;
+    use HasFactory,
+        SoftDeletes,
+        \OwenIt\Auditing\Auditable,
+        BranchScope,
+        EmployeeApplicationAccessors,
+        InteractsWithMedia,
+        StatusScope;
 
     protected $appends = [
         'leave_type_name',
