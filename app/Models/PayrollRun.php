@@ -55,6 +55,13 @@ class PayrollRun extends Model implements Auditable
     protected $casts = [
         'pay_date' => 'date',
     ];
+
+    /**
+     * Transient (not persisted). Set before save() to scope the pending-applications
+     * check in PayrollRunObserver to specific employees only.
+     */
+    public ?array $pendingCheckEmployeeIds = null;
+
     const STATUS_PENDING   = 'pending';
     const STATUS_COMPLETED = 'completed';
     const STATUS_APPROVED  = 'approved';
