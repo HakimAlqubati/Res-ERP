@@ -219,35 +219,36 @@ class EmployeeApplicationTable
                     ->form([
                         \Filament\Forms\Components\DatePicker::make('date_from')
                             ->label(__('lang.from'))
-                            // ->default(today())
-                            ,
+                        // ->default(today())
+                        ,
                         \Filament\Forms\Components\DatePicker::make('date_to')
                             ->label(__('lang.to'))
-                            // ->default(today())
-                            ,
+                        // ->default(today())
+                        ,
                     ])
                     ->query(function (\Illuminate\Database\Eloquent\Builder $query, array $data): \Illuminate\Database\Eloquent\Builder {
                         return $query
                             ->when(
                                 $data['date_from'],
-                                fn (\Illuminate\Database\Eloquent\Builder $query, $date): \Illuminate\Database\Eloquent\Builder => $query->whereDate('application_date', '>=', $date),
+                                fn(\Illuminate\Database\Eloquent\Builder $query, $date): \Illuminate\Database\Eloquent\Builder => $query->whereDate('application_date', '>=', $date),
                             )
                             ->when(
                                 $data['date_to'],
-                                fn (\Illuminate\Database\Eloquent\Builder $query, $date): \Illuminate\Database\Eloquent\Builder => $query->whereDate('application_date', '<=', $date),
+                                fn(\Illuminate\Database\Eloquent\Builder $query, $date): \Illuminate\Database\Eloquent\Builder => $query->whereDate('application_date', '<=', $date),
                             );
-                    })
-                    ,
+                    }),
                 SelectFilter::make('status')->options([
                     EmployeeApplicationV2::STATUS_PENDING  => EmployeeApplicationV2::STATUS_PENDING,
                     EmployeeApplicationV2::STATUS_REJECTED => EmployeeApplicationV2::STATUS_REJECTED,
                     EmployeeApplicationV2::STATUS_APPROVED => EmployeeApplicationV2::STATUS_APPROVED,
                 ]),
-                SelectFilter::make('employee_id')->label(__('lang.employee'))->searchable()
-                    ->options(Employee::query()->forBranchManager()->select('name', 'id')->pluck('name', 'id')),
                 SelectFilter::make('branch_id')
                     ->label(__('lang.branch'))
-                    ->options(Branch::select('name', 'id')->selectable()->forBranchManager('id')->pluck('name', 'id')),
+                    ->options(Branch::select('name', 'id')->selectable()
+                        ->forBranchManager('id')->pluck('name', 'id')),
+                SelectFilter::make('employee_id')->label(__('lang.employee'))->searchable()
+                    ->options(Employee::query()->forBranchManager()->select('name', 'id')->pluck('name', 'id')),
+
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
             ->recordActions([

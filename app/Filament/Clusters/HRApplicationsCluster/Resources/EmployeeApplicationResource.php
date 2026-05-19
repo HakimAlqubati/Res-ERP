@@ -136,8 +136,11 @@ class EmployeeApplicationResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::whereHas('employee', function ($q) {
-            $q->whereNull('deleted_at'); // ignore soft-deleted employees
-        })->count();
+            $q->whereNull('deleted_at');
+        })
+            ->forBranchManager()
+            ->pending()
+            ->count();
     }
 
     public static function canCreate(): bool
