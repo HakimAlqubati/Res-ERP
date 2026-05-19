@@ -150,7 +150,7 @@
 
                         {{-- Center: Avatar + Name --}}
                         <div style="display: flex; align-items: center; justify-content: center; gap: 10px; flex: 1;">
-                            @if ($employee)
+                            @if ($employee && 1>2)
                             <img src="{{ $employee->avatar_image }}"
                                 alt="{{ $employee->name }}"
                                 style="width: 90px; height: 90px; border-radius: 12px; object-fit: cover; border: 3px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.18);">
