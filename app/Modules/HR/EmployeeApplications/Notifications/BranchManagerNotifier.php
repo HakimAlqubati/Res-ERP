@@ -56,7 +56,7 @@ class BranchManagerNotifier
 
         sendNotification(
             deviceToken: $token,
-            title: __('Pending Applications — :branch', ['branch' => $branch->name]),
+            title: __('Pending requests required your approval  :branch', ['branch' => $branch->name]),
             body: __('You have :count pending application(s) awaiting your review.', ['count' => $count]),
             data: [
                 'type'      => 'pending_applications',
