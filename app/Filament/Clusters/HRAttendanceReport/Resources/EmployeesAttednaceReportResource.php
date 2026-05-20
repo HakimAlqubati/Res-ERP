@@ -53,6 +53,7 @@ class EmployeesAttednaceReportResource extends Resource
             ->filters([
                 SelectFilter::make('branch_id')->label(__('lang.choose_a_branch'))->options(
                     Branch::normal()
+                        ->active()
                         ->forBranchManager('id')
                         ->select('id', 'name')
                         ->get()
@@ -88,4 +89,3 @@ class EmployeesAttednaceReportResource extends Resource
         return false;
     }
 }
-
