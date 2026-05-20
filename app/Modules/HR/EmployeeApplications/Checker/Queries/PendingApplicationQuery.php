@@ -20,7 +20,7 @@ class PendingApplicationQuery
         [$startDate, $endDate] = $this->resolveDateRange($filter);
 
         return EmployeeApplicationV2::query()
-            ->where('status', EmployeeApplicationV2::STATUS_PENDING)
+            ->pending()
             ->when($filter->employeeIds, fn(Builder $q) => $q->whereIn('employee_id', $filter->employeeIds))
             ->when($filter->branchId, fn(Builder $q) => $q->where('branch_id', $filter->branchId))
             ->where(function (Builder $query) use ($startDate, $endDate) {
@@ -43,7 +43,7 @@ class PendingApplicationQuery
     public function getAdvanceWageQuery(CheckerFilterDTO $filter): Builder
     {
         return \App\Models\AdvanceWage::query()
-            ->where('status', \App\Models\AdvanceWage::STATUS_PENDING)
+            ->pending()
             ->where('year', $filter->year)
             ->where('month', $filter->month)
             ->when($filter->day, fn($q) => $q->whereDay('date', $filter->day))
@@ -59,8 +59,34 @@ class PendingApplicationQuery
         [$startDate, $endDate] = $this->resolveDateRange($filter);
 
         return \App\Models\EmployeeOvertime::query()
-            ->where('status', \App\Models\EmployeeOvertime::STATUS_PENDING)
+            ->pending()
             ->whereBetween('date', [$startDate, $endDate])
+            ->when($filter->employeeIds, fn($q) => $q->whereIn('employee_id', $filter->employeeIds))
+            ->when($filter->branchId, fn($q) => $q->where('branch_id', $filter->branchId));
+    }
+
+    /**
+     * Query for pending Employee Rewards.
+     */
+    public function getEmployeeRewardQuery(CheckerFilterDTO $filter): Builder
+    {
+        return \App\Models\EmployeeReward::query()
+            ->pending()
+            ->where('year', $filter->year)
+            ->where('month', $filter->month)
+            ->when($filter->employeeIds, fn($q) => $q->whereIn('employee_id', $filter->employeeIds))
+            ->when($filter->branchId, fn($q) => $q->where('branch_id', $filter->branchId));
+    }
+
+    /**
+     * Query for pending Penalty Deductions.
+     */
+    public function getPenaltyDeductionQuery(CheckerFilterDTO $filter): Builder
+    {
+        return \App\Models\PenaltyDeduction::query()
+            ->pending()
+            ->where('year', $filter->year)
+            ->where('month', $filter->month)
             ->when($filter->employeeIds, fn($q) => $q->whereIn('employee_id', $filter->employeeIds))
             ->when($filter->branchId, fn($q) => $q->where('branch_id', $filter->branchId));
     }
