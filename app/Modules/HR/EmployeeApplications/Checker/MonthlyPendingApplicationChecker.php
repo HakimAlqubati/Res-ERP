@@ -26,10 +26,29 @@ class MonthlyPendingApplicationChecker
     public function check(array $filters): bool
     {
         $filterDto = CheckerFilterDTO::fromArray($filters);
-        
+
         return $this->queryBuilder->build($filterDto)->exists()
             || $this->queryBuilder->getAdvanceWageQuery($filterDto)->exists()
-            || $this->queryBuilder->getOvertimeQuery($filterDto)->exists();
+            || $this->queryBuilder->getOvertimeQuery($filterDto)->exists()
+            || $this->queryBuilder->getEmployeeRewardQuery($filterDto)->exists()
+            || $this->queryBuilder->getPenaltyDeductionQuery($filterDto)->exists();
+    }
+
+    /**
+     * Returns the total count of pending applications from all sources.
+     *
+     * @param array $filters
+     * @return int
+     */
+    public function getTotalCount(array $filters): int
+    {
+        $filterDto = CheckerFilterDTO::fromArray($filters);
+
+        return $this->queryBuilder->build($filterDto)->count()
+            + $this->queryBuilder->getAdvanceWageQuery($filterDto)->count()
+            + $this->queryBuilder->getOvertimeQuery($filterDto)->count()
+            + $this->queryBuilder->getEmployeeRewardQuery($filterDto)->count()
+            + $this->queryBuilder->getPenaltyDeductionQuery($filterDto)->count();
     }
 
     /**
@@ -68,6 +87,18 @@ class MonthlyPendingApplicationChecker
             $breakdown[] = ['type' => 'Overtime', 'count' => (int) $overtimeCount];
         }
 
+        // 4. Add Employee Rewards
+        $rewardCount = $this->queryBuilder->getEmployeeRewardQuery($filterDto)->count();
+        if ($rewardCount > 0) {
+            $breakdown[] = ['type' => 'Employee Reward', 'count' => (int) $rewardCount];
+        }
+
+        // 5. Add Penalty Deductions
+        $penaltyCount = $this->queryBuilder->getPenaltyDeductionQuery($filterDto)->count();
+        if ($penaltyCount > 0) {
+            $breakdown[] = ['type' => 'Penalty Deduction', 'count' => (int) $penaltyCount];
+        }
+
         $totalCount = (int) array_sum(array_column($breakdown, 'count'));
 
         $result = [
@@ -77,7 +108,7 @@ class MonthlyPendingApplicationChecker
             'period'      => "{$filterDto->year}-" . str_pad($filterDto->month, 2, '0', STR_PAD_LEFT),
         ];
 
-        // 4. Branch-wise breakdown (Aggregated from all sources)
+        // 6. Branch-wise breakdown (Aggregated from all sources)
         if (!$filterDto->branchId) {
             $result['by_branch'] = $this->getAggregatedBranchBreakdown($filterDto);
         }
@@ -96,7 +127,9 @@ class MonthlyPendingApplicationChecker
         $sources = [
             $this->queryBuilder->build($filterDto),
             $this->queryBuilder->getAdvanceWageQuery($filterDto),
-            $this->queryBuilder->getOvertimeQuery($filterDto)
+            $this->queryBuilder->getOvertimeQuery($filterDto),
+            $this->queryBuilder->getEmployeeRewardQuery($filterDto),
+            $this->queryBuilder->getPenaltyDeductionQuery($filterDto)
         ];
 
         foreach ($sources as $query) {

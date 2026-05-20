@@ -30,9 +30,10 @@ class PayrollRunObserver
     public function creating(PayrollRun $payrollRun): void
     {
         $filters = [
-            'year' => $payrollRun->year,
-            'month' => $payrollRun->month,
-            'branch_id' => $payrollRun->branch_id,
+            'year'         => $payrollRun->year,
+            'month'        => $payrollRun->month,
+            'branch_id'    => $payrollRun->branch_id,
+            'employee_ids' => $payrollRun->pendingCheckEmployeeIds, // null = check whole branch
         ];
 
         $summary = $this->checker->getDashboardSummary($filters);

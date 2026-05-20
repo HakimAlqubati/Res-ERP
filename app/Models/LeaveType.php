@@ -124,7 +124,7 @@ class LeaveType extends Model implements Auditable
             self::TYPE_YEARLY => 'Annual Leave',
             self::TYPE_MONTHLY => 'Monthly Leave',
             // self::TYPE_WEEKLY => 'Weekly Leave',
-            // self::TYPE_SPECIAL => 'Special Leave'
+            self::TYPE_SPECIAL => 'Special Leave'
         ];
     }
 

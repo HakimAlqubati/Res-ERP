@@ -302,6 +302,10 @@ class PayrollRunService implements PayrollRunnerInterface
             'total_allowances'  => 0,
             'total_deductions'  => 0,
         ]);
+
+        // Scope the Observer's pending-check to only the targeted employees (if any).
+        $run->pendingCheckEmployeeIds = $input->employeeIds;
+
         $run->save();
 
         return $run;

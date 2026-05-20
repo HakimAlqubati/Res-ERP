@@ -9,12 +9,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 use App\Observers\PenaltyDeductionObserver;
 use App\Traits\Scopes\BranchScope;
+use App\Traits\Scopes\StatusScope;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 
 #[ObservedBy([PenaltyDeductionObserver::class])]
 class PenaltyDeduction extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable,BranchScope;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope, StatusScope;
 
     // The table associated with the model.
     protected $table = 'hr_penalty_deductions';
@@ -236,7 +237,6 @@ class PenaltyDeduction extends Model implements Auditable
             if ($penalty->branch_id == null) {
                 $penalty->branch_id = $penalty->employee->branch_id;
             }
-          
         });
     }
 }

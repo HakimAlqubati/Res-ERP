@@ -219,40 +219,85 @@ class EmployeeApplicationTable
                     ->form([
                         \Filament\Forms\Components\DatePicker::make('date_from')
                             ->label(__('lang.from'))
-                            // ->default(today())
-                            ,
+                        // ->default(today())
+                        ,
                         \Filament\Forms\Components\DatePicker::make('date_to')
                             ->label(__('lang.to'))
-                            // ->default(today())
-                            ,
+                        // ->default(today())
+                        ,
                     ])
                     ->query(function (\Illuminate\Database\Eloquent\Builder $query, array $data): \Illuminate\Database\Eloquent\Builder {
                         return $query
                             ->when(
                                 $data['date_from'],
-                                fn (\Illuminate\Database\Eloquent\Builder $query, $date): \Illuminate\Database\Eloquent\Builder => $query->whereDate('application_date', '>=', $date),
+                                fn(\Illuminate\Database\Eloquent\Builder $query, $date): \Illuminate\Database\Eloquent\Builder => $query->whereDate('application_date', '>=', $date),
                             )
                             ->when(
                                 $data['date_to'],
-                                fn (\Illuminate\Database\Eloquent\Builder $query, $date): \Illuminate\Database\Eloquent\Builder => $query->whereDate('application_date', '<=', $date),
+                                fn(\Illuminate\Database\Eloquent\Builder $query, $date): \Illuminate\Database\Eloquent\Builder => $query->whereDate('application_date', '<=', $date),
                             );
-                    })
-                    ,
+                    }),
                 SelectFilter::make('status')->options([
                     EmployeeApplicationV2::STATUS_PENDING  => EmployeeApplicationV2::STATUS_PENDING,
                     EmployeeApplicationV2::STATUS_REJECTED => EmployeeApplicationV2::STATUS_REJECTED,
                     EmployeeApplicationV2::STATUS_APPROVED => EmployeeApplicationV2::STATUS_APPROVED,
                 ]),
-                SelectFilter::make('employee_id')->label(__('lang.employee'))->searchable()
-                    ->options(Employee::query()->forBranchManager()->select('name', 'id')->pluck('name', 'id')),
                 SelectFilter::make('branch_id')
                     ->label(__('lang.branch'))
-                    ->options(Branch::select('name', 'id')->selectable()->forBranchManager('id')->pluck('name', 'id')),
+                    ->options(Branch::select('name', 'id')->selectable()
+                        ->forBranchManager('id')->pluck('name', 'id')),
+                SelectFilter::make('employee_id')->label(__('lang.employee'))->searchable()
+                    ->options(Employee::query()->forBranchManager()->select('name', 'id')->pluck('name', 'id')),
+
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
             ->recordActions([
                 ActionGroup::make([
                     EmployeeApplicationResource::attachmentsAction(),
+
+
+
+                    EmployeeApplicationResource::approveLeaveRequest()->hidden(function ($record) {
+                        if (isstuff() || isFinanceManager() || isHR()) {
+                            return true;
+                        }
+                        if (isset(Auth::user()->employee)) {
+                            if ($record->employee_id == Auth::user()->employee->id) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }),
+                    EmployeeApplicationResource::undoApproveLeaveRequest()->hidden(function ($record) {
+                        if (isstuff() || isFinanceManager() || isHR()) {
+                            return true;
+                        }
+                        if (isset(Auth::user()->employee)) {
+                            if ($record->employee_id == Auth::user()->employee->id) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }),
+                    EmployeeApplicationResource::rejectLeaveRequest()->hidden(function ($record) {
+                        if (isstuff() || isFinanceManager() || isHR()) {
+                            return true;
+                        }
+                        if (isset(Auth::user()->employee)) {
+                            if ($record->employee_id == Auth::user()->employee->id) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }),
+                    EmployeeApplicationResource::LeaveRequesttDetails()
+                        ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST)),
+                    EmployeeApplicationResource::departureRequesttDetails()
+                        ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST)),
+                    EmployeeApplicationResource::attendanceRequestDetails()
+                        ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST)),
+
+
 
                     EmployeeApplicationResource::advancedRequestDetails()
                         ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST)),
@@ -279,107 +324,108 @@ class EmployeeApplicationTable
                         }
                         return true;
                     }),
+                    DeleteAction::make()->using(function ($record) {
+
+                        $details = null;
+                        switch ($record->application_type_id) {
+
+                            case EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST:
+                                $record->load([
+                                    'leaveRequest',
+                                ]);
+                                DB::beginTransaction();
+                                try {
+                                    $details = $record->leaveRequest;
+                                    // dd($details);
+                                    if (! is_null($details)) {
+
+                                        $record->delete();
+                                        DB::commit();
+                                        showSuccessNotifiMessage('done');
+                                    }
+                                } catch (Exception $th) {
+                                    DB::rollBack();
+                                    throw $th;
+                                    return Notification::make()->title($th->getMessage())->warning()->send();
+                                }
+                                break;
+                            case EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST:
+                                $record->load([
+                                    'advanceRequest',
+                                ]);
+                                DB::beginTransaction();
+                                try {
+                                    //code...
+                                    $record->delete();
+                                    $record->advanceInstallments()->delete();
+                                    $record->advanceRequest()->delete();
+                                    showSuccessNotifiMessage('Done');
+                                    DB::commit();
+                                } catch (Exception $th) {
+                                    showWarningNotifiMessage($th->getMessage());
+                                    throw $th;
+                                    DB::rollBack();
+                                }
+                                break;
+                            case EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST:
+                                $record->load([
+                                    'missedCheckinRequest',
+                                ]);
+                                DB::beginTransaction();
+                                try {
+                                    //code...
+                                    $record->delete();
+                                    $record->missedCheckinRequest()->delete();
+                                    showSuccessNotifiMessage('Done');
+                                    DB::commit();
+                                } catch (Exception $th) {
+                                    showWarningNotifiMessage($th->getMessage());
+                                    throw $th;
+                                    DB::rollBack();
+                                }
+                                break;
+                            case EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST:
+                                $record->load([
+                                    'missedCheckoutRequest',
+                                ]);
+                                // dd('sd', $record);
+                                DB::beginTransaction();
+                                try {
+                                    //code...
+                                    $record->delete();
+                                    $record->missedCheckoutRequest()->delete();
+                                    showSuccessNotifiMessage('Done');
+                                    DB::commit();
+                                } catch (Exception $th) {
+                                    showWarningNotifiMessage($th->getMessage());
+                                    throw $th;
+                                    DB::rollBack();
+                                }
+
+                                break;
+                            case EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST:
+                                $record->load(['mealRequest']);
+                                DB::beginTransaction();
+                                try {
+                                    $record->delete();
+                                    $record->mealRequest()->delete();
+                                    showSuccessNotifiMessage('Done');
+                                    DB::commit();
+                                } catch (Exception $th) {
+                                    showWarningNotifiMessage($th->getMessage());
+                                    throw $th;
+                                    DB::rollBack();
+                                }
+                                break;
+
+                            default:
+                                # code...
+                                break;
+                        }
+                    }),
                 ]),
                 RestoreAction::make(),
-                DeleteAction::make()->using(function ($record) {
 
-                    $details = null;
-                    switch ($record->application_type_id) {
-
-                        case EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST:
-                            $record->load([
-                                'leaveRequest',
-                            ]);
-                            DB::beginTransaction();
-                            try {
-                                $details = $record->leaveRequest;
-                                // dd($details);
-                                if (! is_null($details)) {
-
-                                    $record->delete();
-                                    DB::commit();
-                                    showSuccessNotifiMessage('done');
-                                }
-                            } catch (Exception $th) {
-                                DB::rollBack();
-                                throw $th;
-                                return Notification::make()->title($th->getMessage())->warning()->send();
-                            }
-                            break;
-                        case EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST:
-                            $record->load([
-                                'advanceRequest',
-                            ]);
-                            DB::beginTransaction();
-                            try {
-                                //code...
-                                $record->delete();
-                                $record->advanceInstallments()->delete();
-                                $record->advanceRequest()->delete();
-                                showSuccessNotifiMessage('Done');
-                                DB::commit();
-                            } catch (Exception $th) {
-                                showWarningNotifiMessage($th->getMessage());
-                                throw $th;
-                                DB::rollBack();
-                            }
-                            break;
-                        case EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST:
-                            $record->load([
-                                'missedCheckinRequest',
-                            ]);
-                            DB::beginTransaction();
-                            try {
-                                //code...
-                                $record->delete();
-                                $record->missedCheckinRequest()->delete();
-                                showSuccessNotifiMessage('Done');
-                                DB::commit();
-                            } catch (Exception $th) {
-                                showWarningNotifiMessage($th->getMessage());
-                                throw $th;
-                                DB::rollBack();
-                            }
-                            break;
-                        case EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST:
-                            $record->load([
-                                'missedCheckoutRequest',
-                            ]);
-                            // dd('sd', $record);
-                            DB::beginTransaction();
-                            try {
-                                //code...
-                                $record->delete();
-                                $record->missedCheckoutRequest()->delete();
-                                showSuccessNotifiMessage('Done');
-                                DB::commit();
-                            } catch (Exception $th) {
-                                showWarningNotifiMessage($th->getMessage());
-                                throw $th;
-                                DB::rollBack();
-                            }
-
-                            break;
-                        case EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST:
-                            $record->load(['mealRequest']);
-                            DB::beginTransaction();
-                            try {
-                                $record->delete();
-                                $record->mealRequest()->delete();
-                                showSuccessNotifiMessage('Done');
-                                DB::commit();
-                            } catch (Exception $th) {
-                                showWarningNotifiMessage($th->getMessage());
-                                throw $th;
-                                DB::rollBack();
-                            }
-                            break;
-
-                        default:
-                            # code...
-                            break;
-                    }
-                }),
                 ForceDeleteAction::make()->using(function ($record) {
                     DB::beginTransaction();
                     try {
@@ -420,41 +466,6 @@ class EmployeeApplicationTable
                 }),
 
 
-
-                EmployeeApplicationResource::approveLeaveRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager() || isHR()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }),
-                EmployeeApplicationResource::undoApproveLeaveRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager() || isHR()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }),
-                EmployeeApplicationResource::rejectLeaveRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager() || isHR()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }),
-
                 EmployeeApplicationResource::approveAttendanceRequest()->hidden(function ($record) {
                     // return false;
                     if (isstuff() || isFinanceManager() || isHR()) {
@@ -479,13 +490,6 @@ class EmployeeApplicationTable
                     }
                     return false;
                 }),
-
-                EmployeeApplicationResource::LeaveRequesttDetails()
-                    ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST)),
-                EmployeeApplicationResource::departureRequesttDetails()
-                    ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST)),
-                EmployeeApplicationResource::attendanceRequestDetails()
-                    ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST)),
 
 
                 EmployeeApplicationResource::approveMealRequest()->hidden(function ($record) {

@@ -314,6 +314,10 @@ class EmployeeTable
                     ->label(__('lang.me'))
                     ->toggle()
                     ->query(fn($query) => $query->where('id', auth()->user()?->employee?->id)),
+                Filter::make('has_employee_pass')
+                    ->label(__('lang.has_employee_pass'))
+                    ->toggle()
+                    ->query(fn($query) => $query->where('has_employee_pass', 1)),
                 Filter::make('my_employees')
                     ->label(__('lang.my_employees'))
                     ->toggle()

@@ -136,8 +136,11 @@ class EmployeeApplicationResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::whereHas('employee', function ($q) {
-            $q->whereNull('deleted_at'); // ignore soft-deleted employees
-        })->count();
+            $q->whereNull('deleted_at');
+        })
+            ->forBranchManager()
+            ->pending()
+            ->count();
     }
 
     public static function canCreate(): bool
@@ -1360,7 +1363,7 @@ class EmployeeApplicationResource extends Resource
 
         // Fetch leave types that are active AND the employee still has available balance
         // Available balance = entitled_days - (used_days + pending_days)
-        $leaveTypes = LeaveType::withTrashed()->query()
+        $leaveTypes = LeaveType::withTrashed()
             ->where('active', 1)
             ->whereHas('leaveBalances', function ($query) use ($employeeId) {
                 $query->where('employee_id', $employeeId)

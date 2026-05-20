@@ -7,10 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 use App\Traits\Scopes\BranchScope;
+use App\Traits\Scopes\StatusScope;
 
 class EmployeeReward extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope;
+    use HasFactory,
+        SoftDeletes,
+        \OwenIt\Auditing\Auditable,
+        BranchScope,
+        StatusScope;
 
     protected $table = 'hr_employee_rewards';
 
