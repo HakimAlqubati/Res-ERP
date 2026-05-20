@@ -226,6 +226,20 @@ trait EmployeeRelationships
             ->withPivot(['year', 'month', 'balance']);
     }
 
+    public function leaveBalances()
+    {
+        return $this->hasMany(\App\Models\LeaveBalance::class, 'employee_id');
+    }
+    public function activeLeaveBalances()
+    {
+        return $this->hasMany(\App\Models\LeaveBalance::class, 'employee_id')
+            ->whereHas('leaveType', function (Builder $query) {
+                $query->whereNull('deleted_at')
+                    ->where('active', 1)
+                    ->whereIn('type', [LeaveType::TYPE_MONTHLY, LeaveType::TYPE_YEARLY, LeaveType::TYPE_SPECIAL]);
+            });;
+    }
+
     public function approvedPenaltyDeductions()
     {
         return $this->hasMany(PenaltyDeduction::class)->where('status', 'approved');
@@ -251,7 +265,7 @@ trait EmployeeRelationships
         return $this->hasMany(EmployeeReward::class);
     }
 
-    
+
     /**
      * Scope to filter employees by their associated user's role.
      * Supports role ID (numeric) or role Name (string).

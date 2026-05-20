@@ -17,6 +17,7 @@ use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\EmployeeFaceDataRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodHistoriesRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodRelationManager;
+use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\LeaveBalancesRelationManager;
 use App\Filament\Resources\EmployeeResource\Pages;
 use App\Filament\Resources\EmployeeResource\Pages\ViewEmployee;
 use App\Filament\Resources\EmployeeResource\Schemas\EmployeeForm;
@@ -86,6 +87,7 @@ class EmployeeResource extends Resource
             PeriodRelationManager::class,
             PeriodHistoriesRelationManager::class,
             BranchLogRelationManager::class,
+            LeaveBalancesRelationManager::class,
             // AdvanceWagesRelationM        anager::class,
             // EmployeeFaceDataRelationManager::class,
         ];
