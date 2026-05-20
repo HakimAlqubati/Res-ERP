@@ -31,4 +31,4 @@ Schedule::command('tenant:backup')
 // Schedule::command('test:cron')->everyMinute();
 Schedule::command('notifications:warning')->everyFourHours();
 Schedule::command('hr:overtime:auto-process')->everyThirtyMinutes();
-// Schedule::command('hr:notify-pending-applications')->everySixHours();
+Schedule::command('hr:notify-pending-applications')->dailyAt('12:00')->timezone('Asia/Kuala_Lumpur');
