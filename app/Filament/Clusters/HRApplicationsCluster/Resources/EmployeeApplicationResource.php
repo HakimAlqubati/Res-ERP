@@ -1363,7 +1363,7 @@ class EmployeeApplicationResource extends Resource
 
         // Fetch leave types that are active AND the employee still has available balance
         // Available balance = entitled_days - (used_days + pending_days)
-        $leaveTypes = LeaveType::withTrashed()
+        $leaveTypes = LeaveType::query()
             ->where('active', 1)
             ->whereHas('leaveBalances', function ($query) use ($employeeId) {
                 $query->where('employee_id', $employeeId)
