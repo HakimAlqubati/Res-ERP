@@ -251,7 +251,7 @@ class LeaveTypeResource extends Resource
     public static function getAddSpecialBalanceAction(): Action
     {
         return Action::make('addSpecialBalance')
-            ->label('Add Balance')
+            ->label('Assign to Staff')
             ->icon('heroicon-o-plus-circle')
             ->color('success')
             ->visible(fn(LeaveType $record): bool => $record->type === LeaveType::TYPE_SPECIAL)
