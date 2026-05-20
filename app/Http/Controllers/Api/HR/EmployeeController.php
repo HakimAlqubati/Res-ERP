@@ -144,21 +144,21 @@ class EmployeeController extends Controller
 
     public function leaveBalances($id)
     {
-        $employee = Employee::with('leaveTypes')->findOrFail($id);
+        $employee = Employee::with(['activeLeaveBalances.leaveType'])->findOrFail($id);
 
         return response()->json([
             'employee' => [
                 'id'   => $employee->id,
                 'name' => $employee->name,
-                'leave_balances' => $employee->leaveTypes->map(function ($leaveType) {
+                'leave_balances' => $employee->activeLeaveBalances->map(function ($leaveBalance) {
                     return [
-                        'leave_type_id'   => $leaveType->id,
-                        'leave_type_name' => $leaveType->name,
-                        'balance'         => $leaveType->pivot->balance,
-                        'year'            => $leaveType->pivot->year,
-                        'month'           => $leaveType->pivot->month,
-                        'type'            => $leaveType->type,
-                        'is_paid'         => $leaveType->is_paid,
+                        'leave_type_id'   => $leaveBalance->leave_type_id,
+                        'leave_type_name' => $leaveBalance->leaveType?->name,
+                        'balance'         => $leaveBalance->available_balance,
+                        'year'            => $leaveBalance->year,
+                        'month'           => $leaveBalance->month,
+                        'type'            => $leaveBalance->leaveType?->type,
+                        'is_paid'         => $leaveBalance->leaveType?->is_paid,
                     ];
                 }),
             ]
