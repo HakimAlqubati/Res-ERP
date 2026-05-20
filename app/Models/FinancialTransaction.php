@@ -5,7 +5,10 @@ namespace App\Models;
 use App\Scopes\BranchRequiredScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use App\Observers\FinancialTransactionObserver;
 
+#[ObservedBy([FinancialTransactionObserver::class])]
 class FinancialTransaction extends Model
 {
     use SoftDeletes;
