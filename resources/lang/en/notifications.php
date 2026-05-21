@@ -50,4 +50,7 @@ return [
     'checkout_from_shift' => 'Check out from :shift',
     'checkin_to_shift' => 'Check in to :shift',
     'duplicate_missed_checkout_request' => 'Duplicate missed checkout request',
+
+    // Leave request date overlap
+    'leave_request_overlap' => 'A leave request already exists that overlaps with the selected dates.',
 ];

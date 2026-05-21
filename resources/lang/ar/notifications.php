@@ -58,4 +58,7 @@ return [
     'checkout_from_shift' => 'تسجيل انصراف من :shift',
     'checkin_to_shift' => 'تسجيل دخول إلى :shift',
     'duplicate_missed_checkout_request' => 'تم تسجيل طلب انصراف مفقود بالفعل',
+
+    // رسالة عند تداخل تواريخ طلب الإجازة مع إجازة سابقة
+    'leave_request_overlap' => 'يوجد طلب إجازة آخر يتعارض مع التواريخ المحددة.',
 ];
