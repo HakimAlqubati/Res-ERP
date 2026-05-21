@@ -2,9 +2,9 @@
 
 namespace App\Modules\HR\EmployeeApplications\Notifications;
 
-use App\Models\Branch;
-use App\Models\AppLog;
 use App\Mail\GeneralNotificationMail;
+use App\Models\AppLog;
+use App\Models\Branch;
 use App\Modules\HR\EmployeeApplications\Checker\MonthlyPendingApplicationChecker;
 use Illuminate\Support\Facades\Mail;
 
@@ -57,11 +57,11 @@ class BranchManagerNotifier
         sendNotification(
             deviceToken: $token,
             title: __('Pending requests required your approval  :branch', ['branch' => $branch->name]),
-            body: __('You have :count pending application(s) awaiting your review.', ['count' => $count]),
+            body: __('You have :count pending request(s) awaiting your review.', ['count' => $count]),
             data: [
-                'type'      => 'pending_applications',
+                'type' => 'pending_applications',
                 'branch_id' => (string) $branch->id,
-                'count'     => (string) $count,
+                'count' => (string) $count,
             ]
         );
     }
@@ -72,8 +72,8 @@ class BranchManagerNotifier
             return;
         }
 
-        $title   = "Pending Applications ({$count}) — {$branch->name}";
-        $message = "There are {$count} pending employee application(s) in branch [{$branch->name}] awaiting your review.";
+        $title = "Pending requests required your approval ({$count}) — {$branch->name}";
+        $message = "There are {$count} pending employee request(s) in branch [{$branch->name}] awaiting your review.";
 
         try {
             Mail::to($manager->email)->send(new GeneralNotificationMail($title, $message));
