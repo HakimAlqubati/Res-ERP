@@ -2,13 +2,12 @@
 
 namespace App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource\Pages;
 
-use Filament\Actions\CreateAction;
-use Filament\Schemas\Components\Tabs\Tab;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource\Table\EmployeeApplicationTable;
 use App\Models\EmployeeApplicationV2;
-use Filament\Actions;
+use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -30,25 +29,28 @@ class ListEmployeeApplications extends ListRecords
                             $parameters['type'] = $typeId;
                         }
                     }
+
                     return EmployeeApplicationResource::getUrl('create', $parameters);
                 }),
         ];
     }
+
     public function getTabs(): array
     {
         return [
             EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST] => Tab::make()
                 ->label(__('lang.missed_checkin_request'))
-                ->modifyQueryUsing(fn(Builder $query) => $query
+                ->modifyQueryUsing(fn (Builder $query) => $query
                     ->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST))
                 ->icon('heroicon-o-finger-print')
                 ->badge(EmployeeApplicationV2::query()
                     ->pending()
+                    ->forBranchManager()
                     ->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST)->count())
                 ->badgeColor('warning'),
             EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST] => Tab::make()
                 ->label(__('lang.missed_checkout_request'))
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST))
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST))
                 ->icon('heroicon-m-finger-print')
                 ->badge(EmployeeApplicationV2::query()
                     ->pending()
@@ -57,7 +59,7 @@ class ListEmployeeApplications extends ListRecords
                 ->badgeColor('warning'),
             EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST] => Tab::make()
                 ->label(__('lang.advance_request'))
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST))
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST))
                 ->icon('heroicon-m-banknotes')
                 ->badge(EmployeeApplicationV2::query()
                     ->whereHas('employee')
@@ -68,14 +70,17 @@ class ListEmployeeApplications extends ListRecords
                 ->badgeColor('warning'),
             EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST] => Tab::make()
                 ->label(__('lang.leave_request'))
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST))
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST))
                 ->icon('heroicon-o-clock')
                 ->badge(EmployeeApplicationV2::query()
-                    ->pending()->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST)->count())
+                    ->pending()
+                    ->forBranchManager()
+                    ->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST)
+                    ->count())
                 ->badgeColor('warning'),
             EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST] => Tab::make()
                 ->label(__('lang.employee_meals_request'))
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST))
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST))
                 ->icon('heroicon-o-fire')
                 ->badge(EmployeeApplicationV2::query()
                     ->whereHas('employee')
@@ -93,8 +98,6 @@ class ListEmployeeApplications extends ListRecords
     {
         return __('lang.request');
     }
-
-
 
     public function table(Table $table): Table
     {
