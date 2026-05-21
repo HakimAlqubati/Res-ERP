@@ -105,6 +105,31 @@ class EmployeeApplicationV2 extends Model implements Auditable, HasMedia
     const STATUS_APPROVED = 'approved';
     const STATUS_REJECTED = 'rejected';
 
+    /**
+     * Get translatable labels for all statuses.
+     *
+     * @return array<string, string>
+     */
+    public static function statuses(): array
+    {
+        return [
+            self::STATUS_PENDING  => __('lang.pending'),
+            self::STATUS_APPROVED => __('lang.approved'),
+            self::STATUS_REJECTED => __('lang.rejected'),
+        ];
+    }
+
+    /**
+     * Get translatable label for a specific status.
+     *
+     * @param string|null $status
+     * @return string
+     */
+    public static function getStatusLabel(?string $status): string
+    {
+        return self::statuses()[$status] ?? $status ?? '';
+    }
+
     // ─────────────────────────────────────────────────────────────
     // Relationships
     // ─────────────────────────────────────────────────────────────

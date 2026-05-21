@@ -69,6 +69,7 @@ class EmployeeApplicationTable
                 ->alignCenter(true)
                 ->badge()
                 ->icon('heroicon-m-check-badge')
+                ->formatStateUsing(fn($state) => EmployeeApplicationV2::getStatusLabel($state))
                 ->color(fn(string $state): string => match ($state) {
                     EmployeeApplicationV2::STATUS_PENDING  => 'warning',
                     EmployeeApplicationV2::STATUS_REJECTED => 'danger',
