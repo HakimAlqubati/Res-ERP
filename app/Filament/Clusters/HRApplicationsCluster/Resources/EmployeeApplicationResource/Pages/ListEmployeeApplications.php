@@ -45,6 +45,7 @@ class ListEmployeeApplications extends ListRecords
                 ->icon('heroicon-o-finger-print')
                 ->badge(EmployeeApplicationV2::query()
                     ->pending()
+                    ->whereHas('employee')
                     ->forBranchManager()
                     ->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST)->count())
                 ->badgeColor('warning'),
@@ -77,6 +78,7 @@ class ListEmployeeApplications extends ListRecords
                 ->badge(EmployeeApplicationV2::query()
                     ->pending()
                     ->forBranchManager()
+                    ->whereHas('employee')
                     ->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST)
                     ->count())
                 ->badgeColor('warning'),
@@ -88,6 +90,7 @@ class ListEmployeeApplications extends ListRecords
                     ->whereHas('employee')
                     ->forBranchManager()
                     ->pending()
+                    ->whereHas('employee')
                     ->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST)
 
                     ->count())
