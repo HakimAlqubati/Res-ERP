@@ -108,7 +108,9 @@ class PayrollsRelationManager extends RelationManager
 
                         return $record->employee?->branch?->name;
                     })
-                    ->toggleable(),
+                    ->visible(fn () => $this->isShowingBranchSplits())
+                    // ->toggleable()
+                    ,
                 Tables\Columns\TextColumn::make('base_salary')
                     ->label('Base')
                     ->numeric()->alignCenter()
