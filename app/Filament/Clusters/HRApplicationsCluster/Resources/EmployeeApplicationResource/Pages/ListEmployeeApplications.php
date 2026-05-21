@@ -55,7 +55,9 @@ class ListEmployeeApplications extends ListRecords
                 ->badge(EmployeeApplicationV2::query()
                     ->pending()
                     ->forBranchManager()
-                    ->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST)->count())
+                    ->whereHas('employee')
+                    ->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST)
+                    ->count())
                 ->badgeColor('warning'),
             EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST] => Tab::make()
                 ->label(__('lang.advance_request'))
