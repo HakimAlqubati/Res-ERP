@@ -30,6 +30,17 @@ class AttendanceObserver
         $this->guardPeriod($attendance);
     }
 
+    /**
+     * Handle the Attendance "deleted" event.
+     * After deletion, if the record type is checkin, delete the associated checkout record.
+     */
+    public function deleted(Attendance $attendance): void
+    {
+        if ($attendance->check_type === Attendance::CHECKTYPE_CHECKIN) {
+            $attendance->checkout?->delete();
+        }
+    }
+
     // -------------------------------------------------------------------------
     //  Private helpers
     // -------------------------------------------------------------------------
