@@ -186,7 +186,8 @@ class EmployeeApplicationController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to approve application',
+                'message' => $errorMessage,
+                // 'message' => 'Failed to approve application',
                 'error'   => $errorMessage,
             ], 500);
         }

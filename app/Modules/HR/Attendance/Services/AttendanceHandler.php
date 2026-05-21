@@ -86,11 +86,19 @@ class AttendanceHandler
             $context = $this->determineCheckType->execute($context);
         }
 
-        // Check-out with no open check-in: auto-create a missed checkout request for HR review.
-        if (
-            $context->isCheckOut() && !$context->lastCheckIn
-            && $context->attendanceType->value != AttendanceType::REQUEST->value
-        ) {
+        // Check-out with no open check-in
+        if ($context->isCheckOut() && !$context->lastCheckIn) {
+
+            // إذا كان الطلب من نوع "request" (موافقة على طلب انصراف):
+            // لا يمكن تسجيل خروج بدون دخول مسجّل مسبقاً — نُعيد failure DTO مباشرةً
+            // (نفس نمط autoRequestCreated أدناه، بدون رمي exception)
+            if ($context->attendanceType->value === AttendanceType::REQUEST->value) {
+                return AttendanceResultDTO::failure(
+                    __('notifications.cannot_checkout_without_checkin')
+                );
+            }
+
+            // للحضور العادي (fingerprint/rfid/...): إنشاء طلب انصراف تلقائي لمراجعة HR.
             $this->createMissedCheckoutRequest->execute($context);
 
             return AttendanceResultDTO::autoRequestCreated(
