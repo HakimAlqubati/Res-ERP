@@ -45,6 +45,8 @@ class PayrollsRelationManager extends RelationManager
 
             ->recordTitleAttribute('employee')
             ->modifyQueryUsing(function (Builder $query): Builder {
+                $query->with(['employee.branch', 'branch']);
+
                 if ($this->isShowingBranchSplits()) {
                     return $query;
                 }
@@ -95,6 +97,18 @@ class PayrollsRelationManager extends RelationManager
                     ->limit(15)
                     ->label(__('lang.employee'))
                     ->tooltip(fn($state) => $state),
+                Tables\Columns\TextColumn::make('branch.name')
+                    ->searchable()
+                    ->sortable()
+                    ->label(__('lang.branch'))
+                    ->getStateUsing(function (Payroll $record) {
+                        if ($this->isShowingBranchSplits()) {
+                            return $record->branch?->name;
+                        }
+
+                        return $record->employee?->branch?->name;
+                    })
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('base_salary')
                     ->label('Base')
                     ->numeric()->alignCenter()
@@ -138,7 +152,7 @@ class PayrollsRelationManager extends RelationManager
             ])
             ->filters([
                 Filter::make('show_branch_splits')
-                    ->label('Show branch splits')
+                    ->label(__('Show Branch'))
                     ->toggle(),
             ])
             ->selectable()
