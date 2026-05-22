@@ -66,7 +66,14 @@ class EmployeeTable
                     })
                     // ->words(3)
                     ->limit(20)
-                    ->weight(FontWeight::Medium)->tooltip(fn ($state) => $state)
+                    ->weight(FontWeight::Medium)
+                    ->tooltip(function ($record, $state) {
+                        if ($record->pendingTerminationRequest) {
+                            return $state . ' (Pending Termination)';
+                        }
+
+                        return $state;
+                    })
                     ->searchable(isIndividual: false, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: false),
 
@@ -251,7 +258,7 @@ class EmployeeTable
                     ->multiple(),
                 // SelectFilter::make('manager_id')
                 //     ->label(__('lang.manager'))
-                     
+
                 //     ->options(Employee::whereIn('employee_type', [1, 2])
                 //         ->pluck('name', 'id')->toArray())
                 //     ->searchable()

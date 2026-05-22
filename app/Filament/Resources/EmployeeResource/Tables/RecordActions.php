@@ -41,7 +41,7 @@ class RecordActions
                 ->label(__('lang.terminate_service'))
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
-                ->visible(fn (Employee $record) => $record->active && ! $record->pendingTerminationRequest()->exists())
+                ->visible(fn (Employee $record) => $record->active && ! $record->pendingTerminationRequest)
                 ->schema(fn (Employee $record) => [
                     Fieldset::make()->columnSpanFull()->columns(2)->schema([
                         TextInput::make('name')
@@ -108,8 +108,7 @@ class RecordActions
                 ->label(__('lang.manage_termination'))
                 ->icon('heroicon-o-clipboard-document-check')
                 ->color('warning')
-                ->visible(fn (Employee $record) => $record->pendingTerminationRequest()
-                    ->exists())
+                ->visible(fn (Employee $record) => $record->pendingTerminationRequest !== null)
                 ->schema(fn (Employee $record) => [
                     DatePicker::make('termination_date')
                         ->label(__('lang.termination_date'))
@@ -175,8 +174,7 @@ class RecordActions
                 ->schema([
                     Textarea::make('rejection_reason')->required()->label(__('lang.rejection_reason')),
                 ])
-                ->visible(fn (Employee $record) => $record->serviceTermination()->where('status', 'pending')->exists())
-
+                ->visible(fn (Employee $record) => $record->pendingTerminationRequest !== null)
                 ->icon('heroicon-o-x-circle')
                 ->action(function (array $data, $record) {
                     try {

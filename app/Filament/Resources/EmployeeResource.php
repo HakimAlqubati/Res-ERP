@@ -135,8 +135,8 @@ class EmployeeResource extends Resource
         return parent::getEloquentQuery()
             // ->where('role_id',8)
             ->forBranchManager()
-            ->with(['branch:id,name', 'pendingTerminationRequest:id,employee_id,status',
-                'serviceTermination:id,employee_id,status'])
+            ->with(['branch:id,name', 'pendingTerminationRequest',
+                'serviceTermination'])
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
