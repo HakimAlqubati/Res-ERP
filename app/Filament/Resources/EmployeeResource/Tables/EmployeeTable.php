@@ -2,22 +2,18 @@
 
 namespace App\Filament\Resources\EmployeeResource\Tables;
 
-use App\Exports\EmployeesExport;
 use App\Filament\Resources\EmployeeResource;
 use App\Filament\Tables\Columns\SoftDeleteColumn;
-use App\Imports\EmployeeImport;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeFileType;
 use App\Models\User;
 use App\Models\UserType;
-use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
-use Filament\Forms\Components\FileUpload; 
-use Filament\Support\Enums\FontWeight; 
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -27,7 +23,6 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
 
 class EmployeeTable
@@ -170,18 +165,18 @@ class EmployeeTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('unrequired_documents_count')->label(__('lang.unrequired_docs'))->alignCenter(true)
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->formatStateUsing(function ($state) {
+                // TextColumn::make('unrequired_documents_count')->label(__('lang.unrequired_docs'))->alignCenter(true)
+                //     ->toggleable(isToggledHiddenByDefault: true)
+                //     ->formatStateUsing(function ($state) {
 
-                        return '('.$state.') docs of '.EmployeeFileType::getCountByRequirement()['unrequired_count'];
-                    }),
-                TextColumn::make('required_documents_count')->label(__('lang.required_docs'))->alignCenter(true)
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->formatStateUsing(function ($state) {
+                //         return '('.$state.') docs of '.EmployeeFileType::getCountByRequirement()['unrequired_count'];
+                //     }),
+                // TextColumn::make('required_documents_count')->label(__('lang.required_docs'))->alignCenter(true)
+                //     ->toggleable(isToggledHiddenByDefault: true)
+                //     ->formatStateUsing(function ($state) {
 
-                        return '('.$state.') docs of '.EmployeeFileType::getCountByRequirement()['required_count'];
-                    }),
+                //         return '('.$state.') docs of '.EmployeeFileType::getCountByRequirement()['required_count'];
+                //     }),
                 IconColumn::make('active')
                     ->label(__('lang.active'))
                     ->boolean()
@@ -254,11 +249,13 @@ class EmployeeTable
                     ->options(UserType::where('active', 1)->pluck('name', 'id')->toArray())
                     ->searchable()
                     ->multiple(),
-                SelectFilter::make('manager_id')
-                    ->label(__('lang.manager'))
-                    ->options(Employee::whereIn('employee_type', [1, 2])->pluck('name', 'id')->toArray())
-                    ->searchable()
-                    ->multiple(),
+                // SelectFilter::make('manager_id')
+                //     ->label(__('lang.manager'))
+                     
+                //     ->options(Employee::whereIn('employee_type', [1, 2])
+                //         ->pluck('name', 'id')->toArray())
+                //     ->searchable()
+                //     ->multiple(),
                 Filter::make('me')
                     ->label(__('lang.me'))
                     ->toggle()

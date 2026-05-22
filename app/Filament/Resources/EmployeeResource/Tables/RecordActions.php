@@ -8,7 +8,6 @@ use App\Filament\Resources\EmployeeResource\EmployeeActions;
 use App\Models\AdvanceWage;
 use App\Models\Branch;
 use App\Models\Employee;
-use App\Models\User;
 use App\Modules\HR\Employee\Services\EmployeeLifecycleService;
 use App\Rules\HR\Employee\NoFutureTerminationApprovalRule;
 use App\Rules\HR\Payroll\AdvanceWageLimitRule;
@@ -42,7 +41,7 @@ class RecordActions
                 ->label(__('lang.terminate_service'))
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
-                ->visible(fn (Employee $record) => $record->active && ! $record->serviceTermination()->where('status', 'pending')->exists())
+                ->visible(fn (Employee $record) => $record->active && ! $record->pendingTerminationRequest()->exists())
                 ->schema(fn (Employee $record) => [
                     Fieldset::make()->columnSpanFull()->columns(2)->schema([
                         TextInput::make('name')
@@ -109,7 +108,7 @@ class RecordActions
                 ->label(__('lang.manage_termination'))
                 ->icon('heroicon-o-clipboard-document-check')
                 ->color('warning')
-                ->visible(fn (Employee $record) => $record->serviceTermination()->pending()
+                ->visible(fn (Employee $record) => $record->pendingTerminationRequest()
                     ->exists())
                 ->schema(fn (Employee $record) => [
                     DatePicker::make('termination_date')
@@ -131,7 +130,7 @@ class RecordActions
                         ->live()
                         ->afterStateUpdated(function (bool $state) use ($record) {
                             $record->serviceTermination->updateQuietly([
-                                'auto_approve'          => $state,
+                                'auto_approve' => $state,
                                 'scheduled_approver_id' => $state ? auth()->id() : null,
                             ]);
                         })
@@ -144,15 +143,15 @@ class RecordActions
                 ->action(function ($record, array $data) {
                     try {
                         $record->serviceTermination->update([
-                            'termination_date'      => $data['termination_date'],
-                            'termination_reason'    => $data['termination_reason'],
-                            'notes'                 => $data['notes'] ?? null,
-                            'auto_approve'          => $data['auto_approve'] ?? false,
+                            'termination_date' => $data['termination_date'],
+                            'termination_reason' => $data['termination_reason'],
+                            'notes' => $data['notes'] ?? null,
+                            'auto_approve' => $data['auto_approve'] ?? false,
                             'scheduled_approver_id' => auth()->id(),
                         ]);
 
                         // If scheduled for future auto-approval, just save and let the cron job handle it.
-                        if (($data['auto_approve'] ?? false) && \Carbon\Carbon::parse($data['termination_date'])->isFuture()) {
+                        if (($data['auto_approve'] ?? false) && Carbon::parse($data['termination_date'])->isFuture()) {
                             Notification::make()
                                 ->title('Scheduled for auto-approval')
                                 ->body('The termination will be approved automatically on the termination date.')

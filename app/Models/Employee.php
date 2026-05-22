@@ -27,8 +27,7 @@ class Employee extends Model implements Auditable
     }
     public function pendingTerminationRequest()
     {
-        return $this->hasOne(EmployeeServiceTermination::class)
-            ->where('status', EmployeeServiceTermination::STATUS_PENDING);
+        return $this->hasOne(EmployeeServiceTermination::class)->pending();
     }
 
     protected $table = 'hr_employees';
