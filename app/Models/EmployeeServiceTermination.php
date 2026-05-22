@@ -24,6 +24,8 @@ class EmployeeServiceTermination extends Model
         'termination_reason',
         'notes',
         'status',
+        'auto_approve',
+        'scheduled_approver_id',
         'rejection_reason',
         'created_by',
         'updated_by',
@@ -37,6 +39,7 @@ class EmployeeServiceTermination extends Model
         'termination_date' => 'date',
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
+        'auto_approve' => 'boolean',
     ];
 
     // Status Constants
@@ -66,6 +69,11 @@ class EmployeeServiceTermination extends Model
     public function updatedBy()
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function scheduledApprover()
+    {
+        return $this->belongsTo(User::class, 'scheduled_approver_id');
     }
 
     public function approvedBy()

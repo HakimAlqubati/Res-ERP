@@ -4,7 +4,9 @@ namespace App\Observers;
 
 use App\Models\EmployeeServiceTermination;
 use App\Models\User;
+use App\Rules\HR\Employee\NoFutureTerminationApprovalRule;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class EmployeeServiceTerminationObserver
 {
@@ -69,6 +71,16 @@ class EmployeeServiceTerminationObserver
     {
         if (auth()->check()) {
             $employeeServiceTermination->updated_by = auth()->id();
+        }
+
+        if (
+            $employeeServiceTermination->isDirty('status') &&
+            $employeeServiceTermination->status === EmployeeServiceTermination::STATUS_APPROVED
+        ) {
+            Validator::make(
+                ['termination_date' => $employeeServiceTermination->termination_date],
+                ['termination_date' => new NoFutureTerminationApprovalRule($employeeServiceTermination->termination_date)]
+            )->validate();
         }
     }
 

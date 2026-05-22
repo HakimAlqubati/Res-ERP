@@ -8,7 +8,9 @@ use App\Filament\Resources\EmployeeResource\EmployeeActions;
 use App\Models\AdvanceWage;
 use App\Models\Branch;
 use App\Models\Employee;
+use App\Models\User;
 use App\Modules\HR\Employee\Services\EmployeeLifecycleService;
+use App\Rules\HR\Employee\NoFutureTerminationApprovalRule;
 use App\Rules\HR\Payroll\AdvanceWageLimitRule;
 use App\Services\S3ImageService;
 use Carbon\Carbon;
@@ -23,6 +25,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
@@ -54,6 +57,7 @@ class RecordActions
                             ->label(__('lang.termination_date'))
                             ->required()
                             ->default(now())
+                            ->live()
                             ->columnSpanFull()
                             ->rules([
                                 fn (Employee $record) => function (string $attribute, $value, Closure $fail) use ($record) {
@@ -68,6 +72,11 @@ class RecordActions
                                     }
                                 },
                             ]),
+                        Toggle::make('auto_approve')
+                            ->label('Auto-approve on termination date (via cron job)')
+                            ->default(false)
+                            ->columnSpanFull()
+                            ->visible(fn (Get $get) => $get('termination_date') && Carbon::parse($get('termination_date'))->isFuture()),
                         Textarea::make('termination_reason')
                             ->label(__('lang.termination_reason'))
                             ->columnSpanFull()
@@ -106,7 +115,9 @@ class RecordActions
                     DatePicker::make('termination_date')
                         ->label(__('lang.termination_date'))
                         ->default($record->serviceTermination->termination_date)
-                        ->required(),
+                        ->required()
+                        ->live()
+                        ->rules([new NoFutureTerminationApprovalRule($record->serviceTermination->termination_date)]),
                     Textarea::make('termination_reason')
                         ->label(__('lang.termination_reason'))
                         ->default($record->serviceTermination->termination_reason)
@@ -114,6 +125,18 @@ class RecordActions
                     Textarea::make('notes')
                         ->label(__('lang.notes'))
                         ->default($record->serviceTermination->notes),
+                    Toggle::make('auto_approve')
+                        ->label('Auto-approve on termination date (via cron job)')
+                        ->default($record->serviceTermination->auto_approve ?? false)
+                        ->live()
+                        ->afterStateUpdated(function (bool $state) use ($record) {
+                            $record->serviceTermination->updateQuietly([
+                                'auto_approve'          => $state,
+                                'scheduled_approver_id' => $state ? auth()->id() : null,
+                            ]);
+                        })
+                        ->columnSpanFull()
+                        ->visible(fn (Get $get) => $get('termination_date') && Carbon::parse($get('termination_date'))->isFuture()),
                 ])
                 ->label(__('lang.approve_termination'))
                 ->color('success')
@@ -121,10 +144,23 @@ class RecordActions
                 ->action(function ($record, array $data) {
                     try {
                         $record->serviceTermination->update([
-                            'termination_date' => $data['termination_date'],
-                            'termination_reason' => $data['termination_reason'],
-                            'notes' => $data['notes'] ?? null,
+                            'termination_date'      => $data['termination_date'],
+                            'termination_reason'    => $data['termination_reason'],
+                            'notes'                 => $data['notes'] ?? null,
+                            'auto_approve'          => $data['auto_approve'] ?? false,
+                            'scheduled_approver_id' => auth()->id(),
                         ]);
+
+                        // If scheduled for future auto-approval, just save and let the cron job handle it.
+                        if (($data['auto_approve'] ?? false) && \Carbon\Carbon::parse($data['termination_date'])->isFuture()) {
+                            Notification::make()
+                                ->title('Scheduled for auto-approval')
+                                ->body('The termination will be approved automatically on the termination date.')
+                                ->success()
+                                ->send();
+
+                            return;
+                        }
 
                         app(EmployeeLifecycleService::class)
                             ->approveTermination($record->serviceTermination);
