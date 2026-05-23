@@ -29,6 +29,16 @@ class EmployeeObserver
                 ->where('id', '!=', $employee->id)
                 ->update(['is_ceo' => false]);
         }
+
+        if ($employee->exists && $employee->isDirty('branch_id') && $employee->branch_id) {
+            $branch = \App\Models\Branch::find($employee->branch_id);
+            if ($branch && $branch->manager_id) {
+                $managerEmployee = Employee::where('user_id', $branch->manager_id)->first();
+                if ($managerEmployee) {
+                    $employee->manager_id = $managerEmployee->id;
+                }
+            }
+        }
     }
 
     /**
