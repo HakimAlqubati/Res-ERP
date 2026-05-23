@@ -36,7 +36,7 @@ use App\Filament\Clusters\SettingsCluster;
 use App\Filament\Clusters\SettingsCluster\Resources\NotificationSettingResource;
 use App\Filament\Clusters\SupplierCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
-use App\Filament\Pages\CustomLogin;
+use App\Filament\Pages\Auth\CustomLogin;
 use App\Filament\Pages\Dashboard as PagesDashboard;
 use App\Filament\Pages\EmployeeRecords;
 use App\Filament\Pages\InventoryReportLinks;
@@ -258,8 +258,8 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->default()
             ->path('admin')
-            ->login()
-            // ->login(CustomLogin::class) 
+            // ->login()
+            ->login(CustomLogin::class) 
             ->defaultThemeMode(ThemeMode::System)
             ->colors([
                 // 'primary' => Color::Green,
