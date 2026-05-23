@@ -2,19 +2,16 @@
 
 namespace App\Filament\Resources\Reports;
 
-use Filament\Pages\Enums\SubNavigationPosition;
-use App\Models\Category;
-use Filament\Forms\Components\DatePicker;
-use App\Filament\Clusters\InventoryReportsCluster;
 use App\Filament\Clusters\SupplierCluster;
-use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Resources\Reports\Pages\ListPurchaseInvoiceReport;
+use App\Models\Category;
 use App\Models\FakeModelReports\PurchaseInvoiceReport;
 use App\Models\Product;
 use App\Models\PurchaseInvoice;
 use App\Models\Store;
 use App\Models\Supplier;
-use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\DatePicker;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Enums\FiltersLayout;
@@ -26,11 +23,15 @@ use Illuminate\Database\Eloquent\Builder;
 class PurchaseInvoiceReportResource extends Resource
 {
     protected static ?string $model = PurchaseInvoiceReport::class;
+
     protected static ?string $slug = 'purchase-invoice-reports';
 
-    protected static string | \BackedEnum | null $navigationIcon =  Heroicon::DocumentText;
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::DocumentText;
+
     protected static ?string $cluster = SupplierCluster::class;
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
     protected static ?int $navigationSort = 4;
 
     /**
@@ -40,6 +41,7 @@ class PurchaseInvoiceReportResource extends Resource
     {
         return __('lang.purchase_invoice_report');
     }
+
     public static function getNavigationLabel(): string
     {
         return __('lang.purchase_invoice_report');
@@ -60,29 +62,29 @@ class PurchaseInvoiceReportResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-        ->deferFilters(false)
+            ->deferFilters(false)
             ->filters([
-                SelectFilter::make("store_id")
+                SelectFilter::make('store_id')
                     ->searchable()
                     ->label(__('lang.store'))
                     ->query(function (Builder $q, $data) {
                         return $q;
                     })->options(Store::active()->get()->pluck('name', 'id')),
 
-                SelectFilter::make("supplier_id")
+                SelectFilter::make('supplier_id')
                     ->searchable()
                     ->label(__('lang.supplier'))
                     ->query(function (Builder $q, $data) {
                         return $q;
                     })->options(Supplier::get()->pluck('name', 'id')),
-                SelectFilter::make("product_id")
+                SelectFilter::make('product_id')
                     ->label(__('lang.product'))
                     ->multiple()
                     ->searchable()
-                    ->options(fn() => Product::where('active', 1)
+                    ->options(fn () => Product::where('active', 1)
                         ->get()
-                        ->mapWithKeys(fn($product) => [
-                            $product->id => "{$product->code} - {$product->name}"
+                        ->mapWithKeys(fn ($product) => [
+                            $product->id => "{$product->code} - {$product->name}",
                         ])
                         ->toArray())
                     ->getSearchResultsUsing(function (string $search): array {
@@ -93,16 +95,15 @@ class PurchaseInvoiceReportResource extends Resource
                             })
                             ->limit(50)
                             ->get()
-                            ->mapWithKeys(fn($product) => [
-                                $product->id => "{$product->code} - {$product->name}"
+                            ->mapWithKeys(fn ($product) => [
+                                $product->id => "{$product->code} - {$product->name}",
                             ])
                             ->toArray();
                     })
                     ->getOptionLabelUsing(
-                        fn($value): ?string =>
-                        optional(Product::find($value))->code . ' - ' . optional(Product::find($value))->name
+                        fn ($value): ?string => optional(Product::find($value))->code.' - '.optional(Product::find($value))->name
                     ),
-                SelectFilter::make("invoice_no")
+                SelectFilter::make('invoice_no')
                     ->searchable()->multiple()
                     ->label(__('lang.invoice_no'))
                     ->query(function (Builder $q, $data) {
@@ -115,15 +116,14 @@ class PurchaseInvoiceReportResource extends Resource
                     ),
                 Filter::make('show_invoice_no')
                     ->toggle()
-                    ->label(__('lang.show_invoice_no')), 
-                SelectFilter::make("category_id")
+                    ->label(__('lang.show_invoice_no')),
+                SelectFilter::make('category_id')
                     ->label(__('lang.category'))
                     ->multiple()
                     ->searchable()
                     ->options(function () {
                         return Category::active()->pluck('name', 'id')->toArray();
                     }),
-
 
                 Filter::make('date')
                     ->schema([
@@ -133,22 +133,33 @@ class PurchaseInvoiceReportResource extends Resource
                             ->label(__('lang.end_date')),
                     ])
                     ->query(function (Builder $query, array $data) {
-                        if (!empty($data['from'])) {
+                        if (! empty($data['from'])) {
                             $query->whereDate('date', '>=', $data['from']);
                         }
-                        if (!empty($data['to'])) {
+                        if (! empty($data['to'])) {
                             $query->whereDate('date', '<=', $data['to']);
                         }
                     }),
 
             ], FiltersLayout::AboveContent);
     }
+
     public static function getNavigationBadge(): ?string
     {
         return 'Report';
     }
+
     public static function getNavigationBadgeTooltip(): ?string
     {
         return 'Purchase Report';
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) {
+            return true;
+        }
+
+        return false;
     }
 }
