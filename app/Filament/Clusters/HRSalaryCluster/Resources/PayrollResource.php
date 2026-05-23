@@ -33,11 +33,11 @@ class PayrollResource extends Resource
 {
     protected static ?string $model = PayrollRun::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = Heroicon::Banknotes;
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::Banknotes;
 
     protected static ?string $cluster = HRSalaryCluster::class;
 
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     protected static ?int $navigationSort = 1;
 
@@ -69,7 +69,7 @@ class PayrollResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->recordUrl(fn(PayrollRun $record): string => PayrollResource::getUrl('view', ['record' => $record]))
+            ->recordUrl(fn (PayrollRun $record): string => PayrollResource::getUrl('view', ['record' => $record]))
             ->columns(PayrollTable::getColumns())
             ->filters(
                 PayrollTable::getFilters(),
@@ -84,21 +84,22 @@ class PayrollResource extends Resource
                         ->icon('heroicon-o-arrow-down-on-square-stack')
                         ->action(function (PayrollRun $record) {
                             $payrolls = $record->payrolls()->with('employee')->get();
-                            $fileName = 'payrolls-' . $record->name . '.xlsx';
+                            $fileName = 'payrolls-'.$record->name.'.xlsx';
+
                             return Excel::download(new PayrollsExport($payrolls), $fileName);
                         }),
                     PayrollActions::earlyInstallmentPaymentAction(),
                     PayrollActions::pdfSalarySlipAction(),
                     PayrollActions::approveAction(),
                     RestoreAction::make()->color('success'),
-                    ViewAction::make()
+                    ViewAction::make(),
                 ]),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                     ForceDeleteBulkAction::make(),
-                    RestoreBulkAction::make()
+                    RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -136,5 +137,14 @@ class PayrollResource extends Resource
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) {
+            return true;
+        }
+
+        return false;
     }
 }
