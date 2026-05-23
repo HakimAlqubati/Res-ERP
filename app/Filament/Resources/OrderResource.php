@@ -2,29 +2,29 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Pages\Enums\SubNavigationPosition;
-use Filament\Schemas\Schema; 
-use App\Filament\Resources\OrderResource\RelationManagers\OrderDetailsRelationManager;
-use App\Filament\Resources\OrderResource\RelationManagers\LogsRelationManager;
-use App\Filament\Resources\OrderResource\Pages\ListOrders;
+use App\Filament\Clusters\MainOrdersCluster;
 use App\Filament\Resources\OrderResource\Pages\CreateOrder;
-use App\Filament\Resources\OrderResource\Pages\ViewOrder;
 use App\Filament\Resources\OrderResource\Pages\EditOrder;
+use App\Filament\Resources\OrderResource\Pages\ListOrders;
 use App\Filament\Resources\OrderResource\Pages\OrderReportCustom;
-use App\Filament\Clusters\MainOrdersCluster; 
+use App\Filament\Resources\OrderResource\Pages\ViewOrder;
+use App\Filament\Resources\OrderResource\RelationManagers\LogsRelationManager;
+use App\Filament\Resources\OrderResource\RelationManagers\OrderDetailsRelationManager;
 use App\Filament\Resources\OrderResource\Schemas\OrderForm;
-use App\Filament\Resources\OrderResource\Tables\OrderTable; 
+use App\Filament\Resources\OrderResource\Tables\OrderTable;
 use App\Models\Branch;
-use App\Models\Order; 
-use Closure; 
+use App\Models\Order;
+use Closure;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Pages\Page;
-use Filament\Resources\Resource; 
-use Filament\Support\Icons\Heroicon; 
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 // use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletingScope; 
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class OrderResource extends Resource
 {
@@ -42,17 +42,22 @@ class OrderResource extends Resource
     //     ];
     // }
 
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
     protected static ?int $navigationSort = 1;
+
     protected static ?string $model = Order::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = Heroicon::BuildingStorefront;
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::BuildingStorefront;
+
     // protected static ?string $navigationGroup = 'Orders';
     protected static ?string $recordTitleAttribute = 'id';
+
     public static function getNavigationLabel(): string
     {
         return __('lang.orders');
     }
+
     public static function form(Schema $schema): Schema
     {
         return OrderForm::configure($schema);
@@ -83,6 +88,7 @@ class OrderResource extends Resource
 
         ];
     }
+
     public static function getRecordSubNavigation(Page $page): array
     {
         return $page->generateNavigationItems([
@@ -92,7 +98,6 @@ class OrderResource extends Resource
             EditOrder::class,
         ]);
     }
-
 
     protected function getTableReorderColumn(): ?string
     {
@@ -128,12 +133,14 @@ class OrderResource extends Resource
 
         return $query;
     }
+
     public static function canCreate(): bool
     {
         return false;
         if (isSuperAdmin()) {
             return true;
         }
+
         return false;
     }
 
@@ -159,9 +166,8 @@ class OrderResource extends Resource
 
     public static function getGlobalSearchResultTitle(Model $record): string
     {
-        return 'Order #' . $record->id;
+        return 'Order #'.$record->id;
     }
-
 
     public static function canDelete(Model $record): bool
     {
@@ -169,6 +175,7 @@ class OrderResource extends Resource
         if (isSuperAdmin()) {
             return true;
         }
+
         return false;
     }
 
@@ -178,9 +185,9 @@ class OrderResource extends Resource
         if (isSuperAdmin()) {
             return true;
         }
+
         return false;
     }
-
 
     public static function canEdit(Model $record): bool
     {
@@ -188,11 +195,21 @@ class OrderResource extends Resource
         if (isSuperAdmin()) {
             return true;
         }
+
         return false;
     }
 
     public static function getGlobalSearchResultsLimit(): int
     {
         return 15;
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) {
+            return true;
+        }
+
+        return false;
     }
 }

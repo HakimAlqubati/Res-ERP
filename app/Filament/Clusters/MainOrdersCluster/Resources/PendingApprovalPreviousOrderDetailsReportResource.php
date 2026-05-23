@@ -79,4 +79,12 @@ class PendingApprovalPreviousOrderDetailsReportResource extends Resource
             'index' => ListPendingApprovalPreviousOrderDetailsReports::route('/'),
         ];
     }
+       public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) {
+            return true;
+        }
+
+        return false;
+    }
 }
