@@ -71,11 +71,7 @@ class RecordActions
                                     }
                                 },
                             ]),
-                        Toggle::make('auto_approve')
-                            ->label('Auto-approve on termination date (via cron job)')
-                            ->default(false)
-                            ->columnSpanFull()
-                            ->visible(fn (Get $get) => $get('termination_date') && Carbon::parse($get('termination_date'))->isFuture()),
+
                         Textarea::make('termination_reason')
                             ->label(__('lang.termination_reason'))
                             ->columnSpanFull()
@@ -114,8 +110,7 @@ class RecordActions
                         ->label(__('lang.termination_date'))
                         ->default($record->serviceTermination->termination_date)
                         ->required()
-                        ->live()
-                        ->rules([new NoFutureTerminationApprovalRule($record->serviceTermination->termination_date)]),
+                        ->live(),
                     Textarea::make('termination_reason')
                         ->label(__('lang.termination_reason'))
                         ->default($record->serviceTermination->termination_reason)
@@ -123,18 +118,7 @@ class RecordActions
                     Textarea::make('notes')
                         ->label(__('lang.notes'))
                         ->default($record->serviceTermination->notes),
-                    Toggle::make('auto_approve')
-                        ->label('Auto-approve on termination date (via cron job)')
-                        ->default($record->serviceTermination->auto_approve ?? false)
-                        ->live()
-                        ->afterStateUpdated(function (bool $state) use ($record) {
-                            $record->serviceTermination->updateQuietly([
-                                'auto_approve' => $state,
-                                'scheduled_approver_id' => $state ? auth()->id() : null,
-                            ]);
-                        })
-                        ->columnSpanFull()
-                        ->visible(fn (Get $get) => $get('termination_date') && Carbon::parse($get('termination_date'))->isFuture()),
+
                 ])
                 ->label(__('lang.approve_termination'))
                 ->color('success')
@@ -145,25 +129,20 @@ class RecordActions
                             'termination_date' => $data['termination_date'],
                             'termination_reason' => $data['termination_reason'],
                             'notes' => $data['notes'] ?? null,
-                            'auto_approve' => $data['auto_approve'] ?? false,
-                            'scheduled_approver_id' => auth()->id(),
                         ]);
 
-                        // If scheduled for future auto-approval, just save and let the cron job handle it.
-                        if (($data['auto_approve'] ?? false) && Carbon::parse($data['termination_date'])->isFuture()) {
+                        app(EmployeeLifecycleService::class)
+                            ->approveTermination($record->serviceTermination);
+
+                        if (Carbon::parse($data['termination_date'])->isFuture()) {
                             Notification::make()
                                 ->title('Scheduled for auto-approval')
                                 ->body('The termination will be approved automatically on the termination date.')
                                 ->success()
                                 ->send();
-
-                            return;
+                        } else {
+                            Notification::make()->title(__('lang.termination_approved_successfully'))->success()->send();
                         }
-
-                        app(EmployeeLifecycleService::class)
-                            ->approveTermination($record->serviceTermination);
-
-                        Notification::make()->title(__('lang.termination_approved_successfully'))->success()->send();
                     } catch (\Exception $e) {
                         Notification::make()->title(__('lang.error_occurred'))->body($e->getMessage())->danger()->send();
                     }

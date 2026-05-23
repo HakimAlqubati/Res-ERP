@@ -77,10 +77,19 @@ class EmployeeServiceTerminationObserver
             $employeeServiceTermination->isDirty('status') &&
             $employeeServiceTermination->status === EmployeeServiceTermination::STATUS_APPROVED
         ) {
-            Validator::make(
-                ['termination_date' => $employeeServiceTermination->termination_date],
-                ['termination_date' => new NoFutureTerminationApprovalRule($employeeServiceTermination->termination_date)]
-            )->validate();
+            if ($employeeServiceTermination->termination_date && $employeeServiceTermination->termination_date->isFuture()) {
+                // Intercept future termination approval: schedule for auto-approval instead of immediate approval
+                $employeeServiceTermination->status = EmployeeServiceTermination::STATUS_PENDING;
+                $employeeServiceTermination->auto_approve = true;
+                $employeeServiceTermination->scheduled_approver_id = auth()->id();
+                $employeeServiceTermination->approved_at = null;
+                $employeeServiceTermination->approved_by = null;
+            } else {
+                Validator::make(
+                    ['termination_date' => $employeeServiceTermination->termination_date],
+                    ['termination_date' => new NoFutureTerminationApprovalRule($employeeServiceTermination->termination_date)]
+                )->validate();
+            }
         }
     }
 
