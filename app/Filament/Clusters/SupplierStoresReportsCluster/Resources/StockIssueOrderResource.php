@@ -2,35 +2,24 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
-use Filament\Pages\Enums\SubNavigationPosition;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Fieldset;
-use Filament\Schemas\Components\Utilities\Set;
-use Filament\Actions\ActionGroup;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
-use Filament\Actions\Action;
-use Throwable;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\ForceDeleteBulkAction;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockIssueOrderResource\Pages\ListStockIssueOrders;
+use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockIssueOrderResource\Pages\CreateStockIssueOrder;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockIssueOrderResource\Pages\EditStockIssueOrder;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockIssueOrderResource\Pages\ListStockIssueOrders;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockIssueOrderResource\Pages\ViewStockIssueOrder;
-use App\Filament\Clusters\InventoryCluster;
-use App\Filament\Clusters\InventoryManagementCluster;
-use App\Filament\Clusters\SupplierStoresReportsCluster;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockIssueOrderResource\Pages;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockIssueOrderResource\RelationManagers;
 use App\Models\Product;
 use App\Models\StockIssueOrder;
 use App\Models\Store;
 use App\Models\UnitPrice;
-use App\Models\User;
 use App\Services\MultiProductsInventoryService;
 use Closure;
-use Filament\Forms;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
@@ -38,10 +27,13 @@ use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Pages\Page;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Schema;
 use Filament\Support\Colors\Color;
-use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -49,16 +41,20 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class StockIssueOrderResource extends Resource
 {
     protected static ?string $model = StockIssueOrder::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = InventoryManagementCluster::class;
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
     protected static ?int $navigationSort = 7;
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -86,15 +82,13 @@ class StockIssueOrderResource extends Resource
 
                             ->visibleOn('view'),
 
-
-
                         Textarea::make('notes')
                             ->label('Notes')
                             ->columnSpanFull(),
 
                         Textarea::make('cancel_reason')
                             ->label('Cancel Reason')
-                            ->hidden(fn($get) => $get('cancelled') == 0),
+                            ->hidden(fn ($get) => $get('cancelled') == 0),
 
                         Repeater::make('details')
                             ->relationship('details')->columnSpanFull()
@@ -106,8 +100,8 @@ class StockIssueOrderResource extends Resource
                                         return Product::where('active', 1)
                                             ->limit(10)
                                             ->get()
-                                            ->mapWithKeys(fn($product) => [
-                                                $product->id => "{$product->code} - {$product->name}"
+                                            ->mapWithKeys(fn ($product) => [
+                                                $product->id => "{$product->code} - {$product->name}",
                                             ]);
                                     })
                                     ->searchable()
@@ -119,22 +113,25 @@ class StockIssueOrderResource extends Resource
                                             })
                                             ->limit(10)
                                             ->get()
-                                            ->mapWithKeys(fn($product) => [
-                                                $product->id => "{$product->code} - {$product->name}"
+                                            ->mapWithKeys(fn ($product) => [
+                                                $product->id => "{$product->code} - {$product->name}",
                                             ])
                                             ->toArray();
                                     })
                                     ->getOptionLabelUsing(function ($value): ?string {
                                         $product = Product::find($value);
+
                                         return $product ? "{$product->code} - {$product->name}" : null;
                                     })
                                     ->reactive()
-                                    ->afterStateUpdated(fn(callable $set) => $set('unit_id', null)),
+                                    ->afterStateUpdated(fn (callable $set) => $set('unit_id', null)),
 
                                 Select::make('unit_id')->label('Unit')
                                     ->options(function (callable $get) {
                                         $product = Product::find($get('product_id'));
-                                        if (! $product) return [];
+                                        if (! $product) {
+                                            return [];
+                                        }
 
                                         return $product?->outUnitPrices?->pluck('unit.name', 'unit_id') ?? [];
                                     })
@@ -151,9 +148,9 @@ class StockIssueOrderResource extends Resource
                                             $set('price', $unitPrice->price);
 
                                             $set('total_price', ((float) $unitPrice->price) * ((float) $get('quantity')));
-                                            $set('package_size',  $unitPrice->package_size ?? 0);
+                                            $set('package_size', $unitPrice->package_size ?? 0);
 
-                                            $service = new  MultiProductsInventoryService(null, $get('product_id'), $state, $get('../../store_id'));
+                                            $service = new MultiProductsInventoryService(null, $get('product_id'), $state, $get('../../store_id'));
                                             $remainingQty = $service->getInventoryForProduct($get('product_id'))[0]['remaining_qty'] ?? 0;
                                             $set('remaining_quantity', $remainingQty);
                                         }
@@ -167,7 +164,7 @@ class StockIssueOrderResource extends Resource
                                     ->label('Quantity')
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(function ($get, $set, $state) {
-                                        $service = new  MultiProductsInventoryService(
+                                        $service = new MultiProductsInventoryService(
                                             null,
                                             $get('product_id'),
                                             $get('unit_id'),
@@ -189,9 +186,7 @@ class StockIssueOrderResource extends Resource
                                 TextInput::make('remaining_quantity')
                                     ->numeric()
                                     ->readOnly()->visibleOn('create')
-                                    ->label('Remaining Qty')
-
-
+                                    ->label('Remaining Qty'),
 
                             ])
                             ->table([
@@ -204,10 +199,9 @@ class StockIssueOrderResource extends Resource
                             ->minItems(1)
                             ->label('Issued Items')
                             ->columns(7),
-                    ])
+                    ]),
             ]);
     }
-
 
     public static function table(Table $table): Table
     {
@@ -239,7 +233,7 @@ class StockIssueOrderResource extends Resource
                         ->color('danger')
                         ->icon('heroicon-o-x-circle')
                         ->requiresConfirmation()
-                        ->visible(fn(StockIssueOrder $record) => !$record->cancelled)
+                        ->visible(fn (StockIssueOrder $record) => ! $record->cancelled)
                         ->action(function (StockIssueOrder $record, array $data) {
                             try {
                                 DB::transaction(function () use ($record, $data) {
@@ -252,7 +246,7 @@ class StockIssueOrderResource extends Resource
                             } catch (Throwable $e) {
                                 report($e);
                                 showWarningNotifiMessage(
-                                    'Failed to cancel and reverse the stock issue order: ' . $e->getMessage()
+                                    'Failed to cancel and reverse the stock issue order: '.$e->getMessage()
                                 );
                             }
                         })
@@ -290,7 +284,6 @@ class StockIssueOrderResource extends Resource
         ];
     }
 
-
     public static function getRecordSubNavigation(Page $page): array
     {
         return $page->generateNavigationItems([
@@ -319,8 +312,10 @@ class StockIssueOrderResource extends Resource
         if (isSuperAdmin()) {
             return true;
         }
+
         return false;
     }
+
     public static function canEdit(Model $record): bool
     {
         return false;
@@ -331,6 +326,7 @@ class StockIssueOrderResource extends Resource
         if (isSuperAdmin()) {
             return true;
         }
+
         return false;
     }
 
@@ -339,11 +335,21 @@ class StockIssueOrderResource extends Resource
         if (isSuperAdmin()) {
             return true;
         }
+
         return false;
     }
 
-    public static function getNavigationBadgeColor(): string | array | null
+    public static function getNavigationBadgeColor(): string|array|null
     {
         return Color::Red;
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isFinanceManager()) {
+            return true;
+        }
+
+        return false;
     }
 }

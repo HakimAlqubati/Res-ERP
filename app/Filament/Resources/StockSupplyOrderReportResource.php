@@ -92,4 +92,12 @@ class StockSupplyOrderReportResource extends Resource
     {
         return 'Report';
     }
+       public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) {
+            return true;
+        }
+
+        return false;
+    }
 }

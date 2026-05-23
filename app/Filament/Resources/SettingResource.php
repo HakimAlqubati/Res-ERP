@@ -704,4 +704,13 @@ class SettingResource extends Resource
             // 'edit' => Pages\EditSetting::route('/'),
         ];
     }
+
+      public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isHR() || isFinanceManager()) {
+            return true;
+        }
+
+        return false;
+    }
 }

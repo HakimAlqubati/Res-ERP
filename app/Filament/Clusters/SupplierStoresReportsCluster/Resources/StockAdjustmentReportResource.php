@@ -2,21 +2,14 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
-use Filament\Pages\Enums\SubNavigationPosition;
-use Filament\Schemas\Schema;
-use Filament\Actions\BulkActionGroup;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReportResource\Pages\ListStockAdjustmentReports;
-use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\InventoryReportCluster;
-use App\Filament\Clusters\SupplierStoresReportsCluster;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReportResource\Pages;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReportResource\RelationManagers;
-use App\Models\StockAdjustment;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReportResource\Pages\ListStockAdjustmentReports;
 use App\Models\StockAdjustmentDetail;
-use App\Models\StockAdjustmentReport;
 use App\Models\Store;
-use Filament\Forms;
+use Filament\Actions\BulkActionGroup;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
@@ -24,18 +17,21 @@ use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class StockAdjustmentReportResource extends Resource
 {
     protected static ?string $model = StockAdjustmentDetail::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = InventoryReportCluster::class;
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
     protected static ?int $navigationSort = 9;
+
     protected static bool $shouldRegisterNavigation = false;
+
     public static function getPluralLabel(): ?string
     {
         return 'Stock Adjustment';
@@ -45,6 +41,7 @@ class StockAdjustmentReportResource extends Resource
     {
         return 'Stock Adjustment';
     }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -63,8 +60,7 @@ class StockAdjustmentReportResource extends Resource
                 TextColumn::make('unit.name')->searchable()->toggleable(),
                 TextColumn::make('package_size')->alignCenter(true)->toggleable(),
                 TextColumn::make('quantity')->alignCenter(true)
-                ->summarize(Sum::make())
-                ,
+                    ->summarize(Sum::make()),
                 TextColumn::make('adjustment_type')->alignCenter(true),
                 TextColumn::make('store.name')->toggleable(),
                 TextColumn::make('notes'),
@@ -80,12 +76,12 @@ class StockAdjustmentReportResource extends Resource
                     ->multiple(),
                 SelectFilter::make('proudct_id')
                     ->label('Product')
-                    ->relationship('product', 'name', fn($query) => $query->select('id', 'name', 'code')->limit(10))
+                    ->relationship('product', 'name', fn ($query) => $query->select('id', 'name', 'code')->limit(10))
                     ->searchable(['name', 'code'])
-                    ->getOptionLabelFromRecordUsing(fn($record) => "{$record->code} - {$record->name}")
+                    ->getOptionLabelFromRecordUsing(fn ($record) => "{$record->code} - {$record->name}")
 
                     ->multiple(),
-                SelectFilter::make("store_id")->placeholder('Select Store')
+                SelectFilter::make('store_id')->placeholder('Select Store')
                     ->label(__('lang.store'))->searchable()
                     ->options(
                         Store::active()->get()->pluck('name', 'id')->toArray()
@@ -97,8 +93,7 @@ class StockAdjustmentReportResource extends Resource
                     // Tables\Actions\DeleteBulkAction::make(),
                     // Tables\Actions\ForceDeleteBulkAction::make(),
                 ]),
-            ])
-        ;
+            ]);
     }
 
     public static function getEloquentQuery(): Builder
@@ -116,10 +111,9 @@ class StockAdjustmentReportResource extends Resource
                 'adjustment_date',
                 'store_id',
             )->orderBy('id', 'desc');
+
         return $query;
     }
-
-
 
     public static function getPages(): array
     {
@@ -137,11 +131,21 @@ class StockAdjustmentReportResource extends Resource
         if (isSuperAdmin()) {
             return true;
         }
+
         return false;
     }
 
     public static function getNavigationBadge(): ?string
     {
         return 'Report';
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) {
+            return true;
+        }
+
+        return false;
     }
 }

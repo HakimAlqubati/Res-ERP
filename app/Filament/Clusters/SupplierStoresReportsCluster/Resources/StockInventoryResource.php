@@ -2,23 +2,23 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
-use Filament\Pages\Enums\SubNavigationPosition;
-use Filament\Schemas\Schema;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages\ListStockInventories;
+use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages\CreateStockInventory;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages\EditStockInventory;
-use App\Models\UnitPrice;
-use App\Filament\Clusters\InventoryManagementCluster;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages\ListStockInventories;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages\ViewStockInventory;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Schemas\StockInventoryForm;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\RelationManagers\DetailsRelationManager;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Schemas\StockInventoryForm;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Tables\StockInventoryTable;
 use App\Models\Product;
 use App\Models\StockInventory;
+use App\Models\UnitPrice;
 use App\Services\MultiProductsInventoryService;
 use Filament\Facades\Filament;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Pages\Page;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Support\Colors\Color;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -28,16 +28,19 @@ class StockInventoryResource extends Resource
 {
     protected static ?string $model = StockInventory::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster                             = InventoryManagementCluster::class;
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort                         = 9;
+    protected static ?string $cluster = InventoryManagementCluster::class;
+
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
+    protected static ?int $navigationSort = 9;
 
     public static function getNavigationLabel(): string
     {
         return 'Stocktakes';
     }
+
     public static function getPluralLabel(): ?string
     {
         return 'Stocktakes';
@@ -49,6 +52,7 @@ class StockInventoryResource extends Resource
     {
         return 'Stocktake';
     }
+
     public static function form(Schema $schema): Schema
     {
 
@@ -71,11 +75,11 @@ class StockInventoryResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => ListStockInventories::route('/'),
+            'index' => ListStockInventories::route('/'),
             // 'new-create' => StockInventoryReactPage::route('/new-create'),
             'create' => CreateStockInventory::route('/create'),
-            'edit'   => EditStockInventory::route('/{record}/edit'),
-            'view'   => ViewStockInventory::route('/{record}'),
+            'edit' => EditStockInventory::route('/{record}/edit'),
+            'view' => ViewStockInventory::route('/{record}'),
         ];
     }
 
@@ -116,6 +120,7 @@ class StockInventoryResource extends Resource
         }
         // dd($remaningQty,$physicalQty);
         $difference = round($physicalQty - $remaningQty, 4);
+
         return $difference;
     }
 
@@ -124,6 +129,7 @@ class StockInventoryResource extends Resource
         if (isSuperAdmin()) {
             return true;
         }
+
         return false;
     }
 
@@ -132,6 +138,7 @@ class StockInventoryResource extends Resource
         if (isSuperAdmin()) {
             return true;
         }
+
         return false;
     }
 
@@ -140,9 +147,11 @@ class StockInventoryResource extends Resource
         if (isSuperAdmin()) {
             return true;
         }
+
         return false;
     }
-    public static function getNavigationBadgeColor(): string | array | null
+
+    public static function getNavigationBadgeColor(): string|array|null
     {
         return Color::Green;
     }
@@ -153,13 +162,14 @@ class StockInventoryResource extends Resource
         if (! $product) {
             return collect();
         }
+
         return $product->supplyOutUnitPrices ?? collect();
     }
 
     public static function handleUnitSelection(callable $set, callable $get, $unitId)
     {
         $productId = $get('product_id');
-        $start     = microtime(true);
+        $start = microtime(true);
         if (! $productId || ! $unitId) {
             return;
         }
@@ -187,29 +197,38 @@ class StockInventoryResource extends Resource
         $set('difference', $difference);
         $set('package_size', $packageSize);
         // Stop timing and calculate duration
-        $end          = microtime(true);
-        $duration     = $end - $start;
-        $seconds      = floor($duration);
+        $end = microtime(true);
+        $duration = $end - $start;
+        $seconds = floor($duration);
         $milliseconds = round(($duration - $seconds) * 1000, 2);
         // showSuccessNotifiMessage('( '. $seconds.'Seconds ) ('. $milliseconds .' Milliseconds)');
 
     }
-
 
     public static function canCreate(): bool
     {
         if (isSuperAdmin() || isSystemManager()) {
             return true;
         }
+
         return false;
     }
-
 
     public static function canEdit(Model $record): bool
     {
         if (isSuperAdmin() || isSystemManager()) {
             return true;
         }
+
+        return false;
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isFinanceManager()) {
+            return true;
+        }
+
         return false;
     }
 }
