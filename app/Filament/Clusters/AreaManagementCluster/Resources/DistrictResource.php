@@ -2,39 +2,36 @@
 
 namespace App\Filament\Clusters\AreaManagementCluster\Resources;
 
-use Filament\Pages\Enums\SubNavigationPosition;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Fieldset;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Actions\EditAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use App\Filament\Clusters\AreaManagementCluster\Resources\DistrictResource\Pages\ListDistricts;
+use App\Filament\Clusters\AreaManagementCluster;
 use App\Filament\Clusters\AreaManagementCluster\Resources\DistrictResource\Pages\CreateDistrict;
 use App\Filament\Clusters\AreaManagementCluster\Resources\DistrictResource\Pages\EditDistrict;
-use App\Filament\Clusters\AreaManagementCluster;
-use App\Filament\Clusters\AreaManagementCluster\Resources\DistrictResource\Pages;
-use App\Filament\Clusters\AreaManagementCluster\Resources\DistrictResource\RelationManagers;
+use App\Filament\Clusters\AreaManagementCluster\Resources\DistrictResource\Pages\ListDistricts;
 use App\Models\City;
 use App\Models\District;
-use Filament\Forms;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class DistrictResource extends Resource
 {
     protected static ?string $model = District::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-building-office-2';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-office-2';
 
     protected static ?string $cluster = AreaManagementCluster::class;
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
     protected static ?int $navigationSort = 3;
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -49,7 +46,7 @@ class DistrictResource extends Resource
                         ->options(City::all()->pluck('name', 'id'))
                         ->searchable()
                         ->required(),
-                ])
+                ]),
             ]);
     }
 
@@ -92,8 +89,18 @@ class DistrictResource extends Resource
             'edit' => EditDistrict::route('/{record}/edit'),
         ];
     }
+
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::query()->count();
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) {
+            return true;
+        }
+
+        return false;
     }
 }

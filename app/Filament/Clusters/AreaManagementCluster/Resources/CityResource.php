@@ -2,39 +2,36 @@
 
 namespace App\Filament\Clusters\AreaManagementCluster\Resources;
 
-use Filament\Pages\Enums\SubNavigationPosition;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Fieldset;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Actions\EditAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use App\Filament\Clusters\AreaManagementCluster\Resources\CityResource\Pages\ListCities;
+use App\Filament\Clusters\AreaManagementCluster;
 use App\Filament\Clusters\AreaManagementCluster\Resources\CityResource\Pages\CreateCity;
 use App\Filament\Clusters\AreaManagementCluster\Resources\CityResource\Pages\EditCity;
-use App\Filament\Clusters\AreaManagementCluster;
-use App\Filament\Clusters\AreaManagementCluster\Resources\CityResource\Pages;
-use App\Filament\Clusters\AreaManagementCluster\Resources\CityResource\RelationManagers;
+use App\Filament\Clusters\AreaManagementCluster\Resources\CityResource\Pages\ListCities;
 use App\Models\City;
 use App\Models\Country;
-use Filament\Forms;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class CityResource extends Resource
 {
     protected static ?string $model = City::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-building-office-2';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-office-2';
 
     protected static ?string $cluster = AreaManagementCluster::class;
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
     protected static ?int $navigationSort = 2;
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -49,7 +46,7 @@ class CityResource extends Resource
                         ->options(Country::all()->pluck('name', 'id'))
                         ->searchable()
                         ->required(),
-                ])
+                ]),
             ]);
     }
 
@@ -92,8 +89,18 @@ class CityResource extends Resource
             'edit' => EditCity::route('/{record}/edit'),
         ];
     }
+
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::query()->count();
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) {
+            return true;
+        }
+
+        return false;
     }
 }
