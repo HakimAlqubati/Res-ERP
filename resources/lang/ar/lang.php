@@ -1138,4 +1138,5 @@ return [
   'auto_missed_checkout_request_created_success' => 'تم إنشاء طلب انصراف تلقائياً لعدم وجود بصمة حضور سابقة، يرجى مراجعته مع الموارد البشرية.',
   'auto_generated_reason_missing_checkin' => 'تم الإنشاء تلقائياً بسبب تسجيل انصراف بدون بصمة دخول سابقة',
   'rejected_successfully' => 'تم الرفض بنجاح',
+  'auto' => 'تلقائي',
 ];

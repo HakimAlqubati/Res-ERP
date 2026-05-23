@@ -2,39 +2,38 @@
 
 namespace App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource\Table;
 
-use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource\Pages\ListEmployeeApplications;
-
+use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource;
 use App\Models\ApplicationTransaction;
 use App\Models\Branch;
+use App\Models\Employee;
 use App\Models\EmployeeApplicationV2;
-use Carbon\Carbon;
 use Exception;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Notifications\Notification;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TrashedFilter;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Filament\Tables\Filters\TrashedFilter;
-use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource;
-use App\Models\Employee;
-use Filament\Actions\ActionGroup;
-use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
-use Filament\Tables\Enums\FiltersLayout;
 
 class EmployeeApplicationTable
 {
     public static function configure($table, ?string $activeTab = null)
     {
 
-
         $activeTab ??= EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST];
-
 
         // الأعمدة المشتركة بين جميع الطلبات:
         $columns = [
@@ -46,7 +45,7 @@ class EmployeeApplicationTable
                 ->label(__('lang.employee'))
                 ->sortable()
                 // ->limit(20)
-                ->tooltip(fn($state) => $state)
+                ->tooltip(fn ($state) => $state)
                 ->searchable(),
 
             TextColumn::make('createdBy.name')
@@ -69,9 +68,9 @@ class EmployeeApplicationTable
                 ->alignCenter(true)
                 ->badge()
                 ->icon('heroicon-m-check-badge')
-                ->formatStateUsing(fn($state) => EmployeeApplicationV2::getStatusLabel($state))
-                ->color(fn(string $state): string => match ($state) {
-                    EmployeeApplicationV2::STATUS_PENDING  => 'warning',
+                ->formatStateUsing(fn ($state) => EmployeeApplicationV2::getStatusLabel($state))
+                ->color(fn (string $state): string => match ($state) {
+                    EmployeeApplicationV2::STATUS_PENDING => 'warning',
                     EmployeeApplicationV2::STATUS_REJECTED => 'danger',
                     EmployeeApplicationV2::STATUS_APPROVED => 'success',
                 }),
@@ -101,12 +100,12 @@ class EmployeeApplicationTable
         if ($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[3]) {
             $columns[] = TextColumn::make('detail_advance_amount')
                 ->label(__('lang.advance_amount'))
-                ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state));
+                ->formatStateUsing(fn ($state) => formatMoneyWithCurrency($state));
 
             $columns[] = TextColumn::make('detail_monthly_deduction_amount')
                 ->label(__('lang.monthly_deduction'))
                 ->toggleable(isToggledHiddenByDefault: true)
-                ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state));
+                ->formatStateUsing(fn ($state) => formatMoneyWithCurrency($state));
 
             $columns[] = TextColumn::make('detail_deduction_starts_from')
                 ->label(__('lang.deduction_starts'))
@@ -129,7 +128,6 @@ class EmployeeApplicationTable
 
             $columns[] = TextColumn::make('detail_time')
 
-
                 ->label(__('lang.time'));
         }
 
@@ -140,6 +138,13 @@ class EmployeeApplicationTable
 
             $columns[] = TextColumn::make('detail_time')
                 ->label(__('lang.time'));
+            $columns[] = IconColumn::make('is_auto_generated')
+                ->label(__('lang.auto'))
+                ->alignCenter()
+                ->toggleable(isToggledHiddenByDefault: true)
+                ->sortable()
+                ->boolean();
+
         }
 
         // أعمدة خاصة بطلب وجبات (Employee Meals Request)
@@ -152,7 +157,7 @@ class EmployeeApplicationTable
 
             $columns[] = TextColumn::make('mealRequest.cost')
                 ->label(__('lang.cost'))
-                ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state));
+                ->formatStateUsing(fn ($state) => formatMoneyWithCurrency($state));
         }
         $columns[] = TextColumn::make('approvedBy.name')
             ->label(__('lang.approved_by'));
@@ -173,6 +178,7 @@ class EmployeeApplicationTable
             ->toggleable(isToggledHiddenByDefault: true)
             ->alignCenter(true)
             ->limit(3);
+
         return $table->defaultSort('id', 'desc')
             ->paginated([10, 25, 50, 100])
             ->striped()
@@ -216,30 +222,30 @@ class EmployeeApplicationTable
 
             ->filters([
                 TrashedFilter::make(),
-                \Filament\Tables\Filters\Filter::make('application_date')
+                Filter::make('application_date')
                     ->form([
-                        \Filament\Forms\Components\DatePicker::make('date_from')
+                        DatePicker::make('date_from')
                             ->label(__('lang.from'))
                         // ->default(today())
                         ,
-                        \Filament\Forms\Components\DatePicker::make('date_to')
+                        DatePicker::make('date_to')
                             ->label(__('lang.to'))
                         // ->default(today())
                         ,
                     ])
-                    ->query(function (\Illuminate\Database\Eloquent\Builder $query, array $data): \Illuminate\Database\Eloquent\Builder {
+                    ->query(function (Builder $query, array $data): Builder {
                         return $query
                             ->when(
                                 $data['date_from'],
-                                fn(\Illuminate\Database\Eloquent\Builder $query, $date): \Illuminate\Database\Eloquent\Builder => $query->whereDate('application_date', '>=', $date),
+                                fn (Builder $query, $date): Builder => $query->whereDate('application_date', '>=', $date),
                             )
                             ->when(
                                 $data['date_to'],
-                                fn(\Illuminate\Database\Eloquent\Builder $query, $date): \Illuminate\Database\Eloquent\Builder => $query->whereDate('application_date', '<=', $date),
+                                fn (Builder $query, $date): Builder => $query->whereDate('application_date', '<=', $date),
                             );
                     }),
                 SelectFilter::make('status')->options([
-                    EmployeeApplicationV2::STATUS_PENDING  => EmployeeApplicationV2::STATUS_PENDING,
+                    EmployeeApplicationV2::STATUS_PENDING => EmployeeApplicationV2::STATUS_PENDING,
                     EmployeeApplicationV2::STATUS_REJECTED => EmployeeApplicationV2::STATUS_REJECTED,
                     EmployeeApplicationV2::STATUS_APPROVED => EmployeeApplicationV2::STATUS_APPROVED,
                 ]),
@@ -256,8 +262,6 @@ class EmployeeApplicationTable
                 ActionGroup::make([
                     EmployeeApplicationResource::attachmentsAction(),
 
-
-
                     EmployeeApplicationResource::approveLeaveRequest()->hidden(function ($record) {
                         if (isstuff() || isFinanceManager() || isHR()) {
                             return true;
@@ -267,6 +271,7 @@ class EmployeeApplicationTable
                                 return true;
                             }
                         }
+
                         return false;
                     }),
                     EmployeeApplicationResource::undoApproveLeaveRequest()->hidden(function ($record) {
@@ -278,6 +283,7 @@ class EmployeeApplicationTable
                                 return true;
                             }
                         }
+
                         return false;
                     }),
                     EmployeeApplicationResource::rejectLeaveRequest()->hidden(function ($record) {
@@ -289,19 +295,18 @@ class EmployeeApplicationTable
                                 return true;
                             }
                         }
+
                         return false;
                     }),
                     EmployeeApplicationResource::LeaveRequesttDetails()
-                        ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST)),
+                        ->visible(fn ($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST)),
                     EmployeeApplicationResource::departureRequesttDetails()
-                        ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST)),
+                        ->visible(fn ($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST)),
                     EmployeeApplicationResource::attendanceRequestDetails()
-                        ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST)),
-
-
+                        ->visible(fn ($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST)),
 
                     EmployeeApplicationResource::advancedRequestDetails()
-                        ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST)),
+                        ->visible(fn ($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST)),
 
                     EmployeeApplicationResource::exportAdvanceRequestPdf(),
 
@@ -317,12 +322,14 @@ class EmployeeApplicationTable
                             if (isFinanceManager() || isHR() || isSuperAdmin()) {
                                 return false;
                             }
+
                             return true;
                         }),
                     EmployeeApplicationResource::financeRejectAdvanceRequest()->hidden(function ($record) {
                         if (isFinanceManager() || isHR() || isSuperAdmin()) {
                             return false;
                         }
+
                         return true;
                     }),
                     DeleteAction::make()->using(function ($record) {
@@ -347,6 +354,7 @@ class EmployeeApplicationTable
                                 } catch (Exception $th) {
                                     DB::rollBack();
                                     throw $th;
+
                                     return Notification::make()->title($th->getMessage())->warning()->send();
                                 }
                                 break;
@@ -356,7 +364,7 @@ class EmployeeApplicationTable
                                 ]);
                                 DB::beginTransaction();
                                 try {
-                                    //code...
+                                    // code...
                                     $record->delete();
                                     $record->advanceInstallments()->delete();
                                     $record->advanceRequest()->delete();
@@ -374,7 +382,7 @@ class EmployeeApplicationTable
                                 ]);
                                 DB::beginTransaction();
                                 try {
-                                    //code...
+                                    // code...
                                     $record->delete();
                                     $record->missedCheckinRequest()->delete();
                                     showSuccessNotifiMessage('Done');
@@ -392,7 +400,7 @@ class EmployeeApplicationTable
                                 // dd('sd', $record);
                                 DB::beginTransaction();
                                 try {
-                                    //code...
+                                    // code...
                                     $record->delete();
                                     $record->missedCheckoutRequest()->delete();
                                     showSuccessNotifiMessage('Done');
@@ -420,7 +428,7 @@ class EmployeeApplicationTable
                                 break;
 
                             default:
-                                # code...
+                                // code...
                                 break;
                         }
                     }),
@@ -438,8 +446,9 @@ class EmployeeApplicationTable
                         DB::commit();
                     } catch (Exception $th) {
                         DB::rollBack();
+
                         return Notification::make()->title($th->getMessage())->warning()->send();
-                        //throw $th;
+                        // throw $th;
                     }
                 }),
 
@@ -452,6 +461,7 @@ class EmployeeApplicationTable
                             return true;
                         }
                     }
+
                     return false;
                 }),
                 EmployeeApplicationResource::rejectDepartureRequest()->hidden(function ($record) {
@@ -463,9 +473,9 @@ class EmployeeApplicationTable
                             return true;
                         }
                     }
+
                     return false;
                 }),
-
 
                 EmployeeApplicationResource::approveAttendanceRequest()->hidden(function ($record) {
                     // return false;
@@ -477,6 +487,7 @@ class EmployeeApplicationTable
                             return true;
                         }
                     }
+
                     return false;
                 }),
 
@@ -489,9 +500,9 @@ class EmployeeApplicationTable
                             return true;
                         }
                     }
+
                     return false;
                 }),
-
 
                 EmployeeApplicationResource::approveMealRequest()->hidden(function ($record) {
                     if (isstuff() || isFinanceManager() || isHR()) {
@@ -502,6 +513,7 @@ class EmployeeApplicationTable
                             return true;
                         }
                     }
+
                     return false;
                 }),
                 EmployeeApplicationResource::rejectMealRequest()->hidden(function ($record) {
@@ -513,10 +525,11 @@ class EmployeeApplicationTable
                             return true;
                         }
                     }
+
                     return false;
                 }),
                 EmployeeApplicationResource::mealRequestDetails()
-                    ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST)),
+                    ->visible(fn ($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST)),
 
             ])
             ->toolbarActions([

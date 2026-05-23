@@ -1157,4 +1157,5 @@ return [
     'auto_missed_checkout_request_created_success' => 'Missed check-out request submitted to HR.',
     'auto_generated_reason_missing_checkin' => 'Automatically generated due to check-out attempt without a prior check-in',
     'rejected_successfully' => 'Rejected Successfully',
+    'auto' => 'Auto',
 ];
