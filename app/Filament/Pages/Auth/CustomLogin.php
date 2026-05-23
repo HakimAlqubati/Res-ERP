@@ -10,16 +10,16 @@ use Illuminate\Support\Facades\Log;
 
 class CustomLogin extends BaseLogin
 {
-    protected string $view = 'filament.pages.auth.login';
+    // protected string $view = 'filament.pages.auth.login';
 
     public function hasLogo(): bool
     {
-        return false;
+        return true;
     }
 
     public function getHeading(): string|Htmlable
     {
-        return '';
+        return 'Sign in';
     }
 
     public function getSubheading(): string|Htmlable|null
