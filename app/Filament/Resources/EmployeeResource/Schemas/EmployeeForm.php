@@ -34,6 +34,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Support\RawJs;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use App\Modules\HR\Employee\Services\PassportValidationService;
 
 class EmployeeForm
 {
@@ -167,9 +168,15 @@ class EmployeeForm
                                                 ->columnSpanFull()
                                                 ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') != setting('default_nationality')))
                                                 ->schema([
-                                                    TextInput::make('passport_no')->label(__('lang.passport_no'))
-                                                        // ->numeric()
-                                                        ->columnSpan(2),
+                                                     TextInput::make('passport_no')->label(__('lang.passport_no'))
+                                                         // ->numeric()
+                                                         ->rules([
+                                                             fn(Get $get, $record) => app(PassportValidationService::class)->rule(
+                                                                 $record?->id,
+                                                                 $get('nationality')
+                                                             )
+                                                         ])
+                                                         ->columnSpan(2),
                                                     Toggle::make('has_employee_pass')->label(__('lang.has_employee_pass'))->inline(false)->live()
                                                         ->columnSpan(1),
                                                 ])->columns(3),
