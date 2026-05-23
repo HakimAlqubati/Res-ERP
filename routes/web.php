@@ -711,6 +711,9 @@ Route::get('/testLog', function () {
 
 Route::get('admin/branchConsumptionReport', [TestController4::class, 'branchConsumptionReport']);
 Route::get('/financial-reports/income-statement', [App\Http\Controllers\FinancialReportWebController::class, 'index'])->name('financial.reports.income-statement');
+Route::get('/hr/reports/multiple-shifts', [\App\Modules\HR\AttendanceReports\Http\Controllers\MultipleShiftsReportController::class, 'index'])->name('hr.reports.multiple-shifts')
+->middleware('auth:web')
+;
 require __DIR__ . '/landing.php';
 Route::get('/test-delivery-order/{order}', function (Order $order) {
     $order->load(['orderDetails.product', 'branch', 'logs.creator']);
