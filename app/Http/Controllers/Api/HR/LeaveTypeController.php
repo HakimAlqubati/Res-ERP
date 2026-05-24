@@ -17,10 +17,10 @@ class LeaveTypeController extends Controller
     public function index(Request $request)
     {
         $query = LeaveType::query()
-            ->where('active', 1)
-            ->when($request->filled('active'), fn($q) => $q->where('active', (int) $request->boolean('active')))
-            ->when($request->filled('type'), fn($q) => $q->where('type', $request->string('type')))
-            ->when($request->filled('balance_period'), fn($q) => $q->where('balance_period', $request->string('balance_period')))
+            ->withTrashed() 
+            ->when($request->filled('active'), fn ($q) => $q->where('active', (int) $request->boolean('active')))
+            ->when($request->filled('type'), fn ($q) => $q->where('type', $request->string('type')))
+            ->when($request->filled('balance_period'), fn ($q) => $q->where('balance_period', $request->string('balance_period')))
             ->orderBy('id', 'desc');
 
         if ($request->string('per_page')->lower() === 'all') {
@@ -48,11 +48,12 @@ class LeaveTypeController extends Controller
     public function weekly()
     {
         $leave = LeaveType::weeklyLeave()->first(); // scope returns a builder or you can keep first() here
-        if (!$leave) {
+        if (! $leave) {
             return response()->json([
-                'message' => 'Weekly (monthly-balance, active) leave type not found.'
+                'message' => 'Weekly (monthly-balance, active) leave type not found.',
             ], 404);
         }
+
         return new LeaveTypeResource($leave);
     }
 
@@ -63,6 +64,7 @@ class LeaveTypeController extends Controller
     public function monthlyDaysSum()
     {
         $sum = LeaveType::getMonthlyCountDaysSum(); // uses your scope
+
         return response()->json(['sum' => (int) $sum]);
     }
 }
