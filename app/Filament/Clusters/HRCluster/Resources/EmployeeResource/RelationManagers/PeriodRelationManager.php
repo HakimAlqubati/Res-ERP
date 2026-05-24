@@ -3,11 +3,10 @@
 namespace App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers;
 
 use App\Enums\DayOfWeek;
-use App\Models\Attendance;
 use App\Models\EmployeePeriod;
 use App\Models\EmployeePeriodHistory;
 use App\Models\WorkPeriod;
-use Carbon\Carbon;
+use App\Modules\HR\EmployeeWorkPeriods\EmployeeWorkPeriodService;
 use Exception;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
@@ -18,7 +17,6 @@ use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -29,9 +27,9 @@ use Illuminate\Support\Facades\Log;
 class PeriodRelationManager extends RelationManager
 {
     protected static string $relationship = 'periods';
-    protected static ?string $title       = 'Shifts';
-    // protected static ?string $badge = count($this->ownerRecord->periods);
 
+    protected static ?string $title = 'Shifts';
+    // protected static ?string $badge = count($this->ownerRecord->periods);
 
     public static function getBadge(Model $ownerRecord, string $pageClass): ?string
     {
@@ -57,7 +55,7 @@ class PeriodRelationManager extends RelationManager
 
     public static function getBadgeTooltip(Model $ownerRecord, string $pageClass): ?string
     {
-        return "Current Shifts Count: " . $ownerRecord->periods()->count();
+        return 'Current Shifts Count: '.$ownerRecord->periods()->count();
     }
 
     public function table(Table $table): Table
@@ -82,7 +80,7 @@ class PeriodRelationManager extends RelationManager
                     ->getStateUsing(function ($record) {
                         $employee = $this->ownerRecord;
 
-                        $employeePeriod = \App\Models\EmployeePeriod::with('days') // eager load للعلاقة
+                        $employeePeriod = EmployeePeriod::with('days') // eager load للعلاقة
                             ->where('employee_id', $employee->id)
                             ->where('period_id', $record->id)
                             ->first();
@@ -95,8 +93,8 @@ class PeriodRelationManager extends RelationManager
 
                         return $employeePeriod->days
                             ->pluck('day_of_week')
-                            ->sortBy(fn($d) => array_search($d, $daysOrder))
-                            ->map(fn($d) => DayOfWeek::from($d)->english())
+                            ->sortBy(fn ($d) => array_search($d, $daysOrder))
+                            ->map(fn ($d) => DayOfWeek::from($d)->english())
                             ->implode(', ');
                     })
                 // ->getStateUsing(fn($state): string =>    implode(',', $state))
@@ -108,7 +106,6 @@ class PeriodRelationManager extends RelationManager
 
                         $employeePeriod = EmployeePeriod::find($record->pivot->id);
 
-
                         return $employeePeriod?->start_date;
                     }),
 
@@ -117,7 +114,8 @@ class PeriodRelationManager extends RelationManager
                     ->date()
                     ->getStateUsing(function ($record) {
                         // dd($record);
-                        $employeePeriod = \App\Models\EmployeePeriod::find($record->pivot->id);
+                        $employeePeriod = EmployeePeriod::find($record->pivot->id);
+
                         return $employeePeriod?->end_date;
                     }),
 
@@ -138,8 +136,8 @@ class PeriodRelationManager extends RelationManager
                                 ->label('Choose the period duration')
                                 ->schema([
                                     DatePicker::make('start_date')->label('Start period date')
-                                        ->default(fn() =>  now()->toDateString())
-                                        ->minDate(fn() => $this->ownerRecord->join_date ?? now()->toDateString())
+                                        ->default(fn () => now()->toDateString())
+                                        ->minDate(fn () => $this->ownerRecord->join_date ?? now()->toDateString())
                                         ->required(),
 
                                     DatePicker::make('end_date')->label('End period date')
@@ -160,10 +158,12 @@ class PeriodRelationManager extends RelationManager
                                 ->options(
                                     function () {
                                         $employee = $this->ownerRecord;
+
                                         // $assigned = $employee->periods->pluck('id')->toArray();
                                         // Only fetch periods NOT assigned to the employee
                                         return WorkPeriod::select('name', 'id')
                                             ->where('branch_id', $employee->branch_id)
+                                            ->orWhere('all_branches', true)
                                             // ->whereNotIn('id', $assigned)
                                             ->get()
                                             ->pluck('name', 'id');
@@ -186,7 +186,7 @@ class PeriodRelationManager extends RelationManager
                     ->databaseTransaction()
                     ->action(function ($data) {
                         try {
-                            $service = new \App\Modules\HR\EmployeeWorkPeriods\EmployeeWorkPeriodService();
+                            $service = new EmployeeWorkPeriodService;
                             $service->assignPeriodsToEmployee($this->ownerRecord, $data);
 
                             // Send notification after the operation is complete
@@ -206,7 +206,7 @@ class PeriodRelationManager extends RelationManager
                                     ->danger() // Use danger for easier visibility of errors like overlap
                                     ->send();
                             }
-                            Log::alert('Error adding new periods: ' . $e->getMessage());
+                            Log::alert('Error adding new periods: '.$e->getMessage());
                         }
                     }),
             ])
@@ -222,6 +222,7 @@ class PeriodRelationManager extends RelationManager
                     ->modalDescription(__('lang.end_period_confirmation'))
                     ->form(function ($record) {
                         $period = EmployeePeriod::find($record->pivot_id);
+
                         return [
                             DatePicker::make('end_date')
                                 ->label(__('lang.end_date'))
@@ -252,7 +253,6 @@ class PeriodRelationManager extends RelationManager
                                 // الاحتمال الثاني: لا يوجد أي تحضيرات بالمرة
                                 if (($lastCheckDate && $data['end_date'] >= $lastCheckDate) || empty($lastCheckDate)) {
 
-
                                     // حذف كل الأيام المرتبطة بهذه الفترة فقط
                                     $period->days()->delete();
 
@@ -261,7 +261,7 @@ class PeriodRelationManager extends RelationManager
                                     // $periodEnd   = $period->end_date; // We rely on start_date match mostly
 
                                     // Update history end_date
-                                    \App\Models\EmployeePeriodHistory::where('employee_id', $record->employee_id)
+                                    EmployeePeriodHistory::where('employee_id', $record->employee_id)
                                         ->where('period_id', $record->period_id)
                                         ->where('start_date', $periodStart)
                                         // ->when($periodEnd, fn($q) => $q->where('end_date', $periodEnd), fn($q) => $q->whereNull('end_date'))
@@ -276,6 +276,7 @@ class PeriodRelationManager extends RelationManager
                                         ->body('Cannot delete shift has attendance logs')
                                         ->warning()
                                         ->send();
+
                                     return;
                                 }
                             });
@@ -297,6 +298,7 @@ class PeriodRelationManager extends RelationManager
         if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
             return true;
         }
+
         return false;
     }
 
@@ -307,7 +309,7 @@ class PeriodRelationManager extends RelationManager
             ->button()
             ->icon('heroicon-o-calendar-days')
             ->form(function ($record) {
-                $employeePeriod = \App\Models\EmployeePeriod::find($record->pivot_id);
+                $employeePeriod = EmployeePeriod::find($record->pivot_id);
 
                 if (! $employeePeriod) {
                     return [];
@@ -348,7 +350,7 @@ class PeriodRelationManager extends RelationManager
                 ];
             })
             ->action(function (array $data, $record) {
-                $employeePeriod = \App\Models\EmployeePeriod::find($record->pivot_id);
+                $employeePeriod = EmployeePeriod::find($record->pivot_id);
 
                 if (! $employeePeriod) {
                     Notification::make()
@@ -356,6 +358,7 @@ class PeriodRelationManager extends RelationManager
                         ->body('Work period not assigned to employee yet.')
                         ->danger()
                         ->send();
+
                     return;
                 }
 
@@ -365,18 +368,19 @@ class PeriodRelationManager extends RelationManager
                         ->body('Please select at least one day to assign.')
                         ->warning()
                         ->send();
+
                     return;
                 }
 
                 try {
-                    $service = new \App\Modules\HR\EmployeeWorkPeriods\EmployeeWorkPeriodService();
+                    $service = new EmployeeWorkPeriodService;
                     $service->assignDaysToEmployeePeriod($employeePeriod, $data['days']);
 
                     Notification::make()
                         ->title('Days Assigned Successfully')
                         ->success()
                         ->send();
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     Notification::make()
                         ->title('Error')
                         ->body($e->getMessage())
