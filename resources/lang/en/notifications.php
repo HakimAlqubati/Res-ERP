@@ -1,22 +1,22 @@
 <?php
+
 return [
-    'welcome_employee'                                                                => 'Welcome',
-    'the_attendance_has_been_recorded'                                                => 'The attendance has been recorded',
-    'the_departure_has_been_recorded'                                                 => 'The departure has been recorded',
-    'please_wait_for_a'                                                               => 'Please wait for ',
-    'minutue'                                                                         => 'minutues',
-    'second'                                                                          => 'second',
-    'attendance_time_is_greater_than_current_period_end_time'                         => 'Attendance time is greater than current period end time',
-    'no_valid_period_found_for_the_specified_time'                                    => 'No valid period found for the specified time.',
+    'welcome_employee' => 'Welcome',
+    'the_attendance_has_been_recorded' => 'The attendance has been recorded',
+    'the_departure_has_been_recorded' => 'The departure has been recorded',
+    'please_wait_for_a' => 'Please wait for ',
+    'minutue' => 'minutues',
+    'second' => 'second',
+    'attendance_time_is_greater_than_current_period_end_time' => 'Attendance time is greater than current period end time',
+    'no_valid_period_found_for_the_specified_time' => 'No valid period found for the specified time.',
 
     'sorry_no_working_hours_have_been_added_to_you_please_contact_the_administration' => 'Sorry, no working hours have been added to you, please contact the administration!',
-    'there_is_no_employee_at_this_number'                                             => 'There is no employee at this number',
-    'notify'                                                                          => 'Notify',
-    'you_cannot_attendance_before'                                                    => 'You can not checkin before',
-    'hours'                                                                           => 'Hours',
-    'cannot_check_in_because_adjust'                                                  => 'You cannot check in right now. Please contact your manager to adjust your shift.',
-    'attendance_out_of_range_before_period' =>
-    'You cannot check in at this time. You are outside the allowed period before your shift starts. Please try again during the permitted time before your shift.',
+    'there_is_no_employee_at_this_number' => 'There is no employee at this number',
+    'notify' => 'Notify',
+    'you_cannot_attendance_before' => 'You can not checkin before',
+    'hours' => 'Hours',
+    'cannot_check_in_because_adjust' => 'You cannot check in right now. Please contact your manager to adjust your shift.',
+    'attendance_out_of_range_before_period' => 'You cannot check in at this time. You are outside the allowed period before your shift starts. Please try again during the permitted time before your shift.',
     'attendance_success' => 'Attendance success'
     /*
     |--------------------------------------------------------------------------
@@ -24,10 +24,10 @@ return [
     |--------------------------------------------------------------------------
     */,
     'attendance_already_completed_for_date' => 'Attendance for this date (:date) is already completed.',
-    'you_are_already_checked_in'            => 'You are already checked in.',
-    'cannot_checkout_without_checkin'       => 'You cannot check out without checking in first. To fix this, please submit a Missed Check-in Request.',
+    'you_are_already_checked_in' => 'You are already checked in.',
+    'cannot_checkout_without_checkin' => 'You cannot check out without checking in first. To fix this, please submit a Missed Check-in Request.',
 
-    'check_in_success'  => 'Checked in successfully.',
+    'check_in_success' => 'Checked in successfully.',
     'check_out_success' => 'Checked out successfully.',
 
     'you_dont_have_periods_today' => 'Please ensure your shift has started, or contact your manager to update your shift.',
@@ -51,6 +51,11 @@ return [
     'checkin_to_shift' => 'Check in to :shift',
     'duplicate_missed_checkout_request' => 'Duplicate missed checkout request',
 
-    // Leave request date overlap
-    'leave_request_overlap' => 'A leave request already exists that overlaps with the selected dates.',
+    // Leave: monthly cap exceeded (on submit)
+    'max_leave_per_month_exceeded_creating' => 'Only :max day(s) of :type leave are allowed per month.',
+
+    // Leave: monthly cap exceeded (on approval)
+    'max_leave_per_month_exceeded_approving' => 'Only :max day(s) of :type leave are allowed per month.',
+    'leave_request_overlap' => 'Request overlaps with existing records',
+
 ];

@@ -4,6 +4,7 @@ namespace App\Services\HR\Applications\LeaveRequest;
 
 use App\Models\EmployeeApplicationV2;
 use App\Models\LeaveBalance;
+use App\Rules\HR\Applications\MaxLeavePerMonthRule;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -44,7 +45,10 @@ class LeaveApprovalService
     public function onApproved(EmployeeApplicationV2 $application): void
     {
         $leaveRequest = $this->guardLeaveRequest($application);
-        $balance      = $this->guardBalance($leaveRequest, $application->id);
+
+        MaxLeavePerMonthRule::check($leaveRequest, MaxLeavePerMonthRule::CONTEXT_APPROVING);
+
+        $balance = $this->guardBalance($leaveRequest, $application->id);
         $days         = (float) $leaveRequest->days_count;
 
         Log::info('[LeaveApprovalService] Processing approval.', [

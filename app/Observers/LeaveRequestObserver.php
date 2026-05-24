@@ -3,24 +3,44 @@
 namespace App\Observers;
 
 use App\Models\LeaveRequest;
+use App\Rules\HR\Applications\MaxLeavePerMonthRule;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 
 /**
  * Observer for LeaveRequest model.
  *
- * يتحقق قبل إنشاء أي طلب إجازة من عدم وجود تداخل مع إجازات سابقة.
+ * يتحقق قبل إنشاء أي طلب إجازة من:
+ *   1. عدم وجود تداخل مع إجازات سابقة.
+ *   2. عدم تجاوز الحد الأقصى المسموح به من الأيام شهرياً (max_days_per_month).
+ *
  * رمي ValidationException في creating() يُلغي INSERT ويتراجع عن
  * أي transaction محيطة (بما فيها سجل EmployeeApplicationV2 الأب).
  */
 class LeaveRequestObserver
 {
     /**
-     * التحقق من عدم التداخل قبل الحفظ.
+     * التحقق من قواعد العمل قبل الحفظ.
      *
      * @throws ValidationException
      */
     public function creating(LeaveRequest $leaveRequest): void
+    {
+        $this->validateNoOverlap($leaveRequest);
+        $this->validateMaxDaysPerMonth($leaveRequest);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Private validation steps
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Ensures the new leave request does not overlap with any existing one
+     * for the same employee.
+     *
+     * @throws ValidationException
+     */
+    private function validateNoOverlap(LeaveRequest $leaveRequest): void
     {
         $startDate = $leaveRequest->start_date;
         $endDate   = $leaveRequest->end_date;
@@ -32,12 +52,12 @@ class LeaveRequestObserver
         $start = Carbon::parse($startDate);
         $end   = Carbon::parse($endDate);
 
-        // البحث عن إجازات متداخلة لنفس الموظف (باستثناء الطلب الحالي إن وُجد)
         $hasOverlap = LeaveRequest::where('employee_id', $leaveRequest->employee_id)
             ->where('start_date', '<=', $end->toDateString())
             ->where('end_date', '>=', $start->toDateString())
-            ->when($leaveRequest->application_id, fn ($q) =>
-                $q->where('application_id', '!=', $leaveRequest->application_id)
+            ->when(
+                $leaveRequest->application_id,
+                fn ($q) => $q->where('application_id', '!=', $leaveRequest->application_id)
             )
             ->exists();
 
@@ -49,4 +69,16 @@ class LeaveRequestObserver
             ]);
         }
     }
+
+    /**
+     * Ensures the employee does not exceed the max_days_per_month cap
+     * defined on the LeaveType for any calendar month touched by this request.
+     *
+     * @throws ValidationException
+     */
+    private function validateMaxDaysPerMonth(LeaveRequest $leaveRequest): void
+    {
+        MaxLeavePerMonthRule::check($leaveRequest);
+    }
 }
+
