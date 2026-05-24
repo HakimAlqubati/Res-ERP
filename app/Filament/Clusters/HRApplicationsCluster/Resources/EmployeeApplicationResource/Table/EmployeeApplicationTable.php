@@ -80,8 +80,10 @@ class EmployeeApplicationTable
         // أعمدة خاصة بإجازات (Leave request)
         if ($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[1]) {
             // dd(true);
-            $columns[] = TextColumn::make('leave_type_name')
-                ->label(__('lang.leave_type'));
+            $columns[] = TextColumn::make('deleted_leave_type_name.name')
+                ->label(__('lang.leave_type'))
+                ->color(fn ($record) => ($record->deleted_leave_type_name['is_deleted'] ?? false) ? 'danger' : null)
+                ->icon(fn ($record) => ($record->deleted_leave_type_name['is_deleted'] ?? false) ? 'heroicon-o-trash' : null);
 
             $columns[] = TextColumn::make('detail_from_date')
                 ->label(__('lang.from'))

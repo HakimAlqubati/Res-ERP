@@ -57,4 +57,9 @@ class LeaveRequest extends Model implements Auditable
     {
         return $this->belongsTo(LeaveType::class, 'leave_type');
     }
+
+    public function deletedLeaveType()
+    {
+        return $this->belongsTo(LeaveType::class, 'leave_type')->withTrashed();
+    }
 }
