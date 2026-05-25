@@ -93,7 +93,7 @@ class EmployeesAttendanceOnDateService
                         $dayAttendances,
                         $dayOvertimes,
                         $workPeriodMap,
-                        false,
+                        $isFuture,
                         $isToday,
                         $employee->discount_exception_if_attendance_late,
                         $this->statsInjector
