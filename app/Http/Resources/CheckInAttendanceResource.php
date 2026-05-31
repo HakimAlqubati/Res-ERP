@@ -38,6 +38,7 @@ class CheckInAttendanceResource extends JsonResource
         return [
             'id'                    => $this->id,
             'branch_id'             => $this->branch_id,
+            'branch'             => $this->branch?->name ??'',
             'check_time'            => $this->check_time,
             'delay_minutes'         => $delayMinutes,
             'early_arrival_minutes' => $this->early_arrival_minutes,

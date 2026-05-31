@@ -131,9 +131,15 @@
         <thead class="fixed-header" style="top:64px;">
             @php
             $employee = \App\Models\Employee::find($employee_id);
+            $total_cols = 1 // Date
+                + 2 // Shift Data
+                + 4 // Checkin/Checkout Data (Check-in, Branch/Status, Check-out, Branch/Status)
+                + 3; // Work Hours Summary
+            if ($show_day) $total_cols++;
+            if ($show_branch) $total_cols++;
             @endphp
             <tr class="header_report">
-                <th colspan="{{ (10 - ($show_branch ? 2 : 0)) + ($show_day ? 1 : 0) + ($show_branch ? 1 : 0) }}" style="padding: 12px 16px;">
+                <th colspan="{{ $total_cols }}" style="padding: 12px 16px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">
                         {{-- Left: Buttons --}}
                         <div style="display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;">
@@ -186,18 +192,22 @@
                 </th>
                 <th rowspan="2">{{ __('lang.date') }}</th>
                 <th colspan="2">{{ __('lang.shift_data') }}</th>
-                <th colspan="{{ $show_branch ? 2 : 4 }}">{{ __('lang.checkin_checkout_data') }}</th>
+                <th colspan="4">{{ __('lang.checkin_checkout_data') }}</th>
                 <th colspan="3">{{ __('lang.work_hours_summary') }}</th>
             </tr>
             <tr>
                 <th class="internal_cell">{{ __('lang.from') }}</th>
                 <th class="internal_cell">{{ __('lang.to') }}</th>
                 <th class="internal_cell">{{ __('lang.check_in') }}</th>
-                @if (!$show_branch)
+                @if ($show_branch)
+                <th class="internal_cell">{{ __('lang.branch') }}</th>
+                @else
                 <th class="internal_cell">{{ __('lang.status') }}</th>
                 @endif
                 <th class="internal_cell">{{ __('lang.check_out') }}</th>
-                @if (!$show_branch)
+                @if ($show_branch)
+                <th class="internal_cell">{{ __('lang.branch') }}</th>
+                @else
                 <th class="internal_cell">{{ __('lang.status') }}</th>
                 @endif
                 <th class="internal_cell">{{ __('lang.supposed') }}</th>
@@ -233,7 +243,7 @@
                 <td>{{ $data['branch_name'] ?? '' }}</td>
                 @endif
                 <td>{{ $date }}</td>
-                <td colspan="{{ $show_branch ? 7 : 9 }}" class="text-center text-gray-500 font-bold">
+                <td colspan="9" class="text-center text-gray-500 font-bold">
                     {{ $data['leave_type'] }}
                 </td>
             </tr>
@@ -285,37 +295,41 @@
                 </td>
 
                 @if ($period['final_status'] == 'absent')
-                <td colspan="{{ $show_branch ? 6 : 8 }}">
+                <td colspan="7">
                     {{ __('lang.absent') }}
                 </td>
                 @elseif ($period['final_status'] == 'future')
-                <td colspan="{{ $show_branch ? 6 : 8 }}">
+                <td colspan="7">
                     {{ '-' }}
                 </td>
                 @elseif ($period['final_status'] == 'weekly_leave')
-                <td colspan="{{ $show_branch ? 6 : 8 }}">
+                <td colspan="7">
                     {{ __('lang.weekly_leave') }}
                 </td>
                 @else
                 <td>
-                    {{ $firstCheckin }}
+                    {{ $checkIns[0]['check_time'] ?? '-' }}
                 </td>
-
-                @if (!$show_branch)
+                @if ($show_branch)
                 <td>
-                    {{ /*$firstCheckinStatus */
-                    $firstCheckinStatusLabel
-                    }}
+                    {{ $checkIns[0]['branch'] ?? '-' }}
+                </td>
+                @else
+                <td>
+                    {{ $firstCheckinStatusLabel }}
                 </td>
                 @endif
 
                 <td>
-                    {{ $lastCheckout }}
+                    {{ $period['attendances']['checkout']['lastcheckout']['check_time'] ?? '-' }}
                 </td>
-
-                @if (!$show_branch)
+                @if ($show_branch)
                 <td>
-                    {{$lastCheckoutStatusLabel}}
+                    {{ $period['attendances']['checkout']['lastcheckout']['branch'] ?? '-' }}
+                </td>
+                @else
+                <td>
+                    {{ $lastCheckoutStatusLabel }}
                 </td>
                 @endif
 
@@ -355,7 +369,7 @@
                 <td>{{ $data['branch_name'] ?? '' }}</td>
                 @endif
                 <td>{{ $date }}</td>
-                <td colspan="{{ $show_branch ? 7 : 9 }}" class="text-center text-gray-500 font-bold">
+                <td colspan="9" class="text-center text-gray-500 font-bold">
                     @if(isset($data['day_status']) )
                     @if ($data['day_status'] == 'terminated')
                     {{ __('lang.terminated') }}
@@ -377,7 +391,7 @@
 
         <tfoot>
             <tr>
-                <td colspan="{{ (7 - ($show_branch ? 2 : 0)) + ($show_day ? 1 : 0) + ($show_branch ? 1 : 0) }}" class="text-center font-bold">{{ __('lang.total') }}</td>
+                <td colspan="{{ $total_cols - 3 }}" class="text-center font-bold">{{ __('lang.total') }}</td>
                 <td class="text-center">{{ $total_duration_hours }}</td>
                 <td class="text-center">{{ $total_actual_duration_hours }}</td>
                 <td class="text-center">{{ $total_approved_overtime }}</td>
