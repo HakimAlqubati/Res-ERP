@@ -227,6 +227,15 @@ class SettingResource extends Resource
                                                 ->placeholder('Enter multiplier (e.g., 2, 3, 4)')
                                                 ->required(),
 
+                                            TextInput::make('weekly_leave_days_earned')
+                                                ->label('Weekly Leave Days Earned')
+                                                ->helperText('Number of weekly leave days earned per cycle (standard is 1)')
+                                                ->numeric()
+                                                ->minValue(1)
+                                                ->maxValue(7)
+                                                ->default(1)
+                                                ->required(),
+
                                             TextInput::make('tax_total_reliefs')
                                                 ->label('Tax Total Reliefs')
                                                 ->helperText('Total annual reliefs to be deducted from annual salary before tax calculation')

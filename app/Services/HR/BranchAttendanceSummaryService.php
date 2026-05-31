@@ -223,7 +223,7 @@ class BranchAttendanceSummaryService
             if ($employee->has_auto_weekly_leave) {
                 $workDaysPerLeave = 6;
                 if (class_exists(\App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::class)) {
-                    $workDaysPerLeave = \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::WORK_DAYS_PER_LEAVE;
+                    $workDaysPerLeave = \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::getWorkDaysPerLeave();
                 }
                 $entitledLeaves = floor($presentDays / $workDaysPerLeave);
 

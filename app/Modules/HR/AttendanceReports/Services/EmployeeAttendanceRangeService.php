@@ -171,12 +171,11 @@ class EmployeeAttendanceRangeService
      */
     private function applyAutoWeeklyLeaves(Collection $report): void
     {
-        $workDaysPerLeave = \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::WORK_DAYS_PER_LEAVE;
         $countPartialAsAbsent = setting('count_partial_as_absent') ?? true;
 
         $dates = $report->keys()->filter(fn($key) => preg_match('/^\d{4}-\d{2}-\d{2}$/', $key))->sort()->values();
 
-        $totalWorkDays = 0;
+        $totalMonthDays = count($dates);
         $absentDates = [];
 
         foreach ($dates as $date) {
@@ -187,12 +186,7 @@ class EmployeeAttendanceRangeService
 
             $status = $day['day_status'];
 
-            if (in_array($status, [
-                \App\Enums\HR\Attendance\AttendanceReportStatus::Present->value,
-                \App\Enums\HR\Attendance\AttendanceReportStatus::IncompleteCheckoutOnly->value,
-            ])) {
-                $totalWorkDays++;
-            } elseif (
+            if (
                 $status === \App\Enums\HR\Attendance\AttendanceReportStatus::Absent->value ||
                 ($countPartialAsAbsent && in_array($status, [
                     \App\Enums\HR\Attendance\AttendanceReportStatus::Partial->value,
@@ -204,10 +198,20 @@ class EmployeeAttendanceRangeService
             }
         }
 
-        $totalEntitledLeaves = floor($totalWorkDays / $workDaysPerLeave);
-        $workDaysTowardsNext = $totalWorkDays % $workDaysPerLeave;
-        $leavesToUse         = min($totalEntitledLeaves, count($absentDates));
-        $usedLeaves          = 0;
+        // استخدام الحاسبة الموحدة
+        $calculator = new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator();
+        $calcResult = $calculator->calculate($totalMonthDays, count($absentDates), [
+            'is_period_ended' => true,
+            'is_for_payroll' => true,
+            'has_auto_weekly_leave' => true,
+        ]);
+
+        $earnedLeaveDays = $calcResult['analysis']['earned_leave_days'] ?? 0;
+        $workRemainder   = $calcResult['analysis']['work_remainder'] ?? 0;
+        $totalWorkDays   = $calcResult['analysis']['worked_days'] ?? 0;
+
+        $leavesToUse = min($earnedLeaveDays, count($absentDates));
+        $usedLeaves  = 0;
 
         foreach ($absentDates as $date) {
             if ($usedLeaves >= $leavesToUse) {
@@ -237,11 +241,11 @@ class EmployeeAttendanceRangeService
 
         $report->put('weekly_leave_stats', [
             'total_work_days'        => $totalWorkDays,
-            'entitled_leaves'        => $totalEntitledLeaves,
+            'entitled_leaves'        => $earnedLeaveDays,
             'used_leaves'            => $usedLeaves,
-            'remaining_leaves'       => $totalEntitledLeaves - $usedLeaves,
+            'remaining_leaves'       => $earnedLeaveDays - $usedLeaves,
             'remaining_absences'     => count($absentDates) - $usedLeaves,
-            'work_days_towards_next' => $workDaysTowardsNext,
+            'work_days_towards_next' => $workRemainder,
         ]);
     }
 }
