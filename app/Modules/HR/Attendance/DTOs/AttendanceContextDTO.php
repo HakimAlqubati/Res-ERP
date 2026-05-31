@@ -163,7 +163,7 @@ class AttendanceContextDTO
             'check_time'  => $this->requestTime->toTimeString(),
             'day'         => $this->shiftDayName ?? strtolower($this->requestTime->format('D')),
             'check_type' => $this->checkType?->value,
-            'branch_id' => $this->employee->branch_id,
+            'branch_id' => $this->payload['branch_id'] ?? $this->employee->branch_id,
             'created_by' => auth()->id() ?? 0,
             'attendance_type' => $this->attendanceType->value,
             'status' => $this->status?->value,

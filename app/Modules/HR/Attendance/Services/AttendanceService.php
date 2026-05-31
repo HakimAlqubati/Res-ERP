@@ -35,6 +35,17 @@ class AttendanceService
      */
     public function handle(array $payload): AttendanceResultDTO
     {
+        // 0. التحقق من صحة branch_id إذا تم إرساله
+        if (isset($payload['branch_id'])) {
+            $validator = \Illuminate\Support\Facades\Validator::make($payload, [
+                'branch_id' => 'exists:branches,id,deleted_at,NULL',
+            ]);
+
+            if ($validator->fails()) {
+                return AttendanceResultDTO::failure(__('Selected branch is invalid.'));
+            }
+        }
+
         // 1. تحديد الموظف
         $employee = $this->resolveEmployee->execute($payload);
 

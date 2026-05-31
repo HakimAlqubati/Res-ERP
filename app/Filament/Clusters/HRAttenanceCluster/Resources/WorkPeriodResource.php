@@ -2,54 +2,51 @@
 
 namespace App\Filament\Clusters\HRAttenanceCluster\Resources;
 
-use Filament\Pages\Enums\SubNavigationPosition;
-use Filament\Schemas\Components\Fieldset;
-use Filament\Schemas\Components\Grid;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TimePicker;
-use Filament\Schemas\Schema;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\BooleanColumn;
-use Filament\Tables\Filters\TrashedFilter;
-use Filament\Actions\EditAction;
-use Filament\Actions\Action;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\BulkAction;
-use Filament\Actions\RestoreBulkAction;
-use App\Imports\WorkPeriodImport;
-use Throwable;
-use App\Filament\Clusters\HRAttenanceCluster\Resources\WorkPeriodResource\Pages\ListWorkPeriods;
+use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\WorkPeriodResource\Pages\CreateWorkPeriod;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\WorkPeriodResource\Pages\EditWorkPeriod;
-use App\Filament\Clusters\HRAttenanceCluster;
-use App\Filament\Clusters\HRAttenanceCluster\Resources\WorkPeriodResource\Pages;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\WorkPeriodResource\Pages\ListWorkPeriods;
+use App\Imports\WorkPeriodImport;
 use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\WorkPeriod;
+use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
 use Filament\Forms;
-use Illuminate\Database\Eloquent\Collection;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Get;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
+use Filament\Tables\Columns\BooleanColumn;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
-use Symfony\Component\Yaml\Inline;
+use Throwable;
 
 class WorkPeriodResource extends Resource
 {
     protected static ?string $model = WorkPeriod::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = Heroicon::Clock;
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::Clock;
 
     protected static ?string $cluster = HRAttenanceCluster::class;
 
@@ -68,7 +65,8 @@ class WorkPeriodResource extends Resource
         return __('lang.work_shifts');
     }
 
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
     protected static ?int $navigationSort = 1;
 
     public static function getFormSchema($branchId = null): array
@@ -83,25 +81,32 @@ class WorkPeriodResource extends Resource
                         ->columnSpan(1)
                         ->unique(ignoreRecord: true),
 
-                    // Toggle::make('all_branches')
-                    //     ->default(1)
-                    //     ->label('For all branches?')
-                    //     ->helperText('This period will be for all branches')
-                    //     ->live()
-                    //     ->columnSpan(1)
-                    //     // ->disabled()
-                    //     ->inline(false)
-                    //     ->default(true),
-                    Select::make('branch_id')
-                        ->options(Branch::where('active', 1)
-                            ->whereIn('type', [
-                                Branch::TYPE_BRANCH,
-                                Branch::TYPE_HQ
-                            ])->select('name', 'id')->get()->pluck('name', 'id'))
-                        ->label(__('lang.branch'))->required()
-                        ->default($branchId) // تعيين القيمة الافتراضية
-                        ->hidden($branchId !== null)
-                        ->searchable(),
+                    Grid::make()
+                        ->columns(1)
+                        ->schema([
+                            Toggle::make('all_branches')
+                                ->default(1)
+                                ->label('For all branches?')
+                                ->helperText('This period will be for all branches')
+                                ->live()
+                                ->columnSpan(1)
+                                                  // ->disabled()
+                                ->inline(false)
+                                ->default(true),
+                            Select::make('branch_id')
+
+                                ->options(Branch::where('active', 1)
+                                    ->whereIn('type', [
+                                        Branch::TYPE_BRANCH,
+                                        Branch::TYPE_HQ,
+                                    ])->select('name', 'id')->get()->pluck('name', 'id'))
+                                ->label(__('lang.branch'))->required()
+                                ->default($branchId) // تعيين القيمة الافتراضية
+                                // ->hidden($branchId !== null)
+                                ->visible(fn ($get) => $get('all_branches') == false)
+                                ->searchable(),
+                        ]),
+
                     Toggle::make('active')
                         ->label(__('lang.active'))
                         ->columnSpan(1)
@@ -155,6 +160,7 @@ class WorkPeriodResource extends Resource
             ]),
         ];
     }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -171,17 +177,17 @@ class WorkPeriodResource extends Resource
                     ->label('id')
                     ->sortable()
                     ->searchable()->toggleable(),
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Name')
                     ->sortable()
                     ->searchable()->toggleable(),
 
-                Tables\Columns\TextColumn::make('branch.name')
+                TextColumn::make('branch_name')
                     ->label('Branch')->searchable()->sortable()->toggleable(),
 
-                Tables\Columns\BooleanColumn::make('active')->alignCenter(true)
+                BooleanColumn::make('active')->alignCenter(true)
                     ->label('Active')->toggleable(),
-                Tables\Columns\BooleanColumn::make('day_and_night')->alignCenter(true)->sortable()
+                BooleanColumn::make('day_and_night')->alignCenter(true)->sortable()
                     ->label('Day and Night')->toggleable(),
 
                 TextColumn::make('start_at')
@@ -191,7 +197,7 @@ class WorkPeriodResource extends Resource
                 TextColumn::make('end_at')
                     ->label('End Time')
                     ->sortable()->toggleable(),
-                Tables\Columns\TextColumn::make('supposed_duration')
+                TextColumn::make('supposed_duration')
                     ->label('Duration')->toggleable()->alignCenter(),
 
                 // Tables\Columns\TextColumn::make('allowed_count_minutes_late')->alignCenter(true)
@@ -206,7 +212,7 @@ class WorkPeriodResource extends Resource
                 EditAction::make(),
                 Action::make('copy')
                     ->label('Copy')
-                    ->hidden(fn(): bool => isBranchManager())
+                    ->hidden(fn (): bool => isBranchManager())
                     ->button()
                     ->icon('heroicon-o-clipboard-document-list')
                     ->schema(function ($record) {
@@ -216,7 +222,7 @@ class WorkPeriodResource extends Resource
                                 TextInput::make('name')->unique()
                                     ->label('Name')
                                     ->required()
-                                    ->default($record->name . ' - Copy'), // Appending " - Copy" for distinction
+                                    ->default($record->name.' - Copy'), // Appending " - Copy" for distinction
                                 Textarea::make('description')
                                     ->label('Description')
                                     ->default($record->description),
@@ -232,7 +238,7 @@ class WorkPeriodResource extends Resource
                                     ->label('End Time')
                                     ->required()
                                     ->default($record->end_at),
-                                Forms\Components\Select::make('branch_id')
+                                Select::make('branch_id')
                                     ->options(Branch::active()
                                         ->selectable()->pluck('name', 'id'))
                                     ->label('Branch')
@@ -258,7 +264,7 @@ class WorkPeriodResource extends Resource
                         $newRecord->save();
                     })
 
-                    ->color('warning')
+                    ->color('warning'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -274,6 +280,7 @@ class WorkPeriodResource extends Resource
                             $countValidate = $periodInAttendanceCount + $employeePeriodsExistingCount;
                             if ($countValidate > 0) {
                                 showWarningNotifiMessage('Cannot delete: shifts assigned.');
+
                                 return;
                             }
                             $records->each->delete();
@@ -282,7 +289,7 @@ class WorkPeriodResource extends Resource
                         // ->action(fn(Collection $records) => $records->each->delete())
                         ->deselectRecordsAfterCompletion(),
                     RestoreBulkAction::make(),
-                    ForceDeleteBulkAction::make()->visible(fn() => isSuperAdmin())
+                    ForceDeleteBulkAction::make()->visible(fn () => isSuperAdmin()),
                 ]),
             ])
             ->headerActions([
@@ -296,7 +303,7 @@ class WorkPeriodResource extends Resource
                     ->color('success')
                     ->action(function ($data) {
 
-                        $file = 'public/' . $data['file'];
+                        $file = 'public/'.$data['file'];
                         try {
                             // Create an instance of the import class
                             $import = new WorkPeriodImport;
@@ -314,9 +321,8 @@ class WorkPeriodResource extends Resource
                             throw $th;
                             showWarningNotifiMessage('Error importing shifts');
                         }
-                    })
-            ])
-        ;
+                    }),
+            ]);
     }
 
     public static function getRelations(): array
@@ -339,14 +345,15 @@ class WorkPeriodResource extends Resource
     {
         return static::getModel()::forBranchManager()->count();
     }
+
     public static function canViewAny(): bool
     {
         if (isSystemManager() || isSuperAdmin() || isBranchManager() || isHR()) {
             return true;
         }
+
         return false;
     }
-
 
     public static function getEloquentQuery(): Builder
     {
@@ -354,6 +361,14 @@ class WorkPeriodResource extends Resource
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
-        return $query->forBranchManager();
+
+        if (auth()->check() && isBranchManager()) {
+            return $query->where(function (Builder $q) {
+                $q->where('branch_id', auth()->user()->branch_id)
+                    ->orWhere('all_branches', true);
+            });
+        }
+
+        return $query;
     }
 }
