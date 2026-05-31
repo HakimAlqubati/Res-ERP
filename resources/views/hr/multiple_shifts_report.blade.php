@@ -114,7 +114,7 @@
             </div>
             <div>
                 <h1 class="text-2xl font-black text-white tracking-wide">تقرير الشيفتات المتعددة</h1>
-                <p class="text-xs text-gray-400">كشف بالموظفين الذين لديهم أكثر من شيفت (فترة عمل) في يوم واحد.</p>
+                <p class="text-xs text-gray-400">كشف بالموظفين الذين لديهم أكثر من وردية في يوم واحد، أو لديهم تحضيرات بدون وردية وهم مسند لهم وردية.</p>
             </div>
         </div>
         
@@ -201,11 +201,19 @@
                                     <td class="py-5 px-6">
                                         <div class="flex flex-wrap gap-2.5 justify-center">
                                             @foreach($row['shifts'] as $index => $shift)
-                                                <div class="flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary-light text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-primary-light"></span>
-                                                    <span class="font-bold">{{ $shift['name'] }}</span>
-                                                    <span class="text-[10px] text-gray-400">({{ $shift['start'] }} - {{ $shift['end'] }})</span>
-                                                </div>
+                                                @if(!empty($shift['is_no_shift']))
+                                                    <div class="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                                                        <span class="font-bold">{{ $shift['name'] }}</span>
+                                                        <span class="text-[10px] text-gray-400">({{ $shift['start'] }})</span>
+                                                    </div>
+                                                @else
+                                                    <div class="flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary-light text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-primary-light"></span>
+                                                        <span class="font-bold">{{ $shift['name'] }}</span>
+                                                        <span class="text-[10px] text-gray-400">({{ $shift['start'] }} - {{ $shift['end'] }})</span>
+                                                    </div>
+                                                @endif
                                             @endforeach
                                         </div>
                                     </td>
@@ -226,7 +234,7 @@
                         </div>
                     </div>
                     <h3 class="text-xl font-bold mb-2 text-white">لا توجد حالات</h3>
-                    <p class="text-sm text-gray-400">لم يتم العثور على أي موظفين لديهم أكثر من شيفت واحد في يوم واحد خلال الفترة المحددة.</p>
+                    <p class="text-sm text-gray-400">لم يتم العثور على أي موظفين لديهم أكثر من وردية في يوم واحد أو تحضيرات بدون وردية في الفترة المحددة.</p>
                 </div>
             @endif
         </section>
