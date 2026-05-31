@@ -78,7 +78,8 @@ class EditStockInventory extends EditRecord
                             ->send();
                     }
                 })
-                ->hidden(),
+                // ->hidden()
+                ,
         ];
     }
 
