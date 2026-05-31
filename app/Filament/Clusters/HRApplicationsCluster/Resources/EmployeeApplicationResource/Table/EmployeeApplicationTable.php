@@ -478,6 +478,18 @@ class EmployeeApplicationTable
 
                     return false;
                 }),
+                EmployeeApplicationResource::undoApproveDepartureRequest()->hidden(function ($record) {
+                    if (isstuff() || isFinanceManager() || isHR()) {
+                        return true;
+                    }
+                    if (isset(Auth::user()->employee)) {
+                        if ($record->employee_id == Auth::user()->employee->id) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }),
 
                 EmployeeApplicationResource::approveAttendanceRequest()->hidden(function ($record) {
                     // return false;
@@ -494,6 +506,18 @@ class EmployeeApplicationTable
                 }),
 
                 EmployeeApplicationResource::rejectAttendanceRequest()->hidden(function ($record) {
+                    if (isstuff() || isFinanceManager() || isHR()) {
+                        return true;
+                    }
+                    if (isset(Auth::user()->employee)) {
+                        if ($record->employee_id == Auth::user()->employee->id) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }),
+                EmployeeApplicationResource::undoApproveAttendanceRequest()->hidden(function ($record) {
                     if (isstuff() || isFinanceManager() || isHR()) {
                         return true;
                     }

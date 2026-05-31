@@ -391,7 +391,12 @@ class EmployeeApplicationService
                     }
                     break;
 
-                    // Note: Rollback for Attendance & Departure fingerprint requests can be added here if needed
+                case EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST:
+                case EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST:
+                    \App\Models\Attendance::where('source_type', EmployeeApplicationV2::class)
+                        ->where('source_id', $record->id)
+                        ->delete();
+                    break;
             }
 
             // Revert state to pending and clear approval metadata
