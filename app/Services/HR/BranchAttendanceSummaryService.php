@@ -210,12 +210,18 @@ class BranchAttendanceSummaryService
                         $checkoutData = $period['attendances']['checkout']['lastcheckout'] ?? [];
                         if (!empty($checkoutData)) {
                             $missingMinutes += (float) ($checkoutData['missing_hours']['total_minutes'] ?? 0);
-                            $earlyDepartureMinutes += (float) ($checkoutData['early_departure_minutes'] ?? 0);
+                            $earlyDep = (float) ($checkoutData['early_departure_minutes'] ?? 0);
+                            if ($earlyDep > 10) {
+                                $earlyDepartureMinutes += $earlyDep;
+                            }
                         }
 
                         $checkinData = $period['attendances']['checkin'][0] ?? [];
                         if (!empty($checkinData) && !empty($checkoutData)) {
-                            $lateMinutes += (float) ($checkinData['delay_minutes'] ?? 0);
+                            $delayMinutes = (float) ($checkinData['delay_minutes'] ?? 0);
+                            if ($delayMinutes > 10) {
+                                $lateMinutes += $delayMinutes;
+                            }
                         }
                     }
                 }
