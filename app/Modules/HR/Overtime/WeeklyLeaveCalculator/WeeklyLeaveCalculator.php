@@ -2,59 +2,30 @@
 
 namespace App\Modules\HR\Overtime\WeeklyLeaveCalculator;
 
+use App\Models\Setting;
+
 class WeeklyLeaveCalculator
 {
     /**
-     * عدد أيام العمل المطلوبة لاكتساب الإجازة (للتوافق الرجعي)
+     * الحد القياسي للإجازات في الشهر (للتوافق الرجعي إذا لم تكن الإعدادات متوفرة)
      */
-    public const WORK_DAYS_PER_LEAVE = 5;
+    public const DEFAULT_MONTHLY_LEAVE = 4;
 
     /**
-     * عدد أيام الراحة المكتسبة (للتوافق الرجعي)
-     */
-    public const LEAVE_DAYS_EARNED = 1;
-
-    /**
-     * الحد القياسي للإجازات (4 أسابيع × عدد أيام الراحة) - للتوافق الرجعي
-     */
-    private const STANDARD_MONTHLY_LEAVE = 4;
-
-    /**
-     * جلب عدد أيام الراحة المكتسبة ديناميكياً من الإعدادات
-     */
-    public static function getLeaveDaysEarned(): int
-    {
-        if (class_exists(\App\Models\Setting::class)) {
-            return (int) \App\Models\Setting::getSetting('weekly_leave_days_earned', self::LEAVE_DAYS_EARNED);
-        }
-        return self::LEAVE_DAYS_EARNED;
-    }
-
-    /**
-     * جلب عدد أيام العمل المطلوبة لاكتساب الإجازة ديناميكياً
-     */
-    public static function getWorkDaysPerLeave(): int
-    {
-        return 7 - self::getLeaveDaysEarned();
-    }
-
-    /**
-     * جلب الحد القياسي للإجازات شهرياً ديناميكياً
+     * جلب إجمالي إجازات الشهر مباشرة من الإعدادات
+     * (الحقل ما زال اسمه القديم لكن قيمته الآن هي الإجمالي الشهري: 4, 8, الخ)
      */
     public static function getStandardMonthlyLeave(): int
     {
-        return 4 * self::getLeaveDaysEarned();
+        if (class_exists(Setting::class)) {
+            return (int) Setting::getSetting('weekly_leave_days_earned', self::DEFAULT_MONTHLY_LEAVE);
+        }
+
+        return self::DEFAULT_MONTHLY_LEAVE;
     }
 
     /**
-     * الاحتساب الرقمي للإجازات الأسبوعية والميزان المالي.
-     *
-     * @param  int  $totalMonthDays  إجمالي أيام الشهر (الوعاء الزمني)
-     * @param  int  $absentDays  عدد أيام الغياب
-     * @param  array  $context  سياق الاستدعاء:
-     *                          - is_period_ended (bool): هل انتهت الفترة/الشهر؟
-     *                          - is_for_payroll  (bool): هل الاحتساب لأغراض الرواتب؟
-     *                          يُطبَّق احتساب الإجازات الأسبوعية فقط عند تحقق الشرطين معاً.
+     * الاحتساب الرقمي للإجازات والميزان المالي.
      */
     public function calculate(int $totalMonthDays, int $absentDays, array $context = []): array
     {
@@ -72,21 +43,23 @@ class WeeklyLeaveCalculator
             // 1. أيام العمل الصافية
             $actualWorkedDays = $totalMonthDays - $absentDays;
 
-            // جلب المتغيرات ديناميكياً
-            $leaveDaysEarned     = self::getLeaveDaysEarned();
-            $workDaysPerLeave    = self::getWorkDaysPerLeave();
+            // جلب المتغير الشهري (مثلاً 4 أو 8)
             $standardMonthlyLeave = self::getStandardMonthlyLeave();
 
-            // 2. رصيد الراحة المكتسب (يُحسب فقط عند تطبيق الإجازات الأسبوعية)
+            // أيام العمل المفترضة في الشهر (لحماية النظام من القسمة على صفر)
+            $expectedWorkDays = max(1, $totalMonthDays - $standardMonthlyLeave);
+
+            // =================================================================
+            // 2. رصيد الراحة المكتسب (نظام النسبة والتناسب الشهري)
+            // =================================================================
             $earnedOffDays = $applyWeeklyLeave
-                ? (int) floor($actualWorkedDays / $workDaysPerLeave) * $leaveDaysEarned
+                ? (int) round(($actualWorkedDays / $expectedWorkDays) * $standardMonthlyLeave)
                 : 0;
+
             $cappedEarnedDays = $applyWeeklyLeave ? min($standardMonthlyLeave, $earnedOffDays) : 0;
-            $workRemainder = $actualWorkedDays % $workDaysPerLeave;
 
             // =================================================================
             // 3. المعادلة الذهبية (الميزان الرقمي)
-            // الرصيد = (ما قدمه الموظف + ما استحقه من راحة) - (المطلوب منه في الشهر)
             // =================================================================
             $netBalance = ($actualWorkedDays + $cappedEarnedDays) - $totalMonthDays;
 
@@ -100,19 +73,16 @@ class WeeklyLeaveCalculator
                 $totalPenaltyDays = abs($netBalance);
             }
 
-            // 5. تفصيل الخصم (للتوضيح فقط)
-            // يُطبَّق فقط عند تفعيل الإجازات الأسبوعية — وإلا فكل الخصم غياب صافٍ
+            // 5. تفصيل الخصم
             $leavePenaltyDisplay = 0;
             $absentPenaltyDisplay = 0;
 
             if ($totalPenaltyDays > 0) {
-                if ($applyWeeklyLeave && $cappedEarnedDays < self::STANDARD_MONTHLY_LEAVE) {
-                    $leavePenaltyDisplay = self::STANDARD_MONTHLY_LEAVE - $cappedEarnedDays;
+                if ($applyWeeklyLeave && $cappedEarnedDays < $standardMonthlyLeave) {
+                    $leavePenaltyDisplay = $standardMonthlyLeave - $cappedEarnedDays;
                 }
                 $absentPenaltyDisplay = max(0, $totalPenaltyDays - $leavePenaltyDisplay);
             }
-
-            $payableDays = $actualWorkedDays + $cappedEarnedDays;
 
             return [
                 'context' => [
@@ -127,14 +97,14 @@ class WeeklyLeaveCalculator
                 'analysis' => [
                     'worked_days' => $actualWorkedDays,
                     'earned_leave_days' => $cappedEarnedDays,
-                    'work_remainder' => $workRemainder,
+                    'work_remainder' => 0, // لم يعد له حاجة في نظام النسبة
                 ],
                 'result' => [
                     'leave_penalty' => $leavePenaltyDisplay,
                     'final_absent_penalty' => $absentPenaltyDisplay,
                     'total_deduction_days' => $totalPenaltyDays,
                     'overtime_days' => $overtimeDays,
-                    'payable_days' => $payableDays,
+                    'payable_days' => $actualWorkedDays + $cappedEarnedDays,
                 ],
             ];
         } catch (\Exception $e) {
