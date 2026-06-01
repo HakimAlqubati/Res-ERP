@@ -34,7 +34,7 @@ class BatchQuickAdd
         return Action::make('quick_add')
             ->label('Batch Quick Add')
             ->color('success')
-            ->icon('heroicon-o-users')
+            ->icon(Heroicon::PlusCircle)
             ->closeModalByClickingAway(false)
             ->closeModalByEscaping(false)
             ->modalHeading('Batch Add Overtime')

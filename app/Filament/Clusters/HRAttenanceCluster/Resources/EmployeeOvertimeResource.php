@@ -21,7 +21,7 @@ class EmployeeOvertimeResource extends Resource
 {
     protected static ?string $model = EmployeeOvertime::class;
 
-    protected static string|\BackedEnum|null $navigationIcon = Heroicon::Briefcase;
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::Clock;
 
     protected static ?string $cluster = HRAttenanceCluster::class;
 
