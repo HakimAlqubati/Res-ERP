@@ -8,7 +8,7 @@ use App\Models\Employee;
 use App\Models\EmployeeOvertime;
 use App\Modules\HR\AttendanceReports\Services\EmployeesAttendanceOnDateService;
 use App\Modules\HR\Overtime\OvertimeService;
- use Filament\Actions\Action;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
@@ -23,6 +23,7 @@ use Filament\Schemas\Components\Grid;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\HtmlString;
 
 class HeaderActions
 {
@@ -33,20 +34,20 @@ class HeaderActions
             ->color('success')
             ->icon('heroicon-o-users')
             ->schema([
-                Grid::make(3)->schema([
+                Grid::make(4)->schema([
                     DatePicker::make('date')
                         ->label('Date')
                         ->required()
                         ->default(now())
                         ->live()
-                        ->afterStateUpdated(fn ($set, $state, $get) => self::updateStaffList($set, $get('branch_id'), $state)),
+                        ->afterStateUpdated(fn ($set, $state, $get) => self::updateStaffList($set, $get('branch_id'), $state, $get('show_all'))),
 
                     Select::make('branch_id')
                         ->label('Branch')
                         ->options(Branch::pluck('name', 'id'))
                         ->required()
                         ->live()
-                        ->afterStateUpdated(fn ($set, $state, $get) => self::updateStaffList($set, $state, $get('date'))),
+                        ->afterStateUpdated(fn ($set, $state, $get) => self::updateStaffList($set, $state, $get('date'), $get('show_all'))),
 
                     Select::make('type')
                         ->label('Type')
@@ -84,6 +85,16 @@ class HeaderActions
                                 }
                             },
                         ]),
+                    Select::make('show_all')
+                        ->label('Show Employees')
+                        ->options([
+                            '0' => 'Present Only',
+                            '1' => 'All (Present & Absent)',
+                        ])
+                        ->default('0')
+                        ->live()
+                        ->afterStateUpdated(fn ($set, $state, $get) => self::updateStaffList($set, $get('branch_id'), $get('date'), $state)),
+
                 ]),
 
                 Textarea::make('reason')
@@ -93,14 +104,14 @@ class HeaderActions
                     ->placeholder('Reason for overall batch...'),
 
                 Repeater::make('items')
-                    ->label('Staff List (Present on Date)')
+                    ->label('Staff List')
                     ->table([
                         TableColumn::make('Select')
                             ->alignCenter()
-                            ->width('20%'),
+                            ->width('15%'),
                         TableColumn::make('Employee')
                             ->alignCenter()
-                            ->width('50%'),
+                            ->width('55%'),
                         TableColumn::make('Hours')
                             ->alignCenter()
                             ->width('30%'),
@@ -112,25 +123,38 @@ class HeaderActions
                             ->extraAttributes([
                                 'class' => 'text-center',
                             ])
+                            // ->disabled(fn ($get) => (bool) $get('is_absent'))
                             ->default(true),
 
                         Placeholder::make('employee_name_label')
                             ->label('')
                             ->hiddenLabel()
-                            ->content(fn ($get) => $get('employee_name')),
+                            ->content(function ($get) {
+                                $name = $get('employee_name');
+                                if ($get('is_absent')) {
+                                    return new HtmlString(
+                                        '<span style="display:inline-flex;align-items:center;gap:6px;">'.
+                                        '<span style="background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;letter-spacing:.5px;">ABSENT</span>'.
+                                        '<span style="color:#6b7280;">'.e($name).'</span>'.
+                                        '</span>'
+                                    );
+                                }
+
+                                return $name;
+                            }),
 
                         TextInput::make('hours')
                             ->label('Hours')
-
                             ->extraInputAttributes([
                                 'class' => 'text-center',
                             ])
                             ->numeric()
-                            ->required(fn ($get) => $get('../../type') !== EmployeeOvertime::TYPE_BASED_ON_MONTH)
-                            ->hidden(fn ($get) => $get('../../type') === EmployeeOvertime::TYPE_BASED_ON_MONTH),
+                            ->required(fn ($get) => $get('../../type') !== EmployeeOvertime::TYPE_BASED_ON_MONTH && ! $get('is_absent'))
+                            ->hidden(fn ($get) => $get('../../type') === EmployeeOvertime::TYPE_BASED_ON_MONTH || $get('is_absent')),
 
                         Hidden::make('employee_id'),
                         Hidden::make('employee_name'),
+                        Hidden::make('is_absent'),
                     ])
                     ->addable(false)
                     ->deletable(false)
@@ -145,7 +169,7 @@ class HeaderActions
 
                 try {
                     foreach ($data['items'] as $item) {
-                        if (! $item['is_selected']) {
+                        if (! $item['is_selected'] || ! empty($item['is_absent'])) {
                             continue;
                         }
 
@@ -265,7 +289,7 @@ class HeaderActions
             ->visible(fn () => isSuperAdmin() || isSystemManager() || isBranchManager());
     }
 
-    protected static function updateStaffList($set, $branchId, $date): void
+    protected static function updateStaffList($set, $branchId, $date, $showAll = '0'): void
     {
         if (! $branchId || ! $date) {
             $set('items', []);
@@ -285,13 +309,24 @@ class HeaderActions
         $attendanceService = app(EmployeesAttendanceOnDateService::class);
         $attendanceReport = $attendanceService->fetchAttendances($employees, $date);
 
-        $items = [];
+        $presentItems = [];
+        $absentItems = [];
         $dateString = is_string($date) ? substr($date, 0, 10) : $date->toDateString();
 
         foreach ($employees as $employee) {
             $report = $attendanceReport->get($employee->id);
 
             if (! isset($report['attendance_report'])) {
+                if ($showAll) {
+                    $absentItems[] = [
+                        'employee_id' => $employee->id,
+                        'employee_name' => $employee->name,
+                        'hours' => 0,
+                        'is_selected' => true,
+                        'is_absent' => true,
+                    ];
+                }
+
                 continue;
             }
 
@@ -299,6 +334,16 @@ class HeaderActions
             $dayData = $attendanceData->get($dateString);
 
             if (! $dayData) {
+                if ($showAll) {
+                    $absentItems[] = [
+                        'employee_id' => $employee->id,
+                        'employee_name' => $employee->name,
+                        'hours' => 0,
+                        'is_selected' => true,
+                        'is_absent' => true,
+                    ];
+                }
+
                 continue;
             }
 
@@ -317,15 +362,25 @@ class HeaderActions
                     $otHours = round($matches[1] + ($matches[2] / 60) + ($matches[3] / 3600), 2);
                 }
 
-                $items[] = [
+                $presentItems[] = [
                     'employee_id' => $employee->id,
                     'employee_name' => $employee->name,
                     'hours' => $otHours > 0 ? $otHours : 0,
                     'is_selected' => true,
+                    'is_absent' => false,
+                ];
+            } elseif ($showAll) {
+                $absentItems[] = [
+                    'employee_id' => $employee->id,
+                    'employee_name' => $employee->name,
+                    'hours' => 0,
+                    'is_selected' => true,
+                    'is_absent' => true,
                 ];
             }
         }
 
-        $set('items', $items);
+        // Present employees first, absent employees at the bottom
+        $set('items', array_merge($presentItems, $absentItems));
     }
 }
