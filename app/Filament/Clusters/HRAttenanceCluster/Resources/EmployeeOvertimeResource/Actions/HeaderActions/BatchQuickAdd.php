@@ -98,9 +98,12 @@ class BatchQuickAdd
 
                             Select::make('branch_id')
                                 ->label('Branch')
-                                ->options(Branch::pluck('name', 'id'))
+                                ->options(Branch::normal()->pluck('name', 'id'))
                                 ->required()
+                                ->native()
+                                ->preload(false)
                                 ->live()
+                                ->searchable()
                                 ->afterStateUpdated(function ($set, $state, $get) {
                                     self::updateStaffList($set, $state, $get('date'), $get('show_all'));
                                     $set('select_all', true);
