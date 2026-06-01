@@ -2,41 +2,39 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
-use Filament\Schemas\Components\Fieldset;
-use Filament\Schemas\Components\Utilities\Get;
-use Spatie\Permission\Models\Role;
-use Filament\Schemas\Components\Grid;
-use Filament\Actions\EditAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use App\Filament\Resources\SettingResource\Pages\CreateSetting;
+use App\Enums\HR\Payroll\DailyRateMethod;
+use App\Enums\HR\Payroll\SalaryAllocationRule;
 use App\Filament\Clusters\SettingsCluster;
 use App\Filament\Resources\SettingResource\Pages;
+use App\Filament\Resources\SettingResource\Pages\CreateSetting;
 use App\Models\Attendance;
 use App\Models\Setting;
-use Filament\Forms\Components\Checkbox;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Wizard;
-use Filament\Tables;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Spatie\Permission\Models\Role;
 
 class SettingResource extends Resource
 {
     protected static ?string $model = Setting::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-cog-6-tooth';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-cog-6-tooth';
 
     public static function getModelLabel(): string
     {
@@ -72,9 +70,9 @@ class SettingResource extends Resource
                             ->icon('heroicon-o-building-office')
                             ->schema([
                                 Fieldset::make()->columns(3)->label('Company Info')->schema([
-                                    TextInput::make("company_name")
+                                    TextInput::make('company_name')
                                         ->label('Name'),
-                                    TextInput::make("company_phone")
+                                    TextInput::make('company_phone')
                                         ->label('Phone Number')
                                         ->required(),
 
@@ -83,7 +81,7 @@ class SettingResource extends Resource
                                         ->searchable()
                                         ->options(getNationalitiesAsCountries()),
 
-                                    TextInput::make("website")
+                                    TextInput::make('website')
                                         ->label('Website')
                                         ->url()
                                         ->placeholder('https://example.com')
@@ -97,7 +95,7 @@ class SettingResource extends Resource
                                         ->visibility('public')
                                         ->columnSpan(3)
                                         ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                            return Str::random(15) . "." . $file->getClientOriginalExtension();
+                                            return Str::random(15).'.'.$file->getClientOriginalExtension();
                                         }),
 
                                     Fieldset::make()->columnSpanFull()->label('Address')->schema([
@@ -112,59 +110,59 @@ class SettingResource extends Resource
                                 Tabs::make('hr')->columnSpanFull()->schema([
                                     Tab::make('Work Shifts')->schema([
                                         Fieldset::make()->label('')->columns(4)->schema([
-                                            TextInput::make("hours_count_after_period_before")
+                                            TextInput::make('hours_count_after_period_before')
                                                 ->label('Allowed hours pre-period')
                                                 ->numeric()
                                                 ->integer()
                                                 ->required(),
-                                            TextInput::make("hours_count_after_period_after")
+                                            TextInput::make('hours_count_after_period_after')
                                                 ->label('Allowed hours post-period')
                                                 ->numeric()
                                                 ->integer()
                                                 ->required(),
 
-                                            TextInput::make("early_attendance_minutes")
+                                            TextInput::make('early_attendance_minutes')
                                                 ->label('Early arrival grace minutes')
                                                 // ->helperText('The number of minutes before the scheduled start time that is considered early attendance.')
                                                 ->numeric()
                                                 ->required(),
-                                            TextInput::make("late_attendance_grace_minutes")
+                                            TextInput::make('late_attendance_grace_minutes')
                                                 ->label('Late arrival grace minutes')
                                                 // ->helperText('The number of minutes after the scheduled start time that is allowed before considering the employee late.')
                                                 ->numeric()
                                                 ->required(),
-                                            TextInput::make("pre_end_hours_for_check_in_out")
+                                            TextInput::make('pre_end_hours_for_check_in_out')
                                                 ->label('Pre-period action hours')
                                                 // ->helperText('Number of hours remaining before period end to trigger an action if check-in or check-out is not recorded')
                                                 ->numeric()
                                                 ->required(),
-                                            TextInput::make("early_depature_deduction_minutes")
+                                            TextInput::make('early_depature_deduction_minutes')
                                                 ->label('Early departure grace minutes')
                                                 ->numeric()
                                                 ->required(),
-                                            TextInput::make("attendance_duplicate_check_minutes")
+                                            TextInput::make('attendance_duplicate_check_minutes')
                                                 ->label('Duplicate Attendance Check (Minutes)')
                                                 ->numeric()
                                                 ->default(15)
                                                 ->required(),
 
-                                            Toggle::make("allow_attendance_without_shift")
+                                            Toggle::make('allow_attendance_without_shift')
                                                 ->label('Allow attendance without shift')
                                                 ->default(false),
 
                                             Fieldset::make()->columns(2)->columnSpanFull()->schema([
-                                                Select::make("period_allowed_to_calculate_overtime")
+                                                Select::make('period_allowed_to_calculate_overtime')
                                                     ->label('Overtime calculation period')
                                                     ->options([
                                                         Attendance::PERIOD_ALLOWED_OVERTIME_QUARTER_HOUR => Attendance::PERIOD_ALLOWED_OVERTIME_QUARTER_HOUR_LABEL,
-                                                        Attendance::PERIOD_ALLOWED_OVERTIME_HALF_HOUR    => Attendance::PERIOD_ALLOWED_OVERTIME_HALF_HOUR_LABEL,
-                                                        Attendance::PERIOD_ALLOWED_OVERTIME_HOUR         => Attendance::PERIOD_ALLOWED_OVERTIME_HOUR_LABEL,
+                                                        Attendance::PERIOD_ALLOWED_OVERTIME_HALF_HOUR => Attendance::PERIOD_ALLOWED_OVERTIME_HALF_HOUR_LABEL,
+                                                        Attendance::PERIOD_ALLOWED_OVERTIME_HOUR => Attendance::PERIOD_ALLOWED_OVERTIME_HOUR_LABEL,
                                                     ])
                                                     ->live()
                                                     ->required(),
                                                 Toggle::make('calculating_overtime_with_half_hour_after_hour')
                                                     ->inline(false)
-                                                    ->visible(fn(Get $get): bool => $get('period_allowed_to_calculate_overtime') == Attendance::PERIOD_ALLOWED_OVERTIME_HOUR),
+                                                    ->visible(fn (Get $get): bool => $get('period_allowed_to_calculate_overtime') == Attendance::PERIOD_ALLOWED_OVERTIME_HOUR),
 
                                             ]),
                                         ]),
@@ -197,7 +195,7 @@ class SettingResource extends Resource
 
                                             Select::make('daily_salary_calculation_method')
                                                 ->label('Daily Salary Calculation Method')
-                                                ->options(\App\Enums\HR\Payroll\DailyRateMethod::options())
+                                                ->options(DailyRateMethod::options())
                                                 ->live()
                                                 ->columnSpan(2)
                                                 ->required(),
@@ -205,8 +203,8 @@ class SettingResource extends Resource
                                             Select::make('payroll_salary_allocation_rule')
                                                 ->label('Salary Allocation Rule (Branch Transfers)')
                                                 ->helperText('Determines which branch pays the salary when an employee moves during the month.')
-                                                ->options(\App\Enums\HR\Payroll\SalaryAllocationRule::options())
-                                                ->default(\App\Enums\HR\Payroll\SalaryAllocationRule::PROPORTIONAL->value)
+                                                ->options(SalaryAllocationRule::options())
+                                                ->default(SalaryAllocationRule::PROPORTIONAL->value)
                                                 ->columnSpan(2)
                                                 ->required(),
 
@@ -217,7 +215,7 @@ class SettingResource extends Resource
                                                 ->minValue(1)
                                                 ->maxValue(31)
                                                 ->required()
-                                                ->visible(fn(Get $get): bool => $get('daily_salary_calculation_method') === \App\Enums\HR\Payroll\DailyRateMethod::ByCustomDays->value),
+                                                ->visible(fn (Get $get): bool => $get('daily_salary_calculation_method') === DailyRateMethod::ByCustomDays->value),
 
                                             TextInput::make('overtime_hour_multiplier')
                                                 ->label('Overtime Hour Multiplier')
@@ -227,13 +225,12 @@ class SettingResource extends Resource
                                                 ->placeholder('Enter multiplier (e.g., 2, 3, 4)')
                                                 ->required(),
 
-                                            TextInput::make('weekly_leave_days_earned')
-                                                ->label('Weekly Leave Days Earned')
-                                                ->helperText('Number of weekly leave days earned per cycle (standard is 1)')
-                                                ->numeric()
-                                                ->minValue(1)
-                                                ->maxValue(7)
-                                                ->default(1)
+                                            TextInput::make('weekly_leave_days_earned') // أبقينا على نفس الـ key لتجنب التعديل في قاعدة البيانات أو الـ Seeder
+                                                ->label('Total Monthly Leave Days') // أو 'إجمالي أيام الراحة الشهرية'
+                                                ->helperText('Monthly leave quota. Automatically prorated based on actual worked days.')->numeric()
+                                                ->minValue(0)
+                                                ->maxValue(15) // تم رفع الحد الأقصى ليناسب وعاء الشهر (15 يوم كحد أقصى منطقي)
+                                                ->default(4) // القيمة الافتراضية أصبحت 4 أيام بدلاً من يوم واحد
                                                 ->required(),
 
                                             TextInput::make('tax_total_reliefs')
@@ -270,7 +267,7 @@ class SettingResource extends Resource
                                                         ->label('Custom End of Month Day')
                                                         ->helperText('Select a custom day for the end of the month')
                                                         ->options(array_combine(range(1, 28), range(1, 28)))          // Creates options from 1 to 28
-                                                        ->visible(fn(Get $get) => ! $get('use_standard_end_of_month')) // Only visible if 'use_standard_end_of_month' is false
+                                                        ->visible(fn (Get $get) => ! $get('use_standard_end_of_month')) // Only visible if 'use_standard_end_of_month' is false
                                                         ->required(),
                                                 ]),
 
@@ -293,7 +290,7 @@ class SettingResource extends Resource
                                                 ->label('Payroll Closing Method')
                                                 ->options([
                                                     'manual' => 'Manual (By HR/Accountant)',
-                                                    'auto'   => 'Automatic (By System)',
+                                                    'auto' => 'Automatic (By System)',
                                                 ])
                                                 ->default('manual')
                                                 ->live() // Make it reactive to show/hide other fields
@@ -304,13 +301,13 @@ class SettingResource extends Resource
                                                 ->label('Auto Closing Day')
                                                 ->options(array_combine(range(1, 31), range(1, 31)))
                                                 ->default(21)
-                                                ->visible(fn(Get $get) => $get('payroll_closing_method') === 'auto')
+                                                ->visible(fn (Get $get) => $get('payroll_closing_method') === 'auto')
                                                 ->helperText('Select the day of month for auto closing (e.g., 21)'),
 
                                             TextInput::make('payroll_auto_closing_time')
                                                 ->label('Auto Closing Time')
                                                 ->default('04:00')
-                                                ->visible(fn(Get $get) => $get('payroll_closing_method') === 'auto')
+                                                ->visible(fn (Get $get) => $get('payroll_closing_method') === 'auto')
                                                 ->helperText('Time (HH:MM) for auto payroll closing'),
 
                                             // تحديد بداية ونهاية دورة الرواتب
@@ -333,13 +330,13 @@ class SettingResource extends Resource
                                                 ->helperText('How many days before closing should the system notify HR?'),
                                         ])->hidden(),
                                         Fieldset::make()->label('Face rekognation settings')
-                                            ->hidden(fn(): bool => isFinanceManager())
+                                            ->hidden(fn (): bool => isFinanceManager())
                                             ->columns(4)->schema([
                                                 Select::make('timeout_webcam_value')
                                                     ->label('Camera Auto-Off Timer (minutes)')
                                                     ->options([
-                                                        '30000'  => 'Half Minute',
-                                                        '60000'  => 'One Minute',
+                                                        '30000' => 'Half Minute',
+                                                        '60000' => 'One Minute',
                                                         '120000' => 'Two Minutes',
                                                         '180000' => 'Three Minutes',
                                                         '300000' => 'Five Minutes',
@@ -352,13 +349,13 @@ class SettingResource extends Resource
                                                 Select::make('webcam_capture_time')->columnSpan(2)
                                                     ->label('Image Capture Delay (Seconds)')
                                                     ->options([
-                                                        '500'   => 'Half a Second',
-                                                        '1000'  => 'One Second',
-                                                        '2000'  => 'Two Seconds',
-                                                        '3000'  => 'Three Seconds',
-                                                        '5000'  => 'Five Seconds',
-                                                        '7000'  => 'Seven Seconds',
-                                                        '8000'  => 'Eight Seconds',
+                                                        '500' => 'Half a Second',
+                                                        '1000' => 'One Second',
+                                                        '2000' => 'Two Seconds',
+                                                        '3000' => 'Three Seconds',
+                                                        '5000' => 'Five Seconds',
+                                                        '7000' => 'Seven Seconds',
+                                                        '8000' => 'Eight Seconds',
                                                         '10000' => 'Ten Seconds',
                                                     ])
                                                     ->default('1000') // Default to 1 second
@@ -407,12 +404,12 @@ class SettingResource extends Resource
                                                         ->numeric()->hint(0.7)
                                                         ->required()
                                                         ->default(0.7),
-                                                ])
+                                                ]),
 
                                             ]),
 
                                     ]),
-                                    Tab::make('Task Settings')->hidden(fn(): bool => isFinanceManager())
+                                    Tab::make('Task Settings')->hidden(fn (): bool => isFinanceManager())
                                         ->icon('heroicon-o-clipboard-document-list')
                                         ->schema([
                                             Fieldset::make('')->columnSpanFull()->columns(4)->schema([
@@ -437,14 +434,14 @@ class SettingResource extends Resource
                                                     ->options([
                                                         'deduction_half_day' => 'Deduction Half Day',
                                                         'deduction_full_day' => 'Deduction Full Day',
-                                                        'custom_amount'      => 'Custom amount',
-                                                        'no_penalty'         => 'No Penalty',
+                                                        'custom_amount' => 'Custom amount',
+                                                        'no_penalty' => 'No Penalty',
                                                     ])
                                                     ->default('no_penalty')
                                                     ->helperText('Select the penalty applied when a red card is issued'),
                                                 TextInput::make('task_penality_custom_amount_red_card')
                                                     ->label('Custom amount')
-                                                    ->visible(fn($get): bool => $get('task_red_card_penalty_type') == 'custom_amount')
+                                                    ->visible(fn ($get): bool => $get('task_red_card_penalty_type') == 'custom_amount')
                                                     ->prefixIconColor('warning')
                                                     ->prefixIconColor('danger')
                                                     ->prefixIcon('heroicon-o-document-currency-dollar')
@@ -470,18 +467,13 @@ class SettingResource extends Resource
                                         }),
                                 ]),
 
-
-
-
-
                             ])
                             ->hidden(function () {
                                 return hideHrForTenant();
                             }),
 
-
                         Tab::make('Stock Settings')
-                            ->hidden(fn(): bool => isFinanceManager() || isHR())
+                            ->hidden(fn (): bool => isFinanceManager() || isHR())
                             ->icon('heroicon-o-shopping-cart')
                             ->schema([
                                 Tabs::make('stock')->columnSpanFull()->schema([
@@ -587,33 +579,31 @@ class SettingResource extends Resource
                                                     ->directory('halal_logos')
                                                     ->image()->disk('public')
                                                     ->visibility('public')
-                                                    ->visible(fn(Get $get): bool => (bool) $get('use_global_halal_logo'))
+                                                    ->visible(fn (Get $get): bool => (bool) $get('use_global_halal_logo'))
                                                     ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                                        return 'global_halal_logo_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+                                                        return 'global_halal_logo_'.Str::random(10).'.'.$file->getClientOriginalExtension();
                                                     }),
                                             ]),
 
                                         ]),
-                                    ])
+                                    ]),
                                 ]),
-
-
 
                             ]),
                         Tab::make('Users Settings')
                             ->label(__('lang.users_settings'))
-                            ->visible(fn(): bool => isSuperAdmin() || isSystemManager())
+                            ->visible(fn (): bool => isSuperAdmin() || isSystemManager())
                             ->icon('heroicon-o-users')
                             ->schema([
                                 Grid::make()->columnSpanFull()->schema([
                                     Grid::make()->columnSpanFull()->columns(3)->schema([
-                                        TextInput::make("password_min_length")
+                                        TextInput::make('password_min_length')
                                             ->label(__('lang.password_min_length'))->numeric()
                                             ->columnSpan(1)->required()->default(6),
                                         Select::make('password_contains_for')
                                             ->label(__('lang.password_strong_type'))
                                             ->options([
-                                                'easy_password'   => __('lang.easy_password'),
+                                                'easy_password' => __('lang.easy_password'),
                                                 'strong_password' => __('lang.strong_password'),
                                             ])
                                             ->required()              // You can adjust validation as needed
@@ -641,7 +631,7 @@ class SettingResource extends Resource
                                             Select::make('type_reactive_blocked_users')
                                                 ->label(__('lang.type_reactive_blocked_users'))
                                                 ->options([
-                                                    'manual'                 => __('lang.manual'),
+                                                    'manual' => __('lang.manual'),
                                                     'based_on_specific_time' => __('lang.based_on_specific_time'),
                                                 ])
                                                 ->required()
@@ -652,7 +642,7 @@ class SettingResource extends Resource
                                             TextInput::make('hours_to_allow_login_again')
                                                 ->label(__('lang.hours_to_allow_login_again'))
                                                 ->columnSpan(1)
-                                                ->visible(fn($get) => $get('type_reactive_blocked_users') == 'based_on_specific_time')
+                                                ->visible(fn ($get) => $get('type_reactive_blocked_users') == 'based_on_specific_time')
 
                                                 ->default(1)
                                                 ->numeric(),
@@ -665,7 +655,7 @@ class SettingResource extends Resource
                                                 ->label('Login Authentication Method')
                                                 ->options([
                                                     'password' => 'Email/Phone with Password',
-                                                    'otp'      => 'OTP via Email',
+                                                    'otp' => 'OTP via Email',
                                                 ])
                                                 ->default('password')
                                                 ->required()
@@ -714,7 +704,7 @@ class SettingResource extends Resource
         ];
     }
 
-      public static function canViewAny(): bool
+    public static function canViewAny(): bool
     {
         if (isSuperAdmin() || isSystemManager() || isHR() || isFinanceManager()) {
             return true;
