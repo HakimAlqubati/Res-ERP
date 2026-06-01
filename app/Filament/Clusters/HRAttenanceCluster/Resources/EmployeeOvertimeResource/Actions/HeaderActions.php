@@ -18,6 +18,7 @@ use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Grid;
 use Illuminate\Support\Carbon;
@@ -33,6 +34,7 @@ class HeaderActions
             ->label('Batch Quick Add')
             ->color('success')
             ->icon('heroicon-o-users')
+            ->closeModalByClickingAway(false)
             ->schema([
                 Grid::make(4)->schema([
                     DatePicker::make('date')
@@ -85,14 +87,11 @@ class HeaderActions
                                 }
                             },
                         ]),
-                    Select::make('show_all')
-                        ->label('Show Employees')
-                        ->options([
-                            '0' => 'Present Only',
-                            '1' => 'All (Present & Absent)',
-                        ])
-                        ->default('0')
+                    Toggle::make('show_all')
+                        ->label('Show All Employees (Present & Absent)')
+                        ->default(false)
                         ->live()
+                        ->inline(false)
                         ->afterStateUpdated(fn ($set, $state, $get) => self::updateStaffList($set, $get('branch_id'), $get('date'), $state)),
 
                 ]),
