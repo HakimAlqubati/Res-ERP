@@ -282,16 +282,7 @@ class UserTable
                                     ->default(fn($record) => $record->email)
                                     ->required()
                                     ->unique(ignoreRecord: true),
-                                Select::make('branch_id')
-                                    ->label('Branch')
-                                    ->searchable()
-                                    ->default(fn($record) => $record->branch_id)
-                                    ->options(
-                                        fn() => Branch::active()
-                                            ->forBranchManager('id')
-                                            ->pluck('name', 'id')
-                                    )
-                                    ->required(),
+                            
                             ]),
                         ])
                         ->action(function (User $record, array $data): void {
