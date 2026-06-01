@@ -1139,4 +1139,6 @@ return [
   'auto_generated_reason_missing_checkin' => 'تم الإنشاء تلقائياً بسبب تسجيل انصراف بدون بصمة دخول سابقة',
   'rejected_successfully' => 'تم الرفض بنجاح',
   'auto' => 'تلقائي',
+  'allow_attendance_from_any_branch' => 'السماح بالتحضير من أي فرع',
+  
 ];
