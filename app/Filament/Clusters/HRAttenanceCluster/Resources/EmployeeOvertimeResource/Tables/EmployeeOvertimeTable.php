@@ -67,6 +67,11 @@ class EmployeeOvertimeTable
                     ->sortable()
                     ->wrap()
                     ->searchable()->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('branch.name')
+                    ->label('Branch')
+                    ->sortable()
+                    ->wrap()
+                    ->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('type')
                     ->label('Type')
                     ->sortable()
