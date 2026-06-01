@@ -56,7 +56,7 @@ class EmployeesAttendanceOnDateService
         $isFuture = $dateCarbon->gt(Carbon::today());
         $isToday = $dateCarbon->isToday();
 
-        $employeesMap = Employee::whereIn('id', $employeeIds)->get(['id', 'name', 'discount_exception_if_attendance_late', 'has_auto_weekly_leave'])->keyBy('id');
+        $employeesMap = Employee::whereIn('id', $employeeIds)->get(['id', 'name', 'branch_id', 'discount_exception_if_attendance_late', 'has_auto_weekly_leave'])->keyBy('id');
 
         $data = $this->fetcher->fetchForMultiEmployeesSingleDate($employeeIds, $dateStr);
         extract($data);
@@ -76,7 +76,7 @@ class EmployeesAttendanceOnDateService
             } else {
                 $leave = $leaves->get($empId);
                 if ($leave) {
-                    $report->put($dateStr, $this->processor->buildLeaveDay($dateStr, $dayName, $leave));
+                    $report->put($dateStr, $this->processor->buildLeaveDay($dateStr, $dayName, $leave, $employee->branch_id));
                 } else {
                     $dayHistories = $histories->where('employee_id', $empId)->filter(function ($h) use ($dayShort, $dateStr) {
                         $dayVal = is_object($h->day_of_week) && property_exists($h->day_of_week, 'value') ? $h->day_of_week->value : $h->day_of_week;

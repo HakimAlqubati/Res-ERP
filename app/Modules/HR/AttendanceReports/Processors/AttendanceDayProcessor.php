@@ -175,11 +175,12 @@ class AttendanceDayProcessor
         ];
     }
 
-    public function buildLeaveDay(string $dateStr, string $dayName, object $leave): array
+    public function buildLeaveDay(string $dateStr, string $dayName, object $leave, ?int $branchId = null): array
     {
         return [
             'date'       => $dateStr,
             'day_name'   => $dayName,
+            'branch_id'  => $branchId,
             'periods'    => [],
             'day_status' => AttendanceReportStatus::Leave->value,
             'leave_type' => $leave->transaction_description,

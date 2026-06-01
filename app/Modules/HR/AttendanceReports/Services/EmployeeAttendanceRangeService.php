@@ -91,7 +91,7 @@ class EmployeeAttendanceRangeService
 
             $leave = $leaves->first(fn($l) => $tempDate->between($l->from_date, $l->to_date));
             if ($leave) {
-                $report->put($currentDateStr, $this->processor->buildLeaveDay($currentDateStr, $currentDayName, $leave));
+                $report->put($currentDateStr, $this->processor->buildLeaveDay($currentDateStr, $currentDayName, $leave, $employee->branch_id));
                 $tempDate->addDay();
                 continue;
             }

@@ -60,8 +60,8 @@ class BranchAttendanceSummaryService
 
         // Process active employees in DB-level chunks
         Employee::whereIn('id', $employeeIdsInBranch)
-            ->where('active', 1)
-            ->select('id', 'name', 'employee_no', 'salary', 'join_date', 'working_days', 'working_hours', 'discount_exception_if_attendance_late', 'has_auto_weekly_leave')
+            ->where('active', 1) 
+            ->select('id', 'name','branch_id', 'employee_no', 'salary', 'join_date', 'working_days', 'working_hours', 'discount_exception_if_attendance_late', 'has_auto_weekly_leave')
             ->withSum(['overtimes as total_overtime' => function ($query) use ($year, $month) {
                 $query->whereYear('date', $year)
                     ->whereMonth('date', $month)
@@ -169,13 +169,13 @@ class BranchAttendanceSummaryService
             $presentDays = 0;
             $absentDays  = 0;
             $weeklyLeaveDays = 0;
+            $totalLeaveDays = 0;
             $totalDays   = 0;
             $missingMinutes = 0;
             $earlyDepartureMinutes = 0;
-            $lateMinutes = 0;
-
+            $lateMinutes = 0; 
             foreach ($attendanceArray as $date => $dayData) {
-                if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+                 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
                     continue;
                 }
 
@@ -197,6 +197,10 @@ class BranchAttendanceSummaryService
                     \App\Enums\HR\Attendance\AttendanceReportStatus::IncompleteCheckinOnly->value,
                 ])) {
                     $absentDays++;
+                } elseif (in_array($status, [
+                    \App\Enums\HR\Attendance\AttendanceReportStatus::Leave->value, 
+                ])) {
+                    $totalLeaveDays++;
                 } elseif ($status === \App\Enums\HR\Attendance\AttendanceReportStatus::WeeklyLeave->value) {
                     $weeklyLeaveDays++;
                 }
@@ -225,8 +229,8 @@ class BranchAttendanceSummaryService
                 if (class_exists(\App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::class)) {
                     $workDaysPerLeave = \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::WORK_DAYS_PER_LEAVE;
                 }
-                $entitledLeaves = min(4, floor($presentDays / $workDaysPerLeave));
-
+                $entitledLeaves = min(4, floor(($presentDays+$totalLeaveDays) / $workDaysPerLeave));
+// dd($entitledLeaves,$presentDays,$workDaysPerLeave,$totalLeaveDays);
                 $totalOffDays = $absentDays + $weeklyLeaveDays;
 
                 if ($entitledLeaves >= $totalOffDays) {
