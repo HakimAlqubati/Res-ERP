@@ -173,7 +173,30 @@ class BranchAttendanceSummaryService
             $totalDays   = 0;
             $missingMinutes = 0;
             $earlyDepartureMinutes = 0;
-            $lateMinutes = 0; 
+            $lateMinutes = 0;
+
+            // حساب أيام الراحة المكتسبة من الفروع الأخرى (للأشهر التي انتقل فيها الموظف)
+            // يُستخدم لضمان أن إجمالي overtime_days لا يتجاوز الحد الأقصى (4 أيام/شهر)
+            // الميزة: attendanceArray يحتوي على كامل الشهر، فنستخرج البيانات مباشرة بدون query إضافي
+            $otherBranchPresentDays = 0;
+            $otherBranchLeaveDays   = 0;
+            if ($employee->has_auto_weekly_leave) {
+                foreach ($attendanceArray as $date => $dayData) {
+                    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) continue;
+                    if (($dayData['branch_id'] ?? null) == $branchId) continue; // تجاهل الفرع الحالي
+
+                    $s = $dayData['day_status'] ?? '';
+                    if (in_array($s, [
+                        \App\Enums\HR\Attendance\AttendanceReportStatus::Present->value,
+                        \App\Enums\HR\Attendance\AttendanceReportStatus::IncompleteCheckoutOnly->value,
+                    ])) {
+                        $otherBranchPresentDays++;
+                    } elseif ($s === \App\Enums\HR\Attendance\AttendanceReportStatus::Leave->value) {
+                        $otherBranchLeaveDays++;
+                    }
+                }
+            }
+
             foreach ($attendanceArray as $date => $dayData) {
                  if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
                     continue;
@@ -231,17 +254,23 @@ class BranchAttendanceSummaryService
             $autoOvertimeDays = 0;
 
             if ($employee->has_auto_weekly_leave) {
-                $workDaysPerLeave = 6;
-                if (class_exists(\App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::class)) {
-                    $workDaysPerLeave = \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::WORK_DAYS_PER_LEAVE;
-                }
-                $entitledLeaves = min(4, floor(($presentDays+$totalLeaveDays) / $workDaysPerLeave));
-// dd($entitledLeaves,$presentDays,$workDaysPerLeave,$totalLeaveDays);
+                $workDaysPerLeave = \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::WORK_DAYS_PER_LEAVE;
+
+                // أيام الراحة المكتسبة من الفروع الأخرى في نفس الشهر (uncapped)
+                $alreadyEarnedDays = (int) floor(($otherBranchPresentDays + $otherBranchLeaveDays) / $workDaysPerLeave);
+
+                // الحد المتبقي للفرع الحالي بعد طرح ما اكتسبه من الفروع الأخرى
+                $remainingCap = max(0, 4 - $alreadyEarnedDays);
+
+                // أيام الراحة المستحقة من هذا الفرع فقط، مقيّدة بالحد المتبقي
+                $earnedFromThisBranch = (int) floor(($presentDays + $totalLeaveDays) / $workDaysPerLeave);
+                $entitledLeaves       = min($remainingCap, $earnedFromThisBranch);
+
                 $totalOffDays = $absentDays + $weeklyLeaveDays;
 
                 if ($entitledLeaves >= $totalOffDays) {
                     $weeklyLeaveDeductionDays = 0;
-                    $autoOvertimeDays = min(4, $entitledLeaves - $totalOffDays);
+                    $autoOvertimeDays = min($remainingCap, $entitledLeaves - $totalOffDays);
                 } else {
                     $weeklyLeaveDeductionDays = $totalOffDays - $entitledLeaves;
                 }
