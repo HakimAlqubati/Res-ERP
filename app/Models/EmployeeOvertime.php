@@ -93,6 +93,10 @@ class EmployeeOvertime extends Model implements Auditable
     {
         return $this->belongsTo(Employee::class, 'employee_id');
     }
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
+    }
 
     // Relationship with the User model (for approval)
     public function approvedBy()
