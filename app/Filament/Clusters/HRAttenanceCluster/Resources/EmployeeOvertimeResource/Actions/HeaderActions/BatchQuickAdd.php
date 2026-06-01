@@ -125,7 +125,7 @@ class BatchQuickAdd
                             ->placeholder('Reason for overall batch...'),
 
                         Toggle::make('select_all')
-                            ->label('Select All / Deselect All')
+                            ->label('Toggle All')
                             ->default(true)
                             ->inline(false)
                             ->live()
