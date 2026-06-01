@@ -213,7 +213,7 @@ class BatchQuickAdd
 
                 try {
                     foreach ($data['items'] as $item) {
-                        if (! $item['is_selected'] || ! empty($item['is_absent'])) {
+                        if (! $item['is_selected']) {
                             continue;
                         }
 
