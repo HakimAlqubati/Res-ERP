@@ -225,7 +225,7 @@ class BranchAttendanceSummaryService
                 if (class_exists(\App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::class)) {
                     $workDaysPerLeave = \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::WORK_DAYS_PER_LEAVE;
                 }
-                $entitledLeaves = floor($presentDays / $workDaysPerLeave);
+                $entitledLeaves = min(4, floor($presentDays / $workDaysPerLeave));
 
                 $totalOffDays = $absentDays + $weeklyLeaveDays;
 
