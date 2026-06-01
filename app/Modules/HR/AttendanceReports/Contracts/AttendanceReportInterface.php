@@ -38,9 +38,11 @@ interface AttendanceReportInterface
      * @param \Illuminate\Support\Collection|array $employees Targeted employees.
      * @param Carbon $startDate Start bounds.
      * @param Carbon $endDate End bounds.
+     * @param bool $excludeNoShift Exclude no-shift days.
+     * @param array $alreadyEarnedDaysMap [employee_id => already_earned_days] أيام الراحة المكتسبة من فروع سابقة.
      * @return Collection Indexed sequential reports (employee_id => report).
      */
-    public function getEmployeesRangeReport($employees, Carbon $startDate, Carbon $endDate, bool $excludeNoShift = false): Collection;
+    public function getEmployeesRangeReport($employees, Carbon $startDate, Carbon $endDate, bool $excludeNoShift = false, array $alreadyEarnedDaysMap = []): Collection;
 
     public function getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
 }

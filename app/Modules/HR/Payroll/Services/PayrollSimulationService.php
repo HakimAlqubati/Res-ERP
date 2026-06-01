@@ -140,7 +140,16 @@ class PayrollSimulationService implements PayrollSimulatorInterface
         $monthDays = (int) $periodStart->daysInMonth;
         $results   = [];
 
-        foreach ($segments as $segment) {
+        // تتبع أيام الراحة المكتسبة لكل موظف عبر فروعه المتعددة في نفس الشهر.
+        // المفتاح: employee_id → عدد أيام الراحة المكتسبة حتى الآن (قبل تطبيق الحد الأقصى)
+        // الهدف: ضمان أن مجموع overtime_days عبر جميع الفروع لا يتجاوز الحد الأقصى (4 أيام/شهر)
+        $earnedDaysTracker = [];
+
+        // ترتيب الـ segments زمنياً لكل موظف (من الأقدم إلى الأحدث)
+        // حتى يُحسب الفرع الأول أولاً، ثم يُمرَّر رصيده للفرع التالي
+        $sortedSegments = $segments->sortBy(fn($seg) => $seg['log']->start->timestamp);
+
+        foreach ($sortedSegments as $segment) {
             /** @var Employee $employee */
             $employee = $segment['employee'];
             $log      = $segment['log'];
@@ -161,7 +170,16 @@ class PayrollSimulationService implements PayrollSimulatorInterface
                 );
             }
 
-            $attendanceArray = $this->fetchAttendance($employee, $log->start, $log->end);
+            // جلب أيام الراحة المكتسبة من الفروع السابقة لهذا الموظف في نفس الشهر
+            $alreadyEarnedDays = $earnedDaysTracker[$employee->id] ?? 0;
+
+            $attendanceArray = $this->fetchAttendance($employee, $log->start, $log->end, $alreadyEarnedDays);
+
+            // استخراج أيام الراحة المكتسبة (uncapped) من هذه الفترة لتمريرها للفرع التالي
+            // نستخدم uncapped_earned_days لأنه يمثل ما اكتسبه الموظف فعلياً من هذه الفترة
+            // (الـ cap الكلي يُطبَّق داخل WeeklyLeaveCalculator باستخدام already_earned_days)
+            $segmentEarned = (int) ($attendanceArray['statistics']['weekly_leave_calculation']['analysis']['uncapped_earned_days'] ?? 0);
+            $earnedDaysTracker[$employee->id] = $alreadyEarnedDays + $segmentEarned;
 
             $totalApprovedOvertime = $employee->overtimes()
                 ->where('branch_id', $log->branch_id)
@@ -193,11 +211,19 @@ class PayrollSimulationService implements PayrollSimulatorInterface
 
     /**
      * جلب تقرير الحضور لموظف في فترة محددة.
+     *
+     * @param int $alreadyEarnedDays أيام الراحة المكتسبة من فروع سابقة في نفس الشهر.
      */
-    private function fetchAttendance(Employee $employee, Carbon $start, Carbon $end): array
+    private function fetchAttendance(Employee $employee, Carbon $start, Carbon $end, int $alreadyEarnedDays = 0): array
     {
         $data = $this->reportManager
-            ->getEmployeesRangeReport(collect([$employee]), $start, $end, true) // 👈 استبعاد التحضيرات no_shift
+            ->getEmployeesRangeReport(
+                collect([$employee]),
+                $start,
+                $end,
+                true, // 👈 استبعاد التحضيرات no_shift
+                [$employee->id => $alreadyEarnedDays], // 👈 تمرير أيام الراحة المكتسبة من الفروع السابقة
+            )
             ->get($employee->id);
 
         return (array) $data?->toArray();

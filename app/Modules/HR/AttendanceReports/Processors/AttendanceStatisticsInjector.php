@@ -119,9 +119,12 @@ class AttendanceStatisticsInjector
      * 
      * @param Collection $report The final report collection acting securely as the output payload.
      * @param Employee $employee The targeted employee to evaluate exemption rules.
+     * @param int $alreadyEarnedDays أيام الراحة المكتسبة من فروع سابقة في نفس الشهر.
+     *                               تُمرَّر إلى WeeklyLeaveCalculator لضمان تطبيق الحد الأقصى (4 أيام)
+     *                               على مجموع الفروع وليس على كل فرع منفرداً.
      * @return void
      */
-    public function inject(Collection $report, Employee $employee): void
+    public function inject(Collection $report, Employee $employee, int $alreadyEarnedDays = 0): void
     {
         $stats = HelperFunctions::calculateAttendanceStats($report);
         // Restore legacy: Inject the Golden Equation weekly leave calculation
@@ -132,7 +135,8 @@ class AttendanceStatisticsInjector
             [
                 'is_period_ended'       => true,
                 'is_for_payroll'        => true,
-                'has_auto_weekly_leave' => (bool) $employee->has_auto_weekly_leave
+                'has_auto_weekly_leave' => (bool) $employee->has_auto_weekly_leave,
+                'already_earned_days'   => $alreadyEarnedDays,
             ]
         );
 

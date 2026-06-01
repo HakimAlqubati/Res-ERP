@@ -45,7 +45,7 @@ class AttendanceReportManager implements AttendanceReportInterface
     {
         return $this->fetcher->getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
     }
-    public function getEmployeesRangeReport($employees, Carbon $startDate, Carbon $endDate, bool $excludeNoShift = false): Collection
+    public function getEmployeesRangeReport($employees, Carbon $startDate, Carbon $endDate, bool $excludeNoShift = false, array $alreadyEarnedDaysMap = []): Collection
     {
         $employees = collect($employees);
         $empIds = $employees->pluck('id')->toArray();
@@ -67,7 +67,10 @@ class AttendanceReportManager implements AttendanceReportInterface
                 'workPeriodMap' => $bulkData['workPeriodMap'],
             ];
 
-            $results->put($employee->id, $this->rangeService->processRangeWithData($employee, $startDate, $endDate, $employeeData));
+            // أيام الراحة التي اكتسبها هذا الموظف من فروع سابقة (للفروع المتعددة في نفس الشهر)
+            $alreadyEarned = (int) ($alreadyEarnedDaysMap[$employee->id] ?? 0);
+
+            $results->put($employee->id, $this->rangeService->processRangeWithData($employee, $startDate, $endDate, $employeeData, $alreadyEarned));
         }
 
         return $results;

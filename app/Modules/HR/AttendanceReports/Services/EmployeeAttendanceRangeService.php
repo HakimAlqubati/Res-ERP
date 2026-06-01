@@ -63,9 +63,12 @@ class EmployeeAttendanceRangeService
      * @param Carbon $startDate Start bounds.
      * @param Carbon $endDate End bounds.
      * @param array $data Pre-fetched collections (histories, attendances, etc.).
+     * @param int $alreadyEarnedDays أيام الراحة المكتسبة من فروع سابقة في نفس الشهر.
+     *                               تُمرَّر لـ WeeklyLeaveCalculator لضمان الحد الأقصى الشهري (4 أيام)
+     *                               عند الانتقال بين الفروع.
      * @return Collection Processed report.
      */
-    public function processRangeWithData(Employee $employee, Carbon $startDate, Carbon $endDate, array $data): Collection
+    public function processRangeWithData(Employee $employee, Carbon $startDate, Carbon $endDate, array $data, int $alreadyEarnedDays = 0): Collection
     {
         extract($data);
 
@@ -154,7 +157,7 @@ class EmployeeAttendanceRangeService
             $this->statsInjector->subtractTotalDurationSeconds($deductionSeconds);
         }
 
-        $this->statsInjector->inject($report, $employee);
+        $this->statsInjector->inject($report, $employee, $alreadyEarnedDays);
 
         $isPreviousMonth = $startDate->format('Y-m') < now()->format('Y-m');
         if ($isPreviousMonth && $employee->has_auto_weekly_leave) {

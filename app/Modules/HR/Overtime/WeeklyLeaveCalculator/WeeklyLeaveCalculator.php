@@ -20,8 +20,10 @@ class WeeklyLeaveCalculator
      * @param int   $totalMonthDays  إجمالي أيام الشهر (الوعاء الزمني)
      * @param int   $absentDays      عدد أيام الغياب
      * @param array $context         سياق الاستدعاء:
-     *                               - is_period_ended (bool): هل انتهت الفترة/الشهر؟
-     *                               - is_for_payroll  (bool): هل الاحتساب لأغراض الرواتب؟
+     *                               - is_period_ended      (bool): هل انتهت الفترة/الشهر؟
+     *                               - is_for_payroll       (bool): هل الاحتساب لأغراض الرواتب؟
+     *                               - already_earned_days  (int):  أيام الراحة المكتسبة من فروع سابقة في نفس الشهر
+     *                                 (يُستخدم لضمان عدم تجاوز الحد الأقصى الشهري = 4 عند الانتقال بين الفروع)
      *                               يُطبَّق احتساب الإجازات الأسبوعية فقط عند تحقق الشرطين معاً.
      * @return array
      */
@@ -33,6 +35,10 @@ class WeeklyLeaveCalculator
             $hasAutoLeave     = (bool) ($context['has_auto_weekly_leave'] ?? true);
             $applyWeeklyLeave = $isPeriodEnded && $isForPayroll && $hasAutoLeave;
 
+            // أيام الراحة التي اكتسبها الموظف من فروع سابقة في نفس الشهر
+            // تُستخدم لتطبيق الحد الأقصى الشهري (4 أيام) عبر جميع الفروع
+            $alreadyEarnedDays = (int) max(0, $context['already_earned_days'] ?? 0);
+
             // حماية: الغياب لا يتجاوز إجمالي الأيام
             if ($absentDays > $totalMonthDays) {
                 $absentDays = $totalMonthDays;
@@ -42,8 +48,11 @@ class WeeklyLeaveCalculator
             $actualWorkedDays = $totalMonthDays - $absentDays;
 
             // 2. رصيد الراحة المكتسب (يُحسب فقط عند تطبيق الإجازات الأسبوعية)
+            // uncapped: الأيام المكتسبة من هذه الفترة فقط (قبل تطبيق الحد)
             $earnedOffDays    = $applyWeeklyLeave ? (int) floor($actualWorkedDays / self::WORK_DAYS_PER_LEAVE) : 0;
-            $cappedEarnedDays = $applyWeeklyLeave ? min(self::STANDARD_MONTHLY_LEAVE, $earnedOffDays) : 0;
+            // الحد المتبقي من الشهر بعد طرح ما اكتسبه من فروع سابقة
+            $remainingCap     = max(0, self::STANDARD_MONTHLY_LEAVE - $alreadyEarnedDays);
+            $cappedEarnedDays = $applyWeeklyLeave ? min($remainingCap, $earnedOffDays) : 0;
             $workRemainder    = $actualWorkedDays % self::WORK_DAYS_PER_LEAVE;
 
             // =================================================================
@@ -78,18 +87,20 @@ class WeeklyLeaveCalculator
 
             return [
                 'context' => [
-                    'is_period_ended'    => $isPeriodEnded,
-                    'is_for_payroll'     => $isForPayroll,
+                    'is_period_ended'      => $isPeriodEnded,
+                    'is_for_payroll'       => $isForPayroll,
                     'weekly_leave_applied' => $applyWeeklyLeave,
+                    'already_earned_days'  => $alreadyEarnedDays,
                 ],
                 'inputs' => [
                     'total_days'  => $totalMonthDays,
                     'absent_days' => $absentDays,
                 ],
                 'analysis' => [
-                    'worked_days'       => $actualWorkedDays,
-                    'earned_leave_days' => $cappedEarnedDays,
-                    'work_remainder'    => $workRemainder,
+                    'worked_days'         => $actualWorkedDays,
+                    'earned_leave_days'   => $cappedEarnedDays,
+                    'uncapped_earned_days'=> $earnedOffDays,   // قبل تطبيق الحد — لتمريره للفرع التالي
+                    'work_remainder'      => $workRemainder,
                 ],
                 'result' => [
                     'leave_penalty'        => $leavePenaltyDisplay,
