@@ -3,6 +3,8 @@
 namespace App\Observers;
 
 use App\Models\User;
+use App\Rules\UserBranchCannotBeChanged;
+use Illuminate\Support\Facades\Validator;
 
 class UserObserver
 {
@@ -15,36 +17,72 @@ class UserObserver
     }
 
     /**
+     * Handle the User "updating" event.
+     *
+     * Prevents changing branch_id directly on a user who has an employee.
+     * Branch transfers must go through the employee record.
+     */
+    public function updating(User $user): void
+    {
+        Validator::make(
+            ['branch_id' => $user->branch_id],
+            ['branch_id' => [new UserBranchCannotBeChanged($user)]]
+        )->validate();
+    }
+
+    /**
      * Handle the User "updated" event.
+     *
+     * Syncs relevant user fields to the associated employee record.
      */
     public function updated(User $user): void
     {
-        // Access the related employee model
         $employee = $user->employee;
 
-        if ($employee) {
+        if (! $employee) {
+            return;
+        }
 
-            // Check if 'email' or 'phone_number' has changed in the user model
-            if ($user->isDirty('email')) {
-                $employee->email = $user->email;
-            }
-            if ($user->isDirty('phone_number')) {
-                $employee->phone_number = $user->phone_number;
-            }
-            if ($user->isDirty('name')) {
-                $employee->name = $user->name;
-            }
-            
-            if ($user->isDirty('active')) {
-                $employee->active = $user->active;
-            }
+        $updates = [];
 
-            if ($user->isDirty('branch_id')) {
-                $employee->branch_id = $user->branch_id;
-            }
+        if ($user->wasChanged('email')) {
+            $updates['email'] = $user->email;
+        }
+        if ($user->wasChanged('phone_number')) {
+            $updates['phone_number'] = $user->phone_number;
+        }
+        if ($user->wasChanged('name')) {
+            $updates['name'] = $user->name;
+        }
+        if ($user->wasChanged('active')) {
+            $updates['active'] = $user->active;
+        }
+        if ($user->wasChanged('gender')) {
+            $updates['gender'] = $user->gender;
+        }
+        if ($user->wasChanged('nationality')) {
+            $updates['nationality'] = $user->nationality;
+        }
 
-            // Save changes to the employee model
-            $employee->save();
+        // Always keep employee_type in sync with user_type
+        $updates['employee_type'] = $user->user_type;
+
+        if ($user->wasChanged('branch_id')) {
+            $updates['branch_id'] = $user->branch_id;
+
+            // Reset manager when branch changes, unless a new owner was set simultaneously
+            if (! $user->wasChanged('owner_id')) {
+                $updates['manager_id'] = null;
+            }
+        }
+
+        if ($user->wasChanged('owner_id')) {
+            $managerEmployee = \App\Models\User::find($user->owner_id)?->employee;
+            $updates['manager_id'] = $managerEmployee?->id;
+        }
+
+        if (! empty($updates)) {
+            $employee->updateQuietly($updates);
         }
     }
 
