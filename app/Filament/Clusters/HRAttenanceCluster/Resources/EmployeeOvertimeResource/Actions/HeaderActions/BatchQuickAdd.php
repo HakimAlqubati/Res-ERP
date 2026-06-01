@@ -96,19 +96,6 @@ class BatchQuickAdd
                                     $set('select_all', true);
                                 }),
 
-                            Select::make('branch_id')
-                                ->label('Branch')
-                                ->options(Branch::normal()->pluck('name', 'id'))
-                                ->required()
-                                ->native()
-                                ->preload(false)
-                                ->live()
-                                ->searchable()
-                                ->afterStateUpdated(function ($set, $state, $get) {
-                                    self::updateStaffList($set, $state, $get('date'), $get('show_all'));
-                                    $set('select_all', true);
-                                }),
-
                             Toggle::make('show_all')
                                 ->label('Show All Employees (Present & Absent)')
                                 ->default(false)
@@ -116,6 +103,37 @@ class BatchQuickAdd
                                 ->inline(false)
                                 ->afterStateUpdated(function ($set, $state, $get) {
                                     self::updateStaffList($set, $get('branch_id'), $get('date'), $state);
+                                    $set('select_all', true);
+                                }),
+                            Toggle::make('select_all')
+                                ->label('Toggle All')
+                                ->default(true)
+                                ->inline(false)
+                                ->live()
+                                ->afterStateUpdated(function ($state, $set, $get) {
+                                    $items = $get('items');
+                                    if (! is_array($items)) {
+                                        return;
+                                    }
+                                    $updated = array_map(function ($item) use ($state) {
+                                        $item['is_selected'] = (bool) $state;
+
+                                        return $item;
+                                    }, $items);
+                                    $set('items', $updated);
+                                }),
+                            Select::make('branch_id')
+                                ->label('Branch')
+                                ->options(Branch::normal()
+                                ->forBranchManager()
+                                ->pluck('name', 'id'))
+                                ->required()
+                                ->multiple()->columnSpanFull()
+                                ->preload(false)
+                                ->live()
+                                ->searchable()
+                                ->afterStateUpdated(function ($set, $state, $get) {
+                                    self::updateStaffList($set, $state, $get('date'), $get('show_all'));
                                     $set('select_all', true);
                                 }),
 
@@ -127,37 +145,21 @@ class BatchQuickAdd
                             ->required()
                             ->placeholder('Reason for overall batch...'),
 
-                        Toggle::make('select_all')
-                            ->label('Toggle All')
-                            ->default(true)
-                            ->inline(false)
-                            ->live()
-                            ->afterStateUpdated(function ($state, $set, $get) {
-                                $items = $get('items');
-                                if (! is_array($items)) {
-                                    return;
-                                }
-                                $updated = array_map(function ($item) use ($state) {
-                                    $item['is_selected'] = (bool) $state;
-
-                                    return $item;
-                                }, $items);
-                                $set('items', $updated);
-                            }),
-
-
                         Repeater::make('items')
                             ->label('Staff List')
                             ->table([
                                 TableColumn::make('Select')
-                                    ->alignCenter()
-                                    ->width('15%'),
+                                    // ->alignCenter()
+                                    ->width('10%'),
                                 TableColumn::make('Employee')
-                                    ->alignCenter()
-                                    ->width('55%'),
+                                    // ->alignCenter()
+                                    ->width('45%'),
+                                TableColumn::make('Branch')
+                                    // ->alignCenter()
+                                    ->width('25%'),
                                 TableColumn::make('Hours')
                                     ->alignCenter()
-                                    ->width('30%'),
+                                    ->width('20%'),
                             ])
                             ->schema([
 
@@ -185,7 +187,10 @@ class BatchQuickAdd
 
                                         return $name;
                                     }),
-
+                                Placeholder::make('branch_name_label')
+                                    ->label('')
+                                    ->hiddenLabel()
+                                    ->content(fn ($get) => $get('branch_name') ?? '—'),
                                 TextInput::make('hours')
                                     ->label('Hours')
                                     ->extraInputAttributes([
@@ -200,6 +205,8 @@ class BatchQuickAdd
 
                                 Hidden::make('employee_id'),
                                 Hidden::make('employee_name'),
+                                Hidden::make('branch_id'),
+                                Hidden::make('branch_name'),
                                 Hidden::make('is_absent'),
                             ])
                             ->addable(false)
@@ -229,8 +236,9 @@ class BatchQuickAdd
 
                         EmployeeOvertime::create([
                             'employee_id' => $item['employee_id'],
-                            'branch_id' => $data['branch_id'],
+                            'branch_id' => $item['branch_id'],
                             'type' => $data['type'],
+
                             'date' => $data['date'],
                             'hours' => $hours,
                             'reason' => $data['reason'],
@@ -264,22 +272,28 @@ class BatchQuickAdd
             );
     }
 
-    protected static function updateStaffList($set, $branchId, $date, $showAll = '0'): void
+    protected static function updateStaffList($set, $branchIds, $date, $showAll = '0'): void
     {
-        if (! $branchId || ! $date) {
+        $branchIds = is_array($branchIds) ? array_filter($branchIds) : [];
+
+        if (empty($branchIds) || ! $date) {
             $set('items', []);
 
             return;
         }
 
-        $employees = Employee::select('id', 'name', 'working_hours')
-            ->where('branch_id', $branchId)->active()->get();
+        // Load branch names for display
+        $branchNames = Branch::whereIn('id', $branchIds)->pluck('name', 'id');
+
+        $employees = Employee::select('id', 'name', 'working_hours', 'branch_id')
+            ->whereIn('branch_id', $branchIds)->active()->get();
 
         if ($employees->isEmpty()) {
             $set('items', []);
 
             return;
         }
+
         /** @var EmployeesAttendanceOnDateService $attendanceService */
         $attendanceService = app(EmployeesAttendanceOnDateService::class);
         $attendanceReport = $attendanceService->fetchAttendances($employees, $date);
@@ -289,6 +303,7 @@ class BatchQuickAdd
         $dateString = is_string($date) ? substr($date, 0, 10) : $date->toDateString();
 
         foreach ($employees as $employee) {
+            $branchName = $branchNames[$employee->branch_id] ?? '—';
             $report = $attendanceReport->get($employee->id);
 
             if (! isset($report['attendance_report'])) {
@@ -296,6 +311,8 @@ class BatchQuickAdd
                     $absentItems[] = [
                         'employee_id' => $employee->id,
                         'employee_name' => $employee->name,
+                        'branch_id' => $employee->branch_id,
+                        'branch_name' => $branchName,
                         'hours' => 1,
                         'is_selected' => true,
                         'is_absent' => true,
@@ -313,6 +330,8 @@ class BatchQuickAdd
                     $absentItems[] = [
                         'employee_id' => $employee->id,
                         'employee_name' => $employee->name,
+                        'branch_id' => $employee->branch_id,
+                        'branch_name' => $branchName,
                         'hours' => 1,
                         'is_selected' => true,
                         'is_absent' => true,
@@ -340,6 +359,8 @@ class BatchQuickAdd
                 $presentItems[] = [
                     'employee_id' => $employee->id,
                     'employee_name' => $employee->name,
+                    'branch_id' => $employee->branch_id,
+                    'branch_name' => $branchName,
                     'hours' => $otHours > 0 ? $otHours : 0,
                     'is_selected' => true,
                     'is_absent' => false,
@@ -348,6 +369,8 @@ class BatchQuickAdd
                 $absentItems[] = [
                     'employee_id' => $employee->id,
                     'employee_name' => $employee->name,
+                    'branch_id' => $employee->branch_id,
+                    'branch_name' => $branchName,
                     'hours' => 1,
                     'is_selected' => true,
                     'is_absent' => true,

@@ -14,6 +14,7 @@ use App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeResource\
 use App\Models\EmployeeOvertime;
 
 use Filament\Resources\Resource;
+use Filament\Support\Colors\Color;
 use Filament\Support\Icons\Heroicon;
 
 use Filament\Tables\Table;
@@ -70,9 +71,10 @@ class EmployeeOvertimeResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static
+        return '('. static
             ::getEloquentQuery()
-            ->count();
+            ->pending()
+            ->count().') Pending';
     }
 
     public static function getEloquentQuery(): Builder
@@ -122,5 +124,9 @@ class EmployeeOvertimeResource extends Resource
             return true;
         }
         return false;
+    }
+     public static function getNavigationBadgeColor(): string | array | null
+    {
+        return Color::Orange;
     }
 }
