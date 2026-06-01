@@ -91,21 +91,30 @@ class BatchQuickAdd
                                 ->required()
                                 ->default(now())
                                 ->live()
-                                ->afterStateUpdated(fn ($set, $state, $get) => self::updateStaffList($set, $get('branch_id'), $state, $get('show_all'))),
+                                ->afterStateUpdated(function ($set, $state, $get) {
+                                    self::updateStaffList($set, $get('branch_id'), $state, $get('show_all'));
+                                    $set('select_all', true);
+                                }),
 
                             Select::make('branch_id')
                                 ->label('Branch')
                                 ->options(Branch::pluck('name', 'id'))
                                 ->required()
                                 ->live()
-                                ->afterStateUpdated(fn ($set, $state, $get) => self::updateStaffList($set, $state, $get('date'), $get('show_all'))),
+                                ->afterStateUpdated(function ($set, $state, $get) {
+                                    self::updateStaffList($set, $state, $get('date'), $get('show_all'));
+                                    $set('select_all', true);
+                                }),
 
                             Toggle::make('show_all')
                                 ->label('Show All Employees (Present & Absent)')
                                 ->default(false)
                                 ->live()
                                 ->inline(false)
-                                ->afterStateUpdated(fn ($set, $state, $get) => self::updateStaffList($set, $get('branch_id'), $get('date'), $state)),
+                                ->afterStateUpdated(function ($set, $state, $get) {
+                                    self::updateStaffList($set, $get('branch_id'), $get('date'), $state);
+                                    $set('select_all', true);
+                                }),
 
                         ]),
 
@@ -114,6 +123,25 @@ class BatchQuickAdd
                             ->rows(2)
                             ->required()
                             ->placeholder('Reason for overall batch...'),
+
+                        Toggle::make('select_all')
+                            ->label('Select All / Deselect All')
+                            ->default(true)
+                            ->inline(false)
+                            ->live()
+                            ->afterStateUpdated(function ($state, $set, $get) {
+                                $items = $get('items');
+                                if (! is_array($items)) {
+                                    return;
+                                }
+                                $updated = array_map(function ($item) use ($state) {
+                                    $item['is_selected'] = (bool) $state;
+
+                                    return $item;
+                                }, $items);
+                                $set('items', $updated);
+                            }),
+
 
                         Repeater::make('items')
                             ->label('Staff List')
