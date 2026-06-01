@@ -14,6 +14,7 @@ use App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeResource\
 use App\Models\EmployeeOvertime;
 
 use Filament\Resources\Resource;
+use Filament\Support\Colors\Color;
 use Filament\Support\Icons\Heroicon;
 
 use Filament\Tables\Table;
@@ -70,23 +71,16 @@ class EmployeeOvertimeResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::forBranchManager()
-            ->when(isBranchUser(), function (Builder $query) {
-                $query->whereHas('employee', function (Builder $query) {
-                    $query->where('employee_id', auth()->user()->employee->id);
-                });
-            })
-            ->count();
+        return '('. static
+            ::getEloquentQuery()
+            ->pending()
+            ->count().') Pending';
     }
 
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->when(isBranchUser(), function (Builder $query) {
-                $query->whereHas('employee', function (Builder $query) {
-                    $query->where('employee_id', auth()->user()->employee->id);
-                });
-            })
+           
             ->forBranchManager()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
@@ -130,5 +124,9 @@ class EmployeeOvertimeResource extends Resource
             return true;
         }
         return false;
+    }
+     public static function getNavigationBadgeColor(): string | array | null
+    {
+        return Color::Orange;
     }
 }

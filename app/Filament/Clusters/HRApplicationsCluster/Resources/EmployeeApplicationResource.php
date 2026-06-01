@@ -805,6 +805,58 @@ class EmployeeApplicationResource extends Resource
             });
     }
 
+    public static function undoApproveAttendanceRequest(): Action
+    {
+        return Action::make('undoApproveAttendanceRequest')
+            ->label(__('lang.undo_approve'))
+            ->button()
+            ->visible(fn($record): bool => (
+                $record->status === EmployeeApplicationV2::STATUS_APPROVED &&
+                $record->application_type_id === EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST
+            ))
+            ->color('warning')
+            ->icon('heroicon-o-arrow-path')
+            ->requiresConfirmation()
+            ->modalHeading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_title' .'id'.'#' . $record->id))
+            ->modalSubheading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_body'))
+            ->action(function (EmployeeApplicationV2 $record) {
+                try {
+                    app(\App\Services\HR\Applications\EmployeeApplicationService::class)
+                        ->undoApproveApplication($record->id, auth()->id());
+
+                    showSuccessNotifiMessage(__('lang.done'));
+                } catch (\Exception $th) {
+                    showWarningNotifiMessage(__('lang.failed'), $th->getMessage());
+                }
+            });
+    }
+
+    public static function undoApproveDepartureRequest(): Action
+    {
+        return Action::make('undoApproveDepartureRequest')
+            ->label(__('lang.undo_approve'))
+            ->button()
+            ->visible(fn($record): bool => (
+                $record->status === EmployeeApplicationV2::STATUS_APPROVED &&
+                $record->application_type_id === EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST
+            ))
+            ->color('warning')
+            ->icon('heroicon-o-arrow-path')
+            ->requiresConfirmation()
+            ->modalHeading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_title' .' id'.'#' . $record->id))
+            ->modalSubheading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_body'))
+            ->action(function (EmployeeApplicationV2 $record) {
+                try {
+                    app(\App\Services\HR\Applications\EmployeeApplicationService::class)
+                        ->undoApproveApplication($record->id, auth()->id());
+
+                    showSuccessNotifiMessage(__('lang.done'));
+                } catch (\Exception $th) {
+                    showWarningNotifiMessage(__('lang.failed'), $th->getMessage());
+                }
+            });
+    }
+
     public static function rejectLeaveRequest(): Action
     {
         return Action::make('rejectLeaveRequest')->label('Reject')->button()
