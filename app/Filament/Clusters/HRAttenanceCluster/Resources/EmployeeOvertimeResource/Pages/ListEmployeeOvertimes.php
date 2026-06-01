@@ -5,6 +5,8 @@ namespace App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeRes
 use Filament\Actions\CreateAction;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeResource;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeResource\Actions\HeaderActions;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeResource\Actions\HeaderActions\AutoProcess;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeResource\Actions\HeaderActions\BatchQuickAdd;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Resources\Pages\ListRecords;
@@ -17,8 +19,8 @@ class ListEmployeeOvertimes extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-           HeaderActions::batchQuickAdd(),
-           HeaderActions::autoProcess(),
+           BatchQuickAdd::action(),
+           AutoProcess::action(),
             CreateAction::make()
                 ->label('Manage Staff Overtime')
                 ->hidden(fn() => isBranchUser()),
