@@ -333,6 +333,10 @@ class EmployeeForm
                                             ->disabled(fn(): bool => isBranchManager())
                                             ->label(__('lang.can_add_branch_order'))->default(0)->inline(false),
 
+                                        Toggle::make('allow_attendance_from_any_branch')->columnSpan(1)
+                                            ->disabled(fn(): bool => isBranchManager())
+                                            ->label(__('lang.allow_attendance_from_any_branch'))->default(0)->inline(false),
+
                                     ]),
                                 ]),
                         ]),

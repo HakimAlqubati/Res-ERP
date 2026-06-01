@@ -70,6 +70,7 @@ class Employee extends Model implements Auditable
         'birthday',
         'salary_allocation_rule',
         'can_add_branch_order',
+        'allow_attendance_from_any_branch',
         'created_by',
         'updated_by',
     ];
@@ -132,6 +133,7 @@ class Employee extends Model implements Auditable
         'has_auto_weekly_leave',
         'birthday',
         'can_add_branch_order',
+        'allow_attendance_from_any_branch',
     ];
 
     protected $casts = [
@@ -139,7 +141,8 @@ class Employee extends Model implements Auditable
         'changes'                => 'array',
         'is_mtd_applicable'      => 'boolean',
         'has_auto_weekly_leave'  => 'boolean',
-        'can_add_branch_order'   => 'boolean',
+        'can_add_branch_order'                => 'boolean',
+        'allow_attendance_from_any_branch'   => 'boolean',
         'salary_allocation_rule' => \App\Enums\HR\Payroll\SalaryAllocationRule::class,
     ];
 

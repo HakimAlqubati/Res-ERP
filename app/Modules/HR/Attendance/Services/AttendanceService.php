@@ -53,6 +53,15 @@ class AttendanceService
             return AttendanceResultDTO::failure(__('Employee not found.'));
         }
 
+        // 1.1 التحقق من صلاحية الفرع للموظف
+        if (
+            isset($payload['branch_id']) &&
+            (int) $payload['branch_id'] !== (int) $employee->branch_id &&
+            ! $employee->allow_attendance_from_any_branch
+        ) {
+            return AttendanceResultDTO::failure(__('Employee is not allowed to attend from this branch.'));
+        }
+
         // 2. تحليل الوقت
         $requestTime = $this->parseRequestTime($payload);
 
