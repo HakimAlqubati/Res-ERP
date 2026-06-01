@@ -70,23 +70,15 @@ class EmployeeOvertimeResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::forBranchManager()
-            ->when(isBranchUser(), function (Builder $query) {
-                $query->whereHas('employee', function (Builder $query) {
-                    $query->where('employee_id', auth()->user()->employee->id);
-                });
-            })
+        return static
+            ::getEloquentQuery()
             ->count();
     }
 
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->when(isBranchUser(), function (Builder $query) {
-                $query->whereHas('employee', function (Builder $query) {
-                    $query->where('employee_id', auth()->user()->employee->id);
-                });
-            })
+           
             ->forBranchManager()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
