@@ -237,7 +237,7 @@ class UserTable
                     EditAction::make(),
                     DeleteAction::make(),
                     RestoreAction::make(),
-                    static::toggleActiveAction(),
+                    static::toggleActiveAction()->hidden(),
                     Action::make('createEmployee')
                         ->label('Create Employee')
                         ->icon('heroicon-o-user-plus')
