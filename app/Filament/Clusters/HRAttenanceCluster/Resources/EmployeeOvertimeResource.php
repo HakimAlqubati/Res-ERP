@@ -2,21 +2,16 @@
 
 namespace App\Filament\Clusters\HRAttenanceCluster\Resources;
 
-use Filament\Pages\Enums\SubNavigationPosition;
-use Filament\Schemas\Schema;
-
-
-use App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeResource\Pages;
 use App\Filament\Clusters\HRAttenanceCluster;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeResource\Pages;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeResource\Schema\EmployeeOvertimeForm;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeResource\Tables\EmployeeOvertimeTable;
-
 use App\Models\EmployeeOvertime;
-
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Support\Colors\Color;
 use Filament\Support\Icons\Heroicon;
-
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -26,24 +21,29 @@ class EmployeeOvertimeResource extends Resource
 {
     protected static ?string $model = EmployeeOvertime::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = Heroicon::Briefcase;
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::Briefcase;
 
-    protected static ?string $cluster                             = HRAttenanceCluster::class;
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?string $cluster = HRAttenanceCluster::class;
+
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     public static function getModelLabel(): string
     {
         return isStuff() ? __('lang.my_overtime') : __('lang.staff_overtime');
     }
+
     public static function getPluralLabel(): ?string
     {
         return isStuff() ? __('lang.my_overtime') : __('lang.staff_overtime');
     }
+
     public static function getNavigationLabel(): string
     {
         return isStuff() ? __('lang.my_overtime') : __('lang.staff_overtime');
     }
+
     protected static ?int $navigationSort = 5;
+
     public static function form(Schema $schema): Schema
     {
         return EmployeeOvertimeForm::configure($schema);
@@ -64,15 +64,15 @@ class EmployeeOvertimeResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListEmployeeOvertimes::route('/'),
+            'index' => Pages\ListEmployeeOvertimes::route('/'),
             'create' => Pages\CreateEmployeeOvertime::route('/create'),
         ];
     }
 
     public static function getNavigationBadge(): ?string
     {
-        return '('. static
-            ::getEloquentQuery()
+        return '('.static::getEloquentQuery()
+            ->withoutTrashed()
             ->pending()
             ->count().') Pending';
     }
@@ -80,7 +80,7 @@ class EmployeeOvertimeResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-           
+
             ->forBranchManager()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
@@ -92,6 +92,7 @@ class EmployeeOvertimeResource extends Resource
         if (isSystemManager() || isSuperAdmin() || isBranchManager()) {
             return true;
         }
+
         return false;
     }
 
@@ -100,6 +101,7 @@ class EmployeeOvertimeResource extends Resource
         if (isSuperAdmin()) {
             return true;
         }
+
         return false;
     }
 
@@ -108,6 +110,7 @@ class EmployeeOvertimeResource extends Resource
         if (isSuperAdmin()) {
             return true;
         }
+
         return false;
     }
 
@@ -116,16 +119,20 @@ class EmployeeOvertimeResource extends Resource
         if (isSuperAdmin()) {
             return true;
         }
+
         return false;
     }
+
     public static function canDeleteAny(): bool
     {
         if (isSuperAdmin()) {
             return true;
         }
+
         return false;
     }
-     public static function getNavigationBadgeColor(): string | array | null
+
+    public static function getNavigationBadgeColor(): string|array|null
     {
         return Color::Orange;
     }

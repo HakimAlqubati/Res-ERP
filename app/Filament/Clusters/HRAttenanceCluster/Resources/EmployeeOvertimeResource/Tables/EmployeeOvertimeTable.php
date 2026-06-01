@@ -39,6 +39,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
 use App\Exceptions\HR\PayrollConflictException;
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use Throwable;
 
 class EmployeeOvertimeTable
@@ -48,8 +49,9 @@ class EmployeeOvertimeTable
         return $table
             ->striped()
             ->defaultSort('id', 'desc')
-            ->paginated([10, 25, 50, 100])
+            ->paginated([10, 25, 50, 100,250])
             ->columns([
+                SoftDeleteColumn::make(),
                 TextColumn::make('id')
                     ->label('ID')
                     ->sortable()
@@ -116,6 +118,9 @@ class EmployeeOvertimeTable
                 TextColumn::make('rejectedBy.name')
                     ->label('Rejected by')
                     ->wrap()->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('createdBy.name')
+                    ->label('Created by')
+                    ->wrap()->toggleable(isToggledHiddenByDefault: true),
 
             ])
             ->selectable()
