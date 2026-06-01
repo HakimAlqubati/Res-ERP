@@ -20,7 +20,10 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
+use Filament\Support\Enums\Width;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -35,131 +38,144 @@ class HeaderActions
             ->color('success')
             ->icon('heroicon-o-users')
             ->closeModalByClickingAway(false)
+            ->closeModalByEscaping(false)
+            ->modalHeading('Batch Add Overtime')
+            ->modalDescription('Add Overtime For Multiple Employees')
+            ->modalAutofocus()
+            ->modalIcon(Heroicon::Clock)
+            ->modalAlignment()
+            ->modalWidth(Width::ScreenExtraLarge)
+            ->modalCloseButton(true)
+            // ->modalSubmitActionLabel('')
             ->schema([
-                Grid::make(4)->schema([
-                    DatePicker::make('date')
-                        ->label('Date')
+                Fieldset::make()
+                ->columns(1)
+                ->columnSpanFull()->schema([
+                    Grid::make(4)->columnSpanFull()->schema([
+                        Select::make('type')
+                            ->label('Type')
+                            ->options(EmployeeOvertime::getTypes())
+                            ->default(EmployeeOvertime::TYPE_BASED_ON_MONTH)
+                            ->required()
+                            ->live()
+                            ->rules([
+                                fn ($get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {
+                                    $items = $get('items');
+                                    $date = $get('date');
+
+                                    if (! is_array($items) || ! $date || ! $value) {
+                                        return;
+                                    }
+
+                                    $selectedEmployees = collect($items)
+                                        ->where('is_selected', true)
+                                        ->mapWithKeys(fn ($item) => [$item['employee_id'] => $item['employee_name'] ?? 'Unknown']);
+
+                                    if ($selectedEmployees->isEmpty()) {
+                                        return;
+                                    }
+
+                                    $existingIds = EmployeeOvertime::query()
+                                        ->where('date', $date)
+                                        ->where('type', $value)
+                                        ->whereIn('employee_id', $selectedEmployees->keys()->toArray())
+                                        ->pluck('employee_id')
+                                        ->toArray();
+
+                                    if (! empty($existingIds)) {
+                                        $names = collect($existingIds)->map(fn ($id) => $selectedEmployees[$id] ?? $id)->implode(' - ');
+                                        $fail(__('Duplicate entry: The following employees already have an overtime record for this date and type: :names', ['names' => $names]));
+                                    }
+                                },
+                            ]),
+                        DatePicker::make('date')
+                            ->label('Date')
+                            ->required()
+                            ->default(now())
+                            ->live()
+                            ->afterStateUpdated(fn ($set, $state, $get) => self::updateStaffList($set, $get('branch_id'), $state, $get('show_all'))),
+
+                        Select::make('branch_id')
+                            ->label('Branch')
+                            ->options(Branch::pluck('name', 'id'))
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(fn ($set, $state, $get) => self::updateStaffList($set, $state, $get('date'), $get('show_all'))),
+
+                        Toggle::make('show_all')
+                            ->label('Show All Employees (Present & Absent)')
+                            ->default(false)
+                            ->live()
+                            ->inline(false)
+                            ->afterStateUpdated(fn ($set, $state, $get) => self::updateStaffList($set, $get('branch_id'), $get('date'), $state)),
+
+                    ]),
+
+                    Textarea::make('reason')
+                        ->label('Reason/Notes')
+                        ->rows(2)
                         ->required()
-                        ->default(now())
-                        ->live()
-                        ->afterStateUpdated(fn ($set, $state, $get) => self::updateStaffList($set, $get('branch_id'), $state, $get('show_all'))),
+                        ->placeholder('Reason for overall batch...'),
 
-                    Select::make('branch_id')
-                        ->label('Branch')
-                        ->options(Branch::pluck('name', 'id'))
-                        ->required()
-                        ->live()
-                        ->afterStateUpdated(fn ($set, $state, $get) => self::updateStaffList($set, $state, $get('date'), $get('show_all'))),
+                    Repeater::make('items')
+                        ->label('Staff List')
+                        ->table([
+                            TableColumn::make('Select')
+                                ->alignCenter()
+                                ->width('15%'),
+                            TableColumn::make('Employee')
+                                ->alignCenter()
+                                ->width('55%'),
+                            TableColumn::make('Hours')
+                                ->alignCenter()
+                                ->width('30%'),
+                        ])
+                        ->schema([
 
-                    Select::make('type')
-                        ->label('Type')
-                        ->options(EmployeeOvertime::getTypes())
-                        ->default(EmployeeOvertime::TYPE_BASED_ON_MONTH)
-                        ->required()
-                        ->live()
-                        ->rules([
-                            fn ($get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {
-                                $items = $get('items');
-                                $date = $get('date');
+                            Checkbox::make('is_selected')
+                                ->label('Select')
+                                ->extraAttributes([
+                                    'class' => 'text-center',
+                                ])
+                                // ->disabled(fn ($get) => (bool) $get('is_absent'))
+                                ->default(true),
 
-                                if (! is_array($items) || ! $date || ! $value) {
-                                    return;
-                                }
+                            Placeholder::make('employee_name_label')
+                                ->label('')
+                                ->hiddenLabel()
+                                ->content(function ($get) {
+                                    $name = $get('employee_name');
+                                    if ($get('is_absent')) {
+                                        return new HtmlString(
+                                            '<span style="display:inline-flex;align-items:center;gap:6px;">'.
+                                            '<span style="background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;letter-spacing:.5px;">ABSENT</span>'.
+                                            '<span style="color:#6b7280;">'.e($name).'</span>'.
+                                            '</span>'
+                                        );
+                                    }
 
-                                $selectedEmployees = collect($items)
-                                    ->where('is_selected', true)
-                                    ->mapWithKeys(fn ($item) => [$item['employee_id'] => $item['employee_name'] ?? 'Unknown']);
+                                    return $name;
+                                }),
 
-                                if ($selectedEmployees->isEmpty()) {
-                                    return;
-                                }
+                            TextInput::make('hours')
+                                ->label('Hours')
+                                ->extraInputAttributes([
+                                    'class' => 'text-center',
+                                ])
+                                ->numeric()
+                                ->required(fn ($get) => $get('../../type') !== EmployeeOvertime::TYPE_BASED_ON_MONTH && ! $get('is_absent'))
+                                ->hidden(fn ($get) => $get('../../type') === EmployeeOvertime::TYPE_BASED_ON_MONTH || $get('is_absent')),
 
-                                $existingIds = EmployeeOvertime::query()
-                                    ->where('date', $date)
-                                    ->where('type', $value)
-                                    ->whereIn('employee_id', $selectedEmployees->keys()->toArray())
-                                    ->pluck('employee_id')
-                                    ->toArray();
-
-                                if (! empty($existingIds)) {
-                                    $names = collect($existingIds)->map(fn ($id) => $selectedEmployees[$id] ?? $id)->implode(' - ');
-                                    $fail(__('Duplicate entry: The following employees already have an overtime record for this date and type: :names', ['names' => $names]));
-                                }
-                            },
-                        ]),
-                    Toggle::make('show_all')
-                        ->label('Show All Employees (Present & Absent)')
-                        ->default(false)
-                        ->live()
-                        ->inline(false)
-                        ->afterStateUpdated(fn ($set, $state, $get) => self::updateStaffList($set, $get('branch_id'), $get('date'), $state)),
-
+                            Hidden::make('employee_id'),
+                            Hidden::make('employee_name'),
+                            Hidden::make('is_absent'),
+                        ])
+                        ->addable(false)
+                        ->deletable(false)
+                        ->reorderable(false)
+                        ->columnSpanFull()
+                        ->itemLabel(fn (array $state): ?string => $state['employee_name'] ?? null),
                 ]),
-
-                Textarea::make('reason')
-                    ->label('Reason/Notes')
-                    ->rows(2)
-                    ->required()
-                    ->placeholder('Reason for overall batch...'),
-
-                Repeater::make('items')
-                    ->label('Staff List')
-                    ->table([
-                        TableColumn::make('Select')
-                            ->alignCenter()
-                            ->width('15%'),
-                        TableColumn::make('Employee')
-                            ->alignCenter()
-                            ->width('55%'),
-                        TableColumn::make('Hours')
-                            ->alignCenter()
-                            ->width('30%'),
-                    ])
-                    ->schema([
-
-                        Checkbox::make('is_selected')
-                            ->label('Select')
-                            ->extraAttributes([
-                                'class' => 'text-center',
-                            ])
-                            // ->disabled(fn ($get) => (bool) $get('is_absent'))
-                            ->default(true),
-
-                        Placeholder::make('employee_name_label')
-                            ->label('')
-                            ->hiddenLabel()
-                            ->content(function ($get) {
-                                $name = $get('employee_name');
-                                if ($get('is_absent')) {
-                                    return new HtmlString(
-                                        '<span style="display:inline-flex;align-items:center;gap:6px;">'.
-                                        '<span style="background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;letter-spacing:.5px;">ABSENT</span>'.
-                                        '<span style="color:#6b7280;">'.e($name).'</span>'.
-                                        '</span>'
-                                    );
-                                }
-
-                                return $name;
-                            }),
-
-                        TextInput::make('hours')
-                            ->label('Hours')
-                            ->extraInputAttributes([
-                                'class' => 'text-center',
-                            ])
-                            ->numeric()
-                            ->required(fn ($get) => $get('../../type') !== EmployeeOvertime::TYPE_BASED_ON_MONTH && ! $get('is_absent'))
-                            ->hidden(fn ($get) => $get('../../type') === EmployeeOvertime::TYPE_BASED_ON_MONTH || $get('is_absent')),
-
-                        Hidden::make('employee_id'),
-                        Hidden::make('employee_name'),
-                        Hidden::make('is_absent'),
-                    ])
-                    ->addable(false)
-                    ->deletable(false)
-                    ->reorderable(false)
-                    ->columnSpanFull()
-                    ->itemLabel(fn (array $state): ?string => $state['employee_name'] ?? null),
             ])
             ->action(function (array $data) {
                 $createdCount = 0;
