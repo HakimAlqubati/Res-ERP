@@ -71,10 +71,10 @@ class EmployeeOvertimeResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return '('. static
-            ::getEloquentQuery()
+        return '(' . static::getEloquentQuery()
+            ->withoutTrashed()
             ->pending()
-            ->count().') Pending';
+            ->count() . ') Pending';
     }
 
     public static function getEloquentQuery(): Builder
