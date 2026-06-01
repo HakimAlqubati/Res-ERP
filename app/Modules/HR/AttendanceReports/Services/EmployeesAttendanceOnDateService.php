@@ -107,7 +107,6 @@ class EmployeesAttendanceOnDateService
                     $isPreviousMonth = $dateCarbon->format('Y-m') < now()->format('Y-m');
                     if ($isAbsent && $employee->has_auto_weekly_leave 
                     && $isPreviousMonth
-                    && 1>2
                     ) {
                         $startOfMonth = $dateCarbon->copy()->startOfMonth();
                         $endOfMonth = $dateCarbon->copy()->endOfMonth();
