@@ -210,7 +210,7 @@ class BranchAttendanceSummaryService
                         }
 
                         $checkinData = $period['attendances']['checkin'][0] ?? [];
-                        if (!empty($checkinData)) {
+                        if (!empty($checkinData) && !empty($checkoutData)) {
                             $lateMinutes += (float) ($checkinData['delay_minutes'] ?? 0);
                         }
                     }
