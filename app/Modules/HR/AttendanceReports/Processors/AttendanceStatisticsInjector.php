@@ -94,7 +94,7 @@ class AttendanceStatisticsInjector
 
         if (!$discountException && isset($lastCo['early_departure_minutes'])) {
             $edMins = (int)$lastCo['early_departure_minutes'];
-            if ($edMins >= $this->minEarlyDepartureMinutes && $edMins > 0) {
+            if ($edMins > $this->minEarlyDepartureMinutes && $edMins > 0) {
                 $shouldDeduct = true;
                 if ($this->flexHoursEarlyDeparture) {
                     if (isset($lastCo['total_actual_duration_hourly']) && isset($lastCo['supposed_duration_hourly'])) {
