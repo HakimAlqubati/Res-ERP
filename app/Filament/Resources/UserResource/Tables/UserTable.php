@@ -330,7 +330,7 @@ class UserTable
                                 'password' => Hash::make($data['password']),
                             ]);
                         })
-                        ->visible(fn() => isSuperAdmin())
+                        ->visible(fn() => isHakimOrAdel())
                         ->icon('heroicon-s-lock-closed') // Optional: Add an icon
                         ->label('Update Password'),      // Optional: Add a label
                     Action::make("allowLogin")
