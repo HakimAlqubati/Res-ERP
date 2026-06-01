@@ -205,7 +205,7 @@ class BranchAttendanceSummaryService
                     foreach ($dayData['periods'] as $period) {
                         $checkoutData = $period['attendances']['checkout']['lastcheckout'] ?? [];
                         if (!empty($checkoutData)) {
-                            $missingMinutes += (float) ($checkoutData['missing_minutes'] ?? 0);
+                            $missingMinutes += (float) ($checkoutData['missing_hours']['total_minutes'] ?? 0);
                             $earlyDepartureMinutes += (float) ($checkoutData['early_departure_minutes'] ?? 0);
                         }
 
@@ -216,7 +216,7 @@ class BranchAttendanceSummaryService
                     }
                 }
             }
-
+ 
             $weeklyLeaveDeductionDays = $absentDays;
             $autoOvertimeDays = 0;
 
