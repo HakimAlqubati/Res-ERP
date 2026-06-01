@@ -48,7 +48,7 @@ class EmployeeOvertimeTable
         return $table
             ->striped()
             ->defaultSort('id', 'desc')
-            ->paginated([10, 25, 50, 100])
+            ->paginated([10, 25, 50, 100,250])
             ->columns([
                 TextColumn::make('id')
                     ->label('ID')
@@ -116,6 +116,9 @@ class EmployeeOvertimeTable
                 TextColumn::make('rejectedBy.name')
                     ->label('Rejected by')
                     ->wrap()->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('createdBy.name')
+                    ->label('Created by')
+                    ->wrap()->toggleable(isToggledHiddenByDefault: true),
 
             ])
             ->selectable()
