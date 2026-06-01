@@ -377,7 +377,7 @@ return [
     'exempt_from_late_attendance_deduction' => 'Exempt from Late Attendance Deduction',
     'is_mtd_applicable' => 'MTD Applicable',
     'has_auto_weekly_leave' => 'Auto Weekly Leave',
-    'can_add_branch_order' => 'Can add branch order',
+    'can_add_branch_order' => 'Can Add Branch Order',
 
     // ===========================================
     // HRMS - Attendance & Shifts
@@ -1158,5 +1158,5 @@ return [
     'auto_generated_reason_missing_checkin' => 'Automatically generated due to check-out attempt without a prior check-in',
     'rejected_successfully' => 'Rejected Successfully',
     'auto' => 'Auto',
-    'allow_attendance_from_any_branch' => 'Allow attendance from any branch',
+    'allow_attendance_from_any_branch' => 'Allow Attendance From Any Branch',
 ];
