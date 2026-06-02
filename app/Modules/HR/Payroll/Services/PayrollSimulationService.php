@@ -8,6 +8,7 @@ use App\Models\EmployeeBranchLog;
 use App\Models\PayrollRun;
 use App\Models\Setting;
 use App\Modules\HR\AttendanceReports\Contracts\AttendanceReportInterface;
+use App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator;
 use App\Modules\HR\Payroll\Contracts\PayrollSimulatorInterface;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -134,11 +135,22 @@ class PayrollSimulationService implements PayrollSimulatorInterface
     /**
      * معالجة كل فترة عمل واحتساب الراتب الخاص بها.
      * هذا هو الكود المشترك بين simulateForEmployees و simulateForRunEmployees.
+     *
+     * تصحيح الموظفين المنتقلين بين فروع:
+     * عند وجود أكثر من سيجمنت للموظف في نفس الشهر، يحتسب كل سيجمنت أيام الإجازة
+     * الأسبوعية (overtime_days) بشكل مستقل مما يتجاوز الحد الأقصى الشهري (4 أيام).
+     * نحل ذلك بتتبع الأيام الإضافية المستخدمة لكل موظف ونقيّدها قبل تمريرها للحاسبة.
      */
     private function processSegments(Collection $segments, int $year, int $month, Carbon $periodStart): array
     {
         $monthDays = (int) $periodStart->daysInMonth;
         $results   = [];
+
+        // الحد الأقصى لأيام الإجازة الأسبوعية المكتسبة في الشهر — مصدر الحقيقة الوحيد
+        $monthlyLeaveCapPerEmployee = WeeklyLeaveCalculator::STANDARD_MONTHLY_LEAVE;
+
+        // متتبع: كم يوم إضافي استُهلك لكل موظف حتى الآن في هذا الشهر
+        $overtimeDaysConsumed = []; // [employee_id => int]
 
         foreach ($segments as $segment) {
             /** @var Employee $employee */
@@ -162,6 +174,29 @@ class PayrollSimulationService implements PayrollSimulatorInterface
             }
 
             $attendanceArray = $this->fetchAttendance($employee, $log->start, $log->end);
+
+            // ─── تصحيح الأيام الإضافية للموظفين المنتقلين ────────────────────
+            $empId = $employee->id;
+            if (!isset($overtimeDaysConsumed[$empId])) {
+                $overtimeDaysConsumed[$empId] = 0;
+            }
+
+            $segmentOvertimeDays = (int) ($attendanceArray['statistics']['weekly_leave_calculation']['result']['overtime_days'] ?? 0);
+
+            // كم يوم إضافي متاح بعد الاستهلاك السابق
+            $remainingCap    = max(0, $monthlyLeaveCapPerEmployee - $overtimeDaysConsumed[$empId]);
+            $allowedOvertime = min($segmentOvertimeDays, $remainingCap);
+
+            if ($segmentOvertimeDays !== $allowedOvertime) {
+                // نعدّل القيمة مباشرةً في مصفوفة الحضور قبل تمريرها للحاسبة
+                $workedDays = (int) ($attendanceArray['statistics']['weekly_leave_calculation']['analysis']['worked_days'] ?? 0);
+                $attendanceArray['statistics']['weekly_leave_calculation']['result']['overtime_days'] = $allowedOvertime;
+                $attendanceArray['statistics']['weekly_leave_calculation']['result']['payable_days']  = $workedDays + $allowedOvertime;
+            }
+
+            // تراكم ما تم احتسابه (حتى لو كان صفراً لا مشكلة)
+            $overtimeDaysConsumed[$empId] += $allowedOvertime;
+            // ─────────────────────────────────────────────────────────────────
 
             $totalApprovedOvertime = $employee->overtimes()
                 ->where('branch_id', $log->branch_id)

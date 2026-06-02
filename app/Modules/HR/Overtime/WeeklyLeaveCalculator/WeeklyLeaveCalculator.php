@@ -12,7 +12,7 @@ class WeeklyLeaveCalculator
     /**
      * الحد القياسي للإجازات (المعيار الذي يقاس عليه الخصم أو الإضافي)
      */
-    private const STANDARD_MONTHLY_LEAVE = 4;
+    public const STANDARD_MONTHLY_LEAVE = 4;
 
     /**
      * الاحتساب الرقمي للإجازات الأسبوعية والميزان المالي.
