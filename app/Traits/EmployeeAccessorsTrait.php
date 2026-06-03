@@ -53,6 +53,9 @@ trait EmployeeAccessorsTrait
 
     public function getAvatarImageAttribute()
     {
+        if(isHakimOrAdel()){
+            return;
+        }
         if ($this->avatar && Storage::disk('s3')->exists($this->avatar)) {
             return Storage::disk('s3')->url($this->avatar);
         }

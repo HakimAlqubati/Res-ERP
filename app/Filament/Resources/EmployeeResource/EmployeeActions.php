@@ -176,4 +176,17 @@ class EmployeeActions
                 }
             });
     }
+
+    public static function attendance(): Action{
+        return  \Filament\Actions\Action::make('attendance_report')
+        ->label(__('lang.attendance_report'))
+        ->color('info')
+        ->icon('heroicon-o-chart-bar')
+        ->url(fn($record) => \App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource::getUrl('index', [
+          'tableFilters[employee_id]' => $record->id,
+          'tableFilters[date_range][start_date]' => now()->startOfMonth()->toDateString(),
+          'tableFilters[date_range][end_date]' => now()->endOfMonth()->toDateString(),
+        ]))
+        ->openUrlInNewTab();
+    }
 }
