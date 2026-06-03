@@ -23,7 +23,7 @@ class ListInventoryTransactionPurchaseReport extends ListRecords
         $reportService = new PurchaseInvoiceProductSummaryReportService();
         $filters       = [
             'product_id'       => $productId,
-            'group_by_invoice' => 0,
+            'group_by_invoice' => 1,
             'store_id'         => $storeId,
 
         ];
