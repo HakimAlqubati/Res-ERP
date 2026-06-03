@@ -180,10 +180,18 @@ class BranchAttendanceSummaryService
             $branchAbsentDays = 0;
             $branchEarnedLeaves = 0;
             $branchDeductionDays = 0;
+            $totalDeductionHours = 
+            $attendanceArray['total_missing_hours']['total_hours']
+            +
+            $attendanceArray['total_early_departure_minutes']['total_hours']
+            +
+            $attendanceArray['late_hours']['totalHoursFloat']
+            ;
+
             if (isset($attendanceArray['statistics']['weekly_leave_calculation']['branches_breakdown'])) {
                 foreach ($attendanceArray['statistics']['weekly_leave_calculation']['branches_breakdown'] as $breakdown) {
                     if ($breakdown['branch_id'] == $branchId) {
-                        $branchWorkedDays = $breakdown['worked_days'];
+                        $branchWorkedDays = $attendanceArray['statistics']['present_days'];
                         $branchAbsentDays = $breakdown['absent_days'];
                         $branchEarnedLeaves = $breakdown['earned_leave_days'];
                         $overtimeDays = $breakdown['overtime_days'];
@@ -196,48 +204,7 @@ class BranchAttendanceSummaryService
 
          
 
-            foreach ($attendanceArray as $date => $dayData) {
-                 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
-                    continue;
-                }
-
-                if (($dayData['branch_id'] ?? null) != $branchId) {
-                    continue;
-                }
-
-                $totalDays++;
-                $status = $dayData['day_status'] ?? '';
- 
-                if (!empty($dayData['periods'])) {
-                    foreach ($dayData['periods'] as $period) {
-                        $checkoutData = $period['attendances']['checkout']['lastcheckout'] ?? [];
-                        if (!empty($checkoutData)) {
-                            $missingMinutes += (float) ($checkoutData['missing_hours']['total_minutes'] ?? 0);
-                            $earlyDep = (float) ($checkoutData['early_departure_minutes'] ?? 0);
-                            if ($earlyDep > 10) {
-                                $earlyDepartureMinutes += $earlyDep;
-                            }
-                        }
-
-                        $checkinData = $period['attendances']['checkin'][0] ?? [];
-                        if (!empty($checkinData) && !empty($checkoutData)) {
-                            $delayMinutes = (float) ($checkinData['delay_minutes'] ?? 0);
-                            if ($delayMinutes > 10) {
-                                $lateMinutes += $delayMinutes;
-                            }
-                        }
-                    }
-                }
-            }
- 
-            $weeklyLeaveDeductionDays = $absentDays;
-             
-
-          
-
-            $deductionMinutes = $missingMinutes + $earlyDepartureMinutes + $lateMinutes;
-            $deductionHours = round($deductionMinutes / 60, 2);
-
+           
             return [
                 'employee_id'  => $employee->id,
                 'employee_no'  => $employee->employee_no,
@@ -249,7 +216,7 @@ class BranchAttendanceSummaryService
                 ],
                 'deductions'   => [
                     'days'  => $branchDeductionDays,
-                    'hours' => $deductionHours,
+                    'hours' => $totalDeductionHours,
                 ],
                 'attendance'   => [
                     'present_days' => $branchWorkedDays,
