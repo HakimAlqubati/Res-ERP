@@ -20,6 +20,7 @@ class EditEmployee extends EditRecord
         return [
             DeleteAction::make(),
             ViewAction::make(),
+            \App\Filament\Resources\EmployeeResource\EmployeeActions::changeBranch(),
             RestoreAction::make(),
             \Filament\Actions\Action::make('rehire')
                 ->label(__('lang.rehire'))
