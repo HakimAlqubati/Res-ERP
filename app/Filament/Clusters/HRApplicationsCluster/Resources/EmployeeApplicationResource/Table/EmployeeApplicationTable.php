@@ -265,7 +265,7 @@ class EmployeeApplicationTable
                     EmployeeApplicationResource::attachmentsAction(),
 
                     EmployeeApplicationResource::approveLeaveRequest()->hidden(function ($record) {
-                        if (isstuff() || isFinanceManager() || isHR()) {
+                        if (isstuff() || isHR()) {
                             return true;
                         }
                         if (isset(Auth::user()->employee)) {
