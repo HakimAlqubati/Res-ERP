@@ -185,6 +185,10 @@ class AttendnaceResource extends Resource
                         $period = $record->period;
                         return '(' . $period->start_at . ' - ' . $period->end_at . ') _ (' . $period->id . ' - ' . $period->name . ')';
                     }),
+                TextColumn::make('branch.name')
+                    ->label('Branch')->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable()
+                    ,
 
                 TextColumn::make('check_date')
                     ->label('Check Date')
