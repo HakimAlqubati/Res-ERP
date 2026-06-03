@@ -125,6 +125,7 @@ class BatchQuickAdd
                             Select::make('branch_id')
                                 ->label('Branch')
                                 ->options(Branch::normal()
+                                ->active()
                                 ->forBranchManager()
                                 ->pluck('name', 'id'))
                                 ->required()
@@ -269,6 +270,7 @@ class BatchQuickAdd
                 fn () => isSuperAdmin()
                     || isSystemManager()
                     || isBranchManager()
+                    || isHR()
             );
     }
 

@@ -28,6 +28,8 @@ class SalaryTransactionResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'employee.name';
 
+    protected static bool $isGloballySearchable = false;
+
     protected static ?string $cluster = HRSalaryCluster::class;
 
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;

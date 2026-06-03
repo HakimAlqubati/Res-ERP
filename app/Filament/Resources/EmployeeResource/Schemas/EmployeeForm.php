@@ -330,7 +330,7 @@ class EmployeeForm
                                         // ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee')
                                         ,
                                         Toggle::make('can_add_branch_order')->columnSpan(1)
-                                            ->disabled(fn(): bool => isBranchManager())
+                                            
                                             ->label(__('lang.can_add_branch_order'))->default(0)->inline(false),
 
                                     ]),
@@ -447,7 +447,7 @@ class EmployeeForm
                                             ->helperText(__('Overrides the default system rule for this specific employee when transferred between branches.'))
                                             ->options(\App\Enums\HR\Payroll\SalaryAllocationRule::class)
                                             ->placeholder(__('Use System Default')) // Fallback to system general setting
-                                            ->disabled(fn(): bool => isBranchManager())
+                                            
                                             ->columnSpan(1),
 
                                         TextInput::make('tax_identification_number')
@@ -456,29 +456,29 @@ class EmployeeForm
                                                 || ($get('has_employee_pass') == 1)
                                             ))
                                             ->numeric()
-                                            ->disabled(fn(): bool => isBranchManager()),
+                                            ,
                                         TextInput::make('bank_account_number')
                                             ->columnSpan(1)
                                             ->label('Bank account number')->nullable(),
                                         Toggle::make('discount_exception_if_absent')->columnSpan(1)
-                                            ->disabled(fn(): bool => isBranchManager())
+                                            
                                             ->label(__('lang.no_salary_deduction_for_absences'))->default(0)->inline(false)
                                         // ->isInline(false)
                                         ,
                                         Toggle::make('discount_exception_if_attendance_late')->columnSpan(1)
-                                            ->disabled(fn(): bool => isBranchManager())
+                                            
                                             ->label(__('lang.exempt_from_late_attendance_deduction'))->default(0)->inline(false)
                                         // ->isInline(false)
                                         ,
                                         Toggle::make('is_mtd_applicable')->columnSpan(1)
-                                            ->disabled(fn(): bool => isBranchManager())
+                                            
                                             ->label(__('lang.is_mtd_applicable'))->default(1)->inline(false),
                                         Toggle::make('has_auto_weekly_leave')->columnSpan(1)
-                                            ->disabled(fn(): bool => isBranchManager())
+                                            
                                             ->label(__('lang.has_auto_weekly_leave'))->default(1)->inline(false),
 
                                         Repeater::make('bank_information')
-                                            ->disabled(fn(): bool => isBranchManager())
+                                            
                                             ->label(__('lang.bank_information'))
                                             ->columns(2)
 
@@ -520,7 +520,7 @@ class EmployeeForm
                                         ]),
                                     ]),
                                     Fieldset::make()->columns(2)->label(__('lang.finance'))->columnSpanFull()
-                                        ->disabled(fn(): bool => isBranchManager())
+                                        
                                         ->schema([
                                             Repeater::make('Monthly allowances')
                                                 ->label(__('lang.monthly_allowances'))

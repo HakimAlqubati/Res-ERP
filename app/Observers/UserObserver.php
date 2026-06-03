@@ -24,10 +24,10 @@ class UserObserver
      */
     public function updating(User $user): void
     {
-        Validator::make(
-            ['branch_id' => $user->branch_id],
-            ['branch_id' => [new UserBranchCannotBeChanged($user)]]
-        )->validate();
+        // Validator::make(
+        //     ['branch_id' => $user->branch_id],
+        //     ['branch_id' => [new UserBranchCannotBeChanged($user)]]
+        // )->validate();
     }
 
     /**
