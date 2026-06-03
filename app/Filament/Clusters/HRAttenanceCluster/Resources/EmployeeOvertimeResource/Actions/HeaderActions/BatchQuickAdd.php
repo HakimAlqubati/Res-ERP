@@ -269,6 +269,7 @@ class BatchQuickAdd
                 fn () => isSuperAdmin()
                     || isSystemManager()
                     || isBranchManager()
+                    || isHR()
             );
     }
 
