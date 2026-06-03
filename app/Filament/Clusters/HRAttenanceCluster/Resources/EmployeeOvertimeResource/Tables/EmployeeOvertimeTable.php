@@ -242,7 +242,7 @@ class EmployeeOvertimeTable
                         // if ($record->approved == 1) {
                         //     return true;
                         // }
-                        if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
+                        if (isSuperAdmin() || isBranchManager() || isSystemManager() || isHR()) {
                             return false;
                         }
                         return true;
