@@ -191,7 +191,8 @@ class BranchAttendanceSummaryService
             if (isset($attendanceArray['statistics']['weekly_leave_calculation']['branches_breakdown'])) {
                 foreach ($attendanceArray['statistics']['weekly_leave_calculation']['branches_breakdown'] as $breakdown) {
                     if ($breakdown['branch_id'] == $branchId) {
-                        $branchWorkedDays = $attendanceArray['statistics']['present_days'];
+                        // $branchWorkedDays = $attendanceArray['statistics']['present_days'];
+                        $branchWorkedDays = $breakdown['worked_days'];
                         $branchAbsentDays = $breakdown['absent_days'];
                         $branchEarnedLeaves = $breakdown['earned_leave_days'];
                         $overtimeDays = $breakdown['overtime_days'];
