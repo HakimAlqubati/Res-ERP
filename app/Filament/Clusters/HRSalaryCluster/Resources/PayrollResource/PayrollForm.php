@@ -11,6 +11,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Placeholder;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Fieldset;
 use App\Models\EmployeeBranchLog;
@@ -31,6 +32,27 @@ class PayrollForm
                     ->suffixIcon('heroicon-o-exclamation-triangle')
                     ->suffixIconColor('warning')
                     ->default('Staffs who have not had their work periods added, will not appear on the payroll.'),
+                Placeholder::make('salary_warning')
+                    ->label('')
+                    ->columnSpan(3)
+                    ->visible(fn (Get $get) => filled($get('branch_id')) && !empty(self::getZeroSalaryEmployees($get)))
+                    ->content(function (Get $get) {
+                        $names = self::getZeroSalaryEmployees($get);
+                        if (empty($names)) {
+                            return null;
+                        }
+                        $namesList = implode('', array_map(fn($name) => '<li>' . e($name) . '</li>', $names));
+                         return new \Illuminate\Support\HtmlString("
+                            <div class='p-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50'>
+                                <h3 class='text-sm font-semibold text-red-800 dark:text-red-300'>
+                                    Warning: The following staff have zero or null salary:
+                                </h3>
+                                <ul class='list-disc list-inside mt-2 text-sm text-red-700 dark:text-red-400 font-medium space-y-1'>
+                                    {$namesList}
+                                </ul>
+                            </div>
+                        ");
+                    }),
                 Select::make('branch_id')->label('Choose branch')
                     ->disabledOn('view')->searchable()
                     ->options(Branch::query()
@@ -152,5 +174,53 @@ class PayrollForm
         )->first();
 
         return (int) ($ownerSegment['branch_id'] ?? 0) === $branchId;
+    }
+
+    private static function getZeroSalaryEmployees(Get $get): array
+    {
+        $branchId = $get('branch_id');
+        if (!$branchId) {
+            return [];
+        }
+
+        $directEmployeeIds = Employee::query()
+            ->where('branch_id', $branchId)
+            ->active()
+            ->pluck('id')
+            ->toArray();
+
+        $logEmployeeIds = [];
+        try {
+            $monthValue = $get('name');
+            if ($monthValue) {
+                $parts = explode(' ', $monthValue);
+                if (count($parts) === 2) {
+                    [$monthName, $year] = $parts;
+                    $monthNumber = \Carbon\Carbon::parse("1 $monthValue")->month;
+                    $year = (int) $year;
+
+                    $date = Carbon::create((int) $year, (int) $monthNumber, 1);
+                    $startDate = $date->copy()->startOfMonth();
+                    $endDate = $date->copy()->endOfMonth();
+                    $logEmployeeIds = EmployeeBranchLog::getEmployeesForBranchInRange($branchId, $startDate, $endDate);
+                }
+            }
+        } catch (\Throwable $e) {
+        }
+
+        $allIds = array_unique(array_merge($directEmployeeIds, $logEmployeeIds));
+
+        if (empty($allIds)) {
+            return [];
+        }
+
+        return Employee::query()
+            ->whereIn('id', $allIds)
+            ->where(function ($query) {
+                $query->whereNull('salary')
+                    ->orWhere('salary', 0);
+            })
+            ->pluck('name')
+            ->toArray();
     }
 }
