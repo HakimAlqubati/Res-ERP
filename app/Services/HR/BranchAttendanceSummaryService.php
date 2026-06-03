@@ -174,7 +174,7 @@ class BranchAttendanceSummaryService
             $missingMinutes = 0;
             $earlyDepartureMinutes = 0;
             $lateMinutes = 0; 
-           
+            $overtimeDays = 0;
             // 1. استخراج بيانات الفرع الحالي من الإحصائية الجاهزة قبل الدخول في حلقة الأيام
             $branchWorkedDays = 0;
             $branchAbsentDays = 0;
@@ -186,6 +186,7 @@ class BranchAttendanceSummaryService
                         $branchWorkedDays = $breakdown['worked_days'];
                         $branchAbsentDays = $breakdown['absent_days'];
                         $branchEarnedLeaves = $breakdown['earned_leave_days'];
+                        $overtimeDays = $breakdown['overtime_days'];
                         
                         break;
                     }
@@ -261,7 +262,7 @@ class BranchAttendanceSummaryService
                 'name'         => $employee->name,
                 'salary'       => $employee->salary,
                 'overtime'     => [
-                    'days'  => $branchEarnedLeaves + ($employee->manual_overtime_days ?? 0),
+                    'days'  => $overtimeDays + ($employee->manual_overtime_days ?? 0),
                     'hours' => $approvedOvertimeHours,
                 ],
                 'deductions'   => [

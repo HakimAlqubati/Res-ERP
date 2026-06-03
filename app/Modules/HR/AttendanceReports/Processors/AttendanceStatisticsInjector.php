@@ -144,7 +144,7 @@ class AttendanceStatisticsInjector
 
         // 2. إضافة تفصيل الفروع (branches_breakdown) إذا كان التقرير يشمل أكثر من فرع
         $breakdown = $this->buildBranchesBreakdown($report, $employee, $calculator, $alreadyEarned, $prevRemainder);
-        if ($breakdown) {
+         if ($breakdown) {
             $stats['weekly_leave_calculation']['branches_breakdown'] = $breakdown;
         }
 
@@ -254,8 +254,7 @@ class AttendanceStatisticsInjector
         $periodEnd   = \Carbon\Carbon::parse($endDateStr);
         
         $segments = \App\Models\EmployeeBranchLog::getSalarySegments($employee, $periodStart, $periodEnd);
-        
-        if ($segments->count() <= 1) {
+        if ($segments->count() <= 0) {
             return null;
         }
 
@@ -292,6 +291,7 @@ class AttendanceStatisticsInjector
                     'worked_days'       => $segCalc['analysis']['worked_days'] ?? 0,
                     'absent_days'       => $segStats['absent'] ?? 0,
                     'earned_leave_days' => $segCalc['analysis']['earned_leave_days'] ?? 0,
+                    'overtime_days' => $segCalc['result']['overtime_days'] ?? 0,
                 ];
                 
                 $cumulativeAlreadyEarned += $segCalc['analysis']['earned_leave_days'] ?? 0;
