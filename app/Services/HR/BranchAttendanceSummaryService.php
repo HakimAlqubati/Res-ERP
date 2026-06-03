@@ -174,6 +174,26 @@ class BranchAttendanceSummaryService
             $missingMinutes = 0;
             $earlyDepartureMinutes = 0;
             $lateMinutes = 0; 
+           
+            // 1. استخراج بيانات الفرع الحالي من الإحصائية الجاهزة قبل الدخول في حلقة الأيام
+            $branchWorkedDays = 0;
+            $branchAbsentDays = 0;
+            $branchEarnedLeaves = 0;
+
+            if (isset($attendanceArray['statistics']['weekly_leave_calculation']['branches_breakdown'])) {
+                foreach ($attendanceArray['statistics']['weekly_leave_calculation']['branches_breakdown'] as $breakdown) {
+                    if ($breakdown['branch_id'] == $branchId) {
+                        $branchWorkedDays = $breakdown['worked_days'];
+                        $branchAbsentDays = $breakdown['absent_days'];
+                        $branchEarnedLeaves = $breakdown['earned_leave_days'];
+                        
+                        break;
+                    }
+                }
+            }
+
+         
+
             foreach ($attendanceArray as $date => $dayData) {
                  if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
                     continue;
@@ -190,7 +210,7 @@ class BranchAttendanceSummaryService
                     \App\Enums\HR\Attendance\AttendanceReportStatus::Present->value,
                     \App\Enums\HR\Attendance\AttendanceReportStatus::IncompleteCheckoutOnly->value,
                 ])) {
-                    $presentDays++;
+                    // $presentDays++;
                 } elseif (in_array($status, [
                     \App\Enums\HR\Attendance\AttendanceReportStatus::Absent->value,
                     \App\Enums\HR\Attendance\AttendanceReportStatus::Partial->value,
@@ -228,24 +248,9 @@ class BranchAttendanceSummaryService
             }
  
             $weeklyLeaveDeductionDays = $absentDays;
-            $autoOvertimeDays = 0;
+             
 
-            if ($employee->has_auto_weekly_leave) {
-                $workDaysPerLeave = 6;
-                if (class_exists(\App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::class)) {
-                    $workDaysPerLeave = \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::WORK_DAYS_PER_LEAVE;
-                }
-                $entitledLeaves = min(4, floor(($presentDays+$totalLeaveDays) / $workDaysPerLeave));
-// dd($entitledLeaves,$presentDays,$workDaysPerLeave,$totalLeaveDays);
-                $totalOffDays = $absentDays + $weeklyLeaveDays;
-
-                if ($entitledLeaves >= $totalOffDays) {
-                    $weeklyLeaveDeductionDays = 0;
-                    $autoOvertimeDays = min(4, $entitledLeaves - $totalOffDays);
-                } else {
-                    $weeklyLeaveDeductionDays = $totalOffDays - $entitledLeaves;
-                }
-            }
+          
 
             $deductionMinutes = $missingMinutes + $earlyDepartureMinutes + $lateMinutes;
             $deductionHours = round($deductionMinutes / 60, 2);
@@ -256,7 +261,7 @@ class BranchAttendanceSummaryService
                 'name'         => $employee->name,
                 'salary'       => $employee->salary,
                 'overtime'     => [
-                    'days'  => $autoOvertimeDays + ($employee->manual_overtime_days ?? 0),
+                    'days'  => $branchEarnedLeaves + ($employee->manual_overtime_days ?? 0),
                     'hours' => $approvedOvertimeHours,
                 ],
                 'deductions'   => [
@@ -264,7 +269,7 @@ class BranchAttendanceSummaryService
                     'hours' => $deductionHours,
                 ],
                 'attendance'   => [
-                    'present_days' => $presentDays,
+                    'present_days' => $branchWorkedDays,
                     'absent_days'  => $absentDays,
                     'total_days'   => $totalDays,
                 ],
