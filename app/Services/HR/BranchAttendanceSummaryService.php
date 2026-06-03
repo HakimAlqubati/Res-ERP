@@ -179,7 +179,7 @@ class BranchAttendanceSummaryService
             $branchWorkedDays = 0;
             $branchAbsentDays = 0;
             $branchEarnedLeaves = 0;
-
+            $branchDeductionDays = 0;
             if (isset($attendanceArray['statistics']['weekly_leave_calculation']['branches_breakdown'])) {
                 foreach ($attendanceArray['statistics']['weekly_leave_calculation']['branches_breakdown'] as $breakdown) {
                     if ($breakdown['branch_id'] == $branchId) {
@@ -187,6 +187,7 @@ class BranchAttendanceSummaryService
                         $branchAbsentDays = $breakdown['absent_days'];
                         $branchEarnedLeaves = $breakdown['earned_leave_days'];
                         $overtimeDays = $breakdown['overtime_days'];
+                        $branchDeductionDays = $breakdown['total_deduction_days'];
                         
                         break;
                     }
@@ -247,7 +248,7 @@ class BranchAttendanceSummaryService
                     'hours' => $approvedOvertimeHours,
                 ],
                 'deductions'   => [
-                    'days'  => $weeklyLeaveDeductionDays,
+                    'days'  => $branchDeductionDays,
                     'hours' => $deductionHours,
                 ],
                 'attendance'   => [

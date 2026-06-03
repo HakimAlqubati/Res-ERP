@@ -292,6 +292,8 @@ class AttendanceStatisticsInjector
                     'absent_days'       => $segStats['absent'] ?? 0,
                     'earned_leave_days' => $segCalc['analysis']['earned_leave_days'] ?? 0,
                     'overtime_days' => $segCalc['result']['overtime_days'] ?? 0,
+                    'total_deduction_days' => $segCalc['result']['total_deduction_days'] ?? 0,
+                    'final_absent_penalty' => $segCalc['result']['final_absent_penalty'] ?? 0,
                 ];
                 
                 $cumulativeAlreadyEarned += $segCalc['analysis']['earned_leave_days'] ?? 0;
