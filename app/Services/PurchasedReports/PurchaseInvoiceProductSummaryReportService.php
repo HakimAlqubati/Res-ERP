@@ -73,18 +73,18 @@ class PurchaseInvoiceProductSummaryReportService
             $store = Store::find($storeId);
             if ($store && $store->default_store) {
                 // جلب IDs الفئات المرتبطة بفروع لديها مخازن (غير المخزن الافتراضي)
-                $excludedCategoryIds = DB::table('branch_category')
-                    ->join('branches', 'branch_category.branch_id', '=', 'branches.id')
-                    ->whereNotNull('branches.store_id')
-                    ->where('branches.store_id', '!=', $storeId)
-                    ->whereNull('branches.deleted_at')
-                    ->pluck('branch_category.category_id')
-                    ->unique()
-                    ->toArray();
+                // $excludedCategoryIds = DB::table('branch_category')
+                //     ->join('branches', 'branch_category.branch_id', '=', 'branches.id')
+                //     ->whereNotNull('branches.store_id')
+                //     ->where('branches.store_id', '!=', $storeId)
+                //     ->whereNull('branches.deleted_at')
+                //     ->pluck('branch_category.category_id')
+                //     ->unique()
+                //     ->toArray();
 
-                if (!empty($excludedCategoryIds)) {
-                    $query->whereNotIn('products.category_id', $excludedCategoryIds);
-                }
+                // if (!empty($excludedCategoryIds)) {
+                //     $query->whereNotIn('products.category_id', $excludedCategoryIds);
+                // }
             }
         }
 
@@ -219,18 +219,18 @@ class PurchaseInvoiceProductSummaryReportService
         if ($storeId) {
             $store = Store::find($storeId);
             if ($store && $store->default_store) {
-                $excludedCategoryIds = DB::table('branch_category')
-                    ->join('branches', 'branch_category.branch_id', '=', 'branches.id')
-                    ->whereNotNull('branches.store_id')
-                    ->where('branches.store_id', '!=', $storeId)
-                    ->whereNull('branches.deleted_at')
-                    ->pluck('branch_category.category_id')
-                    ->unique()
-                    ->toArray();
+                // $excludedCategoryIds = DB::table('branch_category')
+                //     ->join('branches', 'branch_category.branch_id', '=', 'branches.id')
+                //     ->whereNotNull('branches.store_id')
+                //     ->where('branches.store_id', '!=', $storeId)
+                //     ->whereNull('branches.delete    d_at')
+                //     ->pluck('branch_category.category_id')
+                //     ->unique()
+                //     ->toArray();
 
-                if (!empty($excludedCategoryIds)) {
-                    $query->whereNotIn('p.category_id', $excludedCategoryIds);
-                }
+                // if (!empty($excludedCategoryIds)) {
+                //     $query->whereNotIn('p.category_id', $excludedCategoryIds);
+                // }
             }
         }
 
