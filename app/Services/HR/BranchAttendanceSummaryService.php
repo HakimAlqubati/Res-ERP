@@ -206,26 +206,7 @@ class BranchAttendanceSummaryService
 
                 $totalDays++;
                 $status = $dayData['day_status'] ?? '';
-
-                if (in_array($status, [
-                    \App\Enums\HR\Attendance\AttendanceReportStatus::Present->value,
-                    \App\Enums\HR\Attendance\AttendanceReportStatus::IncompleteCheckoutOnly->value,
-                ])) {
-                    // $presentDays++;
-                } elseif (in_array($status, [
-                    \App\Enums\HR\Attendance\AttendanceReportStatus::Absent->value,
-                    \App\Enums\HR\Attendance\AttendanceReportStatus::Partial->value,
-                    \App\Enums\HR\Attendance\AttendanceReportStatus::IncompleteCheckinOnly->value,
-                ])) {
-                    $absentDays++;
-                } elseif (in_array($status, [
-                    \App\Enums\HR\Attendance\AttendanceReportStatus::Leave->value, 
-                ])) {
-                    $totalLeaveDays++;
-                } elseif ($status === \App\Enums\HR\Attendance\AttendanceReportStatus::WeeklyLeave->value) {
-                    $weeklyLeaveDays++;
-                }
-
+ 
                 if (!empty($dayData['periods'])) {
                     foreach ($dayData['periods'] as $period) {
                         $checkoutData = $period['attendances']['checkout']['lastcheckout'] ?? [];
