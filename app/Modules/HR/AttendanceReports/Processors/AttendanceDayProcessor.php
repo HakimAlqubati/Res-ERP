@@ -127,7 +127,6 @@ class AttendanceDayProcessor
             }
 
             $isNotStarted = $isToday && $nowCarbon->lt(Carbon::parse("{$dateStr} {$startTime}"));
-
             if ($isFuture || $isNotStarted) $st = AttendanceReportStatus::Future;
             elseif (!$hasIn && !$hasOut) $st = AttendanceReportStatus::Absent;
             elseif ($hasIn && !$hasOut) $st = AttendanceReportStatus::IncompleteCheckinOnly;
@@ -150,6 +149,14 @@ class AttendanceDayProcessor
         // Extract branch info from the day history record(s)
         $firstHistory = $dayHistories->first();
         $periods = $periods->sortBy('start_time')->values();
+        
+        $dayStatus = $this->statusResolver->resolveDayStatus($periods->pluck('final_status')->all());
+        
+        // إذا لم يكن لديه شيفت (الفترات فارغة)، اعتبره حاضر بناءً على القاعدة
+        if ($periods->isEmpty()) {
+            $dayStatus = \App\Enums\HR\Attendance\AttendanceReportStatus::NoPeriods->value;
+        }
+
         return [
             'date' => $dateStr,
             'day_name' => $dayName,
@@ -158,7 +165,7 @@ class AttendanceDayProcessor
             'periods' => $periods,
             'actual_duration_hours' => gmdate('H:i:s', $dayActualSeconds),
             'actual_duration_hours_formatted' => $this->durationCalculator->formatFloatToHMS($dayActualSeconds / 3600),
-            'day_status' => $this->statusResolver->resolveDayStatus($periods->pluck('final_status')->all()),
+            'day_status' => $dayStatus,
             'daily_supposed_seconds' => $totalDurationSeconds,
         ];
     }

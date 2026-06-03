@@ -68,7 +68,7 @@ class HelperFunctions
                     // Not incrementing required_days, as they are no longer required to work.
                     break;
                 case AttendanceReportStatus::NoPeriods->value:
-                    $stats['required_days']++;
+                    // $stats['required_days']++;
                     $stats['no_periods']++;
                     break;
 
