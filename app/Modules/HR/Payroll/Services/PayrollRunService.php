@@ -37,14 +37,20 @@ class PayrollRunService implements PayrollRunnerInterface
 
         $segments = $this->buildSegments($input->branchId, $input->year, $input->month, $periodStart, $periodEnd);
 
+        // عدّ Segments لكل موظف لتحديد من لديه انتقال فرع
+        $segmentCountPerEmployee = $segments->countBy(fn($s) => $s['employee']->id)->all();
+
         $items  = [];
         $totals = ['base_salary' => 0.0, 'overtime_amount' => 0.0, 'total_allowances' => 0.0, 'total_deductions' => 0.0, 'gross_salary' => 0.0, 'net_salary' => 0.0, 'count' => 0];
 
         foreach ($segments as ['employee' => $employee, 'log' => $log]) {
+            $isMultiSegment = ($segmentCountPerEmployee[$employee->id] ?? 1) > 1;
+
             // استدعاء المحاكي مباشرة بالفترة الدقيقة للفترة — لا إعادة بناء للـ Segments
             $simulation = $this->simulator->simulateForEmployees(
                 [$employee->id], $input->year, $input->month,
                 $log->branch_id, $log->start, $log->end,
+                $isMultiSegment,
             )[0] ?? null;
 
             if (!$simulation || !$simulation['success']) {
@@ -118,11 +124,17 @@ class PayrollRunService implements PayrollRunnerInterface
         $rows    = [];
 
         DB::transaction(function () use ($segments, $input, $run, &$created, &$updated, &$rows) {
+            // عدّ Segments لكل موظف لتحديد من لديه انتقال فرع
+            $segmentCountPerEmployee = $segments->countBy(fn($s) => $s['employee']->id)->all();
+
             foreach ($segments as ['employee' => $employee, 'log' => $log]) {
+                $isMultiSegment = ($segmentCountPerEmployee[$employee->id] ?? 1) > 1;
+
                 // استدعاء المحاكي مباشرة بالفترة الدقيقة — لا إعادة بناء للـ Segments
                 $simulation = $this->simulator->simulateForEmployees(
                     [$employee->id], $input->year, $input->month,
                     $log->branch_id, $log->start, $log->end,
+                    $isMultiSegment,
                 )[0] ?? null;
 
                 if (!$simulation || !$simulation['success']) {
