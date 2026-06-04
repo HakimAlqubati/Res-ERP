@@ -91,9 +91,18 @@ class PayrollForm
                                 $query->whereIn('employee_id', $employeeIds);
                             }
 
-                            $existing = $query->with('employee:id,name')->get();
-
-                            if ($existing->isNotEmpty()) {
+                            $existing = $query->with('employee:id,name,branch_id')->get();
+                            
+                            $existing = $existing->filter(function ($payroll) use ($branchId, $year, $monthNumber) {
+                                if (!$payroll->employee) return false;
+                                
+                                $date = \Carbon\Carbon::create((int) $year, (int) $monthNumber, 1);
+                                $startDate = $date->copy()->startOfMonth();
+                                $endDate = $date->copy()->endOfMonth();
+                                
+                                return self::isEmployeeOwnedByBranchForPayroll($payroll->employee, (int) $branchId, $startDate, $endDate);
+                            });
+                             if ($existing->isNotEmpty()) {
                                 $names = $existing->pluck('employee.name')->filter()->unique()->implode(', ');
                                 $trashed = $existing->whereNotNull('deleted_at')->isNotEmpty();
                                 if ($trashed) {

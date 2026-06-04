@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\Scopes\BranchScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class PayrollRun extends Model implements Auditable
@@ -104,5 +105,12 @@ class PayrollRun extends Model implements Auditable
     public function transactions()
     {
         return $this->hasMany(SalaryTransaction::class, 'payroll_run_id');
+    }
+
+    public function employeesCount(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->payrolls()->distinct('employee_id')->count('employee_id')
+        );
     }
 }
