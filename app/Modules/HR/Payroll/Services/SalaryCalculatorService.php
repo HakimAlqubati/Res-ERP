@@ -148,7 +148,21 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         // Determine how many days should be paid for the current period ($payableDays)
         $payableDays = $rateWorkingDays;
         if ($periodEnd && $periodEnd->day < $monthDays) {
+            // Segment ends mid-month → use the calendar end-day directly.
             $payableDays = $periodEnd->day;
+        } elseif (
+            $this->dailyRateMethod === DailyRateMethod::By30Days->value
+            && $periodStart && $periodStart->day > 1
+        ) {
+            // Last segment after a branch transfer (ends on the last day of the month,
+            // but didn't start on day 1). Subtract the rate-days already consumed by
+            // prior segments so the grand total across all segments always equals 30.
+            //
+            // Example — May (31 days): Segment 1 = 1→12, Segment 2 = 13→31
+            //   previousUsedDays = round((13-1) / 31 × 30) = round(11.61) = 12
+            //   payableDays      = 30 - 12 = 18   →  12 + 18 = 30 ✅
+            $previousUsedDays = (int) round(($periodStart->day - 1) / $monthDays * $rateWorkingDays);
+            $payableDays      = max(0, $rateWorkingDays - $previousUsedDays);
         }
 
         // Cap payable days by required shift days (exclude no_periods days)
