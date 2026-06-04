@@ -140,6 +140,9 @@ class PayrollSimulationService implements PayrollSimulatorInterface
         $monthDays = (int) $periodStart->daysInMonth;
         $results   = [];
 
+        // عدّ Segments لكل موظف (لتحديد من لديه أكثر من Segment = انتقال فرع)
+        $segmentCountPerEmployee = $segments->countBy(fn($s) => $s['employee']->id)->all();
+
         foreach ($segments as $segment) {
             /** @var Employee $employee */
             $employee = $segment['employee'];
@@ -183,6 +186,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
                 periodMonth:           $month,
                 periodEnd:             $log->end,
                 periodStart:           $log->start,   // ← تخصيص فترة الفرع بدقة
+                isMultiSegment:        ($segmentCountPerEmployee[$employee->id] ?? 1) > 1,
             );
 
             $results[] = $this->buildResult($employee, $result, $monthlySalary, $dailyHours, $monthDays, $attendanceArray, $log);

@@ -108,6 +108,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         ?int $periodMonth = null,
         ?Carbon $periodEnd = null,
         ?Carbon $periodStart = null,
+        bool $isMultiSegment = false, // true عندما للموظف أكثر من Segment في هذا الشهر
     ): array {
         $this->resetState();
 
@@ -152,15 +153,12 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             $payableDays = $periodEnd->day;
         } elseif (
             $this->dailyRateMethod === DailyRateMethod::By30Days->value
+            && $isMultiSegment
             && $periodStart && $periodStart->day > 1
         ) {
-            // Last segment after a branch transfer (ends on the last day of the month,
-            // but didn't start on day 1). Subtract the rate-days already consumed by
-            // prior segments so the grand total across all segments always equals 30.
-            //
-            // Example — May (31 days): Segment 1 = 1→12, Segment 2 = 13→31
-            //   previousUsedDays = round((13-1) / 31 × 30) = round(11.61) = 12
-            //   payableDays      = 30 - 12 = 18   →  12 + 18 = 30 ✅
+            // Last segment of a branch-transfer employee: subtract the rate-days already
+            // consumed by prior segments so the total across all segments equals 30.
+            // Only fires when $isMultiSegment = true (new employees are never affected).
             $previousUsedDays = (int) round(($periodStart->day - 1) / $monthDays * $rateWorkingDays);
             $payableDays      = max(0, $rateWorkingDays - $previousUsedDays);
         }
