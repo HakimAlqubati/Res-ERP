@@ -69,6 +69,7 @@ class PayrollResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+        ->defaultSort('id','desc')
             ->recordUrl(fn (PayrollRun $record): string => PayrollResource::getUrl('view', ['record' => $record]))
             ->columns(PayrollTable::getColumns())
             ->filters(

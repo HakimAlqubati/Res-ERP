@@ -31,11 +31,9 @@ class PayrollTable
                     return $months[$key] ?? '';
                 })
                 ->sortable(),
-            TextColumn::make('payrolls_count')
+            TextColumn::make('employees_count')
                 ->label(__('lang.employees_count'))
-                ->counts('payrolls')
-                ->alignCenter()
-                ->sortable(),
+                ->alignCenter(),
             TextColumn::make('total_net')
                 ->label(__('lang.total_salaries'))
                 ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
