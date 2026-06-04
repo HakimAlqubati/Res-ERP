@@ -67,6 +67,7 @@ class EmployeeApplicationTable
                 ->label(__('lang.status'))
                 ->alignCenter(true)
                 ->badge()
+                ->sortable()
                 ->icon('heroicon-m-check-badge')
                 ->formatStateUsing(fn ($state) => EmployeeApplicationV2::getStatusLabel($state))
                 ->color(fn (string $state): string => match ($state) {
