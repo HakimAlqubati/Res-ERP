@@ -140,9 +140,6 @@ class PayrollSimulationService implements PayrollSimulatorInterface
         $monthDays = (int) $periodStart->daysInMonth;
         $results   = [];
 
-        // تتبع الأيام المستهلكة لكل موظف عبر سيغمنتاته (للتعامل مع انتقالات الفروع بدقة)
-        $employeeConsumedDays = [];
-
         foreach ($segments as $segment) {
             /** @var Employee $employee */
             $employee = $segment['employee'];
@@ -172,28 +169,21 @@ class PayrollSimulationService implements PayrollSimulatorInterface
                 ->whereMonth('date', $month)
                 ->sum('hours');
 
-            // كم يوماً استُهلك بالفعل في الـ Segments السابقة لهذا الموظف
-            $previousSegmentPayableDays = $employeeConsumedDays[$employee->id] ?? 0;
-
             $result = $this->salaryCalculatorService->calculate(
-                employee:                    $employee,
-                employeeData:                $attendanceArray,
-                salary:                      $monthlySalary,
-                workingDays:                 $workDays,
-                dailyHours:                  $dailyHours,
-                monthDays:                   $monthDays,
-                totalDuration:               $attendanceArray['total_duration_hours']        ?? '0:00:00',
-                totalActualDuration:         $attendanceArray['total_actual_duration_hours'] ?? '0:00:00',
-                totalApprovedOvertime:       $totalApprovedOvertime,
-                periodYear:                  $year,
-                periodMonth:                 $month,
-                periodEnd:                   $log->end,
-                periodStart:                 $log->start,
-                previousSegmentPayableDays:  $previousSegmentPayableDays,
+                employee:              $employee,
+                employeeData:          $attendanceArray,
+                salary:                $monthlySalary,
+                workingDays:           $workDays,
+                dailyHours:            $dailyHours,
+                monthDays:             $monthDays,
+                totalDuration:         $attendanceArray['total_duration_hours']        ?? '0:00:00',
+                totalActualDuration:   $attendanceArray['total_actual_duration_hours'] ?? '0:00:00',
+                totalApprovedOvertime: $totalApprovedOvertime,
+                periodYear:            $year,
+                periodMonth:           $month,
+                periodEnd:             $log->end,
+                periodStart:           $log->start,   // ← تخصيص فترة الفرع بدقة
             );
-
-            // سجّل الأيام التي استُهلكت في هذا الـ Segment لتُمرَّر للـ Segment التالي
-            $employeeConsumedDays[$employee->id] = $previousSegmentPayableDays + ($result['working_days'] ?? 0);
 
             $results[] = $this->buildResult($employee, $result, $monthlySalary, $dailyHours, $monthDays, $attendanceArray, $log);
         }

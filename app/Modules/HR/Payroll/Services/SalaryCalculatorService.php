@@ -108,7 +108,6 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         ?int $periodMonth = null,
         ?Carbon $periodEnd = null,
         ?Carbon $periodStart = null,
-        int $previousSegmentPayableDays = 0, // أيام الـ rate-days المستهلكة في الـ Segments السابقة
     ): array {
         $this->resetState();
 
@@ -153,15 +152,17 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             $payableDays = $periodEnd->day;
         } elseif (
             $this->dailyRateMethod === DailyRateMethod::By30Days->value
-            && $previousSegmentPayableDays > 0
+            && $periodStart && $periodStart->day > 1
         ) {
-            // Last segment after a branch transfer: prior segments already consumed
-            // $previousSegmentPayableDays rate-days, so this segment gets only the remainder.
-            // This is precise and safe — it fires ONLY when the caller explicitly says
-            // there were previous segments (new employees always pass 0 → no deduction).
+            // Last segment after a branch transfer (ends on the last day of the month,
+            // but didn't start on day 1). Subtract the rate-days already consumed by
+            // prior segments so the grand total across all segments always equals 30.
             //
-            // Example — May (31 days): Segment 1 consumed 12 days → Segment 2 gets 30-12 = 18 ✅
-            $payableDays = max(0, $rateWorkingDays - $previousSegmentPayableDays);
+            // Example — May (31 days): Segment 1 = 1→12, Segment 2 = 13→31
+            //   previousUsedDays = round((13-1) / 31 × 30) = round(11.61) = 12
+            //   payableDays      = 30 - 12 = 18   →  12 + 18 = 30 ✅
+            $previousUsedDays = (int) round(($periodStart->day - 1) / $monthDays * $rateWorkingDays);
+            $payableDays      = max(0, $rateWorkingDays - $previousUsedDays);
         }
 
         // Cap payable days by required shift days (exclude no_periods days)
