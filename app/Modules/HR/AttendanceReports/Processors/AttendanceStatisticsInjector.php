@@ -123,7 +123,7 @@ class AttendanceStatisticsInjector
      */
     public function inject(Collection $report, Employee $employee): void
     {
-        $stats = HelperFunctions::calculateAttendanceStats($report);
+        $stats = HelperFunctions::calculateAttendanceStats($report, $employee);
 
         // 1. حساب الأيام المستحقة مسبقاً والباقي إذا كان التقرير يبدأ بعد يوم 1 في الشهر
         [$alreadyEarned, $prevRemainder] = $this->calculatePreviousEarnedAndRemainder($report, $employee);
@@ -271,7 +271,7 @@ class AttendanceStatisticsInjector
             });
             
             if ($segmentReport->isNotEmpty()) {
-                $segStats = HelperFunctions::calculateAttendanceStats($segmentReport);
+                $segStats = HelperFunctions::calculateAttendanceStats($segmentReport, $employee);
                 $segCalc = $calculator->calculate(
                     $segStats['required_days'] ?? $segStats['total_days'] ?? 0,
                     $segStats['absent'] ?? 0,

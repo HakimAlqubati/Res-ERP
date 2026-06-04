@@ -9,7 +9,7 @@ class HelperFunctions
 {
     public const FLEXIBLE_HOURS_MARGIN_MINUTES = 10;
 
-    public static function calculateAttendanceStats($reportData)
+    public static function calculateAttendanceStats($reportData, $employee = null)
     {
         $countAsAbsent = (bool) (setting('count_partial_as_absent') ?? true);
 
@@ -68,8 +68,13 @@ class HelperFunctions
                     // Not incrementing required_days, as they are no longer required to work.
                     break;
                 case AttendanceReportStatus::NoPeriods->value:
-                    // $stats['required_days']++;
-                    $stats['no_periods']++;
+                    if ($employee && $employee->no_shift_is_present) {
+                        $stats['present_days']++;
+                        $stats['required_days']++;
+                    } else {
+                        // $stats['required_days']++;
+                        $stats['no_periods']++;
+                    }
                     break;
 
                 default:
@@ -91,7 +96,7 @@ class HelperFunctions
             AttendanceReportStatus::NoPeriods,
             AttendanceReportStatus::Terminated,
         ];
-        $stats = self::calculateAttendanceStats($reportData);
+        $stats = self::calculateAttendanceStats($reportData, $employee);
 
         // dd($stats,$statuses);
         $chartData = [

@@ -476,6 +476,9 @@ class EmployeeForm
                                         Toggle::make('has_auto_weekly_leave')->columnSpan(1)
                                             
                                             ->label(__('lang.has_auto_weekly_leave'))->default(1)->inline(false),
+                                        Toggle::make('no_shift_is_present')->columnSpan(1)
+                                            ->label(__('lang.no_shift_is_present'))
+                                            ->default(0)->inline(false),
 
                                         Repeater::make('bank_information')
                                             
