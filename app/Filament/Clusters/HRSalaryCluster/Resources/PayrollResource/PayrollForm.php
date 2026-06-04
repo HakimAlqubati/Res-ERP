@@ -56,6 +56,7 @@ class PayrollForm
                 Select::make('branch_id')->label('Choose branch')
                     ->disabledOn('view')->searchable()
                     ->options(Branch::query()
+                         ->active()
                         ->forBranchManager('id')
                         ->select('id', 'name')
                         ->get()
