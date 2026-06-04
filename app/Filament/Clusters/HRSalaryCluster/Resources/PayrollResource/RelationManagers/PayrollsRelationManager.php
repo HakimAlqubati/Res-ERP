@@ -144,7 +144,7 @@ class PayrollsRelationManager extends RelationManager
                     ->getStateUsing(fn(Payroll $record) => (float) $record->getRawOriginal('net_salary'))
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->sortable()
-                    ->summarize(Sum::make()),
+                    ->summarize(Sum::make()->label(__(''))->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))),
                 TextColumn::make('created_at')
                     ->label(__('Created At'))
                     ->alignCenter()->toggleable(isToggledHiddenByDefault: true)

@@ -56,6 +56,7 @@ class PayrollForm
                 Select::make('branch_id')->label('Choose branch')
                     ->disabledOn('view')->searchable()
                     ->options(Branch::query()
+                         ->active()
                         ->forBranchManager('id')
                         ->select('id', 'name')
                         ->get()
@@ -115,6 +116,7 @@ class PayrollForm
                     }),
                 TextInput::make('name')->label('Title')->hiddenOn('create')->disabled(),
                 DatePicker::make('pay_date')->required()
+                    ->label('Generation date')
                     ->default(date('Y-m-d')),
             ]),
 
