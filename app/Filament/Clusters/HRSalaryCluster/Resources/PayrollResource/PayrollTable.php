@@ -35,7 +35,7 @@ class PayrollTable
                 ->label(__('lang.employees_count'))
                 ->alignCenter(),
             TextColumn::make('total_net')
-                ->label(__('lang.total_salaries'))
+                ->label('Net Salary')
                 ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                 ->sortable(),
             TextColumn::make('creator.name')

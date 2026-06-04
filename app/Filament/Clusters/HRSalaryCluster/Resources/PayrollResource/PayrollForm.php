@@ -116,6 +116,7 @@ class PayrollForm
                     }),
                 TextInput::make('name')->label('Title')->hiddenOn('create')->disabled(),
                 DatePicker::make('pay_date')->required()
+                    ->label('Generation date')
                     ->default(date('Y-m-d')),
             ]),
 
