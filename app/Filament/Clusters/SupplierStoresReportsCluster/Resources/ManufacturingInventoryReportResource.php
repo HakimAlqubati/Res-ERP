@@ -6,6 +6,7 @@ use Filament\Pages\Enums\SubNavigationPosition;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages\ListManufacturingInventoryReport;
 use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages;
+use App\Models\Branch;
 use App\Models\Product;
 use App\Models\Store;
 use Filament\Forms\Components\Toggle;
@@ -54,8 +55,14 @@ class ManufacturingInventoryReportResource extends Resource
                 ->label('Store')
                 ->placeholder('Choose Store')
                 ->searchable()
-                ->options(Store::active()->where('is_central_kitchen', 1)
-                    ->pluck('name', 'id')),
+                ->options(
+                    Store::active()
+                        ->where(function ($q) {
+                            $q->where('is_central_kitchen', 1)
+                              ->orWhereHas('branches', fn($b) => $b->where('type', Branch::TYPE_CENTRAL_KITCHEN));
+                        })
+                        ->pluck('name', 'id')
+                ),
 
             Filter::make('options')
                 ->label('Extra')
