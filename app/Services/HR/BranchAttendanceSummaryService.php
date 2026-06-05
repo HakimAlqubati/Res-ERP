@@ -67,9 +67,20 @@ class BranchAttendanceSummaryService
                     ->whereMonth('date', $month)
                     ->where('type', \App\Models\EmployeeOvertime::TYPE_BASED_ON_DAY);
             }], 'hours')
-            ->withCount(['dailyOvertimes as manual_overtime_days' => function ($query) use ($year, $month) {
+            ->withCount(['dailyOvertimes as manual_overtime_days' => function ($query) use ($year, $month, $branchId) {
                 $query->whereYear('date', $year)
-                    ->whereMonth('date', $month);
+                    ->whereMonth('date', $month)
+                    ->whereExists(function ($sub) use ($branchId) {
+                        $sub->selectRaw(1)
+                            ->from('hr_employee_branch_logs')
+                            ->whereColumn('hr_employee_branch_logs.employee_id', 'hr_employee_overtime.employee_id')
+                            ->where('hr_employee_branch_logs.branch_id', $branchId)
+                            ->whereColumn('hr_employee_branch_logs.start_at', '<=', 'hr_employee_overtime.date')
+                            ->where(function ($q) {
+                                $q->whereNull('hr_employee_branch_logs.end_at')
+                                  ->orWhereColumn('hr_employee_branch_logs.end_at', '>=', 'hr_employee_overtime.date');
+                            });
+                    });
             }])
             ->chunk(50, function ($employees) use (&$currentStaff, &$newStaff, $terminatedEmployeeIds, $year, $month, $periodStart, $periodEnd, $monthDays, $branchId) {
 
