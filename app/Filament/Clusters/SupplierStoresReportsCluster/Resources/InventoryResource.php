@@ -100,7 +100,7 @@ class InventoryResource extends Resource
             ])
             ->columns([
 
-                SoftDeleteColumn::make(),
+                SoftDeleteColumn::make()->toggleable(),
                 TextColumn::make('deleted_at')
                     ->label('Deleted At')
                     ->toggleable(isToggledHiddenByDefault: true),
