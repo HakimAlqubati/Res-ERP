@@ -70,7 +70,7 @@ class ClosingStockCalculationService
                 'product_id'   => $productId,
                 'product_name' => $detail->product->name ?? '—',
                 'unit_name'    => optional($detail->unit)->name ?? '—',
-                'package_size' => $latestPrice->package_size ?? 0,
+                'package_size' => $detail->package_size ?? 0,
                 'physical_qty' => $physicalQty,
                 'unit_price'   => $unitPrice,
                 'total_value'  => $totalValue,
