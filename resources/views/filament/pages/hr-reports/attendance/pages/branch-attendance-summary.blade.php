@@ -40,8 +40,8 @@
                     <td style="text-align:center;">{{ $row['attendance']['present_days'] ?? '0' }}</td>
                     <td style="text-align:center;">{{ $row['overtime']['days'] ?: '0' }}</td>
                     <td style="text-align:center;">{{ $row['overtime']['hours'] ?: '0' }}</td>
-                    <td style="text-align:center;">{{ $row['deductions']['days'] ?: '0' }}</td>
-                    <td style="text-align:center;">{{ $row['deductions']['hours'] ?: '0' }}</td>
+                    <td style="text-align:center; color: red;">{{ $row['deductions']['days'] ?: '0' }}</td>
+                    <td style="text-align:center; color: red;">{{ $row['deductions']['hours'] ?: '0' }}</td>
                     <td>{{ $row['note'] }}</td>
                 </tr>
                 @empty
@@ -57,8 +57,8 @@
                     <td style="text-align:center;">{{ $report['totals']['current_staff']['present_days'] }}</td>
                     <td style="text-align:center;">{{ $report['totals']['current_staff']['overtime_days'] }}</td>
                     <td style="text-align:center;">{{ $report['totals']['current_staff']['overtime_hours'] }}</td>
-                    <td style="text-align:center;">{{ $report['totals']['current_staff']['deduction_days'] }}</td>
-                    <td style="text-align:center;">{{ $report['totals']['current_staff']['deduction_hours'] }}</td>
+                    <td style="text-align:center; color: red;">{{ $report['totals']['current_staff']['deduction_days'] }}</td>
+                    <td style="text-align:center; color: red;">{{ $report['totals']['current_staff']['deduction_hours'] }}</td>
                     <td></td>
                 </tr>
             </tfoot>
@@ -97,8 +97,8 @@
                     <td style="text-align:center;">{{ $row['attendance']['present_days'] ?? '0' }}</td>
                     <td style="text-align:center;">{{ $row['overtime']['days'] ?: '0' }}</td>
                     <td style="text-align:center;">{{ $row['overtime']['hours'] ?: '0' }}</td>
-                    <td style="text-align:center;">{{ $row['deductions']['days'] ?: '0' }}</td>
-                    <td style="text-align:center;">{{ $row['deductions']['hours'] ?: '0' }}</td>
+                    <td style="text-align:center; color: red;">{{ $row['deductions']['days'] ?: '0' }}</td>
+                    <td style="text-align:center; color: red;">{{ $row['deductions']['hours'] ?: '0' }}</td>
                     <td style="text-align:center;">{{ $row['salary'] ?? '0' }}</td>
                     <td>{{ $row['note'] }}</td>
                 </tr>
@@ -115,8 +115,8 @@
                     <td style="text-align:center;">{{ $report['totals']['new_staff']['present_days'] }}</td>
                     <td style="text-align:center;">{{ $report['totals']['new_staff']['overtime_days'] }}</td>
                     <td style="text-align:center;">{{ $report['totals']['new_staff']['overtime_hours'] }}</td>
-                    <td style="text-align:center;">{{ $report['totals']['new_staff']['deduction_days'] }}</td>
-                    <td style="text-align:center;">{{ $report['totals']['new_staff']['deduction_hours'] }}</td>
+                    <td style="text-align:center; color: red;">{{ $report['totals']['new_staff']['deduction_days'] }}</td>
+                    <td style="text-align:center; color: red;">{{ $report['totals']['new_staff']['deduction_hours'] }}</td>
                     <td style="text-align:center;">{{ $report['totals']['new_staff']['salary'] }}</td>
                     <td></td>
                 </tr>
@@ -156,8 +156,8 @@
                     <td style="text-align:center;">{{ $row['attendance']['present_days'] ?? '0' }}</td>
                     <td style="text-align:center;">{{ $row['overtime']['days'] ?: '0' }}</td>
                     <td style="text-align:center;">{{ $row['overtime']['hours'] ?: '0' }}</td>
-                    <td style="text-align:center;">{{ $row['deductions']['days'] ?: '0' }}</td>
-                    <td style="text-align:center;">{{ $row['deductions']['hours'] ?: '0' }}</td>
+                    <td style="text-align:center; color: red;">{{ $row['deductions']['days'] ?: '0' }}</td>
+                    <td style="text-align:center; color: red;">{{ $row['deductions']['hours'] ?: '0' }}</td>
                     <td style="text-align:center;">{{ $row['termination_date'] ?? '0' }}</td>
                     <td>{{ $row['note'] }}</td>
                 </tr>
@@ -174,8 +174,8 @@
                     <td style="text-align:center;">{{ $report['totals']['terminated_staff']['present_days'] }}</td>
                     <td style="text-align:center;">{{ $report['totals']['terminated_staff']['overtime_days'] }}</td>
                     <td style="text-align:center;">{{ $report['totals']['terminated_staff']['overtime_hours'] }}</td>
-                    <td style="text-align:center;">{{ $report['totals']['terminated_staff']['deduction_days'] }}</td>
-                    <td style="text-align:center;">{{ $report['totals']['terminated_staff']['deduction_hours'] }}</td>
+                    <td style="text-align:center; color: red;">{{ $report['totals']['terminated_staff']['deduction_days'] }}</td>
+                    <td style="text-align:center; color: red;">{{ $report['totals']['terminated_staff']['deduction_hours'] }}</td>
                     <td></td>
                     <td></td>
                 </tr>
