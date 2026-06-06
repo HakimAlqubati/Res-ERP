@@ -21,7 +21,7 @@
                         <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
                             <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt="" class="logo-left circle-image">
                         </th>
-                        <th colspan="4" class="no_border_right_left text-center">
+                        <th colspan="5" class="no_border_right_left text-center">
                             <h3>Stock Inventory — Closing Stock Value Details</h3>
                             <p class="text-xs font-normal mt-1">
                                 Store: <strong>{{ $inventory->store->name ?? 'N/A' }}</strong>
@@ -38,6 +38,7 @@
                         <th>#</th>
                         <th>Product</th>
                         <th>Unit</th>
+                        <th class="text-right">Package Size</th>
                         <th class="text-right">Physical Qty</th>
                         <th class="text-right">Unit Price</th>
                         <th class="text-right">Total Value</th>
@@ -50,6 +51,7 @@
                             <td>{{ $i + 1 }}</td>
                             <td>{{ $row['product_name'] }}</td>
                             <td>{{ $row['unit_name'] }}</td>
+                            <td class="text-right">{{ number_format($row['package_size'], 3) }}</td>
                             <td class="text-right">{{ number_format($row['physical_qty'], 3) }}</td>
                             <td class="text-right">{{ formatMoneyWithCurrency($row['unit_price']) }}</td>
                             <td class="text-right">{{ formatMoneyWithCurrency($row['total_value']) }}</td>
@@ -59,7 +61,7 @@
 
                 <tfoot>
                     <tr class="font-bold bg-gray-100">
-                        <td colspan="5" class="text-right pr-2">Grand Total</td>
+                        <td colspan="6" class="text-right pr-2">Grand Total</td>
                         <td class="text-right">{{ formatMoneyWithCurrency($grandTotal) }}</td>
                     </tr>
                 </tfoot>
