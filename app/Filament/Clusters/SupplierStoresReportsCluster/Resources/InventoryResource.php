@@ -26,6 +26,7 @@ use App\Models\InventoryTransaction;
 use App\Models\Product;
 use Dom\Text;
 use Filament\Actions\Action;
+use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Forms\Components\FileUpload;
 use Filament\Resources\Resource;
@@ -63,7 +64,7 @@ class InventoryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->striped()
-            ->paginated([10, 25, 50, 150])
+            ->paginated([10, 25, 50, 150,400])
             ->defaultSort('id', 'desc')
             ->headerActions([
                 Action::make('import_inventory')->hidden()
@@ -321,8 +322,30 @@ class InventoryResource extends Resource
             ->filtersFormColumns(4)
             ->deferFilters(true)
             ->recordActions([
-                // Tables\Actions\EditAction::make(),
+ 
+                Action::make('editTransaction')
+                    ->label('Edit Package Size')
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('warning')
+                    ->visible(fn()=>isHakimOrAdel())
+                    ->action(function ($record, $data) {
+                        $record->update([
+                            'package_size' => $data['package_size'],
+                        ]);
 
+                        Notification::make()
+                            ->title('Package Size Updated')
+                            ->success()
+                            ->body('Package size updated successfully.')
+                            ->send();
+                    })
+                     ->schema([
+                        TextInput::make('package_size')
+                            ->label('Package Size')
+                            ->required()
+                            ->numeric()->default(fn($record): float => $record->package_size ?? 0)
+                            ->minValue(0),
+                    ]),
                 ActionGroup::make([
 
                     Action::make('editQuantity')
