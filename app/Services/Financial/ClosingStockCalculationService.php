@@ -59,7 +59,7 @@ class ClosingStockCalculationService
             $latestPrice = $reportService->getLatestPurchasePrice($productId);
 
             if ($latestPrice && $latestPrice->package_size > 0) {
-                $unitPrice = $latestPrice->price / $latestPrice->package_size;
+                $unitPrice = ($latestPrice->price / $latestPrice->package_size) * $detail->package_size;
             } else {
                 $unitPrice = 0;
             }

@@ -7,7 +7,9 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustment
 use App\Models\Product;
 use App\Models\StockAdjustmentDetail;
 use App\Models\Store;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
+use Filament\Notifications\Notification;
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -149,7 +151,46 @@ class StockAdjustmentReportResource extends Resource
             ], FiltersLayout::Modal)
             ->deferFilters(true)
             ->filtersFormColumns(4)
-            ->recordActions([])
+            ->recordActions([
+                Action::make('edit_package_size')
+                    ->label('Edit PKS')
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('warning')
+                    ->button()
+                    ->visible(fn()=> isHakimOrAdel())
+                    ->schema([
+                        TextInput::make('package_size')
+                            ->label('Package Size')
+                            ->numeric()
+                            ->minValue(0.001)
+                            ->required()
+                            ->default(fn (StockAdjustmentDetail $record) => $record->package_size),
+                    ])
+                    ->action(function (StockAdjustmentDetail $record, array $data): void {
+                        try {
+                            $newPackageSize = (float) $data['package_size'];
+
+                            // 1. Update the adjustment detail itself
+                            $record->update(['package_size' => $newPackageSize]);
+
+                            // 2. Update the linked inventory transaction(s)
+                            // $record->inventoryTransaction()
+                            //     ->update(['package_size' => $newPackageSize]);
+
+                            Notification::make()
+                                ->title('Package size updated')
+                                ->body("Package size set to {$newPackageSize} for {$record->product?->name}.")
+                                ->success()
+                                ->send();
+                        } catch (\Throwable $e) {
+                            Notification::make()
+                                ->title('Update failed')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+            ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make(),

@@ -98,11 +98,42 @@ class DetailsRelationManager extends RelationManager
                 // Tables\Actions\CreateAction::make(),
             ])
             ->recordActions([
+                Action::make('edit_package_size')
+                    ->label('Edit PKS')
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('warning')
+                    ->button()
+                    ->schema([
+                        TextInput::make('package_size')
+                            ->label('Package Size')
+                            ->numeric()
+                            ->minValue(0.001)
+                            ->required()
+                            ->default(fn ($record) => $record->package_size),
+                    ])->visible(fn()=> isHakimOrAdel())
+                    ->action(function ($record, array $data): void {
+                        try {
+                            $record->update(['package_size' => (float) $data['package_size']]);
+
+                            Notification::make()
+                                ->title('Package size updated')
+                                ->body("Package size set to {$data['package_size']}.")
+                                ->success()
+                                ->send();
+                        } catch (\Throwable $e) {
+                            Notification::make()
+                                ->title('Update failed')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
 
                 // Tables\Actions\DeleteAction::make(),
             ])
 
             ->toolbarActions([
+
                 BulkAction::make('editPhysicalQuantity')
                     ->label(__('Edit Physical Quantity'))
                     ->icon('heroicon-o-pencil-square')
