@@ -1,15 +1,41 @@
 <x-filament::page>
 
     {{-- Toolbar --}}
-    <div class="flex justify-end gap-2 mb-4">
-        <button id="printReport"
-            class="px-5 py-2 font-semibold rounded-md border border-blue-600 bg-blue-500 hover:bg-blue-700 text-white transition duration-300 shadow-md">
-            🖨️ Print
-        </button>
-        <button id="exportExcel"
-            class="px-5 py-2 font-semibold rounded-md border border-green-600 bg-green-500 hover:bg-green-700 text-white transition duration-300 shadow-md">
-            📥 Export Excel
-        </button>
+    <div class="flex flex-wrap justify-between items-center gap-2 mb-4">
+        {{-- Left: Highlight filter --}}
+        <div class="flex items-center gap-3">
+            <button wire:click="toggleHighlight"
+                class="flex items-center gap-2 px-4 py-2 rounded-md border font-semibold text-sm transition duration-300 shadow-sm
+                       {{ $highlightWrong
+                            ? 'bg-red-500 border-red-600 text-white hover:bg-red-700'
+                            : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200' }}">
+                ⚠️ Highlight Wrong Package Size
+                @if ($highlightWrong)
+                    <span class="ml-1 bg-white text-red-600 rounded-full px-2 py-0.5 text-xs font-bold">
+                        {{ count($wrongProductIds) }}
+                    </span>
+                @endif
+            </button>
+            @if ($highlightWrong && count($wrongProductIds) > 0)
+                <span class="text-xs text-red-500 font-medium">
+                    {{ count($wrongProductIds) }} product(s) with mismatched package size
+                </span>
+            @elseif ($highlightWrong && count($wrongProductIds) === 0)
+                <span class="text-xs text-green-600 font-medium">✓ No mismatches found</span>
+            @endif
+        </div>
+
+        {{-- Right: Print / Export --}}
+        <div class="flex gap-2">
+            <button id="printReport"
+                class="px-5 py-2 font-semibold rounded-md border border-blue-600 bg-blue-500 hover:bg-blue-700 text-white transition duration-300 shadow-md">
+                🖨️ Print
+            </button>
+            <button id="exportExcel"
+                class="px-5 py-2 font-semibold rounded-md border border-green-600 bg-green-500 hover:bg-green-700 text-white transition duration-300 shadow-md">
+                📥 Export Excel
+            </button>
+        </div>
     </div>
 
     @if (!empty($rows))
@@ -47,9 +73,19 @@
 
                 <tbody>
                     @foreach ($rows as $i => $row)
-                        <tr>
+                        @php
+                            $isWrong = $highlightWrong && in_array($row['product_id'], $wrongProductIds);
+                        @endphp
+                        <tr class="{{ $isWrong ? 'bg-red-50' : '' }}">
                             <td>{{ $i + 1 }}</td>
-                            <td>{{ $row['product_name'] }}</td>
+                            <td>
+                                <span class="{{ $isWrong ? 'text-red-600 font-semibold' : '' }}">
+                                    {{ $row['product_name'] }}
+                                </span>
+                                @if ($isWrong)
+                                    <span class="ml-1 text-xs bg-red-100 text-red-700 rounded px-1 py-0.5">⚠ wrong pkg</span>
+                                @endif
+                            </td>
                             <td>{{ $row['unit_name'] }}</td>
                             <td class="text-right">{{ number_format($row['package_size'], 3) }}</td>
                             <td class="text-right">{{ number_format($row['physical_qty'], 3) }}</td>
