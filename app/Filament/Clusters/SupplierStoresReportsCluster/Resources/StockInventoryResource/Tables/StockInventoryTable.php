@@ -37,6 +37,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Columns\Summarizers\Summarizer;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -57,6 +58,19 @@ class StockInventoryTable
                     ->wrap()->label('Categories')->toggleable(),
                 TextColumn::make('details_count')->label('Products No')->alignCenter(true)->toggleable(),
                 TextColumn::make('store.name')->sortable()->label('Store')->toggleable(),
+                TextColumn::make('closing_stock_value')
+                    ->label('Closing Stock Value')
+                    ->sortable(false)
+                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
+                    ->toggleable()
+                    ->summarize(
+                        Summarizer::make()
+                            ->using(function (Table $table) {
+                                $total = $table->getRecords()->sum(fn($record) => $record->closing_stock_value);
+                                return is_numeric($total) ? formatMoneyWithCurrency($total) : $total;
+                            })
+                    ),
+
                 TextColumn::make('responsibleUser.name')
                 ->limit(15)
                 ->tooltip(fn($state) => $state)
@@ -101,6 +115,11 @@ class StockInventoryTable
                         ->visible(fn($record): bool => $record->finalized)
                         ->button()
                         ->icon('heroicon-o-eye')->color('success'),
+                    \Filament\Actions\Action::make('value_details')
+                        ->label('Value Details')
+                        ->icon('heroicon-o-calculator')
+                        ->color('info')
+                        ->url(fn($record): string => StockInventoryResource::getUrl('value-details', ['record' => $record])),
                 ])
             ])
             ->toolbarActions([

@@ -44,6 +44,45 @@ class ClosingStockCalculationService
     }
 
     /**
+     * Return per-product breakdown: product name, physical qty, unit price, total value.
+     */
+    public function getDetailedClosingStockValues(StockInventory $inventory): array
+    {
+        $inventory->loadMissing('details.product');
+
+        $reportService = new PurchaseInvoiceProductSummaryReportService();
+        $rows = [];
+
+        foreach ($inventory->details as $detail) {
+            $physicalQty = (float) $detail->physical_quantity;
+            $productId   = $detail->product_id;
+            $latestPrice = $reportService->getLatestPurchasePrice($productId);
+
+            if ($latestPrice && $latestPrice->package_size > 0) {
+                $unitPrice = $latestPrice->price / $latestPrice->package_size;
+            } else {
+                $unitPrice = 0;
+            }
+
+            $totalValue = $physicalQty * $unitPrice;
+
+            $rows[] = [
+                'product_id'   => $productId,
+                'product_name' => $detail->product->name ?? '—',
+                'unit_name'    => optional($detail->unit)->name ?? '—',
+                'physical_qty' => $physicalQty,
+                'unit_price'   => $unitPrice,
+                'total_value'  => $totalValue,
+            ];
+        }
+
+        // Sort by product name
+        usort($rows, fn($a, $b) => strcmp($a['product_name'], $b['product_name']));
+
+        return $rows;
+    }
+
+    /**
      * Calculate value for a single product using Latest Purchase Price logic.
      *
      * @param int $productId

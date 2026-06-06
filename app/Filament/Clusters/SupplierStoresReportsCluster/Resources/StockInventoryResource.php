@@ -7,6 +7,7 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryR
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages\EditStockInventory;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages\ListStockInventories;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages\ViewStockInventory;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages\StockInventoryValueDetails;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\RelationManagers\DetailsRelationManager;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Schemas\StockInventoryForm;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Tables\StockInventoryTable;
@@ -75,11 +76,12 @@ class StockInventoryResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListStockInventories::route('/'),
+            'index'         => ListStockInventories::route('/'),
             // 'new-create' => StockInventoryReactPage::route('/new-create'),
-            'create' => CreateStockInventory::route('/create'),
-            'edit' => EditStockInventory::route('/{record}/edit'),
-            'view' => ViewStockInventory::route('/{record}'),
+            'create'        => CreateStockInventory::route('/create'),
+            'edit'          => EditStockInventory::route('/{record}/edit'),
+            'view'          => ViewStockInventory::route('/{record}'),
+            'value-details' => StockInventoryValueDetails::route('/{record}/value-details'),
         ];
     }
 
