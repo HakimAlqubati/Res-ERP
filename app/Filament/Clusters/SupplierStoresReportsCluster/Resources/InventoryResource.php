@@ -329,9 +329,28 @@ class InventoryResource extends Resource
                     ->color('warning')
                     ->visible(fn()=>isHakimOrAdel())
                     ->action(function ($record, $data) {
+                        $newPackageSize = $data['package_size'];
+                        
                         $record->update([
-                            'package_size' => $data['package_size'],
+                            'package_size' => $newPackageSize,
                         ]);
+
+                        // Check if it's from a StockAdjustmentDetail
+                        if ($record->formatted_transactionable_type === 'StockAdjustmentDetail' || $record->transactionable_type === \App\Models\StockAdjustmentDetail::class) {
+                            $adjDetail = \App\Models\StockAdjustmentDetail::find($record->transactionable_id);
+                            
+                            if ($adjDetail) {
+                                $adjDetail->update(['package_size' => $newPackageSize]);
+
+                                // Check if the adjustment is from a StockInventory
+                                if (str_ends_with($adjDetail->source_type ?? '', 'StockInventory')) {
+                                    \App\Models\StockInventoryDetail::where('stock_inventory_id', $adjDetail->source_id)
+                                        ->where('product_id', $adjDetail->product_id)
+                                        ->where('unit_id', $adjDetail->unit_id)
+                                        ->update(['package_size' => $newPackageSize]);
+                                }
+                            }
+                        }
 
                         Notification::make()
                             ->title('Package Size Updated')
