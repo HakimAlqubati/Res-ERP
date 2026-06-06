@@ -333,6 +333,7 @@ class InventoryResource extends Resource
                         
                         $record->update([
                             'package_size' => $newPackageSize,
+                            'temp_qty' => $data['temp_qty'],
                         ]);
 
                         // Check if it's from a StockAdjustmentDetail
@@ -364,6 +365,9 @@ class InventoryResource extends Resource
                             ->required()
                             ->numeric()->default(fn($record): float => $record->package_size ?? 0)
                             ->minValue(0),
+                            TextInput::make('temp_qty')
+                            ->label('Temp qty')
+                            ->default(fn($record): float => $record->temp_qty ?? 0)->numeric()
                     ]),
                 ActionGroup::make([
 
