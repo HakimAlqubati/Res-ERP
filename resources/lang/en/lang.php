@@ -377,6 +377,8 @@ return [
     'exempt_from_late_attendance_deduction' => 'Exempt from Late Attendance Deduction',
     'is_mtd_applicable' => 'MTD Applicable',
     'has_auto_weekly_leave' => 'Auto Weekly Leave',
+    'max_weekly_leave_days' => 'Max Weekly Leave Days / Month',
+    'max_weekly_leave_days_hint' => 'Override the default (4 days). Leave blank to use system default.',
     'no_shift_is_present' => 'Attendance Without Shift',
     'can_add_branch_order' => 'Can add branch order',
 
