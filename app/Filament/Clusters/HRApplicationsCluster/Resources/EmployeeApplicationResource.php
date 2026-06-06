@@ -1036,9 +1036,19 @@ class EmployeeApplicationResource extends Resource
                         TextInput::make('end_at')->default($attendance?->period?->end_at),
                         Hidden::make('period')->default($attendance?->period),
                     ]),
-                    Fieldset::make()->disabled(false)->label('Request data')->columns(2)->schema([
+                    Fieldset::make()->disabled(false)->label('Request data')->columns(3)->schema([
                         DatePicker::make('request_check_date')->default($details->date)->label('Date'),
                         TimePicker::make('request_check_time')->default($details->time)->label('Time'),
+                        \Filament\Forms\Components\Placeholder::make('is_auto_generated')
+                            ->label('Is Auto Request')
+                            ->content(function ($record) {
+                                $isAuto = (bool) $record?->is_auto_generated;
+                                $color = $isAuto ? 'rgb(34, 197, 94)' : 'rgb(239, 68, 68)';
+                                $svg = $isAuto
+                                    ? '<svg style="width:24px; height:24px; color:'.$color.';" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>'
+                                    : '<svg style="width:24px; height:24px; color:'.$color.';" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>';
+                                return new \Illuminate\Support\HtmlString($svg);
+                            }),
                     ]),
 
                     static::getAttachmentsPlaceholder($record),
