@@ -276,6 +276,12 @@ class SettingResource extends Resource
                                                 ->inline(false)
                                                 ->default(true),
 
+                                            Toggle::make('can_create_missed_check_requests')
+                                                ->label('Allow Creating Missed Check Requests')
+                                                ->helperText('If enabled, employees (with Staff role) are allowed to create missed check requests.')
+                                                ->inline(false)
+                                                ->default(true),
+
                                         ]),
                                     ]),
                                     Tab::make('Face Rekognation')->schema([

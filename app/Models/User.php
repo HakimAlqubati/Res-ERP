@@ -106,7 +106,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
         'managed_stores_ids',
         'is_attendance',
         'avatar_image',
-        'can_create_advance'
+        'can_create_advance',
+        'can_create_missed_check_requests'
     ];
     public static $filamentUserColumn = 'is_filament_user'; // The name of a boolean column in your database.
 
@@ -424,6 +425,14 @@ class User extends Authenticatable implements FilamentUser, Auditable
     {
         if (isStuff()) {
             return setting('can_create_advance', false);
+        }
+        return true;
+    }
+
+    public function getCanCreateMissedCheckRequestsAttribute()
+    {
+        if (isStuff()) {
+            return setting('can_create_missed_check_requests', false);
         }
         return true;
     }

@@ -124,10 +124,12 @@ class AttendanceImagesReportService
             $attendanceStatus = $attendance->resolveSupposedStatus();
 
             $isImageUpload = $source && str_contains($attendance->source_type, 'AttendanceImagesUploaded');
+            $isRequest = $source && str_contains($attendance->source_type, 'EmployeeApplicationV2');
             $defaultImage = asset('imgs/manual-request.png');
             $imgUrl = $isImageUpload && !empty($source->img_url) ? $source->full_image_url : $defaultImage;
             $datetime = $isImageUpload && !empty($source->datetime) ? $source->datetime : $attendance->check_date . ' ' . $attendance->check_time;
             $imageId = $isImageUpload && $source ? $source->id : $attendance->id;
+            $requestId = $isRequest ? $attendance->source_id : null;
 
             return [
                 'id'             => $imageId,
@@ -139,6 +141,7 @@ class AttendanceImagesReportService
                 'real_check_date'  => $attendance->real_check_date,
                 'attendance'     => [
                     'id'               => $attendance->id,
+                    'request_id'       => $requestId,
                     'check_type'       => $attendance->check_type,
                     'attendance_type'  => $attendance->attendance_type,
                     'check_type_label' => Attendance::getCheckTypes()[$attendance->check_type] ?? $attendance->check_type,

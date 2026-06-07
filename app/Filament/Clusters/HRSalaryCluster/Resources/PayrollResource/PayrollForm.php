@@ -26,14 +26,14 @@ class PayrollForm
     {
         // dd(getMonthOptionsBasedOnSettings());
         return [
-            Fieldset::make()->columnSpanFull()->label('Set Branch, Month and payment date')->columns(3)->schema([
+            Fieldset::make()->columnSpanFull()->label('Set Branch, Month and generation date')->columns(3)->schema([
                 TextInput::make('note_that')->label('Note that!')->columnSpan(3)->hiddenOn('view')
                     ->disabled()
                     ->suffixIcon('heroicon-o-exclamation-triangle')
                     ->suffixIconColor('warning')
                     ->default('Staffs who have not had their work periods added, will not appear on the payroll.'),
                 Placeholder::make('salary_warning')
-                    ->label('')
+                    ->label('Warning')
                     ->columnSpan(3)
                     ->visible(fn (Get $get) => filled($get('branch_id')) && !empty(self::getZeroSalaryEmployees($get)))
                     ->content(function (Get $get) {
@@ -43,11 +43,19 @@ class PayrollForm
                         }
                         $namesList = implode('', array_map(fn($name) => '<li>' . e($name) . '</li>', $names));
                          return new \Illuminate\Support\HtmlString("
-                            <div class='p-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50'>
-                                <h3 class='text-sm font-semibold text-red-800 dark:text-red-300'>
+                            <style>
+                                .payroll-zero-salary-warning { border: 1px solid #fecaca; }
+                                .payroll-zero-salary-warning h3 { color: #991b1b; }
+                                .payroll-zero-salary-warning ul { color: #b91c1c; }
+                                .dark .payroll-zero-salary-warning { border-color: rgba(127, 29, 29, 0.5); }
+                                .dark .payroll-zero-salary-warning h3 { color: #fca5a5; }
+                                .dark .payroll-zero-salary-warning ul { color: #f87171; }
+                            </style>
+                            <div class='p-4 rounded-lg payroll-zero-salary-warning'>
+                                <h3 class='text-sm font-semibold'>
                                     Warning: The following staff have zero or null salary:
                                 </h3>
-                                <ul class='list-disc list-inside mt-2 text-sm text-red-700 dark:text-red-400 font-medium space-y-1'>
+                                <ul class='list-disc list-inside mt-2 text-sm font-medium space-y-1'>
                                     {$namesList}
                                 </ul>
                             </div>
