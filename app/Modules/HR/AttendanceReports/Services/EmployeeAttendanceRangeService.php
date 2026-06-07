@@ -91,7 +91,7 @@ class EmployeeAttendanceRangeService
 
             $leave = $leaves->first(fn($l) => $tempDate->between($l->from_date, $l->to_date));
             if ($leave) {
-                $report->put($currentDateStr, $this->processor->buildLeaveDay($currentDateStr, $currentDayName, $leave));
+                $report->put($currentDateStr, $this->processor->buildLeaveDay($currentDateStr, $currentDayName, $leave, $employee->branch_id));
                 $tempDate->addDay();
                 continue;
             }
@@ -105,6 +105,8 @@ class EmployeeAttendanceRangeService
             $dayAttendances = ($attendances->get($currentDateStr) ?? collect())->groupBy('period_id');
             $dayOvertimes = ($overtimes->get($currentDateStr) ?? collect());
 
+            \App\Modules\HR\AttendanceReports\Processors\VirtualPeriodInjector::inject($dayAttendances, $dayHistories, $workPeriodMap);
+
             $dayReport = $this->processor->processDay(
                 $currentDateStr,
                 $currentDayName,
@@ -115,7 +117,7 @@ class EmployeeAttendanceRangeService
                 $workPeriodMap,
                 $isFuture,
                 $isToday,
-                $employee->discount_exception_if_attendance_late,
+                $employee->discount_exception_if_attendance_late ?? false,
                 $this->statsInjector
             );
 
@@ -134,7 +136,10 @@ class EmployeeAttendanceRangeService
         $employeeStartedFromBeginning = $earliestHistoryStart !== null
             && Carbon::parse($earliestHistoryStart)->lte($startDate);
 
-        if ($isFullMonth && $employeeStartedFromBeginning && $report->count() > 4) {
+        if (
+            $isFullMonth && $employeeStartedFromBeginning && $report->count() > 4
+            && $employee->has_auto_weekly_leave
+        ) {
             $deductionSeconds = 0;
             $chunks = $report->values()->chunk(7);
 

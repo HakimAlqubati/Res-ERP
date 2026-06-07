@@ -8,12 +8,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use App\Observers\AdvanceWageObserver;
+use App\Traits\Scopes\StatusScope;
 
 #[ObservedBy([AdvanceWageObserver::class])]
 
 class AdvanceWage extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, StatusScope;
 
     protected $table = 'hr_advance_wages';
 
@@ -186,6 +187,4 @@ class AdvanceWage extends Model
             ->pending()
             ->sum('amount');
     }
-
-
 }

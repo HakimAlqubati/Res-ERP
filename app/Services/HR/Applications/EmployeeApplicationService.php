@@ -283,7 +283,7 @@ class EmployeeApplicationService
         // side-effects (installment generation, financial transaction) are
         // atomic. Any failure rolls back everything — no orphaned state.
         return DB::transaction(function () use ($id, $userId) {
-            $record = EmployeeApplicationV2::with(['missedCheckinRequest', 'missedCheckoutRequest', 'leaveRequest'])->findOrFail($id);
+            $record = EmployeeApplicationV2::with(['missedCheckinRequest', 'missedCheckoutRequest', 'leaveRequest', 'mealRequest'])->findOrFail($id);
 
             switch ($record->application_type_id) {
                 case EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST:
@@ -325,7 +325,17 @@ class EmployeeApplicationService
                     break;
 
                 case EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST:
-                    app(\App\Services\HR\Applications\LeaveRequest\LeaveApprovalService::class)->process($record);
+                    // app(\App\Services\HR\Applications\LeaveRequest\LeaveApprovalService::class)->process($record);
+                    break;
+
+                case EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST:
+                    if ($record->mealRequest) {
+                        $record->mealRequest->update([
+                            'status'      => EmployeeApplicationV2::STATUS_APPROVED,
+                            'approved_by' => $userId,
+                            'approved_at' => now(),
+                        ]);
+                    }
                     break;
             }
 
@@ -358,7 +368,8 @@ class EmployeeApplicationService
             $record = EmployeeApplicationV2::with([
                 'leaveRequest',
                 'missedCheckinRequest',
-                'missedCheckoutRequest'
+                'missedCheckoutRequest',
+                'mealRequest'
             ])->findOrFail($id);
 
             // We only allow undo operations if the application is currently approved
@@ -368,10 +379,24 @@ class EmployeeApplicationService
 
             switch ($record->application_type_id) {
                 case EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST:
-                    app(\App\Services\HR\Applications\LeaveRequest\LeaveApprovalService::class)->undoProcess($record);
                     break;
 
-                    // Note: Rollback for Attendance & Departure fingerprint requests can be added here if needed
+                case EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST:
+                    if ($record->mealRequest) {
+                        $record->mealRequest->update([
+                            'status'      => EmployeeApplicationV2::STATUS_PENDING,
+                            'approved_by' => null,
+                            'approved_at' => null,
+                        ]);
+                    }
+                    break;
+
+                case EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST:
+                case EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST:
+                    \App\Models\Attendance::where('source_type', EmployeeApplicationV2::class)
+                        ->where('source_id', $record->id)
+                        ->delete();
+                    break;
             }
 
             // Revert state to pending and clear approval metadata
@@ -387,15 +412,23 @@ class EmployeeApplicationService
 
     public function rejectApplication(int $id, int $userId, string $reason)
     {
-        $record = EmployeeApplicationV2::findOrFail($id);
+        return DB::transaction(function () use ($id, $userId, $reason) {
+            $record = EmployeeApplicationV2::with('mealRequest')->findOrFail($id);
 
-        $record->update([
-            'status'          => EmployeeApplicationV2::STATUS_REJECTED,
-            'rejected_by'     => $userId,
-            'rejected_at'     => now(),
-            'rejected_reason' => $reason,
-        ]);
+            $record->update([
+                'status'          => EmployeeApplicationV2::STATUS_REJECTED,
+                'rejected_by'     => $userId,
+                'rejected_at'     => now(),
+                'rejected_reason' => $reason,
+            ]);
 
-        return $record;
+            if ($record->application_type_id === EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST && $record->mealRequest) {
+                $record->mealRequest->update([
+                    'status' => EmployeeApplicationV2::STATUS_REJECTED,
+                ]);
+            }
+
+            return $record;
+        });
     }
 }

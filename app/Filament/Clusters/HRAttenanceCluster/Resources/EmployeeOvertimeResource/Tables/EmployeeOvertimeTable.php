@@ -39,6 +39,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
 use App\Exceptions\HR\PayrollConflictException;
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use Throwable;
 
 class EmployeeOvertimeTable
@@ -48,8 +49,9 @@ class EmployeeOvertimeTable
         return $table
             ->striped()
             ->defaultSort('id', 'desc')
-            ->paginated([10, 25, 50, 100])
+            ->paginated([10, 25, 50, 100,250])
             ->columns([
+                SoftDeleteColumn::make(),
                 TextColumn::make('id')
                     ->label('ID')
                     ->sortable()
@@ -65,6 +67,11 @@ class EmployeeOvertimeTable
                     ->sortable()
                     ->wrap()
                     ->searchable()->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('branch.name')
+                    ->label('Branch')
+                    ->sortable()
+                    ->wrap()
+                    ->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('type')
                     ->label('Type')
                     ->sortable()
@@ -113,6 +120,12 @@ class EmployeeOvertimeTable
                     ->label('Approved at')->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('created_at')->wrap()
                     ->label('Created at')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('rejectedBy.name')
+                    ->label('Rejected by')
+                    ->wrap()->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('createdBy.name')
+                    ->label('Created by')
+                    ->wrap()->toggleable(isToggledHiddenByDefault: true),
 
             ])
             ->selectable()
@@ -179,6 +192,24 @@ class EmployeeOvertimeTable
                 //         // dd($data['hours'],$data,$record);
                 //         return $record->update(['hours' => $data['hours']]);
                 //     }),
+                Action::make('Reject')
+                    ->databaseTransaction()
+                    ->requiresConfirmation()
+                    ->button()
+                    ->color('danger')
+                    ->label('Reject')
+                    ->icon('heroicon-o-x-mark')
+                    ->action(function ($record) {
+                        // dd($record);
+                        return $record->update([
+                            'status' => EmployeeOvertime::STATUS_REJECTED,
+                            'rejected_by' => auth()->id(),
+                            'rejected_at' => now()
+                        ]);
+                    })
+                    ->visible(fn($record) => ($record->status === EmployeeOvertime::STATUS_PENDING
+                        && isSuperAdmin() || isBranchManager()
+                    )),
                 Action::make('Approve')
                     ->databaseTransaction()
                     ->label(function ($record) {
@@ -211,7 +242,7 @@ class EmployeeOvertimeTable
                         // if ($record->approved == 1) {
                         //     return true;
                         // }
-                        if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
+                        if (isSuperAdmin() || isBranchManager() || isSystemManager() || isHR()) {
                             return false;
                         }
                         return true;

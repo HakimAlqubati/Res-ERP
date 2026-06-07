@@ -16,7 +16,7 @@ class LeaveBalance extends Model implements Auditable
     // Define the table name if it's different from the convention
     protected $table = 'hr_leave_balances';
 
-    // protected $appends = ['balance'];
+    protected $appends = ['available_balance', 'balance'];
 
     // Define fillable attributes for mass assignment
     protected $fillable = [
@@ -27,6 +27,10 @@ class LeaveBalance extends Model implements Auditable
         'balance',
         'branch_id',
         'created_by',
+        'entitled_days',
+        'supposed_days',
+        'used_days',
+        'pending_days',
     ];
     protected $auditInclude = [
         'employee_id',
@@ -36,6 +40,18 @@ class LeaveBalance extends Model implements Auditable
         'balance',
         'branch_id',
         'created_by',
+        'entitled_days',
+        'supposed_days',
+        'used_days',
+        'pending_days',
+    ];
+
+    protected $casts = [
+        'balance'       => 'decimal:2',
+        'entitled_days' => 'integer',
+        'supposed_days' => 'integer',
+        'used_days'     => 'integer',
+        'pending_days'  => 'integer',
     ];
 
     /**
@@ -63,6 +79,8 @@ class LeaveBalance extends Model implements Auditable
             ->where('year', $year)
             ->first();
     }
+
+
     public static function getMonthlyBalanceForEmployee($employeeId, $year, $month)
     {
         return self::where('employee_id', $employeeId)
@@ -107,21 +125,31 @@ class LeaveBalance extends Model implements Auditable
         // parent::boot();
 
         //    dd(auth()->user(),auth()->user()->has_employee,auth()->user()->employee);
-        if (auth()->check()) {
-            if (isBranchManager()) {
-                static::addGlobalScope(function (Builder $builder) {
-                    $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
-                });
-            } elseif (isStuff()) {
-                static::addGlobalScope(function (Builder $builder) {
-                    $builder->where('employee_id', auth()->user()->employee->id); // Add your default query here
-                });
-            }
-        }
+        // if (auth()->check()) {
+        //     if (isBranchManager()) {
+        //         static::addGlobalScope(function (Builder $builder) {
+        //             $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
+        //         });
+        //     } elseif (isStuff()) {
+        //         static::addGlobalScope(function (Builder $builder) {
+        //             $builder->where('employee_id', auth()->user()->employee->id); // Add your default query here
+        //         });
+        //     }
+        // }
     }
 
-    // public function getBalanceAttribute()
-    // {
-    //     return 50;
-    // }
+    /**
+     * (جديد) المعادلة المحاسبية لحساب الرصيد المتاح 
+     */
+    public function getAvailableBalanceAttribute()
+    {
+        // الرصيد المتاح = إجمالي الاستحقاق - (الأيام المستهلكة + الأيام المعلقة)
+        return $this->entitled_days - ($this->used_days + $this->pending_days);
+    }
+
+    public function getBalanceAttribute()
+    {
+        // الرصيد المتاح = إجمالي الاستحقاق - (الأيام المستهلكة + الأيام المعلقة)
+        return $this->available_balance;
+    }
 }

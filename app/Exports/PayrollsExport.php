@@ -2,7 +2,9 @@
 
 namespace App\Exports;
 
+use App\Enums\HR\Payroll\SalaryTransactionType;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromView;
 
 class PayrollsExport implements FromView
@@ -17,48 +19,38 @@ class PayrollsExport implements FromView
     public function view(): View
     {
         $this->payrolls->load('transactions', 'employee');
+        $payrollGroups = $this->groupPayrollsByEmployee($this->payrolls);
 
         $additionColumns = collect();
         $deductionColumns = collect();
         $employerContributionColumns = collect();
 
-        // Pass 1: Gather all unique column headers
-        foreach ($this->payrolls as $payroll) {
-            foreach ($payroll->transactions as $transaction) {
+        foreach ($payrollGroups as $group) {
+            foreach ($group['transactions'] as $transaction) {
                 $typeVal = $transaction->type instanceof \BackedEnum ? $transaction->type->value : $transaction->type;
 
-                // Exclude basic salary — it has its own fixed column
-                if ($typeVal === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_SALARY->value) {
+                if ($typeVal === SalaryTransactionType::TYPE_SALARY->value) {
                     continue;
                 }
 
-                // Employer contributions: collect as dynamic columns
-                if ($typeVal === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value) {
-                    $colName = $transaction->description ?: $typeVal;
-                    if (!empty($colName)) {
-                        $employerContributionColumns->push($colName);
-                    }
+                if ($typeVal === SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value) {
+                    $employerContributionColumns->push($this->mergeLabel($transaction));
                     continue;
                 }
 
-                // Advance wages: fixed column — excluded from dynamic columns
-                if ($typeVal === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_ADVANCE_WAGE->value) {
+                if ($typeVal === SalaryTransactionType::TYPE_ADVANCE_WAGE->value) {
                     continue;
                 }
 
-                $columnName = $transaction->description ?: $typeVal;
-                if (str_contains($columnName, 'Advance installment')) {
-                    $columnName = 'Advance Installment';
+                $columnName = $this->normalizedColumnName($transaction);
+                if (empty($columnName)) {
+                    continue;
                 }
-
-                if (empty($columnName)) continue;
 
                 if ($transaction->operation === '+') {
                     $additionColumns->push($columnName);
-                } elseif ($transaction->operation === '-') {
-                    if ($typeVal !== \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_CARRY_FORWARD->value) {
-                        $deductionColumns->push($columnName);
-                    }
+                } elseif ($transaction->operation === '-' && $typeVal !== SalaryTransactionType::TYPE_CARRY_FORWARD->value) {
+                    $deductionColumns->push($columnName);
                 }
             }
         }
@@ -88,24 +80,17 @@ class PayrollsExport implements FromView
             $totals['employer_contributions'][$col] = 0;
         }
 
-        // Pass 2: Prepare rows
         $rows = [];
-        foreach ($this->payrolls as $payroll) {
+        foreach ($payrollGroups as $group) {
+            $payroll = $group['payroll'];
+
             $row = [
-                'employee_no'           => $payroll->employee?->employee_no,
-                'employee_name'         => $payroll->employee?->name,
-                'branch_name'           => $payroll->employee?->branch?->name,
-                'base_salary'           => $payroll->base_salary,
-                'net_salary'            => $payroll->net_salary,
-                'employer_contribution' => 0,
-                'additions'             => [],
-                'total_additions'       => 0,
-                'deductions'            => [],
-                'total_deductions'      => 0,
                 'employee_no'            => $payroll->employee?->employee_no,
                 'employee_name'          => $payroll->employee?->name,
-                'base_salary'            => $payroll->base_salary,
-                'net_salary'             => $payroll->net_salary,
+                'branch_name'            => $payroll->employee?->branch?->name,
+                'base_salary'            => $group['base_salary'],
+                'net_salary'             => $group['net_salary'],
+                'employer_contribution'  => 0,
                 'employer_contributions' => [],
                 'advance_wages'          => 0,
                 'additions'              => [],
@@ -114,7 +99,6 @@ class PayrollsExport implements FromView
                 'total_deductions'       => 0,
             ];
 
-            // Initialize dynamic columns with 0
             foreach ($additionHeaders as $col) {
                 $row['additions'][$col] = 0;
             }
@@ -125,54 +109,45 @@ class PayrollsExport implements FromView
                 $row['employer_contributions'][$col] = 0;
             }
 
-            // Populate transaction data
-            foreach ($payroll->transactions as $transaction) {
+            foreach ($group['transactions'] as $transaction) {
                 $typeVal = $transaction->type instanceof \BackedEnum ? $transaction->type->value : $transaction->type;
 
-                // Exclude basic salary as it has its own fixed column
-                if ($typeVal === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_SALARY->value) {
+                if ($typeVal === SalaryTransactionType::TYPE_SALARY->value) {
                     continue;
                 }
 
-                // Handle employer contributions as dynamic columns
-                if ($typeVal === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value) {
-                    $colName = $transaction->description ?: $typeVal;
+                if ($typeVal === SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value) {
+                    $colName = $this->mergeLabel($transaction);
                     if (isset($row['employer_contributions'][$colName])) {
                         $row['employer_contributions'][$colName] += $transaction->amount;
                     }
                     continue;
                 }
 
-                // Handle advance wages as a fixed column
-                if ($typeVal === \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_ADVANCE_WAGE->value) {
+                if ($typeVal === SalaryTransactionType::TYPE_ADVANCE_WAGE->value) {
                     $row['advance_wages'] += $transaction->amount;
                     continue;
                 }
 
-                $columnName = $transaction->description ?: $typeVal;
-                if (str_contains($columnName, 'Advance installment')) {
-                    $columnName = 'Advance Installment';
-                }
+                $columnName = $this->normalizedColumnName($transaction);
 
                 if ($transaction->operation === '+') {
                     if (isset($row['additions'][$columnName])) {
                         $row['additions'][$columnName] += $transaction->amount;
                     }
                     $row['total_additions'] += $transaction->amount;
-                } elseif ($transaction->operation === '-') {
-                    if ($typeVal !== \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_CARRY_FORWARD->value) {
-                        if (isset($row['deductions'][$columnName])) {
-                            $row['deductions'][$columnName] += $transaction->amount;
-                        }
-                        $row['total_deductions'] += $transaction->amount;
+                } elseif ($transaction->operation === '-' && $typeVal !== SalaryTransactionType::TYPE_CARRY_FORWARD->value) {
+                    if (isset($row['deductions'][$columnName])) {
+                        $row['deductions'][$columnName] += $transaction->amount;
                     }
+                    $row['total_deductions'] += $transaction->amount;
                 }
             }
 
-            $totals['base_salary']      += $row['base_salary'] ?? 0;
-            $totals['net_salary']       += $row['net_salary'] ?? 0;
-            $totals['advance_wages']    += $row['advance_wages'] ?? 0;
-            $totals['total_additions']  += $row['total_additions'] ?? 0;
+            $totals['base_salary'] += $row['base_salary'] ?? 0;
+            $totals['net_salary'] += $row['net_salary'] ?? 0;
+            $totals['advance_wages'] += $row['advance_wages'] ?? 0;
+            $totals['total_additions'] += $row['total_additions'] ?? 0;
             $totals['total_deductions'] += $row['total_deductions'] ?? 0;
 
             foreach ($additionHeaders as $col) {
@@ -195,5 +170,74 @@ class PayrollsExport implements FromView
             'rows'                        => $rows,
             'totals'                      => $totals,
         ]);
+    }
+
+    private function groupPayrollsByEmployee(Collection $payrolls): Collection
+    {
+        return $payrolls
+            ->groupBy(fn($payroll) => implode('|', [$payroll->payroll_run_id, $payroll->employee_id]))
+            ->map(function (Collection $group) {
+                $payroll = $group->first();
+
+                return [
+                    'payroll'      => $payroll,
+                    'base_salary'  => round((float) $group->sum('base_salary'), 2),
+                    'net_salary'   => round((float) $group->sum(fn($item) => (float) $item->getRawOriginal('net_salary')), 2),
+                    'transactions' => $this->mergeSimilarTransactions(
+                        $group->flatMap(fn($payroll) => $payroll->transactions)
+                    ),
+                ];
+            })
+            ->values();
+    }
+
+    private function mergeSimilarTransactions(Collection $transactions): Collection
+    {
+        return $transactions
+            ->groupBy(fn($transaction) => implode('|', [
+                $transaction->operation,
+                $transaction->type,
+                $transaction->sub_type,
+                $transaction->unit,
+                $transaction->multiplier,
+                $this->mergeLabel($transaction),
+            ]))
+            ->map(function (Collection $group) {
+                $first = $group->first();
+
+                return (object) [
+                    'operation'   => $first->operation,
+                    'type'        => $first->type,
+                    'sub_type'    => $first->sub_type,
+                    'description' => $this->mergeLabel($first),
+                    'amount'      => round((float) $group->sum('amount'), 2),
+                    'unit'        => $first->unit,
+                    'multiplier'  => $first->multiplier,
+                ];
+            })
+            ->values();
+    }
+
+    private function normalizedColumnName($transaction): string
+    {
+        $columnName = $this->mergeLabel($transaction);
+
+        if (str_contains($columnName, 'Advance installment')) {
+            return 'Advance Installment';
+        }
+
+        return $columnName;
+    }
+
+    private function mergeLabel($transaction): string
+    {
+        if ($transaction->sub_type === 'base_salary') {
+            return 'Base salary';
+        }
+
+        $label = $transaction->description
+            ?: ucfirst(str_replace('_', ' ', $transaction->sub_type ?? ($transaction->type ?? '')));
+
+        return trim((string) preg_replace('/\s*\([^)]*\d+\s*days?[^)]*\)\s*/i', ' ', $label));
     }
 }

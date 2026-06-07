@@ -98,11 +98,42 @@ class DetailsRelationManager extends RelationManager
                 // Tables\Actions\CreateAction::make(),
             ])
             ->recordActions([
+                Action::make('edit_package_size')
+                    ->label('Edit PKS')
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('warning')
+                    ->button()
+                    ->schema([
+                        TextInput::make('package_size')
+                            ->label('Package Size')
+                            ->numeric()
+                            ->minValue(0.001)
+                            ->required()
+                            ->default(fn ($record) => $record->package_size),
+                    ])->visible(fn()=> isHakimOrAdel())
+                    ->action(function ($record, array $data): void {
+                        try {
+                            $record->update(['package_size' => (float) $data['package_size']]);
+
+                            Notification::make()
+                                ->title('Package size updated')
+                                ->body("Package size set to {$data['package_size']}.")
+                                ->success()
+                                ->send();
+                        } catch (\Throwable $e) {
+                            Notification::make()
+                                ->title('Update failed')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
 
                 // Tables\Actions\DeleteAction::make(),
             ])
 
             ->toolbarActions([
+
                 BulkAction::make('editPhysicalQuantity')
                     ->label(__('Edit Physical Quantity'))
                     ->icon('heroicon-o-pencil-square')
@@ -125,13 +156,14 @@ class DetailsRelationManager extends RelationManager
                             Repeater::make('items')
                                 ->label(__('Products'))
                                 ->table([
-                                    TableColumn::make(__('lang.product'))->width('35%'),
+                                    TableColumn::make(__('lang.product'))->width('30%'),
                                     TableColumn::make(__('lang.unit'))->width('10%'),
-                                    TableColumn::make(__('lang.system_quantity'))->width('15%'),
+                                    TableColumn::make(__('lang.package_size'))->width('10%'),
+                                    TableColumn::make(__('lang.system_quantity'))->width('13%'),
                                     TableColumn::make(__('lang.physical_quantity'))
                                         ->alignCenter(true)
                                         ->width('15%'),
-                                    TableColumn::make(__('lang.difference'))->width('15%'),
+                                    TableColumn::make(__('lang.difference'))->width('12%'),
                                 ])->columnSpanFull()
                                 ->schema([
                                     Hidden::make('id'),
@@ -173,14 +205,33 @@ class DetailsRelationManager extends RelationManager
 
                                             $systemQty = $report[0][0]['remaining_qty'] ?? 0;
                                             $set('system_quantity', $systemQty);
-                                            // dd($productId,$storeId,$state,$report,$systemQty);
 
                                             // Recalculate difference
                                             $physicalQty = $get('physical_quantity') ?? 0;
                                             $diff = round($physicalQty - $systemQty, 4);
                                             $set('difference', $diff);
+
+                                            // Update package_size based on selected unit
+                                            $packageSize = \App\Models\UnitPrice::getPackageSize((int) $productId, (int) $state);
+
+                                            if ($packageSize === null) {
+                                                Notification::make()
+                                                    ->title(__('Package Size Missing'))
+                                                    ->body(__('No package size defined for the selected unit. Please configure it in the product settings.'))
+                                                    ->danger()
+                                                    ->send();
+                                                $set('unit_id', null);
+                                                return;
+                                            }
+
+                                            $set('package_size', $packageSize);
                                         })
                                         ->required(),
+                                    TextInput::make('package_size')
+                                        ->label(__('lang.package_size'))
+                                        ->extraInputAttributes(['class' => 'text-center'])
+                                        ->disabled()
+                                        ->dehydrated(true),
                                     TextInput::make('system_quantity')
                                         ->label(__('System Qty'))
                                         ->extraInputAttributes(['class' => 'text-center'])
@@ -226,10 +277,14 @@ class DetailsRelationManager extends RelationManager
                                 }
                                 $record = $records->firstWhere('id', $item['id']);
                                 if ($record) {
+                                    if (empty($item['package_size']) && $item['package_size'] !== 0) {
+                                        throw new \Exception("Package size is missing for product: {$record->product?->name}. Cannot save without a valid package size.");
+                                    }
                                     $record->update([
                                         'physical_quantity' => $item['physical_quantity'],
-                                        'unit_id' => $item['unit_id'],
-                                        'difference' => $item['physical_quantity'] - $record->system_quantity,
+                                        'unit_id'           => $item['unit_id'],
+                                        'package_size'      => $item['package_size'],
+                                        'difference'        => $item['physical_quantity'] - $record->system_quantity,
                                     ]);
                                 }
                             }

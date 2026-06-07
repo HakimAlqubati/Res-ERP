@@ -17,6 +17,7 @@ class LeaveTypeController extends Controller
     public function index(Request $request)
     {
         $query = LeaveType::query()
+            ->where('active', 1)
             ->when($request->filled('active'), fn($q) => $q->where('active', (int) $request->boolean('active')))
             ->when($request->filled('type'), fn($q) => $q->where('type', $request->string('type')))
             ->when($request->filled('balance_period'), fn($q) => $q->where('balance_period', $request->string('balance_period')))

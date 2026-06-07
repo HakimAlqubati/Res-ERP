@@ -23,17 +23,23 @@ class EmployeeServiceTerminationController extends Controller
         $perPage = min((int) $request->input('per_page', 15), 100);
 
         $query = EmployeeServiceTermination::query()
+            ->forBranchManager()
+            ->forEmployee()
             ->select('hr_employee_service_terminations.*')
-            ->join(
-                'hr_employees',
-                'hr_employees.id',
-                'hr_employee_service_terminations.employee_id'
-            );
+            // ->join(
+            //     'hr_employees',
+            //     'hr_employees.id',
+            //     'hr_employee_service_terminations.employee_id'
+            // )
+        ;
 
-        if (isBranchManager()) {
-            $query->where('hr_employees.branch_id', auth()->user()->branch_id);
+        // if (isBranchManager()) {
+        //     $query->where('hr_employees.branch_id', auth()->user()->branch_id);
+        // }
+
+        if ($request->has('branch_id')) {
+            $query->where('branch_id', $request->input('branch_id'));
         }
-
         $query->with(['employee', 'createdBy', 'approvedBy', 'rejectedBy']);
 
         if ($request->filled('status')) {

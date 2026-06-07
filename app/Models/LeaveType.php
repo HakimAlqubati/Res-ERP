@@ -10,7 +10,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class LeaveType extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, \App\Models\Traits\OldScopesLeaveType;
     protected $table = 'hr_leave_types';
 
     protected $fillable = [
@@ -23,6 +23,13 @@ class LeaveType extends Model implements Auditable
         'type',
         'balance_period',
         'is_paid',
+        'requires_attachment',
+        'carry_forward_allowed',
+        'max_carry_forward',
+        'prorate_on_hire',
+        'applicable_to',
+        'all_branches',
+        'max_days_per_month'
     ];
     protected $auditInclude = [
         'name',
@@ -34,10 +41,26 @@ class LeaveType extends Model implements Auditable
         'type',
         'balance_period',
         'is_paid',
+        'requires_attachment',
+        'carry_forward_allowed',
+        'max_carry_forward',
+        'prorate_on_hire',
+        'applicable_to',
+        'all_branches',
+        'max_days_per_month'
     ];
 
     protected $appends = ['type_label', 'balance_period_label'];
 
+    protected $casts = [
+        'requires_attachment' => 'boolean',
+        'carry_forward_allowed' => 'boolean',
+        'prorate_on_hire' => 'boolean',
+        'max_carry_forward' => 'integer',
+        'max_days_per_month' => 'double',
+        'is_paid' => 'boolean',
+        'active' => 'boolean',
+    ];
     // Enum constants for 'type'
     const TYPE_YEARLY = 'yearly';
     const TYPE_MONTHLY = 'monthly';
@@ -47,6 +70,19 @@ class LeaveType extends Model implements Auditable
     const BALANCE_PERIOD_YEARLY = 'yearly';
     const BALANCE_PERIOD_MONTHLY = 'monthly';
     const BALANCE_PERIOD_OTHER = 'other';
+
+
+    // Enum constants for applicability
+    const APPLICABLE_ALL = 'all';
+    const APPLICABLE_EXPAT_WITH_EP = 'expat_with_ep'; // Expatriate with Employment Pass
+
+    public static function getApplicabilityOptions()
+    {
+        return [
+            self::APPLICABLE_ALL => 'All Employees',
+            self::APPLICABLE_EXPAT_WITH_EP => 'Expats with EP only',
+        ];
+    }
     // Relationship to the user who created the leave type
     public function creator()
     {
@@ -65,21 +101,6 @@ class LeaveType extends Model implements Auditable
     }
 
 
-    /**
-     * Scope to get the sum of monthly count days, defaulting null values to 4.
-     *
-     * @param Builder $query
-     * @return int
-     */
-    public function scopeGetMonthlyCountDaysSum($query)
-    {
-        return $query->where('type', static::TYPE_WEEKLY)
-            ->where('balance_period', static::BALANCE_PERIOD_MONTHLY)
-            ->get()
-            ->sum(function ($leaveType) {
-                return $leaveType->count_days ?? 4;
-            });
-    }
 
 
     /**
@@ -102,7 +123,7 @@ class LeaveType extends Model implements Auditable
         return [
             self::TYPE_YEARLY => 'Annual Leave',
             self::TYPE_MONTHLY => 'Monthly Leave',
-            self::TYPE_WEEKLY => 'Weekly Leave',
+            // self::TYPE_WEEKLY => 'Weekly Leave',
             self::TYPE_SPECIAL => 'Special Leave'
         ];
     }
@@ -116,13 +137,6 @@ class LeaveType extends Model implements Auditable
         ];
     }
 
-    public function scopeWeeklyLeave($query)
-    {
-        return $query->where('type', LeaveType::TYPE_WEEKLY)
-            ->where('balance_period', LeaveType::BALANCE_PERIOD_MONTHLY)
-            ->where('active', 1)->first()
-        ;
-    }
 
     /**
      * جميع طلبات الإجازات التي تستخدم هذا النوع
@@ -130,5 +144,33 @@ class LeaveType extends Model implements Auditable
     public function leaveRequests()
     {
         return $this->hasMany(LeaveRequest::class, 'leave_type_id');
+    }
+
+    /**
+     * الفروع المرتبطة بهذا النوع من الإجازات
+     */
+    public function branches()
+    {
+        return $this->belongsToMany(Branch::class, 'hr_branch_leave_types', 'leave_type_id', 'branch_id');
+    }
+
+    /**
+     * 2. حل مشكلة التكرار بين type و balance_period برمجياً
+     * هذا الـ Event يعمل تلقائياً قبل الحفظ أو التعديل
+     */
+    protected static function booted()
+    {
+        static::saving(function ($leaveType) {
+            // ملء حقل balance_period تلقائياً بناءً على الـ type
+            // لتجنب التناقض، وبذلك لن يحتاج المستخدم لإدخاله يدوياً
+            if ($leaveType->type === self::TYPE_YEARLY) {
+                $leaveType->balance_period = self::BALANCE_PERIOD_YEARLY;
+            } elseif (in_array($leaveType->type, [self::TYPE_MONTHLY, self::TYPE_WEEKLY])) {
+                $leaveType->balance_period = self::BALANCE_PERIOD_MONTHLY;
+            } else {
+                // للأنواع الخاصة (Special)
+                $leaveType->balance_period = $leaveType->balance_period ?? self::BALANCE_PERIOD_OTHER;
+            }
+        });
     }
 }

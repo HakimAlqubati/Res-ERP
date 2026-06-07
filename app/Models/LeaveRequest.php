@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Observers\LeaveRequestObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
 
+#[ObservedBy([LeaveRequestObserver::class])]
 class LeaveRequest extends Model implements Auditable
 {
     use \OwenIt\Auditing\Auditable;
@@ -53,5 +56,10 @@ class LeaveRequest extends Model implements Auditable
     public function leaveType()
     {
         return $this->belongsTo(LeaveType::class, 'leave_type');
+    }
+
+    public function deletedLeaveType()
+    {
+        return $this->belongsTo(LeaveType::class, 'leave_type')->withTrashed();
     }
 }

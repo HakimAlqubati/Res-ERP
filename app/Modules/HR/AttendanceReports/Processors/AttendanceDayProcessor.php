@@ -94,9 +94,12 @@ class AttendanceDayProcessor
 
                 if (!empty($lastCheckoutResource['total_actual_duration_hourly'])) {
                     [$ah, $am, $as] = explode(':', $lastCheckoutResource['total_actual_duration_hourly']);
-                    $dayActualSeconds += ($ah * 3600) + ($am * 60) + $as;
+                    $periodActualSeconds = ($ah * 3600) + ($am * 60) + $as;
+                    $dayActualSeconds += $periodActualSeconds;
+                } else {
+                    $periodActualSeconds = 0;
                 }
-
+                $lastCheckoutResource['total_actual_druation_hourly_formatted'] = $this->durationCalculator->formatFloatToHMS($periodActualSeconds / 3600);
                 $statsInjector->accumulatePeriodStats($lastCheckoutResource, $discountException);
             }
 
@@ -124,14 +127,12 @@ class AttendanceDayProcessor
             }
 
             $isNotStarted = $isToday && $nowCarbon->lt(Carbon::parse("{$dateStr} {$startTime}"));
-
             if ($isFuture || $isNotStarted) $st = AttendanceReportStatus::Future;
             elseif (!$hasIn && !$hasOut) $st = AttendanceReportStatus::Absent;
             elseif ($hasIn && !$hasOut) $st = AttendanceReportStatus::IncompleteCheckinOnly;
             elseif (!$hasIn && $hasOut) $st = AttendanceReportStatus::IncompleteCheckoutOnly;
             else $st = AttendanceReportStatus::Present;
-
-            $periods->push([
+             $periods->push([
                 'period_id' => $periodId,
                 'period_name' => $workPeriod->name,
                 'start_time' => $startTime,
@@ -147,6 +148,14 @@ class AttendanceDayProcessor
 
         // Extract branch info from the day history record(s)
         $firstHistory = $dayHistories->first();
+        $periods = $periods->sortBy('start_time')->values();
+        
+        $dayStatus = $this->statusResolver->resolveDayStatus($periods->pluck('final_status')->all());
+        
+        // إذا لم يكن لديه شيفت (الفترات فارغة)، اعتبره حاضر بناءً على القاعدة
+        if ($periods->isEmpty()) {
+            $dayStatus = \App\Enums\HR\Attendance\AttendanceReportStatus::NoPeriods->value;
+        }
 
         return [
             'date' => $dateStr,
@@ -155,7 +164,8 @@ class AttendanceDayProcessor
             'branch_name' => $firstHistory?->branch?->name,
             'periods' => $periods,
             'actual_duration_hours' => gmdate('H:i:s', $dayActualSeconds),
-            'day_status' => $this->statusResolver->resolveDayStatus($periods->pluck('final_status')->all()),
+            'actual_duration_hours_formatted' => $this->durationCalculator->formatFloatToHMS($dayActualSeconds / 3600),
+            'day_status' => $dayStatus,
             'daily_supposed_seconds' => $totalDurationSeconds,
         ];
     }
@@ -172,11 +182,12 @@ class AttendanceDayProcessor
         ];
     }
 
-    public function buildLeaveDay(string $dateStr, string $dayName, object $leave): array
+    public function buildLeaveDay(string $dateStr, string $dayName, object $leave, ?int $branchId = null): array
     {
         return [
             'date'       => $dateStr,
             'day_name'   => $dayName,
+            'branch_id'  => $branchId,
             'periods'    => [],
             'day_status' => AttendanceReportStatus::Leave->value,
             'leave_type' => $leave->transaction_description,

@@ -34,6 +34,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Support\RawJs;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use App\Modules\HR\Employee\Services\PassportValidationService;
 
 class EmployeeForm
 {
@@ -167,9 +168,15 @@ class EmployeeForm
                                                 ->columnSpanFull()
                                                 ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') != setting('default_nationality')))
                                                 ->schema([
-                                                    TextInput::make('passport_no')->label(__('lang.passport_no'))
-                                                        // ->numeric()
-                                                        ->columnSpan(2),
+                                                     TextInput::make('passport_no')->label(__('lang.passport_no'))
+                                                         // ->numeric()
+                                                         ->rules([
+                                                             fn(Get $get, $record) => app(PassportValidationService::class)->rule(
+                                                                 $record?->id,
+                                                                 $get('nationality')
+                                                             )
+                                                         ])
+                                                         ->columnSpan(2),
                                                     Toggle::make('has_employee_pass')->label(__('lang.has_employee_pass'))->inline(false)->live()
                                                         ->columnSpan(1),
                                                 ])->columns(3),
@@ -233,20 +240,22 @@ class EmployeeForm
                                             ->live()
                                             ->visible(
                                                 fn($get, ?Employee $record): bool =>
-                                                in_array((int) $get('employee_type'), [0, 1]) &&
-                                                    (
-                                                        ($record && $record->is_ceo) ||
-                                                        !Employee::where('is_ceo', true)->exists()
-                                                    )
+                                                in_array((int) $get('employee_type'), [0, 1])
+                                                //  &&
+                                                //     (
+                                                //         ($record && $record->is_ceo) ||
+                                                // !Employee::where('is_ceo', true)->exists()
+                                                //     )
                                             )
                                             ->default(0)->inline(false),
                                         Select::make('manager_id')
                                             ->columnSpan(1)
                                             ->label(__('lang.manager'))
                                             ->searchable()
+                                            ->hidden(fn($get) => $get('is_ceo'))
                                             // ->requiredIf('is_ceo', false)
-                                            ->required(fn(Get $get) => in_array((int) $get('employee_type'), [2, 3, 4]))
-
+                                            // ->required(fn(Get $get) => in_array((int) $get('employee_type'), [2, 3, 4]))
+                                            ->required()
                                             ->options(function (Get $get, ?Employee $record) {
                                                 $branchId = $get('branch_id');
                                                 $employeeType = (int) $get('employee_type');
@@ -262,7 +271,7 @@ class EmployeeForm
                                                             $query->where('id', '!=', $currentEmployeeId) // استبعاد الموظف الحالي إن كنا في وضع التعديل
                                                         )
                                                         ->whereHas('user.roles', function ($query) {
-                                                            $query->whereIn('roles.id', [3, 4, 14, 16, 15]);
+                                                            $query->whereIn('roles.id', [3, 4, 14, 16, 15, 7]);
                                                         })
                                                         ->pluck('name', 'id');
                                                 }
@@ -273,7 +282,7 @@ class EmployeeForm
                                                         ->forBranch($branchId)
                                                         ->whereIn('employee_type', [1, 2, 3, 0])
                                                         ->whereHas('user.roles', function ($query) {
-                                                            $query->whereIn('roles.id', [3, 4, 14, 16, 15]);
+                                                            $query->whereIn('roles.id', [3, 4, 7, 14, 16, 15]);
                                                         })
                                                         ->when(
                                                             $currentEmployeeId,
@@ -321,7 +330,7 @@ class EmployeeForm
                                         // ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee')
                                         ,
                                         Toggle::make('can_add_branch_order')->columnSpan(1)
-                                            ->disabled(fn(): bool => isBranchManager())
+                                            
                                             ->label(__('lang.can_add_branch_order'))->default(0)->inline(false),
 
                                     ]),
@@ -427,14 +436,18 @@ class EmployeeForm
                                         TextInput::make('salary')
                                             ->label(__('lang.salary'))
                                             ->numeric()
-                                            ->inputMode('decimal')->disabled(fn(): bool => isBranchManager()),
+                                            ->inputMode('decimal')
+                                            ->disabled(
+                                                fn(): bool => isBranchManager() && !(isSuperAdmin()
+                                                    || isSystemManager())
+                                            ),
 
                                         Select::make('salary_allocation_rule')
                                             ->label(__('Salary Allocation Override (Branch Transfers)'))
                                             ->helperText(__('Overrides the default system rule for this specific employee when transferred between branches.'))
                                             ->options(\App\Enums\HR\Payroll\SalaryAllocationRule::class)
                                             ->placeholder(__('Use System Default')) // Fallback to system general setting
-                                            ->disabled(fn(): bool => isBranchManager())
+                                            
                                             ->columnSpan(1),
 
                                         TextInput::make('tax_identification_number')
@@ -443,29 +456,32 @@ class EmployeeForm
                                                 || ($get('has_employee_pass') == 1)
                                             ))
                                             ->numeric()
-                                            ->disabled(fn(): bool => isBranchManager()),
+                                            ,
                                         TextInput::make('bank_account_number')
                                             ->columnSpan(1)
                                             ->label('Bank account number')->nullable(),
                                         Toggle::make('discount_exception_if_absent')->columnSpan(1)
-                                            ->disabled(fn(): bool => isBranchManager())
+                                            
                                             ->label(__('lang.no_salary_deduction_for_absences'))->default(0)->inline(false)
                                         // ->isInline(false)
                                         ,
                                         Toggle::make('discount_exception_if_attendance_late')->columnSpan(1)
-                                            ->disabled(fn(): bool => isBranchManager())
+                                            
                                             ->label(__('lang.exempt_from_late_attendance_deduction'))->default(0)->inline(false)
                                         // ->isInline(false)
                                         ,
                                         Toggle::make('is_mtd_applicable')->columnSpan(1)
-                                            ->disabled(fn(): bool => isBranchManager())
+                                            
                                             ->label(__('lang.is_mtd_applicable'))->default(1)->inline(false),
                                         Toggle::make('has_auto_weekly_leave')->columnSpan(1)
-                                            ->disabled(fn(): bool => isBranchManager())
+                                            
                                             ->label(__('lang.has_auto_weekly_leave'))->default(1)->inline(false),
+                                        Toggle::make('no_shift_is_present')->columnSpan(1)
+                                            ->label(__('lang.no_shift_is_present'))
+                                            ->default(0)->inline(false),
 
                                         Repeater::make('bank_information')
-                                            ->disabled(fn(): bool => isBranchManager())
+                                            
                                             ->label(__('lang.bank_information'))
                                             ->columns(2)
 
@@ -507,7 +523,7 @@ class EmployeeForm
                                         ]),
                                     ]),
                                     Fieldset::make()->columns(2)->label(__('lang.finance'))->columnSpanFull()
-                                        ->disabled(fn(): bool => isBranchManager())
+                                        
                                         ->schema([
                                             Repeater::make('Monthly allowances')
                                                 ->label(__('lang.monthly_allowances'))

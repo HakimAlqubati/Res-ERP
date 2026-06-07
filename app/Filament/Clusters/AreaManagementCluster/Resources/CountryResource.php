@@ -91,4 +91,13 @@ class CountryResource extends Resource
     {
         return static::getModel()::query()->count();
     }
+
+       public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) {
+            return true;
+        }
+
+        return false;
+    }
 }

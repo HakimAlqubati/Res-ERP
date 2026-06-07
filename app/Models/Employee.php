@@ -25,6 +25,10 @@ class Employee extends Model implements Auditable
     {
         return $this->hasOne(EmployeeServiceTermination::class);
     }
+    public function pendingTerminationRequest()
+    {
+        return $this->hasOne(EmployeeServiceTermination::class)->pending();
+    }
 
     protected $table = 'hr_employees';
 
@@ -63,6 +67,7 @@ class Employee extends Model implements Auditable
         'is_indexed_in_aws',
         'is_mtd_applicable',
         'has_auto_weekly_leave',
+        'no_shift_is_present',
         'birthday',
         'salary_allocation_rule',
         'can_add_branch_order',
@@ -126,6 +131,7 @@ class Employee extends Model implements Auditable
         'is_indexed_in_aws',
         'is_mtd_applicable',
         'has_auto_weekly_leave',
+        'no_shift_is_present',
         'birthday',
         'can_add_branch_order',
     ];
@@ -135,6 +141,7 @@ class Employee extends Model implements Auditable
         'changes'                => 'array',
         'is_mtd_applicable'      => 'boolean',
         'has_auto_weekly_leave'  => 'boolean',
+        'no_shift_is_present'    => 'boolean',
         'can_add_branch_order'   => 'boolean',
         'salary_allocation_rule' => \App\Enums\HR\Payroll\SalaryAllocationRule::class,
     ];
@@ -169,7 +176,7 @@ class Employee extends Model implements Auditable
 
         $systemSetting = settingWithDefault('payroll_salary_allocation_rule', \App\Enums\HR\Payroll\SalaryAllocationRule::PROPORTIONAL->value);
 
-        return \App\Enums\HR\Payroll\SalaryAllocationRule::tryFrom($systemSetting) 
+        return \App\Enums\HR\Payroll\SalaryAllocationRule::tryFrom($systemSetting)
             ?? \App\Enums\HR\Payroll\SalaryAllocationRule::PROPORTIONAL;
     }
 

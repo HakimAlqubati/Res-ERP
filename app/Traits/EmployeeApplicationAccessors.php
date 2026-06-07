@@ -115,6 +115,18 @@ trait EmployeeApplicationAccessors
         return $this->leaveRequest?->leaveType?->name;
     }
 
+    public function getDeletedLeaveTypeNameAttribute()
+    {
+        if ($this->application_type_id != EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST) {
+            return null;
+        }
+        $leaveType = $this->leaveRequest?->deletedLeaveType;
+        return [
+            'name' => $leaveType?->name,
+            'is_deleted' => $leaveType?->trashed() ?? false,
+        ];
+    }
+
     public function getLeaveTypeIdAttribute()
     {
         if ($this->application_type_id != EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST) {

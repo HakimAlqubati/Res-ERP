@@ -94,13 +94,10 @@ class PayrollFinancialSyncService implements PayrollFinancialSyncInterface
 
                 $payrollIds = $payrolls->pluck('id')->toArray();
 
-                // 1. Calculate Base Salary Expense (Net Salary - Other Earnings)
-                $totalNetSalary = $payrolls->sum(function ($payroll) {
-                    return $payroll->net_salary;
-                });
-
                 // Fetch all earnings transactions (allowance, bonus, overtime) to record separately
-                $detailedEarningTransactions = SalaryTransaction::whereIn('payroll_id', $payrollIds)
+                // Eager-load payroll so we can read payroll.branch_id per transaction
+                $detailedEarningTransactions = SalaryTransaction::with('payroll')
+                    ->whereIn('payroll_id', $payrollIds)
                     ->whereIn('type', [
                         SalaryTransactionType::TYPE_ALLOWANCE->value,
                         SalaryTransactionType::TYPE_BONUS->value,
@@ -109,30 +106,41 @@ class PayrollFinancialSyncService implements PayrollFinancialSyncInterface
                     ->where('operation', SalaryTransaction::OPERATION_ADD)
                     ->get();
 
-                $detailedEarningsAmount = $detailedEarningTransactions->sum('amount');
+                // 1. Calculate Basic Salary Expense per branch
+                // Group payrolls by the branch each Payroll row belongs to (reflects EmployeeBranchLog splits)
+                $payrollsByBranch = $payrolls->groupBy('branch_id');
 
-                // The remaining basic expense:
-                $basicSalaryExpense = floatval($totalNetSalary) - floatval($detailedEarningsAmount);
+                foreach ($payrollsByBranch as $branchId => $branchPayrolls) {
+                    $branchPayrollIds = $branchPayrolls->pluck('id');
 
-                if ($basicSalaryExpense > 0) {
-                    // Create main salary expense transaction
-                    FinancialTransaction::create([
-                        'branch_id' => $payrollRun->branch_id,
-                        'category_id' => $salaryCategory->id,
-                        'amount' => max(0, $basicSalaryExpense),
-                        'type' => FinancialTransaction::TYPE_EXPENSE,
-                        'transaction_date' => \Carbon\Carbon::create($payrollRun->year, $payrollRun->month, 1)->endOfMonth(),
-                        'status' => FinancialTransaction::STATUS_PAID,
-                        'description' => "Basic Salaries - Payroll Run: {$payrollRun->name} - {$payrollRun->year}/{$payrollRun->month}",
-                        'reference_type' => PayrollRun::class,
-                        'reference_id' => $payrollRun->id,
-                        'created_by' => auth()->id() ?? $payrollRun->created_by ?? 1,
-                        'month' => $payrollRun->month,
-                        'year' => $payrollRun->year,
-                    ]);
+                    $branchNetSalary = $branchPayrolls->sum(fn($p) => floatval($p->net_salary));
+
+                    // Detailed earnings that belong to this branch
+                    $branchDetailedEarningsAmount = $detailedEarningTransactions
+                        ->whereIn('payroll_id', $branchPayrollIds)
+                        ->sum('amount');
+
+                    $branchBasicExpense = $branchNetSalary - floatval($branchDetailedEarningsAmount);
+
+                    if ($branchBasicExpense > 0) {
+                        FinancialTransaction::create([
+                            'branch_id'        => $branchId,
+                            'category_id'      => $salaryCategory->id,
+                            'amount'           => max(0, $branchBasicExpense),
+                            'type'             => FinancialTransaction::TYPE_EXPENSE,
+                            'transaction_date' => \Carbon\Carbon::create($payrollRun->year, $payrollRun->month, 1)->endOfMonth(),
+                            'status'           => FinancialTransaction::STATUS_PAID,
+                            'description'      => "Basic Salaries - Payroll Run: {$payrollRun->name} - {$payrollRun->year}/{$payrollRun->month}",
+                            'reference_type'   => PayrollRun::class,
+                            'reference_id'     => $payrollRun->id,
+                            'created_by'       => auth()->id() ?? $payrollRun->created_by ?? 1,
+                            'month'            => $payrollRun->month,
+                            'year'             => $payrollRun->year,
+                        ]);
+                    }
                 }
 
-                // 2. Group Earning Transactions by Financial Category
+                // 2. Group Earning Transactions by Branch + Financial Category
                 $this->syncDetailedEarnings($payrollRun, $detailedEarningTransactions, $salaryCategory);
 
                 // 3. Employer Contributions (Direct Company Costs/Contributions)
@@ -315,14 +323,23 @@ class PayrollFinancialSyncService implements PayrollFinancialSyncInterface
 
     /**
      * Group and sync detailed earnings like Allowances, Overtime, and Bonuses.
+     *
+     * Earnings are grouped by (branch_id + financial_category + name) so that
+     * employees who worked in different branches during the period are attributed
+     * to the correct branch in the financial ledger.
+     *
+     * The Collection is expected to have 'payroll' relation already eager-loaded.
      */
     protected function syncDetailedEarnings(PayrollRun $payrollRun, Collection $earningTransactions, FinancialCategory $defaultCategory): void
     {
         $grouped = [];
 
         foreach ($earningTransactions as $transaction) {
+            // Resolve the branch from the Payroll row (reflects EmployeeBranchLog split)
+            $branchId = $transaction->payroll->branch_id ?? $payrollRun->branch_id;
+
             $catId = $defaultCategory->id;
-            $name = ucfirst($transaction->type ?? 'Other');
+            $name  = ucfirst($transaction->type ?? 'Other');
 
             // Find specific financial category if linked
             if ($transaction->reference_type && $transaction->reference_id) {
@@ -330,7 +347,7 @@ class PayrollFinancialSyncService implements PayrollFinancialSyncInterface
                     $ref = $transaction->reference_type::find($transaction->reference_id);
                     if ($ref && isset($ref->financial_category_id) && $ref->financial_category_id) {
                         $catId = $ref->financial_category_id;
-                        $name = $ref->name ?? $name;
+                        $name  = $ref->name ?? $name;
                     } elseif ($ref && isset($ref->name)) {
                         $name = $ref->name;
                     }
@@ -341,12 +358,14 @@ class PayrollFinancialSyncService implements PayrollFinancialSyncInterface
                 }
             }
 
-            $key = $catId . '_' . $name;
+            // Include branch_id in key so each branch gets its own financial transaction
+            $key = $branchId . '_' . $catId . '_' . $name;
             if (!isset($grouped[$key])) {
                 $grouped[$key] = [
+                    'branch_id'   => $branchId,
                     'category_id' => $catId,
-                    'name' => $name,
-                    'amount' => 0
+                    'name'        => $name,
+                    'amount'      => 0,
                 ];
             }
             $grouped[$key]['amount'] += $transaction->amount;
@@ -355,18 +374,18 @@ class PayrollFinancialSyncService implements PayrollFinancialSyncInterface
         foreach ($grouped as $group) {
             if ($group['amount'] > 0) {
                 FinancialTransaction::create([
-                    'branch_id' => $payrollRun->branch_id,
-                    'category_id' => $group['category_id'],
-                    'amount' => $group['amount'],
-                    'type' => FinancialTransaction::TYPE_EXPENSE,
+                    'branch_id'        => $group['branch_id'],
+                    'category_id'      => $group['category_id'],
+                    'amount'           => $group['amount'],
+                    'type'             => FinancialTransaction::TYPE_EXPENSE,
                     'transaction_date' => \Carbon\Carbon::create($payrollRun->year, $payrollRun->month, 1)->endOfMonth(),
-                    'status' => FinancialTransaction::STATUS_PAID,
-                    'description' => "{$group['name']} - Payroll: {$payrollRun->name} ({$payrollRun->year}/{$payrollRun->month})",
-                    'reference_type' => PayrollRun::class,
-                    'reference_id' => $payrollRun->id,
-                    'created_by' => auth()->id() ?? $payrollRun->created_by ?? 1,
-                    'month' => $payrollRun->month,
-                    'year' => $payrollRun->year,
+                    'status'           => FinancialTransaction::STATUS_PAID,
+                    'description'      => "{$group['name']} - Payroll: {$payrollRun->name} ({$payrollRun->year}/{$payrollRun->month})",
+                    'reference_type'   => PayrollRun::class,
+                    'reference_id'     => $payrollRun->id,
+                    'created_by'       => auth()->id() ?? $payrollRun->created_by ?? 1,
+                    'month'            => $payrollRun->month,
+                    'year'             => $payrollRun->year,
                 ]);
             }
         }
@@ -374,11 +393,16 @@ class PayrollFinancialSyncService implements PayrollFinancialSyncInterface
 
     /**
      * Group and sync Employer Contributions.
+     *
+     * Contributions are grouped by (branch_id + financial_category + name) so that
+     * each branch is charged only for its own employees' employer shares.
      */
     protected function syncEmployerContributions(PayrollRun $payrollRun, array $payrollIds): void
     {
         // Fetch Employer Contributions from SalaryTransactions
-        $employerContributions = SalaryTransaction::whereIn('payroll_id', $payrollIds)
+        // Eager-load payroll to read payroll.branch_id per transaction
+        $employerContributions = SalaryTransaction::with('payroll')
+            ->whereIn('payroll_id', $payrollIds)
             ->where('type', SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value)
             ->get();
 
@@ -389,8 +413,11 @@ class PayrollFinancialSyncService implements PayrollFinancialSyncInterface
         $grouped = [];
 
         foreach ($employerContributions as $transaction) {
+            // Resolve the branch from the Payroll row (reflects EmployeeBranchLog split)
+            $branchId = $transaction->payroll->branch_id ?? $payrollRun->branch_id;
+
             $catId = null;
-            $name = 'Employer Share';
+            $name  = 'Employer Share';
 
             if ($transaction->reference_type === Deduction::class && $transaction->reference_id) {
                 $deduction = Deduction::with('financialCategory')->find($transaction->reference_id);
@@ -403,12 +430,14 @@ class PayrollFinancialSyncService implements PayrollFinancialSyncInterface
             }
 
             if ($catId) {
-                $key = $catId . '_' . $name;
+                // Include branch_id in key so each branch gets its own financial transaction
+                $key = $branchId . '_' . $catId . '_' . $name;
                 if (!isset($grouped[$key])) {
                     $grouped[$key] = [
+                        'branch_id'   => $branchId,
                         'category_id' => $catId,
-                        'name' => $name,
-                        'amount' => 0
+                        'name'        => $name,
+                        'amount'      => 0,
                     ];
                 }
                 $grouped[$key]['amount'] += $transaction->amount;
@@ -418,18 +447,18 @@ class PayrollFinancialSyncService implements PayrollFinancialSyncInterface
         foreach ($grouped as $group) {
             if ($group['amount'] > 0) {
                 FinancialTransaction::create([
-                    'branch_id' => $payrollRun->branch_id,
-                    'category_id' => $group['category_id'],
-                    'amount' => $group['amount'],
-                    'type' => FinancialTransaction::TYPE_EXPENSE,
+                    'branch_id'        => $group['branch_id'],
+                    'category_id'      => $group['category_id'],
+                    'amount'           => $group['amount'],
+                    'type'             => FinancialTransaction::TYPE_EXPENSE,
                     'transaction_date' => \Carbon\Carbon::create($payrollRun->year, $payrollRun->month, 1)->endOfMonth(),
-                    'status' => FinancialTransaction::STATUS_PAID,
-                    'description' => "{$group['name']} - Payroll: {$payrollRun->name} ({$payrollRun->year}/{$payrollRun->month})",
-                    'reference_type' => PayrollRun::class,
-                    'reference_id' => $payrollRun->id,
-                    'created_by' => auth()->id() ?? $payrollRun->created_by ?? 1,
-                    'month' => $payrollRun->month,
-                    'year' => $payrollRun->year,
+                    'status'           => FinancialTransaction::STATUS_PAID,
+                    'description'      => "{$group['name']} - Payroll: {$payrollRun->name} ({$payrollRun->year}/{$payrollRun->month})",
+                    'reference_type'   => PayrollRun::class,
+                    'reference_id'     => $payrollRun->id,
+                    'created_by'       => auth()->id() ?? $payrollRun->created_by ?? 1,
+                    'month'            => $payrollRun->month,
+                    'year'             => $payrollRun->year,
                 ]);
             }
         }

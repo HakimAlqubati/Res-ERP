@@ -268,6 +268,7 @@ class PayrollActions
                         return $record->payrolls()
                             ->with('employee:id,name,employee_no')
                             ->get()
+                            ->unique('employee_id')
                             ->mapWithKeys(fn($payroll) => [
                                 $payroll->id => $payroll->employee->name . ' (' . $payroll->employee->employee_no . ')'
                             ]);

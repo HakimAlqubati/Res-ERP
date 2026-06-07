@@ -44,9 +44,11 @@ class BranchAttendanceSummaryService
 
         $monthDays = $periodStart->daysInMonth;
 
+        $employeeIdsInBranch = \App\Models\EmployeeBranchLog::getEmployeesForBranchInRange($branchId, $periodStart, $periodEnd);
+
         // Terminated records this month
         $terminatedRecords = EmployeeServiceTermination::where('status', EmployeeServiceTermination::STATUS_APPROVED)
-            ->whereHas('employee', fn($q) => $q->where('branch_id', $branchId))
+            ->whereIn('employee_id', $employeeIdsInBranch)
             ->whereBetween('termination_date', [$periodStart, $periodEnd])
             ->with('employee:id,name,employee_no,salary,join_date,working_days,working_hours,discount_exception_if_attendance_late')
             ->get();
@@ -57,19 +59,30 @@ class BranchAttendanceSummaryService
         $newStaff        = [];
 
         // Process active employees in DB-level chunks
-        Employee::where('branch_id', $branchId)
-            ->where('active', 1)
-            ->select('id', 'name', 'employee_no', 'salary', 'join_date', 'working_days', 'working_hours', 'discount_exception_if_attendance_late', 'has_auto_weekly_leave')
+        Employee::whereIn('id', $employeeIdsInBranch)
+            ->where('active', 1) 
+            ->select('id', 'name','branch_id', 'employee_no', 'salary', 'join_date', 'working_days', 'working_hours', 'discount_exception_if_attendance_late', 'has_auto_weekly_leave')
             ->withSum(['overtimes as total_overtime' => function ($query) use ($year, $month) {
                 $query->whereYear('date', $year)
                     ->whereMonth('date', $month)
                     ->where('type', \App\Models\EmployeeOvertime::TYPE_BASED_ON_DAY);
             }], 'hours')
-            ->withCount(['dailyOvertimes as manual_overtime_days' => function ($query) use ($year, $month) {
+            ->withCount(['dailyOvertimes as manual_overtime_days' => function ($query) use ($year, $month, $branchId) {
                 $query->whereYear('date', $year)
-                    ->whereMonth('date', $month);
+                    ->whereMonth('date', $month)
+                    ->whereExists(function ($sub) use ($branchId) {
+                        $sub->selectRaw(1)
+                            ->from('hr_employee_branch_logs')
+                            ->whereColumn('hr_employee_branch_logs.employee_id', 'hr_employee_overtime.employee_id')
+                            ->where('hr_employee_branch_logs.branch_id', $branchId)
+                            ->whereColumn('hr_employee_branch_logs.start_at', '<=', 'hr_employee_overtime.date')
+                            ->where(function ($q) {
+                                $q->whereNull('hr_employee_branch_logs.end_at')
+                                  ->orWhereColumn('hr_employee_branch_logs.end_at', '>=', 'hr_employee_overtime.date');
+                            });
+                    });
             }])
-            ->chunk(50, function ($employees) use (&$currentStaff, &$newStaff, $terminatedEmployeeIds, $year, $month, $periodStart, $periodEnd, $monthDays) {
+            ->chunk(50, function ($employees) use (&$currentStaff, &$newStaff, $terminatedEmployeeIds, $year, $month, $periodStart, $periodEnd, $monthDays, $branchId) {
 
                 $filtered = $employees->filter(fn($emp) => !in_array($emp->id, $terminatedEmployeeIds));
 
@@ -78,7 +91,7 @@ class BranchAttendanceSummaryService
 
                 foreach ($filtered as $employee) {
                     $employeeReport = $chunkReportMap->get($employee->id) ?? collect();
-                    $row = $this->processEmployee($employee, $employeeReport, $periodStart, $periodEnd, $year, $month, $monthDays);
+                    $row = $this->processEmployee($employee, $employeeReport, $periodStart, $periodEnd, $year, $month, $monthDays, $branchId);
 
                     // Classify: new staff if joined this month
                     $isNew = $employee->join_date
@@ -104,7 +117,7 @@ class BranchAttendanceSummaryService
                 if (!$emp) continue;
 
                 $empReport = $terminatedReportMap->get($emp->id) ?? collect();
-                $row = $this->processEmployee($emp, $empReport, $periodStart, $periodEnd, $year, $month, $monthDays);
+                $row = $this->processEmployee($emp, $empReport, $periodStart, $periodEnd, $year, $month, $monthDays, $branchId);
                 $row['termination_date'] = Carbon::parse($record->termination_date)->format('Y-m-d');
                 $terminatedStaff[] = $row;
             }
@@ -157,45 +170,68 @@ class BranchAttendanceSummaryService
         Carbon $periodEnd,
         int $year,
         int $month,
-        int $monthDays
+        int $monthDays,
+        int $branchId
     ): array {
         try {
             $approvedOvertimeHours = (float) ($employee->total_overtime ?? 0);
-
-            // 1. Convert collection to array (already fetched in bulk by parent loop)
             $attendanceArray = $attendanceData->toArray();
 
-            $stats = $attendanceArray['statistics'] ?? [];
+            $presentDays = 0;
+            $absentDays  = 0;
+            $weeklyLeaveDays = 0;
+            $totalLeaveDays = 0;
+            $totalDays   = 0;
+            $missingMinutes = 0;
+            $earlyDepartureMinutes = 0;
+            $lateMinutes = 0; 
+            $overtimeDays = 0;
+            // 1. استخراج بيانات الفرع الحالي من الإحصائية الجاهزة قبل الدخول في حلقة الأيام
+            $branchWorkedDays = 0;
+            $branchAbsentDays = 0;
+            $branchEarnedLeaves = 0;
+            $branchDeductionDays = 0;
+            $totalDeductionHours = 
+            $attendanceArray['total_missing_hours']['total_hours']
+            +
+            $attendanceArray['total_early_departure_minutes']['total_hours']
+            +
+            $attendanceArray['late_hours']['totalHoursFloat']
+            ;
 
-            // 2. Weekly leave calculation (overtime_days / deduction_days)
-            $totalDays  = $stats['required_days'] ?? $monthDays;
-            $absentDays = $stats['absent'] ?? 0;
+            if (isset($attendanceArray['statistics']['weekly_leave_calculation']['branches_breakdown'])) {
+                foreach ($attendanceArray['statistics']['weekly_leave_calculation']['branches_breakdown'] as $breakdown) {
+                    if ($breakdown['branch_id'] == $branchId) {
+                        // $branchWorkedDays = $attendanceArray['statistics']['present_days'];
+                        $branchWorkedDays = $breakdown['worked_days'];
+                        $branchAbsentDays = $breakdown['absent_days'];
+                        $branchEarnedLeaves = $breakdown['earned_leave_days'];
+                        $overtimeDays = $breakdown['overtime_days'];
+                        $branchDeductionDays = $breakdown['total_deduction_days'];
+                        
+                        break;
+                    }
+                }
+            }
 
-            $weeklyResult = $stats['weekly_leave_calculation']['result'] ?? [];
-            // dd($weeklyResult);
-            // 4. Deduction hours: sum of missing hours, late, and early departure
-            $missingMinutes        = $attendanceArray['total_missing_hours']['total_minutes'] ?? 0;
-            $earlyDepartureMinutes = $attendanceArray['total_early_departure_minutes']['total_minutes'] ?? 0;
-            $lateMinutes           = $attendanceArray['late_hours']['totalMinutes'] ?? 0;
+         
 
-            $deductionMinutes = $missingMinutes + $earlyDepartureMinutes + $lateMinutes;
-            $deductionHours = round($deductionMinutes / 60, 2);
-
+           
             return [
                 'employee_id'  => $employee->id,
                 'employee_no'  => $employee->employee_no,
                 'name'         => $employee->name,
                 'salary'       => $employee->salary,
                 'overtime'     => [
-                    'days'  => ($weeklyResult['overtime_days'] ?? 0) + ($employee->manual_overtime_days ?? 0),
-                    'hours' => (float) $approvedOvertimeHours,
+                    'days'  => $overtimeDays + ($employee->manual_overtime_days ?? 0),
+                    'hours' => $approvedOvertimeHours,
                 ],
                 'deductions'   => [
-                    'days'  => $weeklyResult['total_deduction_days'] ?? 0,
-                    'hours' => $deductionHours,
+                    'days'  => $branchDeductionDays,
+                    'hours' => $totalDeductionHours,
                 ],
                 'attendance'   => [
-                    'present_days' => $stats['present_days'] ?? 0,
+                    'present_days' => $branchWorkedDays,
                     'absent_days'  => $absentDays,
                     'total_days'   => $totalDays,
                 ],

@@ -114,6 +114,7 @@ return [
   'please_select_branch' => 'يرجى اختيار فرع',
   'please_select_product' => 'يرجى اختيار منتج',
   'all_stores' => 'كل المخازن',
+  'all_branches' => 'كافة الفروع',
   'all_suppliers' => 'كل الموردين',
   'transfer_date' => 'تاريخ المناقلة',
   'attachment' => 'المرفق',
@@ -358,6 +359,7 @@ return [
   'exempt_from_late_attendance_deduction' => 'معفى من خصم التأخير',
   'is_mtd_applicable' => 'خاضع لـMTD',
   'has_auto_weekly_leave' => 'إجازة أسبوعية تلقائية',
+  'no_shift_is_present' => 'حضور بدون شفت',
   'can_add_branch_order' => 'يمكنه إضافة طلب فرع',
 
   // ===========================================
@@ -365,6 +367,8 @@ return [
   // ===========================================
   'attendance' => 'الحضور',
   'shift' => 'الوردية',
+  'total_shift_hours' => 'إجمالي ساعات الشفت',
+  'currently_shift_hours' => 'ساعات الشفت الحالية',
   'shifts' => 'الورديات',
   'shift_id' => 'رقم الوردية',
   'shift_rfid' => 'الوردية - RFID',
@@ -403,6 +407,8 @@ return [
   // HRMS - Status & Actions
   // ===========================================
   'inactive' => 'غير فعال',
+  'enable_account' => 'تفعيل الحساب',
+  'disable_account' => 'تعطيل الحساب',
   'activate' => 'تفعيل',
   'deactivate' => 'إلغاء التفعيل',
   'create' => 'إنشاء',
@@ -704,6 +710,7 @@ return [
   'current_staff' => 'الموظفين الحاليين',
   'new_staff' => 'الموظفين الجدد',
   'terminated_staff' => 'الموظفين المنتهية خدماتهم',
+  'termination_requests' => 'طلبات إنهاء الخدمة',
   'no_data' => 'لا توجد بيانات',
   'start_date' => 'تاريخ البداية',
   'end_date' => 'تاريخ النهاية',
@@ -1131,4 +1138,6 @@ return [
   'approved_successfully' => 'تمت الموافقة بنجاح',
   'auto_missed_checkout_request_created_success' => 'تم إنشاء طلب انصراف تلقائياً لعدم وجود بصمة حضور سابقة، يرجى مراجعته مع الموارد البشرية.',
   'auto_generated_reason_missing_checkin' => 'تم الإنشاء تلقائياً بسبب تسجيل انصراف بدون بصمة دخول سابقة',
+  'rejected_successfully' => 'تم الرفض بنجاح',
+  'auto' => 'تلقائي',
 ];

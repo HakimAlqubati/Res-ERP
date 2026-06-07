@@ -30,22 +30,19 @@ class PenaltyDeductionService
                 'approver:id,name',
                 'rejector:id,name'
             ]);
-        $query->join(
-            'hr_employees',
-            'hr_employees.id',
-            'hr_penalty_deductions.employee_id'
-        );
-        if (isBranchManager()) {
-            $query->where('hr_penalty_deductions.branch_id', auth()->user()->branch_id);
-        }
-        if (isStuff()) {
-            $query->where('employee_id', auth()->user()->branch_id);
-        }
+        // $query->join(
+        //     'hr_employees',
+        //     'hr_employees.id',
+        //     'hr_penalty_deductions.employee_id'
+        // )
+        ;
+        
+
         if (!empty($filters['employee_id'])) {
             $query->where('employee_id', $filters['employee_id']);
         }
         if (!empty($filters['branch_id'])) {
-            $query->where('hr_penalty_deductions.branch_id', $filters['branch_id']);
+            $query->where('branch_id', $filters['branch_id']);
         }
 
         if (!empty($filters['year'])) {

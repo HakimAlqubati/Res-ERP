@@ -51,6 +51,10 @@ trait BranchScopes
     {
         return $query->where('active', true);
     }
+    public function scopeUnactive(Builder $query): Builder
+    {
+        return $query->where('active', false);
+    }
 
     /**
      * فروع من نوع "مطبخ مركزي"

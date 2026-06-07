@@ -14,11 +14,24 @@ class ListOvertimeReports extends ListRecords
 
     protected function getViewData(): array
     {
-        $branchId   = $this->getTable()->getFilters()['branch_id']->getState()['value'] ?? null;
-        $employeeId = $this->getTable()->getFilters()['employee_id']->getState()['value'] ?? null;
-        $dateFrom   = $this->getTable()->getFilters()['date_range']->getState()['date_from'] ?? null;
-        $dateTo     = $this->getTable()->getFilters()['date_range']->getState()['date_to'] ?? null;
-        $status = $this->getTable()->getFilters()['status']->getState()['value'] ?? null;
+        $filters = $this->getTable()->getFilters();
+        
+        $branchId   = $filters['branch_id']->getState()['value'] ?? null;
+        $employeeId = $filters['employee_id']->getState()['value'] ?? null;
+        $dateFrom   = $filters['date_range']->getState()['date_from'] ?? null;
+        $dateTo     = $filters['date_range']->getState()['date_to'] ?? null;
+        $status     = $filters['status']->getState()['value'] ?? null;
+
+        // Get labels for header
+        $branchName = '-';
+        if ($branchId) {
+            $branchName = \App\Models\Branch::find($branchId)?->name ?? '-';
+        }
+
+        $employee = null;
+        if ($employeeId) {
+            $employee = \App\Models\Employee::find($employeeId);
+        }
 
         $filter = new OvertimeReportFilter(
             branchId: $branchId ? (int) $branchId : null,
@@ -26,13 +39,20 @@ class ListOvertimeReports extends ListRecords
             dateFrom: $dateFrom,
             dateTo: $dateTo,
             status: $status !== null && $status !== '' ? (string) $status : null,
+            page: (int) $this->getTablePage()
         );
 
         $report = app(OvertimeReportService::class)->generate($filter);
 
         return [
-            'items'   => $report['items'],
-            'summary' => $report['summary'],
+            'items'        => $report['items'],
+            'summary'      => $report['summary'],
+            'branch_name'  => $branchName,
+            'branch_id'    => $branchId,
+            'employee'     => $employee,
+            'start_date'   => $dateFrom ?? '-',
+            'end_date'     => $dateTo ?? '-',
+            'employee_id'  => $employeeId,
         ];
     }
 }

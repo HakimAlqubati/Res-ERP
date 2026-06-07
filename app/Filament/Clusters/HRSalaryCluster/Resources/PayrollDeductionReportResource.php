@@ -2,29 +2,36 @@
 
 namespace App\Filament\Clusters\HRSalaryCluster\Resources;
 
+use App\Enums\HR\Payroll\SalaryTransactionType;
 use App\Filament\Clusters\HRSalaryCluster;
+use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollDeductionReportResource\Pages\ListPayrollDeductionReports;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\FakeModelHRReports\EmployeeAttendanceReport;
-use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollDeductionReportResource\Pages\ListPayrollDeductionReports;
+use App\Models\SalaryTransaction;
+use App\Modules\HR\Payroll\DTOs\DeductionReportFilterDTO;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Table;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
 class PayrollDeductionReportResource extends Resource
 {
     protected static ?string $model = EmployeeAttendanceReport::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = Heroicon::DocumentCheck;
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::DocumentCheck;
 
     protected static ?string $cluster = HRSalaryCluster::class;
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
     protected static ?int $navigationSort = 4;
 
     protected static ?string $pluralLabel = 'Deductions Report';
@@ -40,24 +47,24 @@ class PayrollDeductionReportResource extends Resource
                 Filter::make('grouping_filter')
                     ->columnSpanFull()
                     ->schema([
-                        \Filament\Forms\Components\Select::make('group_by')
+                        Select::make('group_by')
                             ->label(__('Group By'))
                             ->options([
-                                \App\Modules\HR\Payroll\DTOs\DeductionReportFilterDTO::GROUP_BY_EMPLOYEE => __('Employee'),
-                                \App\Modules\HR\Payroll\DTOs\DeductionReportFilterDTO::GROUP_BY_BRANCH => __('Branch'),
+                                DeductionReportFilterDTO::GROUP_BY_EMPLOYEE => __('Employee'),
+                                DeductionReportFilterDTO::GROUP_BY_BRANCH => __('Branch'),
                             ])
-                            ->default(\App\Modules\HR\Payroll\DTOs\DeductionReportFilterDTO::GROUP_BY_EMPLOYEE)
+                            ->default(DeductionReportFilterDTO::GROUP_BY_EMPLOYEE)
                             ->selectablePlaceholder(false)
                             ->live()
                             ->afterStateUpdated(function (callable $set, $state) {
-                                if ($state === \App\Modules\HR\Payroll\DTOs\DeductionReportFilterDTO::GROUP_BY_BRANCH) {
+                                if ($state === DeductionReportFilterDTO::GROUP_BY_BRANCH) {
                                     $set('employee_id', null);
                                 } else {
                                     $set('branch_id', null);
                                 }
                             }),
 
-                        \Filament\Forms\Components\Select::make('branch_id')
+                        Select::make('branch_id')
                             ->label(__('Branch'))
                             ->options(function () {
                                 return Branch::where('active', 1)
@@ -67,16 +74,16 @@ class PayrollDeductionReportResource extends Resource
                             })
                             ->searchable()
                             ->placeholder('Select Branch')
-                            ->visible(fn(callable $get) => $get('group_by') === \App\Modules\HR\Payroll\DTOs\DeductionReportFilterDTO::GROUP_BY_BRANCH),
+                            ->visible(fn (callable $get) => $get('group_by') === DeductionReportFilterDTO::GROUP_BY_BRANCH),
 
-                        \Filament\Forms\Components\Select::make('employee_id')
+                        Select::make('employee_id')
                             ->label(__('Employee'))
                             ->options(function () {
                                 return Employee::where('active', 1)
                                     ->limit(5)
                                     ->get()
                                     ->mapWithKeys(function ($employee) {
-                                        return [$employee->id => $employee->name . ' - ' . $employee->id];
+                                        return [$employee->id => $employee->name.' - '.$employee->id];
                                     })->all();
                             })
                             ->getSearchResultsUsing(function (string $search) {
@@ -88,16 +95,17 @@ class PayrollDeductionReportResource extends Resource
                                     ->limit(50)
                                     ->get()
                                     ->mapWithKeys(function ($employee) {
-                                        return [$employee->id => $employee->name . ' - ' . $employee->id];
+                                        return [$employee->id => $employee->name.' - '.$employee->id];
                                     })->all();
                             })
                             ->getOptionLabelUsing(function ($value) {
                                 $employee = Employee::find($value);
-                                return $employee ? $employee->name . ' - ' . $employee->id : null;
+
+                                return $employee ? $employee->name.' - '.$employee->id : null;
                             })
                             ->searchable()
                             ->placeholder('Select Employee')
-                            ->hidden(fn(callable $get) => $get('group_by') === \App\Modules\HR\Payroll\DTOs\DeductionReportFilterDTO::GROUP_BY_BRANCH),
+                            ->hidden(fn (callable $get) => $get('group_by') === DeductionReportFilterDTO::GROUP_BY_BRANCH),
                     ])
                     ->query(function (Builder $query) {
                         return $query;
@@ -108,17 +116,18 @@ class PayrollDeductionReportResource extends Resource
                     ->multiple()
                     ->label(__('Deduction Type'))
                     ->options(function () {
-                        return \App\Models\SalaryTransaction::query()
+                        return SalaryTransaction::query()
                             ->where(function ($q) {
-                                $q->where('operation', \App\Models\SalaryTransaction::OPERATION_SUB)
-                                    ->orWhere('type', \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION);
+                                $q->where('operation', SalaryTransaction::OPERATION_SUB)
+                                    ->orWhere('type', SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION);
                             })
-                            ->where('status', \App\Models\SalaryTransaction::STATUS_APPROVED)
+                            ->where('status', SalaryTransaction::STATUS_APPROVED)
                             ->select('type', 'sub_type', 'description')
                             ->distinct()
                             ->get()
                             ->mapWithKeys(function ($tx) {
                                 $name = $tx->description ?: ucfirst(str_replace('_', ' ', $tx->sub_type ?? $tx->type));
+
                                 return [$name => $name];
                             })
                             ->filter()
@@ -142,17 +151,17 @@ class PayrollDeductionReportResource extends Resource
                         return $query;
                     }),
 
-                \Filament\Tables\Filters\TernaryFilter::make('include_employer_contribution')
+                TernaryFilter::make('include_employer_contribution')
                     ->label('Include Employer Contribution')
                     ->selectablePlaceholder(false)
                     ->trueLabel('Yes')
                     ->falseLabel('No')
                     ->default(true)
                     ->queries(
-                        true: fn(Builder $query) => $query,
-                        false: fn(Builder $query) => $query,
-                        blank: fn(Builder $query) => $query,
-                    )
+                        true: fn (Builder $query) => $query,
+                        false: fn (Builder $query) => $query,
+                        blank: fn (Builder $query) => $query,
+                    ),
             ], FiltersLayout::AboveContent)
             ->actions([])
             ->bulkActions([]);
@@ -163,5 +172,14 @@ class PayrollDeductionReportResource extends Resource
         return [
             'index' => ListPayrollDeductionReports::route('/'),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -94,7 +94,7 @@ class AttendanceStatisticsInjector
 
         if (!$discountException && isset($lastCo['early_departure_minutes'])) {
             $edMins = (int)$lastCo['early_departure_minutes'];
-            if ($edMins >= $this->minEarlyDepartureMinutes && $edMins > 0) {
+            if ($edMins > $this->minEarlyDepartureMinutes && $edMins > 0) {
                 $shouldDeduct = true;
                 if ($this->flexHoursEarlyDeparture) {
                     if (isset($lastCo['total_actual_duration_hourly']) && isset($lastCo['supposed_duration_hourly'])) {
@@ -123,7 +123,11 @@ class AttendanceStatisticsInjector
      */
     public function inject(Collection $report, Employee $employee): void
     {
-        $stats = HelperFunctions::calculateAttendanceStats($report);
+        $stats = HelperFunctions::calculateAttendanceStats($report, $employee);
+
+        // 1. حساب الأيام المستحقة مسبقاً والباقي إذا كان التقرير يبدأ بعد يوم 1 في الشهر
+        [$alreadyEarned, $prevRemainder] = $this->calculatePreviousEarnedAndRemainder($report, $employee);
+
         // Restore legacy: Inject the Golden Equation weekly leave calculation
         $calculator = new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator();
         $stats['weekly_leave_calculation'] = $calculator->calculate(
@@ -132,9 +136,17 @@ class AttendanceStatisticsInjector
             [
                 'is_period_ended'       => true,
                 'is_for_payroll'        => true,
-                'has_auto_weekly_leave' => (bool) $employee->has_auto_weekly_leave
+                'has_auto_weekly_leave' => (bool) $employee->has_auto_weekly_leave,
+                'already_earned'        => $alreadyEarned,
+                'prev_remainder'        => $prevRemainder,
             ]
         );
+
+        // 2. إضافة تفصيل الفروع (branches_breakdown) إذا كان التقرير يشمل أكثر من فرع
+        $breakdown = $this->buildBranchesBreakdown($report, $employee, $calculator, $alreadyEarned, $prevRemainder);
+         if ($breakdown) {
+            $stats['weekly_leave_calculation']['branches_breakdown'] = $breakdown;
+        }
 
         $report->put('statistics', $stats);
         $report->put('total_duration_hours', round($this->totalDurationSeconds / 3600, 2));
@@ -193,5 +205,102 @@ class AttendanceStatisticsInjector
         $m = floor(($seconds % 3600) / 60);
         $s = $seconds % 60;
         return sprintf('%02d:%02d:%02d', $h, $m, $s);
+    }
+
+    /**
+     * @return array [alreadyEarned, prevRemainder]
+     */
+    private function calculatePreviousEarnedAndRemainder(Collection $report, Employee $employee): array
+    {
+        $alreadyEarned = 0;
+        $prevRemainder = 0;
+        
+        $dates = $report->keys()->filter(fn($key) => preg_match('/^\d{4}-\d{2}-\d{2}$/', $key))->sort()->values();
+        $startDateStr = $dates->first();
+
+        if ($startDateStr) {
+            $startDate = \Carbon\Carbon::parse($startDateStr);
+            if ($startDate->day > 1) {
+                $previousStart = $startDate->copy()->startOfMonth();
+                $previousEnd   = $startDate->copy()->subDay();
+
+                $reportManager = app(\App\Modules\HR\AttendanceReports\Contracts\AttendanceReportInterface::class);
+                $previousReport = $reportManager->getEmployeesRangeReport(collect([$employee]), $previousStart, $previousEnd, true)->first();
+
+                if ($previousReport) {
+                    $prevWorked = (int) ($previousReport['statistics']['weekly_leave_calculation']['analysis']['worked_days'] ?? 0);
+                    $workDaysPerLeave = \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::WORK_DAYS_PER_LEAVE;
+                    
+                    $alreadyEarned = (int) floor($prevWorked / $workDaysPerLeave);
+                    $prevRemainder = $prevWorked % $workDaysPerLeave;
+                }
+            }
+        }
+
+        return [$alreadyEarned, $prevRemainder];
+    }
+
+    private function buildBranchesBreakdown(Collection $report, Employee $employee, \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator $calculator, int $alreadyEarned, int $prevRemainder): ?array
+    {
+        $dates = $report->keys()->filter(fn($key) => preg_match('/^\d{4}-\d{2}-\d{2}$/', $key))->sort()->values();
+        $startDateStr = $dates->first();
+        $endDateStr   = $dates->last();
+
+        if (!$startDateStr || !$endDateStr) {
+            return null;
+        }
+
+        $periodStart = \Carbon\Carbon::parse($startDateStr);
+        $periodEnd   = \Carbon\Carbon::parse($endDateStr);
+        
+        $segments = \App\Models\EmployeeBranchLog::getSalarySegments($employee, $periodStart, $periodEnd);
+        if ($segments->count() <= 0) {
+            return null;
+        }
+
+        $breakdown = [];
+        $cumulativeAlreadyEarned = $alreadyEarned;
+        $cumulativeRemainder = $prevRemainder;
+        
+        foreach ($segments as $segment) {
+            $segStartStr = $segment['start']->toDateString();
+            $segEndStr   = $segment['end']->toDateString();
+            
+            $segmentReport = $report->filter(function ($val, $key) use ($segStartStr, $segEndStr) {
+                return preg_match('/^\d{4}-\d{2}-\d{2}$/', $key) && $key >= $segStartStr && $key <= $segEndStr;
+            });
+            
+            if ($segmentReport->isNotEmpty()) {
+                $segStats = HelperFunctions::calculateAttendanceStats($segmentReport, $employee);
+                $segCalc = $calculator->calculate(
+                    $segStats['required_days'] ?? $segStats['total_days'] ?? 0,
+                    $segStats['absent'] ?? 0,
+                    [
+                        'is_period_ended'       => true,
+                        'is_for_payroll'        => true,
+                        'has_auto_weekly_leave' => (bool) $employee->has_auto_weekly_leave,
+                        'already_earned'        => $cumulativeAlreadyEarned,
+                        'prev_remainder'        => $cumulativeRemainder,
+                    ]
+                );
+                
+                $breakdown[] = [
+                    'branch_id'         => $segment['branch_id'],
+                    'start_date'        => $segStartStr,
+                    'end_date'          => $segEndStr,
+                    'worked_days'       => $segCalc['analysis']['worked_days'] ?? 0,
+                    'absent_days'       => $segStats['absent'] ?? 0,
+                    'earned_leave_days' => $segCalc['analysis']['earned_leave_days'] ?? 0,
+                    'overtime_days' => $segCalc['result']['overtime_days'] ?? 0,
+                    'total_deduction_days' => $segCalc['result']['total_deduction_days'] ?? 0,
+                    'final_absent_penalty' => $segCalc['result']['final_absent_penalty'] ?? 0,
+                ];
+                
+                $cumulativeAlreadyEarned += $segCalc['analysis']['earned_leave_days'] ?? 0;
+                $cumulativeRemainder      = $segCalc['analysis']['work_remainder'] ?? 0;
+            }
+        }
+
+        return $breakdown;
     }
 }

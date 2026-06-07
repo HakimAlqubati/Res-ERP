@@ -9,6 +9,9 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeApplicationV2;
 use App\Models\EmployeeOvertime;
+use App\Models\EmployeeReward;
+use App\Models\EmployeeServiceTermination;
+use App\Models\PenaltyDeduction;
 use App\Models\ServiceRequest;
 use App\Services\HR\AttendanceHelpers\Reports\AbsentEmployeesV2Service;
 use App\Services\HR\AttendanceHelpers\Reports\MissingCheckoutService;
@@ -63,11 +66,41 @@ class DashboardService
         $pendingOvertimeCount = $overtimeQuery->count();
 
         // New Service Requests
-        $srQuery = ServiceRequest::where('status', ServiceRequest::STATUS_NEW);
+        $srQuery = ServiceRequest::where('status', ServiceRequest::STATUS_NEW)
+            ->forBranchManager()
+            ->forEmployee();
         if ($dto->branchId) {
             $srQuery->where('branch_id', $dto->branchId);
         }
         $newServiceRequestsCount = $srQuery->count();
+
+        // Employee Service Terminations
+        $terminationQuery = EmployeeServiceTermination::where('status', EmployeeServiceTermination::STATUS_PENDING)
+            ->forBranchManager()
+            ->forEmployee();
+        if ($dto->branchId) {
+            $terminationQuery->where('branch_id', $dto->branchId);
+        }
+        $pendingTerminationsCount = $terminationQuery->count();
+
+        // Employee Rewards
+        $rewardQuery = EmployeeReward::where('status', EmployeeReward::STATUS_PENDING)
+            ->forBranchManager()
+            ->forEmployee();
+        if ($dto->branchId) {
+            $rewardQuery->where('branch_id', $dto->branchId);
+        }
+        $pendingRewardsCount = $rewardQuery->count();
+
+        // Penalty Deductions
+        $penaltyQuery = PenaltyDeduction::where('status', PenaltyDeduction::STATUS_PENDING)
+            ->forBranchManager()
+            ->forEmployee();
+
+        if ($dto->branchId) {
+            $penaltyQuery->where('branch_id', $dto->branchId);
+        }
+        $pendingPenaltiesCount = $penaltyQuery->count();
 
         return [
             'pending_leaves'   => $appCounts->get(EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST, 0),
@@ -77,6 +110,9 @@ class DashboardService
             'pending_advance'  => $appCounts->get(EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST, 0),
             'pending_meal'     => $appCounts->get(EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST, 0),
             'new_service_request' => $newServiceRequestsCount,
+            'pending_terminations' => $pendingTerminationsCount,
+            'pending_rewards'      => $pendingRewardsCount,
+            'pending_penalties'    => $pendingPenaltiesCount,
             'missing_checkouts_count' => $missingCheckoutsCount,
             'absents_count'           => $this->getTodayAbsentsCount($dto),
         ];
@@ -228,6 +264,8 @@ class DashboardService
     public function getMaintenanceAlerts(DashboardFilterDTO $dto): array
     {
         $stats = ServiceRequest::query()
+            ->forBranchManager()
+            ->forEmployee()
             ->when($dto->branchId, fn($q) => $q->where('branch_id', $dto->branchId))
             ->selectRaw("
                 COUNT(CASE WHEN status != '" . ServiceRequest::STATUS_CLOSED . "' THEN 1 END) as open_count,

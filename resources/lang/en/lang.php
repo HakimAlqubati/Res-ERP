@@ -114,6 +114,7 @@ return [
     'please_select_branch'                        => 'Please Select a Branch',
     'please_select_product'                       => 'Please Select a Product',
     'all_stores'                                  => 'All Stores',
+    'all_branches'                                => 'All Branches',
     'all_suppliers'                               => 'All suppliers',
     'system_settings'                             => 'System settings',
     'transfer_date'                               => 'Transfer date',
@@ -376,6 +377,7 @@ return [
     'exempt_from_late_attendance_deduction' => 'Exempt from Late Attendance Deduction',
     'is_mtd_applicable' => 'MTD Applicable',
     'has_auto_weekly_leave' => 'Auto Weekly Leave',
+    'no_shift_is_present' => 'Attendance Without Shift',
     'can_add_branch_order' => 'Can add branch order',
 
     // ===========================================
@@ -383,6 +385,8 @@ return [
     // ===========================================
     'attendance' => 'Attendance',
     'shift' => 'Shift',
+    'total_shift_hours' => 'Total Shift Hours',
+    'currently_shift_hours' => 'Shift Hours',
     'shifts' => 'Shifts',
     'shift_id' => 'Shift ID',
     'shift_rfid' => 'Shift - RFID',
@@ -421,6 +425,8 @@ return [
     // HRMS - Status & Actions
     // ===========================================
     'inactive' => 'Inactive',
+    'enable_account' => 'Enable Account',
+    'disable_account' => 'Disable Account',
     'activate' => 'Activate',
     'deactivate' => 'Deactivate',
     'create' => 'Create',
@@ -722,6 +728,7 @@ return [
     'current_staff' => 'Current Staff',
     'new_staff' => 'New Staff',
     'terminated_staff' => 'Terminated Staff',
+    'termination_requests' => 'Termination Requests',
     'no_data' => 'No data',
     'start_date' => 'Start Date',
     'end_date' => 'End Date',
@@ -892,7 +899,7 @@ return [
     'work_hours_summary' => 'Work Hours Summary',
     'supposed' => 'Supposed',
     'total_hours_worked' => 'Total Hours Worked',
-    'no_periods' => 'No periods',
+    'no_periods' => 'No Scheduled Shift',
     'total' => 'Total',
     'please_select_employee' => 'Please select a Staff',
     'show_details' => 'Show details',
@@ -1150,4 +1157,6 @@ return [
     'approved_successfully' => 'Approved Successfully',
     'auto_missed_checkout_request_created_success' => 'Missed check-out request submitted to HR.',
     'auto_generated_reason_missing_checkin' => 'Automatically generated due to check-out attempt without a prior check-in',
+    'rejected_successfully' => 'Rejected Successfully',
+    'auto' => 'Auto',
 ];

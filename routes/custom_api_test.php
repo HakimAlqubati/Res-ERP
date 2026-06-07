@@ -57,3 +57,27 @@ Route::get('/debug-inventory-sql', function () {
         'data_sample' => is_array($results) ? array_slice($results, 0, 3) : $results, // أول 3 نتائج فقط
     ]);
 });
+
+
+Route::get('/test/pendingApplications', function () {
+    $filters = [
+        'year'         => request('year', now()->year),
+        'month'        => request('month', now()->month),
+        'day'          => request('day'),          // اختياري: فلترة بيوم محدد
+        'branch_id'    => request('branch_id'),
+        'employee_ids' => request('employee_ids') ? explode(',', request('employee_ids')) : null,
+    ];
+
+    $checker = app(\App\Modules\HR\EmployeeApplications\Checker\MonthlyPendingApplicationChecker::class);
+
+    $summary = $checker->getDashboardSummary($filters);
+
+    return response()->json([
+        'status'  => 'success',
+        'filters' => $filters,
+        'result'  => $summary,
+    ]);
+});
+
+
+

@@ -16,6 +16,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
+use App\Rules\UserBranchCannotBeChanged;
 use Illuminate\Validation\Rules\Password;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
 use Ysfkaya\FilamentPhoneInput\PhoneInputNumberType;
@@ -56,6 +57,11 @@ trait HasNewUserForm
                             ])
                             // ->default(1)
                             ->required(),
+                            
+                        \Filament\Forms\Components\Checkbox::make('active')
+                            ->label(__('lang.active'))
+                            ->default(true)
+                            ->inline(false),
 
                         Select::make('nationality')
                             ->label('Nationality')
@@ -75,6 +81,7 @@ trait HasNewUserForm
                                 $set('owner_id', null);
                             })
                             ->searchable()
+                            ->rules(fn(?User $record) => $record ? [new UserBranchCannotBeChanged($record)] : [])
                             ->options(function () {
                                 // return Branch::selectable()
                                 return Branch::query()

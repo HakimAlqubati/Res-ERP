@@ -136,8 +136,11 @@ class EmployeeApplicationResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::whereHas('employee', function ($q) {
-            $q->whereNull('deleted_at'); // ignore soft-deleted employees
-        })->count();
+            $q->whereNull('deleted_at');
+        })
+            ->forBranchManager()
+            ->pending()
+            ->count();
     }
 
     public static function canCreate(): bool
@@ -257,6 +260,7 @@ class EmployeeApplicationResource extends Resource
                                 ->default($record?->missedCheckoutRequest?->time)
                                 ->label('Time')->readOnly(),
                         ]),
+                    static::getAttachmentsPlaceholder($record),
                 ];
             });
     }
@@ -380,6 +384,7 @@ class EmployeeApplicationResource extends Resource
                         ->rows(2)
                         ->columnSpanFull(),
 
+                    static::getAttachmentsPlaceholder($record),
                 ];
             })
         ;
@@ -429,6 +434,19 @@ class EmployeeApplicationResource extends Resource
                         $record = EmployeeApplicationV2::find($record->id);
                     }
                     $advanceRequest = $record->advanceRequest;
+
+                    $deductionDate = \Carbon\Carbon::parse($data['deduction_starts_from'] ?? $advanceRequest->deduction_starts_from);
+                    if (app(\App\Services\HR\Payroll\PayrollLockGuard::class)->isLocked($advanceRequest->employee_id, $deductionDate->year, $deductionDate->month)) {
+                        \Filament\Notifications\Notification::make()
+                            ->danger()
+                            ->title(__('lang.error') ?: 'Error')
+                            ->body('Cannot process records for this employee in this period.')
+                            ->send();
+
+                        DB::rollBack();
+                        return;
+                    }
+
                     $advanceRequest->finance_approved_by = auth()->id();
                     $advanceRequest->finance_approved_at = now();
                     $advanceRequest->payment_method      = $data['payment_method'] ?? null;
@@ -604,6 +622,7 @@ class EmployeeApplicationResource extends Resource
                             ->prefixIcon('heroicon-o-hashtag'),
                     ]),
 
+                    static::getAttachmentsPlaceholder($record),
                 ];
             });
     }
@@ -633,12 +652,27 @@ class EmployeeApplicationResource extends Resource
             ->color('danger')
             ->icon('heroicon-o-x-circle')
             ->action(function ($record, $data) {
-                $record->update([
-                    'status'      => EmployeeApplicationV2::STATUS_REJECTED,
-                    'rejected_by' => auth()->user()->id,
-                    'rejected_at' => now(),
-                    'rejected_reason' => $data['rejected_reason'],
-                ]);
+                try {
+                    \Illuminate\Support\Facades\DB::transaction(function () use ($record, $data) {
+                        $record->update([
+                            'status'      => EmployeeApplicationV2::STATUS_REJECTED,
+                            'rejected_by' => auth()->user()->id,
+                            'rejected_at' => now(),
+                            'rejected_reason' => $data['rejected_reason'],
+                        ]);
+                    });
+
+                    \Filament\Notifications\Notification::make()
+                        ->title(__('lang.rejected_successfully') ?: 'Rejected Successfully')
+                        ->success()
+                        ->send();
+                } catch (\Exception $e) {
+                    \Filament\Notifications\Notification::make()
+                        ->title(__('lang.error') ?: 'Error')
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+                }
             })
             ->schema(function ($record) {
                 return [
@@ -701,7 +735,6 @@ class EmployeeApplicationResource extends Resource
 
                 DB::beginTransaction();
                 try {
-                    app(\App\Services\HR\Applications\LeaveRequest\LeaveApprovalService::class)->process($record);
 
                     $record->update([
                         'status'      => EmployeeApplicationV2::STATUS_APPROVED,
@@ -727,7 +760,7 @@ class EmployeeApplicationResource extends Resource
                 $daysCount = $leaveRequest->days_count;
                 $year      = $leaveRequest->year;
                 $month     = getMonthArrayWithKeys()[$leaveRequest->month] ?? '';
-                $leaveType = LeaveType::find($leaveTypeId)->name;
+                $leaveType = LeaveType::withTrashed()->find($leaveTypeId)->name;
 
                 return [
                     Fieldset::make()->label('Request data')->columns(3)->schema([
@@ -739,6 +772,8 @@ class EmployeeApplicationResource extends Resource
                         TextInput::make('detail_month')->default($month)->label('Month'),
                         TextInput::make('days_count')->default($daysCount),
                     ]),
+
+                    static::getAttachmentsPlaceholder($record),
                 ];
             })
         ;
@@ -757,6 +792,58 @@ class EmployeeApplicationResource extends Resource
             ->icon('heroicon-o-arrow-path')
             ->requiresConfirmation()
             ->modalHeading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_title', ['id' => '#' . $record->id]))
+            ->modalSubheading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_body'))
+            ->action(function (EmployeeApplicationV2 $record) {
+                try {
+                    app(\App\Services\HR\Applications\EmployeeApplicationService::class)
+                        ->undoApproveApplication($record->id, auth()->id());
+
+                    showSuccessNotifiMessage(__('lang.done'));
+                } catch (\Exception $th) {
+                    showWarningNotifiMessage(__('lang.failed'), $th->getMessage());
+                }
+            });
+    }
+
+    public static function undoApproveAttendanceRequest(): Action
+    {
+        return Action::make('undoApproveAttendanceRequest')
+            ->label(__('lang.undo_approve'))
+            ->button()
+            ->visible(fn($record): bool => (
+                $record->status === EmployeeApplicationV2::STATUS_APPROVED &&
+                $record->application_type_id === EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST
+            ))
+            ->color('warning')
+            ->icon('heroicon-o-arrow-path')
+            ->requiresConfirmation()
+            ->modalHeading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_title' .'id'.'#' . $record->id))
+            ->modalSubheading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_body'))
+            ->action(function (EmployeeApplicationV2 $record) {
+                try {
+                    app(\App\Services\HR\Applications\EmployeeApplicationService::class)
+                        ->undoApproveApplication($record->id, auth()->id());
+
+                    showSuccessNotifiMessage(__('lang.done'));
+                } catch (\Exception $th) {
+                    showWarningNotifiMessage(__('lang.failed'), $th->getMessage());
+                }
+            });
+    }
+
+    public static function undoApproveDepartureRequest(): Action
+    {
+        return Action::make('undoApproveDepartureRequest')
+            ->label(__('lang.undo_approve'))
+            ->button()
+            ->visible(fn($record): bool => (
+                $record->status === EmployeeApplicationV2::STATUS_APPROVED &&
+                $record->application_type_id === EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST
+            ))
+            ->color('warning')
+            ->icon('heroicon-o-arrow-path')
+            ->requiresConfirmation()
+            ->modalHeading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_title' .' id'.'#' . $record->id))
             ->modalSubheading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_body'))
             ->action(function (EmployeeApplicationV2 $record) {
                 try {
@@ -797,6 +884,9 @@ class EmployeeApplicationResource extends Resource
             ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST))
             ->color('success')
             ->icon('heroicon-o-check')
+            ->modalHeading(fn($record) => 'Request #' . $record->id)
+            ->modalIcon(fn($record) => Heroicon::FingerPrint)
+            ->modalDescription('Approve Attendance Request')
             ->action(function ($record, $data) {
                 // Logic for approving attendance fingerprint requests
                 DB::beginTransaction();
@@ -876,6 +966,8 @@ class EmployeeApplicationResource extends Resource
 
 
                     Fieldset::make()->label('Request data')->columns(2)->schema([
+                        TextInput::make('employee')->default($record?->employee?->name)
+                            ->disabled()->columnSpanFull(),
                         DatePicker::make('request_check_date')
                             ->default($record?->missedCheckinRequest?->date)
                             ->label('Date')
@@ -892,6 +984,8 @@ class EmployeeApplicationResource extends Resource
                                 // Trigger check on initial load using default/hydrated values
                                 $checkShiftAvailability($get, $set);
                             }),
+                        TextInput::make('notes')->default($record?->notes ?? '')
+                            ->disabled()->columnSpanFull(),
                     ]),
 
 
@@ -912,6 +1006,7 @@ class EmployeeApplicationResource extends Resource
                         ->helperText('Select a shift to proceed')
                         ->columnSpanFull(),
 
+                    static::getAttachmentsPlaceholder($record),
                 ];
             });
     }
@@ -941,11 +1036,22 @@ class EmployeeApplicationResource extends Resource
                         TextInput::make('end_at')->default($attendance?->period?->end_at),
                         Hidden::make('period')->default($attendance?->period),
                     ]),
-                    Fieldset::make()->disabled(false)->label('Request data')->columns(2)->schema([
+                    Fieldset::make()->disabled(false)->label('Request data')->columns(3)->schema([
                         DatePicker::make('request_check_date')->default($details->date)->label('Date'),
                         TimePicker::make('request_check_time')->default($details->time)->label('Time'),
+                        \Filament\Forms\Components\Placeholder::make('is_auto_generated')
+                            ->label('Is Auto Request')
+                            ->content(function ($record) {
+                                $isAuto = (bool) $record?->is_auto_generated;
+                                $color = $isAuto ? 'rgb(34, 197, 94)' : 'rgb(239, 68, 68)';
+                                $svg = $isAuto
+                                    ? '<svg style="width:24px; height:24px; color:'.$color.';" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>'
+                                    : '<svg style="width:24px; height:24px; color:'.$color.';" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>';
+                                return new \Illuminate\Support\HtmlString($svg);
+                            }),
                     ]),
 
+                    static::getAttachmentsPlaceholder($record),
                 ];
             })
             ->modalSubmitAction(false)
@@ -955,10 +1061,13 @@ class EmployeeApplicationResource extends Resource
 
     public static function LeaveRequesttDetails(): Action
     {
-        return Action::make('LeaveRequesttDetails')->label('Details')->button()
+        return Action::make('LeaveRequesttDetails')
+            ->label('Details')
+            ->button()
             ->color('info')
             ->icon('heroicon-m-newspaper')
-
+            ->modalHeading(fn($record) => 'Details #' . $record->id)
+            ->modalDescription(fn() => 'Leave Request')
             ->disabledSchema()
             ->schema(function ($record) {
                 $leaveRequest = $record?->leaveRequest;
@@ -970,17 +1079,25 @@ class EmployeeApplicationResource extends Resource
                 $year      = $leaveRequest->year;
                 // $month     = getMonthArrayWithKeys()[$leaveRequest->month] ?? '';
                 $month     =  $leaveRequest->month  ?? '';
-                $leaveType = LeaveType::find($leaveTypeId)->name;
+                $leaveType = LeaveType::withTrashed()->find($leaveTypeId)->name;
 
                 return [
                     Fieldset::make()->columnSpanFull()->label('Request data')->columns(2)->schema([
-                        TextInput::make('employee')->columnSpan(2)->default($record?->employee?->name),
-                        TextInput::make('leave')->default($leaveType),
-                        TextInput::make('days_count')->default($daysCount),
-                        DatePicker::make('from_date')->default($fromDate)->label('From date'),
-                        DatePicker::make('to_date')->default($toDate)->label('To date'),
-                        TextInput::make('detail_year')->default($year)->label('Year'),
-                        TextInput::make('detail_month')->default($month)->label('Month'),
+                        Grid::make(4)->columnSpanFull()->schema([
+                            TextInput::make('employee')->columnSpan(2)->default($record?->employee?->name),
+                            TextInput::make('leave')->default($leaveType),
+                            TextInput::make('days_count')->default($daysCount),
+                            DatePicker::make('from_date')->default($fromDate)->label('From date'),
+                            DatePicker::make('to_date')->default($toDate)->label('To date'),
+                            TextInput::make('detail_year')->default($year)->label('Year'),
+                            TextInput::make('detail_month')->default($month)->label('Month'),
+                            TextInput::make('notes')
+                                ->columnSpanFull()
+                                ->default($record?->notes ?? '')->label('notes'),
+
+                        ]),
+
+                        static::getAttachmentsPlaceholder($record),
                     ]),
                 ];
             })
@@ -998,7 +1115,7 @@ class EmployeeApplicationResource extends Resource
             ->disabledForm()
             ->modalIcon('heroicon-m-newspaper')
             ->modalHeading('Advance Request Details')
-            ->modalWidth('xl')
+            // ->modalWidth('xl')
 
             ->schema(function ($record) {
                 $advanceDetails = $record->advanceRequest;
@@ -1010,24 +1127,56 @@ class EmployeeApplicationResource extends Resource
                 $numberOfMonthsOfDeduction = $advanceDetails->number_of_months_of_deduction;
                 $notes                     = $record?->notes;
                 return [
-                    Fieldset::make()->label('Request data')->columns(3)->schema([
-                        TextInput::make('employee')->default($record?->employee?->name),
-                        DatePicker::make('date')->default($detailDate)->label('Advance date'),
-                        TextInput::make('advance_amount')->default($advanceAmount),
-                        TextInput::make('deductionStartsFrom')->label('Deducation starts from')->default($deductionStartsFrom),
-                        TextInput::make('deductionEndsAt')->label('Deducation ends at')->default($deductionEndsAt),
-                        TextInput::make('numberOfMonthsOfDeduction')->label('Number of months of deduction')->default($numberOfMonthsOfDeduction),
-                        TextInput::make('monthlyDeductionAmount')->label('Monthly deduction amount')->default($monthlyDeductionAmount),
+                    Fieldset::make()->label('Request data')->columns(4)->schema([
+                        TextInput::make('employee')
+                            ->columnSpan(2)
+                            ->default($record?->employee?->name),
+                        DatePicker::make('date')->default($detailDate)->label('Date'),
+                        TextInput::make('advance_amount')->default($advanceAmount)->label('Amount'),
+                        TextInput::make('deductionStartsFrom')->label('Starts')->default($deductionStartsFrom),
+                        TextInput::make('deductionEndsAt')->label('Ends')->default($deductionEndsAt),
+                        TextInput::make('numberOfMonthsOfDeduction')->label('Months')->default($numberOfMonthsOfDeduction),
+                        TextInput::make('monthlyDeductionAmount')->label('Monthly')->default($monthlyDeductionAmount),
+                        TextInput::make('test')->label('Notes')->columnSpanFull()->default($notes),
 
                     ]),
-                    Fieldset::make()->label('Notes')->columns(2)->schema([
-                        TextInput::make('test')->label('Notes')->columnSpanFull()->default($notes),
-                    ]),
+
+
+                    static::getAttachmentsPlaceholder($record),
                 ];
             })
             ->modalSubmitAction(false)
-            ->modalCancelAction(false)
-        ;
+            ->modalCancelAction(false);
+    }
+
+    public static function attendanceRequestDetails(): Action
+    {
+        return Action::make('attendanceRequestDetails')
+            ->label(__('lang.details'))
+            ->button()
+            ->color('info')
+            ->icon('heroicon-m-newspaper')
+            ->visible(fn($record): bool => $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST)
+            ->disabledForm()
+            ->modalHeading(fn($record) => 'Details #' . $record->id)
+            ->modalDescription('Missed Checkin Request')
+            ->schema(function ($record) {
+                $details = $record->missedCheckinRequest;
+                return [
+                    Fieldset::make()->disabled(false)->label('Request data')->columns(2)->schema([
+                        TextInput::make('employee')->default($record?->employee?->name)
+                            ->columnSpanFull(),
+                        DatePicker::make('request_check_date')->default($details?->date)->label('Date'),
+                        TimePicker::make('request_check_time')->default($details?->time)->label('Time'),
+                        TextInput::make('notes')->default($record?->notes)->label('Notes')->columnSpanFull(),
+
+                    ]),
+
+                    static::getAttachmentsPlaceholder($record),
+                ];
+            })
+            ->modalSubmitAction(false)
+            ->modalCancelAction(false);
     }
 
     public static function exportAdvanceRequestPdf(): Action
@@ -1242,10 +1391,13 @@ class EmployeeApplicationResource extends Resource
             ->schema(function ($record) {
                 $mealRequest = $record->mealRequest;
                 return [
-                    Fieldset::make(__('lang.notes'))->columns(2)->schema([
+                    Fieldset::make(__('lang.notes'))->columns(3)->schema([
                         TextInput::make('employee_name')
                             ->label(__('lang.employee'))
                             ->default($record->employee?->name),
+                        DatePicker::make('date')
+                            ->label(__('lang.request_date'))
+                            ->default($mealRequest?->date),
                         TextInput::make('cost')
                             ->label(__('lang.cost'))
                             ->default($mealRequest?->cost),
@@ -1258,6 +1410,8 @@ class EmployeeApplicationResource extends Resource
                             ->default($mealRequest?->notes)
                             ->columnSpanFull(),
                     ]),
+
+                    static::getAttachmentsPlaceholder($record),
                 ];
             })
             ->modalSubmitAction(false)
@@ -1266,18 +1420,22 @@ class EmployeeApplicationResource extends Resource
 
     public static function leaveRequestForm($set, $get)
     {
-        $leaveBalances = LeaveBalance::where('employee_id', $get('employee_id'))->pluck('leave_type_id');
+        $employeeId = $get('employee_id');
         $set('from_to_date', date('Y-m-d'));
-        // Get the leave types that are active and have a balance for the employee
-        $leaveTypes = LeaveType::where('active', 1)
-            ->whereIn('id', $leaveBalances)
-            ->whereHas('leaveBalances', function ($query) use ($get) {
-                $query->where('employee_id', $get('employee_id'))
-                    ->where('balance', '>', 0); // Ensure the balance is greater than 0
+
+        // Fetch leave types that are active AND the employee still has available balance
+        // Available balance = entitled_days - (used_days + pending_days)
+        $leaveTypes = LeaveType::query()
+            ->where('active', 1)
+            ->whereHas('leaveBalances', function ($query) use ($employeeId) {
+                $query->where('employee_id', $employeeId)
+                    ->where('year', now()->year)
+                    ->whereRaw('entitled_days > (used_days + pending_days)');
             })
             ->select('name', 'id')
             ->get()
             ->pluck('name', 'id');
+
         return [
             Fieldset::make('leaveRequest')
                 ->relationship('leaveRequest')->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
@@ -1291,117 +1449,122 @@ class EmployeeApplicationResource extends Resource
                     $data['end_date']    = $data['detail_to_date'];
 
                     $data['year']       = $data['detail_year'];
-                    $data['month']      = $data['detail_month'];
+                    $data['month']      = $data['detail_month']; // Stored on the request record for historical reference
                     $data['days_count'] = $data['detail_days_count'];
-                    $date               = $get('detail_from_date') ?? now();
-                    // app(MonthClosureService::class)->ensureMonthIsOpen($date);
                     return $data;
                 })
                 ->saveRelationshipsUsing(static function ($record, $state) {
-                    $data =  $state;
+                    $data                          = $state;
                     $data['application_type_id']   = EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST;
-                    $data['application_type_name'] = \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_NAMES[\App\Models\EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST];
-                    $data['employee_id'] = $data['employee_id'] ?? $record->employee_id;
-                    $data['leave_type']  = $data['detail_leave_type_id'] ?? null;
-                    $data['start_date']  = $data['detail_from_date'] ?? null;
-                    $data['end_date']    = $data['detail_to_date'] ?? null;
-                    $data['year']        = $data['detail_year'] ?? now()->year;
-                    $data['month']       = $data['detail_month'] ?? now()->month;
-                    $data['days_count']  = $data['detail_days_count'];
+                    $data['application_type_name'] = EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST];
+                    $data['employee_id']           = $data['employee_id'] ?? $record->employee_id;
+                    $data['leave_type']            = $data['detail_leave_type_id'] ?? null;
+                    $data['start_date']            = $data['detail_from_date'] ?? null;
+                    $data['end_date']              = $data['detail_to_date'] ?? null;
+                    $data['year']                  = $data['detail_year'] ?? now()->year;
+                    $data['month']                 = $data['detail_month'] ?? now()->month;
+                    $data['days_count']            = $data['detail_days_count'];
                     return $data;
-                })->schema(
+                })->schema([
+                    Grid::make()->columns(4)->schema([
 
-                    [
-                        Grid::make()->columns(4)->schema([
-                            Select::make('detail_leave_type_id')->label('Leave type')
-                                ->requiredIf('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST)
-                                ->live()
-                                ->options(
-                                    $leaveTypes
-                                )->required()
-                                ->afterStateUpdated(function ($get, Set $set, $state) {
-                                    $leaveBalance = LeaveBalance::getLeaveBalanceForEmployee($get('../employee_id'), $get('detail_year'), $state, $get('detail_month'));
-                                    $set('detail_balance', $leaveBalance?->balance);
-                                }),
-                            Select::make('detail_year')->label('Year')
+                        Select::make('detail_leave_type_id')->label('Leave type')
+                            ->requiredIf('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST)
+                            ->live()
+                            ->options($leaveTypes)
+                            ->required()
+                            ->afterStateUpdated(function ($get, Set $set, $state) {
+                                // Year-based lookup — month is intentionally excluded from balance matching
+                                $balance = LeaveBalance::query()
+                                    ->where('employee_id', $get('../employee_id'))
+                                    ->where('leave_type_id', $state)
+                                    ->where('year', $get('detail_year') ?? now()->year)
+                                    ->first();
 
-                                ->options([
-                                    2024 => 2024,
-                                    2025 => 2025,
-                                    2026 => 2026,
-                                ])->disabled()->dehydrated()
-                                ->live(),
-                            Select::make('detail_month')->label('Month')
-                                ->options(getMonthArrayWithKeys())
-                                ->live()
-                                ->dehydrated(),
-                            TextInput::make('detail_balance')->label('Leave balance')->disabled(),
+                                $set('detail_balance', $balance?->available_balance ?? 0);
+                            }),
 
-                        ]),
-                        Grid::make()->columns(3)->schema([
-                            DatePicker::make('detail_from_date')
-                                ->label('From Date')
-                                ->reactive()
-                                ->default(date('Y-m-d'))
-                                ->required()
-                                ->dehydrated()
-                                ->afterStateUpdated(function ($state, callable $set, $get) {
-                                    $fromDate = $get('detail_from_date');
-                                    $toDate   = $get('detail_to_date');
+                        Select::make('detail_year')->label('Year')
+                            ->options([
+                                2025 => 2025,
+                                2026 => 2026,
+                                2027 => 2027,
+                            ])
+                            ->required()
+                            // ->disabled()->dehydrated()
 
-                                    if ($fromDate && $toDate) {
-                                        $daysDiff = now()->parse($fromDate)->diffInDays(now()->parse($toDate)) + 1;
-                                        $set('detail_days_count', $daysDiff); // Set the detail_days_count automatically
-                                    } else {
-                                        $set('detail_days_count', 0); // Reset if no valid dates are selected
-                                    }
-                                }),
+                            ->live(),
 
-                            DatePicker::make('detail_to_date')
-                                ->label('To Date')
-                                ->dehydrated()
-                                ->default(Carbon::tomorrow()->addDays(1)->format('Y-m-d'))
-                                ->reactive()
-                                ->required()
-                                ->afterStateUpdated(function ($state, callable $set, $get) {
-                                    $fromDate = $get('detail_from_date');
-                                    $toDate   = $get('detail_to_date');
+                        Select::make('detail_month')->label('Month')
+                            ->options(getMonthArrayWithKeys())
+                            ->live()
+                            ->dehydrated(),
 
-                                    if ($fromDate && $toDate) {
-                                        $daysDiff = now()->parse($fromDate)->diffInDays(now()->parse($toDate)) + 1;
-                                        $set('detail_days_count', $daysDiff); // Set the detail_days_count automatically
-                                    } else {
-                                        $set('detail_days_count', 0); // Reset if no valid dates are selected
-                                    }
-                                }),
+                        TextInput::make('detail_balance')
+                            ->label('Available Balance')
+                            ->disabled(),
 
-                            TextInput::make('detail_days_count')
-                                // ->disabled()
-                                ->label('Number of Days')
-                                // ->helperText('Type how many days this leave will be')
-                                ->helperText('Type how many days this leave will be')
-                                ->numeric()
-                                // ->default(2)
-                                ->minValue(1)
-                                ->live()
-                                ->required()
-                                ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                    // Parse the state as a Carbon date, add one month, and set it to the end of the month
-                                    $state    = (int) $state;
-                                    $nextDate = Carbon::parse($get('detail_from_date'))->addDays(($state - 1))->format('Y-m-d');
-                                    $set('detail_to_date', $nextDate);
-                                })
-                                ->maxValue(function ($get) {
-                                    $balance = $get('detail_balance') ?? 0;
-                                    return $balance;
-                                })->validationAttribute('Leave balance'),
+                    ]),
+                    Grid::make()->columns(3)->schema([
 
-                        ]),
-                    ]
+                        DatePicker::make('detail_from_date')
+                            ->label('From Date')
+                            ->reactive()
+                            ->default(date('Y-m-d'))
+                            ->required()
+                            ->dehydrated()
+                            ->afterStateUpdated(function ($state, callable $set, $get) {
+                                $fromDate = $get('detail_from_date');
+                                $toDate   = $get('detail_to_date');
 
-                ),
+                                if ($fromDate && $toDate) {
+                                    $set('detail_days_count', now()->parse($fromDate)->diffInDays(now()->parse($toDate)) + 1);
+                                } else {
+                                    $set('detail_days_count', 0);
+                                }
+                            }),
+
+                        DatePicker::make('detail_to_date')
+                            ->label('To Date')
+                            ->dehydrated()
+                            ->default(Carbon::tomorrow()->addDays(1)->format('Y-m-d'))
+                            ->reactive()
+                            ->required()
+                            ->afterStateUpdated(function ($state, callable $set, $get) {
+                                $fromDate = $get('detail_from_date');
+                                $toDate   = $get('detail_to_date');
+
+                                if ($fromDate && $toDate) {
+                                    $set('detail_days_count', now()->parse($fromDate)->diffInDays(now()->parse($toDate)) + 1);
+                                } else {
+                                    $set('detail_days_count', 0);
+                                }
+                            }),
+
+                        TextInput::make('detail_days_count')
+                            ->label('Number of Days')
+                            ->helperText('Type how many days this leave will be')
+                            ->numeric()
+                            ->minValue(1)
+                            ->live()
+                            ->required()
+                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                $state    = (int) $state;
+                                $nextDate = Carbon::parse($get('detail_from_date'))->addDays($state - 1)->format('Y-m-d');
+                                $set('detail_to_date', $nextDate);
+                            })
+                            ->maxValue(function ($get) {
+                                return (float) ($get('detail_balance') ?? 0);
+                            })
+                            ->validationAttribute('Leave balance'),
+
+                    ]),
+                ]),
         ];
     }
+
+
+
 
     public static function advanceRequestForm($set, $get)
     {
@@ -1646,7 +1809,7 @@ class EmployeeApplicationResource extends Resource
                             ->default('Y-m-d')
                             ->rules([
                                 fn($get) => function ($attribute, $value, $fail) use ($get) {
-                                   return;
+                                    return;
                                     $date = \Carbon\Carbon::parse($value);
                                     if ($empId = $get('../employee_id')) {
                                         try {
@@ -1747,5 +1910,44 @@ class EmployeeApplicationResource extends Resource
             $q->whereNull('deleted_at'); // ignore soft-deleted employees
         });
         return $query->forBranchManager();
+    }
+
+    private static function getAttachmentsPlaceholder($record): \Filament\Forms\Components\Placeholder
+    {
+        return \Filament\Forms\Components\Placeholder::make('attachments_preview')
+            ->label(__('lang.attachments'))
+            ->columnSpanFull()
+            ->content(function () use ($record) {
+                if (!$record) {
+                    return '—';
+                }
+
+                $mediaItems = $record->getMedia('images')->merge($record->getMedia('files'));
+
+                if ($mediaItems->isEmpty()) {
+                    return '—';
+                }
+
+                $html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 8px;">';
+                foreach ($mediaItems as $media) {
+                    // Skip if not an image
+                    if (! str_starts_with($media->mime_type, 'image/')) {
+                        continue;
+                    }
+
+                    $url = $media->getUrl();
+                    $html .= "
+                        <div style='position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #e5e7eb;'>
+                            <img src='{$url}' 
+                                 alt='Attachment' 
+                                 style='width: 100%; height: 100%; object-fit: cover; cursor: pointer;' 
+                                 onclick='window.open(\"{$url}\", \"_blank\")'
+                                 onerror='this.parentElement.style.display=\"none\"'>
+                        </div>";
+                }
+                $html .= '</div>';
+
+                return new \Illuminate\Support\HtmlString($html);
+            });
     }
 }

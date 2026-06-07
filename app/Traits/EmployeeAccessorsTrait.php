@@ -26,6 +26,31 @@ trait EmployeeAccessorsTrait
         })->count();
     }
 
+    public function getTotalPeriodsHoursAttribute()
+    {
+        $totalMinutes = 0;
+
+        foreach ($this->periods as $period) {
+            if (!$period->start_at || !$period->end_at) {
+                continue;
+            }
+
+            $start = \Carbon\Carbon::parse($period->start_at);
+            $end   = \Carbon\Carbon::parse($period->end_at);
+
+            if ($end->lt($start)) {
+                $end->addDay();
+            }
+
+            $totalMinutes += $start->diffInMinutes($end);
+        }
+
+        $hours = intdiv($totalMinutes, 60);
+        $minutes = $totalMinutes % 60;
+
+        return sprintf('%02d:%02d', $hours, $minutes);
+    }
+
     public function getAvatarImageAttribute()
     {
         if ($this->avatar && Storage::disk('s3')->exists($this->avatar)) {
@@ -154,6 +179,18 @@ trait EmployeeAccessorsTrait
         return $this->periods()->count();
     }
 
+    public function getFullPeriodNamesAttribute()
+    {
+        return $this->relationLoaded('periods')
+            ? $this->periods->pluck('name')->implode(', ')
+            : $this->periods()->pluck('name')->implode(', ');
+    }
+
+    public function getPeriodNamesAttribute()
+    {
+        return \Illuminate\Support\Str::limit($this->full_period_names, 40, '...');
+    }
+
     public function logPeriodChange(array $periodIds, $action)
     {
         EmployeePeriodLog::create([
@@ -161,6 +198,43 @@ trait EmployeeAccessorsTrait
             'period_ids'  => json_encode($periodIds),
             'action'      => $action,
         ]);
+    }
+
+    /**
+     * خاصية لجلب إجمالي الساعات المتوقعة للشهر الحالي.
+     * يمكن الوصول لها عبر $employee->total_supposed_hours
+     */
+    public function getTotalSupposedHoursAttribute()
+    {
+        $startDate = \Carbon\Carbon::now()->startOfMonth();
+        $endDate   = \Carbon\Carbon::now()->endOfMonth();
+
+        $calculator = new \App\Modules\HR\AttendanceReports\Calculators\TotalSupposedHoursCalculator();
+        return $calculator->calculate($this, $startDate, $endDate, true);
+    }
+
+    /**
+     * دالة مساعدة لجلب إجمالي الساعات المتوقعة لأي نطاق زمني محدد مع الموظف.
+     * $employee->getTotalSupposedHoursRange('2026-02-01', '2026-02-28');
+     */
+    public function getTotalSupposedHoursRange($startDate, $endDate, bool $formatted = true)
+    {
+        $calculator = new \App\Modules\HR\AttendanceReports\Calculators\TotalSupposedHoursCalculator();
+        return $calculator->calculate($this, $startDate, $endDate, $formatted);
+    }
+
+    /**
+     * خاصية لجلب متوسط عدد ساعات العمل اليومية للشهر الحالي (رقمية مقربة لأقرب رقم صحيح).
+     * يتم حسابها بقسمة: إجمالي الساعات المتوقعة / صافي أيام العمل (بعد خصم الإجازات والإجازات الأسبوعية إن وجدت)
+     * يمكن الوصول لها عبر $employee->average_daily_supposed_hours
+     */
+    public function getAverageDailySupposedHoursAttribute(): int
+    {
+        $startDate = \Carbon\Carbon::now()->startOfMonth();
+        $endDate   = \Carbon\Carbon::now()->endOfMonth();
+
+        $calculator = new \App\Modules\HR\AttendanceReports\Calculators\TotalSupposedHoursCalculator();
+        return $calculator->calculateAverageDailyHours($this, $startDate, $endDate);
     }
 
     public function getApprovedPenaltyDeductionsForPeriod($year, $month)

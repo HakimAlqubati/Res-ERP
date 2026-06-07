@@ -98,7 +98,9 @@ class ResetEmployeeBranchLogs extends Command
 
         try {
             // 1. Get all employees who have a branch assigned
-            $employees = Employee::whereNotNull('branch_id')->get();
+            $employees = Employee::whereNotNull('branch_id')
+                ->whereDoesntHave('branchLogs')
+                ->get();
 
             if ($employees->isEmpty()) {
                 $this->line("No employees found.");
@@ -106,7 +108,6 @@ class ResetEmployeeBranchLogs extends Command
             }
 
             // 2. Clear all existing branch logs
-            EmployeeBranchLog::query()->delete();
 
             $count = 0;
             foreach ($employees as $employee) {

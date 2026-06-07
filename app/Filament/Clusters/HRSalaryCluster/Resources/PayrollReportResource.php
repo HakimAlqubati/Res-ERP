@@ -3,29 +3,28 @@
 namespace App\Filament\Clusters\HRSalaryCluster\Resources;
 
 use App\Filament\Clusters\HRSalaryCluster;
+use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollReportResource\Pages\ListPayrollReports;
 use App\Models\Branch;
 use App\Models\FakeModelHRReports\EmployeeAttendanceReport;
-use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollReportResource\Pages\ListPayrollReports;
+use Filament\Forms\Components\Select;
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Table;
-use Filament\Tables\Filters\Filter;
 use Filament\Tables\Enums\FiltersLayout;
-use Filament\Forms\Components\Select;
-use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
 class PayrollReportResource extends Resource
 {
     protected static ?string $model = EmployeeAttendanceReport::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = Heroicon::DocumentText;
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::DocumentText;
 
     protected static ?string $cluster = HRSalaryCluster::class;
-    
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    
+
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
     protected static ?int $navigationSort = 5;
 
     protected static ?string $pluralLabel = 'Payroll Report';
@@ -55,7 +54,7 @@ class PayrollReportResource extends Resource
 
                         Select::make('period')
                             ->label(__('Month'))
-                            ->options(fn() => getMonthOptionsBasedOnSettings())
+                            ->options(fn () => getMonthOptionsBasedOnSettings())
                             ->required()
                             ->live()
                             ->default(now()->format('F Y')),
@@ -74,5 +73,14 @@ class PayrollReportResource extends Resource
         return [
             'index' => ListPayrollReports::route('/'),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) {
+            return true;
+        }
+
+        return false;
     }
 }

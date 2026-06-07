@@ -1,22 +1,23 @@
 <?php
+
 return [
-    'welcome_employee'                                                                => 'مرحباً موظفنا العزيز',
-    'the_attendance_has_been_recorded'                                                => 'تم تسجيل الحضور',
-    'the_departure_has_been_recorded'                                                 => 'تم تسجيل الانصراف',
-    'please_wait_for_a'                                                               => 'يرجى الانتظار لمدة ',
-    'minutue'                                                                         => 'دقيقة',
-    'second'                                                                          => 'ثانية',
-    'attendance_time_is_greater_than_current_period_end_time'                         => 'وقت الحضور يتجاوز وقت نهاية الفترة الحالية',
-    'no_valid_period_found_for_the_specified_time'                                    => 'لم يتم العثور على فترة صالحة للوقت المحدد.',
-    'you_dont_have_periods_today'                                                     => 'تأكد بأن الشيفت الخاصة بك قد بدأت، أو قم بالتواصل مع مديرك لتأكيد شيفتك',
+    'welcome_employee' => 'مرحباً موظفنا العزيز',
+    'the_attendance_has_been_recorded' => 'تم تسجيل الحضور',
+    'the_departure_has_been_recorded' => 'تم تسجيل الانصراف',
+    'please_wait_for_a' => 'يرجى الانتظار لمدة ',
+    'minutue' => 'دقيقة',
+    'second' => 'ثانية',
+    'attendance_time_is_greater_than_current_period_end_time' => 'وقت الحضور يتجاوز وقت نهاية الفترة الحالية',
+    'no_valid_period_found_for_the_specified_time' => 'لم يتم العثور على فترة صالحة للوقت المحدد.',
+    'you_dont_have_periods_today' => 'تأكد بأن الشيفت الخاصة بك قد بدأت، أو قم بالتواصل مع مديرك لتأكيد شيفتك',
     'sorry_no_working_hours_have_been_added_to_you_please_contact_the_administration' => 'عذرًا، لم يتم إضافة ساعات العمل الخاصة بك، يرجى التواصل مع الإدارة!',
-    'there_is_no_employee_at_this_number'                                             => 'لا يوجد موظف بهذا الرقم',
-    'notify'                                                                          => 'تنبيه',
-    'you_cannot_attendance_before'                                                    => 'لا تستطيع تسجيل الحضور قبل',
-    'hours'                                                                           => 'ساعات',
-    'cannot_check_in_because_adjust'                                                  => 'لا يمكنك تسجيل الحضور في الوقت الحالي. يرجى التواصل مع مديرك لتعديل الشيفت.',
-    'attendance_out_of_range_before_period'                                           => 'لا يمكنك تسجيل الحضور في هذا الوقت، أنت خارج الفترة المسموح بها قبل بداية الدوام. يرجى المحاولة في الوقت المسموح قبل بدء الدوام',
-    'attendance_success'                                                              => 'تم بنجاح',
+    'there_is_no_employee_at_this_number' => 'لا يوجد موظف بهذا الرقم',
+    'notify' => 'تنبيه',
+    'you_cannot_attendance_before' => 'لا تستطيع تسجيل الحضور قبل',
+    'hours' => 'ساعات',
+    'cannot_check_in_because_adjust' => 'لا يمكنك تسجيل الحضور في الوقت الحالي. يرجى التواصل مع مديرك لتعديل الشيفت.',
+    'attendance_out_of_range_before_period' => 'لا يمكنك تسجيل الحضور في هذا الوقت، أنت خارج الفترة المسموح بها قبل بداية الدوام. يرجى المحاولة في الوقت المسموح قبل بدء الدوام',
+    'attendance_success' => 'تم بنجاح',
 
     /*
     |--------------------------------------------------------------------------
@@ -58,4 +59,13 @@ return [
     'checkout_from_shift' => 'تسجيل انصراف من :shift',
     'checkin_to_shift' => 'تسجيل دخول إلى :shift',
     'duplicate_missed_checkout_request' => 'تم تسجيل طلب انصراف مفقود بالفعل',
+
+    // رسالة عند تداخل تواريخ طلب الإجازة مع إجازة سابقة
+    'leave_request_overlap' => 'يوجد طلب إجازة آخر يتعارض مع التواريخ المحددة.',
+
+    // تجاوز الحد الشهري عند تقديم الطلب
+    'max_leave_per_month_exceeded_creating' => 'لا يمكن تقديم هذا الطلب. لقد استهلكت :consumed يوم(أيام) من إجازة ":type" في :month، والحد الأقصى المسموح هو :max يوم في الشهر.',
+
+    // تجاوز الحد الشهري عند الموافقة
+    'max_leave_per_month_exceeded_approving' => 'لا يمكن الموافقة على هذا الطلب. الموظف استهلك :consumed يوم(أيام) من إجازة ":type" في :month، والحد الأقصى المسموح هو :max يوم في الشهر.',
 ];

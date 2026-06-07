@@ -30,6 +30,29 @@ class AttendanceObserver
         $this->guardPeriod($attendance);
     }
 
+   
+
+    /**
+     * Block deleting attendance if the payroll period is already finalized.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function deleting(Attendance $attendance): void
+    {
+        $this->guardPeriod($attendance);
+    }
+
+    /**
+     * Handle the Attendance "deleted" event.
+     * After deletion, if the record type is checkin, delete the associated checkout record.
+     */
+    public function deleted(Attendance $attendance): void
+    {
+        if ($attendance->check_type === Attendance::CHECKTYPE_CHECKIN) {
+            $attendance->checkout?->delete();
+        }
+    }
+
     // -------------------------------------------------------------------------
     //  Private helpers
     // -------------------------------------------------------------------------

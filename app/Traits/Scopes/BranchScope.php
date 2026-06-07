@@ -18,6 +18,7 @@ trait BranchScope
         if (auth()->check() && (isSuperAdmin() || isSystemManager())) {
             return $query;
         }
+        
         if (auth()->check() && isBranchManager()) {
             return $query->where($branchColumn, auth()->user()->branch_id);
         }
@@ -60,7 +61,7 @@ trait BranchScope
         if (auth()->check() && (isSuperAdmin() || isSystemManager())) {
             return $query;
         }
-        if (auth()->check() && isStuff()) {
+        if (auth()->check() && (isStuff() || isStoreManager()) ) {
             return $query->where($employeeColumn, auth()->user()->employee->id);
         }
 

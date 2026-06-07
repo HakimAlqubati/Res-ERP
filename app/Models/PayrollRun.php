@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\Scopes\BranchScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class PayrollRun extends Model implements Auditable
@@ -55,6 +56,13 @@ class PayrollRun extends Model implements Auditable
     protected $casts = [
         'pay_date' => 'date',
     ];
+
+    /**
+     * Transient (not persisted). Set before save() to scope the pending-applications
+     * check in PayrollRunObserver to specific employees only.
+     */
+    public ?array $pendingCheckEmployeeIds = null;
+
     const STATUS_PENDING   = 'pending';
     const STATUS_COMPLETED = 'completed';
     const STATUS_APPROVED  = 'approved';
@@ -97,5 +105,12 @@ class PayrollRun extends Model implements Auditable
     public function transactions()
     {
         return $this->hasMany(SalaryTransaction::class, 'payroll_run_id');
+    }
+
+    public function employeesCount(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->payrolls()->distinct('employee_id')->count('employee_id')
+        );
     }
 }

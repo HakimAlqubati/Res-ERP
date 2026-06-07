@@ -9,12 +9,6 @@ trait InventoryBootEvents
 {
     protected static function bootInventoryBootEvents()
     {
-        // When retrieving the model, modify the `transactionable_type`
-        static::retrieved(function ($transaction) {
-            if ($transaction->transactionable_type) {
-                $transaction->transactionable_type = class_basename($transaction->transactionable_type);
-            }
-        });
         static::creating(function ($transaction) {
 
             $product = $transaction->product ?? $transaction->product()->with('supplyOutUnitPrices')->first();

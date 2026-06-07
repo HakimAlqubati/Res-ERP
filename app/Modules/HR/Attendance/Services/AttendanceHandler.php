@@ -35,6 +35,7 @@ class AttendanceHandler
         private AttendanceCalculator $calculator,
         private AttendanceRepositoryInterface $repository,
         private CreateMissedCheckoutRequestAction $createMissedCheckoutRequest,
+        private AttendanceConfig $config,
     ) {}
 
     /**
@@ -59,14 +60,19 @@ class AttendanceHandler
         }
 
         if (!$shiftInfo) {
-            throw new NoShiftFoundException();
+            if (!$this->config->isNoShiftAttendanceAllowed()) {
+                throw new NoShiftFoundException();
+            }
+            // الإعداد مفعّل: نكمل بدون شيفت (period_id = null)
+        } else {
+            $context->setShiftInfo($shiftInfo);
         }
-        $context->setShiftInfo($shiftInfo);
 
         // 2. تحديد نوع العملية (دخول/خروج)
-        $requestedType = $context->getRequestedCheckType();
-        if ($requestedType) {
-            $context->setCheckType($requestedType);
+        // ملاحظة: عند وجود شيفت وnوع صريح يُعالج هنا مباشرة؛
+        // أما حالة بدون شيفت تمر عبر DetermineCheckTypeAction لأنه يعرف كيف يبحث بدون period_id
+        if ($context->getRequestedCheckType() && $context->workPeriod) {
+            $context->setCheckType($context->getRequestedCheckType());
 
             if ($context->isCheckOut()) {
                 $lastCheckIn = $this->repository->findOpenCheckIn(
@@ -80,11 +86,19 @@ class AttendanceHandler
             $context = $this->determineCheckType->execute($context);
         }
 
-        // Check-out with no open check-in: auto-create a missed checkout request for HR review.
-        if (
-            $context->isCheckOut() && !$context->lastCheckIn
-            && $context->attendanceType->value != AttendanceType::REQUEST->value
-        ) {
+        // Check-out with no open check-in
+        if ($context->isCheckOut() && !$context->lastCheckIn) {
+
+            // إذا كان الطلب من نوع "request" (موافقة على طلب انصراف):
+            // لا يمكن تسجيل خروج بدون دخول مسجّل مسبقاً — نُعيد failure DTO مباشرةً
+            // (نفس نمط autoRequestCreated أدناه، بدون رمي exception)
+            if ($context->attendanceType->value === AttendanceType::REQUEST->value) {
+                return AttendanceResultDTO::failure(
+                    __('notifications.cannot_checkout_without_checkin')
+                );
+            }
+
+            // للحضور العادي (fingerprint/rfid/...): إنشاء طلب انصراف تلقائي لمراجعة HR.
             $this->createMissedCheckoutRequest->execute($context);
 
             return AttendanceResultDTO::autoRequestCreated(

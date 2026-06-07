@@ -116,4 +116,77 @@ class EmployeeActions
                     ->send();
             });
     }
+
+    public static function active(): Action
+    {
+        return Action::make('active')
+            ->label(__('lang.enable_account'))
+            ->color('success')
+            ->icon('heroicon-o-check-circle')
+            ->requiresConfirmation()
+            ->visible(fn(Employee $record) => !$record->active)
+            ->action(function (Employee $record) {
+                \Illuminate\Support\Facades\DB::beginTransaction();
+                try {
+                    $record->update(['active' => true]);
+                    \Illuminate\Support\Facades\DB::commit();
+                    
+                    Notification::make()
+                        ->title(__('lang.success'))
+                        ->success()
+                        ->send();
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\DB::rollBack();
+                    
+                    Notification::make()
+                        ->title(__('lang.error'))
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+                }
+            });
+    }
+
+    public static function inactive(): Action
+    {
+        return Action::make('inactive')
+            ->label(__('lang.disable_account'))
+            ->color('danger')
+            ->icon('heroicon-o-x-circle')
+            ->requiresConfirmation()
+            ->visible(fn(Employee $record) => $record->active)
+            ->action(function (Employee $record) {
+                \Illuminate\Support\Facades\DB::beginTransaction();
+                try {
+                    $record->update(['active' => false]);
+                    \Illuminate\Support\Facades\DB::commit();
+                    
+                    Notification::make()
+                        ->title(__('lang.success'))
+                        ->success()
+                        ->send();
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\DB::rollBack();
+                    
+                    Notification::make()
+                        ->title(__('lang.error'))
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+                }
+            });
+    }
+
+    public static function attendance(): Action{
+        return  \Filament\Actions\Action::make('attendance_report')
+        ->label(__('lang.attendance_report'))
+        ->color('info')
+        ->icon('heroicon-o-chart-bar')
+        ->url(fn($record) => \App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource::getUrl('index', [
+          'tableFilters[employee_id]' => $record->id,
+          'tableFilters[date_range][start_date]' => now()->startOfMonth()->toDateString(),
+          'tableFilters[date_range][end_date]' => now()->endOfMonth()->toDateString(),
+        ]))
+        ->openUrlInNewTab();
+    }
 }

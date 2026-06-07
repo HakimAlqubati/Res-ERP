@@ -45,19 +45,24 @@ class AttendanceReportManager implements AttendanceReportInterface
     {
         return $this->fetcher->getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
     }
-    public function getEmployeesRangeReport($employees, Carbon $startDate, Carbon $endDate): Collection
+    public function getEmployeesRangeReport($employees, Carbon $startDate, Carbon $endDate, bool $excludeNoShift = false): Collection
     {
         $employees = collect($employees);
         $empIds = $employees->pluck('id')->toArray();
-        $bulkData = $this->fetcher->fetchForMultiEmployeesRange($empIds, $startDate->toDateString(), $endDate->toDateString());
+        $bulkData = $this->fetcher->fetchForMultiEmployeesRange($empIds, $startDate->toDateString(), $endDate->toDateString(), $excludeNoShift);
 
         $results = collect();
         foreach ($employees as $employee) {
+            $termination = $bulkData['terminations'][$employee->id] ?? null;
+            if ($termination && $employee->join_date && \Carbon\Carbon::parse($termination->termination_date)->lte(\Carbon\Carbon::parse($employee->join_date))) {
+                $termination = null;
+            }
+
             $employeeData = [
                 'histories'     => ($bulkData['histories'][$employee->id] ?? collect()),
                 'attendances'   => ($bulkData['attendances'][$employee->id] ?? collect()),
                 'leaves'        => ($bulkData['leaves'][$employee->id] ?? collect()),
-                'terminations'  => ($bulkData['terminations'][$employee->id] ?? null),
+                'terminations'  => $termination,
                 'overtimes'     => ($bulkData['overtimes'][$employee->id] ?? collect()),
                 'workPeriodMap' => $bulkData['workPeriodMap'],
             ];

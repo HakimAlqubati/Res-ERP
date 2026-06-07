@@ -2,30 +2,30 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
-use Filament\Pages\Enums\SubNavigationPosition;
 use App\Filament\Clusters\InventoryManagementCluster;
-use App\Filament\Clusters\InventoryReportCluster;
-use App\Models\Product;
-use Filament\Resources\Resource;
-use Filament\Tables\Table;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\MinimumProductQtyReportResource\Pages;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\MissingInventoryProductsReportResource\Pages\ListMissingInventoryProductsReport;
+use App\Models\Product;
 use App\Models\Store;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Toggle;
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
 
 class MissingInventoryProductsReportResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = InventoryManagementCluster::class;
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
     protected static ?int $navigationSort = 11;
 
     public static function getPluralLabel(): ?string
@@ -37,7 +37,6 @@ class MissingInventoryProductsReportResource extends Resource
     {
         return 'Unaudited Products';
     }
-
 
     public static function table(Table $table): Table
     {
@@ -69,7 +68,7 @@ class MissingInventoryProductsReportResource extends Resource
                         }
                     )
 
-                    ->hidden(fn() => isStuff() || isMaintenanceManager())
+                    ->hidden(fn () => isStuff() || isMaintenanceManager())
                     ->searchable(),
                 Filter::make('options')
                     ->label('Extra')
@@ -82,8 +81,6 @@ class MissingInventoryProductsReportResource extends Resource
             ->recordActions([]);
     }
 
-
-
     public static function getPages(): array
     {
         return [
@@ -94,10 +91,21 @@ class MissingInventoryProductsReportResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return 'Report';
+
         return static::getModel()::whereNotNull('minimum_stock_qty')->count();
     }
-    public static function getNavigationBadgeColor(): string | array | null
+
+    public static function getNavigationBadgeColor(): string|array|null
     {
         return Color::Yellow;
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isFinanceManager()) {
+            return true;
+        }
+
+        return false;
     }
 }

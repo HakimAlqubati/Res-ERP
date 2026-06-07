@@ -15,6 +15,8 @@ class EquipmentController extends Controller
     public function index(Request $req)
     {
         $q = Equipment::query()
+            ->forBranchManager()
+            ->forEmployee()
             ->with(['type.category', 'branch'])
             ->when($req->filled('search'), function ($x) use ($req) {
                 $v = $req->input('search');

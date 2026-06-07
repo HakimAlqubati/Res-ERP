@@ -5,6 +5,8 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 use App\Models\Traits\HasUserDevices;
+use App\Observers\UserObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use App\Traits\Scopes\BranchScope;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
@@ -21,6 +23,7 @@ use Laravel\Passport\HasApiTokens;
 use OwenIt\Auditing\Contracts\Auditable;
 use Spatie\Permission\Traits\HasRoles;
 
+#[ObservedBy(UserObserver::class)]
 class User extends Authenticatable implements FilamentUser, Auditable
 // implements FilamentUser
 

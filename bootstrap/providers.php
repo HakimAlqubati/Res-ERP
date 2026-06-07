@@ -17,4 +17,5 @@ return [
     Maatwebsite\Excel\ExcelServiceProvider::class,
     Mccarlosen\LaravelMpdf\LaravelMpdfServiceProvider::class,
     OwenIt\Auditing\AuditingServiceProvider::class,
+    App\Modules\Stock\Providers\StockServiceProvider::class,
 ];

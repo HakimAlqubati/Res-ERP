@@ -26,6 +26,7 @@ use App\Models\InventoryTransaction;
 use App\Models\Product;
 use Dom\Text;
 use Filament\Actions\Action;
+use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Forms\Components\FileUpload;
 use Filament\Resources\Resource;
@@ -63,7 +64,7 @@ class InventoryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->striped()
-            ->paginated([10, 25, 50, 150])
+            ->paginated([10, 25, 50, 150,400])
             ->defaultSort('id', 'desc')
             ->headerActions([
                 Action::make('import_inventory')->hidden()
@@ -100,7 +101,7 @@ class InventoryResource extends Resource
             ])
             ->columns([
 
-                SoftDeleteColumn::make(),
+                SoftDeleteColumn::make()->toggleable(),
                 TextColumn::make('deleted_at')
                     ->label('Deleted At')
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -321,8 +322,53 @@ class InventoryResource extends Resource
             ->filtersFormColumns(4)
             ->deferFilters(true)
             ->recordActions([
-                // Tables\Actions\EditAction::make(),
+ 
+                Action::make('editTransaction')
+                    ->label('Edit Package Size')
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('warning')
+                    ->visible(fn()=>isHakimOrAdel())
+                    ->action(function ($record, $data) {
+                        $newPackageSize = $data['package_size'];
+                        
+                        $record->update([
+                            'package_size' => $newPackageSize,
+                            'temp_qty' => $data['temp_qty'],
+                        ]);
 
+                        // Check if it's from a StockAdjustmentDetail
+                        if ($record->formatted_transactionable_type === 'StockAdjustmentDetail' || $record->transactionable_type === \App\Models\StockAdjustmentDetail::class) {
+                            $adjDetail = \App\Models\StockAdjustmentDetail::find($record->transactionable_id);
+                            
+                            if ($adjDetail) {
+                                $adjDetail->update(['package_size' => $newPackageSize]);
+
+                                // Check if the adjustment is from a StockInventory
+                                if (str_ends_with($adjDetail->source_type ?? '', 'StockInventory')) {
+                                    \App\Models\StockInventoryDetail::where('stock_inventory_id', $adjDetail->source_id)
+                                        ->where('product_id', $adjDetail->product_id)
+                                        ->where('unit_id', $adjDetail->unit_id)
+                                        ->update(['package_size' => $newPackageSize]);
+                                }
+                            }
+                        }
+
+                        Notification::make()
+                            ->title('Package Size Updated')
+                            ->success()
+                            ->body('Package size updated successfully.')
+                            ->send();
+                    })
+                     ->schema([
+                        TextInput::make('package_size')
+                            ->label('Package Size')
+                            ->required()
+                            ->numeric()->default(fn($record): float => $record->package_size ?? 0)
+                            ->minValue(0),
+                            TextInput::make('temp_qty')
+                            ->label('Temp qty')
+                            ->default(fn($record): float => $record->temp_qty ?? 0)->numeric()
+                    ]),
                 ActionGroup::make([
 
                     Action::make('editQuantity')

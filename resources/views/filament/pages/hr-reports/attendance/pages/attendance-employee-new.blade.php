@@ -155,7 +155,12 @@
                                 alt="{{ $employee->name }}"
                                 style="width: 90px; height: 90px; border-radius: 12px; object-fit: cover; border: 3px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.18);">
                             @endif
-                            <span style="font-size: 13px; font-weight: bold;">{{ $employee?->name ?? __('lang.choose_branch') }}</span>
+                            <span style="font-size: 13px; font-weight: bold;">
+                                <a href="{{ $employee ? \App\Filament\Resources\EmployeeResource::getUrl('view', ['record' => $employee->id]) : '#' }}" target="_blank">
+                                    {{ $employee?->name ?? __('lang.choose_branch') }}
+                                </a>
+
+                            </span>
                         </div>
 
                         {{-- Right: Dates --}}
@@ -325,21 +330,15 @@
                     ->values()
                     ->all();
 
-                    $result = \App\Services\HR\AttendanceHelpers\Reports\AttendanceDetailsCalculator::calculatePeriodDuration($checkIns, $checkOuts);
-                    $duration = $result['formatted'];
                     @endphp
-                    @if ($duration !== '-')
                     <button
                         class="text-blue-600 font-semibold hover:text-blue-900 transition flex items-center justify-between w-full"
                         wire:click="showDetails('{{ $date }}', {{ $employee_id }}, {{ $period['period_id'] }})"
                         style="cursor:pointer; border:none; background:none; padding:0;"
                         title="Show all check-in/out details">
-                        <span class="underline">{{ $duration }}</span>
+                        <span class="underline">{{ $period['attendances']['checkout']['lastcheckout']['total_actual_druation_hourly_formatted'] ?? '-' }}</span>
                         <span class="star-badge">&#9733;</span>
                     </button>
-                    @else
-                    <span>{{ $duration }}</span>
-                    @endif
                 </td>
                 <td>
                     {{ $period['attendances']['checkout']['lastcheckout']['approved_overtime'] ?? '-' }}
@@ -358,7 +357,15 @@
                 <td>{{ $date }}</td>
                 <td colspan="{{ $show_branch ? 7 : 9 }}" class="text-center text-gray-500 font-bold">
                     @if(isset($data['day_status']) )
+                    @if ($data['day_status'] == 'terminated')
+                    {{ __('lang.terminated') }}
+
+                    @elseif($data['day_status']=='no_periods')
+                    {{ __('lang.no_periods') }}
+                    @else
                     {{ $data['day_status'] }}
+                    @endif
+
                     @else
                     {{ __('lang.no_periods') }}
                     @endif

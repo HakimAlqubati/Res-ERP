@@ -8,6 +8,8 @@ use App\Models\CustomTenantModel;
 use App\Models\Employee;
 
 use App\Models\InventoryTransaction;
+use App\Models\LeaveType;
+use App\Observers\LeaveTypeObserver;
 use App\Models\PurchaseInvoiceDetail;
 use App\Models\StockTransferOrder;
 use App\Models\Task;
@@ -82,6 +84,7 @@ class AppServiceProvider extends ServiceProvider
         StockInventory::observe(StockInventoryObserver::class);
         \App\Models\PayrollRun::observe(\App\Observers\PayrollRunObserver::class);
         \App\Models\Payroll::observe(\App\Observers\PayrollObserver::class);
+        LeaveType::observe(LeaveTypeObserver::class);
         \App\Models\MaintenanceCost::observe(\App\Observers\MaintenanceCostObserver::class);
 
         // PurchaseInvoiceDetail::observe(PurchaseInvoiceDetailObserver::class);

@@ -2,24 +2,42 @@
 
 namespace App\Observers;
 
+use App\Jobs\InitNewEmployeeLeaveBalancesJob;
 use App\Models\Employee;
 use App\Models\EmployeeBranchLog;
 use App\Models\User;
+use App\Modules\HR\Leaves\InitEmployeeLeaves\Init;
+use App\Modules\HR\Employee\Services\PassportValidationService;
 use Exception;
 use Illuminate\Support\Facades\Storage;
 
 class EmployeeObserver
 {
+    public function __construct(
+        private readonly PassportValidationService $passportValidationService
+    ) {}
 
     /**
      * Handle the Employee "saving" event.
      */
     public function saving(Employee $employee): void
     {
+        $this->passportValidationService->validateUniquePassportPerNationality($employee);
+
         if ($employee->is_ceo) {
             Employee::where('is_ceo', true)
                 ->where('id', '!=', $employee->id)
                 ->update(['is_ceo' => false]);
+        }
+
+        if ($employee->exists && $employee->isDirty('branch_id') && $employee->branch_id) {
+            $branch = \App\Models\Branch::find($employee->branch_id);
+            if ($branch && $branch->manager_id) {
+                $managerEmployee = Employee::where('user_id', $branch->manager_id)->first();
+                if ($managerEmployee) {
+                    $employee->manager_id = $managerEmployee->id;
+                }
+            }
         }
     }
 
@@ -69,6 +87,22 @@ class EmployeeObserver
             // ربط user_id بالموظف
             $employee->user_id = $user->id;
             $employee->save();
+        }
+
+        // تهيئة أرصدة الإجازة في الخلفية دون إيقاف المستخدم
+        // Initialize leave balances in the background without blocking the user
+        // نمرر الـ tenantId صراحةً لضمان عمل الجوب على قاعدة البيانات الصحيحة
+        // Explicitly pass tenantId so the job runs on the correct tenant database
+         (new Init())->handleForNewEmployee($employee);
+
+        // إنشاء سجل الفرع الأول بناءً على تاريخ الانضمام
+        if ($employee->branch_id) {
+            $employee->branchLogs()->create([
+                'branch_id'  => $employee->branch_id,
+                'start_at'   => $employee->join_date ?? now(),
+                'end_at'     => null,
+                'created_by' => auth()->id(),
+            ]);
         }
     }
 

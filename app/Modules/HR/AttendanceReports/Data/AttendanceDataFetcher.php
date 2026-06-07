@@ -68,7 +68,7 @@ class AttendanceDataFetcher
             ->whereIn('employee_id', $employeeIds)
             ->where('status', EmployeeServiceTermination::STATUS_APPROVED)
             ->where('termination_date', '<', $dateStr)
-            ->join('hr_employees','hr_employees.id','=','hr_employee_service_terminations.employee_id')
+            ->join('hr_employees', 'hr_employees.id', '=', 'hr_employee_service_terminations.employee_id')
             ->where('hr_employees.active', 0)
             ->pluck('termination_date', 'employee_id');
 
@@ -82,6 +82,7 @@ class AttendanceDataFetcher
 
         $workPeriodIds = $histories->pluck('period_id')->unique()->toArray();
         $workPeriodMap = WorkPeriod::whereIn('id', $workPeriodIds)
+            ->orderBy('start_at', 'asc')
             ->get(['id', 'name', 'start_at', 'end_at', 'day_and_night'])
             ->keyBy('id');
 
@@ -153,6 +154,7 @@ class AttendanceDataFetcher
 
         $workPeriodIds = $histories->pluck('period_id')->unique()->toArray();
         $workPeriodMap = WorkPeriod::whereIn('id', $workPeriodIds)
+            ->orderBy('start_at', 'asc')
             ->get(['id', 'name', 'start_at', 'end_at', 'day_and_night'])
             ->keyBy('id');
 
@@ -167,7 +169,7 @@ class AttendanceDataFetcher
      * @param string $endDateStr The end date in 'Y-m-d' format.
      * @return array An associative array containing collections grouped by employee_id.
      */
-    public function fetchForMultiEmployeesRange(array $employeeIds, string $startDateStr, string $endDateStr): array
+    public function fetchForMultiEmployeesRange(array $employeeIds, string $startDateStr, string $endDateStr, bool $excludeNoShift = false): array
     {
         $histories = EmployeePeriodHistory::with(['workPeriod', 'branch'])
             ->where('active', 1)
@@ -179,14 +181,21 @@ class AttendanceDataFetcher
             ->get()
             ->groupBy('employee_id');
 
-        $attendances = Attendance::with('branch')
+        $attendancesQuery = Attendance::with('branch')
             ->where('deleted_at', null)
             ->where('accepted', 1)
             ->whereIn('employee_id', $employeeIds)
             ->whereBetween('check_date', [$startDateStr, $endDateStr])
-            ->orderBy('id')
-            ->get()
-            ->groupBy(['employee_id', 'check_date']);
+            ->orderBy('id');
+
+        if ($excludeNoShift) {
+            $attendancesQuery->where(function ($q) {
+                $q->whereNull('status')
+                    ->orWhere('status', '!=', \App\Modules\HR\Attendance\Enums\AttendanceStatus::NO_SHIFT->value);
+            });
+        }
+
+        $attendances = $attendancesQuery->get()->groupBy(['employee_id', 'check_date']);
 
         $leaves = DB::table('hr_employee_applications')
             ->join('hr_leave_requests', 'hr_employee_applications.id', '=', 'hr_leave_requests.application_id')
@@ -229,6 +238,7 @@ class AttendanceDataFetcher
         $workPeriodIds = $allPeriodIds->unique()->toArray();
 
         $workPeriodMap = WorkPeriod::whereIn('id', $workPeriodIds)
+            ->orderBy('start_at', 'asc')
             ->get(['id', 'name', 'start_at', 'end_at', 'day_and_night'])
             ->keyBy('id');
 

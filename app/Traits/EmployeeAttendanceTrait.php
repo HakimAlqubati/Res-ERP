@@ -274,7 +274,22 @@ trait EmployeeAttendanceTrait
             return [];
         }
 
-        // 2. فلترة الفترات النشطة لهذا اليوم من الـ Collection
+        // 2. جلب بصمات هذا اليوم فقط
+        $attendances = $this->attendances
+            ->where('check_date', $date)
+            ->sortBy('id')
+            ->values();
+
+        if ($attendances->count() < 2) {
+            return [];
+        }
+
+        // 3. التحقق إذا كان الحضور بدون وردية (No Shift) وتوجيهه لدالة مبسطة (SRP)
+        if ($attendances->contains('status', \App\Modules\HR\Attendance\Enums\AttendanceStatus::NO_SHIFT->value)) {
+            return $this->calculateNoShiftOvertime($attendances, $halfHourRule);
+        }
+
+        // 4. فلترة الفترات النشطة لهذا اليوم للورديات العادية
         $activePeriods = $this->periodHistories->filter(function ($history) use ($date) {
             $startValid = is_null($history->start_date) || $history->start_date <= $date;
             $endValid = is_null($history->end_date) || $history->end_date >= $date;
@@ -285,69 +300,58 @@ trait EmployeeAttendanceTrait
             return [];
         }
 
-        // 3. جلب بصمات هذا اليوم فقط (يجب استخدام values لإعادة الفهرسة وتجنب أخطاء الـ Loop)
-        $attendances = $this->attendances
-            ->where('check_date', $date)
-            ->sortBy('id') // 👈 إجبار الترتيب بالتسلسل الصحيح
-            ->values();
-        if ($attendances->count() < 2) {
-            return [];
-        }
-
-        $totalMinutes = 0;
-        $firstCheckInTime = null;
-        $lastCheckOutTime = null;
-
-        // 4. حساب دقائق العمل الفِعلية بدقة (معالجة أزواج الدخول/الخروج)
-        for ($i = 0; $i < $attendances->count() - 1; $i++) {
-            $current = $attendances[$i];
-            $next = $attendances[$i + 1];
-
-            if ($current->check_type === 'checkin' && $next->check_type === 'checkout') {
-                $in  = \Carbon\Carbon::parse("{$current->real_check_date} {$current->check_time}");
-                $out = \Carbon\Carbon::parse("{$next->real_check_date} {$next->check_time}");
-
-                // معالجة الورديات المسائية التي تعبر لمنتصف الليل (اليوم التالي)
-                if ($out < $in) {
-                    $out->addDay();
-                }
-
-                $totalMinutes += $in->diffInMinutes($out);
-
-                // حفظ أول وقت دخول كبداية للإضافي، وتحديث آخر وقت خروج كنهاية
-                $firstCheckInTime = $firstCheckInTime ?? $in;
-                $lastCheckOutTime = $out;
-
-                // تخطي بصمة الخروج لأننا أدخلناها في الحساب بنجاح مع الدخول
-                $i++;
-            }
-        }
-
-        if ($totalMinutes === 0) {
-            return [];
-        }
-
-        // 5. مقارنة وقت العمل الفعلي بوقت الفترة المقررة (Supposed Duration)
-        // 5. مقارنة وقت العمل الفعلي بوقت الفترة المقررة (Supposed Duration)
+        // 5 & 6. حساب الإضافي لكل وردية على حدة بناءً على بصماتها فقط
         foreach ($activePeriods as $history) {
             $period = $history->workPeriod;
             if (!$period) continue;
+
+            // فلترة البصمات الخاصة بهذه الوردية فقط
+            $periodAttendances = $attendances->where('period_id', $period->id)->values();
+
+            if ($periodAttendances->count() < 2) {
+                continue;
+            }
+
+            $totalMinutes = 0;
+            $firstCheckInTime = null;
+            $lastCheckOutTime = null;
+
+            for ($i = 0; $i < $periodAttendances->count() - 1; $i++) {
+                $current = $periodAttendances[$i];
+                $next = $periodAttendances[$i + 1];
+
+                if ($current->check_type === 'checkin' && $next->check_type === 'checkout') {
+                    $in  = \Carbon\Carbon::parse("{$current->real_check_date} {$current->check_time}");
+                    $out = \Carbon\Carbon::parse("{$next->real_check_date} {$next->check_time}");
+
+                    if ($out < $in) {
+                        $out->addDay();
+                    }
+
+                    $totalMinutes += $in->diffInMinutes($out);
+                    $firstCheckInTime = $firstCheckInTime ?? $in;
+                    $lastCheckOutTime = $out;
+                    $i++;
+                }
+            }
+
+            if ($totalMinutes === 0) {
+                continue;
+            }
 
             [$hours, $minutes] = explode(':', $period->supposed_duration);
             $supposedDurationMinutes = ((int)$hours * 60) + (int)$minutes;
 
             if ($totalMinutes >= ($supposedDurationMinutes + $allowedOffset)) {
+
                 $overtimeMinutes = $totalMinutes - $supposedDurationMinutes;
 
-                // 👈 هنا الحل: استخدام معادلتك الأصلية لإجبار التقريب لأقرب نصف ساعة دائماً
                 $overtimeHours = round(($overtimeMinutes / 60) * 2) / 2;
 
-                // تطبيق الشرط الخاص بك (من الكود القديم) إذا لزم الأمر
                 if ($halfHourRule) {
                     $overtimeHours = round($overtimeHours, 2);
                 }
 
-                // حساب التنسيق النصي بنفس طريقتك الأصلية
                 $remainingMinutes = $overtimeMinutes % 60;
                 $formattedOvertime = "{$overtimeHours} h {$remainingMinutes} m";
 
@@ -355,7 +359,7 @@ trait EmployeeAttendanceTrait
                     'employee_id'               => $this->id,
                     'period_id'                 => $period->id,
                     'supposed_duration_minutes' => (int) $overtimeMinutes,
-                    'overtime_hours'            => $overtimeHours, // 👈 النتيجة الآن ستتطابق
+                    'overtime_hours'            => $overtimeHours,
                     'overtime'                  => $formattedOvertime,
                     'overtime_start_time'       => $firstCheckInTime?->toTimeString(),
                     'overtime_end_time'         => $lastCheckOutTime?->toTimeString(),
@@ -364,5 +368,58 @@ trait EmployeeAttendanceTrait
         }
 
         return [];
+    }
+
+    /**
+     * دالة مبسطة لحساب الإضافي للموظفين الذين حضروا بدون وردية (No Shift)
+     * جميع ساعات العمل تُعتبر إضافي لأن الساعات المتوقعة هي 0.
+     */
+    private function calculateNoShiftOvertime(\Illuminate\Support\Collection $attendances, bool $halfHourRule): array
+    {
+        $totalMinutes = 0;
+        $firstCheckInTime = null;
+        $lastCheckOutTime = null;
+
+        for ($i = 0; $i < $attendances->count() - 1; $i++) {
+            $current = $attendances[$i];
+            $next = $attendances[$i + 1];
+
+            if ($current->check_type === 'checkin' && $next->check_type === 'checkout') {
+                $in  = \Carbon\Carbon::parse("{$current->real_check_date} {$current->check_time}");
+                $out = \Carbon\Carbon::parse("{$next->real_check_date} {$next->check_time}");
+
+                if ($out < $in) {
+                    $out->addDay();
+                }
+
+                $totalMinutes += $in->diffInMinutes($out);
+                $firstCheckInTime = $firstCheckInTime ?? $in;
+                $lastCheckOutTime = $out;
+                $i++;
+            }
+        }
+
+        if ($totalMinutes === 0) {
+            return [];
+        }
+
+        $overtimeHours = round(($totalMinutes / 60) * 2) / 2;
+
+        if ($halfHourRule) {
+            $overtimeHours = round($overtimeHours, 2);
+        }
+
+        $remainingMinutes = $totalMinutes % 60;
+        $formattedOvertime = "{$overtimeHours} h {$remainingMinutes} m";
+
+        return [
+            'employee_id'               => $this->id,
+            'period_id'                 => null, // لا يوجد وردية
+            'supposed_duration_minutes' => $totalMinutes,
+            'overtime_hours'            => $overtimeHours,
+            'overtime'                  => $formattedOvertime,
+            'overtime_start_time'       => $firstCheckInTime?->toTimeString(),
+            'overtime_end_time'         => $lastCheckOutTime?->toTimeString(),
+        ];
     }
 }

@@ -108,6 +108,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         ?int $periodMonth = null,
         ?Carbon $periodEnd = null,
         ?Carbon $periodStart = null,
+        bool $isMultiSegment = false, // true عندما للموظف أكثر من Segment في هذا الشهر
     ): array {
         $this->resetState();
 
@@ -148,7 +149,19 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         // Determine how many days should be paid for the current period ($payableDays)
         $payableDays = $rateWorkingDays;
         if ($periodEnd && $periodEnd->day < $monthDays) {
+            // Segment ends mid-month → use the calendar end-day directly.
             $payableDays = $periodEnd->day;
+        } elseif (
+            $this->dailyRateMethod === DailyRateMethod::By30Days->value
+            && $isMultiSegment
+            && $monthDays === 31
+            && $periodStart && $periodStart->day > 1
+        ) {
+            // Last segment of a branch-transfer employee in a 31-day month:
+            // subtract the rate-days already consumed by prior segments
+            // so the total across all segments equals 30 (not 31).
+            $previousUsedDays = (int) round(($periodStart->day - 1) / $monthDays * $rateWorkingDays);
+            $payableDays      = max(0, $rateWorkingDays - $previousUsedDays);
         }
 
         // Cap payable days by required shift days (exclude no_periods days)
@@ -181,15 +194,15 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
 
         // Create calculation context
         $context = new CalculationContext(
-            employee:        $employee,
-            employeeData:    $employeeData,
-            salary:          $salary,
-            workingDays:     (int)$payableDays,
-            dailyHours:      $dailyHours,
-            monthDays:       $monthDays,
-            periodYear:      $periodYear,
-            periodMonth:     $periodMonth,
-            periodEndDate:   $periodEnd ? $periodEnd->toDateString() : null,
+            employee: $employee,
+            employeeData: $employeeData,
+            salary: $salary,
+            workingDays: (int)$payableDays,
+            dailyHours: $dailyHours,
+            monthDays: $monthDays,
+            periodYear: $periodYear,
+            periodMonth: $periodMonth,
+            periodEndDate: $periodEnd ? $periodEnd->toDateString() : null,
             periodStartDate: $periodStart?->toDateString(),   // ← بداية فترة الفرع الدقيقة
         );
 

@@ -2,19 +2,19 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Pages\Enums\SubNavigationPosition;
-use Filament\Schemas\Schema;
-use App\Filament\Resources\ProductResource\Pages\ManageProducts;
+use App\Filament\Clusters\ProductUnitCluster;
 use App\Filament\Resources\ProductResource\Pages\CreateProduct;
 use App\Filament\Resources\ProductResource\Pages\EditProduct;
+use App\Filament\Resources\ProductResource\Pages\ManageProducts;
 use App\Filament\Resources\ProductResource\Pages\ViewProduct;
 use App\Filament\Resources\ProductResource\RelationManagers\ProductPriceHistoriesRelationManager;
-use App\Filament\Clusters\ProductUnitCluster;
 use App\Filament\Resources\ProductResource\Schema\ProductsSchema;
 use App\Filament\Resources\ProductResource\Tables\ProductsTable;
 use App\Models\Product;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Pages\Page;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -25,18 +25,24 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ProductResource extends Resource
 {
-    protected static ?string $model                               = Product::class;
-    protected static ?string $cluster                             = ProductUnitCluster::class;
-    protected static string | \BackedEnum | null $navigationIcon                      = Heroicon::Cube;
-    protected static ?string $recordTitleAttribute                = 'name';
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort                         = 1;
+    protected static ?string $model = Product::class;
+
+    protected static ?string $cluster = ProductUnitCluster::class;
+
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::Cube;
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
+    protected static ?int $navigationSort = 1;
     // protected static ?string $navigationGroup = 'Products - units';
 
     public static function getPluralLabel(): ?string
     {
         return __('lang.products');
     }
+
     public static function getNavigationLabel(): string
     {
         return __('lang.products');
@@ -61,10 +67,10 @@ class ProductResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => ManageProducts::route('/'),
+            'index' => ManageProducts::route('/'),
             'create' => CreateProduct::route('/create'),
-            'edit'   => EditProduct::route('/{record}/edit'),
-            'view'   => ViewProduct::route('/{record}'),
+            'edit' => EditProduct::route('/{record}/edit'),
+            'view' => ViewProduct::route('/{record}'),
         ];
     }
 
@@ -93,9 +99,10 @@ class ProductResource extends Resource
     {
         return static::getModel()::count();
     }
+
     public static function getGlobalSearchResultTitle(Model $record): string
     {
-        return $record->code . ' - ' . $record->name;
+        return $record->code.' - '.$record->name;
     }
 
     public static function getGloballySearchableAttributes(): array
@@ -103,30 +110,37 @@ class ProductResource extends Resource
         return ['name', 'code', 'id'];
     }
 
-
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery()
             ->rawOrSemiFinished()->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+
         // $query->withMinimumUnitPrices();
         return $query;
     }
-
-
 
     public static function canEdit(Model $record): bool
     {
         if (isSuperAdmin() || isSystemManager() || isFinanceManager()) {
             return true;
         }
+
         return false;
     }
-
 
     public static function getGlobalSearchResultsLimit(): int
     {
         return 15;
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) {
+            return true;
+        }
+
+        return false;
     }
 }

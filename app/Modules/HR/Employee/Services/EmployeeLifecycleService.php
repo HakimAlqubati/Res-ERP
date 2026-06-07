@@ -51,9 +51,10 @@ class EmployeeLifecycleService
      * Approve a pending termination request.
      *
      * @param EmployeeServiceTermination $termination
+     * @param int|null $approverId  Explicit approver ID (used by the cron job). Falls back to auth()->id().
      * @throws Exception
      */
-    public function approveTermination(EmployeeServiceTermination $termination): void
+    public function approveTermination(EmployeeServiceTermination $termination, ?int $approverId = null): void
     {
         $this->ensureFinancialClearance($termination->employee);
 
@@ -62,7 +63,7 @@ class EmployeeLifecycleService
             $termination->update([
                 'status'      => EmployeeServiceTermination::STATUS_APPROVED,
                 'approved_at' => now(),
-                'approved_by' => auth()->id(),
+                'approved_by' => $approverId ?? auth()->id(),
             ]);
 
             // Deactivate Employee

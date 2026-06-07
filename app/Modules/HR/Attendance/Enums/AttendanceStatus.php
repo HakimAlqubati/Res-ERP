@@ -12,6 +12,7 @@ enum AttendanceStatus: string
     case ON_TIME = 'on_time';
     case EARLY_DEPARTURE = 'early_departure';
     case LATE_DEPARTURE = 'late_departure';
+    case NO_SHIFT = 'no_shift';
 
     /**
      * الحصول على التسمية المترجمة
@@ -19,11 +20,12 @@ enum AttendanceStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::EARLY_ARRIVAL => __('Early Arrival'),
-            self::LATE_ARRIVAL => __('Late Arrival'),
-            self::ON_TIME => __('On Time'),
+            self::EARLY_ARRIVAL  => __('Early Arrival'),
+            self::LATE_ARRIVAL   => __('Late Arrival'),
+            self::ON_TIME        => __('On Time'),
             self::EARLY_DEPARTURE => __('Early Departure'),
             self::LATE_DEPARTURE => __('Late Departure'),
+            self::NO_SHIFT       => __('No Shift'),
         };
     }
 
@@ -33,11 +35,12 @@ enum AttendanceStatus: string
     public function color(): string
     {
         return match ($this) {
-            self::EARLY_ARRIVAL => 'info',
-            self::LATE_ARRIVAL => 'danger',
-            self::ON_TIME => 'success',
+            self::EARLY_ARRIVAL  => 'info',
+            self::LATE_ARRIVAL   => 'danger',
+            self::ON_TIME        => 'success',
             self::EARLY_DEPARTURE => 'warning',
             self::LATE_DEPARTURE => 'primary',
+            self::NO_SHIFT       => 'gray',
         };
     }
 
@@ -47,11 +50,12 @@ enum AttendanceStatus: string
     public function icon(): string
     {
         return match ($this) {
-            self::EARLY_ARRIVAL => 'heroicon-o-clock',
-            self::LATE_ARRIVAL => 'heroicon-o-exclamation-triangle',
-            self::ON_TIME => 'heroicon-o-check-circle',
+            self::EARLY_ARRIVAL  => 'heroicon-o-clock',
+            self::LATE_ARRIVAL   => 'heroicon-o-exclamation-triangle',
+            self::ON_TIME        => 'heroicon-o-check-circle',
             self::EARLY_DEPARTURE => 'heroicon-o-arrow-left-on-rectangle',
             self::LATE_DEPARTURE => 'heroicon-o-arrow-right-on-rectangle',
+            self::NO_SHIFT       => 'heroicon-o-calendar-x-mark',
         };
     }
 

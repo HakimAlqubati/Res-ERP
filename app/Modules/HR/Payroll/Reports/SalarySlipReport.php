@@ -4,6 +4,8 @@ namespace App\Modules\HR\Payroll\Reports;
 
 use App\Enums\HR\Payroll\SalaryTransactionType;
 use App\Models\Payroll;
+use App\Models\SalaryTransaction;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf;
 
@@ -31,8 +33,18 @@ class SalarySlipReport
             'transactions',
         ])->findOrFail($payrollId);
 
-        // Sort transactions by date
-        $transactions = $payroll->transactions()->orderBy('date')->get();
+        $payrollIds = Payroll::query()
+            ->where('payroll_run_id', $payroll->payroll_run_id)
+            ->where('employee_id', $payroll->employee_id)
+            ->pluck('id');
+
+        // Sort and merge similar transactions across branch split payroll rows.
+        $transactions = $this->mergeSimilarTransactions(
+            SalaryTransaction::query()
+                ->whereIn('payroll_id', $payrollIds)
+                ->orderBy('date')
+                ->get()
+        );
 
         // Split transactions
         $earnings = $transactions->filter(fn($t) => $t->operation === '+');
@@ -152,6 +164,56 @@ class SalarySlipReport
             'totalEmployer'   => $totalEmployer,
             'amountInWords'   => $amountInWords($net),
         ];
+    }
+
+    /**
+     * @param Collection<int, SalaryTransaction> $transactions
+     * @return Collection<int, object>
+     */
+    private function mergeSimilarTransactions(Collection $transactions): Collection
+    {
+        return $transactions
+            ->groupBy(fn(SalaryTransaction $transaction) => implode('|', [
+                $transaction->operation,
+                $transaction->type,
+                $transaction->sub_type,
+                $transaction->unit,
+                $transaction->multiplier,
+                $this->mergeLabel($transaction),
+            ]))
+            ->map(function (Collection $group) {
+                /** @var SalaryTransaction $first */
+                $first = $group->first();
+                $label = $this->mergeLabel($first);
+
+                return (object) [
+                    'id'          => $first->id,
+                    'operation'   => $first->operation,
+                    'type'        => $first->type,
+                    'sub_type'    => $first->sub_type,
+                    'description' => $label,
+                    'notes'       => $first->notes,
+                    'amount'      => round((float) $group->sum('amount'), 2),
+                    'date'        => $first->date,
+                    'unit'        => $first->unit,
+                    'qty'         => $group->sum('qty'),
+                    'rate'        => $first->rate,
+                    'multiplier'  => $first->multiplier,
+                ];
+            })
+            ->values();
+    }
+
+    private function mergeLabel(SalaryTransaction $transaction): string
+    {
+        if ($transaction->sub_type === 'base_salary') {
+            return 'Base salary';
+        }
+
+        $label = $transaction->description
+            ?: ucfirst(str_replace('_', ' ', $transaction->sub_type ?? ($transaction->type ?? '')));
+
+        return trim((string) preg_replace('/\s*\([^)]*\d+\s*days?[^)]*\)\s*/i', ' ', $label));
     }
 
     /**
