@@ -41,6 +41,7 @@ class UserResource extends JsonResource
                 $employee->avatar = $employee->avatar_image   ;
             }) : null,
             'can_create_advance' => (bool)$this->can_create_advance,
+            'can_create_missed_check_requests' => (bool)$this->can_create_missed_check_requests,
         ];
     }
 }

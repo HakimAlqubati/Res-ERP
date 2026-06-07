@@ -271,6 +271,59 @@ class EmployeeApplicationService
         return $record;
     }
 
+    public function updateMissedCheckin(int $id, array $data)
+    {
+        return DB::transaction(function () use ($id, $data) {
+            $record = EmployeeApplicationV2::findOrFail($id);
+            
+            if ($record->application_type_id !== EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST) {
+                throw new \Exception('Invalid application type for missed check-in update');
+            }
+
+            if ($record->status !== EmployeeApplicationV2::STATUS_PENDING) {
+                throw new \Exception('Cannot update application that is not pending');
+            }
+
+            if ($record->missedCheckinRequest) {
+                $record->missedCheckinRequest()->update([
+                    'date' => $data['date'],
+                    'time' => $data['time'],
+                ]);
+            }
+
+            // You can also optionally update the application_date if it represents the date
+            $record->update(['application_date' => $data['date']]);
+
+            return $record->load('missedCheckinRequest');
+        });
+    }
+
+    public function updateMissedCheckout(int $id, array $data)
+    {
+        return DB::transaction(function () use ($id, $data) {
+            $record = EmployeeApplicationV2::findOrFail($id);
+            
+            if ($record->application_type_id !== EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST) {
+                throw new \Exception('Invalid application type for missed check-out update');
+            }
+
+            if ($record->status !== EmployeeApplicationV2::STATUS_PENDING) {
+                throw new \Exception('Cannot update application that is not pending');
+            }
+
+            if ($record->missedCheckoutRequest) {
+                $record->missedCheckoutRequest()->update([
+                    'date' => $data['date'],
+                    'time' => $data['time'],
+                ]);
+            }
+            
+            $record->update(['application_date' => $data['date']]);
+
+            return $record->load('missedCheckoutRequest');
+        });
+    }
+
     public function deleteApplication(int $id)
     {
         $record = EmployeeApplicationV2::findOrFail($id);
