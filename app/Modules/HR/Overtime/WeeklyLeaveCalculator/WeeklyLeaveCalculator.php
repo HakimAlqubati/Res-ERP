@@ -33,6 +33,11 @@ class WeeklyLeaveCalculator
             $hasAutoLeave     = (bool) ($context['has_auto_weekly_leave'] ?? true);
             $applyWeeklyLeave = $isPeriodEnded && $isForPayroll && $hasAutoLeave;
 
+            // الحد الأقصى للإجازة: يُستخدم الخاص بالموظف إن وُجد، وإلا الافتراضي
+            $standardMonthlyLeave = isset($context['max_monthly_leave']) && $context['max_monthly_leave'] !== null
+                ? (int) $context['max_monthly_leave']
+                : self::STANDARD_MONTHLY_LEAVE;
+
             // حماية: الغياب لا يتجاوز إجمالي الأيام
             if ($absentDays > $totalMonthDays) {
                 $absentDays = $totalMonthDays;
@@ -50,7 +55,7 @@ class WeeklyLeaveCalculator
             $earnedOffDays    = $applyWeeklyLeave ? (int) floor($totalWorkedForLeave / self::WORK_DAYS_PER_LEAVE) : 0;
             
             // خصم ما تم كسبه مسبقاً من الحد الأقصى الشهري لضمان عدم تجاوزه
-            $remainingCap     = max(0, self::STANDARD_MONTHLY_LEAVE - $alreadyEarned);
+            $remainingCap     = max(0, $standardMonthlyLeave - $alreadyEarned);
             $cappedEarnedDays = $applyWeeklyLeave ? min($remainingCap, $earnedOffDays) : 0;
             $workRemainder    = $totalWorkedForLeave % self::WORK_DAYS_PER_LEAVE;
 
@@ -76,8 +81,8 @@ class WeeklyLeaveCalculator
             $absentPenaltyDisplay = 0;
 
             if ($totalPenaltyDays > 0) {
-                if ($applyWeeklyLeave && $cappedEarnedDays < self::STANDARD_MONTHLY_LEAVE) {
-                    $leavePenaltyDisplay = self::STANDARD_MONTHLY_LEAVE - $cappedEarnedDays;
+                if ($applyWeeklyLeave && $cappedEarnedDays < $standardMonthlyLeave) {
+                    $leavePenaltyDisplay = $standardMonthlyLeave - $cappedEarnedDays;
                 }
                 $absentPenaltyDisplay = max(0, $totalPenaltyDays - $leavePenaltyDisplay);
             }
