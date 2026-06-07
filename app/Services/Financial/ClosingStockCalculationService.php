@@ -68,6 +68,7 @@ class ClosingStockCalculationService
 
             $rows[] = [
                 'product_id'   => $productId,
+                'product_code' => $detail->product->code ?? '—',
                 'product_name' => $detail->product->name ?? '—',
                 'unit_name'    => optional($detail->unit)->name ?? '—',
                 'package_size' => $detail->package_size ?? 0,

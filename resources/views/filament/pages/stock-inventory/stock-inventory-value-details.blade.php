@@ -47,7 +47,7 @@
                         <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
                             <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt="" class="logo-left circle-image">
                         </th>
-                        <th colspan="5" class="no_border_right_left text-center">
+                        <th colspan="6" class="no_border_right_left text-center">
                             <h3>Stock Inventory — Closing Stock Value Details</h3>
                             <p class="text-xs font-normal mt-1">
                                 Store: <strong>{{ $inventory->store->name ?? 'N/A' }}</strong>
@@ -62,6 +62,7 @@
 
                     <tr>
                         <th>#</th>
+                        <th>Product Code</th>
                         <th>Product</th>
                         <th>Unit</th>
                         <th class="text-right">Package Size</th>
@@ -78,6 +79,7 @@
                         @endphp
                         <tr class="{{ $isWrong ? 'bg-red-50' : '' }}">
                             <td>{{ $i + 1 }}</td>
+                            <td>{{ $row['product_code'] ?? '—' }}</td>
                             <td>
                                 <span class="{{ $isWrong ? 'text-red-600 font-semibold' : '' }}">
                                     {{ $row['product_name'] }}
@@ -97,7 +99,7 @@
 
                 <tfoot>
                     <tr class="font-bold bg-gray-100">
-                        <td colspan="6" class="text-right pr-2">Grand Total</td>
+                        <td colspan="7" class="text-right pr-2">Grand Total</td>
                         <td class="text-right">{{ formatMoneyWithCurrency($grandTotal) }}</td>
                     </tr>
                 </tfoot>
