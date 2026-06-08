@@ -774,6 +774,22 @@ if (!function_exists('sendWhatsAppMessage')) {
     }
 }
 
+if (!function_exists('clearEmployeeDailyAttendanceCache')) {
+    /**
+     * Clear the cached daily attendance report for a specific employee and date.
+     *
+     * @param int|string|null $employeeId
+     * @param string|null $date (Y-m-d format)
+     */
+    function clearEmployeeDailyAttendanceCache($employeeId, $date)
+    {
+        if ($employeeId && $date) {
+            $dateString = $date instanceof \Carbon\Carbon ? $date->toDateString() : \Carbon\Carbon::parse($date)->toDateString();
+            \Illuminate\Support\Facades\Cache::forget("emp_daily_attendance_report_{$employeeId}_{$dateString}");
+        }
+    }
+}
+
 if (!function_exists('formUserForExistingEmployee')) {
     function formUserForExistingEmployee()
     {

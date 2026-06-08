@@ -48,26 +48,53 @@ class AttendanceReportManager implements AttendanceReportInterface
     public function getEmployeesRangeReport($employees, Carbon $startDate, Carbon $endDate, bool $excludeNoShift = false): Collection
     {
         $employees = collect($employees);
-        $empIds = $employees->pluck('id')->toArray();
-        $bulkData = $this->fetcher->fetchForMultiEmployeesRange($empIds, $startDate->toDateString(), $endDate->toDateString(), $excludeNoShift);
-
         $results = collect();
+        
+        $startDateStr = $startDate->toDateString();
+        $endDateStr = $endDate->toDateString();
+        
+        // Optimize: Cache at the employee level if fetching a single day
+        $isSingleDay = $startDateStr === $endDateStr;
+        $uncachedEmployees = collect();
+
         foreach ($employees as $employee) {
-            $termination = $bulkData['terminations'][$employee->id] ?? null;
-            if ($termination && $employee->join_date && \Carbon\Carbon::parse($termination->termination_date)->lte(\Carbon\Carbon::parse($employee->join_date))) {
-                $termination = null;
+            if ($isSingleDay) {
+                $cacheKey = "emp_daily_attendance_report_{$employee->id}_{$startDateStr}";
+                if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+                    $results->put($employee->id, \Illuminate\Support\Facades\Cache::get($cacheKey));
+                    continue;
+                }
             }
+            $uncachedEmployees->push($employee);
+        }
 
-            $employeeData = [
-                'histories'     => ($bulkData['histories'][$employee->id] ?? collect()),
-                'attendances'   => ($bulkData['attendances'][$employee->id] ?? collect()),
-                'leaves'        => ($bulkData['leaves'][$employee->id] ?? collect()),
-                'terminations'  => $termination,
-                'overtimes'     => ($bulkData['overtimes'][$employee->id] ?? collect()),
-                'workPeriodMap' => $bulkData['workPeriodMap'],
-            ];
+        if ($uncachedEmployees->isNotEmpty()) {
+            $empIds = $uncachedEmployees->pluck('id')->toArray();
+            $bulkData = $this->fetcher->fetchForMultiEmployeesRange($empIds, $startDateStr, $endDateStr, $excludeNoShift);
 
-            $results->put($employee->id, $this->rangeService->processRangeWithData($employee, $startDate, $endDate, $employeeData));
+            foreach ($uncachedEmployees as $employee) {
+                $termination = $bulkData['terminations'][$employee->id] ?? null;
+                if ($termination && $employee->join_date && \Carbon\Carbon::parse($termination->termination_date)->lte(\Carbon\Carbon::parse($employee->join_date))) {
+                    $termination = null;
+                }
+
+                $employeeData = [
+                    'histories'     => ($bulkData['histories'][$employee->id] ?? collect()),
+                    'attendances'   => ($bulkData['attendances'][$employee->id] ?? collect()),
+                    'leaves'        => ($bulkData['leaves'][$employee->id] ?? collect()),
+                    'terminations'  => $termination,
+                    'overtimes'     => ($bulkData['overtimes'][$employee->id] ?? collect()),
+                    'workPeriodMap' => $bulkData['workPeriodMap'],
+                ];
+
+                $processedData = $this->rangeService->processRangeWithData($employee, $startDate, $endDate, $employeeData);
+                $results->put($employee->id, $processedData);
+
+                if ($isSingleDay) {
+                    $cacheKey = "emp_daily_attendance_report_{$employee->id}_{$startDateStr}";
+                    \Illuminate\Support\Facades\Cache::put($cacheKey, $processedData, now()->addDay());
+                }
+            }
         }
 
         return $results;

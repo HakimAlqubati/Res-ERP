@@ -30,6 +30,23 @@ class LeaveRequestObserver
         $this->validateMaxDaysPerMonth($leaveRequest);
     }
 
+    public function saved(LeaveRequest $leaveRequest): void
+    {
+        $this->clearCacheForLeave($leaveRequest->employee_id, $leaveRequest->start_date, $leaveRequest->end_date);
+
+        // If dates changed, clear old dates too
+        if ($leaveRequest->isDirty('start_date') || $leaveRequest->isDirty('end_date')) {
+            $oldStart = $leaveRequest->getOriginal('start_date');
+            $oldEnd = $leaveRequest->getOriginal('end_date');
+            $this->clearCacheForLeave($leaveRequest->employee_id, $oldStart, $oldEnd);
+        }
+    }
+
+    public function deleted(LeaveRequest $leaveRequest): void
+    {
+        $this->clearCacheForLeave($leaveRequest->employee_id, $leaveRequest->start_date, $leaveRequest->end_date);
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Private validation steps
     // ─────────────────────────────────────────────────────────────────────────
@@ -79,6 +96,21 @@ class LeaveRequestObserver
     private function validateMaxDaysPerMonth(LeaveRequest $leaveRequest): void
     {
         MaxLeavePerMonthRule::check($leaveRequest);
+    }
+
+    /**
+     * Clear the daily attendance cache for the specified employee and date range.
+     */
+    private function clearCacheForLeave($employeeId, $startDate, $endDate): void
+    {
+        if ($employeeId && $startDate && $endDate) {
+            $start = Carbon::parse($startDate);
+            $end = Carbon::parse($endDate);
+            while ($start->lte($end)) {
+                clearEmployeeDailyAttendanceCache($employeeId, $start->toDateString());
+                $start->addDay();
+            }
+        }
     }
 }
 
