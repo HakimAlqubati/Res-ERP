@@ -221,7 +221,8 @@ class InventoryResource extends Resource
                             ->toArray();
                     })
                     ->getOptionLabelUsing(fn($value) => "ID: $value")
-                    ->hidden(),
+                    // ->hidden()
+                    ,
 
                 SelectFilter::make('movement_type')
                     ->label('Movement Type')
