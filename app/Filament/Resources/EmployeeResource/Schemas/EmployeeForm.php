@@ -11,6 +11,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
 use App\Models\Allowance;
 use App\Models\Branch;
+use App\Models\Deduction;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeFileType;
@@ -598,6 +599,50 @@ class EmployeeForm
                                                         ->default(0)->minValue(0)
                                                         ->numeric(),
 
+                                                ]),
+
+                                            Repeater::make('Custom deductions')
+                                                ->label(__('lang.custom_deductions'))
+                                                ->defaultItems(0)
+                                                ->table([
+                                                    TableColumn::make(__('lang.deduction'))->width('20rem'),
+                                                    TableColumn::make(__('lang.type'))->alignCenter()->width('10rem'),
+                                                    TableColumn::make(__('lang.amount'))->alignCenter()->width('12rem'),
+                                                ])
+                                                ->relationship('deductions')
+                                                ->schema([
+                                                    Select::make('deduction_id')
+                                                        ->label(__('lang.deduction'))
+                                                        ->options(Deduction::where('active', 1)->where('is_specific', 1)->get()->pluck('name', 'id'))
+                                                        ->required(),
+                                                    Toggle::make('is_percentage')->live()->default(false),
+                                                    TextInput::make('amount')->visible(fn(Get $get): bool => ! $get('is_percentage'))->numeric()
+                                                        ->suffixIcon('heroicon-o-calculator')
+                                                        ->suffixIconColor('danger'),
+
+                                                    Slider::make('percentage')->hintIcon(Heroicon::PercentBadge)
+                                                        ->label(__('lang.percentage'))
+                                                        ->tooltips(RawJs::make(<<<'JS'
+                                                            `%${$value.toFixed(0)}`
+                                                        JS))
+                                                        ->pips()
+                                                        ->pipsFilter(RawJs::make(<<<'JS'
+                                                            ($value % 50) === 0
+                                                                ? 1
+                                                                : ($value % 10) === 0
+                                                                    ? 2
+                                                                    : ($value % 25) === 0
+                                                                        ? 0
+                                                                        : -1
+                                                        JS))
+                                                        ->fillTrack()
+                                                        ->required()
+                                                        ->visible(fn(Get $get): bool => $get('is_percentage'))
+                                                        ->minValue(0)
+                                                        ->step(1)
+                                                        ->maxValue(100)
+                                                        ->default(0)
+                                                        ->rtl(),
                                                 ]),
 
                                         ]),

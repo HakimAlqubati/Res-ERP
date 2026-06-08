@@ -351,6 +351,8 @@ return [
   'monthly_bonus' => 'المكافأة الشهرية',
   'deductions' => 'الخصومات',
   'deduction' => 'خصم',
+  'custom_deductions' => 'الخصومات المخصصة',
+  'custom_deduction' => 'خصم مخصص',
   'type' => 'النوع',
   'percentage' => 'النسبة المئوية',
   'amount_percentage' => 'المبلغ / النسبة',
