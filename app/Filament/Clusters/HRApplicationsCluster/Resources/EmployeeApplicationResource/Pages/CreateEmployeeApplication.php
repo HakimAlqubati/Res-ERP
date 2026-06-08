@@ -131,7 +131,7 @@ class CreateEmployeeApplication extends CreateRecord
             }
         }
 
-        if (isStuff() || isFinanceManager() || isHR()) {
+        if (isStuff()) {
             $data['employee_id'] = auth()->user()->employee->id;
             $data['branch_id'] = auth()->user()->branch_id;
             $employee = Employee::find($data['employee_id']);

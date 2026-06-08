@@ -43,11 +43,23 @@ class AttendanceObserver
     }
 
     /**
+     * Handle the Attendance "saved" event.
+     * Clears the daily attendance report cache for the specific employee and date.
+     */
+    public function saved(Attendance $attendance): void
+    {
+        clearEmployeeDailyAttendanceCache($attendance->employee_id, $attendance->check_date);
+    }
+
+    /**
      * Handle the Attendance "deleted" event.
      * After deletion, if the record type is checkin, delete the associated checkout record.
+     * Also clears the daily attendance report cache.
      */
     public function deleted(Attendance $attendance): void
     {
+        clearEmployeeDailyAttendanceCache($attendance->employee_id, $attendance->check_date);
+
         if ($attendance->check_type === Attendance::CHECKTYPE_CHECKIN) {
             $attendance->checkout?->delete();
         }

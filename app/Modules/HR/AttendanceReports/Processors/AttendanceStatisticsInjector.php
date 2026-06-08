@@ -139,6 +139,7 @@ class AttendanceStatisticsInjector
                 'has_auto_weekly_leave' => (bool) $employee->has_auto_weekly_leave,
                 'already_earned'        => $alreadyEarned,
                 'prev_remainder'        => $prevRemainder,
+                'max_monthly_leave'     => $employee->max_weekly_leave_days, // null = استخدم الافتراضي (4)
             ]
         );
 
@@ -281,6 +282,7 @@ class AttendanceStatisticsInjector
                         'has_auto_weekly_leave' => (bool) $employee->has_auto_weekly_leave,
                         'already_earned'        => $cumulativeAlreadyEarned,
                         'prev_remainder'        => $cumulativeRemainder,
+                        'max_monthly_leave'     => $employee->max_weekly_leave_days, // null = استخدم الافتراضي (4)
                     ]
                 );
                 

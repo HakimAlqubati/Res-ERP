@@ -351,6 +351,8 @@ class EmployeeApplicationService
                         'type'                           => \App\Models\Attendance::CHECKTYPE_CHECKIN,
                         'attendance_type'                => \App\Models\Attendance::ATTENDANCE_TYPE_REQUEST,
                         'skip_duplicate_timestamp_check' => true,
+                        'source_type' => EmployeeApplicationV2::class,
+                        'source_id' => $record->id,
                     ]);
 
                     if (!$result->success) {
@@ -370,6 +372,8 @@ class EmployeeApplicationService
                         'type'                           => \App\Models\Attendance::CHECKTYPE_CHECKOUT,
                         'attendance_type'                => \App\Models\Attendance::ATTENDANCE_TYPE_REQUEST,
                         'skip_duplicate_timestamp_check' => true,
+                        'source_type' => EmployeeApplicationV2::class,
+                        'source_id' => $record->id,
                     ]);
 
                     if (!$result->success) {
