@@ -56,10 +56,12 @@ class AttendanceReportManager implements AttendanceReportInterface
         // Optimize: Cache at the employee level if fetching a single day
         $isSingleDay = $startDateStr === $endDateStr;
         $uncachedEmployees = collect();
+        
+        $tenantDb = \Illuminate\Support\Facades\DB::connection()->getDatabaseName();
 
         foreach ($employees as $employee) {
             if ($isSingleDay) {
-                $cacheKey = "emp_daily_attendance_report_{$employee->id}_{$startDateStr}";
+                $cacheKey = "emp_daily_attendance_report_{$tenantDb}_{$employee->id}_{$startDateStr}";
                 if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
                     $results->put($employee->id, \Illuminate\Support\Facades\Cache::get($cacheKey));
                     continue;
@@ -91,7 +93,7 @@ class AttendanceReportManager implements AttendanceReportInterface
                 $results->put($employee->id, $processedData);
 
                 if ($isSingleDay) {
-                    $cacheKey = "emp_daily_attendance_report_{$employee->id}_{$startDateStr}";
+                    $cacheKey = "emp_daily_attendance_report_{$tenantDb}_{$employee->id}_{$startDateStr}";
                     \Illuminate\Support\Facades\Cache::put($cacheKey, $processedData, now()->addDay());
                 }
             }

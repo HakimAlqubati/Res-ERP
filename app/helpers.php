@@ -785,7 +785,8 @@ if (!function_exists('clearEmployeeDailyAttendanceCache')) {
     {
         if ($employeeId && $date) {
             $dateString = $date instanceof \Carbon\Carbon ? $date->toDateString() : \Carbon\Carbon::parse($date)->toDateString();
-            \Illuminate\Support\Facades\Cache::forget("emp_daily_attendance_report_{$employeeId}_{$dateString}");
+            $tenantDb = \Illuminate\Support\Facades\DB::connection()->getDatabaseName();
+            \Illuminate\Support\Facades\Cache::forget("emp_daily_attendance_report_{$tenantDb}_{$employeeId}_{$dateString}");
         }
     }
 }
@@ -805,11 +806,11 @@ if (!function_exists('clearAllEmployeesDailyAttendanceCache')) {
 
         $dateString = $date instanceof \Carbon\Carbon ? $date->toDateString() : \Carbon\Carbon::parse($date)->toDateString();
 
-        // نستدعي العمود id فقط، ونستخدم chunkById لأنه يستخدم (WHERE id > last_id) وهو أسرع بآلاف المرات من chunk العادي (الذي يستخدم OFFSET) في الداتا بيس الكبيرة.
-        // ملاحظة: قمت بتعديل query('id') التي كتبتها إلى query()->select('id') لأن query() في لارافل لا تقبل الأعمدة بداخلها.
-        \App\Models\Employee::query()->select('id')->chunkById(1000, function ($employees) use ($dateString) {
+        $tenantDb = \Illuminate\Support\Facades\DB::connection()->getDatabaseName();
+
+        \App\Models\Employee::query()->select('id')->chunkById(1000, function ($employees) use ($dateString, $tenantDb) {
             foreach ($employees as $employee) {
-                \Illuminate\Support\Facades\Cache::forget("emp_daily_attendance_report_{$employee->id}_{$dateString}");
+                \Illuminate\Support\Facades\Cache::forget("emp_daily_attendance_report_{$tenantDb}_{$employee->id}_{$dateString}");
             }
         });
     }
@@ -831,7 +832,6 @@ if (!function_exists('clearAllEmployeesDailyAttendanceCacheForMonth')) {
         $startOfMonth = \Carbon\Carbon::createFromDate($year, $month, 1)->startOfMonth();
         $endOfMonth = $startOfMonth->copy()->endOfMonth();
 
-        // تجهيز مصفوفة بكل أيام الشهر لتفادي عمل حسابات التاريخ داخل الـ Loop
         $dates = [];
         $currentDate = $startOfMonth->copy();
         while ($currentDate->lte($endOfMonth)) {
@@ -839,13 +839,82 @@ if (!function_exists('clearAllEmployeesDailyAttendanceCacheForMonth')) {
             $currentDate->addDay();
         }
 
-        \App\Models\Employee::query()->select('id')->chunkById(1000, function ($employees) use ($dates) {
+        $tenantDb = \Illuminate\Support\Facades\DB::connection()->getDatabaseName();
+
+        \App\Models\Employee::query()->select('id')->chunkById(1000, function ($employees) use ($dates, $tenantDb) {
             foreach ($employees as $employee) {
                 foreach ($dates as $dateString) {
-                    \Illuminate\Support\Facades\Cache::forget("emp_daily_attendance_report_{$employee->id}_{$dateString}");
+                    \Illuminate\Support\Facades\Cache::forget("emp_daily_attendance_report_{$tenantDb}_{$employee->id}_{$dateString}");
                 }
             }
         });
+    }
+}
+
+if (!function_exists('clearBranchEmployeesDailyAttendanceCache')) {
+    /**
+     * Clear the cached daily attendance report for all employees in a specific branch on a specific date.
+     *
+     * @param int|string $branchId
+     * @param string|\Carbon\Carbon $date
+     */
+    function clearBranchEmployeesDailyAttendanceCache($branchId, $date)
+    {
+        if (!$branchId || !$date) {
+            return;
+        }
+
+        $dateString = $date instanceof \Carbon\Carbon ? $date->toDateString() : \Carbon\Carbon::parse($date)->toDateString();
+
+        $tenantDb = \Illuminate\Support\Facades\DB::connection()->getDatabaseName();
+
+        \App\Models\Employee::query()
+            ->select('id')
+            ->where('branch_id', $branchId)
+            ->chunkById(1000, function ($employees) use ($dateString, $tenantDb) {
+                foreach ($employees as $employee) {
+                    \Illuminate\Support\Facades\Cache::forget("emp_daily_attendance_report_{$tenantDb}_{$employee->id}_{$dateString}");
+                }
+            });
+    }
+}
+
+if (!function_exists('clearBranchEmployeesDailyAttendanceCacheForMonth')) {
+    /**
+     * Clear the cached daily attendance report for all employees in a specific branch for an entire month.
+     *
+     * @param int|string $branchId
+     * @param int|string $year
+     * @param int|string $month
+     */
+    function clearBranchEmployeesDailyAttendanceCacheForMonth($branchId, $year, $month)
+    {
+        if (!$branchId || !$year || !$month) {
+            return;
+        }
+
+        $startOfMonth = \Carbon\Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $endOfMonth = $startOfMonth->copy()->endOfMonth();
+
+        $dates = [];
+        $currentDate = $startOfMonth->copy();
+        while ($currentDate->lte($endOfMonth)) {
+            $dates[] = $currentDate->toDateString();
+            $currentDate->addDay();
+        }
+
+        $tenantDb = \Illuminate\Support\Facades\DB::connection()->getDatabaseName();
+
+        \App\Models\Employee::query()
+            ->select('id')
+            ->where('branch_id', $branchId)
+            ->chunkById(1000, function ($employees) use ($dates, $tenantDb) {
+                foreach ($employees as $employee) {
+                    foreach ($dates as $dateString) {
+                        \Illuminate\Support\Facades\Cache::forget("emp_daily_attendance_report_{$tenantDb}_{$employee->id}_{$dateString}");
+                    }
+                }
+            });
     }
 }
 
