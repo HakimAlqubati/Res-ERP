@@ -75,6 +75,8 @@ class DetailsRelationManager extends RelationManager
                 TextColumn::make('remaining_quantity')->label('Real Qty in Stock')
                     ->alignCenter(true)
                     ->getStateUsing(function ($record) {
+                        $remQty = MultiProductsInventoryService::quickReport($this->ownerRecord->store_id, $record->product_id, $record->unit_id)[0][0]['remaining_qty'] ?? 0;
+                        return $remQty;
                         $product = $record->product;
                         $storeId = defaultManufacturingStore($product)->id ?? null;
                         if (!$storeId) {
