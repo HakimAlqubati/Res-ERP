@@ -277,7 +277,7 @@ class SettingResource extends Resource
                                                 ->default(true),
 
                                             Toggle::make('can_create_missed_check_requests')
-                                                ->label('Allow Creating Missed Check Requests')
+                                                ->label('Attendance requests: Enabled for Staff role')
                                                 ->helperText('If enabled, employees (with Staff role) are allowed to create missed check requests.')
                                                 ->inline(false)
                                                 ->default(true),
