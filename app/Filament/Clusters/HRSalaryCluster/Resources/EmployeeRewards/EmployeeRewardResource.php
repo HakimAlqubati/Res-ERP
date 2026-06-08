@@ -74,4 +74,14 @@ class EmployeeRewardResource extends Resource
 
         return false;
     }
+
+    
+    public static function shouldRegisterNavigation(): bool
+    {
+           if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) {
+            return true;
+        }
+
+        return false;
+    }
 }
