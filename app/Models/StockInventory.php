@@ -75,6 +75,6 @@ class StockInventory extends Model implements Auditable
 
     public function getClosingStockValueAttribute(): float
     {
-        return app(ClosingStockCalculationService::class)->calculateClosingStockValue($this);
+        return app(ClosingStockCalculationService::class)->getAdjustmentedStockValue($this);
     }
 }
