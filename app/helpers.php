@@ -790,6 +790,65 @@ if (!function_exists('clearEmployeeDailyAttendanceCache')) {
     }
 }
 
+if (!function_exists('clearAllEmployeesDailyAttendanceCache')) {
+    /**
+     * Clear the cached daily attendance report for all employees on a specific date.
+     * Uses highly optimized chunking (chunkById) to support millions of records without memory leaks.
+     *
+     * @param string|\Carbon\Carbon $date
+     */
+    function clearAllEmployeesDailyAttendanceCache($date)
+    {
+        if (!$date) {
+            return;
+        }
+
+        $dateString = $date instanceof \Carbon\Carbon ? $date->toDateString() : \Carbon\Carbon::parse($date)->toDateString();
+
+        // نستدعي العمود id فقط، ونستخدم chunkById لأنه يستخدم (WHERE id > last_id) وهو أسرع بآلاف المرات من chunk العادي (الذي يستخدم OFFSET) في الداتا بيس الكبيرة.
+        // ملاحظة: قمت بتعديل query('id') التي كتبتها إلى query()->select('id') لأن query() في لارافل لا تقبل الأعمدة بداخلها.
+        \App\Models\Employee::query()->select('id')->chunkById(1000, function ($employees) use ($dateString) {
+            foreach ($employees as $employee) {
+                \Illuminate\Support\Facades\Cache::forget("emp_daily_attendance_report_{$employee->id}_{$dateString}");
+            }
+        });
+    }
+}
+
+if (!function_exists('clearAllEmployeesDailyAttendanceCacheForMonth')) {
+    /**
+     * Clear the cached daily attendance report for all employees for an entire month.
+     *
+     * @param int|string $year
+     * @param int|string $month
+     */
+    function clearAllEmployeesDailyAttendanceCacheForMonth($year, $month)
+    {
+        if (!$year || !$month) {
+            return;
+        }
+
+        $startOfMonth = \Carbon\Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $endOfMonth = $startOfMonth->copy()->endOfMonth();
+
+        // تجهيز مصفوفة بكل أيام الشهر لتفادي عمل حسابات التاريخ داخل الـ Loop
+        $dates = [];
+        $currentDate = $startOfMonth->copy();
+        while ($currentDate->lte($endOfMonth)) {
+            $dates[] = $currentDate->toDateString();
+            $currentDate->addDay();
+        }
+
+        \App\Models\Employee::query()->select('id')->chunkById(1000, function ($employees) use ($dates) {
+            foreach ($employees as $employee) {
+                foreach ($dates as $dateString) {
+                    \Illuminate\Support\Facades\Cache::forget("emp_daily_attendance_report_{$employee->id}_{$dateString}");
+                }
+            }
+        });
+    }
+}
+
 if (!function_exists('formUserForExistingEmployee')) {
     function formUserForExistingEmployee()
     {
