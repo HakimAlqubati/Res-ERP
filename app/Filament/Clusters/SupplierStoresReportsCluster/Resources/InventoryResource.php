@@ -195,6 +195,7 @@ class InventoryResource extends Resource
                 SelectFilter::make('id')
                     ->label('ID')
                     ->searchable()
+                    ->multiple()
                     ->options(function () {
                         return InventoryTransaction::query()
                             ->orderBy('id', 'asc') // ترتيب تصاعدي
