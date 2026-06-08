@@ -4,18 +4,21 @@
     <div class="flex flex-wrap justify-between items-center gap-2 mb-4">
         {{-- Left: Highlight filter --}}
         <div class="flex items-center gap-3">
+            @if (isHakimOrAdel())
+                
             <button wire:click="toggleHighlight"
-                class="flex items-center gap-2 px-4 py-2 rounded-md border font-semibold text-sm transition duration-300 shadow-sm
+            class="flex items-center gap-2 px-4 py-2 rounded-md border font-semibold text-sm transition duration-300 shadow-sm
                        {{ $highlightWrong
                             ? 'bg-red-500 border-red-600 text-white hover:bg-red-700'
                             : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200' }}">
                 ⚠️ Highlight Wrong Package Size
                 @if ($highlightWrong)
-                    <span class="ml-1 bg-white text-red-600 rounded-full px-2 py-0.5 text-xs font-bold">
-                        {{ count($wrongProductIds) }}
-                    </span>
+                <span class="ml-1 bg-white text-red-600 rounded-full px-2 py-0.5 text-xs font-bold">
+                    {{ count($wrongProductIds) }}
+                </span>
                 @endif
             </button>
+            @endif
             @if ($highlightWrong && count($wrongProductIds) > 0)
                 <span class="text-xs text-red-500 font-medium">
                     {{ count($wrongProductIds) }} product(s) with mismatched package size
