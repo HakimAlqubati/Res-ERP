@@ -475,8 +475,20 @@ class EmployeeForm
                                             
                                             ->label(__('lang.is_mtd_applicable'))->default(1)->inline(false),
                                         Toggle::make('has_auto_weekly_leave')->columnSpan(1)
-                                            
-                                            ->label(__('lang.has_auto_weekly_leave'))->default(1)->inline(false),
+                                            ->label(__('lang.has_auto_weekly_leave'))->default(1)->inline(false)->live(),
+
+                                        TextInput::make('max_weekly_leave_days')
+                                            ->label(__('lang.max_weekly_leave_days'))
+                                            ->helperText(__('lang.max_weekly_leave_days_hint'))
+                                            ->numeric()
+                                            ->integer()
+                                            ->minValue(1)
+                                            ->maxValue(31)
+                                            ->nullable()
+                                            ->placeholder('4')
+                                            ->columnSpan(1)
+                                            ->visible(fn (Get $get): bool => (bool) $get('has_auto_weekly_leave')),
+
                                         Toggle::make('no_shift_is_present')->columnSpan(1)
                                             ->label(__('lang.no_shift_is_present'))
                                             ->default(0)->inline(false),

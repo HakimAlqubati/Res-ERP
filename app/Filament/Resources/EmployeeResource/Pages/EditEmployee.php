@@ -58,6 +58,9 @@ class EditEmployee extends EditRecord
 
     protected function getRedirectUrl(): string
     {
+        if(isHakimOrAdel()){
+            return EmployeeResource::getUrl('edit',['record'=>$this->record->id]);
+        }
         return $this->getResource()::getUrl('index');
     }
 
