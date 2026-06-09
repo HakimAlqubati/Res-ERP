@@ -161,7 +161,7 @@ class AttendanceImagesUploadedResource extends Resource
                     ->multiple()
                     ->options(function () {
                         return \App\Models\Employee::orderBy('name')
-                            ->active()
+                            // ->active()
                             // ->forBranch('branch_id')
                             ->forBranchManager()
                             ->pluck('name', 'id')->toArray();
