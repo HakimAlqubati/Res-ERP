@@ -214,8 +214,8 @@ class MultiProductsInventoryService
         $queryIn->where('store_id', $this->storeId);
         $queryOut->where('store_id', $this->storeId);
         // }
-        $totalIn = $queryIn->sum(DB::raw('(quantity - temp_qty) * package_size'));
-        $totalOut = $queryOut->sum(DB::raw('(quantity - temp_qty) * package_size'));
+        $totalIn = $queryIn->sum(DB::raw('(quantity) * package_size'));
+        $totalOut = $queryOut->sum(DB::raw('(quantity) * package_size'));
 
 
         $totalBaseIn = $queryIn->sum(DB::raw('IFNULL(base_quantity, quantity * package_size)'));
