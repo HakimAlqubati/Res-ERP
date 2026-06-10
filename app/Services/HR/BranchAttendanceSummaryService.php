@@ -61,7 +61,6 @@ class BranchAttendanceSummaryService
         // Process active employees in DB-level chunks
         Employee::whereIn('id', $employeeIdsInBranch)
             ->where('active', 1) 
-            ->where('id',263)
             ->select('id', 'name','branch_id', 'employee_no', 'salary', 'join_date', 'working_days', 'working_hours', 'discount_exception_if_attendance_late', 'has_auto_weekly_leave','max_weekly_leave_days')
             ->withSum(['overtimes as total_overtime' => function ($query) use ($year, $month) {
                 $query->whereYear('date', $year)
@@ -84,7 +83,6 @@ class BranchAttendanceSummaryService
                     });
             }])
             ->chunk(50, function ($employees) use (&$currentStaff, &$newStaff, $terminatedEmployeeIds, $year, $month, $periodStart, $periodEnd, $monthDays, $branchId) {
-
                 $filtered = $employees->filter(fn($emp) => !in_array($emp->id, $terminatedEmployeeIds));
 
                 // Optimized: Fetch all attendance data for the entire chunk in one bulk request
