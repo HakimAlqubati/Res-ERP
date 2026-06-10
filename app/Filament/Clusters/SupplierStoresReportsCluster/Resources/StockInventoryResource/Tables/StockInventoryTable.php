@@ -119,7 +119,8 @@ class StockInventoryTable
                         ->label('Value Details')
                         ->icon('heroicon-o-calculator')
                         ->color('info')
-                        ->visible(fn()=>isHakimOrAdel())
+                        ->visible(fn()=> isSuperAdmin())
+                        // ->visible(fn()=>isHakimOrAdel())
                         ->url(fn($record): string => StockInventoryResource::getUrl('value-details', ['record' => $record])),
                 ])
             ])
