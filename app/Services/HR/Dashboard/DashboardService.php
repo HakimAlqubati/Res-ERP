@@ -68,7 +68,7 @@ class DashboardService
         // New Service Requests
         $srQuery = ServiceRequest::where('status', ServiceRequest::STATUS_NEW)
             ->forBranchManager()
-            ->forEmployee('assigned_to');
+            ->forEmployee();
         if ($dto->branchId) {
             $srQuery->where('branch_id', $dto->branchId);
         }
@@ -265,7 +265,7 @@ class DashboardService
     {
         $stats = ServiceRequest::query()
             ->forBranchManager()
-            ->forEmployee('assigned_to')
+            ->forEmployee()
             ->when($dto->branchId, fn($q) => $q->where('branch_id', $dto->branchId))
             ->selectRaw("
                 COUNT(CASE WHEN status != '" . ServiceRequest::STATUS_CLOSED . "' THEN 1 END) as open_count,
