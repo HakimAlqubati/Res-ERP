@@ -199,24 +199,10 @@ class DetailsRelationManager extends RelationManager
                                                 return;
                                             }
 
-                                            $report = MultiProductsInventoryService::quickReport(
-                                                (int) $storeId,
-                                                (int) $productId,
-                                                (int) $state
-                                            );
+                                            // 1. Fetch new package_size for selected unit
+                                            $newPackageSize = \App\Models\UnitPrice::getPackageSize((int) $productId, (int) $state);
 
-                                            $systemQty = $report[0][0]['remaining_qty'] ?? 0;
-                                            $set('system_quantity', $systemQty);
-
-                                            // Recalculate difference
-                                            $physicalQty = $get('physical_quantity') ?? 0;
-                                            $diff = round($physicalQty - $systemQty, 4);
-                                            $set('difference', $diff);
-
-                                            // Update package_size based on selected unit
-                                            $packageSize = \App\Models\UnitPrice::getPackageSize((int) $productId, (int) $state);
-
-                                            if ($packageSize === null) {
+                                            if ($newPackageSize === null) {
                                                 Notification::make()
                                                     ->title(__('Package Size Missing'))
                                                     ->body(__('No package size defined for the selected unit. Please configure it in the product settings.'))
@@ -226,7 +212,31 @@ class DetailsRelationManager extends RelationManager
                                                 return;
                                             }
 
-                                            $set('package_size', $packageSize);
+                                            // 2. Convert physical_quantity based on package_size ratio
+                                            $oldPackageSize = $get('package_size');
+                                            $physicalQty = $get('physical_quantity') ?? 0;
+
+                                            if ($oldPackageSize && $oldPackageSize > 0 && $newPackageSize > 0) {
+                                                $physicalQty = round($physicalQty * ($oldPackageSize / $newPackageSize), 4);
+                                                $set('physical_quantity', $physicalQty);
+                                            }
+
+                                            // 3. Update package_size to new value
+                                            $set('package_size', $newPackageSize);
+
+                                            // 4. Get system_quantity for new unit
+                                            $report = MultiProductsInventoryService::quickReport(
+                                                (int) $storeId,
+                                                (int) $productId,
+                                                (int) $state
+                                            );
+
+                                            $systemQty = $report[0][0]['remaining_qty'] ?? 0;
+                                            $set('system_quantity', $systemQty);
+
+                                            // 5. Recalculate difference with converted physical_quantity
+                                            $diff = round($physicalQty - $systemQty, 4);
+                                            $set('difference', $diff);
                                         })
                                         ->required(),
                                     TextInput::make('package_size')
