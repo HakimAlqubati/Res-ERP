@@ -32,7 +32,6 @@ use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Support\Enums\SlideOverPosition;
 use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
@@ -284,7 +283,6 @@ class DetailsRelationManager extends RelationManager
                     ->label(__('Edit Physical Quantity'))
                     ->icon('heroicon-o-pencil-square')
                     ->slideOver(true)
-                    ->slideOverPosition()
                     ->color('info')
                     ->closeModalByClickingAway(false)
                     ->closeModalByEscaping(false)
@@ -476,8 +474,7 @@ class DetailsRelationManager extends RelationManager
                     ->closeModalByClickingAway(false)
                     ->closeModalByEscaping(false)
                     ->stickyModalHeader(true)
-                    ->slideOver(true)
-                    ->slideOverPosition()
+                    ->slideOver(true) 
                     ->modalCloseButton(false)
                     ->modalIcon(Heroicon::ChartBarSquare)
                     ->modalWidth(Width::SevenExtraLarge)
