@@ -328,7 +328,7 @@ class InventoryResource extends Resource
                     ->label('Edit Package Size')
                     ->icon('heroicon-o-pencil-square')
                     ->color('warning')
-                    ->visible(fn()=>isHakimOrAdel())
+                    ->visible(fn()=>isHakimOrAdel() && 1>2)
                     ->action(function ($record, $data) {
                         $newPackageSize = $data['package_size'];
                         
@@ -396,23 +396,7 @@ class InventoryResource extends Resource
                         ->icon('heroicon-m-pencil-square'),
 
 
-                    // Tables\Actions\Action::make('editPackageSize')
-                    //     ->visible(fn(): bool => auth()->user()->email == 'admin@admin.com')
-                    //     ->form([
-                    //         \Filament\Forms\Components\TextInput::make('package_size')->required(),
-                    //     ])->action(function ($record, $data) {
-                    //         $record->update([
-                    //             'package_size' => $data['package_size'],
-                    //         ]);
-                    //         \Filament\Notifications\Notification::make()
-                    //             ->title('Store Updated')
-                    //             ->success()
-                    //             ->body('Store updated successfully.')
-                    //             ->send();
-                    //     })
-                    //     ->label('Edit Package Size')
-                    //     ->color('warning')
-                    //     ->icon('heroicon-m-pencil-square'),
+                   
 
                 ])
             ])
