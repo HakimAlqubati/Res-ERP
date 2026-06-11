@@ -372,28 +372,56 @@ class GoodsReceivedNoteResource extends Resource
                                             )
                                                 ->where('unit_id', $state)->first();
                                             $set('package_size',  $unitPrice->package_size ?? 0);
-                                        })->columnSpan(2)->required(),
+                                        })
+                                        ->columnSpan(2)->required(),
                                     TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
                                         ->label(__('lang.package_size')),
                                     TextInput::make('quantity')
                                         ->label(__('lang.quantity'))
-
                                         ->numeric()
-
                                         ->minValue(0.1)
                                         ->default(1)
-
                                         ->live(onBlur: true)
+                                        ->afterStateUpdated(function ($set, $get) {
+                                            $quantity = (float) ($get('quantity') ?? 0);
+                                            $price = (float) ($get('price') ?? 0);
+                                            $set('total_price', round($quantity * $price, 2));
+                                        })
                                         ->columnSpan(1)->required()
                                         ->formatStateUsing(fn($state) => round((float) $state, 2)),
+                                    TextInput::make('price')
+                                        ->label(__('lang.price'))
+                                        ->numeric()
+                                        ->minValue(0.1)
+                                        ->live(onBlur: true)
+                                        ->afterStateUpdated(function ($set, $get) {
+                                            $quantity = (float) ($get('quantity') ?? 0);
+                                            $price = (float) ($get('price') ?? 0);
+                                            $set('total_price', round($quantity * $price, 2));
+                                        })
+                                        ->columnSpan(1)->required()
+                                        // ->formatStateUsing(fn($state) => round((float) $state, 2))
+                                        ,
+                                    TextInput::make('total_price')
+                                        ->label(__('lang.total_price'))
+                                        ->disabled()
+                                        ->numeric()
+                                        ->default(0)
+                                        // ->minValue(0.1)
+                                        ->live(onBlur: true)
+                                        ->columnSpan(1)->required()
+                                        // ->formatStateUsing(fn($state) => round((float) $state, 2))
+                                        ,
 
 
                                 ])
                                 ->table([
                                     TableColumn::make(__('Product'))->width('24rem'),
-                                    TableColumn::make(__('Unit'))->alignCenter()->width('18rem'),
-                                    TableColumn::make(__('lang.psize'))->alignCenter()->width('10rem'),
-                                    TableColumn::make(__('Qty'))->alignCenter()->width('10rem'),
+                                    TableColumn::make(__('Unit'))->alignCenter()->width('15rem'),
+                                    TableColumn::make(__('lang.psize'))->alignCenter()->width('5rem'),
+                                    TableColumn::make(__('Qty'))->alignCenter()->width('14rem'),
+                                    TableColumn::make(__('Price'))->alignCenter()->width('14rem'),
+                                    TableColumn::make(__('Total Price'))->alignCenter()->width('10rem'),
                                 ])
                                 ->createItemButtonLabel('Add Item')
                                 ->collapsible()
@@ -617,7 +645,7 @@ class GoodsReceivedNoteResource extends Resource
                                         'unit_id' => $detail->unit_id,
                                         'package_size' => $detail->package_size,
                                         'store_id' => $record->store_id,
-                                        'price' => getUnitPrice($detail->product_id, $detail->unit_id),
+                                        'price' => $detail->price,
                                         'transaction_date' => $record->date,
                                         'movement_date' => $record->date,
                                         'notes' => $notes,
