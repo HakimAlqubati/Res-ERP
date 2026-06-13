@@ -222,8 +222,8 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td style="padding: 8px 5px; color: #333; border-bottom: 1px solid #f9f9f9;">Base Salary (Contracted)</td>
-                        <td style="padding: 8px 5px; text-align: right; color: #333; border-bottom: 1px solid #f9f9f9;">{{ formatMoneyWithCurrency($payroll->employee?->salary ?? 0) }}</td>
+                        <td style="padding: 8px 5px; color: #999; border-bottom: 1px solid #f9f9f9;">Base Salary (Contracted)</td>
+                        <td style="padding: 8px 5px; text-align: right; color: #999; border-bottom: 1px solid #f9f9f9;">{{ formatMoneyWithCurrency($payroll->employee?->salary ?? 0) }}</td>
                     </tr>
                     @foreach (($earnings ?? collect()) as $e)
                     @php

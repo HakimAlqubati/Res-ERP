@@ -190,7 +190,7 @@ class SalarySlipReport
                 
                 if ($first->type === SalaryTransactionType::TYPE_SALARY->value) {
                     $branchName = $first->payroll?->branch?->name;
-                    $label = "Base Salary Earned " . (float)$qtySum . " days" . ($branchName ? " - {$branchName}" : "");
+                    $label = "Earned Basic Salary (Prorated) " . (float)$qtySum . " days" . ($branchName ? " - {$branchName}" : "");
                 } else {
                     $label = $this->mergeLabel($first);
                 }
