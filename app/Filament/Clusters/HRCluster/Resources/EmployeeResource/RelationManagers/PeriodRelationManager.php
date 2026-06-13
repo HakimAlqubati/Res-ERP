@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers;
 
 use App\Enums\DayOfWeek;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\WorkPeriodResource;
 use App\Models\Attendance;
 use App\Models\EmployeePeriod;
 use App\Models\EmployeePeriodHistory;
@@ -19,6 +20,7 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
+use Filament\Support\Colors\Color;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -129,8 +131,19 @@ class PeriodRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
+               
                 Action::make('createOne')->label('Add shifts')
                     ->icon('heroicon-o-plus')
+                    ->extraModalFooterActions([
+                         Action::make('gotoWorkPeriod')
+                         ->color(Color::Orange)
+                         ->label('Add new shift')
+                    ->icon('heroicon-o-clock')
+                    ->url(function () {
+                        return WorkPeriodResource::getUrl('create');
+                    })->openUrlInNewTab(),
+                    ])
+                    
                     ->schema(
 
                         [Grid::make()->columnSpanFull()->columns(1)->schema([
