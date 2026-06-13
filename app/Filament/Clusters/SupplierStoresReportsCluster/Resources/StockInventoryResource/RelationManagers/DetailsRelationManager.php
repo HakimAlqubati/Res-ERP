@@ -366,8 +366,8 @@ class DetailsRelationManager extends RelationManager
                                             $physicalQty = $get('physical_quantity') ?? 0;
 
                                             if ($oldPackageSize && $oldPackageSize > 0 && $newPackageSize > 0) {
-                                                $physicalQty = round($physicalQty * ($oldPackageSize / $newPackageSize), 4);
-                                                $set('physical_quantity', $physicalQty);
+                                                // $physicalQty = round($physicalQty * ($oldPackageSize / $newPackageSize), 4);
+                                                // $set('physical_quantity', $physicalQty);
                                             }
 
                                             // 3. Update package_size to new value
@@ -395,6 +395,7 @@ class DetailsRelationManager extends RelationManager
                                         ->dehydrated(true),
                                     TextInput::make('system_quantity')
                                         ->label(__('System Qty'))
+                                        ->dehydrated(true)
                                         ->extraInputAttributes(['class' => 'text-center'])
 
                                         ->disabled(),
@@ -404,7 +405,7 @@ class DetailsRelationManager extends RelationManager
                                         ->numeric()
                                         ->required()
                                         ->minValue(0)
-                                        ->live()
+                                        ->live(onBlur: true)
                                         ->disabled(fn($get) => $get('is_adjustmented'))
                                         ->afterStateUpdated(function ($state, callable $get, callable $set) {
                                             $systemQty = $get('system_quantity') ?? 0;
@@ -444,8 +445,9 @@ class DetailsRelationManager extends RelationManager
                                     $record->update([
                                         'physical_quantity' => $item['physical_quantity'],
                                         'unit_id'           => $item['unit_id'],
+                                        'system_quantity'   => $item['system_quantity'],
                                         'package_size'      => $item['package_size'],
-                                        'difference'        => $item['physical_quantity'] - $record->system_quantity,
+                                        'difference'        => $item['physical_quantity'] - $item['system_quantity'],
                                     ]);
                                 }
                             }
@@ -472,6 +474,7 @@ class DetailsRelationManager extends RelationManager
     {
         return BulkAction::make('createStockAdjustment')
                     ->closeModalByClickingAway(false)
+                    ->label('Create Stock Adjustment')
                     ->closeModalByEscaping(false)
                     ->stickyModalHeader(true)
                     ->slideOver(true) 
@@ -554,16 +557,22 @@ class DetailsRelationManager extends RelationManager
                                                     ])
                                                     ->toArray();
                                             })
+                                            ->disabled()
+                                            ->dehydrated()
                                             ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
                                             ->columnSpan(2),
                                         Select::make('unit_id')
                                             ->label('Unit')
                                             ->required()
+                                              ->disabled()
+                                            ->dehydrated()
                                             ->options($records->pluck('unit.name', 'unit_id')->toArray()),
                                         TextInput::make('quantity')
                                             ->numeric()
                                             // ->minValue(0)
                                             // ->maxValue(99999)
+                                              ->disabled()
+                                            ->dehydrated()
                                             ->rules([
                                                 'numeric',
                                                 // 'min:0',
@@ -572,6 +581,9 @@ class DetailsRelationManager extends RelationManager
                                             ->required(),
                                         TextInput::make('package_size')
                                             ->readOnly()
+                                            ->label('Qty per Pack')
+                                            ->disabled()
+                                            ->dehydrated()
                                             ->required(),
 
                                     ]),
