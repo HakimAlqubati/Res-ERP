@@ -21,6 +21,7 @@ class ProductResource extends JsonResource
             'product_id' => $this->id,
             'product_name' => $this->name,
             'product_code' => $this->code,
+            'image' => $this->image ? asset('storage/' . $this->image) : asset('images/default-product.svg'),
             // 'is_manufacturing' => $this->is_manufacturing,
             'cat_id' => $this->category->id,
             'cat_name' => $this->category->name,

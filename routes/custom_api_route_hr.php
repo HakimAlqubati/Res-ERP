@@ -404,10 +404,11 @@ Route::prefix('hr')
         ]);
 
         // Get available work periods (shifts) by branch
-        Route::get('/workPeriods', [
-            \App\Modules\HR\EmployeeWorkPeriods\Http\Controllers\EmployeeWorkPeriodController::class,
-            'getWorkPeriods'
-        ]);
+        // Route::get('/workPeriods', [
+        //     \App\Modules\HR\EmployeeWorkPeriods\Http\Controllers\EmployeeWorkPeriodController::class,
+        //     'getWorkPeriods'
+        // ]);
+        Route::apiResource('/workPeriods', \App\Modules\HR\WorkPeriods\Http\Controllers\WorkPeriodController::class);
     });
 
 // ═══════════════════════════════════════════════════════════════════════════
