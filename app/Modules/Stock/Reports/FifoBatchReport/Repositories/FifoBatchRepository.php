@@ -48,7 +48,7 @@ class FifoBatchRepository implements FifoBatchRepositoryInterface
             )
             ->where('inventory_transactions.movement_type', InventoryTransaction::MOVEMENT_IN)
             ->whereNull('inventory_transactions.deleted_at')
-            ->when($filter->productId, fn($q, $v) => $q->where('inventory_transactions.product_id', $v))
+            ->when($filter->productIds, fn($q, $v) => $q->whereIn('inventory_transactions.product_id', $v))
             ->when($filter->unitId, fn($q, $v) => $q->where('inventory_transactions.unit_id', $v))
             ->when($filter->storeId, fn($q, $v) => $q->where('inventory_transactions.store_id', $v))
             ->when($filter->dateFrom, fn($q, $v) => $q->where('inventory_transactions.movement_date', '>=', $v))

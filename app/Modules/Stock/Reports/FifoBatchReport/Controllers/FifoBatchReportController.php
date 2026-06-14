@@ -34,7 +34,7 @@ class FifoBatchReportController extends Controller
         $filter = $request->toFilterDTO();
 
         $batch = $this->service->getCurrentBatch(
-            $filter->productId,
+            $filter->productIds[0] ?? 0,
             $filter->unitId,
             $filter->storeId,
         );

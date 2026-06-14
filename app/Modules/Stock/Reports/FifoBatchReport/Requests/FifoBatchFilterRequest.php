@@ -15,11 +15,13 @@ class FifoBatchFilterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_id' => 'nullable|integer|exists:products,id',
-            'unit_id'    => 'nullable|integer|exists:units,id',
-            'store_id'   => 'nullable|integer|exists:stores,id',
-            'date_from'  => 'nullable|date',
-            'date_to'    => 'nullable|date|after_or_equal:date_from',
+
+            'product_ids'   => 'nullable|array',
+            'product_ids.*' => 'integer|exists:products,id',
+            'unit_id'       => 'nullable|integer|exists:units,id',
+            'store_id'      => 'nullable|integer|exists:stores,id',
+            'date_from'     => 'nullable|date',
+            'date_to'       => 'nullable|date|after_or_equal:date_from',
         ];
     }
 

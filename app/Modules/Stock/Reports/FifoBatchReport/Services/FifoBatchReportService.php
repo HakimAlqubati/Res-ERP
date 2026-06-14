@@ -39,7 +39,7 @@ class FifoBatchReportService implements FifoBatchServiceInterface
      */
     public function getCurrentBatch(int $productId, int $unitId, ?int $storeId = null): ?FifoBatchDTO
     {
-        $filter = new FifoBatchFilterDTO(productId: $productId, unitId: $unitId, storeId: $storeId);
+        $filter = new FifoBatchFilterDTO(productIds: [$productId], unitId: $unitId, storeId: $storeId);
 
         return $this->getReport($filter)->first()?->currentBatch;
     }
