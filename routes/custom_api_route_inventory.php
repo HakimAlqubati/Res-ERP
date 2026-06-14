@@ -6,7 +6,13 @@ use App\Http\Controllers\Api\Inventory\InventoryApiController;
 use App\Http\Controllers\Api\Inventory\StockInventory\StockInventoryController;
 use App\Http\Controllers\Api\Inventory\StockAdjustment\StockAdjustmentController;
 use App\Http\Controllers\Api\Reports\GoodsReceivedNoteReportController;
+use App\Modules\Stock\Reports\FifoBatchReports\Contracts\InventoryStockRepositoryInterface;
 
+Route::get('/batch',function(){
+$batches = app(InventoryStockRepositoryInterface::class)
+    ->getAvailableStockBatches(productId: 13, storeId: 1);
+    return $batches;
+});
 Route::prefix('inventory')->name('inventory.')->group(function () {
     Route::get('remaining', [InventoryApiController::class, 'remaining'])->name('remaining');
 

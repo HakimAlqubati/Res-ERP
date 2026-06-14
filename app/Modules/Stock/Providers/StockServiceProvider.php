@@ -2,6 +2,8 @@
 
 namespace App\Modules\Stock\Providers;
 
+use App\Modules\Stock\Reports\FifoBatchReports\Contracts\InventoryStockRepositoryInterface;
+use App\Modules\Stock\Reports\FifoBatchReports\Repositories\InventoryStockRepository;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
 use App\Modules\Stock\Reports\GrnConsumption\Contracts\GrnConsumptionRepositoryInterface;
@@ -27,6 +29,11 @@ class StockServiceProvider extends ServiceProvider
             ProductAggregationRepositoryInterface::class,
             ProductAggregationRepository::class
         );
+
+         $this->app->bind(
+        InventoryStockRepositoryInterface::class,
+        InventoryStockRepository::class,
+    );
     }
 
     /**
