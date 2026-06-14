@@ -16,7 +16,7 @@ class FifoBatchReportService implements FifoBatchServiceInterface
     ) {}
 
     /**
-     * Full report: all batches per product+unit with FIFO layers.
+     * Full report: all batches per product with FIFO layers (base units).
      *
      * @return Collection<int, FifoBatchReportDTO>
      */
@@ -28,14 +28,16 @@ class FifoBatchReportService implements FifoBatchServiceInterface
             return collect();
         }
 
-        return $rows
-            ->groupBy(fn($row) => $row->product_id . '_' . $row->unit_id)
-            ->map(fn(Collection $group) => $this->buildReport($group))
+        $reports = $rows
+            ->groupBy('product_id')
+            ->map(fn(Collection $group) => $this->buildReport($group, $filter->onlyCurrent))
             ->values();
+
+        return $reports;
     }
 
     /**
-     * Get only the current FIFO batch (oldest with remaining qty) for a product+unit.
+     * Get only the current FIFO batch (oldest with remaining qty) for a product.
      */
     public function getCurrentBatch(int $productId, int $unitId, ?int $storeId = null): ?FifoBatchDTO
     {
@@ -45,23 +47,23 @@ class FifoBatchReportService implements FifoBatchServiceInterface
     }
 
     /**
-     * Get the current FIFO price for a product+unit.
+     * Get the current FIFO price for a product.
      */
     public function getCurrentPrice(int $productId, int $unitId, ?int $storeId = null): ?float
     {
-        return $this->getCurrentBatch($productId, $unitId, $storeId)?->price;
+        return $this->getCurrentBatch($productId, $unitId, $storeId)?->basePrice;
     }
 
     // ─── Internal ────────────────────────────────────────────────────
 
-    private function buildReport(Collection $rows): FifoBatchReportDTO
+    private function buildReport(Collection $rows, bool $onlyCurrent = false): FifoBatchReportDTO
     {
         $first        = $rows->first();
         $currentFound = false;
 
         $batches = $rows->map(function ($row) use (&$currentFound) {
             $isCurrent = false;
-            if (!$currentFound && (float) $row->remaining_qty > 0) {
+            if (!$currentFound && (float) $row->base_remaining_qty > 0) {
                 $isCurrent    = true;
                 $currentFound = true;
             }
@@ -70,26 +72,32 @@ class FifoBatchReportService implements FifoBatchServiceInterface
                 transactionId: $row->id,
                 productId: $row->product_id,
                 unitId: $row->unit_id,
+                unitName: $row->unit_name,
                 storeId: $row->store_id,
                 entryQty: (float) $row->quantity,
                 packageSize: (float) $row->package_size,
                 price: (float) $row->price,
+                baseEntryQty: (float) $row->base_entry_qty,
+                basePrice: (float) $row->base_price,
                 movementDate: $row->movement_date,
                 sourceType: $row->transactionable_type ? class_basename($row->transactionable_type) : null,
                 sourceId: $row->transactionable_id,
-                consumedQty: (float) $row->consumed_qty,
+                baseConsumedQty: (float) $row->base_consumed_qty,
                 isCurrentBatch: $isCurrent,
             );
-        })->all();
+        });
+
+        if ($onlyCurrent) {
+            $batches = $batches->filter(fn(FifoBatchDTO $b) => $b->isCurrentBatch);
+        }
 
         return new FifoBatchReportDTO(
             productId: $first->product_id,
             productName: $first->product_name,
             productCode: $first->product_code,
-            unitId: $first->unit_id,
-            unitName: $first->unit_name,
-            packageSize: (float) $first->package_size,
-            batches: $batches,
+            baseUnitId: $first->base_unit_id,
+            baseUnitName: $first->base_unit_name,
+            batches: $batches->values()->all(),
         );
     }
 }

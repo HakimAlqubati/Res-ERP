@@ -10,21 +10,24 @@ class FifoBatchFilterDTO
         public readonly ?int $storeId = null,
         public readonly ?string $dateFrom = null,
         public readonly ?string $dateTo = null,
+        public readonly bool $excludeDepleted = false,
+        public readonly bool $onlyCurrent = false,
     ) {}
 
     public static function fromArray(array $data): self
     {
         return new self(
-            productIds: self::normalizeIds($data['product_ids'] ?? $data['product_id'] ?? null),
+            productIds: self::normalizeIds($data['product_ids'] ?? null),
             unitId: $data['unit_id'] ?? null,
             storeId: $data['store_id'] ?? null,
             dateFrom: $data['date_from'] ?? null,
             dateTo: $data['date_to'] ?? null,
+            excludeDepleted: filter_var($data['exclude_depleted'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            onlyCurrent: filter_var($data['only_current'] ?? false, FILTER_VALIDATE_BOOLEAN),
         );
     }
 
     /**
-     * Accepts: int, "5", [1,2,3], "1,2,3", or null.
      * @return int[]|null
      */
     private static function normalizeIds(mixed $value): ?array

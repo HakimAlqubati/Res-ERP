@@ -24,14 +24,19 @@ class FifoBatchRepository implements FifoBatchRepositoryInterface
                 'inventory_transactions.movement_date',
                 'inventory_transactions.transactionable_type',
                 'inventory_transactions.transactionable_id',
+                'inventory_transactions.base_unit_id',
                 'products.name as product_name',
                 'products.code as product_code',
                 'units.name as unit_name',
-                DB::raw('COALESCE(consumed.total_consumed_base, 0) / inventory_transactions.package_size as consumed_qty'),
-                DB::raw('GREATEST(0, inventory_transactions.quantity - COALESCE(consumed.total_consumed_base, 0) / inventory_transactions.package_size) as remaining_qty'),
+                'base_units.name as base_unit_name',
+                DB::raw('(inventory_transactions.quantity * inventory_transactions.package_size) as base_entry_qty'),
+                DB::raw('COALESCE(consumed.total_consumed_base, 0) as base_consumed_qty'),
+                DB::raw('(inventory_transactions.quantity * inventory_transactions.package_size) - COALESCE(consumed.total_consumed_base, 0) as base_remaining_qty'),
+                DB::raw('inventory_transactions.price / inventory_transactions.package_size as base_price'),
             ])
             ->join('products', 'products.id', '=', 'inventory_transactions.product_id')
             ->join('units', 'units.id', '=', 'inventory_transactions.unit_id')
+            ->leftJoin('units as base_units', 'base_units.id', '=', 'inventory_transactions.base_unit_id')
             ->leftJoinSub(
                 InventoryTransaction::query()
                     ->select([
@@ -53,6 +58,7 @@ class FifoBatchRepository implements FifoBatchRepositoryInterface
             ->when($filter->storeId, fn($q, $v) => $q->where('inventory_transactions.store_id', $v))
             ->when($filter->dateFrom, fn($q, $v) => $q->where('inventory_transactions.movement_date', '>=', $v))
             ->when($filter->dateTo, fn($q, $v) => $q->where('inventory_transactions.movement_date', '<=', $v))
+            ->when($filter->excludeDepleted, fn($q) => $q->havingRaw('base_remaining_qty > 0'))
             ->orderBy('inventory_transactions.id')
             ->get();
     }
