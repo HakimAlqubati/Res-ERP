@@ -27,6 +27,8 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\FileUpload;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Components\Wizard;
@@ -52,63 +54,76 @@ class ProductsSchema
             Wizard::make()->skippable()
                 ->columnSpanFull()
                 ->schema([
-                    Step::make('')
-                        ->columns(3)
+                    Step::make('Basic Info')
+                        ->icon('heroicon-o-information-circle')
                         ->schema([
-                            TextInput::make('name')->required()->label(__('lang.name'))
-                                ->live(onBlur: true)
-                                ->unique(ignoreRecord: true),
-                            Select::make('category_id')->required()->label(__('lang.category'))
-                                ->searchable()->live()
-                                ->options(function () {
-                                    $type = request()->query('type');
-                                    return Category::when($type == 'manufacturing', function ($query) use ($type) {
-
-                                        $query->where('is_manafacturing', true);
-                                    })->pluck('name', 'id');
-                                })
-                                ->afterStateUpdated(function ($set, $state) {
-                                    $set('code', Product::generateProductCode($state));
-                                }),
-                                  FileUpload::make('image')
-                                ->label(__('lang.image'))
-                                ->image()
-                                ->disk('public')
-                                ->directory('products')
-                                ->visibility('public')
-                                // ->columnSpanFull()
-                                ,
-                            TextInput::make('code')->required()
-                                ->unique(ignoreRecord: true)
-                                ->label(__('lang.code'))
-                                ->readOnly()
-                                ->helperText(__('lang.product_code_helper'))
-                                ->placeholder('Code generates automatically')
-                                ->disabled()
-                                ->dehydrated()
-                                ->default(fn($get) => Product::generateProductCode($get('category_id'))),
-                            Grid::make()->columns(4)->columnSpanFull()->schema([
-                                TextInput::make('sku')
-                                    ->label('SKU')
-                                    ->placeholder('SKU code')
-                                    ->unique(ignoreRecord: true)
-                                    ->maxLength(50),
-                                TextInput::make('minimum_stock_qty')->numeric()->default(0)->required()
-                                    ->label(__('stock.minimum_quantity'))
-                                    ->helperText(__('stock.minimum_quantity_desc')),
-                                TextInput::make('waste_stock_percentage')
-                                    ->label('Waste %')
-                                    ->numeric()
-                                    ->minValue(0)
-                                    ->default(0)
-                                    ->maxValue(100),
-                                Toggle::make('active')
-                                    ->inline(false)->default(true)
-                                    ->label(__('lang.active')),
+                            Grid::make(3)->schema([
+                                Group::make()->columnSpan(2)->schema([
+                                    Grid::make(2)->schema([
+                                        TextInput::make('name')->required()->label(__('lang.name'))
+                                            ->live(onBlur: true)
+                                            ->unique(ignoreRecord: true),
+                                        Select::make('category_id')->required()->label(__('lang.category'))
+                                            ->searchable()->live()
+                                            ->options(function () {
+                                                $type = request()->query('type');
+                                                return Category::when($type == 'manufacturing', function ($query) use ($type) {
+                                                    $query->where('is_manafacturing', true);
+                                                })->pluck('name', 'id');
+                                            })
+                                            ->afterStateUpdated(function ($set, $state) {
+                                                $set('code', Product::generateProductCode($state));
+                                            }),
+                                        TextInput::make('code')->required()
+                                            ->unique(ignoreRecord: true)
+                                            ->label(__('lang.code'))
+                                            ->readOnly()
+                                            ->helperText(__('lang.product_code_helper'))
+                                            ->placeholder('Code generates automatically')
+                                            ->disabled()
+                                            ->dehydrated()
+                                            ->default(fn($get) => Product::generateProductCode($get('category_id')))
+                                            ->columnSpanFull(),
+                                    ]),
+                                ]),
+                                
+                                Group::make()->columnSpan(1)->schema([
+                                    FileUpload::make('image')
+                                        ->label(__('lang.image'))
+                                        ->image()
+                                        ->disk('public')
+                                        ->directory('products')
+                                        ->visibility('public')
+                                        ->imageEditor()
+                                        ->panelAspectRatio('1:1'),
+                                ]),
                             ]),
-                            Textarea::make('description')->label(__('lang.description'))->columnSpanFull()
-                                ->rows(2),
-                          
+                            
+                            Section::make('Stock & Additional Info')
+                                ->schema([
+                                    Grid::make()->columns(4)->schema([
+                                        TextInput::make('sku')
+                                            ->label('SKU')
+                                            ->placeholder('SKU code')
+                                            ->unique(ignoreRecord: true)
+                                            ->maxLength(50),
+                                        TextInput::make('minimum_stock_qty')->numeric()->default(0)->required()
+                                            ->label(__('stock.minimum_quantity'))
+                                            ->helperText(__('stock.minimum_quantity_desc')),
+                                        TextInput::make('waste_stock_percentage')
+                                            ->label('Waste %')
+                                            ->numeric()
+                                            ->minValue(0)
+                                            ->default(0)
+                                            ->maxValue(100),
+                                        Toggle::make('active')
+                                            ->inline(false)->default(true)
+                                            ->label(__('lang.active')),
+                                    ]),
+                                    Textarea::make('description')->label(__('lang.description'))->columnSpanFull()
+                                        ->rows(2),
+                                ])
+                                ->collapsible(),
                         ]),
 
                     Step::make('products')
