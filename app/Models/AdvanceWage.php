@@ -8,13 +8,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use App\Observers\AdvanceWageObserver;
+use App\Traits\Scopes\BranchScope;
 use App\Traits\Scopes\StatusScope;
 
 #[ObservedBy([AdvanceWageObserver::class])]
 
 class AdvanceWage extends Model
 {
-    use SoftDeletes, StatusScope;
+    use SoftDeletes, StatusScope, BranchScope;
 
     protected $table = 'hr_advance_wages';
 
