@@ -26,7 +26,7 @@ class FifoBatchDTO
         bool $isCurrentBatch,
     ) {
         $this->consumedQty    = round($consumedQty, 4);
-        $this->remainingQty   = round(max(0, $entryQty - $consumedQty), 4);
+        $this->remainingQty   = round($entryQty - $consumedQty, 4);
         $this->totalValue     = round($entryQty * $price, 2);
         $this->remainingValue = round($this->remainingQty * $price, 2);
         $this->isCurrentBatch = $isCurrentBatch;
