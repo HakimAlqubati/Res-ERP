@@ -8,6 +8,8 @@ use App\Modules\Stock\Reports\GrnConsumption\Contracts\GrnConsumptionRepositoryI
 use App\Modules\Stock\Reports\GrnConsumption\Repositories\GrnConsumptionRepository;
 use App\Modules\Stock\Reports\ProductGrnAggregation\Contracts\ProductAggregationRepositoryInterface;
 use App\Modules\Stock\Reports\ProductGrnAggregation\Repositories\ProductAggregationRepository;
+use App\Modules\Stock\Reports\FifoBatchReport\Contracts\FifoBatchRepositoryInterface;
+use App\Modules\Stock\Reports\FifoBatchReport\Repositories\FifoBatchRepository;
 
 class StockServiceProvider extends ServiceProvider
 {
@@ -27,6 +29,12 @@ class StockServiceProvider extends ServiceProvider
             ProductAggregationRepositoryInterface::class,
             ProductAggregationRepository::class
         );
+
+        // Bind the Repository Interface to its Implementation (FIFO Batch Report)
+        $this->app->bind(
+            FifoBatchRepositoryInterface::class,
+            FifoBatchRepository::class
+        );
     }
 
     /**
@@ -35,6 +43,7 @@ class StockServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerRoutes();
+        $this->registerApiRoutes();
         $this->registerViews();
     }
 
@@ -50,6 +59,21 @@ class StockServiceProvider extends ServiceProvider
     }
 
     /**
+     * Register the Stock Module API Routes.
+     */
+    protected function registerApiRoutes(): void
+    {
+        $apiRoutesPath = __DIR__ . '/../routes/api.php';
+
+        if (file_exists($apiRoutesPath)) {
+            Route::middleware(['api', 'auth:api'])
+                ->prefix('api/stock')
+                ->name('api.stock.')
+                ->group($apiRoutesPath);
+        }
+    }
+
+    /**
      * Register the Stock Module Views.
      */
     protected function registerViews(): void
@@ -58,3 +82,4 @@ class StockServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'stock');
     }
 }
+
