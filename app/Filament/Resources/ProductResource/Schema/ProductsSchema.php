@@ -15,6 +15,8 @@ use App\Filament\Resources\ProductResource\Support\ProductResourceActions as PRA
 use App\Models\OrderDetails;
 use App\Models\UnitPrice;
 use Closure;
+use Illuminate\Support\Str;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
@@ -95,6 +97,26 @@ class ProductsSchema
                                         ->directory('products')
                                         ->visibility('public')
                                         ->imageEditor()
+                                        ->imageEditorAspectRatios([
+                                            '16:9',
+                                            '4:3',
+                                            '1:1',
+                                        ])
+                                        ->saveUploadedFileUsing(function (TemporaryUploadedFile $file): string {
+                                            try {
+                                                $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+                                                $img = $manager->read($file->get());
+                                                $img->scaleDown(width: 1200);
+                                                $encodedImage = $img->toJpeg(70);
+                                                $filename = 'products/' . Str::random(15) . '.jpeg';
+                                                \Illuminate\Support\Facades\Storage::disk('public')->put($filename, (string) $encodedImage, 'public');
+                                                return $filename;
+                                            } catch (\Exception $e) {
+                                                \Illuminate\Support\Facades\Log::error('Product Image Upload Error: ' . $e->getMessage());
+                                                throw $e;
+                                            }
+                                        })
+                                        ->maxSize(20000)
                                         ->panelAspectRatio('1:1'),
                                 ]),
                             ]),
