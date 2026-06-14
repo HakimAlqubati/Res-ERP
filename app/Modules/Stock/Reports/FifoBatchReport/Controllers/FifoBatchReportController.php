@@ -3,33 +3,22 @@
 namespace App\Modules\Stock\Reports\FifoBatchReport\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Stock\Reports\FifoBatchReport\DTOs\FifoBatchFilterDTO;
-use App\Modules\Stock\Reports\FifoBatchReport\Services\FifoBatchReportService;
+use App\Modules\Stock\Reports\FifoBatchReport\Contracts\FifoBatchServiceInterface;
+use App\Modules\Stock\Reports\FifoBatchReport\Requests\FifoBatchFilterRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class FifoBatchReportController extends Controller
 {
     public function __construct(
-        private readonly FifoBatchReportService $service,
+        private readonly FifoBatchServiceInterface $service,
     ) {}
 
     /**
      * GET /api/stock/fifo-batches
-     * Full FIFO batch layers report.
      */
-    public function index(Request $request): JsonResponse
+    public function index(FifoBatchFilterRequest $request): JsonResponse
     {
-        $request->validate([
-            'product_id' => 'nullable|integer|exists:products,id',
-            'unit_id'    => 'nullable|integer|exists:units,id',
-            'store_id'   => 'nullable|integer|exists:stores,id',
-            'date_from'  => 'nullable|date',
-            'date_to'    => 'nullable|date|after_or_equal:date_from',
-        ]);
-
-        $filter = FifoBatchFilterDTO::fromArray($request->all());
-        $reports = $this->service->getReport($filter);
+        $reports = $this->service->getReport($request->toFilterDTO());
 
         return response()->json([
             'data'  => $reports->map->toArray()->values(),
@@ -39,20 +28,15 @@ class FifoBatchReportController extends Controller
 
     /**
      * GET /api/stock/fifo-batches/current-price?product_id=X&unit_id=Y
-     * Quick lookup: current FIFO price for a product+unit.
      */
-    public function currentPrice(Request $request): JsonResponse
+    public function currentPrice(FifoBatchFilterRequest $request): JsonResponse
     {
-        $request->validate([
-            'product_id' => 'required|integer|exists:products,id',
-            'unit_id'    => 'required|integer|exists:units,id',
-            'store_id'   => 'nullable|integer|exists:stores,id',
-        ]);
+        $filter = $request->toFilterDTO();
 
         $batch = $this->service->getCurrentBatch(
-            $request->integer('product_id'),
-            $request->integer('unit_id'),
-            $request->integer('store_id') ?: null,
+            $filter->productId,
+            $filter->unitId,
+            $filter->storeId,
         );
 
         if (!$batch) {

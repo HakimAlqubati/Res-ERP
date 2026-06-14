@@ -3,12 +3,13 @@
 namespace App\Modules\Stock\Reports\FifoBatchReport\Services;
 
 use App\Modules\Stock\Reports\FifoBatchReport\Contracts\FifoBatchRepositoryInterface;
+use App\Modules\Stock\Reports\FifoBatchReport\Contracts\FifoBatchServiceInterface;
 use App\Modules\Stock\Reports\FifoBatchReport\DTOs\FifoBatchDTO;
 use App\Modules\Stock\Reports\FifoBatchReport\DTOs\FifoBatchFilterDTO;
 use App\Modules\Stock\Reports\FifoBatchReport\DTOs\FifoBatchReportDTO;
 use Illuminate\Support\Collection;
 
-class FifoBatchReportService
+class FifoBatchReportService implements FifoBatchServiceInterface
 {
     public function __construct(
         private readonly FifoBatchRepositoryInterface $repository,

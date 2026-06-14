@@ -9,7 +9,9 @@ use App\Modules\Stock\Reports\GrnConsumption\Repositories\GrnConsumptionReposito
 use App\Modules\Stock\Reports\ProductGrnAggregation\Contracts\ProductAggregationRepositoryInterface;
 use App\Modules\Stock\Reports\ProductGrnAggregation\Repositories\ProductAggregationRepository;
 use App\Modules\Stock\Reports\FifoBatchReport\Contracts\FifoBatchRepositoryInterface;
+use App\Modules\Stock\Reports\FifoBatchReport\Contracts\FifoBatchServiceInterface;
 use App\Modules\Stock\Reports\FifoBatchReport\Repositories\FifoBatchRepository;
+use App\Modules\Stock\Reports\FifoBatchReport\Services\FifoBatchReportService;
 
 class StockServiceProvider extends ServiceProvider
 {
@@ -30,11 +32,9 @@ class StockServiceProvider extends ServiceProvider
             ProductAggregationRepository::class
         );
 
-        // Bind the Repository Interface to its Implementation (FIFO Batch Report)
-        $this->app->bind(
-            FifoBatchRepositoryInterface::class,
-            FifoBatchRepository::class
-        );
+        // FIFO Batch Report bindings
+        $this->app->bind(FifoBatchRepositoryInterface::class, FifoBatchRepository::class);
+        $this->app->bind(FifoBatchServiceInterface::class, FifoBatchReportService::class);
     }
 
     /**
