@@ -70,6 +70,14 @@ class ProductsSchema
                                 ->afterStateUpdated(function ($set, $state) {
                                     $set('code', Product::generateProductCode($state));
                                 }),
+                                  FileUpload::make('image')
+                                ->label(__('lang.image'))
+                                ->image()
+                                ->disk('public')
+                                ->directory('products')
+                                ->visibility('public')
+                                // ->columnSpanFull()
+                                ,
                             TextInput::make('code')->required()
                                 ->unique(ignoreRecord: true)
                                 ->label(__('lang.code'))
@@ -100,7 +108,7 @@ class ProductsSchema
                             ]),
                             Textarea::make('description')->label(__('lang.description'))->columnSpanFull()
                                 ->rows(2),
-
+                          
                         ]),
 
                     Step::make('products')
