@@ -135,7 +135,7 @@ class ProductsTable
                 \Filament\Tables\Columns\ImageColumn::make('image')
                     ->label(__('lang.image'))
                     ->defaultImageUrl(url('/images/default-product.svg'))
-                    ->square()
+                    ->circular()
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('code')
                     ->label(__('lang.code'))->copyable()->sortable()
