@@ -356,7 +356,7 @@ class EmployeeApplicationTable
                                     }
                                 } catch (Exception $th) {
                                     DB::rollBack();
-                                    throw $th;
+                                    // throw $th;
 
                                     return Notification::make()->title($th->getMessage())->warning()->send();
                                 }
