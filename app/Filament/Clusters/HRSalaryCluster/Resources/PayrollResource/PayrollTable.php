@@ -37,7 +37,12 @@ class PayrollTable
             TextColumn::make('total_net')
                 ->label('Net Salary')
                 ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
-                ->sortable(),
+                ->sortable()
+                ->summarize([
+                        \Filament\Tables\Columns\Summarizers\Sum::make()->label('')
+                            ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state)),
+                    ])
+                ,
             TextColumn::make('creator.name')
                 ->label(__('Created By'))
                 ->sortable()
@@ -71,8 +76,25 @@ class PayrollTable
     {
         return [
             TrashedFilter::make(),
-            SelectFilter::make('branch_id')->label('Branch')
+            SelectFilter::make('branch_id')->label(__('Branch'))
+                ->searchable()
                 ->options(Branch::selectable()->forBranchManager('id')->pluck('name', 'id')),
+            SelectFilter::make('year')
+                ->label(__('Year'))
+                ->options(array_combine(
+                    range(date('Y') - 3, date('Y') + 1),
+                    range(date('Y') - 3, date('Y') + 1)
+                ))
+                ->default(date('Y'))
+                ,
+            SelectFilter::make('month')
+                ->label(__('Month'))
+                ->options(getMonthArrayWithKeys())
+                // ->default(date('m'))
+                ,
+            SelectFilter::make('status')
+                ->label(__('Status'))
+                ->options(PayrollRun::statuses()),
         ];
     }
 }
