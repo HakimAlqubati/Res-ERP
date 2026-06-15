@@ -19,52 +19,13 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
         $stockBatches = $this->stockBatchesSubquery($productId, $storeId);
 
         // fromSub تُغلِّف الـ subquery كـ derived table محل CTE
-        $batches = DB::table($stockBatches, 'stock_batches')
+        return DB::table($stockBatches, 'stock_batches')
             ->selectRaw('*, (total_in - total_out) AS current_stock')
             ->whereRaw('(total_in - total_out) > 0')
-            ->orWhereRaw('(total_in - total_out) < 0')
-            ->orderBy('product_id')
-            ->get();
-
-        $finalCollection = collect();
-
-        // return $batches;
-        foreach ($batches->groupBy('product_id') as $productBatches) {
-            $negativeCarry = 0.0;
-
-            foreach ($productBatches as $batch) {
-                $currentStock = (float) $batch->current_stock;
-
-                if ($currentStock < 0) {
-                    $negativeCarry += $currentStock;
-                    $batch->current_stock = 0;
-                } elseif ($negativeCarry < 0) {
-                    $newStock = $currentStock + $negativeCarry;
-                    if ($newStock <= 0) {
-                        $negativeCarry = $newStock;
-                        $batch->current_stock = 0;
-                    } else {
-                        $negativeCarry = 0.0;
-                        $batch->current_stock = number_format($newStock, 4, '.', '');
-                    }
-                }
-            }
-
-            if ($negativeCarry < 0) {
-                $lastBatch = $productBatches->last();
-                if ($lastBatch) {
-                    $lastBatch->current_stock = number_format($negativeCarry, 4, '.', '');
-                }
-            }
-
-            foreach ($productBatches as $batch) {
-                if (round((float) $batch->current_stock, 4) != 0) {
-                    $finalCollection->push($batch);
-                }
-            }
-        }
-
-        return $finalCollection->values();
+            ->orderBy('id')
+            ->get()
+            // ->map(StockBatchData::fromRow(...))
+            ;
     }
 
       private function outAggregatesSubquery(): Builder

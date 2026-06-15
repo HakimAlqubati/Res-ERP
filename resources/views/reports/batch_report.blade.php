@@ -83,7 +83,7 @@
                         <tbody>
                             @foreach($batches as $batch)
                                 @php
-                                    $remaining = $batch->current_stock;
+                                    $remaining = $batch->total_in - $batch->total_out;
                                     $packageSize = max($batch->package_size, 1);
                                     $remainingTotalPrice = $remaining * ($batch->unit_price);
                                 @endphp
@@ -97,7 +97,7 @@
                                     <td class="px-6 py-4">{{ $batch->total_in }}</td>
                                     <td class="px-6 py-4">{{ $batch->total_out }}</td>
                                     <td class="px-6 py-4 font-bold text-blue-600">{{ $remaining }}</td>
-                                    <td class="px-6 py-4 font-bold text-green-600">{{ $remainingTotalPrice }}</td>
+                                    <td class="px-6 py-4 font-bold text-green-600">{{ number_format($remainingTotalPrice, 2) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
