@@ -26,6 +26,7 @@ use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\DB;
@@ -208,10 +209,27 @@ class PenaltyDeductionResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('employee_id')
-                    ->options(Employee::all()->pluck('name', 'id')),
+                    ->label(__('Employee'))
+                    ->searchable()
+                    ->options(Employee::pluck('name', 'id')),
                 SelectFilter::make('deduction_id')
-                    ->options(Deduction::penalty()->get()->pluck('name', 'id')),
-            ])
+                    ->label(__('Deduction'))
+                    ->searchable()
+                    ->options(Deduction::penalty()->pluck('name', 'id')),
+                SelectFilter::make('year')
+                    ->label(__('Year'))
+                    ->options(array_combine(
+                        range(date('Y') - 3, date('Y') + 1),
+                        range(date('Y') - 3, date('Y') + 1)
+                    )),
+                SelectFilter::make('month')
+                    ->label(__('Month'))
+                    ->options(getMonthArrayWithIntKeys()),
+                SelectFilter::make('status')
+                    ->label(__('Status'))
+                    ->options(PenaltyDeduction::getStatusOptions()),
+                ],FiltersLayout::Modal)
+            ->filtersFormColumns(4)
             ->recordActions([
                 EditAction::make()->visible(fn ($record): bool => $record->status == PenaltyDeduction::STATUS_PENDING),
                 Action::make('approve')

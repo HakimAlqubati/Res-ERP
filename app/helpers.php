@@ -507,6 +507,26 @@ if (!function_exists('getMonthArrayWithKeys')) {
     }
 }
 
+if (!function_exists('getMonthArrayWithIntKeys')) {
+    function getMonthArrayWithIntKeys()
+    {
+        return [
+            1  => __('lang.month.january'),  // January
+            2  => __('lang.month.february'), // February
+            3  => __('lang.month.march'),    // March
+            4  => __('lang.month.april'),    // April
+            5  => __('lang.month.may'),      // May
+            6  => __('lang.month.june'),     // June
+            7  => __('lang.month.july'),     // July
+            8  => __('lang.month.august'),   // August
+            9  => __('lang.month.september'), // September
+            10 => __('lang.month.october'),  // October
+            11 => __('lang.month.november'), // November
+            12 => __('lang.month.december'), // December
+        ];
+    }
+}
+
 /**
  * to get setting by key field
  */
