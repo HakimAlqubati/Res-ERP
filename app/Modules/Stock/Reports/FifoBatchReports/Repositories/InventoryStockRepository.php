@@ -46,6 +46,7 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
                 'in_t.price',
                 'in_t.transactionable_type',
                 'in_t.transactionable_id',
+                'in_t.movement_date',
             ])
             ->selectRaw('(in_t.quantity * in_t.package_size) AS total_in')
             ->selectRaw('COALESCE(oa.total_out_qty, 0) AS total_out')
