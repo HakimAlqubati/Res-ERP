@@ -10,7 +10,7 @@ use App\Modules\Stock\Reports\FifoBatchReports\Contracts\InventoryStockRepositor
 
 Route::get('/batch',function(){
 $batches = app(InventoryStockRepositoryInterface::class)
-    ->getAvailableStockBatches(productId: 13, storeId: 1);
+    ->getAvailableStockBatches(productId: 174, storeId: 1);
     return $batches;
 });
 Route::prefix('inventory')->name('inventory.')->group(function () {

@@ -1123,3 +1123,7 @@ Route::post('secret-setup/store', [App\Http\Controllers\SecretSetupController::c
 Route::get('/login', function () {
     return redirect()->route('filament.admin.auth.login');
 })->name('login');
+
+
+use App\Http\Controllers\BatchReportController;
+Route::get('/batch-report', [BatchReportController::class, 'index'])->name('reports.batch');

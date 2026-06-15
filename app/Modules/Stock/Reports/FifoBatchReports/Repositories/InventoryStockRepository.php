@@ -44,6 +44,11 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
             ->select([
                 'in_t.id',
                 'in_t.price',
+                'in_t.product_id',
+                'p.name as product',
+                'u.name as unit',
+                'in_t.package_size',
+                'in_t.price as unit_price',
                 'in_t.transactionable_type',
                 'in_t.transactionable_id',
                 'in_t.movement_date',
@@ -57,6 +62,8 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
                 '=',
                 'in_t.id'
             )
+            ->join('products AS p', 'in_t.product_id', '=', 'p.id')
+            ->join('units AS u', 'in_t.unit_id', '=', 'u.id')
             ->where('in_t.movement_type', 'in')
             ->where('in_t.product_id', $productId)
             ->where('in_t.store_id', $storeId)
