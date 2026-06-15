@@ -19,6 +19,7 @@ use Filament\Actions\RestoreBulkAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
@@ -228,6 +229,8 @@ class UserTable
                                     ->default(fn ($record) => $record->email)
                                     ->required()
                                     ->unique(ignoreRecord: true),
+                                Toggle::make('active')
+                                    ->default(fn ($record) => $record->active ?? true),
 
                             ]),
                         ])
