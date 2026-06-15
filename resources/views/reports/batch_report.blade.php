@@ -62,7 +62,7 @@
         </form>
 
         <!-- Table -->
-        @if(request()->has('store_id') && request()->has('product_id'))
+        @if(request()->has('store_id'))
             @if($batches->isNotEmpty())
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm text-left text-gray-500">
@@ -108,7 +108,7 @@
                     <div class="flex">
                         <div class="ml-3">
                             <p class="text-sm text-yellow-700">
-                                No available batches found for this product in the selected store.
+                                No available batches found for the selected criteria.
                             </p>
                         </div>
                     </div>
@@ -119,7 +119,7 @@
                 <div class="flex">
                     <div class="ml-3">
                         <p class="text-sm text-blue-700">
-                            Please select a store and a product to view the report.
+                            Please select a store to view the report.
                         </p>
                     </div>
                 </div>

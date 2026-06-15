@@ -16,9 +16,9 @@ class BatchReportController extends Controller
 
         $batches = collect();
 
-        if ($storeId && $productId) {
+        if ($storeId) {
             $batches = $inventoryRepo->getAvailableStockBatches(
-                productId: (int) $productId,
+                productId: $productId ? (int) $productId : null,
                 storeId: (int) $storeId
             );
         }

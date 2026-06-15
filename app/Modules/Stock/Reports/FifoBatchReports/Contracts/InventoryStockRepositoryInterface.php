@@ -10,5 +10,5 @@ interface InventoryStockRepositoryInterface
     /**
      * @return Collection<int, StockBatchData>
      */
-    public function getAvailableStockBatches(int $productId, int $storeId): Collection;
+    public function getAvailableStockBatches(?int $productId, int $storeId): Collection;
 }

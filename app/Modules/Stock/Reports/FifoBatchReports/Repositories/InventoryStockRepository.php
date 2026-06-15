@@ -14,7 +14,7 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
 {
     private const TABLE = 'inventory_transactions';
 
-    public function getAvailableStockBatches(int $productId, int $storeId): Collection
+    public function getAvailableStockBatches(?int $productId, int $storeId): Collection
     {
         $stockBatches = $this->stockBatchesSubquery($productId, $storeId);
 
@@ -38,7 +38,7 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
             ->groupBy('source_transaction_id');
     }
 
-     private function stockBatchesSubquery(int $productId, int $storeId): Builder
+     private function stockBatchesSubquery(?int $productId, int $storeId): Builder
     {
         return DB::table(self::TABLE . ' AS in_t')
             ->select([
@@ -65,7 +65,7 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
             ->join('products AS p', 'in_t.product_id', '=', 'p.id')
             ->join('units AS u', 'in_t.unit_id', '=', 'u.id')
             ->where('in_t.movement_type', 'in')
-            ->where('in_t.product_id', $productId)
+            ->when($productId, fn($query) => $query->where('in_t.product_id', $productId))
             ->where('in_t.store_id', $storeId)
             ->whereNull('in_t.deleted_at');
     }
