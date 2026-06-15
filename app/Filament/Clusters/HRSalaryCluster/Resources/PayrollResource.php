@@ -142,7 +142,7 @@ class PayrollResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager() || isHR()) {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) {
             return true;
         }
 
