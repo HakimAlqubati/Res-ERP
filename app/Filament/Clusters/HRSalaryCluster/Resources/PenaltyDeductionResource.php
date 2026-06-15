@@ -6,6 +6,7 @@ use App\Filament\Clusters\HRSalaryCluster;
 use App\Filament\Clusters\HRSalaryCluster\Resources\PenaltyDeductionResource\Pages\CreatePenaltyDeduction;
 use App\Filament\Clusters\HRSalaryCluster\Resources\PenaltyDeductionResource\Pages\EditPenaltyDeduction;
 use App\Filament\Clusters\HRSalaryCluster\Resources\PenaltyDeductionResource\Pages\ListPenaltyDeductions;
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\Deduction;
 use App\Models\Employee;
 use App\Models\PenaltyDeduction;
@@ -28,6 +29,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -155,6 +157,7 @@ class PenaltyDeductionResource extends Resource
         return $table->defaultSort('id', 'desc')->striped()
             ->recordUrl(null)
             ->columns([
+                SoftDeleteColumn::make(),
                 TextColumn::make('id')
                     ->alignCenter(true)->label('ID#')->searchable()->wrap()
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -208,6 +211,7 @@ class PenaltyDeductionResource extends Resource
                     ->sortable(),
             ])
             ->filters([
+                TrashedFilter::make(),
                 SelectFilter::make('employee_id')
                     ->label(__('Employee'))
                     ->searchable()
