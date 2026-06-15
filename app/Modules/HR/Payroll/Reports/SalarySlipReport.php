@@ -245,7 +245,7 @@ class SalarySlipReport
 
         $filename = sprintf(
             'SalarySlip-%s-%s-%s.pdf',
-            $payroll->employee?->name ?? '000',
+            str_replace(['/', '\\'], '-', $payroll->employee?->name ?? '000'),
             $payroll->year,
             $payroll->month
         );
