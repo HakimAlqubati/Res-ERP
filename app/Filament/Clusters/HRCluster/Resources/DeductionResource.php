@@ -18,6 +18,7 @@ use App\Filament\Clusters\HRCluster\Resources\DeductionResource\Pages\ViewDeduct
 use App\Filament\Clusters\HRCluster\Resources\DeductionResource\Pages;
 use App\Filament\Clusters\HRSalaryCluster;
 use App\Filament\Clusters\HRSalarySettingCluster;
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\Deduction;
 use Filament\Forms;
 use Filament\Forms\Components\Radio;
@@ -34,6 +35,7 @@ use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
 
@@ -251,6 +253,7 @@ class DeductionResource extends Resource
         return $table
             ->striped()
             ->columns([
+                SoftDeleteColumn::make(),
                 TextColumn::make('name')->sortable()->searchable()->wrap(),
                 TextColumn::make('description')->wrap()->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('is_penalty')->alignCenter(true)
@@ -291,7 +294,7 @@ class DeductionResource extends Resource
                 ToggleColumn::make('active')->disabled(fn(): bool => isBranchManager()),
             ])
             ->filters([
-                //
+                TrashedFilter::make(),
             ])
             ->recordActions([
                 EditAction::make(),
