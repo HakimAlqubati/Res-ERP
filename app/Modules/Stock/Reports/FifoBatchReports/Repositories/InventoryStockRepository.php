@@ -21,6 +21,7 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
         // fromSub تُغلِّف الـ subquery كـ derived table محل CTE
         return DB::table($stockBatches, 'stock_batches')
             ->selectRaw('*, (total_in - total_out) AS current_stock')
+            ->selectRaw('CASE WHEN ROW_NUMBER() OVER(PARTITION BY product_id ORDER BY id ASC) = 1 THEN true ELSE false END AS is_current_batch')
             ->whereRaw('(total_in - total_out) > 0')
             ->orderBy('id')
             ->get()
