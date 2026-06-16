@@ -11,7 +11,9 @@ use Illuminate\Http\Request;
 
 Route::get('/batch',function(Request $request){
 $batches = app(InventoryStockRepositoryInterface::class)
-    ->getAvailableStockBatches(productId: $request->product_id, storeId: $request->store_id);
+    ->getAvailableStockBatches(productId: $request->product_id, storeId:
+     $request->store_id,
+   isCurrentBatch: $request?->current_batch ?? null);
     return $batches;
 });
 Route::prefix('inventory')->name('inventory.')->group(function () {

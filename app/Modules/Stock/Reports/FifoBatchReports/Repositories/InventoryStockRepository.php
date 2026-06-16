@@ -14,19 +14,22 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
 {
     private const TABLE = 'inventory_transactions';
 
-    public function getAvailableStockBatches(?int $productId, int $storeId): Collection
+    public function getAvailableStockBatches(?int $productId, int $storeId, ?bool $isCurrentBatch = null): Collection
     {
         $stockBatches = $this->stockBatchesSubquery($productId, $storeId);
 
         // fromSub تُغلِّف الـ subquery كـ derived table محل CTE
-        return DB::table($stockBatches, 'stock_batches')
+        $query = DB::table($stockBatches, 'stock_batches')
             ->selectRaw('*, (total_in - total_out) AS current_stock')
             ->selectRaw('CASE WHEN ROW_NUMBER() OVER(PARTITION BY product_id ORDER BY id ASC) = 1 THEN true ELSE false END AS is_current_batch')
-            ->whereRaw('(total_in - total_out) > 0')
-            ->orderBy('id')
-            ->get()
-            // ->map(StockBatchData::fromRow(...))
-            ;
+            ->whereRaw('(total_in - total_out) > 0');
+
+        if ($isCurrentBatch !== null) {
+            $query = DB::table($query, 'filtered_batches')
+                ->where('is_current_batch', $isCurrentBatch ? 1 : 0);
+        }
+
+        return $query->orderBy('id')->get();
     }
 
       private function outAggregatesSubquery(): Builder
