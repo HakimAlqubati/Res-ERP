@@ -23,7 +23,7 @@
 </head>
 <body class="bg-gray-100 p-6">
 
-    <div class="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-md">
+    <div class="mx-auto bg-white p-6 rounded-lg shadow-md">
         <h1 class="text-2xl font-bold mb-6 text-gray-800 border-b pb-4">Inventory Batch Report</h1>
 
         <!-- Filters -->
@@ -70,6 +70,7 @@
                             <tr>
                                 <th scope="col" class="px-6 py-3 font-semibold">Transaction ID</th>
                                 <th scope="col" class="px-6 py-3 font-semibold">Source Document</th>
+                                <th scope="col" class="px-6 py-3 font-semibold text-center">Current Batch</th>
                                 <th scope="col" class="px-6 py-3 font-semibold">Product</th>
                                 <th scope="col" class="px-6 py-3 font-semibold">Unit</th>
                                 <th scope="col" class="px-6 py-3 font-semibold">Pkg Size</th>
@@ -97,6 +98,17 @@
                                             </span>
                                         @else
                                             <span class="text-gray-400">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        @if(isset($batch->is_current_batch) && $batch->is_current_batch)
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                Yes
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                No
+                                            </span>
                                         @endif
                                     </td>
                                     <td class="px-6 py-4">{{ $batch->product ?? 'N/A' }}</td>
