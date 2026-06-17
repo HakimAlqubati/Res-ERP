@@ -84,17 +84,12 @@
                         </thead>
                         <tbody>
                             @foreach($batches as $batch)
-                                @php
-                                    $remaining = $batch->total_in - $batch->total_out;
-                                    $packageSize = max($batch->package_size, 1);
-                                    $remainingTotalPrice = $remaining * ($batch->unit_price);
-                                @endphp
                                 <tr class="bg-white border-b hover:bg-gray-50">
                                     <td class="px-6 py-4">{{ $batch->id }}</td>
                                     <td class="px-6 py-4">
-                                        @if($batch->transactionable_type)
+                                        @if(isset($batch->source_document))
                                             <span class="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-md border border-gray-200">
-                                                {{ \Illuminate\Support\Str::headline(class_basename($batch->transactionable_type)) }} #{{ $batch->transactionable_id }}
+                                                {{ $batch->source_document }}
                                             </span>
                                         @else
                                             <span class="text-gray-400">-</span>
@@ -118,8 +113,8 @@
                                     <td class="px-6 py-4">{{ number_format($batch->unit_price, 2) }}</td>
                                     <td class="px-6 py-4">{{ $batch->total_in }}</td>
                                     <td class="px-6 py-4">{{ $batch->total_out }}</td>
-                                    <td class="px-6 py-4 font-bold text-blue-600">{{ $remaining }}</td>
-                                    <td class="px-6 py-4 font-bold text-green-600">{{ number_format($remainingTotalPrice, 2) }}</td>
+                                    <td class="px-6 py-4 font-bold text-blue-600">{{ $batch->current_stock }}</td>
+                                    <td class="px-6 py-4 font-bold text-green-600">{{ number_format($batch->remaining_total_price, 2) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
