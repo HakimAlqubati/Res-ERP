@@ -69,22 +69,30 @@
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b">
                             <tr>
                                 <th scope="col" class="px-6 py-3 font-semibold">Transaction ID</th>
-                                <th scope="col" class="px-6 py-3 font-semibold">Source Document</th>
-                                <th scope="col" class="px-6 py-3 font-semibold text-center">Current Batch</th>
-                                <th scope="col" class="px-6 py-3 font-semibold">Product</th>
-                                <th scope="col" class="px-6 py-3 font-semibold">Base Unit</th>
                                 <th scope="col" class="px-6 py-3 font-semibold">Date</th>
-                                <th scope="col" class="px-6 py-3 font-semibold">Unit Price</th>
-                                <th scope="col" class="px-6 py-3 font-semibold">Total In</th>
-                                <th scope="col" class="px-6 py-3 font-semibold">Total Out</th>
-                                <th scope="col" class="px-6 py-3 font-semibold text-blue-600">Remaining</th>
+                                <th scope="col" class="px-6 py-3 font-semibold">Source Document</th>
+                                <th scope="col" class="px-6 py-3 font-semibold">Product</th>
+                                <!-- Original IN Info -->
+                                <th scope="col" class="px-6 py-3 font-semibold border-l bg-gray-100">In Unit</th>
+                                <th scope="col" class="px-6 py-3 font-semibold bg-gray-100">In Qty</th>
+                                <th scope="col" class="px-6 py-3 font-semibold bg-gray-100">In Pkg Size</th>
+                                <!-- Base Unit Info -->
+                                <th scope="col" class="px-6 py-3 font-semibold border-l bg-blue-50 text-blue-700">Base Unit</th>
+                                <th scope="col" class="px-6 py-3 font-semibold bg-blue-50 text-blue-700">Base Pkg Size</th>
+                                <th scope="col" class="px-6 py-3 font-semibold bg-blue-50 text-blue-700">Total In (Base)</th>
+                                <th scope="col" class="px-6 py-3 font-semibold bg-blue-50 text-blue-700">Total Out (Base)</th>
+                                <th scope="col" class="px-6 py-3 font-semibold bg-blue-50 text-blue-700">Remaining (Base)</th>
+                                <!-- Financials & Status -->
+                                <th scope="col" class="px-6 py-3 font-semibold border-l">Base Unit Price</th>
                                 <th scope="col" class="px-6 py-3 font-semibold text-green-600">Remaining Total Price</th>
+                                <th scope="col" class="px-6 py-3 font-semibold text-center">Current Batch</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($batches as $batch)
                                 <tr class="bg-white border-b hover:bg-gray-50">
                                     <td class="px-6 py-4">{{ $batch->id }}</td>
+                                    <td class="px-6 py-4">{{ \Carbon\Carbon::parse($batch->movement_date)->format('Y-m-d H:i') }}</td>
                                     <td class="px-6 py-4">
                                         @if(isset($batch->source_document))
                                             <span class="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-md border border-gray-200">
@@ -94,6 +102,23 @@
                                             <span class="text-gray-400">-</span>
                                         @endif
                                     </td>
+                                    <td class="px-6 py-4">{{ $batch->product ?? 'N/A' }}</td>
+                                    
+                                    <!-- Original IN Info -->
+                                    <td class="px-6 py-4 border-l bg-gray-50">{{ $batch->unit ?? 'N/A' }}</td>
+                                    <td class="px-6 py-4 bg-gray-50">{{ $batch->in_qty }}</td>
+                                    <td class="px-6 py-4 bg-gray-50">{{ $batch->package_size ?? 1 }}</td>
+                                    
+                                    <!-- Base Unit Info -->
+                                    <td class="px-6 py-4 border-l bg-blue-50/30 text-blue-800">{{ $batch->base_unit ?? 'N/A' }}</td>
+                                    <td class="px-6 py-4 bg-blue-50/30 text-blue-800">{{ $batch->base_unit_package_size ?? 1 }}</td>
+                                    <td class="px-6 py-4 bg-blue-50/30 text-blue-800">{{ $batch->base_unit_in_qty }}</td>
+                                    <td class="px-6 py-4 bg-blue-50/30 text-blue-800">{{ $batch->base_unit_out }}</td>
+                                    <td class="px-6 py-4 bg-blue-50/30 font-bold text-blue-600">{{ $batch->current_stock }}</td>
+                                    
+                                    <!-- Financials & Status -->
+                                    <td class="px-6 py-4 border-l">{{ number_format($batch->unit_price, 2) }}</td>
+                                    <td class="px-6 py-4 font-bold text-green-600">{{ number_format($batch->remaining_total_price, 2) }}</td>
                                     <td class="px-6 py-4 text-center">
                                         @if(isset($batch->is_current_batch) && $batch->is_current_batch)
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -105,14 +130,6 @@
                                             </span>
                                         @endif
                                     </td>
-                                    <td class="px-6 py-4">{{ $batch->product ?? 'N/A' }}</td>
-                                    <td class="px-6 py-4">{{ $batch->base_unit ?? 'N/A' }}</td>
-                                    <td class="px-6 py-4">{{ \Carbon\Carbon::parse($batch->movement_date)->format('Y-m-d H:i') }}</td>
-                                    <td class="px-6 py-4">{{ number_format($batch->unit_price, 2) }}</td>
-                                    <td class="px-6 py-4">{{ $batch->total_in }}</td>
-                                    <td class="px-6 py-4">{{ $batch->total_out }}</td>
-                                    <td class="px-6 py-4 font-bold text-blue-600">{{ $batch->current_stock }}</td>
-                                    <td class="px-6 py-4 font-bold text-green-600">{{ number_format($batch->remaining_total_price, 2) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

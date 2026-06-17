@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Modules\Stock\Reports\FifoBatchReports\Repositories;
 
 // use App\DataTransferObjects\StockBatchData;
- use Illuminate\Database\Query\Builder;
+use App\Models\UnitPrice;
+use App\Modules\Stock\Reports\FifoBatchReports\Contracts\InventoryStockRepositoryInterface;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use App\Modules\Stock\Reports\FifoBatchReports\Contracts\InventoryStockRepositoryInterface;
 
 final class InventoryStockRepository implements InventoryStockRepositoryInterface
 {
@@ -18,30 +19,28 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
     {
         $stockBatches = $this->stockBatchesSubquery($productId, $storeId);
 
-        // dd($stockBatches->get());
         // fromSub تُغلِّف الـ subquery كـ derived table محل CTE
         $query = DB::table($stockBatches, 'stock_batches')
-            ->selectRaw('*, (total_in - total_out) AS current_stock')
-            ->selectRaw('((total_in - total_out) * unit_price) AS remaining_total_price')
+            ->selectRaw('*, (base_unit_in_qty - base_unit_out) AS current_stock')
+            ->selectRaw('((base_unit_in_qty - base_unit_out) * unit_price) AS remaining_total_price')
             ->selectRaw('CASE WHEN ROW_NUMBER() OVER(PARTITION BY product_id ORDER BY id ASC) = 1 THEN true ELSE false END AS is_current_batch')
-            ->selectRaw('CONCAT(REGEXP_REPLACE(SUBSTRING_INDEX(transactionable_type, "\\\\", -1), "([a-z])([A-Z])", "$1 $2"), " #", transactionable_id) AS source_document')
-            ->whereRaw('(total_in - total_out) > 0')
-            ->orWhereRaw('(total_in - total_out) < 0')
-            ;
+            // ->selectRaw('CONCAT(REGEXP_REPLACE(SUBSTRING_INDEX(transactionable_type, "\\\\", -1), "([a-z])([A-Z])", "$1 $2"), " #", transactionable_id) AS source_document')
+            ->selectRaw('CONCAT(transactionable_id, " #", transactionable_type) AS source_document')
+            ->whereRaw('(base_unit_in_qty - base_unit_out) > 0')
+            ->orWhereRaw('(base_unit_in_qty - base_unit_out) < 0');
 
         if ($isCurrentBatch !== null) {
             $query = DB::table($query, 'filtered_batches')
                 ->where('is_current_batch', $isCurrentBatch ? 1 : 0);
-        }
-
+        } 
         return $query->orderBy('id')->get();
     }
 
-      private function outAggregatesSubquery(): Builder
+    private function outAggregatesSubquery(): Builder
     {
         return DB::table(self::TABLE)
             ->select('source_transaction_id')
-            ->selectRaw('SUM(quantity * package_size) AS total_out_qty,MAX(package_size) AS out_package_size')
+            ->selectRaw('SUM(quantity * package_size) AS total_out_qty')
             ->where('movement_type', 'out')
             ->whereNull('deleted_at')
             ->groupBy('source_transaction_id');
@@ -54,37 +53,46 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
             ->selectRaw('ROW_NUMBER() OVER(PARTITION BY up.product_id ORDER BY up.package_size ASC) as rn')
             ->join('units as u', 'up.unit_id', '=', 'u.id')
             ->whereIn('up.usage_scope', [
-                \App\Models\UnitPrice::USAGE_ALL,
-                \App\Models\UnitPrice::USAGE_SUPPLY_ONLY,
-                \App\Models\UnitPrice::USAGE_OUT_ONLY,
-                \App\Models\UnitPrice::USAGE_NONE,
+                UnitPrice::USAGE_ALL,
+                UnitPrice::USAGE_SUPPLY_ONLY,
+                UnitPrice::USAGE_OUT_ONLY,
+                UnitPrice::USAGE_NONE,
             ]);
 
         return DB::table($ranked, 'ranked_units')->where('rn', 1);
     }
 
-     private function stockBatchesSubquery(?int $productId, int $storeId): Builder
+    private function stockBatchesSubquery(?int $productId, int $storeId): Builder
     {
         // dd($this
         // ->outAggregatesSubquery()->get()[0]);
-        return DB::table(self::TABLE . ' AS in_t')
+        return DB::table(self::TABLE.' AS in_t')
             ->select([
+                // 1. Transaction & Product Info
                 'in_t.id',
-                'in_t.price',
                 'in_t.product_id',
                 'p.name as product',
-                'u.name as unit',
-                'bu.base_unit_name as base_unit',
-                'bu.base_package_size',
-                'in_t.package_size',
                 'in_t.transactionable_type',
                 'in_t.transactionable_id',
                 'in_t.movement_date',
+                
+                // 2. Original IN Unit Info
+                'u.name as unit',
+                'in_t.quantity as in_qty',
+                'in_t.package_size',
+                
+                // 3. Base Unit Info
+                'bu.base_unit_name as base_unit',
+                'bu.base_package_size as base_unit_package_size',
+                
+                // 4. Financial (Original)
+                'in_t.price',
             ])
+            // 5. Quantities in Base Unit
+            ->selectRaw('(in_t.quantity * in_t.package_size) AS base_unit_in_qty')
+            ->selectRaw('COALESCE(oa.total_out_qty, 0) AS base_unit_out')
+            // 6. Pricing per Base Unit
             ->selectRaw('(in_t.price / in_t.package_size) as unit_price')
-            ->selectRaw('(in_t.quantity * in_t.package_size) AS total_in')
-            ->selectRaw('COALESCE(oa.total_out_qty, 0) AS total_out')
-            ->selectRaw('COALESCE(oa.out_package_size, 0) AS out_package_size')
             ->leftJoinSub(
                 $this->outAggregatesSubquery(),
                 'oa',
@@ -102,9 +110,8 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
             ->join('products AS p', 'in_t.product_id', '=', 'p.id')
             ->join('units AS u', 'in_t.unit_id', '=', 'u.id')
             ->where('in_t.movement_type', 'in')
-            ->when($productId, fn($query) => $query->where('in_t.product_id', $productId))
+            ->when($productId, fn ($query) => $query->where('in_t.product_id', $productId))
             ->where('in_t.store_id', $storeId)
             ->whereNull('in_t.deleted_at');
     }
 }
- 
