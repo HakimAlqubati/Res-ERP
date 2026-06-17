@@ -49,13 +49,15 @@ class TestController4 extends Controller
 
         $where[] = ' o.deleted_at is null ';
 
-        // ✅ NEW: استبعد أوامر الفروع من نوع RESELLER
-        // $where[] = "EXISTS (
-        //     SELECT 1
-        //     FROM branches br
-        //     WHERE br.id = o.branch_id
-        //     AND br.type != '" . Branch::TYPE_RESELLER . "'
-        // )";
+        if ($request->has('branch_type')) {
+            $branchType = addslashes($request->branch_type);
+            $where[] = "EXISTS (
+                SELECT 1
+                FROM branches br
+                WHERE br.id = o.branch_id
+                AND br.type = '{$branchType}'
+            )";
+        }
         // ✅ Role-based filters
         $user = auth()->user();
 
