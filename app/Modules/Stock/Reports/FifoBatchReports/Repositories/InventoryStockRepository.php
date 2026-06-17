@@ -25,7 +25,9 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
             ->selectRaw('((total_in - total_out) * unit_price) AS remaining_total_price')
             ->selectRaw('CASE WHEN ROW_NUMBER() OVER(PARTITION BY product_id ORDER BY id ASC) = 1 THEN true ELSE false END AS is_current_batch')
             ->selectRaw('CONCAT(REGEXP_REPLACE(SUBSTRING_INDEX(transactionable_type, "\\\\", -1), "([a-z])([A-Z])", "$1 $2"), " #", transactionable_id) AS source_document')
-            ->whereRaw('(total_in - total_out) > 0');
+            ->whereRaw('(total_in - total_out) > 0')
+            ->orWhereRaw('(total_in - total_out) < 0')
+            ;
 
         if ($isCurrentBatch !== null) {
             $query = DB::table($query, 'filtered_batches')
