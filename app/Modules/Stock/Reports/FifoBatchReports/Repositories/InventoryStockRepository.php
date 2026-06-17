@@ -45,6 +45,22 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
             ->groupBy('source_transaction_id');
     }
 
+    private function baseUnitsSubquery(): Builder
+    {
+        $ranked = DB::table('unit_prices as up')
+            ->select('up.product_id', 'u.name as base_unit_name', 'up.package_size as base_package_size')
+            ->selectRaw('ROW_NUMBER() OVER(PARTITION BY up.product_id ORDER BY up.package_size ASC) as rn')
+            ->join('units as u', 'up.unit_id', '=', 'u.id')
+            ->whereIn('up.usage_scope', [
+                \App\Models\UnitPrice::USAGE_ALL,
+                \App\Models\UnitPrice::USAGE_SUPPLY_ONLY,
+                \App\Models\UnitPrice::USAGE_OUT_ONLY,
+                \App\Models\UnitPrice::USAGE_NONE,
+            ]);
+
+        return DB::table($ranked, 'ranked_units')->where('rn', 1);
+    }
+
      private function stockBatchesSubquery(?int $productId, int $storeId): Builder
     {
         // dd($this
@@ -56,6 +72,8 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
                 'in_t.product_id',
                 'p.name as product',
                 'u.name as unit',
+                'bu.base_unit_name as base_unit',
+                'bu.base_package_size',
                 'in_t.package_size',
                 'in_t.transactionable_type',
                 'in_t.transactionable_id',
@@ -71,6 +89,13 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
                 'oa.source_transaction_id',
                 '=',
                 'in_t.id'
+            )
+            ->leftJoinSub(
+                $this->baseUnitsSubquery(),
+                'bu',
+                'bu.product_id',
+                '=',
+                'in_t.product_id'
             )
             ->join('products AS p', 'in_t.product_id', '=', 'p.id')
             ->join('units AS u', 'in_t.unit_id', '=', 'u.id')

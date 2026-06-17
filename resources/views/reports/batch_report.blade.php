@@ -72,8 +72,7 @@
                                 <th scope="col" class="px-6 py-3 font-semibold">Source Document</th>
                                 <th scope="col" class="px-6 py-3 font-semibold text-center">Current Batch</th>
                                 <th scope="col" class="px-6 py-3 font-semibold">Product</th>
-                                <th scope="col" class="px-6 py-3 font-semibold">Unit</th>
-                                <th scope="col" class="px-6 py-3 font-semibold">Pkg Size</th>
+                                <th scope="col" class="px-6 py-3 font-semibold">Base Unit</th>
                                 <th scope="col" class="px-6 py-3 font-semibold">Date</th>
                                 <th scope="col" class="px-6 py-3 font-semibold">Unit Price</th>
                                 <th scope="col" class="px-6 py-3 font-semibold">Total In</th>
@@ -107,8 +106,7 @@
                                         @endif
                                     </td>
                                     <td class="px-6 py-4">{{ $batch->product ?? 'N/A' }}</td>
-                                    <td class="px-6 py-4">{{ $batch->unit ?? 'N/A' }}</td>
-                                    <td class="px-6 py-4">{{ $batch->package_size ?? 1 }}</td>
+                                    <td class="px-6 py-4">{{ $batch->base_unit ?? 'N/A' }}</td>
                                     <td class="px-6 py-4">{{ \Carbon\Carbon::parse($batch->movement_date)->format('Y-m-d H:i') }}</td>
                                     <td class="px-6 py-4">{{ number_format($batch->unit_price, 2) }}</td>
                                     <td class="px-6 py-4">{{ $batch->total_in }}</td>
