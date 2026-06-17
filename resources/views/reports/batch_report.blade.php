@@ -69,6 +69,7 @@
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b">
                             <tr>
                                 <th scope="col" class="px-6 py-3 font-semibold">Transaction ID</th>
+                                <th scope="col" class="px-6 py-3 font-semibold">Source Document</th>
                                 <th scope="col" class="px-6 py-3 font-semibold">Product</th>
                                 <th scope="col" class="px-6 py-3 font-semibold">Unit</th>
                                 <th scope="col" class="px-6 py-3 font-semibold">Pkg Size</th>
@@ -89,6 +90,15 @@
                                 @endphp
                                 <tr class="bg-white border-b hover:bg-gray-50">
                                     <td class="px-6 py-4">{{ $batch->id }}</td>
+                                    <td class="px-6 py-4">
+                                        @if($batch->transactionable_type)
+                                            <span class="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-md border border-gray-200">
+                                                {{ \Illuminate\Support\Str::headline(class_basename($batch->transactionable_type)) }} #{{ $batch->transactionable_id }}
+                                            </span>
+                                        @else
+                                            <span class="text-gray-400">-</span>
+                                        @endif
+                                    </td>
                                     <td class="px-6 py-4">{{ $batch->product ?? 'N/A' }}</td>
                                     <td class="px-6 py-4">{{ $batch->unit ?? 'N/A' }}</td>
                                     <td class="px-6 py-4">{{ $batch->package_size ?? 1 }}</td>
