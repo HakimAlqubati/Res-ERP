@@ -151,7 +151,7 @@ final class FifoAllocationService implements FifoAllocatorInterface
         $price = $this->calculatePriceForTargetUnit($batch, $targetUnit);
         $entryQtyBasedOnUnit = $this->entryQtyInTargetUnit($batch, $targetUnit);
         $previousOutBasedOnUnit = $this->previousOutInTargetUnit($batch, $targetUnit);
-        $notes = $this->buildNotes($batch, $price, $sourceModel);
+        $notes = $this->buildNotes($batch, $deductQty, $price, $targetUnit, $sourceModel);
 
         return [
             // معرفات الحركة
@@ -280,23 +280,42 @@ final class FifoAllocationService implements FifoAllocatorInterface
     }
 
     /**
-     * بناء نص الملاحظات.
+     * بناء نص الملاحظات بشكل احترافي.
      */
-    private function buildNotes(object $batch, float $price, ?Model $sourceModel): string
-    {
+    private function buildNotes(
+        object $batch,
+        float $deductQty,
+        float $price,
+        UnitPrice $targetUnit,
+        ?Model $sourceModel
+    ): string {
+        $sourceDoc = \Illuminate\Support\Str::headline(class_basename($batch->transactionable_type ?? 'Unknown'));
+        $unitName  = $targetUnit->unit->name ?? 'Unit';
+
         if (! $sourceModel) {
-            return "Price is {$price}";
+            return sprintf(
+                'FIFO allocation: %.4f %s @ %s per unit — sourced from %s #%s',
+                $deductQty,
+                $unitName,
+                number_format($price, 2),
+                $sourceDoc,
+                $batch->transactionable_id
+            );
         }
 
-        $forModelName = str_replace(' ', '', class_basename($sourceModel));
+        $modelName = \Illuminate\Support\Str::headline(class_basename($sourceModel));
 
         return sprintf(
-            'Stock deducted for %s #%s from %s #%s with price %s',
-            $forModelName,
+            'FIFO deduction for %s #%s — %.4f %s @ %s per unit — sourced from %s #%s (Batch #%s, dated %s)',
+            $modelName,
             $sourceModel->id,
-            $batch->transactionable_type,
+            $deductQty,
+            $unitName,
+            number_format($price, 2),
+            $sourceDoc,
             $batch->transactionable_id,
-            $price
+            $batch->id,
+            $batch->movement_date
         );
     }
 
