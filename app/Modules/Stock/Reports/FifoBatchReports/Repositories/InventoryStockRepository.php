@@ -52,21 +52,21 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
                 ->where('is_current_batch', $isCurrentBatch ? 1 : 0);
         }
 
-        return $query->orderBy('id')->get();
+        return $query->orderBy('product_id', 'asc')->orderBy('id')->get();
     }
 
-    private function outAggregatesSubquery(): Builder
+    private function outAggregatesSubquery(int $storeId): Builder
     {
         return DB::table(self::TABLE)
             ->select('source_transaction_id')
             ->selectRaw('SUM(quantity * package_size) AS total_out_qty')
             ->where('movement_type', 'out')
+            ->where('store_id', $storeId)
             ->whereNull('deleted_at')
-            ->groupBy('source_transaction_id')
-            ;
+            ->groupBy('source_transaction_id');
     }
 
-    private function baseUnitsSubquery(): Builder
+    private function baseUnitsSubquery(?int $productId): Builder
     {
         $ranked = DB::table('unit_prices as up')
             ->select('up.product_id', 'u.name as base_unit_name', 'up.package_size as base_package_size')
@@ -77,7 +77,8 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
                 UnitPrice::USAGE_SUPPLY_ONLY,
                 UnitPrice::USAGE_OUT_ONLY,
                 UnitPrice::USAGE_NONE,
-            ]);
+            ])
+            ->when($productId, fn ($q) => $q->where('up.product_id', $productId));
 
         return DB::table($ranked, 'ranked_units')->where('rn', 1);
     }
@@ -112,14 +113,14 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
             // 6. Pricing per Base Unit
             ->selectRaw('(in_t.price / in_t.package_size) as unit_price')
             ->leftJoinSub(
-                $this->outAggregatesSubquery(),
+                $this->outAggregatesSubquery($storeId),
                 'oa',
                 'oa.source_transaction_id',
                 '=',
                 'in_t.id'
             )
             ->leftJoinSub(
-                $this->baseUnitsSubquery(),
+                $this->baseUnitsSubquery($productId),
                 'bu',
                 'bu.product_id',
                 '=',
