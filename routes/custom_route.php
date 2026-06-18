@@ -23,6 +23,7 @@ use App\Models\StockIssueOrder;
 use App\Services\FifoMethodService;
 use App\Services\FixFifo\FifoAllocatorService;
 use App\Services\UnitPriceFifoUpdater;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
@@ -103,35 +104,16 @@ Route::get('/purchasedVSordered', [TestController5::class, 'purchasedVSordered']
 
 
 
-Route::get('/testAllocateFifo', function () {
+Route::get('/testAllocateFifo', function (Request $request) {
 
-    $order = Order::find(305);
-    $stockIssue = StockIssueOrder::find(1);
-    $fifoService = new \App\Services\FifoMethodService($stockIssue);
-    // $updated = [];
-    // $products = Product::whereIn('id', [1, 2, 3, 4, 5])->select('id', 'name')->with('allUnitPrices')->get();
-    // foreach ($products as  $product) {
-    //     $unitPrices = $product->allUnitPrices;
+  $fifoService = new FifoMethodService();
 
-    //     foreach ($unitPrices as $unitPrice) {
-    //         $fifoService = new FifoMethodService();
-
-    //         $allocations[$unitPrice->unit_id] = $fifoService->getAllocateFifo(
-    //             $unitPrice->product_id,
-    //             $unitPrice->unit_id,
-    //             0.0000001
-    //         );
-    //     }
-    //     $updated[$product->id] = $allocations;
-    // }
-    // return $updated;
-    return (new FifoAllocatorService())->allocate($_GET['product_id']);
-    $allocations = $fifoService->getAllocateFifo(
-        $_GET['product_id'],
-        $_GET['unit_id'],
-        $_GET['qty']
-    );
-    return $allocations;
+   $allocations = $fifoService->getAllocateFifo(
+   $request->product_id ?? 25,
+   $request->unit_id ?? 10,
+   $request->qty ?? 50
+            );
+ return $allocations; 
 });
 Route::get('/testUpdateUnitPrice', function () {
     $productId = $_GET['product_id'];
