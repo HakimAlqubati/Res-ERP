@@ -19,75 +19,40 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
     {
         $stockBatches = $this->stockBatchesSubquery($productId, $storeId);
 
-        // fromSub تُغلِّف الـ subquery كـ derived table محل CTE
-        $query = DB::table($stockBatches, 'stock_batches')
-            ->selectRaw('*, (base_unit_in_qty - base_unit_out) AS current_stock')
-            ->selectRaw('((base_unit_in_qty - base_unit_out) * unit_price) AS remaining_total_price')
-            ->selectRaw('CASE WHEN ROW_NUMBER() OVER(
-            PARTITION BY product_id,
-            CASE WHEN (base_unit_in_qty - base_unit_out) > 0 THEN 1 ELSE 0 END
-             ORDER BY id ASC
-             ) = 1 
-              AND (base_unit_in_qty - base_unit_out) > 0
-                THEN true ELSE false END AS is_current_batch')
-            // ->selectRaw('CONCAT(REGEXP_REPLACE(SUBSTRING_INDEX(transactionable_type, "\\\\", -1), "([a-z])([A-Z])", "$1 $2"), " #", transactionable_id) AS source_document')
-            ->selectRaw('CONCAT(transactionable_id, " #", transactionable_type) AS source_document')
-            // ->whereRaw('(base_unit_in_qty - base_unit_out) > 0')
-            // ->orWhereRaw('(base_unit_in_qty - base_unit_out) < 0');
+        // الطبقة 1: حساب الرصيد الخام + المجموع التراكمي لكل منتج
+        $withRunningTotal = DB::table($stockBatches, 'stock_batches')
+            ->selectRaw('*')
+            ->selectRaw('(base_unit_in_qty - base_unit_out) AS current_stock')
+            ->selectRaw('SUM(base_unit_in_qty - base_unit_out) OVER (PARTITION BY product_id ORDER BY id) AS running_total')
             ->whereRaw('(base_unit_in_qty - base_unit_out) != 0');
+
+        // الطبقة 2: حساب أعلى مجموع تراكمي سابق لكل صف
+        $withMaxPrev = DB::table($withRunningTotal, 'rt')
+            ->selectRaw('*')
+            ->selectRaw('COALESCE(MAX(running_total) OVER (PARTITION BY product_id ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING), 0) AS max_prev_rt');
+
+        // الطبقة 3: تصفية الباتشات الموجبة التي يبقى لها رصيد بعد استيعاب العجز
+        $filtered = DB::table($withMaxPrev, 'mp')
+            ->selectRaw('*')
+            ->whereRaw('current_stock > 0')
+            ->whereRaw('GREATEST(0, running_total - GREATEST(0, max_prev_rt)) > 0');
+
+        // الطبقة 4: النتيجة النهائية مع الرصيد المعدّل و is_current_batch
+        $query = DB::table($filtered, 'final_batches')
+            ->selectRaw('id, product_id, product, transactionable_type, transactionable_id, movement_date')
+            ->selectRaw('unit, in_qty, package_size, base_unit, base_unit_package_size, price')
+            ->selectRaw('base_unit_in_qty, base_unit_out, unit_price')
+            ->selectRaw('GREATEST(0, running_total - GREATEST(0, max_prev_rt)) AS current_stock')
+            ->selectRaw('GREATEST(0, running_total - GREATEST(0, max_prev_rt)) * unit_price AS remaining_total_price')
+            ->selectRaw('CASE WHEN ROW_NUMBER() OVER (PARTITION BY product_id ORDER BY id) = 1 THEN 1 ELSE 0 END AS is_current_batch')
+            ->selectRaw('CONCAT(transactionable_id, " #", transactionable_type) AS source_document');
 
         if ($isCurrentBatch !== null) {
             $query = DB::table($query, 'filtered_batches')
                 ->where('is_current_batch', $isCurrentBatch ? 1 : 0);
-        } 
-        $finalResult = $query->orderBy('id')->get();
-
-        // return $finalResult;
-        return $this->adjustNegativeBatches($finalResult);
-    }
-
-    /**
-     * إذا كان هناك باتش برصيد سالب، يتم خصمه من الباتش الموجب الذي يليه مباشرة
-     * ثم يتم حذف الباتش السالب من النتائج
-     */
-    private function adjustNegativeBatches(Collection $batches): Collection
-    {
-        $batches = $batches->values();
-        $toRemove = [];
-
-        for ($i = 0; $i < $batches->count(); $i++) {
-            $batch = $batches[$i];
-
-            if ((float) $batch->current_stock < 0) {
-                $deficit = abs((float) $batch->current_stock);
-
-                // Find the next positive batch to absorb the deficit
-                for ($j = $i + 1; $j < $batches->count(); $j++) {
-                    if ((float) $batches[$j]->current_stock > 0) {
-                        $batches[$j]->current_stock = (string) ((float) $batches[$j]->current_stock - $deficit);
-                        $batches[$j]->remaining_total_price = (string) ((float) $batches[$j]->current_stock * (float) $batches[$j]->unit_price);
-                        $toRemove[] = $i;
-                        break;
-                    }
-                }
-            }
         }
 
-        // Remove absorbed negative batches and re-index
-        $adjusted = $batches->filter(fn ($item, $key) => ! in_array($key, $toRemove))->values();
-
-        // Recalculate is_current_batch: first positive batch per product_id
-        $seenProducts = [];
-        foreach ($adjusted as $batch) {
-            if ((float) $batch->current_stock > 0 && ! isset($seenProducts[$batch->product_id])) {
-                $batch->is_current_batch = 1;
-                $seenProducts[$batch->product_id] = true;
-            } else {
-                $batch->is_current_batch = 0;
-            }
-        }
-
-        return $adjusted;
+        return $query->orderBy('id')->get();
     }
 
     private function outAggregatesSubquery(): Builder
@@ -97,7 +62,8 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
             ->selectRaw('SUM(quantity * package_size) AS total_out_qty')
             ->where('movement_type', 'out')
             ->whereNull('deleted_at')
-            ->groupBy('source_transaction_id');
+            ->groupBy('source_transaction_id')
+            ;
     }
 
     private function baseUnitsSubquery(): Builder
