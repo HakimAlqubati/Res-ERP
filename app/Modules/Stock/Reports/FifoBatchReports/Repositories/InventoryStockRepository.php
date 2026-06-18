@@ -32,14 +32,17 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
                 THEN true ELSE false END AS is_current_batch')
             // ->selectRaw('CONCAT(REGEXP_REPLACE(SUBSTRING_INDEX(transactionable_type, "\\\\", -1), "([a-z])([A-Z])", "$1 $2"), " #", transactionable_id) AS source_document')
             ->selectRaw('CONCAT(transactionable_id, " #", transactionable_type) AS source_document')
-            ->whereRaw('(base_unit_in_qty - base_unit_out) > 0')
-            ->orWhereRaw('(base_unit_in_qty - base_unit_out) < 0');
+            // ->whereRaw('(base_unit_in_qty - base_unit_out) > 0')
+            // ->orWhereRaw('(base_unit_in_qty - base_unit_out) < 0');
+            ->whereRaw('(base_unit_in_qty - base_unit_out) != 0');
 
         if ($isCurrentBatch !== null) {
             $query = DB::table($query, 'filtered_batches')
                 ->where('is_current_batch', $isCurrentBatch ? 1 : 0);
         } 
-        return $query->orderBy('id')->get();
+        $finalResult = $query->orderBy('id')->get();
+        // dd($finalResult);
+        return $finalResult;
     }
 
     private function outAggregatesSubquery(): Builder
@@ -69,9 +72,7 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
     }
 
     private function stockBatchesSubquery(?int $productId, int $storeId): Builder
-    {
-        // dd($this
-        // ->outAggregatesSubquery()->get()[0]);
+    { 
         return DB::table(self::TABLE.' AS in_t')
             ->select([
                 // 1. Transaction & Product Info
