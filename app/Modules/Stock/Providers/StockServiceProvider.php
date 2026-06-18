@@ -3,7 +3,9 @@
 namespace App\Modules\Stock\Providers;
 
 use App\Modules\Stock\Reports\FifoBatchReports\Contracts\InventoryStockRepositoryInterface;
+use App\Modules\Stock\Reports\FifoBatchReports\Contracts\FifoAllocatorInterface;
 use App\Modules\Stock\Reports\FifoBatchReports\Repositories\InventoryStockRepository;
+use App\Modules\Stock\Reports\FifoBatchReports\Allocator\FifoAllocationService;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
 use App\Modules\Stock\Reports\GrnConsumption\Contracts\GrnConsumptionRepositoryInterface;
@@ -34,6 +36,12 @@ class StockServiceProvider extends ServiceProvider
         InventoryStockRepositoryInterface::class,
         InventoryStockRepository::class,
     );
+
+        // Bind the FIFO Allocator Interface to its Implementation
+        $this->app->bind(
+            FifoAllocatorInterface::class,
+            FifoAllocationService::class,
+        );
     }
 
     /**

@@ -115,6 +115,20 @@ Route::get('/testAllocateFifo', function (Request $request) {
             );
  return $allocations; 
 });
+
+Route::get('/testAllocateFifoNew', function (Request $request) {
+    $service = app(\App\Modules\Stock\Reports\FifoBatchReports\Contracts\FifoAllocatorInterface::class);
+
+    $allocations = $service->allocate(
+        productId: (int) ($request->product_id ?? 25),
+        unitId:    (int) ($request->unit_id ?? 10),
+        requestedQty: (float) ($request->qty ?? 50),
+        storeId:   (int) ($request->store_id ?? 1),
+    );
+
+    return $allocations;
+});
+
 Route::get('/testUpdateUnitPrice', function () {
     $productId = $_GET['product_id'];
     $serevice = UnitPriceFifoUpdater::updatePriceUsingFifo($productId);

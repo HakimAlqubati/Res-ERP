@@ -96,6 +96,7 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
                 'in_t.movement_date',
                 
                 // 2. Original IN Unit Info
+                'in_t.unit_id',
                 'u.name as unit',
                 'in_t.quantity as in_qty',
                 'in_t.package_size',
