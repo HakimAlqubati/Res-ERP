@@ -41,8 +41,53 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
                 ->where('is_current_batch', $isCurrentBatch ? 1 : 0);
         } 
         $finalResult = $query->orderBy('id')->get();
-        // dd($finalResult);
-        return $finalResult;
+
+        // return $finalResult;
+        return $this->adjustNegativeBatches($finalResult);
+    }
+
+    /**
+     * إذا كان هناك باتش برصيد سالب، يتم خصمه من الباتش الموجب الذي يليه مباشرة
+     * ثم يتم حذف الباتش السالب من النتائج
+     */
+    private function adjustNegativeBatches(Collection $batches): Collection
+    {
+        $batches = $batches->values();
+        $toRemove = [];
+
+        for ($i = 0; $i < $batches->count(); $i++) {
+            $batch = $batches[$i];
+
+            if ((float) $batch->current_stock < 0) {
+                $deficit = abs((float) $batch->current_stock);
+
+                // Find the next positive batch to absorb the deficit
+                for ($j = $i + 1; $j < $batches->count(); $j++) {
+                    if ((float) $batches[$j]->current_stock > 0) {
+                        $batches[$j]->current_stock = (string) ((float) $batches[$j]->current_stock - $deficit);
+                        $batches[$j]->remaining_total_price = (string) ((float) $batches[$j]->current_stock * (float) $batches[$j]->unit_price);
+                        $toRemove[] = $i;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Remove absorbed negative batches and re-index
+        $adjusted = $batches->filter(fn ($item, $key) => ! in_array($key, $toRemove))->values();
+
+        // Recalculate is_current_batch: first positive batch per product_id
+        $seenProducts = [];
+        foreach ($adjusted as $batch) {
+            if ((float) $batch->current_stock > 0 && ! isset($seenProducts[$batch->product_id])) {
+                $batch->is_current_batch = 1;
+                $seenProducts[$batch->product_id] = true;
+            } else {
+                $batch->is_current_batch = 0;
+            }
+        }
+
+        return $adjusted;
     }
 
     private function outAggregatesSubquery(): Builder
