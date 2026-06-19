@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Stock\Http\Requests\StockBatchIndexRequest;
 use App\Modules\Stock\Reports\FifoBatchReports\Contracts\GetAvailableStockBatchesQueryInterface;
 use App\Modules\Stock\Reports\FifoBatchReports\Contracts\InventoryStockRepositoryInterface;
+use App\Modules\Stock\Reports\FifoBatchReports\Responses\StockBatchIndexResponse;
 use Illuminate\Http\JsonResponse;
 
 class StockBatchController extends Controller
@@ -20,15 +21,14 @@ class StockBatchController extends Controller
     /**
      * GET /api/stock/stockBatches
      */
-    public function index(StockBatchIndexRequest $request): JsonResponse
+    public function index(StockBatchIndexRequest $request)
     {
         $batches = $this->stockBatchesQuery->execute(
             $request->toDTO()
         );
 
-        return response()->json([
-            'success' => true,
-            'data'    => $batches,
-        ]);
+        return new StockBatchIndexResponse($batches);
+
+       
     }
 }

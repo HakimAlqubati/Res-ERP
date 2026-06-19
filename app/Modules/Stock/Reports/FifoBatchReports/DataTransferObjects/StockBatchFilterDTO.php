@@ -12,16 +12,16 @@ namespace App\Modules\Stock\Reports\FifoBatchReports\DataTransferObjects;
 final readonly class StockBatchFilterDTO
 {
     /**
-     * @param  int        $storeId         المخزن (مطلوب)
-     * @param  int[]      $productIds      معرّفات المنتجات (اختياري – مصفوفة)
+     * @param  int  $storeId  المخزن (مطلوب)
+     * @param  int[]  $productIds  معرّفات المنتجات (اختياري – مصفوفة)
      * @param  bool|null  $isCurrentBatch  فلترة الباتش الحالي (null = بدون فلترة)
-     * @param  int|null   $perPage         عدد النتائج في الصفحة (null = بدون pagination)
+     * @param  int|null  $perPage  عدد النتائج في الصفحة (null = بدون pagination)
      */
     public function __construct(
         public int $storeId,
         public array $productIds = [],
         public ?bool $isCurrentBatch = null,
-        public ?int $perPage = null,
+        public ?int $perPage = 20,
     ) {}
 
     /**
@@ -29,7 +29,7 @@ final readonly class StockBatchFilterDTO
      */
     public function wantsPagination(): bool
     {
-        return $this->perPage !== null && $this->perPage > 0;
+        return $this->perPage > 0;
     }
 
     /**
@@ -37,6 +37,6 @@ final readonly class StockBatchFilterDTO
      */
     public function hasProductFilter(): bool
     {
-        return !empty($this->productIds);
+        return ! empty($this->productIds);
     }
 }

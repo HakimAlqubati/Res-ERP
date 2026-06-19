@@ -33,9 +33,7 @@ class StockBatchIndexRequest extends FormRequest
             isCurrentBatch: $this->filled('current_batch')
                 ? (bool) $this->input('current_batch')
                 : null,
-            perPage:        $this->filled('per_page')
-                ? (int) $this->input('per_page')
-                : null,
+           perPage: (int) $this->input('per_page', 20),
         );
     }
 }
