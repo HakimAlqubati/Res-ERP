@@ -14,13 +14,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
 final class FifoAllocationService implements FifoAllocatorInterface
-{
-    private FifoAllocationMapper $mapper;
+{ 
 
     public function __construct(
-        private InventoryStockRepositoryInterface $stockRepository
-    ) {
-        $this->mapper = new FifoAllocationMapper();
+        private InventoryStockRepositoryInterface $stockRepository,
+        private FifoAllocationMapper $mapper
+    ) { 
     }
 
     // ─────────────────────────────────────────────
