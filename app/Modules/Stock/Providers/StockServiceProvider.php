@@ -57,6 +57,7 @@ class StockServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerRoutes();
+        $this->registerApiRoutes();
         $this->registerViews();
     }
 
@@ -69,6 +70,17 @@ class StockServiceProvider extends ServiceProvider
             ->prefix('stock')
             ->name('stock.')
             ->group(__DIR__ . '/../routes/web.php');
+    }
+
+    /**
+     * Register the Stock Module API Routes.
+     */
+    protected function registerApiRoutes(): void
+    {
+        Route::middleware(['api', 'auth:api'])
+            ->prefix('api/stock')
+            ->name('api.stock.')
+            ->group(__DIR__ . '/../routes/api.php');
     }
 
     /**
