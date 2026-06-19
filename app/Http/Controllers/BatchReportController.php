@@ -5,12 +5,18 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Store;
 use App\Models\Product;
+use App\Modules\Stock\Reports\FifoBatchReports\Contracts\GetAvailableStockBatchesQueryInterface;
 use App\Modules\Stock\Reports\FifoBatchReports\Contracts\InventoryStockRepositoryInterface;
 use App\Modules\Stock\Reports\FifoBatchReports\DataTransferObjects\StockBatchFilterDTO;
 
 class BatchReportController extends Controller
 {
-    public function index(Request $request, InventoryStockRepositoryInterface $inventoryRepo)
+    public function __construct(
+        private readonly InventoryStockRepositoryInterface $stockRepository,
+        private readonly GetAvailableStockBatchesQueryInterface $stockBatchesQuery,
+    ) {}
+
+    public function index(Request $request)
     {
         $storeId = $request->input('store_id');
         $productId = $request->input('product_id');
@@ -24,7 +30,7 @@ class BatchReportController extends Controller
                 $productIds = [(int) $productId];
             }
 
-            $batches = $inventoryRepo->getAvailableStockBatches(
+            $batches = $this->stockBatchesQuery->execute(
                 new StockBatchFilterDTO(
                     storeId: (int) $storeId,
                     productIds: array_map('intval', $productIds),
@@ -34,7 +40,7 @@ class BatchReportController extends Controller
         }
 
         $stores = Store::active()->orderBy('name')->get();
-        $products = Product::orderBy('name')->get();
+        $products = Product::orderBy('id')->get();
 
         return view('reports.batch_report', compact('batches', 'stores', 'products', 'storeId', 'productId'));
     }

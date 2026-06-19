@@ -6,6 +6,8 @@ use App\Modules\Stock\Reports\FifoBatchReports\Contracts\InventoryStockRepositor
 use App\Modules\Stock\Reports\FifoBatchReports\Contracts\FifoAllocatorInterface;
 use App\Modules\Stock\Reports\FifoBatchReports\Repositories\InventoryStockRepository;
 use App\Modules\Stock\Reports\FifoBatchReports\Allocator\FifoAllocationService;
+use App\Modules\Stock\Reports\FifoBatchReports\Contracts\GetAvailableStockBatchesQueryInterface;
+use App\Modules\Stock\Reports\FifoBatchReports\Queries\GetAvailableStockBatchesQuery;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
 use App\Modules\Stock\Reports\GrnConsumption\Contracts\GrnConsumptionRepositoryInterface;
@@ -34,6 +36,13 @@ class StockServiceProvider extends ServiceProvider
             ProductAggregationRepository::class
         );
 
+        // ربط الواجهة بالكلاس المسؤول عن الاستعلام (Query Object)
+        // استخدمنا bind لأن الكلاس لا يخزن حالة (Stateless) ويقوم بعمليات قراءة فقط
+        $this->app->bind(
+            GetAvailableStockBatchesQueryInterface::class,
+            GetAvailableStockBatchesQuery::class
+        );
+        
          $this->app->bind(
         InventoryStockRepositoryInterface::class,
         InventoryStockRepository::class,
