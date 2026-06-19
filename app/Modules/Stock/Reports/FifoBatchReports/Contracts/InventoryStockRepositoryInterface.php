@@ -1,14 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules\Stock\Reports\FifoBatchReports\Contracts;
 
-use App\DataTransferObjects\StockBatchData;
+use App\Modules\Stock\Reports\FifoBatchReports\DataTransferObjects\StockBatchFilterDTO;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 interface InventoryStockRepositoryInterface
 {
-    /**
-     * @return Collection<int, StockBatchData>
-     */
-    public function getAvailableStockBatches(?int $productId, int $storeId, ?bool $isCurrentBatch = null): Collection;
+    public function getAvailableStockBatches(StockBatchFilterDTO $filters): Collection|LengthAwarePaginator;
 }

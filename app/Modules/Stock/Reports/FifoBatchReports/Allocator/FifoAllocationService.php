@@ -9,6 +9,7 @@ use App\Models\UnitPrice;
 use App\Modules\Stock\Reports\FifoBatchReports\Allocator\Helpers\FifoAllocationMapper;
 use App\Modules\Stock\Reports\FifoBatchReports\Contracts\FifoAllocatorInterface;
 use App\Modules\Stock\Reports\FifoBatchReports\Contracts\InventoryStockRepositoryInterface;
+use App\Modules\Stock\Reports\FifoBatchReports\DataTransferObjects\StockBatchFilterDTO;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -44,7 +45,9 @@ final class FifoAllocationService implements FifoAllocatorInterface
         $targetUnit = $this->resolveTargetUnit($productId, $unitId);
 
         // جلب الباتشات المتاحة من Repository (SQL سريع — استعلام واحد)
-        $batches = $this->stockRepository->getAvailableStockBatches($productId, $storeId);
+        $batches = $this->stockRepository->getAvailableStockBatches(
+            new StockBatchFilterDTO(storeId: $storeId, productIds: [$productId])
+        );
 
         // التحقق من كفاية الرصيد
         $availableQty = $this->sumAvailableInTargetUnit($batches, $targetUnit);
@@ -79,7 +82,9 @@ final class FifoAllocationService implements FifoAllocatorInterface
     ): float {
         $targetUnit = $this->resolveTargetUnit($productId, $unitId);
 
-        $batches = $this->stockRepository->getAvailableStockBatches($productId, $storeId);
+        $batches = $this->stockRepository->getAvailableStockBatches(
+            new StockBatchFilterDTO(storeId: $storeId, productIds: [$productId])
+        );
 
         return $this->sumAvailableInTargetUnit($batches, $targetUnit);
     }

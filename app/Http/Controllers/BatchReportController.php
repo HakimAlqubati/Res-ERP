@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Store;
 use App\Models\Product;
 use App\Modules\Stock\Reports\FifoBatchReports\Contracts\InventoryStockRepositoryInterface;
+use App\Modules\Stock\Reports\FifoBatchReports\DataTransferObjects\StockBatchFilterDTO;
 
 class BatchReportController extends Controller
 {
@@ -17,9 +18,18 @@ class BatchReportController extends Controller
         $batches = collect();
 
         if ($storeId) {
+            $productIds = $request->input('product_ids', []);
+            // backwards-compatible: single product_id → wrap in array
+            if (empty($productIds) && $productId) {
+                $productIds = [(int) $productId];
+            }
+
             $batches = $inventoryRepo->getAvailableStockBatches(
-                productId: $productId ? (int) $productId : null,
-                storeId: (int) $storeId
+                new StockBatchFilterDTO(
+                    storeId: (int) $storeId,
+                    productIds: array_map('intval', $productIds),
+                    perPage: $request->filled('per_page') ? (int) $request->input('per_page') : null,
+                )
             );
         }
 
@@ -29,3 +39,4 @@ class BatchReportController extends Controller
         return view('reports.batch_report', compact('batches', 'stores', 'products', 'storeId', 'productId'));
     }
 }
+

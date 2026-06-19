@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Stock\Reports\FifoBatchReports\Repositories;
 
-// use App\DataTransferObjects\StockBatchData;
 use App\Models\UnitPrice;
 use App\Modules\Stock\Reports\FifoBatchReports\Contracts\InventoryStockRepositoryInterface;
+use App\Modules\Stock\Reports\FifoBatchReports\DataTransferObjects\StockBatchFilterDTO;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -15,9 +16,9 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
 {
     private const TABLE = 'inventory_transactions';
 
-    public function getAvailableStockBatches(?int $productId, int $storeId, ?bool $isCurrentBatch = null): Collection
+    public function getAvailableStockBatches(StockBatchFilterDTO $filters): Collection|LengthAwarePaginator
     {
-        $stockBatches = $this->stockBatchesSubquery($productId, $storeId);
+        $stockBatches = $this->stockBatchesSubquery($filters);
 
         // الطبقة 1: حساب الرصيد الخام + المجموع التراكمي لكل منتج
         $withRunningTotal = DB::table($stockBatches, 'stock_batches')
@@ -47,12 +48,18 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
             ->selectRaw('CASE WHEN ROW_NUMBER() OVER (PARTITION BY product_id ORDER BY id) = 1 THEN 1 ELSE 0 END AS is_current_batch')
             ->selectRaw('CONCAT(transactionable_id, " #", transactionable_type) AS source_document');
 
-        if ($isCurrentBatch !== null) {
+        if ($filters->isCurrentBatch !== null) {
             $query = DB::table($query, 'filtered_batches')
-                ->where('is_current_batch', $isCurrentBatch ? 1 : 0);
+                ->where('is_current_batch', $filters->isCurrentBatch ? 1 : 0);
         }
 
-        return $query->orderBy('product_id', 'asc')->orderBy('id')->get();
+        $query = $query->orderBy('product_id', 'asc')->orderBy('id');
+
+        if ($filters->wantsPagination()) {
+            return $query->paginate($filters->perPage);
+        }
+
+        return $query->get();
     }
 
     private function outAggregatesSubquery(int $storeId): Builder
@@ -66,7 +73,7 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
             ->groupBy('source_transaction_id');
     }
 
-    private function baseUnitsSubquery(?int $productId): Builder
+    private function baseUnitsSubquery(StockBatchFilterDTO $filters): Builder
     {
         $ranked = DB::table('unit_prices as up')
             ->select('up.product_id', 'u.name as base_unit_name', 'up.package_size as base_package_size')
@@ -78,12 +85,12 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
                 UnitPrice::USAGE_OUT_ONLY,
                 UnitPrice::USAGE_NONE,
             ])
-            ->when($productId, fn ($q) => $q->where('up.product_id', $productId));
+            ->when($filters->hasProductFilter(), fn ($q) => $q->whereIn('up.product_id', $filters->productIds));
 
         return DB::table($ranked, 'ranked_units')->where('rn', 1);
     }
 
-    private function stockBatchesSubquery(?int $productId, int $storeId): Builder
+    private function stockBatchesSubquery(StockBatchFilterDTO $filters): Builder
     { 
         return DB::table(self::TABLE.' AS in_t')
             ->select([
@@ -114,14 +121,14 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
             // 6. Pricing per Base Unit
             ->selectRaw('(in_t.price / in_t.package_size) as unit_price')
             ->leftJoinSub(
-                $this->outAggregatesSubquery($storeId),
+                $this->outAggregatesSubquery($filters->storeId),
                 'oa',
                 'oa.source_transaction_id',
                 '=',
                 'in_t.id'
             )
             ->leftJoinSub(
-                $this->baseUnitsSubquery($productId),
+                $this->baseUnitsSubquery($filters),
                 'bu',
                 'bu.product_id',
                 '=',
@@ -130,8 +137,8 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
             ->join('products AS p', 'in_t.product_id', '=', 'p.id')
             ->join('units AS u', 'in_t.unit_id', '=', 'u.id')
             ->where('in_t.movement_type', 'in')
-            ->when($productId, fn ($query) => $query->where('in_t.product_id', $productId))
-            ->where('in_t.store_id', $storeId)
+            ->when($filters->hasProductFilter(), fn ($query) => $query->whereIn('in_t.product_id', $filters->productIds))
+            ->where('in_t.store_id', $filters->storeId)
             ->whereNull('in_t.deleted_at');
     }
 }
