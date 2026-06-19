@@ -14,17 +14,13 @@ use Illuminate\Support\Facades\DB;
 
 final class StockBalanceRepository implements StockBalanceRepositoryInterface
 {
-    // ─────────────────────────────────────────────
-    //  Public API (الدالة الرئيسية)
-    // ─────────────────────────────────────────────
-
     public function getBalances(StockBalanceFilterDTO $filters): Collection|LengthAwarePaginator
     {
         $query = $this->buildBaseQuery($filters);
         $query = $this->attachInventoryTotals($query, $filters->storeId);
 
         if ($filters->onlyAvailable) {
-            $query = $this->applyAvailabilityFilter($query);
+            $query = $this->applyAvailabilityFilter($query, $filters->storeId);
         }
 
         if ($filters->wantsPagination()) {
@@ -34,14 +30,35 @@ final class StockBalanceRepository implements StockBalanceRepositoryInterface
         return $query->get();
     }
 
+    public function getSingleProductBalance(int $productId, int $storeId): ?object
+    {
+        $query = $this->buildBaseQuery(new StockBalanceFilterDTO(storeId: $storeId, productIds: [$productId]));
+        $query = $this->attachInventoryTotals($query, $storeId);
+        return $query->first();
+    }
+
+    public function getLowStockProducts(int $storeId, ?int $perPage = 15): Collection|LengthAwarePaginator
+    {
+        $query = $this->buildBaseQuery(new StockBalanceFilterDTO(storeId: $storeId, onlyActive: true));
+        $query = $this->attachInventoryTotals($query, $storeId);
+        
+        // فلترة النواقص برمجياً كشرط داخل قاعدة البيانات
+        $inSql = "SELECT COALESCE(SUM(quantity * package_size), 0) FROM inventory_transactions WHERE product_id = products.id AND movement_type = 'in' AND store_id = {$storeId} AND deleted_at IS NULL";
+        $outSql = "SELECT COALESCE(SUM(quantity * package_size), 0) FROM inventory_transactions WHERE product_id = products.id AND movement_type = 'out' AND store_id = {$storeId} AND deleted_at IS NULL";
+        
+        $query->whereRaw("({$inSql}) - ({$outSql}) <= COALESCE(products.minimum_stock_qty, 0)");
+
+        if ($perPage !== null && $perPage > 0) {
+            return $query->paginate($perPage);
+        }
+        return $query->get();
+    }
+
     // ─────────────────────────────────────────────
-    //  Private Helpers (الدوال المساعدة)
+    //  Private Helpers (الدوال المساعدة السريعة)
     // ─────────────────────────────────────────────
 
-    /**
-     * بناء استعلام المنتجات الأساسي وتطبيق الفلاتر البسيطة.
-     */
-   private function buildBaseQuery(StockBalanceFilterDTO $filters): Builder
+    private function buildBaseQuery(StockBalanceFilterDTO $filters): Builder
     {
         $query = Product::query()
             ->select([
@@ -50,22 +67,27 @@ final class StockBalanceRepository implements StockBalanceRepositoryInterface
                 'products.code',
                 'products.active',
                 'products.category_id',
-                'bu.base_unit_name',
-                'bu.base_package_size',
                 'products.minimum_stock_qty',
             ]);
 
-        // 🔥 التعديل الأول: جلب الوحدة الأساسية باستخدام JOIN ذكي جداً بدل الـ Select المترابط
-        $rankedUnits = DB::table('unit_prices as up')
-            ->select('up.product_id', 'u.name as base_unit_name', 'up.package_size as base_package_size')
-            ->selectRaw('ROW_NUMBER() OVER(PARTITION BY up.product_id ORDER BY up.package_size ASC) as rn')
-            ->join('units as u', 'up.unit_id', '=', 'u.id');
+        // استعلامات فرعية سريعة (Subquery Selects)
+        $query->addSelect([
+            'base_unit_name' => DB::table('unit_prices')
+                ->join('units', 'units.id', '=', 'unit_prices.unit_id')
+                ->whereColumn('unit_prices.product_id', 'products.id')
+                ->where('unit_prices.usage_scope', '!=', 'manufacturing_only')
+                ->orderBy('unit_prices.package_size', 'asc')
+                ->select('units.name')
+                ->limit(1),
 
-        $baseUnits = DB::table($rankedUnits, 'ranked_units')->where('rn', 1);
+            'base_package_size' => DB::table('unit_prices')
+                ->whereColumn('unit_prices.product_id', 'products.id')
+                ->where('unit_prices.usage_scope', '!=', 'manufacturing_only')
+                ->orderBy('unit_prices.package_size', 'asc')
+                ->select('unit_prices.package_size')
+                ->limit(1),
+        ]);
 
-        $query->leftJoinSub($baseUnits, 'bu', 'bu.product_id', '=', 'products.id');
-
-        // الفلاتر
         if ($filters->onlyActive) {
             $query->where('products.active', true);
         }
@@ -79,70 +101,33 @@ final class StockBalanceRepository implements StockBalanceRepositoryInterface
         return $query;
     }
 
-    /**
-     * إرفاق حسابات المخزون باستخدام استعلامات فرعية (Subqueries) سريعة جداً.
-     * هذا يغنينا عن عمل حلقات تكرار (foreach) وعمليات حسابية في لغة PHP.
-     */
-    
     private function attachInventoryTotals(Builder $query, int $storeId): Builder
     {
-        // 🔥 التعديل الأهم: تجميع الرصيد لكل المنتجات مرة واحدة في الذاكرة المؤقتة لقاعدة البيانات
-        $inventoryTotals = DB::table('inventory_transactions')
-            ->select('product_id')
-            ->selectRaw("SUM(CASE WHEN movement_type = 'in' THEN quantity * package_size ELSE 0 END) as total_in")
-            ->selectRaw("SUM(CASE WHEN movement_type = 'out' THEN quantity * package_size ELSE 0 END) as total_out")
-            ->where('store_id', $storeId)
-            ->whereNull('deleted_at')
-            ->groupBy('product_id');
+        // حسابات الداخل والخارج بدون Joins
+        $query->addSelect([
+            'total_in' => DB::table('inventory_transactions')
+                ->selectRaw('COALESCE(SUM(quantity * package_size), 0)')
+                ->whereColumn('product_id', 'products.id')
+                ->where('store_id', $storeId)
+                ->where('movement_type', 'in')
+                ->whereNull('deleted_at'),
 
-        // ربط الجدول المجمع مع جدول المنتجات (أسرع بآلاف المرات)
-        $query->leftJoinSub($inventoryTotals, 'inv', 'inv.product_id', '=', 'products.id')
-              ->addSelect([
-                  DB::raw('COALESCE(inv.total_in, 0) as total_in'),
-                  DB::raw('COALESCE(inv.total_out, 0) as total_out'),
-                  DB::raw('COALESCE(inv.total_in, 0) - COALESCE(inv.total_out, 0) as remaining_base_qty')
-              ]);
+            'total_out' => DB::table('inventory_transactions')
+                ->selectRaw('COALESCE(SUM(quantity * package_size), 0)')
+                ->whereColumn('product_id', 'products.id')
+                ->where('store_id', $storeId)
+                ->where('movement_type', 'out')
+                ->whereNull('deleted_at'),
+        ]);
 
         return $query;
     }
 
-    /**
-     * فلترة المنتجات التي يتبقى منها رصيد فقط.
-     * نستخدم HAVING لأن remaining_base_qty هو عمود محسوب (Alias).
-     */
-    private function applyAvailabilityFilter(Builder $query): Builder
+    private function applyAvailabilityFilter(Builder $query, int $storeId): Builder
     {
-        // استخدام whereRaw بدلاً من having لأننا الآن نستخدم JOIN صريح
-        return $query->whereRaw('(COALESCE(inv.total_in, 0) - COALESCE(inv.total_out, 0)) > 0');
-    }
+        $inSql = "SELECT COALESCE(SUM(quantity * package_size), 0) FROM inventory_transactions WHERE product_id = products.id AND movement_type = 'in' AND store_id = ? AND deleted_at IS NULL";
+        $outSql = "SELECT COALESCE(SUM(quantity * package_size), 0) FROM inventory_transactions WHERE product_id = products.id AND movement_type = 'out' AND store_id = ? AND deleted_at IS NULL";
 
-    // ─────────────────────────────────────────────
-    //  Public API (الدوال الإضافية)
-    // ─────────────────────────────────────────────
-
-    /**
-     * جلب تفاصيل الرصيد لمنتج واحد محدد.
-     */
-    public function getSingleProductBalance(int $productId, int $storeId): ?object
-    {
-        $query = $this->buildBaseQuery(new StockBalanceFilterDTO(storeId: $storeId, productIds: [$productId]));
-        $query = $this->attachInventoryTotals($query, $storeId);
-        return $query->first();
-    }
-
-    /**
-     * جلب المنتجات التي وصل رصيدها للحد الأدنى (النواقص).
-     */
-   public function getLowStockProducts(int $storeId, ?int $perPage = 15): Collection|LengthAwarePaginator
-    {
-        $query = $this->buildBaseQuery(new StockBalanceFilterDTO(storeId: $storeId, onlyActive: true));
-        $query = $this->attachInventoryTotals($query, $storeId);
-        
-        $query->whereRaw('(COALESCE(inv.total_in, 0) - COALESCE(inv.total_out, 0)) <= COALESCE(products.minimum_stock_qty, 0)');
-
-        if ($perPage !== null && $perPage > 0) {
-            return $query->paginate($perPage);
-        }
-        return $query->get();
+        return $query->whereRaw("({$inSql}) - ({$outSql}) > 0",[$storeId,$storeId]);
     }
 }

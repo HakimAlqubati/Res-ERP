@@ -14,6 +14,12 @@ class StockBalanceResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // نحفظ القيم كأرقام تفادياً للأخطاء الحسابية
+        $totalIn = (float) $this->total_in;
+        $totalOut = (float) $this->total_out;
+        $remainingQty = $totalIn - $totalOut;
+        
+        $remainingQty = formatQunantity($remainingQty);
         return [
             'product_id'   => $this->id,
             'product_code' => $this->code,
@@ -28,7 +34,7 @@ class StockBalanceResource extends JsonResource
             // 🔥 هنا نظهر الحقول الديناميكية التي حسبناها في قاعدة البيانات
             'total_in'           => (float) $this->total_in,
             'total_out'          => (float) $this->total_out,
-            'remaining_base_qty' => (float) $this->remaining_base_qty,
+            'remaining_base_qty' => $remainingQty,
 
             // إذا كان لديك وحدات مسحوبة مسبقاً يمكنك إضافتها هنا لاحقاً
             // 'unit_prices' => $this->whenLoaded('reportUnitPrices'),
