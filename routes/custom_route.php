@@ -20,6 +20,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\PurchaseInvoice;
 use App\Models\StockIssueOrder;
+use App\Modules\Stock\Reports\FifoBatchReports\Contracts\FifoAllocatorInterface;
 use App\Services\FifoMethodService;
 use App\Services\FixFifo\FifoAllocatorService;
 use App\Services\UnitPriceFifoUpdater;
@@ -116,10 +117,9 @@ Route::get('/testAllocateFifo', function (Request $request) {
  return $allocations; 
 });
 
-Route::get('/testAllocateFifoNew', function (Request $request) {
-    $service = app(\App\Modules\Stock\Reports\FifoBatchReports\Contracts\FifoAllocatorInterface::class);
-
-    $allocations = $service->allocate(
+Route::get('/testAllocateFifoNew', function (Request $request,FifoAllocatorInterface $fifoAllocator) {
+   
+    $allocations = $fifoAllocator->allocate(
         productId: (int) ($request->product_id ?? 25),
         unitId:    (int) ($request->unit_id ?? 10),
         requestedQty: (float) ($request->qty ?? 50),
