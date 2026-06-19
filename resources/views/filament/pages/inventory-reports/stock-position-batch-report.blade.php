@@ -162,7 +162,7 @@
                     <thead>
                         <tr class="header_report">
                             <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}"></th>
-                            <th colspan="7" class="no_border_right_left" style="text-align: center;">
+                            <th colspan="5" class="no_border_right_left" style="text-align: center;">
                                 <h3>Store Position Batch Report (FIFO)</h3>
                             </th>
                             <th class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}" style="text-align: center;">
@@ -176,8 +176,6 @@
                             <th>Source</th>
                             <th>Date</th>
                             <th>Unit</th>
-                            <th>IN Qty</th>
-                            <th>OUT Qty</th>
                             <th>Current Stock</th>
                             <th>Unit Price</th>
                             <th id="totalPriceHeader" style="cursor: pointer; user-select: none;">
@@ -192,7 +190,7 @@
                             @if ($currentProductId !== $batch->product_id)
                                 @php $currentProductId = $batch->product_id; @endphp
                                 <tr class="product-group-row">
-                                    <td colspan="9">{{ $batch->product }}</td>
+                                    <td colspan="7">{{ $batch->product }}</td>
                                 </tr>
                             @endif
                             <tr class="{{ $batch->is_current_batch ? 'batch-current-row' : '' }}">
@@ -200,8 +198,6 @@
                                 <td>{{ $batch->source_document }}</td>
                                 <td>{{ $batch->movement_date }}</td>
                                 <td>{{ $batch->unit }}</td>
-                                <td>{{ formatQunantity($batch->base_unit_in_qty) }}</td>
-                                <td>{{ formatQunantity($batch->base_unit_out) }}</td>
                                 <td style="font-weight: 600;">{{ formatQunantity($batch->current_stock) }}</td>
                                 <td>{{ formatMoneyWithCurrency($batch->unit_price) }}</td>
                                 <td>{{ formatMoneyWithCurrency($batch->remaining_total_price) }}</td>
@@ -211,7 +207,7 @@
 
                     <tbody>
                         <tr class="footer-row">
-                            <td colspan="8" style="text-align: right;">Total Remaining Price</td>
+                            <td colspan="6" style="text-align: right;">Total Remaining Price</td>
                             <td>{{ formatMoneyWithCurrency($reportResult->totalPrice) }}</td>
                         </tr>
                     </tbody>
