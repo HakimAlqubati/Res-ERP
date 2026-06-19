@@ -2,78 +2,172 @@
     {{ $this->getTableFiltersForm() }}
 
     <style>
-        table {
+        .batch-report-table {
             width: 100%;
-            border-collapse: inherit;
-            border-spacing: initial;
+            border-collapse: collapse;
         }
 
-        tbody:last-of-type .fixed_footer {
+        .batch-report-table th,
+        .batch-report-table td {
+            border: 1px solid #e5e7eb;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .batch-report-table thead th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .batch-report-table .product-group-row {
+            background-color: #f3f4f6;
+        }
+
+        .batch-report-table .product-group-row td {
+            font-weight: 700;
+            font-size: 0.875rem;
+            color: #1f2937;
+            padding: 6px 12px;
+        }
+
+        .batch-report-table .batch-current-row {
+            background-color: #f0fdf4;
+        }
+
+        .batch-report-table .footer-row {
             position: sticky;
             bottom: 0;
-            background: white !important;
+            background: white;
+            font-weight: 700;
             color: #0d7c66;
             z-index: 10;
+        }
+
+        .batch-report-table tbody tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .summary-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+
+        .summary-card .label {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+
+        .summary-card .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .summary-card .value.price {
+            color: #059669;
         }
 
         .fi-tabs {
             display: none !important;
         }
 
-        .batch-current {
-            background-color: #f0fdf4 !important;
+        /* Dark mode */
+        .dark .batch-report-table th,
+        .dark .batch-report-table td {
+            border-color: #374151;
         }
 
-        .dark .batch-current {
-            background-color: rgba(34, 197, 94, 0.1) !important;
+        .dark .batch-report-table thead th {
+            background-color: #1f2937;
+            color: #e5e7eb;
         }
 
-        .dark tbody:last-of-type .fixed_footer {
-            background: #1f2937 !important;
+        .dark .batch-report-table .product-group-row {
+            background-color: #374151;
+        }
+
+        .dark .batch-report-table .product-group-row td {
+            color: #e5e7eb;
+        }
+
+        .dark .batch-report-table .batch-current-row {
+            background-color: rgba(34, 197, 94, 0.1);
+        }
+
+        .dark .batch-report-table .footer-row {
+            background: #1f2937;
+        }
+
+        .dark .batch-report-table tbody tr:hover {
+            background-color: #1f2937;
+        }
+
+        .dark .summary-card {
+            background: #1f2937;
+            border-color: #374151;
+        }
+
+        .dark .summary-card .label {
+            color: #9ca3af;
+        }
+
+        .dark .summary-card .value {
+            color: #f3f4f6;
+        }
+
+        .dark .summary-card .value.price {
+            color: #34d399;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
         }
     </style>
 
-    {{-- Print & Export Buttons --}}
-    <div class="flex justify-end gap-2 mb-4">
+    {{-- Buttons --}}
+    <div class="flex justify-end gap-2 mb-4 no-print">
         <button id="printReport"
-            class="px-6 py-2 font-semibold rounded-md border border-blue-600 bg-blue-500 hover:bg-blue-700 text-white transition duration-300 shadow-md">
-            🖨️ Print
+            style="padding: 8px 20px; font-weight: 600; border-radius: 6px; border: 1px solid #2563eb; background: #3b82f6; color: #fff; cursor: pointer;">
+            Print
         </button>
         <button id="exportExcel"
-            class="px-6 py-2 font-semibold rounded-md border border-green-600 bg-green-500 hover:bg-green-700 text-white transition duration-300 shadow-md">
-            📥 Export Excel
+            style="padding: 8px 20px; font-weight: 600; border-radius: 6px; border: 1px solid #16a34a; background: #22c55e; color: #fff; cursor: pointer;">
+            Export Excel
         </button>
     </div>
 
     @if ($storeId)
         @if ($reportResult && $reportResult->totalBatches > 0)
-            {{-- Summary Cards --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Total Batches (All)</div>
-                    <div class="text-2xl font-bold text-gray-900 dark:text-white">
-                        {{ number_format($reportResult->totalBatches) }}
-                    </div>
+            {{-- Summary --}}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div class="summary-card">
+                    <div class="label">Total Batches (All)</div>
+                    <div class="value">{{ number_format($reportResult->totalBatches) }}</div>
                 </div>
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Total Remaining Price (All)</div>
-                    <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                        {{ formatMoneyWithCurrency($reportResult->totalPrice) }}
-                    </div>
+                <div class="summary-card">
+                    <div class="label">Total Remaining Price (All)</div>
+                    <div class="value price">{{ formatMoneyWithCurrency($reportResult->totalPrice) }}</div>
                 </div>
             </div>
 
             <div id="reportContent">
-                <table class="w-full text-sm text-left pretty reports table-striped border" id="report-table">
-                    <thead class="fixed-header">
+                <table class="batch-report-table" id="report-table">
+                    <thead>
                         <tr class="header_report">
                             <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}"></th>
-                            <th colspan="8" class="no_border_right_left text-center">
+                            <th colspan="7" class="no_border_right_left" style="text-align: center;">
                                 <h3>Store Position Batch Report (FIFO)</h3>
                             </th>
-                            <th class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}">
+                            <th class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}" style="text-align: center;">
                                 <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt=""
-                                    class="logo-left circle-image">
+                                    class="logo-left circle-image" style="display: inline-block;">
                             </th>
                         </tr>
 
@@ -86,10 +180,9 @@
                             <th>OUT Qty</th>
                             <th>Current Stock</th>
                             <th>Unit Price</th>
-                            <th id="totalPriceHeader" class="cursor-pointer select-none">
-                                Remaining Price <span id="sortIcon">⇅</span>
+                            <th id="totalPriceHeader" style="cursor: pointer; user-select: none;">
+                                Remaining Price <span id="sortIcon">&#8597;</span>
                             </th>
-                            <th>Batch</th>
                         </tr>
                     </thead>
 
@@ -98,38 +191,28 @@
                         @foreach ($reportResult->batches as $batch)
                             @if ($currentProductId !== $batch->product_id)
                                 @php $currentProductId = $batch->product_id; @endphp
-                                <tr class="bg-gray-100 dark:bg-gray-700">
-                                    <td colspan="10" class="font-bold text-gray-800 dark:text-gray-200 px-4 py-2">
-                                        📦 {{ $batch->product }}
-                                    </td>
+                                <tr class="product-group-row">
+                                    <td colspan="9">{{ $batch->product }}</td>
                                 </tr>
                             @endif
-                            <tr class="{{ $batch->is_current_batch ? 'batch-current' : '' }}">
+                            <tr class="{{ $batch->is_current_batch ? 'batch-current-row' : '' }}">
                                 <td>{{ $batch->product }}</td>
                                 <td>{{ $batch->source_document }}</td>
                                 <td>{{ $batch->movement_date }}</td>
                                 <td>{{ $batch->unit }}</td>
                                 <td>{{ formatQunantity($batch->base_unit_in_qty) }}</td>
                                 <td>{{ formatQunantity($batch->base_unit_out) }}</td>
-                                <td class="font-semibold">{{ formatQunantity($batch->current_stock) }}</td>
+                                <td style="font-weight: 600;">{{ formatQunantity($batch->current_stock) }}</td>
                                 <td>{{ formatMoneyWithCurrency($batch->unit_price) }}</td>
                                 <td>{{ formatMoneyWithCurrency($batch->remaining_total_price) }}</td>
-                                <td>
-                                    @if ($batch->is_current_batch)
-                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                            Current
-                                        </span>
-                                    @endif
-                                </td>
                             </tr>
                         @endforeach
                     </tbody>
 
                     <tbody>
-                        <tr class="font-bold bg-gray-100 fixed_footer">
-                            <td colspan="8" class="text-right">Total Remaining Price</td>
+                        <tr class="footer-row">
+                            <td colspan="8" style="text-align: right;">Total Remaining Price</td>
                             <td>{{ formatMoneyWithCurrency($reportResult->totalPrice) }}</td>
-                            <td></td>
                         </tr>
                     </tbody>
                 </table>
@@ -137,7 +220,7 @@
 
             {{-- Pagination --}}
             @if ($reportResult->batches instanceof \Illuminate\Contracts\Pagination\Paginator && $reportResult->batches->hasPages())
-                <div class="mt-4">
+                <div style="margin-top: 16px;">
                     {{ $reportResult->batches->withQueryString()->links() }}
                 </div>
             @endif
@@ -192,7 +275,7 @@
 
             header.addEventListener("click", function() {
                 const rows = Array.from(table.querySelectorAll("tbody:first-of-type tr"))
-                    .filter(row => !row.classList.contains("bg-gray-100") && !row.classList.contains("font-bold"));
+                    .filter(row => !row.classList.contains("product-group-row") && !row.classList.contains("footer-row"));
 
                 rows.sort((a, b) => {
                     const aValue = parseFloat(a.cells[8]?.innerText.replace(/[^\d.-]/g, "")) || 0;
@@ -203,18 +286,9 @@
                 const tbody = table.querySelector("tbody");
                 rows.forEach(row => tbody.appendChild(row));
 
-                icon.textContent = ascending ? "🔼" : "🔽";
+                icon.textContent = ascending ? "\u25B2" : "\u25BC";
                 ascending = !ascending;
             });
         });
     </script>
-
-    <style>
-        @media print {
-            #printReport,
-            #exportExcel {
-                display: none;
-            }
-        }
-    </style>
 </x-filament::page>
