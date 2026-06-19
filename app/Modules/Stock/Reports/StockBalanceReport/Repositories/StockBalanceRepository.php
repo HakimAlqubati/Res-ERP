@@ -68,25 +68,32 @@ final class StockBalanceRepository implements StockBalanceRepositoryInterface
                 'products.active',
                 'products.category_id',
                 'products.minimum_stock_qty',
-            ]);
+            ])
+           ->with('smallestReportUnit.unit');
+        // // استعلامات فرعية سريعة (Subquery Selects)
+        // $query->addSelect([
+        //     'base_unit_id' => DB::table('unit_prices')
+        //         ->whereColumn('unit_prices.product_id', 'products.id')
+        //         ->where('unit_prices.usage_scope', '!=', 'manufacturing_only')
+        //         ->orderBy('unit_prices.package_size', 'asc')
+        //         ->select('unit_prices.unit_id')
+        //         ->limit(1),
 
-        // استعلامات فرعية سريعة (Subquery Selects)
-        $query->addSelect([
-            'base_unit_name' => DB::table('unit_prices')
-                ->join('units', 'units.id', '=', 'unit_prices.unit_id')
-                ->whereColumn('unit_prices.product_id', 'products.id')
-                ->where('unit_prices.usage_scope', '!=', 'manufacturing_only')
-                ->orderBy('unit_prices.package_size', 'asc')
-                ->select('units.name')
-                ->limit(1),
+        //     'base_unit_name' => DB::table('unit_prices')
+        //         ->join('units', 'units.id', '=', 'unit_prices.unit_id')
+        //         ->whereColumn('unit_prices.product_id', 'products.id')
+        //         ->where('unit_prices.usage_scope', '!=', 'manufacturing_only')
+        //         ->orderBy('unit_prices.package_size', 'asc')
+        //         ->select('units.name')
+        //         ->limit(1),
 
-            'base_package_size' => DB::table('unit_prices')
-                ->whereColumn('unit_prices.product_id', 'products.id')
-                ->where('unit_prices.usage_scope', '!=', 'manufacturing_only')
-                ->orderBy('unit_prices.package_size', 'asc')
-                ->select('unit_prices.package_size')
-                ->limit(1),
-        ]);
+        //     'base_package_size' => DB::table('unit_prices')
+        //         ->whereColumn('unit_prices.product_id', 'products.id')
+        //         ->where('unit_prices.usage_scope', '!=', 'manufacturing_only')
+        //         ->orderBy('unit_prices.package_size', 'asc')
+        //         ->select('unit_prices.package_size')
+        //         ->limit(1),
+        // ]);
 
         if ($filters->onlyActive) {
             $query->where('products.active', true);

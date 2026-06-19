@@ -20,6 +20,7 @@ class StockBalanceResource extends JsonResource
         $remainingQty = $totalIn - $totalOut;
         
         $remainingQty = formatQunantity($remainingQty);
+        $smallestUnit = $this->smallestReportUnit;
         return [
             'product_id'   => $this->id,
             'product_code' => $this->code,
@@ -28,14 +29,15 @@ class StockBalanceResource extends JsonResource
             // 'category_name'=> $this->category->name,
             
             // 🔥 إضافة بيانات الوحدة الأساسية التي جلبناها من الـ Subquery
-            'base_unit'         => $this->base_unit_name ?? 'N/A',
-            'base_package_size' => (float) ($this->base_package_size ?? 1),
+            'base_unit_id'      => $smallestUnit->unit_id,
+            'base_unit'         => $smallestUnit->unit->name,
+            'base_package_size' => (float) ($smallestUnit->package_size ?? 1),
 
             // 🔥 هنا نظهر الحقول الديناميكية التي حسبناها في قاعدة البيانات
             'total_in'           => (float) $this->total_in,
             'total_out'          => (float) $this->total_out,
             'remaining_base_qty' => $remainingQty,
-
+             
             // إذا كان لديك وحدات مسحوبة مسبقاً يمكنك إضافتها هنا لاحقاً
             // 'unit_prices' => $this->whenLoaded('reportUnitPrices'),
         ];
