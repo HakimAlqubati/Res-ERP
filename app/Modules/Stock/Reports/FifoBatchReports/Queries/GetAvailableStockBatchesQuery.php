@@ -7,17 +7,17 @@ namespace App\Modules\Stock\Reports\FifoBatchReports\Queries;
 use App\Models\UnitPrice;
 use App\Modules\Stock\Reports\FifoBatchReports\Contracts\GetAvailableStockBatchesQueryInterface;
 use App\Modules\Stock\Reports\FifoBatchReports\DataTransferObjects\StockBatchFilterDTO;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Contracts\Pagination\Paginator;
-use Illuminate\Database\Query\Builder;
+use App\Modules\Stock\Reports\FifoBatchReports\DataTransferObjects\StockBatchReportResult;
+ use Illuminate\Database\Query\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Pagination\Paginator;
 final class GetAvailableStockBatchesQuery implements GetAvailableStockBatchesQueryInterface
 {
     private const TABLE = 'inventory_transactions';
 
-    public function execute(StockBatchFilterDTO $filters): Collection|LengthAwarePaginator|Paginator
+    public function execute(StockBatchFilterDTO $filters): StockBatchReportResult
     {
         // بناء الاستعلام بالتدريج باستخدام Subqueries مدعومة أصلياً في لارافل
         // يتم تمرير المخرجات من طبقة إلى أخرى لضمان مقروئية الكود وسهولة تتبعه
@@ -34,12 +34,38 @@ final class GetAvailableStockBatchesQuery implements GetAvailableStockBatchesQue
             $query->where('is_current_batch', $filters->isCurrentBatch ? 1 : 0);
         }
 
+        // --- حساب الملخص الإجمالي (All Summary) بحركة ذكية ---
+         // نطلب من قاعدة البيانات جلب العدد والمجموع في استعلام واحد فقط!
+        $aggregates = DB::query()
+            ->fromSub(clone $query, 'summary_table')
+            ->selectRaw('
+                COUNT(*) as total_batches, 
+                COALESCE(SUM(remaining_total_price), 0) as total_price
+            ')->first();
+
+        $totalBatches = (int) $aggregates->total_batches;
+        $totalPrice   = (float) $aggregates->total_price;
+
         $query->orderBy('product_id', 'asc')->orderBy('id', 'asc');
 
         if ($filters->wantsPagination()) {
-            return $query->paginate($filters->perPage); 
-        }
+            $page = Paginator::resolveCurrentPage();
+            // نجلب بيانات هذه الصفحة فقط
+            $results = $query->forPage($page, $filters->perPage)->get();
 
+            // نبني الـ Paginator يدوياً ونمرر له العدد الذي حسبناه مسبقاً لكي لا يكرر عملية العد
+        $batches = new \Illuminate\Pagination\Paginator(
+    $results,
+    $filters->perPage,
+    $page,
+    ['path' => Paginator::resolveCurrentPath()]
+);
+$batches->hasMorePagesWhen($totalBatches > ($page * $filters->perPage));
+
+         }else{
+            $batches = $query->get();
+         }
+        return new StockBatchReportResult($batches, $totalBatches, $totalPrice);
         return $query->get();
     }
 
