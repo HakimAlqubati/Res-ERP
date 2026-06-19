@@ -12,6 +12,8 @@ use App\Modules\Stock\Reports\GrnConsumption\Contracts\GrnConsumptionRepositoryI
 use App\Modules\Stock\Reports\GrnConsumption\Repositories\GrnConsumptionRepository;
 use App\Modules\Stock\Reports\ProductGrnAggregation\Contracts\ProductAggregationRepositoryInterface;
 use App\Modules\Stock\Reports\ProductGrnAggregation\Repositories\ProductAggregationRepository;
+use App\Modules\Stock\Reports\StockBalanceReport\Contracts\StockBalanceRepositoryInterface;
+use App\Modules\Stock\Reports\StockBalanceReport\Repositories\StockBalanceRepository;
 
 class StockServiceProvider extends ServiceProvider
 {
@@ -41,6 +43,11 @@ class StockServiceProvider extends ServiceProvider
         $this->app->bind(
             FifoAllocatorInterface::class,
             FifoAllocationService::class,
+        );
+
+        $this->app->bind(
+            StockBalanceRepositoryInterface::class,
+            StockBalanceRepository::class
         );
     }
 
