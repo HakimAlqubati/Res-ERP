@@ -30,8 +30,12 @@ final class GetAvailableStockBatchesQuery implements GetAvailableStockBatchesQue
         $query = $this->layer4Final($layer3);
 
         // تطبيق فلتر الباتش الحالي إن وُجد
+        // يجب تغليف الاستعلام في subquery لأن MySQL لا يسمح بفلترة عمود ناتج عن window function في نفس المستوى
         if ($filters->isCurrentBatch !== null) {
-            $query->where('is_current_batch', $filters->isCurrentBatch ? 1 : 0);
+            $query = DB::query()
+                ->fromSub($query, 'batch_with_flag')
+                ->select('*')
+                ->where('is_current_batch', $filters->isCurrentBatch ? 1 : 0);
         }
 
         // --- حساب الملخص الإجمالي (All Summary) بحركة ذكية ---
@@ -119,7 +123,7 @@ $batches->hasMorePagesWhen($totalBatches > ($page * $filters->perPage));
     {
         return DB::table(self::TABLE . ' AS in_t')
             ->select([
-                'in_t.id', 'in_t.product_id', 'p.name as product', 'in_t.transactionable_type',
+                'in_t.id', 'in_t.product_id', 'p.name as product','p.code as product_code', 'in_t.transactionable_type',
                 'in_t.transactionable_id', 'in_t.movement_date', 'in_t.unit_id', 'u.name as unit',
                 'in_t.quantity as in_qty', 'in_t.package_size', 'bu.base_unit_name as base_unit',
                 'bu.base_package_size as base_unit_package_size', 'in_t.price'
@@ -182,7 +186,7 @@ $batches->hasMorePagesWhen($totalBatches > ($page * $filters->perPage));
         return DB::query()
             ->fromSub($source, 'cte_layer3_filtered')
             ->select([
-                'id', 'product_id', 'product', 'transactionable_type', 'transactionable_id', 'movement_date',
+                'id', 'product_id', 'product', 'product_code', 'transactionable_type', 'transactionable_id', 'movement_date',
                 'unit', 'in_qty', 'package_size', 'base_unit', 'base_unit_package_size', 'price',
                 'base_unit_in_qty', 'base_unit_out', 'unit_price',
             ])

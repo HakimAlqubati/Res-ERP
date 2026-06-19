@@ -61,4 +61,6 @@ class StockPositionBatchReportResource extends Resource
 
         ];
     }
+   protected static bool $isGloballySearchable = false;
+
 }

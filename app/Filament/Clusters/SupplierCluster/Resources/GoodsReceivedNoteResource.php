@@ -504,6 +504,7 @@ class GoodsReceivedNoteResource extends Resource
                 IconColumn::make('belongs_to_purchase_invoice')
                     ->label('Belongs to Invoice')
                     ->boolean()->toggleable(isToggledHiddenByDefault: true)
+                    ->tooltip(fn($record) => $record?->purchase_invoice_id)
                     ->alignCenter(),
                 IconColumn::make('has_outbound_transactions')
                     ->toggleable(isToggledHiddenByDefault: true)

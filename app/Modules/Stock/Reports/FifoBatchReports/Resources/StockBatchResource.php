@@ -13,11 +13,12 @@ final class StockBatchResource extends JsonResource
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
-    {
+    { 
         return [
             'id' => $this->id,
             'product_id' => $this->product_id,
             'product_name' => $this->product,
+            'product_code' => $this->product_code,
 
             'document' => $this->source_document,
             'transactionable_type' => $this->transactionable_type,

@@ -131,38 +131,18 @@
         }
     </style>
 
-    {{-- Buttons --}}
-    <div class="flex justify-end gap-2 mb-4 no-print">
-        <button id="printReport"
-            style="padding: 8px 20px; font-weight: 600; border-radius: 6px; border: 1px solid #2563eb; background: #3b82f6; color: #fff; cursor: pointer;">
-            Print
-        </button>
-        <button id="exportExcel"
-            style="padding: 8px 20px; font-weight: 600; border-radius: 6px; border: 1px solid #16a34a; background: #22c55e; color: #fff; cursor: pointer;">
-            Export Excel
-        </button>
-    </div>
+ 
 
     @if ($storeId)
         @if ($reportResult && $reportResult->totalBatches > 0)
-            {{-- Summary --}}
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-                <div class="summary-card">
-                    <div class="label">Total Batches (All)</div>
-                    <div class="value">{{ number_format($reportResult->totalBatches) }}</div>
-                </div>
-                <div class="summary-card">
-                    <div class="label">Total Remaining Price (All)</div>
-                    <div class="value price">{{ formatMoneyWithCurrency($reportResult->totalPrice) }}</div>
-                </div>
-            </div>
+ 
 
             <div id="reportContent">
                 <table class="batch-report-table" id="report-table">
                     <thead>
                         <tr class="header_report">
                             <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}"></th>
-                            <th colspan="5" class="no_border_right_left" style="text-align: center;">
+                            <th colspan="6" class="no_border_right_left" style="text-align: center;">
                                 <h3>Store Position Batch Report (FIFO)</h3>
                             </th>
                             <th class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}" style="text-align: center;">
@@ -172,6 +152,7 @@
                         </tr>
 
                         <tr>
+                            <th>Code</th>
                             <th>Product</th>
                             <th>Source</th>
                             <th>Date</th>
@@ -187,17 +168,18 @@
                     <tbody>
                         @php $currentProductId = null; @endphp
                         @foreach ($reportResult->batches as $batch)
-                            @if ($currentProductId !== $batch->product_id)
+                            @if ($currentProductId !== $batch->product_id && 1 < 2)
                                 @php $currentProductId = $batch->product_id; @endphp
-                                <tr class="product-group-row">
+                                <!-- <tr class="product-group-row">
                                     <td colspan="7">{{ $batch->product }}</td>
-                                </tr>
+                                </tr> -->
                             @endif
                             <tr class="{{ $batch->is_current_batch ? 'batch-current-row' : '' }}">
+                                <td>{{ $batch->product_code }}</td>
                                 <td>{{ $batch->product }}</td>
                                 <td>{{ $batch->source_document }}</td>
                                 <td>{{ $batch->movement_date }}</td>
-                                <td>{{ $batch->unit }}</td>
+                                <td>{{ $batch->base_unit }}</td>
                                 <td style="font-weight: 600;">{{ formatQunantity($batch->current_stock) }}</td>
                                 <td>{{ formatMoneyWithCurrency($batch->unit_price) }}</td>
                                 <td>{{ formatMoneyWithCurrency($batch->remaining_total_price) }}</td>
@@ -207,7 +189,7 @@
 
                     <tbody>
                         <tr class="footer-row">
-                            <td colspan="6" style="text-align: right;">Total Remaining Price</td>
+                            <td colspan="7" style="text-align: right;">Total Remaining Price</td>
                             <td>{{ formatMoneyWithCurrency($reportResult->totalPrice) }}</td>
                         </tr>
                     </tbody>
