@@ -1163,4 +1163,6 @@ return [
     'auto_generated_reason_missing_checkin' => 'Automatically generated due to check-out attempt without a prior check-in',
     'rejected_successfully' => 'Rejected Successfully',
     'auto' => 'Auto',
+    'stock_position_batch_report' => 'Store Position Batch Report',
+    'stock_position_batch_report_desc' => 'Store Position Batch Report Description',
 ];

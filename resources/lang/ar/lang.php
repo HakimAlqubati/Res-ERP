@@ -1144,4 +1144,7 @@ return [
   'auto_generated_reason_missing_checkin' => 'تم الإنشاء تلقائياً بسبب تسجيل انصراف بدون بصمة دخول سابقة',
   'rejected_successfully' => 'تم الرفض بنجاح',
   'auto' => 'تلقائي',
+   'stock_position_batch_report' => 'تقرير مخزون المستودع',
+    'stock_position_batch_report_desc' => 'تقرير مخزون المستودع',
+
 ];
