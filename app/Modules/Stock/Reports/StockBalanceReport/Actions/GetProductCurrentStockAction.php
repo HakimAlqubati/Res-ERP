@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Stock\Reports\StockBalanceReport\Actions;
 
 use App\Modules\Stock\Reports\StockBalanceReport\Contracts\StockBalanceRepositoryInterface;
+use App\Modules\Stock\Reports\StockBalanceReport\Mappers\ProductStockMapper;
 use Exception;
 
 final readonly class GetProductCurrentStockAction
@@ -14,8 +15,8 @@ final readonly class GetProductCurrentStockAction
      * (سنقوم بإنشاء الـ Mapper لاحقاً)
      */
     public function __construct(
-        private StockBalanceRepositoryInterface $repository
-        // private ProductStockMapper $mapper  👈 سنضيفه لاحقاً لتحويل الرصيد للوحدات
+        private StockBalanceRepositoryInterface $repository,
+        private ProductStockMapper $mapper  
     ) {}
 
     /**
@@ -32,10 +33,8 @@ final readonly class GetProductCurrentStockAction
             throw new Exception("❌ Product (ID: {$productId}) not found in store (ID: {$storeId})");
         }
 
-        // 2. هنا سنستخدم الـ Mapper لتحويل الرصيد الأساسي (Base Qty) 
-        // إلى تفاصيل الوحدات المختلفة (كرتون، حبة، إلخ) وأسعارها.
-        // return $this->mapper->mapToUnits($rawStock, $productId);
+        // 2. تمرير الرصيد الخام إلى الـ Mapper ليقوم بالسحر الرياضي
+        return $this->mapper->mapToUnits($rawStock, $productId, $storeId);
         
-        return (array) $rawStock; // مؤقتاً نعيد البيانات الخام حتى نبني الـ Mapper
-    }
+     }
 }

@@ -17,7 +17,7 @@ Route::get('/stockBalances/lowStock', [StockBalanceController::class, 'lowStock'
     ->name('balances.lowStock');
 
 Route::get('/stockBalances/{productId}', [StockBalanceController::class, 'show'])
-    ->where('productId', '[0-9]+')
+    // ->where('productId', '[0-9]+')
     ->name('balances.show');
 
 Route::get('/stockBalances', [StockBalanceController::class, 'index'])
