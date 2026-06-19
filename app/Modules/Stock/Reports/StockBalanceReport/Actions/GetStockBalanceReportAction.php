@@ -6,8 +6,8 @@ namespace App\Modules\Stock\Reports\StockBalanceReport\Actions;
 
 use App\Modules\Stock\Reports\StockBalanceReport\Contracts\StockBalanceRepositoryInterface;
 use App\Modules\Stock\Reports\StockBalanceReport\DataTransferObjects\StockBalanceFilterDTO;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
+use App\Modules\Stock\Reports\StockBalanceReport\Resources\StockBalanceResource;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 final readonly class GetStockBalanceReportAction
 {
@@ -20,18 +20,15 @@ final readonly class GetStockBalanceReportAction
 
     /**
      * تنفيذ الإجراء لجلب التقرير.
-     * * @param StockBalanceFilterDTO $filters
-     * @return Collection|LengthAwarePaginator
      */
-    public function execute(StockBalanceFilterDTO $filters): Collection|LengthAwarePaginator
+    public function execute(StockBalanceFilterDTO $filters): AnonymousResourceCollection
     {
         // 1. يمكننا هنا إضافة أي منطق أعمال (Business Logic) قبل الاستعلام
         // مثلاً: التأكد من صلاحيات المستخدم، أو تسجيل الحدث (Logging).
 
         // 2. جلب البيانات من المستودع
-        $reportData = $this->repository->getBalances($filters);
+        $rawReport = $this->repository->getBalances($filters);
 
-        // 3. إعادة البيانات بصيغتها النهائية
-        return $reportData;
+        return StockBalanceResource::collection($rawReport);
     }
 }
