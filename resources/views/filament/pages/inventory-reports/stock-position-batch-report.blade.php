@@ -158,7 +158,7 @@
                             <th>Date</th>
                             <th>Unit</th>
                             <th>Qty per Pack</th>
-                            <th>Current Stock</th>
+                            <th>Remaining Qty </th>
                             <th>Unit Price</th>
                             <th id="totalPriceHeader" style="cursor: pointer; user-select: none;">
                                 Remaining Price <span id="sortIcon">&#8597;</span>
