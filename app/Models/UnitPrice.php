@@ -88,7 +88,7 @@ class UnitPrice extends Model implements Auditable
                     'old_price'      => $unitPrice->getOriginal('price') ?? 0,
                     'new_price'      => $unitPrice->price,
                     'date'           => $unitPrice->date ?? now(), // استخدم التاريخ المحدد أو تاريخ اليوم
-                    'note'           => $unitPrice->notes ?? 'تحديث تلقائي من UnitPrice',
+                    'note'           => $unitPrice->notes ?? 'Auto Update from UnitPrice',
                     'source_type'    => self::class,
                     'source_id'      => $unitPrice->id,
                 ]);
