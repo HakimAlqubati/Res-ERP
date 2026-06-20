@@ -24,6 +24,7 @@ class ListStockPositionBatchReport extends ListRecords
     protected function getViewData(): array
     {
         $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
+        $categoryId = $this->getTable()->getFilters()['category_id']->getState()['value'] ?? null;
         $productIds = $this->getTable()->getFilters()['product_ids']->getState()['values'] ?? [];
         $isCurrentBatch = $this->getTable()->getFilters()['current_batch']->getState()['value'] ?? null;
 
@@ -41,6 +42,7 @@ class ListStockPositionBatchReport extends ListRecords
             isCurrentBatch: $isCurrentBatch !== null && $isCurrentBatch !== ''
                 ? (bool) $isCurrentBatch
                 : null,
+            categoryId: $categoryId ? (int) $categoryId : null,
             perPage: 50,
         );
 

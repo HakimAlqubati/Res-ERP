@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\InventoryReportCluster\Resources\InventoryTransactions\Tables;
 
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\Store;
 use Filament\Tables\Enums\FiltersLayout;
@@ -22,6 +23,14 @@ class InventoryTransactionsTable
                         Store::active()->get()->pluck('name', 'id')->toArray()
                     )
                     ->placeholder('Select Store')
+                    ->query(fn (Builder $q) => $q),
+
+                SelectFilter::make('category_id')
+                    ->label('Category')
+                    ->options(Category::active()
+                    ->notForPos()
+                    ->pluck('name', 'id')->toArray())
+                    ->searchable()
                     ->query(fn (Builder $q) => $q),
 
                 SelectFilter::make('product_ids')

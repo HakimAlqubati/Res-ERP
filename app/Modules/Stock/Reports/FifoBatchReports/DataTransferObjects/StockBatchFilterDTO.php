@@ -21,6 +21,7 @@ final readonly class StockBatchFilterDTO
         public int $storeId,
         public array $productIds = [],
         public ?bool $isCurrentBatch = null,
+        public ?int $categoryId = null,
         public ?int $perPage = 20,
     ) {}
 
@@ -38,5 +39,13 @@ final readonly class StockBatchFilterDTO
     public function hasProductFilter(): bool
     {
         return ! empty($this->productIds);
+    }
+
+    /**
+     * هل يوجد فلتر على التصنيف؟
+     */
+    public function hasCategoryFilter(): bool
+    {
+        return $this->categoryId !== null;
     }
 }

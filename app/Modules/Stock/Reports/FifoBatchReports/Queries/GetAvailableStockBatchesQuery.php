@@ -88,7 +88,10 @@ $batches->hasMorePagesWhen($totalBatches > ($page * $filters->perPage));
                 UnitPrice::USAGE_OUT_ONLY,
                 UnitPrice::USAGE_NONE,
             ])
-            ->when($filters->hasProductFilter(), fn ($q) => $q->whereIn('up.product_id', $filters->productIds));
+            ->when($filters->hasProductFilter(), fn ($q) => $q->whereIn('up.product_id', $filters->productIds))
+            ->when($filters->hasCategoryFilter(), fn ($q) => $q->whereIn('up.product_id', function ($query) use ($filters) {
+                $query->select('id')->from('products')->where('category_id', $filters->categoryId);
+            }));
     }
 
     /**
@@ -113,6 +116,9 @@ $batches->hasMorePagesWhen($totalBatches > ($page * $filters->perPage));
             ->where('store_id', $filters->storeId)
             ->whereNull('deleted_at')
             ->when($filters->hasProductFilter(), fn ($q) => $q->whereIn('product_id', $filters->productIds))
+            ->when($filters->hasCategoryFilter(), fn ($q) => $q->whereIn('product_id', function ($query) use ($filters) {
+                $query->select('id')->from('products')->where('category_id', $filters->categoryId);
+            }))
             ->groupBy('source_transaction_id');
     }
 
@@ -138,7 +144,8 @@ $batches->hasMorePagesWhen($totalBatches > ($page * $filters->perPage));
             ->where('in_t.movement_type', 'in')
             ->where('in_t.store_id', $filters->storeId)
             ->whereNull('in_t.deleted_at')
-            ->when($filters->hasProductFilter(), fn ($q) => $q->whereIn('in_t.product_id', $filters->productIds));
+            ->when($filters->hasProductFilter(), fn ($q) => $q->whereIn('in_t.product_id', $filters->productIds))
+            ->when($filters->hasCategoryFilter(), fn ($q) => $q->where('p.category_id', $filters->categoryId));
     }
 
     /**
