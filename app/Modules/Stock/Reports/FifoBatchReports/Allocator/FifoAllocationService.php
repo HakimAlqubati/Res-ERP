@@ -46,7 +46,7 @@ final class FifoAllocationService implements FifoAllocatorInterface
 
         // جلب الباتشات المتاحة من Repository (SQL سريع — استعلام واحد)
         $batches = $this->stockRepository->getAvailableStockBatches(
-            new StockBatchFilterDTO(storeId: $storeId, productIds: [$productId])
+            new StockBatchFilterDTO(storeId: $storeId, productIds: [$productId], perPage: null)
         );
 
         // التحقق من كفاية الرصيد
@@ -83,7 +83,7 @@ final class FifoAllocationService implements FifoAllocatorInterface
         $targetUnit = $this->resolveTargetUnit($productId, $unitId);
 
         $batches = $this->stockRepository->getAvailableStockBatches(
-            new StockBatchFilterDTO(storeId: $storeId, productIds: [$productId])
+            new StockBatchFilterDTO(storeId: $storeId, productIds: [$productId], perPage: null)
         );
 
         return $this->sumAvailableInTargetUnit($batches, $targetUnit);

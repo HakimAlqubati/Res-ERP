@@ -26,7 +26,7 @@ class StockBatchController extends Controller
         $batches = $this->stockBatchesQuery->execute(
             $request->toDTO()
         );
-
+        
         return new StockBatchIndexResponse($batches);
 
        

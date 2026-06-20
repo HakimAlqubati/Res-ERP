@@ -171,9 +171,9 @@
                         @foreach ($reportResult->batches as $batch)
                             @if ($currentProductId !== $batch->product_id && 1 < 2)
                                 @php $currentProductId = $batch->product_id; @endphp
-                                <!-- <tr class="product-group-row">
+                                <tr class="product-group-row">
                                     <td colspan="8">{{ $batch->product }}</td>
-                                </tr> -->
+                                </tr>
                             @endif
                             <tr class="{{ $batch->is_current_batch ? 'batch-current-row' : '' }}">
                                 <td>{{ $batch->product_code }}</td>
