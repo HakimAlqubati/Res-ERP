@@ -200,8 +200,8 @@
 
             {{-- Pagination --}}
             @if ($reportResult->batches instanceof \Illuminate\Contracts\Pagination\Paginator && $reportResult->batches->hasPages())
-                <div style="margin-top: 16px;">
-                    {{ $reportResult->batches->withQueryString()->links() }}
+                <div style="margin-top: 16px;" class="no-print">
+                    <x-filament::pagination :paginator="$reportResult->batches" class="px-3 py-3 sm:px-6" />
                 </div>
             @endif
         @else

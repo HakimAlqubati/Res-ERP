@@ -23,6 +23,7 @@ final readonly class StockBatchFilterDTO
         public ?bool $isCurrentBatch = null,
         public ?int $categoryId = null,
         public ?int $perPage = 20,
+        public int $page = 1,
     ) {}
 
     /**

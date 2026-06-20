@@ -53,19 +53,18 @@ final class GetAvailableStockBatchesQuery implements GetAvailableStockBatchesQue
         $query->orderBy('product_id', 'asc')->orderBy('id', 'asc');
 
         if ($filters->wantsPagination()) {
-            $page = Paginator::resolveCurrentPage();
+            $page = $filters->page;
             // نجلب بيانات هذه الصفحة فقط
             $results = $query->forPage($page, $filters->perPage)->get();
 
-            // نبني الـ Paginator يدوياً ونمرر له العدد الذي حسبناه مسبقاً لكي لا يكرر عملية العد
-        $batches = new \Illuminate\Pagination\Paginator(
-    $results,
-    $filters->perPage,
-    $page,
-    ['path' => Paginator::resolveCurrentPath()]
-);
-$batches->hasMorePagesWhen($totalBatches > ($page * $filters->perPage));
-
+            // نبني الـ Paginator يدوياً
+            $batches = new \Illuminate\Pagination\LengthAwarePaginator(
+                $results,
+                $totalBatches,
+                $filters->perPage,
+                $page,
+                ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath(), 'pageName' => 'reportPage']
+            );
          }else{
             $batches = $query->get();
          }
