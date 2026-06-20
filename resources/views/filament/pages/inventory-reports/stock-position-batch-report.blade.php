@@ -35,9 +35,17 @@
             background-color: #f0fdf4;
         }
 
-        .batch-report-table .footer-row {
+        .batch-report-table .footer-row  {
             position: sticky;
             bottom: 0;
+            background: white;
+            font-weight: 700;
+            color: #0d7c66;
+            z-index: 10;
+        }
+        .batch-report-table .current-page-footer  {
+            position: sticky;
+            bottom: 30px;
             background: white;
             font-weight: 700;
             color: #0d7c66;
@@ -160,8 +168,8 @@
                             <th>Qty per Pack</th>
                             <th>Remaining Qty </th>
                             <th>Unit Price</th>
-                            <th id="totalPriceHeader" style="cursor: pointer; user-select: none;">
-                                Remaining Price <span id="sortIcon">&#8597;</span>
+                            <th id="totalPriceHeader" >
+                                Remaining Price <span ></span>
                             </th>
                         </tr>
                     </thead>
@@ -190,8 +198,21 @@
                     </tbody>
 
                     <tbody>
+                        @php
+                            $currentItems = $reportResult->batches instanceof \Illuminate\Contracts\Pagination\Paginator
+                                ? collect($reportResult->batches->items())
+                                : collect($reportResult->batches);
+                            
+                            $currentTotalPrice = $currentItems->sum(function ($item) {
+                                return (float) $item->remaining_total_price;
+                            });
+                        @endphp
+                        <tr class="current-page-footer">
+                            <td colspan="8" style="text-align: right;">Current Total Price</td>
+                            <td>{{ formatMoneyWithCurrency($currentTotalPrice) }}</td>
+                        </tr>
                         <tr class="footer-row">
-                            <td colspan="8" style="text-align: right;">Total Remaining Price</td>
+                            <td colspan="8" style="text-align: right;">All Total Price</td>
                             <td>{{ formatMoneyWithCurrency($reportResult->totalPrice) }}</td>
                         </tr>
                     </tbody>
@@ -242,33 +263,5 @@
             XLSX.writeFile(wb, "stock_position_batch_report.xlsx");
         });
     </script>
-
-    {{-- Sort by Remaining Price --}}
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const table = document.querySelector("#report-table");
-            const header = document.querySelector("#totalPriceHeader");
-            const icon = document.querySelector("#sortIcon");
-            if (!table || !header) return;
-
-            let ascending = true;
-
-            header.addEventListener("click", function() {
-                const rows = Array.from(table.querySelectorAll("tbody:first-of-type tr"))
-                    .filter(row => !row.classList.contains("product-group-row") && !row.classList.contains("footer-row"));
-
-                rows.sort((a, b) => {
-                    const aValue = parseFloat(a.cells[8]?.innerText.replace(/[^\d.-]/g, "")) || 0;
-                    const bValue = parseFloat(b.cells[8]?.innerText.replace(/[^\d.-]/g, "")) || 0;
-                    return ascending ? aValue - bValue : bValue - aValue;
-                });
-
-                const tbody = table.querySelector("tbody");
-                rows.forEach(row => tbody.appendChild(row));
-
-                icon.textContent = ascending ? "\u25B2" : "\u25BC";
-                ascending = !ascending;
-            });
-        });
-    </script>
+ 
 </x-filament::page>
