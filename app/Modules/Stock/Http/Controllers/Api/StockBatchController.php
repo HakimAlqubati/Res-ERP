@@ -14,7 +14,6 @@ use Illuminate\Http\JsonResponse;
 class StockBatchController extends Controller
 {
     public function __construct(
-        private readonly InventoryStockRepositoryInterface $stockRepository,
         private readonly GetAvailableStockBatchesQueryInterface $stockBatchesQuery,
     ) {}
 
