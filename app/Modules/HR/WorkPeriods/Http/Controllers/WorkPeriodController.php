@@ -3,6 +3,7 @@
 namespace App\Modules\HR\WorkPeriods\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\HR\WorkPeriods\Http\Requests\IndexWorkPeriodRequest;
 use App\Modules\HR\WorkPeriods\Http\Requests\StoreWorkPeriodRequest;
 use App\Modules\HR\WorkPeriods\Http\Requests\UpdateWorkPeriodRequest;
 use App\Modules\HR\WorkPeriods\Http\Resources\WorkPeriodResource;
@@ -17,9 +18,10 @@ class WorkPeriodController extends Controller
         $this->service = $service;
     }
 
-    public function index()
+    public function index(IndexWorkPeriodRequest $request)
     {
-        $workPeriods = $this->service->getAll();
+        $filters = $request->validated();
+        $workPeriods = $this->service->getAll($filters);
         return WorkPeriodResource::collection($workPeriods);
     }
 

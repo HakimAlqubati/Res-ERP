@@ -14,9 +14,9 @@ class WorkPeriodService
         $this->repository = $repository;
     }
 
-    public function getAll()
+    public function getAll(array $filters = [])
     {
-        return $this->repository->getAll();
+        return $this->repository->getAll($filters);
     }
 
     public function getById($id)

@@ -6,9 +6,13 @@ use App\Models\WorkPeriod;
 
 class WorkPeriodRepository implements WorkPeriodRepositoryInterface
 {
-    public function getAll()
+    public function getAll(array $filters = [])
     {
-        return WorkPeriod::with('branch')->orderBy('id', 'desc')->get();
+        return WorkPeriod::with('branch')
+            ->when(isset($filters['branch_id']), function ($query) use ($filters) {
+                return $query->where('branch_id', $filters['branch_id']);
+            })
+            ->orderBy('id', 'desc')->get();
     }
 
     public function getById($id)
