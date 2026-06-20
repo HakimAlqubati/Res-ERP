@@ -10,6 +10,11 @@
         <option value="50">50</option>
         <option value="100">100</option>
         <option value="150">150</option>
+        @if (isHakimOrAdel())
+        
+        <option value="500">500</option>
+        <option value="1000">1000</option>
+        @endif
         {{-- <option value="all">All</option> --}}
     </select>
     
