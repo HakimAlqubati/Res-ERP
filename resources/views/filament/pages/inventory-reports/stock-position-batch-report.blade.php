@@ -169,7 +169,7 @@
                             <th>Remaining Qty </th>
                             <th>Unit Price</th>
                             <th id="totalPriceHeader" >
-                                Remaining Price <span ></span>
+                                Total Price <span ></span>
                             </th>
                         </tr>
                     </thead>
