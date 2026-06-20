@@ -58,6 +58,15 @@ class InventoryTransactionsTable
                             ])
                             ->toArray();
                     })
+                    ->options(function () {
+                        return Product::where('active', 1)
+                            ->limit(10)
+                            ->get()
+                            ->mapWithKeys(fn ($product) => [
+                                $product->id => "{$product->code} - {$product->name}",
+                            ])
+                            ->toArray();
+                    })
                     ->query(fn (Builder $q) => $q),
 
                 SelectFilter::make('current_batch')
