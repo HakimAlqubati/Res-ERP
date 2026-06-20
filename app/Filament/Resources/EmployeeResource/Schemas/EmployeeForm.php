@@ -11,6 +11,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
 use App\Models\Allowance;
 use App\Models\Branch;
+use App\Models\Deduction;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeFileType;
@@ -440,7 +441,9 @@ class EmployeeForm
                                             ->disabled(
                                                 fn(): bool => isBranchManager() && !(isSuperAdmin()
                                                     || isSystemManager())
-                                            ),
+                                            )
+                                            ->hidden(fn() =>isHR())
+                                            ,
 
                                         Select::make('salary_allocation_rule')
                                             ->label(__('Salary Allocation Override (Branch Transfers)'))
@@ -534,84 +537,142 @@ class EmployeeForm
                                                 ->unique(ignoreRecord: true),
                                         ]),
                                     ]),
-                                    Fieldset::make()->columns(2)->label(__('lang.finance'))->columnSpanFull()
-                                        
+                                    Grid::make(3)->columnSpanFull()
                                         ->schema([
-                                            Repeater::make('Monthly allowances')
+                                            Fieldset::make('Monthly allowances')
                                                 ->label(__('lang.monthly_allowances'))
-                                                ->defaultItems(0)
-                                                ->table([
-                                                    TableColumn::make(__('lang.allowance'))->width('20rem'),
-                                                    TableColumn::make(__('lang.type'))->alignCenter()->width('10rem'),
-                                                    TableColumn::make(__('lang.amount'))->alignCenter()->width('12rem'),
-                                                ])
-
-                                                ->relationship('allowances')
+                                                ->columnSpan(1)
                                                 ->schema([
+                                                    Repeater::make('Monthly allowances')
+                                                        ->hiddenLabel()
+                                                        ->defaultItems(0)
+                                                        ->columnSpanFull()
+                                                        ->columns(['default' => 3])
+                                                        ->table([
+                                                            TableColumn::make(__('lang.allowance'))->width('10rem'),
+                                                            TableColumn::make(__('lang.type'))->alignCenter()->width('6rem'),
+                                                            TableColumn::make(__('lang.amount'))->alignCenter()->width('6rem'),
+                                                        ])
+                                                        ->relationship('allowances')
+                                                        ->schema([
+                                                            Select::make('allowance_id')
+                                                                ->columnSpan(['default' => 1])
+                                                                ->label(__('lang.allowance'))
+                                                                ->options(Allowance::where('active', 1)->where('is_specific', 1)->get()->pluck('name', 'id'))
+                                                                ->required(),
+                                                            Toggle::make('is_percentage')->live()->default(true)->columnSpan(['default' => 1]),
+                                                            TextInput::make('amount')->visible(fn(Get $get): bool => ! $get('is_percentage'))->numeric()
+                                                                ->columnSpan(['default' => 1])
+                                                                ->suffixIcon('heroicon-o-calculator')
+                                                                ->suffixIconColor('success'),
 
-                                                    Select::make('allowance_id')
-                                                        ->label(__('lang.allowance'))
-                                                        ->options(Allowance::where('active', 1)->where('is_specific', 1)->get()->pluck('name', 'id'))
-                                                        ->required(),
-                                                    Toggle::make('is_percentage')->live()->default(true)
-                                                    // ->helperText('Set allowance as a salary percentage or fixed amount')
-                                                    ,
-                                                    TextInput::make('amount')->visible(fn(Get $get): bool => ! $get('is_percentage'))->numeric()
-                                                        ->suffixIcon('heroicon-o-calculator')
-                                                        ->suffixIconColor('success'),
-
-                                                    Slider::make('percentage')->hintIcon(Heroicon::PercentBadge)
-                                                        ->label(__('lang.percentage'))
-                                                        ->tooltips(RawJs::make(<<<'JS'
-                                                            `%${$value.toFixed(0)}`
-                                                        JS))
-                                                        ->pips()
-                                                        ->pipsFilter(RawJs::make(<<<'JS'
-                                                            ($value % 50) === 0
-                                                                ? 1
-                                                                : ($value % 10) === 0
-                                                                    ? 2
-                                                                    : ($value % 25) === 0
-                                                                        ? 0
-                                                                        : -1
-                                                        JS))
-
-                                                        ->fillTrack()
-                                                        ->required()
-                                                        ->visible(fn(Get $get): bool => $get('is_percentage'))
-                                                        ->minValue(0)
-                                                        ->step(1)
-                                                        ->maxValue(100)
-                                                        ->default(0)
-                                                        ->rtl(),
-                                                    // TextInput::make('percentage')
-                                                    //     ->visible(fn(Get $get): bool => $get('is_percentage'))
-                                                    //     ->numeric()
-                                                    //     ->suffixIcon('heroicon-o-percent-badge')
-                                                    //     ->suffixIconColor('success'),
-
+                                                            Slider::make('percentage')->hintIcon(Heroicon::PercentBadge)
+                                                                ->columnSpan(['default' => 1])
+                                                                ->label(__('lang.percentage'))
+                                                                ->tooltips(RawJs::make(<<<'JS'
+                                                                    `%${$value.toFixed(0)}`
+                                                                JS))
+                                                                ->pips()
+                                                                ->pipsFilter(RawJs::make(<<<'JS'
+                                                                    ($value % 50) === 0
+                                                                        ? 1
+                                                                        : ($value % 10) === 0
+                                                                            ? 2
+                                                                            : ($value % 25) === 0
+                                                                                ? 0
+                                                                                : -1
+                                                                JS))
+                                                                ->fillTrack()
+                                                                ->required()
+                                                                ->visible(fn(Get $get): bool => $get('is_percentage'))
+                                                                ->minValue(0)
+                                                                ->step(1)
+                                                                ->maxValue(100)
+                                                                ->default(0)
+                                                                ->rtl(),
+                                                        ]),
                                                 ]),
-                                            Repeater::make('Monthly bonus')
-                                                ->defaultItems(0)
-                                                ->table([
-                                                    TableColumn::make(__('lang.monthly_bonus'))->width('20rem'),
-                                                    TableColumn::make(__('lang.amount'))->alignCenter()->width('12rem'),
-                                                ])
 
+                                            Fieldset::make('Monthly bonus')
                                                 ->label(__('lang.monthly_bonus'))
-                                                ->relationship('monthlyIncentives')
+                                                ->columnSpan(1)
                                                 ->schema([
-
-                                                    Select::make('monthly_incentive_id')
-                                                        ->label(__('lang.monthly_bonus'))
-                                                        ->options(MonthlyIncentive::where('active', 1)->get()->pluck('name', 'id'))
-                                                        ->required(),
-                                                    TextInput::make('amount')
-                                                        ->default(0)->minValue(0)
-                                                        ->numeric(),
-
+                                                    Repeater::make('Monthly bonus')
+                                                        ->hiddenLabel()
+                                                        ->defaultItems(0)
+                                                        ->columnSpanFull()
+                                                        ->columns(['default' => 2])
+                                                        ->table([
+                                                            TableColumn::make(__('lang.monthly_bonus'))->width('10rem'),
+                                                            TableColumn::make(__('lang.amount'))->alignCenter()->width('6rem'),
+                                                        ])
+                                                        ->relationship('monthlyIncentives')
+                                                        ->schema([
+                                                            Select::make('monthly_incentive_id')
+                                                                ->columnSpan(['default' => 1])
+                                                                ->label(__('lang.monthly_bonus'))
+                                                                ->options(MonthlyIncentive::where('active', 1)->get()->pluck('name', 'id'))
+                                                                ->required(),
+                                                            TextInput::make('amount')
+                                                                ->columnSpan(['default' => 1])
+                                                                ->default(0)->minValue(0)
+                                                                ->numeric(),
+                                                        ]),
                                                 ]),
 
+                                            Fieldset::make('Custom deductions')
+                                                ->label(__('lang.custom_deductions'))
+                                                ->columnSpan(1)
+                                                ->schema([
+                                                    Repeater::make('Custom deductions')
+                                                        ->hiddenLabel()
+                                                        ->defaultItems(0)
+                                                        ->columnSpanFull()
+                                                        ->columns(['default' => 3])
+                                                        ->table([
+                                                            TableColumn::make(__('lang.deduction'))->width('10rem'),
+                                                            TableColumn::make(__('lang.type'))->alignCenter()->width('6rem'),
+                                                            TableColumn::make(__('lang.amount'))->alignCenter()->width('6rem'),
+                                                        ])
+                                                        ->relationship('deductions')
+                                                        ->schema([
+                                                            Select::make('deduction_id')
+                                                                ->columnSpan(['default' => 1])
+                                                                ->label(__('lang.deduction'))
+                                                                ->options(Deduction::where('active', 1)->where('is_specific', 1)->get()->pluck('name', 'id'))
+                                                                ->required(),
+                                                            Toggle::make('is_percentage')->live()->default(false)->columnSpan(['default' => 1]),
+                                                            TextInput::make('amount')->visible(fn(Get $get): bool => ! $get('is_percentage'))->numeric()
+                                                                ->columnSpan(['default' => 1])
+                                                                ->suffixIcon('heroicon-o-calculator')
+                                                                ->suffixIconColor('danger'),
+
+                                                            Slider::make('percentage')->hintIcon(Heroicon::PercentBadge)
+                                                                ->columnSpan(['default' => 1])
+                                                                ->label(__('lang.percentage'))
+                                                                ->tooltips(RawJs::make(<<<'JS'
+                                                                    `%${$value.toFixed(0)}`
+                                                                JS))
+                                                                ->pips()
+                                                                ->pipsFilter(RawJs::make(<<<'JS'
+                                                                    ($value % 50) === 0
+                                                                        ? 1
+                                                                        : ($value % 10) === 0
+                                                                            ? 2
+                                                                            : ($value % 25) === 0
+                                                                                ? 0
+                                                                                : -1
+                                                                JS))
+                                                                ->fillTrack()
+                                                                ->required()
+                                                                ->visible(fn(Get $get): bool => $get('is_percentage'))
+                                                                ->minValue(0)
+                                                                ->step(1)
+                                                                ->maxValue(100)
+                                                                ->default(0)
+                                                                ->rtl(),
+                                                        ]),
+                                                ]),
                                         ]),
                                 ]),
                         ]),

@@ -76,8 +76,21 @@ class StockInventoryTable
                 ->tooltip(fn($state) => $state)
                 ->sortable()->label('Responsible')->toggleable(),
                 IconColumn::make('finalized')->sortable()->label('Finalized')->boolean()->alignCenter(true)->toggleable(),
+                TextColumn::make('adjustment_date')
+                    ->label('Finalized Date')
+                    ->date('Y-m-d')
+                    ->sortable(false)
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->state(function ($record) {
+                        if (!$record->finalized) return null;
+                        return \App\Models\StockAdjustmentDetail::where('source_id', $record->id)
+                            ->where('source_type', get_class($record))
+                            ->latest('adjustment_date')
+                            ->value('adjustment_date') ?? $record->updated_at;
+                    })
+                    ->placeholder('-'),
 
-            ])->deferFilters(false)->filtersFormColumns(4)
+            ])->deferFilters(true)->filtersFormColumns(4)
             ->filters([
                 TrashedFilter::make(),
                 SelectFilter::make('store_id')
@@ -119,6 +132,8 @@ class StockInventoryTable
                         ->label('Value Details')
                         ->icon('heroicon-o-calculator')
                         ->color('info')
+                        ->visible(fn()=> isSuperAdmin())
+                        // ->visible(fn()=>isHakimOrAdel())
                         ->url(fn($record): string => StockInventoryResource::getUrl('value-details', ['record' => $record])),
                 ])
             ])

@@ -132,6 +132,11 @@ class ProductsTable
                     ->sortable()->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: true),
+                \Filament\Tables\Columns\ImageColumn::make('image')
+                    ->label(__('lang.image'))
+                    ->defaultImageUrl(url('/images/default-product.svg'))
+                    ->circular()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('code')
                     ->label(__('lang.code'))->copyable()->sortable()
                     ->searchable(isIndividual: false, isGlobal: true),

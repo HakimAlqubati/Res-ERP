@@ -134,7 +134,7 @@ class MultiProductsInventoryService
             }
 
             // تحويلهم إلى Collection وتطبيق pagination يدويًا
-            $currentPage = request()->get('page', 1);
+            $currentPage = \Illuminate\Pagination\Paginator::resolveCurrentPage('page', 1);
             $collection = collect($filteredReport);
             $pagedData = $collection->slice(($currentPage - 1) * $perPage, $perPage)->values();
 
@@ -214,8 +214,8 @@ class MultiProductsInventoryService
         $queryIn->where('store_id', $this->storeId);
         $queryOut->where('store_id', $this->storeId);
         // }
-        $totalIn = $queryIn->sum(DB::raw('(quantity - temp_qty) * package_size'));
-        $totalOut = $queryOut->sum(DB::raw('(quantity - temp_qty) * package_size'));
+        $totalIn = $queryIn->sum(DB::raw('(quantity) * package_size'));
+        $totalOut = $queryOut->sum(DB::raw('(quantity) * package_size'));
 
 
         $totalBaseIn = $queryIn->sum(DB::raw('IFNULL(base_quantity, quantity * package_size)'));
@@ -397,7 +397,7 @@ class MultiProductsInventoryService
 
 
         // Paginate results
-        $currentPage = request()->get('page', 1);
+        $currentPage = \Illuminate\Pagination\Paginator::resolveCurrentPage('page', 1);
         $collection = new Collection($lowStockProducts);
         $pagedData = $collection->slice(($currentPage - 1) * $perPage, $perPage)->values();
 

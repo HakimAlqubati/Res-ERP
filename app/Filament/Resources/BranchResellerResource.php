@@ -25,7 +25,9 @@ use App\Models\City;
 use App\Models\Country;
 use App\Models\District;
 use App\Models\Store;
-use App\Models\User; 
+use App\Models\User;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\RestoreBulkAction;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
@@ -323,12 +325,12 @@ class BranchResellerResource extends Resource
 
                 EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
-                // Tables\Actions\RestoreAction::make(),
+                RestoreAction::make(),
             ])
             ->toolbarActions([
                 // Tables\Actions\DeleteBulkAction::make(),
                 // Tables\Actions\ForceDeleteBulkAction::make(),
-                // Tables\Actions\RestoreBulkAction::make(),
+                RestoreBulkAction::make(),
             ]);
     }
 

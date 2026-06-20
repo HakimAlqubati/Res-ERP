@@ -21,7 +21,8 @@ class BranchManagerNotifier
      */
     public function notifyIfPending(Branch $branch): int
     {
-        $count = $this->countPendingApplications($branch->id);
+        $summary = $this->checker->getDashboardSummary(['branch_id' => $branch->id]);
+        $count = $summary['total_count'] ?? 0;
 
         if ($count === 0) {
             return 0;
@@ -33,20 +34,17 @@ class BranchManagerNotifier
             return $count;
         }
 
-        $this->sendFcmNotification($manager, $branch, $count);
-        $this->sendEmailNotification($manager, $branch, $count);
+        $breakdown = $summary['breakdown'] ?? [];
+
+        $this->sendFcmNotification($manager, $branch, $count, $breakdown);
+        $this->sendEmailNotification($manager, $branch, $count, $breakdown);
 
         return $count;
     }
 
     // -------------------------------------------------------------------------
 
-    private function countPendingApplications(int $branchId): int
-    {
-        return $this->checker->getTotalCount(['branch_id' => $branchId]);
-    }
-
-    private function sendFcmNotification($manager, Branch $branch, int $count): void
+    private function sendFcmNotification($manager, Branch $branch, int $count, array $breakdown): void
     {
         $token = $manager->fcm_token ?? null;
 
@@ -54,10 +52,21 @@ class BranchManagerNotifier
             return;
         }
 
+        $details = [];
+        foreach ($breakdown as $item) {
+            $details[] = "{$item['count']} {$item['type']}";
+        }
+        $detailsString = implode("\n", $details);
+
+        $body = __('You have :count pending request(s) awaiting your review.', ['count' => $count]);
+        if (!empty($detailsString)) {
+            $body .= "\n\n" . $detailsString;
+        }
+
         sendNotification(
             deviceToken: $token,
             title: __('Pending requests required your approval  :branch', ['branch' => $branch->name]),
-            body: __('You have :count pending request(s) awaiting your review.', ['count' => $count]),
+            body: $body,
             data: [
                 'type' => 'pending_applications',
                 'branch_id' => (string) $branch->id,
@@ -66,7 +75,7 @@ class BranchManagerNotifier
         );
     }
 
-    private function sendEmailNotification($manager, Branch $branch, int $count): void
+    private function sendEmailNotification($manager, Branch $branch, int $count, array $breakdown): void
     {
         if (! $manager->email) {
             return;
@@ -74,6 +83,13 @@ class BranchManagerNotifier
 
         $title = "Pending requests required your approval ({$count}) — {$branch->name}";
         $message = "There are {$count} pending employee request(s) in branch [{$branch->name}] awaiting your review.";
+
+        if (!empty($breakdown)) {
+            $message .= "\n\nDetails:\n";
+            foreach ($breakdown as $item) {
+                $message .= "- {$item['count']} {$item['type']}\n";
+            }
+        }
 
         try {
             Mail::to($manager->email)->send(new GeneralNotificationMail($title, $message));

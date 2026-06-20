@@ -61,7 +61,7 @@ class BranchAttendanceSummaryService
         // Process active employees in DB-level chunks
         Employee::whereIn('id', $employeeIdsInBranch)
             ->where('active', 1) 
-            ->select('id', 'name','branch_id', 'employee_no', 'salary', 'join_date', 'working_days', 'working_hours', 'discount_exception_if_attendance_late', 'has_auto_weekly_leave')
+            ->select('id', 'name','branch_id', 'employee_no', 'salary', 'join_date', 'working_days', 'working_hours', 'discount_exception_if_attendance_late', 'has_auto_weekly_leave','max_weekly_leave_days')
             ->withSum(['overtimes as total_overtime' => function ($query) use ($year, $month) {
                 $query->whereYear('date', $year)
                     ->whereMonth('date', $month)
@@ -83,7 +83,6 @@ class BranchAttendanceSummaryService
                     });
             }])
             ->chunk(50, function ($employees) use (&$currentStaff, &$newStaff, $terminatedEmployeeIds, $year, $month, $periodStart, $periodEnd, $monthDays, $branchId) {
-
                 $filtered = $employees->filter(fn($emp) => !in_array($emp->id, $terminatedEmployeeIds));
 
                 // Optimized: Fetch all attendance data for the entire chunk in one bulk request
@@ -201,6 +200,7 @@ class BranchAttendanceSummaryService
 
             if (isset($attendanceArray['statistics']['weekly_leave_calculation']['branches_breakdown'])) {
                 foreach ($attendanceArray['statistics']['weekly_leave_calculation']['branches_breakdown'] as $breakdown) {
+                   
                     if ($breakdown['branch_id'] == $branchId) {
                         // $branchWorkedDays = $attendanceArray['statistics']['present_days'];
                         $branchWorkedDays = $breakdown['worked_days'];
@@ -208,7 +208,6 @@ class BranchAttendanceSummaryService
                         $branchEarnedLeaves = $breakdown['earned_leave_days'];
                         $overtimeDays = $breakdown['overtime_days'];
                         $branchDeductionDays = $breakdown['total_deduction_days'];
-                        
                         break;
                     }
                 }

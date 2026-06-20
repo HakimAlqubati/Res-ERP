@@ -369,6 +369,8 @@ return [
     'monthly_bonus' => 'Monthly Bonus',
     'deductions' => 'Deductions',
     'deduction' => 'Deduction',
+    'custom_deductions' => 'Custom Deductions',
+    'custom_deduction' => 'Custom Deduction',
     'type' => 'Type',
     'percentage' => 'Percentage',
     'amount_percentage' => 'Amount / %',

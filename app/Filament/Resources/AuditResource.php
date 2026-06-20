@@ -103,7 +103,16 @@ class AuditResource extends Resource
                             ->mapWithKeys(fn($event) => [$event => ucfirst($event)])
                             ->toArray()
                     ),
-
+                Tables\Filters\Filter::make('auditable_id')
+                    ->form([
+                        Forms\Components\TextInput::make('auditable_id')
+                            ->label('Auditable ID')
+                            ->numeric(),
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => $query->when(
+                        $data['auditable_id'],
+                        fn (Builder $query, $id): Builder => $query->where('auditable_id', $id),
+                    )),
             ], FiltersLayout::AboveContent)
             ->recordActions([
                 // Tables\Actions\EditAction::make(),
