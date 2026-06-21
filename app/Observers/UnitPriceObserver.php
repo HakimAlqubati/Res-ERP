@@ -13,11 +13,11 @@ class UnitPriceObserver
             return;
         }
 
-        app(UpdateCompositeProductsFromUnitPriceService::class)->handle(
-            $unitPrice->id,
-            $unitPrice->product_id,
-            $unitPrice->unit_id,
-            (float) $unitPrice->price
-        );
+        // app(UpdateCompositeProductsFromUnitPriceService::class)->handle(
+        //     $unitPrice->id,
+        //     $unitPrice->product_id,
+        //     $unitPrice->unit_id,
+        //     (float) $unitPrice->price
+        // );
     }
 }
