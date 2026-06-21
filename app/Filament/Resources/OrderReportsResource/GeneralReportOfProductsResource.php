@@ -167,7 +167,7 @@ class GeneralReportOfProductsResource extends Resource
     {
         return [
             'index' => ListGeneralReportOfProducts::route('/'),
-            'details' => GeneralReportProductDetails::route('/details/{category_id}'),
+            'details' => GeneralReportProductDetailsOld::route('/details/{category_id}'),
         ];
     }
 
