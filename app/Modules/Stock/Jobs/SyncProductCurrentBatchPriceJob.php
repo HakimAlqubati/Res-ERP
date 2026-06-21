@@ -29,12 +29,12 @@ final class SyncProductCurrentBatchPriceJob implements ShouldQueue
     {
         Log::info('SyncProductCurrentBatchPriceJob Working with Tenant ID: ' . $this->tenantId);
         // تفعيل اتصال قاعدة بيانات الـ Tenant أولاً وقبل أي استعلام
-        if ($this->tenantId) {
-            $tenant = \Spatie\Multitenancy\Models\Tenant::find($this->tenantId);
-            if ($tenant) {
-                $tenant->makeCurrent();
-            }
-        }
+        // if ($this->tenantId) {
+        //     $tenant = \Spatie\Multitenancy\Models\Tenant::find($this->tenantId);
+        //     if ($tenant) {
+        //         $tenant->makeCurrent();
+        //     }
+        // }
 
         // جلب موديل المخزن من قاعدة بيانات الـ Tenant
         $store = Store::findOrFail($this->storeId);
