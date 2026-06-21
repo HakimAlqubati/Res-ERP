@@ -465,6 +465,7 @@ class OrderRepository implements OrderRepositoryInterface
                         Order::READY_FOR_DELEVIRY,
                         Order::DELEVIRED,
                         Order::ORDERED,
+                        Order::CANCELLED,
                     ]),
                 ],
                 'notes' => 'string',

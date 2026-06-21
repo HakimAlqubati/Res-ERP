@@ -58,7 +58,7 @@ class TransferFinancialSyncService
         $query = Order::query()
             ->where('branch_id', $branchId)
             ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
-            ->where('cancelled', false)
+            ->where('status', '!=', Order::CANCELLED)
             ->whereHas('branch', function ($q) {
                 $q->where('type', '!=', Branch::TYPE_RESELLER);
             });
