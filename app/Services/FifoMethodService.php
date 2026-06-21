@@ -37,8 +37,10 @@ class FifoMethodService
         }
 
         // استخدام الـ Service الجديد (أسرع 10x)
-        $inventoryRemainingQty = MultiProductsInventoryService::quickReport($storeId, $productId, $unitId)[0][0]['remaining_qty'];
-
+        $inventoryRemainingQty = MultiProductsInventoryService::quickReport($storeId, $productId, $unitId)[0][0]['remaining_qty']?? 0;
+//   if($productId==386){
+//       dd($inventoryRemainingQty);
+//   }
         if ($requestedQty > $inventoryRemainingQty) {
             $productName = $targetUnit->product->name ?? 'Unknown Product';
             $unitName    = $targetUnit->unit->name ?? 'Unknown Unit';
