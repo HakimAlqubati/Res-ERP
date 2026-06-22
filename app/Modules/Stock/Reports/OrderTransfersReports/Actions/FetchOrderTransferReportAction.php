@@ -5,34 +5,50 @@ namespace App\Modules\Stock\Reports\OrderTransfersReports\Actions;
 use App\Modules\Stock\Reports\OrderTransfersReports\DTOs\OrderTransferReportFilterDTO;
 use App\Modules\Stock\Reports\OrderTransfersReports\Interfaces\OrderTransferReportRepositoryInterface;
 use App\Modules\Stock\Reports\OrderTransfersReports\Resources\OrderTransferReportResource;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 
 class FetchOrderTransferReportAction
 {
-    /**
-     * نحقن الـ Interface هنا بدلاً من الكلاس مباشرة (Dependency Injection)
-     * هذا يرفع أداء النظام ويسهل عملية الاختبار (Testing).
-     */
     public function __construct(
         private readonly OrderTransferReportRepositoryInterface $repository
     ) {}
 
     /**
-     * تنفيذ المهمة
-     *
-     * @param OrderTransferReportFilterDTO $dto
-     * @return array مصفوفة البيانات المنسقة والجاهزة للعرض
+     * @return array ['paginator' => LengthAwarePaginator, 'grand_total' => string]
      */
     public function execute(OrderTransferReportFilterDTO $dto): array
     {
-        // 1. جلب البيانات الخام من قاعدة البيانات بناءً على الفلاتر
-        $rawReportData = $this->repository->getRawReportData($dto);
+        // 1. جلب الإحصائيات (العدد والإجمالي المالي من SQL دفعة واحدة)
+        $aggregates = $this->repository->getReportAggregates($dto);
+        $totalRecords = $aggregates['total_records'];
+        $grandTotal = $aggregates['grand_total'];
 
-        // 2. إذا لم يكن هناك بيانات، نعيد مصفوفة فارغة فوراً لتوفير الموارد
-        if (empty($rawReportData)) {
-            return [];
+        if ($totalRecords === 0) {
+            $paginator = new LengthAwarePaginator([], 0, $dto->perPage, $dto->page, [
+                'path' => Paginator::resolveCurrentPath(),
+            ]);
+
+            return ['paginator' => $paginator, 'grand_total' => formatMoneyWithCurrency(0)];
         }
 
-        // 3. إرسال البيانات الخام إلى كلاس التنسيق وإعادتها جاهزة
-        return OrderTransferReportResource::transform($rawReportData);
+        // 2. جلب وتنسيق الصفحة الحالية فقط
+        $rawReportData = $this->repository->getRawReportData($dto);
+        $formattedItems = OrderTransferReportResource::transform($rawReportData);
+
+        // 3. بناء الباجنيتور
+        $paginator = new LengthAwarePaginator(
+            $formattedItems,
+            $totalRecords,
+            $dto->perPage,
+            $dto->page,
+            ['path' => Paginator::resolveCurrentPath(), 'pageName' => 'page']
+        );
+
+        // 4. إرجاع النتائج جاهزة للـ View
+        return [
+            'paginator' => $paginator,
+            'grand_total' => formatMoneyWithCurrency($grandTotal), // الإجمالي الكلي منسق وجاهز
+        ];
     }
 }

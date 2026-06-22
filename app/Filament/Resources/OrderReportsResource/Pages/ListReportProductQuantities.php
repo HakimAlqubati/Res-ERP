@@ -3,12 +3,12 @@
 namespace App\Filament\Resources\OrderReportsResource\Pages;
 
 use App\Filament\Resources\OrderReportsResource\ReportProductQuantitiesResource;
+// ← مهم جداً لسلاسة الأياكس
 use App\Models\Branch;
 use App\Modules\Stock\Reports\OrderTransfersReports\Actions\FetchOrderTransferReportAction;
 use App\Modules\Stock\Reports\OrderTransfersReports\DTOs\OrderTransferReportFilterDTO;
-use Filament\Actions\Action;
 use Filament\Resources\Pages\ListRecords;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Pagination\Paginator;
 
 class ListReportProductQuantities extends ListRecords
 {
@@ -16,15 +16,14 @@ class ListReportProductQuantities extends ListRecords
 
     protected string $view = 'filament.pages.order-reports.report-product-quantities';
 
-    public function getTableRecordKey(Model|array $record): string
-    {
-        $attributes = $record->getAttributes();
-
-        return $attributes['product'].'-'.$attributes['branch'].'-'.$attributes['unit'];
-    }
+    // نحدد ثيم التصفح ليكون متوافق مع Filament (اختياري لكن يفضل)
+    protected string $paginationTheme = 'tailwind';
 
     protected function getViewData(): array
     {
+        // استخراج رقم الصفحة الحالية الذي يرسله Livewire تلقائياً
+        $currentPage = Paginator::resolveCurrentPage('page');
+        $perPage = 50; // غير هذا الرقم كما تحب لعدد السجلات في كل صفحة
 
         $filters = [
             'branch_id' => $this->getTable()->getFilters()['branch_id']->getState()['values'] ?? [],
@@ -34,30 +33,25 @@ class ListReportProductQuantities extends ListRecords
             'category_id' => $this->getTable()->getFilters()['category_id']->getState()['values'] ?? [],
         ];
 
-        // إذا لم يتم تحديد فروع، يتم اختيار الفروع الافتراضية
         if (empty($filters['branch_id'])) {
             $filters['branch_id'] = Branch::whereIn('type', [
-                Branch::TYPE_BRANCH,
-                Branch::TYPE_CENTRAL_KITCHEN,
-                Branch::TYPE_POPUP,
+                Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN, Branch::TYPE_POPUP,
             ])->activePopups()->active()->pluck('id')->toArray();
         }
-        // 2. إنشاء كائن الـ DTO لضمان نظافة البيانات
-        $filterDTO = OrderTransferReportFilterDTO::fromArray($filters);
 
-        // 3. استدعاء الأكشن (Action) الذي سيقوم بكل العمل باستخدام الحقن (Dependency Injection)
+        // إنشاء الـ DTO
+        $filterDTO = OrderTransferReportFilterDTO::fromArray($filters, $currentPage, $perPage);
+
+        // استدعاء الأكشن للحصول على كائن LengthAwarePaginator
         $action = app(FetchOrderTransferReportAction::class);
+         $result = $action->execute($filterDTO);
 
-        // 4. تنفيذ الأكشن والحصول على البيانات المنسقة مباشرة
-        $reportData = $action->execute($filterDTO);
-
-        // $totalPrice = $data->sum('price');
         return [
-            'report_data' => $reportData,
+            'report_data' => $result['paginator'],    // مصفوفة السجلات والتصفح
+            'grand_total' => $result['grand_total'],  // الإجمالي الكلي الجاهز
             'product_id' => $filterDTO->productId,
             'start_date' => $filters['start_date'],
-            'end_date' => $filters['end_date'], ];
-
-        return [];
+            'end_date' => $filters['end_date'],
+        ];
     }
 }

@@ -128,17 +128,21 @@
             </tr>
             @endforeach
 
-            @php
-            $grandTotal = collect($report_data)->sum('subtotal_raw');
-            @endphp
+
             <tr class="footer-row" style="font-weight: bold;">
                 <td colspan="6">{{ __('lang.total') }}</td>
 
-                <td>{{ formatMoneyWithCurrency($grandTotal) }}</td>
+                <td>{{ $grand_total }}</td>
             </tr>
         </tbody>
 
     </table>
+    {{-- طباعة أزرار التنقل السلسة والخفيفة من لايف واير --}}
+    @if ($report_data->hasPages())
+        <div class="mt-6 p-4 border-t border-gray-200 dark:border-gray-700">
+            {{ $report_data->links() }}
+        </div>
+    @endif
     {{-- @else
         <div class="please_select_message_div" style="text-align: center;">
 

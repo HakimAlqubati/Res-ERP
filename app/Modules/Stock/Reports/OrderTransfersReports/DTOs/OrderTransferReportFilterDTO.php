@@ -15,13 +15,15 @@ class OrderTransferReportFilterDTO
         public readonly ?string $fromDate,
         public readonly ?string $toDate,
         public readonly array $branchIds,
-        public readonly array $categoryIds
+        public readonly array $categoryIds,
+        public readonly int $page,     // رقم الصفحة الحالية
+        public readonly int $perPage
     ) {}
 
     /**
      * دالة ثابتة (Factory Method) لإنشاء الكائن بسهولة من مصفوفة الفلاتر القادمة من Filament
      */
-    public static function fromArray(array $filters): self
+    public static function fromArray(array $filters,int $page = 1, int $perPage = 50): self
     {
         // 1. معالجة معرف المنتج (ضمان أنه رقم أو Null)
         $productId = null;
@@ -43,7 +45,9 @@ class OrderTransferReportFilterDTO
             fromDate: $fromDate,
             toDate: $toDate,
             branchIds: $branchIds,
-            categoryIds: $categoryIds
+            categoryIds: $categoryIds,
+            page: $page,
+            perPage: $perPage
         );
     }
 }
