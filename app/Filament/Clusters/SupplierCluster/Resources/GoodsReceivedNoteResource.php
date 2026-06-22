@@ -381,6 +381,7 @@ class GoodsReceivedNoteResource extends Resource
                                         ->numeric()
                                         ->minValue(0.1)
                                         ->default(1)
+                                        ->maxLength(6)
                                         ->live(onBlur: true)
                                         ->afterStateUpdated(function ($set, $get) {
                                             $quantity = (float) ($get('quantity') ?? 0);
