@@ -66,6 +66,20 @@
         .cursor-pointer {
             cursor: pointer;
         }
+
+        #report-table .footer-row td {
+            position: sticky;
+            bottom: 0;
+            background-color: white;
+            z-index: 10;
+            border-top: 2px solid #e5e7eb;
+            color: black;
+        }
+
+        .dark #report-table .footer-row td {
+            background-color: #1f2937;
+            border-top-color: #374151;
+        }
     </style>
     {{-- @if (isset($product_id) && is_numeric($product_id)) --}}
     <table class="w-full text-sm text-left pretty  reports" id="report-table">
@@ -117,7 +131,7 @@
             @php
             $grandTotal = collect($report_data)->sum('subtotal_raw');
             @endphp
-            <tr style="font-weight: bold; ">
+            <tr class="footer-row" style="font-weight: bold;">
                 <td colspan="6">{{ __('lang.total') }}</td>
 
                 <td>{{ formatMoneyWithCurrency($grandTotal) }}</td>
