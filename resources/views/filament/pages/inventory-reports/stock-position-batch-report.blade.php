@@ -147,7 +147,7 @@
 
             <div id="reportContent">
                 <table class="batch-report-table" id="report-table">
-                    <thead>
+                    <thead class="fixed-header">
                         <tr class="header_report">
                             <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}"></th>
                             <th colspan="7" class="no_border_right_left" style="text-align: center;">
