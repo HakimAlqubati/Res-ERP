@@ -549,6 +549,7 @@ class ProductRepository implements ProductRepositoryInterface
 
             WHERE it_in.deleted_at IS NULL
               AND it_in.movement_type = 'in'
+              and it_in.transactionable_type = 'App\\Models\\Order'
               AND it_in.store_id IN ($placeholdersStores)
               {$productFilterSql}
               {$categoryFilterSql}
