@@ -383,6 +383,8 @@ return [
     'max_weekly_leave_days_hint' => 'Override the default (4 days). Leave blank to use system default.',
     'no_shift_is_present' => 'Attendance Without Shift',
     'can_add_branch_order' => 'Can add branch order',
+    'can_view_all_branches' => 'View all branches staff',
+    'can_view_all_branches_hint' => 'Allow branch manager to view staff from all branches',
 
     // ===========================================
     // HRMS - Attendance & Shifts

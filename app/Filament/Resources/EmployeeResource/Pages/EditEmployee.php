@@ -64,12 +64,26 @@ class EditEmployee extends EditRecord
         return $this->getResource()::getUrl('index');
     }
 
-    public function afterSave() {}
+    public function afterSave()
+    {
+        $settingsData = $this->data['settings'] ?? [];
+
+        if (!empty($settingsData)) {
+            $this->record->settings()->updateOrCreate(
+                ['employee_id' => $this->record->id],
+                $settingsData
+            );
+        }
+    }
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
         // dd($data['employee_periods'],$this->record->id);
         $this->logPeriodChanges();
+
+        // Remove settings data — will be saved in afterSave
+        unset($data['settings']);
+
         return $data;
     }
 
@@ -78,6 +92,13 @@ class EditEmployee extends EditRecord
         $terminationData = $this->record?->serviceTermination ?? null;
         $data['termination_date'] = $terminationData?->termination_date;
         $data['termination_reason'] = $terminationData?->termination_reason;
+
+        // Load settings from the related table
+        $settings = $this->record?->settings;
+        $data['settings'] = [
+            'can_view_all_branches' => $settings?->can_view_all_branches ?? false,
+        ];
+
         return $data;
     }
     protected function logPeriodChanges()

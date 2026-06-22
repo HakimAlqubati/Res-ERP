@@ -20,6 +20,12 @@ trait BranchScope
         }
         
         if (auth()->check() && isBranchManager()) {
+            $canViewAll = auth()->user()->employee
+                ?->settings
+                ?->can_view_all_branches ?? false;
+            if($canViewAll && $query->getModel() instanceof \App\Models\Employee){
+                return $query;
+            }
             return $query->where($branchColumn, auth()->user()->branch_id);
         }
 

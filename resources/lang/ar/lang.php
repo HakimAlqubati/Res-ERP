@@ -365,6 +365,8 @@ return [
   'max_weekly_leave_days_hint' => 'تجاوز الإعداد الافتراضي (4 أيام). اتركه فارغاً لاستخدام الافتراضي.',
   'no_shift_is_present' => 'حضور بدون شفت',
   'can_add_branch_order' => 'يمكنه إضافة طلب فرع',
+  'can_view_all_branches' => 'رؤية موظفي جميع الفروع',
+  'can_view_all_branches_hint' => 'السماح لمدير الفرع بمشاهدة جميع الموظفين من كافة الفروع',
 
   // ===========================================
   // HRMS - Attendance & Shifts

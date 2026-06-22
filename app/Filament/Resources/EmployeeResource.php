@@ -132,14 +132,27 @@ class EmployeeResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
-            // ->where('role_id',8)
-            ->forBranchManager()
+        $query = parent::getEloquentQuery()
             ->with(['branch:id,name', 'pendingTerminationRequest',
                 'serviceTermination'])
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+
+        // If branch manager has "can_view_all_branches" → skip branch filter
+        if (auth()->check() && isBranchManager() && !isSuperAdmin() && !isSystemManager()) {
+            $canViewAll = auth()->user()->employee
+                ?->settings
+                ?->can_view_all_branches ?? false;
+
+            if (!$canViewAll) {
+                $query->forBranchManager();
+            }
+
+            return $query;
+        }
+
+        return $query->forBranchManager();
     }
     // public function canCreate(){
     //     return false;

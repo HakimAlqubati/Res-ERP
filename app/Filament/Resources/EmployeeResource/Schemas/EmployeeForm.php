@@ -334,6 +334,14 @@ class EmployeeForm
                                             
                                             ->label(__('lang.can_add_branch_order'))->default(0)->inline(false),
 
+                                        Toggle::make('settings.can_view_all_branches')->columnSpan(1)
+                                            ->label(__('lang.can_view_all_branches'))
+                                            ->helperText(__('lang.can_view_all_branches_hint'))
+                                            ->default(0)
+                                            ->inline(false)
+                                            ->visible(fn(): bool => isSuperAdmin() || isSystemManager())
+                                            ,
+
                                     ]),
                                 ]),
                         ]),
