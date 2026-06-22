@@ -563,7 +563,7 @@ class ProductRepository implements ProductRepositoryInterface
         GROUP BY 
             t.branch_name, t.unit_id, t.unit_name, t.unit_price, 
             t.package_size, t.product_id, t.product_code, t.product_name
-        ORDER BY t.branch_name, t.unit_id, t.package_size
+        ORDER BY t.branch_name, t.product_code 
     ";
 
         $bindings = array_merge(
