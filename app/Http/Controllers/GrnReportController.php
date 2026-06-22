@@ -7,16 +7,18 @@ use Illuminate\Support\Facades\DB;
 
 class GrnReportController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $selectedDate = $request->input('date', '2026-06-11');
+
         $count = DB::table('goods_received_notes as grn')
             ->whereNull('grn.deleted_at')
             ->where('grn.status', 'approved')
             ->where('grn.cancelled', 0)
             ->whereNull('grn.purchase_invoice_id')
-            ->whereDate('grn.created_at', '<=', '2026-06-12')
+            ->whereDate('grn.created_at', '<=', $selectedDate)
             ->count('grn.id');
 
-        return view('reports.grn_count', compact('count'));
+        return view('reports.grn_count', compact('count', 'selectedDate'));
     }
 }
