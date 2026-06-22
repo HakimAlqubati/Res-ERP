@@ -14,7 +14,7 @@ class GrnReportController extends Controller
             ->where('grn.status', 'approved')
             ->where('grn.cancelled', 0)
             ->whereNull('grn.purchase_invoice_id')
-            ->whereDate('grn.created_at', '<=', '2026-06-12')
+            ->whereDate('grn.created_at', '<=', '2026-06-11')
             ->count('grn.id');
 
         return view('reports.grn_count', compact('count'));
