@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Goods Received Notes Count</title>
-        <style>
+    <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f4f7f6;
@@ -40,44 +40,16 @@
             font-size: 16px;
             line-height: 1.5;
         }
-        .filter-section {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-        .filter-section label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: bold;
-        }
-        .filter-section input[type="date"] {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 16px;
-            width: 100%;
-            box-sizing: border-box;
-            text-align: center;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Approved GRN Count</h1>
-        
-        <form method="GET" action="{{ route('reports.grn-count') }}" id="filter-form">
-            <div class="filter-section">
-                <label for="date">Select Date (up to):</label>
-                <input type="date" id="date" name="date" value="{{ $selectedDate }}" onchange="document.getElementById('filter-form').submit();">
-            </div>
-        </form>
-
         <div class="count-display">
             {{ number_format($count) }}
         </div>
         <p class="description">
-            Approved & Uninvoiced GRNs (until {{ \Carbon\Carbon::parse($selectedDate)->format('M d, Y') }}).
+            Approved & Uninvoiced GRNs (until June 12, 2026).
         </p>
     </div>
 </body>
