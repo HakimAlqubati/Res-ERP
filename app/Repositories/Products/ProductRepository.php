@@ -537,7 +537,7 @@ class ProductRepository implements ProductRepositoryInterface
              AND it_out.store_id = it_in.store_id
              AND it_out.deleted_at IS NULL
              AND (? IS NULL OR it_out.movement_date <= ?)
-             AND it_out.transactionable_type = 'App\\Models\\ReturnedOrder'
+             AND it_out.transactionable_type = 'App\\\\Models\\\\ReturnedOrder'
 
             JOIN products p ON p.id = it_in.product_id
             LEFT JOIN units  u ON u.id = it_in.unit_id
@@ -549,12 +549,12 @@ class ProductRepository implements ProductRepositoryInterface
 
             WHERE it_in.deleted_at IS NULL
               AND it_in.movement_type = 'in'
-              and it_in.transactionable_type = 'App\\Models\\Order'
               AND it_in.store_id IN ($placeholdersStores)
               {$productFilterSql}
               {$categoryFilterSql}
               AND (? IS NULL OR it_in.movement_date >= ?)
               AND (? IS NULL OR it_in.movement_date <= ?)
+               AND it_in.transactionable_type = 'App\\\\Models\\\\Order'
 
             GROUP BY
               it_in.id, it_in.movement_date, it_in.unit_id, u.name,
