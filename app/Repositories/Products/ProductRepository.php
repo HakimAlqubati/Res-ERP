@@ -537,6 +537,7 @@ class ProductRepository implements ProductRepositoryInterface
              AND it_out.store_id = it_in.store_id
              AND it_out.deleted_at IS NULL
              AND (? IS NULL OR it_out.movement_date <= ?)
+             AND it_out.transactionable_type = 'App\\Models\\ReturnedOrder'
 
             JOIN products p ON p.id = it_in.product_id
             LEFT JOIN units  u ON u.id = it_in.unit_id
@@ -590,6 +591,8 @@ class ProductRepository implements ProductRepositoryInterface
             $obj->in_quantity  = formatQunantity((float)($r->in_qty_base ?? 0));
             $obj->out_quantity = formatQunantity((float)($r->out_qty_base ?? 0));
             $obj->price        = formatMoneyWithCurrency((float)($r->unit_price ?? 0));
+            $obj->subtotal     = formatMoneyWithCurrency((float)($r->unit_price * $r->remaining_qty_unit)); // ✅
+
             $final[]           = $obj;
         }
 
