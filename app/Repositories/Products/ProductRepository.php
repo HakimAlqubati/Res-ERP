@@ -592,7 +592,7 @@ class ProductRepository implements ProductRepositoryInterface
             $obj->out_quantity = formatQunantity((float)($r->out_qty_base ?? 0));
             $obj->price        = formatMoneyWithCurrency((float)($r->unit_price ?? 0));
             $obj->subtotal     = formatMoneyWithCurrency((float)($r->unit_price * $r->remaining_qty_unit)); // ✅
-
+            $obj->subtotal_raw = (float)($r->unit_price * $r->remaining_qty_unit);
             $final[]           = $obj;
         }
 
