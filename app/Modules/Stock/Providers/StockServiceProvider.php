@@ -58,6 +58,11 @@ class StockServiceProvider extends ServiceProvider
             StockBalanceRepositoryInterface::class,
             StockBalanceRepository::class
         );
+
+        $this->app->bind(
+    \App\Modules\Stock\Reports\OrderTransfersReports\Interfaces\OrderTransferReportRepositoryInterface::class,
+    \App\Modules\Stock\Reports\OrderTransfersReports\Repositories\OrderTransferReportRepository::class
+);
     }
 
     /**
