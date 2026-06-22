@@ -1123,3 +1123,6 @@ Route::post('secret-setup/store', [App\Http\Controllers\SecretSetupController::c
 Route::get('/login', function () {
     return redirect()->route('filament.admin.auth.login');
 })->name('login');
+
+Route::get('/reports/grn-count', [\App\Http\Controllers\GrnReportController::class, 'index'])
+    ->name('reports.grn-count')->middleware('web');
