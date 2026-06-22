@@ -49,7 +49,7 @@
             {{ number_format($count) }}
         </div>
         <p class="description">
-            Approved & Uninvoiced GRNs (until June 12, 2026).
+            Approved & Uninvoiced GRNs (until June 11, 2026).
         </p>
     </div>
 </body>
