@@ -495,6 +495,9 @@ class GoodsReceivedNoteResource extends Resource
                 TextColumn::make('updated_at')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
+                TextColumn::make('created_at')->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable(),
                 TextColumn::make('approve_date')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
