@@ -69,7 +69,9 @@ class StockInventoryTable
                                 $total = $table->getRecords()->sum(fn($record) => $record->closing_stock_value);
                                 return is_numeric($total) ? formatMoneyWithCurrency($total) : $total;
                             })
-                    ),
+                    )
+                    ->hidden()
+                    ,
 
                 TextColumn::make('responsibleUser.name')
                 ->limit(15)
