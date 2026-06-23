@@ -8,9 +8,14 @@ use App\Models\InventoryTransaction;
 use App\Models\ProductItem;
 use App\Models\StockSupplyOrder;
 use App\Models\UnitPrice;
+use App\Modules\Stock\Reports\StockBalanceReport\Contracts\StockBalanceRepositoryInterface;
+use App\Modules\Stock\Reports\StockBalanceReport\DataTransferObjects\StockBalanceFilterDTO;
+use App\Modules\Stock\Reports\StockBalanceReport\Resources\StockBalanceResource;
 use App\Services\FifoMethodService;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 final class DeductCompositeProductComponentsAction
 {
@@ -26,6 +31,8 @@ final class DeductCompositeProductComponentsAction
         $allComponents = ProductItem::whereIn('parent_product_id', $productIds)
             ->get()
             ->groupBy('parent_product_id');
+
+        $this->validateStockAvailability($order, $allComponents);
 
         $outboundTransactions = [];
         $now = now();
@@ -155,6 +162,73 @@ final class DeductCompositeProductComponentsAction
                 $unitPrice->price = $finalPrice;
                 $unitPrice->notes = "Updated price for Composite Product #{$detail->product->name} in Supply Order #{$detail->stock_supply_order_id}";
                 $unitPrice->save();
+            }
+        }
+    }
+
+    private function validateStockAvailability(StockSupplyOrder $order, Collection $allComponents): void
+    {
+        $requiredQuantities = [];
+
+        foreach ($order->details as $detail) {
+            $components = $allComponents->get($detail->product_id);
+
+            if (! $components || $components->isEmpty()) {
+                continue;
+            }
+
+            foreach ($components as $component) {
+                $totalQtyToDeduct = $this->calculateRequiredQuantity(
+                    (float) $component->quantity,
+                    (float) $detail->quantity,
+                    (float) ($component->qty_waste_percentage ?? 0)
+                );
+
+                if (! isset($requiredQuantities[$component->product_id])) {
+                    $requiredQuantities[$component->product_id] = [
+                        'required' => 0,
+                    ];
+                }
+                $requiredQuantities[$component->product_id]['required'] += $totalQtyToDeduct;
+            }
+        }
+
+        if (! empty($requiredQuantities)) {
+            $componentProductIds = array_keys($requiredQuantities);
+
+            /** @var StockBalanceRepositoryInterface $stockBalanceRepo */
+            $stockBalanceRepo = app(StockBalanceRepositoryInterface::class);
+
+            $filters = new StockBalanceFilterDTO(
+                storeId: $order->store_id,
+                productIds: $componentProductIds
+            );
+
+            $balances = $stockBalanceRepo->getBalances($filters);
+            $stockResources = StockBalanceResource::collection($balances)->resolve(request());
+            $errors = [];
+
+            foreach ($requiredQuantities as $productId => $data) {
+                $resourceData = collect($stockResources)->firstWhere('product_id', $productId);
+
+                $availableQty = 0.0;
+                $productName = "Product ID #{$productId}";
+
+                if ($resourceData) {
+                    $availableQtyStr = $resourceData['remaining_base_qty'] ?? 0;
+                    $availableQty = is_numeric($availableQtyStr) ? (float) $availableQtyStr : (float) str_replace(',', '', (string) $availableQtyStr);
+                    $productName = $resourceData['product_name'] ?? $productName;
+                }
+
+                if ($availableQty < $data['required']) {
+                    $requiredFormatted = round($data['required'], 4);
+                    $availableFormatted = round($availableQty, 4);
+                    $errors["product_{$productId}"] = "Insufficient stock for component '{$productName}'. Required: {$requiredFormatted}, Available: {$availableFormatted}.";
+                }
+            }
+
+            if (! empty($errors)) {
+                throw ValidationException::withMessages($errors);
             }
         }
     }
