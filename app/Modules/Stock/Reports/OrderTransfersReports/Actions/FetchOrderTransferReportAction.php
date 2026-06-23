@@ -30,6 +30,7 @@ class FetchOrderTransferReportAction
             return [
                 'paginator' => $paginator,
                 'current_page_total' => formatMoneyWithCurrency(0),
+                'current_page_price_total' => formatMoneyWithCurrency(0),
                 'grand_total' => formatMoneyWithCurrency(0),
             ];
         }

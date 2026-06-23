@@ -23,7 +23,7 @@ class ListReportProductQuantities extends ListRecords
     {
         // استخراج رقم الصفحة الحالية الذي يرسله Livewire تلقائياً
         $currentPage = Paginator::resolveCurrentPage('page');
-        $perPage = 50; // غير هذا الرقم كما تحب لعدد السجلات في كل صفحة
+        $perPage = 200; // غير هذا الرقم كما تحب لعدد السجلات في كل صفحة
 
         $filters = [
             'branch_id' => $this->getTable()->getFilters()['branch_id']->getState()['values'] ?? [],
@@ -45,7 +45,7 @@ class ListReportProductQuantities extends ListRecords
         // استدعاء الأكشن للحصول على كائن LengthAwarePaginator
         $action = app(FetchOrderTransferReportAction::class);
          $result = $action->execute($filterDTO);
-
+// dd($result);
         return [
             'report_data' => $result['paginator'],    // مصفوفة السجلات والتصفح
             'grand_total' => $result['grand_total'],  // الإجمالي الكلي الجاهز

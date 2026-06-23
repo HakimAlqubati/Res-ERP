@@ -23,7 +23,7 @@ class OrderTransferReportFilterDTO
     /**
      * دالة ثابتة (Factory Method) لإنشاء الكائن بسهولة من مصفوفة الفلاتر القادمة من Filament
      */
-    public static function fromArray(array $filters,int $page = 1, int $perPage = 50): self
+    public static function fromArray(array $filters,int $page = 1, int $perPage = 200): self
     {
         // 1. معالجة معرف المنتج (ضمان أنه رقم أو Null)
         $productId = null;
