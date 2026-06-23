@@ -185,51 +185,58 @@ final class DeductCompositeProductComponentsAction
                 );
 
                 if (! isset($requiredQuantities[$component->product_id])) {
-                    $requiredQuantities[$component->product_id] = [
-                        'required' => 0,
-                    ];
+                    $requiredQuantities[$component->product_id] = 0.0;
                 }
-                $requiredQuantities[$component->product_id]['required'] += $totalQtyToDeduct;
+                $requiredQuantities[$component->product_id] += $totalQtyToDeduct;
             }
         }
 
-        if (! empty($requiredQuantities)) {
-            $componentProductIds = array_keys($requiredQuantities);
+        if (empty($requiredQuantities)) {
+            return;
+        }
 
-            /** @var StockBalanceRepositoryInterface $stockBalanceRepo */
-            $stockBalanceRepo = app(StockBalanceRepositoryInterface::class);
+        /** @var StockBalanceRepositoryInterface $stockBalanceRepo */
+        $stockBalanceRepo = app(StockBalanceRepositoryInterface::class);
 
-            $filters = new StockBalanceFilterDTO(
-                storeId: $order->store_id,
-                productIds: $componentProductIds
-            );
+        $filters = new StockBalanceFilterDTO(
+            storeId: $order->store_id,
+            productIds: array_keys($requiredQuantities)
+        );
 
-            $balances = $stockBalanceRepo->getBalances($filters);
-            $stockResources = StockBalanceResource::collection($balances)->resolve(request());
-            $errors = [];
+        // Fetch balances and index by ID for O(1) lookup performance
+        $balances = $stockBalanceRepo->getBalances($filters)->keyBy('id');
 
-            foreach ($requiredQuantities as $productId => $data) {
-                $resourceData = collect($stockResources)->firstWhere('product_id', $productId);
+        $shortages = [];
 
-                $availableQty = 0.0;
-                $productName = "Product ID #{$productId}";
+        foreach ($requiredQuantities as $productId => $requiredQty) {
+            $balanceModel = $balances->get($productId);
 
-                if ($resourceData) {
-                    $availableQtyStr = $resourceData['remaining_base_qty'] ?? 0;
-                    $availableQty = is_numeric($availableQtyStr) ? (float) $availableQtyStr : (float) str_replace(',', '', (string) $availableQtyStr);
-                    $productName = $resourceData['product_name'] ?? $productName;
-                }
+            $availableQty = 0.0;
+            $productName = "Product ID #{$productId}";
 
-                if ($availableQty < $data['required']) {
-                    $requiredFormatted = round($data['required'], 4);
-                    $availableFormatted = round($availableQty, 4);
-                    $errors["product_{$productId}"] = "Insufficient stock for component '{$productName}'. Required: {$requiredFormatted}, Available: {$availableFormatted}.";
-                }
+            if ($balanceModel) {
+                // Best Practice & Performance: Calculate purely mathematically without JSON Resource overhead
+                $availableQty = (float) ($balanceModel->total_in ?? 0) - (float) ($balanceModel->total_out ?? 0);
+                $productName = $balanceModel->name ?? $productName;
             }
 
-            if (! empty($errors)) {
-                throw ValidationException::withMessages($errors);
+            // Optional safeguard against extreme precision issues
+            if (round($availableQty, 6) < round($requiredQty, 6)) {
+                $shortages[] = $productName;
             }
+        }
+
+        if (! empty($shortages)) {
+            $count = count($shortages);
+            $displayed = array_slice($shortages, 0, 2);
+            $message = "Not enough stock for: " . implode(", ", $displayed);
+            
+            if ($count > 2) {
+                $remaining = $count - 2;
+                $message .= " (and {$remaining} more)";
+            }
+
+            throw ValidationException::withMessages(['components' => $message]);
         }
     }
 }
