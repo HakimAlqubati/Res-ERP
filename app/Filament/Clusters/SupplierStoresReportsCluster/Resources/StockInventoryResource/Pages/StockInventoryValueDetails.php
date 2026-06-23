@@ -36,7 +36,9 @@ class StockInventoryValueDetails extends Page
     public function mount(int $record): void
     {
         $this->inventory = StockInventory::with(['store', 'details.product', 'details.unit'])
-            ->findOrFail($record);
+            ->where('finalized',1)
+            ->findOrFail($record)
+            ;
 
         $service    = app(ClosingStockCalculationService::class);
         $this->rows = $service->getDetailedClosingStockValues($this->inventory);

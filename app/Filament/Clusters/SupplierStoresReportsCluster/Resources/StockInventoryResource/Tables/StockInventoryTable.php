@@ -70,6 +70,7 @@ class StockInventoryTable
                                 return is_numeric($total) ? formatMoneyWithCurrency($total) : $total;
                             })
                     )
+                    ->visible(fn($record)=> ( (isSuperAdmin() || isHakim()) ))
                     ->hidden()
                     ,
 
@@ -125,19 +126,22 @@ class StockInventoryTable
                     ->label('Finalize')
                     ->button()
                     ->hidden(fn($record): bool => $record->finalized),
-                ActionGroup::make([
-                    ViewAction::make()
-                        ->visible(fn($record): bool => $record->finalized)
-                        ->button()
-                        ->icon('heroicon-o-eye')->color('success'),
+                // ActionGroup::make([
+                //     ViewAction::make()
+                //         ->visible(fn($record): bool => $record->finalized)
+                //         ->button()
+                //         ->icon('heroicon-o-eye')->color('success'),
                     \Filament\Actions\Action::make('value_details')
-                        ->label('Value Details')
+                        ->label('Stock Value')
                         ->icon('heroicon-o-calculator')
                         ->color('info')
-                        ->visible(fn()=> isSuperAdmin())
+                        ->button()
+                        ->visible(fn($record)=> (isSuperAdmin()
+                        && $record->finalized
+                        ))
                         // ->visible(fn()=>isHakimOrAdel())
                         ->url(fn($record): string => StockInventoryResource::getUrl('value-details', ['record' => $record])),
-                ])
+                // ])
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

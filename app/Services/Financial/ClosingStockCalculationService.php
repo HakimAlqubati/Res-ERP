@@ -83,6 +83,7 @@ class ClosingStockCalculationService
         foreach ($inventory->details as $detail) {
             $physicalQty = (float) $detail->physical_quantity;
             $productId   = $detail->product_id;
+            if($detail->difference <= 0) continue;
 
             // جلب السعر من الحركة المخزنية المرتبطة عبر التسوية (إن وجدت)
             $transaction = \Illuminate\Support\Facades\DB::table('inventory_transactions as it')
