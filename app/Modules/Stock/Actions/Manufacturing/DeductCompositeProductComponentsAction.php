@@ -8,12 +8,16 @@ use App\Models\InventoryTransaction;
 use App\Models\ProductItem;
 use App\Models\StockSupplyOrder;
 use App\Models\UnitPrice;
-use App\Services\FifoMethodService;
+use App\Modules\Stock\Reports\FifoBatchReports\Contracts\FifoAllocatorInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 final class DeductCompositeProductComponentsAction
 {
+    public function __construct(
+        private FifoAllocatorInterface $fifoAllocator
+    ) {}
+
     public function execute(int $supplyOrderId): void
     {
         Log::info("start DeductCompositeProductComponentsAction: execute - supplyOrderId: {$supplyOrderId}");
@@ -49,12 +53,12 @@ final class DeductCompositeProductComponentsAction
                     (float) ($component->qty_waste_percentage ?? 0)
                 );
 
-                $fifoService = new FifoMethodService($order);
-                $allocations = $fifoService->getAllocateFifo(
-                    $component->product_id,
-                    $component->unit_id,
-                    $totalQtyToDeduct,
-                    $order->store_id
+                $allocations = $this->fifoAllocator->allocate(
+                    (int) $component->product_id,
+                    (int) $component->unit_id,
+                    (float) $totalQtyToDeduct,
+                    (int) $order->store_id,
+                    $order
                 );
 
                 // 🟢 [التعديل 2]: مقارنة سعر الباتش المسحوب وتحديث الوصفة (ProductItem)
