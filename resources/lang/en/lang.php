@@ -1165,4 +1165,5 @@ return [
     'auto' => 'Auto',
     'stock_position_batch_report' => 'Store Position Batch Report',
     'stock_position_batch_report_desc' => 'Store Position Batch Report Description',
+    'current_page_total' => 'Current Page Total',
 ];

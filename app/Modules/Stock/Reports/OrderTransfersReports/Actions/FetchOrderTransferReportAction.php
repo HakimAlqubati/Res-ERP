@@ -14,13 +14,11 @@ class FetchOrderTransferReportAction
         private readonly OrderTransferReportRepositoryInterface $repository
     ) {}
 
-    /**
-     * @return array ['paginator' => LengthAwarePaginator, 'grand_total' => string]
-     */
     public function execute(OrderTransferReportFilterDTO $dto): array
     {
-        // 1. جلب الإحصائيات (العدد والإجمالي المالي من SQL دفعة واحدة)
+        // 1. جلب الإحصائيات (العدد والإجمالي المالي من SQL)
         $aggregates = $this->repository->getReportAggregates($dto);
+       
         $totalRecords = $aggregates['total_records'];
         $grandTotal = $aggregates['grand_total'];
 
@@ -29,13 +27,29 @@ class FetchOrderTransferReportAction
                 'path' => Paginator::resolveCurrentPath(),
             ]);
 
-            return ['paginator' => $paginator, 'grand_total' => formatMoneyWithCurrency(0)];
+            return [
+                'paginator' => $paginator,
+                'current_page_total' => formatMoneyWithCurrency(0),
+                'grand_total' => formatMoneyWithCurrency(0),
+            ];
         }
 
         // 2. جلب وتنسيق الصفحة الحالية فقط
         $rawReportData = $this->repository->getRawReportData($dto);
         $formattedItems = OrderTransferReportResource::transform($rawReportData);
-
+        $currentPageSubtotalRaw = collect($formattedItems)->sum(function($item) {
+            return $item->subtotal_raw ?? 0;
+        });
+        $currentPagePriceTotalRaw = collect($rawReportData)->sum(function($item) {
+            return $item->remaining_value ?? 0;
+        });
+        // dd($rawReportData,$formattedItems,$currentPagePriceTotalRaw);
+        
+        // ✅ حساب إجمالي الصفحة الحالية (سريع جداً لأنه يجمع 50 سجلاً فقط كحد أقصى)
+        // $currentPageTotalRaw = collect($formattedItems)->sum('subtotal_raw');
+$currentPageTotalRaw = collect($formattedItems)->sum(function($item) {
+            return $item->subtotal_raw ?? 0;
+        });
         // 3. بناء الباجنيتور
         $paginator = new LengthAwarePaginator(
             $formattedItems,
@@ -45,10 +59,12 @@ class FetchOrderTransferReportAction
             ['path' => Paginator::resolveCurrentPath(), 'pageName' => 'page']
         );
 
-        // 4. إرجاع النتائج جاهزة للـ View
+        // 4. إرجاع النتائج جاهزة
         return [
             'paginator' => $paginator,
-            'grand_total' => formatMoneyWithCurrency($grandTotal), // الإجمالي الكلي منسق وجاهز
+            'current_page_price_total' => formatMoneyWithCurrency($currentPagePriceTotalRaw),
+            'current_page_total' => formatMoneyWithCurrency($currentPageTotalRaw), // إجمالي الصفحة
+            'grand_total' => formatMoneyWithCurrency($grandTotal),          // الإجمالي الكلي
         ];
     }
 }

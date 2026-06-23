@@ -129,6 +129,11 @@
             @endforeach
 
 
+            <tr class="footer-row" style="font-weight: bold; background-color: #f9fafb;">
+                <td colspan="6">{{ __('lang.current_page_total') ?? 'Current Page Total' }}</td>
+                <td>{{ $current_page_price_total }}</td>
+            </tr>
+
             <tr class="footer-row" style="font-weight: bold;">
                 <td colspan="6">{{ __('lang.total') }}</td>
 

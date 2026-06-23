@@ -49,7 +49,9 @@ class ListReportProductQuantities extends ListRecords
         return [
             'report_data' => $result['paginator'],    // مصفوفة السجلات والتصفح
             'grand_total' => $result['grand_total'],  // الإجمالي الكلي الجاهز
-            'product_id' => $filterDTO->productId,
+          'current_page_total' => $result['current_page_total'], // ✅ إضافة إجمالي الصفحة الحالية
+         'current_page_price_total' => $result['current_page_price_total'], // ✅ المتغير الجديد
+          'product_id' => $filterDTO->productId,
             'start_date' => $filters['start_date'],
             'end_date' => $filters['end_date'],
         ];

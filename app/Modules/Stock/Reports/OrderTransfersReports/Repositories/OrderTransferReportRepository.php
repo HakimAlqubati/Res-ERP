@@ -50,10 +50,10 @@ class OrderTransferReportRepository implements OrderTransferReportRepositoryInte
             return [];
         }
 
-        $limit = $dto->perPage;
-        $offset = ($dto->page - 1) * $dto->perPage;
-        $bindings = array_merge($components['bindings'], [$limit, $offset]);
-
+       
+        $limitInt  = (int) $dto->perPage;
+        $offsetInt = (int) (($dto->page - 1) * $dto->perPage);
+ $bindings = $components['bindings'];
         // ملاحظة: sub_total جاهز هنا تحت اسم remaining_value
         $sql = "
             SELECT 
@@ -87,9 +87,9 @@ class OrderTransferReportRepository implements OrderTransferReportRepositoryInte
             LEFT JOIN units u ON u.id = final_t.unit_id
             LEFT JOIN branches b ON b.store_id = final_t.store_id
             ORDER BY b.name, p.code
-            LIMIT ? OFFSET ?
+            LIMIT {$limitInt} OFFSET {$offsetInt}
         ";
-
+ 
         return DB::select($sql, $bindings);
     }
 

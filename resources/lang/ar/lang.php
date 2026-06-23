@@ -1146,5 +1146,5 @@ return [
   'auto' => 'تلقائي',
    'stock_position_batch_report' => 'تقرير مخزون المستودع',
     'stock_position_batch_report_desc' => 'تقرير مخزون المستودع',
-
+'current_page_total' => 'المجموع الحالي',
 ];
