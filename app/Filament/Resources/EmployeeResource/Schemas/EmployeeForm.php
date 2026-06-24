@@ -450,7 +450,7 @@ class EmployeeForm
                                                 fn(): bool => isBranchManager() && !(isSuperAdmin()
                                                     || isSystemManager())
                                             )
-                                            ->hidden(fn() =>isHR())
+                                            ->visible(fn(string $operation): bool => isSuperAdmin() || isSystemManager() || (isHR() && $operation === 'create'))
                                             ,
 
                                         Select::make('salary_allocation_rule')
