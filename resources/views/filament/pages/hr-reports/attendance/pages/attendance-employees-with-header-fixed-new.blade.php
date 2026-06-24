@@ -209,6 +209,7 @@
             $att = $employeeData['attendance_report'][$date] ?? [];
             $periods = $att['periods'] ?? [];
             $status = $att['day_status'] ?? null;
+            
             @endphp
 
             <tr>
@@ -226,6 +227,11 @@
                 @if ($status === 'leave')
                 <td colspan="9" class="text-center text-gray-500 font-bold">
                     {{ $att['leave_type'] ?? __('Leave') }}
+                </td>
+
+                @elseif($status === 'weekly_leave')
+                <td colspan="9" class="text-center text-gray-500 font-bold">
+                    {{ __('Weekly Leave') }}
                 </td>
                 @elseif(empty($periods))
                 <td class="internal_cell" colspan="2" style="border: none;"> </td>

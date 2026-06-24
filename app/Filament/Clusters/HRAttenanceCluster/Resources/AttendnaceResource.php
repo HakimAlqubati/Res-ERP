@@ -177,6 +177,10 @@ class AttendnaceResource extends Resource
 
                         return '('.$period->start_at.' - '.$period->end_at.') _ ('.$period->id.' - '.$period->name.')';
                     }),
+                TextColumn::make('branch.name')
+                    ->label('Branch')->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable()
+                    ,
 
                 TextColumn::make('check_date')
                     ->label('Check Date')
@@ -243,6 +247,24 @@ class AttendnaceResource extends Resource
 
                         return 'ID: '.$data['id'];
                     }),
+                Filter::make('check_date')
+                    ->form([
+                        DatePicker::make('from_date')
+                            ->label('From Date'),
+                        DatePicker::make('to_date')
+                            ->label('To Date'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['from_date'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('check_date', '>=', $date),
+                            )
+                            ->when(
+                                $data['to_date'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('check_date', '<=', $date),
+                            );
+                    }),
                 TrashedFilter::make(),
 
                 SelectFilter::make('accepted')->searchable()->label('Rejected')->options([
@@ -260,59 +282,6 @@ class AttendnaceResource extends Resource
                             ->pluck('name', 'id');
                     }),
 
-                Filter::make('month')
-                    ->label('Filter by Month')
-                    ->schema([
-
-                        Select::make('year')
-                            ->label('Year')
-                            ->options(function () {
-                                $years = range(Carbon::now()->year, Carbon::now()->year - 1); // Last 10 years
-
-                                return array_combine($years, $years);
-                            })
-                            ->placeholder('Select a year'),
-                        Select::make('month')
-                            ->label('Month')
-                            ->options([
-                                '01' => 'January',
-                                '02' => 'February',
-                                '03' => 'March',
-                                '04' => 'April',
-                                '05' => 'May',
-                                '06' => 'June',
-                                '07' => 'July',
-                                '08' => 'August',
-                                '09' => 'September',
-                                '10' => 'October',
-                                '11' => 'November',
-                                '12' => 'December',
-                            ])
-                            ->placeholder('Select a month'),
-
-                        DatePicker::make('check_date')
-                            ->label('Date')
-                            ->placeholder('Choose date'),
-
-                    ])->query(function (Builder $query, array $data) {
-                        if ($data['month'] && $data['year']) {
-                            $startDate = Carbon::createFromDate($data['year'], $data['month'], 1)->startOfMonth();
-                            $endDate = $startDate->copy()->endOfMonth();
-
-                            $query->whereBetween('check_date', [$startDate, $endDate]);
-                            if ($data['check_date']) {
-                                $query->where('check_date', $data['check_date']);
-                            }
-                        }
-                    })
-
-                    ->indicateUsing(function (array $data): ?string {
-                        if ($data['month'] && $data['year']) {
-                            return 'Month: '.Carbon::createFromDate($data['year'], $data['month'], 1)->format('F Y');
-                        }
-
-                        return null;
-                    }),
                 SelectFilter::make('check_type')
                     ->label('Type')
                     ->options([

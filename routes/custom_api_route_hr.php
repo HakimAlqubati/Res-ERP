@@ -101,6 +101,9 @@ Route::prefix('applications')
         Route::put('/{id}', [EmployeeApplicationController::class, 'update']); // PUT /applications/{id}
         Route::delete('/{id}', [EmployeeApplicationController::class, 'destroy']); // DELETE /applications/{id}
 
+        Route::put('/{id}/missedCheckin', [EmployeeApplicationController::class, 'updateMissedCheckin']); // PUT /applications/{id}/missedCheckin
+        Route::put('/{id}/missedCheckout', [EmployeeApplicationController::class, 'updateMissedCheckout']); // PUT /applications/{id}/missedCheckout
+
         Route::post('/{id}/approve', [EmployeeApplicationController::class, 'approve']); // POST /applications/{id}/approve
         Route::post('/{id}/rollback', [EmployeeApplicationController::class, 'rollback']); // POST /applications/{id}/rollback
         Route::post('/{id}/reject', [EmployeeApplicationController::class, 'reject']);   // POST /applications/{id}/reject
@@ -400,10 +403,11 @@ Route::prefix('hr')
         ]);
 
         // Get available work periods (shifts) by branch
-        Route::get('/workPeriods', [
-            \App\Modules\HR\EmployeeWorkPeriods\Http\Controllers\EmployeeWorkPeriodController::class,
-            'getWorkPeriods'
-        ]);
+        // Route::get('/workPeriods', [
+        //     \App\Modules\HR\EmployeeWorkPeriods\Http\Controllers\EmployeeWorkPeriodController::class,
+        //     'getWorkPeriods'
+        // ]);
+        Route::apiResource('/workPeriods', \App\Modules\HR\WorkPeriods\Http\Controllers\WorkPeriodController::class);
     });
 
 // ═══════════════════════════════════════════════════════════════════════════

@@ -351,6 +351,8 @@ return [
   'monthly_bonus' => 'المكافأة الشهرية',
   'deductions' => 'الخصومات',
   'deduction' => 'خصم',
+  'custom_deductions' => 'الخصومات المخصصة',
+  'custom_deduction' => 'خصم مخصص',
   'type' => 'النوع',
   'percentage' => 'النسبة المئوية',
   'amount_percentage' => 'المبلغ / النسبة',
@@ -359,6 +361,9 @@ return [
   'exempt_from_late_attendance_deduction' => 'معفى من خصم التأخير',
   'is_mtd_applicable' => 'خاضع لـMTD',
   'has_auto_weekly_leave' => 'إجازة أسبوعية تلقائية',
+  'max_weekly_leave_days' => 'الحد الأقصى لأيام الإجازة الأسبوعية / شهر',
+  'max_weekly_leave_days_hint' => 'تجاوز الإعداد الافتراضي (4 أيام). اتركه فارغاً لاستخدام الافتراضي.',
+  'no_shift_is_present' => 'حضور بدون شفت',
   'can_add_branch_order' => 'يمكنه إضافة طلب فرع',
 
   // ===========================================

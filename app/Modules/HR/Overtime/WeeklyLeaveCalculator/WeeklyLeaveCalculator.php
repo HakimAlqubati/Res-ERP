@@ -33,6 +33,11 @@ class WeeklyLeaveCalculator
             $hasAutoLeave     = (bool) ($context['has_auto_weekly_leave'] ?? true);
             $applyWeeklyLeave = $isPeriodEnded && $isForPayroll && $hasAutoLeave;
 
+            // الحد الأقصى للإجازة: يُستخدم الخاص بالموظف إن وُجد، وإلا الافتراضي
+            $standardMonthlyLeave = isset($context['max_monthly_leave']) && $context['max_monthly_leave'] !== null
+                ? (int) $context['max_monthly_leave']
+                : self::STANDARD_MONTHLY_LEAVE;
+
             // حماية: الغياب لا يتجاوز إجمالي الأيام
             if ($absentDays > $totalMonthDays) {
                 $absentDays = $totalMonthDays;
@@ -42,9 +47,17 @@ class WeeklyLeaveCalculator
             $actualWorkedDays = $totalMonthDays - $absentDays;
 
             // 2. رصيد الراحة المكتسب (يُحسب فقط عند تطبيق الإجازات الأسبوعية)
-            $earnedOffDays    = $applyWeeklyLeave ? (int) floor($actualWorkedDays / self::WORK_DAYS_PER_LEAVE) : 0;
-            $cappedEarnedDays = $applyWeeklyLeave ? min(self::STANDARD_MONTHLY_LEAVE, $earnedOffDays) : 0;
-            $workRemainder    = $actualWorkedDays % self::WORK_DAYS_PER_LEAVE;
+            $alreadyEarned    = (int) ($context['already_earned'] ?? 0);
+            $prevRemainder    = (int) ($context['prev_remainder'] ?? 0);
+            
+            // نجمع أيام العمل الحالية مع باقي الأيام من السيجمنتات السابقة لضمان عدم ضياع الكسور
+            $totalWorkedForLeave = $actualWorkedDays + $prevRemainder;
+            $earnedOffDays    = $applyWeeklyLeave ? (int) floor($totalWorkedForLeave / self::WORK_DAYS_PER_LEAVE) : 0;
+            
+            // خصم ما تم كسبه مسبقاً من الحد الأقصى الشهري لضمان عدم تجاوزه
+            $remainingCap     = max(0, $standardMonthlyLeave - $alreadyEarned);
+            $cappedEarnedDays = $applyWeeklyLeave ? min($remainingCap, $earnedOffDays) : 0;
+            $workRemainder    = $totalWorkedForLeave % self::WORK_DAYS_PER_LEAVE;
 
             // =================================================================
             // 3. المعادلة الذهبية (الميزان الرقمي)
@@ -68,8 +81,8 @@ class WeeklyLeaveCalculator
             $absentPenaltyDisplay = 0;
 
             if ($totalPenaltyDays > 0) {
-                if ($applyWeeklyLeave && $cappedEarnedDays < self::STANDARD_MONTHLY_LEAVE) {
-                    $leavePenaltyDisplay = self::STANDARD_MONTHLY_LEAVE - $cappedEarnedDays;
+                if ($applyWeeklyLeave && $cappedEarnedDays < $standardMonthlyLeave) {
+                    $leavePenaltyDisplay = $standardMonthlyLeave - $cappedEarnedDays;
                 }
                 $absentPenaltyDisplay = max(0, $totalPenaltyDays - $leavePenaltyDisplay);
             }
@@ -88,6 +101,7 @@ class WeeklyLeaveCalculator
                 ],
                 'analysis' => [
                     'worked_days'       => $actualWorkedDays,
+                    'already_earned'    => $alreadyEarned,
                     'earned_leave_days' => $cappedEarnedDays,
                     'work_remainder'    => $workRemainder,
                 ],

@@ -148,7 +148,9 @@ class EmployeeTable
                     // ->money(fn(): string => getDefaultCurrency())
                     ->formatStateUsing(fn ($state) => formatMoneyWithCurrency($state))
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ->searchable(isIndividual: false, isGlobal: false)->alignCenter(true),
+                    ->searchable(isIndividual: false, isGlobal: false)->alignCenter(true)
+                    ->hidden(fn() => isHR())
+                    ,
 
                 TextColumn::make('working_hours')->label(__('lang.working_hours'))->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: false)->alignCenter(true)

@@ -41,6 +41,7 @@ class InventoryTransaction extends Model implements Auditable
         'base_quantity',
         'base_unit_package_size',
         'price_per_base_unit',
+        'temp_qty',
     ];
 
     protected $auditInclude = [

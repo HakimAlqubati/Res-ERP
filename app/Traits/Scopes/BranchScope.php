@@ -58,7 +58,7 @@ trait BranchScope
      */
     public function scopeForEmployee(Builder $query, string $employeeColumn = 'employee_id'): Builder
     {
-        if (auth()->check() && (isSuperAdmin() || isSystemManager())) {
+        if (auth()->check() && (isSuperAdmin() || isSystemManager() || isBranchManager() )) {
             return $query;
         }
         if (auth()->check() && (isStuff() || isStoreManager()) ) {

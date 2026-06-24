@@ -1,4 +1,4 @@
-<x-filament::page>
+<x-filament-panels::page>
     {{-- Print Button --}}
     <style>
         table {
@@ -95,10 +95,10 @@
 
             {{-- Pagination Controls --}}
             {{-- @if ($reportData instanceof \Illuminate\Pagination\LengthAwarePaginator) --}}
-            <div class="mt-4">
+            <div class="mt-4 no-print">
                 <div class="paginator_container">
                     @if (isset($pagination) && $pagination instanceof \Illuminate\Pagination\LengthAwarePaginator)
-                        {{ $pagination->links() }}
+                        <x-filament::pagination :paginator="$pagination" class="px-3 py-3 sm:px-6" />
                     @endif
                 </div>
 
@@ -139,4 +139,4 @@
         }
     </style>
 
-</x-filament::page>
+</x-filament-panels::page>

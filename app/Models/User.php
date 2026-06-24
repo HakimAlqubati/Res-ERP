@@ -5,6 +5,8 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 use App\Models\Traits\HasUserDevices;
+use App\Observers\UserObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use App\Traits\Scopes\BranchScope;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
@@ -21,6 +23,7 @@ use Laravel\Passport\HasApiTokens;
 use OwenIt\Auditing\Contracts\Auditable;
 use Spatie\Permission\Traits\HasRoles;
 
+#[ObservedBy(UserObserver::class)]
 class User extends Authenticatable implements FilamentUser, Auditable
 // implements FilamentUser
 
@@ -103,7 +106,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
         'managed_stores_ids',
         'is_attendance',
         'avatar_image',
-        'can_create_advance'
+        'can_create_advance',
+        'can_create_missed_check_requests'
     ];
     public static $filamentUserColumn = 'is_filament_user'; // The name of a boolean column in your database.
 
@@ -421,6 +425,14 @@ class User extends Authenticatable implements FilamentUser, Auditable
     {
         if (isStuff()) {
             return setting('can_create_advance', false);
+        }
+        return true;
+    }
+
+    public function getCanCreateMissedCheckRequestsAttribute()
+    {
+        if (isStuff()) {
+            return setting('can_create_missed_check_requests', false);
         }
         return true;
     }

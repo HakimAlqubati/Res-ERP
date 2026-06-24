@@ -34,6 +34,7 @@ use App\Modules\HR\Payroll\Calculators\MealRequestCalculator;
 use App\Modules\HR\Payroll\Calculators\GeneralDeductionCalculator;
 use App\Modules\HR\Payroll\Calculators\TransactionBuilder;
 use App\Modules\HR\Payroll\Calculators\MonthlyIncentiveCalculator;
+use App\Modules\HR\Payroll\Calculators\CustomDeductionCalculator;
 
 /**
  * The Core Payroll Calculation Engine.
@@ -83,6 +84,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         protected GeneralDeductionCalculator $generalDeductionCalculator,
         protected TransactionBuilder $transactionBuilder,
         protected MonthlyIncentiveCalculator $monthlyIncentiveCalculator,
+        protected CustomDeductionCalculator $customDeductionCalculator,
         /** @var SalaryPolicyHookInterface[] */
         protected array $policyHooks = []
     ) {
@@ -108,6 +110,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         ?int $periodMonth = null,
         ?Carbon $periodEnd = null,
         ?Carbon $periodStart = null,
+        bool $isMultiSegment = false, // true عندما للموظف أكثر من Segment في هذا الشهر
     ): array {
         $this->resetState();
 
@@ -148,7 +151,19 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         // Determine how many days should be paid for the current period ($payableDays)
         $payableDays = $rateWorkingDays;
         if ($periodEnd && $periodEnd->day < $monthDays) {
+            // Segment ends mid-month → use the calendar end-day directly.
             $payableDays = $periodEnd->day;
+        } elseif (
+            $this->dailyRateMethod === DailyRateMethod::By30Days->value
+            && $isMultiSegment
+            && $monthDays === 31
+            && $periodStart && $periodStart->day > 1
+        ) {
+            // Last segment of a branch-transfer employee in a 31-day month:
+            // subtract the rate-days already consumed by prior segments
+            // so the total across all segments equals 30 (not 31).
+            $previousUsedDays = (int) round(($periodStart->day - 1) / $monthDays * $rateWorkingDays);
+            $payableDays      = max(0, $rateWorkingDays - $previousUsedDays);
         }
 
         // Cap payable days by required shift days (exclude no_periods days)
@@ -239,6 +254,9 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         // 6c. Calculate monthly incentives
         $monthlyIncentives = $this->monthlyIncentiveCalculator->calculate($context);
 
+        // 6d. Calculate custom deductions
+        $customDeductions = $this->customDeductionCalculator->calculate($context);
+
 
         $statistics = $employeeData['statistics'];
         $totalDeductionDays =  $statistics['weekly_leave_calculation']['result']['total_deduction_days'];
@@ -294,7 +312,8 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
                 $advanceInstallments['total'] +
                 $advanceWages['total'] +
                 $mealRequests['total'] +
-                $deductions->missingHoursDeduction
+                $deductions->missingHoursDeduction +
+                $customDeductions['total']
         );
         $this->netSalary = $this->round($this->grossSalary - $this->totalDeductions);
 
@@ -349,6 +368,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             advanceWages: $advanceWages,
             mealRequests: $mealRequests,
             dynamicDeductions: $dynamicDeductions,
+            customDeductions: $customDeductions,
             monthlyIncentives: $monthlyIncentives,
             overtimeMultiplier: $this->overtimeMultiplier,
             policyHookTransactions: $policyHookTransactions,
@@ -394,7 +414,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
                 $penalties['total'],
                 $advanceInstallments['total'],
                 $mealRequests['total'],
-                $dynamicTotal,
+                $dynamicTotal + $customDeductions['total'],
                 $carryForwarded
             );
 
@@ -471,6 +491,8 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             'advance_wages'          => $advanceWages['items'],
             'meal_requests_total'    => $this->round($mealRequests['total']),
             'meal_requests'          => $mealRequests['items'],
+            'custom_deductions_total'=> $this->round($customDeductions['total']),
+            'custom_deductions'      => $customDeductions['items'],
             'monthly_incentives_total' => $this->round($monthlyIncentives['total'] ?? 0),
             'monthly_incentives'       => $monthlyIncentives['items'] ?? [],
         ];

@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -15,14 +14,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // First, find and drop any foreign key constraints that depend on this index
-        $foreignKeys = $this->getForeignKeysOnIndex('hr_salary_transactions', 'hr_salary_transactions_emp_ym_type_sub_operation_payroll_unique');
-
-        Schema::table('hr_salary_transactions', function (Blueprint $table) use ($foreignKeys) {
-            // Drop foreign keys first
-            foreach ($foreignKeys as $fk) {
-                $table->dropForeign($fk);
-            }
+        // Add index for employee_id to satisfy foreign key constraint before dropping the unique index
+        Schema::table('hr_salary_transactions', function (Blueprint $table) {
+            $table->index('employee_id');
         });
 
         // Now drop the unique index
@@ -54,23 +48,9 @@ return new class extends Migration
                 'hr_salary_transactions_emp_ym_type_sub_operation_payroll_unique'
             );
         });
-    }
 
-    /**
-     * Get foreign key constraint names that reference a specific index.
-     */
-    protected function getForeignKeysOnIndex(string $table, string $indexName): array
-    {
-        $database = config('database.connections.mysql.database');
-
-        $results = DB::select("
-            SELECT CONSTRAINT_NAME 
-            FROM information_schema.KEY_COLUMN_USAGE 
-            WHERE TABLE_SCHEMA = ? 
-            AND TABLE_NAME = ? 
-            AND REFERENCED_TABLE_NAME IS NOT NULL
-        ", [$database, $table]);
-
-        return array_map(fn($row) => $row->CONSTRAINT_NAME, $results);
+        Schema::table('hr_salary_transactions', function (Blueprint $table) {
+            $table->dropIndex(['employee_id']);
+        });
     }
 };

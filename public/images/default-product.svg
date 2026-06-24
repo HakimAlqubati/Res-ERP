@@ -1,0 +1,32 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="400" rx="40" fill="#F2F7F5"/>
+  
+  <!-- Shadow -->
+  <ellipse cx="200" cy="300" rx="90" ry="20" fill="#D3E0DC"/>
+
+  <!-- Box Front Left -->
+  <path d="M200 280L110 228V130L200 182V280Z" fill="#E8F1EE" stroke="#0E6951" stroke-width="8" stroke-linejoin="round"/>
+  
+  <!-- Box Front Right -->
+  <path d="M200 280L290 228V130L200 182V280Z" fill="#FFFFFF" stroke="#0E6951" stroke-width="8" stroke-linejoin="round"/>
+  
+  <!-- Box Top -->
+  <path d="M200 182L110 130L200 78L290 130L200 182Z" fill="#F8FBFA" stroke="#0E6951" stroke-width="8" stroke-linejoin="round"/>
+  
+  <!-- Packaging Tape on Top -->
+  <path d="M155 104L245 156" stroke="#0E6951" stroke-width="12" stroke-linejoin="round" opacity="0.8"/>
+
+  <!-- WB Logo on Right Face -->
+  <text transform="matrix(0.866, -0.5, 0, 1, 225, 235)" fill="#0E6951" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="48" letter-spacing="-2">WB</text>
+
+  <!-- ERP Text below WB -->
+  <text transform="matrix(0.866, -0.5, 0, 1, 228, 255)" fill="#0E6951" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="14" letter-spacing="4">ERP</text>
+
+  <!-- Barcode on Left Side -->
+  <line x1="135" y1="165" x2="135" y2="195" stroke="#0E6951" stroke-width="6" stroke-linecap="round"/>
+  <line x1="147" y1="172" x2="147" y2="202" stroke="#0E6951" stroke-width="6" stroke-linecap="round"/>
+  <line x1="159" y1="179" x2="159" y2="209" stroke="#0E6951" stroke-width="8" stroke-linecap="round"/>
+  <line x1="171" y1="186" x2="171" y2="216" stroke="#0E6951" stroke-width="4" stroke-linecap="round"/>
+  <line x1="183" y1="193" x2="183" y2="223" stroke="#0E6951" stroke-width="6" stroke-linecap="round"/>
+</svg>

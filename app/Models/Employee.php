@@ -67,6 +67,8 @@ class Employee extends Model implements Auditable
         'is_indexed_in_aws',
         'is_mtd_applicable',
         'has_auto_weekly_leave',
+        'max_weekly_leave_days',
+        'no_shift_is_present',
         'birthday',
         'salary_allocation_rule',
         'can_add_branch_order',
@@ -131,6 +133,8 @@ class Employee extends Model implements Auditable
         'is_indexed_in_aws',
         'is_mtd_applicable',
         'has_auto_weekly_leave',
+        'max_weekly_leave_days',
+        'no_shift_is_present',
         'birthday',
         'can_add_branch_order',
         'allow_attendance_from_any_branch',
@@ -143,6 +147,9 @@ class Employee extends Model implements Auditable
         'has_auto_weekly_leave'  => 'boolean',
         'can_add_branch_order'                => 'boolean',
         'allow_attendance_from_any_branch'   => 'boolean',
+        'max_weekly_leave_days'  => 'integer',
+        'no_shift_is_present'    => 'boolean',
+        'can_add_branch_order'   => 'boolean',
         'salary_allocation_rule' => \App\Enums\HR\Payroll\SalaryAllocationRule::class,
     ];
 

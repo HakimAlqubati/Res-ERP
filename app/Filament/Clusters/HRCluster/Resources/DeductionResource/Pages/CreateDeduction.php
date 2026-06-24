@@ -17,7 +17,10 @@ class CreateDeduction extends CreateRecord
     
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['is_percentage'] = $data['is_percentage'] == 'is_percentage' ? 1: 0;
+        if(isset($data['is_percentage'])){
+            $data['is_percentage'] = $data['is_percentage'] == 'is_percentage' ? 1: 0;
+        }
+            
         return $data;
     }
 }

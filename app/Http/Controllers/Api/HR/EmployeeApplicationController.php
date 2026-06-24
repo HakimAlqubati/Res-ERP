@@ -143,6 +143,76 @@ class EmployeeApplicationController extends Controller
     }
 
     /**
+     * 🟢 Update Missed Check-in time & date.
+     */
+    public function updateMissedCheckin(Request $request, $id, EmployeeApplicationService $service)
+    {
+        $validated = $request->validate([
+            'date' => 'required|date',
+            'time' => 'required|date_format:H:i',
+        ]);
+
+        $record = \App\Models\EmployeeApplicationV2::findOrFail($id);
+        if ($record->application_type_id !== \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid application type. This endpoint is only for missed check-in requests.'
+            ], 422);
+        }
+
+        try {
+            $record = $service->updateMissedCheckin($id, $validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Missed check-in updated successfully',
+                'data'    => new EmployeeApplicationResource($record),
+            ]);
+        } catch (Throwable $th) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update missed check-in',
+                'error'   => $th->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * 🟢 Update Missed Check-out time & date.
+     */
+    public function updateMissedCheckout(Request $request, $id, EmployeeApplicationService $service)
+    {
+        $validated = $request->validate([
+            'date' => 'required|date',
+            'time' => 'required|date_format:H:i',
+        ]);
+
+        $record = \App\Models\EmployeeApplicationV2::findOrFail($id);
+        if ($record->application_type_id !== \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid application type. This endpoint is only for missed check-out requests.'
+            ], 422);
+        }
+
+        try {
+            $record = $service->updateMissedCheckout($id, $validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Missed check-out updated successfully',
+                'data'    => new EmployeeApplicationResource($record),
+            ]);
+        } catch (Throwable $th) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update missed check-out',
+                'error'   => $th->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * 🟢 Delete application.
      */
     public function destroy($id, EmployeeApplicationService $service)

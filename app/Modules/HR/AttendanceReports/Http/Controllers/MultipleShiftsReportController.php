@@ -4,6 +4,7 @@ namespace App\Modules\HR\AttendanceReports\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\EmployeePeriodHistory;
+use App\Models\Attendance;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -30,6 +31,12 @@ class MultipleShiftsReportController extends Controller
             })
             ->get();
 
+        // Fetch all accepted attendance records within the date range
+        $attendances = Attendance::whereBetween('check_date', [$startDateStr, $endDateStr])
+            ->where('accepted', 1)
+            ->get()
+            ->groupBy(['check_date', 'employee_id']);
+
         $reportData = [];
         $tempDate = $startDate->copy();
 
@@ -49,9 +56,15 @@ class MultipleShiftsReportController extends Controller
             $groupedByEmployee = $dayHistories->groupBy('employee_id');
 
             foreach ($groupedByEmployee as $employeeId => $empHistories) {
-                // If the employee has more than 1 unique shift (period) assigned for this day
-                $uniquePeriods = $empHistories->unique('period_id');
-                if ($uniquePeriods->count() > 1) {
+                // Check if the employee has more than 1 shift (even if they are duplicates of the same period)
+                $hasMultipleShifts = $empHistories->count() > 1;
+
+                // Get attendances for this employee on this specific day
+                $dayAttendances = $attendances->get($currentDateStr)?->get($employeeId) ?? collect();
+                $noShiftAtts = $dayAttendances->filter(fn($att) => is_null($att->period_id));
+                $hasNoShiftAttendance = $noShiftAtts->isNotEmpty();
+
+                if ($hasMultipleShifts || $hasNoShiftAttendance) {
                     $employee = $empHistories->first()->employee;
                     if ($employee) {
                         $shifts = [];
@@ -66,6 +79,17 @@ class MultipleShiftsReportController extends Controller
                                     'end' => $endTime,
                                 ];
                             }
+                        }
+
+                        // Add no-shift attendances as special items
+                        foreach ($noShiftAtts as $att) {
+                            $checkTypeLabel = $att->check_type === 'checkin' ? 'تحضير بدون وردية (دخول)' : 'تحضير بدون وردية (خروج)';
+                            $shifts[] = [
+                                'name' => $checkTypeLabel,
+                                'start' => Carbon::parse($att->check_time)->format('H:i'),
+                                'end' => null,
+                                'is_no_shift' => true,
+                            ];
                         }
 
                         $branchName = $empHistories->first()->branch?->name ?? 'N/A';

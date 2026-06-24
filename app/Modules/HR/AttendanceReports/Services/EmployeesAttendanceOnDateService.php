@@ -22,15 +22,18 @@ class EmployeesAttendanceOnDateService
     private AttendanceDataFetcher $fetcher;
     private AttendanceDayProcessor $processor;
     private AttendanceStatisticsInjector $statsInjector;
+    private EmployeeAttendanceRangeService $rangeService;
 
     public function __construct(
         AttendanceDataFetcher $fetcher,
         AttendanceDayProcessor $processor,
-        AttendanceStatisticsInjector $statsInjector
+        AttendanceStatisticsInjector $statsInjector,
+        EmployeeAttendanceRangeService $rangeService
     ) {
         $this->fetcher = $fetcher;
         $this->processor = $processor;
         $this->statsInjector = $statsInjector;
+        $this->rangeService = $rangeService;
     }
 
     /**
@@ -53,7 +56,7 @@ class EmployeesAttendanceOnDateService
         $isFuture = $dateCarbon->gt(Carbon::today());
         $isToday = $dateCarbon->isToday();
 
-        $employeesMap = Employee::whereIn('id', $employeeIds)->get(['id', 'name', 'discount_exception_if_attendance_late', 'has_auto_weekly_leave'])->keyBy('id');
+        $employeesMap = Employee::whereIn('id', $employeeIds)->get(['id', 'name', 'branch_id', 'discount_exception_if_attendance_late', 'has_auto_weekly_leave'])->keyBy('id');
 
         $data = $this->fetcher->fetchForMultiEmployeesSingleDate($employeeIds, $dateStr);
         extract($data);
@@ -73,7 +76,7 @@ class EmployeesAttendanceOnDateService
             } else {
                 $leave = $leaves->get($empId);
                 if ($leave) {
-                    $report->put($dateStr, $this->processor->buildLeaveDay($dateStr, $dayName, $leave));
+                    $report->put($dateStr, $this->processor->buildLeaveDay($dateStr, $dayName, $leave, $employee->branch_id));
                 } else {
                     $dayHistories = $histories->where('employee_id', $empId)->filter(function ($h) use ($dayShort, $dateStr) {
                         $dayVal = is_object($h->day_of_week) && property_exists($h->day_of_week, 'value') ? $h->day_of_week->value : $h->day_of_week;
@@ -98,6 +101,26 @@ class EmployeesAttendanceOnDateService
                         $employee->discount_exception_if_attendance_late,
                         $this->statsInjector
                     );
+
+                    // Check if employee is absent and has auto weekly leave setting enabled
+                    $isAbsent = isset($dayReport['day_status']) && $dayReport['day_status'] === \App\Enums\HR\Attendance\AttendanceReportStatus::Absent->value;
+                    $isPreviousMonth = $dateCarbon->format('Y-m') < now()->format('Y-m');
+                    if ($isAbsent && $employee->has_auto_weekly_leave 
+                    && $isPreviousMonth
+                    ) {
+                        $startOfMonth = $dateCarbon->copy()->startOfMonth();
+                        $endOfMonth = $dateCarbon->copy()->endOfMonth();
+
+                        // Call the range service to fetch and process the full month to get accrued leaves
+                        $monthlyReport = $this->rangeService->fetchRange($employee, $startOfMonth, $endOfMonth);
+
+                        // If the range service converted this date to WeeklyLeave, use the updated day report
+                        $resolvedDay = $monthlyReport->get($dateStr);
+                        if ($resolvedDay && isset($resolvedDay['day_status']) && $resolvedDay['day_status'] === \App\Enums\HR\Attendance\AttendanceReportStatus::WeeklyLeave->value) {
+                            $dayReport = $resolvedDay;
+                        }
+                    }
+
                     $report->put($dateStr, $dayReport);
                 }
             }

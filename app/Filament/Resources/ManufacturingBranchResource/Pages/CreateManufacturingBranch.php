@@ -12,7 +12,7 @@ class CreateManufacturingBranch extends CreateRecord
     protected static string $resource = ManufacturingBranchResource::class;
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['type'] = Branch::TYPE_RESELLER;
+        $data['type'] = Branch::TYPE_CENTRAL_KITCHEN;
         return $data;
     }
 

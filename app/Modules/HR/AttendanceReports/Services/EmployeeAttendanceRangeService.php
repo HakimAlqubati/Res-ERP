@@ -91,7 +91,7 @@ class EmployeeAttendanceRangeService
 
             $leave = $leaves->first(fn($l) => $tempDate->between($l->from_date, $l->to_date));
             if ($leave) {
-                $report->put($currentDateStr, $this->processor->buildLeaveDay($currentDateStr, $currentDayName, $leave));
+                $report->put($currentDateStr, $this->processor->buildLeaveDay($currentDateStr, $currentDayName, $leave, $employee->branch_id));
                 $tempDate->addDay();
                 continue;
             }
@@ -158,7 +158,7 @@ class EmployeeAttendanceRangeService
 
         $isPreviousMonth = $startDate->format('Y-m') < now()->format('Y-m');
         if ($isPreviousMonth && $employee->has_auto_weekly_leave) {
-            $this->applyAutoWeeklyLeaves($report);
+            $this->applyAutoWeeklyLeaves($report, $employee);
         }
 
         return $report;
@@ -169,7 +169,7 @@ class EmployeeAttendanceRangeService
      * This is strictly for UI representation and is applied AFTER statistics injection
      * so it does not interfere with the core payroll calculations.
      */
-    private function applyAutoWeeklyLeaves(Collection $report): void
+    private function applyAutoWeeklyLeaves(Collection $report, Employee $employee): void
     {
         $workDaysPerLeave = \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::WORK_DAYS_PER_LEAVE;
         $countPartialAsAbsent = setting('count_partial_as_absent') ?? true;
@@ -206,7 +206,7 @@ class EmployeeAttendanceRangeService
 
         $totalEntitledLeaves = floor($totalWorkDays / $workDaysPerLeave);
         $workDaysTowardsNext = $totalWorkDays % $workDaysPerLeave;
-        $leavesToUse         = min($totalEntitledLeaves, count($absentDates));
+        $leavesToUse         = min($totalEntitledLeaves, count($absentDates),$employee?->max_weekly_leave_days ?? $totalEntitledLeaves);
         $usedLeaves          = 0;
 
         foreach ($absentDates as $date) {

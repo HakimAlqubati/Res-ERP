@@ -17,6 +17,12 @@ class RepositoryServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Work Period Repository Binding
+        $this->app->bind(
+            \App\Modules\HR\WorkPeriods\Repositories\WorkPeriodRepositoryInterface::class,
+            \App\Modules\HR\WorkPeriods\Repositories\WorkPeriodRepository::class
+        );
+
         // Stock Inventory Repository Binding
         $this->app->bind(
             StockInventoryRepositoryInterface::class,

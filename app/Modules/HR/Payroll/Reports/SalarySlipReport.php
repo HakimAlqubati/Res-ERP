@@ -41,6 +41,7 @@ class SalarySlipReport
         // Sort and merge similar transactions across branch split payroll rows.
         $transactions = $this->mergeSimilarTransactions(
             SalaryTransaction::query()
+                ->with('payroll.branch')
                 ->whereIn('payroll_id', $payrollIds)
                 ->orderBy('date')
                 ->get()
@@ -180,11 +181,19 @@ class SalarySlipReport
                 $transaction->unit,
                 $transaction->multiplier,
                 $this->mergeLabel($transaction),
+                $transaction->type === SalaryTransactionType::TYPE_SALARY->value ? $transaction->payroll?->branch_id : '',
             ]))
             ->map(function (Collection $group) {
                 /** @var SalaryTransaction $first */
                 $first = $group->first();
-                $label = $this->mergeLabel($first);
+                $qtySum = $group->sum('qty');
+                
+                if ($first->type === SalaryTransactionType::TYPE_SALARY->value) {
+                    $branchName = $first->payroll?->branch?->name;
+                    $label = "Earned Basic Salary (Prorated) " . (float)$qtySum . " days" . ($branchName ? " - {$branchName}" : "");
+                } else {
+                    $label = $this->mergeLabel($first);
+                }
 
                 return (object) [
                     'id'          => $first->id,
@@ -196,7 +205,7 @@ class SalarySlipReport
                     'amount'      => round((float) $group->sum('amount'), 2),
                     'date'        => $first->date,
                     'unit'        => $first->unit,
-                    'qty'         => $group->sum('qty'),
+                    'qty'         => $qtySum,
                     'rate'        => $first->rate,
                     'multiplier'  => $first->multiplier,
                 ];
@@ -236,7 +245,7 @@ class SalarySlipReport
 
         $filename = sprintf(
             'SalarySlip-%s-%s-%s.pdf',
-            $payroll->employee?->name ?? '000',
+            str_replace(['/', '\\'], '-', $payroll->employee?->name ?? '000'),
             $payroll->year,
             $payroll->month
         );

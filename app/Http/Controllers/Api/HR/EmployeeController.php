@@ -133,7 +133,7 @@ class EmployeeController extends Controller
                     'nationality_code' => $emp->nationality,
                     'nationality_name' => getNationalities()[$emp->nationality] ?? $emp->nationality,
                     'job_title' => $emp->job_title,
-                    'salary' => $emp->salary,
+                    'salary' => !isHR() ? $emp->salary: 0,
                     'phone_number' => $emp->phone_number,
                     'email' => $emp->email,
                 ];

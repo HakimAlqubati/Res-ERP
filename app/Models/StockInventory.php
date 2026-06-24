@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\Financial\ClosingStockCalculationService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -26,7 +27,7 @@ class StockInventory extends Model implements Auditable
         'created_by',
     ];
 
-    protected $appends = ['details_count', 'categories_names'];
+    protected $appends = ['details_count', 'categories_names', 'closing_stock_value'];
 
     public function store()
     {
@@ -70,5 +71,10 @@ class StockInventory extends Model implements Auditable
             ->filter() // يستبعد null
             ->unique()
             ->implode(', ');
+    }
+
+    public function getClosingStockValueAttribute(): float
+    {
+        return app(ClosingStockCalculationService::class)->getAdjustmentedStockValue($this);
     }
 }

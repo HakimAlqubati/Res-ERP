@@ -67,6 +67,7 @@ class EmployeeApplicationTable
                 ->label(__('lang.status'))
                 ->alignCenter(true)
                 ->badge()
+                ->sortable()
                 ->icon('heroicon-m-check-badge')
                 ->formatStateUsing(fn ($state) => EmployeeApplicationV2::getStatusLabel($state))
                 ->color(fn (string $state): string => match ($state) {
@@ -265,7 +266,7 @@ class EmployeeApplicationTable
                     EmployeeApplicationResource::attachmentsAction(),
 
                     EmployeeApplicationResource::approveLeaveRequest()->hidden(function ($record) {
-                        if (isstuff() || isFinanceManager() || isHR()) {
+                        if (isstuff() || isHR()) {
                             return true;
                         }
                         if (isset(Auth::user()->employee)) {
@@ -355,7 +356,7 @@ class EmployeeApplicationTable
                                     }
                                 } catch (Exception $th) {
                                     DB::rollBack();
-                                    throw $th;
+                                    // throw $th;
 
                                     return Notification::make()->title($th->getMessage())->warning()->send();
                                 }
@@ -478,6 +479,18 @@ class EmployeeApplicationTable
 
                     return false;
                 }),
+                EmployeeApplicationResource::undoApproveDepartureRequest()->hidden(function ($record) {
+                    if (isstuff() || isFinanceManager() || isHR()) {
+                        return true;
+                    }
+                    if (isset(Auth::user()->employee)) {
+                        if ($record->employee_id == Auth::user()->employee->id) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }),
 
                 EmployeeApplicationResource::approveAttendanceRequest()->hidden(function ($record) {
                     // return false;
@@ -494,6 +507,18 @@ class EmployeeApplicationTable
                 }),
 
                 EmployeeApplicationResource::rejectAttendanceRequest()->hidden(function ($record) {
+                    if (isstuff() || isFinanceManager() || isHR()) {
+                        return true;
+                    }
+                    if (isset(Auth::user()->employee)) {
+                        if ($record->employee_id == Auth::user()->employee->id) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }),
+                EmployeeApplicationResource::undoApproveAttendanceRequest()->hidden(function ($record) {
                     if (isstuff() || isFinanceManager() || isHR()) {
                         return true;
                     }

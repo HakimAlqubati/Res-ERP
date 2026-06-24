@@ -79,5 +79,31 @@ Route::get('/test/pendingApplications', function () {
     ]);
 });
 
+Route::get('/test/clearAttendanceCache', function () {
+    $date = request('date', now()->toDateString());
+    
+    $startTime = microtime(true);
+    clearAllEmployeesDailyAttendanceCache($date);
+    $executionTime = round(microtime(true) - $startTime, 10);
+    
+    return response()->json([
+        'status' => 'success',
+        'message' => "Cleared daily attendance cache for all employees on {$date}",
+        'execution_time_seconds' => $executionTime,
+    ]);
+});
 
-
+Route::get('/test/clearAttendanceCacheForMonth', function () {
+    $year = request('year', now()->year);
+    $month = request('month', now()->month);
+    
+    $startTime = microtime(true);
+    clearAllEmployeesDailyAttendanceCacheForMonth($year, $month);
+    $executionTime = round(microtime(true) - $startTime, 4);
+    
+    return response()->json([
+        'status' => 'success',
+        'message' => "Cleared daily attendance cache for all employees for {$year}-{$month}",
+        'execution_time_seconds' => $executionTime,
+    ]);
+});

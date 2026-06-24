@@ -84,7 +84,7 @@ class EmployeeOvertime extends Model implements Auditable
     {
         return [
             EmployeeOvertime::TYPE_BASED_ON_DAY => 'Hourly',
-            EmployeeOvertime::TYPE_BASED_ON_MONTH => 'Daily',
+            EmployeeOvertime::TYPE_BASED_ON_MONTH => 'One-Day',
         ];
     }
     // Relationships
@@ -92,6 +92,10 @@ class EmployeeOvertime extends Model implements Auditable
     public function employee()
     {
         return $this->belongsTo(Employee::class, 'employee_id');
+    }
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
     }
 
     // Relationship with the User model (for approval)
