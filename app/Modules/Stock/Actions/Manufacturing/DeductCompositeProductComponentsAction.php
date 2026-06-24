@@ -45,6 +45,7 @@ final class DeductCompositeProductComponentsAction
             }
 
             $hasPriceChanged = false;
+            $changedComponentsDetails = [];
             foreach ($components as $component) {
                 // حساب الكمية مع الهدر
                 $totalQtyToDeduct = $this->calculateRequiredQuantity(
@@ -67,6 +68,9 @@ final class DeductCompositeProductComponentsAction
                     $sourcePrice = (float) $lastAllocation['price_based_on_unit'];
 
                     if (round((float) $component->price, 6) !== round($sourcePrice, 6)) {
+                        $oldPrice = round((float) $component->price, 2);
+                        $newPrice = round($sourcePrice, 2);
+
                         $component->price = $sourcePrice;
                         $component->total_price = $sourcePrice * (float) $component->quantity;
                         $component->total_price_after_waste = ProductItem::calculateTotalPriceAfterWaste(
@@ -75,6 +79,7 @@ final class DeductCompositeProductComponentsAction
                         );
                         $component->save();
                         $hasPriceChanged = true;
+                        $changedComponentsDetails[] = "ID #{$component->product_id} ({$oldPrice} -> {$newPrice})";
                     }
                 }
 
@@ -91,9 +96,11 @@ final class DeductCompositeProductComponentsAction
             // 🟢 [التعديل 3]: تحديث السعر العام للمنتج المركب (UnitPrice) فقط إذا تغيرت مكوناته
             if ($hasPriceChanged) {
                 $newCompositeCost = (float) $components->sum('total_price_after_waste');
+                $componentsChangesStr = implode(', ', $changedComponentsDetails);
+                $updateNote = "Price updated due to comps: {$componentsChangesStr}";
 
                 // يتم تحديث الأسعار العامة فقط، دون المساس بالحركات المخزنية!
-                $this->updateGlobalPrice($detail, $newCompositeCost);
+                $this->updateGlobalPrice($detail, $newCompositeCost, $updateNote);
             }
         }
 
@@ -147,7 +154,7 @@ final class DeductCompositeProductComponentsAction
     }
 
     // --- دالة مبسطة لتحديث السعر العام للمنتج المركب مباشرة ---
-    private function updateGlobalPrice($detail, float $newCost): void
+    private function updateGlobalPrice($detail, float $newCost, string $updateNote): void
     {
         $unitPrices = UnitPrice::where('product_id', $detail->product_id)->get();
 
@@ -158,7 +165,7 @@ final class DeductCompositeProductComponentsAction
             // مقارنة السعر الحالي بالتكلفة الجديدة وتحديثه إذا اختلف فقط
             if (round((float) $unitPrice->price, 2) !== $finalPrice) {
                 $unitPrice->price = $finalPrice;
-                $unitPrice->notes = "Updated price for Composite Product #{$detail->product->name} in Supply Order #{$detail->stock_supply_order_id}";
+                $unitPrice->notes = "{$updateNote} in Supply Order #{$detail->stock_supply_order_id}";
                 $unitPrice->save();
             }
         }
