@@ -68,18 +68,10 @@ final class DeductCompositeProductComponentsAction
                     $lastAllocation = end($allocations);
                     $sourcePrice = (float) $lastAllocation['price_based_on_unit'];
 
-                    if (round((float) $component->price, 6) !== round($sourcePrice, 6)) {
-                        $oldPriceRaw = (float) $component->price;
-                        $newPriceRaw = (float) $sourcePrice;
-                        
-                        $oldPrice = round($oldPriceRaw, 2) + 0;
-                        $newPrice = round($newPriceRaw, 2) + 0;
-
-                        if ($oldPrice === $newPrice) {
-                            // إظهار كسور أكثر لكي يفهم المستخدم أن هناك اختلافاً بسيطاً جداً أدى لتحديث السعر
-                            $oldPrice = round($oldPriceRaw, 6) + 0;
-                            $newPrice = round($newPriceRaw, 6) + 0;
-                        }
+                    // مقارنة السعر برقمين عشريين لتجاهل الفروقات البسيطة الناتجة عن التقريب
+                    if (round((float) $component->price, 2) !== round((float) $sourcePrice, 2)) {
+                        $oldPrice = round((float) $component->price, 2) + 0;
+                        $newPrice = round((float) $sourcePrice, 2) + 0;
 
                         $component->price = $sourcePrice;
                         $component->total_price = $sourcePrice * (float) $component->quantity;
