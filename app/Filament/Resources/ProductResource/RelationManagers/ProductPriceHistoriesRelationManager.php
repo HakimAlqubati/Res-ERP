@@ -56,6 +56,7 @@ class ProductPriceHistoriesRelationManager extends RelationManager
                 TextColumn::make('note')
                     ->label('Note')
                     ->limit(100)
+                    ->tooltip(fn($state)=>$state)
                     ->toggleable(),
 
                 TextColumn::make('date')

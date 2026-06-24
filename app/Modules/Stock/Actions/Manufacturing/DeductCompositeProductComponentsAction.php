@@ -27,7 +27,8 @@ final class DeductCompositeProductComponentsAction
         // 1. تحسين الأداء (1): جلب جميع المكونات باستعلام واحد فقط!
         $productIds = $order->details->pluck('product_id')->unique()->toArray();
 
-        $allComponents = ProductItem::whereIn('parent_product_id', $productIds)
+        $allComponents = ProductItem::with('product')
+            ->whereIn('parent_product_id', $productIds)
             ->get()
             ->groupBy('parent_product_id');
 
@@ -68,8 +69,17 @@ final class DeductCompositeProductComponentsAction
                     $sourcePrice = (float) $lastAllocation['price_based_on_unit'];
 
                     if (round((float) $component->price, 6) !== round($sourcePrice, 6)) {
-                        $oldPrice = round((float) $component->price, 2);
-                        $newPrice = round($sourcePrice, 2);
+                        $oldPriceRaw = (float) $component->price;
+                        $newPriceRaw = (float) $sourcePrice;
+                        
+                        $oldPrice = round($oldPriceRaw, 2) + 0;
+                        $newPrice = round($newPriceRaw, 2) + 0;
+
+                        if ($oldPrice === $newPrice) {
+                            // إظهار كسور أكثر لكي يفهم المستخدم أن هناك اختلافاً بسيطاً جداً أدى لتحديث السعر
+                            $oldPrice = round($oldPriceRaw, 6) + 0;
+                            $newPrice = round($newPriceRaw, 6) + 0;
+                        }
 
                         $component->price = $sourcePrice;
                         $component->total_price = $sourcePrice * (float) $component->quantity;
@@ -79,7 +89,8 @@ final class DeductCompositeProductComponentsAction
                         );
                         $component->save();
                         $hasPriceChanged = true;
-                        $changedComponentsDetails[] = "ID #{$component->product_id} ({$oldPrice} -> {$newPrice})";
+                        $componentName = $component->product ? $component->product->name : "ID #{$component->product_id}";
+                        $changedComponentsDetails[] = "{$componentName} ({$oldPrice} -> {$newPrice})";
                     }
                 }
 
