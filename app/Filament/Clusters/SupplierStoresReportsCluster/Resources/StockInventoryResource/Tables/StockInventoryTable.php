@@ -31,6 +31,7 @@ use App\Models\Store;
 use App\Services\MultiProductsInventoryService;
 use App\Services\Stock\StockInventory\InventoryProductCacheService;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\RestoreBulkAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\IconColumn;
@@ -146,6 +147,8 @@ class StockInventoryTable
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
+                        ->visible(fn(): bool => StockInventoryResource::canDeleteAny()),
+                        RestoreBulkAction::make()
                         ->visible(fn(): bool => StockInventoryResource::canDeleteAny()),
                     ForceDeleteBulkAction::make()
                         ->visible(fn(): bool => StockInventoryResource::canForceDeleteAny()),
