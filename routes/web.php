@@ -1124,6 +1124,12 @@ Route::get('/login', function () {
     return redirect()->route('filament.admin.auth.login');
 })->name('login');
 
-
 use App\Http\Controllers\BatchReportController;
-Route::get('/batch-report', [BatchReportController::class, 'index'])->name('reports.batch');
+use App\Http\Controllers\GrnReportController;
+
+Route::get('/batch-report', [BatchReportController::class, 'index'])
+    ->name('reports.batch-report');
+
+Route::get('/grnCount', [GrnReportController::class, 'index'])
+    ->name('reports.grn-count')
+    ->middleware('web');
