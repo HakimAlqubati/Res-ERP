@@ -123,6 +123,7 @@ class EmployeeController extends Controller
             ->paginate($perPage)
             ->appends(request()->query())
             ->through(function ($emp) {
+                $salary = !(isHR() || (isBranchManager() && auth()->user()->branch_id != $emp->branch_id)) ? $emp->salary: 0;
                 return [
                     'employee_id' => $emp->id,
                     'employee_no' => $emp->employee_no,
@@ -133,7 +134,7 @@ class EmployeeController extends Controller
                     'nationality_code' => $emp->nationality,
                     'nationality_name' => getNationalities()[$emp->nationality] ?? $emp->nationality,
                     'job_title' => $emp->job_title,
-                    'salary' => !isHR() ? $emp->salary: 0,
+                    'salary' => $salary,
                     'phone_number' => $emp->phone_number,
                     'email' => $emp->email,
                 ];
