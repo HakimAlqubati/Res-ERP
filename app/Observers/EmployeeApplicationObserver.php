@@ -6,6 +6,8 @@ use App\Enums\Warnings\WarningLevel;
 use App\Facades\Warnings;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource;
 use App\Models\EmployeeApplicationV2;
+use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker;
+use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService;
 use App\Services\HR\Applications\AdvanceRequest\AdvanceApprovalService;
 use App\Services\HR\Applications\LeaveRequest\LeaveApprovalService;
 use App\Services\HR\Payroll\PayrollLockGuard;
@@ -71,6 +73,10 @@ class EmployeeApplicationObserver
      */
     public function created(EmployeeApplicationV2 $app): void
     {
+        if (app(ApprovalWorkflowRequirementChecker::class)->hasActivePolicy($app)) {
+            app(ApprovalWorkflowService::class)->createFor($app);
+        }
+
         try {
             $employee = $app->employee()->with(['manager.user'])->first();
 
