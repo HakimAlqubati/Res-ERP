@@ -90,6 +90,7 @@ class EmployeeController extends Controller
             'phone_number',
             'email',
         )
+        ->forBranchManager()
         ->with('branch:id,name')
             ->when(request('branch_id'), function ($query, $branchId) {
                 $query->where('branch_id', $branchId);

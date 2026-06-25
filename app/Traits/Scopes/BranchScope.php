@@ -15,17 +15,17 @@ trait BranchScope
      */
     public function scopeForBranchManager(Builder $query, string $branchColumn = 'branch_id'): Builder
     {
+        $canViewAll = auth()->user()->employee
+                ?->settings
+                ?->can_view_all_branches ?? false;
+        if($canViewAll && $query->getModel() instanceof \App\Models\Employee){
+            return $query;
+        }
         if (auth()->check() && (isSuperAdmin() || isSystemManager())) {
             return $query;
         }
         
         if (auth()->check() && isBranchManager()) {
-            $canViewAll = auth()->user()->employee
-                ?->settings
-                ?->can_view_all_branches ?? false;
-            if($canViewAll && $query->getModel() instanceof \App\Models\Employee){
-                return $query;
-            }
             return $query->where($branchColumn, auth()->user()->branch_id);
         }
 
