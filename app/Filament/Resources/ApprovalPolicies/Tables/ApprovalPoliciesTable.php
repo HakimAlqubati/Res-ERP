@@ -47,7 +47,7 @@ class ApprovalPoliciesTable
                     }),
 
                 TextColumn::make('application_type_id')
-                    ->label(__('Application Type'))
+                    ->label(__('Request Type'))
                     ->formatStateUsing(fn($state): string => $state
                         ? (EmployeeApplicationV2::APPLICATION_TYPE_NAMES[(int) $state] ?? (string) $state)
                         : __('All'))
@@ -82,7 +82,7 @@ class ApprovalPoliciesTable
                     ->options(self::approvableTypeOptions()),
 
                 SelectFilter::make('application_type_id')
-                    ->label(__('Employee Application Type'))
+                    ->label(__('Employee Request Type'))
                     ->options(EmployeeApplicationV2::APPLICATION_TYPE_NAMES),
 
                 SelectFilter::make('branch_id')
@@ -108,7 +108,7 @@ class ApprovalPoliciesTable
     private static function approvableTypeOptions(): array
     {
         return [
-            EmployeeApplicationV2::class => __('Employee Applications'),
+            EmployeeApplicationV2::class => __('Employee Reqests'),
             EmployeeOvertime::class => __('Employee Overtime'),
             AdvanceWage::class => __('Advance Wages'),
         ];
