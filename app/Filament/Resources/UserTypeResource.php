@@ -3,16 +3,8 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Clusters\HRUserTypeCluster;
-use Filament\Schemas\Schema;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\Toggle;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Actions\EditAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use App\Filament\Resources\UserTypeResource\Pages\ListUserTypes;
+ 
+ 
 use App\Filament\Resources\UserTypeResource\Pages\CreateUserType;
 use App\Filament\Resources\UserTypeResource\Pages\EditUserType;
 use App\Filament\Resources\UserTypeResource\Pages\ListUserTypes;
@@ -27,7 +19,7 @@ use Filament\Schemas\Components\Fieldset;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Resources\Resource;
+ 
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
