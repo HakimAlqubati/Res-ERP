@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Observers\EmployeeServiceTerminationObserver;
 use App\Traits\Scopes\BranchScope;
+use App\Traits\Scopes\StatusScope;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[ObservedBy([EmployeeServiceTerminationObserver::class])]
 class EmployeeServiceTermination extends Model
 {
-    use HasFactory, SoftDeletes,BranchScope;
+    use BranchScope, HasFactory,SoftDeletes,StatusScope;
 
     protected $table = 'hr_employee_service_terminations';
 
@@ -23,6 +24,8 @@ class EmployeeServiceTermination extends Model
         'termination_reason',
         'notes',
         'status',
+        'auto_approve',
+        'scheduled_approver_id',
         'rejection_reason',
         'created_by',
         'updated_by',
@@ -34,15 +37,19 @@ class EmployeeServiceTermination extends Model
 
     protected $casts = [
         'termination_date' => 'date',
-        'approved_at'      => 'datetime',
-        'rejected_at'      => 'datetime',
+        'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
+        'auto_approve' => 'boolean',
     ];
 
     // Status Constants
-    const STATUS_PENDING  = 'pending';
+    const STATUS_PENDING = 'pending';
+
     const STATUS_APPROVED = 'approved';
+
     const STATUS_REJECTED = 'rejected';
-    const STATUS_CANCEL   = 'cancelled';
+
+    const STATUS_CANCEL = 'cancelled';
 
     public function employee()
     {
@@ -51,7 +58,7 @@ class EmployeeServiceTermination extends Model
 
     public function branch()
     {
-        return $this->belongsTo(\App\Models\Branch::class);
+        return $this->belongsTo(Branch::class);
     }
 
     public function createdBy()
@@ -62,6 +69,11 @@ class EmployeeServiceTermination extends Model
     public function updatedBy()
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function scheduledApprover()
+    {
+        return $this->belongsTo(User::class, 'scheduled_approver_id');
     }
 
     public function approvedBy()

@@ -175,7 +175,7 @@ class GoodsReceivedNote extends Model implements Auditable
                         'movement_type' => InventoryTransaction::MOVEMENT_IN,
                         'quantity' => $detail->quantity,
                         'package_size' => $detail->package_size,
-                        'price' => getUnitPrice($detail->product_id, $detail->unit_id),
+                        'price' => $detail->price,
                         'movement_date' => $grn->grn_date ?? now(),
                         'unit_id' => $detail->unit_id,
                         'store_id' => $grn->store_id,

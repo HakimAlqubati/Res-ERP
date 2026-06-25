@@ -2,37 +2,35 @@
 
 namespace App\Filament\Resources\OrderReportsResource;
 
-use Filament\Pages\Enums\SubNavigationPosition;
-use App\Filament\Clusters\MainOrdersCluster;
-use App\Filament\Clusters\OrderCluster;
 use App\Filament\Clusters\OrderReportsCluster;
-use App\Filament\Clusters\ReportOrdersCluster;
 use App\Filament\Resources\OrderReportsResource\Pages\ListReportProductQuantities;
 use App\Models\Branch;
-use App\Models\FakeModelReports\ReportProductQuantities;
-use App\Models\Order;
-use App\Models\OrderDetails;
-use App\Models\Product;
 use App\Models\Category;
+use App\Models\FakeModelReports\ReportProductQuantities;
+use App\Models\Product;
 use Filament\Forms\Components\DatePicker;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\DB;
 
 class ReportProductQuantitiesResource extends Resource
 {
     protected static ?string $model = ReportProductQuantities::class;
+
     protected static ?string $slug = 'report-product-quantities';
-    protected static string | \BackedEnum | null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
+
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
+
     protected static ?string $cluster = OrderReportsCluster::class;
+
     protected static bool $shouldRegisterNavigation = true;
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
     protected static ?int $navigationSort = 2;
 
     /**
@@ -42,6 +40,7 @@ class ReportProductQuantitiesResource extends Resource
     {
         return __('lang.report_product_quantities');
     }
+
     public static function getNavigationLabel(): string
     {
         return __('lang.report_product_quantities');
@@ -63,7 +62,7 @@ class ReportProductQuantitiesResource extends Resource
     {
         return $table->deferFilters(false)
             ->filters([
-                SelectFilter::make("product_id")
+                SelectFilter::make('product_id')
                     // ->multiple()
                     ->label(__('lang.product'))->searchable()
                     ->getSearchResultsUsing(function (string $search): array {
@@ -74,17 +73,17 @@ class ReportProductQuantitiesResource extends Resource
                             })
                             ->limit(50)
                             ->get()
-                            ->mapWithKeys(fn($product) => [
-                                $product->id => "{$product->code} - {$product->name}"
+                            ->mapWithKeys(fn ($product) => [
+                                $product->id => "{$product->code} - {$product->name}",
                             ])
                             ->toArray();
                     })
-                    ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
+                    ->getOptionLabelUsing(fn ($value): ?string => Product::find($value)?->code.' - '.Product::find($value)?->name)
                     ->options(function () {
                         return Product::where('active', 1)
                             ->get()
-                            ->mapWithKeys(fn($product) => [
-                                $product->id => "{$product->code} - {$product->name}"
+                            ->mapWithKeys(fn ($product) => [
+                                $product->id => "{$product->code} - {$product->name}",
                             ]);
                     }),
                 SelectFilter::make('category_id')
@@ -97,7 +96,7 @@ class ReportProductQuantitiesResource extends Resource
                     ->options(Branch::whereIn('type', [
                         Branch::TYPE_BRANCH,
                         Branch::TYPE_CENTRAL_KITCHEN,
-                        Branch::TYPE_POPUP
+                        Branch::TYPE_POPUP,
                     ])
                         ->activePopups()
                         ->active()->pluck('name', 'id')),
@@ -108,7 +107,16 @@ class ReportProductQuantitiesResource extends Resource
                             ->label(__('lang.start_date')),
                         DatePicker::make('end_date')
                             ->label(__('lang.end_date')),
-                    ])
+                    ]),
             ], layout: FiltersLayout::AboveContent);
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) {
+            return true;
+        }
+
+        return false;
     }
 }

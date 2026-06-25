@@ -18,16 +18,18 @@ class WeeklyLeaveCalculator extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static string | \BackedEnum | null $navigationIcon = Heroicon::Calculator;
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::Calculator;
 
-    protected   string $view = 'filament.clusters.hr-salary-cluster.pages.weekly-leave-calculator';
+    protected string $view = 'filament.clusters.hr-salary-cluster.pages.weekly-leave-calculator';
 
     protected static ?string $cluster = HRSalaryCluster::class;
 
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     protected static ?int $navigationSort = 4;
+
     protected static ?string $navigationLabel = 'Weekly Leave Calculator';
+
     protected ?string $heading = 'Weekly Leave Calculator';
 
     // Form State
@@ -45,7 +47,7 @@ class WeeklyLeaveCalculator extends Page implements HasForms
     {
         $this->form->fill([
             'total_month_days' => $this->data['total_month_days'] ?? 30,
-            'absent_days'      => $this->data['absent_days'] ?? 0,
+            'absent_days' => $this->data['absent_days'] ?? 0,
         ]);
 
         // ✅ إذا كانت القيم موجودة في الـ URL، احسب تلقائياً
@@ -77,7 +79,7 @@ class WeeklyLeaveCalculator extends Page implements HasForms
                                 ->required()
                                 ->default(0),
                         ]),
-                    ])
+                    ]),
             ])
             ->statePath('data');
     }
@@ -89,10 +91,19 @@ class WeeklyLeaveCalculator extends Page implements HasForms
         $totalMonthDays = (int) $data['total_month_days'];
         $absentDays = (float) $data['absent_days'];
 
-        $calculator = new CalculatorService();
-        $this->result = $calculator->calculate($totalMonthDays, $absentDays,[
+        $calculator = new CalculatorService;
+        $this->result = $calculator->calculate($totalMonthDays, $absentDays, [
             'is_period_ended' => true,
-            'is_for_payroll'  => true,
+            'is_for_payroll' => true,
         ]);
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) {
+            return true;
+        }
+
+        return false;
     }
 }

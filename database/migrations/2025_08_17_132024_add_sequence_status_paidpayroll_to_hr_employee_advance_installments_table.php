@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::table('hr_employee_advance_installments', function (Blueprint $table) {
             if (!Schema::hasColumn('hr_employee_advance_installments', 'sequence')) {
                 $table->unsignedInteger('sequence')->after('application_id');
+                $table->unique(['application_id', 'sequence']);
             }
 
             if (!Schema::hasColumn('hr_employee_advance_installments', 'status')) {
@@ -25,12 +26,6 @@ return new class extends Migration
             if (!Schema::hasColumn('hr_employee_advance_installments', 'paid_payroll_id')) {
                 $table->unsignedBigInteger('paid_payroll_id')->nullable()->after('paid_date');
                 $table->foreign('paid_payroll_id')->references('id')->on('hr_payrolls')->nullOnDelete();
-            }
-
-            // الفهرس الفريد
-            if (!Schema::hasColumn('hr_employee_advance_installments', 'sequence')) {
-                $table->unsignedInteger('sequence')->after('application_id');
-                $table->unique(['application_id', 'sequence']);
             }
         });
     }

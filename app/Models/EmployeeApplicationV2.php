@@ -8,6 +8,7 @@ use App\Modules\HR\ApprovalPolicies\Traits\EnforcesApprovalWorkflow;
 use App\Modules\HR\ApprovalPolicies\Traits\HasApprovalWorkflow;
 use App\Traits\EmployeeApplicationAccessors;
 use App\Traits\Scopes\BranchScope;
+use App\Traits\Scopes\StatusScope;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -28,7 +29,8 @@ class EmployeeApplicationV2 extends Model implements Auditable, HasMedia, Approv
         EmployeeApplicationAccessors,
         InteractsWithMedia,
         HasApprovalWorkflow,
-        EnforcesApprovalWorkflow;
+        EnforcesApprovalWorkflow,
+        StatusScope;
 
     protected $appends = [
         'leave_type_name',
@@ -107,6 +109,31 @@ class EmployeeApplicationV2 extends Model implements Auditable, HasMedia, Approv
     const STATUS_PENDING = 'pending';
     const STATUS_APPROVED = 'approved';
     const STATUS_REJECTED = 'rejected';
+
+    /**
+     * Get translatable labels for all statuses.
+     *
+     * @return array<string, string>
+     */
+    public static function statuses(): array
+    {
+        return [
+            self::STATUS_PENDING  => __('lang.pending'),
+            self::STATUS_APPROVED => __('lang.approved'),
+            self::STATUS_REJECTED => __('lang.rejected'),
+        ];
+    }
+
+    /**
+     * Get translatable label for a specific status.
+     *
+     * @param string|null $status
+     * @return string
+     */
+    public static function getStatusLabel(?string $status): string
+    {
+        return self::statuses()[$status] ?? $status ?? '';
+    }
 
     // ─────────────────────────────────────────────────────────────
     // Relationships

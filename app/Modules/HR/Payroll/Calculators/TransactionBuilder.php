@@ -38,6 +38,7 @@ class TransactionBuilder
         array $advanceWages,
         array $mealRequests,
         array $dynamicDeductions,
+        array $customDeductions = [],
         array $monthlyIncentives = [],
         float $overtimeMultiplier = 1.5,
         array $policyHookTransactions = [],
@@ -204,6 +205,20 @@ class TransactionBuilder
                 'applied_by'   => $ded['applied_by'] ?? null,
                 'reference_type' => Deduction::class,
                 'reference_id' => $ded['id'] ?? null,
+            ];
+        }
+
+        // 10.5. الخصومات المخصصة للموظف
+        foreach ($customDeductions['items'] ?? [] as $cd) {
+            $tx[] = [
+                'type'         => SalaryTransactionType::TYPE_DEDUCTION,
+                'sub_type'     => Str::slug($cd['name'] ?? 'custom-deduction'),
+                'amount'       => $this->round($cd['amount']),
+                'operation'    => '-',
+                'description'  => $cd['name'] ?? 'Custom deduction',
+                'deduction_id' => $cd['id'] ?? null,
+                'reference_type' => Deduction::class,
+                'reference_id' => $cd['id'] ?? null,
             ];
         }
 

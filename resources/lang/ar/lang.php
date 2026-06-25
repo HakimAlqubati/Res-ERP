@@ -351,6 +351,8 @@ return [
   'monthly_bonus' => 'المكافأة الشهرية',
   'deductions' => 'الخصومات',
   'deduction' => 'خصم',
+  'custom_deductions' => 'الخصومات المخصصة',
+  'custom_deduction' => 'خصم مخصص',
   'type' => 'النوع',
   'percentage' => 'النسبة المئوية',
   'amount_percentage' => 'المبلغ / النسبة',
@@ -359,6 +361,9 @@ return [
   'exempt_from_late_attendance_deduction' => 'معفى من خصم التأخير',
   'is_mtd_applicable' => 'خاضع لـMTD',
   'has_auto_weekly_leave' => 'إجازة أسبوعية تلقائية',
+  'max_weekly_leave_days' => 'الحد الأقصى لأيام الإجازة الأسبوعية / شهر',
+  'max_weekly_leave_days_hint' => 'تجاوز الإعداد الافتراضي (4 أيام). اتركه فارغاً لاستخدام الافتراضي.',
+  'no_shift_is_present' => 'حضور بدون شفت',
   'can_add_branch_order' => 'يمكنه إضافة طلب فرع',
 
   // ===========================================
@@ -366,6 +371,8 @@ return [
   // ===========================================
   'attendance' => 'الحضور',
   'shift' => 'الوردية',
+  'total_shift_hours' => 'إجمالي ساعات الشفت',
+  'currently_shift_hours' => 'ساعات الشفت الحالية',
   'shifts' => 'الورديات',
   'shift_id' => 'رقم الوردية',
   'shift_rfid' => 'الوردية - RFID',
@@ -404,6 +411,8 @@ return [
   // HRMS - Status & Actions
   // ===========================================
   'inactive' => 'غير فعال',
+  'enable_account' => 'تفعيل الحساب',
+  'disable_account' => 'تعطيل الحساب',
   'activate' => 'تفعيل',
   'deactivate' => 'إلغاء التفعيل',
   'create' => 'إنشاء',
@@ -1134,4 +1143,5 @@ return [
   'auto_missed_checkout_request_created_success' => 'تم إنشاء طلب انصراف تلقائياً لعدم وجود بصمة حضور سابقة، يرجى مراجعته مع الموارد البشرية.',
   'auto_generated_reason_missing_checkin' => 'تم الإنشاء تلقائياً بسبب تسجيل انصراف بدون بصمة دخول سابقة',
   'rejected_successfully' => 'تم الرفض بنجاح',
+  'auto' => 'تلقائي',
 ];

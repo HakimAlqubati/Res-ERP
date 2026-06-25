@@ -5,6 +5,7 @@ namespace App\Filament\Resources\EmployeeResource\Pages;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\RestoreAction;
 use App\Filament\Resources\EmployeeResource;
+use App\Filament\Resources\EmployeeResource\EmployeeActions;
 use App\Models\Employee;
 use Filament\Actions\ViewAction;
 use Filament\Pages\Actions;
@@ -20,6 +21,8 @@ class EditEmployee extends EditRecord
         return [
             DeleteAction::make(),
             ViewAction::make(),
+            \App\Filament\Resources\EmployeeResource\EmployeeActions::changeBranch(),
+            EmployeeActions::attendance(),
             RestoreAction::make(),
             \Filament\Actions\Action::make('rehire')
                 ->label(__('lang.rehire'))
@@ -55,6 +58,9 @@ class EditEmployee extends EditRecord
 
     protected function getRedirectUrl(): string
     {
+        if(isHakimOrAdel()){
+            return EmployeeResource::getUrl('edit',['record'=>$this->record->id]);
+        }
         return $this->getResource()::getUrl('index');
     }
 

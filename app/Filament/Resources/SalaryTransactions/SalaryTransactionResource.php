@@ -27,14 +27,20 @@ class SalaryTransactionResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
 
     protected static ?string $recordTitleAttribute = 'employee.name';
+
+    protected static bool $isGloballySearchable = false;
+
     protected static ?string $cluster = HRSalaryCluster::class;
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     protected static ?int $navigationSort = 2;
+
     public static function form(Schema $schema): Schema
     {
         return SalaryTransactionForm::configure($schema);
     }
+
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
@@ -64,7 +70,7 @@ class SalaryTransactionResource extends Resource
             'create' => CreateSalaryTransaction::route('/create'),
             'view' => ViewSalaryTransaction::route('/{record}'),
             'edit' => EditSalaryTransaction::route('/{record}/edit'),
-        ];  
+        ];
     }
 
     public static function getRecordRouteBindingEloquentQuery(): Builder
@@ -73,5 +79,14 @@ class SalaryTransactionResource extends Resource
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -17,7 +17,10 @@ class AdvanceWageService implements AdvanceWageServiceInterface
 
     public function getAll(array $filters, int $perPage = 15): LengthAwarePaginator
     {
-        $query = AdvanceWage::query()->with(['employee', 'creator', 'approver', 'settledPayroll']);
+        $query = AdvanceWage::query()
+        ->forBranchManager()
+        // ->forEmployee('employee_id')
+        ->with(['employee', 'creator', 'approver', 'settledPayroll']);
 
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);

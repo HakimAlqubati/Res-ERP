@@ -51,7 +51,7 @@ class LogsRelationManager extends RelationManager
 
                 TextColumn::make('created_at')
                     ->label('Created At')
-                    ->formatStateUsing(fn($state) => Carbon::parse($state)->format('d-m-Y h:i A'))
+                    ->formatStateUsing(fn($state) => Carbon::parse($state)->format('d-m-Y h:i:s A'))
 
                     // ->since()
                     ->sortable(),

@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromView;
 
 class PayrollTransactionsExport implements FromView
@@ -18,7 +19,7 @@ class PayrollTransactionsExport implements FromView
 
     public function view(): View
     {
-        $transactions = $this->transactions->map(function ($tx) {
+        $transactions = $this->mergeSimilarTransactions(collect($this->transactions))->map(function ($tx) {
             if (str_contains($tx->description ?? '', 'Advance installment')) {
                 $tx->description = 'Advance Installment';
             }
@@ -29,5 +30,50 @@ class PayrollTransactionsExport implements FromView
             'transactions' => $transactions,
             'employeeName' => $this->employeeName,
         ]);
+    }
+
+    private function mergeSimilarTransactions(Collection $transactions): Collection
+    {
+        return $transactions
+            ->groupBy(fn($transaction) => implode('|', [
+                $transaction->operation,
+                $transaction->type,
+                $transaction->sub_type,
+                $transaction->unit,
+                $transaction->multiplier,
+                $this->mergeLabel($transaction),
+            ]))
+            ->map(function (Collection $group) {
+                $first = $group->first();
+                $label = $this->mergeLabel($first);
+
+                return (object) [
+                    'id'          => $first->id,
+                    'operation'   => $first->operation,
+                    'type'        => $first->type,
+                    'sub_type'    => $first->sub_type,
+                    'description' => $label,
+                    'amount'      => round((float) $group->sum('amount'), 2),
+                    'status'      => $first->status,
+                    'date'        => $first->date,
+                    'unit'        => $first->unit,
+                    'qty'         => $group->sum('qty'),
+                    'rate'        => $first->rate,
+                    'multiplier'  => $first->multiplier,
+                ];
+            })
+            ->values();
+    }
+
+    private function mergeLabel($transaction): string
+    {
+        if ($transaction->sub_type === 'base_salary') {
+            return 'Base salary';
+        }
+
+        $label = $transaction->description
+            ?: ucfirst(str_replace('_', ' ', $transaction->sub_type ?? ($transaction->type ?? '')));
+
+        return trim((string) preg_replace('/\s*\([^)]*\d+\s*days?[^)]*\)\s*/i', ' ', $label));
     }
 }

@@ -7,7 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use App\Observers\ServiceRequestCommentObserver;
 
+#[ObservedBy(ServiceRequestCommentObserver::class)]
 class ServiceRequestComment extends Model implements HasMedia
 {
     use HasFactory, InteractsWithMedia;

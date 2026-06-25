@@ -40,6 +40,7 @@ class Product extends Model implements Auditable
         'waste_stock_percentage',
         'sku',
         'type',
+        'image',
     ];
     protected $auditInclude = [
         'name',
@@ -55,8 +56,9 @@ class Product extends Model implements Auditable
         'waste_stock_percentage',
         'sku',
         'type',
+        'image',
     ];
-    protected $appends = ['unit_prices_count', 'product_items_count', 'is_manufacturing', 'formatted_unit_prices', 'display_name'];
+    protected $appends = ['unit_prices_count', 'product_items_count', 'is_manufacturing', 'formatted_unit_prices', 'display_name', 'image_url'];
 
     public const TYPE_RAW           = 'raw';
     public const TYPE_SEMI_FINISHED = 'semi_finished';
@@ -265,6 +267,12 @@ class Product extends Model implements Auditable
     {
         return "{$this->name} ({$this->code})";
     }
+
+    public function getImageUrlAttribute()
+    {
+        return $this->image ? asset('storage/' . $this->image) : asset('images/default-product.svg');
+    }
+
     public function inventoryTransactions()
     {
         return $this->hasMany(InventoryTransaction::class);

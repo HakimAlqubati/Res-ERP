@@ -39,6 +39,7 @@ use App\Modules\HR\Payroll\Calculators\MealRequestCalculator;
 use App\Modules\HR\Payroll\Calculators\GeneralDeductionCalculator;
 use App\Modules\HR\Payroll\Calculators\TransactionBuilder;
 use App\Modules\HR\Payroll\Calculators\MonthlyIncentiveCalculator;
+use App\Modules\HR\Payroll\Calculators\CustomDeductionCalculator;
 
 class PayrollServiceProvider extends ServiceProvider
 {
@@ -59,6 +60,7 @@ class PayrollServiceProvider extends ServiceProvider
         $this->app->singleton(GeneralDeductionCalculator::class);
         $this->app->singleton(TransactionBuilder::class);
         $this->app->singleton(MonthlyIncentiveCalculator::class);
+        $this->app->singleton(CustomDeductionCalculator::class);
 
         // ===== Repositories =====
         $this->app->singleton(PayrollRepositoryInterface::class, PayrollRepository::class);
@@ -80,6 +82,7 @@ class PayrollServiceProvider extends ServiceProvider
                 $app->make(GeneralDeductionCalculator::class),
                 $app->make(TransactionBuilder::class),
                 $app->make(MonthlyIncentiveCalculator::class),
+                $app->make(CustomDeductionCalculator::class),
             );
         });
         $this->app->singleton(SalaryCalculatorService::class, function ($app) {

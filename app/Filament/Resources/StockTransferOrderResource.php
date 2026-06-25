@@ -2,49 +2,50 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Pages\Enums\SubNavigationPosition;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Fieldset;
-use Filament\Schemas\Components\Grid;
-use App\Services\MultiProductsInventoryService;
-use Filament\Schemas\Components\Utilities\Set;
-use Filament\Actions\EditAction;
-use Filament\Actions\Action;
-use Throwable;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use App\Filament\Resources\StockTransferOrderResource\Pages\ListStockTransferOrders;
+use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Resources\StockTransferOrderResource\Pages\CreateStockTransferOrder;
 use App\Filament\Resources\StockTransferOrderResource\Pages\EditStockTransferOrder;
+use App\Filament\Resources\StockTransferOrderResource\Pages\ListStockTransferOrders;
 use App\Filament\Resources\StockTransferOrderResource\Pages\ViewStockTransferOrder;
-use App\Filament\Clusters\InventoryManagementCluster;
-use App\Filament\Resources\StockTransferOrderResource\Pages;
 use App\Models\Product;
 use App\Models\StockTransferOrder;
 use App\Models\Store;
 use App\Models\UnitPrice;
-use Filament\Forms;
+use App\Services\MultiProductsInventoryService;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class StockTransferOrderResource extends Resource
 {
-    protected static ?string $model          = StockTransferOrder::class;
-    protected static ?string $slug           = 'stock-transfer-orders';
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $model = StockTransferOrder::class;
 
-    protected static ?string $cluster                             = InventoryManagementCluster::class;
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort                         = 8;
+    protected static ?string $slug = 'stock-transfer-orders';
+
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    protected static ?string $cluster = InventoryManagementCluster::class;
+
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
+    protected static ?int $navigationSort = 8;
 
     public static function form(Schema $schema): Schema
     {
@@ -67,6 +68,7 @@ class StockTransferOrderResource extends Resource
                                                 $state
                                             );
                                         }
+
                                         return $item;
                                     })->toArray();
 
@@ -84,7 +86,7 @@ class StockTransferOrderResource extends Resource
                         Select::make('status')
                             ->required()
                             ->options([
-                                'created'  => 'Created',
+                                'created' => 'Created',
                                 'approved' => 'Approved',
                                 'rejected' => 'Rejected',
                             ])->disabled()->dehydrated()
@@ -103,12 +105,12 @@ class StockTransferOrderResource extends Resource
                             ->options(
                                 Product::where('active', 1)
                                     ->get()
-                                    ->mapWithKeys(fn($product) => [
+                                    ->mapWithKeys(fn ($product) => [
                                         $product->id => "{$product->code} - {$product->name}",
                                     ])
                                     ->toArray()
                             )
-                            ->visible(fn($record) => blank($record)) // يظهر فقط أثناء الإضافة
+                            ->visible(fn ($record) => blank($record)) // يظهر فقط أثناء الإضافة
                             ->live(onBlur: true)
                             ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                 $details = $get('details') ?? [];
@@ -125,7 +127,7 @@ class StockTransferOrderResource extends Resource
                                         continue;
                                     }
 
-                                    $unitPrice    = $product->supplyOutUnitPrices->first();
+                                    $unitPrice = $product->supplyOutUnitPrices->first();
                                     $availableQty = 1;
 
                                     if ($get('from_store_id')) {
@@ -137,19 +139,19 @@ class StockTransferOrderResource extends Resource
                                     }
 
                                     $details[] = [
-                                        'product_id'         => $productId,
-                                        'unit_id'            => $unitPrice?->unit_id,
-                                        'package_size'       => $unitPrice?->package_size ?? 1,
-                                        'quantity'           => 1,
+                                        'product_id' => $productId,
+                                        'unit_id' => $unitPrice?->unit_id,
+                                        'package_size' => $unitPrice?->package_size ?? 1,
+                                        'quantity' => 1,
                                         'remaining_quantity' => $availableQty,
-                                        'notes'              => '',
+                                        'notes' => '',
                                     ];
                                 }
 
                                 // المنتجات التي يجب حذفها من details
                                 $remainingProductIds = $state;
-                                $details             = collect($details)
-                                    ->filter(fn($item) => in_array($item['product_id'], $remainingProductIds))
+                                $details = collect($details)
+                                    ->filter(fn ($item) => in_array($item['product_id'], $remainingProductIds))
                                     ->values()
                                     ->toArray();
 
@@ -167,7 +169,7 @@ class StockTransferOrderResource extends Resource
                                     ->options(function () {
                                         return Product::where('active', 1)
                                             ->get()
-                                            ->mapWithKeys(fn($product) => [
+                                            ->mapWithKeys(fn ($product) => [
                                                 $product->id => "{$product->code} - {$product->name}",
                                             ]);
                                     })
@@ -180,12 +182,12 @@ class StockTransferOrderResource extends Resource
                                             })
                                             ->limit(50)
                                             ->get()
-                                            ->mapWithKeys(fn($product) => [
+                                            ->mapWithKeys(fn ($product) => [
                                                 $product->id => "{$product->code} - {$product->name}",
                                             ])
                                             ->toArray();
                                     })
-                                    ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name),
+                                    ->getOptionLabelUsing(fn ($value): ?string => Product::find($value)?->code.' - '.Product::find($value)?->name),
 
                                 Select::make('unit_id')->label('Unit')
                                     ->options(function (callable $get) {
@@ -200,7 +202,7 @@ class StockTransferOrderResource extends Resource
                                     ->searchable()
                                     ->reactive()
                                     ->afterStateUpdated(function (Set $set, $state, $get) {
-                                        $productId   = $get('product_id');
+                                        $productId = $get('product_id');
                                         $fromStoreId = $get('../../from_store_id'); // صعود للمخزن
 
                                         $unitPrice = UnitPrice::where('product_id', $productId)
@@ -230,8 +232,8 @@ class StockTransferOrderResource extends Resource
                                     ->dehydrated(false)
                                     ->afterStateHydrated(function (callable $set, $get) {
                                         $productId = $get('product_id');
-                                        $unitId    = $get('unit_id');
-                                        $storeId   = $get('../../from_store_id'); // صعود للخارج للوصول لقيمة المخزن
+                                        $unitId = $get('unit_id');
+                                        $storeId = $get('../../from_store_id'); // صعود للخارج للوصول لقيمة المخزن
 
                                         if ($productId && $unitId && $storeId) {
                                             $qty = MultiProductsInventoryService::getRemainingQty($productId, $unitId, $storeId);
@@ -272,11 +274,11 @@ class StockTransferOrderResource extends Resource
                 TextColumn::make('fromStore.name')->label('From')->sortable()->searchable()->alignCenter(true)->toggleable(),
                 TextColumn::make('toStore.name')->label('To')->sortable()->searchable()->alignCenter(true)->toggleable(),
                 TextColumn::make('date')->date()->sortable()->searchable()->alignCenter(true)->toggleable(),
-                TextColumn::make('status')->badge()->sortable()->searchable()->alignCenter(true)->toggleable()->color(fn(string $state): string => match ($state) {
-                    StockTransferOrder::STATUS_CREATED                                                                                              => 'gray',
-                    StockTransferOrder::STATUS_APPROVED                                                                                             => 'success',
-                    StockTransferOrder::STATUS_REJECTED                                                                                             => 'danger',
-                    default                                                                                                                         => 'secondary',
+                TextColumn::make('status')->badge()->sortable()->searchable()->alignCenter(true)->toggleable()->color(fn (string $state): string => match ($state) {
+                    StockTransferOrder::STATUS_CREATED => 'gray',
+                    StockTransferOrder::STATUS_APPROVED => 'success',
+                    StockTransferOrder::STATUS_REJECTED => 'danger',
+                    default => 'secondary',
                 }),
                 TextColumn::make('created_at')->dateTime()->sortable()->searchable()->alignCenter(true)->toggleable(),
                 TextColumn::make('details_count')->alignCenter(true)->toggleable(),
@@ -286,7 +288,7 @@ class StockTransferOrderResource extends Resource
                 //
             ])
             ->recordActions([
-                EditAction::make()->visible(fn($record): bool => $record->status === StockTransferOrder::STATUS_CREATED),
+                EditAction::make()->visible(fn ($record): bool => $record->status === StockTransferOrder::STATUS_CREATED),
 
                 Action::make('reject')->button()
                     ->label('Reject')
@@ -301,14 +303,14 @@ class StockTransferOrderResource extends Resource
                                     ->rows(4)->columnSpanFull(),
                             ]),
                     ])
-                    ->visible(fn($record) => $record->status === StockTransferOrder::STATUS_CREATED)
+                    ->visible(fn ($record) => $record->status === StockTransferOrder::STATUS_CREATED)
                     ->action(function ($data, $record) {
                         try {
                             DB::beginTransaction();
 
                             $record->update([
-                                'status'          => StockTransferOrder::STATUS_REJECTED,
-                                'rejected_by'     => auth()->id(),
+                                'status' => StockTransferOrder::STATUS_REJECTED,
+                                'rejected_by' => auth()->id(),
                                 'rejected_reason' => $data['rejected_reason'],
                             ]);
 
@@ -325,12 +327,12 @@ class StockTransferOrderResource extends Resource
                     ->color('success')->button()
                     ->icon('heroicon-o-check-circle')
                     // ->requiresConfirmation()
-                    ->visible(fn($record) => $record->status === StockTransferOrder::STATUS_CREATED)
+                    ->visible(fn ($record) => $record->status === StockTransferOrder::STATUS_CREATED)
                     ->action(function ($record) {
                         try {
                             DB::beginTransaction();
                             $record->update([
-                                'status'      => StockTransferOrder::STATUS_APPROVED,
+                                'status' => StockTransferOrder::STATUS_APPROVED,
                                 'approved_at' => now(),
                             ]);
 
@@ -360,10 +362,10 @@ class StockTransferOrderResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => ListStockTransferOrders::route('/'),
+            'index' => ListStockTransferOrders::route('/'),
             'create' => CreateStockTransferOrder::route('/create'),
-            'edit'   => EditStockTransferOrder::route('/{record}/edit'),
-            'view'   => ViewStockTransferOrder::route('/{record}'),
+            'edit' => EditStockTransferOrder::route('/{record}/edit'),
+            'view' => ViewStockTransferOrder::route('/{record}'),
         ];
     }
 
@@ -373,5 +375,14 @@ class StockTransferOrderResource extends Resource
 
             // ->forBranchManager()
             ->count();
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isFinanceManager()) {
+            return true;
+        }
+
+        return false;
     }
 }

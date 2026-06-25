@@ -166,4 +166,12 @@ class SupplierResource extends Resource
         }
         return false;
     }
+       public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) {
+            return true;
+        }
+
+        return false;
+    }
 }

@@ -136,8 +136,11 @@ class EmployeeApplicationResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::whereHas('employee', function ($q) {
-            $q->whereNull('deleted_at'); // ignore soft-deleted employees
-        })->count();
+            $q->whereNull('deleted_at');
+        })
+            ->forBranchManager()
+            ->pending()
+            ->count();
     }
 
     public static function canCreate(): bool
@@ -248,7 +251,7 @@ class EmployeeApplicationResource extends Resource
                     Fieldset::make()
                         ->disabled(false)
                         ->label('Request data')
-                        ->columns(2)
+                        ->columns(3)
                         ->schema([
                             DatePicker::make('request_check_date')
                                 ->default($record?->missedCheckoutRequest?->date)
@@ -256,6 +259,7 @@ class EmployeeApplicationResource extends Resource
                             TimePicker::make('request_check_time')
                                 ->default($record?->missedCheckoutRequest?->time)
                                 ->label('Time')->readOnly(),
+                            static::getSystemNotePlaceholder(),
                         ]),
                     static::getAttachmentsPlaceholder($record),
                 ];
@@ -431,6 +435,19 @@ class EmployeeApplicationResource extends Resource
                         $record = EmployeeApplicationV2::find($record->id);
                     }
                     $advanceRequest = $record->advanceRequest;
+
+                    $deductionDate = \Carbon\Carbon::parse($data['deduction_starts_from'] ?? $advanceRequest->deduction_starts_from);
+                    if (app(\App\Services\HR\Payroll\PayrollLockGuard::class)->isLocked($advanceRequest->employee_id, $deductionDate->year, $deductionDate->month)) {
+                        \Filament\Notifications\Notification::make()
+                            ->danger()
+                            ->title(__('lang.error') ?: 'Error')
+                            ->body('Cannot process records for this employee in this period.')
+                            ->send();
+
+                        DB::rollBack();
+                        return;
+                    }
+
                     $advanceRequest->finance_approved_by = auth()->id();
                     $advanceRequest->finance_approved_at = now();
                     $advanceRequest->payment_method      = $data['payment_method'] ?? null;
@@ -636,12 +653,27 @@ class EmployeeApplicationResource extends Resource
             ->color('danger')
             ->icon('heroicon-o-x-circle')
             ->action(function ($record, $data) {
-                $record->update([
-                    'status'      => EmployeeApplicationV2::STATUS_REJECTED,
-                    'rejected_by' => auth()->user()->id,
-                    'rejected_at' => now(),
-                    'rejected_reason' => $data['rejected_reason'],
-                ]);
+                try {
+                    \Illuminate\Support\Facades\DB::transaction(function () use ($record, $data) {
+                        $record->update([
+                            'status'      => EmployeeApplicationV2::STATUS_REJECTED,
+                            'rejected_by' => auth()->user()->id,
+                            'rejected_at' => now(),
+                            'rejected_reason' => $data['rejected_reason'],
+                        ]);
+                    });
+
+                    \Filament\Notifications\Notification::make()
+                        ->title(__('lang.rejected_successfully') ?: 'Rejected Successfully')
+                        ->success()
+                        ->send();
+                } catch (\Exception $e) {
+                    \Filament\Notifications\Notification::make()
+                        ->title(__('lang.error') ?: 'Error')
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+                }
             })
             ->schema(function ($record) {
                 return [
@@ -761,6 +793,58 @@ class EmployeeApplicationResource extends Resource
             ->icon('heroicon-o-arrow-path')
             ->requiresConfirmation()
             ->modalHeading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_title', ['id' => '#' . $record->id]))
+            ->modalSubheading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_body'))
+            ->action(function (EmployeeApplicationV2 $record) {
+                try {
+                    app(\App\Services\HR\Applications\EmployeeApplicationService::class)
+                        ->undoApproveApplication($record->id, auth()->id());
+
+                    showSuccessNotifiMessage(__('lang.done'));
+                } catch (\Exception $th) {
+                    showWarningNotifiMessage(__('lang.failed'), $th->getMessage());
+                }
+            });
+    }
+
+    public static function undoApproveAttendanceRequest(): Action
+    {
+        return Action::make('undoApproveAttendanceRequest')
+            ->label(__('lang.undo_approve'))
+            ->button()
+            ->visible(fn($record): bool => (
+                $record->status === EmployeeApplicationV2::STATUS_APPROVED &&
+                $record->application_type_id === EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST
+            ))
+            ->color('warning')
+            ->icon('heroicon-o-arrow-path')
+            ->requiresConfirmation()
+            ->modalHeading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_title' .'id'.'#' . $record->id))
+            ->modalSubheading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_body'))
+            ->action(function (EmployeeApplicationV2 $record) {
+                try {
+                    app(\App\Services\HR\Applications\EmployeeApplicationService::class)
+                        ->undoApproveApplication($record->id, auth()->id());
+
+                    showSuccessNotifiMessage(__('lang.done'));
+                } catch (\Exception $th) {
+                    showWarningNotifiMessage(__('lang.failed'), $th->getMessage());
+                }
+            });
+    }
+
+    public static function undoApproveDepartureRequest(): Action
+    {
+        return Action::make('undoApproveDepartureRequest')
+            ->label(__('lang.undo_approve'))
+            ->button()
+            ->visible(fn($record): bool => (
+                $record->status === EmployeeApplicationV2::STATUS_APPROVED &&
+                $record->application_type_id === EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST
+            ))
+            ->color('warning')
+            ->icon('heroicon-o-arrow-path')
+            ->requiresConfirmation()
+            ->modalHeading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_title' .' id'.'#' . $record->id))
             ->modalSubheading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_body'))
             ->action(function (EmployeeApplicationV2 $record) {
                 try {
@@ -953,9 +1037,10 @@ class EmployeeApplicationResource extends Resource
                         TextInput::make('end_at')->default($attendance?->period?->end_at),
                         Hidden::make('period')->default($attendance?->period),
                     ]),
-                    Fieldset::make()->disabled(false)->label('Request data')->columns(2)->schema([
+                    Fieldset::make()->disabled(false)->label('Request data')->columns(3)->schema([
                         DatePicker::make('request_check_date')->default($details->date)->label('Date'),
                         TimePicker::make('request_check_time')->default($details->time)->label('Time'),
+                        static::getSystemNotePlaceholder(),
                     ]),
 
                     static::getAttachmentsPlaceholder($record),
@@ -1298,10 +1383,13 @@ class EmployeeApplicationResource extends Resource
             ->schema(function ($record) {
                 $mealRequest = $record->mealRequest;
                 return [
-                    Fieldset::make(__('lang.notes'))->columns(2)->schema([
+                    Fieldset::make(__('lang.notes'))->columns(3)->schema([
                         TextInput::make('employee_name')
                             ->label(__('lang.employee'))
                             ->default($record->employee?->name),
+                        DatePicker::make('date')
+                            ->label(__('lang.request_date'))
+                            ->default($mealRequest?->date),
                         TextInput::make('cost')
                             ->label(__('lang.cost'))
                             ->default($mealRequest?->cost),
@@ -1329,8 +1417,7 @@ class EmployeeApplicationResource extends Resource
 
         // Fetch leave types that are active AND the employee still has available balance
         // Available balance = entitled_days - (used_days + pending_days)
-        $leaveTypes = LeaveType::withTrashed()
-        // ->query()
+        $leaveTypes = LeaveType::query()
             ->where('active', 1)
             ->whereHas('leaveBalances', function ($query) use ($employeeId) {
                 $query->where('employee_id', $employeeId)
@@ -1815,6 +1902,20 @@ class EmployeeApplicationResource extends Resource
             $q->whereNull('deleted_at'); // ignore soft-deleted employees
         });
         return $query->forBranchManager();
+    }
+
+    public static function getSystemNotePlaceholder(): \Filament\Forms\Components\Placeholder
+    {
+        return \Filament\Forms\Components\Placeholder::make('is_auto_generated')
+            ->label('System Note')
+            ->content(function ($record) {
+                $isAuto = (bool) $record?->is_auto_generated;
+                if ($isAuto) {
+                    return new \Illuminate\Support\HtmlString('<span class="text-gray-500 dark:text-gray-400 font-medium italic">System-generated: The employee selected "checkout" instead of "check-in".</span>');
+                }
+                return '-';
+            })
+            ->columnSpanFull();
     }
 
     private static function getAttachmentsPlaceholder($record): \Filament\Forms\Components\Placeholder

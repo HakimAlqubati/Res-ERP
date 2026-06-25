@@ -33,13 +33,13 @@ class EmployeeApplicationForm
                         //     $set('basic_salary', $employee?->salary);
                         // })
                         ->disabled(function () {
-                            if (isStuff() || isFinanceManager() || isHR()) {
+                            if (isStuff()) {
                                 return true;
                             }
                             return false;
                         })
                         ->default(function () {
-                            if (isStuff() || isFinanceManager() || isHR()) {
+                            if (isStuff()) {
                                 return auth()->user()->employee->id;
                             }
                         })

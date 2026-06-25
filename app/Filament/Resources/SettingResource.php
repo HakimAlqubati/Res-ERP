@@ -276,6 +276,12 @@ class SettingResource extends Resource
                                                 ->inline(false)
                                                 ->default(true),
 
+                                            Toggle::make('can_create_missed_check_requests')
+                                                ->label('Attendance requests: Enabled for Staff role')
+                                                ->helperText('If enabled, employees (with Staff role) are allowed to create missed check requests.')
+                                                ->inline(false)
+                                                ->default(true),
+
                                         ]),
                                     ]),
                                     Tab::make('Face Rekognation')->schema([
@@ -703,5 +709,14 @@ class SettingResource extends Resource
             'index' => CreateSetting::route('/'),
             // 'edit' => Pages\EditSetting::route('/'),
         ];
+    }
+
+      public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isHR() || isFinanceManager()) {
+            return true;
+        }
+
+        return false;
     }
 }

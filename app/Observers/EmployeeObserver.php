@@ -7,21 +7,37 @@ use App\Models\Employee;
 use App\Models\EmployeeBranchLog;
 use App\Models\User;
 use App\Modules\HR\Leaves\InitEmployeeLeaves\Init;
+use App\Modules\HR\Employee\Services\PassportValidationService;
 use Exception;
 use Illuminate\Support\Facades\Storage;
 
 class EmployeeObserver
 {
+    public function __construct(
+        private readonly PassportValidationService $passportValidationService
+    ) {}
 
     /**
      * Handle the Employee "saving" event.
      */
     public function saving(Employee $employee): void
     {
+        $this->passportValidationService->validateUniquePassportPerNationality($employee);
+
         if ($employee->is_ceo) {
             Employee::where('is_ceo', true)
                 ->where('id', '!=', $employee->id)
                 ->update(['is_ceo' => false]);
+        }
+
+        if ($employee->exists && $employee->isDirty('branch_id') && $employee->branch_id) {
+            $branch = \App\Models\Branch::find($employee->branch_id);
+            if ($branch && $branch->manager_id) {
+                $managerEmployee = Employee::where('user_id', $branch->manager_id)->first();
+                if ($managerEmployee) {
+                    $employee->manager_id = $managerEmployee->id;
+                }
+            }
         }
     }
 

@@ -2,40 +2,42 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
-use Filament\Pages\Enums\SubNavigationPosition;
-use Filament\Schemas\Schema;
-use Filament\Actions\BulkActionGroup;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReportResource\Pages\ListStockAdjustmentReports;
-use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\InventoryReportCluster;
-use App\Filament\Clusters\SupplierStoresReportsCluster;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReportResource\Pages;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReportResource\RelationManagers;
-use App\Models\StockAdjustment;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReportResource\Pages\ListStockAdjustmentReports;
+use App\Models\Product;
 use App\Models\StockAdjustmentDetail;
-use App\Models\StockAdjustmentReport;
 use App\Models\Store;
-use Filament\Forms;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Notifications\Notification;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TextInput;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class StockAdjustmentReportResource extends Resource
 {
     protected static ?string $model = StockAdjustmentDetail::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = InventoryReportCluster::class;
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
     protected static ?int $navigationSort = 9;
+
     protected static bool $shouldRegisterNavigation = false;
+
     public static function getPluralLabel(): ?string
     {
         return 'Stock Adjustment';
@@ -45,6 +47,7 @@ class StockAdjustmentReportResource extends Resource
     {
         return 'Stock Adjustment';
     }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -63,8 +66,7 @@ class StockAdjustmentReportResource extends Resource
                 TextColumn::make('unit.name')->searchable()->toggleable(),
                 TextColumn::make('package_size')->alignCenter(true)->toggleable(),
                 TextColumn::make('quantity')->alignCenter(true)
-                ->summarize(Sum::make())
-                ,
+                    ->summarize(Sum::make()),
                 TextColumn::make('adjustment_type')->alignCenter(true),
                 TextColumn::make('store.name')->toggleable(),
                 TextColumn::make('notes'),
@@ -78,27 +80,123 @@ class StockAdjustmentReportResource extends Resource
                     ->relationship('product.category', 'name')
                     ->searchable()->preload()
                     ->multiple(),
-                SelectFilter::make('proudct_id')
+                SelectFilter::make('product_id')
                     ->label('Product')
-                    ->relationship('product', 'name', fn($query) => $query->select('id', 'name', 'code')->limit(10))
-                    ->searchable(['name', 'code'])
-                    ->getOptionLabelFromRecordUsing(fn($record) => "{$record->code} - {$record->name}")
-
+                    ->searchable()
+                    ->getSearchResultsUsing(function (string $search): array {
+                        return Product::where(function ($q) use ($search) {
+                            $q->where('name', 'like', "%{$search}%")
+                              ->orWhere('code', 'like', "%{$search}%");
+                        })
+                        ->limit(20)
+                        ->get()
+                        ->mapWithKeys(fn ($p) => [$p->id => "{$p->code} — {$p->name}"])
+                        ->toArray();
+                    })
+                    ->getOptionLabelUsing(
+                        fn ($value) => optional(Product::find($value))
+                            ->code . ' — ' . optional(Product::find($value))->name
+                    )
                     ->multiple(),
-                SelectFilter::make("store_id")->placeholder('Select Store')
+                SelectFilter::make('store_id')->placeholder('Select Store')
                     ->label(__('lang.store'))->searchable()
                     ->options(
                         Store::active()->get()->pluck('name', 'id')->toArray()
                     ),
-            ], FiltersLayout::AboveContent)
-            ->recordActions([])
+                Filter::make('adjustment_date_range')
+                    ->label('Adjustment Date')
+                    ->columnSpan(2)
+                    ->schema([
+                        DatePicker::make('from')->label('From Date'),
+                        DatePicker::make('to')->label('To Date'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when($data['from'], fn ($q, $date) => $q->whereDate('adjustment_date', '>=', $date))
+                            ->when($data['to'],   fn ($q, $date) => $q->whereDate('adjustment_date', '<=', $date));
+                    }),
+                SelectFilter::make('source_type')
+                    ->label('Source Type')
+                    ->placeholder('All Sources')
+                    ->options([
+                        'App\Models\StockInventory' => 'Stock Inventory (Stocktake)',
+                        'manual'                    => 'Manual Adjustment',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['value'] ?? null,
+                            function ($q, $value) {
+                                if ($value === 'manual') {
+                                    return $q->whereNull('source_type')
+                                             ->orWhere('source_type', '');
+                                }
+                                return $q->where('source_type', $value);
+                            }
+                        );
+                    }),
+                Filter::make('source_id')
+                    ->label('Source ID')
+                    ->schema([
+                        TextInput::make('source_id')
+                            ->label('Source ID')
+                            ->numeric()
+                            ->placeholder('e.g. 12'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            $data['source_id'] ?? null,
+                            fn ($q, $id) => $q->where('source_id', (int) $id)
+                        );
+                    }),
+            ], FiltersLayout::Modal)
+            ->deferFilters(true)
+            ->filtersFormColumns(4)
+            ->recordActions([
+                Action::make('edit_package_size')
+                    ->label('Edit PKS')
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('warning')
+                    ->button()
+                    ->visible(fn()=> isHakimOrAdel())
+                    ->schema([
+                        TextInput::make('package_size')
+                            ->label('Package Size')
+                            ->numeric()
+                            ->minValue(0.001)
+                            ->required()
+                            ->default(fn (StockAdjustmentDetail $record) => $record->package_size),
+                    ])
+                    ->action(function (StockAdjustmentDetail $record, array $data): void {
+                        try {
+                            $newPackageSize = (float) $data['package_size'];
+
+                            // 1. Update the adjustment detail itself
+                            $record->update(['package_size' => $newPackageSize]);
+
+                            // 2. Update the linked inventory transaction(s)
+                            // $record->inventoryTransaction()
+                            //     ->update(['package_size' => $newPackageSize]);
+
+                            Notification::make()
+                                ->title('Package size updated')
+                                ->body("Package size set to {$newPackageSize} for {$record->product?->name}.")
+                                ->success()
+                                ->send();
+                        } catch (\Throwable $e) {
+                            Notification::make()
+                                ->title('Update failed')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+            ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make(),
                     // Tables\Actions\ForceDeleteBulkAction::make(),
                 ]),
-            ])
-        ;
+            ]);
     }
 
     public static function getEloquentQuery(): Builder
@@ -116,10 +214,9 @@ class StockAdjustmentReportResource extends Resource
                 'adjustment_date',
                 'store_id',
             )->orderBy('id', 'desc');
+
         return $query;
     }
-
-
 
     public static function getPages(): array
     {
@@ -137,11 +234,21 @@ class StockAdjustmentReportResource extends Resource
         if (isSuperAdmin()) {
             return true;
         }
+
         return false;
     }
 
     public static function getNavigationBadge(): ?string
     {
         return 'Report';
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) {
+            return true;
+        }
+
+        return false;
     }
 }

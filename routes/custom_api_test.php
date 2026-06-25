@@ -59,25 +59,51 @@ Route::get('/debug-inventory-sql', function () {
 });
 
 
-Route::get('/test-pending-applications', function () {
+Route::get('/test/pendingApplications', function () {
     $filters = [
         'year'         => request('year', now()->year),
         'month'        => request('month', now()->month),
+        'day'          => request('day'),          // اختياري: فلترة بيوم محدد
         'branch_id'    => request('branch_id'),
         'employee_ids' => request('employee_ids') ? explode(',', request('employee_ids')) : null,
     ];
 
     $checker = app(\App\Modules\HR\EmployeeApplications\Checker\MonthlyPendingApplicationChecker::class);
-    
-    // Use the new dashboard summary method
+
     $summary = $checker->getDashboardSummary($filters);
 
     return response()->json([
-        'status' => 'success',
+        'status'  => 'success',
         'filters' => $filters,
-        'result' => $summary
+        'result'  => $summary,
     ]);
 });
 
+Route::get('/test/clearAttendanceCache', function () {
+    $date = request('date', now()->toDateString());
+    
+    $startTime = microtime(true);
+    clearAllEmployeesDailyAttendanceCache($date);
+    $executionTime = round(microtime(true) - $startTime, 10);
+    
+    return response()->json([
+        'status' => 'success',
+        'message' => "Cleared daily attendance cache for all employees on {$date}",
+        'execution_time_seconds' => $executionTime,
+    ]);
+});
 
-
+Route::get('/test/clearAttendanceCacheForMonth', function () {
+    $year = request('year', now()->year);
+    $month = request('month', now()->month);
+    
+    $startTime = microtime(true);
+    clearAllEmployeesDailyAttendanceCacheForMonth($year, $month);
+    $executionTime = round(microtime(true) - $startTime, 4);
+    
+    return response()->json([
+        'status' => 'success',
+        'message' => "Cleared daily attendance cache for all employees for {$year}-{$month}",
+        'execution_time_seconds' => $executionTime,
+    ]);
+});

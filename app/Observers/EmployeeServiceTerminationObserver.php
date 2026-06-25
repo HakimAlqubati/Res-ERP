@@ -4,7 +4,9 @@ namespace App\Observers;
 
 use App\Models\EmployeeServiceTermination;
 use App\Models\User;
+use App\Rules\HR\Employee\NoFutureTerminationApprovalRule;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class EmployeeServiceTerminationObserver
 {
@@ -69,6 +71,25 @@ class EmployeeServiceTerminationObserver
     {
         if (auth()->check()) {
             $employeeServiceTermination->updated_by = auth()->id();
+        }
+
+        if (
+            $employeeServiceTermination->isDirty('status') &&
+            $employeeServiceTermination->status === EmployeeServiceTermination::STATUS_APPROVED
+        ) {
+            if ($employeeServiceTermination->termination_date && $employeeServiceTermination->termination_date->isFuture()) {
+                // Intercept future termination approval: schedule for auto-approval instead of immediate approval
+                $employeeServiceTermination->status = EmployeeServiceTermination::STATUS_PENDING;
+                $employeeServiceTermination->auto_approve = true;
+                $employeeServiceTermination->scheduled_approver_id = auth()->id();
+                $employeeServiceTermination->approved_at = null;
+                $employeeServiceTermination->approved_by = null;
+            } else {
+                Validator::make(
+                    ['termination_date' => $employeeServiceTermination->termination_date],
+                    ['termination_date' => new NoFutureTerminationApprovalRule($employeeServiceTermination->termination_date)]
+                )->validate();
+            }
         }
     }
 

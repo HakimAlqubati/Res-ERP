@@ -24,6 +24,7 @@ use App\Filament\Clusters\HRAttenanceCluster\Resources\LeaveTypeResource\Relatio
 use App\Filament\Clusters\HRLeaveManagementCluster;
 use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\LeaveType;
+use Filament\Actions\Action;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Forms;
 use Filament\Forms\Components\Select;
@@ -206,6 +207,7 @@ class LeaveTypeResource extends Resource
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
             ->recordActions([
+                self::getAddSpecialBalanceAction(),
                 EditAction::make(),
             ])
             ->toolbarActions([
@@ -246,10 +248,92 @@ class LeaveTypeResource extends Resource
         return false;
     }
 
+    public static function getAddSpecialBalanceAction(): Action
+    {
+        return Action::make('addSpecialBalance')
+            ->label('Assign to Staff')
+            ->icon('heroicon-o-plus-circle')
+            ->color('success')
+            ->visible(fn(LeaveType $record): bool => $record->type === LeaveType::TYPE_SPECIAL)
+            ->schema([
+                Fieldset::make()->columns(4)->columnSpanFull()->schema([
+                    \Filament\Forms\Components\Select::make('employee_id')
+                        ->label('Employee')
+                        ->options(\App\Models\Employee::active()
+                            ->forBranchManager()
+                            // ->forEmployee()
+                            ->pluck('name', 'id'))
+                        ->searchable()
+                        ->required(),
+                    \Filament\Forms\Components\TextInput::make('balance')
+                        ->label('Balance (Days)')
+                        ->numeric()
+                        ->default(fn(LeaveType $record) => $record->count_days)
+                        ->required(),
+                    \Filament\Forms\Components\Select::make('year')
+                        ->label('Year')
+                        ->options(function () {
+                            $currentYear = (int) date('Y');
+                            return array_combine(
+                                range($currentYear - 1, $currentYear + 2),
+                                range($currentYear - 1, $currentYear + 2)
+                            );
+                        })
+                        ->default(date('Y'))
+                        ->required(),
+                    \Filament\Forms\Components\Select::make('month')
+                        ->label('Month')
+                        ->options(array_combine(range(1, 12), range(1, 12)))
+                        ->nullable(),
+                ])
+            ])
+            ->action(function (array $data, LeaveType $record) {
+                try {
+                    \Illuminate\Support\Facades\DB::beginTransaction();
+
+                    $employee = \App\Models\Employee::find($data['employee_id']);
+
+                    \App\Models\LeaveBalance::create([
+                        'employee_id'   => $employee->id,
+                        'branch_id'     => $employee->branch_id,
+                        'leave_type_id' => $record->id,
+                        'year'          => (int) $data['year'],
+                        'month'         => !empty($data['month']) ? (int) $data['month'] : null,
+                        'entitled_days' => (float) $data['balance'],
+                        'supposed_days' => (float) $record->count_days,
+                        'used_days'     => 0,
+                        'pending_days'  => 0,
+                        'balance'       => (float) $data['balance'],
+                        'created_by'    => auth()->id(),
+                    ]);
+
+                    \Illuminate\Support\Facades\DB::commit();
+
+                    \Filament\Notifications\Notification::make()
+                        ->title('Balance added successfully')
+                        ->success()
+                        ->send();
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\DB::rollBack();
+                    \Illuminate\Support\Facades\Log::error('Failed to add special leave balance: ' . $e->getMessage());
+
+                    \Filament\Notifications\Notification::make()
+                        ->title('Failed to add balance')
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+                }
+            });
+    }
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->whereIn('type', [LeaveType::TYPE_YEARLY, LeaveType::TYPE_MONTHLY])
+            ->whereIn('type', [
+                LeaveType::TYPE_YEARLY,
+                LeaveType::TYPE_MONTHLY,
+                LeaveType::TYPE_SPECIAL
+            ])
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

@@ -369,6 +369,8 @@ return [
     'monthly_bonus' => 'Monthly Bonus',
     'deductions' => 'Deductions',
     'deduction' => 'Deduction',
+    'custom_deductions' => 'Custom Deductions',
+    'custom_deduction' => 'Custom Deduction',
     'type' => 'Type',
     'percentage' => 'Percentage',
     'amount_percentage' => 'Amount / %',
@@ -377,6 +379,9 @@ return [
     'exempt_from_late_attendance_deduction' => 'Exempt from Late Attendance Deduction',
     'is_mtd_applicable' => 'MTD Applicable',
     'has_auto_weekly_leave' => 'Auto Weekly Leave',
+    'max_weekly_leave_days' => 'Max Weekly Leave Days / Month',
+    'max_weekly_leave_days_hint' => 'Override the default (4 days). Leave blank to use system default.',
+    'no_shift_is_present' => 'Attendance Without Shift',
     'can_add_branch_order' => 'Can add branch order',
 
     // ===========================================
@@ -384,6 +389,8 @@ return [
     // ===========================================
     'attendance' => 'Attendance',
     'shift' => 'Shift',
+    'total_shift_hours' => 'Total Shift Hours',
+    'currently_shift_hours' => 'Shift Hours',
     'shifts' => 'Shifts',
     'shift_id' => 'Shift ID',
     'shift_rfid' => 'Shift - RFID',
@@ -422,6 +429,8 @@ return [
     // HRMS - Status & Actions
     // ===========================================
     'inactive' => 'Inactive',
+    'enable_account' => 'Enable Account',
+    'disable_account' => 'Disable Account',
     'activate' => 'Activate',
     'deactivate' => 'Deactivate',
     'create' => 'Create',
@@ -1153,4 +1162,5 @@ return [
     'auto_missed_checkout_request_created_success' => 'Missed check-out request submitted to HR.',
     'auto_generated_reason_missing_checkin' => 'Automatically generated due to check-out attempt without a prior check-in',
     'rejected_successfully' => 'Rejected Successfully',
+    'auto' => 'Auto',
 ];

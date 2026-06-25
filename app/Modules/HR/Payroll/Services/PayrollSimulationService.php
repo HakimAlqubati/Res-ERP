@@ -33,6 +33,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
         ?int $branchId = null,
         ?Carbon $optionalStart = null,
         ?Carbon $optionalEnd = null,
+        bool $forceMultiSegment = false, // يُمرَّر من PayrollRunService عند معرفة وجود انتقال فرع
     ): array {
         $periodStart = $optionalStart ?? Carbon::create($year, $month, 1)->startOfMonth();
         $periodEnd   = $optionalEnd   ?? Carbon::create($year, $month, 1)->endOfMonth();
@@ -45,7 +46,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
         $employees = $this->resolveEmployees($employeeIds, $branchId, $periodStart, $periodEnd);
         $segments  = $this->buildSegments($employees, $periodStart, $periodEnd, $branchId);
 
-        return $this->processSegments($segments, $year, $month, $periodStart);
+        return $this->processSegments($segments, $year, $month, $periodStart, $forceMultiSegment);
     }
 
     /**
@@ -78,7 +79,9 @@ class PayrollSimulationService implements PayrollSimulatorInterface
             $query->whereIn('id', $idsInBranch);
         }
 
-        return $query->get();
+        return $query->get()
+            ->filter(fn(Employee $employee) => $this->isEmployeeOwnedByBranchForPayroll($employee, $branchId, $periodStart, $periodEnd))
+            ->values();
     }
 
     /**
@@ -87,19 +90,61 @@ class PayrollSimulationService implements PayrollSimulatorInterface
     private function buildSegments(Collection $employees, Carbon $periodStart, Carbon $periodEnd, ?int $branchId): Collection
     {
         return $employees->flatMap(
-            fn(Employee $employee) => EmployeeBranchLog::getSalarySegments($employee, $periodStart, $periodEnd, $branchId)
+            fn(Employee $employee) => EmployeeBranchLog::getSalarySegments(
+                $employee,
+                $periodStart,
+                $periodEnd,
+                $this->segmentTargetBranchId($employee, $branchId),
+            )
                 ->map(fn($seg) => ['employee' => $employee, 'log' => (object) $seg])
         );
+    }
+
+    /**
+     * For proportional allocation, the selected last/current branch owns the
+     * simulation, while the result still contains all branch split periods.
+     */
+    private function segmentTargetBranchId(Employee $employee, ?int $branchId): ?int
+    {
+        if (! $branchId) {
+            return null;
+        }
+
+        return $employee->getEffectiveSalaryAllocationRule() === SalaryAllocationRule::PROPORTIONAL
+            ? null
+            : $branchId;
+    }
+
+    private function isEmployeeOwnedByBranchForPayroll(Employee $employee, ?int $branchId, Carbon $periodStart, Carbon $periodEnd): bool
+    {
+        if (! $branchId || $employee->getEffectiveSalaryAllocationRule() !== SalaryAllocationRule::PROPORTIONAL) {
+            return true;
+        }
+
+        $ownerSegment = EmployeeBranchLog::getSalarySegments(
+            $employee,
+            $periodStart,
+            $periodEnd,
+            null,
+            SalaryAllocationRule::LAST_BRANCH,
+        )->first();
+
+        return (int) ($ownerSegment['branch_id'] ?? 0) === $branchId;
     }
 
     /**
      * معالجة كل فترة عمل واحتساب الراتب الخاص بها.
      * هذا هو الكود المشترك بين simulateForEmployees و simulateForRunEmployees.
      */
-    private function processSegments(Collection $segments, int $year, int $month, Carbon $periodStart): array
+    private function processSegments(Collection $segments, int $year, int $month, Carbon $periodStart, bool $forceMultiSegment = false): array
     {
         $monthDays = (int) $periodStart->daysInMonth;
         $results   = [];
+
+        // عدّ Segments لكل موظف — أو استخدم الفلاج المُمرَّر مباشرة من PayrollRunService
+        $segmentCountPerEmployee = $forceMultiSegment
+            ? []   // سيُعتمد على $forceMultiSegment مباشرة أدناه
+            : $segments->countBy(fn($s) => $s['employee']->id)->all();
 
         foreach ($segments as $segment) {
             /** @var Employee $employee */
@@ -144,6 +189,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
                 periodMonth:           $month,
                 periodEnd:             $log->end,
                 periodStart:           $log->start,   // ← تخصيص فترة الفرع بدقة
+                isMultiSegment:        $forceMultiSegment || ($segmentCountPerEmployee[$employee->id] ?? 1) > 1,
             );
 
             $results[] = $this->buildResult($employee, $result, $monthlySalary, $dailyHours, $monthDays, $attendanceArray, $log);

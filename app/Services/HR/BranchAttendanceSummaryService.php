@@ -60,19 +60,29 @@ class BranchAttendanceSummaryService
 
         // Process active employees in DB-level chunks
         Employee::whereIn('id', $employeeIdsInBranch)
-            ->where('active', 1)
-            ->select('id', 'name', 'employee_no', 'salary', 'join_date', 'working_days', 'working_hours', 'discount_exception_if_attendance_late', 'has_auto_weekly_leave')
+            ->where('active', 1) 
+            ->select('id', 'name','branch_id', 'employee_no', 'salary', 'join_date', 'working_days', 'working_hours', 'discount_exception_if_attendance_late', 'has_auto_weekly_leave','max_weekly_leave_days')
             ->withSum(['overtimes as total_overtime' => function ($query) use ($year, $month) {
                 $query->whereYear('date', $year)
                     ->whereMonth('date', $month)
                     ->where('type', \App\Models\EmployeeOvertime::TYPE_BASED_ON_DAY);
             }], 'hours')
-            ->withCount(['dailyOvertimes as manual_overtime_days' => function ($query) use ($year, $month) {
+            ->withCount(['dailyOvertimes as manual_overtime_days' => function ($query) use ($year, $month, $branchId) {
                 $query->whereYear('date', $year)
-                    ->whereMonth('date', $month);
+                    ->whereMonth('date', $month)
+                    ->whereExists(function ($sub) use ($branchId) {
+                        $sub->selectRaw(1)
+                            ->from('hr_employee_branch_logs')
+                            ->whereColumn('hr_employee_branch_logs.employee_id', 'hr_employee_overtime.employee_id')
+                            ->where('hr_employee_branch_logs.branch_id', $branchId)
+                            ->whereColumn('hr_employee_branch_logs.start_at', '<=', 'hr_employee_overtime.date')
+                            ->where(function ($q) {
+                                $q->whereNull('hr_employee_branch_logs.end_at')
+                                  ->orWhereColumn('hr_employee_branch_logs.end_at', '>=', 'hr_employee_overtime.date');
+                            });
+                    });
             }])
             ->chunk(50, function ($employees) use (&$currentStaff, &$newStaff, $terminatedEmployeeIds, $year, $month, $periodStart, $periodEnd, $monthDays, $branchId) {
-
                 $filtered = $employees->filter(fn($emp) => !in_array($emp->id, $terminatedEmployeeIds));
 
                 // Optimized: Fetch all attendance data for the entire chunk in one bulk request
@@ -168,88 +178,59 @@ class BranchAttendanceSummaryService
 
             $presentDays = 0;
             $absentDays  = 0;
+            $weeklyLeaveDays = 0;
+            $totalLeaveDays = 0;
             $totalDays   = 0;
             $missingMinutes = 0;
             $earlyDepartureMinutes = 0;
-            $lateMinutes = 0;
+            $lateMinutes = 0; 
+            $overtimeDays = 0;
+            // 1. استخراج بيانات الفرع الحالي من الإحصائية الجاهزة قبل الدخول في حلقة الأيام
+            $branchWorkedDays = 0;
+            $branchAbsentDays = 0;
+            $branchEarnedLeaves = 0;
+            $branchDeductionDays = 0;
+            $totalDeductionHours = 
+            $attendanceArray['total_missing_hours']['total_hours']
+            +
+            $attendanceArray['total_early_departure_minutes']['total_hours']
+            +
+            $attendanceArray['late_hours']['totalHoursFloat']
+            ;
 
-            foreach ($attendanceArray as $date => $dayData) {
-                if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
-                    continue;
-                }
-
-                if (($dayData['branch_id'] ?? null) != $branchId) {
-                    continue;
-                }
-
-                $totalDays++;
-                $status = $dayData['day_status'] ?? '';
-
-                if (in_array($status, [
-                    \App\Enums\HR\Attendance\AttendanceReportStatus::Present->value,
-                    \App\Enums\HR\Attendance\AttendanceReportStatus::IncompleteCheckoutOnly->value,
-                ])) {
-                    $presentDays++;
-                } elseif (in_array($status, [
-                    \App\Enums\HR\Attendance\AttendanceReportStatus::Absent->value,
-                    \App\Enums\HR\Attendance\AttendanceReportStatus::Partial->value,
-                    \App\Enums\HR\Attendance\AttendanceReportStatus::IncompleteCheckinOnly->value,
-                ])) {
-                    $absentDays++;
-                }
-
-                if (!empty($dayData['periods'])) {
-                    foreach ($dayData['periods'] as $period) {
-                        $checkoutData = $period['attendances']['checkout']['lastcheckout'] ?? [];
-                        if (!empty($checkoutData)) {
-                            $missingMinutes += (float) ($checkoutData['missing_minutes'] ?? 0);
-                            $earlyDepartureMinutes += (float) ($checkoutData['early_departure_minutes'] ?? 0);
-                        }
-
-                        $checkinData = $period['attendances']['checkin'][0] ?? [];
-                        if (!empty($checkinData)) {
-                            $lateMinutes += (float) ($checkinData['delay_minutes'] ?? 0);
-                        }
+            if (isset($attendanceArray['statistics']['weekly_leave_calculation']['branches_breakdown'])) {
+                foreach ($attendanceArray['statistics']['weekly_leave_calculation']['branches_breakdown'] as $breakdown) {
+                   
+                    if ($breakdown['branch_id'] == $branchId) {
+                        // $branchWorkedDays = $attendanceArray['statistics']['present_days'];
+                        $branchWorkedDays = $breakdown['worked_days'];
+                        $branchAbsentDays = $breakdown['absent_days'];
+                        $branchEarnedLeaves = $breakdown['earned_leave_days'];
+                        $overtimeDays = $breakdown['overtime_days'];
+                        $branchDeductionDays = $breakdown['total_deduction_days'];
+                        break;
                     }
                 }
             }
 
-            $weeklyLeaveDeductionDays = $absentDays;
-            $autoOvertimeDays = 0;
+         
 
-            if ($employee->has_auto_weekly_leave) {
-                $workDaysPerLeave = 6;
-                if (class_exists(\App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::class)) {
-                    $workDaysPerLeave = \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::WORK_DAYS_PER_LEAVE;
-                }
-                $entitledLeaves = floor($presentDays / $workDaysPerLeave);
-
-                if ($entitledLeaves >= $absentDays) {
-                    $weeklyLeaveDeductionDays = 0;
-                    $autoOvertimeDays = $entitledLeaves - $absentDays;
-                } else {
-                    $weeklyLeaveDeductionDays = $absentDays - $entitledLeaves;
-                }
-            }
-
-            $deductionMinutes = $missingMinutes + $earlyDepartureMinutes + $lateMinutes;
-            $deductionHours = round($deductionMinutes / 60, 2);
-
+           
             return [
                 'employee_id'  => $employee->id,
                 'employee_no'  => $employee->employee_no,
                 'name'         => $employee->name,
                 'salary'       => $employee->salary,
                 'overtime'     => [
-                    'days'  => $autoOvertimeDays + ($employee->manual_overtime_days ?? 0),
+                    'days'  => $overtimeDays + ($employee->manual_overtime_days ?? 0),
                     'hours' => $approvedOvertimeHours,
                 ],
                 'deductions'   => [
-                    'days'  => $weeklyLeaveDeductionDays,
-                    'hours' => $deductionHours,
+                    'days'  => $branchDeductionDays,
+                    'hours' => $totalDeductionHours,
                 ],
                 'attendance'   => [
-                    'present_days' => $presentDays,
+                    'present_days' => $branchWorkedDays,
                     'absent_days'  => $absentDays,
                     'total_days'   => $totalDays,
                 ],

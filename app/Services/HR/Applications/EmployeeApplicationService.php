@@ -275,6 +275,59 @@ class EmployeeApplicationService
         return $record;
     }
 
+    public function updateMissedCheckin(int $id, array $data)
+    {
+        return DB::transaction(function () use ($id, $data) {
+            $record = EmployeeApplicationV2::findOrFail($id);
+            
+            if ($record->application_type_id !== EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST) {
+                throw new \Exception('Invalid application type for missed check-in update');
+            }
+
+            if ($record->status !== EmployeeApplicationV2::STATUS_PENDING) {
+                throw new \Exception('Cannot update application that is not pending');
+            }
+
+            if ($record->missedCheckinRequest) {
+                $record->missedCheckinRequest()->update([
+                    'date' => $data['date'],
+                    'time' => $data['time'],
+                ]);
+            }
+
+            // You can also optionally update the application_date if it represents the date
+            $record->update(['application_date' => $data['date']]);
+
+            return $record->load('missedCheckinRequest');
+        });
+    }
+
+    public function updateMissedCheckout(int $id, array $data)
+    {
+        return DB::transaction(function () use ($id, $data) {
+            $record = EmployeeApplicationV2::findOrFail($id);
+            
+            if ($record->application_type_id !== EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST) {
+                throw new \Exception('Invalid application type for missed check-out update');
+            }
+
+            if ($record->status !== EmployeeApplicationV2::STATUS_PENDING) {
+                throw new \Exception('Cannot update application that is not pending');
+            }
+
+            if ($record->missedCheckoutRequest) {
+                $record->missedCheckoutRequest()->update([
+                    'date' => $data['date'],
+                    'time' => $data['time'],
+                ]);
+            }
+            
+            $record->update(['application_date' => $data['date']]);
+
+            return $record->load('missedCheckoutRequest');
+        });
+    }
+
     public function deleteApplication(int $id)
     {
         $record = EmployeeApplicationV2::findOrFail($id);
@@ -296,7 +349,7 @@ class EmployeeApplicationService
         // side-effects (installment generation, financial transaction) are
         // atomic. Any failure rolls back everything — no orphaned state.
         return DB::transaction(function () use ($id, $userId) {
-            $record = EmployeeApplicationV2::with(['missedCheckinRequest', 'missedCheckoutRequest', 'leaveRequest'])->findOrFail($id);
+            $record = EmployeeApplicationV2::with(['missedCheckinRequest', 'missedCheckoutRequest', 'leaveRequest', 'mealRequest'])->findOrFail($id);
 
             switch ($record->application_type_id) {
                 case EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST:
@@ -311,6 +364,8 @@ class EmployeeApplicationService
                         'type'                           => \App\Models\Attendance::CHECKTYPE_CHECKIN,
                         'attendance_type'                => \App\Models\Attendance::ATTENDANCE_TYPE_REQUEST,
                         'skip_duplicate_timestamp_check' => true,
+                        'source_type' => EmployeeApplicationV2::class,
+                        'source_id' => $record->id,
                     ]);
 
                     if (!$result->success) {
@@ -330,6 +385,8 @@ class EmployeeApplicationService
                         'type'                           => \App\Models\Attendance::CHECKTYPE_CHECKOUT,
                         'attendance_type'                => \App\Models\Attendance::ATTENDANCE_TYPE_REQUEST,
                         'skip_duplicate_timestamp_check' => true,
+                        'source_type' => EmployeeApplicationV2::class,
+                        'source_id' => $record->id,
                     ]);
 
                     if (!$result->success) {
@@ -339,6 +396,16 @@ class EmployeeApplicationService
 
                 case EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST:
                     // app(\App\Services\HR\Applications\LeaveRequest\LeaveApprovalService::class)->process($record);
+                    break;
+
+                case EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST:
+                    if ($record->mealRequest) {
+                        $record->mealRequest->update([
+                            'status'      => EmployeeApplicationV2::STATUS_APPROVED,
+                            'approved_by' => $userId,
+                            'approved_at' => now(),
+                        ]);
+                    }
                     break;
             }
 
@@ -371,7 +438,8 @@ class EmployeeApplicationService
             $record = EmployeeApplicationV2::with([
                 'leaveRequest',
                 'missedCheckinRequest',
-                'missedCheckoutRequest'
+                'missedCheckoutRequest',
+                'mealRequest'
             ])->findOrFail($id);
 
             // We only allow undo operations if the application is currently approved
@@ -383,7 +451,22 @@ class EmployeeApplicationService
                 case EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST:
                     break;
 
-                    // Note: Rollback for Attendance & Departure fingerprint requests can be added here if needed
+                case EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST:
+                    if ($record->mealRequest) {
+                        $record->mealRequest->update([
+                            'status'      => EmployeeApplicationV2::STATUS_PENDING,
+                            'approved_by' => null,
+                            'approved_at' => null,
+                        ]);
+                    }
+                    break;
+
+                case EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST:
+                case EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST:
+                    \App\Models\Attendance::where('source_type', EmployeeApplicationV2::class)
+                        ->where('source_id', $record->id)
+                        ->delete();
+                    break;
             }
 
             // Revert state to pending and clear approval metadata
@@ -399,15 +482,23 @@ class EmployeeApplicationService
 
     public function rejectApplication(int $id, int $userId, string $reason)
     {
-        $record = EmployeeApplicationV2::findOrFail($id);
+        return DB::transaction(function () use ($id, $userId, $reason) {
+            $record = EmployeeApplicationV2::with('mealRequest')->findOrFail($id);
 
-        $record->update([
-            'status'          => EmployeeApplicationV2::STATUS_REJECTED,
-            'rejected_by'     => $userId,
-            'rejected_at'     => now(),
-            'rejected_reason' => $reason,
-        ]);
+            $record->update([
+                'status'          => EmployeeApplicationV2::STATUS_REJECTED,
+                'rejected_by'     => $userId,
+                'rejected_at'     => now(),
+                'rejected_reason' => $reason,
+            ]);
 
-        return $record;
+            if ($record->application_type_id === EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST && $record->mealRequest) {
+                $record->mealRequest->update([
+                    'status' => EmployeeApplicationV2::STATUS_REJECTED,
+                ]);
+            }
+
+            return $record;
+        });
     }
 }

@@ -195,11 +195,19 @@ class EmployeeOvertimeObserver
     }
 
     /**
+     * Handle the EmployeeOvertime "saved" event.
+     */
+    public function saved(EmployeeOvertime $employeeOvertime): void
+    {
+        clearEmployeeDailyAttendanceCache($employeeOvertime->employee_id, $employeeOvertime->date);
+    }
+
+    /**
      * Handle the EmployeeOvertime "deleted" event.
      */
     public function deleted(EmployeeOvertime $employeeOvertime): void
     {
-        //
+        clearEmployeeDailyAttendanceCache($employeeOvertime->employee_id, $employeeOvertime->date);
     }
 
     /**

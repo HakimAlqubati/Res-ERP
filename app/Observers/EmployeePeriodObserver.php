@@ -92,4 +92,14 @@ class EmployeePeriodObserver
             ]);
         }
     }
+
+    public function saved(EmployeePeriod $period): void
+    {
+        clearEmployeeDailyAttendanceCache($period->employee_id, now()->toDateString());
+    }
+
+    public function deleted(EmployeePeriod $period): void
+    {
+        clearEmployeeDailyAttendanceCache($period->employee_id, now()->toDateString());
+    }
 }

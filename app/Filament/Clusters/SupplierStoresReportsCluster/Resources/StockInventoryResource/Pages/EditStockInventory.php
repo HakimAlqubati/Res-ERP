@@ -6,7 +6,6 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryR
 use App\Models\InventoryTransaction;
 use App\Models\StockAdjustmentDetail;
 use App\Models\StockInventory;
-use Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
@@ -29,7 +28,7 @@ class EditStockInventory extends EditRecord
                 ->modalHeading('Rollback Inventory Finalization')
                 ->modalDescription('This will permanently delete all stock adjustments and inventory transactions created during this stocktake, and reopen the inventory for editing. This action cannot be undone.')
                 ->modalSubmitActionLabel('Yes, Rollback')
-                ->visible(fn() => (bool) $this->record?->finalized && isSuperAdmin())
+                ->visible(fn () => (bool) $this->record?->finalized && isSuperAdmin())
                 ->action(function () {
                     DB::beginTransaction();
                     try {
@@ -55,7 +54,7 @@ class EditStockInventory extends EditRecord
                         // 4. Reset is_adjustmented and difference on all inventory details
                         $inventory->details()->update([
                             'is_adjustmented' => false,
-                            'difference'      => 0,
+                            'difference' => 0,
                         ]);
 
                         // 5. Reopen the inventory
@@ -78,11 +77,12 @@ class EditStockInventory extends EditRecord
                             ->danger()
                             ->send();
                     }
-                }),
+                })
+                ->hidden(),
         ];
     }
 
-    public function getTitle(): string | Htmlable
+    public function getTitle(): string|Htmlable
     {
         return 'Finalize';
     }
@@ -96,7 +96,7 @@ class EditStockInventory extends EditRecord
     {
         return [
             $this->getSaveFormAction()
-                ->disabled(fn() => !($this->data['edit_enabled'] ?? false))
+                ->disabled(fn () => ! ($this->data['edit_enabled'] ?? false))
                 ->hidden()
                 ->tooltip('Enable editing first to save changes.'),
             $this->getCancelFormAction()->hidden(),

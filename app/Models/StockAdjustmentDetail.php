@@ -24,8 +24,9 @@ class StockAdjustmentDetail extends Model implements Auditable
         'store_id',
         'reason_id',
         'source_id',
-        'source_type'
+        'source_type',
     ];
+
     protected $auditInclude = [
         'stock_adjustment_id',
         'product_id',
@@ -42,7 +43,9 @@ class StockAdjustmentDetail extends Model implements Auditable
 
     // Constants for adjustment types
     const ADJUSTMENT_TYPE_INCREASE = 'increase';
+
     const ADJUSTMENT_TYPE_DECREASE = 'decrease';
+
     const ADJUSTMENT_TYPE_EQUAL = 'equal';
 
     /**
@@ -57,6 +60,7 @@ class StockAdjustmentDetail extends Model implements Auditable
     {
         return $this->belongsTo(Product::class);
     }
+
     public function store()
     {
         return $this->belongsTo(Store::class);
@@ -66,10 +70,12 @@ class StockAdjustmentDetail extends Model implements Auditable
     {
         return $this->belongsTo(Unit::class);
     }
+
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
     public function inventoryTransaction()
     {
         return $this->morphOne(InventoryTransaction::class, 'transactionable');

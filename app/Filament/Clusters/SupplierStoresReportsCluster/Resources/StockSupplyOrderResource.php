@@ -2,42 +2,36 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
-use Filament\Pages\Enums\SubNavigationPosition;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Fieldset;
-use Filament\Schemas\Components\Utilities\Set;
-use Filament\Actions\ActionGroup;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
-use Filament\Actions\Action;
-use Throwable;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\ForceDeleteBulkAction;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockSupplyOrderResource\Pages\ListStockSupplyOrders;
+use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockSupplyOrderResource\Pages\CreateStockSupplyOrder;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockSupplyOrderResource\Pages\EditStockSupplyOrder;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockSupplyOrderResource\Pages\ListStockSupplyOrders;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockSupplyOrderResource\Pages\ViewStockSupplyOrder;
-use App\Filament\Clusters\InventoryManagementCluster;
-use App\Filament\Clusters\SupplierStoresReportsCluster;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockSupplyOrderResource\Pages;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockSupplyOrderResource\RelationManagers;
 use App\Models\Product;
 use App\Models\StockSupplyOrder;
 use App\Models\Store;
 use App\Models\UnitPrice;
-use Filament\Forms;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Pages\Page;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Schema;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\FontWeight;
-use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
@@ -48,16 +42,20 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class StockSupplyOrderResource extends Resource
 {
     protected static ?string $model = StockSupplyOrder::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = InventoryManagementCluster::class;
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
     protected static ?int $navigationSort = 8;
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -80,7 +78,6 @@ class StockSupplyOrderResource extends Resource
                         ->label('Notes')
                         ->columnSpanFull(),
 
-
                     Repeater::make('details')->columnSpanFull()
                         ->relationship('details')
                         ->schema([
@@ -92,8 +89,8 @@ class StockSupplyOrderResource extends Resource
                                     return Product::where('active', 1)
                                         ->limit(10)
                                         ->get()
-                                        ->mapWithKeys(fn($product) => [
-                                            $product->id => "{$product->code} - {$product->name}"
+                                        ->mapWithKeys(fn ($product) => [
+                                            $product->id => "{$product->code} - {$product->name}",
                                         ]);
                                 })
                                 ->searchable()
@@ -105,13 +102,14 @@ class StockSupplyOrderResource extends Resource
                                         })
                                         ->limit(10)
                                         ->get()
-                                        ->mapWithKeys(fn($product) => [
-                                            $product->id => "{$product->code} - {$product->name}"
+                                        ->mapWithKeys(fn ($product) => [
+                                            $product->id => "{$product->code} - {$product->name}",
                                         ])
                                         ->toArray();
                                 })
                                 ->getOptionLabelUsing(function ($value): ?string {
                                     $product = Product::find($value);
+
                                     return $product ? "{$product->code} - {$product->name}" : null;
                                 })
                                 ->reactive()
@@ -124,7 +122,9 @@ class StockSupplyOrderResource extends Resource
                             Select::make('unit_id')->label('Unit')
                                 ->options(function (callable $get) {
                                     $product = Product::find($get('product_id'));
-                                    if (! $product) return [];
+                                    if (! $product) {
+                                        return [];
+                                    }
 
                                     return $product->supplyUnitPrices
                                         ->pluck('unit.name', 'unit_id')?->toArray() ?? [];
@@ -141,7 +141,7 @@ class StockSupplyOrderResource extends Resource
                                     $set('price', $unitPrice->price);
 
                                     $set('total_price', ((float) $unitPrice?->price) * ((float) $get('quantity')));
-                                    $set('package_size',  $unitPrice?->package_size ?? 0);
+                                    $set('package_size', $unitPrice?->package_size ?? 0);
                                 })->columnSpan(2)->required(),
 
                             TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
@@ -160,6 +160,7 @@ class StockSupplyOrderResource extends Resource
                                 ->suffix('%')
                                 ->default(function (callable $get) {
                                     $productId = $get('product_id');
+
                                     return Product::find($productId)?->waste_stock_percentage ?? 0;
                                 })
                                 ->columnSpan(1),
@@ -176,7 +177,7 @@ class StockSupplyOrderResource extends Resource
                         ->minItems(1)
                         ->label('Order Details')
                         ->columns(7),
-                ])
+                ]),
             ]);
     }
 
@@ -206,7 +207,7 @@ class StockSupplyOrderResource extends Resource
                     ->label('Untouched')->boolean()->alignCenter(),
             ])
             ->filters([
-                SelectFilter::make("store_id")->placeholder('Select Store')
+                SelectFilter::make('store_id')->placeholder('Select Store')
                     ->label(__('lang.store'))->searchable()
                     ->options(
                         Store::active()->get()->pluck('name', 'id')->toArray()
@@ -218,8 +219,8 @@ class StockSupplyOrderResource extends Resource
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
-                            ->when($data['from'], fn($q, $date) => $q->whereDate('order_date', '>=', $date))
-                            ->when($data['to'], fn($q, $date) => $q->whereDate('order_date', '<=', $date));
+                            ->when($data['from'], fn ($q, $date) => $q->whereDate('order_date', '>=', $date))
+                            ->when($data['to'], fn ($q, $date) => $q->whereDate('order_date', '<=', $date));
                     })
                     ->label('Date Between')
                     ->indicateUsing(function (array $data): ?string {
@@ -232,13 +233,13 @@ class StockSupplyOrderResource extends Resource
                         if ($data['to']) {
                             return "Until {$data['to']}";
                         }
+
                         return null;
                     }),
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
             ->recordActions([
                 ActionGroup::make([
-
 
                     EditAction::make(),
                     ViewAction::make(),
@@ -264,15 +265,16 @@ class StockSupplyOrderResource extends Resource
                                 if (! $result['status']) {
                                     showWarningNotifiMessage('Failed', $result['message']);
                                 }
-                                if ($result['status'])
+                                if ($result['status']) {
                                     showSuccessNotifiMessage('Success', $result['message']);
+                                }
                             } catch (Throwable $e) {
                                 DB::rollBack();
                                 showWarningNotifiMessage('Error', $e->getMessage());
                                 report($e);
                             }
                         })
-                        ->visible(fn(StockSupplyOrder $record) => ! $record->cancelled)
+                        ->visible(fn (StockSupplyOrder $record) => ! $record->cancelled),
                 ]),
             ])
             ->toolbarActions([
@@ -310,7 +312,6 @@ class StockSupplyOrderResource extends Resource
         ]);
     }
 
-
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
@@ -329,6 +330,7 @@ class StockSupplyOrderResource extends Resource
         if (isSuperAdmin()) {
             return true;
         }
+
         return false;
     }
 
@@ -342,6 +344,7 @@ class StockSupplyOrderResource extends Resource
         if (isSuperAdmin()) {
             return true;
         }
+
         return false;
     }
 
@@ -350,11 +353,21 @@ class StockSupplyOrderResource extends Resource
         if (isSuperAdmin()) {
             return true;
         }
+
         return false;
     }
 
-    public static function getNavigationBadgeColor(): string | array | null
+    public static function getNavigationBadgeColor(): string|array|null
     {
         return Color::Blue;
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) {
+            return true;
+        }
+
+        return false;
     }
 }

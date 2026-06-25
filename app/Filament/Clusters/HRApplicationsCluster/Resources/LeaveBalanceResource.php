@@ -114,7 +114,13 @@ class LeaveBalanceResource extends Resource
                 //     ,
                 TextColumn::make('available_balance')->alignCenter(true)
                     ->numeric()
-                    ->label('Balance'),
+                    ->label('Balance')
+                    ->sortable(query: function (Builder $query, string $direction): Builder {
+                        return $query->orderByRaw(
+                            "(entitled_days - (used_days + pending_days)) {$direction}"
+                        );
+                    })
+                    ,
                 TextColumn::make('used_days')->alignCenter(true)
                     ->numeric()
                     ->sortable(),

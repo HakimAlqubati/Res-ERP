@@ -283,6 +283,19 @@ class EmployeeApplicationObserver
 
                     default => null,
                 };
+                
+                // Clear cache for the leave dates
+                if ($app->application_type_id === EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST) {
+                    $leave = $app->leaveRequest;
+                    if ($leave && $leave->start_date && $leave->end_date) {
+                        $start = \Carbon\Carbon::parse($leave->start_date);
+                        $end = \Carbon\Carbon::parse($leave->end_date);
+                        while ($start->lte($end)) {
+                            clearEmployeeDailyAttendanceCache($app->employee_id, $start->toDateString());
+                            $start->addDay();
+                        }
+                    }
+                }
             });
         } catch (\Throwable $e) {
             Log::error('[EmployeeApplicationObserver] Failed to update leave balance.', [

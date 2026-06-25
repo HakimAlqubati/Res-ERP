@@ -13,8 +13,25 @@
         <table class="w-full text-sm text-left pretty reports" style="margin-bottom: 2rem;">
             <thead class="fixed-header" style="top:64px;">
                 <tr class="header_report">
-                    <th colspan="8" class="no_border_right_left" style="text-align:center; font-size:14px;">
-                        {{ __('lang.current_staff') }} &mdash; {{ $report['period'] }}
+                    <th colspan="8" class="no_border_right_left" style="padding: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div style="flex: 1; text-align: {{ app()->getLocale() == 'en' ? 'left' : 'right' }};">
+                                <p style="font-size: 14px; font-weight: bold; margin: 3px 0;">
+                                    {{ empty($branch_id) ? __('All Branches') : \App\Models\Branch::find($branch_id)?->name }}
+                                </p>
+                                <p style="font-size: 14px; margin: 3px 0;">
+                                    {{ now()->format('Y-m-d H:i') }}
+                                </p>
+                            </div>
+                            <div style="flex: 1; text-align: center;">
+                                <p style="font-size: 16px; font-weight: bold; margin: 0;">
+                                    {{ __('lang.current_staff') }} &mdash; {{ $report['period'] }}
+                                </p>
+                            </div>
+                            <div style="flex: 1; text-align: {{ app()->getLocale() == 'en' ? 'right' : 'left' }};">
+                                <img class="circle-image" style="max-height: 60px; display: inline-block;" src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="">
+                            </div>
+                        </div>
                     </th>
                 </tr>
                 <tr>
@@ -22,14 +39,14 @@
                     <th rowspan="2">{{ __('lang.employee_name') }}</th>
                     <th rowspan="2" style="text-align:center;">{{ __('Present Days') }}</th>
                     <th colspan="2" style="text-align:center;">{{ __('lang.overtime') }}</th>
-                    <th colspan="2" style="text-align:center;">{{ __('lang.deductions') }}</th>
+                    <th colspan="2" style="text-align:center; color: red;">{{ __('lang.deductions') }}</th>
                     <th rowspan="2">{{ __('lang.note') }}</th>
                 </tr>
                 <tr>
                     <th style="text-align:center;">{{ __('lang.days') }}</th>
                     <th style="text-align:center;">{{ __('lang.hours') }}</th>
-                    <th style="text-align:center;">{{ __('lang.days') }}</th>
-                    <th style="text-align:center;">{{ __('lang.hours') }}</th>
+                    <th style="text-align:center; color: red;">{{ __('lang.days') }}</th>
+                    <th style="text-align:center; color: red;">{{ __('lang.hours') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -69,8 +86,25 @@
         <table class="w-full text-sm text-left pretty reports" style="margin-bottom: 2rem;">
             <thead>
                 <tr class="header_report">
-                    <th colspan="9" class="no_border_right_left" style="text-align:center; font-size:14px;">
-                        {{ __('lang.new_staff') }} &mdash; {{ $report['period'] }}
+                    <th colspan="9" class="no_border_right_left" style="padding: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div style="flex: 1; text-align: {{ app()->getLocale() == 'en' ? 'left' : 'right' }};">
+                                <p style="font-size: 14px; font-weight: bold; margin: 3px 0;">
+                                    {{ empty($branch_id) ? __('All Branches') : \App\Models\Branch::find($branch_id)?->name }}
+                                </p>
+                                <p style="font-size: 14px; margin: 3px 0;">
+                                    {{ now()->format('Y-m-d H:i') }}
+                                </p>
+                            </div>
+                            <div style="flex: 1; text-align: center;">
+                                <p style="font-size: 16px; font-weight: bold; margin: 0;">
+                                    {{ __('lang.new_staff') }} &mdash; {{ $report['period'] }}
+                                </p>
+                            </div>
+                            <div style="flex: 1; text-align: {{ app()->getLocale() == 'en' ? 'right' : 'left' }};">
+                                <img class="circle-image" style="max-height: 60px; display: inline-block;" src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="">
+                            </div>
+                        </div>
                     </th>
                 </tr>
                 <tr>
@@ -78,15 +112,15 @@
                     <th rowspan="2">{{ __('lang.employee_name') }}</th>
                     <th rowspan="2" style="text-align:center;">{{ __('Present Days') }}</th>
                     <th colspan="2" style="text-align:center;">{{ __('lang.overtime') }}</th>
-                    <th colspan="2" style="text-align:center;">{{ __('lang.deductions') }}</th>
+                    <th colspan="2" style="text-align:center; color: red;">{{ __('lang.deductions') }}</th>
                     <th rowspan="2">{{ __('lang.salary') }}</th>
                     <th rowspan="2">{{ __('lang.note') }}</th>
                 </tr>
                 <tr>
                     <th style="text-align:center;">{{ __('lang.days') }}</th>
                     <th style="text-align:center;">{{ __('lang.hours') }}</th>
-                    <th style="text-align:center;">{{ __('lang.days') }}</th>
-                    <th style="text-align:center;">{{ __('lang.hours') }}</th>
+                    <th style="text-align:center; color: red;">{{ __('lang.days') }}</th>
+                    <th style="text-align:center; color: red;">{{ __('lang.hours') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -128,8 +162,25 @@
         <table class="w-full text-sm text-left pretty reports">
             <thead>
                 <tr class="header_report">
-                    <th colspan="9" class="no_border_right_left" style="text-align:center; font-size:14px;">
-                        {{ __('lang.terminated_staff') }} &mdash; {{ $report['period'] }}
+                    <th colspan="9" class="no_border_right_left" style="padding: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div style="flex: 1; text-align: {{ app()->getLocale() == 'en' ? 'left' : 'right' }};">
+                                <p style="font-size: 14px; font-weight: bold; margin: 3px 0;">
+                                    {{ empty($branch_id) ? __('All Branches') : \App\Models\Branch::find($branch_id)?->name }}
+                                </p>
+                                <p style="font-size: 14px; margin: 3px 0;">
+                                    {{ now()->format('Y-m-d H:i') }}
+                                </p>
+                            </div>
+                            <div style="flex: 1; text-align: center;">
+                                <p style="font-size: 16px; font-weight: bold; margin: 0;">
+                                    {{ __('lang.terminated_staff') }} &mdash; {{ $report['period'] }}
+                                </p>
+                            </div>
+                            <div style="flex: 1; text-align: {{ app()->getLocale() == 'en' ? 'right' : 'left' }};">
+                                <img class="circle-image" style="max-height: 60px; display: inline-block;" src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="">
+                            </div>
+                        </div>
                     </th>
                 </tr>
                 <tr>
@@ -137,15 +188,15 @@
                     <th rowspan="2">{{ __('lang.employee_name') }}</th>
                     <th rowspan="2" style="text-align:center;">{{ __('Present Days') }}</th>
                     <th colspan="2" style="text-align:center;">{{ __('lang.overtime') }}</th>
-                    <th colspan="2" style="text-align:center;">{{ __('lang.deductions') }}</th>
+                    <th colspan="2" style="text-align:center; color: red;">{{ __('lang.deductions') }}</th>
                     <th rowspan="2">{{ __('lang.termination_date') }}</th>
                     <th rowspan="2">{{ __('lang.note') }}</th>
                 </tr>
                 <tr>
                     <th style="text-align:center;">{{ __('lang.days') }}</th>
                     <th style="text-align:center;">{{ __('lang.hours') }}</th>
-                    <th style="text-align:center;">{{ __('lang.days') }}</th>
-                    <th style="text-align:center;">{{ __('lang.hours') }}</th>
+                    <th style="text-align:center; color: red;">{{ __('lang.days') }}</th>
+                    <th style="text-align:center; color: red;">{{ __('lang.hours') }}</th>
                 </tr>
             </thead>
             <tbody>

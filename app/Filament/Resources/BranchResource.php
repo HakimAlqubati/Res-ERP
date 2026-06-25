@@ -2,24 +2,19 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\BranchResource\RelationManagers\WorkPeriodsRelationManager;
-use App\Filament\Resources\BranchResource\RelationManagers\EmployeesRelationManager;
-use App\Filament\Resources\BranchResource\RelationManagers\EquipmentsRelationManager;
-use Filament\Schemas\Schema;
-
-
-use App\Filament\Resources\BranchResource\Pages\ManageBranches;
-use App\Filament\Resources\BranchResource\Pages\EditBranch;
 use App\Filament\Resources\BranchResource\Pages\CreateBranch;
-use App\Filament\Resources\BranchResource\Pages;
+use App\Filament\Resources\BranchResource\Pages\EditBranch;
+use App\Filament\Resources\BranchResource\Pages\ManageBranches;
 use App\Filament\Resources\BranchResource\Pages\ViewBranch;
 use App\Filament\Resources\BranchResource\RelationManagers\AreasRelationManager;
+use App\Filament\Resources\BranchResource\RelationManagers\EmployeesRelationManager;
+use App\Filament\Resources\BranchResource\RelationManagers\EquipmentsRelationManager;
+use App\Filament\Resources\BranchResource\RelationManagers\WorkPeriodsRelationManager;
 use App\Filament\Resources\BranchResource\Schemas\BranchForm;
 use App\Filament\Resources\BranchResource\Tables\BranchTable;
 use App\Models\Branch;
-
 use Filament\Resources\Resource;
-
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -29,12 +24,15 @@ class BranchResource extends Resource
 {
     protected static ?string $model = Branch::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-building-office-2';
-    protected static string | \UnitEnum | null $navigationGroup = 'Branches';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-office-2';
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Branches';
+
     public static function getNavigationLabel(): string
     {
         return __('lang.branches');
     }
+
     public static function form(Schema $schema): Schema
     {
         return BranchForm::configure($schema);
@@ -81,9 +79,14 @@ class BranchResource extends Resource
                 SoftDeletingScope::class,
             ]);
     }
+
     public static function canViewAny(): bool
     {
-        return true;
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isHR()) {
+            return true;
+        }
+
+        return false;
     }
 
     public static function canCreate(): bool
@@ -91,6 +94,7 @@ class BranchResource extends Resource
         if (isSuperAdmin() || isSystemManager()) {
             return true;
         }
+
         return false;
     }
 
@@ -99,6 +103,7 @@ class BranchResource extends Resource
         if (isSuperAdmin() || isSystemManager()) {
             return true;
         }
+
         return false;
     }
 
@@ -107,20 +112,20 @@ class BranchResource extends Resource
         if (isSuperAdmin() || isSystemManager()) {
             return true;
         }
+
         return false;
     }
-
 
     public static function getGlobalSearchResultsLimit(): int
     {
         return 3;
     }
 
-
     public static function getGloballySearchableAttributes(): array
     {
         return ['name'];
     }
+
     public static function getGlobalSearchResultTitle(Model $record): string
     {
         return $record->name;
