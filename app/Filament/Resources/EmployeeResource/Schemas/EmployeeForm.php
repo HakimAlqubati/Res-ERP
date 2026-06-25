@@ -334,9 +334,13 @@ class EmployeeForm
                                             
                                             ->label(__('lang.can_add_branch_order'))->default(0)->inline(false),
 
-                                        Toggle::make('allow_attendance_from_any_branch')->columnSpan(1)
-                                            ->disabled(fn(): bool => isBranchManager())
-                                            ->label(__('lang.allow_attendance_from_any_branch'))->default(0)->inline(false),
+                                        Toggle::make('settings.can_view_all_branches')->columnSpan(1)
+                                            ->label(__('lang.can_view_all_branches'))
+                                            ->helperText(__('lang.can_view_all_branches_hint'))
+                                            ->default(0)
+                                            ->inline(false)
+                                            ->visible(fn(): bool => isSuperAdmin() || isSystemManager())
+                                            ,
 
                                     ]),
                                 ]),
@@ -446,7 +450,7 @@ class EmployeeForm
                                                 fn(): bool => isBranchManager() && !(isSuperAdmin()
                                                     || isSystemManager())
                                             )
-                                            ->hidden(fn() =>isHR())
+                                            ->visible(fn(string $operation): bool => isSuperAdmin() || isSystemManager() || (isHR() && $operation === 'create'))
                                             ,
 
                                         Select::make('salary_allocation_rule')

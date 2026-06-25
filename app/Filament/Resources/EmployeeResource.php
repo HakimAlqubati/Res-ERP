@@ -133,7 +133,6 @@ class EmployeeResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            // ->where('role_id',8)
             ->forBranchManager()
             ->with(['branch:id,name', 'pendingTerminationRequest',
                 'serviceTermination'])

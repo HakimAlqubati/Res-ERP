@@ -15,6 +15,7 @@ use App\Models\EmployeeFaceData;
 use App\Models\EmployeeFile;
 use App\Models\EmployeeMonthlyIncentive;
 use App\Models\EmployeeReward;
+use App\Models\EmployeeSetting;
 use App\Models\EmployeeOvertime;
 use App\Models\EmployeePeriod;
 use App\Models\EmployeePeriodDay;
@@ -256,6 +257,11 @@ trait EmployeeRelationships
     public function rewards()
     {
         return $this->hasMany(EmployeeReward::class);
+    }
+
+    public function settings()
+    {
+        return $this->hasOne(EmployeeSetting::class);
     }
 
 
