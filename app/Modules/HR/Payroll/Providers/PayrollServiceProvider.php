@@ -61,6 +61,7 @@ class PayrollServiceProvider extends ServiceProvider
         $this->app->singleton(TransactionBuilder::class);
         $this->app->singleton(MonthlyIncentiveCalculator::class);
         $this->app->singleton(CustomDeductionCalculator::class);
+        $this->app->singleton(\App\Modules\HR\Payroll\Calculators\CarryForwardRecoveryCalculator::class);
 
         // ===== Repositories =====
         $this->app->singleton(PayrollRepositoryInterface::class, PayrollRepository::class);
@@ -83,6 +84,7 @@ class PayrollServiceProvider extends ServiceProvider
                 $app->make(TransactionBuilder::class),
                 $app->make(MonthlyIncentiveCalculator::class),
                 $app->make(CustomDeductionCalculator::class),
+                $app->make(\App\Modules\HR\Payroll\Calculators\CarryForwardRecoveryCalculator::class),
             );
         });
         $this->app->singleton(SalaryCalculatorService::class, function ($app) {

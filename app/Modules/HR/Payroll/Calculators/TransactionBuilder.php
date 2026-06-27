@@ -36,6 +36,7 @@ class TransactionBuilder
         array $penalties,
         array $advanceInstallments,
         array $advanceWages,
+        array $carryForwardRecovery,
         array $mealRequests,
         array $dynamicDeductions,
         array $customDeductions = [],
@@ -304,6 +305,23 @@ class TransactionBuilder
                 'description'  => $bonus['name'] ?? 'Incentive',
                 'reference_type' => \App\Models\EmployeeMonthlyIncentive::class,
                 'reference_id'   => $bonus['employee_incentive_id'] ?? null,
+            ];
+        }
+
+        // 14b. استرداد ديون الأشهر السابقة (Carry Forward Recovery)
+        foreach ($carryForwardRecovery['items'] ?? [] as $cfr) {
+            $tx[] = [
+                'type'           => SalaryTransactionType::TYPE_CARRY_FORWARD,
+                'sub_type'       => SalaryTransactionSubType::CARRY_FORWARD->value,
+                'amount'         => $this->round((float)$cfr['recovery_amount']),
+                'operation'      => '-',
+                'description'    => sprintf('Carry forward recovery from %d/%d', $cfr['from_month'], $cfr['from_year']),
+                'reference_type' => \App\Models\CarryForward::class,
+                'reference_id'   => $cfr['carry_forward_id'],
+                'unit'           => 'flat',
+                'qty'            => 1,
+                'rate'           => $this->round((float)$cfr['recovery_amount']),
+                'multiplier'     => 1.0,
             ];
         }
 
