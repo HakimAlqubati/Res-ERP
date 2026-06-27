@@ -193,36 +193,20 @@ class EmployeeApplicationResource extends Resource
             ->icon('heroicon-o-check')
             ->databaseTransaction()
             ->action(function ($record, $data) {
-                DB::beginTransaction();
                 try {
-                    $employee = $record->employee;
-
-                    // باقي الكود كما هو...
-                    $validated = [
-                        'employee_id'      => $employee->id,
-                        'date_time'        => $data['request_check_date'] . ' ' . $data['request_check_time'],
-                        'type'             => Attendance::CHECKTYPE_CHECKOUT,
-                        'attendance_type'  => Attendance::ATTENDANCE_TYPE_REQUEST,
-                        'skip_duplicate_timestamp_check' => true,
-                        'source_type' => EmployeeApplicationV2::class,
-                        'source_id' => $record->id,
-                    ];
-
-                    $result = app(AttendanceService::class)->handle($validated);
-
-                    if ($result->success) {
-                        $record->update([
-                            'status'      => EmployeeApplicationV2::STATUS_APPROVED,
-                            'approved_by' => auth()->user()->id,
-                            'approved_at' => now(),
+                    app(\App\Services\HR\Applications\EmployeeApplicationService::class)
+                        ->updateMissedCheckout($record->id, [
+                            'date' => $data['request_check_date'],
+                            'time' => $data['request_check_time']
                         ]);
-                        DB::commit();
-                        showSuccessNotifiMessage('Done');
-                    } else {
-                        showWarningNotifiMessage($result->message);
-                    }
-                } catch (Exception $e) {
-                    DB::rollBack();
+
+                    app(\App\Services\HR\Applications\EmployeeApplicationService::class)
+                        ->approveApplication($record->id, auth()->id());
+
+                    showSuccessNotifiMessage('Done');
+                } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+                    Notification::make()->danger()->title('Authorization error')->body($e->getMessage())->send();
+                } catch (\Exception $e) {
                     AppLog::write('Error approving attendance request: ' . $e->getMessage(), AppLog::LEVEL_ERROR);
                     return Notification::make()->warning()->body($e->getMessage())->send();
                 }
@@ -296,21 +280,14 @@ class EmployeeApplicationResource extends Resource
             ->modalSubmitActionLabel('Approve')
 
             ->action(function ($record) {
-                DB::beginTransaction();
                 try {
-                    // Only update the status to MANAGER APPROVED.
-                    // Installments and financial transactions will be created
-                    // when the Financial Manager approves the request.
-                    $record->update([
-                        'status'      => EmployeeApplicationV2::STATUS_APPROVED,
-                        'approved_by' => auth()->id(),
-                        'approved_at' => now(),
-                    ]);
+                    app(\App\Services\HR\Applications\EmployeeApplicationService::class)
+                        ->approveApplication($record->id, auth()->id());
 
-                    DB::commit();
-                    Notification::make()->success()->title('Manager Approved. Waiting for Finance Approval.')->send();
+                    Notification::make()->success()->title('Approved successfully')->send();
+                } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+                    Notification::make()->danger()->title('Authorization error')->body($e->getMessage())->send();
                 } catch (\Throwable $th) {
-                    DB::rollBack();
                     Notification::make()->danger()->title('Approval error: ' . $th->getMessage())->send();
                     throw $th;
                 }
@@ -733,21 +710,14 @@ class EmployeeApplicationResource extends Resource
             ->color('success')
             ->icon('heroicon-o-check')
             ->action(function ($record, $data) {
-
-                DB::beginTransaction();
                 try {
+                    app(\App\Services\HR\Applications\EmployeeApplicationService::class)
+                        ->approveApplication($record->id, auth()->id());
 
-                    $record->update([
-                        'status'      => EmployeeApplicationV2::STATUS_APPROVED,
-                        'approved_by' => auth()->user()->id,
-                        'approved_at' => now(),
-                    ]);
-
-                    DB::commit();
                     showSuccessNotifiMessage('Done');
+                } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+                    Notification::make()->danger()->title('Authorization error')->body($e->getMessage())->send();
                 } catch (Exception $th) {
-                    //throw $th;
-                    DB::rollBack();
                     showWarningNotifiMessage('Failed', $th->getMessage());
                 }
             })
@@ -889,42 +859,20 @@ class EmployeeApplicationResource extends Resource
             ->modalIcon(fn($record) => Heroicon::FingerPrint)
             ->modalDescription('Approve Attendance Request')
             ->action(function ($record, $data) {
-                // Logic for approving attendance fingerprint requests
-                DB::beginTransaction();
                 try {
-
-                    $employee = $record->employee;
-
-                    $validated = [
-                        'employee_id' => $employee->id,
-                        'date_time' => $data['request_check_date'] . ' ' . $data['request_check_time'],
-                        'type' =>  Attendance::CHECKTYPE_CHECKIN,
-                        'attendance_type' => Attendance::ATTENDANCE_TYPE_REQUEST,
-                        'skip_duplicate_timestamp_check' => true,
-                        'source_type' => EmployeeApplicationV2::class,
-                        'source_id' => $record->id,
-                    ];
-
-                    // Add period_id if selected
-                    if (!empty($data['period_id'])) {
-                        $validated['period_id'] = $data['period_id'];
-                    }
-                    $result = app(AttendanceService::class)->handle($validated);
-                    if ($result->success) {
-                        $record->update([
-                            'status'      => EmployeeApplicationV2::STATUS_APPROVED,
-                            'approved_by' => auth()->user()->id,
-                            'approved_at' => now(),
+                    app(\App\Services\HR\Applications\EmployeeApplicationService::class)
+                        ->updateMissedCheckin($record->id, [
+                            'date' => $data['request_check_date'],
+                            'time' => $data['request_check_time']
                         ]);
-                        DB::commit();
-                        showSuccessNotifiMessage('Done');
-                    } else {
-                        // Case: Other Failure
-                        DB::rollBack();
-                        showWarningNotifiMessage($result->message);
-                    }
+
+                    app(\App\Services\HR\Applications\EmployeeApplicationService::class)
+                        ->approveApplication($record->id, auth()->id());
+
+                    showSuccessNotifiMessage('Done');
+                } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+                    Notification::make()->danger()->title('Authorization error')->body($e->getMessage())->send();
                 } catch (Exception $th) {
-                    DB::rollBack();
                     showWarningNotifiMessage($th->getMessage());
                     throw $th;
                 }
@@ -1318,21 +1266,16 @@ class EmployeeApplicationResource extends Resource
             ->icon('heroicon-o-check')
             ->databaseTransaction()
             ->action(function ($record) {
-                $record->update([
-                    'status'      => EmployeeApplicationV2::STATUS_APPROVED,
-                    'approved_by' => auth()->id(),
-                    'approved_at' => now(),
-                ]);
+                try {
+                    app(\App\Services\HR\Applications\EmployeeApplicationService::class)
+                        ->approveApplication($record->id, auth()->id());
 
-                if ($record->mealRequest) {
-                    $record->mealRequest->update([
-                        'status'      => 'approved',
-                        'approved_by' => auth()->id(),
-                        'approved_at' => now(),
-                    ]);
+                    showSuccessNotifiMessage('Approved');
+                } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+                    Notification::make()->danger()->title('Authorization error')->body($e->getMessage())->send();
+                } catch (\Exception $e) {
+                    Notification::make()->danger()->title('Error')->body($e->getMessage())->send();
                 }
-
-                showSuccessNotifiMessage('Approved');
             });
     }
 
