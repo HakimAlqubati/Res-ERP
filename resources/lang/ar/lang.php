@@ -927,6 +927,7 @@ return [
   'monthly_deduction' => 'الخصم الشهري',
   'deduction_starts' => 'بداية الخصم',
   'deduction_ends' => 'نهاية الخصم',
+  'finance_approved_by' => 'اعتمد بواسطة المدير المالي',
 
   // Attendance Fingerprint Request
   'attendance_fingerprint_request' => 'طلب بصمة الحضور',

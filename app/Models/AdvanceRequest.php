@@ -75,6 +75,10 @@ class AdvanceRequest extends Model
 
     protected $appends = ['payment_status'];
 
+    protected $casts = [
+        'finance_approved_at' => 'datetime',
+    ];
+
     // ===================== Relationships =====================
 
     public function employee()
