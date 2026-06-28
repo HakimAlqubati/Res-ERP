@@ -38,13 +38,6 @@ class InventoryTransactionObserver
                 // $tenantId
             );
         }
-
-        if ($transaction->movement_type === InventoryTransaction::MOVEMENT_IN
-            && $transaction->transactionable_type === StockSupplyOrder::class
-            && $transaction->product->is_manufacturing
-        ) {
-            $this->deductCompositeAction->execute($transaction->transactionable_id);
-        }
         // تحديث ملخص المخزون
         // $this->summaryUpdater->onTransactionCreated($inventoryTransaction);
 

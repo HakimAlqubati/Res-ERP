@@ -7,6 +7,7 @@ namespace App\Modules\Stock\Actions\Manufacturing;
 use App\Models\InventoryTransaction;
 use App\Models\ProductItem;
 use App\Models\StockSupplyOrder;
+use App\Models\StockSupplyOrderDetail;
 use App\Models\UnitPrice;
 use App\Modules\Stock\Reports\FifoBatchReports\Contracts\FifoAllocatorInterface;
 use Illuminate\Support\Facades\DB;
@@ -18,103 +19,181 @@ final class DeductCompositeProductComponentsAction
         private FifoAllocatorInterface $fifoAllocator
     ) {}
 
-    public function execute(int $supplyOrderId): void
+    public function executeForDetail(StockSupplyOrderDetail $detail): void
     {
-        Log::info("start DeductCompositeProductComponentsAction: execute - supplyOrderId: {$supplyOrderId}");
-        $order = StockSupplyOrder::with(['details'])->findOrFail($supplyOrderId);
-        Log::info('order fetched ');
-        // DB::transaction(function () use ($order) {
-        // 1. تحسين الأداء (1): جلب جميع المكونات باستعلام واحد فقط!
-        $productIds = $order->details->pluck('product_id')->unique()->toArray();
+        Log::info("start DeductCompositeProductComponentsAction: executeForDetail - detailId: {$detail->id}");
+        
+        $order = $detail->order;
+        if (!$order) {
+            return;
+        }
 
-        $allComponents = ProductItem::with('product')
-            ->whereIn('parent_product_id', $productIds)
-            ->get()
-            ->groupBy('parent_product_id');
+        $components = ProductItem::with('product')
+            ->where('parent_product_id', $detail->product_id)
+            ->get();
 
-        app(ValidateStockForManufacturingAction::class)->execute($order, $allComponents);
+        if ($components->isEmpty()) {
+            return;
+        }
+
+        // Validate stock for this specific composite product
+        app(ValidateStockForManufacturingAction::class)->execute($order, collect([$detail->product_id => $components]));
 
         $outboundTransactions = [];
         $now = now();
 
-        foreach ($order->details as $detail) {
-            // جلب المكونات من المجموعة المحملة مسبقاً (بدون استعلام جديد للداتا بيز)
-            $components = $allComponents->get($detail->product_id);
+        $hasPriceChanged = false;
+        $changedComponentsDetails = [];
+        
+        $allComponentsAllocations = [];
+        
+        // 🟢 1. سحب الكميات بالكامل لكل مكون بمرة واحدة (أداء عالي)
+        foreach ($components as $component) {
+            $totalQtyToDeduct = $this->calculateRequiredQuantity(
+                (float) $component->quantity,
+                (float) $detail->quantity,
+                (float) ($component->qty_waste_percentage ?? 0)
+            );
 
-            if (! $components || $components->isEmpty()) {
-                continue;
-            }
+            if ($totalQtyToDeduct <= 0) continue;
 
-            $hasPriceChanged = false;
-            $changedComponentsDetails = [];
-            foreach ($components as $component) {
-                // حساب الكمية مع الهدر
-                $totalQtyToDeduct = $this->calculateRequiredQuantity(
-                    (float) $component->quantity,
-                    (float) $detail->quantity,
-                    (float) ($component->qty_waste_percentage ?? 0)
-                );
+            $allocations = $this->fifoAllocator->allocate(
+                (int) $component->product_id,
+                (int) $component->unit_id,
+                (float) $totalQtyToDeduct,
+                (int) $order->store_id,
+                $order
+            );
 
-                $allocations = $this->fifoAllocator->allocate(
-                    (int) $component->product_id,
-                    (int) $component->unit_id,
-                    (float) $totalQtyToDeduct,
-                    (int) $order->store_id,
-                    $order
-                );
+            $this->collectOutboundTransactions(
+                $outboundTransactions,
+                $order,
+                $detail->product_id,
+                $component,
+                $allocations,
+                $now
+            );
 
-                // 🟢 [التعديل 2]: مقارنة سعر الباتش المسحوب وتحديث الوصفة (ProductItem)
-                if (! empty($allocations)) {
-                    $lastAllocation = end($allocations);
-                    $sourcePrice = (float) $lastAllocation['price_based_on_unit'];
+            // تحديث أسعار المكونات (الوصفة) بناءً على آخر سعر سحب
+            if (! empty($allocations)) {
+                $lastAllocation = end($allocations);
+                $sourcePrice = (float) $lastAllocation['price_based_on_unit'];
 
-                    // مقارنة السعر برقمين عشريين لتجاهل الفروقات البسيطة الناتجة عن التقريب
-                    if (round((float) $component->price, 2) !== round((float) $sourcePrice, 2)) {
-                        $oldPrice = round((float) $component->price, 2) + 0;
-                        $newPrice = round((float) $sourcePrice, 2) + 0;
+                if (round((float) $component->price, 2) !== round($sourcePrice, 2)) {
+                    $oldPrice = round((float) $component->price, 2) + 0;
+                    $newPrice = round($sourcePrice, 2) + 0;
 
-                        $component->price = $sourcePrice;
-                        $component->total_price = $sourcePrice * (float) $component->quantity;
-                        $component->total_price_after_waste = ProductItem::calculateTotalPriceAfterWaste(
-                            $component->total_price,
-                            (float) ($component->qty_waste_percentage ?? 0)
-                        );
-                        $component->save();
-                        $hasPriceChanged = true;
-                        $componentName = $component->product ? $component->product->name : "ID #{$component->product_id}";
-                        $changedComponentsDetails[] = "{$componentName} ({$oldPrice} -> {$newPrice})";
+                    $component->price = $sourcePrice;
+                    $component->total_price = $sourcePrice * (float) $component->quantity;
+                    $component->total_price_after_waste = ProductItem::calculateTotalPriceAfterWaste(
+                        $component->total_price,
+                        (float) ($component->qty_waste_percentage ?? 0)
+                    );
+                    $component->save();
+                    
+                    $hasPriceChanged = true;
+                    $componentName = $component->product ? $component->product->name : "ID #{$component->product_id}";
+                    $changeMsg = "{$componentName} ({$oldPrice} -> {$newPrice})";
+                    if (!in_array($changeMsg, $changedComponentsDetails)) {
+                        $changedComponentsDetails[] = $changeMsg;
                     }
                 }
-
-                // 2. تحسين الأداء (2): تجميع البيانات للإدخال المجمع بدلاً من الإدخال الفردي
-                $this->collectOutboundTransactions(
-                    $outboundTransactions,
-                    $order,
-                    $detail->product_id,
-                    $component,
-                    $allocations,
-                    $now
-                );
             }
-            // 🟢 [التعديل 3]: تحديث السعر العام للمنتج المركب (UnitPrice) فقط إذا تغيرت مكوناته
-            if ($hasPriceChanged) {
-                $newCompositeCost = (float) $components->sum('total_price_after_waste');
-                $componentsChangesStr = implode(', ', $changedComponentsDetails);
-                $updateNote = "Price updated due to comps: {$componentsChangesStr}";
-
-                // يتم تحديث الأسعار العامة فقط، دون المساس بالحركات المخزنية!
-                $this->updateGlobalPrice($detail, $newCompositeCost, $updateNote);
-            }
+            
+            // تخزين التوزيعات في الذاكرة لتقسيمها على دفعات المنتج المركب لاحقاً
+            $allComponentsAllocations[$component->id] = [
+                'recipe_qty_per_unit' => $this->calculateRequiredQuantity(
+                    (float) $component->quantity,
+                    1.0, // الكمية المطلوبة لإنتاج 1 حبة من المنتج المركب
+                    (float) ($component->qty_waste_percentage ?? 0)
+                ),
+                'allocations' => $allocations
+            ];
         }
 
-        // 3. تحسين الأداء (3): تنفيذ عملية إدخال واحدة (Bulk Insert) لكل الحركات!
+        // 🟢 2. تقسيم المنتج المركب إلى دفعات (حبات) واحتساب التكلفة في الذاكرة (بدون استعلامات إضافية)
+        $remainingCompositeQty = (float) $detail->quantity;
+        $producedBatches = [];
+
+        while ($remainingCompositeQty > 0) {
+            $currentBatchQty = min(1.0, $remainingCompositeQty);
+            $currentBatchCost = 0;
+            
+            foreach ($allComponentsAllocations as $compId => &$compData) {
+                // الكمية المطلوبة من هذا المكون لهذه الدفعة من المنتج المركب
+                $neededQty = $compData['recipe_qty_per_unit'] * $currentBatchQty;
+                
+                foreach ($compData['allocations'] as &$alloc) {
+                    if ($neededQty <= 0) break;
+                    if ($alloc['deducted_qty'] <= 0) continue;
+                    
+                    $take = min($neededQty, $alloc['deducted_qty']);
+                    $currentBatchCost += ($take * (float) $alloc['price_based_on_unit']);
+                    
+                    $alloc['deducted_qty'] -= $take;
+                    $neededQty -= $take;
+                }
+            }
+            
+            $unitCost = $currentBatchQty > 0 ? ($currentBatchCost / $currentBatchQty) : 0;
+            
+            if (!empty($producedBatches) && abs(end($producedBatches)['unit_cost'] - $unitCost) < 0.001) {
+                $lastIdx = count($producedBatches) - 1;
+                $producedBatches[$lastIdx]['quantity'] += $currentBatchQty;
+                $producedBatches[$lastIdx]['total_cost'] += $currentBatchCost;
+            } else {
+                $producedBatches[] = [
+                    'quantity' => $currentBatchQty,
+                    'unit_cost' => $unitCost,
+                    'total_cost' => $currentBatchCost,
+                ];
+            }
+
+            $remainingCompositeQty -= $currentBatchQty;
+            if ($remainingCompositeQty < 0.0001) break;
+        }
+
+        // 🟢 3. إنشاء حركات الدخول للمنتج المركب (مقسمة لباتشات فعلية بناءً على التكلفة)
+        $notes = 'Stock supply with ID ' . $detail->stock_supply_order_id;
+        if (isset($order->store_id)) {
+            $notes .= ' in (' . $order->store->name . ')';
+        }
+     
+        foreach ($producedBatches as $batch) {
+            InventoryTransaction::create([
+                'product_id' => $detail->product_id,
+                'movement_type' => InventoryTransaction::MOVEMENT_IN,
+                'quantity' => $batch['quantity'],
+                'unit_id' => $detail->unit_id,
+                'movement_date' => $order->date ?? $now,
+                'package_size' => $detail->package_size,
+                'store_id' => $order->store_id,
+                'price' => $batch['unit_cost'],
+                'transaction_date' => $order->date ?? $now,
+                'notes' => $notes,
+                'transactionable_id' => $detail->stock_supply_order_id,
+                'transactionable_type' => StockSupplyOrder::class,
+                'waste_stock_percentage' => $detail->waste_stock_percentage,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
+
+        // 🟢 4. تحديث السعر العام
+        if ($hasPriceChanged) {
+            $newCompositeCost = (float) $components->sum('total_price_after_waste');
+            $componentsChangesStr = implode(', ', $changedComponentsDetails);
+            $updateNote = "Price updated due to comps: {$componentsChangesStr}";
+
+            $this->updateGlobalPrice($detail, $newCompositeCost, $updateNote);
+        }
+
+        // 🟢 5. إدخال حركات سحب المكونات
         if (! empty($outboundTransactions)) {
-            // تقسيم المصفوفة إلى دفعات (Chunks) إذا كانت ضخمة جداً لحماية الذاكرة
             foreach (array_chunk($outboundTransactions, 500) as $chunk) {
                 InventoryTransaction::insert($chunk);
             }
         }
-        // });
     }
 
     private function calculateRequiredQuantity(float $recipeQty, float $producedQty, float $wastePercentage): float
@@ -150,13 +229,12 @@ final class DeductCompositeProductComponentsAction
                 'transactionable_id' => $order->id,
                 'transactionable_type' => StockSupplyOrder::class,
                 'source_transaction_id' => $alloc['transaction_id'],
-                'created_at' => $now,
-                'updated_at' => $now,
+                'created_at' => $now->toDateTimeString(),
+                'updated_at' => $now->toDateTimeString(),
             ];
         }
     }
 
-    // --- دالة مبسطة لتحديث السعر العام للمنتج المركب مباشرة ---
     private function updateGlobalPrice($detail, float $newCost, string $updateNote): void
     {
         $unitPrices = UnitPrice::where('product_id', $detail->product_id)->get();
@@ -165,7 +243,6 @@ final class DeductCompositeProductComponentsAction
             $packageSize = $unitPrice->package_size ?: 1;
             $finalPrice = round($packageSize * $newCost, 2);
 
-            // مقارنة السعر الحالي بالتكلفة الجديدة وتحديثه إذا اختلف فقط
             if (round((float) $unitPrice->price, 2) !== $finalPrice) {
                 $unitPrice->price = $finalPrice;
                 $unitPrice->notes = "{$updateNote} in Supply Order #{$detail->stock_supply_order_id}";

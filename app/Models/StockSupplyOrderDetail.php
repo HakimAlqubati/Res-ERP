@@ -64,22 +64,29 @@ class StockSupplyOrderDetail extends Model implements Auditable
                 $notes .= ' (Created due to Stock Adjustment ID: ' . $order->created_using_model_id . ')';
             }
 
-            // Subtract from inventory transactions
-            InventoryTransaction::create([
-                'product_id' => $stockSupplyDetail->product_id,
-                'movement_type' => InventoryTransaction::MOVEMENT_IN,
-                'quantity' =>  $stockSupplyDetail->quantity,
-                'unit_id' => $stockSupplyDetail->unit_id,
-                'movement_date' => $stockSupplyDetail->order->date ?? now(),
-                'package_size' => $stockSupplyDetail->package_size,
-                'store_id' => $stockSupplyDetail->order?->store_id,
-                'price' => $stockSupplyDetail->price,
-                'transaction_date' => $stockSupplyDetail->order->date ?? now(),
-                'notes' => $notes,
-                'transactionable_id' => $stockSupplyDetail->stock_supply_order_id,
-                'transactionable_type' => StockSupplyOrder::class,
-                'waste_stock_percentage' => $stockSupplyDetail->waste_stock_percentage,
-            ]);
+            // Check if it's a composite/manufacturing product
+            if ($stockSupplyDetail->product->is_manufacturing) {
+                // For manufacturing products, trigger the action to deduct components and insert accurate batches
+                app(\App\Modules\Stock\Actions\Manufacturing\DeductCompositeProductComponentsAction::class)
+                    ->executeForDetail($stockSupplyDetail);
+            } else {
+                // Subtract from inventory transactions for regular products
+                InventoryTransaction::create([
+                    'product_id' => $stockSupplyDetail->product_id,
+                    'movement_type' => InventoryTransaction::MOVEMENT_IN,
+                    'quantity' =>  $stockSupplyDetail->quantity,
+                    'unit_id' => $stockSupplyDetail->unit_id,
+                    'movement_date' => $stockSupplyDetail->order->date ?? now(),
+                    'package_size' => $stockSupplyDetail->package_size,
+                    'store_id' => $stockSupplyDetail->order?->store_id,
+                    'price' => $stockSupplyDetail->price,
+                    'transaction_date' => $stockSupplyDetail->order->date ?? now(),
+                    'notes' => $notes,
+                    'transactionable_id' => $stockSupplyDetail->stock_supply_order_id,
+                    'transactionable_type' => StockSupplyOrder::class,
+                    'waste_stock_percentage' => $stockSupplyDetail->waste_stock_percentage,
+                ]);
+            }
         });
     }
 
