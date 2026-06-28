@@ -23,16 +23,20 @@ final class DeductCompositeProductComponentsAction
     {
         Log::info("start DeductCompositeProductComponentsAction: executeForDetail - detailId: {$detail->id}");
         
-        $order = $detail->order;
-        if (!$order) {
-            return;
-        }
+        DB::beginTransaction();
+        try {
+            $order = $detail->order;
+            if (!$order) {
+                DB::rollBack();
+                return;
+            }
 
         $components = ProductItem::with('product')
             ->where('parent_product_id', $detail->product_id)
             ->get();
 
         if ($components->isEmpty()) {
+            DB::rollBack();
             return;
         }
 
@@ -193,6 +197,13 @@ final class DeductCompositeProductComponentsAction
             foreach (array_chunk($outboundTransactions, 500) as $chunk) {
                 InventoryTransaction::insert($chunk);
             }
+        }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error("Failed in DeductCompositeProductComponentsAction: " . $e->getMessage(), ['exception' => $e]);
+            throw $e;
         }
     }
 
