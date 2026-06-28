@@ -104,8 +104,10 @@ class ReportProductQuantitiesResource extends Resource
                 Filter::make('date')
                     ->schema([
                         DatePicker::make('start_date')
+                            ->default(now()->startOfMonth()->toDateString())
                             ->label(__('lang.start_date')),
                         DatePicker::make('end_date')
+                            ->default(now()->endOfMonth()->toDateString())
                             ->label(__('lang.end_date')),
                     ]),
             ], layout: FiltersLayout::AboveContent);
