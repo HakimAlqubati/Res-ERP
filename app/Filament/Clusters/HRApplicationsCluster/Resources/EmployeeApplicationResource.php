@@ -1622,6 +1622,7 @@ class EmployeeApplicationResource extends Resource
                             ->default(now()->toDateString()),
                         TextInput::make('detail_advance_amount')->numeric()->required()
                             ->label('Amount')
+                            ->minValue(1)
                             ->live(onBlur: true)
                             ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                 if ($state > 0) {
@@ -1864,9 +1865,11 @@ class EmployeeApplicationResource extends Resource
 
                         Select::make('branch_id')
                             ->label(__('lang.branch'))
-                            ->options(Branch::where('type', Branch::TYPE_BRANCH)->pluck('name', 'id'))
+                            ->options(Branch::where('type', Branch::TYPE_BRANCH)
+                            ->active()
+                            ->pluck('name', 'id'))
                         // ->required()
-                        // ->searchable()
+                        ->searchable()
                         // ->live()
                         // ->afterStateUpdated(function ($set, $state) {
                         //     // Sync back to the parent application's branch_id if necessary
@@ -1877,6 +1880,7 @@ class EmployeeApplicationResource extends Resource
                         TextInput::make('cost')
                             ->label(__('lang.cost'))
                             ->numeric()
+                            ->minValue(1)
                             ->required()
                             ->prefixIcon(Heroicon::CurrencyDollar)
                             ->default(0),
