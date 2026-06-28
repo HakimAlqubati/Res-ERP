@@ -313,6 +313,11 @@ class PurchaseInvoiceProductSummaryReportService
             );
             $remainingQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
 
+            // تجاهل الكميات الصفرية
+            if ($remainingQty <= 0) {
+                continue;
+            }
+
             $lastPrice = ($latestPrice && $latestPrice->package_size > 0)
                 ? ($latestPrice->price / $latestPrice->package_size)
                 : $purchase['price'];
