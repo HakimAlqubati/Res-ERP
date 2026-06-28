@@ -196,8 +196,8 @@ class StockSupplyOrderResource extends Resource
                 TextColumn::make('store.name')->label('Store')->toggleable()->searchable(),
                 TextColumn::make('item_count')->label('Products Count')->alignCenter(true)->toggleable(),
                 TextColumn::make('notes')->limit(50)->label('Notes'),
-                IconColumn::make('cancelled')
-                    ->label('Cancelled')->toggleable(isToggledHiddenByDefault: true)->boolean()->alignCenter(),
+                // IconColumn::make('cancelled')
+                //     ->label('Cancelled')->toggleable(isToggledHiddenByDefault: true)->boolean()->alignCenter(),
                 TextColumn::make('created_at')
                     ->label('Created at')->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('creator.name')
@@ -274,7 +274,9 @@ class StockSupplyOrderResource extends Resource
                                 report($e);
                             }
                         })
-                        ->visible(fn (StockSupplyOrder $record) => ! $record->cancelled),
+                        ->visible(fn (StockSupplyOrder $record) => ! $record->cancelled)
+                        ->hidden()
+                        ,
                 ]),
             ])
             ->toolbarActions([
