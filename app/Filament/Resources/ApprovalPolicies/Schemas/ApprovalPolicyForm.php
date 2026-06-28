@@ -81,11 +81,11 @@ class ApprovalPolicyForm
                                             }),
 
                                         Select::make('application_type_id')
-                                            ->label(__('Employee Application Type'))
+                                            ->label(__('Employee Request Type'))
                                             ->options(EmployeeApplicationV2::APPLICATION_TYPE_NAMES)
                                             ->searchable()
                                             ->nullable()
-                                            ->helperText(__('Leave empty to apply to all employee application types.'))
+                                            ->helperText(__('Leave empty to apply to all employee request types.'))
                                             ->visible(fn(Get $get): bool => $get('approvable_type') === EmployeeApplicationV2::class),
 
                                     ]),
@@ -184,7 +184,7 @@ class ApprovalPolicyForm
     private static function approvableTypeOptions(): array
     {
         return [
-            EmployeeApplicationV2::class => __('Employee Applications'),
+            EmployeeApplicationV2::class => __('Employee Requests'),
             EmployeeOvertime::class => __('Employee Overtime'),
             AdvanceWage::class => __('Advance Wages'),
         ];

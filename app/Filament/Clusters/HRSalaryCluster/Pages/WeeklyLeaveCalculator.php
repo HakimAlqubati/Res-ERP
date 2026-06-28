@@ -26,7 +26,7 @@ class WeeklyLeaveCalculator extends Page implements HasForms
 
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 8;
 
     protected static ?string $navigationLabel = 'Weekly Leave Calculator';
 

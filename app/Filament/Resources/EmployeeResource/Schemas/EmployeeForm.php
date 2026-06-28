@@ -485,9 +485,7 @@ class EmployeeForm
                                             ->label(__('lang.exempt_from_late_attendance_deduction'))->default(0)->inline(false)
                                         // ->isInline(false)
                                         ,
-                                        Toggle::make('is_mtd_applicable')->columnSpan(1)
-                                            
-                                            ->label(__('lang.is_mtd_applicable'))->default(1)->inline(false),
+ 
                                         Toggle::make('has_auto_weekly_leave')->columnSpan(1)
                                             ->label(__('lang.has_auto_weekly_leave'))->default(1)->inline(false)->live(),
 

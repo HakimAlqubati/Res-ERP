@@ -35,6 +35,7 @@ use App\Modules\HR\Payroll\Calculators\GeneralDeductionCalculator;
 use App\Modules\HR\Payroll\Calculators\TransactionBuilder;
 use App\Modules\HR\Payroll\Calculators\MonthlyIncentiveCalculator;
 use App\Modules\HR\Payroll\Calculators\CustomDeductionCalculator;
+use App\Modules\HR\Payroll\Calculators\CarryForwardRecoveryCalculator;
 
 /**
  * The Core Payroll Calculation Engine.
@@ -85,6 +86,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         protected TransactionBuilder $transactionBuilder,
         protected MonthlyIncentiveCalculator $monthlyIncentiveCalculator,
         protected CustomDeductionCalculator $customDeductionCalculator,
+        protected CarryForwardRecoveryCalculator $carryForwardRecoveryCalculator,
         /** @var SalaryPolicyHookInterface[] */
         protected array $policyHooks = []
     ) {
@@ -257,6 +259,9 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         // 6d. Calculate custom deductions
         $customDeductions = $this->customDeductionCalculator->calculate($context);
 
+        // 6e. Calculate carry forward recovery (debts from previous months)
+        $carryForwardRecovery = $this->carryForwardRecoveryCalculator->calculate($context);
+
 
         $statistics = $employeeData['statistics'];
         $totalDeductionDays =  $statistics['weekly_leave_calculation']['result']['total_deduction_days'];
@@ -313,7 +318,8 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
                 $advanceWages['total'] +
                 $mealRequests['total'] +
                 $deductions->missingHoursDeduction +
-                $customDeductions['total']
+                $customDeductions['total'] +
+                $carryForwardRecovery['total']
         );
         $this->netSalary = $this->round($this->grossSalary - $this->totalDeductions);
 
@@ -366,6 +372,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             penalties: $penalties,
             advanceInstallments: $advanceInstallments,
             advanceWages: $advanceWages,
+            carryForwardRecovery: $carryForwardRecovery,
             mealRequests: $mealRequests,
             dynamicDeductions: $dynamicDeductions,
             customDeductions: $customDeductions,
@@ -495,6 +502,8 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             'custom_deductions'      => $customDeductions['items'],
             'monthly_incentives_total' => $this->round($monthlyIncentives['total'] ?? 0),
             'monthly_incentives'       => $monthlyIncentives['items'] ?? [],
+            'carry_forward_recovery_total' => $this->round($carryForwardRecovery['total']),
+            'carry_forward_recovery'       => $carryForwardRecovery['items'],
         ];
     }
 

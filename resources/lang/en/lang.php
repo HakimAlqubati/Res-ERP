@@ -949,6 +949,7 @@ return [
     'monthly_deduction' => 'Monthly deduction',
     'deduction_starts' => 'Deduction starts',
     'deduction_ends' => 'Deduction ends',
+    'finance_approved_by' => 'Approved by Finance Manager',
 
     // Attendance Fingerprint Request
     'attendance_fingerprint_request' => 'Attendance Fingerprint Request',
