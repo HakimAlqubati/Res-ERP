@@ -41,7 +41,7 @@ class EmployeeAdvanceReportResource extends Resource
     protected static ?string $pluralLabel = 'Staff Advances';
 
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 2;
 
     public static function table(Table $table): Table
     {
@@ -118,6 +118,20 @@ class EmployeeAdvanceReportResource extends Resource
                     ->label(__('lang.deduction_ends'))
                     ->date()
                     ->sortable(),
+
+                TextColumn::make('financeApprovedBy.name')
+                    ->label(__('lang.finance_approved_by'))
+                    ->placeholder(__('lang.pending'))
+                    ->badge()
+                    ->color(fn($record) => $record->finance_approved_at ? 'success' : 'warning')
+                    ->getStateUsing(fn($record) => $record->finance_approved_at
+                        ? ($record->financeApprovedBy?->name ?? __('lang.approved'))
+                        : __('lang.pending')
+                    )
+                    ->tooltip(fn($record) => $record->finance_approved_at
+                        ? $record->finance_approved_at->format('Y-m-d H:i')
+                        : null
+                    ),
 
                 TextColumn::make('application.status')
                     ->label(__('lang.status'))
@@ -296,7 +310,7 @@ class EmployeeAdvanceReportResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return AdvanceRequest::query()
-            ->with(['employee:id,name,employee_no,branch_id', 'employee.branch:id,name', 'application:id,status'])
+            ->with(['employee:id,name,employee_no,branch_id', 'employee.branch:id,name', 'application:id,status', 'financeApprovedBy:id,name'])
             ->whereHas('application', function ($query) {
                 $query->where('status', EmployeeApplicationV2::STATUS_APPROVED);
             });

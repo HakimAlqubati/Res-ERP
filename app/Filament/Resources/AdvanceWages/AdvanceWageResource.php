@@ -30,7 +30,7 @@ class AdvanceWageResource extends Resource
 
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
-    protected static ?int $navigationSort = 8;
+    protected static ?int $navigationSort = 4;
 
     public static function form(Schema $schema): Schema
     {

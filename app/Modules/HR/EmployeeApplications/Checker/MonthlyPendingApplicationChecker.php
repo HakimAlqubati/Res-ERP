@@ -2,6 +2,7 @@
 
 namespace App\Modules\HR\EmployeeApplications\Checker;
 
+use App\Models\AdvanceRequest;
 use App\Models\EmployeeApplicationV2;
 use App\Modules\HR\EmployeeApplications\Checker\DTOs\CheckerFilterDTO;
 use App\Modules\HR\EmployeeApplications\Checker\Queries\PendingApplicationQuery;
@@ -99,6 +100,12 @@ class MonthlyPendingApplicationChecker
             $breakdown[] = ['type' => 'Penalty Deduction', 'count' => (int) $penaltyCount];
         }
 
+        // 6. Add Advance requests approved but not yet approved by finance manager
+        $advanceFinancePendingCount = $this->getAdvanceFinanceManagerPendingCount($filterDto);
+        if ($advanceFinancePendingCount > 0) {
+            $breakdown[] = ['type' => 'Advance Finance Manager Pending', 'count' => (int) $advanceFinancePendingCount];
+        }
+
         $totalCount = (int) array_sum(array_column($breakdown, 'count'));
 
         $result = [
@@ -108,7 +115,7 @@ class MonthlyPendingApplicationChecker
             'period'      => "{$filterDto->year}-" . str_pad($filterDto->month, 2, '0', STR_PAD_LEFT),
         ];
 
-        // 6. Branch-wise breakdown (Aggregated from all sources)
+        // 7. Branch-wise breakdown (Aggregated from all sources)
         if (!$filterDto->branchId) {
             $result['by_branch'] = $this->getAggregatedBranchBreakdown($filterDto);
         }
@@ -156,5 +163,23 @@ class MonthlyPendingApplicationChecker
         }
 
         return array_values($branches);
+    }
+
+    /**
+     * Count advance requests that are approved but not yet approved by finance manager.
+     */
+    private function getAdvanceFinanceManagerPendingCount(CheckerFilterDTO $filterDto): int
+    {
+        return AdvanceRequest::query()
+            ->whereNull('finance_approved_at')
+            ->whereHas('application', function ($q) use ($filterDto) {
+                $q->where('status', EmployeeApplicationV2::STATUS_APPROVED);
+
+                if ($filterDto->branchId) {
+                    $q->where('branch_id', $filterDto->branchId);
+                }
+            })
+            ->when($filterDto->employeeIds, fn($q) => $q->whereIn('employee_id', $filterDto->employeeIds))
+            ->count();
     }
 }
