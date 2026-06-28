@@ -100,6 +100,7 @@ class EmployeeAdvanceReportResource extends Resource
                     ->label(__('lang.paid_installments'))
                     ->alignCenter()
                     ->badge()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->color('success'),
 
                 TextColumn::make('remaining_total')
@@ -118,9 +119,19 @@ class EmployeeAdvanceReportResource extends Resource
                     ->label(__('lang.deduction_ends'))
                     ->date()
                     ->sortable(),
+                       TextColumn::make('application.status')
+                    ->label('Manager Approval')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'approved' => 'success',
+                        'pending' => 'warning',
+                        'rejected' => 'danger',
+                        default => 'gray',
+                    })
+                    ->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('financeApprovedBy.name')
-                    ->label(__('lang.finance_approved_by'))
+                    ->label('Finance')
                     ->placeholder(__('lang.pending'))
                     ->badge()
                     ->color(fn($record) => $record->finance_approved_at ? 'success' : 'warning')
@@ -133,16 +144,7 @@ class EmployeeAdvanceReportResource extends Resource
                         : null
                     ),
 
-                TextColumn::make('application.status')
-                    ->label(__('lang.status'))
-                    ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'approved' => 'success',
-                        'pending' => 'warning',
-                        'rejected' => 'danger',
-                        default => 'gray',
-                    })
-                    ->toggleable(isToggledHiddenByDefault: true),
+             
             ])
             ->deferFilters(true)
             ->filters([
