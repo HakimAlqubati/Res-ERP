@@ -72,7 +72,7 @@ class StockInventoryTable
                             })
                     )
                     ->visible(fn($record)=> ( (isSuperAdmin() || isHakim()) ))
-                    ->hidden()
+                    // ->hidden()
                     ,
 
                 TextColumn::make('responsibleUser.name')

@@ -21,59 +21,12 @@ class ClosingStockCalculationService
      */
     public function calculateClosingStockValue(StockInventory $inventory): float
     {
-        $totalValue = 0.0;
+        $detailedValues = $this->getDetailedClosingStockValues($inventory);
 
-        // Load details with product
-        $inventory->loadMissing('details.product');
-
-        foreach ($inventory->details as $detail) {
-            $physicalQty = (float) $detail->physical_quantity;
-
-            if ($physicalQty <= 0) {
-                continue;
-            }
-
-            $productId = $detail->product_id;
-            $storeId = $inventory->store_id;
-
-            // Calculate value for this product using Latest Purchase Price
-            $productValue = $this->calculateProductValueLatestPrice($productId, $physicalQty,$inventory->inventory_date);
-            $totalValue += $productValue;
-        }
-
-        return $totalValue;
+        return (float) array_sum(array_column($detailedValues, 'total_value'));
     }
 
-    /**
-     * Get the stock value of the inventory. If it's finalized (adjustmented),
-     * fetch it from the related inventory transactions. Otherwise, calculate it.
-     *
-     * @param StockInventory $inventory
-     * @return float
-     */
-    public function getAdjustmentedStockValue(StockInventory $inventory): float
-    {
-        // if ($inventory->finalized) {
-        //     // Retrieve value from inventory transactions connected through StockAdjustmentDetail
-        //     $totalValue = \Illuminate\Support\Facades\DB::table('inventory_transactions')
-        //         ->join('stock_adjustment_details', function ($join) {
-        //             $join->on('inventory_transactions.transactionable_id', '=', 'stock_adjustment_details.id')
-        //                  ->where('inventory_transactions.transactionable_type', '=', \App\Models\StockAdjustmentDetail::class);
-        //         })
-        //         ->where('stock_adjustment_details.source_type', \App\Models\StockInventory::class)
-        //         ->where('stock_adjustment_details.source_id', $inventory->id)
-        //         ->where('inventory_transactions.movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
-        //         ->selectRaw('SUM((inventory_transactions.temp_qty - inventory_transactions.quantity) * inventory_transactions.price) as total')
-        //         ->value('total');
-
-        //     if ($totalValue && $totalValue > 0) {
-        //         return (float) $totalValue;
-        //     }
-        // }
-
-        return $this->calculateClosingStockValue($inventory);
-    }
-
+     
     public function getDetailedClosingStockValues(StockInventory $inventory): array
     {
         $inventory->loadMissing('details.product');
