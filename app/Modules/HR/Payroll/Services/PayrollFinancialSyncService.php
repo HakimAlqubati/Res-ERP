@@ -60,13 +60,14 @@ class PayrollFinancialSyncService implements PayrollFinancialSyncInterface
         $salaryCategory = FinancialCategory::findByCode(FinancialCategoryCode::PAYROLL_SALARIES);
 
         if (!$salaryCategory) {
-            return [
-                'success' => false,
-                'message' => 'Payroll financial categories not found. Please run PayrollHRFinancialCategorySeeder first.',
-                'synced' => 0,
-                'skipped' => 0,
-                'errors' => 0,
-            ];
+            $salaryCategory = FinancialCategory::create([
+                'name' => 'Net Salaries',
+                'code' => FinancialCategoryCode::PAYROLL_SALARIES,
+                'type' => FinancialCategory::TYPE_EXPENSE,
+                'is_system' => true,
+                'is_visible' => false,
+                'description' => 'Net employee salaries (includes base salary, allowances, incentives minus internal deductions)',
+            ]);
         }
 
         // Check if already synced

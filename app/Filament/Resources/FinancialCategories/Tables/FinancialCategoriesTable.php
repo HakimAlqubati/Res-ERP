@@ -96,6 +96,11 @@ class FinancialCategoriesTable
             ])->deferFilters(false)
             ->filtersFormColumns(4)
             ->filters([
+                SelectFilter::make('parent_id')
+                    ->options(FinancialCategory::parents()->pluck('name','id'))
+                    ->label('Parent')
+                    ->searchable()
+                    ,
                 SelectFilter::make('type')
                     ->options(FinancialCategory::TYPES)
                     ->label('Type'),
@@ -107,7 +112,7 @@ class FinancialCategoriesTable
                         'parents_only' => 'Parents only',
                         'all_categories' => 'All categories',
                     ])
-                    ->default('parents_only')
+                    // ->default('parents_only')
                     ->query(function ($query, $state) {
                         $state = $state['value'] ?? null;
                         if ($state === 'parents_only') {
@@ -135,6 +140,7 @@ class FinancialCategoriesTable
                     static::forceDeleteTransactions(),
                 ])
             ])
+            ->deferFilters(true)
             ->toolbarActions([
                 BulkActionGroup::make([
                     BulkAction::make('change_profit_type')
