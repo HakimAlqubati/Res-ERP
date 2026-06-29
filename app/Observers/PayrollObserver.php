@@ -11,6 +11,36 @@ use Illuminate\Support\Facades\Log;
 
 class PayrollObserver
 {
+    public function __construct(
+        protected \App\Modules\HR\EmployeeApplications\Checker\MonthlyPendingApplicationChecker $checker
+    ) {}
+
+    /**
+     * Handle the Payroll "creating" event.
+     *
+     * @param Payroll $payroll
+     * @return void
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function creating(Payroll $payroll): void
+    {
+        $filters = [
+            'year'         => $payroll->year,
+            'month'        => $payroll->month,
+            'branch_id'    => $payroll->branch_id,
+            'employee_ids' => [$payroll->employee_id],
+        ];
+
+        $summary = $this->checker->getDashboardSummary($filters);  
+        if ($summary['has_pending']) {
+            $message = "Cannot create payroll. Please approve or reject all pending employee applications for this period first.";
+
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'error' => $message
+            ]);
+        }
+    }
+
     /**
      * Handle the Payroll "updating" event.
      *
