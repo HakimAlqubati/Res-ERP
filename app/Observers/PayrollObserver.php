@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Log;
 
 class PayrollObserver
 {
+       public function __construct(
+        protected \App\Modules\HR\EmployeeApplications\Checker\MonthlyPendingApplicationChecker $checker
+    ) {}
 
     /**
      * Handle the Payroll "creating" event.
