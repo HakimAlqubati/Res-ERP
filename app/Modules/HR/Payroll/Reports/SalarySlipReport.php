@@ -46,7 +46,7 @@ class SalarySlipReport
                 ->orderBy('date')
                 ->get()
         );
-
+        
         // Split transactions
         $earnings = $transactions->filter(fn($t) => $t->operation === '+');
         $deductions = $transactions->filter(fn($t) => $t->operation === '-');
@@ -134,9 +134,14 @@ class SalarySlipReport
         // Totals
         $gross = $earnings->sum('amount');
 
-        // Exclude Carry Forward from the TOTAL sum, but keep them in the $deductions list for display
+        // Exclude *new* Carry Forward (deficit recording) from the TOTAL sum,
+        // but include Carry Forward *recovery* (which has a reference_type).
         $totalDeductions = $deductions->filter(function ($t) {
-            return $t->type !== SalaryTransactionType::TYPE_CARRY_FORWARD->value;
+            if ($t->type === SalaryTransactionType::TYPE_CARRY_FORWARD->value) {
+                // If it's a recovery deduction, include it in the sum
+                return $t->type === SalaryTransactionType::TYPE_CARRY_FORWARD->value;
+            }
+            return true;
         })->sum('amount');
 
         // $net = max($gross - $totalDeductions, 0);
