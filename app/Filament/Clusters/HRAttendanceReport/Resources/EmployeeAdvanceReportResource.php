@@ -51,6 +51,11 @@ class EmployeeAdvanceReportResource extends Resource
             ->emptyStateHeading(__('lang.no_data'))
             ->striped()
             ->columns([
+                TextColumn::make('application_id')
+                    ->label('Request ID')
+                    ->searchable()->toggleable(isToggledHiddenByDefault: false)
+                    ->sortable()
+                    ->copyable(),
                 TextColumn::make('code')
                     ->label(__('lang.code'))
                     ->searchable()->toggleable(isToggledHiddenByDefault: true)
