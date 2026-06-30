@@ -242,6 +242,15 @@ class EmployeeAdvanceReportResource extends Resource
                             }
                             return false;
                         }),
+                    EmployeeApplicationResource::financeRejectAdvanceRequest()
+                        ->visible(function ($record) {
+                            if ((isFinanceManager() || isHR() || isSuperAdmin())
+                                && $record?->finance_approved_at === null
+                            ) {
+                                return true;
+                            }
+                            return false;
+                        }),
                     Action::make('defer_installment')
                         ->label(__('lang.defer_installment'))
                         // ->button()
