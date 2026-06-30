@@ -1168,4 +1168,7 @@ return [
     'allow_attendance_from_any_branch' => 'Allow Attendance From Any Branch',
     'advance_already_exists_in_month' => 'Employee already has an advance request in :month.',
     'advance_has_outstanding_installments' => 'Employee still has outstanding (unpaid) installments from a previous advance.',
+    'code_old_system' => 'Old System Code',
+    'code_old_system_helper' => 'This field is only for old system codes and is optional.',
+    'code_old_system_placeholder' => 'Old system code',
 ];
