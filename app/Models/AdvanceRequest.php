@@ -4,11 +4,14 @@ namespace App\Models;
 
 use Throwable;
 use Carbon\Carbon;
+use App\Observers\AdvanceRequestObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Builder;
 
+#[ObservedBy([AdvanceRequestObserver::class])]
 class AdvanceRequest extends Model
 {
     use HasFactory;

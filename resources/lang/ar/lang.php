@@ -1145,4 +1145,6 @@ return [
   'auto_generated_reason_missing_checkin' => 'تم الإنشاء تلقائياً بسبب تسجيل انصراف بدون بصمة دخول سابقة',
   'rejected_successfully' => 'تم الرفض بنجاح',
   'auto' => 'تلقائي',
+  'advance_already_exists_in_month' => 'يوجد طلب سلفة للموظف في شهر :month بالفعل.',
+  'advance_has_outstanding_installments' => 'لا يزال لدى الموظف أقساط غير مسددة من سلفة سابقة.',
 ];

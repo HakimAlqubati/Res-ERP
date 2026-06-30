@@ -1164,4 +1164,6 @@ return [
     'auto_generated_reason_missing_checkin' => 'Automatically generated due to check-out attempt without a prior check-in',
     'rejected_successfully' => 'Rejected Successfully',
     'auto' => 'Auto',
+    'advance_already_exists_in_month' => 'Employee already has an advance request in :month.',
+    'advance_has_outstanding_installments' => 'Employee still has outstanding (unpaid) installments from a previous advance.',
 ];
