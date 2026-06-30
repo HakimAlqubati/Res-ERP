@@ -485,7 +485,7 @@ class EmployeeForm
                                                             ->label(fn (Get $get) => EmployeePaymentMethod::find($get('payment_method_id'))?->code === 'ewallet' ? 'Wallet Number' : 'Account Number')
                                                             ->required()
                                                             ->live(onBlur: true)
-                                                            ->afterStateUpdated(fn ($state, \Filament\Forms\Set $set) => $set('bank_account_number', $state))
+                                                            ->afterStateUpdated(fn ($state, $set) => $set('bank_account_number', $state))
                                                             ->visible(fn (Get $get) => in_array(EmployeePaymentMethod::find($get('payment_method_id'))?->code, ['ewallet', 'bank'])),
                                                         
                                                         Textarea::make('payment_details.note')
