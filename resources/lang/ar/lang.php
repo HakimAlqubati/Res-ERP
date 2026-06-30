@@ -1150,6 +1150,6 @@ return [
   'advance_already_exists_in_month' => 'يوجد طلب سلفة للموظف في شهر :month بالفعل.',
   'advance_has_outstanding_installments' => 'لا يزال لدى الموظف أقساط غير مسددة من سلفة سابقة.',
   'code_old_system' => 'كود النظام القديم',
-  'code_old_system_helper' => 'هذا الحقل خاص بأكواد النظام القديم فقط، وهو اختياري.',
+  'code_old_system_helper' => 'هذا الحقل خاص بأكواد النظام القديم فقط',
   'code_old_system_placeholder' => 'كود النظام القديم',
 ];

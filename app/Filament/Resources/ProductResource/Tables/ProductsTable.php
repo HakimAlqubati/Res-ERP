@@ -140,6 +140,10 @@ class ProductsTable
                 TextColumn::make('code')
                     ->label(__('lang.code'))->copyable()->sortable()
                     ->searchable(isIndividual: false, isGlobal: true),
+                TextColumn::make('code_old_system')
+                    ->label(__('lang.code_old_system'))->copyable()->sortable()
+                    ->searchable(isIndividual: false, isGlobal: true)
+                    ->visible(fn() => filter_var(\App\Models\Setting::getSetting('show_old_system_code'), FILTER_VALIDATE_BOOLEAN)),
 
                 TextColumn::make('name')
                     ->label(__('lang.name'))
