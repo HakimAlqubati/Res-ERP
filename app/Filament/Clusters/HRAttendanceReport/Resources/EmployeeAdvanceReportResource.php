@@ -244,6 +244,9 @@ class EmployeeAdvanceReportResource extends Resource
                     EmployeeApplicationResource::exportAdvanceRequestPdf(),
                     EmployeeApplicationResource::financeApproveAdvanceRequest()
                         ->visible(function ($record) {
+                            if($record->application->status === EmployeeApplicationV2::STATUS_REJECTED) {
+                                return false;
+                            }
                             if ((isFinanceManager() || isHR() || isSuperAdmin())
                                 && $record?->finance_approved_at === null
                             ) {
@@ -253,6 +256,9 @@ class EmployeeAdvanceReportResource extends Resource
                         }),
                     EmployeeApplicationResource::financeRejectAdvanceRequest()
                         ->visible(function ($record) {
+                            if($record->application->status === EmployeeApplicationV2::STATUS_REJECTED) {
+                                return false;
+                            }
                             if ((isFinanceManager() || isHR() || isSuperAdmin())
                                 && $record?->finance_approved_at === null
                             ) {

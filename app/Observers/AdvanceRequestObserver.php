@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\AdvanceRequest;
 use App\Models\EmployeeAdvanceInstallment;
+use App\Models\EmployeeApplicationV2;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -42,6 +43,7 @@ class AdvanceRequestObserver
         $exists = AdvanceRequest::where('employee_id', $advance->employee_id)
             ->whereYear('date', $date->year)
             ->whereMonth('date', $date->month)
+            ->whereHas('application', fn($query) => $query->where('status', '!=', EmployeeApplicationV2::STATUS_REJECTED))
             ->exists();
 
         if ($exists) {
