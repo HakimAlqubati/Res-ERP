@@ -383,7 +383,7 @@ return [
     'max_weekly_leave_days' => 'Max Weekly Leave Days / Month',
     'max_weekly_leave_days_hint' => 'Override the default (4 days). Leave blank to use system default.',
     'no_shift_is_present' => 'Attendance Without Shift',
-    'can_add_branch_order' => 'Can add branch order',
+    'can_add_branch_order' => 'Can Add Branch Order',
 
     // ===========================================
     // HRMS - Attendance & Shifts
