@@ -81,6 +81,7 @@ class Employee extends Model implements Auditable
         'created_by',
         'updated_by',
         'payment_method_id',
+        'payment_details',
     ];
 
     // ─────────────────────────────────────────────────────────────
@@ -146,6 +147,7 @@ class Employee extends Model implements Auditable
     ];
 
     protected $casts = [
+        'payment_details'        => 'array',
         'bank_information'       => 'array',
         'changes'                => 'array',
         'is_mtd_applicable'      => 'boolean',
