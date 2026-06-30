@@ -329,7 +329,7 @@ class EmployeeAdvanceReportResource extends Resource
         return AdvanceRequest::query()
             ->with(['employee:id,name,employee_no,branch_id', 'employee.branch:id,name', 'application:id,status', 'financeApprovedBy:id,name'])
             ->whereHas('application', function ($query) {
-                $query->where('status', EmployeeApplicationV2::STATUS_APPROVED);
+                $query->whereIn('status', [EmployeeApplicationV2::STATUS_APPROVED, EmployeeApplicationV2::STATUS_REJECTED]);
             });
     }
 
