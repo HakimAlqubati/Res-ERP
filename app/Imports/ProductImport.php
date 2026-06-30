@@ -32,6 +32,7 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
             $productId = (int) $row['id'];
             $productName = trim($row['product_name'] ?? '');
             $categoryName = trim($row['category'] ?? '');
+            $codeOldSystem = trim($row['code_old_system'] ?? '');
             $unitName = trim($row['unit'] ?? '');
             $price = (float) ($row['price'] ?? 0);
             $minimumStockQty = (int) ($row['minimum_stock_qty'] ?? 0);
@@ -54,6 +55,7 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
                 $product = Product::create([
                     'id' => $productId,
                     'name' => $productName,
+                    'code_old_system' => $codeOldSystem,
                     'code' =>  Product::generateProductCode($category->id),
                     'description' => '',
                     'active' => true,

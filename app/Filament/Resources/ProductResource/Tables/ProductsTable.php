@@ -98,11 +98,11 @@ class ProductsTable
                     ])
                     ->color('success')
                     ->action(function (array $data) {
-                        $filePath = 'public/' . $data['file'];
+                        $filePath =  $data['file'];
                         $import   = new ProductImport();
 
                         try {
-                            Excel::import($import, $filePath);
+                            Excel::import($import, $filePath,'public');
 
                             if ($import->getSuccessfulImportsCount() > 0) {
                                 showSuccessNotifiMessage("✅ Imported {$import->getSuccessfulImportsCount()} products successfully.");

@@ -85,8 +85,16 @@ class ProductsSchema
                                             ->disabled()
                                             ->dehydrated()
                                             ->default(fn($get) => Product::generateProductCode($get('category_id')))
-                                            ->columnSpanFull(),
-                                    ]),
+                                            // ->columnSpanFull()
+                                            ,
+                                        TextInput::make('code_old_system')
+                                            ->required(false)
+                                            // ->columnSpanFull()
+                                            ->unique(ignoreRecord: true)
+                                            ->label(__('lang.code_old_system'))
+                                            ->helperText(__('lang.code_old_system_helper'))
+                                            ->placeholder(__('lang.code_old_system_placeholder')),
+                                                ]),
                                 ]),
                                 
                                 Group::make()->columnSpan(1)->schema([
