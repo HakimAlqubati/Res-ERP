@@ -182,8 +182,13 @@ class GoodsReceivedNoteResource extends Resource
                                                     }
                                                     if (!empty($result['documents'][0]['summary']['INVOICE_RECEIPT_DATE'])) {
                                                         $date = $result['documents'][0]['summary']['INVOICE_RECEIPT_DATE'];
-                                                        $date = date('Y-m-d', strtotime(str_replace('/', '-', $date)));
-                                                        $set('grn_date', $date);
+                                                        $timestamp = strtotime(str_replace('/', '-', $date));
+                                                        if ($timestamp !== false) {
+                                                            $formattedDate = date('Y-m-d', $timestamp);
+                                                            if ($formattedDate !== '1970-01-01') {
+                                                                $set('grn_date', $formattedDate);
+                                                            }
+                                                        }
                                                     }
                                                     $items = [];
 

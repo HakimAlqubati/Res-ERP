@@ -111,6 +111,7 @@ class SalaryTransactionsTable
                 TextColumn::make('description')
                     ->label(__('Description'))->toggleable()
                     ->limit(40)
+                    ->tooltip(fn($state) => $state)
                     ->toggleable(),
 
                 TextColumn::make('referenceable.name')

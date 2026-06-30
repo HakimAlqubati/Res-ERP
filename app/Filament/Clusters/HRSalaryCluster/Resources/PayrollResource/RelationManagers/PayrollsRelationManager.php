@@ -45,45 +45,49 @@ class PayrollsRelationManager extends RelationManager
 
             ->recordTitleAttribute('employee')
             ->modifyQueryUsing(function (Builder $query): Builder {
-                $query->with(['employee.branch', 'branch']);
+                $query->with(['employee.branch', 'branch'])
+                      ->leftJoin('hr_employee_service_terminations', 'hr_employee_service_terminations.employee_id', '=', 'hr_payrolls.employee_id');
 
                 if ($this->isShowingBranchSplits()) {
-                    return $query;
+                    return $query->select('hr_payrolls.*', 'hr_employee_service_terminations.termination_reason');
                 }
 
                 return $query
+                 
                     ->selectRaw('
-                        MIN(id) as id,
-                        payroll_run_id,
-                        employee_id,
-                        MIN(branch_id) as branch_id,
-                        year,
-                        month,
-                        MIN(period_start_date) as period_start_date,
-                        MAX(period_end_date) as period_end_date,
-                        SUM(base_salary) as base_salary,
-                        SUM(total_allowances) as total_allowances,
-                        SUM(total_bonus) as total_bonus,
-                        SUM(overtime_amount) as overtime_amount,
-                        SUM(total_deductions) as total_deductions,
-                        SUM(total_advances) as total_advances,
-                        SUM(total_penalties) as total_penalties,
-                        SUM(total_insurance) as total_insurance,
-                        SUM(employer_share) as employer_share,
-                        SUM(employee_share) as employee_share,
-                        SUM(taxes_amount) as taxes_amount,
-                        SUM(other_deductions) as other_deductions,
-                        SUM(gross_salary) as gross_salary,
-                        SUM(net_salary) as net_salary,
-                        MIN(currency) as currency,
-                        MIN(status) as status,
-                        MAX(is_paid) as is_paid,
-                        MAX(payment_date) as payment_date,
-                        MIN(created_at) as created_at,
-                        MAX(updated_at) as updated_at,
+                        MIN(hr_payrolls.id) as id,
+                        hr_payrolls.payroll_run_id,
+                        hr_payrolls.employee_id,
+                        MIN(hr_payrolls.branch_id) as branch_id,
+                        hr_payrolls.year,
+                        hr_payrolls.month,
+                        MIN(hr_payrolls.period_start_date) as period_start_date,
+                        MAX(hr_payrolls.period_end_date) as period_end_date,
+                        SUM(hr_payrolls.base_salary) as base_salary,
+                        SUM(hr_payrolls.total_allowances) as total_allowances,
+                        SUM(hr_payrolls.total_bonus) as total_bonus,
+                        SUM(hr_payrolls.overtime_amount) as overtime_amount,
+                        SUM(hr_payrolls.total_deductions) as total_deductions,
+                        SUM(hr_payrolls.total_advances) as total_advances,
+                        SUM(hr_payrolls.total_penalties) as total_penalties,
+                        SUM(hr_payrolls.total_insurance) as total_insurance,
+                        SUM(hr_payrolls.employer_share) as employer_share,
+                        SUM(hr_payrolls.employee_share) as employee_share,
+                        SUM(hr_payrolls.taxes_amount) as taxes_amount,
+                        SUM(hr_payrolls.other_deductions) as other_deductions,
+                        SUM(hr_payrolls.gross_salary) as gross_salary,
+                        SUM(hr_payrolls.net_salary) as net_salary,
+                        MIN(hr_payrolls.currency) as currency,
+                        MIN(hr_payrolls.status) as status,
+                        MAX(hr_payrolls.is_paid) as is_paid,
+                        MAX(hr_payrolls.payment_date) as payment_date,
+                        MIN(hr_payrolls.created_at) as created_at,
+                        MAX(hr_payrolls.updated_at) as updated_at,
+                        MAX(hr_employee_service_terminations.termination_reason) as termination_reason,
+                        MAX(hr_employee_service_terminations.notes) as termination_notes,
                         1 as is_grouped_row
                     ')
-                    ->groupBy('payroll_run_id', 'employee_id', 'year', 'month');
+                    ->groupBy('hr_payrolls.payroll_run_id', 'hr_payrolls.employee_id', 'hr_payrolls.year', 'hr_payrolls.month');
             })
             ->columns([
                 Tables\Columns\TextColumn::make('id')
@@ -145,10 +149,24 @@ class PayrollsRelationManager extends RelationManager
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->sortable()
                     ->summarize(Sum::make()->label(__(''))->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))),
+                TextColumn::make('termination_reason')
+                ->wrap()
+                    ->label(__('Termination Reason'))
+                    ->alignCenter()
+                    ->tooltip(fn($state) => $state)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('termination_notes')
+                ->wrap()
+                    ->label(__('Termination Notes'))
+                    ->alignCenter()
+                    ->tooltip(fn($state) => $state)
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->label(__('Created At'))
                     ->alignCenter()->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable()
+                    ->sortable(query: function (Builder $query, string $direction): Builder {
+                        return $query->orderBy('hr_payrolls.created_at', $direction);
+                    })
                     ->dateTime(),
 
             ])

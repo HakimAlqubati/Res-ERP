@@ -927,6 +927,7 @@ return [
   'monthly_deduction' => 'الخصم الشهري',
   'deduction_starts' => 'بداية الخصم',
   'deduction_ends' => 'نهاية الخصم',
+  'finance_approved_by' => 'اعتمد بواسطة المدير المالي',
 
   // Attendance Fingerprint Request
   'attendance_fingerprint_request' => 'طلب بصمة الحضور',
@@ -1146,4 +1147,6 @@ return [
   'auto' => 'تلقائي',
   'allow_attendance_from_any_branch' => 'السماح بالتحضير من أي فرع',
   
+  'advance_already_exists_in_month' => 'يوجد طلب سلفة للموظف في شهر :month بالفعل.',
+  'advance_has_outstanding_installments' => 'لا يزال لدى الموظف أقساط غير مسددة من سلفة سابقة.',
 ];

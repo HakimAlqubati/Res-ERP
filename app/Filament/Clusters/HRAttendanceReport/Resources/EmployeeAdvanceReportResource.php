@@ -41,7 +41,7 @@ class EmployeeAdvanceReportResource extends Resource
     protected static ?string $pluralLabel = 'Staff Advances';
 
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 2;
 
     public static function table(Table $table): Table
     {
@@ -51,6 +51,11 @@ class EmployeeAdvanceReportResource extends Resource
             ->emptyStateHeading(__('lang.no_data'))
             ->striped()
             ->columns([
+                TextColumn::make('application_id')
+                    ->label('Request ID')
+                    ->searchable()->toggleable(isToggledHiddenByDefault: false)
+                    ->sortable()
+                    ->copyable(),
                 TextColumn::make('code')
                     ->label(__('lang.code'))
                     ->searchable()->toggleable(isToggledHiddenByDefault: true)
@@ -100,6 +105,7 @@ class EmployeeAdvanceReportResource extends Resource
                     ->label(__('lang.paid_installments'))
                     ->alignCenter()
                     ->badge()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->color('success'),
 
                 TextColumn::make('remaining_total')
@@ -110,25 +116,50 @@ class EmployeeAdvanceReportResource extends Resource
 
                 TextColumn::make('deduction_starts_from')
                     ->label(__('lang.deduction_starts'))
-                    ->date()
+                    ->date('M-Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('deduction_ends_at')
                     ->label(__('lang.deduction_ends'))
-                    ->date()
+                    ->date('M-Y')
                     ->sortable(),
-
                 TextColumn::make('application.status')
-                    ->label(__('lang.status'))
+                    ->label('Manager Approval')
                     ->badge()
+                    ->formatStateUsing(fn(string $state): string => EmployeeApplicationV2::getStatusLabel($state))
                     ->color(fn(string $state): string => match ($state) {
                         'approved' => 'success',
                         'pending' => 'warning',
                         'rejected' => 'danger',
                         default => 'gray',
                     })
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                TextColumn::make('financeApprovedBy.name')
+                    ->label('Finance Approval')
+                    ->placeholder(__('lang.pending'))
+                    ->badge()
+                    ->color(function($record) {
+                        if ($record->application?->status === EmployeeApplicationV2::STATUS_REJECTED) {
+                            return 'danger';
+                        }
+                        return $record->finance_approved_at ? 'success' : 'warning';
+                    })
+                    ->getStateUsing(function($record) {
+                        if ($record->application?->status === EmployeeApplicationV2::STATUS_REJECTED) {
+                            return __('lang.rejected');
+                        }
+                        return $record->finance_approved_at
+                            ? ($record->financeApprovedBy?->name ?? __('lang.approved'))
+                            : __('lang.pending');
+                    })
+                    ->tooltip(fn($record) => $record->finance_approved_at
+                        ? $record->finance_approved_at->format('Y-m-d H:i')
+                        : null
+                    ),
+
+             
             ])
             ->deferFilters(true)
             ->filters([
@@ -209,10 +240,31 @@ class EmployeeAdvanceReportResource extends Resource
             ->recordActions([
                 ActionGroup::make([
 
-                    \App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource::advanceInstallmentsAction(),
+                    \App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource::advanceInstallmentsAction()
+                    ->visible(function ($record) {
+                        if($record->application->status === EmployeeApplicationV2::STATUS_REJECTED) {
+                            return false;
+                        }
+                        return true;
+                    }),
                     EmployeeApplicationResource::exportAdvanceRequestPdf(),
                     EmployeeApplicationResource::financeApproveAdvanceRequest()
                         ->visible(function ($record) {
+                            if($record->application->status === EmployeeApplicationV2::STATUS_REJECTED) {
+                                return false;
+                            }
+                            if ((isFinanceManager() || isHR() || isSuperAdmin())
+                                && $record?->finance_approved_at === null
+                            ) {
+                                return true;
+                            }
+                            return false;
+                        }),
+                    EmployeeApplicationResource::financeRejectAdvanceRequest()
+                        ->visible(function ($record) {
+                            if($record->application->status === EmployeeApplicationV2::STATUS_REJECTED) {
+                                return false;
+                            }
                             if ((isFinanceManager() || isHR() || isSuperAdmin())
                                 && $record?->finance_approved_at === null
                             ) {
@@ -274,7 +326,7 @@ class EmployeeAdvanceReportResource extends Resource
                         ->modalHeading(__('lang.defer_installment'))
                         ->modalDescription(__('lang.defer_installment_desc'))
                         ->modalSubmitActionLabel(__('lang.defer'))
-                        ->visible(fn($record) => $record->remaining_total > 0),
+                        ->visible(fn($record) => $record->remaining_total > 0 && $record->application?->status === EmployeeApplicationV2::STATUS_APPROVED && $record->finance_approved_by),
                 ])
 
             ])
@@ -296,9 +348,9 @@ class EmployeeAdvanceReportResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return AdvanceRequest::query()
-            ->with(['employee:id,name,employee_no,branch_id', 'employee.branch:id,name', 'application:id,status'])
+            ->with(['employee:id,name,employee_no,branch_id', 'employee.branch:id,name', 'application:id,status', 'financeApprovedBy:id,name'])
             ->whereHas('application', function ($query) {
-                $query->where('status', EmployeeApplicationV2::STATUS_APPROVED);
+                $query->whereIn('status', [EmployeeApplicationV2::STATUS_APPROVED, EmployeeApplicationV2::STATUS_REJECTED]);
             });
     }
 

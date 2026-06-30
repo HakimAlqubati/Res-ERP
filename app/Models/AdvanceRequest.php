@@ -4,11 +4,14 @@ namespace App\Models;
 
 use Throwable;
 use Carbon\Carbon;
+use App\Observers\AdvanceRequestObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Builder;
 
+#[ObservedBy([AdvanceRequestObserver::class])]
 class AdvanceRequest extends Model
 {
     use HasFactory;
@@ -74,6 +77,10 @@ class AdvanceRequest extends Model
     public const PAYMENT_METHOD_BANK_TRANSFER = 'bank_transfer';
 
     protected $appends = ['payment_status'];
+
+    protected $casts = [
+        'finance_approved_at' => 'datetime',
+    ];
 
     // ===================== Relationships =====================
 

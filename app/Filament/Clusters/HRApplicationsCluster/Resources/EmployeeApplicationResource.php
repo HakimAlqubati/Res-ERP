@@ -521,7 +521,8 @@ class EmployeeApplicationResource extends Resource
                             ->suffix($currency)
                             ->prefixIcon('heroicon-o-banknotes')
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                            ->afterStateUpdated(function (Get $get, Set $set, $state, $old) {
+                                if ($state == $old) return; // no actual change (e.g. auto-focus blur)
                                 if ($state > 0) {
                                     $set('monthly_deduction_amount', $state);
                                     $set('number_of_months_of_deduction', 1);
@@ -655,10 +656,15 @@ class EmployeeApplicationResource extends Resource
             ->action(function ($record, $data) {
                 try {
                     \Illuminate\Support\Facades\DB::transaction(function () use ($record, $data) {
+                        // Resolve to EmployeeApplicationV2 if called from AdvanceRequest context
+                        if (get_class($record) === AdvanceRequest::class) {
+                            $record = EmployeeApplicationV2::find($record->application_id);
+                        }
+
                         $record->update([
-                            'status'      => EmployeeApplicationV2::STATUS_REJECTED,
-                            'rejected_by' => auth()->user()->id,
-                            'rejected_at' => now(),
+                            'status'          => EmployeeApplicationV2::STATUS_REJECTED,
+                            'rejected_by'     => auth()->user()->id,
+                            'rejected_at'     => now(),
                             'rejected_reason' => $data['rejected_reason'],
                         ]);
                     });
@@ -1622,6 +1628,7 @@ class EmployeeApplicationResource extends Resource
                             ->default(now()->toDateString()),
                         TextInput::make('detail_advance_amount')->numeric()->required()
                             ->label('Amount')
+                            ->minValue(1)
                             ->live(onBlur: true)
                             ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                 if ($state > 0) {
@@ -1864,9 +1871,11 @@ class EmployeeApplicationResource extends Resource
 
                         Select::make('branch_id')
                             ->label(__('lang.branch'))
-                            ->options(Branch::where('type', Branch::TYPE_BRANCH)->pluck('name', 'id'))
+                            ->options(Branch::where('type', Branch::TYPE_BRANCH)
+                            ->active()
+                            ->pluck('name', 'id'))
                         // ->required()
-                        // ->searchable()
+                        ->searchable()
                         // ->live()
                         // ->afterStateUpdated(function ($set, $state) {
                         //     // Sync back to the parent application's branch_id if necessary
@@ -1877,6 +1886,7 @@ class EmployeeApplicationResource extends Resource
                         TextInput::make('cost')
                             ->label(__('lang.cost'))
                             ->numeric()
+                            ->minValue(1)
                             ->required()
                             ->prefixIcon(Heroicon::CurrencyDollar)
                             ->default(0),

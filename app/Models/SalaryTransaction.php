@@ -152,27 +152,57 @@ class SalaryTransaction extends Model
     {
         \Illuminate\Support\Facades\Log::info("Handling CarryForward: Op={$this->operation}, Amount={$this->amount}");
         if ($this->operation === '-') {
-            // This is a NEW deficit being recorded
-            $cf = \App\Models\CarryForward::updateOrCreate(
-                [
-                    'employee_id'         => $this->employee_id,
-                    'from_payroll_run_id' => $this->payroll_run_id,
-                ],
-                [
-                    'year'              => $this->year,
-                    'month'             => $this->month,
-                    'total_amount'      => $this->amount,
-                    'remaining_balance' => $this->amount,
-                    'status'            => 'active',
-                    'notes'             => $this->notes ?? $this->description,
-                    'created_by'        => $this->created_by ?? auth()->id(),
-                ]
-            );
-            \Illuminate\Support\Facades\Log::info("CarryForward created/updated: ID={$cf->id}");
+            if ($this->reference_type === \App\Models\CarryForward::class && $this->reference_id) {
+                // This is a RECOVERY deduction — settle the specific CarryForward record
+                \Illuminate\Support\Facades\Log::info("CarryForward recovery deduction for CF ID={$this->reference_id}");
+                $this->settleSpecificCarryForward($this->reference_id, (float) $this->amount);
+            } else {
+                // This is a NEW deficit being recorded
+                $cf = \App\Models\CarryForward::updateOrCreate(
+                    [
+                        'employee_id'         => $this->employee_id,
+                        'from_payroll_run_id' => $this->payroll_run_id,
+                    ],
+                    [
+                        'year'              => $this->year,
+                        'month'             => $this->month,
+                        'total_amount'      => $this->amount,
+                        'remaining_balance' => $this->amount,
+                        'status'            => 'active',
+                        'notes'             => $this->notes ?? $this->description,
+                        'created_by'        => $this->created_by ?? auth()->id(),
+                    ]
+                );
+                \Illuminate\Support\Facades\Log::info("CarryForward created/updated: ID={$cf->id}");
+            }
         } elseif ($this->operation === '+') {
             // This is a RECOVERY (settlement) of previous debts
             $this->settleCarryForwards();
         }
+    }
+
+    /**
+     * Settle a specific carry forward record by its ID.
+     */
+    protected function settleSpecificCarryForward(int $carryForwardId, float $amount): void
+    {
+        $cf = \App\Models\CarryForward::find($carryForwardId);
+        if (!$cf) {
+            \Illuminate\Support\Facades\Log::warning("CarryForward ID={$carryForwardId} not found for settlement.");
+            return;
+        }
+
+        $canSettle = min($amount, (float) $cf->remaining_balance);
+
+        $cf->settled_amount    = (float) $cf->settled_amount + $canSettle;
+        $cf->remaining_balance = (float) $cf->remaining_balance - $canSettle;
+
+        if ($cf->remaining_balance <= 0) {
+            $cf->status = 'settled';
+        }
+        $cf->save();
+
+        \Illuminate\Support\Facades\Log::info("CarryForward ID={$carryForwardId} settled {$canSettle}, remaining={$cf->remaining_balance}, status={$cf->status}");
     }
 
     /**

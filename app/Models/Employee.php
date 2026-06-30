@@ -25,6 +25,12 @@ class Employee extends Model implements Auditable
     {
         return $this->hasOne(EmployeeServiceTermination::class);
     }
+    
+    public function paymentMethod()
+    {
+        return $this->belongsTo(EmployeePaymentMethod::class, 'payment_method_id');
+    }
+    
     public function pendingTerminationRequest()
     {
         return $this->hasOne(EmployeeServiceTermination::class)->pending();
@@ -75,6 +81,7 @@ class Employee extends Model implements Auditable
         'allow_attendance_from_any_branch',
         'created_by',
         'updated_by',
+        'payment_method_id',
     ];
 
     // ─────────────────────────────────────────────────────────────
