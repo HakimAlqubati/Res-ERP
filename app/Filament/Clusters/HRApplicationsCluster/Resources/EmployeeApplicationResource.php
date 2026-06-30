@@ -656,10 +656,15 @@ class EmployeeApplicationResource extends Resource
             ->action(function ($record, $data) {
                 try {
                     \Illuminate\Support\Facades\DB::transaction(function () use ($record, $data) {
+                        // Resolve to EmployeeApplicationV2 if called from AdvanceRequest context
+                        if (get_class($record) === AdvanceRequest::class) {
+                            $record = EmployeeApplicationV2::find($record->application_id);
+                        }
+
                         $record->update([
-                            'status'      => EmployeeApplicationV2::STATUS_REJECTED,
-                            'rejected_by' => auth()->user()->id,
-                            'rejected_at' => now(),
+                            'status'          => EmployeeApplicationV2::STATUS_REJECTED,
+                            'rejected_by'     => auth()->user()->id,
+                            'rejected_at'     => now(),
                             'rejected_reason' => $data['rejected_reason'],
                         ]);
                     });
