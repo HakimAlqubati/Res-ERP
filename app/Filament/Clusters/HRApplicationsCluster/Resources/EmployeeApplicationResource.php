@@ -521,7 +521,8 @@ class EmployeeApplicationResource extends Resource
                             ->suffix($currency)
                             ->prefixIcon('heroicon-o-banknotes')
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                            ->afterStateUpdated(function (Get $get, Set $set, $state, $old) {
+                                if ($state == $old) return; // no actual change (e.g. auto-focus blur)
                                 if ($state > 0) {
                                     $set('monthly_deduction_amount', $state);
                                     $set('number_of_months_of_deduction', 1);
