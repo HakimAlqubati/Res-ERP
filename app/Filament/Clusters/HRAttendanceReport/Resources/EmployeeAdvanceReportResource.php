@@ -116,13 +116,13 @@ class EmployeeAdvanceReportResource extends Resource
 
                 TextColumn::make('deduction_starts_from')
                     ->label(__('lang.deduction_starts'))
-                    ->date()
+                    ->date('M-Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('deduction_ends_at')
                     ->label(__('lang.deduction_ends'))
-                    ->date()
+                    ->date('M-Y')
                     ->sortable(),
                 TextColumn::make('application.status')
                     ->label('Manager Approval')
