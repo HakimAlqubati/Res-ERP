@@ -28,12 +28,13 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
     {
         // DB::beginTransaction();
         try {
-            $packageSize = $row['qty_per_pack'];
+            $packageSize = (int) ($row['qty_per_pack'] ?? 1);
             $productId = (int) $row['id'];
             $productName = trim($row['product_name'] ?? '');
             $categoryName = trim($row['category'] ?? '');
             $codeOldSystem = trim($row['code_old_system'] ?? '');
             $unitName = trim($row['unit'] ?? '');
+            $unitPerPackName = trim($row['unit_per_pack'] ?? '');
             $price = (float) ($row['price'] ?? 0);
             $minimumStockQty = (int) ($row['minimum_stock_qty'] ?? 0);
             $stockQty = (float) ($row['stock_qty'] ?? 0);
@@ -49,6 +50,14 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
                 return null;
             }
 
+            $unitPerPack = null;
+            if ($packageSize > 1 && $unitPerPackName) {
+                $unitPerPack = Unit::where('name', $unitPerPackName)->first();
+                if (!$unitPerPack) {
+                    return null;
+                }
+            }
+
             // إما نجد المنتج أو ننشئه حسب ID
             $product = Product::find($productId);
             if (!$product) {
@@ -61,27 +70,11 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
                     'active' => true,
                     'category_id' => $category->id,
                     'minimum_stock_qty' => $minimumStockQty,
-
-                ]);
-                UnitPrice::create([
-                    'product_id' => $product->id,
-                    'unit_id' => $unit->id,
-                    'price' => $price,
-                    'package_size' => $packageSize,
-                    'order' => $packageSize,
-
                 ]);
             }
+
             if ($product) {
-                $existingUnitPrice = UnitPrice::where('product_id', $product->id)->first();
-
-                $calculatedPrice = $price;
-
-                if ($existingUnitPrice) {
-                    $basePrice = $existingUnitPrice->price;
-                    $calculatedPrice = $packageSize * $basePrice;
-                }
-
+                $packPrice = $price;
                 $unitPriceExists = UnitPrice::where('product_id', $product->id)
                     ->where('unit_id', $unit->id)
                     ->first();
@@ -90,18 +83,43 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
                     UnitPrice::create([
                         'product_id' => $product->id,
                         'unit_id' => $unit->id,
-                        'price' => $calculatedPrice,
+                        'price' => $packPrice,
                         'package_size' => $packageSize,
                         'order' => $packageSize,
                     ]);
                 } else {
                     // Update existing unit price if needed
                     $unitPriceExists->update([
-                        'price' => $calculatedPrice,
+                        'price' => $packPrice,
                         'package_size' => $packageSize,
                         'order' => $packageSize,
                     ]);
                 }
+
+                // If packageSize > 1, create/update a piece unit price
+                if ($packageSize > 1 && $unitPerPack) {
+                    $piecePrice = $packPrice / $packageSize;
+                    $pieceUnitPriceExists = UnitPrice::where('product_id', $product->id)
+                        ->where('unit_id', $unitPerPack->id)
+                        ->first();
+                    
+                    if (!$pieceUnitPriceExists) {
+                        UnitPrice::create([
+                            'product_id' => $product->id,
+                            'unit_id' => $unitPerPack->id,
+                            'price' => $piecePrice,
+                            'package_size' => 1,
+                            'order' => 1,
+                        ]);
+                    } else {
+                        $pieceUnitPriceExists->update([
+                            'price' => $piecePrice,
+                            'package_size' => 1,
+                            'order' => 1,
+                        ]);
+                    }
+                }
+
                 // Queue product for stock addition if needed
                 if ($stockQty > 0) {
                     InventoryTransaction::create([
@@ -111,7 +129,7 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
                         'unit_id' => $unit->id,
                         'movement_date' => now(),
                         'package_size' => $packageSize,
-                        'price' => $price,
+                        'price' => $packPrice,
                         'transaction_date' => now(),
                         'notes' => 'Opening stock from import',
                         'transactionable_id' => $product->id,
@@ -140,6 +158,7 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
             'product_name' => 'required|string',
             'category' => 'required|string',
             'unit' => 'required|string',
+            'unit_per_pack' => 'nullable|string',
             'price' => 'required|numeric|min:0.01',
             'stock_qty' => 'nullable|numeric|min:0',
             'qty_per_pack' => 'nullable|numeric|min:1',
