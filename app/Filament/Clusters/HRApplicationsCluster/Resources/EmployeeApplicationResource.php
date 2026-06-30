@@ -539,7 +539,8 @@ class EmployeeApplicationResource extends Resource
                             ->suffix($currency)
                             ->prefixIcon('heroicon-o-calculator')
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                            ->afterStateUpdated(function (Get $get, Set $set, $state, $old) {
+                                if ($state == $old) return; // no actual change
                                 $advAmt = (float) $get('advance_amount');
                                 if ((float)$state > 0 && $advAmt > 0) {
                                     $months = (int) ceil($advAmt / (float)$state);
@@ -581,7 +582,8 @@ class EmployeeApplicationResource extends Resource
                             ->suffix(__('lang.months'))
                             ->prefixIcon('heroicon-o-clock')
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                            ->afterStateUpdated(function (Get $get, Set $set, $state, $old) {
+                                if ($state == $old) return; // no actual change
                                 $advAmt = (float) $get('advance_amount');
                                 $months = (int) $state;
                                 if ($advAmt > 0 && $months > 0) {
@@ -1625,6 +1627,23 @@ class EmployeeApplicationResource extends Resource
                                     ->endOfMonth()->format('Y-m-d');
                                 $set('detail_deduction_starts_from', $endNextMonth);
                             })
+                                 ->rules([
+                                fn (Get $get, $record) => function (string $attribute, $value, \Closure $fail) use ($get, $record) {
+                                    $empId = $get('../../employee_id') ?? $get('../employee_id') ?? $get('employee_id') ?? $record?->employee_id;
+                                    
+                                    if (!$empId) {
+                                        // Fallback: try to get it from the parent application if record is AdvanceRequest
+                                        if ($record instanceof \App\Models\AdvanceRequest) {
+                                            $empId = $record->employee_id ?? $record->application?->employee_id;
+                                        } elseif ($record instanceof \App\Models\EmployeeApplicationV2) {
+                                            $empId = $record->employee_id;
+                                        }
+                                    }
+
+                                    $rule = new \App\Rules\ValidAdvanceRequestDateRule($empId);
+                                    $rule->validate($attribute, $value, $fail);
+                                },
+                            ])
                             ->default(now()->toDateString()),
                         TextInput::make('detail_advance_amount')->numeric()->required()
                             ->label('Amount')
@@ -1657,7 +1676,8 @@ class EmployeeApplicationResource extends Resource
                             ->numeric()
                             ->label('Monthly deduction amount')->required()
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                            ->afterStateUpdated(function (Get $get, Set $set, $state, $old) {
+                                if ($state == $old) return;
                                 $advancedAmount = $get('detail_advance_amount');
                                 if ($state > 0 && $advancedAmount > 0) {
                                     $res = ceil($advancedAmount / $state);
@@ -1692,7 +1712,8 @@ class EmployeeApplicationResource extends Resource
                         ]),
                         TextInput::make('detail_number_of_months_of_deduction')->live(onBlur: true)
                             ->numeric()
-                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                            ->afterStateUpdated(function (Get $get, Set $set, $state, $old) {
+                                if ($state == $old) return;
                                 $advancedAmount = $get('detail_advance_amount');
                                 if ($advancedAmount > 0 && $state > 0) {
 
