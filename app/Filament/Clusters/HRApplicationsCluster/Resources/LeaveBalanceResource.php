@@ -146,7 +146,7 @@ class LeaveBalanceResource extends Resource
                         ->limit(20)
                         ->get()
                         ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
-                })
+                })->multiple()
 
                     ->searchable(),
                 SelectFilter::make('year')
