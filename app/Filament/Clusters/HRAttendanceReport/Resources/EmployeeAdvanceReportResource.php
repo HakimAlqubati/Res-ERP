@@ -124,7 +124,7 @@ class EmployeeAdvanceReportResource extends Resource
                     ->label(__('lang.deduction_ends'))
                     ->date()
                     ->sortable(),
-                       TextColumn::make('application.status')
+                TextColumn::make('application.status')
                     ->label('Manager Approval')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
@@ -295,7 +295,7 @@ class EmployeeAdvanceReportResource extends Resource
                         ->modalHeading(__('lang.defer_installment'))
                         ->modalDescription(__('lang.defer_installment_desc'))
                         ->modalSubmitActionLabel(__('lang.defer'))
-                        ->visible(fn($record) => $record->remaining_total > 0),
+                        ->visible(fn($record) => $record->remaining_total > 0 && $record->application?->status === EmployeeApplicationV2::STATUS_APPROVED && $record->finance_approved_by),
                 ])
 
             ])
