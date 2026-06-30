@@ -131,7 +131,7 @@ class EmployeeAdvanceReportResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('financeApprovedBy.name')
-                    ->label('Finance')
+                    ->label('Finance Approval')
                     ->placeholder(__('lang.pending'))
                     ->badge()
                     ->color(fn($record) => $record->finance_approved_at ? 'success' : 'warning')
