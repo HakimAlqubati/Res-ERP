@@ -127,6 +127,7 @@ class EmployeeAdvanceReportResource extends Resource
                 TextColumn::make('application.status')
                     ->label('Manager Approval')
                     ->badge()
+                    ->formatStateUsing(fn(string $state): string => EmployeeApplicationV2::getStatusLabel($state))
                     ->color(fn(string $state): string => match ($state) {
                         'approved' => 'success',
                         'pending' => 'warning',
