@@ -240,7 +240,13 @@ class EmployeeAdvanceReportResource extends Resource
             ->recordActions([
                 ActionGroup::make([
 
-                    \App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource::advanceInstallmentsAction(),
+                    \App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource::advanceInstallmentsAction()
+                    ->visible(function ($record) {
+                        if($record->application->status === EmployeeApplicationV2::STATUS_REJECTED) {
+                            return false;
+                        }
+                        return true;
+                    }),
                     EmployeeApplicationResource::exportAdvanceRequestPdf(),
                     EmployeeApplicationResource::financeApproveAdvanceRequest()
                         ->visible(function ($record) {
