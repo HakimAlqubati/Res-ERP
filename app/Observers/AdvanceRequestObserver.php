@@ -3,9 +3,9 @@
 namespace App\Observers;
 
 use App\Models\AdvanceRequest;
-use App\Models\EmployeeAdvanceInstallment;
-use App\Models\EmployeeApplicationV2;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Validator;
+use App\Rules\ValidAdvanceRequestDateRule;
 
 /**
  * Observer for AdvanceRequest model.
@@ -21,59 +21,14 @@ class AdvanceRequestObserver
      */
     public function creating(AdvanceRequest $advance): void
     {
-        $this->ensureNoDuplicateInMonth($advance);
-        $this->ensureNoOutstandingInstallments($advance);
-    }
+        $validator = Validator::make(
+            ['date' => $advance->date],
+            ['date' => [new ValidAdvanceRequestDateRule($advance->employee_id, $advance->id)]]
+        );
 
-    // =========================================================================
-    //  Validation Rules
-    // =========================================================================
-
-    /**
-     * Reject if the employee already has an advance request in the same month.
-     *
-     * @throws ValidationException
-     */
-    private function ensureNoDuplicateInMonth(AdvanceRequest $advance): void
-    {
-        $date = $advance->date
-            ? \Carbon\Carbon::parse($advance->date)
-            : now();
-
-        $exists = AdvanceRequest::where('employee_id', $advance->employee_id)
-            ->whereYear('date', $date->year)
-            ->whereMonth('date', $date->month)
-            ->whereHas('application', fn($query) => $query->where('status', '!=', EmployeeApplicationV2::STATUS_REJECTED))
-            ->exists();
-
-        if ($exists) {
+        if ($validator->fails()) {
             throw ValidationException::withMessages([
-                'advance_request' => [
-                    __('lang.advance_already_exists_in_month', [
-                        'month' => $date->translatedFormat('F Y'),
-                    ]),
-                ],
-            ]);
-        }
-    }
-
-    /**
-     * Reject if the employee still has scheduled (unpaid) installments
-     * from a previous advance.
-     *
-     * @throws ValidationException
-     */
-    private function ensureNoOutstandingInstallments(AdvanceRequest $advance): void
-    {
-        $hasScheduled = EmployeeAdvanceInstallment::where('employee_id', $advance->employee_id)
-            ->where('is_paid', false)
-            ->exists();
-
-        if ($hasScheduled) {
-            throw ValidationException::withMessages([
-                'advance_request' => [
-                    __('lang.advance_has_outstanding_installments'),
-                ],
+                'advance_request' => $validator->errors()->first('date'),
             ]);
         }
     }

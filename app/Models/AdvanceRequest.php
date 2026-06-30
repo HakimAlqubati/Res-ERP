@@ -249,6 +249,8 @@ class AdvanceRequest extends Model
                 $advanceRequestId = $advanceRequest?->id;
             }
 
+            $numberOfMonths = (int) $numberOfMonths;
+            $totalAmount = (float) $totalAmount;
             $base = (float) $monthlyDeductionAmount;
             $acc  = round($base * ($numberOfMonths - 1), 2);
             $last = round($totalAmount - $acc, 2);
