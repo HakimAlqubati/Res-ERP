@@ -16,6 +16,7 @@ use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeFileType;
 use App\Models\EmployeeFileTypeField;
+use App\Models\EmployeePaymentMethod;
 use App\Models\MonthlyIncentive;
 use App\Models\Position;
 use App\Models\UserType;
@@ -36,6 +37,7 @@ use Filament\Support\RawJs;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use App\Modules\HR\Employee\Services\PassportValidationService;
+use Filament\Schemas\Components\Group;
 
 class EmployeeForm
 {
@@ -464,16 +466,37 @@ class EmployeeForm
                                             ))
                                             ->numeric()
                                             ,
+                                            Select::make('payment_method_id')
+                                                ->columnSpan(1)
+                                                ->label(__('lang.payment_method'))
+                                                ->relationship('paymentMethod', 'name')
+                                                ->preload()
+                                                ->searchable()
+                                                ->nullable()
+                                                ->live()
+                                                ,
+                                                Group::make([
+                                                        TextInput::make('payment_details.account_name')
+                                                            ->label(fn (Get $get) => EmployeePaymentMethod::find($get('payment_method_id'))?->code === 'ewallet' ? 'Wallet Name' : 'Bank Name')
+                                                            ->required()
+                                                            ->visible(fn (Get $get) => in_array(EmployeePaymentMethod::find($get('payment_method_id'))?->code, ['ewallet', 'bank'])),
+                                                        
+                                                        TextInput::make('payment_details.account_number')
+                                                            ->label(fn (Get $get) => EmployeePaymentMethod::find($get('payment_method_id'))?->code === 'ewallet' ? 'Wallet Number' : 'Account Number')
+                                                            ->required()
+                                                            ->live(onBlur: true)
+                                                            ->afterStateUpdated(fn ($state, \Filament\Forms\Set $set) => $set('bank_account_number', $state))
+                                                            ->visible(fn (Get $get) => in_array(EmployeePaymentMethod::find($get('payment_method_id'))?->code, ['ewallet', 'bank'])),
+                                                        
+                                                        Textarea::make('payment_details.note')
+                                                            ->label('Note')
+                                                            ->columnSpanFull()
+                                                            ->visible(fn (Get $get) => in_array(EmployeePaymentMethod::find($get('payment_method_id'))?->code, ['ewallet', 'bank'])),
+                                                    ])
+                                                    ->columns(2)
+                                                    ->visible(fn (Get $get) => filled($get('payment_method_id'))),
                                         TextInput::make('bank_account_number')
-                                            ->columnSpan(1)
-                                            ->label('Bank account number')->nullable(),
-                                        Select::make('payment_method_id')
-                                            ->columnSpan(1)
-                                            ->label(__('lang.payment_method'))
-                                            ->relationship('paymentMethod', 'name')
-                                            ->preload()
-                                            ->searchable()
-                                            ->nullable(),
+                                            ->hidden(),
                                         Toggle::make('discount_exception_if_absent')->columnSpan(1)
                                             
                                             ->label(__('lang.no_salary_deduction_for_absences'))->default(0)->inline(false)

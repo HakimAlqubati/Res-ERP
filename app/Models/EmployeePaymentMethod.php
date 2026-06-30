@@ -13,7 +13,22 @@ class EmployeePaymentMethod extends Model
 
     protected $fillable = [
         'name',
+        'code',
         'active',
         'created_by',
     ];
+
+    public const CODE_BANK = 'bank';
+    public const CODE_EWALLET = 'ewallet';
+    public const CODE_CASH = 'cash';
+
+    public static function getCodes(): array
+    {
+        return [
+            ['key' => self::CODE_BANK, 'value' => __('Bank')],
+            ['key' => self::CODE_EWALLET, 'value' => __('E-Wallet')],
+            ['key' => self::CODE_CASH, 'value' => __('Cash')],
+        ];
+    }
 }
+
