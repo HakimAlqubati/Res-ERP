@@ -140,11 +140,20 @@ class EmployeeAdvanceReportResource extends Resource
                     ->label('Finance Approval')
                     ->placeholder(__('lang.pending'))
                     ->badge()
-                    ->color(fn($record) => $record->finance_approved_at ? 'success' : 'warning')
-                    ->getStateUsing(fn($record) => $record->finance_approved_at
-                        ? ($record->financeApprovedBy?->name ?? __('lang.approved'))
-                        : __('lang.pending')
-                    )
+                    ->color(function($record) {
+                        if ($record->application?->status === EmployeeApplicationV2::STATUS_REJECTED) {
+                            return 'danger';
+                        }
+                        return $record->finance_approved_at ? 'success' : 'warning';
+                    })
+                    ->getStateUsing(function($record) {
+                        if ($record->application?->status === EmployeeApplicationV2::STATUS_REJECTED) {
+                            return __('lang.rejected');
+                        }
+                        return $record->finance_approved_at
+                            ? ($record->financeApprovedBy?->name ?? __('lang.approved'))
+                            : __('lang.pending');
+                    })
                     ->tooltip(fn($record) => $record->finance_approved_at
                         ? $record->finance_approved_at->format('Y-m-d H:i')
                         : null
