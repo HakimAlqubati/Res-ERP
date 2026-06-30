@@ -152,7 +152,7 @@ class LeaveBalanceResource extends Resource
                 SelectFilter::make('year')
                     ->searchable()
                     ->multiple()
-                    ->label('Year')->options([2024 => 2024, 2025 => 2025, 2026 => 2026]),
+                    ->label('Year')->options([2024 => 2024, 2025 => 2025, 2026 => 2026, 2027 => 2027]),
                 SelectFilter::make('month')
                     ->searchable()
                     ->multiple()
