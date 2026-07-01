@@ -59,7 +59,6 @@ class Employee extends Model implements Auditable
         'rfid',
         'employee_type',
         'bank_account_number',
-        'bank_information',
         'gender',
         'nationality',
         'passport_no',
@@ -82,6 +81,8 @@ class Employee extends Model implements Auditable
         'created_by',
         'updated_by',
         'payment_method_id',
+        'payment_details',
+        'dynamic_field_values',
     ];
 
     // ─────────────────────────────────────────────────────────────
@@ -127,7 +128,6 @@ class Employee extends Model implements Auditable
         'rfid',
         'employee_type',
         'bank_account_number',
-        'bank_information',
         'gender',
         'nationality',
         'passport_no',
@@ -145,10 +145,12 @@ class Employee extends Model implements Auditable
         'birthday',
         'can_add_branch_order',
         'allow_attendance_from_any_branch',
+        'dynamic_field_values',
     ];
 
     protected $casts = [
-        'bank_information'       => 'array',
+        'payment_details'        => 'array',
+        'dynamic_field_values'   => 'array',
         'changes'                => 'array',
         'is_mtd_applicable'      => 'boolean',
         'has_auto_weekly_leave'  => 'boolean',

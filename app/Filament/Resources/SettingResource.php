@@ -591,7 +591,15 @@ class SettingResource extends Resource
                                             ]),
 
                                         ]),
-                                    ])
+                                    ]),
+                                    Tab::make('Products Settings')->columnSpanFull()->schema([
+                                        Grid::make()->columnSpanFull()->columns(3)->schema([
+                                            Toggle::make('show_old_system_code')
+                                                ->inline(false)
+                                                ->label('Show Old System Code')
+                                                ->default(false),
+                                        ]),
+                                    ]),
                                 ]),
 
 

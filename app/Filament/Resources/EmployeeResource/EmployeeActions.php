@@ -26,7 +26,11 @@ class EmployeeActions
             // ->icon('heroicon-o-annotation') // Icon for the button
             ->modalHeading(__('lang.change_employee_branch')) // Modal heading
             ->modalButton('Save')                    // Button inside the modal
-            ->fillForm(fn(Employee $record): array => $record->load('branchLogs')->toArray())
+            ->fillForm(function(Employee $record): array {
+                $data = $record->load('branchLogs')->toArray();
+                unset($data['branch_id']); // Remove current branch so the select is empty
+                return $data;
+            })
             ->schema([
                 Tabs::make('Tabs')
                     ->columnSpanFull()
@@ -60,7 +64,30 @@ class EmployeeActions
                                             ->required(),
                                         DatePicker::make('end_at')
                                             ->label(__('lang.end_date')),
+                                    ]),
+                                \Filament\Schemas\Components\Section::make(__('lang.assign_shifts') ?? 'Assign Shifts')
+                                    ->description(__('lang.assign_shifts_description') ?? 'You can assign new shifts for this branch. If left empty, the employee will have no shift.')
+                                    ->schema([
+                                        \Filament\Forms\Components\ToggleButtons::make('periods')
+                                            ->label('Work Periods')
+                                            ->columns(3)->multiple()
+                                            ->options(function (Get $get) {
+                                                $branchId = $get('branch_id');
+                                                if (!$branchId) return [];
+                                                return \App\Models\WorkPeriod::where('branch_id', $branchId)->pluck('name', 'id');
+                                            })
+                                            ->helperText('Select the employee\'s work periods.'),
+                                        \Filament\Schemas\Components\Fieldset::make()->schema([
+                                            \Filament\Forms\Components\CheckboxList::make('period_days')
+                                                ->label('Days of Work')
+                                                ->columns(3)
+                                                ->options(\App\Enums\DayOfWeek::options())
+                                                ->required(fn(Get $get) => !empty($get('periods')))
+                                                ->bulkToggleable()
+                                                ->helperText('Select the days this period applies to.'),
+                                        ]),
                                     ])
+                                    ->visible(fn(Get $get) => filled($get('branch_id'))),
                             ]),
                         Tab::make(__('lang.branch_logs_count'))
                             ->icon('heroicon-o-list-bullet')
@@ -108,6 +135,27 @@ class EmployeeActions
                     startAt: $data['start_at'],
                     endAt: $data['end_at'] ?? null,
                 );
+
+                if (!empty($data['periods']) && !empty($data['period_days'])) {
+                    try {
+                        $shiftData = [
+                            'start_date' => $data['start_at'],
+                            'end_date' => $data['end_at'] ?? null,
+                            'periods' => $data['periods'],
+                            'period_days' => $data['period_days'],
+                        ];
+                        $service = new \App\Modules\HR\EmployeeWorkPeriods\EmployeeWorkPeriodService();
+                        $service->assignPeriodsToEmployee($record, $shiftData);
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::alert('Error adding new periods during branch transfer: ' . $e->getMessage());
+                        Notification::make()
+                            ->title(__('lang.warning') ?? 'Warning')
+                            ->body('Branch changed, but failed to assign shifts: ' . $e->getMessage())
+                            ->warning()
+                            ->send();
+                        return;
+                    }
+                }
 
                 Notification::make()
                     ->title(__('lang.success'))

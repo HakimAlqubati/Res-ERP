@@ -85,8 +85,17 @@ class ProductsSchema
                                             ->disabled()
                                             ->dehydrated()
                                             ->default(fn($get) => Product::generateProductCode($get('category_id')))
-                                            ->columnSpanFull(),
-                                    ]),
+                                            // ->columnSpanFull()
+                                            ,
+                                        TextInput::make('code_old_system')
+                                            ->required()
+                                            // ->columnSpanFull()
+                                            ->unique(ignoreRecord: true)
+                                            ->label(__('lang.code_old_system'))
+                                            ->helperText(__('lang.code_old_system_helper'))
+                                            ->placeholder(__('lang.code_old_system_placeholder'))
+                                            ->visible(fn() => filter_var(\App\Models\Setting::getSetting('show_old_system_code'), FILTER_VALIDATE_BOOLEAN)),
+                                                ]),
                                 ]),
                                 
                                 Group::make()->columnSpan(1)->schema([

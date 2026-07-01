@@ -111,6 +111,25 @@
         table tbody tr:nth-child(even) .star-badge {
             color: white;
         }
+
+        /* Fixed Footer Styles */
+        tfoot.fixed-footer {
+            position: sticky;
+            bottom: 0;
+            z-index: 50;
+        }
+
+        tfoot.fixed-footer td {
+            background-color: #f3f4f6 !important;
+            color: #111827 !important;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1) !important;
+        }
+
+        :is(.dark) tfoot.fixed-footer td, .dark tfoot.fixed-footer td {
+            background-color: #1f2937 !important;
+            color: #f9fafb !important;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.5) !important;
+        }
     </style>
     <div class="text-right mb-4">
 
@@ -389,7 +408,7 @@
             @endforeach
         </tbody>
 
-        <tfoot>
+        <tfoot class="fixed-footer">
             <tr>
                 <td colspan="{{ $total_cols - 3 }}" class="text-center font-bold">{{ __('lang.total') }}</td>
                 <td class="text-center">{{ $total_duration_hours }}</td>

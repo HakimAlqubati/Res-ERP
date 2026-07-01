@@ -386,6 +386,7 @@ return [
     'can_add_branch_order' => 'Can add branch order',
     'can_view_all_branches' => 'View all branches staff',
     'can_view_all_branches_hint' => 'Allow branch manager to view staff from all branches',
+    'can_add_branch_order' => 'Can Add Branch Order',
 
     // ===========================================
     // HRMS - Attendance & Shifts
@@ -1168,4 +1169,11 @@ return [
     'rejected_successfully' => 'Rejected Successfully',
     'auto' => 'Auto',
     'allow_attendance_from_any_branch' => 'Allow Attendance From Any Branch',
+    'advance_already_exists_in_month' => 'Employee already has an advance request in :month.',
+    'advance_has_outstanding_installments' => 'Employee still has outstanding (unpaid) installments from a previous advance.',
+    'code_old_system' => 'Old System Code',
+    'code_old_system_helper' => 'This field is only for old system codes',
+    'code_old_system_placeholder' => 'Old system code',
+    'assign_shifts' => 'Assign Shifts',
+    'assign_shifts_description' => 'You can assign new shifts for this branch. If left empty, the employee will have no shift.',
 ];

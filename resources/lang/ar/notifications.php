@@ -68,4 +68,7 @@ return [
 
     // تجاوز الحد الشهري عند الموافقة
     'max_leave_per_month_exceeded_approving' => 'لا يمكن الموافقة على هذا الطلب. الموظف استهلك :consumed يوم(أيام) من إجازة ":type" في :month، والحد الأقصى المسموح هو :max يوم في الشهر.',
+
+    // رصيد الإجازة غير كافٍ
+    'insufficient_leave_balance' => 'رصيد الإجازات غير كافٍ. المطلوب: :requested، المتاح الفعلي: :available',
 ];

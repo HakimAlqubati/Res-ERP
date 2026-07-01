@@ -1149,4 +1149,11 @@ return [
   'auto' => 'تلقائي',
   'allow_attendance_from_any_branch' => 'السماح بالتحضير من أي فرع',
   
+  'advance_already_exists_in_month' => 'يوجد طلب سلفة للموظف في شهر :month بالفعل.',
+  'advance_has_outstanding_installments' => 'لا يزال لدى الموظف أقساط غير مسددة من سلفة سابقة.',
+  'code_old_system' => 'كود النظام القديم',
+  'code_old_system_helper' => 'هذا الحقل خاص بأكواد النظام القديم فقط',
+  'code_old_system_placeholder' => 'كود النظام القديم',
+  'assign_shifts' => 'تعيين فترات العمل (الشيفتات)',
+  'assign_shifts_description' => 'يمكنك تعيين شيفتات جديدة خاصة بهذا الفرع. في حال تركه فارغاً، سيكون الموظف بدون شيفت.',
 ];
