@@ -51,6 +51,9 @@ class LeaveApprovalService
         $balance = $this->guardBalance($leaveRequest, $application->id);
         $days         = (float) $leaveRequest->days_count;
 
+        // Check if balance is sufficient
+        \App\Rules\HR\Applications\SufficientLeaveBalanceRule::check($leaveRequest, $balance);
+
         Log::info('[LeaveApprovalService] Processing approval.', [
             'application_id' => $application->id,
             'employee_id'    => $application->employee_id,

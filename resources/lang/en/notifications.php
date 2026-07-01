@@ -58,4 +58,7 @@ return [
     'max_leave_per_month_exceeded_approving' => 'Only :max day(s) of :type leave are allowed per month.',
     'leave_request_overlap' => 'Request overlaps with existing records',
 
+    // Leave: insufficient balance
+    'insufficient_leave_balance' => 'Insufficient leave balance. Requested: :requested, Available: :available',
+
 ];
