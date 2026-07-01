@@ -77,6 +77,17 @@ class EmployeeApplicationTable
                 }),
         ];
 
+        // أعمدة خاصة بسلف الموظف (Advance request)
+        if ($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[3]) {
+            $columns[] = TextColumn::make('advanceRequest.finance_approved_at')
+                ->label('Finance Approval')
+                ->badge()
+                ->alignCenter()
+                ->formatStateUsing(fn ($state) => $state ? __('lang.approved') : __('lang.pending'))
+                ->color(fn ($state) => $state ? 'success' : 'warning')
+                ->icon(fn ($state) => $state ? 'heroicon-m-check-badge' : 'heroicon-m-clock')
+                ;
+        }
         // dd($activeTab,EmployeeApplicationV2::APPLICATION_TYPE_NAMES[1]);
         // أعمدة خاصة بإجازات (Leave request)
         if ($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[1]) {
