@@ -450,8 +450,8 @@ class EmployeeApplicationResource extends Resource
 
                     $advanceRequest->finance_approved_by = auth()->id();
                     $advanceRequest->finance_approved_at = now();
-                    $advanceRequest->payment_method      = $data['payment_method'] ?? null;
-                    $advanceRequest->bank_account_number = $data['bank_account_number'] ?? null;
+                    $advanceRequest->payment_method_id   = $data['payment_method_id'] ?? null;
+                    $advanceRequest->payment_details     = $data['payment_details'] ?? null;
                     $advanceRequest->transaction_number  = $data['transaction_number'] ?? null;
 
                     // ✅ تحديث بيانات الأقساط بالقيم التي عدّلها المدير المالي
@@ -602,28 +602,43 @@ class EmployeeApplicationResource extends Resource
                         ->disabled()
                         ->hidden(),
 
-                    Fieldset::make()->label('Payment Details')->columns(3)->schema([
-                        Select::make('payment_method')
-                            ->label('Payment Method')
-                            ->options([
-                                \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER => 'Bank Transfer',
-                                \App\Models\AdvanceRequest::PAYMENT_METHOD_CASH => 'Cash',
-                            ])
-                            ->required()
-                            ->live()
-                            ->default(\App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
-                            ->prefixIcon('heroicon-o-credit-card'),
-                        TextInput::make('bank_account_number')
-                            ->label('Bank Account Number')
-                            ->default($employee?->bank_account_number)
-                            ->required(fn($get) => $get('payment_method') === \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
-                            ->visible(fn($get) => $get('payment_method') === \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
-                            ->prefixIcon('heroicon-o-identification'),
+                    Fieldset::make()->label('Payment Details')->columns(2)->schema([
+                        Select::make('payment_method_id')
+                            ->columnSpanFull()
+                            ->label(__('lang.payment_method'))
+                            ->options(\App\Models\EmployeePaymentMethod::pluck('name', 'id'))
+                            ->preload()
+                            ->searchable()
+                            ->nullable()
+                            ->default($employee?->payment_method_id)
+                            ->live(),
+                            
+                        \Filament\Schemas\Components\Group::make([
+                            TextInput::make('payment_details.account_name')
+                                ->label(fn (Get $get) => \App\Models\EmployeePaymentMethod::find($get('payment_method_id'))?->getAccountNameLabel() ?? __('Account Name'))
+                                ->default($employee?->payment_details['account_name'] ?? null)
+                                ->required(),
+                            
+                            TextInput::make('payment_details.account_number')
+                                ->label(fn (Get $get) => \App\Models\EmployeePaymentMethod::find($get('payment_method_id'))?->getAccountNumberLabel() ?? __('Account Number'))
+                                ->default($employee?->payment_details['account_number'] ?? null)
+                                ->required(),
+                            
+                            TextInput::make('payment_details.note')
+                                ->label(fn (Get $get) => \App\Models\EmployeePaymentMethod::find($get('payment_method_id'))?->getNoteLabel() ?? __('Remarks'))
+                                ->default($employee?->payment_details['note'] ?? null)
+                                ->columnSpanFull(),
+                        ])
+                        ->columns(2)
+                        ->columnSpanFull()
+                        ->visible(fn (Get $get) => \App\Models\EmployeePaymentMethod::find($get('payment_method_id'))?->requiresDetails() ?? false),
+
                         TextInput::make('transaction_number')
                             ->label(__('lang.transaction_number'))
-                            ->visible(fn($get) => $get('payment_method') === \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
+                            ->visible(fn(Get $get) => \App\Models\EmployeePaymentMethod::find($get('payment_method_id'))?->requiresDetails() ?? false)
                             ->placeholder(__('lang.enter_transaction_number'))
-                            ->prefixIcon('heroicon-o-hashtag'),
+                            ->prefixIcon('heroicon-o-hashtag')
+                            ->columnSpanFull(),
                     ]),
 
                     static::getAttachmentsPlaceholder($record),

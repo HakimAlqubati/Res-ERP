@@ -81,6 +81,7 @@ class Employee extends Model implements Auditable
         'updated_by',
         'payment_method_id',
         'payment_details',
+        'dynamic_field_values',
     ];
 
     // ─────────────────────────────────────────────────────────────
@@ -142,10 +143,12 @@ class Employee extends Model implements Auditable
         'no_shift_is_present',
         'birthday',
         'can_add_branch_order',
+        'dynamic_field_values',
     ];
 
     protected $casts = [
         'payment_details'        => 'array',
+        'dynamic_field_values'   => 'array',
         'changes'                => 'array',
         'is_mtd_applicable'      => 'boolean',
         'has_auto_weekly_leave'  => 'boolean',
