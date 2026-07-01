@@ -113,12 +113,12 @@ class EmployeeApplicationTable
             $columns[] = TextColumn::make('detail_deduction_starts_from')
                 ->label(__('lang.deduction_starts'))
                 ->toggleable(isToggledHiddenByDefault: true)
-                ->date();
+                ->date('M Y');
 
             $columns[] = TextColumn::make('detail_deduction_ends_at')
                 ->label(__('lang.deduction_ends'))
                 ->toggleable(isToggledHiddenByDefault: true)
-                ->date();
+                ->date('M Y');
 
             $columns[] = TextColumn::make('detail_number_of_months_of_deduction')
                 ->label(__('lang.months'))->alignCenter();
