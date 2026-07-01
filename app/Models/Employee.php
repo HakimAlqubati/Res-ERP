@@ -59,7 +59,6 @@ class Employee extends Model implements Auditable
         'rfid',
         'employee_type',
         'bank_account_number',
-        'bank_information',
         'gender',
         'nationality',
         'passport_no',
@@ -127,7 +126,6 @@ class Employee extends Model implements Auditable
         'rfid',
         'employee_type',
         'bank_account_number',
-        'bank_information',
         'gender',
         'nationality',
         'passport_no',
@@ -148,7 +146,6 @@ class Employee extends Model implements Auditable
 
     protected $casts = [
         'payment_details'        => 'array',
-        'bank_information'       => 'array',
         'changes'                => 'array',
         'is_mtd_applicable'      => 'boolean',
         'has_auto_weekly_leave'  => 'boolean',
