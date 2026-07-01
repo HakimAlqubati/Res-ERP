@@ -64,6 +64,7 @@ class PresentEmployeesService
                 'employee:id,name,branch_id,department_id',
                 'period:id,name,start_at,end_at',
             ])
+            ->forBranchManager()
             ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
             ->where('accepted', 1)
             ->where(function ($q) use ($grouped) {
