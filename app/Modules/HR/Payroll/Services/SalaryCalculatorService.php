@@ -309,18 +309,63 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         $this->grossSalary = $this->round(
             $this->baseSalary + $overtime['amount'] + $allowances['total'] + $overtimeDaysAmount + $manualOvertimeAmount + ($monthlyIncentives['total'] ?? 0)
         );
-        $this->totalDeductions = $this->round(
+        // 7. Calculate general deductions (taxes, insurance)
+        // Statutory deductions (EPF, SOCSO, EIS) are typically based on Gross Wages EARNED.
+        // Gross Wages should include Overtime, Allowances, etc.
+        // However, we should subtract Unpaid Leave (Absent days) because that salary was never earned.
+        // We should NOT subtract Late/Early/Penalties/Advances as those are deductions from earned salary.
+
+        $baseForStatutoryDeductions = max(0, $this->grossSalary - $deductions->absenceDeduction);
+
+        $dynamicDeductions = $this->generalDeductionCalculator->calculate($context, $baseForStatutoryDeductions);
+        $dynamicTotal = (float)($dynamicDeductions['result'] ?? 0);
+
+        // 7b. Calculate non-advance deductions
+        $nonAdvanceDeductionsTotal = $this->round(
             $deductions->absenceDeduction +
                 $deductions->lateDeduction +
                 $deductions->earlyDepartureDeduction +
                 $penalties['total'] +
-                $advanceInstallments['total'] +
                 $advanceWages['total'] +
                 $mealRequests['total'] +
                 $deductions->missingHoursDeduction +
                 $customDeductions['total'] +
                 $carryForwardRecovery['total']
         );
+
+        // 7c. Cap Advance Installments if necessary
+        $availableNetForInstallments = $this->round($this->grossSalary - ($nonAdvanceDeductionsTotal + $dynamicTotal));
+        $availableNetForInstallments = max(0, $availableNetForInstallments);
+
+        $advanceShortfall = 0.0;
+        if ($advanceInstallments['total'] > $availableNetForInstallments) {
+            $originalAdvanceTotal = $advanceInstallments['total'];
+            $capAmount = $availableNetForInstallments;
+            $newAdvanceInstallmentTotal = 0.0;
+
+            foreach ($advanceInstallments['items'] as &$item) {
+                if ($capAmount <= 0) {
+                    $item['amount'] = 0.0;
+                    continue;
+                }
+
+                if ($item['amount'] > $capAmount) {
+                    $item['amount'] = $this->round($capAmount);
+                    $capAmount = 0.0;
+                } else {
+                    $capAmount -= $item['amount'];
+                }
+                $newAdvanceInstallmentTotal += $item['amount'];
+            }
+            unset($item); // Best Practice: Clean up reference
+
+            // Filter out fully capped installments
+            $advanceInstallments['items'] = array_values(array_filter($advanceInstallments['items'], fn($i) => $i['amount'] > 0));
+            $advanceInstallments['total'] = $this->round($newAdvanceInstallmentTotal);
+            $advanceShortfall = $this->round($originalAdvanceTotal - $advanceInstallments['total']);
+        }
+
+        $this->totalDeductions = $this->round($nonAdvanceDeductionsTotal + $advanceInstallments['total']);
         $this->netSalary = $this->round($this->grossSalary - $this->totalDeductions);
 
         // Policy hooks (post calculation: taxes, caps, extra allowances…)
@@ -335,20 +380,6 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
                 mut: $this->mutableComponents($deductions, $overtime),
             ));
         }
-
-        // 7. Calculate general deductions (taxes, insurance)
-        // Statutory deductions (EPF, SOCSO, EIS) are typically based on Gross Wages EARNED.
-        // Gross Wages should include Overtime, Allowances, etc.
-        // However, we should subtract Unpaid Leave (Absent days) because that salary was never earned.
-        // We should NOT subtract Late/Early/Penalties/Advances as those are deductions from earned salary.
-
-        $baseForStatutoryDeductions = $this->grossSalary - ($this->totalDeductions);
-
-        // Ensure base is not negative
-        $baseForStatutoryDeductions = max(0, $baseForStatutoryDeductions);
-
-        $dynamicDeductions = $this->generalDeductionCalculator->calculate($context, $baseForStatutoryDeductions);
-        $dynamicTotal = (float)($dynamicDeductions['result'] ?? 0);
 
         // Include dynamic deductions in totals
         $finalTotalDeductions = $this->round($this->totalDeductions + $dynamicTotal);
@@ -404,14 +435,16 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             }
         }
 
-        // 9. Carry Forward: if net salary is negative, cap at 0 and record debt
-        $carryForwarded = 0.0;
+        // 9. Carry Forward: if net salary is negative or there is an advance shortfall, cap at 0 and record debt
+        $carryForwarded = $advanceShortfall ?? 0.0;
         if ($finalNetSalary < 0) {
-            $carryForwarded = $this->round(abs($finalNetSalary));
+            $carryForwarded += $this->round(abs($finalNetSalary));
             $finalNetSalary = 0.0;
+        }
 
+        if ($carryForwarded > 0) {
             $notes = sprintf(
-                "Gross Salary: %.2f | Total Deductions: %.2f (Absence: %.2f, Late: %.2f, Early Departure: %.2f, Missing Hours: %.2f, Penalties: %.2f, Advances: %.2f, Meals: %.2f, Dynamic: %.2f) | Deficit: %.2f",
+                "Gross Salary: %.2f | Processed Deductions: %.2f (Absence: %.2f, Late: %.2f, Early Departure: %.2f, Missing Hours: %.2f, Penalties: %.2f, Advances: %.2f, Meals: %.2f, Dynamic: %.2f) | Unrecovered/Deficit: %.2f",
                 $this->grossSalary,
                 $finalTotalDeductions,
                 $deductions->absenceDeduction,
@@ -425,12 +458,14 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
                 $carryForwarded
             );
 
+            $descReason = ($advanceShortfall ?? 0) > 0 ? 'Unrecovered Advance Installment' : 'Net Salary Deficit';
+
             $transactions[] = [
                 'type'        => \App\Enums\HR\Payroll\SalaryTransactionType::TYPE_CARRY_FORWARD,
                 'sub_type'    => \App\Enums\HR\Payroll\SalaryTransactionSubType::CARRY_FORWARD,
                 'amount'      => $carryForwarded,
                 'operation'   => '-',
-                'description' => 'Carry forward ' . $carryForwarded . ' (Gross ' . $this->grossSalary . ' - Ded. ' . $finalTotalDeductions . ')',
+                'description' => 'Carry forward ' . $carryForwarded . ' (' . $descReason . ')',
                 'notes'       => $notes,
                 'unit'        => 'flat',
                 'qty'         => 1,
