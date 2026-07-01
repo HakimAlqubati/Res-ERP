@@ -30,5 +30,25 @@ class EmployeePaymentMethod extends Model
             ['key' => self::CODE_CASH, 'value' => __('Cash')],
         ];
     }
+
+    public function getAccountNameLabel(): string
+    {
+        return $this->code === self::CODE_EWALLET ? __('E-Wallet Provider') : __('Bank Name');
+    }
+
+    public function getAccountNumberLabel(): string
+    {
+        return $this->code === self::CODE_EWALLET ? __('E-Wallet Number') : __('Account Number');
+    }
+
+    public function getNoteLabel(): string
+    {
+        return __('Remarks');
+    }
+
+    public function requiresDetails(): bool
+    {
+        return in_array($this->code, [self::CODE_EWALLET, self::CODE_BANK]);
+    }
 }
 

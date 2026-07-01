@@ -71,6 +71,8 @@ class AdvanceRequest extends Model
         'payment_method',
         'bank_account_number',
         'transaction_number',
+        'payment_method_id',
+        'payment_details',
     ];
 
     public const PAYMENT_METHOD_CASH = 'cash';
@@ -80,6 +82,7 @@ class AdvanceRequest extends Model
 
     protected $casts = [
         'finance_approved_at' => 'datetime',
+        'payment_details'     => 'array',
     ];
 
     // ===================== Relationships =====================
@@ -87,6 +90,11 @@ class AdvanceRequest extends Model
     public function employee()
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    public function paymentMethod()
+    {
+        return $this->belongsTo(EmployeePaymentMethod::class, 'payment_method_id');
     }
 
     public function installments()
