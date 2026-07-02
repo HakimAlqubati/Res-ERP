@@ -171,26 +171,23 @@ class MonthlyPendingApplicationChecker
     private function getAdvanceFinanceManagerPendingCount(CheckerFilterDTO $filterDto): int
     {
         return AdvanceRequest::query()
-            ->when(function($q)use($filterDto){
-                if($filterDto->year && $filterDto->month){
-                    $startOfMonth = \Carbon\Carbon::create($filterDto->year, $filterDto->month, 1)->startOfMonth()->toDateString();
-                    $endOfMonth = \Carbon\Carbon::create($filterDto->year, $filterDto->month, 1)->endOfMonth()->toDateString();
-
-                    
-                    $q->where('deduction_starts_from', '<=', $endOfMonth)
-                        ->where(function ($query) use ($startOfMonth) {
-                            $query->where('deduction_ends_at', '>=', $startOfMonth)
-                                ->orWhereNull('deduction_ends_at');
-                        });
-                }
-            })
             ->whereNull('finance_approved_at')
             ->whereHas('application', function ($q) use ($filterDto) {
-                $q->where('status', EmployeeApplicationV2::STATUS_APPROVED);
+                $q->whereIn('status', [EmployeeApplicationV2::STATUS_APPROVED, EmployeeApplicationV2::STATUS_PENDING]);
 
                 if ($filterDto->branchId) {
                     $q->where('branch_id', $filterDto->branchId);
                 }
+            })
+            ->when($filterDto->year && $filterDto->month, function ($q) use ($filterDto) {
+                $startOfMonth = \Carbon\Carbon::create($filterDto->year, $filterDto->month, 1)->startOfMonth()->toDateString();
+                $endOfMonth = \Carbon\Carbon::create($filterDto->year, $filterDto->month, 1)->endOfMonth()->toDateString();
+
+                $q->where('deduction_starts_from', '<=', $endOfMonth)
+                    ->where(function ($query) use ($startOfMonth) {
+                        $query->where('deduction_ends_at', '>=', $startOfMonth)
+                            ->orWhereNull('deduction_ends_at');
+                    });
             })
             ->when($filterDto->employeeIds, fn($q) => $q->whereIn('employee_id', $filterDto->employeeIds))
             ->count();
