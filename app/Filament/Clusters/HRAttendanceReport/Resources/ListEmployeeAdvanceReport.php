@@ -15,7 +15,7 @@ class ListEmployeeAdvanceReport extends ListRecords
     public function getTableRecordKey(Model|array $record): string
     {
         $attributes = $record->getAttributes();
-        return $attributes['employee_id'];
+        return $attributes['employee_id'] .'-'. $attributes['application_id'];
     }
 
     

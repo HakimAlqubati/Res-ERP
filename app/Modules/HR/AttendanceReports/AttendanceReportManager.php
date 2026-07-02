@@ -94,7 +94,7 @@ class AttendanceReportManager implements AttendanceReportInterface
 
                 if ($isSingleDay) {
                     $cacheKey = "emp_daily_attendance_report_{$tenantDb}_{$employee->id}_{$startDateStr}";
-                    \Illuminate\Support\Facades\Cache::put($cacheKey, $processedData, now()->addDay());
+                    \Illuminate\Support\Facades\Cache::put($cacheKey, $processedData, now()->addHours(4));
                 }
             }
         }

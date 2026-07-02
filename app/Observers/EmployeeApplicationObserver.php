@@ -6,14 +6,16 @@ use App\Enums\Warnings\WarningLevel;
 use App\Facades\Warnings;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource;
 use App\Models\EmployeeApplicationV2;
-use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker;
-use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService;
+use App\Models\User;
 use App\Services\HR\Applications\AdvanceRequest\AdvanceApprovalService;
 use App\Services\HR\Applications\LeaveRequest\LeaveApprovalService;
 use App\Services\HR\Payroll\PayrollLockGuard;
 use App\Services\Warnings\WarningPayload;
+use App\Services\WhatsApp\Contracts\WhatsAppServiceInterface;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Observer for EmployeeApplicationV2 model.
@@ -28,8 +30,8 @@ class EmployeeApplicationObserver
 {
     public function __construct(
         private readonly AdvanceApprovalService $advanceApprovalService,
-        private readonly LeaveApprovalService   $leaveApprovalService,
-        private readonly PayrollLockGuard       $payrollLockGuard,
+        private readonly LeaveApprovalService $leaveApprovalService,
+        private readonly PayrollLockGuard $payrollLockGuard,
     ) {}
 
     // =========================================================================
@@ -42,23 +44,23 @@ class EmployeeApplicationObserver
      *
      * Throwing here aborts the INSERT and rolls back any wrapping transaction.
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function creating(EmployeeApplicationV2 $app): void
     {
-        if (!auth()->user()->can_create_advance) {
+        if (! auth()->user()->can_create_advance) {
             if (
                 $app->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST
                 || $app->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST
             ) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
-                    'errors' => ['Cannot Create Advance Request']
+                throw ValidationException::withMessages([
+                    'errors' => ['Cannot Create Advance Request'],
                 ]);
             }
         }
         $date = $app->application_date
-            ? \Carbon\Carbon::parse($app->application_date)
-            : \Carbon\Carbon::today();
+            ? Carbon::parse($app->application_date)
+            : Carbon::today();
 
         $this->payrollLockGuard->checkLock(
             $app->employee_id,
@@ -97,21 +99,21 @@ class EmployeeApplicationObserver
             Warnings::send(
                 $managerUser,
                 WarningPayload::make(
-                    'New Request from ' . ($employee->name ?? 'Employee'),
+                    'New Request from '.($employee->name ?? 'Employee'),
                     implode("\n", [
                         "Type: {$typeName}",
-                        'Date: ' . ($app->application_date ?: now()->toDateString()),
+                        'Date: '.($app->application_date ?: now()->toDateString()),
                     ]),
                     WarningLevel::Info
                 )
                     ->ctx([
                         'application_id' => $app->id,
-                        'employee_id'    => $employee->id,
-                        'type_id'        => $app->application_type_id,
+                        'employee_id' => $employee->id,
+                        'type_id' => $app->application_type_id,
                     ])
                     ->url(
                         rtrim(EmployeeApplicationResource::getUrl(), '/')
-                            . (EmployeeApplicationV2::APPLICATION_TYPE_FILTERS[$app->application_type_id] ?? '')
+                            .(EmployeeApplicationV2::APPLICATION_TYPE_FILTERS[$app->application_type_id] ?? '')
                     )
                     ->scope("emp-app-{$app->id}")
                     ->expires(now()->addHours(24))
@@ -127,15 +129,15 @@ class EmployeeApplicationObserver
                     'parameters' => [
                         ['type' => 'text', 'text' => $managerUser->name],
                         ['type' => 'text', 'text' => $employee->name],
-                        ['type' => 'text', 'text' => $amount]
-                    ]
+                        ['type' => 'text', 'text' => $amount],
+                    ],
                 ]);
             }
         } catch (\Throwable $e) {
             Log::warning('[EmployeeApplicationObserver] Failed to notify manager.', [
                 'application_id' => $app->id ?? null,
-                'employee_id'    => $app->employee_id ?? null,
-                'error'          => $e->getMessage(),
+                'employee_id' => $app->employee_id ?? null,
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -143,18 +145,22 @@ class EmployeeApplicationObserver
     /**
      * Prevent approving or modifying an application if the payroll month is locked.
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function updating(EmployeeApplicationV2 $app): void
     {
-        $this->checkApplicationModelLock($app);
+        if ($app->getOriginal('status') == EmployeeApplicationV2::STATUS_APPROVED &&
+          $app->toArray()['status'] == EmployeeApplicationV2::STATUS_REJECTED) {
+            return;
+        }
 
+        $this->checkApplicationModelLock($app);
 
         // 1. Determine the date to check against (Original date in DB)
         // To prevent modifying any data in an already locked month.
         $originalDate = $app->getOriginal('application_date')
-            ? \Carbon\Carbon::parse($app->getOriginal('application_date'))
-            : ($app->application_date ? \Carbon\Carbon::parse($app->application_date) : \Carbon\Carbon::today());
+            ? Carbon::parse($app->getOriginal('application_date'))
+            : ($app->application_date ? Carbon::parse($app->application_date) : Carbon::today());
 
         $this->payrollLockGuard->checkLock(
             $app->employee_id,
@@ -164,8 +170,8 @@ class EmployeeApplicationObserver
         );
 
         // 2. If the application_date itself is changing, ensure the NEW date is also not in a locked month.
-        if ($app->isDirty('application_date') && !empty($app->application_date)) {
-            $newDate = \Carbon\Carbon::parse($app->application_date);
+        if ($app->isDirty('application_date') && ! empty($app->application_date)) {
+            $newDate = Carbon::parse($app->application_date);
 
             if ($newDate->month !== $originalDate->month || $newDate->year !== $originalDate->year) {
                 $this->payrollLockGuard->checkLock(
@@ -198,7 +204,7 @@ class EmployeeApplicationObserver
         // ── Advance Request: installment generation ───────────────────────────
         if ($this->isAdvanceApproval($app)) {
             try {
-                DB::transaction(fn() => $this->advanceApprovalService->process($app));
+                DB::transaction(fn () => $this->advanceApprovalService->process($app));
 
                 $employeeUser = $app->employee?->user;
                 if ($employeeUser) {
@@ -211,10 +217,10 @@ class EmployeeApplicationObserver
                         )
                             ->ctx([
                                 'application_id' => $app->id,
-                                'employee_id'    => $app->employee_id,
-                                'type_id'        => $app->application_type_id,
+                                'employee_id' => $app->employee_id,
+                                'type_id' => $app->application_type_id,
                             ])
-                            ->url(rtrim(EmployeeApplicationResource::getUrl(), '/') . '?tab=Advance+request')
+                            ->url(rtrim(EmployeeApplicationResource::getUrl(), '/').'?tab=Advance+request')
                             ->scope("emp-app-approved-{$app->id}")
                             ->expires(now()->addDays(3))
                     );
@@ -222,8 +228,8 @@ class EmployeeApplicationObserver
             } catch (\Throwable $e) {
                 Log::error('[EmployeeApplicationObserver] Failed to process advance approval.', [
                     'application_id' => $app->id,
-                    'employee_id'    => $app->employee_id,
-                    'error'          => $e->getMessage(),
+                    'employee_id' => $app->employee_id,
+                    'error' => $e->getMessage(),
                 ]);
                 throw $e;
             }
@@ -252,44 +258,39 @@ class EmployeeApplicationObserver
         }
 
         $previousStatus = $app->getOriginal('status');
-        $currentStatus  = $app->status;
+        $currentStatus = $app->status;
 
         try {
             DB::transaction(function () use ($app, $previousStatus, $currentStatus) {
                 match (true) {
 
                     // ✅ Any status → Approved: add to used_days
-                    $currentStatus === EmployeeApplicationV2::STATUS_APPROVED
-                        => $this->leaveApprovalService->onApproved($app),
+                    $currentStatus === EmployeeApplicationV2::STATUS_APPROVED => $this->leaveApprovalService->onApproved($app),
 
                     // 🔄 Was Approved → now Pending: undo approve (move from used to pending)
                     $currentStatus === EmployeeApplicationV2::STATUS_PENDING
-                    && $previousStatus === EmployeeApplicationV2::STATUS_APPROVED
-                        => $this->leaveApprovalService->onRevertedToPendingFromApproved($app),
+                    && $previousStatus === EmployeeApplicationV2::STATUS_APPROVED => $this->leaveApprovalService->onRevertedToPendingFromApproved($app),
 
                     // ⏳ Any OTHER status → Pending: add to pending_days
-                    $currentStatus === EmployeeApplicationV2::STATUS_PENDING
-                        => $this->leaveApprovalService->onPending($app),
+                    $currentStatus === EmployeeApplicationV2::STATUS_PENDING => $this->leaveApprovalService->onPending($app),
 
                     // ❌ Was Approved → now Rejected: revert used_days
-                    $currentStatus  === EmployeeApplicationV2::STATUS_REJECTED
-                    && $previousStatus === EmployeeApplicationV2::STATUS_APPROVED
-                        => $this->leaveApprovalService->onRejectedFromApproved($app),
+                    $currentStatus === EmployeeApplicationV2::STATUS_REJECTED
+                    && $previousStatus === EmployeeApplicationV2::STATUS_APPROVED => $this->leaveApprovalService->onRejectedFromApproved($app),
 
                     // ❌ Was Pending → now Rejected: revert pending_days
-                    $currentStatus  === EmployeeApplicationV2::STATUS_REJECTED
-                    && $previousStatus === EmployeeApplicationV2::STATUS_PENDING
-                        => $this->leaveApprovalService->onRejectedFromPending($app),
+                    $currentStatus === EmployeeApplicationV2::STATUS_REJECTED
+                    && $previousStatus === EmployeeApplicationV2::STATUS_PENDING => $this->leaveApprovalService->onRejectedFromPending($app),
 
                     default => null,
                 };
-                
+
                 // Clear cache for the leave dates
                 if ($app->application_type_id === EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST) {
                     $leave = $app->leaveRequest;
                     if ($leave && $leave->start_date && $leave->end_date) {
-                        $start = \Carbon\Carbon::parse($leave->start_date);
-                        $end = \Carbon\Carbon::parse($leave->end_date);
+                        $start = Carbon::parse($leave->start_date);
+                        $end = Carbon::parse($leave->end_date);
                         while ($start->lte($end)) {
                             clearEmployeeDailyAttendanceCache($app->employee_id, $start->toDateString());
                             $start->addDay();
@@ -299,11 +300,11 @@ class EmployeeApplicationObserver
             });
         } catch (\Throwable $e) {
             Log::error('[EmployeeApplicationObserver] Failed to update leave balance.', [
-                'application_id'  => $app->id,
-                'employee_id'     => $app->employee_id,
+                'application_id' => $app->id,
+                'employee_id' => $app->employee_id,
                 'previous_status' => $previousStatus,
-                'current_status'  => $currentStatus,
-                'error'           => $e->getMessage(),
+                'current_status' => $currentStatus,
+                'error' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -313,13 +314,13 @@ class EmployeeApplicationObserver
     /**
      * Prevent deleting an application if the payroll month is locked.
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function deleting(EmployeeApplicationV2 $app): void
     {
         $date = $app->application_date
-            ? \Carbon\Carbon::parse($app->application_date)
-            : \Carbon\Carbon::today();
+            ? Carbon::parse($app->application_date)
+            : Carbon::today();
 
         $this->payrollLockGuard->checkLock(
             $app->employee_id,
@@ -346,7 +347,7 @@ class EmployeeApplicationObserver
             } catch (\Throwable $e) {
                 Log::error('[EmployeeApplicationObserver] Failed to restore balance on delete.', [
                     'application_id' => $app->id,
-                    'error'          => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
         }
@@ -365,20 +366,20 @@ class EmployeeApplicationObserver
         return false;
     }
 
-    public function checkApplicationModelLock(\App\Models\EmployeeApplicationV2 $app): void
+    public function checkApplicationModelLock(EmployeeApplicationV2 $app): void
     {
         $targetDate = null;
         switch ($app->application_type_id) {
-            case \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST:
+            case EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST:
                 $targetDate = $app->missedCheckinRequest?->date;
                 break;
-            case \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST:
+            case EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST:
                 $targetDate = $app->missedCheckoutRequest?->date;
                 break;
-            case \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST:
+            case EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST:
                 $targetDate = $app->leaveRequest?->start_date;
                 break;
-            case \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST:
+            case EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST:
                 $targetDate = $app->application_date;
                 break;
             default:
@@ -386,16 +387,13 @@ class EmployeeApplicationObserver
                 break;
         }
         if ($targetDate) {
-            $parsedDate = \Carbon\Carbon::parse($targetDate);
+            $parsedDate = Carbon::parse($targetDate);
             $this->payrollLockGuard->checkLock($app->employee_id, $parsedDate->year, $parsedDate->month, 'application_date');
         }
     }
 
     /**
      * Notify all Financial Managers that an Advance Request has been approved by the manager.
-     *
-     * @param EmployeeApplicationV2 $app
-     * @return void
      */
     private function notifyFinancialManagersOfAdvanceApproved(EmployeeApplicationV2 $app): void
     {
@@ -406,30 +404,30 @@ class EmployeeApplicationObserver
             $advanceRequest = $app->advanceRequest;
             $amount = $advanceRequest ? ($advanceRequest->advance_amount) : 'Unknown Amount';
 
-            $whatsappService = app(\App\Services\WhatsApp\Contracts\WhatsAppServiceInterface::class);
+            $whatsappService = app(WhatsAppServiceInterface::class);
 
             // Fetch Financial Managers (role ID 16 based on User::isFinanceManager)
-            $financeManagers = \App\Models\User::whereHas('roles', function ($query) {
+            $financeManagers = User::whereHas('roles', function ($query) {
                 $query->where('roles.id', 16);
             })->whereNotNull('phone_number')->get();
             Log::info('financial managers', $financeManagers->toArray());
             foreach ($financeManagers as $manager) {
-                if (!empty($manager->phone_number)) {
+                if (! empty($manager->phone_number)) {
                     $whatsappService->sendTemplate(
                         to: $manager->phone_number,
                         templateName: 'workbench_advance_notifier',
                         parameters: [
                             $managerName,
                             $employeeName,
-                            $amount
+                            $amount,
                         ]
                     );
                 }
             }
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('[EmployeeApplicationObserver] Failed to send WhatsApp to Financial Managers.', [
+            Log::warning('[EmployeeApplicationObserver] Failed to send WhatsApp to Financial Managers.', [
                 'application_id' => $app->id,
-                'error'          => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
         }
     }

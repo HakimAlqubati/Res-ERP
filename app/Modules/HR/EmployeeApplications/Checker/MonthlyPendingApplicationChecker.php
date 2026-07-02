@@ -171,6 +171,19 @@ class MonthlyPendingApplicationChecker
     private function getAdvanceFinanceManagerPendingCount(CheckerFilterDTO $filterDto): int
     {
         return AdvanceRequest::query()
+            ->when(function($q)use($filterDto){
+                if($filterDto->year && $filterDto->month){
+                    $startOfMonth = \Carbon\Carbon::create($filterDto->year, $filterDto->month, 1)->startOfMonth()->toDateString();
+                    $endOfMonth = \Carbon\Carbon::create($filterDto->year, $filterDto->month, 1)->endOfMonth()->toDateString();
+
+                    
+                    $q->where('deduction_starts_from', '<=', $endOfMonth)
+                        ->where(function ($query) use ($startOfMonth) {
+                            $query->where('deduction_ends_at', '>=', $startOfMonth)
+                                ->orWhereNull('deduction_ends_at');
+                        });
+                }
+            })
             ->whereNull('finance_approved_at')
             ->whereHas('application', function ($q) use ($filterDto) {
                 $q->where('status', EmployeeApplicationV2::STATUS_APPROVED);

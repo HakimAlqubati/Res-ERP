@@ -201,13 +201,15 @@ class EmployeeAdvanceInstallment extends Model
             // 1. تعليم القسط الحالي كمتخطّى
             $this->markSkipped($reason);
 
-            // 2. جلب آخر قسط في السلفة
+            // 2. جلب آخر قسط في السلفة لتكون الإضافة في نهاية الجدول
             $lastInstallment = self::where('advance_request_id', $this->advance_request_id)
                 ->orderByDesc('due_date')
                 ->first();
 
             // 3. حساب تاريخ القسط الجديد (الشهر التالي لآخر قسط)
-            $newDueDate = Carbon::parse($lastInstallment->due_date)->addMonth()->endOfMonth();
+            // ملاحظة: نستخدم startOfMonth ثم addMonth ثم endOfMonth لتجنب مشكلة الـ overflow
+            // حيث أن إضافة شهر على 31 أغسطس يؤدي إلى 1 أكتوبر ثم 31 أكتوبر
+            $newDueDate = Carbon::parse($lastInstallment->due_date)->startOfMonth()->addMonth()->endOfMonth();
 
             // 4. إنشاء القسط الجديد
             $newInstallment = self::create([

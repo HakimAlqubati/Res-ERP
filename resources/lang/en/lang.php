@@ -379,10 +379,11 @@ return [
     'exempt_from_late_attendance_deduction' => 'Exempt from Late Attendance Deduction',
     'is_mtd_applicable' => 'MTD Applicable',
     'has_auto_weekly_leave' => 'Auto Weekly Leave',
+    'can_add_branch_order' => 'Can Add Branch Order',
     'max_weekly_leave_days' => 'Max Weekly Leave Days / Month',
     'max_weekly_leave_days_hint' => 'Override the default (4 days). Leave blank to use system default.',
     'no_shift_is_present' => 'Attendance Without Shift',
-    'can_add_branch_order' => 'Can add branch order',
+    'can_add_branch_order' => 'Can Add Branch Order',
 
     // ===========================================
     // HRMS - Attendance & Shifts
@@ -1167,4 +1168,12 @@ return [
     'stock_position_batch_report' => 'Store Position Batch Report',
     'stock_position_batch_report_desc' => 'Store Position Batch Report Description',
     'current_page_total' => 'Current Page Total',
+    'allow_attendance_from_any_branch' => 'Allow Attendance From Any Branch',
+    'advance_already_exists_in_month' => 'Employee already has an advance request in :month.',
+    'advance_has_outstanding_installments' => 'Employee still has outstanding (unpaid) installments from a previous advance.',
+    'code_old_system' => 'Old System Code',
+    'code_old_system_helper' => 'This field is only for old system codes',
+    'code_old_system_placeholder' => 'Old system code',
+    'assign_shifts' => 'Assign Shifts',
+    'assign_shifts_description' => 'You can assign new shifts for this branch. If left empty, the employee will have no shift.',
 ];
