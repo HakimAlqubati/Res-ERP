@@ -500,6 +500,10 @@ class EmployeeForm
                                                         ->live(onBlur: true)
                                                         ->afterStateUpdated(fn ($state, $set) => $set('bank_account_number', $state)),
 
+                                                    TextInput::make('payment_details.full_name')
+                                                        ->label(__('Full Name'))
+                                                        ->nullable(),
+
                                                     TextInput::make('payment_details.note')
                                                         ->label(fn (Get $get) => EmployeePaymentMethod::find($get('payment_method_id'))?->getNoteLabel() ?? __('Remarks'))
                                                         ->columnSpanFull(),
@@ -525,7 +529,8 @@ class EmployeeForm
                                             ->label(__('lang.has_auto_weekly_leave'))->default(1)->inline(false)->live(),
 
                                         Toggle::make('no_shift_is_present')->columnSpan(1)
-                                            ->label(__('lang.no_shift_is_present'))
+                                            // ->label(__('lang.no_shift_is_present'))
+                                            ->label('Paid Unscheduled Shift Days')
                                             ->default(0)->inline(false),
 
                                     ]),
