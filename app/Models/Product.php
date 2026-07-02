@@ -29,6 +29,7 @@ class Product extends Model implements Auditable
         'id',
         'name',
         'code',
+        'code_old_system',
         'description',
         'active',
         'category_id',

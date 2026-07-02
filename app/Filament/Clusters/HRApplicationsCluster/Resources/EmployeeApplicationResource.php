@@ -450,8 +450,8 @@ class EmployeeApplicationResource extends Resource
 
                     $advanceRequest->finance_approved_by = auth()->id();
                     $advanceRequest->finance_approved_at = now();
-                    $advanceRequest->payment_method      = $data['payment_method'] ?? null;
-                    $advanceRequest->bank_account_number = $data['bank_account_number'] ?? null;
+                    $advanceRequest->payment_method_id   = $data['payment_method_id'] ?? null;
+                    $advanceRequest->payment_details     = $data['payment_details'] ?? null;
                     $advanceRequest->transaction_number  = $data['transaction_number'] ?? null;
 
                     // ✅ تحديث بيانات الأقساط بالقيم التي عدّلها المدير المالي
@@ -521,7 +521,8 @@ class EmployeeApplicationResource extends Resource
                             ->suffix($currency)
                             ->prefixIcon('heroicon-o-banknotes')
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                            ->afterStateUpdated(function (Get $get, Set $set, $state, $old) {
+                                if ($state == $old) return; // no actual change (e.g. auto-focus blur)
                                 if ($state > 0) {
                                     $set('monthly_deduction_amount', $state);
                                     $set('number_of_months_of_deduction', 1);
@@ -538,7 +539,8 @@ class EmployeeApplicationResource extends Resource
                             ->suffix($currency)
                             ->prefixIcon('heroicon-o-calculator')
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                            ->afterStateUpdated(function (Get $get, Set $set, $state, $old) {
+                                if ($state == $old) return; // no actual change
                                 $advAmt = (float) $get('advance_amount');
                                 if ((float)$state > 0 && $advAmt > 0) {
                                     $months = (int) ceil($advAmt / (float)$state);
@@ -580,7 +582,8 @@ class EmployeeApplicationResource extends Resource
                             ->suffix(__('lang.months'))
                             ->prefixIcon('heroicon-o-clock')
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                            ->afterStateUpdated(function (Get $get, Set $set, $state, $old) {
+                                if ($state == $old) return; // no actual change
                                 $advAmt = (float) $get('advance_amount');
                                 $months = (int) $state;
                                 if ($advAmt > 0 && $months > 0) {
@@ -599,28 +602,43 @@ class EmployeeApplicationResource extends Resource
                         ->disabled()
                         ->hidden(),
 
-                    Fieldset::make()->label('Payment Details')->columns(3)->schema([
-                        Select::make('payment_method')
-                            ->label('Payment Method')
-                            ->options([
-                                \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER => 'Bank Transfer',
-                                \App\Models\AdvanceRequest::PAYMENT_METHOD_CASH => 'Cash',
-                            ])
-                            ->required()
-                            ->live()
-                            ->default(\App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
-                            ->prefixIcon('heroicon-o-credit-card'),
-                        TextInput::make('bank_account_number')
-                            ->label('Bank Account Number')
-                            ->default($employee?->bank_account_number)
-                            ->required(fn($get) => $get('payment_method') === \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
-                            ->visible(fn($get) => $get('payment_method') === \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
-                            ->prefixIcon('heroicon-o-identification'),
+                    Fieldset::make()->label('Payment Details')->columns(2)->schema([
+                        Select::make('payment_method_id')
+                            ->columnSpanFull()
+                            ->label(__('lang.payment_method'))
+                            ->options(\App\Models\EmployeePaymentMethod::pluck('name', 'id'))
+                            ->preload()
+                            ->searchable()
+                            ->nullable()
+                            ->default($employee?->payment_method_id)
+                            ->live(),
+                            
+                        \Filament\Schemas\Components\Group::make([
+                            TextInput::make('payment_details.account_name')
+                                ->label(fn (Get $get) => \App\Models\EmployeePaymentMethod::find($get('payment_method_id'))?->getAccountNameLabel() ?? __('Account Name'))
+                                ->default($employee?->payment_details['account_name'] ?? null)
+                                ->required(),
+                            
+                            TextInput::make('payment_details.account_number')
+                                ->label(fn (Get $get) => \App\Models\EmployeePaymentMethod::find($get('payment_method_id'))?->getAccountNumberLabel() ?? __('Account Number'))
+                                ->default($employee?->payment_details['account_number'] ?? null)
+                                ->required(),
+                            
+                            TextInput::make('payment_details.note')
+                                ->label(fn (Get $get) => \App\Models\EmployeePaymentMethod::find($get('payment_method_id'))?->getNoteLabel() ?? __('Remarks'))
+                                ->default($employee?->payment_details['note'] ?? null)
+                                ->columnSpanFull(),
+                        ])
+                        ->columns(2)
+                        ->columnSpanFull()
+                        ->visible(fn (Get $get) => \App\Models\EmployeePaymentMethod::find($get('payment_method_id'))?->requiresDetails() ?? false),
+
                         TextInput::make('transaction_number')
                             ->label(__('lang.transaction_number'))
-                            ->visible(fn($get) => $get('payment_method') === \App\Models\AdvanceRequest::PAYMENT_METHOD_BANK_TRANSFER)
+                            ->visible(fn(Get $get) => \App\Models\EmployeePaymentMethod::find($get('payment_method_id'))?->requiresDetails() ?? false)
                             ->placeholder(__('lang.enter_transaction_number'))
-                            ->prefixIcon('heroicon-o-hashtag'),
+                            ->prefixIcon('heroicon-o-hashtag')
+                            ->columnSpanFull(),
                     ]),
 
                     static::getAttachmentsPlaceholder($record),
@@ -655,10 +673,15 @@ class EmployeeApplicationResource extends Resource
             ->action(function ($record, $data) {
                 try {
                     \Illuminate\Support\Facades\DB::transaction(function () use ($record, $data) {
+                        // Resolve to EmployeeApplicationV2 if called from AdvanceRequest context
+                        if (get_class($record) === AdvanceRequest::class) {
+                            $record = EmployeeApplicationV2::find($record->application_id);
+                        }
+
                         $record->update([
-                            'status'      => EmployeeApplicationV2::STATUS_REJECTED,
-                            'rejected_by' => auth()->user()->id,
-                            'rejected_at' => now(),
+                            'status'          => EmployeeApplicationV2::STATUS_REJECTED,
+                            'rejected_by'     => auth()->user()->id,
+                            'rejected_at'     => now(),
                             'rejected_reason' => $data['rejected_reason'],
                         ]);
                     });
@@ -1619,6 +1642,23 @@ class EmployeeApplicationResource extends Resource
                                     ->endOfMonth()->format('Y-m-d');
                                 $set('detail_deduction_starts_from', $endNextMonth);
                             })
+                                 ->rules([
+                                fn (Get $get, $record) => function (string $attribute, $value, \Closure $fail) use ($get, $record) {
+                                    $empId = $get('../../employee_id') ?? $get('../employee_id') ?? $get('employee_id') ?? $record?->employee_id;
+                                    
+                                    if (!$empId) {
+                                        // Fallback: try to get it from the parent application if record is AdvanceRequest
+                                        if ($record instanceof \App\Models\AdvanceRequest) {
+                                            $empId = $record->employee_id ?? $record->application?->employee_id;
+                                        } elseif ($record instanceof \App\Models\EmployeeApplicationV2) {
+                                            $empId = $record->employee_id;
+                                        }
+                                    }
+
+                                    $rule = new \App\Rules\ValidAdvanceRequestDateRule($empId);
+                                    $rule->validate($attribute, $value, $fail);
+                                },
+                            ])
                             ->default(now()->toDateString()),
                         TextInput::make('detail_advance_amount')->numeric()->required()
                             ->label('Amount')
@@ -1651,7 +1691,8 @@ class EmployeeApplicationResource extends Resource
                             ->numeric()
                             ->label('Monthly deduction amount')->required()
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                            ->afterStateUpdated(function (Get $get, Set $set, $state, $old) {
+                                if ($state == $old) return;
                                 $advancedAmount = $get('detail_advance_amount');
                                 if ($state > 0 && $advancedAmount > 0) {
                                     $res = ceil($advancedAmount / $state);
@@ -1686,7 +1727,8 @@ class EmployeeApplicationResource extends Resource
                         ]),
                         TextInput::make('detail_number_of_months_of_deduction')->live(onBlur: true)
                             ->numeric()
-                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                            ->afterStateUpdated(function (Get $get, Set $set, $state, $old) {
+                                if ($state == $old) return;
                                 $advancedAmount = $get('detail_advance_amount');
                                 if ($advancedAmount > 0 && $state > 0) {
 

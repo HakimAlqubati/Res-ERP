@@ -138,7 +138,6 @@ class EmployeeReward extends Model implements Auditable
 
             if ($reward->date) {
                 $date = \Carbon\Carbon::parse($reward->date);
-                $reward->month = $date->month;
                 $reward->year = $date->year;
             }
         });
@@ -146,7 +145,6 @@ class EmployeeReward extends Model implements Auditable
         static::updating(function ($reward) {
             if ($reward->isDirty('date') && $reward->date) {
                 $date = \Carbon\Carbon::parse($reward->date);
-                $reward->month = $date->month;
                 $reward->year = $date->year;
             }
         });

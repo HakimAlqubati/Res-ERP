@@ -20,6 +20,14 @@ class EmployeePaymentMethodsTable
                     ->searchable()
                     ->sortable()
                     ->label(__('lang.name')),
+                \Filament\Tables\Columns\TextColumn::make('code')
+                    ->searchable()
+                    ->sortable()
+                    ->label(__('lang.code'))
+                    ->formatStateUsing(function ($state) {
+                        $option = collect(\App\Models\EmployeePaymentMethod::getCodes())->firstWhere('key', $state);
+                        return $option ? $option['value'] : $state;
+                    }),
                 \Filament\Tables\Columns\IconColumn::make('active')
                     ->boolean()
                     ->label(__('lang.active')),

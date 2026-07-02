@@ -111,6 +111,25 @@
         table tbody tr:nth-child(even) .star-badge {
             color: white;
         }
+
+        /* Fixed Footer Styles */
+        tfoot.fixed-footer {
+            position: sticky;
+            bottom: 0;
+            z-index: 50;
+        }
+
+        tfoot.fixed-footer td {
+            background-color: #f3f4f6 !important;
+            color: #111827 !important;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1) !important;
+        }
+
+        :is(.dark) tfoot.fixed-footer td, .dark tfoot.fixed-footer td {
+            background-color: #1f2937 !important;
+            color: #f9fafb !important;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.5) !important;
+        }
     </style>
     <div class="text-right mb-4">
 
@@ -375,12 +394,12 @@
             @endforeach
         </tbody>
 
-        <tfoot>
+        <tfoot class="fixed-footer">
             <tr>
-                <td colspan="{{ (7 - ($show_branch ? 2 : 0)) + ($show_day ? 1 : 0) + ($show_branch ? 1 : 0) }}" class="text-center font-bold">{{ __('lang.total') }}</td>
-                <td class="text-center">{{ $total_duration_hours }}</td>
-                <td class="text-center">{{ $total_actual_duration_hours }}</td>
-                <td class="text-center">{{ $total_approved_overtime }}</td>
+                <td colspan="{{ (7 - ($show_branch ? 2 : 0)) + ($show_day ? 1 : 0) + ($show_branch ? 1 : 0) }}" class="text-center font-bold py-3">{{ __('lang.total') }}</td>
+                <td class="text-center font-bold py-3">{{ $total_duration_hours }}</td>
+                <td class="text-center font-bold py-3">{{ $total_actual_duration_hours }}</td>
+                <td class="text-center font-bold py-3">{{ $total_approved_overtime }}</td>
             </tr>
         </tfoot>
     </table>

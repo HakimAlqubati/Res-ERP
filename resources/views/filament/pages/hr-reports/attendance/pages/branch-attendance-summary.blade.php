@@ -3,6 +3,14 @@
     {{ $this->getTableFiltersForm() }}
 
     @if (!empty($branch_id) && $report)
+    @php
+        $reportStartDate = \Carbon\Carbon::create($report['year'], $report['month'], 1)->startOfMonth()->toDateString();
+        $reportEndDate = \Carbon\Carbon::create($report['year'], $report['month'], 1)->endOfMonth();
+        if ($report['year'] == now()->year && $report['month'] == now()->month) {
+            $reportEndDate = now();
+        }
+        $reportEndDate = $reportEndDate->toDateString();
+    @endphp
     <div class="flex justify-end mb-4 mt-4 no-print">
         <x-filament::button wire:click="exportPdf" size="sm" color="success" icon="heroicon-o-document-arrow-down">
             {{ __('Export PDF') }}
@@ -53,7 +61,15 @@
                 @forelse ($report['current_staff'] as $i => $row)
                 <tr>
                     <td>{{ $i + 1 }}</td>
-                    <td>{{ $row['name'] }}</td>
+                    <td>
+                        <a href="{{ \App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource::getUrl('index', [
+                            'tableFilters[employee_id]' => $row['employee_id'],
+                            'tableFilters[date_range][start_date]' => $reportStartDate,
+                            'tableFilters[date_range][end_date]' => $reportEndDate,
+                        ]) }}" target="_blank">
+                            {{ $row['name'] }}
+                        </a>
+                    </td>
                     <td style="text-align:center;">{{ $row['attendance']['present_days'] ?? '0' }}</td>
                     <td style="text-align:center;">{{ $row['overtime']['days'] ?: '0' }}</td>
                     <td style="text-align:center;">{{ $row['overtime']['hours'] ?: '0' }}</td>
@@ -127,7 +143,15 @@
                 @forelse ($report['new_staff'] as $i => $row)
                 <tr>
                     <td>{{ $i + 1 }}</td>
-                    <td>{{ $row['name'] }}</td>
+                    <td>
+                        <a href="{{ \App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource::getUrl('index', [
+                            'tableFilters[employee_id]' => $row['employee_id'],
+                            'tableFilters[date_range][start_date]' => $reportStartDate,
+                            'tableFilters[date_range][end_date]' => $reportEndDate,
+                        ]) }}" target="_blank">
+                            {{ $row['name'] }}
+                        </a>
+                    </td>
                     <td style="text-align:center;">{{ $row['attendance']['present_days'] ?? '0' }}</td>
                     <td style="text-align:center;">{{ $row['overtime']['days'] ?: '0' }}</td>
                     <td style="text-align:center;">{{ $row['overtime']['hours'] ?: '0' }}</td>
@@ -203,7 +227,15 @@
                 @forelse ($report['terminated_staff'] as $i => $row)
                 <tr>
                     <td>{{ $i + 1 }}</td>
-                    <td>{{ $row['name'] }}</td>
+                    <td>
+                        <a href="{{ \App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource::getUrl('index', [
+                            'tableFilters[employee_id]' => $row['employee_id'],
+                            'tableFilters[date_range][start_date]' => $reportStartDate,
+                            'tableFilters[date_range][end_date]' => $reportEndDate,
+                        ]) }}" target="_blank">
+                            {{ $row['name'] }}
+                        </a>
+                    </td>
                     <td style="text-align:center;">{{ $row['attendance']['present_days'] ?? '0' }}</td>
                     <td style="text-align:center;">{{ $row['overtime']['days'] ?: '0' }}</td>
                     <td style="text-align:center;">{{ $row['overtime']['hours'] ?: '0' }}</td>

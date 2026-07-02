@@ -77,6 +77,17 @@ class EmployeeApplicationTable
                 }),
         ];
 
+        // أعمدة خاصة بسلف الموظف (Advance request)
+        if ($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[3]) {
+            $columns[] = TextColumn::make('advanceRequest.finance_approved_at')
+                ->label('Finance Approval')
+                ->badge()
+                ->alignCenter()
+                ->formatStateUsing(fn ($state) => $state ? __('lang.approved') : __('lang.pending'))
+                ->color(fn ($state) => $state ? 'success' : 'warning')
+                ->icon(fn ($state) => $state ? 'heroicon-m-check-badge' : 'heroicon-m-clock')
+                ;
+        }
         // dd($activeTab,EmployeeApplicationV2::APPLICATION_TYPE_NAMES[1]);
         // أعمدة خاصة بإجازات (Leave request)
         if ($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[1]) {
@@ -113,12 +124,12 @@ class EmployeeApplicationTable
             $columns[] = TextColumn::make('detail_deduction_starts_from')
                 ->label(__('lang.deduction_starts'))
                 ->toggleable(isToggledHiddenByDefault: true)
-                ->date();
+                ->date('M Y');
 
             $columns[] = TextColumn::make('detail_deduction_ends_at')
                 ->label(__('lang.deduction_ends'))
                 ->toggleable(isToggledHiddenByDefault: true)
-                ->date();
+                ->date('M Y');
 
             $columns[] = TextColumn::make('detail_number_of_months_of_deduction')
                 ->label(__('lang.months'))->alignCenter();
