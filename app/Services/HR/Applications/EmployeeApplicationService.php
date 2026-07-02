@@ -6,6 +6,10 @@ use App\Models\Employee;
 use App\Models\EmployeeApplicationV2;
 use App\Rules\HR\Applications\AdvanceRequestConsistencyRule;
 use App\Exceptions\HR\LeaveApprovalException;
+use App\Models\User;
+use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowGuard;
+use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker;
+use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -332,6 +336,15 @@ class EmployeeApplicationService
 
     public function approveApplication(int $id, int $userId)
     {
+        $record = EmployeeApplicationV2::findOrFail($id);
+
+        if (
+            ! app(ApprovalWorkflowGuard::class)->isBypassed()
+            && app(ApprovalWorkflowRequirementChecker::class)->requiresWorkflow($record)
+        ) {
+            return app(ApprovalWorkflowService::class)->approve($record, User::findOrFail($userId));
+        }
+
         // DB::transaction ensures that the status update AND all observer
         // side-effects (installment generation, financial transaction) are
         // atomic. Any failure rolls back everything — no orphaned state.

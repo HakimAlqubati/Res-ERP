@@ -2,6 +2,9 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Clusters\HRUserTypeCluster;
+ 
+ 
 use App\Filament\Resources\UserTypeResource\Pages\CreateUserType;
 use App\Filament\Resources\UserTypeResource\Pages\EditUserType;
 use App\Filament\Resources\UserTypeResource\Pages\ListUserTypes;
@@ -10,15 +13,21 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Fieldset;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Resources\Resource;
+ 
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class UserTypeResource extends Resource
 {
@@ -32,23 +41,34 @@ class UserTypeResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Role Assignment';
 
+    protected static ?string $cluster = HRUserTypeCluster::class;
+
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
+    protected static ?int $navigationSort = 2;
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
+                Fieldset::make()->columnSpanFull()
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('name')
+                            ->required()
+                            ->maxLength(255),
 
-                Textarea::make('description'),
 
-                Select::make('role_ids')
-                    ->label('Roles')
-                    ->options(\Spatie\Permission\Models\Role::get()->pluck('name', 'id'))->multiple()->required(),
 
-                Toggle::make('active')
-                    ->label('Is Active')
-                    ->default(true),
+
+                        Toggle::make('active')->inline(false)
+                            ->label('Is Active')
+                            ->default(true),
+                        Select::make('role_ids')
+                            ->label('Roles')->columnSpanFull()
+                            ->options(\Spatie\Permission\Models\Role::get()->pluck('name', 'id'))->multiple()->required(),
+                        Textarea::make('description')
+                            ->columnSpanFull(),
+                    ])
             ]);
     }
 
@@ -96,12 +116,28 @@ class UserTypeResource extends Resource
         return static::getModel()::count();
     }
 
+    public static function canCreate(): bool
+    {
+        return isSuperAdmin();
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return isSuperAdmin();
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return isSuperAdmin();
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return isSuperAdmin();
+    }
+
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin()) {
-            return true;
-        }
-
-        return false;
+        return isSuperAdmin();
     }
 }

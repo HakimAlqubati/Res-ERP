@@ -5,6 +5,9 @@ namespace App\Models;
 use App\Observers\EmployeeOvertimeObserver;
 use Illuminate\Database\Eloquent\Builder;
 use App\Traits\Scopes\BranchScope;
+use App\Modules\HR\ApprovalPolicies\Contracts\ApprovableRecord;
+use App\Modules\HR\ApprovalPolicies\Traits\EnforcesApprovalWorkflow;
+use App\Modules\HR\ApprovalPolicies\Traits\HasApprovalWorkflow;
 use App\Traits\Scopes\StatusScope;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,13 +16,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 
 #[ObservedBy([EmployeeOvertimeObserver::class])]
-class EmployeeOvertime extends Model implements Auditable
-{
+class EmployeeOvertime extends Model implements Auditable, ApprovableRecord
+{ 
     use HasFactory,
         SoftDeletes,
-        \OwenIt\Auditing\Auditable,
-        BranchScope,
-        StatusScope;
+        \OwenIt\Auditing\Auditable, 
+        StatusScope,BranchScope, HasApprovalWorkflow, EnforcesApprovalWorkflow;
     protected $table = 'hr_employee_overtime';
 
     public const STATUS_PENDING = 'pending';
@@ -96,6 +98,26 @@ class EmployeeOvertime extends Model implements Auditable
     public function branch()
     {
         return $this->belongsTo(Branch::class, 'branch_id');
+    }
+
+    public function approvalEmployee(): ?Employee
+    {
+        return $this->employee;
+    }
+
+    public function approvalBranchId(): ?int
+    {
+        return $this->branch_id;
+    }
+
+    public function approvalApplicationTypeId(): ?int
+    {
+        return null;
+    }
+
+    public function approvalApprovedStatuses(): array
+    {
+        return [self::STATUS_APPROVED];
     }
 
     // Relationship with the User model (for approval)

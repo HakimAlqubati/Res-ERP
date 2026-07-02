@@ -8,14 +8,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use App\Observers\AdvanceWageObserver;
+use App\Modules\HR\ApprovalPolicies\Contracts\ApprovableRecord;
+use App\Modules\HR\ApprovalPolicies\Traits\EnforcesApprovalWorkflow;
+use App\Modules\HR\ApprovalPolicies\Traits\HasApprovalWorkflow;
 use App\Traits\Scopes\BranchScope;
 use App\Traits\Scopes\StatusScope;
 
 #[ObservedBy([AdvanceWageObserver::class])]
 
-class AdvanceWage extends Model
+class AdvanceWage extends Model implements ApprovableRecord
 {
-    use SoftDeletes, StatusScope, BranchScope;
+    use SoftDeletes, StatusScope, BranchScope, HasApprovalWorkflow, EnforcesApprovalWorkflow;
+     
 
     protected $table = 'hr_advance_wages';
 
@@ -78,6 +82,31 @@ class AdvanceWage extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function approvalEmployee(): ?Employee
+    {
+        return $this->employee;
+    }
+
+    public function approvalBranchId(): ?int
+    {
+        return $this->branch_id;
+    }
+
+    public function approvalApplicationTypeId(): ?int
+    {
+        return null;
+    }
+
+    public function approvalStatusColumn(): ?string
+    {
+        return 'status';
+    }
+
+    public function approvalApprovedStatuses(): array
+    {
+        return [self::STATUS_SETTLED];
     }
 
     public function settledPayroll(): BelongsTo
