@@ -29,4 +29,7 @@ Route::middleware(['web', 'auth'])->group(function () {
 
     Route::get('/quantity-discrepancy', [\App\Modules\Stock\Http\Controllers\QuantityDiscrepancyController::class, 'index'])
         ->name('quantity-discrepancy.index');
+
+    Route::get('/wrong-package-size', [\App\Modules\Stock\Http\Controllers\WrongPackageSizeController::class, 'index'])
+        ->name('wrong-package-size.index');
 });
