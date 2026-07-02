@@ -12,7 +12,9 @@
             <th>{{ __('lang.start_date') }}</th>
             <th>{{ __('lang.termination_date') }}</th>
             <th>{{ __('lang.termination_reason') }}</th>
+            @if (isSuperAdmin() || isSystemManager())
             <th>{{ __('lang.salary') }}</th>
+            @endif
             <th>{{ __('lang.working_hours') }}</th>
             <th>{{ __('lang.working_days') }}</th>
             <th>{{ __('lang.job_title') }}</th>
@@ -39,7 +41,9 @@
                 <td>{{ $item->join_date }}</td>
                 <td>{{ $item->serviceTermination?->termination_date }}</td>
                 <td>{{ $item->serviceTermination?->termination_reason }}</td>
+                @if (isSuperAdmin() || isSystemManager())
                 <td>{{ $item->salary }}</td>
+                @endif
                 <td>{{ $item->working_hours }}</td>
                 <td>{{ $item->working_days }}</td>
                 <td>{{ $item->job_title }}</td>
