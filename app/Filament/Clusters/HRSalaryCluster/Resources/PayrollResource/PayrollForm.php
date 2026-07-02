@@ -248,6 +248,7 @@ class PayrollForm
                 $query->whereNull('salary')
                     ->orWhere('salary', 0);
             })
+            ->active()
             ->pluck('name')
             ->toArray();
     }
