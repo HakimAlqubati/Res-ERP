@@ -373,7 +373,8 @@ class InventoryResource extends Resource
                 ActionGroup::make([
 
                     Action::make('editQuantity')
-                        ->visible(fn(): bool => auth()->user()->email === 'admin@admin.com')
+                      
+                    ->visible(fn()=>isHakimOrAdel())
                         ->schema([
                             TextInput::make('quantity')
                                 ->required()
