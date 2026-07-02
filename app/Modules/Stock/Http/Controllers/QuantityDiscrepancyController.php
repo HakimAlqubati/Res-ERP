@@ -45,7 +45,7 @@ WITH base AS (
         source_in.transactionable_type, source_in.transactionable_id,
         it.product_id, p.name, it.unit_id, it.package_size, it.store_id, it.price, it.quantity,
         DATE(it.transaction_date), DATE(source_in.transaction_date), it.source_transaction_id, it.notes,
-        source_in.quantity, out_totals.total_out
+        source_in.quantity, source_in.package_size, out_totals.total_out
 )
 SELECT 
     *,
