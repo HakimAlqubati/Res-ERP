@@ -147,7 +147,7 @@
 
             <div id="reportContent">
                 <table class="batch-report-table" id="report-table">
-                    <thead>
+                    <thead class="fixed-header">
                         <tr class="header_report">
                             <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}"></th>
                             <th colspan="7" class="no_border_right_left" style="text-align: center;">
@@ -169,7 +169,7 @@
                             <th>Remaining Qty </th>
                             <th>Unit Price</th>
                             <th id="totalPriceHeader" >
-                                Remaining Price <span ></span>
+                                Total Price <span ></span>
                             </th>
                         </tr>
                     </thead>

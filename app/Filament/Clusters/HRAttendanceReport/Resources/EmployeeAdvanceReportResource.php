@@ -41,7 +41,7 @@ class EmployeeAdvanceReportResource extends Resource
     protected static ?string $pluralLabel = 'Staff Advances';
 
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 2;
 
     public static function table(Table $table): Table
     {
@@ -100,6 +100,7 @@ class EmployeeAdvanceReportResource extends Resource
                     ->label(__('lang.paid_installments'))
                     ->alignCenter()
                     ->badge()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->color('success'),
 
                 TextColumn::make('remaining_total')
@@ -118,9 +119,8 @@ class EmployeeAdvanceReportResource extends Resource
                     ->label(__('lang.deduction_ends'))
                     ->date()
                     ->sortable(),
-
-                TextColumn::make('application.status')
-                    ->label(__('lang.status'))
+                       TextColumn::make('application.status')
+                    ->label('Manager Approval')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
                         'approved' => 'success',
@@ -128,7 +128,23 @@ class EmployeeAdvanceReportResource extends Resource
                         'rejected' => 'danger',
                         default => 'gray',
                     })
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: false),
+
+                TextColumn::make('financeApprovedBy.name')
+                    ->label('Finance')
+                    ->placeholder(__('lang.pending'))
+                    ->badge()
+                    ->color(fn($record) => $record->finance_approved_at ? 'success' : 'warning')
+                    ->getStateUsing(fn($record) => $record->finance_approved_at
+                        ? ($record->financeApprovedBy?->name ?? __('lang.approved'))
+                        : __('lang.pending')
+                    )
+                    ->tooltip(fn($record) => $record->finance_approved_at
+                        ? $record->finance_approved_at->format('Y-m-d H:i')
+                        : null
+                    ),
+
+             
             ])
             ->deferFilters(true)
             ->filters([
@@ -296,7 +312,7 @@ class EmployeeAdvanceReportResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return AdvanceRequest::query()
-            ->with(['employee:id,name,employee_no,branch_id', 'employee.branch:id,name', 'application:id,status'])
+            ->with(['employee:id,name,employee_no,branch_id', 'employee.branch:id,name', 'application:id,status', 'financeApprovedBy:id,name'])
             ->whereHas('application', function ($query) {
                 $query->where('status', EmployeeApplicationV2::STATUS_APPROVED);
             });

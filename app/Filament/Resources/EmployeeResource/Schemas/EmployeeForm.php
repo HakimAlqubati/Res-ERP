@@ -463,6 +463,13 @@ class EmployeeForm
                                         TextInput::make('bank_account_number')
                                             ->columnSpan(1)
                                             ->label('Bank account number')->nullable(),
+                                        Select::make('payment_method_id')
+                                            ->columnSpan(1)
+                                            ->label(__('lang.payment_method'))
+                                            ->relationship('paymentMethod', 'name')
+                                            ->preload()
+                                            ->searchable()
+                                            ->nullable(),
                                         Toggle::make('discount_exception_if_absent')->columnSpan(1)
                                             
                                             ->label(__('lang.no_salary_deduction_for_absences'))->default(0)->inline(false)
@@ -473,9 +480,7 @@ class EmployeeForm
                                             ->label(__('lang.exempt_from_late_attendance_deduction'))->default(0)->inline(false)
                                         // ->isInline(false)
                                         ,
-                                        Toggle::make('is_mtd_applicable')->columnSpan(1)
-                                            
-                                            ->label(__('lang.is_mtd_applicable'))->default(1)->inline(false),
+ 
                                         Toggle::make('has_auto_weekly_leave')->columnSpan(1)
                                             ->label(__('lang.has_auto_weekly_leave'))->default(1)->inline(false)->live(),
 

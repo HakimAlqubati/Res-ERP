@@ -44,7 +44,7 @@ class OrderCostAnalysisService
         }
 
         // 1.2 التحقق من إلغاء الطلب
-        if ($order->cancelled) {
+        if ($order->status === Order::CANCELLED) {
             return $this->errorResponse($orderId, 'Order has been cancelled.');
         }
 

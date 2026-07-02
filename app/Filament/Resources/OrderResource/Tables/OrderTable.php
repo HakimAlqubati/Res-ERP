@@ -77,7 +77,7 @@ class OrderTable
                         'secondary' => static fn($state): bool => $state === Order::PENDING_APPROVAL,
                         'warning' => static fn($state): bool => $state === Order::READY_FOR_DELEVIRY,
                         'success' => static fn($state): bool => $state === Order::DELEVIRED,
-                        'danger' => static fn($state): bool => $state === Order::PROCESSING,
+                        'danger' => static fn($state): bool => in_array($state, [Order::PROCESSING, Order::CANCELLED]),
                     ])
                     ->iconPosition('after')->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('item_count')->label(__('lang.item_counts'))->alignCenter(true)->sortable(),
@@ -146,6 +146,7 @@ class OrderTable
                         'ready_for_delivery' => 'Ready for deleviry',
                         'delevired' => 'Delevired',
                         'pending_approval' => 'Pending approval',
+                        'cancelled' => 'Cancelled',
                     ]),
                 SelectFilter::make('customer_id')
                     ->searchable()
@@ -178,7 +179,7 @@ class OrderTable
             ], FiltersLayout::Modal)->filtersFormColumns(3)
             ->recordActions([
                 Action::make('cancel')
-                    ->label('Cancel')->hidden(fn($record): bool => $record->cancelled)
+                    ->label('Cancel')->hidden(fn($record): bool => $record->status === Order::CANCELLED)
                     ->icon('heroicon-o-backspace')->button()->color(Color::Red)
                     ->schema([
                         Textarea::make('cancel_reason')->required()->label('Cancel Reason')
@@ -199,7 +200,9 @@ class OrderTable
                                 ->danger()
                                 ->send();
                         }
-                    })->hidden(fn(): bool => isSuperVisor() || isStoreManager()),
+                    })->visible(fn($record): bool => (isSuperAdmin() || isSystemManager())
+                   && $record->cancellable
+                ),
                 Action::make('Move')
                     ->button()->requiresConfirmation()
                     ->label(function ($record) {
@@ -247,7 +250,7 @@ class OrderTable
                         // Add a log entry for the "moved" action
                     })
                     ->disabled(function ($record) {
-                        if ($record->status == Order::DELEVIRED) {
+                        if (in_array($record->status, [Order::DELEVIRED, Order::CANCELLED])) {
                             return true;
                         }
                         return false;

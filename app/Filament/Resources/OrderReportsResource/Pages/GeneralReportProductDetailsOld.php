@@ -18,6 +18,10 @@ class GeneralReportProductDetailsOld extends Page
 {
   protected static string $resource = GeneralReportOfProductsResource::class;
 
+ public function getTitle(): string
+    {
+      return 'Report Details';
+    }
   public string $start_date;
   public string $end_date;
   public $category_id;

@@ -84,6 +84,10 @@ class FinancialCategory extends Model
     {
         return $query->where('code', $code);
     }
+    public function scopeParents($query)
+    {
+        return $query->whereNull('parent_id');
+    }
 
     public static function findByCode($code)
     {

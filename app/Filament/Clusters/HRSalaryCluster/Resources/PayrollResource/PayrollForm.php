@@ -84,6 +84,11 @@ class PayrollForm
                                 return;
                             }
 
+                            if (! str_contains($value, ' ')) {
+                                $fail(__('Invalid month format. Please select a valid month.'));
+                                return;
+                            }
+
                             [$monthName, $year] = explode(' ', $value);
                             $monthNumber = \Carbon\Carbon::parse("1 $value")->month;
 
@@ -152,6 +157,10 @@ class PayrollForm
                                 $monthNumber = now()->month;
                                 $year = now()->year;
                             } else {
+                                if (! str_contains($monthValue, ' ')) {
+                                    return [];
+                                }
+
                                 [$monthName, $year] = explode(' ', $monthValue);
                                 $monthNumber = \Carbon\Carbon::parse("1 $monthValue")->month;
                                 $year = (int) $year;

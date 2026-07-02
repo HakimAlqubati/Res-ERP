@@ -156,6 +156,11 @@ class OrderRepository implements OrderRepositoryInterface
             DB::beginTransaction();
 
             $branchId = auth()->user()->branch?->id;
+            
+            if (!$branchId) {
+                throw new \Exception('You cannot create an order because you are not associated with any branch.');
+            }
+
             $customerId = isBranchManager()
                 ? auth()->user()->id
                 : (isBranchUser() ? auth()->user()->owner->id : null);
@@ -465,6 +470,7 @@ class OrderRepository implements OrderRepositoryInterface
                         Order::READY_FOR_DELEVIRY,
                         Order::DELEVIRED,
                         Order::ORDERED,
+                        Order::CANCELLED,
                     ]),
                 ],
                 'notes' => 'string',

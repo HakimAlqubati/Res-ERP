@@ -182,8 +182,13 @@ class GoodsReceivedNoteResource extends Resource
                                                     }
                                                     if (!empty($result['documents'][0]['summary']['INVOICE_RECEIPT_DATE'])) {
                                                         $date = $result['documents'][0]['summary']['INVOICE_RECEIPT_DATE'];
-                                                        $date = date('Y-m-d', strtotime(str_replace('/', '-', $date)));
-                                                        $set('grn_date', $date);
+                                                        $timestamp = strtotime(str_replace('/', '-', $date));
+                                                        if ($timestamp !== false) {
+                                                            $formattedDate = date('Y-m-d', $timestamp);
+                                                            if ($formattedDate !== '1970-01-01') {
+                                                                $set('grn_date', $formattedDate);
+                                                            }
+                                                        }
                                                     }
                                                     $items = [];
 
@@ -381,6 +386,7 @@ class GoodsReceivedNoteResource extends Resource
                                         ->numeric()
                                         ->minValue(0.1)
                                         ->default(1)
+                                        ->maxLength(6)
                                         ->live(onBlur: true)
                                         ->afterStateUpdated(function ($set, $get) {
                                             $quantity = (float) ($get('quantity') ?? 0);
@@ -492,6 +498,9 @@ class GoodsReceivedNoteResource extends Resource
                     )
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable(),
+                TextColumn::make('created_at')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
                 TextColumn::make('approve_date')->alignCenter(true)

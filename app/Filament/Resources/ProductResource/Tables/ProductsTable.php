@@ -256,7 +256,9 @@ class ProductsTable
                             } else {
                                 showWarningNotifiMessage("⚠️ لم يتم تحديث أي مكوّن. تأكد من أن المنتج مركب أو أن هناك أسعار متاحة.");
                             }
-                        }),
+                        })
+                        ->hidden()
+                        ,
 
                     Action::make('import_items')
                         ->label('Import Items')

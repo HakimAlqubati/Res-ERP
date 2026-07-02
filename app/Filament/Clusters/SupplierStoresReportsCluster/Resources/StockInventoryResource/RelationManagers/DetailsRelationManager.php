@@ -114,7 +114,9 @@ class DetailsRelationManager extends RelationManager
                             ->minValue(0.001)
                             ->required()
                             ->default(fn ($record) => $record->package_size),
-                    ])->visible(fn()=> isHakimOrAdel())
+                    ])
+                    ->visible(fn()=> isHakimOrAdel())
+                    ->hidden()
                     ->action(function ($record, array $data): void {
                         try {
                             $record->update(['package_size' => (float) $data['package_size']]);

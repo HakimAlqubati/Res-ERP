@@ -31,6 +31,7 @@ use App\Models\Store;
 use App\Services\MultiProductsInventoryService;
 use App\Services\Stock\StockInventory\InventoryProductCacheService;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\RestoreBulkAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\IconColumn;
@@ -69,7 +70,10 @@ class StockInventoryTable
                                 $total = $table->getRecords()->sum(fn($record) => $record->closing_stock_value);
                                 return is_numeric($total) ? formatMoneyWithCurrency($total) : $total;
                             })
-                    ),
+                    )
+                    ->visible(fn($record)=> ( (isSuperAdmin() || isHakim()) ))
+                    // ->hidden()
+                    ,
 
                 TextColumn::make('responsibleUser.name')
                 ->limit(15)
@@ -123,23 +127,28 @@ class StockInventoryTable
                     ->label('Finalize')
                     ->button()
                     ->hidden(fn($record): bool => $record->finalized),
-                ActionGroup::make([
-                    ViewAction::make()
-                        ->visible(fn($record): bool => $record->finalized)
-                        ->button()
-                        ->icon('heroicon-o-eye')->color('success'),
+                // ActionGroup::make([
+                //     ViewAction::make()
+                //         ->visible(fn($record): bool => $record->finalized)
+                //         ->button()
+                //         ->icon('heroicon-o-eye')->color('success'),
                     \Filament\Actions\Action::make('value_details')
-                        ->label('Value Details')
+                        ->label('Stock Value')
                         ->icon('heroicon-o-calculator')
                         ->color('info')
-                        ->visible(fn()=> isSuperAdmin())
+                        ->button()
+                        ->visible(fn($record)=> (isSuperAdmin()
+                        && $record->finalized
+                        ))
                         // ->visible(fn()=>isHakimOrAdel())
                         ->url(fn($record): string => StockInventoryResource::getUrl('value-details', ['record' => $record])),
-                ])
+                // ])
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
+                        ->visible(fn(): bool => StockInventoryResource::canDeleteAny()),
+                        RestoreBulkAction::make()
                         ->visible(fn(): bool => StockInventoryResource::canDeleteAny()),
                     ForceDeleteBulkAction::make()
                         ->visible(fn(): bool => StockInventoryResource::canForceDeleteAny()),

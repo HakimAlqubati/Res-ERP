@@ -21,62 +21,12 @@ class ClosingStockCalculationService
      */
     public function calculateClosingStockValue(StockInventory $inventory): float
     {
-        $totalValue = 0.0;
+        $detailedValues = $this->getDetailedClosingStockValues($inventory);
 
-        // Load details with product
-        $inventory->loadMissing('details.product');
-
-        foreach ($inventory->details as $detail) {
-            $physicalQty = (float) $detail->physical_quantity;
-
-            if ($physicalQty <= 0) {
-                continue;
-            }
-
-            $productId = $detail->product_id;
-            $storeId = $inventory->store_id;
-
-            // Calculate value for this product using Latest Purchase Price
-            $productValue = $this->calculateProductValueLatestPrice($productId, $physicalQty,$inventory->inventory_date);
-            $totalValue += $productValue;
-        }
-
-        return $totalValue;
+        return (float) array_sum(array_column($detailedValues, 'total_value'));
     }
 
-    /**
-     * Get the stock value of the inventory. If it's finalized (adjustmented),
-     * fetch it from the related inventory transactions. Otherwise, calculate it.
-     *
-     * @param StockInventory $inventory
-     * @return float
-     */
-    public function getAdjustmentedStockValue(StockInventory $inventory): float
-    {
-        // if ($inventory->finalized) {
-        //     // Retrieve value from inventory transactions connected through StockAdjustmentDetail
-        //     $totalValue = \Illuminate\Support\Facades\DB::table('inventory_transactions')
-        //         ->join('stock_adjustment_details', function ($join) {
-        //             $join->on('inventory_transactions.transactionable_id', '=', 'stock_adjustment_details.id')
-        //                  ->where('inventory_transactions.transactionable_type', '=', \App\Models\StockAdjustmentDetail::class);
-        //         })
-        //         ->where('stock_adjustment_details.source_type', \App\Models\StockInventory::class)
-        //         ->where('stock_adjustment_details.source_id', $inventory->id)
-        //         ->where('inventory_transactions.movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
-        //         ->selectRaw('SUM((inventory_transactions.temp_qty - inventory_transactions.quantity) * inventory_transactions.price) as total')
-        //         ->value('total');
-
-        //     if ($totalValue && $totalValue > 0) {
-        //         return (float) $totalValue;
-        //     }
-        // }
-
-        return $this->calculateClosingStockValue($inventory);
-    }
-
-    /**
-     * Return per-product breakdown: product name, physical qty, unit price, total value.
-     */
+     
     public function getDetailedClosingStockValues(StockInventory $inventory): array
     {
         $inventory->loadMissing('details.product');
@@ -86,13 +36,24 @@ class ClosingStockCalculationService
         foreach ($inventory->details as $detail) {
             $physicalQty = (float) $detail->physical_quantity;
             $productId   = $detail->product_id;
-            $latestPrice = $this->getLatestPurchasePrice($productId,$inventory->inventory_date);
+            if($detail->difference <= 0) continue;
 
-            if ($latestPrice && $latestPrice->package_size > 0) {
-                $unitPrice = ($latestPrice->price / $latestPrice->package_size) * $detail->package_size;
-            } else {
-                $unitPrice = 0;
-            }
+            // جلب السعر من الحركة المخزنية المرتبطة عبر التسوية (إن وجدت)
+            $transaction = \Illuminate\Support\Facades\DB::table('inventory_transactions as it')
+                ->join('stock_adjustment_details as sad', function ($join) {
+                    $join->on('it.transactionable_id', '=', 'sad.id')
+                         ->where('it.transactionable_type', '=', \App\Models\StockAdjustmentDetail::class);
+                })
+                ->where('sad.source_type', \App\Models\StockInventory::class)
+                ->where('sad.source_id', $inventory->id)
+                ->where('sad.product_id', $productId)
+                ->where('sad.unit_id', $detail->unit_id)
+                ->where('it.movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
+                ->select('it.price', 'it.package_size')
+                ->first();
+
+                $unitPrice = $transaction->price ?? 0;
+ 
 
             $totalValue = $physicalQty * $unitPrice;
 

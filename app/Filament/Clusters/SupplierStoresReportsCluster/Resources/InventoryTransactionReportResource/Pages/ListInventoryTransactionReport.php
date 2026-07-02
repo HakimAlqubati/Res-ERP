@@ -14,7 +14,9 @@ use Filament\Resources\Pages\ListRecords;
 
 class ListInventoryTransactionReport extends ListRecords
 {
-    use HasBackButtonAction;
+    use HasBackButtonAction {
+        getHeaderActions as getTraitHeaderActions;
+    }
     protected static string $resource = InventoryTransactionReportResource::class;
     protected string $view = 'filament.pages.inventory-reports.multi-products-inventory-report';
 
@@ -35,10 +37,18 @@ class ListInventoryTransactionReport extends ListRecords
             $productIds = [$productIds];
         }
         $productId = $productIds[0] ?? null;
-        $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'];
+        $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
         $categoryId = $this->getTable()->getFilters()['category_id']->getState()['value'] ?? null;
-        $showAvailableInStock = $this->getTable()->getFilters()['show_extra_fields']->getState()['only_available'];
+        $showAvailableInStock = $this->getTable()->getFilters()['show_extra_fields']->getState()['only_available'] ?? false;
         $unitId = 'all';
+
+        if (!$storeId) {
+            return [
+                'reportData' => [],
+                'storeId' => null,
+                'pagination' => null
+            ];
+        }
 
         $perPage = $this->perPage;
         if ($perPage === 'all') {
@@ -90,5 +100,51 @@ class ListInventoryTransactionReport extends ListRecords
         $inventoryService = new MultiProductsInventoryService($categoryId, $productId, $unitId, $storeId, $showAvailableInStock);
         $inventoryService->setProductIds($productIds);
         return $inventoryService->getInventoryReportWithPagination($perPage);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        $actions = $this->getTraitHeaderActions();
+        
+        $actions[] = \Filament\Actions\Action::make('export_excel')
+            ->label(__('lang.export_to_excel') ?? 'Export to Excel')
+            ->icon('heroicon-o-document-arrow-down')
+            ->color('warning')
+            ->action(function () {
+                $productIds = $this->getTable()->getFilters()['product_id']->getState()['values'] ?? [];
+
+                if (!is_array($productIds)) {
+                    $productIds = [$productIds];
+                }
+                $productId = $productIds[0] ?? null;
+                $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
+                if(!$storeId){
+                  showWarningNotifiMessage("Please select store","To export data, please select store from filters");
+                    return;
+                }
+                $categoryId = $this->getTable()->getFilters()['category_id']->getState()['value'] ?? null;
+                $showAvailableInStock = $this->getTable()->getFilters()['show_extra_fields']->getState()['only_available'] ?? false;
+                $unitId = 'all';
+
+                $perPage = 999999; // Without pagination
+
+                if ($this->useOptimizedService) {
+                    $report = $this->getOptimizedReport($categoryId, $productId, $productIds, $unitId, $storeId, $showAvailableInStock, $perPage);
+                } else {
+                    $report = $this->getLegacyReport($categoryId, $productId, $productIds, $unitId, $storeId, $showAvailableInStock, $perPage);
+                }
+
+                $reportData = $report['reportData'] ?? $report;
+
+                $storeName = $storeId ? (\App\Models\Store::find($storeId)?->name ?? 'all_stores') : 'all_stores';
+                // Sanitize store name for file name
+                $storeName = preg_replace('/[^A-Za-z0-9_\-ء-ي]/', '_', $storeName);
+                $date = now()->format('Y-m-d');
+                $fileName = "inventory_report_{$storeName}_{$date}.xlsx";
+
+                return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\InventoryTransactionReportExport($reportData), $fileName);
+            });
+
+        return $actions;
     }
 }

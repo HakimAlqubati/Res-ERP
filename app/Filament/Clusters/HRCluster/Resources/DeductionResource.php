@@ -103,7 +103,7 @@ class DeductionResource extends Resource
                             ->preload()
                             ->placeholder(__('Select to create financial transaction'))
                             ->helperText(__('If selected, a separate financial transaction will be created when payroll is processed'))
-                            ->hidden(fn($get): bool => ($get('is_penalty') || $get('is_specific')))
+                            // ->hidden(fn($get): bool => ($get('is_penalty') || $get('is_specific')))
                             ->columnSpan(2),
                     ]),
                 Fieldset::make()->columnSpanFull()->label('')->columns(6)->schema([

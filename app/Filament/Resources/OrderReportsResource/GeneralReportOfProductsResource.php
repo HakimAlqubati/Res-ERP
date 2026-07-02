@@ -4,6 +4,7 @@ namespace App\Filament\Resources\OrderReportsResource;
 
 use App\Filament\Clusters\OrderReportsCluster;
 use App\Filament\Resources\OrderReportsResource\Pages\GeneralReportProductDetails;
+use App\Filament\Resources\OrderReportsResource\Pages\GeneralReportProductDetailsOld;
 use App\Filament\Resources\OrderReportsResource\Pages\ListGeneralReportOfProducts;
 use App\Models\Branch;
 use App\Models\Category;
@@ -113,14 +114,15 @@ class GeneralReportOfProductsResource extends Resource
         foreach ($categories as $cat_id => $cat_name) {
 
             // 3) جلب صفوف المنتجات داخل الفئة بنفس منطق runSourceBalanceByCategorySQL
-            $reportDetailsInstance = app(GeneralReportProductDetails::class);
+            $reportDetailsInstance = app(GeneralReportProductDetailsOld::class);
             $reportDetailsInstance->branch_id = $branch_id;  // Set branch_id on instance
             $rows = $reportDetailsInstance->runSourceBalanceByCategorySQL(
+                (int) $storeId,
                 (int) $cat_id,
                 $from,
                 $to
             );
-
+            
             // 4) تجميع كميات وقيم الفئة
             $cat_qty = 0.0; // مجموع remaining_qty (بالوحدة المُدخلة لكل منتج)
             $cat_amount = 0.0; // مجموع remaining_value
@@ -165,7 +167,7 @@ class GeneralReportOfProductsResource extends Resource
     {
         return [
             'index' => ListGeneralReportOfProducts::route('/'),
-            'details' => GeneralReportProductDetails::route('/details/{category_id}'),
+            'details' => GeneralReportProductDetailsOld::route('/details/{category_id}'),
         ];
     }
 

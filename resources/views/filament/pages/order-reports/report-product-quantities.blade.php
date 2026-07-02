@@ -66,6 +66,41 @@
         .cursor-pointer {
             cursor: pointer;
         }
+
+        #report-table .footer-row td {
+            position: sticky;
+            bottom: 0;
+            height: 46px;
+            background-color: white;
+            z-index: 10;
+            border-top: 2px solid #e5e7eb;
+            color: black;
+        }
+
+        #report-table .footer-row-page-total td {
+            position: sticky;
+            bottom: 46px;
+            height: 46px;
+            background-color: #f9fafb;
+            z-index: 10;
+            border-top: 2px solid #e5e7eb;
+            color: black;
+        }
+
+        .dark #report-table .footer-row td,
+        .dark #report-table .footer-row-page-total td {
+            color: white;
+        }
+
+        .dark #report-table .footer-row td {
+            background-color: #1f2937;
+            border-top-color: #374151;
+        }
+
+        .dark #report-table .footer-row-page-total td {
+            background-color: #111827;
+            border-top-color: #374151;
+        }
     </style>
     {{-- @if (isset($product_id) && is_numeric($product_id)) --}}
     <table class="w-full text-sm text-left pretty  reports" id="report-table">
@@ -114,17 +149,29 @@
             </tr>
             @endforeach
 
-            @php
-            $grandTotal = collect($report_data)->sum('subtotal_raw');
-            @endphp
-            <tr style="font-weight: bold; ">
+
+            <tr class="footer-row-page-total" style="font-weight: bold;">
+                <td colspan="6">{{ __('lang.current_page_total') ?? 'Current Page Total' }}</td>
+                <td>{{ $current_page_price_total }}</td>
+            </tr>
+
+            <tr class="footer-row" style="font-weight: bold;">
                 <td colspan="6">{{ __('lang.total') }}</td>
 
-                <td>{{ formatMoneyWithCurrency($grandTotal) }}</td>
+                <td>{{ $grand_total }}</td>
             </tr>
         </tbody>
 
     </table>
+    {{-- طباعة أزرار التنقل السلسة والخفيفة من لايف واير --}}
+    @if ($report_data->hasPages())
+     {{-- Pagination --}}
+    <div class="mt-4 no-print">
+        <x-filament::pagination
+            :paginator="$report_data"
+            class="px-3 py-3 sm:px-6" />
+    </div>
+    @endif
     {{-- @else
         <div class="please_select_message_div" style="text-align: center;">
 

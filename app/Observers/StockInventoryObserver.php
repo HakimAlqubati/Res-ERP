@@ -4,7 +4,7 @@ namespace App\Observers;
 
 use App\Models\StockInventory;
 use App\Services\Financial\ClosingStockCalculationService;
-
+use App\Validators\Inventory\StockInventoryCreationValidator;
 
 class StockInventoryObserver
 {
@@ -20,6 +20,14 @@ class StockInventoryObserver
     }
 
     /**
+     * Handle the StockInventory "creating" event.
+     */
+    public function creating(StockInventory $stockInventory): void
+    {
+        StockInventoryCreationValidator::validate($stockInventory);
+    }
+
+    /**
      * Handle the StockInventory "updated" event.
      */
     public function updated(StockInventory $stockInventory): void
@@ -28,6 +36,9 @@ class StockInventoryObserver
         if ($stockInventory->wasChanged('finalized') && $stockInventory->finalized == true) {
             // 1. Create Closing + Opening Stock transactions (single valuation pass)
             $this->calculationService->createStockValueTransactions($stockInventory);
+            // if (\Carbon\Carbon::parse($stockInventory->inventory_date)->isLastOfMonth()) {
+            //     $this->calculationService->createStockValueTransactions($stockInventory);
+            // }
 
             // 2. Generate Stock Adjustments for differences
             $this->adjustmentService->createFromInventory($stockInventory);

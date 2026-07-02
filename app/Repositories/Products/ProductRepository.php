@@ -537,6 +537,7 @@ class ProductRepository implements ProductRepositoryInterface
              AND it_out.store_id = it_in.store_id
              AND it_out.deleted_at IS NULL
              AND (? IS NULL OR it_out.movement_date <= ?)
+             AND it_out.transactionable_type = 'App\\\\Models\\\\ReturnedOrder'
 
             JOIN products p ON p.id = it_in.product_id
             LEFT JOIN units  u ON u.id = it_in.unit_id
@@ -553,6 +554,7 @@ class ProductRepository implements ProductRepositoryInterface
               {$categoryFilterSql}
               AND (? IS NULL OR it_in.movement_date >= ?)
               AND (? IS NULL OR it_in.movement_date <= ?)
+               AND it_in.transactionable_type = 'App\\\\Models\\\\Order'
 
             GROUP BY
               it_in.id, it_in.movement_date, it_in.unit_id, u.name,
@@ -562,7 +564,7 @@ class ProductRepository implements ProductRepositoryInterface
         GROUP BY 
             t.branch_name, t.unit_id, t.unit_name, t.unit_price, 
             t.package_size, t.product_id, t.product_code, t.product_name
-        ORDER BY t.branch_name, t.unit_id, t.package_size
+        ORDER BY t.branch_name, t.product_code 
     ";
 
         $bindings = array_merge(
@@ -590,6 +592,8 @@ class ProductRepository implements ProductRepositoryInterface
             $obj->in_quantity  = formatQunantity((float)($r->in_qty_base ?? 0));
             $obj->out_quantity = formatQunantity((float)($r->out_qty_base ?? 0));
             $obj->price        = formatMoneyWithCurrency((float)($r->unit_price ?? 0));
+            $obj->subtotal     = formatMoneyWithCurrency((float)($r->unit_price * $r->remaining_qty_unit)); // ✅
+            $obj->subtotal_raw = (float)($r->unit_price * $r->remaining_qty_unit);
             $final[]           = $obj;
         }
 
