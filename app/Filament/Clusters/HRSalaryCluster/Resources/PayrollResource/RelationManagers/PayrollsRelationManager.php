@@ -100,6 +100,12 @@ class PayrollsRelationManager extends RelationManager
                     ->searchable()
                     ->limit(15)
                     ->label(__('lang.employee'))
+                    ->color(function (Payroll $record) {
+                        if ($record->employee?->serviceTermination) {
+                            return 'danger';
+                        }
+                        return 'primary';
+                    })
                     ->tooltip(fn($state) => $state),
                 Tables\Columns\TextColumn::make('branch.name')
                     ->searchable()
