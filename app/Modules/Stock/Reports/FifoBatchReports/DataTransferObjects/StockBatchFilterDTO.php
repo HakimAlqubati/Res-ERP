@@ -24,6 +24,8 @@ final readonly class StockBatchFilterDTO
         public ?int $categoryId = null,
         public ?int $perPage = 200,
         public int $page = 1,
+        public bool $showNegativeBatches = true ,
+        public bool $deductPreviousDeficits = false,
     ) {}
 
     /**
