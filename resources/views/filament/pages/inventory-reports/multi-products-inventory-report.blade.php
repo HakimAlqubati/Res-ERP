@@ -56,7 +56,7 @@
                             <th>Product Name</th>
                             <th>Unit ID</th>
                             <th>Unit Name</th>
-                            <th>Package Size</th>
+                            <th>Qty per Pack</th>
                             <th>Quantity in Stock</th>
                         </tr>
                     </thead>

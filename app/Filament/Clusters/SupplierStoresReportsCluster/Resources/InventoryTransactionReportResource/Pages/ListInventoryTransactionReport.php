@@ -137,12 +137,13 @@ class ListInventoryTransactionReport extends ListRecords
                 $reportData = $report['reportData'] ?? $report;
 
                 $storeName = $storeId ? (\App\Models\Store::find($storeId)?->name ?? 'all_stores') : 'all_stores';
+                $originalStoreName = $storeName;
                 // Sanitize store name for file name
                 $storeName = preg_replace('/[^A-Za-z0-9_\-ء-ي]/', '_', $storeName);
                 $date = now()->format('Y-m-d');
                 $fileName = "inventory_report_{$storeName}_{$date}.xlsx";
 
-                return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\InventoryTransactionReportExport($reportData), $fileName);
+                return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\InventoryTransactionReportExport($reportData, $originalStoreName, $date), $fileName);
             });
 
         return $actions;
