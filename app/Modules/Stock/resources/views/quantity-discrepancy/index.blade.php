@@ -190,7 +190,7 @@
                         <td>{{ $row->in_date }}</td>
                         <td>{{ $row->out_date }}</td>
                         <td>
-                            <strong>{{ $row->product_name ?? 'Unknown' }}</strong>
+                            <strong title="Product ID: {{ $row->product_id }}">{{ $row->product_name ?? 'Unknown' }}</strong>
                             <div style="font-size: 11px; color: #888;">ID: {{ $row->product_id }}</div>
                         </td>
                         <td><span class="type-badge">{{ class_basename($row->in_type) }}</span></td>

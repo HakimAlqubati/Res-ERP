@@ -379,7 +379,8 @@ class InventoryResource extends Resource
                             TextInput::make('quantity')
                                 ->required()
                                 ->numeric()->default(fn($record): float => $record->quantity)
-                                ->minValue(0.1),
+                                // ->minValue(0.1)
+                                ,
                         ])
                         ->action(function ($record, $data) {
                             $record->update([
