@@ -104,6 +104,12 @@
         <div class="error-divider"></div>
         <h2 class="error-title">Access Denied</h2>
         
+        @if(isset($exception) && $exception->getMessage() && $exception->getMessage() !== 'This action is unauthorized.')
+            <p style="color: #4b5563; margin-top: -1.5rem; margin-bottom: 2.5rem; font-size: 0.95rem; line-height: 1.5; padding: 0 1rem;">
+                {{ $exception->getMessage() }}
+            </p>
+        @endif
+        
         <!-- Action Button -->
         <a href="{{ url('/admin') }}" class="btn-home">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
