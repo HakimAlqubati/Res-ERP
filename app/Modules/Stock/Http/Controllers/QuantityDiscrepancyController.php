@@ -10,7 +10,11 @@ class QuantityDiscrepancyController extends Controller
 {
     public function index(Request $request)
     {
-        $sql = <<<'SQL'
+        $storeId = $request->input('store_id');
+        $report = [];
+
+        if ($storeId) {
+            $sql = <<<'SQL'
 WITH base AS (
     SELECT 
         DATE(it.transaction_date) AS out_date,
@@ -39,7 +43,7 @@ WITH base AS (
     WHERE it.deleted_at IS NULL 
         AND it.movement_type = 'out'
         AND it.transactionable_type = 'App\\Models\\Order'
-        AND it.store_id = 1
+        AND it.store_id = :store_id
     GROUP BY 
         it.transactionable_type, it.transactionable_id, it.movement_type,
         source_in.transactionable_type, source_in.transactionable_id,
@@ -55,8 +59,9 @@ WHERE count_ > 1
   AND qout > qin;
 SQL;
 
-        $report = DB::select($sql);
+            $report = DB::select($sql, ['store_id' => $storeId]);
+        }
 
-        return view('stock::quantity-discrepancy.index', compact('report'));
+        return view('stock::quantity-discrepancy.index', compact('report', 'storeId'));
     }
 }

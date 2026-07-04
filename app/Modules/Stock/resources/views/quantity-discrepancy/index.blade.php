@@ -90,6 +90,50 @@
             overflow: auto;
             border-bottom: 1px solid #ddd;
         }
+        .filters {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .filters form {
+            display: flex;
+            gap: 20px;
+            align-items: flex-end;
+        }
+        .form-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 300px;
+        }
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 5px;
+        }
+        .form-group input {
+            height: 42px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 0 10px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .filters button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            height: 42px;
+        }
+        .filters button:hover {
+            background: #2563eb;
+        }
     </style>
 </head>
 <body>
@@ -100,11 +144,24 @@
             <h1>Quantity Discrepancy</h1>
             <p style="margin: 5px 0 0 0; color: #666;">Overview of inventory transactions with output greater than input.</p>
         </div>
+        @if(isset($storeId) && $storeId)
         <div class="count">
             Total Discrepancies: {{ count($report) }}
         </div>
+        @endif
     </div>
 
+    <div class="filters">
+        <form action="" method="GET">
+            <div class="form-group">
+                <label>Store ID</label>
+                <input type="number" name="store_id" value="{{ $storeId ?? '' }}" placeholder="Enter Store ID" required>
+            </div>
+            <button type="submit">Filter Report</button>
+        </form>
+    </div>
+
+    @if(isset($storeId) && $storeId)
     <div class="table-container">
         <table>
             <thead>
@@ -153,6 +210,13 @@
             </tbody>
         </table>
     </div>
+    @else
+    <div class="empty-state" style="background: #fff; border-radius: 8px; border: 1px dashed #cbd5e1; padding: 60px;">
+        <div style="font-size: 32px; margin-bottom: 15px;">🔍</div>
+        <h3 style="margin: 0 0 10px 0; color: #334155;">Select Filters to Run Report</h3>
+        <p style="margin: 0; color: #64748b;">Please enter a store ID to view discrepancies.</p>
+    </div>
+    @endif
 </div>
 
 </body>
