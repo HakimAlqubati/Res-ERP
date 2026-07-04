@@ -31,5 +31,5 @@ Route::get('/stockBalances', [StockBalanceController::class, 'index'])
     ->name('balances.index');
 
 // Manufacturing
-Route::get('/manufacturing/compoundProducts/{compoundProductId}/componentsStock', [CompoundProductComponentStockController::class, 'index'])
-    ->name('manufacturing.compoundProducts.componentsStock');
+Route::get('/manufacturing/recipeIngredientsStock/{compoundProductId}', [CompoundProductComponentStockController::class, 'index'])
+    ->name('manufacturing.recipeIngredientsStock');

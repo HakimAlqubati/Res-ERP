@@ -36,17 +36,17 @@ class CompoundProductComponentsStockReportResource extends Resource
 
     public static function getLabel(): ?string
     {
-        return 'Compound Product Components Stock Report';
+        return 'Recipe Ingredients Stock Report';
     }
 
     public static function getNavigationLabel(): string
     {
-        return 'Compound Product Components Stock Report';
+        return 'Recipe Ingredients Stock Report';
     }
 
     public static function getPluralLabel(): ?string
     {
-        return 'Compound Product Components Stock Report';
+        return 'Recipe Ingredients Stock Report';
     }
 
     public static function table(Table $table): Table

@@ -54,7 +54,7 @@ class InventoryReportLinks extends Page
                 'url' => InventoryTransactionReportResource::getUrl(),
             ],
             [
-                'title' => 'Compound Product Components Stock Report',
+                'title' => 'Recipe Ingredients Stock Report',
                 'description' => 'View stock balances for components of a compound product',
                 'icon' => 'heroicon-o-square-3-stack-3d',
                 'url' => CompoundProductComponentsStockReportResource::getUrl(),

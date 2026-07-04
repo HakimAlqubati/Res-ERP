@@ -111,10 +111,10 @@
                         <tr class="header_report">
                             <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}"></th>
                             <th colspan="5" class="no_border_right_left" style="text-align: center;">
-                                <h3>Compound Product Components Stock Report</h3>
+                                <h3>Recipe Ingredients Stock Report</h3>
                                 @if($compoundProduct)
                                     <p style="margin-top: 5px; font-weight: normal;">
-                                        Product: <strong>{{ $compoundProduct->code }} - {{ $compoundProduct->name }}</strong>
+                                         <strong>{{ $compoundProduct->code }} - {{ $compoundProduct->name }}</strong>
                                     </p>
                                 @endif
                             </th>
