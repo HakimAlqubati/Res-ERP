@@ -71,7 +71,15 @@ class StockInventoryRepository implements StockInventoryRepositoryInterface
         $sortDirection = $filters['sort_direction'] ?? 'desc';
         $query->orderBy($sortBy, $sortDirection);
 
-        return $query->paginate($perPage);
+        if(isSuperAdmin() || isSystemManager()){
+            return $query->paginate($perPage);
+        }
+        if(isBranchManager()){
+            $query->where('store_id', auth()->user()->branch?->store_id);
+            return $query->paginate($perPage);
+        }
+        
+        return $query->paginate($perPage); 
     }
 
     /**
