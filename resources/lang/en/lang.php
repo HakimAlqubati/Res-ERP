@@ -1173,4 +1173,6 @@ return [
     'code_old_system_placeholder' => 'Old system code',
     'assign_shifts' => 'Assign Shifts',
     'assign_shifts_description' => 'You can assign new shifts for this branch. If left empty, the employee will have no shift.',
+    'emergency_contact' => 'Emergency Contact',
+    'kinship' => 'Kinship',
 ];
