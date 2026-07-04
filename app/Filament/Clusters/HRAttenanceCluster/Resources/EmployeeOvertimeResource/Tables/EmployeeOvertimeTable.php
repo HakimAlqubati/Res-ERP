@@ -196,20 +196,50 @@ class EmployeeOvertimeTable
                     ->databaseTransaction()
                     ->requiresConfirmation()
                     ->button()
-                    ->color('danger')
-                    ->label('Reject')
-                    ->icon('heroicon-o-x-mark')
-                    ->action(function ($record) {
-                        // dd($record);
-                        return $record->update([
-                            'status' => EmployeeOvertime::STATUS_REJECTED,
-                            'rejected_by' => auth()->id(),
-                            'rejected_at' => now()
-                        ]);
+                    ->color(function ($record) {
+                        if ($record->status === EmployeeOvertime::STATUS_REJECTED) {
+                            return 'gray';
+                        } else {
+                            return 'danger';
+                        }
                     })
-                    ->visible(fn($record) => ($record->status === EmployeeOvertime::STATUS_PENDING
-                        && isSuperAdmin() || isBranchManager()
-                    )),
+                    ->label(function ($record) {
+                        if ($record->status === EmployeeOvertime::STATUS_REJECTED) {
+                            return 'Revoke rejected';
+                        } else {
+                            return 'Reject';
+                        }
+                    })
+                    ->icon(function ($record) {
+                        if ($record->status === EmployeeOvertime::STATUS_REJECTED) {
+                            return 'heroicon-o-arrow-uturn-left';
+                        } else {
+                            return 'heroicon-o-x-mark';
+                        }
+                    })
+                    ->action(function (Model $record) {
+                        try {
+                            DB::transaction(function () use ($record) {
+                                if ($record->status === EmployeeOvertime::STATUS_REJECTED) {
+                                    $record->update(['status' => EmployeeOvertime::STATUS_PENDING, 'rejected_by' => null, 'rejected_at' => null]);
+                                } else {
+                                    $record->update(['status' => EmployeeOvertime::STATUS_REJECTED, 'rejected_by' => auth()->id(), 'rejected_at' => now()]);
+                                }
+                            });
+                            Notification::make()->title(__('Done'))->success()->send();
+                        } catch (\Throwable $e) {
+                            Notification::make()->title(__('Faild'))->body($e->getMessage())->danger()->send();
+                        }
+                    })
+                    ->hidden(function ($record) {
+                        if ($record->status == EmployeeOvertime::STATUS_APPROVED) {
+                            return true;
+                        }
+                        if (isSuperAdmin()) {
+                            return false;
+                        }
+                        return true;
+                    }),
                 Action::make('Approve')
                     ->databaseTransaction()
                     ->label(function ($record) {
@@ -319,6 +349,23 @@ class EmployeeOvertimeTable
                         })
                         ->hidden(function () {
                             if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
+                                return false;
+                            }
+                            return true;
+                        }),
+                    BulkAction::make('Revoke rejected')
+                        ->requiresConfirmation()
+                        ->icon('heroicon-o-arrow-uturn-left')
+                        ->action(function (Collection $records) {
+                            try {
+                                DB::transaction(fn() => $records->each->update(['status' => EmployeeOvertime::STATUS_PENDING, 'rejected_by' => null, 'rejected_at' => null]));
+                                Notification::make()->title(__('Done'))->success()->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()->title(__('Faild'))->body($e->getMessage())->danger()->send();
+                            }
+                        })
+                        ->hidden(function () {
+                            if (isSuperAdmin()) {
                                 return false;
                             }
                             return true;
