@@ -57,6 +57,7 @@ final class GetCompoundProductComponentsStockAction
 
             return [
                 'product_id' => $component->product_id,
+                'product_code' => $component->product ? $component->product->code : '-',
                 'product_name' => $component->product ? $component->product->name : "Product ID #{$component->product_id}",
                 'unit_id' => $component->unit_id,
                 'unit_name' => $component->unit ? $component->unit->name : null,

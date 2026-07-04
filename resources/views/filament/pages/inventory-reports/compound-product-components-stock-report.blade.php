@@ -110,7 +110,7 @@
                     <thead class="fixed-header">
                         <tr class="header_report">
                             <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}"></th>
-                            <th colspan="6" class="no_border_right_left" style="text-align: center;">
+                            <th colspan="5" class="no_border_right_left" style="text-align: center;">
                                 <h3>Compound Product Components Stock Report</h3>
                                 @if($compoundProduct)
                                     <p style="margin-top: 5px; font-weight: normal;">
@@ -125,41 +125,27 @@
                         </tr>
 
                         <tr>
-                            <th>ID</th>
+                            <th>Code</th>
                             <th>Component Name</th>
                             <th>Unit</th>
-                            <!-- <th>Package Size</th> -->
                             <th>Recipe Qty</th>
                             <th>Waste %</th>
                             <th>Required Qty</th>
-                            <th>Available Balance</th>
-                            <th>Status</th>
+                            <th>Qty in Stock</th>
                         </tr>
                     </thead>
 
                     <tbody>
                         @foreach ($reportResult as $component)
                             <tr class="{{ $component['has_shortage'] ? 'shortage-row' : '' }}">
-                                <td>{{ $component['product_id'] }}</td>
+                                <td>{{ $component['product_code'] }}</td>
                                 <td>{{ $component['product_name'] }}</td>
                                 <td>{{ $component['unit_name'] ?? '-' }}</td>
-                                <!-- <td>{{ $component['package_size'] }}</td> -->
                                 <td>{{ $component['recipe_quantity'] }}</td>
                                 <td>{{ $component['waste_percentage'] }}%</td>
                                 <td>{{ formatQunantity($component['required_quantity_for_one_unit']) }}</td>
                                 <td style="font-weight: 600;" class="{{ $component['has_shortage'] ? 'text-danger-600 dark:text-danger-400' : '' }}">
                                     {{ formatQunantity($component['available_balance']) }}
-                                </td>
-                                <td>
-                                    @if($component['has_shortage'])
-                                        <span class="fi-badge flex items-center justify-center gap-x-1 rounded-md text-xs font-medium ring-1 ring-inset px-2 min-w-[20px] py-1 fi-color-custom bg-custom-50 text-custom-600 ring-custom-600/10 dark:bg-custom-400/10 dark:text-custom-400 dark:ring-custom-400/30" style="--c-50:var(--danger-50);--c-400:var(--danger-400);--c-600:var(--danger-600);">
-                                            Shortage
-                                        </span>
-                                    @else
-                                        <span class="fi-badge flex items-center justify-center gap-x-1 rounded-md text-xs font-medium ring-1 ring-inset px-2 min-w-[20px] py-1 fi-color-custom bg-custom-50 text-custom-600 ring-custom-600/10 dark:bg-custom-400/10 dark:text-custom-400 dark:ring-custom-400/30" style="--c-50:var(--success-50);--c-400:var(--success-400);--c-600:var(--success-600);">
-                                            Sufficient
-                                        </span>
-                                    @endif
                                 </td>
                             </tr>
                         @endforeach
