@@ -11,6 +11,7 @@ class QuantityDiscrepancyController extends Controller
     public function index(Request $request)
     {
         $storeId = $request->input('store_id');
+        $productId = $request->input('product_id');
         $report = [];
 
         if ($storeId) {
@@ -44,6 +45,14 @@ WITH base AS (
         AND it.movement_type = 'out'
         AND it.transactionable_type = 'App\\Models\\Order'
         AND it.store_id = :store_id
+SQL;
+
+            if ($productId) {
+                $sql .= "\n        AND it.product_id = :product_id";
+            }
+
+            $sql .= <<<'SQL'
+
     GROUP BY 
         it.transactionable_type, it.transactionable_id, it.movement_type,
         source_in.transactionable_type, source_in.transactionable_id,
@@ -59,9 +68,14 @@ WHERE count_ > 1
   AND qout > qin;
 SQL;
 
-            $report = DB::select($sql, ['store_id' => $storeId]);
+            $params = ['store_id' => $storeId];
+            if ($productId) {
+                $params['product_id'] = $productId;
+            }
+
+            $report = DB::select($sql, $params);
         }
 
-        return view('stock::quantity-discrepancy.index', compact('report', 'storeId'));
+        return view('stock::quantity-discrepancy.index', compact('report', 'storeId', 'productId'));
     }
 }

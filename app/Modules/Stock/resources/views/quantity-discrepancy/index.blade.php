@@ -157,6 +157,10 @@
                 <label>Store ID</label>
                 <input type="number" name="store_id" value="{{ $storeId ?? '' }}" placeholder="Enter Store ID" required>
             </div>
+            <div class="form-group">
+                <label>Product ID (Optional)</label>
+                <input type="number" name="product_id" value="{{ $productId ?? '' }}" placeholder="Enter Product ID">
+            </div>
             <button type="submit">Filter Report</button>
         </form>
     </div>
