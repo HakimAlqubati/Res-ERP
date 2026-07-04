@@ -238,6 +238,7 @@ class EmployeeForm
                                                     ->whereIn('type', [
                                                         Branch::TYPE_BRANCH,
                                                         Branch::TYPE_HQ,
+                                                        Branch::TYPE_CENTRAL_KITCHEN
                                                     ])
                                                     ->get()
                                                     ->pluck('name', 'id')

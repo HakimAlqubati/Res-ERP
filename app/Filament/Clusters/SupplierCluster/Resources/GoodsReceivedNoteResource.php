@@ -108,6 +108,7 @@ class GoodsReceivedNoteResource extends Resource
                                     ->helperText('Enter GRN Number')->required(),
                                 DatePicker::make('grn_date')
                                     ->label('GRN Date')->default(now())
+                                    ->minDate(now()->subYears(2))
                                     ->required()->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
 
 
