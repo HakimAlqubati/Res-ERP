@@ -58,6 +58,8 @@ class FifoMethodService
 
         $entryQtyBasedOnUnit = 0;
 
+        
+        $negativeRemaining = 0;
         foreach ($entries as $entry) {
 
             if (! $targetUnit) {
@@ -87,7 +89,17 @@ class FifoMethodService
             $entryQtyBasedOnUnit = (($entryQty * $entry->package_size) / $targetUnit->package_size);
             $remaining           = $entryQtyBasedOnUnit - $previousOrderedQtyBasedOnTargetUnit;
 
-            $remaining = $remaining;
+            // تطبيق العجز المتراكم (إن وجد) على الكمية المتبقية للباتش الحالي
+            if ($negativeRemaining < 0) {
+                $remaining += $negativeRemaining;
+            }
+
+            // تحديث قيمة العجز للباتش القادم
+            if ($remaining < 0) {
+                $negativeRemaining = $remaining; // ترحيل العجز المتبقي
+            } else {
+                $negativeRemaining = 0; // تم تغطية العجز بالكامل من هذا الباتش
+            }
             if ($remaining <= 0) {
                 continue;
             }
