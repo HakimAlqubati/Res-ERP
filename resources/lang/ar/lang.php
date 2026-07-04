@@ -1154,4 +1154,6 @@ return [
   'code_old_system_placeholder' => 'كود النظام القديم',
   'assign_shifts' => 'تعيين فترات العمل (الشيفتات)',
   'assign_shifts_description' => 'يمكنك تعيين شيفتات جديدة خاصة بهذا الفرع. في حال تركه فارغاً، سيكون الموظف بدون شيفت.',
+  'emergency_contact' => 'بيانات الطوارئ',
+  'kinship' => 'صلة القرابة',
 ];

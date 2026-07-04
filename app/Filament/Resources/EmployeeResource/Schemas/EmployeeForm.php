@@ -193,7 +193,43 @@ class EmployeeForm
                                     static::avatar()
                                         ->columnSpan(1),
                                 ]),
+                                   Fieldset::make(__('lang.emergency_contact'))
+                                   ->columnSpanFull()
+                                   ->columns(3)
+                                ->schema([ 
+                                        TextInput::make('emergency_number.name')
+                                            ->label(__('lang.name'))
+                                            ->required(),
+                                            
+                                        PhoneInput::make('emergency_number.phone')
+                                            ->label(__('lang.phone_number'))
+                                            ->required()
+                                            ->defaultCountry('my')
+                                            ->onlyCountries(['sa', 'ye', 'ae', 'my'])
+                                            ->countryValidations([
+                                                'sa' => [
+                                                    'starts_with' => ['+9665'],
+                                                    'length' => 13,
+                                                ],
+                                                'my' => [
+                                                    'starts_with' => ['+601'],
+                                                    'length' => [12, 13],
+                                                ],
+                                                'ye' => [
+                                                    'starts_with' => ['+96777', '+96773', '+96771', '+96770'],
+                                                    'length' => 13,
+                                                ],
+                                            ]),
+                                            
+                                        TextInput::make('emergency_number.relation')
+                                            ->label(__('lang.kinship'))
+                                            ->nullable(),
+
+                                ]),
+
                             Textarea::make('address')->label('')->columnSpanFull(),
+
+                         
                         ]),
 
                     Step::make(__('lang.employment'))
