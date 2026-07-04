@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Modules\Stock\Http\Controllers\Api\StockBalanceController;
 use App\Modules\Stock\Http\Controllers\Api\StockBatchController;
+use App\Modules\Stock\Http\Controllers\Api\CompoundProductComponentStockController;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,3 +30,6 @@ Route::get('/stockBalances/{productId}', [StockBalanceController::class, 'show']
 Route::get('/stockBalances', [StockBalanceController::class, 'index'])
     ->name('balances.index');
 
+// Manufacturing
+Route::get('/manufacturing/compoundProducts/{compoundProductId}/componentsStock', [CompoundProductComponentStockController::class, 'index'])
+    ->name('manufacturing.compoundProducts.componentsStock');
