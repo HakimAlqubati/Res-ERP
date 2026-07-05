@@ -22,21 +22,21 @@ final class SyncPriceOnNewStockEntryJob implements ShouldQueue
     public function __construct(
         private readonly int $transactionId,
         private readonly int $storeId,
-        // private readonly ?int $tenantId = null
+        private readonly ?int $tenantId = null
     ) {
-        // $this->onConnection('database');
+        $this->onConnection('database');
     }
 
     public function handle(SyncPriceOnNewStockEntryAction $action): void
     {
-        // Log::info('SyncProductCurrentBatchPriceJob Working with Tenant ID: ' . $this->tenantId);
+        Log::info('SyncProductCurrentBatchPriceJob Working with Tenant ID: ' . $this->tenantId);
         // تفعيل اتصال قاعدة بيانات الـ Tenant أولاً وقبل أي استعلام
-        // if ($this->tenantId) {
-        //     $tenant = \Spatie\Multitenancy\Models\Tenant::find($this->tenantId);
-        //     if ($tenant) {
-        //         $tenant->makeCurrent();
-        //     }
-        // }
+        if ($this->tenantId) {
+            $tenant = \Spatie\Multitenancy\Models\Tenant::find($this->tenantId);
+            if ($tenant) {
+                $tenant->makeCurrent();
+            }
+        }
 
         // جلب الموديلات فريش من قاعدة بيانات الـ Tenant الصحيحة
         $transaction = InventoryTransaction::findOrFail($this->transactionId);
