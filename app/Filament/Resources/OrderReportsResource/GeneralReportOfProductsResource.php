@@ -77,6 +77,7 @@ class GeneralReportOfProductsResource extends Resource
                     ->schema([
                         DatePicker::make('start_date')
                             ->label(__('lang.start_date'))
+                            ->default(now()->firstOfMonth())
                             ->reactive()
                             ->afterStateUpdated(function ($state, callable $set) {
                                 if ($state) {
@@ -84,6 +85,7 @@ class GeneralReportOfProductsResource extends Resource
                                 }
                             }),
                         DatePicker::make('end_date')
+                        ->default(now()->endOfMonth())
                             ->label(__('lang.end_date')),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
