@@ -21,10 +21,10 @@ class InventoryTransactionObserver
     public function created(InventoryTransaction $transaction)
     {
         $tenantId = app(IsTenant::class)::current()?->id;
-        // \Illuminate\Support\Facades\Log::info('Tenant ID: ' . $tenantId);
+        \Illuminate\Support\Facades\Log::info('Tenant ID: ' . $tenantId);
         // إذا كانت الحركة دخول (in) -> نستدعي أكشن الدخول
         if ($transaction->movement_type === InventoryTransaction::MOVEMENT_IN) {
-            // \Illuminate\Support\Facades\Log::info('Dispatching SyncPriceOnNewStockEntryJob');
+            \Illuminate\Support\Facades\Log::info('Dispatching SyncPriceOnNewStockEntryJob');
             SyncPriceOnNewStockEntryJob::dispatch($transaction->id,
                 $transaction->store_id,
                 $tenantId
@@ -32,7 +32,7 @@ class InventoryTransactionObserver
         }
         // إذا كانت الحركة خروج (out) -> نستدعي أكشن الخروج
         elseif ($transaction->movement_type === InventoryTransaction::MOVEMENT_OUT) {
-            // \Illuminate\Support\Facades\Log::info('Dispatching SyncProductCurrentBatchPriceJob');
+            \Illuminate\Support\Facades\Log::info('Dispatching SyncProductCurrentBatchPriceJob');
             SyncProductCurrentBatchPriceJob::dispatch($transaction->product_id,
                 $transaction->store_id,
                 $tenantId

@@ -29,7 +29,7 @@ final class SyncPriceOnNewStockEntryJob implements ShouldQueue
 
     public function handle(SyncPriceOnNewStockEntryAction $action): void
     {
-        Log::info('SyncProductCurrentBatchPriceJob Working with Tenant ID: ' . $this->tenantId);
+        Log::info('SyncPriceOnNewStockEntryJob Working with Tenant ID: ' . $this->tenantId);
         // تفعيل اتصال قاعدة بيانات الـ Tenant أولاً وقبل أي استعلام
         if ($this->tenantId) {
             $tenant = \Spatie\Multitenancy\Models\Tenant::find($this->tenantId);
