@@ -13,6 +13,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Spatie\Multitenancy\Models\Tenant;
 
 final class SyncPriceOnNewStockEntryJob implements ShouldQueue
 {
@@ -27,12 +28,12 @@ final class SyncPriceOnNewStockEntryJob implements ShouldQueue
         $this->onConnection('database');
     }
 
-    public function handle(SyncPriceOnNewStockEntryAction $action): void
+    public function handle(): void
     {
-        Log::info('SyncPriceOnNewStockEntryJob Working with Tenant ID: ' . $this->tenantId);
+        Log::info('SyncPriceOnNewStockEntryJob Working with Tenant ID: '.$this->tenantId);
         // تفعيل اتصال قاعدة بيانات الـ Tenant أولاً وقبل أي استعلام
         if ($this->tenantId) {
-            $tenant = \Spatie\Multitenancy\Models\Tenant::find($this->tenantId);
+            $tenant = Tenant::find($this->tenantId);
             if ($tenant) {
                 $tenant->makeCurrent();
             }
@@ -40,9 +41,9 @@ final class SyncPriceOnNewStockEntryJob implements ShouldQueue
 
         // جلب الموديلات فريش من قاعدة بيانات الـ Tenant الصحيحة
         $transaction = InventoryTransaction::findOrFail($this->transactionId);
-        $store       = Store::findOrFail($this->storeId);
+        $store = Store::findOrFail($this->storeId);
 
         // تنفيذ الإجراء
-        $action->execute($transaction, $store);
+        app(SyncPriceOnNewStockEntryAction::class)->execute($transaction, $store);
     }
 }
