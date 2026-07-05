@@ -22,7 +22,7 @@ final class SyncProductCurrentBatchPriceJob implements ShouldQueue
         private readonly int $storeId,
         private readonly ?int $tenantId = null
     ) {
-        $this->onConnection('database');
+        // $this->onConnection('database');
     }
 
     public function handle(SyncProductCurrentBatchPriceAction $action): void
