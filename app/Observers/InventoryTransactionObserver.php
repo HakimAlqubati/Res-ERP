@@ -28,7 +28,7 @@ class InventoryTransactionObserver
             SyncPriceOnNewStockEntryJob::dispatch($transaction->id,
                 $transaction->store_id,
                 $tenantId
-            );
+            )->onConnection('tenant');
         }
         // إذا كانت الحركة خروج (out) -> نستدعي أكشن الخروج
         elseif ($transaction->movement_type === InventoryTransaction::MOVEMENT_OUT) {
@@ -36,7 +36,7 @@ class InventoryTransactionObserver
             SyncProductCurrentBatchPriceJob::dispatch($transaction->product_id,
                 $transaction->store_id,
                 $tenantId
-            );
+            )->onConnection('tenant');
         }
         // تحديث ملخص المخزون
         // $this->summaryUpdater->onTransactionCreated($inventoryTransaction);
