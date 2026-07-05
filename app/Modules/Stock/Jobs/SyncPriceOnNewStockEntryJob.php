@@ -24,7 +24,7 @@ final class SyncPriceOnNewStockEntryJob implements ShouldQueue
         private readonly int $storeId,
         private readonly ?int $tenantId = null
     ) {
-        // $this->onConnection('database');
+        $this->onConnection('database');
     }
 
     public function handle(SyncPriceOnNewStockEntryAction $action): void
