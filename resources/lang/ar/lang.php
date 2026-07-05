@@ -1148,6 +1148,8 @@ return [
    'stock_position_batch_report' => 'تقرير مخزون المستودع',
     'stock_position_batch_report_desc' => 'تقرير مخزون المستودع',
 'current_page_total' => 'المجموع الحالي',
+  'allow_attendance_from_any_branch' => 'السماح بالتحضير من أي فرع',
+  
   'advance_already_exists_in_month' => 'يوجد طلب سلفة للموظف في شهر :month بالفعل.',
   'advance_has_outstanding_installments' => 'لا يزال لدى الموظف أقساط غير مسددة من سلفة سابقة.',
   'code_old_system' => 'كود النظام القديم',

@@ -16,8 +16,9 @@ class WeeklyLeaveCalculatorController extends Controller
             $totalMonthDays = (int) $request->input('total_month_days', 30);
             $absentDays = (int) $request->input('absent_days', 0);
 
-            $calculator = new WeeklyLeaveCalculator();
-            $result = $calculator->calculate($totalMonthDays, $absentDays);
+            $calculator = new WeeklyLeaveCalculator;
+            $result = $calculator->calculate($totalMonthDays, $absentDays, ['is_period_ended' => true,
+                'is_for_payroll' => true, ]);
         }
 
         return view('hr.weekly_leave_calculator', compact('result'));

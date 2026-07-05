@@ -2,35 +2,38 @@
 
 namespace App\Filament\Pages;
 
-use Filament\Schemas\Schema;
+use App\Models\Branch;
 use App\Models\Employee;
 use App\Modules\HR\Attendance\Services\AttendanceService;
-use Carbon\Carbon;
+use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Schema;
 use Filament\Support\Enums\IconSize;
 
 class AttendanceTest extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-arrows-right-left';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-arrows-right-left';
     // protected static string | \UnitEnum | null $navigationGroup = 'Inventory Management';
 
     protected static ?string $navigationLabel = 'Attendance Test';
 
     protected static ?string $title = 'Attendance Management (V2)';
 
-    protected   string $view = 'filament.pages.attendance-test';
+    protected string $view = 'filament.pages.attendance-test';
 
     public ?array $data = [];
+
     public bool $showTypeField = false;
+
     public bool $showPeriodField = false;
+
     public array $periodOptions = [];
 
     public function mount(): void
@@ -49,7 +52,7 @@ class AttendanceTest extends Page implements HasForms
                             ->orderBy('name')
                             ->get()
                             ->mapWithKeys(function ($employee) {
-                                return [$employee->id => $employee->name . ' - ' . $employee->id];
+                                return [$employee->id => $employee->name.' - '.$employee->id];
                             })
                             ->toArray()
                     )
@@ -66,14 +69,14 @@ class AttendanceTest extends Page implements HasForms
                         'checkout' => 'Check Out',
                     ])
                     ->placeholder('Optional - Auto detected')
-                    ->visible(fn() => $this->showTypeField)
+                    ->visible(fn () => $this->showTypeField)
                     // ->required(fn() => $this->showTypeField)
                     ->native(false),
 
                 Select::make('period_id')
                     ->label('Select Shift')
                     ->options($this->periodOptions)
-                    ->visible(fn() => $this->showPeriodField)
+                    ->visible(fn () => $this->showPeriodField)
                 // ->required(fn() => $this->showPeriodField)
                 // ->native(false)
                 ,
@@ -83,6 +86,8 @@ class AttendanceTest extends Page implements HasForms
                     ->default(now())
                 // ->hidden(fn() => !isSuperAdmin())
                 ,
+                Select::make('branch_id')->searchable()->options(Branch::active()
+                    ->pluck('name', 'id')),
             ])
             ->statePath('data');
     }
@@ -90,7 +95,6 @@ class AttendanceTest extends Page implements HasForms
     public function submit(): void
     {
         $data = $this->form->getState();
-
         try {
             // إنشاء instance من service
             $attendanceService = app(AttendanceService::class);
@@ -114,7 +118,7 @@ class AttendanceTest extends Page implements HasForms
                 return;
             }
 
-             // Dealing with shift selection or conflict
+            // Dealing with shift selection or conflict
             if ($result->shiftSelectionRequired || ($result->shiftConflictDetected ?? false)) {
                 $this->showPeriodField = true;
 
@@ -124,7 +128,8 @@ class AttendanceTest extends Page implements HasForms
                     ->mapWithKeys(function ($shift) {
                         // Handle array or object
                         $shift = (array) $shift;
-                        $label = ($shift['name'] ?? '') . ' (' . ($shift['status'] ?? '') . ')';
+                        $label = ($shift['name'] ?? '').' ('.($shift['status'] ?? '').')';
+
                         return [$shift['period_id'] => $label];
                     })
                     ->toArray();
@@ -184,7 +189,7 @@ class AttendanceTest extends Page implements HasForms
     public function getFormActions(): array
     {
         return [
-            \Filament\Actions\Action::make('submit')
+            Action::make('submit')
                 ->label('Submit Attendance')
                 ->icon('heroicon-o-finger-print')
                 ->size('xl')
