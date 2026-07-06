@@ -199,11 +199,11 @@ class EmployeeForm
                                 ->schema([ 
                                         TextInput::make('emergency_number.name')
                                             ->label(__('lang.name'))
-                                            ->required(),
+                                            ->required(false),
                                             
                                         PhoneInput::make('emergency_number.phone')
                                             ->label(__('lang.phone_number'))
-                                            ->required()
+                                            ->required(false)
                                             ->defaultCountry('my')
                                             ->onlyCountries(['sa', 'ye', 'ae', 'my'])
                                             ->countryValidations([
