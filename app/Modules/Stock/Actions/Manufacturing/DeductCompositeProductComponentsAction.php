@@ -9,15 +9,12 @@ use App\Models\ProductItem;
 use App\Models\StockSupplyOrder;
 use App\Models\StockSupplyOrderDetail;
 use App\Models\UnitPrice;
-use App\Modules\Stock\Reports\FifoBatchReports\Contracts\FifoAllocatorInterface;
+use App\Services\FifoMethodService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 final class DeductCompositeProductComponentsAction
 {
-    public function __construct(
-        private FifoAllocatorInterface $fifoAllocator
-    ) {}
 
     public function executeForDetail(StockSupplyOrderDetail $detail): void
     {
@@ -61,12 +58,11 @@ final class DeductCompositeProductComponentsAction
 
             if ($totalQtyToDeduct <= 0) continue;
 
-            $allocations = $this->fifoAllocator->allocate(
+            $allocations = (new FifoMethodService($order))->getAllocateFifo(
                 (int) $component->product_id,
                 (int) $component->unit_id,
                 (float) $totalQtyToDeduct,
-                (int) $order->store_id,
-                $order
+                (int) $order->store_id
             );
 
             $this->collectOutboundTransactions(
