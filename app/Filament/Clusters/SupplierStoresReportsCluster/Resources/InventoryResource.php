@@ -7,6 +7,7 @@ use Filament\Schemas\Schema;
 use Filament\Notifications\Notification;
 use Throwable;
 use Filament\Tables\Columns\TextColumn;
+use App\Models\Branch;
 use App\Models\Store;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Actions\ActionGroup;
@@ -29,6 +30,7 @@ use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
@@ -41,6 +43,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Enums\FiltersLayout;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -98,6 +101,10 @@ class InventoryResource extends Resource
                                 ->send();
                         }
                     }),
+
+                static::makeStockInNonManufacturingAction()
+                ->visible(fn()=>isHakimOrAdel())
+                ,
             ])
             ->columns([
 
@@ -410,6 +417,108 @@ class InventoryResource extends Resource
                 ]),
             ]);
     }
+
+    // -------------------------------------------------------------------------
+    // Stock-In action for non-manufacturing products
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns a header Action that opens a modal asking the user to pick a store
+     * linked to a non-manufacturing branch (i.e. any branch type that is NOT
+     * central_kitchen), then bulk-creates MOVEMENT_IN transactions for every
+     * active non-manufacturing product that has at least one unit price.
+     */
+    public static function makeStockInNonManufacturingAction(): Action
+    {
+        return Action::make('stock_in_non_manufacturing')
+            ->label('Stock In – Non-Manufacturing')
+            ->icon('heroicon-o-arrow-down-tray')
+            ->color('success')
+            ->schema([
+                Select::make('store_id')
+                    ->label('Store')
+                    ->required()
+                    ->searchable()
+                    ->options(static::getNonManufacturingStoreOptions()),
+            ])
+            ->action(function (array $data): void {
+                static::createStockInForNonManufacturingProducts((int) $data['store_id']);
+            });
+    }
+
+    /**
+     * Returns store options whose branches ARE of type central_kitchen (manufacturing).
+     *
+     * @return array<int, string>
+     */
+    public static function getNonManufacturingStoreOptions(): array
+    {
+        $manufacturingStoreIds = Branch::query()
+            ->where('type', Branch::TYPE_CENTRAL_KITCHEN)
+            ->whereNotNull('store_id')
+            ->pluck('store_id')
+            ->unique()
+            ->values();
+
+        return Store::active()
+            ->whereIn('id', $manufacturingStoreIds)
+            ->get(['id', 'name'])
+            ->pluck('name', 'id')
+            ->toArray();
+    }
+
+    /**
+     * Creates MOVEMENT_IN inventory transactions for every active non-manufacturing
+     * product that has at least one unit price, targeting the given store.
+     *
+     * @param int $storeId  The destination store ID.
+     * @return void
+     */
+    public static function createStockInForNonManufacturingProducts(int $storeId): void
+    {
+        $products = Product::query()
+            ->active()
+            ->unmanufacturingCategory()
+            ->where('type', '!=', Product::TYPE_FINISHED_POS)   // exclude POS products
+            ->with(['unitPrices' => fn ($q) => $q->forSupply()->orderBy('package_size', 'asc')])
+            ->get();
+
+        $createdCount = 0;
+
+        DB::transaction(function () use ($products, $storeId, &$createdCount) {
+            foreach ($products as $product) {
+                /** @var \App\Models\UnitPrice|null $unitPrice */
+                $unitPrice = $product->unitPrices->first();
+
+                if (! $unitPrice) {
+                    continue;
+                }
+
+                InventoryTransaction::create([
+                    'product_id'       => $product->id,
+                    'movement_type'    => InventoryTransaction::MOVEMENT_IN,
+                    'quantity'         => 100,
+                    'unit_id'          => $unitPrice->unit_id,
+                    'package_size'     => $unitPrice->package_size ?? 1,
+                    'store_id'         => $storeId,
+                    'price'            => $unitPrice->price ?? 0,
+                    'movement_date'    => now(),
+                    'transaction_date' => now(),
+                    'notes'            => 'Initial stock-in – raw materials for manufacturing',
+                ]);
+
+                $createdCount++;
+            }
+        });
+
+        Notification::make()
+            ->title('Stock In Completed')
+            ->body("{$createdCount} stock-in transactions created for non-manufacturing products.")
+            ->success()
+            ->send();
+    }
+
+    // -------------------------------------------------------------------------
 
     public static function getRelations(): array
     {
