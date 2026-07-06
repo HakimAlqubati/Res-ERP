@@ -103,7 +103,8 @@ class InventoryResource extends Resource
                     }),
 
                 static::makeStockInNonManufacturingAction()
-                ->visible(fn()=>isHakimOrAdel())
+                // ->visible(fn()=>isHakimOrAdel())
+                ->visible(fn()=>isSuperAdmin())
                 ,
             ])
             ->columns([
@@ -440,9 +441,15 @@ class InventoryResource extends Resource
                     ->required()
                     ->searchable()
                     ->options(static::getNonManufacturingStoreOptions()),
+                TextInput::make('quantity')
+                    ->label('Quantity per Product')
+                    ->numeric()
+                    ->required()
+                    ->minValue(1)
+                    ->default(100),
             ])
             ->action(function (array $data): void {
-                static::createStockInForNonManufacturingProducts((int) $data['store_id']);
+                static::createStockInForNonManufacturingProducts((int) $data['store_id'], (int) $data['quantity']);
             });
     }
 
@@ -471,10 +478,11 @@ class InventoryResource extends Resource
      * Creates MOVEMENT_IN inventory transactions for every active non-manufacturing
      * product that has at least one unit price, targeting the given store.
      *
-     * @param int $storeId  The destination store ID.
+     * @param int $storeId    The destination store ID.
+     * @param int $quantity   The quantity to assign to each transaction.
      * @return void
      */
-    public static function createStockInForNonManufacturingProducts(int $storeId): void
+    public static function createStockInForNonManufacturingProducts(int $storeId, int $quantity = 100): void
     {
         $products = Product::query()
             ->active()
@@ -485,7 +493,7 @@ class InventoryResource extends Resource
 
         $createdCount = 0;
 
-        DB::transaction(function () use ($products, $storeId, &$createdCount) {
+        DB::transaction(function () use ($products, $storeId, $quantity, &$createdCount) {
             foreach ($products as $product) {
                 /** @var \App\Models\UnitPrice|null $unitPrice */
                 $unitPrice = $product->unitPrices->first();
@@ -497,7 +505,7 @@ class InventoryResource extends Resource
                 InventoryTransaction::create([
                     'product_id'       => $product->id,
                     'movement_type'    => InventoryTransaction::MOVEMENT_IN,
-                    'quantity'         => 100,
+                    'quantity'         => $quantity,
                     'unit_id'          => $unitPrice->unit_id,
                     'package_size'     => $unitPrice->package_size ?? 1,
                     'store_id'         => $storeId,
