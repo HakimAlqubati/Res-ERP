@@ -68,6 +68,11 @@ class SalaryTransactionsTable
                     // ->alignCenter()
                     ->sortable()
                     ->searchable(),
+                TextColumn::make('status')->toggleable()
+                    ->label(__('Status'))
+                    // ->alignCenter()
+                    ->sortable()
+                    ->searchable(),
                 TextColumn::make('sub_type')
                     ->label(__('Sub Type'))->toggleable()
                     // ->alignCenter()
