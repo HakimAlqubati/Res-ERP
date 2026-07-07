@@ -8,37 +8,89 @@
             border-spacing: initial;
         }
 
+        /* Print-specific styles */
         @media print {
-            body * { visibility: hidden; }
-            #report-table, #report-table * { visibility: visible; }
-            #report-table { position: absolute; top: 0; left: 0; width: 100%; }
-            table { border-collapse: collapse; width: 100%; }
-            th, td { border: 1px solid #000; padding: 10px; font-size: 12px; color: #000; }
-            th { background-color: #ddd; }
-            td { background-color: #fff; }
+            body * {
+                visibility: hidden;
+            }
+
+            #report-table,
+            #report-table * {
+                visibility: visible;
+            }
+
+            #report-table {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+            }
+
+            table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+
+            th,
+            td {
+                border: 1px solid #000;
+                padding: 10px;
+                font-size: 12px;
+                color: #000;
+            }
+
+            th {
+                background-color: #ddd;
+            }
+
+            td {
+                background-color: #fff;
+            }
         }
 
         .btn-primary {
-            border: 1px solid #7c3aed;
+            border: 1px solid green;
             border-radius: 5px;
-            padding: 0px 10px;
+            padding: 0px 10px 0px 10px;
             min-width: 150px;
         }
 
-        .pretty th, .pretty td {
+        .btn-refresh {
+            border: 1px solid green;
+            border-radius: 5px;
+            padding: 0px 10px 0px 10px;
+            min-width: 150px;
+            margin-top: 5px;
+        }
+
+        .pretty th,
+        .pretty td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .pretty th {
+            /* Attendance report specific green */
+            color: #0b7a5a;
+            font-weight: bold;
+        }
+
+        .pretty th,
+        .pretty td {
             border: 1px solid #ddd;
             padding: 8px;
             text-align: center;
         }
 
         .pretty thead th {
-            color: #7c3aed;
+            color: #0b7a5a;
             font-weight: bold;
             background-color: #fff;
         }
 
         .pretty tbody tr:nth-child(odd) td {
-            background-color: #faf5ff;
+            background-color: #f0fdf4;
             color: #111827;
         }
 
@@ -55,7 +107,7 @@
 
         .forecast-badge {
             display: inline-block;
-            background: #7c3aed;
+            background: #0b7a5a;
             color: #fff;
             font-size: 11px;
             font-weight: 600;
@@ -92,7 +144,7 @@
                         <div style="display: flex; align-items: center; justify-content: center; gap: 10px; flex: 1;">
                             @if ($employee && $employee->avatar_image)
                             <img src="{{ $employee->avatar_image }}" alt="{{ $employee->name }}"
-                                style="width: 90px; height: 90px; border-radius: 12px; object-fit: cover; border: 3px solid #7c3aed; box-shadow: 0 2px 10px rgba(0,0,0,0.18);">
+                                style="width: 90px; height: 90px; border-radius: 12px; object-fit: cover; border: 3px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.18);">
                             @endif
                             <div>
                                 <span style="font-size: 16px; font-weight: bold;">{{ $displayName }}</span>
@@ -125,7 +177,7 @@
             @forelse ($reportData['employees_deductions'] as $empData)
             {{-- Employee Header --}}
             <tr>
-                <td colspan="2" style="background-color: #ede9fe !important; color: #3730a3 !important; font-weight: bold; text-align: center; padding: 12px; font-size: 1.1em;">
+                <td colspan="2" style="background-color: #e5e7eb !important; color: #111827 !important; font-weight: bold; text-align: center; padding: 12px; font-size: 1.1em;">
                     {{ $empData['employee_name'] }}
                 </td>
             </tr>
@@ -133,7 +185,7 @@
             @foreach ($empData['monthly_deductions'] as $monthData)
             {{-- Month Header --}}
             <tr>
-                <td colspan="2" style="background-color: #f5f3ff !important; color: #7c3aed !important; font-weight: bold; text-align: left; padding-left: 15px;">
+                <td colspan="2" style="background-color: #f0fdf4 !important; color: #0b7a5a !important; font-weight: bold; text-align: left; padding-left: 15px;">
                     {{ $monthData['month_name'] }}
                 </td>
             </tr>
@@ -150,7 +202,7 @@
                 <td style="text-align: right; font-weight: bold; background-color: #fafafa !important; color: #111827 !important;">
                     {{ __('Total for :month', ['month' => $monthData['month_name']]) }}
                 </td>
-                <td style="text-align: right; font-weight: bold; background-color: #fafafa !important; color: #7c3aed !important;">
+                <td style="text-align: right; font-weight: bold; background-color: #fafafa !important; color: #d9534f !important;">
                     {{ formatMoneyWithCurrency($monthData['month_total']) }}
                 </td>
             </tr>
@@ -161,7 +213,7 @@
                 <td style="text-align: right; font-weight: bold; background-color: #d1d5db !important; color: #111827 !important;">
                     {{ __('Total Deductions for Employee') }} ({{ $empData['employee_name'] }})
                 </td>
-                <td style="text-align: right; font-weight: bold; background-color: #d1d5db !important; color: #7c3aed !important;">
+                <td style="text-align: right; font-weight: bold; background-color: #d1d5db !important; color: #d9534f !important;">
                     {{ formatMoneyWithCurrency($empData['total_deductions']) }}
                 </td>
             </tr>
@@ -178,10 +230,8 @@
         @if (count($reportData['employees_deductions']) > 0)
         <tfoot>
             <tr>
-                <td style="text-align: right; font-weight: bold; background-color:#eaeaea; color:#000;">
-                    {{ __('Grand Total Deductions') }} ({{ __('Estimated') }})
-                </td>
-                <td style="text-align: right; font-weight: bold; background-color:#eaeaea; color:#7c3aed;">
+                <td style="text-align: right; font-weight: bold; background-color:#eaeaea; color:#000;">{{ __('Grand Total Deductions') }} ({{ __('Estimated') }})</td>
+                <td style="text-align: right; font-weight: bold; background-color:#eaeaea; color:#d9534f;">
                     {{ formatMoneyWithCurrency($reportData['grand_total']) }}
                 </td>
             </tr>
