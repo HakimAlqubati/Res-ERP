@@ -36,12 +36,19 @@ class MealRequestCalculator
 
         // جلب طلبات الوجبات المعتمدة لهذا الموظف في الشهر/السنة المحددة
         // تاريخ الطلب يجب أن يكون ضمن الفترة المحددة
-        $mealRequests = EmployeeMealRequest::query()
+        $mealQuery = EmployeeMealRequest::query()
             ->where('employee_id', $context->employee->id)
             ->where('status', 'approved') // نفترض أن الحالة هي approved
             ->whereYear('date', $context->periodYear)
-            ->whereMonth('date', $context->periodMonth)
-            ->get();
+            ->whereMonth('date', $context->periodMonth);
+
+        // في حالة Multi-Segment: تقييد بتاريخ الفترة الدقيقة لمنع الازدواج
+        if ($context->periodStartDate !== null) {
+            $mealQuery->whereBetween('date', [$context->periodStartDate, $context->periodEnd()]);
+        }
+
+        $mealRequests = $mealQuery->get();
+
 
         foreach ($mealRequests as $mr) {
             $cost = (float)$mr->cost;
