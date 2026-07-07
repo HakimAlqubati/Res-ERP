@@ -25,7 +25,7 @@ class AdvanceWageObserver
     {
         // Set default status to settled if not provided
         if (!$advanceWage->status) {
-            $advanceWage->status = AdvanceWage::STATUS_SETTLED;
+            // $advanceWage->status = AdvanceWage::STATUS_SETTLED;
         }
 
         // Set the creator
