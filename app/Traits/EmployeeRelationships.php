@@ -5,7 +5,9 @@ namespace App\Traits;
 use App\Models\AdvanceWage;
 use App\Models\ApplicationTransaction;
 use App\Models\Attendance;
+use App\Models\Branch;
 use App\Models\Department;
+use App\Models\Employee;
 use App\Models\EmployeeAdvanceInstallment;
 use App\Models\EmployeeAllowance;
 use App\Models\EmployeeApplicationV2;
@@ -13,15 +15,14 @@ use App\Models\EmployeeBranchLog;
 use App\Models\EmployeeDeduction;
 use App\Models\EmployeeFaceData;
 use App\Models\EmployeeFile;
+use App\Models\EmployeeMealRequest;
 use App\Models\EmployeeMonthlyIncentive;
-use App\Models\EmployeeReward;
 use App\Models\EmployeeOvertime;
 use App\Models\EmployeePeriod;
 use App\Models\EmployeePeriodDay;
 use App\Models\EmployeePeriodHistory;
-use App\Models\Branch;
-use App\Models\Employee;
-use App\Models\EmployeeMealRequest;
+use App\Models\EmployeeReward;
+use App\Models\LeaveBalance;
 use App\Models\LeaveType;
 use App\Models\PenaltyDeduction;
 use App\Models\Position;
@@ -156,7 +157,7 @@ trait EmployeeRelationships
     public function overtimesofMonth($date)
     {
         $startOfMonth = Carbon::parse($date)->startOfMonth()->toDateString();
-        $endOfMonth   = Carbon::parse($date)->endOfMonth()->toDateString();
+        $endOfMonth = Carbon::parse($date)->endOfMonth()->toDateString();
 
         return $this->hasMany(EmployeeOvertime::class, 'employee_id')
             ->day()
@@ -228,16 +229,17 @@ trait EmployeeRelationships
 
     public function leaveBalances()
     {
-        return $this->hasMany(\App\Models\LeaveBalance::class, 'employee_id');
+        return $this->hasMany(LeaveBalance::class, 'employee_id');
     }
+
     public function activeLeaveBalances()
     {
-        return $this->hasMany(\App\Models\LeaveBalance::class, 'employee_id')
+        return $this->hasMany(LeaveBalance::class, 'employee_id')
             ->whereHas('leaveType', function (Builder $query) {
                 $query->whereNull('deleted_at')
                     ->where('active', 1)
                     ->whereIn('type', [LeaveType::TYPE_MONTHLY, LeaveType::TYPE_YEARLY, LeaveType::TYPE_SPECIAL]);
-            });;
+            });
     }
 
     public function approvedPenaltyDeductions()
@@ -260,11 +262,23 @@ trait EmployeeRelationships
         return $this->hasMany(AdvanceWage::class, 'employee_id');
     }
 
+    public function approvedPendingAdvanceWagesByPeriod($year, $month)
+    {
+        return $this->hasMany(AdvanceWage::class, 'employee_id')
+            ->where('year', $year)
+            ->where('month', $month)
+            ->whereIn('status', [AdvanceWage::STATUS_PENDING, AdvanceWage::STATUS_SETTLED]);
+    }
+
+    public function approvedPendingAdvanceWagesTotal($year, $month): float
+    {
+        return (float) $this->approvedPendingAdvanceWagesByPeriod($year, $month)->sum('amount');
+    }
+
     public function rewards()
     {
         return $this->hasMany(EmployeeReward::class);
     }
-
 
     /**
      * Scope to filter employees by their associated user's role.
