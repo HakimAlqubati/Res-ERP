@@ -96,11 +96,24 @@ class InventoryReportController extends Controller
 
     public function productTracking(Request $request)
     {
-        $productId = $request->product_id ?? null;
+        $validator = validator($request->all(), [
+            'product_id' => 'required|exists:products,id',
+            'store_id'   => 'required|exists:stores,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first()
+            ]);
+        }
+
+     
+        $productId = $request->product_id;
 
         $product      = Product::find($productId);
         $movementType = $request->movement_type ?? null;
-        $storeId      = $request->store_id ?? null;
+        $storeId      = $request->store_id;
         $reportData   = collect();
 
         $rawData = null;
