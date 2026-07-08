@@ -490,7 +490,7 @@ class EmployeeForm
                                                     fn (): bool => isBranchManager() && ! (isSuperAdmin()
                                                         || isSystemManager())
                                                 )
-                                                ->hidden(fn () => isHR()),
+                                                ->hidden(fn (string $operation) => isHR() && $operation !== 'create'),
 
                                             Select::make('salary_allocation_rule')
                                                 ->label(__('Salary Allocation Override (Branch Transfers)'))
