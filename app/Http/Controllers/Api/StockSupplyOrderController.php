@@ -43,7 +43,7 @@ class StockSupplyOrderController extends Controller
             $query->whereDate('order_date', '<=', $request->to_date);
         }
 
-        // $query->where('created_by', auth()->user()->id);
+        $query->where('created_by', auth()->user()->id);
         if (isBranchManager()) {
 
             if (!isStoreManager() && auth()->user()->branch->is_kitchen) {

@@ -169,6 +169,14 @@ class TestController4 extends Controller
             ->whereRaw($whereSql)
             ->count();
 
+        // 💰 Get total paid all
+        $totalPaidAll = DB::table('orders as o')
+            ->join('branches as b', 'o.branch_id', '=', 'b.id')
+            ->leftJoin('order_paid_amounts as opa', 'o.id', '=', 'opa.order_id')
+            ->whereRaw($whereSql)
+            ->where('b.type', 'reseller')
+            ->sum('opa.amount');
+
         // 📦 Fetch paginated data
         $orders = DB::select("
         SELECT
@@ -178,7 +186,8 @@ class TestController4 extends Controller
             o.status,
             o.branch_id,
             o.created_at,
-            o.updated_at
+            o.updated_at,
+            (SELECT COALESCE(SUM(amount), 0) FROM order_paid_amounts WHERE order_id = o.id) AS total_paid
         FROM orders o
         WHERE $whereSql
           AND EXISTS (
@@ -194,7 +203,7 @@ class TestController4 extends Controller
             ->get(['id', 'name'])->keyBy('id');
 
         $branches = DB::table('branches')->where('active', 1)
-            ->get(['id', 'name'])->keyBy('id');
+            ->get(['id', 'name', 'type'])->keyBy('id');
         $orderIds = collect($orders)->pluck('id')->unique()->toArray();
         $ordersWithPreviousQty = DB::table('orders_details')
             ->whereIn('order_id', $orderIds)
@@ -204,7 +213,7 @@ class TestController4 extends Controller
             ->flip();
         // 🧩 Transform result
         $orders = collect($orders)->map(function ($order) use ($branches, $customers, $ordersWithPreviousQty) {
-
+            $branchType = $branches[$order->branch_id]->type ?? null;
             return [
                 'id' => $order->id,
                 'active' => $order->active,
@@ -214,6 +223,7 @@ class TestController4 extends Controller
                 'branch_id' => $order->branch_id,
                 'branch_name' => $branches[$order->branch_id]->name ?? null,
                 'total_price' => 0,
+                'total_paid' => $branchType === 'reseller' ? (float) $order->total_paid : 0,
                 'created_at' => Carbon::parse($order->created_at)->format('Y-m-d H:i:s'),
                 'updated_at' => Carbon::parse($order->updated_at)->format('Y-m-d H:i:s'),
                 'has_created_due_to_previous_order' => isset($ordersWithPreviousQty[$order->id]),
@@ -225,6 +235,7 @@ class TestController4 extends Controller
             'current_page' => $page,
             'per_page' => $perPage,
             'total' => $total,
+            'total_paid' => (float) $totalPaidAll,
             'last_page' => ceil($total / $perPage),
             'data' => $orders,
         ]);
