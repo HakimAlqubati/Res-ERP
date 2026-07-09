@@ -197,6 +197,13 @@ class EmployeeApplicationTable
             ->toggleable(isToggledHiddenByDefault: true)
             ->alignCenter(true)
             ->limit(3);
+        $columns[] = TextColumn::make('branch.name')
+            ->label(__('lang.branch'))
+            ->searchable()
+            ->default('-')
+            ->toggleable(isToggledHiddenByDefault: true)
+            ->alignCenter(false)
+           ;
 
         return $table->defaultSort('id', 'desc')
             ->paginated([10, 25, 50, 100])
