@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Modules\Stock\Http\Controllers\Api\StockBalanceController;
 use App\Modules\Stock\Http\Controllers\Api\StockBatchController;
 use App\Modules\Stock\Http\Controllers\Api\CompoundProductComponentStockController;
+use App\Modules\Stock\Http\Controllers\Api\Reports\StockPositionBatchReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,6 +19,10 @@ use App\Modules\Stock\Http\Controllers\Api\CompoundProductComponentStockControll
 // Stock Batches (FIFO)
 Route::get('/stockBatches', [StockBatchController::class, 'index'])
     ->name('batches.index');
+
+// Reports
+Route::get('/reports/stockPositionBatch', [StockPositionBatchReportController::class, 'index'])
+    ->name('reports.stockPositionBatch');
 
 // Stock Balances
 Route::get('/stockBalances/lowStock', [StockBalanceController::class, 'lowStock'])
