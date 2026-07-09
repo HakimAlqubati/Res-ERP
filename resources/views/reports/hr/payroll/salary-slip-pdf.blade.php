@@ -247,7 +247,7 @@
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 13px; page-break-inside: avoid;">
                 <thead>
                     <tr>
-                        <th style="border-bottom: 2px solid #aebac1; text-align: left; padding: 8px 5px; color: #0d7c66; font-weight: bold; width: 70%;">Employee Deductions</th>
+                        <th style="border-bottom: 2px solid #aebac1; text-align: left; padding: 8px 5px; color: red; font-weight: bold; width: 70%;">Employee Deductions</th>
                         <th style="border-bottom: 2px solid #aebac1; text-align: right; padding: 8px 5px; color: #333; font-weight: bold; width: 30%;">Current</th>
                     </tr>
                 </thead>
@@ -264,7 +264,7 @@
                 <tfoot>
                     <tr>
                         <td style="padding: 12px 5px 8px 5px; font-weight: 800; color: #222;">Total Deductions</td>
-                        <td style="padding: 12px 5px 8px 5px; text-align: right; font-weight: 800; color: #0d7c66;">{{ formatMoneyWithCurrency($totalDeductions) }}</td>
+                        <td style="padding: 12px 5px 8px 5px; text-align: right; font-weight: 800; color: red;">{{ formatMoneyWithCurrency($totalDeductions) }}</td>
                     </tr>
                 </tfoot>
             </table>
