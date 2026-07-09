@@ -907,6 +907,7 @@ return [
     'no_periods' => 'No Scheduled Shift',
     'total' => 'Total',
     'please_select_employee' => 'Please select a Staff',
+    'select_employee' => 'Select a Staff',
     'show_details' => 'Show details',
     'show_charts' => 'Show Charts',
     'print_report' => 'Print Report',

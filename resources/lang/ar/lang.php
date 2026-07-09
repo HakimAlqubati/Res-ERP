@@ -887,6 +887,7 @@ return [
   'no_periods' => 'لا توجد فترات',
   'total' => 'الإجمالي',
   'please_select_employee' => 'يرجى اختيار موظف',
+  'select_employee' => 'اختر الموظف',
   'show_details' => 'عرض التفاصيل',
   'show_charts' => 'عرض الرسوم البيانية',
   'print_report' => 'طباعة التقرير',

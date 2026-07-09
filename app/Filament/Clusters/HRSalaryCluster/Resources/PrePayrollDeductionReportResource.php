@@ -46,8 +46,8 @@ class PrePayrollDeductionReportResource extends Resource
                         Select::make('group_by')
                             ->label(__('Group By'))
                             ->options([
-                                PrePayrollDeductionFilterDTO::GROUP_BY_EMPLOYEE => __('Employee'),
-                                PrePayrollDeductionFilterDTO::GROUP_BY_BRANCH   => __('Branch'),
+                                PrePayrollDeductionFilterDTO::GROUP_BY_EMPLOYEE => __('lang.employee'),
+                                PrePayrollDeductionFilterDTO::GROUP_BY_BRANCH   => __('lang.branch'),
                             ])
                             ->default(PrePayrollDeductionFilterDTO::GROUP_BY_EMPLOYEE)
                             ->selectablePlaceholder(false)
@@ -64,11 +64,11 @@ class PrePayrollDeductionReportResource extends Resource
                                 ->pluck('name', 'id')
                                 ->all())
                             ->searchable()
-                            ->placeholder(__('Select Branch'))
+                            ->placeholder(__('lang.select_branch'))
                             ->visible(fn (callable $get) => $get('group_by') === PrePayrollDeductionFilterDTO::GROUP_BY_BRANCH),
 
                         Select::make('employee_id')
-                            ->label(__('Employee'))
+                            ->label(__('lang.employee'))
                             ->options(fn () => Employee::where('active', 1)
                                 ->limit(5)
                                 ->get()
@@ -86,7 +86,7 @@ class PrePayrollDeductionReportResource extends Resource
                                 ? "{$e->name} - {$e->id}"
                                 : null)
                             ->searchable()
-                            ->placeholder(__('Select Employee'))
+                            ->placeholder(__('lang.select_employee'))
                             ->hidden(fn (callable $get) => $get('group_by') === PrePayrollDeductionFilterDTO::GROUP_BY_BRANCH),
                     ])
                     ->query(fn (Builder $query) => $query)
