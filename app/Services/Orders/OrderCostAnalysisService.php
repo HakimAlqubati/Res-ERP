@@ -48,40 +48,43 @@ class OrderCostAnalysisService
             return $this->errorResponse($orderId, 'Order has been cancelled.');
         }
 
+        $orderValue = 0;
         // 2. حساب إجمالي قيمة الطلب (سعر البيع/التحويل)
         // مع fallback لـ unit_prices إذا كان السعر صفر أو null
-        $orderValue = OrderDetails::query()
-            ->where('order_id', $orderId)
-            ->leftJoin('unit_prices', function ($join) {
-                $join->on('orders_details.product_id', '=', 'unit_prices.product_id')
-                    ->on('orders_details.unit_id', '=', 'unit_prices.unit_id');
-            })
-            ->sum(
-                DB::raw('CASE 
-                    WHEN orders_details.price IS NULL OR orders_details.price = 0 
-                    THEN COALESCE(unit_prices.price, 0) * orders_details.available_quantity
-                    ELSE orders_details.price * orders_details.available_quantity
-                END')
-            );
+        // $orderValue = OrderDetails::query()
+        //     ->where('order_id', $orderId)
+        //     ->leftJoin('unit_prices', function ($join) {
+        //         $join->on('orders_details.product_id', '=', 'unit_prices.product_id')
+        //             ->on('orders_details.unit_id', '=', 'unit_prices.unit_id');
+        //     })
+        //     ->sum(
+        //         DB::raw('CASE 
+        //             WHEN orders_details.price IS NULL OR orders_details.price = 0 
+        //             THEN COALESCE(unit_prices.price, 0) * orders_details.available_quantity
+        //             ELSE orders_details.price * orders_details.available_quantity
+        //         END')
+        //     );
 
         // --- ثانياً وثالثاً: حساب التكلفة والتحقق من حركات المخزون ---
         $branchStoreId = $order->branch?->store_id;
 
         // 3.1 حساب إجمالي تكلفة المخزون الصادرة (COGS)
-        // $inventoryCostQuery = InventoryTransaction::query()
-        //     ->where('transactionable_type', Order::class)
-        //     ->where('transactionable_id', $orderId)
-        //     ->where('store_id', $branchStoreId)
-        //     // الحركة الصادرة تمثل التكلفة المحققة (COGS) من المخزن المركزي
-        //     ->where('movement_type', InventoryTransaction::MOVEMENT_IN);
-
+        $inventoryCostQuery = InventoryTransaction::query()
+            ->where('transactionable_type', Order::class)
+            ->where('transactionable_id', $orderId)
+            ->where('store_id', $branchStoreId)
+            // الحركة الصادرة تمثل التكلفة المحققة (COGS) من المخزن المركزي
+            ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+            ->whereNull('deleted_at');
         // حساب التكلفة مع استخدام unit_prices كبديل إذا كان السعر صفر أو فارغ
-        // $inventoryCost = (clone $inventoryCostQuery)
-        //     ->leftJoin('unit_prices', function ($join) {
-        //         $join->on('inventory_transactions.product_id', '=', 'unit_prices.product_id')
-        //             ->on('inventory_transactions.unit_id', '=', 'unit_prices.unit_id');
-        //     })
-        //     ->sum(DB::raw('inventory_transactions.quantity * COALESCE(NULLIF(inventory_transactions.price, 0), unit_prices.price, 0)'));
+        $inventoryCost = (clone $inventoryCostQuery)
+            // ->leftJoin('unit_prices', function ($join) {
+            //     $join->on('inventory_transactions.product_id', '=', 'unit_prices.product_id')
+            //         ->on('inventory_transactions.unit_id', '=', 'unit_prices.unit_id');
+            // })
+            ->sum(DB::raw('inventory_transactions.quantity * inventory_transactions.price'));
+
+        $orderValue = $inventoryCost;
 
         // 3.2 التحقق من وجود حركات مخزون صادرة
         // if ($inventoryCost == 0 && $inventoryCostQuery->doesntExist()) {
