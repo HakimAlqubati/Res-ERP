@@ -123,21 +123,17 @@ class CreateEmployeeApplication extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
 
-        // dd($data);
-        if (!isStuff() && !isFinanceManager() || isHR()) {
-            $employee = Employee::find($data['employee_id']);
-            if ($employee->branch()->exists()) {
-                $data['branch_id'] = $employee->branch->id;
-            }
-        }
-
+        // If the user is just a regular employee (Staff), force the application to be for themselves
         if (isStuff()) {
             $data['employee_id'] = auth()->user()->employee->id;
+        }
+
+        $employee = Employee::find($data['employee_id']);
+        
+        if ($employee && $employee->branch()->exists()) {   
+            $data['branch_id'] = $employee->branch->id;
+        } elseif (auth()->user()->branch_id) {
             $data['branch_id'] = auth()->user()->branch_id;
-            $employee = Employee::find($data['employee_id']);
-            if ($employee->branch()->exists()) {
-                $data['branch_id'] = $employee->branch->id;
-            }
         }
 
         $applicationType = EmployeeApplicationV2::APPLICATION_TYPES[$data['application_type_id']];
