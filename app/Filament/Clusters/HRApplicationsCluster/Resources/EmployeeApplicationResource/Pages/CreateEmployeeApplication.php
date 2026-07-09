@@ -174,34 +174,34 @@ class CreateEmployeeApplication extends CreateRecord
             ->where('application_type_id', $data['application_type_id'])
             ->get();
 
-        if ($existingApplications && $data['application_type_id'] == EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST) {
-            foreach ($existingApplications as $existingApplication) {
-                $existedStartDate = $existingApplication->leaveRequest->start_date ?? null;
-                $existedEndDate = $existingApplication?->leaveRequest?->end_date;
-                $requestedStartDate = $this->data['leaveRequest']['detail_from_date'];
-                $requestedEndDate = $this->data['leaveRequest']['detail_to_date'];
-                // Check for nulls first
-                if ($existedStartDate && $existedEndDate && $requestedStartDate && $requestedEndDate) {
-                    // Convert strings to Carbon instances to easily compare dates
-                    $existedStartDate = Carbon::parse($existedStartDate);
-                    $existedEndDate = Carbon::parse($existedEndDate);
-                    $requestedStartDate = Carbon::parse($requestedStartDate);
-                    $requestedEndDate = Carbon::parse($requestedEndDate);
+        // if ($existingApplications && $data['application_type_id'] == EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST) {
+        //     foreach ($existingApplications as $existingApplication) {
+        //         $existedStartDate = $existingApplication->leaveRequest->start_date ?? null;
+        //         $existedEndDate = $existingApplication?->leaveRequest?->end_date;
+        //         $requestedStartDate = $this->data['leaveRequest']['detail_from_date'];
+        //         $requestedEndDate = $this->data['leaveRequest']['detail_to_date'];
+        //         // Check for nulls first
+        //         if ($existedStartDate && $existedEndDate && $requestedStartDate && $requestedEndDate) {
+        //             // Convert strings to Carbon instances to easily compare dates
+        //             $existedStartDate = Carbon::parse($existedStartDate);
+        //             $existedEndDate = Carbon::parse($existedEndDate);
+        //             $requestedStartDate = Carbon::parse($requestedStartDate);
+        //             $requestedEndDate = Carbon::parse($requestedEndDate);
 
-                    // Check if the existing dates overlap with the requested dates
-                    $isOverlap = $existedStartDate->lte($requestedEndDate) && $existedEndDate->gte($requestedStartDate);
+        //             // Check if the existing dates overlap with the requested dates
+        //             $isOverlap = $existedStartDate->lte($requestedEndDate) && $existedEndDate->gte($requestedStartDate);
 
-                    if ($isOverlap) {
-                        Notification::make()->body('An application already exists for this employee on the selected date.')->warning()->send();
-                        Log::warning('An application already exists for this employee on the selected date.');
-                        // Throw a validation exception if an application exists
-                        throw ValidationException::withMessages([
-                            'application_date' => 'An application already exists for this employee on the selected date.',
-                        ]);
-                    }
-                }
-            }
-        }
+        //             if ($isOverlap) {
+        //                 Notification::make()->body('An application already exists for this employee on the selected date.')->warning()->send();
+        //                 Log::warning('An application already exists for this employee on the selected date.');
+        //                 // Throw a validation exception if an application exists
+        //                 throw ValidationException::withMessages([
+        //                     'application_date' => 'An application already exists for this employee on the selected date.',
+        //                 ]);
+        //             }
+        //         }
+        //     }
+        // }
 
         if ($data['application_type_id'] == EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST) {
             $attendances = $employee->attendancesByDate($this->data['missedCheckinRequest']['date'])->where('check_type', Attendance::CHECKTYPE_CHECKIN)->count();

@@ -356,17 +356,22 @@ class User extends Authenticatable implements FilamentUser, Auditable
     {
         return DB::transaction(function () use ($data) {
             try {
+                $managerEmployeeId = $this->owner_id ? \App\Models\User::find($this->owner_id)?->employee?->id : null;
+
                 // إنشاء الموظف الجديد مرتبط باليوزر
                 $employee = Employee::create([
-                    'name'        => $this->name,             // من اليوزر
-                    'email'       => $this->email,            // من اليوزر
-                    'phone_number' => $this->phone_number,     // من اليوزر
-                    'branch_id'   => $this->branch_id,        // من اليوزر
-                    'user_id'     => $this->id,               // الربط
-                    'active'      => 1,
-                    'employee_no' => (Employee::withTrashed()->max('id') ?? 0) + 1,
-                    'join_date'   => now(),
-                    'job_title'   => $data['job_title'] ?? 'New Employee',
+                    'name'          => $this->name,             // من اليوزر
+                    'email'         => $this->email,            // من اليوزر
+                    'phone_number'  => $this->phone_number,     // من اليوزر
+                    'branch_id'     => $this->branch_id,        // من اليوزر
+                    'user_id'       => $this->id,               // الربط
+                    'active'        => 1,
+                    'employee_no'   => (Employee::withTrashed()->max('id') ?? 0) + 1,
+                    'join_date'     => now(),
+                    'job_title'     => $data['job_title'] ?? 'New Employee',
+                    'nationality'   => $this->nationality,      // من اليوزر
+                    'manager_id'    => $managerEmployeeId,      // من اليوزر
+                    'employee_type' => $this->user_type,        // من اليوزر
                 ]);
 
                 Notification::make()
