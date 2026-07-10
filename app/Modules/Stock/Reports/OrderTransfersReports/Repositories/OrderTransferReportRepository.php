@@ -79,14 +79,13 @@ class OrderTransferReportRepository implements OrderTransferReportRepositoryInte
                         (it_in.quantity * COALESCE(it_in.package_size, 1.0)) AS in_qty_base,
                         COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0) AS out_qty_base,
                         GREATEST((it_in.quantity * COALESCE(it_in.package_size, 1.0)) - COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0), 0) / COALESCE(it_in.package_size, 1.0) AS remaining_qty_unit,
-                        CASE WHEN it_in.price IS NULL OR it_in.price = 0 THEN COALESCE(up.price, 0) ELSE it_in.price END AS unit_price,
-                        (GREATEST((it_in.quantity * COALESCE(it_in.package_size, 1.0)) - COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0), 0) / COALESCE(it_in.package_size, 1.0)) * CASE WHEN it_in.price IS NULL OR it_in.price = 0 THEN COALESCE(up.price, 0) ELSE it_in.price END AS remaining_value
+                        COALESCE(it_in.price, 0) AS unit_price,
+                        (GREATEST((it_in.quantity * COALESCE(it_in.package_size, 1.0)) - COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0), 0) / COALESCE(it_in.package_size, 1.0)) * COALESCE(it_in.price, 0) AS remaining_value
                     FROM inventory_transactions AS it_in
                     LEFT JOIN inventory_transactions AS it_out ON it_out.source_transaction_id = it_in.id AND it_out.movement_type = 'out' AND it_out.store_id = it_in.store_id AND it_out.deleted_at IS NULL AND (? IS NULL OR it_out.movement_date <= ?) AND it_out.transactionable_type = 'App\\\\Models\\\\ReturnedOrder'
                     JOIN products p ON p.id = it_in.product_id
-                    LEFT JOIN unit_prices up ON up.product_id = it_in.product_id AND up.unit_id = it_in.unit_id
                     WHERE it_in.deleted_at IS NULL AND it_in.movement_type = 'in' AND it_in.store_id IN ({$components['store_placeholders']}) {$components['sql_product']} {$components['sql_cat']} {$components['sql_order']} AND (? IS NULL OR it_in.movement_date >= ?) AND (? IS NULL OR it_in.movement_date <= ?) AND it_in.transactionable_type = 'App\\\\Models\\\\Order'
-                    GROUP BY it_in.id, it_in.movement_date, it_in.store_id, it_in.unit_id, it_in.product_id, it_in.package_size, it_in.quantity, it_in.price, up.price
+                    GROUP BY it_in.id, it_in.movement_date, it_in.store_id, it_in.unit_id, it_in.product_id, it_in.package_size, it_in.quantity, it_in.price
                 ) AS t
                 GROUP BY t.store_id, t.unit_id, t.package_size, t.product_id, t.unit_price
                 HAVING SUM(t.remaining_qty_unit) > 0
@@ -123,14 +122,13 @@ class OrderTransferReportRepository implements OrderTransferReportRepositoryInte
                     SELECT 
                         it_in.store_id, it_in.unit_id, it_in.product_id, COALESCE(it_in.package_size, 1.0) AS package_size,
                         GREATEST((it_in.quantity * COALESCE(it_in.package_size, 1.0)) - COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0), 0) / COALESCE(it_in.package_size, 1.0) AS remaining_qty_unit,
-                        CASE WHEN it_in.price IS NULL OR it_in.price = 0 THEN COALESCE(up.price, 0) ELSE it_in.price END AS unit_price,
-                        (GREATEST((it_in.quantity * COALESCE(it_in.package_size, 1.0)) - COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0), 0) / COALESCE(it_in.package_size, 1.0)) * CASE WHEN it_in.price IS NULL OR it_in.price = 0 THEN COALESCE(up.price, 0) ELSE it_in.price END AS remaining_value
+                        COALESCE(it_in.price, 0) AS unit_price,
+                        (GREATEST((it_in.quantity * COALESCE(it_in.package_size, 1.0)) - COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0), 0) / COALESCE(it_in.package_size, 1.0)) * COALESCE(it_in.price, 0) AS remaining_value
                     FROM inventory_transactions AS it_in
                     LEFT JOIN inventory_transactions AS it_out ON it_out.source_transaction_id = it_in.id AND it_out.movement_type = 'out' AND it_out.store_id = it_in.store_id AND it_out.deleted_at IS NULL AND (? IS NULL OR it_out.movement_date <= ?) AND it_out.transactionable_type = 'App\\\\Models\\\\ReturnedOrder'
                     JOIN products p ON p.id = it_in.product_id
-                    LEFT JOIN unit_prices up ON up.product_id = it_in.product_id AND up.unit_id = it_in.unit_id
                     WHERE it_in.deleted_at IS NULL AND it_in.movement_type = 'in' AND it_in.store_id IN ({$components['store_placeholders']}) {$components['sql_product']} {$components['sql_cat']} {$components['sql_order']} AND (? IS NULL OR it_in.movement_date >= ?) AND (? IS NULL OR it_in.movement_date <= ?) AND it_in.transactionable_type = 'App\\\\Models\\\\Order'
-                    GROUP BY it_in.id, it_in.movement_date, it_in.store_id, it_in.unit_id, it_in.product_id, it_in.package_size, it_in.quantity, it_in.price, up.price
+                    GROUP BY it_in.id, it_in.movement_date, it_in.store_id, it_in.unit_id, it_in.product_id, it_in.package_size, it_in.quantity, it_in.price
                 ) AS t
                 GROUP BY t.store_id, t.unit_id, t.package_size, t.product_id, t.unit_price
                 HAVING SUM(t.remaining_qty_unit) > 0
