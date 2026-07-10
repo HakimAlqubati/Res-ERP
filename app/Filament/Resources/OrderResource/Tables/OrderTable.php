@@ -42,8 +42,12 @@ class OrderTable
 
     public static function configure(Table $table): Table
     {
+        $pagination = [10, 25, 50, 100];
+        if(isHakimOrAdel()){
+            $pagination = [10, 25, 50, 100,250,400,500];
+        }
         return $table
-            ->paginated([10, 25, 50, 100])
+            ->paginated($pagination)
             ->deferLoading()
             ->striped()
             ->extremePaginationLinks()
@@ -87,10 +91,10 @@ class OrderTable
                     ->numeric()
                     ->hidden(fn(): bool => isStoreManager())
                     ->state(function (Order $record, OrderCostAnalysisService $service) {
-                        // if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
-                        //     $analysis = $service->getOrderValues($record->id);
-                        //     return $analysis['total_cost_from_inventory_transactions'] ?? $record->total_amount;
-                        // }
+                        if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
+                            $analysis = $service->getOrderValues($record->id);
+                            return $analysis['total_cost_from_inventory_transactions'] ?? $record->total_amount;
+                        }
                         return $record->total_amount;
                     })
                     ->formatStateUsing(function ($state) {
@@ -101,10 +105,10 @@ class OrderTable
                             ->using(function (Table $table) {
                                 $service = app(OrderCostAnalysisService::class);
                                 $total = $table->getRecords()->sum(function ($record) use ($service) {
-                                    // if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
-                                    //     $analysis = $service->getOrderValues($record->id);
-                                    //     return $analysis['total_cost_from_inventory_transactions'] ?? $record->total_amount;
-                                    // }
+                                    if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
+                                        $analysis = $service->getOrderValues($record->id);
+                                        return $analysis['total_cost_from_inventory_transactions'] ?? $record->total_amount;
+                                    }
                                     return $record->total_amount;
                                 });
                                 if (is_numeric($total)) {

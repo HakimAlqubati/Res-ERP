@@ -6,6 +6,8 @@ use App\Models\Order;
 use App\Models\InventoryTransaction;
 use App\Models\OrderDetails;
 use App\Models\Branch; // تم تضمينه لجلب معلومات الفرع
+use App\Models\ReturnedOrder;
+use App\Models\StockTransferOrder;
 use Illuminate\Support\Facades\DB;
 
 class OrderCostAnalysisService
@@ -76,13 +78,23 @@ class OrderCostAnalysisService
             // الحركة الصادرة تمثل التكلفة المحققة (COGS) من المخزن المركزي
             ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
             ->whereNull('deleted_at');
-        // حساب التكلفة مع استخدام unit_prices كبديل إذا كان السعر صفر أو فارغ
+        // حساب إجمالي تكلفة الكميات الواردة
         $inventoryCost = (clone $inventoryCostQuery)
-            // ->leftJoin('unit_prices', function ($join) {
-            //     $join->on('inventory_transactions.product_id', '=', 'unit_prices.product_id')
-            //         ->on('inventory_transactions.unit_id', '=', 'unit_prices.unit_id');
-            // })
             ->sum(DB::raw('inventory_transactions.quantity * inventory_transactions.price'));
+
+        // خصم تكلفة الكميات الخارجة من نفس الباتشات (المرتبطة عبر source_transaction_id)
+        $inTransactionIds = (clone $inventoryCostQuery)->pluck('id');
+        if ($inTransactionIds->isNotEmpty()) {
+            $outgoingCost = InventoryTransaction::query()
+                ->whereIn('source_transaction_id', $inTransactionIds)
+                ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
+                ->whereNull('deleted_at')
+                // ->whereIn('transactionable_type',[ReturnedOrder::class])
+                ->whereIn('transactionable_type',[ReturnedOrder::class,StockTransferOrder::class])
+                ->sum(DB::raw('inventory_transactions.quantity * inventory_transactions.price'));
+
+            $inventoryCost -= $outgoingCost;
+        }
 
         $orderValue = $inventoryCost;
 
