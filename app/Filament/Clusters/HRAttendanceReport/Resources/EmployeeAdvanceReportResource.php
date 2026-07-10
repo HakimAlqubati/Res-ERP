@@ -295,6 +295,9 @@ class EmployeeAdvanceReportResource extends Resource
                                         ])
                                     )
                                     ->required()
+                                    ->rules([
+                                        new \App\Rules\InstallmentPayrollNotGenerated(),
+                                    ])
                                     ->native(false),
                                 Textarea::make('reason')
                                     ->label(__('lang.reason'))
