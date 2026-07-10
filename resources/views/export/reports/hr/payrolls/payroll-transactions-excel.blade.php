@@ -25,5 +25,9 @@
             <td>{{ $transaction->date?->format('Y-m-d') }}</td>
         </tr>
         @endforeach
+        <tr>
+            <td colspan="5" style="text-align: right; font-weight: bold;">{{ __('Net Salary') }}</td>
+            <td style="font-weight: bold;">{{ number_format($netSalary, 2) }}</td>
+        </tr>
     </tbody>
 </table>

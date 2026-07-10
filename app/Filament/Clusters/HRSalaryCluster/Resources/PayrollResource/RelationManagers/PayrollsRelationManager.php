@@ -215,8 +215,9 @@ class PayrollsRelationManager extends RelationManager
                                 ->whereIn('payroll_id', $this->payrollIdsForDisplay($record))
                                 ->get();
                             $employeeName = $record->employee?->name ?? 'Employee';
+                            $netSalary = (float) $record->getRawOriginal('net_salary');
                             $fileName = 'transactions-' . $employeeName . '.xlsx';
-                            return Excel::download(new PayrollTransactionsExport($transactions, $employeeName), $fileName);
+                            return Excel::download(new PayrollTransactionsExport($transactions, $employeeName, $netSalary), $fileName);
                         }),
                     self::quickShowAction(),
                 ]),
