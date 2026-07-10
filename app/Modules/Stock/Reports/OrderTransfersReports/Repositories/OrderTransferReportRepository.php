@@ -17,6 +17,9 @@ class OrderTransferReportRepository implements OrderTransferReportRepositoryInte
 
         $bindings = [$dto->toDate, $dto->toDate];
 
+        $storePlaceholders = implode(',', array_fill(0, count($storeIds), '?'));
+        $bindings = array_merge($bindings, $storeIds);
+
         $productFilterSql = '';
         if ($dto->productId !== null) {
             $productFilterSql = 'AND it_in.product_id = ?';
@@ -30,13 +33,18 @@ class OrderTransferReportRepository implements OrderTransferReportRepositoryInte
             $bindings = array_merge($bindings, $dto->categoryIds);
         }
 
-        $storePlaceholders = implode(',', array_fill(0, count($storeIds), '?'));
-        $bindings = array_merge($bindings, $storeIds);
+        $orderFilterSql = '';
+        if ($dto->orderNumber !== null) {
+            $orderFilterSql = 'AND it_in.transactionable_id = ?';
+            $bindings[] = $dto->orderNumber;
+        }
+
         $bindings = array_merge($bindings, [$dto->fromDate, $dto->fromDate, $dto->toDate, $dto->toDate]);
 
         return [
             'sql_product' => $productFilterSql,
             'sql_cat' => $categoryFilterSql,
+            'sql_order' => $orderFilterSql,
             'store_placeholders' => $storePlaceholders,
             'bindings' => $bindings,
             'store_ids' => $storeIds,
@@ -77,7 +85,7 @@ class OrderTransferReportRepository implements OrderTransferReportRepositoryInte
                     LEFT JOIN inventory_transactions AS it_out ON it_out.source_transaction_id = it_in.id AND it_out.movement_type = 'out' AND it_out.store_id = it_in.store_id AND it_out.deleted_at IS NULL AND (? IS NULL OR it_out.movement_date <= ?) AND it_out.transactionable_type = 'App\\\\Models\\\\ReturnedOrder'
                     JOIN products p ON p.id = it_in.product_id
                     LEFT JOIN unit_prices up ON up.product_id = it_in.product_id AND up.unit_id = it_in.unit_id
-                    WHERE it_in.deleted_at IS NULL AND it_in.movement_type = 'in' AND it_in.store_id IN ({$components['store_placeholders']}) {$components['sql_product']} {$components['sql_cat']} AND (? IS NULL OR it_in.movement_date >= ?) AND (? IS NULL OR it_in.movement_date <= ?) AND it_in.transactionable_type = 'App\\\\Models\\\\Order'
+                    WHERE it_in.deleted_at IS NULL AND it_in.movement_type = 'in' AND it_in.store_id IN ({$components['store_placeholders']}) {$components['sql_product']} {$components['sql_cat']} {$components['sql_order']} AND (? IS NULL OR it_in.movement_date >= ?) AND (? IS NULL OR it_in.movement_date <= ?) AND it_in.transactionable_type = 'App\\\\Models\\\\Order'
                     GROUP BY it_in.id, it_in.movement_date, it_in.store_id, it_in.unit_id, it_in.product_id, it_in.package_size, it_in.quantity, it_in.price, up.price
                 ) AS t
                 GROUP BY t.store_id, t.unit_id, t.package_size, t.product_id, t.unit_price
@@ -121,7 +129,7 @@ class OrderTransferReportRepository implements OrderTransferReportRepositoryInte
                     LEFT JOIN inventory_transactions AS it_out ON it_out.source_transaction_id = it_in.id AND it_out.movement_type = 'out' AND it_out.store_id = it_in.store_id AND it_out.deleted_at IS NULL AND (? IS NULL OR it_out.movement_date <= ?) AND it_out.transactionable_type = 'App\\\\Models\\\\ReturnedOrder'
                     JOIN products p ON p.id = it_in.product_id
                     LEFT JOIN unit_prices up ON up.product_id = it_in.product_id AND up.unit_id = it_in.unit_id
-                    WHERE it_in.deleted_at IS NULL AND it_in.movement_type = 'in' AND it_in.store_id IN ({$components['store_placeholders']}) {$components['sql_product']} {$components['sql_cat']} AND (? IS NULL OR it_in.movement_date >= ?) AND (? IS NULL OR it_in.movement_date <= ?) AND it_in.transactionable_type = 'App\\\\Models\\\\Order'
+                    WHERE it_in.deleted_at IS NULL AND it_in.movement_type = 'in' AND it_in.store_id IN ({$components['store_placeholders']}) {$components['sql_product']} {$components['sql_cat']} {$components['sql_order']} AND (? IS NULL OR it_in.movement_date >= ?) AND (? IS NULL OR it_in.movement_date <= ?) AND it_in.transactionable_type = 'App\\\\Models\\\\Order'
                     GROUP BY it_in.id, it_in.movement_date, it_in.store_id, it_in.unit_id, it_in.product_id, it_in.package_size, it_in.quantity, it_in.price, up.price
                 ) AS t
                 GROUP BY t.store_id, t.unit_id, t.package_size, t.product_id, t.unit_price

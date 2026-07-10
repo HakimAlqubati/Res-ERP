@@ -16,6 +16,7 @@ class OrderTransferReportFilterDTO
         public readonly ?string $toDate,
         public readonly array $branchIds,
         public readonly array $categoryIds,
+        public readonly ?string $orderNumber,
         public readonly int $page,     // رقم الصفحة الحالية
         public readonly int $perPage
     ) {}
@@ -39,6 +40,8 @@ class OrderTransferReportFilterDTO
         $branchIds   = isset($filters['branch_id']) && is_array($filters['branch_id']) ? $filters['branch_id'] : [];
         $categoryIds = isset($filters['category_id']) && is_array($filters['category_id']) ? $filters['category_id'] : [];
 
+        $orderNumber = !empty($filters['order_number']) ? (string) $filters['order_number'] : null;
+
         // إرجاع كائن من هذا الكلاس مبني بشكل آمن
         return new self(
             productId: $productId,
@@ -46,6 +49,7 @@ class OrderTransferReportFilterDTO
             toDate: $toDate,
             branchIds: $branchIds,
             categoryIds: $categoryIds,
+            orderNumber: $orderNumber,
             page: $page,
             perPage: $perPage
         );
