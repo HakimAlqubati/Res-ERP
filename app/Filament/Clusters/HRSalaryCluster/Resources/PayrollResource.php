@@ -12,6 +12,7 @@ use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\RelationMana
 use App\Models\PayrollRun;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ForceDeleteBulkAction;
@@ -98,6 +99,19 @@ class PayrollResource extends Resource
             ])
             ->bulkActions([
                 BulkActionGroup::make([
+                    BulkAction::make('exportExcelBulk')
+                        ->label('Export Excel')
+                        ->color('info')
+                        ->icon('heroicon-o-arrow-down-on-square-stack')
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                            $payrolls = \App\Models\Payroll::whereIn('payroll_run_id', $records->pluck('id'))
+                                ->with('employee')
+                                ->get();
+                            
+                            $fileName = 'payrolls-bulk-' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+
+                            return Excel::download(new PayrollsExport($payrolls), $fileName);
+                        }),
                     DeleteBulkAction::make(),
                     ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),

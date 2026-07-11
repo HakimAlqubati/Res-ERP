@@ -62,6 +62,7 @@ class PayrollsExport implements FromView
         $totals = [
             'base_salary'            => 0,
             'total_additions'        => 0,
+            'gross_salary'           => 0,
             'total_deductions'       => 0,
             'employer_contributions' => [],
             'advance_wages'          => 0,
@@ -144,10 +145,13 @@ class PayrollsExport implements FromView
                 }
             }
 
+            $row['gross_salary'] = $row['base_salary'] + $row['total_additions'];
+
             $totals['base_salary'] += $row['base_salary'] ?? 0;
             $totals['net_salary'] += $row['net_salary'] ?? 0;
             $totals['advance_wages'] += $row['advance_wages'] ?? 0;
             $totals['total_additions'] += $row['total_additions'] ?? 0;
+            $totals['gross_salary'] += $row['gross_salary'] ?? 0;
             $totals['total_deductions'] += $row['total_deductions'] ?? 0;
 
             foreach ($additionHeaders as $col) {

@@ -9,6 +9,7 @@
             <th>{{ __($col) }}</th>
             @endforeach
             <th>{{ __('Total Additions') }}</th>
+            <th>{{ __('Gross Salary') }}</th>
             @foreach($deductionColumns as $col)
             <th>{{ __($col) }}</th>
             @endforeach
@@ -32,6 +33,7 @@
             <td>{{ $row['additions'][$col] ?? 0 }}</td>
             @endforeach
             <td>{{ $row['total_additions'] }}</td>
+            <td>{{ $row['gross_salary'] ?? 0 }}</td>
 
             @foreach($deductionColumns as $col)
             <td>{{ $row['deductions'][$col] ?? 0 }}</td>
@@ -54,6 +56,7 @@
             <td style="font-weight: bold;">{{ $totals['additions'][$col] ?? 0 }}</td>
             @endforeach
             <td style="font-weight: bold;">{{ $totals['total_additions'] }}</td>
+            <td style="font-weight: bold;">{{ $totals['gross_salary'] ?? 0 }}</td>
 
             @foreach($deductionColumns as $col)
             <td style="font-weight: bold;">{{ $totals['deductions'][$col] ?? 0 }}</td>
