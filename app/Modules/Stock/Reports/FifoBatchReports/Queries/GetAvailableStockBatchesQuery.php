@@ -63,13 +63,12 @@ final class GetAvailableStockBatchesQuery implements GetAvailableStockBatchesQue
                 $totalBatches,
                 $filters->perPage,
                 $page,
-                ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath(), 'pageName' => 'reportPage']
+                ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath(), 'pageName' => 'page']
             );
          }else{
             $batches = $query->get();
          }
         return new StockBatchReportResult($batches, $totalBatches, $totalPrice);
-        return $query->get();
     }
 
     /**

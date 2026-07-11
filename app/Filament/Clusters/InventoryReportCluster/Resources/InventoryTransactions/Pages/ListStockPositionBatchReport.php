@@ -44,7 +44,7 @@ class ListStockPositionBatchReport extends ListRecords
                 : null,
             categoryId: $categoryId ? (int) $categoryId : null,
             perPage: 50,
-            page: $this->paginators['reportPage'] ?? 1,
+            page: $this->paginators['page'] ?? 1,
         );
 
         /** @var GetAvailableStockBatchesQueryInterface $query */
