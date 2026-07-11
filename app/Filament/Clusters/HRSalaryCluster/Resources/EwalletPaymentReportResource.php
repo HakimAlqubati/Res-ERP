@@ -40,9 +40,9 @@ class EwalletPaymentReportResource extends Resource
 
     protected static ?string $cluster = HRSalaryCluster::class;
 
-    protected static ?string $label = 'E-Wallet Sheet';
+    protected static ?string $label = 'eWallet Sheet';
 
-    protected static ?string $pluralLabel = 'E-Wallet Sheet';
+    protected static ?string $pluralLabel = 'eWallet Sheet';
 
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 

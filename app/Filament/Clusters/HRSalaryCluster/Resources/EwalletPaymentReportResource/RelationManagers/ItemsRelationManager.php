@@ -13,7 +13,7 @@ class ItemsRelationManager extends RelationManager
 {
     protected static string $relationship = 'items';
 
-    protected static ?string $title = 'E-Wallet Verified Sheet';
+    protected static ?string $title = 'eWallet Verified Sheet';
 
     // public function form(Form $form): Form
     // {
