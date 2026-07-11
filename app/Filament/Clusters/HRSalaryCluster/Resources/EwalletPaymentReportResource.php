@@ -79,7 +79,7 @@ class EwalletPaymentReportResource extends Resource
                     ->color('primary')
                     ->sortable()
                     ->alignCenter()
-                    ->summarize(Sum::make())
+                    ->summarize(Sum::make()->formatStateUsing(fn($state) => formatMoneyWithCurrency($state)))
                     ->formatStateUsing(fn($state)=>formatMoneyWithCurrency($state))
                     ,
                 TextColumn::make('employees_count')
@@ -92,9 +92,10 @@ class EwalletPaymentReportResource extends Resource
                     ->label('Created By')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
-                    ->dateTime()
+                    ->dateTime('Y-m-d H:i')
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->label('Generated At')
+                    ->toggleable(isToggledHiddenByDefault: false),
             ])
             ->filters([
 
@@ -102,21 +103,9 @@ class EwalletPaymentReportResource extends Resource
             ->filtersFormColumns(4)
 
             ->recordActions([
-                ViewAction::make(),
-                Action::make('export_excel')
-                    ->label('Export Excel')
-                    ->icon('heroicon-o-document-arrow-down')
-                    ->color('success')
-                    ->action(function (EwalletPaymentReport $record) {
-                        $monthName = Carbon::create()->month($record->month)->format('F');
-                        $fileName = "TnG_Payment_Report_{$monthName}_{$record->year}.xlsx";
-
-                        return Excel::download(
-                            new EwalletPaymentExport($record),
-                            $fileName
-                        );
-                    }),
-                DeleteAction::make(),
+                self::getExportExcelAction(Action::class),
+                self::getExportPdfAction(Action::class),
+                // DeleteAction::make(),
                 RestoreAction::make(),
                 ForceDeleteAction::make(),
             ])
@@ -130,10 +119,46 @@ class EwalletPaymentReportResource extends Resource
             ->defaultSort('created_at', 'desc');
     }
 
+    public static function getExportExcelAction(string $actionClass)
+    {
+        return $actionClass::make('export_excel')
+            ->label('Export Excel')
+            ->icon('heroicon-o-document-arrow-down')
+            ->color('success')
+            ->action(function (EwalletPaymentReport $record) {
+                $monthName = Carbon::create()->month($record->month)->format('F');
+                $fileName = "TnG_Payment_Report_{$monthName}_{$record->year}.xlsx";
+
+                return Excel::download(
+                    new EwalletPaymentExport($record),
+                    $fileName
+                );
+            });
+    }
+
+    public static function getExportPdfAction(string $actionClass)
+    {
+        return $actionClass::make('export_pdf')
+            ->label('Export PDF')
+            ->icon('heroicon-o-document-arrow-down')
+            ->color('danger')
+            ->action(function (EwalletPaymentReport $record) {
+                $record->load('items');
+                $pdf = \Mccarlosen\LaravelMpdf\Facades\LaravelMpdf::loadView('reports.hr.ewallet-payment-report-pdf', ['report' => $record]);
+                
+                $monthName = Carbon::create()->month($record->month)->format('F');
+                $fileName = "EWallet_Sheet_{$monthName}_{$record->year}.pdf";
+
+                return response()->streamDownload(function () use ($pdf) {
+                    echo $pdf->output();
+                }, $fileName);
+            });
+    }
+
     public static function getRelations(): array
     {
         return [
-            // \App\Filament\Clusters\HRSalaryCluster\Resources\EwalletPaymentReportResource\RelationManagers\ItemsRelationManager::class,
+            \App\Filament\Clusters\HRSalaryCluster\Resources\EwalletPaymentReportResource\RelationManagers\ItemsRelationManager::class,
         ];
     }
 

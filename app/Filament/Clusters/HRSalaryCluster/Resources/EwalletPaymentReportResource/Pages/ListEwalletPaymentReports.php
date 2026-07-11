@@ -21,7 +21,7 @@ class ListEwalletPaymentReports extends ListRecords
     {
         return [
             Action::make('generate_report')
-                ->label('Generate New Report')
+                ->label('Generate')
                 ->icon('heroicon-o-plus')
                 ->color('primary')
                 ->form([
