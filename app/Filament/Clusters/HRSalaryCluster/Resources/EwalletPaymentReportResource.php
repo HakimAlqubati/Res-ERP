@@ -3,22 +3,37 @@
 namespace App\Filament\Clusters\HRSalaryCluster\Resources;
 
 use App\Filament\Clusters\HRSalaryCluster;
-use App\Models\EwalletPaymentReport;
-use Filament\Schemas\Schema;
-use Filament\Resources\Resource;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Actions\ViewAction;
-use Filament\Actions\DeleteAction;
-use Filament\Pages\Enums\SubNavigationPosition;
-use Filament\Support\Icons\Heroicon;
 use App\Filament\Clusters\HRSalaryCluster\Resources\EwalletPaymentReportResource\Pages;
+use App\Models\EwalletPaymentReport;
+use App\Modules\HR\PayrollReports\Exports\EwalletPaymentExport;
+use Carbon\Carbon;
 use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ViewAction;
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Columns\Summarizers\Summarizer;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Maatwebsite\Excel\Facades\Excel;
 
 class EwalletPaymentReportResource extends Resource
 {
     protected static ?string $model = EwalletPaymentReport::class;
-    
+
     protected static ?string $slug = 'ewallet-payment-report';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::ClipboardDocumentList;
@@ -26,9 +41,11 @@ class EwalletPaymentReportResource extends Resource
     protected static ?string $cluster = HRSalaryCluster::class;
 
     protected static ?string $label = 'E-Wallet Sheet';
+
     protected static ?string $pluralLabel = 'E-Wallet Sheet';
 
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
     protected static ?int $navigationSort = 2;
 
     public static function form(Schema $schema): Schema
@@ -43,28 +60,34 @@ class EwalletPaymentReportResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('year')
+                    ->label('Year')
+                    ->sortable()
+                    ->toggleable()
+                    ->alignCenter()
+                    ->searchable()
+                    ,
                 TextColumn::make('month')
                     ->label('Month')
                     ->sortable()
-                    ->formatStateUsing(fn($state) => \Carbon\Carbon::create()->month($state)->format('F')),
-                TextColumn::make('year')
-                    ->label('Year')
-                    ->sortable(),
+                    ->toggleable()
+                    ->alignCenter()
+                    ->formatStateUsing(fn ($state) => Carbon::create()->month($state)->format('F')),
+                
                 TextColumn::make('total_amount')
-                    ->label('Total Amount (RM)')
-                    ->numeric(2)
-                    ->sortable(),
+                    ->label('Total Amount') 
+                    ->color('primary')
+                    ->sortable()
+                    ->alignCenter()
+                    ->summarize(Sum::make())
+                    ->formatStateUsing(fn($state)=>formatMoneyWithCurrency($state))
+                    ,
                 TextColumn::make('employees_count')
                     ->label('Employees Count')
-                    ->sortable(),
-                TextColumn::make('status')
-                    ->label('Status')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'pending' => 'warning',
-                        'exported' => 'success',
-                        default => 'gray',
-                    }),
+                    ->sortable()
+                    ->alignCenter()
+                    ,
+            
                 TextColumn::make('creator.name')
                     ->label('Created By')
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -74,27 +97,35 @@ class EwalletPaymentReportResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
-            ])
-            ->actions([
+
+                TrashedFilter::make()],FiltersLayout::Modal)
+            ->filtersFormColumns(4)
+
+            ->recordActions([
                 ViewAction::make(),
                 Action::make('export_excel')
                     ->label('Export Excel')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('success')
                     ->action(function (EwalletPaymentReport $record) {
-                        $monthName = \Carbon\Carbon::create()->month($record->month)->format('F');
+                        $monthName = Carbon::create()->month($record->month)->format('F');
                         $fileName = "TnG_Payment_Report_{$monthName}_{$record->year}.xlsx";
 
-                        return \Maatwebsite\Excel\Facades\Excel::download(
-                            new \App\Modules\HR\PayrollReports\Exports\EwalletPaymentExport($record), 
+                        return Excel::download(
+                            new EwalletPaymentExport($record),
                             $fileName
                         );
                     }),
                 DeleteAction::make(),
+                RestoreAction::make(),
+                ForceDeleteAction::make(),
             ])
             ->bulkActions([
-                //
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+                ]),
             ])
             ->defaultSort('created_at', 'desc');
     }
@@ -112,6 +143,14 @@ class EwalletPaymentReportResource extends Resource
             'index' => Pages\ListEwalletPaymentReports::route('/'),
             'view' => Pages\ViewEwalletPaymentReport::route('/{record}'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
     }
 
     public static function canCreate(): bool
