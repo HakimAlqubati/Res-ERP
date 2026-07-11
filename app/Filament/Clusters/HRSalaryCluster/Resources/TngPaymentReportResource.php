@@ -102,7 +102,7 @@ class TngPaymentReportResource extends Resource
                         }
                         return $query;
                     })
-            ], FiltersLayout::Modal)
+            ], FiltersLayout::AboveContent)
             ->filtersFormColumns(4)
             ->headerActions([
                 Action::make('export_excel')
