@@ -149,7 +149,6 @@ class TngPaymentReportResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return isHakimOrAdel();
-        return isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR();
+        return isSuperAdmin() || isSystemManager() || isFinanceManager();
     }
 }

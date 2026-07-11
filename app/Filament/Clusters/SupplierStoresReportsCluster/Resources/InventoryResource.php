@@ -116,14 +116,14 @@ class InventoryResource extends Resource
                 TextColumn::make('id')->sortable()->searchable()
                     ->label('ID')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('product.code')
-                    ->label('Product Code'),
+                    ->label('Product Code')->toggleable(),
                 TextColumn::make('product.name')
-                    ->label('Product'),
+                    ->label('Product')->toggleable(),
                 TextColumn::make('store.name')
-                    ->label('Store'),
+                    ->label('Store')->toggleable(),
                 TextColumn::make('movement_type_title')->alignCenter(true)
                     ->label('Movement Type')
-                    ->sortable(),
+                    ->sortable()->toggleable(),
 
                 TextColumn::make('quantity')
                     ->label('Qty')->alignCenter(true)
