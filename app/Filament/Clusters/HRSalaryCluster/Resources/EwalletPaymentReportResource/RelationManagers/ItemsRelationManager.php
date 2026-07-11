@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\HRSalaryCluster\Resources\EwalletPaymentReportRe
 
  
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -31,19 +32,30 @@ class ItemsRelationManager extends RelationManager
                 TextColumn::make('employee.name')
                     ->label('Employee')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ,
                 TextColumn::make('account_number')
                     ->label('Account Number')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable()
+                    ,
                 TextColumn::make('net_salary')
-                    ->label('Net Salary (RM)')
-                    ->numeric(2)
-                    ->sortable(),
+                    ->label('Net Salary')
+                    ->formatStateUsing(fn($state)=>formatMoneyWithCurrency($state))
+                    ->sortable()
+                    ->toggleable()
+                    ->summarize(Sum::make()->formatStateUsing(fn($state)=>formatMoneyWithCurrency($state)))
+                    ,
                 TextColumn::make('reward_name')
                     ->label('Reward Name')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable()
+                    ,
                 TextColumn::make('reward_description')
                     ->label('Reward Description')
+                    ->limit(50)
+                    ->toggleable()
                     ->limit(50),
             ])
             ->filters([

@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>E-Wallet Payment Report</title>
+    <title>eWallet Verified Sheet</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <style>
@@ -109,7 +109,7 @@
                 </td>
                 <td class="center-box">
                     <div class="comp">{{ settingWithDefault('company_name', 'Company Name') }}</div>
-                    <div class="title">E-Wallet Payment Report</div>
+                    <div class="title">eWallet Verified Sheet</div>
                 </td>
                 <td class="logoBox" style="text-align: right;">
                     @if(setting('company_logo'))
@@ -138,27 +138,27 @@
             <thead>
                 <tr>
                     <th style="width: 5%;">#</th>
-                    <th style="width: 25%;">Employee Name</th>
-                    <th style="width: 25%;">E-Wallet Account No.</th>
-                    <th style="width: 30%;">Reward Description</th>
+                    <th style="width: 25%;">eWallet Account No.</th>
+                    <th style="width: 25%;">Reward Name</th>
                     <th style="width: 15%;" class="text-right">Net Salary</th>
+                    <th style="width: 30%;">Reward Description</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($report->items as $index => $item)
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
-                    <td>{{ $item->reward_name }}</td>
                     <td>{{ $item->account_number ?? '-' }}</td>
-                    <td>{{ $item->reward_description }}</td>
+                    <td>{{ $item->reward_name }}</td>
                     <td class="text-right">{{ formatMoneyWithCurrency($item->net_salary) }}</td>
+                    <td>{{ $item->reward_description }}</td>
                 </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="4" class="text-right" style="font-weight: bold; padding: 10px;">Total</td>
-                    <td class="text-right" style="font-weight: bold; color: #0d7c66; padding: 10px;">{{ formatMoneyWithCurrency($report->total_amount) }}</td>
+                    <td colspan="3" class="text-right" style="font-weight: bold; padding: 10px;">Total</td>
+                    <td colspan="2" class="text-right" style="font-weight: bold; color: #0d7c66; padding: 10px;">{{ formatMoneyWithCurrency($report->total_amount) }}</td>
                 </tr>
             </tfoot>
         </table>

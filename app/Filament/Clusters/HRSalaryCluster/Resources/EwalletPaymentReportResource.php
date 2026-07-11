@@ -40,9 +40,14 @@ class EwalletPaymentReportResource extends Resource
 
     protected static ?string $cluster = HRSalaryCluster::class;
 
-    protected static ?string $label = 'eWallet Sheet';
+    protected static ?string $label = "eWallet Sheet";
 
-    protected static ?string $pluralLabel = 'eWallet Sheet';
+    protected static ?string $pluralLabel = "eWallet Sheet";
+    protected static ?string $pluralModelLabel = 'eWallet Sheet';
+
+    // Disable Filament's default title casing (which applies ucwords())
+    protected static bool $hasTitleCaseModelLabel = false;
+    protected static ?string $navigationLabel = 'eWallet Sheet';
 
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
