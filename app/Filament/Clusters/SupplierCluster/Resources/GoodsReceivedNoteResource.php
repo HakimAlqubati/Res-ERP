@@ -316,6 +316,10 @@ class GoodsReceivedNoteResource extends Resource
                         ->schema([
                             Repeater::make('grnDetails')->columnSpanFull()
                                 ->relationship()
+                                ->mutateRelationshipDataBeforeFillUsing(function (array $data): array {
+                                    $data['total_price'] = round((float) ($data['quantity'] ?? 0) * (float) ($data['price'] ?? 0), 2);
+                                    return $data;
+                                })
                                 ->label('Items')
                                 ->columns(6)
                                 ->schema([
