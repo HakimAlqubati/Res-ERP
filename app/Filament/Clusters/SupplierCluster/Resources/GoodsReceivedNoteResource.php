@@ -567,7 +567,8 @@ class GoodsReceivedNoteResource extends Resource
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
             ->recordActions([
-                EditAction::make()
+                self::getExportExcelAction(\Filament\Tables\Actions\Action::class),
+                Tables\Actions\EditAction::make()
                     ->visible(fn($record): bool => $record->status == GoodsReceivedNote::STATUS_CREATED),
                 // Tables\Actions\Action::make('Reject')
                 //     ->label('Reject')
@@ -720,7 +721,9 @@ class GoodsReceivedNoteResource extends Resource
 
                         return $record->status == GoodsReceivedNote::STATUS_APPROVED && !$record->is_purchase_invoice_created  &&
                             (count(array_intersect($userRoles, $allowedRoles)) > 0);
-                    }),
+                    })
+                    ->hidden()
+                    ,
 
             ])
             ->toolbarActions([
@@ -798,5 +801,21 @@ class GoodsReceivedNoteResource extends Resource
     public static function getGlobalSearchResultsLimit(): int
     {
         return 15;
+    }
+
+    public static function getExportExcelAction(string $actionClass)
+    {
+        return $actionClass::make('export_excel')
+            ->label('Export Excel')
+            ->icon('heroicon-o-document-arrow-down')
+            ->color('success')
+            ->action(function (GoodsReceivedNote $record) {
+                $fileName = "GRN_{$record->grn_number}.xlsx";
+
+                return \Maatwebsite\Excel\Facades\Excel::download(
+                    new \App\Exports\GoodsReceivedNoteExport($record),
+                    $fileName
+                );
+            });
     }
 }

@@ -97,7 +97,7 @@ class EwalletPaymentReportResource extends Resource
                     ->label('Created By')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
-                    ->dateTime('Y-m-d H:i')
+                    ->dateTime('d-m-Y H:i')
                     ->sortable()
                     ->label('Generated At')
                     ->toggleable(isToggledHiddenByDefault: false),

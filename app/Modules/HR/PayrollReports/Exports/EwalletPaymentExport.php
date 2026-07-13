@@ -34,7 +34,7 @@ class EwalletPaymentExport implements FromCollection, WithMapping, WithHeadings,
         $rewardDescription = substr($item->reward_description ?? '', 0, 200);
 
         return [
-            $item->account_number,
+            "'" . $item->account_number,
             $item->net_salary,
             $rewardName,
             $rewardDescription,
