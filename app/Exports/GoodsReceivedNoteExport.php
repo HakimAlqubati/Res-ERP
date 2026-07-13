@@ -3,13 +3,12 @@
 namespace App\Exports;
 
 use App\Models\GoodsReceivedNote;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithHeadings;
+use Illuminate\Contracts\View\View;
+use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithTitle;
 
-class GoodsReceivedNoteExport implements FromCollection, WithMapping, WithHeadings, ShouldAutoSize, WithTitle
+class GoodsReceivedNoteExport implements FromView, ShouldAutoSize, WithTitle
 {
     protected GoodsReceivedNote $grn;
 
@@ -18,43 +17,11 @@ class GoodsReceivedNoteExport implements FromCollection, WithMapping, WithHeadin
         $this->grn = $grn;
     }
 
-    public function collection()
+    public function view(): View
     {
-        return $this->grn->grnDetails()->with(['product', 'unit'])->get();
-    }
-
-    public function map($detail): array
-    {
-        return [
-            $this->grn->grn_number,
-            $this->grn->grn_date,
-            $this->grn->store?->name ?? '',
-            $this->grn->supplier?->name ?? '',
-            $detail->product?->code ?? '',
-            $detail->product?->name ?? '',
-            $detail->unit?->name ?? '',
-            $detail->package_size ?? '',
-            $detail->quantity ?? 0,
-            $detail->price ?? 0,
-            $detail->total_price ?? 0,
-        ];
-    }
-
-    public function headings(): array
-    {
-        return [
-            'GRN Number',
-            'GRN Date',
-            'Store',
-            'Supplier',
-            'Product Code',
-            'Product Name',
-            'Unit',
-            'Package Size',
-            'Quantity',
-            'Price',
-            'Total Price',
-        ];
+        return view('export.goods_received_note', [
+            'grn' => $this->grn
+        ]);
     }
 
     public function title(): string
