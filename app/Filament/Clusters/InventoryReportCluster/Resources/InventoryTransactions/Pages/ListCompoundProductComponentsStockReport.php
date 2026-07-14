@@ -39,6 +39,7 @@ class ListCompoundProductComponentsStockReport extends ListRecords
                         'autoScriptToLang' => true,
                         'autoLangToFont' => true,
                         'format' => 'A4',
+                        'tempDir' => storage_path('app/mpdf'),
                     ]);
                     $mpdf->WriteHTML($html);
 
