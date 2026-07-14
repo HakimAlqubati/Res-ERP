@@ -60,10 +60,14 @@ class AttendanceHandler
         }
 
         if (!$shiftInfo) {
-            if (!$this->config->isNoShiftAttendanceAllowed()) {
+            // التحقق: هل الموظف لديه ورديات مسندة إليه؟
+            // إذا كان لديه ورديات ولكن الوقت خارج نافذتها، لا نسمح بالتسجيل بدون شفت
+            $hasAssignedPeriods = $context->employee->employeePeriods->isNotEmpty();
+
+            if ($hasAssignedPeriods || !$this->config->isNoShiftAttendanceAllowed()) {
                 throw new NoShiftFoundException();
             }
-            // الإعداد مفعّل: نكمل بدون شيفت (period_id = null)
+            // الإعداد مفعّل والموظف بدون ورديات: نكمل بدون شيفت (period_id = null)
         } else {
             $context->setShiftInfo($shiftInfo);
         }
