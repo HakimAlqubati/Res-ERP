@@ -48,6 +48,10 @@ class ShiftResolver implements ShiftResolverInterface
         $matchingShifts = $this->getAllMatchingShifts($candidates, $time);
 
         if ($matchingShifts->isEmpty()) {
+            // Fallback: البحث عن بصمة دخول مفتوحة في ورديات الأيام القريبة
+            if ($repository) {
+                return $this->resolveFromOpenCheckIn($candidates, $employee, $repository, $time);
+            }
             return null;
         }
 
@@ -111,6 +115,40 @@ class ShiftResolver implements ShiftResolverInterface
         }
 
         return $matchingShifts;
+    }
+
+    /**
+     * Fallback: البحث عن بصمة دخول مفتوحة في الورديات المرشحة
+     * 
+     * يُستخدم عندما لا يجد النظام أي وردية مطابقة للنافذة الزمنية،
+     * لكن الموظف لديه بصمة دخول مفتوحة في وردية قريبة
+     */
+    private function resolveFromOpenCheckIn(
+        Collection $candidates,
+        Employee $employee,
+        AttendanceRepositoryInterface $repository,
+        Carbon $time
+    ): ?ShiftInfoDTO {
+        foreach ($candidates as $candidate) {
+            $period = $candidate['period'];
+            $date = $candidate['date'];
+
+            $openCheckIn = $repository->findOpenCheckIn(
+                $employee->id,
+                $period->id,
+                $date
+            );
+
+            if ($openCheckIn) {
+                $bounds = $this->calculateBounds($period, $date);
+                return $this->createShiftDTO([
+                    'candidate' => $candidate,
+                    'bounds' => $bounds,
+                ]);
+            }
+        }
+
+        return null;
     }
 
     /**
