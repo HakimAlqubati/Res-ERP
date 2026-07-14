@@ -571,8 +571,8 @@ class GoodsReceivedNoteResource extends Resource
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
             ->recordActions([
-                self::getExportExcelAction(\Filament\Tables\Actions\Action::class),
-                Tables\Actions\EditAction::make()
+                self::getExportExcelAction(Action::class),
+                EditAction::make()
                     ->visible(fn($record): bool => $record->status == GoodsReceivedNote::STATUS_CREATED),
                 // Tables\Actions\Action::make('Reject')
                 //     ->label('Reject')
