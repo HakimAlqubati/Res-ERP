@@ -29,6 +29,18 @@ class CompoundProductComponentsStockReportTable
                     )
                     ->placeholder('Select Store')
                     ->query(fn (Builder $q) => $q),
+                SelectFilter::make('category_id')
+                    ->label(__('lang.category'))
+                    ->searchable()
+                    ->options(function () {
+                        return \App\Models\Category::active()
+                            ->manufacturing()
+                            ->get()
+                            ->pluck('name', 'id')
+                            ->toArray();
+                    })
+                    ->placeholder('Select Category')
+                    ->query(fn (Builder $q) => $q),
 
                 SelectFilter::make('compound_product_id')
                     ->label('Compound Product')

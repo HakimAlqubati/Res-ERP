@@ -102,7 +102,7 @@
         }
     </style>
 
-    @if ($storeId && $compoundProductId)
+    @if ($storeId && ($compoundProductId || $categoryId))
         @if ($reportResult && $reportResult->count() > 0)
 
             <div id="reportContent">
@@ -115,6 +115,10 @@
                                 @if($compoundProduct)
                                     <p style="margin-top: 5px; font-weight: normal;">
                                          <strong>{{ $compoundProduct->code }} - {{ $compoundProduct->name }}</strong>
+                                    </p>
+                                @elseif($category)
+                                    <p style="margin-top: 5px; font-weight: normal;">
+                                         <strong>Category: {{ $category->name }}</strong>
                                     </p>
                                 @endif
                             </th>
@@ -136,30 +140,42 @@
                     </thead>
 
                     <tbody>
-                        @foreach ($reportResult as $component)
-                            <tr class="{{ $component['has_shortage'] ? 'shortage-row' : '' }}">
-                                <td>{{ $component['product_code'] }}</td>
-                                <td>{{ $component['product_name'] }}</td>
-                                <td>{{ $component['unit_name'] ?? '-' }}</td>
-                                <td>{{ $component['recipe_quantity'] }}</td>
-                                <td>{{ $component['waste_percentage'] }}%</td>
-                                <td>{{ formatQunantity($component['required_quantity_for_one_unit']) }}</td>
-                                <td style="font-weight: 600;" class="{{ $component['has_shortage'] ? 'text-danger-600 dark:text-danger-400' : '' }}">
-                                    {{ formatQunantity($component['available_balance']) }}
-                                </td>
-                            </tr>
+                        @php
+                            $groupedComponents = $reportResult->groupBy('compound_product_id');
+                        @endphp
+                        @foreach ($groupedComponents as $compoundId => $componentsGroup)
+                            @if(!$compoundProduct)
+                                <tr class="product-group-row">
+                                    <td colspan="7">
+                                        {{ $componentsGroup->first()['compound_product_code'] }} - {{ $componentsGroup->first()['compound_product_name'] }}
+                                    </td>
+                                </tr>
+                            @endif
+                            @foreach ($componentsGroup as $component)
+                                <tr class="{{ $component['has_shortage'] ? 'shortage-row' : '' }}">
+                                    <td>{{ $component['product_code'] }}</td>
+                                    <td>{{ $component['product_name'] }}</td>
+                                    <td>{{ $component['unit_name'] ?? '-' }}</td>
+                                    <td>{{ $component['recipe_quantity'] }}</td>
+                                    <td>{{ $component['waste_percentage'] }}%</td>
+                                    <td>{{ formatQunantity($component['required_quantity_for_one_unit']) }}</td>
+                                    <td style="font-weight: 600;" class="{{ $component['has_shortage'] ? 'text-danger-600 dark:text-danger-400' : '' }}">
+                                        {{ formatQunantity($component['available_balance']) }}
+                                    </td>
+                                </tr>
+                            @endforeach
                         @endforeach
                     </tbody>
                 </table>
             </div>
         @else
             <div class="please_select_message_div text-center">
-                <h1 class="please_select_message_text">No components found for this compound product.</h1>
+                <h1 class="please_select_message_text">No components found for this selection.</h1>
             </div>
         @endif
     @else
         <div class="please_select_message_div text-center">
-            <h1 class="please_select_message_text">Please select a Store and a Compound Product</h1>
+            <h1 class="please_select_message_text">Please select a Store, and either a Category or a Compound Product</h1>
         </div>
     @endif
 
