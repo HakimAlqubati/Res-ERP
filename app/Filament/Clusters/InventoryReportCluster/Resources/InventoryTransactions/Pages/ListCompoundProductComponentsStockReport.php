@@ -17,7 +17,36 @@ class ListCompoundProductComponentsStockReport extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [];
+        return [
+            \Filament\Actions\Action::make('export_pdf')
+                ->label('Export to PDF')
+                ->icon('heroicon-o-document-arrow-down')
+                ->color('danger')
+                ->action(function () {
+                    $data = $this->getViewData();
+
+                    if (empty($data['reportResult']) || $data['reportResult']->isEmpty()) {
+                        \Filament\Notifications\Notification::make()
+                            ->title('No data to export')
+                            ->warning()
+                            ->send();
+                        return;
+                    }
+
+                    $html = view('filament.pages.inventory-reports.compound-product-components-stock-report-pdf', $data)->render();
+
+                    $mpdf = new \Mpdf\Mpdf([
+                        'autoScriptToLang' => true,
+                        'autoLangToFont' => true,
+                        'format' => 'A4',
+                    ]);
+                    $mpdf->WriteHTML($html);
+
+                    return response()->streamDownload(function () use ($mpdf) {
+                        echo $mpdf->Output('', 'S');
+                    }, 'recipe-ingredients-stock-report.pdf');
+                }),
+        ];
     }
 
     protected function getViewData(): array
