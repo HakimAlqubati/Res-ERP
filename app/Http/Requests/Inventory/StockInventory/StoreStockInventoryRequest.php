@@ -45,7 +45,7 @@ class StoreStockInventoryRequest extends FormRequest
             'details.*.unit_id' => ['required', 'integer', 'exists:units,id'],
             'details.*.physical_quantity' => ['required', 'numeric', 'min:0'],
             'details.*.system_quantity' => ['required', 'numeric'],
-            'details.*.package_size' => ['required', 'numeric', 'min:0.01'],
+            'details.*.package_size' => ['sometimes', 'numeric', 'min:0.01'],
             'details.*.is_adjustmented' => ['sometimes', 'boolean'],
         ];
     }
@@ -89,20 +89,24 @@ class StoreStockInventoryRequest extends FormRequest
                     );
                 }
 
-                // Validate unit_id, package_size and product_id match UnitPrice
-                if (isset($detail['package_size'])) {
-                    $unitPriceExists = \App\Models\UnitPrice::where('product_id', $detail['product_id'])
-                        ->where('unit_id', $detail['unit_id'])
-                        ->where('package_size', $detail['package_size'])
-                        ->exists();
+                // Fetch the real package_size from UnitPrice
+                $unitPrice = \App\Models\UnitPrice::where('product_id', $detail['product_id'])
+                    ->where('unit_id', $detail['unit_id'])
+                    ->first();
 
-                    if (!$unitPriceExists) {
-                        $validator->errors()->add(
-                            "details.{$index}.unit_id",
-                            "Product '{$productName}' (Unit: {$unitName}): The combination of unit and package size does not match the product's unit prices."
-                        );
-                    }
+                if ($unitPrice) {
+                    $details[$index]['package_size'] = $unitPrice->package_size;
+                } else {
+                    $validator->errors()->add(
+                        "details.{$index}.unit_id",
+                        "Product '{$productName}' (Unit: {$unitName}): No unit price found for this product and unit combination."
+                    );
                 }
+            }
+
+            // Merge the updated details (with fetched package_size) back into the request
+            if (empty($validator->errors()->all())) {
+                $this->merge(['details' => $details]);
             }
         });
     }
@@ -126,7 +130,6 @@ class StoreStockInventoryRequest extends FormRequest
             'details.*.unit_id.exists' => 'The selected unit does not exist',
             'details.*.physical_quantity.required' => 'The physical quantity is required',
             'details.*.physical_quantity.min' => 'The physical quantity must be zero or greater',
-            'details.*.package_size.required' => 'The package size is required',
             'details.*.package_size.min' => 'The package size must be greater than zero',
         ];
     }
