@@ -137,8 +137,8 @@
         <table class="data-table" width="100%">
             <thead>
                 <tr>
-                    <th style="width: 5%;">#</th>
-                    <th style="width: 25%;">eWallet Account No.</th>
+                    <th style="width: 6%;">#</th>
+                    <th style="width: 24%;">eWallet Account No.</th>
                     <th style="width: 25%;">Reward Name</th>
                     <th style="width: 15%;" class="text-right">Net Salary</th>
                     <th style="width: 30%;">Reward Description</th>
