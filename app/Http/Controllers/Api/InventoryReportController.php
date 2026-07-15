@@ -63,7 +63,7 @@ class InventoryReportController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => "You are not authorized to access this report",
-                ],403);
+                ]);
             }
         }
         $productId = $request->product_id ?? null;
