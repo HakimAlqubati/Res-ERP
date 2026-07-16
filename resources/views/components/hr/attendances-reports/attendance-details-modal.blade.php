@@ -18,7 +18,7 @@
              <thead class="bg-gray-100">
                  <tr>
                      <th class="border border-gray-400 px-3 py-2 text-center w-12">#</th>
-                     <th class="border border-gray-400 px-3 py-2 text-center w-1/3">{{ __('Branch') }}</th>
+                     <!-- <th class="border border-gray-400 px-3 py-2 text-center w-1/3">{{ __('Branch') }}</th> -->
                      <th class="border border-gray-400 px-3 py-2 text-center w-1/3">{{ __('Check-in') }}</th>
                      <th class="border border-gray-400 px-3 py-2 text-center w-1/3">{{ __('Check-out') }}</th>
                      <th class="border border-gray-400 px-3 py-2 text-center w-1/3">{{ __('Total Hours') }}</th>
@@ -35,9 +35,9 @@
                          {{ $loop->iteration }}
                      </td>
                      @endif
-                     <td class="border border-gray-400 px-3 py-2 text-center">
+                     <!-- <td class="border border-gray-400 px-3 py-2 text-center">
                          {{ $attendance['branch_name'][$i] ?? '-' }}
-                     </td>
+                     </td> -->
                      <td class="border border-gray-400 px-3 py-2 text-center">
                          {{ $attendance['checkins'][$i] ?? '-' }}
                      </td>
@@ -53,7 +53,7 @@
              </tbody>
              <tfoot>
                  <tr class="bg-gray-50 font-bold">
-                     <td colspan="3" class="border border-gray-400 px-3 py-2 text-right">
+                     <td colspan="2" class="border border-gray-400 px-3 py-2 text-right">
                          {{ __('Total Hours:') }}
                      </td>
                      <td class="border border-gray-400 px-3 py-2 text-center">
