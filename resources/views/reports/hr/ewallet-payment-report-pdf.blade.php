@@ -127,7 +127,7 @@
                 <td style="width: 25%; font-weight: bold; color: #0d7c66;">{{ formatMoneyWithCurrency($report->total_amount) }}</td>
             </tr>
             <tr>
-                <td><strong>Employees Count:</strong></td>
+                <td><strong>Staffs Count:</strong></td>
                 <td>{{ $report->employees_count }}</td>
                 <td><strong>Generated On:</strong></td>
                 <td>{{ now()->format('d/m/Y H:i') }}</td>

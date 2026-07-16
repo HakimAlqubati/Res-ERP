@@ -152,7 +152,7 @@ class EwalletPaymentReportResource extends Resource
                 $pdf = \Mccarlosen\LaravelMpdf\Facades\LaravelMpdf::loadView('reports.hr.ewallet-payment-report-pdf', ['report' => $record]);
                 
                 $monthName = Carbon::create()->month($record->month)->format('F');
-                $fileName = "EWallet_Sheet_{$monthName}_{$record->year}.pdf";
+                $fileName = "eWallet_Sheet_{$monthName}_{$record->year}.pdf";
 
                 return response()->streamDownload(function () use ($pdf) {
                     echo $pdf->output();

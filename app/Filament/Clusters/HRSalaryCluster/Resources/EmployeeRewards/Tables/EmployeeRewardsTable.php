@@ -31,7 +31,7 @@ class EmployeeRewardsTable
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('employee.name')
-                    ->label('Employee')
+                    ->label(__('lang.employee'))
                     ->searchable()
                     ->sortable(),
 
@@ -42,7 +42,7 @@ class EmployeeRewardsTable
 
                 TextColumn::make('reward_amount')
                     ->label('Amount')
-                    ->money('USD')
+                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->sortable()
                     ->alignCenter(),
 
@@ -77,7 +77,7 @@ class EmployeeRewardsTable
                     ->alignCenter(),
 
                 TextColumn::make('date')
-                    ->date()
+                    ->date('d-m-Y')
                     ->sortable()
                     ->toggleable(),
 

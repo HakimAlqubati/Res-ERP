@@ -1179,4 +1179,6 @@ return [
     'assign_shifts_description' => 'You can assign new shifts for this branch. If left empty, the employee will have no shift.',
     'emergency_contact' => 'Emergency Contact',
     'kinship' => 'Kinship',
+    'rewards' => 'Rewards',
+    'reward' => 'Reward',
 ];
