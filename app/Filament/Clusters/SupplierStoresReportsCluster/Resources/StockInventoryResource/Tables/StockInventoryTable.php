@@ -28,9 +28,13 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryR
 use App\Models\Product;
 use App\Models\StockInventory;
 use App\Models\Store;
+use App\Exports\StockInventoriesExport;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Database\Eloquent\Collection;
 use App\Services\MultiProductsInventoryService;
 use App\Services\Stock\StockInventory\InventoryProductCacheService;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Support\Enums\FontWeight;
@@ -146,6 +150,16 @@ class StockInventoryTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('export_excel')
+                        ->label('Export Excel')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->action(function (Collection $records) {
+                            return Excel::download(new StockInventoriesExport($records), 'stock_inventories.xlsx');
+                        })
+                        ->deselectRecordsAfterCompletion()
+                        ->visible(fn()=>isHakimOrAdel())
+                        ,
                     DeleteBulkAction::make()
                         ->visible(fn(): bool => StockInventoryResource::canDeleteAny()),
                         RestoreBulkAction::make()
