@@ -32,6 +32,7 @@ class FifoAllocationMapper
         $notes = $this->buildNotes($batch, $deductQty, $price, $targetUnit, $sourceModel);
 
         return [
+            'product_id' => $batch->product_id,
             // معرفات الحركة
             'transaction_id' => $batch->id,
             'store_id' => $storeId,

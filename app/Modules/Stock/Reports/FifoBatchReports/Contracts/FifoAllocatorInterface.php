@@ -61,4 +61,16 @@ interface FifoAllocatorInterface
         int $unitId,
         int $storeId
     ): float;
+
+    /**
+     * تخصيص كميات لعدة منتجات دفعة واحدة (استعلام SQL واحد).
+     *
+     * @param  array<int, array{product_id: int, unit_id: int, qty: float}>  $items
+     * @return array<int, array{status: string, allocations?: array, message?: string}>
+     */
+    public function allocateMany(
+        array $items,
+        int $storeId,
+        ?Model $sourceModel = null
+    ): array;
 }

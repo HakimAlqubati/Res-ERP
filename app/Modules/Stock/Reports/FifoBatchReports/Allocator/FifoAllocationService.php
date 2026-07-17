@@ -89,6 +89,86 @@ final class FifoAllocationService implements FifoAllocatorInterface
         return $this->sumAvailableInTargetUnit($batches, $targetUnit);
     }
 
+    /**
+     * تخصيص كميات لعدة منتجات دفعة واحدة (استعلام SQL واحد بدلاً من N استعلام).
+     *
+     * @param  array<int, array{product_id: int, unit_id: int, qty: float}>  $items
+     * @return array<int, array{status: string, allocations?: array, message?: string}>
+     */
+    public function allocateMany(
+        array $items,
+        int $storeId,
+        ?Model $sourceModel = null
+    ): array {
+        if (empty($items)) {
+            return [];
+        }
+
+        $productIds = array_unique(array_column($items, 'product_id'));
+
+        // 1. جلب كل الوحدات المطلوبة في استعلام واحد (بدلاً من N استعلام)
+        $unitIds = array_unique(array_column($items, 'unit_id'));
+        $allUnitPrices = UnitPrice::whereIn('product_id', $productIds)
+            ->whereIn('unit_id', $unitIds)
+            ->with('unit')
+            ->get()
+            ->keyBy(fn (UnitPrice $up) => $up->product_id . '-' . $up->unit_id);
+
+        // 2. جلب كل الباتشات المتاحة لجميع المنتجات في استعلام SQL واحد
+        $allBatches = $this->stockRepository->getAvailableStockBatches(
+            new StockBatchFilterDTO(storeId: $storeId, productIds: $productIds, perPage: null)
+        );
+
+        // 3. تجميع الباتشات حسب المنتج
+        $batchesByProduct = $allBatches->groupBy('product_id');
+
+        // 4. تخصيص لكل منتج من الباتشات المجمعة
+        $results = [];
+        foreach ($items as $item) {
+            $productId = (int) $item['product_id'];
+            $unitId    = (int) $item['unit_id'];
+            $qty       = (float) $item['qty'];
+
+            $key = $productId . '-' . $unitId;
+            $targetUnit = $allUnitPrices->get($key);
+
+            if (! $targetUnit) {
+                $results[$productId] = [
+                    'status'  => 'error',
+                    'message' => "❌ Unit (ID: {$unitId}) not found for product (ID: {$productId})",
+                ];
+                continue;
+            }
+
+            $productBatches = $batchesByProduct->get($productId, collect());
+            $availableQty = $this->sumAvailableInTargetUnit($productBatches, $targetUnit);
+
+            if ($qty > $availableQty) {
+                $productName = $targetUnit->product->name ?? 'Unknown Product';
+                $unitName    = $targetUnit->unit->name ?? 'Unknown Unit';
+                $results[$productId] = [
+                    'status'  => 'error',
+                    'message' => "❌ Requested quantity ({$qty} {$unitName}) exceeds available inventory ({$availableQty}) for product: {$productName}",
+                ];
+                continue;
+            }
+
+            try {
+                $results[$productId] = [
+                    'status'      => 'success',
+                    'allocations' => $this->walkBatches($productBatches, $qty, $targetUnit, $unitId, $storeId, $sourceModel),
+                ];
+            } catch (\Exception $e) {
+                $results[$productId] = [
+                    'status'  => 'error',
+                    'message' => $e->getMessage(),
+                ];
+            }
+        }
+
+        return $results;
+    }
+
     // ─────────────────────────────────────────────
     //  Core Allocation Logic
     // ─────────────────────────────────────────────
