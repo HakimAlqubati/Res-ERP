@@ -467,6 +467,9 @@ class InventoryResource extends Resource
             ->unique()
             ->values();
 
+            if(isHakim()){
+                $manufacturingStoreIds[] = 1;
+            }
         return Store::active()
             ->whereIn('id', $manufacturingStoreIds)
             ->get(['id', 'name'])
