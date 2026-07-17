@@ -66,6 +66,7 @@ class StockInventoryTable
                 TextColumn::make('closing_stock_value')
                     ->label('Closing Stock Value')
                     ->sortable(false)
+                    ->state(fn($record) => (float) ($record->closing_stock_value ?? 0))
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->toggleable()
                     ->summarize(
