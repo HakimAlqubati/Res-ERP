@@ -270,12 +270,12 @@ class SalarySlipReport
     public function json($payrollId)
     {
         $data = $this->getData($payrollId);
-        if (isStuff() &&  $data['payroll']->status !== Payroll::STATUS_APPROVED) {
-            return response()->json([
-                'success' => false,
-                'message' => __('lang.cannot_view_unapproved_salary_slip')
-            ]);
-        }
+        // if (isStuff() &&  $data['payroll']->status !== Payroll::STATUS_APPROVED) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => __('lang.cannot_view_unapproved_salary_slip')
+        //     ]);
+        // }
         return response()->json([
             'success' => true,
             'data' => $data,
