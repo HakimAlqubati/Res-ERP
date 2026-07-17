@@ -124,10 +124,12 @@ Route::get('/testAllocateFifoNew', function (Request $request, FifoAllocatorInte
     $storeId   = (int) ($request->store_id ?? 1);
 
     // دعم عدة منتجات: ?product_ids=25,30,42  أو منتج واحد: ?product_id=25
-    $productIds = $request->product_ids
-        ? array_map('intval', explode(',', $request->product_ids))
-        : [(int) ($request->product_id ?? 25)];
+    // $productIds = $request->product_ids
+    //     ? array_map('intval', explode(',', $request->product_ids))
+    //     : [(int) ($request->product_id ?? 25)];
 
+    $productIds = range(1, 100);
+    
     // بناء مصفوفة items لـ allocateMany
     $items = array_map(fn (int $pid) => [
         'product_id' => $pid,
