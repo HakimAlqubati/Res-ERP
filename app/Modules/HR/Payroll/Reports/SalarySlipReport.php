@@ -240,12 +240,12 @@ class SalarySlipReport
     {
         $data = $this->getData($payrollId);
         $payroll = $data['payroll'];
-        if (isStuff() &&  $payroll->status !== Payroll::STATUS_APPROVED) {
-            return response()->json([
-                'success' => false,
-                'message' => __('lang.cannot_view_unapproved_salary_slip')
-            ]);
-        }
+        // if (isStuff() &&  $payroll->status !== Payroll::STATUS_APPROVED) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => __('lang.cannot_view_unapproved_salary_slip')
+        //     ]);
+        // }
         $pdf = LaravelMpdf::loadView('reports.hr.payroll.salary-slip-pdf', $data);
 
         $filename = sprintf(
