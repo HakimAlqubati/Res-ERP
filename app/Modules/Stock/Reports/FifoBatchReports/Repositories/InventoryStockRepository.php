@@ -7,7 +7,7 @@ namespace App\Modules\Stock\Reports\FifoBatchReports\Repositories;
 use App\Models\UnitPrice;
 use App\Modules\Stock\Reports\FifoBatchReports\Contracts\InventoryStockRepositoryInterface;
 use App\Modules\Stock\Reports\FifoBatchReports\DataTransferObjects\StockBatchFilterDTO;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +16,7 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
 {
     private const TABLE = 'inventory_transactions';
 
-    public function getAvailableStockBatches(StockBatchFilterDTO $filters): Collection|LengthAwarePaginator
+    public function getAvailableStockBatches(StockBatchFilterDTO $filters): Collection|Paginator
     {
         $stockBatches = $this->stockBatchesSubquery($filters);
 
@@ -56,7 +56,7 @@ final class InventoryStockRepository implements InventoryStockRepositoryInterfac
         $query = $query->orderBy('product_id', 'asc')->orderBy('id');
 
         if ($filters->wantsPagination()) {
-            return $query->paginate($filters->perPage);
+            return $query->simplePaginate($filters->perPage);
         }
 
         return $query->get();
