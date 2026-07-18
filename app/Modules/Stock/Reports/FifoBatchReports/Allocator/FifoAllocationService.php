@@ -104,6 +104,9 @@ final class FifoAllocationService implements FifoAllocatorInterface
             return [];
         }
 
+        // تحقق ذكي من أن كل المنتجات تملك أرصدة كافية (يرمي ValidationException لو فيه نقص)
+        app(\App\Modules\Stock\Actions\Allocations\ValidateStockForAllocationAction::class)->execute($items, $storeId);
+
         $productIds = array_unique(array_column($items, 'product_id'));
 
         // 1. جلب كل الوحدات المطلوبة في استعلام واحد (بدلاً من N استعلام)
