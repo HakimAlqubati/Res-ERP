@@ -37,6 +37,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -71,10 +72,34 @@ class DetailsRelationManager extends RelationManager
                 TextColumn::make('physical_quantity')
                     ->label('Physical Qty')
                     ->alignCenter(true)->toggleable()->sortable(),
+                TextColumn::make('total_price')
+                    ->label('Total Price')
+                    ->alignCenter(true)->toggleable()
+                    ->getStateUsing(function ($record) {
+                        $unitPrice = getUnitPrice($record->product_id, $record->unit_id) ?? 0;
+                        $physicalQty = $record->physical_quantity ?? 0;
+                        return number_format((float)($physicalQty * $unitPrice), 2);
+                    })
+                    ->formatStateUsing(fn($state)=> formatMoneyWithCurrency($state))
+                    ->summarize(
+                        \Filament\Tables\Columns\Summarizers\Summarizer::make()
+                            ->using(function (\Illuminate\Database\Query\Builder $query) {
+                                $records = $query->get();
+                                $sum = 0;
+                                foreach ($records as $record) {
+                                    $unitPrice = getUnitPrice($record->product_id, $record->unit_id) ?? 0;
+                                    $sum += ($record->physical_quantity ?? 0) * $unitPrice;
+                                }
+                                return $sum;
+                            })
+                            ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
+                    ),
                 TextColumn::make('difference')->alignCenter(true)->toggleable()->sortable(),
                 IconColumn::make('is_adjustmented')->boolean()->alignCenter(true)->label(__('stock.is_adjustmented'))
                     ->toggleable()->sortable(),
-                TextColumn::make('remaining_quantity')->label('Real Qty in Stock')
+                TextColumn::make('remaining_quantity')
+                ->hidden()
+                ->label('Real Qty in Stock')
                     ->alignCenter(true)
                     ->getStateUsing(function ($record) {
                         $remQty = MultiProductsInventoryService::quickReport($this->ownerRecord->store_id, $record->product_id, $record->unit_id)[0][0]['remaining_qty'] ?? 0;

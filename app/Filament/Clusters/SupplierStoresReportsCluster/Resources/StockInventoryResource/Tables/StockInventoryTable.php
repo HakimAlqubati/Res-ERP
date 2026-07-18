@@ -66,13 +66,27 @@ class StockInventoryTable
                 TextColumn::make('closing_stock_value')
                     ->label('Closing Stock Value')
                     ->sortable(false)
-                    ->state(fn($record) => (float) ($record->closing_stock_value ?? 0))
+                    ->state(function($record) {
+                        $sum = 0;
+                        foreach ($record->details as $detail) {
+                            $unitPrice = getUnitPrice($detail->product_id, $detail->unit_id) ?? 0;
+                            $sum += ($detail->physical_quantity ?? 0) * $unitPrice;
+                        }
+                        return $sum;
+                    })
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->toggleable()
                     ->summarize(
                         Summarizer::make()
                             ->using(function (Table $table) {
-                                $total = $table->getRecords()->sum(fn($record) => $record->closing_stock_value);
+                                $total = $table->getRecords()->sum(function($record) {
+                                    $sum = 0;
+                                    foreach ($record->details as $detail) {
+                                        $unitPrice = getUnitPrice($detail->product_id, $detail->unit_id) ?? 0;
+                                        $sum += ($detail->physical_quantity ?? 0) * $unitPrice;
+                                    }
+                                    return $sum;
+                                });
                                 return is_numeric($total) ? formatMoneyWithCurrency($total) : $total;
                             })
                     )
@@ -145,6 +159,7 @@ class StockInventoryTable
                         ->visible(fn($record)=> (isSuperAdmin()
                         && $record->finalized
                         ))
+                        ->hidden()
                         // ->visible(fn()=>isHakimOrAdel())
                         ->url(fn($record): string => StockInventoryResource::getUrl('value-details', ['record' => $record])),
                 // ])
