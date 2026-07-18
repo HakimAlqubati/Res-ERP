@@ -78,7 +78,7 @@ class DetailsRelationManager extends RelationManager
                     ->getStateUsing(function ($record) {
                         $unitPrice = getUnitPrice($record->product_id, $record->unit_id) ?? 0;
                         $physicalQty = $record->physical_quantity ?? 0;
-                        return number_format((float)($physicalQty * $unitPrice), 2);
+                        return (float)($physicalQty * $unitPrice);
                     })
                     ->formatStateUsing(fn($state)=> formatMoneyWithCurrency($state))
                     ->summarize(
