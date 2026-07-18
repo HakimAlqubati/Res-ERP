@@ -57,7 +57,13 @@ final class ValidateStockForAllocationAction
             $requiredQuantitiesInPieces[$productId] += $qtyInPieces;
         }
 
-        // 2. جلب الأرصدة المتاحة من Repository التجميعي السريع جداً
+        // 2. جلب الأسماء الأصلية للمنتجات
+        $productNames = \App\Models\Product::withTrashed()
+            ->whereIn('id', $productIds)
+            ->pluck('name', 'id')
+            ->toArray();
+
+        // 3. جلب الأرصدة المتاحة من Repository التجميعي السريع جداً
         /** @var StockBalanceRepositoryInterface $stockBalanceRepo */
         $stockBalanceRepo = app(StockBalanceRepositoryInterface::class);
         $filters = new StockBalanceFilterDTO(
@@ -68,32 +74,30 @@ final class ValidateStockForAllocationAction
 
         $shortages = [];
 
-        // 3. التحقق من الكميات
+        // 4. التحقق من الكميات
         foreach ($requiredQuantitiesInPieces as $productId => $requiredPieces) {
             $balanceModel = $balances->get($productId);
             $availablePieces = 0.0;
-            $productName = "Product ID #{$productId}";
-
+            
             if ($balanceModel) {
                 $availablePieces = (float) ($balanceModel->total_in ?? 0) - (float) ($balanceModel->total_out ?? 0);
-                $productName = $balanceModel->name ?? $productName;
             }
 
-            // استخدام دالة التقريب لتفادي مشاكل الأرقام العشرية (Floating Point Precision)
+            // استخدام دالة التقريب لتفادي مشاكل الأرقام العشرية
             if (round($availablePieces, 4) < round($requiredPieces, 4)) {
-                $shortages[] = $productName;
+                $name = $productNames[$productId] ?? "Product #{$productId}";
+                $shortages[] = $name;
             }
         }
 
-        // 4. إذا كان هناك عجز، نرمي استثناء يحتوي على أسماء المنتجات الناقصة
+        // 5. إذا كان هناك عجز، نرمي استثناء يحتوي على أسماء المنتجات الناقصة
         if (! empty($shortages)) {
             $count = count($shortages);
             $displayed = array_slice($shortages, 0, 2);
-            $message = "الكمية المتوفرة في المخزون لا تكفي لـ : " . implode(", ", $displayed);
+            $message = "Insufficient stock for: " . implode(", ", $displayed);
             
             if ($count > 2) {
-                $remaining = $count - 2;
-                $message .= " (و {$remaining} أصناف أخرى)";
+                $message .= " (and " . ($count - 2) . " more)";
             }
 
             throw ValidationException::withMessages(['stock' => $message]);
