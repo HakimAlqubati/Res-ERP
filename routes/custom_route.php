@@ -20,6 +20,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\PurchaseInvoice;
 use App\Models\StockIssueOrder;
+use App\Models\UnitPrice;
 use App\Modules\Stock\Reports\FifoBatchReports\Contracts\FifoAllocatorInterface;
 use App\Services\FifoMethodService;
 use App\Services\FixFifo\FifoAllocatorService;
@@ -128,7 +129,13 @@ Route::get('/testAllocateFifoNew', function (Request $request, FifoAllocatorInte
     //     ? array_map('intval', explode(',', $request->product_ids))
     //     : [(int) ($request->product_id ?? 25)];
 
-    $productIds = range(1, 100);
+    // $productIds = range(1, 15);
+    $productIds = UnitPrice::where('unit_id',1)
+    ->join('products','products.id','unit_prices.product_id')
+    ->join('categories','categories.id','products.category_id')
+    ->where('categories.is_manafacturing',0)
+    ->where('products.active',1)
+    ->pluck('product_id')->toArray();
     
     // بناء مصفوفة items لـ allocateMany
     $items = array_map(fn (int $pid) => [
