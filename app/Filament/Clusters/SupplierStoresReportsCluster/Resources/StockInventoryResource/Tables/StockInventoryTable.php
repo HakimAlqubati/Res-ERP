@@ -159,7 +159,7 @@ class StockInventoryTable
                             return Excel::download(new StockInventoriesExport($records), 'stock_inventories.xlsx');
                         })
                         ->deselectRecordsAfterCompletion()
-                        ->visible(fn()=>isHakimOrAdel())
+                        ->visible(fn()=>isSuperAdmin())
                         ,
                     DeleteBulkAction::make()
                         ->visible(fn(): bool => StockInventoryResource::canDeleteAny()),
