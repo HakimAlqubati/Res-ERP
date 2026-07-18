@@ -38,7 +38,7 @@ final class DeductCompositeProductComponentsAction
         }
 
         // Validate stock for this specific composite product
-        app(ValidateStockForManufacturingAction::class)->execute($order, collect([$detail->product_id => $components]));
+        // app(ValidateStockForManufacturingAction::class)->execute($order, collect([$detail->product_id => $components]));
 
         $outboundTransactions = [];
         $now = now();
@@ -48,7 +48,10 @@ final class DeductCompositeProductComponentsAction
         
         $allComponentsAllocations = [];
         
-        // 🟢 1. سحب الكميات بالكامل لكل مكون بمرة واحدة (أداء عالي)
+        // 🟢 1. سحب الكميات بالكامل لكل المكونات في استعلامين فقط (أداء فائق)
+        $itemsToAllocate = [];
+        $componentsQtyMap = [];
+        
         foreach ($components as $component) {
             $totalQtyToDeduct = $this->calculateRequiredQuantity(
                 (float) $component->quantity,
@@ -58,17 +61,27 @@ final class DeductCompositeProductComponentsAction
 
             if ($totalQtyToDeduct <= 0) continue;
 
-            $allocations = (new FifoMethodService($order))->getAllocateFifo(
-                (int) $component->product_id,
-                (int) $component->unit_id,
-                (float) $totalQtyToDeduct,
-                (int) $order->store_id
-            );
+            $itemsToAllocate[] = [
+                'product_id' => (int) $component->product_id,
+                'unit_id'    => (int) $component->unit_id,
+                'qty'        => (float) $totalQtyToDeduct,
+            ];
+            
+            $componentsQtyMap[$component->id] = $totalQtyToDeduct;
+        }
+
+        $fifoAllocator = app(\App\Modules\Stock\Reports\FifoBatchReports\Contracts\FifoAllocatorInterface::class);
+        $batchAllocations = $fifoAllocator->allocateMany($itemsToAllocate, (int) $order->store_id, $order);
+
+        foreach ($components as $component) {
+            if (!isset($componentsQtyMap[$component->id])) continue;
+
+            $allocations = $batchAllocations[$component->product_id]['allocations'] ?? [];
 
             $this->collectOutboundTransactions(
                 $outboundTransactions,
                 $order,
-                $detail->product_id,
+                $detail->product?->name ?? "Composite Product #{$detail->product_id}",
                 $component,
                 $allocations,
                 $now
@@ -213,10 +226,10 @@ final class DeductCompositeProductComponentsAction
     private function collectOutboundTransactions(
         array &$transactionsArray,
         StockSupplyOrder $order,
-        int $compositeProductId,
+        string $compositeProductName,
         ProductItem $component,
         array $allocations,
-        $now
+        \Illuminate\Support\Carbon $now
     ): void {
         $movementDate = $order->order_date ?? $now;
 
@@ -232,7 +245,7 @@ final class DeductCompositeProductComponentsAction
                 'movement_date' => $movementDate,
                 'transaction_date' => $now,
                 'store_id' => $alloc['store_id'],
-                'notes' => "Manufacturing deduction for Composite Product #{$compositeProductId} in Order #{$order->id}",
+                'notes' => "Manufacturing deduction for {$compositeProductName} in Supply Order #{$order->id}",
                 'transactionable_id' => $order->id,
                 'transactionable_type' => StockSupplyOrder::class,
                 'source_transaction_id' => $alloc['transaction_id'],
