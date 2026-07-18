@@ -94,7 +94,7 @@ final class ValidateStockForAllocationAction
         if (! empty($shortages)) {
             $count = count($shortages);
             $displayed = array_slice($shortages, 0, 2);
-            $message = "Insufficient stock for: " . implode(", ", $displayed);
+            $message = "Not enough stock for: " . implode(", ", $displayed);
             
             if ($count > 2) {
                 $message .= " (and " . ($count - 2) . " more)";
