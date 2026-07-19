@@ -403,9 +403,14 @@ class PayrollRunService implements PayrollRunnerInterface
             throw new InvalidArgumentException('Invalid month value.');
         }
 
-        return [
-            Carbon::create($year, $month, 1)->startOfMonth(),
-            Carbon::create($year, $month, 1)->endOfMonth(),
-        ];
+        $periodStart = Carbon::create($year, $month, 1)->startOfMonth();
+        $periodEnd   = Carbon::create($year, $month, 1)->endOfMonth();
+
+        // تقليص نهاية الفترة إذا كان الشهر الحالي
+        if ($year == now()->year && $month == now()->month) {
+            $periodEnd = now()->endOfDay();
+        }
+
+        return [$periodStart, $periodEnd];
     }
 }
