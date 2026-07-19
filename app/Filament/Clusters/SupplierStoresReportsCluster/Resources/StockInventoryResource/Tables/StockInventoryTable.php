@@ -66,34 +66,17 @@ class StockInventoryTable
                 TextColumn::make('closing_stock_value')
                     ->label('Closing Stock Value')
                     ->sortable(false)
-                    ->state(function($record) {
-                        $sum = 0;
-                        foreach ($record->details as $detail) {
-                            $unitPrice = getUnitPrice($detail->product_id, $detail->unit_id) ?? 0;
-                            $sum += ($detail->physical_quantity ?? 0) * $unitPrice;
-                        }
-                        return $sum;
-                    })
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->toggleable()
                     ->summarize(
                         Summarizer::make()
                             ->using(function (Table $table) {
-                                $total = $table->getRecords()->sum(function($record) {
-                                    $sum = 0;
-                                    foreach ($record->details as $detail) {
-                                        $unitPrice = getUnitPrice($detail->product_id, $detail->unit_id) ?? 0;
-                                        $sum += ($detail->physical_quantity ?? 0) * $unitPrice;
-                                    }
-                                    return $sum;
-                                });
+                                $total = $table->getRecords()->sum('closing_stock_value');
                                 return is_numeric($total) ? formatMoneyWithCurrency($total) : $total;
                             })
                     )
-                    ->visible(fn($record)=> ( (isSuperAdmin() || isHakim()) ))
-                    // ->hidden()
-                    ,
-
+                    ->visible(fn($record)=> ( (isSuperAdmin() || isHakim()) )),
+ 
                 TextColumn::make('responsibleUser.name')
                 ->limit(15)
                 ->tooltip(fn($state) => $state)
