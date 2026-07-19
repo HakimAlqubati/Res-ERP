@@ -23,6 +23,9 @@ class EmployeeServiceTerminationsTable
     public static function configure(Table $table): Table
     {
         return $table
+        ->defaultSort('id','desc')
+        ->striped()
+        ->deferLoading()
             ->columns([
                 TextColumn::make('employee.name')
                     ->label(__('lang.employee'))
@@ -57,9 +60,11 @@ class EmployeeServiceTerminationsTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()
+                ->visible(fn (EmployeeServiceTermination $record) => $record->status === EmployeeServiceTermination::STATUS_PENDING)
+                ,
                 Action::make('manageTermination')
-                    ->label(__('lang.approve_termination'))
+                    ->label(__('lang.approve'))
                     ->icon('heroicon-o-clipboard-document-check')
                     ->color('success')
                     ->visible(fn (EmployeeServiceTermination $record) => $record->status === EmployeeServiceTermination::STATUS_PENDING)
@@ -101,7 +106,7 @@ class EmployeeServiceTerminationsTable
                         }
                     }),
                 Action::make('reject')
-                    ->label(__('lang.reject_termination'))
+                    ->label(__('lang.reject'))
                     ->color('danger')
                     ->icon('heroicon-o-x-circle')
                     ->visible(fn (EmployeeServiceTermination $record) => $record->status === EmployeeServiceTermination::STATUS_PENDING)

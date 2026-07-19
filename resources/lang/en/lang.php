@@ -1189,4 +1189,5 @@ return [
     'termination_rejected_successfully' => 'Termination rejected successfully',
     'scheduled_for_auto_approval' => 'Scheduled for auto-approval',
     'auto_approval_body' => 'The termination will be approved automatically on the termination date.',
+    'terminate_staff' => 'Terminate Staff',
 ];

@@ -1170,4 +1170,5 @@ return [
   'termination_rejected_successfully' => 'تم رفض الإنهاء بنجاح',
   'scheduled_for_auto_approval' => 'مجدول للاعتماد التلقائي',
   'auto_approval_body' => 'سيتم اعتماد الإنهاء تلقائياً في تاريخ الإنهاء المبرمج.',
+  'terminate_staff' => 'إنهاء خدمات الموظف',
 ];
