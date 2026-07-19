@@ -1181,4 +1181,12 @@ return [
     'kinship' => 'Kinship',
     'rewards' => 'Rewards',
     'reward' => 'Reward',
+    'termination_details' => 'Termination Details',
+    'manage_termination' => 'Manage Termination',
+    'approve_termination' => 'Approve Termination',
+    'reject_termination' => 'Reject Termination',
+    'termination_approved_successfully' => 'Termination approved successfully',
+    'termination_rejected_successfully' => 'Termination rejected successfully',
+    'scheduled_for_auto_approval' => 'Scheduled for auto-approval',
+    'auto_approval_body' => 'The termination will be approved automatically on the termination date.',
 ];

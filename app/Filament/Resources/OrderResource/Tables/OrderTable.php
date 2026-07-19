@@ -268,7 +268,9 @@ class OrderTable
                     self::showCostDetailsAction(),
                     ViewAction::make(),
                     EditAction::make(),
-                    DeleteAction::make(),
+                    DeleteAction::make()
+                    ->visible(fn()=> isHakimOrAdel())
+                    ,
 
 
                 ]),

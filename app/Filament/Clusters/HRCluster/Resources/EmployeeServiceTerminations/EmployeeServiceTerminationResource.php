@@ -31,6 +31,27 @@ class EmployeeServiceTerminationResource extends Resource
     protected static ?int $navigationSort = 2;
     protected static ?string $recordTitleAttribute = 'employee';
 
+        public static function getNavigationLabel(): string
+    {
+        return __('lang.service_termination');
+    }
+
+    public static function getPluralLabel(): ?string
+    {
+        return __('lang.service_termination');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('lang.service_termination');
+    }
+
+    public static function getLabel(): ?string
+    {
+        return __('lang.service_termination');
+    }
+
+
     public static function form(Schema $schema): Schema
     {
         return EmployeeServiceTerminationForm::configure($schema);

@@ -1162,4 +1162,12 @@ return [
   'kinship' => 'صلة القرابة',
   'rewards' => 'المكافآت',
   'reward' => 'مكافأة',
+  'termination_details' => 'تفاصيل الإنهاء',
+  'manage_termination' => 'إدارة الإنهاء',
+  'approve_termination' => 'اعتماد الإنهاء',
+  'reject_termination' => 'رفض الإنهاء',
+  'termination_approved_successfully' => 'تم اعتماد الإنهاء بنجاح',
+  'termination_rejected_successfully' => 'تم رفض الإنهاء بنجاح',
+  'scheduled_for_auto_approval' => 'مجدول للاعتماد التلقائي',
+  'auto_approval_body' => 'سيتم اعتماد الإنهاء تلقائياً في تاريخ الإنهاء المبرمج.',
 ];
