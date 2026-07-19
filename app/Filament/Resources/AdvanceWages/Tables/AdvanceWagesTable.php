@@ -92,7 +92,7 @@ class AdvanceWagesTable
             ])
             ->recordActions([
                 EditAction::make()
-                    ->disabled(fn (AdvanceWage $record) => app(PayrollLockGuard::class)->isLocked(
+                    ->hidden(fn (AdvanceWage $record) => app(PayrollLockGuard::class)->isLocked(
                         (int) $record->employee_id,
                         (int) $record->year,
                         (int) $record->month
@@ -110,7 +110,7 @@ class AdvanceWagesTable
                         $record->cancel();
                         Notification::make()->success()->title(__('Advance wage cancelled.'))->send();
                     })
-                    ->disabled(fn (AdvanceWage $record) => app(PayrollLockGuard::class)->isLocked(
+                    ->hidden(fn (AdvanceWage $record) => app(PayrollLockGuard::class)->isLocked(
                         (int) $record->employee_id,
                         (int) $record->year,
                         (int) $record->month
@@ -128,13 +128,13 @@ class AdvanceWagesTable
                         $record->update(['status' => AdvanceWage::STATUS_SETTLED]);
                         Notification::make()->success()->title(__('Advance wage approved.'))->send();
                     })
-                    ->disabled(fn (AdvanceWage $record) => app(PayrollLockGuard::class)->isLocked(
+                    ->hidden(fn (AdvanceWage $record) => app(PayrollLockGuard::class)->isLocked(
                         (int) $record->employee_id,
                         (int) $record->year,
                         (int) $record->month
                     )),
                 DeleteAction::make()
-                    ->disabled(fn (AdvanceWage $record) => app(PayrollLockGuard::class)->isLocked(
+                    ->hidden(fn (AdvanceWage $record) => app(PayrollLockGuard::class)->isLocked(
                         (int) $record->employee_id,
                         (int) $record->year,
                         (int) $record->month
