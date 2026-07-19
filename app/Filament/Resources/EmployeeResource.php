@@ -125,10 +125,15 @@ class EmployeeResource extends Resource
         ]);
     }
 
-    // public static function getNavigationBadge(): ?string
-    // {
-    //     return static::getModel()::forBranchManager()->count();
-    // }
+    public static function getNavigationBadge(): ?string
+    {
+        $userId = auth()->id();
+        return (string) \Illuminate\Support\Facades\Cache::remember(
+            "employee_resource_badge_user_{$userId}",
+            now()->addHours(6),
+            fn () => static::getModel()::forBranchManager()->count()
+        );
+    }
 
     public static function getEloquentQuery(): Builder
     {

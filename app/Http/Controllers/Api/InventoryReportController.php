@@ -57,6 +57,15 @@ class InventoryReportController extends Controller
 
     public function inventoryReport(Request $request)
     {
+        if(isStoreManager()){
+            $userBranch = auth()->user()->branch;
+            if ($userBranch && $userBranch->type == \App\Enums\BranchType::CENTRAL_KITCHEN->value) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "You are not authorized to access this report",
+                ]);
+            }
+        }
         $productId = $request->product_id ?? null;
         $storeId   = $request->store_id ?? null;
         if (isset(auth()->user()->branch) && auth()->user()->branch->is_kitchen) {

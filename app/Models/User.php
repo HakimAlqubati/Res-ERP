@@ -254,6 +254,9 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
     public function isStuff()
     {
+      return in_array(8, $this->roles->pluck('id')->toArray());
+
+        
         if (in_array(getCurrentRole(), [8, 9, 10, 6])) {
             return true;
         }

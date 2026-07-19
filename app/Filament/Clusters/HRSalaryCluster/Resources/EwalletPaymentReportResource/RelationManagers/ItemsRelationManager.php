@@ -27,6 +27,7 @@ class ItemsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+        ->defaultSort('id','desc')
             ->recordTitleAttribute('account_number')
             ->columns([
                 TextColumn::make('employee.name')

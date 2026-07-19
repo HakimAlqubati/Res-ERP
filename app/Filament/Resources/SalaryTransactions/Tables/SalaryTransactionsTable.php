@@ -35,7 +35,7 @@ class SalaryTransactionsTable
             ->recordUrl(fn(SalaryTransaction $record): string => SalaryTransactionResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('employee.name')
-                    ->label(__('Employee'))->toggleable()
+                    ->label(__('lang.employee'))->toggleable()
                     ->sortable()
                     ->searchable(),
                 // TextColumn::make('payroll')

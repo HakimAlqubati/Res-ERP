@@ -30,6 +30,7 @@ class EmployeeTable
     public static function configure(Table $table): Table
     {
         return $table->striped()
+        ->deferLoading()
             ->paginated([10, 25, 50, 100])
 
             ->defaultSort('id', 'desc')

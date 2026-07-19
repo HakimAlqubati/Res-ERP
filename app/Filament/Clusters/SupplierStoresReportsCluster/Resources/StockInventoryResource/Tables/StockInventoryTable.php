@@ -28,9 +28,13 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryR
 use App\Models\Product;
 use App\Models\StockInventory;
 use App\Models\Store;
+use App\Exports\StockInventoriesExport;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Database\Eloquent\Collection;
 use App\Services\MultiProductsInventoryService;
 use App\Services\Stock\StockInventory\InventoryProductCacheService;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Support\Enums\FontWeight;
@@ -67,14 +71,12 @@ class StockInventoryTable
                     ->summarize(
                         Summarizer::make()
                             ->using(function (Table $table) {
-                                $total = $table->getRecords()->sum(fn($record) => $record->closing_stock_value);
+                                $total = $table->getRecords()->sum('closing_stock_value');
                                 return is_numeric($total) ? formatMoneyWithCurrency($total) : $total;
                             })
                     )
-                    ->visible(fn($record)=> ( (isSuperAdmin() || isHakim()) ))
-                    // ->hidden()
-                    ,
-
+                    ->visible(fn($record)=> ( (isSuperAdmin() || isHakim()) )),
+ 
                 TextColumn::make('responsibleUser.name')
                 ->limit(15)
                 ->tooltip(fn($state) => $state)
@@ -140,12 +142,23 @@ class StockInventoryTable
                         ->visible(fn($record)=> (isSuperAdmin()
                         && $record->finalized
                         ))
+                        ->hidden()
                         // ->visible(fn()=>isHakimOrAdel())
                         ->url(fn($record): string => StockInventoryResource::getUrl('value-details', ['record' => $record])),
                 // ])
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('export_excel')
+                        ->label('Export Excel')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->action(function (Collection $records) {
+                            return Excel::download(new StockInventoriesExport($records), 'stock_inventories.xlsx');
+                        })
+                        ->deselectRecordsAfterCompletion()
+                        ->visible(fn()=>isSuperAdmin())
+                        ,
                     DeleteBulkAction::make()
                         ->visible(fn(): bool => StockInventoryResource::canDeleteAny()),
                         RestoreBulkAction::make()

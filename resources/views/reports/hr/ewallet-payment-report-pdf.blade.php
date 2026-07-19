@@ -127,7 +127,7 @@
                 <td style="width: 25%; font-weight: bold; color: #0d7c66;">{{ formatMoneyWithCurrency($report->total_amount) }}</td>
             </tr>
             <tr>
-                <td><strong>Employees Count:</strong></td>
+                <td><strong>Staffs Count:</strong></td>
                 <td>{{ $report->employees_count }}</td>
                 <td><strong>Generated On:</strong></td>
                 <td>{{ now()->format('d/m/Y H:i') }}</td>
@@ -137,8 +137,8 @@
         <table class="data-table" width="100%">
             <thead>
                 <tr>
-                    <th style="width: 5%;">#</th>
-                    <th style="width: 25%;">eWallet Account No.</th>
+                    <th style="width: 6%;">#</th>
+                    <th style="width: 24%;">eWallet Account No.</th>
                     <th style="width: 25%;">Reward Name</th>
                     <th style="width: 15%;" class="text-right">Net Salary</th>
                     <th style="width: 30%;">Reward Description</th>

@@ -55,13 +55,13 @@ class ListEwalletPaymentReports extends ListRecords
                         ->where('year', $year)
                         ->exists();
 
-                    if ($exists) {
-                        Notification::make()
-                            ->title("A report for this month and year already exists.")
-                            ->danger()
-                            ->send();
-                        return;
-                    }
+                    // if ($exists) {
+                    //     Notification::make()
+                    //         ->title("A report for this month and year already exists.")
+                    //         ->danger()
+                    //         ->send();
+                    //     return;
+                    // }
 
                     $payrolls = Payroll::with(['employee', 'branch', 'employee.branch'])
                         ->where('status', Payroll::STATUS_APPROVED)
@@ -74,7 +74,7 @@ class ListEwalletPaymentReports extends ListRecords
 
                     if ($payrolls->isEmpty()) {
                         Notification::make()
-                            ->title("No approved E-Wallet payrolls found for this month.")
+                            ->title("No approved payroll found for this month.")
                             ->warning()
                             ->send();
                         return;
