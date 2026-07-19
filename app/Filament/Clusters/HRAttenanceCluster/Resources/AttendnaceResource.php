@@ -162,6 +162,8 @@ class AttendnaceResource extends Resource
                 TextColumn::make('employee.name')
                     ->label('Employee')
                     ->sortable()
+                    ->limit(30)
+                    ->tooltip(fn($state)=>$state    )
                     ->searchable(),
 
                 TextColumn::make('check_type')
