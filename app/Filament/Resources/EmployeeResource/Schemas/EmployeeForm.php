@@ -569,11 +569,6 @@ class EmployeeForm
                                         Toggle::make('has_auto_weekly_leave')->columnSpan(1)
                                             ->label(__('lang.has_auto_weekly_leave'))->default(1)->inline(false)->live(),
 
-                                        Toggle::make('no_shift_is_present')->columnSpan(1)
-                                            // ->label(__('lang.no_shift_is_present'))
-                                            ->label('Paid Unscheduled Shift Days')
-                                            ->default(0)->inline(false),
-
                                     ]),
 
                                     Grid::make(3)->columnSpanFull()
