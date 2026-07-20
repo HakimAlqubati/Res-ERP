@@ -342,6 +342,37 @@ class ShiftResolver implements ShiftResolverInterface
     }
 
     /**
+     * التحقق مما إذا كان لدى الموظف أي وردية في هذا التاريخ
+     */
+    public function hasShiftOnDate(Employee $employee, Carbon $date): bool
+    {
+        $dateString = $date->toDateString();
+        $dayName = strtolower($date->format('D'));
+
+        $employee->loadMissing(['employeePeriods.workPeriod', 'employeePeriods.days', 'periodHistories.workPeriod']);
+
+        // 1. فحص الشيفتات الحالية
+        foreach ($employee->employeePeriods as $ep) {
+            if ($this->isWithinDateRange($ep, $dateString) && $this->isWorkingDay($ep, $dayName)) {
+                if ($ep->workPeriod && $ep->workPeriod->active) {
+                    return true;
+                }
+            }
+        }
+
+        // 2. فحص الشيفتات التاريخية
+        foreach ($employee->periodHistories as $ph) {
+            if ($this->isWithinHistoricalDateRange($ph, $dateString) && $this->isWorkingDayHistorical($ph, $dayName)) {
+                if ($ph->workPeriod && $ph->active) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * التحقق من أن التاريخ ضمن نطاق الوردية التاريخية
      */
     private function isWithinHistoricalDateRange($periodHistory, string $date): bool
