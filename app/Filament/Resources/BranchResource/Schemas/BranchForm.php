@@ -104,8 +104,10 @@ class BranchForm
 
                                         Select::make('store_id')
                                             ->label(__('stock.store_id'))
-                                            ->options(Store::active()
-                                                ->centralKitchen()->pluck('name', 'id'))
+                                            ->relationship(
+                                                'store',
+                                                'name'
+                                            )
                                             ->searchable()
                                         // ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN)
                                         // ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN)
