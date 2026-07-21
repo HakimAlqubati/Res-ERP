@@ -78,9 +78,14 @@ class UserTypeResource extends Resource
             ->columns([
                 TextColumn::make('id')->sortable(),
                 TextColumn::make('name')->searchable(),
-                TextColumn::make('role_names')->label('Roles'),
-                IconColumn::make('active')->boolean(),
-                TextColumn::make('created_at')->dateTime(),
+                TextColumn::make('role_names')
+                ->limit(70)
+                ->tooltip(fn($state)=> $state)
+                ->label('Roles'),
+                IconColumn::make('active')->boolean()->alignCenter(),
+                TextColumn::make('created_at')
+                ->toggleable(isToggledHiddenByDefault: true)
+                ->dateTime(),
             ])
             ->filters([
                 //
