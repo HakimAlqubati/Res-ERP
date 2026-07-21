@@ -133,6 +133,10 @@ class OrderTable
                     ->sortable(),
 
 
+                TextColumn::make('logs_count')->counts('logs')
+                    ->label('Order Logs')->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: false)
+                    ->visible(fn()=>isHakimOrAdel()),
                 // TextColumn::make('recorded'),
                 // TextColumn::make('orderDetails'),
             ])
