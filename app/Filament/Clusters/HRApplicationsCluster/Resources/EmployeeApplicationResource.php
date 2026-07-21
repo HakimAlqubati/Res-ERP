@@ -726,6 +726,55 @@ class EmployeeApplicationResource extends Resource
             });
     }
 
+    public static function viewApprovalTrackAction(): Action
+    {
+        return Action::make('viewApprovalTrack')
+            ->label('Approval Track')
+            ->icon('heroicon-o-queue-list')
+            ->color('gray')
+            ->modalHeading('Approval Workflow Track')
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel('Close')
+            ->visible(fn (EmployeeApplicationV2 $record) => $record->approvalSteps->isNotEmpty())
+            ->infolist(function ($infolist) {
+                return $infolist
+                    ->schema([
+                        \Filament\Infolists\Components\RepeatableEntry::make('approvalSteps')
+                            ->label('')
+                            ->schema([
+                                \Filament\Infolists\Components\TextEntry::make('step_order')
+                                    ->label('Step')
+                                    ->badge()
+                                    ->color('info'),
+                                \Filament\Infolists\Components\TextEntry::make('status')
+                                    ->badge()
+                                    ->color(fn (string $state): string => match ($state) {
+                                        \App\Modules\HR\ApprovalPolicies\Enums\ApprovalStepStatus::PENDING => 'warning',
+                                        \App\Modules\HR\ApprovalPolicies\Enums\ApprovalStepStatus::APPROVED => 'success',
+                                        \App\Modules\HR\ApprovalPolicies\Enums\ApprovalStepStatus::REJECTED => 'danger',
+                                        default => 'gray',
+                                    }),
+                                \Filament\Infolists\Components\TextEntry::make('approverName')
+                                    ->label('Required Approver')
+                                    ->state(function ($record) {
+                                        return $record->approverEmployee?->name 
+                                            ?: $record->approverUser?->name 
+                                            ?: ($record->approverRole?->name ? "Any {$record->approverRole->name}" : 'Unknown');
+                                    }),
+                                \Filament\Infolists\Components\TextEntry::make('updated_at')
+                                    ->label('Action Date')
+                                    ->dateTime()
+                                    ->visible(fn ($record) => $record->status !== \App\Modules\HR\ApprovalPolicies\Enums\ApprovalStepStatus::PENDING),
+                                \Filament\Infolists\Components\TextEntry::make('notes')
+                                    ->label('Notes')
+                                    ->placeholder('-')
+                                    ->columnSpanFull(),
+                            ])
+                            ->columns(4),
+                    ]);
+            });
+    }
+
     public static function approvePolicyStepAction(): Action
     {
         return Action::make('approvePolicyStep')

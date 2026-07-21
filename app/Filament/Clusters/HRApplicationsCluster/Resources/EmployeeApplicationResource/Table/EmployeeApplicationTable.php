@@ -286,6 +286,7 @@ class EmployeeApplicationTable
             ->filtersFormColumns(4)
             ->recordActions([
                 ActionGroup::make([
+                    EmployeeApplicationResource::viewApprovalTrackAction(),
                     EmployeeApplicationResource::approvePolicyStepAction(),
                     EmployeeApplicationResource::attachmentsAction(),
 
