@@ -108,6 +108,7 @@ class GoodsReceivedNoteResource extends Resource
                                     ->helperText('Enter GRN Number')->required(),
                                 DatePicker::make('grn_date')
                                     ->label('GRN Date')->default(now())
+                                    ->minDate(now()->subYears(2))
                                     ->required()->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
 
 
@@ -315,6 +316,10 @@ class GoodsReceivedNoteResource extends Resource
                         ->schema([
                             Repeater::make('grnDetails')->columnSpanFull()
                                 ->relationship()
+                                ->mutateRelationshipDataBeforeFillUsing(function (array $data): array {
+                                    $data['total_price'] = round((float) ($data['quantity'] ?? 0) * (float) ($data['price'] ?? 0), 2);
+                                    return $data;
+                                })
                                 ->label('Items')
                                 ->columns(6)
                                 ->schema([
@@ -386,6 +391,7 @@ class GoodsReceivedNoteResource extends Resource
                                         ->numeric()
                                         ->minValue(0.1)
                                         ->default(1)
+                                        ->maxValue(999999999)
                                         ->live(onBlur: true)
                                         ->afterStateUpdated(function ($set, $get) {
                                             $quantity = (float) ($get('quantity') ?? 0);
@@ -499,6 +505,9 @@ class GoodsReceivedNoteResource extends Resource
                 TextColumn::make('updated_at')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
+                TextColumn::make('created_at')->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->sortable(),
                 TextColumn::make('approve_date')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
@@ -509,6 +518,7 @@ class GoodsReceivedNoteResource extends Resource
                 IconColumn::make('belongs_to_purchase_invoice')
                     ->label('Belongs to Invoice')
                     ->boolean()->toggleable(isToggledHiddenByDefault: true)
+                    ->tooltip(fn($record) => $record?->purchase_invoice_id)
                     ->alignCenter(),
                 IconColumn::make('has_outbound_transactions')
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -561,6 +571,7 @@ class GoodsReceivedNoteResource extends Resource
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
             ->recordActions([
+                self::getExportExcelAction(Action::class),
                 EditAction::make()
                     ->visible(fn($record): bool => $record->status == GoodsReceivedNote::STATUS_CREATED),
                 // Tables\Actions\Action::make('Reject')
@@ -714,7 +725,9 @@ class GoodsReceivedNoteResource extends Resource
 
                         return $record->status == GoodsReceivedNote::STATUS_APPROVED && !$record->is_purchase_invoice_created  &&
                             (count(array_intersect($userRoles, $allowedRoles)) > 0);
-                    }),
+                    })
+                    ->hidden()
+                    ,
 
             ])
             ->toolbarActions([
@@ -792,5 +805,21 @@ class GoodsReceivedNoteResource extends Resource
     public static function getGlobalSearchResultsLimit(): int
     {
         return 15;
+    }
+
+    public static function getExportExcelAction(string $actionClass)
+    {
+        return $actionClass::make('export_excel')
+            ->label('Export Excel')
+            ->icon('heroicon-o-document-arrow-down')
+            ->color('success')
+            ->action(function (GoodsReceivedNote $record) {
+                $fileName = "GRN_{$record->grn_number}.xlsx";
+
+                return \Maatwebsite\Excel\Facades\Excel::download(
+                    new \App\Exports\GoodsReceivedNoteExport($record),
+                    $fileName
+                );
+            });
     }
 }

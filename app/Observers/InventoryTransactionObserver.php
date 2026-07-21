@@ -2,22 +2,42 @@
 
 namespace App\Observers;
 
-use App\Models\ProductItem;
-use Throwable;
 use App\Models\InventoryTransaction;
+use App\Models\ProductItem;
 use App\Models\PurchaseInvoice;
-use App\Services\ProductCostingService;
-use App\Services\Inventory\Summary\InventorySummaryUpdater;
-use Illuminate\Support\Facades\Log;
+use App\Models\StockSupplyOrder;
+use App\Modules\Stock\Actions\Manufacturing\DeductCompositeProductComponentsAction;
+use App\Modules\Stock\Jobs\SyncPriceOnNewStockEntryJob;
+use App\Modules\Stock\Jobs\SyncProductCurrentBatchPriceJob;
+use Spatie\Multitenancy\Contracts\IsTenant;
+use Throwable;
 
 class InventoryTransactionObserver
 {
     public function __construct(
-        private InventorySummaryUpdater $summaryUpdater
+        private DeductCompositeProductComponentsAction $deductCompositeAction,
     ) {}
 
-    public function created(InventoryTransaction $inventoryTransaction)
+    public function created(InventoryTransaction $transaction)
     {
+        $tenantId = app(IsTenant::class)::current()?->id;
+        \Illuminate\Support\Facades\Log::info('Tenant ID: ' . $tenantId);
+        // إذا كانت الحركة دخول (in) -> نستدعي أكشن الدخول
+        if ($transaction->movement_type === InventoryTransaction::MOVEMENT_IN) {
+            \Illuminate\Support\Facades\Log::info('Dispatching SyncPriceOnNewStockEntryJob');
+            SyncPriceOnNewStockEntryJob::dispatch($transaction->id,
+                $transaction->store_id,
+                $tenantId
+            )->onConnection('tenant');
+        }
+        // إذا كانت الحركة خروج (out) -> نستدعي أكشن الخروج
+        elseif ($transaction->movement_type === InventoryTransaction::MOVEMENT_OUT) {
+            \Illuminate\Support\Facades\Log::info('Dispatching SyncProductCurrentBatchPriceJob');
+            SyncProductCurrentBatchPriceJob::dispatch($transaction->product_id,
+                $transaction->store_id,
+                $tenantId
+            )->onConnection('tenant');
+        }
         // تحديث ملخص المخزون
         // $this->summaryUpdater->onTransactionCreated($inventoryTransaction);
 

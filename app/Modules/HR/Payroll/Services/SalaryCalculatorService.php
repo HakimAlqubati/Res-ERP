@@ -129,7 +129,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
 
         // Check if employee has any assigned shifts (required days) in this period
         $requiredDays = (int)($employeeData['statistics']['required_days'] ?? 0);
-        if ($requiredDays === 0) {
+        if ($requiredDays === 0 && $totalApprovedOvertime < 0) {
             throw new InvalidArgumentException(
                 "Skipped: Employee [{$employee->name}] (No: {$employee->employee_no}) has no assigned shifts for this period. Salary cannot be calculated."
             );

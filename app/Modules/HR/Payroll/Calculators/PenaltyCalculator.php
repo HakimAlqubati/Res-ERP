@@ -34,13 +34,21 @@ class PenaltyCalculator
         }
 
         // جلب الجزاءات المعتمدة لهذا الموظف في الشهر/السنة المحددة
-        $penalties = PenaltyDeduction::query()
+        $query = PenaltyDeduction::query()
             ->where('employee_id', $context->employee->id)
             ->where('status', PenaltyDeduction::STATUS_APPROVED)
             ->where('year', $context->periodYear)
             ->where('month', $context->periodMonth)
-            ->with(['deduction:id,name'])
-            ->get();
+            ->with(['deduction:id,name']);
+
+        // في حالة Multi-Segment (انتقال بين فروع): تقييد الجزاءات بتاريخ الفترة الدقيقة
+        // لمنع احتساب نفس الجزاء في أكثر من Segment
+        if ($context->periodStartDate !== null) {
+            $query->whereBetween('date', [$context->periodStartDate, $context->periodEnd()]);
+        }
+
+        $penalties = $query->get();
+
 
         foreach ($penalties as $p) {
             $amount = (float)$p->penalty_amount;

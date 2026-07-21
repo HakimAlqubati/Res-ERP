@@ -75,6 +75,22 @@ class StockIssueOrderResource extends Resource
                             )
                             ->default(getDefaultStore())
                             ->required()
+                            ->live()
+                            ->afterStateUpdated(function (callable $get, callable $set, $state) {
+                                $details = $get('details') ?? [];
+                                foreach ($details as $index => $detail) {
+                                    if (!empty($detail['product_id']) && !empty($detail['unit_id'])) {
+                                        $service = new MultiProductsInventoryService(
+                                            null,
+                                            $detail['product_id'],
+                                            $detail['unit_id'],
+                                            $state
+                                        );
+                                        $remainingQty = $service->getInventoryForProduct($detail['product_id'])[0]['remaining_qty'] ?? 0;
+                                        $set("details.{$index}.remaining_quantity", $remainingQty);
+                                    }
+                                }
+                            })
                             ->label('Store'),
 
                         DateTimePicker::make('created_at')

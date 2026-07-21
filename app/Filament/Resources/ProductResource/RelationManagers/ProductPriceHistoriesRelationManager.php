@@ -56,11 +56,16 @@ class ProductPriceHistoriesRelationManager extends RelationManager
                 TextColumn::make('note')
                     ->label('Note')
                     ->limit(100)
+                    ->tooltip(fn($state)=>$state)
                     ->toggleable(),
 
                 TextColumn::make('date')
                     ->label('Date')
                     ->date()
+                    ->sortable(),
+                TextColumn::make('created_at')
+                    ->label('created at')
+                    // ->date()
                     ->sortable(),
             ])
             ->filters([])

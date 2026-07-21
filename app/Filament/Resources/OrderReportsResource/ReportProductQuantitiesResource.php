@@ -101,11 +101,19 @@ class ReportProductQuantitiesResource extends Resource
                         ->activePopups()
                         ->active()->pluck('name', 'id')),
 
+                Filter::make('order_number')
+                    ->form([
+                        \Filament\Forms\Components\TextInput::make('order_number')
+                            ->label(__('Order Number'))
+                            ->numeric(),
+                    ]),
                 Filter::make('date')
                     ->schema([
                         DatePicker::make('start_date')
+                            ->default(now()->startOfMonth()->toDateString())
                             ->label(__('lang.start_date')),
                         DatePicker::make('end_date')
+                            ->default(now()->endOfMonth()->toDateString())
                             ->label(__('lang.end_date')),
                     ]),
             ], layout: FiltersLayout::AboveContent);

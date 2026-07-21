@@ -10,6 +10,7 @@ use Filament\Facades\Filament;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
+use Illuminate\Validation\ValidationException;
 
 class CreateStockInventory extends CreateRecord
 {
@@ -33,6 +34,20 @@ class CreateStockInventory extends CreateRecord
             'package_size' => $packageSize,
             'remaining_qty' => $remainingQty,
         ];
+    }
+
+    protected function afterValidate(): void
+    {
+        try {
+            $inventory = new \App\Models\StockInventory($this->data);
+            \App\Validators\Inventory\StockInventoryCreationValidator::validate($inventory);
+        } catch (ValidationException $e) {
+            $messages = [];
+            foreach ($e->errors() as $key => $errors) {
+                $messages["data.{$key}"] = $errors;
+            }
+            throw ValidationException::withMessages($messages);
+        }
     }
 
 

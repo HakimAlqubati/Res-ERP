@@ -76,6 +76,9 @@ class LeaveRequestObserver
                 $leaveRequest->application_id,
                 fn ($q) => $q->where('application_id', '!=', $leaveRequest->application_id)
             )
+            ->whereDoesntHave('application', function ($query) {
+                $query->where('status', \App\Models\EmployeeApplicationV2::STATUS_REJECTED);
+            })
             ->exists();
 
         if ($hasOverlap) {

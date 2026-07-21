@@ -3,17 +3,12 @@
 namespace App\Services\Inventory;
 
 use App\Models\InventoryTransaction;
-use Illuminate\Support\Facades\DB;
 
 class InboundOutflowReportService
 {
     /**
      * يُنتج تقريرًا تفصيليًا عن كل الحركات OUT المرتبطة بحركات IN
      * بناءً على رقم فاتورة التوريد أو GRN أو stock adjustment.
-     *
-     * @param int $transactionableId
-     * @param string|null $transactionableType
-     * @return array
      */
     public function generate(int $transactionableId, ?string $transactionableType = null): array
     {
@@ -43,7 +38,6 @@ class InboundOutflowReportService
             $totalOutQty = $outflows->sum('quantity');
 
             $remainingQtyFromThisIN = max(0, $inTxn->quantity - $totalOutQty);
-
 
             $outflows = InventoryTransaction::query()
                 ->with('unit') // تحميل الوحدة للحركات OUT

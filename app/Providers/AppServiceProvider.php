@@ -104,13 +104,13 @@ class AppServiceProvider extends ServiceProvider
                 ->locales(['ar', 'en']); // also accepts a closure
         });
 
-        FilamentAsset::register([
+        // FilamentAsset::register([
             // Js::make('custom-script', __DIR__ . '/../../tune.js'),
             // Js::make('custom-script', ''),
             // Css::make('main', ''),
             // Css::make('keypad', ''),
             // Js::make('example-local-script', asset('js/tune.js')),
-        ]);
+        // ]);
         // FilamentView::registerRenderHook(
         //     'panels::auth.login.form.after',
         //     fn(): View => view('filament.login_extra')

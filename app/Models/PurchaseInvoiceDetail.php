@@ -85,15 +85,7 @@ class PurchaseInvoiceDetail extends Model implements Auditable
                 $notes .= ' in (' . $purchaseInvoiceDetail->purchaseInvoice->store->name . ')';
             }
 
-            UnitPriceFifoUpdater::updateIfInventoryIsZero(
-                $purchaseInvoiceDetail->product_id,
-                $purchaseInvoiceDetail->unit_id,
-                $purchaseInvoiceDetail->price,
-                $purchaseInvoiceDetail->package_size,
-                $invoice->store_id,
-                $invoice->date ?? now(),
-                'Updated from Purchase Invoice #' . $purchaseInvoiceDetail->purchase_invoice_id
-            );
+        
 
             // Add a record to the inventory transactions table
             InventoryTransaction::create([
@@ -110,14 +102,7 @@ class PurchaseInvoiceDetail extends Model implements Auditable
                 'transactionable_id' => $purchaseInvoiceDetail->purchase_invoice_id,
                 'transactionable_type' => PurchaseInvoice::class,
                 'waste_stock_percentage' => $purchaseInvoiceDetail->waste_stock_percentage,
-            ]);
-
-
-            // ✅ تحديث السعر بعد إضافة الحركة
-            // \App\Services\UnitPriceFifoUpdater::updatePriceUsingFifo(
-            // $purchaseInvoiceDetail->product_id,
-            // $purchaseInvoiceDetail->purchaseInvoice
-            // );
+            ]); 
         });
     }
     public function inventoryTransactions()

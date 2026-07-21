@@ -197,6 +197,15 @@ class EmployeeAdvanceInstallment extends Model
      */
     public function skipAndReschedule(?string $reason = null): self
     {
+        $validator = \Illuminate\Support\Facades\Validator::make(
+            ['installment_id' => $this->id],
+            ['installment_id' => [new \App\Rules\InstallmentPayrollNotGenerated()]]
+        );
+
+        if ($validator->fails()) {
+            throw new \Illuminate\Validation\ValidationException($validator);
+        }
+
         return \Illuminate\Support\Facades\DB::transaction(function () use ($reason) {
             // 1. تعليم القسط الحالي كمتخطّى
             $this->markSkipped($reason);

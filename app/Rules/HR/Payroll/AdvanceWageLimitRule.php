@@ -58,10 +58,17 @@ class AdvanceWageLimitRule implements ValidationRule
             // Extract net salary from simulation results
             $netSalary = (float) ($results[0]['data']['net_salary'] ?? 0);
             
-            // Validate if requested amount exceeds the net salary
-            if ((float) $value > $netSalary) {
-                $fail(__('The amount exceeds the employee\'s net salary for this period (:amount).', [
-                    'amount' => formatMoneyWithCurrency($netSalary)
+            // Calculate existing approved pending advance wages
+            $employee = \App\Models\Employee::find($this->employeeId);
+            $existingAdvances = $employee ? $employee->approvedPendingAdvanceWagesTotal((int) $this->year, (int) $this->month) : 0;
+            
+            // Available amount
+            $availableAmount = max(0, $netSalary - $existingAdvances);
+
+            // Validate if requested amount exceeds the available amount
+            if ((float) $value > $availableAmount) {
+                $fail(__('The amount exceeds the employee\'s available net salary for this period (:amount).', [
+                    'amount' => formatMoneyWithCurrency($availableAmount)
                 ]));
             }
         } catch (\Exception $e) {

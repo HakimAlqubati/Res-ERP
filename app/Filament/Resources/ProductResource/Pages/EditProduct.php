@@ -36,6 +36,11 @@ class EditProduct extends EditRecord
     }
     protected function getRedirectUrl(): string
     {
+        if(isHakimOrAdel()){
+            return $this->getResource()::getUrl('edit', [
+                'record' => $this->record->id,
+            ]);
+        }
         return $this->getResource()::getUrl('index');
     }
 

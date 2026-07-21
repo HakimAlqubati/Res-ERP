@@ -439,6 +439,7 @@ class PurchaseInvoiceForm
 
                                 ->minValue(0.1)
                                 ->default(1)
+                                ->maxValue(999999999)
                                 ->disabledOn('edit')
                                 ->live(onBlur: true)
                                 ->afterStateUpdated(function (Set $set, $state, $get) {

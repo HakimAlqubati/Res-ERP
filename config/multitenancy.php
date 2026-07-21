@@ -108,5 +108,7 @@ return [
      */
     'not_tenant_aware_jobs' => [
         // ...
+        // \App\Modules\Stock\Jobs\SyncPriceOnNewStockEntryJob::class,
+        // \App\Modules\Stock\Jobs\SyncProductCurrentBatchPriceJob::class,
     ],
 ];

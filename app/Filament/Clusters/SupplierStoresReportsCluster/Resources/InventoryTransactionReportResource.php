@@ -98,7 +98,8 @@ class InventoryTransactionReportResource extends Resource
                     ->schema([
                         Toggle::make('only_available')
                             ->inline(false)
-                            ->default(fn () => request()->get('only_available'))
+->default(true)
+                            // ->default(fn () => request()->get('only_available'))
                             ->label('Show Available in Stock'),
                     ]),
 

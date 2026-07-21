@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Clusters\InventoryReportCluster\Resources\InventoryTransactions\StockPositionBatchReportResource;
+use App\Filament\Clusters\InventoryReportCluster\Resources\InventoryTransactions\CompoundProductComponentsStockReportResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\FifoInventoryReportResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InboundOutflowReportResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventorySummaryReportResource;
@@ -50,6 +52,12 @@ class InventoryReportLinks extends Page
                 'description' => __('lang.inventory_report_desc'),
                 'icon' => 'heroicon-o-building-storefront',
                 'url' => InventoryTransactionReportResource::getUrl(),
+            ],
+            [
+                'title' => 'Recipe Ingredients Stock Report',
+                'description' => 'View stock balances for components of a compound product',
+                'icon' => 'heroicon-o-square-3-stack-3d',
+                'url' => CompoundProductComponentsStockReportResource::getUrl(),
             ],
             // [
             //     'title'       => __('lang.inventory_report') . ' NEW ',
@@ -118,6 +126,12 @@ class InventoryReportLinks extends Page
                 'description' => __('lang.stock_adjustment_summary_desc'),
                 'icon' => 'heroicon-o-presentation-chart-bar',
                 'url' => StockAdjustmentSummaryReportResource::getUrl(),
+            ],
+            [
+                'title' => __('lang.stock_position_batch_report'),
+                'description' => __('lang.stock_position_batch_report_desc'),
+                'icon' => 'heroicon-o-presentation-chart-bar',
+                'url' => StockPositionBatchReportResource::getUrl(),
             ],
             // [
             //     'title'       => MinimumProductQtyReportResource::getPluralLabel(),

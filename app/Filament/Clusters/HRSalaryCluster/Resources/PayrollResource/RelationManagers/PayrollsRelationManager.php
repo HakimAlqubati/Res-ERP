@@ -100,6 +100,12 @@ class PayrollsRelationManager extends RelationManager
                     ->searchable()
                     ->limit(15)
                     ->label(__('lang.employee'))
+                    ->color(function (Payroll $record) {
+                        if ($record->employee?->serviceTermination) {
+                            return 'danger';
+                        }
+                        return 'primary';
+                    })
                     ->tooltip(fn($state) => $state),
                 Tables\Columns\TextColumn::make('branch.name')
                     ->searchable()
@@ -209,8 +215,9 @@ class PayrollsRelationManager extends RelationManager
                                 ->whereIn('payroll_id', $this->payrollIdsForDisplay($record))
                                 ->get();
                             $employeeName = $record->employee?->name ?? 'Employee';
+                            $netSalary = (float) $record->getRawOriginal('net_salary');
                             $fileName = 'transactions-' . $employeeName . '.xlsx';
-                            return Excel::download(new PayrollTransactionsExport($transactions, $employeeName), $fileName);
+                            return Excel::download(new PayrollTransactionsExport($transactions, $employeeName, $netSalary), $fileName);
                         }),
                     self::quickShowAction(),
                 ]),

@@ -172,14 +172,18 @@ class PenaltyDeductionResource extends Resource
                     ->sortable(),
                 TextColumn::make('deduction.name')
                     ->label('Deduction')
-                    ->searchable()->toggleable()
+                    ->searchable()->toggleable(isToggledHiddenByDefault:true)
 
                     ->sortable(),
                 TextColumn::make('penalty_amount')
                     ->label('Amount')->toggleable()
                     // ->money('MY')
                     ->alignCenter(true)
+                    ->formatStateUsing(fn($state)=>formatMoneyWithCurrency($state))
                     ->sortable(),
+                    TextColumn::make('description')
+                    ->label('Reason')->toggleable()
+                    ->toggleable(isToggledHiddenByDefault:true)->limit(50)->tooltip(fn ($record) => $record->description),
                 TextColumn::make('month')
                     ->label('Month')
                     ->getStateUsing(function ($record) {
@@ -200,14 +204,14 @@ class PenaltyDeductionResource extends Resource
                     })
                     ->sortable(),
                 TextColumn::make('date')->toggleable()
-                    ->date()
+                    ->date('d-m-Y')
                     ->sortable(),
                 TextColumn::make('created_by')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->formatStateUsing(fn ($record) => $record->created_by ? User::find($record->created_by)?->name : '-')
                     ->sortable(),
-                TextColumn::make('created_at')->toggleable()
-                    ->date()
+                TextColumn::make('created_at')->toggleable(isToggledHiddenByDefault:true)
+                    ->date('d-m-Y H:i')
                     ->sortable(),
             ])
             ->filters([

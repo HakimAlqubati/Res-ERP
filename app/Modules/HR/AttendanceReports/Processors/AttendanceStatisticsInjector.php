@@ -229,10 +229,13 @@ class AttendanceStatisticsInjector
                 $previousReport = $reportManager->getEmployeesRangeReport(collect([$employee]), $previousStart, $previousEnd, true)->first();
 
                 if ($previousReport) {
-                    $prevWorked = (int) ($previousReport['statistics']['weekly_leave_calculation']['analysis']['worked_days'] ?? 0);
+                    $prevCalc         = $previousReport['statistics']['weekly_leave_calculation'] ?? [];
                     $workDaysPerLeave = \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator::WORK_DAYS_PER_LEAVE;
-                    
-                    $alreadyEarned = (int) floor($prevWorked / $workDaysPerLeave);
+
+                    // استخدام earned_leave_days الفعلي (الذي يشمل التغطية المُسبقة للغياب)
+                    // بدلاً من إعادة حسابه من worked_days، لضمان نقل رصيد الإجازة المُستَهلك بدقة
+                    $alreadyEarned = (int) ($prevCalc['analysis']['earned_leave_days'] ?? 0);
+                    $prevWorked    = (int) ($prevCalc['analysis']['worked_days']       ?? 0);
                     $prevRemainder = $prevWorked % $workDaysPerLeave;
                 }
             }

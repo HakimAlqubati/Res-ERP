@@ -499,4 +499,13 @@ class Product extends Model implements Auditable
      * ---
      * end for textract
      */
+
+
+
+    public function smallestReportUnit()
+    {
+        return $this->hasOne(\App\Models\UnitPrice::class, 'product_id')
+                    ->where('usage_scope', '!=', 'manufacturing_only')
+                    ->orderBy('package_size', 'asc');
+    }
 }

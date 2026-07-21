@@ -24,6 +24,7 @@ class Order extends Model implements Auditable
     public const READY_FOR_DELEVIRY = 'ready_for_delivery';
     public const DELEVIRED = 'delevired';
     public const PENDING_APPROVAL = 'pending_approval';
+    public const CANCELLED = 'cancelled';
 
     public const METHOD_FIFO = 'fifo';
     public const METHOD_UNIT_PRICE = 'from_unit_prices';
@@ -49,7 +50,6 @@ class Order extends Model implements Auditable
         'supplier_id',
         'order_date',
         'store_id',
-        'cancelled',
         'cancel_reason',
         'type',
     ];
@@ -69,7 +69,6 @@ class Order extends Model implements Auditable
         'is_purchased',
         'order_date',
         'store_id',
-        'cancelled',
         'cancel_reason',
         'type',
     ];
@@ -156,6 +155,7 @@ class Order extends Model implements Auditable
             self::READY_FOR_DELEVIRY => 'Ready for Delivery',
             self::DELEVIRED => 'Delivered',
             self::PENDING_APPROVAL => 'Pending Approval',
+            self::CANCELLED => 'Cancelled',
         ];
     }
 
@@ -167,6 +167,7 @@ class Order extends Model implements Auditable
             self::READY_FOR_DELEVIRY => 'orange',
             self::DELEVIRED => 'green',
             self::PENDING_APPROVAL => 'purple',
+            self::CANCELLED => 'red',
             default => 'gray',
         };
     }
@@ -179,6 +180,7 @@ class Order extends Model implements Auditable
             self::READY_FOR_DELEVIRY => 'heroicon-o-truck',
             self::DELEVIRED => 'heroicon-o-check-circle',
             self::PENDING_APPROVAL => 'heroicon-o-clock',
+            self::CANCELLED => 'heroicon-o-x-circle',
             default => 'heroicon-o-exclamation-circle',
         };
     }
@@ -188,16 +190,9 @@ class Order extends Model implements Auditable
         DB::beginTransaction();
 
         try {
-
-            $this->cancelled = true;
+            $this->status = self::CANCELLED;
             $this->cancel_reason = $reason;
             $this->save();
-
-            // Delete related inventory transactions
-            InventoryTransaction::where('transactionable_id', $this->id)
-                ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
-                ->delete();
-
             DB::commit();
 
             return ['status' => 'success', 'message' => 'Order canceled successfully.'];
@@ -303,9 +298,7 @@ class Order extends Model implements Auditable
         });
 
         static::saved(function (Order $order) {
-            if (in_array($order->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
-                app(CopyOrderOutToBranchStoreService::class)->handleForOrder($order);
-
+            if (in_array($order->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) { 
                 // Create Financial Transaction for Transfers (only for non-reseller branches)
                 if ($order->branch && $order->branch->type !== Branch::TYPE_RESELLER) {
                     app(\App\Services\Financial\TransferFinancialSyncService::class)->syncOrder($order);
@@ -420,6 +413,8 @@ class Order extends Model implements Auditable
                 return [
                     self::DELEVIRED => 'Delevired',
                 ];
+            case self::CANCELLED:
+                return []; // No transitions available from cancelled
             default:
                 return []; // No transitions available for final statuses
         }
@@ -543,5 +538,11 @@ class Order extends Model implements Auditable
     public function getTotalReturnedAmountAttribute(): float
     {
         return $this->returns->sum(fn($returnedOrder) => $returnedOrder->total_amount);
+    }
+
+    
+    public function getCancellableAttribute()
+    {
+        return in_array($this->status, [self::ORDERED, self::PROCESSING]);
     }
 }

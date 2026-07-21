@@ -26,6 +26,11 @@ class AdvanceWageObserver
      */
     public function creating(AdvanceWage $advanceWage): void
     {
+        // Set default status to settled if not provided
+        if (!$advanceWage->status) {
+            // $advanceWage->status = AdvanceWage::STATUS_SETTLED;
+        }
+
         // Set the creator
         if (!$advanceWage->created_by) {
             $advanceWage->created_by = \Illuminate\Support\Facades\Auth::id();

@@ -43,12 +43,31 @@ trait HasNewUserForm
                         TextInput::make('name')->required()->unique(ignoreRecord: true),
                         TextInput::make('email')->required()->unique(ignoreRecord: true)
                             ->email()->required(),
-                        TextInput::make('phone_number')
+                        \App\Filament\Forms\Components\PhoneInput::make('phone_number')
+                            ->label(__('lang.phone_number'))
                             ->unique(ignoreRecord: true)
                             ->columnSpan(1)
-
-                            // ->numeric()
-                            ->maxLength(14)->minLength(8),
+                            // ->required()
+                            ->defaultCountry('my') // اليمن كدولة افتراضية
+                            ->onlyCountries(['sa', 'ye', 'ae', 'my']) // حصر القائمة في السعودية، اليمن، والإمارات
+                            ->countryValidations([
+                                'sa' => [
+                                    // السعودية: يجب أن يبدأ بـ 5
+                                    'starts_with' => ['+9665'],
+                                    'length' => 13,
+                                ],
+                                'my' => [
+                                    // ماليزيا: أرقام الجوال تبدأ بـ 1
+                                    'starts_with' => ['+601'],
+                                    'length' => [12, 13],
+                                ],
+                                'ye' => [
+                                    // اليمن: تحديد دقيق للشركات (77، 73، 71، 70) ومنع أرقام الهاتف الثابت
+                                    'starts_with' => ['+96777', '+96773', '+96771', '+96770'],
+                                    'length' => 13,
+                                ],
+                                [],
+                            ]),
                         Select::make('gender')
                             ->label('Gender')
                             ->options([
@@ -87,6 +106,7 @@ trait HasNewUserForm
                                 return Branch::query()
                                     ->whereIn('type', [Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN, Branch::TYPE_RESELLER, Branch::TYPE_POPUP, Branch::TYPE_HQ])
                                     ->select('id', 'name')
+                                    ->active()
                                     ->forBranchManager('id')
                                     ->get()
                                     ->pluck('name', 'id');;

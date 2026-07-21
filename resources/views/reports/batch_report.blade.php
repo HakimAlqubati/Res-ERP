@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Batch Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tom Select for searchable dropdowns -->
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Tom Select styling tweaks to match Tailwind */
+        .ts-control {
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            border-color: #d1d5db;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-6">
+
+    <div class="mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold mb-6 text-gray-800 border-b pb-4">Inventory Batch Report</h1>
+
+        <!-- Filters -->
+        <form method="GET" action="{{ route('reports.batch') }}" class="mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Store</label>
+                    <select name="store_id" class="searchable-select w-full border-gray-300 rounded-md shadow-sm border p-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">-- Select Store --</option>
+                        @foreach($stores as $store)
+                            <option value="{{ $store->id }}" {{ $storeId == $store->id ? 'selected' : '' }}>
+                                {{ $store->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Product</label>
+                    <select name="product_id" class="searchable-select w-full border-gray-300 rounded-md shadow-sm border p-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">-- Select Product --</option>
+                        @foreach($products as $product)
+                            <option value="{{ $product->id }}" {{ $productId == $product->id ? 'selected' : '' }}>
+                                {{ $product->display_name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <button type="submit" class="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-md shadow hover:bg-blue-700 transition" style="height: 42px;">
+                        View Report
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Table -->
+        @if(request()->has('store_id'))
+            @if($batches->isNotEmpty())
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 font-semibold">Transaction ID</th>
+                                <th scope="col" class="px-6 py-3 font-semibold">Date</th>
+                                <th scope="col" class="px-6 py-3 font-semibold">Source Document</th>
+                                <th scope="col" class="px-6 py-3 font-semibold">Product</th>
+                                <!-- Original IN Info -->
+                                <th scope="col" class="px-6 py-3 font-semibold border-l bg-gray-100">In Unit</th>
+                                <th scope="col" class="px-6 py-3 font-semibold bg-gray-100">In Qty</th>
+                                <th scope="col" class="px-6 py-3 font-semibold bg-gray-100">In Pkg Size</th>
+                                <!-- Base Unit Info -->
+                                <th scope="col" class="px-6 py-3 font-semibold border-l bg-blue-50 text-blue-700">Base Unit</th>
+                                <th scope="col" class="px-6 py-3 font-semibold bg-blue-50 text-blue-700">Base Pkg Size</th>
+                                <th scope="col" class="px-6 py-3 font-semibold bg-blue-50 text-blue-700">Total In (Base)</th>
+                                <th scope="col" class="px-6 py-3 font-semibold bg-blue-50 text-blue-700">Total Out (Base)</th>
+                                <th scope="col" class="px-6 py-3 font-semibold bg-blue-50 text-blue-700">Remaining (Base)</th>
+                                <!-- Financials & Status -->
+                                <th scope="col" class="px-6 py-3 font-semibold border-l">Base Unit Price</th>
+                                <th scope="col" class="px-6 py-3 font-semibold text-green-600">Remaining Total Price</th>
+                                <th scope="col" class="px-6 py-3 font-semibold text-center">Current Batch</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($batches as $batch)
+                                <tr class="bg-white border-b hover:bg-gray-50">
+                                    <td class="px-6 py-4">{{ $batch->id }}</td>
+                                    <td class="px-6 py-4">{{ \Carbon\Carbon::parse($batch->movement_date)->format('Y-m-d H:i') }}</td>
+                                    <td class="px-6 py-4">
+                                        @if(isset($batch->source_document))
+                                            <span class="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-md border border-gray-200">
+                                                {{ $batch->source_document }}
+                                            </span>
+                                        @else
+                                            <span class="text-gray-400">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4">{{ $batch->product ?? 'N/A' }}</td>
+                                    
+                                    <!-- Original IN Info -->
+                                    <td class="px-6 py-4 border-l bg-gray-50">{{ $batch->unit ?? 'N/A' }}</td>
+                                    <td class="px-6 py-4 bg-gray-50">{{ $batch->in_qty }}</td>
+                                    <td class="px-6 py-4 bg-gray-50">{{ $batch->package_size ?? 1 }}</td>
+                                    
+                                    <!-- Base Unit Info -->
+                                    <td class="px-6 py-4 border-l bg-blue-50/30 text-blue-800">{{ $batch->base_unit ?? 'N/A' }}</td>
+                                    <td class="px-6 py-4 bg-blue-50/30 text-blue-800">{{ $batch->base_unit_package_size ?? 1 }}</td>
+                                    <td class="px-6 py-4 bg-blue-50/30 text-blue-800">{{ $batch->base_unit_in_qty }}</td>
+                                    <td class="px-6 py-4 bg-blue-50/30 text-blue-800">{{ $batch->base_unit_out }}</td>
+                                    <td class="px-6 py-4 bg-blue-50/30 font-bold text-blue-600">{{ $batch->current_stock }}</td>
+                                    
+                                    <!-- Financials & Status -->
+                                    <td class="px-6 py-4 border-l">{{ number_format($batch->unit_price, 2) }}</td>
+                                    <td class="px-6 py-4 font-bold text-green-600">{{ number_format($batch->remaining_total_price, 2) }}</td>
+                                    <td class="px-6 py-4 text-center">
+                                        @if(isset($batch->is_current_batch) && $batch->is_current_batch)
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                Yes
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                No
+                                            </span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mt-4 rounded-r-md">
+                    <div class="flex">
+                        <div class="ml-3">
+                            <p class="text-sm text-yellow-700">
+                                No available batches found for the selected criteria.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        @else
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mt-4 rounded-r-md">
+                <div class="flex">
+                    <div class="ml-3">
+                        <p class="text-sm text-blue-700">
+                            Please select a store to view the report.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        @endif
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll('.searchable-select').forEach((el) => {
+                new TomSelect(el, {
+                    create: false,
+                    sortField: {
+                        field: "text",
+                        direction: "asc"
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

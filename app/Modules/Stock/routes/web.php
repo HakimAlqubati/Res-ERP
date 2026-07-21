@@ -26,4 +26,10 @@ Route::middleware(['web', 'auth'])->group(function () {
 
     Route::get('/reports/products/search', [GrnConsumptionReportController::class, 'searchProducts'])
         ->name('reports.products.search');
+
+    Route::get('/quantity-discrepancy', [\App\Modules\Stock\Http\Controllers\QuantityDiscrepancyController::class, 'index'])
+        ->name('quantity-discrepancy.index');
+
+    Route::get('/wrong-package-size', [\App\Modules\Stock\Http\Controllers\WrongPackageSizeController::class, 'index'])
+        ->name('wrong-package-size.index');
 });

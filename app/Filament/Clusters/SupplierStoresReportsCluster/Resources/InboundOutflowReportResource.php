@@ -43,7 +43,9 @@ class InboundOutflowReportResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->filters([
+        return $table
+        ->deferFilters(false)
+        ->filters([
             Filter::make('transactionable_id')
                 ->schema([
                     TextInput::make('transactionable_id')

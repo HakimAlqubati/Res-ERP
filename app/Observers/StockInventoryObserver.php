@@ -4,7 +4,7 @@ namespace App\Observers;
 
 use App\Models\StockInventory;
 use App\Services\Financial\ClosingStockCalculationService;
-
+use App\Validators\Inventory\StockInventoryCreationValidator;
 
 class StockInventoryObserver
 {
@@ -17,6 +17,14 @@ class StockInventoryObserver
     ) {
         $this->calculationService = $calculationService;
         $this->adjustmentService = $adjustmentService;
+    }
+
+    /**
+     * Handle the StockInventory "creating" event.
+     */
+    public function creating(StockInventory $stockInventory): void
+    {
+        StockInventoryCreationValidator::validate($stockInventory);
     }
 
     /**

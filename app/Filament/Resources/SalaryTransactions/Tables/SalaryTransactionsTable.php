@@ -35,7 +35,7 @@ class SalaryTransactionsTable
             ->recordUrl(fn(SalaryTransaction $record): string => SalaryTransactionResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('employee.name')
-                    ->label(__('Employee'))->toggleable()
+                    ->label(__('lang.employee'))->toggleable()
                     ->sortable()
                     ->searchable(),
                 // TextColumn::make('payroll')
@@ -68,6 +68,11 @@ class SalaryTransactionsTable
                     // ->alignCenter()
                     ->sortable()
                     ->searchable(),
+                TextColumn::make('status')->toggleable()
+                    ->label(__('Status'))
+                    // ->alignCenter()
+                    ->sortable()
+                    ->searchable(),
                 TextColumn::make('sub_type')
                     ->label(__('Sub Type'))->toggleable()
                     // ->alignCenter()
@@ -93,7 +98,7 @@ class SalaryTransactionsTable
                 // التاريخ
                 TextColumn::make('date')->alignCenter()->toggleable()
                     ->label(__('Date'))->toggleable(isToggledHiddenByDefault: true)
-                    ->date('Y-m-d')
+                    ->date('d-m-Y')
                     ->sortable(),
 
                 // // الحالة

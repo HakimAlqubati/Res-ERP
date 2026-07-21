@@ -14,6 +14,7 @@ class ViewGoodsReceivedNote extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            GoodsReceivedNoteResource::getExportExcelAction(\Filament\Actions\Action::class),
             DeleteAction::make(),
         ];
     }

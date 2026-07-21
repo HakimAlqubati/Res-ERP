@@ -67,7 +67,14 @@ class ListEmployeeApplications extends ListRecords
                 ->badge(EmployeeApplicationV2::query()
                     ->whereHas('employee')
                     ->forBranchManager()
-                    ->pending()
+                    ->when(isFinanceManager(), function ($q) {
+                        $q->whereIn('status', [EmployeeApplicationV2::STATUS_APPROVED,EmployeeApplicationV2::STATUS_PENDING])
+                            ->whereHas('advanceRequest', function ($query) {
+                                $query->whereNull('finance_approved_at');
+                            });
+                    }, function ($q) {
+                        // $q->pending();
+                    })
                     ->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST)
                     ->count())
                 ->badgeColor('warning'),

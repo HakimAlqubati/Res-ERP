@@ -238,6 +238,7 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
 
     public static function canViewAny(): bool
     {
+        return false;
         if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) {
             return true;
         }

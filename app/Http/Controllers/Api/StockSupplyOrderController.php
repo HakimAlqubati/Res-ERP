@@ -143,7 +143,7 @@ class StockSupplyOrderController extends Controller
             DB::rollBack();
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to create supply order',
+                'message' => $e->getMessage(),
                 'error' => $e->getMessage()
             ], 500);
         }

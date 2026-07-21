@@ -4,6 +4,7 @@ namespace App\Filament\Resources\EmployeeResource\Tables;
 
 use App\Exports\EmployeesExport;
 use App\Imports\EmployeeImport;
+use App\Imports\EmployeeEwalletImport;
 use App\Models\Employee;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -81,6 +82,45 @@ class HeaderActions
                     } catch (Throwable $th) {
                         throw $th;
                         showWarningNotifiMessage('Error importing employees');
+                    }
+                }),
+
+            Action::make('import_ewallet_data')
+                ->label(__('Import E-Wallet Data'))
+                ->icon('heroicon-o-credit-card')
+                ->visible(fn (): bool => isHakimOrAdel())
+                ->schema([
+                    FileUpload::make('file')
+                        ->label(__('lang.select_excel_file')),
+                ])
+                ->color('info')
+                ->action(function ($data) {
+                    $file = storage_path('app/public/'.$data['file']);
+                    try {
+                        $import = new EmployeeEwalletImport;
+                        Excel::import($import, $file);
+
+                        if ($import->getUpdatedCount() > 0) {
+                            $message = "E-Wallet data imported successfully. {$import->getUpdatedCount()} employees updated.";
+                            if ($import->getSkippedCount() > 0) {
+                                $message .= " {$import->getSkippedCount()} rows skipped.";
+                            }
+                            showSuccessNotifiMessage($message);
+                        } else {
+                            showWarningNotifiMessage('No employees were updated. Please check your file.');
+                        }
+
+                        if ($import->hasErrors()) {
+                            $errors = implode("\n", array_slice($import->getImportErrors(), 0, 10));
+                            Notification::make()
+                                ->title('Import Warnings')
+                                ->body($errors)
+                                ->warning()
+                                ->persistent()
+                                ->send();
+                        }
+                    } catch (Throwable $th) {
+                        throw $th;
                     }
                 }),
         ];

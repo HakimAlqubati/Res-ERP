@@ -42,8 +42,12 @@ class OrderTable
 
     public static function configure(Table $table): Table
     {
+        $pagination = [10, 25, 50, 100];
+        if(isHakimOrAdel()){
+            $pagination = [10, 25, 50, 100,250,400,500];
+        }
         return $table
-            ->paginated([10, 25, 50, 100])
+            ->paginated($pagination)
             ->deferLoading()
             ->striped()
             ->extremePaginationLinks()
@@ -77,7 +81,7 @@ class OrderTable
                         'secondary' => static fn($state): bool => $state === Order::PENDING_APPROVAL,
                         'warning' => static fn($state): bool => $state === Order::READY_FOR_DELEVIRY,
                         'success' => static fn($state): bool => $state === Order::DELEVIRED,
-                        'danger' => static fn($state): bool => $state === Order::PROCESSING,
+                        'danger' => static fn($state): bool => in_array($state, [Order::PROCESSING, Order::CANCELLED]),
                     ])
                     ->iconPosition('after')->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('item_count')->label(__('lang.item_counts'))->alignCenter(true)->sortable(),
@@ -87,10 +91,10 @@ class OrderTable
                     ->numeric()
                     ->hidden(fn(): bool => isStoreManager())
                     ->state(function (Order $record, OrderCostAnalysisService $service) {
-                        // if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
-                        //     $analysis = $service->getOrderValues($record->id);
-                        //     return $analysis['total_cost_from_inventory_transactions'] ?? $record->total_amount;
-                        // }
+                        if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
+                            $analysis = $service->getOrderValues($record->id);
+                            return $analysis['total_cost_from_inventory_transactions'] ?? $record->total_amount;
+                        }
                         return $record->total_amount;
                     })
                     ->formatStateUsing(function ($state) {
@@ -101,10 +105,10 @@ class OrderTable
                             ->using(function (Table $table) {
                                 $service = app(OrderCostAnalysisService::class);
                                 $total = $table->getRecords()->sum(function ($record) use ($service) {
-                                    // if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
-                                    //     $analysis = $service->getOrderValues($record->id);
-                                    //     return $analysis['total_cost_from_inventory_transactions'] ?? $record->total_amount;
-                                    // }
+                                    if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
+                                        $analysis = $service->getOrderValues($record->id);
+                                        return $analysis['total_cost_from_inventory_transactions'] ?? $record->total_amount;
+                                    }
                                     return $record->total_amount;
                                 });
                                 if (is_numeric($total)) {
@@ -129,6 +133,10 @@ class OrderTable
                     ->sortable(),
 
 
+                TextColumn::make('logs_count')->counts('logs')
+                    ->label('Order Logs')->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: false)
+                    ->visible(fn()=>isHakimOrAdel()),
                 // TextColumn::make('recorded'),
                 // TextColumn::make('orderDetails'),
             ])
@@ -146,6 +154,7 @@ class OrderTable
                         'ready_for_delivery' => 'Ready for deleviry',
                         'delevired' => 'Delevired',
                         'pending_approval' => 'Pending approval',
+                        'cancelled' => 'Cancelled',
                     ]),
                 SelectFilter::make('customer_id')
                     ->searchable()
@@ -178,7 +187,7 @@ class OrderTable
             ], FiltersLayout::Modal)->filtersFormColumns(3)
             ->recordActions([
                 Action::make('cancel')
-                    ->label('Cancel')->hidden(fn($record): bool => $record->cancelled)
+                    ->label('Cancel')->hidden(fn($record): bool => $record->status === Order::CANCELLED)
                     ->icon('heroicon-o-backspace')->button()->color(Color::Red)
                     ->schema([
                         Textarea::make('cancel_reason')->required()->label('Cancel Reason')
@@ -199,7 +208,9 @@ class OrderTable
                                 ->danger()
                                 ->send();
                         }
-                    })->hidden(fn(): bool => isSuperVisor() || isStoreManager()),
+                    })->visible(fn($record): bool => (isSuperAdmin() || isSystemManager())
+                   && $record->cancellable
+                ),
                 Action::make('Move')
                     ->button()->requiresConfirmation()
                     ->label(function ($record) {
@@ -247,7 +258,7 @@ class OrderTable
                         // Add a log entry for the "moved" action
                     })
                     ->disabled(function ($record) {
-                        if ($record->status == Order::DELEVIRED) {
+                        if (in_array($record->status, [Order::DELEVIRED, Order::CANCELLED])) {
                             return true;
                         }
                         return false;
@@ -261,7 +272,9 @@ class OrderTable
                     self::showCostDetailsAction(),
                     ViewAction::make(),
                     EditAction::make(),
-                    DeleteAction::make(),
+                    DeleteAction::make()
+                    ->visible(fn()=> isHakimOrAdel())
+                    ,
 
 
                 ]),

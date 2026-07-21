@@ -1,0 +1,45 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Modules\Stock\Reports\StockBalanceReport\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class StockBalanceResource extends JsonResource
+{
+    /**
+     * تحويل الكائن إلى مصفوفة نظيفة تحتوي على الحقول الديناميكية.
+     */
+    public function toArray(Request $request): array
+    {
+        // نحفظ القيم كأرقام تفادياً للأخطاء الحسابية
+        $totalIn = (float) $this->total_in;
+        $totalOut = (float) $this->total_out;
+        $remainingQty = $totalIn - $totalOut;
+        
+        $remainingQty = formatQunantity($remainingQty);
+        $smallestUnit = $this->smallestReportUnit;
+        return [
+            'product_id'   => $this->id,
+            'product_code' => $this->code,
+            'product_name' => $this->name,
+            'category_id'  => $this->category_id,
+            // 'category_name'=> $this->category->name,
+            
+            // 🔥 إضافة بيانات الوحدة الأساسية التي جلبناها من الـ Subquery
+            'base_unit_id'      => $smallestUnit->unit_id,
+            'base_unit'         => $smallestUnit->unit->name,
+            'base_package_size' => (float) ($smallestUnit->package_size ?? 1),
+
+            // 🔥 هنا نظهر الحقول الديناميكية التي حسبناها في قاعدة البيانات
+            'total_in'           => (float) $this->total_in,
+            'total_out'          => (float) $this->total_out,
+            'remaining_base_qty' => $remainingQty,
+             
+            // إذا كان لديك وحدات مسحوبة مسبقاً يمكنك إضافتها هنا لاحقاً
+            // 'unit_prices' => $this->whenLoaded('reportUnitPrices'),
+        ];
+    }
+}

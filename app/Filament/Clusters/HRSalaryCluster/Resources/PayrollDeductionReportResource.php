@@ -50,8 +50,8 @@ class PayrollDeductionReportResource extends Resource
                         Select::make('group_by')
                             ->label(__('Group By'))
                             ->options([
-                                DeductionReportFilterDTO::GROUP_BY_EMPLOYEE => __('Employee'),
-                                DeductionReportFilterDTO::GROUP_BY_BRANCH => __('Branch'),
+                                DeductionReportFilterDTO::GROUP_BY_EMPLOYEE => __('lang.employee'),
+                                DeductionReportFilterDTO::GROUP_BY_BRANCH => __('lang.branch'),
                             ])
                             ->default(DeductionReportFilterDTO::GROUP_BY_EMPLOYEE)
                             ->selectablePlaceholder(false)
@@ -77,7 +77,7 @@ class PayrollDeductionReportResource extends Resource
                             ->visible(fn (callable $get) => $get('group_by') === DeductionReportFilterDTO::GROUP_BY_BRANCH),
 
                         Select::make('employee_id')
-                            ->label(__('Employee'))
+                            ->label(__('lang.employee'))
                             ->options(function () {
                                 return Employee::where('active', 1)
                                     ->limit(5)
@@ -104,7 +104,7 @@ class PayrollDeductionReportResource extends Resource
                                 return $employee ? $employee->name.' - '.$employee->id : null;
                             })
                             ->searchable()
-                            ->placeholder('Select Employee')
+                            ->placeholder(__('lang.select_employee'))
                             ->hidden(fn (callable $get) => $get('group_by') === DeductionReportFilterDTO::GROUP_BY_BRANCH),
                     ])
                     ->query(function (Builder $query) {

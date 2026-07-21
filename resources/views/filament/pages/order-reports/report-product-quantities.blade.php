@@ -1,6 +1,15 @@
 <x-filament::page>
     {{ $this->getTableFiltersForm() }}
 
+    <div class="flex justify-end mt-4 mb-4 no-print">
+        <button onclick="exportTableToExcel('report-table', 'Product_Quantities_Report')" style="background-color: #10b981; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem;" class="hover:bg-green-600 transition shadow">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
+            </svg>
+            {{ __('lang.export_to_excel') ?? 'Export to Excel' }}
+        </button>
+    </div>
+
     <style>
         table {
             /* border-collapse: collapse; */
@@ -66,6 +75,41 @@
         .cursor-pointer {
             cursor: pointer;
         }
+
+        #report-table .footer-row td {
+            position: sticky;
+            bottom: 0;
+            height: 46px;
+            background-color: white;
+            z-index: 10;
+            border-top: 2px solid #e5e7eb;
+            color: black;
+        }
+
+        #report-table .footer-row-page-total td {
+            position: sticky;
+            bottom: 46px;
+            height: 46px;
+            background-color: #f9fafb;
+            z-index: 10;
+            border-top: 2px solid #e5e7eb;
+            color: black;
+        }
+
+        .dark #report-table .footer-row td,
+        .dark #report-table .footer-row-page-total td {
+            color: white;
+        }
+
+        .dark #report-table .footer-row td {
+            background-color: #1f2937;
+            border-top-color: #374151;
+        }
+
+        .dark #report-table .footer-row-page-total td {
+            background-color: #111827;
+            border-top-color: #374151;
+        }
     </style>
     {{-- @if (isset($product_id) && is_numeric($product_id)) --}}
     <table class="w-full text-sm text-left pretty  reports" id="report-table">
@@ -114,21 +158,52 @@
             </tr>
             @endforeach
 
-            @php
-            $grandTotal = collect($report_data)->sum('subtotal_raw');
-            @endphp
-            <tr style="font-weight: bold; ">
+
+            <tr class="footer-row-page-total" style="font-weight: bold;">
+                <td colspan="6">{{ __('lang.current_page_total') ?? 'Current Page Total' }}</td>
+                <td>{{ $current_page_price_total }}</td>
+            </tr>
+
+            <tr class="footer-row" style="font-weight: bold;">
                 <td colspan="6">{{ __('lang.total') }}</td>
 
-                <td>{{ formatMoneyWithCurrency($grandTotal) }}</td>
+                <td>{{ $grand_total }}</td>
             </tr>
         </tbody>
 
     </table>
+    {{-- طباعة أزرار التنقل السلسة والخفيفة من لايف واير --}}
+    @if ($report_data->hasPages())
+     {{-- Pagination --}}
+    <div class="mt-4 no-print">
+        <x-filament::pagination
+            :paginator="$report_data"
+            class="px-3 py-3 sm:px-6" />
+    </div>
+    @endif
     {{-- @else
         <div class="please_select_message_div" style="text-align: center;">
 
             <h1 class="please_select_message_text">{{ __('lang.please_select_product') }}</h1>
     </div>
     @endif --}}
+
+    <script type="text/javascript" src="https://unpkg.com/xlsx@0.15.1/dist/xlsx.full.min.js"></script>
+    <script>
+        function exportTableToExcel(tableID, filename = ''){
+            var tableSelect = document.getElementById(tableID);
+            // Clone the table to avoid modifying the original
+            var clonedTable = tableSelect.cloneNode(true);
+            
+            // Remove any images or unwanted elements from the cloned table if needed
+            var images = clonedTable.getElementsByTagName('img');
+            while(images.length > 0){
+                images[0].parentNode.removeChild(images[0]);
+            }
+
+            var wb = XLSX.utils.table_to_book(clonedTable, {sheet: "Report"});
+            filename = filename ? filename + '.xlsx' : 'excel_data.xlsx';
+            XLSX.writeFile(wb, filename);
+        }
+    </script>
 </x-filament::page>

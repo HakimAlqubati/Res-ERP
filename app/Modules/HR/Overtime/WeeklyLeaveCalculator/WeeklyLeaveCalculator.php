@@ -59,6 +59,24 @@ class WeeklyLeaveCalculator
             $cappedEarnedDays = $applyWeeklyLeave ? min($remainingCap, $earnedOffDays) : 0;
             $workRemainder    = $totalWorkedForLeave % self::WORK_DAYS_PER_LEAVE;
 
+            // تغطية مُسبقة للغياب في الفترات القصيرة (Multi-Segment)
+            //
+            // المشكلة: في Segment أول قصير (مثال: 3 أيام بغياب 1)، لا يكفي وقت
+            // لتراكم يوم إجازة بالصيغة (كل 6 أيام عمل = يوم راحة)، مما يُنتج خصماً
+            // غير صحيح رغم وجود رصيد إجازة شهري متبقٍّ.
+            //
+            // الحل: إذا كان الغياب أكبر من الإجازة المكتسبة بالصيغة،
+            // وكان هناك رصيد إجازة شهري متبقٍّ، نُسلّف من الرصيد لتغطية الفرق.
+            //
+            // السلامة:
+            //   - الموظف بشهر كامل: earnedOffDays كافٍ → cappedEarnedDays >= absentDays → لا تغيير
+            //   - بدون has_auto_weekly_leave: applyWeeklyLeave=false → لا تغيير
+            //   - الرصيد مستنفَد: remainingCap = cappedEarnedDays → لا تغيير
+            // if ($applyWeeklyLeave && $absentDays > $cappedEarnedDays && $remainingCap > $cappedEarnedDays) {
+            //     $cappedEarnedDays += min($remainingCap - $cappedEarnedDays, $absentDays - $cappedEarnedDays);
+            // }
+
+
             // =================================================================
             // 3. المعادلة الذهبية (الميزان الرقمي)
             // الرصيد = (ما قدمه الموظف + ما استحقه من راحة) - (المطلوب منه في الشهر)

@@ -120,3 +120,15 @@ if (!function_exists('isHakimOrAdel')) {
         ]);
     }
 }
+if (!function_exists('isHakim')) {
+    function isHakim(): bool
+    {
+        if (!auth()->check()) {
+            return false;
+        }
+
+        return in_array(auth()->user()->email, [
+            'hakimahmed123321@gmail.com'
+        ]);
+    }
+}

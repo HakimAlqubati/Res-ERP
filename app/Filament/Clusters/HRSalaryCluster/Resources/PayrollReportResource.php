@@ -25,7 +25,7 @@ class PayrollReportResource extends Resource
 
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 7;
 
     protected static ?string $pluralLabel = 'Payroll Report';
 
