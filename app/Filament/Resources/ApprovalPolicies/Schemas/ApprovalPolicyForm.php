@@ -70,23 +70,49 @@ class ApprovalPolicyForm
                                 Grid::make(2)
                                     ->columnSpanFull()
                                     ->schema([
-                                        Select::make('approvable_type')
+                                        Hidden::make('approvable_type'),
+                                        Hidden::make('application_type_id'),
+
+                                        Select::make('approval_subject_combined')
                                             ->label(__('Approval Subject'))
-                                            ->options(self::approvableTypeOptions())
+                                            ->options(function (): array {
+                                                $options = [
+                                                    EmployeeOvertime::class => __('Employee Overtime'),
+                                                    AdvanceWage::class => __('Advance Wages'),
+                                                    EmployeeApplicationV2::class . ':all' => __('All Employee Requests'),
+                                                ];
+
+                                                foreach (EmployeeApplicationV2::APPLICATION_TYPE_NAMES as $id => $name) {
+                                                    $options[EmployeeApplicationV2::class . ':' . $id] = __('Employee Requests') . ' - ' . $name;
+                                                }
+
+                                                return $options;
+                                            })
                                             ->required()
                                             ->searchable()
                                             ->live()
-                                            ->afterStateUpdated(function (Set $set): void {
-                                                $set('application_type_id', null);
-                                            }),
+                                            ->afterStateHydrated(function (Select $component, Get $get): void {
+                                                $type = $get('approvable_type');
+                                                $appId = $get('application_type_id');
 
-                                        Select::make('application_type_id')
-                                            ->label(__('Employee Request Type'))
-                                            ->options(EmployeeApplicationV2::APPLICATION_TYPE_NAMES)
-                                            ->searchable()
-                                            ->nullable()
-                                            ->helperText(__('Leave empty to apply to all employee request types.'))
-                                            ->visible(fn(Get $get): bool => $get('approvable_type') === EmployeeApplicationV2::class),
+                                                if ($type === EmployeeApplicationV2::class) {
+                                                    $component->state($type . ':' . ($appId ?? 'all'));
+                                                } else {
+                                                    $component->state($type);
+                                                }
+                                            })
+                                            ->afterStateUpdated(function (?string $state, Set $set): void {
+                                                if ($state && str_contains($state, ':')) {
+                                                    [$type, $appId] = explode(':', $state);
+                                                    $set('approvable_type', $type);
+                                                    $set('application_type_id', $appId === 'all' ? null : $appId);
+                                                } else {
+                                                    $set('approvable_type', $state);
+                                                    $set('application_type_id', null);
+                                                }
+                                            })
+                                            ->dehydrated(false)
+                                            ->columnSpanFull(),
 
                                     ]),
                             ])

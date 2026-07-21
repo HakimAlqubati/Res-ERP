@@ -38,6 +38,20 @@ class EmployeeApplicationResource extends JsonResource
             'images'            => $this->getMedia('images')->map(fn($media) => $media->getFullUrl()),
             'files'             => $this->getMedia('files')->map(fn($media) => $media->getFullUrl()),
             'createdAt'         => $this->created_at?->toDateTimeString(),
+            
+            'approval_steps'    => $this->approvalSteps ? $this->approvalSteps->map(function ($step) {
+                return [
+                    'id' => $step->id,
+                    'step_order' => $step->step_order,
+                    'status' => $step->status,
+                    'approver_user' => $step->approverUser?->name,
+                    'approver_role' => $step->approverRole?->name,
+                    'approver_employee' => $step->approverEmployee?->name,
+                    'approved_at' => $step->approved_at,
+                    'rejected_at' => $step->rejected_at,
+                    'notes' => $step->notes,
+                ];
+            }) : null,
         ];
     }
 }

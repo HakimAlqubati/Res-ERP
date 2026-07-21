@@ -70,7 +70,14 @@ class EmployeeApplicationController extends Controller
      */
     public function show($id)
     {
-        $app = EmployeeApplicationV2::with(['employee', 'leaveRequest', 'advanceRequest'])->find($id);
+        $app = EmployeeApplicationV2::with([
+            'employee', 
+            'leaveRequest', 
+            'advanceRequest',
+            'approvalSteps.approverUser',
+            'approvalSteps.approverRole',
+            'approvalSteps.approverEmployee',
+        ])->find($id);
 
         if (! $app) {
             return response()->json([
