@@ -36,10 +36,10 @@ class ApprovalWorkflowRequirementChecker
             ->when(
                 $record->approvalBranchId(),
                 fn ($query, int $branchId) => $query->where(function ($q) use ($branchId) {
-                    $q->where('branch_id', $branchId)
-                        ->orWhereNull('branch_id');
+                    $q->whereJsonContains('branch_ids', $branchId)
+                        ->orWhereNull('branch_ids');
                 }),
-                fn ($query) => $query->whereNull('branch_id')
+                fn ($query) => $query->whereNull('branch_ids')
             )
             ->exists();
     }

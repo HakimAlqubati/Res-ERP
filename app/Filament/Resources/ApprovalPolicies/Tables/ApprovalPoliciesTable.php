@@ -27,7 +27,7 @@ class ApprovalPoliciesTable
             ->recordTitleAttribute('name')
             ->striped()
             ->defaultSort('created_at', 'desc')
-            ->modifyQueryUsing(fn(Builder $query) => $query->with('branch')->withCount('policySteps'))
+            ->modifyQueryUsing(fn(Builder $query) => $query->withCount('policySteps'))
             ->columns([
                 TextColumn::make('name')
                     ->label(__('Name'))
@@ -53,10 +53,17 @@ class ApprovalPoliciesTable
                         : __('All'))
                     ->placeholder(__('All')),
 
-                TextColumn::make('branch.name')
-                    ->label(__('Branch'))
-                    ->sortable()
-                    ->searchable()
+                TextColumn::make('branch_ids')
+                    ->label(__('Branches'))
+                    ->formatStateUsing(function ($state) {
+                        if (empty($state)) return __('Global');
+                        static $branchNames = null;
+                        if ($branchNames === null) {
+                            $branchNames = \App\Models\Branch::pluck('name', 'id')->toArray();
+                        }
+                        return collect($state)->map(fn($id) => $branchNames[$id] ?? $id)->join(', ');
+                    })
+                    ->badge()
                     ->placeholder(__('Global')),
 
                 TextColumn::make('policy_steps_count')
@@ -85,9 +92,13 @@ class ApprovalPoliciesTable
                     ->label(__('Employee Request Type'))
                     ->options(EmployeeApplicationV2::APPLICATION_TYPE_NAMES),
 
-                SelectFilter::make('branch_id')
+                SelectFilter::make('branch_ids')
                     ->label(__('Branch'))
-                    ->relationship('branch', 'name')
+                    ->options(fn() => \App\Models\Branch::pluck('name', 'id')->toArray())
+                    ->query(function (Builder $query, array $data) {
+                        if (empty($data['value'])) return $query;
+                        return $query->whereJsonContains('branch_ids', (int) $data['value']);
+                    })
                     ->searchable()
                     ->preload(),
 

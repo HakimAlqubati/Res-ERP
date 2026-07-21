@@ -50,13 +50,14 @@ class ApprovalPolicyForm
                                             ->placeholder(__('Example: Leave approval - branch manager')),
 
 
-                                        Select::make('branch_id')
-                                            ->label(__('Branch'))
+                                        Select::make('branch_ids')
+                                            ->label(__('Branches'))
                                             ->placeholder('All')
                                             ->options(fn(): array => Branch::query()
                                                 ->orderBy('name')
                                                 ->pluck('name', 'id')
                                                 ->all())
+                                            ->multiple()
                                             ->searchable()
                                             ->nullable()
                                             ->helperText(__('Select all to apply this policy to every branch.')),

@@ -15,7 +15,7 @@ class ApprovalPolicy extends Model
         'name',
         'approvable_type',
         'application_type_id',
-        'branch_id',
+        'branch_ids',
         'mode',
         'levels',
         'custom_approver_user_ids',
@@ -24,7 +24,7 @@ class ApprovalPolicy extends Model
 
     protected $casts = [
         'application_type_id' => 'integer',
-        'branch_id' => 'integer',
+        'branch_ids' => 'array',
         'levels' => 'integer',
         'custom_approver_user_ids' => 'array',
         'active' => 'boolean',
@@ -38,10 +38,5 @@ class ApprovalPolicy extends Model
     public function policySteps(): HasMany
     {
         return $this->hasMany(ApprovalPolicyStep::class, 'approval_policy_id')->orderBy('step_order');
-    }
-
-    public function branch(): BelongsTo
-    {
-        return $this->belongsTo(Branch::class);
     }
 }

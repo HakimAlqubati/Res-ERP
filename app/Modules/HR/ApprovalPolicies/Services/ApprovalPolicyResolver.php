@@ -28,12 +28,12 @@ class ApprovalPolicyResolver
             ->when(
                 $branchId,
                 fn ($query) => $query->where(function ($q) use ($branchId) {
-                    $q->where('branch_id', $branchId)
-                        ->orWhereNull('branch_id');
+                    $q->whereJsonContains('branch_ids', $branchId)
+                        ->orWhereNull('branch_ids');
                 }),
-                fn ($query) => $query->whereNull('branch_id')
+                fn ($query) => $query->whereNull('branch_ids')
             )
-            ->orderByRaw('CASE WHEN branch_id IS NULL THEN 1 ELSE 0 END')
+            ->orderByRaw('CASE WHEN branch_ids IS NULL THEN 1 ELSE 0 END')
             ->orderByRaw('CASE WHEN application_type_id IS NULL THEN 1 ELSE 0 END')
             ->latest('id')
             ->first();
