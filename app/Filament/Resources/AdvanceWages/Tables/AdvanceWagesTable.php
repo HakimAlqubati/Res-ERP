@@ -35,7 +35,7 @@ class AdvanceWagesTable
 
                 TextColumn::make('amount')
                     ->label(__('Amount'))
-                    ->money(fn($record) => $record->employee?->branch?->currency ?? 'MYR')
+                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->sortable(),
 
                 TextColumn::make('reason')
