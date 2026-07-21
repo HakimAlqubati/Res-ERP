@@ -726,6 +726,64 @@ class EmployeeApplicationResource extends Resource
             });
     }
 
+    public static function approvePolicyStepAction(): Action
+    {
+        return Action::make('approvePolicyStep')
+            ->label('Approve Step')
+            ->button()
+            ->color('success')
+            ->icon('heroicon-o-check-badge')
+            ->visible(function (EmployeeApplicationV2 $record): bool {
+                if ($record->status !== EmployeeApplicationV2::STATUS_PENDING) {
+                    return false;
+                }
+                
+                if (!$record->approvalSteps()->exists()) {
+                    return false;
+                }
+
+                $service = app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService::class);
+                return $service->canUserApprove($record, auth()->user());
+            })
+            ->action(function (EmployeeApplicationV2 $record, array $data) {
+                try {
+                    $service = app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService::class);
+                    $service->approve($record, auth()->user(), $data['notes'] ?? null);
+
+                    Notification::make()->success()->title('Step approved successfully')->send();
+                } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+                    Notification::make()->danger()->title('Authorization error')->body($e->getMessage())->send();
+                } catch (\Exception $th) {
+                    Notification::make()->danger()->title('Approval error')->body($th->getMessage())->send();
+                }
+            })
+            ->schema(function (EmployeeApplicationV2 $record) {
+                $step = $record->currentApprovalStep;
+                
+                $step->loadMissing(['approverUser', 'approverEmployee', 'approverRole']);
+                $approverName = $step?->approverEmployee?->name
+                    ?: $step?->approverUser?->name
+                    ?: ($step?->approverRole?->name ? "Any {$step->approverRole->name}" : 'Unknown');
+
+                return [
+                    Fieldset::make('Current Step Details')->schema([
+                        TextInput::make('step_order')
+                            ->label('Step Order')
+                            ->default($step?->step_order)
+                            ->disabled(),
+                        TextInput::make('approver')
+                            ->label('Required Approver')
+                            ->default($approverName)
+                            ->disabled(),
+                    ]),
+                    Textarea::make('notes')
+                        ->label('Approval Notes')
+                        ->placeholder('Optional notes for this approval step...')
+                        ->rows(3),
+                ];
+            });
+    }
+
     public static function approveLeaveRequest(): Action
     {
         return Action::make('approveLeaveRequest')->label('Approve')->button()

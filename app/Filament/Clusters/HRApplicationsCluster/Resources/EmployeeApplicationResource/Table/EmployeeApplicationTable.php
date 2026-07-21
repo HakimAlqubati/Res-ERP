@@ -286,6 +286,7 @@ class EmployeeApplicationTable
             ->filtersFormColumns(4)
             ->recordActions([
                 ActionGroup::make([
+                    EmployeeApplicationResource::approvePolicyStepAction(),
                     EmployeeApplicationResource::attachmentsAction(),
 
                     EmployeeApplicationResource::approveLeaveRequest()->hidden(function ($record) {
