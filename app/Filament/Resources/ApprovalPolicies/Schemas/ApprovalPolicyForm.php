@@ -9,6 +9,7 @@ use App\Models\EmployeeOvertime;
 use App\Models\User;
 use App\Modules\HR\ApprovalPolicies\Enums\ApprovalMode;
 use App\Modules\HR\ApprovalPolicies\Enums\ApprovalPolicyStepType;
+use App\Modules\HR\ApprovalPolicies\Rules\PolicyNotInUse;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
@@ -47,13 +48,21 @@ class ApprovalPolicyForm
                                         TextInput::make('name')
                                             ->label(__('Name'))
                                             ->maxLength(255)
-                                            ->placeholder(__('Example: Leave approval - branch manager')),
+                                            ->placeholder(__('Example: Leave approval - branch manager'))
+                                            ->rules([
+                                                fn (?\Illuminate\Database\Eloquent\Model $record) => function (string $attribute, $value, \Closure $fail) use ($record) {
+                                                    if ($record) {
+                                                        (new PolicyNotInUse($record))->validate($attribute, $value, $fail);
+                                                    }
+                                                },
+                                            ]),
 
 
                                         Select::make('branch_ids')
                                             ->label(__('Branches'))
                                             ->placeholder('All')
                                             ->options(fn(): array => Branch::query()
+                                            ->active()
                                                 ->orderBy('name')
                                                 ->pluck('name', 'id')
                                                 ->all())

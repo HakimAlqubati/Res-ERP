@@ -3,10 +3,13 @@
 namespace App\Modules\HR\ApprovalPolicies\Models;
 
 use App\Models\Branch;
+use App\Modules\HR\ApprovalPolicies\Observers\ApprovalPolicyObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+#[ObservedBy([ApprovalPolicyObserver::class])]
 class ApprovalPolicy extends Model
 {
     protected $table = 'hr_approval_policies';

@@ -64,6 +64,7 @@ class ApprovalPoliciesTable
                         return collect($state)->map(fn($id) => $branchNames[$id] ?? $id)->join(', ');
                     })
                     ->badge()
+                    ->wrap()
                     ->placeholder(__('Global')),
 
                 TextColumn::make('policy_steps_count')
