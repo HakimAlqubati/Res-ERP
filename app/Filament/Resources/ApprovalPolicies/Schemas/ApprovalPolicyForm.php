@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Modules\HR\ApprovalPolicies\Enums\ApprovalMode;
 use App\Modules\HR\ApprovalPolicies\Enums\ApprovalPolicyStepType;
 use App\Modules\HR\ApprovalPolicies\Rules\PolicyNotInUse;
+use App\Modules\HR\ApprovalPolicies\Rules\UniqueApprovalPolicy;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
@@ -55,6 +56,12 @@ class ApprovalPolicyForm
                                                         (new PolicyNotInUse($record))->validate($attribute, $value, $fail);
                                                     }
                                                 },
+                                                fn (Get $get, ?\Illuminate\Database\Eloquent\Model $record) => new UniqueApprovalPolicy(
+                                                    ignoreId: $record?->id,
+                                                    approvableType: $get('approvable_type'),
+                                                    applicationTypeId: $get('application_type_id'),
+                                                    branchIds: $get('branch_ids')
+                                                ),
                                             ]),
 
 
