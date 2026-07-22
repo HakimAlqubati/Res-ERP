@@ -44,6 +44,7 @@ class EmployeeApplicationTable
             TextColumn::make('employee.name')
                 ->label(__('lang.employee'))
                 ->sortable()
+                ->url(fn ($record) => \App\Filament\Resources\EmployeeResource::getUrl('view', ['record' => $record->employee_id]),true)
                 ->limit(20)
                 ->tooltip(fn ($state) => $state)
                 ->searchable(),
