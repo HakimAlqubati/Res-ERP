@@ -492,6 +492,14 @@ class SettingResource extends Resource
                                                 ->offColor('danger')
                                                 ->helperText('Purchase Invoice Number is mandatory and becomes non-editable once entered.')
                                                 ->default(false),
+                                            TextInput::make('max_price_change_percent')
+                                                ->label('Max Price Change Percent')
+                                                ->numeric()
+                                                ->minValue(0)
+                                                ->maxValue(100)
+                                                ->suffix('%')
+                                                ->helperText('Alerts if the new price change exceeds this percentage')
+                                                ->default(0),
                                         ]),
                                     ]),
                                     Tab::make('GRN Workflow Settings')->columnSpanFull()->schema([

@@ -16,6 +16,7 @@ use App\Modules\Stock\Reports\ProductGrnAggregation\Contracts\ProductAggregation
 use App\Modules\Stock\Reports\ProductGrnAggregation\Repositories\ProductAggregationRepository;
 use App\Modules\Stock\Reports\StockBalanceReport\Contracts\StockBalanceRepositoryInterface;
 use App\Modules\Stock\Reports\StockBalanceReport\Repositories\StockBalanceRepository;
+use App\Modules\Stock\PriceValidation\Providers\PriceValidationServiceProvider;
 
 class StockServiceProvider extends ServiceProvider
 {
@@ -24,6 +25,8 @@ class StockServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Register sub-module providers.
+        $this->app->register(PriceValidationServiceProvider::class);
         // Bind the Repository Interface to its Implementation (GRN Level)
         $this->app->bind(
             GrnConsumptionRepositoryInterface::class,
