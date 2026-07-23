@@ -5,8 +5,8 @@ namespace App\Modules\Stock\PriceValidation\DTOs;
 /**
  * Immutable result of a price-change validation check.
  *
- * Contains everything the UI needs to display a meaningful
- * warning notification to the user.
+ * This DTO is framework-agnostic — it carries raw data only.
+ * The caller decides how to present it (notification, log, exception, etc.).
  */
 final class PriceCheckResult
 {
@@ -22,7 +22,7 @@ final class PriceCheckResult
     ) {}
 
     /**
-     * Quick check: does this result require user attention?
+     * Does this result require user attention?
      */
     public function requiresWarning(): bool
     {
@@ -46,20 +46,40 @@ final class PriceCheckResult
     }
 
     /**
-     * Build a notification body suitable for Filament Notification.
+     * Plain-text summary suitable for any output channel.
      */
-    public function toNotificationBody(): string
+    public function toSummary(): string
     {
-        $direction   = $this->changePercent > 0 ? '📈' : '📉';
         $absPercent  = abs(round($this->changePercent, 1));
         $lastDisplay = number_format($this->normalizedLastPrice, 2);
         $newDisplay  = number_format($this->normalizedNewPrice, 2);
 
-        return implode("\n", [
-            "{$direction} Price changed by {$absPercent}% (max allowed: {$this->maxAllowedPercent}%)",
-            "Last price (per unit): {$lastDisplay}",
-            "New price (per unit): {$newDisplay}",
+        return implode(' | ', [
+            "Change: {$absPercent}% ({$this->direction()})",
+            "Max allowed: {$this->maxAllowedPercent}%",
+            "Last: {$lastDisplay}",
+            "New: {$newDisplay}",
         ]);
+    }
+
+    /**
+     * Structured array representation for serialization or logging.
+     */
+    public function toArray(): array
+    {
+        return [
+            'product_id'            => $this->productId,
+            'unit_id'               => $this->unitId,
+            'exceeds'               => $this->exceeds,
+            'change_percent'        => $this->changePercent,
+            'direction'             => $this->direction(),
+            'normalized_last_price' => $this->normalizedLastPrice,
+            'normalized_new_price'  => $this->normalizedNewPrice,
+            'max_allowed_percent'   => $this->maxAllowedPercent,
+            'source_type'           => $this->lastPriceRecord?->sourceType,
+            'source_id'             => $this->lastPriceRecord?->sourceId,
+            'source_date'           => $this->lastPriceRecord?->sourceDate,
+        ];
     }
 
     /**
