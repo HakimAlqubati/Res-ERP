@@ -99,8 +99,7 @@ class AllowanceResource extends Resource
                         ->minValue(0)
                         ->step(0.1) // ✅ يسمح بالقيم الكسرية مثل 0.1 أو 25.5
                         ->maxValue(100)
-                        ->default(0)
-                        ->rtl(),
+                        ->default(0),
                     // TextInput::make('percentage')
                     // ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'))->numeric()
                     //     ->suffixIcon('heroicon-o-percent-badge')

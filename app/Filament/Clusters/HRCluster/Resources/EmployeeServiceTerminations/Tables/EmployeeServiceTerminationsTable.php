@@ -29,6 +29,8 @@ class EmployeeServiceTerminationsTable
             ->columns([
                 TextColumn::make('employee.name')
                     ->label(__('lang.employee'))
+                    ->url(fn ($record) => \App\Filament\Resources\EmployeeResource::getUrl('view', ['record' => $record->employee_id]))
+                    ->openUrlInNewTab()
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('termination_date')

@@ -75,6 +75,7 @@ class EmployeeForm
                                                     return [];
                                                 })
                                                 ->rules('string')
+                                                ->unique(ignoreRecord: true)
                                                 ->columnSpan(2)->required(),
 
                                             TextInput::make('known_name')
@@ -95,6 +96,10 @@ class EmployeeForm
                                                         ->disabled(),
                                                     Textarea::make('termination_reason')
                                                         ->label(__('lang.termination_reason'))
+                                                        ->columnSpanFull()
+                                                        ->disabled(),
+                                                    Textarea::make('notes')
+                                                        ->label(__('lang.notes'))
                                                         ->columnSpanFull()
                                                         ->disabled(),
                                                 ]),
@@ -131,7 +136,7 @@ class EmployeeForm
                                                 ->columnSpan(1)
                                                 // ->required()
                                                 ->defaultCountry('my') // اليمن كدولة افتراضية
-                                                ->onlyCountries(['sa', 'ye', 'ae', 'my']) // حصر القائمة في السعودية، اليمن، والإمارات
+                                                // ->onlyCountries(['sa', 'ye', 'ae', 'my']) // حصر القائمة في السعودية، اليمن، والإمارات
                                                 ->countryValidations([
                                                     'sa' => [
                                                         // السعودية: يجب أن يبدأ بـ 5
@@ -627,8 +632,7 @@ class EmployeeForm
                                                                 ->minValue(0)
                                                                 ->step(1)
                                                                 ->maxValue(100)
-                                                                ->default(0)
-                                                                ->rtl(),
+                                                                ->default(0),
                                                         ]),
                                                 ]),
 
@@ -708,8 +712,7 @@ class EmployeeForm
                                                                 ->minValue(0)
                                                                 ->step(1)
                                                                 ->maxValue(100)
-                                                                ->default(0)
-                                                                ->rtl(),
+                                                                ->default(0),
                                                         ]),
                                                 ]),
                                         ]),

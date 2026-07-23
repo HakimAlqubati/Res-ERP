@@ -40,6 +40,7 @@ class PayrollsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table->striped()
+            ->paginated([10, 25, 50, 100])
             ->deferFilters(false)
             ->defaultKeySort(false)
 

@@ -37,7 +37,8 @@ class BranchForm
                         ->icon('heroicon-o-user-circle')
                         ->schema([
                             Fieldset::make()->columns(2)->schema([
-                                TextInput::make('name')->required()->label(__('lang.name')),
+                                TextInput::make('name')->required()->label(__('lang.name'))
+                                    ->unique(ignoreRecord: true),
                                 Select::make('manager_id')
                                     ->label(__('lang.branch_manager'))
                                     ->options(User::whereHas('roles', function ($q) {

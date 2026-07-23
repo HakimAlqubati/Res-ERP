@@ -171,8 +171,7 @@ class DeductionResource extends Resource
                                 ->minValue(0)
                                 ->step(0.1)
                                 ->maxValue(100)
-                                ->default(0)
-                                ->rtl(),
+                                ->default(0),
                             TextInput::make('employer_amount')
                                 ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_amount') && (in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])))
                                 ->numeric()
@@ -204,8 +203,7 @@ class DeductionResource extends Resource
                                 ->minValue(0)
                                 ->step(0.01)
                                 ->maxValue(100)
-                                ->default(0)
-                                ->rtl(),
+                                ->default(0),
 
                             Toggle::make('has_cap')
                                 ->label('Has Cap')
