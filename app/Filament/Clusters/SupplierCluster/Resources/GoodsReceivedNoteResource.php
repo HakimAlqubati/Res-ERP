@@ -640,41 +640,7 @@ class GoodsReceivedNoteResource extends Resource
                                 report($e);
                             }
                         })
-                        ->visible(fn(GoodsReceivedNote $record) => ! $record->cancelled),
-                    Action::make('create_inventory')
-                        ->label('Create Inventory')
-                        ->icon('heroicon-o-plus-circle')->button()
-                        ->color('success')
-                        ->visible(fn($record) => !$record->has_inventory_transaction)
-                        ->action(function ($record) {
-                            DB::beginTransaction();
-                            try {
-                                $notes = 'GRN with id ' . $record->id;
-                                if ($record->store?->name) {
-                                    $notes .= ' in (' . $record->store->name . ')';
-                                }
-                                foreach ($record->grnDetails as $detail) {
-                                    InventoryTransaction::moveToStore([
-                                        'product_id' => $detail->product_id,
-                                        'movement_type' => InventoryTransaction::MOVEMENT_IN,
-                                        'quantity' => $detail->quantity,
-                                        'unit_id' => $detail->unit_id,
-                                        'package_size' => $detail->package_size,
-                                        'store_id' => $record->store_id,
-                                        'price' => $detail->price,
-                                        'transaction_date' => $record->date,
-                                        'movement_date' => $record->date,
-                                        'notes' => $notes,
-                                        'transactionable' => $record,
-                                    ]);
-                                }
-                                DB::commit();
-                                showSuccessNotifiMessage('Done');
-                            } catch (Exception $e) {
-                                DB::rollBack();
-                                showWarningNotifiMessage($e->getMessage());
-                            }
-                        })->hidden(),
+                        ->visible(fn(GoodsReceivedNote $record) => ! $record->cancelled)->hidden(),
                     Action::make('restore')
                         ->label('Restore')
                         ->icon(Heroicon::ArrowPath)
@@ -697,24 +663,10 @@ class GoodsReceivedNoteResource extends Resource
                                 return redirect(url($file_link));
                             }
                         })->hidden(fn($record) => !(strlen($record['attachment']) > 0))
-                        ->color('green'),
+                        ->color('green') ->hidden(),
                 ]),
-                Action::make('Approve')
-                    ->label(fn($record): string =>  $record->status == GoodsReceivedNote::STATUS_APPROVED ? 'Approved' : 'Approve')
-                    ->disabled(fn($record): bool =>  $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false)
-                    ->color('success')->button()
-                    ->icon('heroicon-o-check-badge')
-                    ->requiresConfirmation()
-                    ->action(function ($record, array $data) {
-                        $record->update([
-                            'status' => GoodsReceivedNote::STATUS_APPROVED,
-                            'approved_by' => auth()->id(),
-                            'approve_date' => now(),
-                        ]);
-                    })
-                    ->requiresConfirmation(),
-                Action::make('CreatePurchaseInvoice')
-                    ->label('Input Prices')
+                Action::make('PreviewAndApprove')
+                    ->label('Preview & Approve')
                     ->color('primary')
                     ->icon('heroicon-o-clipboard-document-check')
                     ->url(fn($record) => static::getUrl('create-purchase-invoice', ['record' => $record]))
@@ -723,11 +675,9 @@ class GoodsReceivedNoteResource extends Resource
                         $allowedRoles = setting('grn_approver_role_id', []);
                         $userRoles = auth()->user()?->roles->pluck('id')->toArray() ?? [];
 
-                        return $record->status == GoodsReceivedNote::STATUS_APPROVED && !$record->is_purchase_invoice_created  &&
+                        return $record->status == GoodsReceivedNote::STATUS_CREATED && !$record->is_purchase_invoice_created  &&
                             (count(array_intersect($userRoles, $allowedRoles)) > 0);
-                    })
-                    ->hidden()
-                    ,
+                    }),
 
             ])
             ->toolbarActions([

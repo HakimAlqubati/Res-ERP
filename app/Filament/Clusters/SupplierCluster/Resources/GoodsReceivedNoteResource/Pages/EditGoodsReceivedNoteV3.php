@@ -38,7 +38,7 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
     protected static string $resource = PurchaseInvoiceResource::class;
     public function getTitle(): string | Htmlable
     {
-        return 'Create Supplier Invoice';
+        return 'Preview & Approve';
     }
     public function mount(): void
     {
@@ -51,12 +51,13 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
             'payment_method_id' => $this?->record?->payment_method_id,
             'units' => $this->record->grnDetails->map(function ($detail) {
                 return [
+                    'detail_id' => $detail->id,
                     'product_id' => $detail->product_id,
                     'unit_id' => $detail->unit_id,
                     'quantity' => $detail->quantity,
                     'package_size' => $detail->package_size,
-                    'price' => 0,
-                    'total_price' => 0,
+                    'price' => $detail->price ?? 0,
+                    'total_price' => ($detail->quantity ?? 0) * ($detail->price ?? 0),
                 ];
             })->toArray(),
         ];
@@ -97,6 +98,7 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
                     ->placeholder('Enter description')
                     ->columnSpanFull()
                     ->required()
+                    ->default("purchase invoice from GRN {$this->record->grn_number}")
                     ->statePath('formData.description')
             ]),
 
@@ -105,6 +107,7 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
                 ->label('')->deletable(false)
                 ->columns(7)->minItems(1)
                 ->schema([
+                    Forms\Components\Hidden::make('detail_id'),
                     Select::make('product_id')->label('Product')
                         ->options(function () {
                             return $this->record->grnDetails->pluck('product_id')->unique()->mapWithKeys(function ($productId) {
@@ -132,7 +135,7 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
     }
 
 
-    public function createInvoice(): void
+    public function approve(): void
     {
         $data = $this->formData;
 
@@ -142,20 +145,31 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
                 if (!empty($data['invoice_no'])) {
                     $this->validateInvoiceNo($data['invoice_no']);
                 }
+                
+                // Update GRN detail prices based on form input
+                foreach ($data['units'] as $item) {
+                    if (isset($item['detail_id'])) {
+                        \App\Models\GoodsReceivedNoteDetail::where('id', $item['detail_id'])
+                            ->update(['price' => $item['price']]);
+                    }
+                }
+
                 $invoice = PurchaseInvoice::create([
                     'invoice_no' => $data['invoice_no'],
                     'date' => $data['date'],
                     'store_id' => $data['store_id'],
                     'supplier_id' => $data['supplier_id'],
-                    'description' => $data['description'],
+                    'description' => $data['description'] ?? "purchase invoice from GRN {$this->record->grn_number}",
                     'has_grn' => true,
                     'grn_id' => $this->record->id,
                     'payment_method_id' => $data['payment_method_id']
                 ]);
                 $this->record->update([
+                    'status' => GoodsReceivedNote::STATUS_APPROVED,
                     'is_purchase_invoice_created' => true,
                     'purchase_invoice_id' => $invoice->id,
-                    'approved_by' => auth()->id()
+                    'approved_by' => auth()->id(),
+                    'approve_date' => now(),
                 ]);
 
                 foreach ($data['units'] as $item) {
@@ -166,11 +180,11 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
 
             Notification::make()
                 ->title('Success')
-                ->body('Purchase Invoice Created Successfully')
+                ->body('Goods Received Note Approved and Purchase Invoice Created Successfully')
                 ->success()
                 ->send();
             DB::commit();
-            $this->redirect(PurchaseInvoiceResource::getUrl('index'));
+            $this->redirect(GoodsReceivedNoteResource::getUrl('index'));
         } catch (Exception $e) {
             DB::rollBack();
 
@@ -197,6 +211,30 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
     {
         if (PurchaseInvoice::where('invoice_no', $invoiceNo)->exists()) {
             throw new Exception("Invoice number already exists!");
+        }
+    }
+
+    public function reject(): void
+    {
+        try {
+            DB::transaction(function () {
+                $this->record->update([
+                    'status' => GoodsReceivedNote::STATUS_REJECTED,
+                ]);
+            });
+
+            Notification::make()
+                ->title('Success')
+                ->body('Goods Received Note Rejected Successfully')
+                ->success()
+                ->send();
+            $this->redirect(GoodsReceivedNoteResource::getUrl('index'));
+        } catch (Exception $e) {
+            Notification::make()
+                ->title('Error')
+                ->body('Failed to reject GRN: ' . $e->getMessage())
+                ->danger()
+                ->send();
         }
     }
 
