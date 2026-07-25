@@ -94,8 +94,8 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
                     ->searchable()
 
                     ->statePath('formData.payment_method_id'),
-                Textarea::make('description')->label(__('lang.description'))
-                    ->placeholder('Enter description')
+                Textarea::make('description')->label(__('lang.notes'))
+                    ->placeholder('Enter notes')
                     ->columnSpanFull()
                     ->required()
                     ->default("purchase invoice from GRN {$this->record->grn_number}")

@@ -526,7 +526,8 @@ class GoodsReceivedNoteResource extends Resource
                 IconColumn::make('cancelled')
                     ->label('Cancelled')->toggleable(isToggledHiddenByDefault: true)->boolean()->alignCenter(),
                 IconColumn::make('has_attachment')->alignCenter(true)->label(__('lang.has_attachment'))
-                    ->boolean()->toggleable(),
+                    ->boolean()->toggleable(isToggledHiddenByDefault: true)
+                    ,
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
