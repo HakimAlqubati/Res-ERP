@@ -122,6 +122,7 @@ class GoodsReceivedNoteResource extends Resource
                                     ->label('Status')->default(GoodsReceivedNote::STATUS_CREATED)
                                     ->options(GoodsReceivedNote::getStatusOptions())
                                     ->required()
+                                    ->hiddenOn('create')
                                     ->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
                                 Select::make('supplier_id')->label(__('lang.supplier'))
                                     ->getSearchResultsUsing(fn(string $search): array => Supplier::where('name', 'like', "%{$search}%")->limit(10)->pluck('name', 'id')->toArray())
@@ -482,7 +483,18 @@ class GoodsReceivedNoteResource extends Resource
                     ->searchable()->toggleable(),
                 TextColumn::make('supplier.name')->label('Supplier')
                     ->searchable()->toggleable(isToggledHiddenByDefault: false),
-                // TextColumn::make('status')->label('Status')->badge()->toggleable(),
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => \App\Models\GoodsReceivedNote::getStatusOptions()[$state] ?? $state)
+                    ->color(fn (string $state): string => match ($state) {
+                        \App\Models\GoodsReceivedNote::STATUS_CREATED => 'gray',
+                        \App\Models\GoodsReceivedNote::STATUS_APPROVED => 'success',
+                        \App\Models\GoodsReceivedNote::STATUS_REJECTED => 'danger',
+                        \App\Models\GoodsReceivedNote::STATUS_CANCELLED => 'warning',
+                        default => 'primary',
+                    })
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('details_count')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('total_amount')
