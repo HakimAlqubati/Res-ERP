@@ -50,9 +50,9 @@ class PriceChangeValidator implements PriceChangeValidatorInterface
             return PriceCheckResult::ok($item->productId, $item->unitId);
         }
 
-        // Normalise both prices to "per base unit" via package_size.
-        $normalizedLast = $lastRecord->normalizedPrice();
-        $normalizedNew  = $item->normalizedNewPrice();
+        // Convert prices to the current purchase unit's package size for comparison and display.
+        $normalizedLast = $lastRecord->normalizedPrice() * $item->packageSize;
+        $normalizedNew  = $item->newPrice;
 
         // Prevent division by zero.
         if ($normalizedLast == 0) {
