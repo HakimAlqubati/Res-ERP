@@ -666,7 +666,7 @@ class GoodsReceivedNoteResource extends Resource
                         ->color('green') ->hidden(),
                 ]),
                 Action::make('PreviewAndApprove')
-                    ->label('Preview & Approve')
+                    ->label('Preview and Approve')
                     ->color('primary')
                     ->icon('heroicon-o-clipboard-document-check')
                     ->url(fn($record) => static::getUrl('create-purchase-invoice', ['record' => $record]))

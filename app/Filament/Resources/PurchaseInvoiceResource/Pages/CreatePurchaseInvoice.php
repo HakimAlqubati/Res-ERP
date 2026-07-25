@@ -53,16 +53,16 @@ class CreatePurchaseInvoice extends CreateRecord
             ->closeModalByEscaping(false)
             ->modalIcon(Heroicon::ChartBarSquare)
             ->modalWidth(Width::SevenExtraLarge)
-            ->modalDescription(new HtmlString('<p style="font-size: 1rem;">Some items have a significant price change compared to the last purchase. Please review them before saving.</p>'))
-            ->schema([
+            ->modalDescription('Some items have a significant price change compared to the last purchase. Please review them before saving.')
+             ->schema([
                 Repeater::make('warnings')
                     ->hiddenLabel()
                     ->schema([
                         TextInput::make('product_name')->label('Product')->columnSpan(2),
                         TextInput::make('unit_name')->label('Unit')->columnSpan(1),
                         TextInput::make('old_price')->label('Old Price')->columnSpan(1),
-                        TextInput::make('new_price')->label('New Price')->columnSpan(1),
-                        TextInput::make('change_percent')->label('Change %')->columnSpan(1),
+                        TextInput::make('new_price')->label('New Price')->columnSpan(1)->extraInputAttributes(['style' => 'color: red !important; -webkit-text-fill-color: red !important; font-weight: bold;']),
+                        TextInput::make('change_percent')->label('Change %')->columnSpan(1)->extraInputAttributes(['style' => 'color: red !important; -webkit-text-fill-color: red !important; font-weight: bold;']),
                     ])
                     ->columns(6)
                     ->disabled()

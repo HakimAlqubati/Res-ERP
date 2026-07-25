@@ -493,7 +493,7 @@ class SettingResource extends Resource
                                                 ->helperText('Purchase Invoice Number is mandatory and becomes non-editable once entered.')
                                                 ->default(false),
                                             TextInput::make('max_price_change_percent')
-                                                ->label('Max Price Change Percent')
+                                                ->label('Price Change Alert Limit (±%)')
                                                 ->numeric()
                                                 ->minValue(0)
                                                 ->maxValue(100)

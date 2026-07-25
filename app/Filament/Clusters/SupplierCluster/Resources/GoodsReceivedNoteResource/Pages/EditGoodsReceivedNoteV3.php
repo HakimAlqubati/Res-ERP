@@ -38,7 +38,7 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
     protected static string $resource = PurchaseInvoiceResource::class;
     public function getTitle(): string | Htmlable
     {
-        return 'Preview & Approve';
+        return 'Preview and Approve';
     }
     public function mount(): void
     {
