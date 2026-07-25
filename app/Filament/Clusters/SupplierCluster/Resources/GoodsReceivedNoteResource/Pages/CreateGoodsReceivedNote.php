@@ -50,7 +50,7 @@ class CreateGoodsReceivedNote extends CreateRecord
             ->closeModalByEscaping(false)
             ->modalIcon(Heroicon::ChartBarSquare)
             ->modalWidth(Width::SevenExtraLarge)
-            ->modalDescription('Some items have a significant price change compared to the last purchase. Please review them before saving.')
+            ->modalDescription(__('lang.price_change_warning'))
              ->schema([
                 Repeater::make('warnings')
                     ->hiddenLabel()
