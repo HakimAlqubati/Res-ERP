@@ -36,6 +36,15 @@ interface ShiftResolverInterface
     public function getMatchingShifts(Employee $employee, Carbon $time): Collection;
 
     /**
+     * التحقق مما إذا كان لدى الموظف أي وردية في هذا التاريخ
+     * 
+     * @param Employee $employee الموظف
+     * @param Carbon $date التاريخ المطلوب التحقق منه
+     * @return bool
+     */
+    public function hasShiftOnDate(Employee $employee, Carbon $date): bool;
+
+    /**
      * حساب حدود الوردية
      * 
      * @param \App\Models\WorkPeriod $period الوردية
