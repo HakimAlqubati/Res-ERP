@@ -61,8 +61,8 @@ class CreatePurchaseInvoice extends CreateRecord
                         TextInput::make('product_name')->label('Product')->columnSpan(2),
                         TextInput::make('unit_name')->label('Unit')->columnSpan(1),
                         TextInput::make('old_price')->label('Old Price')->columnSpan(1),
-                        TextInput::make('new_price')->label('New Price')->columnSpan(1)->extraInputAttributes(['style' => 'color: red !important; -webkit-text-fill-color: red !important; font-weight: bold;']),
-                        TextInput::make('change_percent')->label('Change %')->columnSpan(1)->extraInputAttributes(['style' => 'color: red !important; -webkit-text-fill-color: red !important; font-weight: bold;']),
+                        TextInput::make('new_price')->label(new HtmlString('<span style="color: red;">New Price</span>'))->columnSpan(1)->extraInputAttributes(['style' => 'color: red !important; -webkit-text-fill-color: red !important; font-weight: bold;']),
+                        TextInput::make('change_percent')->label(new HtmlString('<span style="color: red;">Change %</span>'))->columnSpan(1)->extraInputAttributes(['style' => 'color: red !important; -webkit-text-fill-color: red !important; font-weight: bold;']),
                     ])
                     ->columns(6)
                     ->disabled()
