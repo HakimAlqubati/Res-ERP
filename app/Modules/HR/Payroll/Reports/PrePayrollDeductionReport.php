@@ -41,7 +41,7 @@ class PrePayrollDeductionReport
             employeeIds: $employeeIds,
             year:        $filters->year,
             month:       $filters->month,
-            branchId:    null,
+            branchId:    count($filters->branchIds ?? []) === 1 ? $filters->branchIds[0] : null,
         );
 
         $monthKey  = sprintf('%04d-%02d', $filters->year, $filters->month);
