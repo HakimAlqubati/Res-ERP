@@ -677,6 +677,7 @@ class EmployeeForm
                                                             Select::make('deduction_id')
                                                                 ->columnSpan(['default' => 1])
                                                                 ->label(__('lang.deduction'))
+                                                                ->searchable()
                                                                 ->options(Deduction::where('active', 1)->where('is_specific', 1)->get()->pluck('name', 'id'))
                                                                 ->required(),
                                                             Toggle::make('is_percentage')->live()->default(false)->columnSpan(['default' => 1]),

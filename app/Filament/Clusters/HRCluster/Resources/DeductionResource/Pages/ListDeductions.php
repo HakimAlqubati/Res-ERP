@@ -29,6 +29,8 @@ class ListDeductions extends ListRecords
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('is_specific', 1)),
             'Penalty deductions' => Tab::make()
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('is_penalty', 1)),
+            'Employer deductions' => Tab::make()
+                ->modifyQueryUsing(fn(Builder $query) => $query->whereIn('applied_by', ['employer', 'both'])),
         ];
     }
 }
