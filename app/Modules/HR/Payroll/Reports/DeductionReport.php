@@ -22,7 +22,7 @@ class DeductionReport
     public function getSummary(DeductionReportFilterDTO $filters): array
     {
         $query = SalaryTransaction::query()
-            ->with(['employee']) // Eager load if needed, but we're mostly aggregating
+            ->with(['employee.branch']) // Eager load if needed, but we're mostly aggregating
             ->where('status', SalaryTransaction::STATUS_APPROVED)
             ->whereBetween('date', [
                 $filters->fromDate->startOfDay()->format('Y-m-d H:i:s'),
@@ -112,6 +112,7 @@ class DeductionReport
             return [
                 'employee_id' => $employeeId,
                 'employee_name' => $employeeName,
+                'branch_name' => $employeeTransactions->first()->employee?->branch?->name ?? __('Unknown Branch'),
                 'monthly_deductions' => $employeeMonthly,
                 'total_deductions' => round(abs((float) $employeeTransactions->sum('amount')), 2)
             ];
