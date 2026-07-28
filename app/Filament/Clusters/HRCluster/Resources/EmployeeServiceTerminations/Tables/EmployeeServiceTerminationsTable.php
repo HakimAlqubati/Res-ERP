@@ -37,6 +37,17 @@ class EmployeeServiceTerminationsTable
                     ->label(__('lang.termination_date'))
                     ->date()
                     ->sortable(),
+             
+                TextColumn::make('termination_reason')
+                    ->label(__('lang.termination_reason'))
+                    ->limit(50)
+                    ->tooltip(fn($state)=>$state)
+                    ->sortable(),
+                       TextColumn::make('notes')
+                    ->label(__('lang.notes'))
+                    ->limit(50)
+                    ->tooltip(fn($state)=>$state)
+                    ->sortable(),
                 TextColumn::make('status')
                     ->label(__('lang.status'))
                     ->badge()
