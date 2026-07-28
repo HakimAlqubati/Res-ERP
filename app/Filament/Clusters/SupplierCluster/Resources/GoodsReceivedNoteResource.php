@@ -495,6 +495,11 @@ class GoodsReceivedNoteResource extends Resource
                         default => 'primary',
                     })
                     ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('rejected_reason')
+                    ->label('Reject Reason')
+                    ->limit(40)
+                    ->tooltip(fn($state)=>$state)
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('details_count')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('total_amount')

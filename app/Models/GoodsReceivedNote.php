@@ -29,6 +29,8 @@ class GoodsReceivedNote extends Model implements Auditable
         'is_purchase_invoice_created',
         'approve_date',
         'cancelled',
+        'rejected_date',
+        'rejected_reason',
     ];
 
     protected $auditInclude = [
@@ -63,6 +65,7 @@ class GoodsReceivedNote extends Model implements Auditable
     protected $casts = [
         'grn_date' => 'date',
         'approve_date' => 'datetime',
+        'rejected_date' => 'datetime',
     ];
 
     // ✅ العلاقات

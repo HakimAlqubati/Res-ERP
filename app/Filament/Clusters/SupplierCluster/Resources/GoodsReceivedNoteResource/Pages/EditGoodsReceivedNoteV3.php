@@ -214,28 +214,41 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
         }
     }
 
-    public function reject(): void
+    public function rejectAction(): \Filament\Actions\Action
     {
-        try {
-            DB::transaction(function () {
-                $this->record->update([
-                    'status' => GoodsReceivedNote::STATUS_REJECTED,
-                ]);
-            });
+        return \Filament\Actions\Action::make('reject')
+            ->label('Reject')
+            ->color('danger')
+            ->requiresConfirmation()
+            ->form([
+                \Filament\Forms\Components\Textarea::make('rejected_reason')
+                    ->label('Reject Reason')
+                    ->required(),
+            ])
+            ->action(function (array $data) {
+                try {
+                    DB::transaction(function () use ($data) {
+                        $this->record->update([
+                            'status' => GoodsReceivedNote::STATUS_REJECTED,
+                            'rejected_reason' => $data['rejected_reason'],
+                            'rejected_date' => now(),
+                        ]);
+                    });
 
-            Notification::make()
-                ->title('Success')
-                ->body('Goods Received Note Rejected Successfully')
-                ->success()
-                ->send();
-            $this->redirect(GoodsReceivedNoteResource::getUrl('index'));
-        } catch (Exception $e) {
-            Notification::make()
-                ->title('Error')
-                ->body('Failed to reject GRN: ' . $e->getMessage())
-                ->danger()
-                ->send();
-        }
+                    Notification::make()
+                        ->title('Success')
+                        ->body('Goods Received Note Rejected Successfully')
+                        ->success()
+                        ->send();
+                    $this->redirect(GoodsReceivedNoteResource::getUrl('index'));
+                } catch (Exception $e) {
+                    Notification::make()
+                        ->title('Error')
+                        ->body('Failed to reject GRN: ' . $e->getMessage())
+                        ->danger()
+                        ->send();
+                }
+            });
     }
 
     protected string $view = 'filament.pages.edit-goods-received-note-v3';
