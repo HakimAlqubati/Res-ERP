@@ -106,13 +106,13 @@
         }
     </style>
 
-    @if ($reportData && ($reportData['employee_id'] || $reportData['branch_id']))
+    @if ($reportData && ($reportData['employee_id'] || !empty($reportData['branch_ids'])))
     @php
     $employee = \App\Models\Employee::find($reportData['employee_id']);
-    $branch = \App\Models\Branch::find($reportData['branch_id']);
+    $branches = !empty($reportData['branch_ids']) ? \App\Models\Branch::whereIn('id', $reportData['branch_ids'])->get() : collect();
 
     $avatarUrl = $employee ? $employee->avatar_image : url('/storage/workbench.png');
-    $displayName = $employee ? $employee->name : ($branch ? $branch->name . ' - ' . __('Branch') : __('All Employees'));
+    $displayName = $employee ? $employee->name : ($branches->isNotEmpty() ? ($branches->count() > 2 ? __('Multiple Branches') : $branches->pluck('name')->join(' & ') . ' - ' . __('Branch')) : __('All Employees'));
     @endphp
 
     <table class="w-full text-sm text-left pretty" id="report-table">

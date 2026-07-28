@@ -60,11 +60,12 @@ class PayrollDeductionReportResource extends Resource
                                 if ($state === DeductionReportFilterDTO::GROUP_BY_BRANCH) {
                                     $set('employee_id', null);
                                 } else {
-                                    $set('branch_id', null);
+                                    $set('branch_ids', []);
                                 }
                             }),
 
-                        Select::make('branch_id')
+                        Select::make('branch_ids')
+                            ->multiple()
                             ->label(__('Branch'))
                             ->options(function () {
                                 return Branch::where('active', 1)

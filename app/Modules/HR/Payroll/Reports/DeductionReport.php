@@ -43,9 +43,9 @@ class DeductionReport
                 $query->where('employee_id', $filters->employeeId);
             }
         } elseif ($filters->groupBy === DeductionReportFilterDTO::GROUP_BY_BRANCH) {
-            if ($filters->branchId) {
+            if (!empty($filters->branchIds)) {
                 $query->whereHas('employee', function ($q) use ($filters) {
-                    $q->where('branch_id', $filters->branchId);
+                    $q->whereIn('branch_id', $filters->branchIds);
                 });
             }
         }
@@ -124,7 +124,7 @@ class DeductionReport
             'from_date' => $filters->fromDate->format('Y-m-d'),
             'to_date' => $filters->toDate->format('Y-m-d'),
             'employee_id' => $filters->employeeId,
-            'branch_id' => $filters->branchId,
+            'branch_ids' => $filters->branchIds,
             'monthly_deductions' => $monthlyDeductions,
             'employees_deductions' => $employeesDeductions,
             'grand_total' => round(abs((float) $transactions->sum('amount')), 2),
@@ -142,7 +142,7 @@ class DeductionReport
             'from_date' => $filters->fromDate->format('Y-m-d'),
             'to_date' => $filters->toDate->format('Y-m-d'),
             'employee_id' => $filters->employeeId,
-            'branch_id' => $filters->branchId,
+            'branch_ids' => $filters->branchIds,
             'monthly_deductions' => [],
             'employees_deductions' => [],
             'grand_total' => 0.0,
@@ -159,8 +159,12 @@ class DeductionReport
             return Employee::find($filters->employeeId)?->name ?? 'Unknown Employee';
         }
 
-        if ($filters->branchId) {
-            return Branch::find($filters->branchId)?->name ?? 'Unknown Branch';
+        if (!empty($filters->branchIds)) {
+            $branches = Branch::whereIn('id', $filters->branchIds)->pluck('name');
+            if ($branches->count() > 2) {
+                return __('Multiple Branches');
+            }
+            return $branches->isNotEmpty() ? $branches->join(' & ') . ' - ' . __('Branch') : 'Unknown Branch';
         }
 
         return __('All Employees');
