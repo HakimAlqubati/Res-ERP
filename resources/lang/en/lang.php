@@ -1191,4 +1191,7 @@ return [
     'auto_approval_body' => 'The termination will be approved automatically on the termination date.',
     'terminate_staff' => 'Terminate Staff',
     'price_change_warning' => 'Prices for some items have changed significantly. Please review.',
+    'employee_file_types' => 'Staff File Types',
+    'employee_file_type' => 'Staff File Type',
+    'rejected_by' => 'Rejected By',
 ];

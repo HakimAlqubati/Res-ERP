@@ -181,6 +181,13 @@ class EmployeeApplicationTable
           ->limit(20)
           ->toggleable(isToggledHiddenByDefault:false)
         ;
+        
+        $columns[] = TextColumn::make('rejectedBy.name')
+            ->label(__('lang.rejected_by'))
+          ->tooltip(fn ($state) => $state)
+          ->limit(20)
+          ->toggleable(isToggledHiddenByDefault:true)
+        ;
         $columns[] = SpatieMediaLibraryImageColumn::make('images')
             ->label(__('lang.images'))
             ->collection('images')
