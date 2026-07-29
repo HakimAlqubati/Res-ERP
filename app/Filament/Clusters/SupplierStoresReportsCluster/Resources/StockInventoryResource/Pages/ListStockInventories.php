@@ -48,7 +48,7 @@ class ListStockInventories extends ListRecords
                         // ->default(8)
                         ->options(fn() => Store::active()
                             ->whereHas('branches', function ($query) {
-                                $query->whereIn('type', [Branch::TYPE_BRANCH,Branch::TYPE_CENTRAL_KITCHEN]);
+                                $query->whereIn('type', [Branch::TYPE_BRANCH]);
                             })
                             ->pluck('name', 'id'))
                         ->required()
