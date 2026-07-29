@@ -499,7 +499,12 @@ class SettingResource extends Resource
                                                 ->maxValue(100)
                                                 ->suffix('%')
                                                 ->helperText('Alerts if the new price change exceeds this percentage')
-                                                ->default(0),
+                                                ->default(50)
+                                                ->afterStateHydrated(function (TextInput $component, $state) {
+                                                    if (blank($state)) {
+                                                        $component->state(50);
+                                                    }
+                                                }),
                                         ]),
                                     ]),
                                     Tab::make('GRN Workflow Settings')->columnSpanFull()->schema([

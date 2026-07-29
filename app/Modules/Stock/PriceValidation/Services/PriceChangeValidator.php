@@ -111,6 +111,6 @@ class PriceChangeValidator implements PriceChangeValidatorInterface
      */
     private function getMaxAllowedPercent(): float
     {
-        return (float) settingWithDefault(self::SETTING_KEY, 0);
+        return (float) settingWithDefault(self::SETTING_KEY, 50);
     }
 }
