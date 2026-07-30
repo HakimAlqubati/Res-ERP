@@ -34,7 +34,7 @@ class StockInventoryReportService
 
         // 3. بناء Query للمنتجات غير المجردة مع Eager Loading
         $query = Product::query()
-            ->unmanufacturingCategory()
+            // ->unmanufacturingCategory()
             ->whereNotIn('id', $inventoriedProductIds)
             ->with(['category:id,name']);
 
