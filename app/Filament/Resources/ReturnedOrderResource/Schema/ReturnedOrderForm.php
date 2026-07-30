@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\ReturnedOrder;
 use App\Models\Store;
+use App\Models\InventoryTransaction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
@@ -39,6 +40,15 @@ class ReturnedOrderForm
                                 }
 
                                 if ($order) {
+                                    $transaction = InventoryTransaction::where('transactionable_type', Order::class)
+                                        ->where('transactionable_id', $order->id)
+                                        ->where('movement_type', 'out')
+                                        ->first();
+                                        
+                                    if ($transaction && $transaction->store_id) {
+                                        $set('store_id', $transaction->store_id);
+                                    }
+
                                     $details = $order->orderDetails->map(function ($detail) {
                                         return [
                                             'product_id'   => $detail->product_id,
@@ -125,12 +135,61 @@ class ReturnedOrderForm
                                     })
                                     ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
                                     ->required()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($set, $state, $get) {
+                                        $set('unit_id', null);
+                                        $set('price', 0);
+                                        $set('package_size', 1);
+                                        
+                                        $orderId = $get('../../original_order_id');
+                                        $transaction = null;
+                                        
+                                        if ($state && $orderId) {
+                                            $transaction = \App\Models\InventoryTransaction::where('transactionable_type', Order::class)
+                                                ->where('transactionable_id', $orderId)
+                                                ->where('product_id', $state)
+                                                ->where('movement_type', 'out')
+                                                ->first();
+                                        }
+
+                                        if ($transaction) {
+                                            $set('unit_id', $transaction->unit_id);
+                                            $set('price', $transaction->price ?? 0);
+                                            $set('package_size', $transaction->package_size ?? 1);
+                                        } elseif ($state) {
+                                            $firstUnitPrice = \App\Models\UnitPrice::where('product_id', $state)->first();
+                                            if ($firstUnitPrice) {
+                                                $set('unit_id', $firstUnitPrice->unit_id);
+                                                $set('price', $firstUnitPrice->price ?? 0);
+                                                $set('package_size', $firstUnitPrice->package_size);
+                                            }
+                                        }
+                                    })
                                     ->columnSpan(2),
 
                                 Select::make('unit_id')->columnSpan(2)
                                     ->label('Unit')
-                                    ->relationship('unit', 'name')
-                                    ->searchable()
+                                    ->options(function (callable $get) {
+                                        $productId = $get('product_id');
+                                        if (!$productId) return [];
+
+                                        $options = \App\Models\UnitPrice::with('unit:id,name')
+                                            ->where('product_id', $productId)
+                                            ->get()
+                                            ->pluck('unit.name', 'unit_id')
+                                            ->toArray();
+                                            
+                                        $selectedUnitId = $get('unit_id');
+                                        if ($selectedUnitId && !isset($options[$selectedUnitId])) {
+                                            $unit = \App\Models\Unit::find($selectedUnitId);
+                                            if ($unit) {
+                                                $options[$selectedUnitId] = $unit->name;
+                                            }
+                                        }
+                                        return $options;
+                                    })
+                                    ->disabled()
+                                    ->dehydrated()
                                     ->required(),
 
                                 TextInput::make('quantity')
