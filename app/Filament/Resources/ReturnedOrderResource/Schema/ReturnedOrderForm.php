@@ -49,16 +49,28 @@ class ReturnedOrderForm
                                         $set('store_id', $transaction->store_id);
                                     }
 
-                                    $details = $order->orderDetails->map(function ($detail) {
+                                    $details = $order->orderDetails->map(function ($detail) use ($order) {
+                                        $returnedQty = \App\Models\ReturnedOrderDetail::whereHas('returnedOrder', function($q) use ($order) {
+                                            $q->where('original_order_id', $order->id)
+                                              ->where('status', '!=', \App\Models\ReturnedOrder::STATUS_REJECTED);
+                                        })
+                                        ->where('product_id', $detail->product_id)
+                                        ->where('unit_id', $detail->unit_id)
+                                        ->sum('quantity');
+                                        
+                                        $remainingQty = $detail->available_quantity - $returnedQty;
+                                        
+                                        if ($remainingQty <= 0) return null;
+
                                         return [
                                             'product_id'   => $detail->product_id,
                                             'unit_id'      => $detail->unit_id,
-                                            'quantity'     => $detail->available_quantity,
+                                            'quantity'     => $remainingQty,
                                             'price'        => $detail->price,
                                             'package_size' => $detail->package_size ?? 1,
                                             'notes'        => 'Auto-filled from order #' . $detail->order_id,
                                         ];
-                                    })->toArray();
+                                    })->filter()->toArray();
 
                                     $set('details', $details);
                                 }
@@ -97,6 +109,7 @@ class ReturnedOrderForm
                     ->schema([
                         Repeater::make('details')
                             ->relationship()
+                            ->minItems(1)
                             ->table([
                                 TableColumn::make(__('lang.product'))->width('18rem'),
                                 TableColumn::make(__('lang.unit'))->width('15rem'),
@@ -198,7 +211,7 @@ class ReturnedOrderForm
                                     ->label('Quantity')
                                     ->numeric()->live(onBlur: true)
                                     ->required()
-                                    ->rules(function (callable $get) {
+                                    ->rules(function (callable $get, $record) {
                                         $orderId   = $get('../../original_order_id');
                                         $productId = $get('product_id');
                                         $unitId    = $get('unit_id');
@@ -216,9 +229,26 @@ class ReturnedOrderForm
                                             return $d->product_id == $productId && $d->unit_id == $unitId;
                                         });
 
-                                        return $detail
-                                            ? ['max:' . $detail->available_quantity]
-                                            : [];
+                                        if (! $detail) {
+                                            return [];
+                                        }
+                                        
+                                        $returnedQtyQuery = \App\Models\ReturnedOrderDetail::whereHas('returnedOrder', function($q) use ($orderId) {
+                                            $q->where('original_order_id', $orderId)
+                                              ->where('status', '!=', \App\Models\ReturnedOrder::STATUS_REJECTED);
+                                        })
+                                        ->where('product_id', $productId)
+                                        ->where('unit_id', $unitId);
+                                        
+                                        if ($record && $record->exists) { 
+                                            $returnedQtyQuery->where('id', '!=', $record->id);
+                                        }
+                                        
+                                        $returnedQty = $returnedQtyQuery->sum('quantity');
+                                           
+                                        $maxQty = $detail->available_quantity - $returnedQty;
+
+                                        return ['max:' . max(0, $maxQty)];
                                     }),
 
                                 Hidden::make('price'),
