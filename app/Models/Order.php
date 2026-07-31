@@ -235,11 +235,16 @@ class Order extends Model implements Auditable
             if (in_array($order->status, [self::PROCESSING, self::READY_FOR_DELEVIRY]) && $order->isDirty('status')) {
                 $customer = $order->customer;
                 if ($customer && $customer->fcm_token) {
-                    sendNotification(
-                        $customer->fcm_token,
-                        '📦 تحديث حالة الطلب',
-                        "تم تحديث حالة طلبك رقم #{$order->id} إلى: " . self::getStatusLabels()[$order->status]
-                    );
+                    $fcmToken = $customer->fcm_token;
+                    $orderId = $order->id;
+                    $statusLabel = self::getStatusLabels()[$order->status];
+                    dispatch(function () use ($fcmToken, $orderId, $statusLabel) {
+                        sendNotification(
+                            $fcmToken,
+                            '📦 تحديث حالة الطلب',
+                            "تم تحديث حالة طلبك رقم #{$orderId} إلى: " . $statusLabel
+                        );
+                    });
                 }
             }
 
@@ -248,21 +253,27 @@ class Order extends Model implements Auditable
                 $order->status === self::READY_FOR_DELEVIRY &&
                 $order->getOriginal('status') !== self::READY_FOR_DELEVIRY
             ) {
-                foreach ($order->orderDetails as $detail) {
-                    $fifoService = new FifoMethodService($order);
+                $orderId = $order->id;
+                dispatch(function () use ($orderId) {
+                    $order = Order::find($orderId);
+                    if (!$order) return;
 
-                    $allocations = $fifoService->getAllocateFifo(
-                        $detail->product_id,
-                        $detail->unit_id,
-                        $detail->available_quantity
-                    );
+                    foreach ($order->orderDetails as $detail) {
+                        $fifoService = new FifoMethodService($order);
 
-                    self::moveFromInventory($allocations, $detail);
+                        $allocations = $fifoService->getAllocateFifo(
+                            $detail->product_id,
+                            $detail->unit_id,
+                            $detail->available_quantity
+                        );
 
-                    if ($order->branch && $order->branch->store && $order->branch->store->active) {
-                        self::receiveIntoBranchStore($allocations, $detail);
+                        self::moveFromInventory($allocations, $detail);
+
+                        if ($order->branch && $order->branch->store && $order->branch->store->active) {
+                            self::receiveIntoBranchStore($allocations, $detail);
+                        }
                     }
-                }
+                })->afterCommit();
 
                 // ✅ New logic: Update costing for composite (manufacturing) product when a component product is affected
 
@@ -301,7 +312,13 @@ class Order extends Model implements Auditable
             if (in_array($order->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) { 
                 // Create Financial Transaction for Transfers (only for non-reseller branches)
                 if ($order->branch && $order->branch->type !== Branch::TYPE_RESELLER) {
-                    app(\App\Services\Financial\TransferFinancialSyncService::class)->syncOrder($order);
+                    $orderId = $order->id;
+                    dispatch(function () use ($orderId) {
+                        $order = Order::find($orderId);
+                        if ($order) {
+                            app(\App\Services\Financial\TransferFinancialSyncService::class)->syncOrder($order);
+                        }
+                    })->afterCommit();
                 }
             }
         });
