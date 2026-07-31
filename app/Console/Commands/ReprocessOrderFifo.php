@@ -43,21 +43,25 @@ class ReprocessOrderFifo extends Command
             DB::beginTransaction();
 
             foreach ($order->orderDetails as $detail) {
-                $fifoService = new FifoMethodService($order);
+                try {
+                    $fifoService = new FifoMethodService($order);
 
-                $allocations = $fifoService->getAllocateFifo(
-                    $detail->product_id,
-                    $detail->unit_id,
-                    $detail->available_quantity
-                );
+                    $allocations = $fifoService->getAllocateFifo(
+                        $detail->product_id,
+                        $detail->unit_id,
+                        $detail->available_quantity
+                    );
 
-                Order::moveFromInventory($allocations, $detail);
+                    Order::moveFromInventory($allocations, $detail);
 
-                if ($order->branch && $order->branch->store && $order->branch->store->active) {
-                    Order::receiveIntoBranchStore($allocations, $detail);
+                    if ($order->branch && $order->branch->store && $order->branch->store->active) {
+                        Order::receiveIntoBranchStore($allocations, $detail);
+                    }
+
+                    $this->info("  ✅ Product #{$detail->product_id} - {$detail->available_quantity} units allocated");
+                } catch (\Exception $e) {
+                    $this->warn("  ⚠️ Product #{$detail->product_id} SKIPPED: " . $e->getMessage());
                 }
-
-                $this->info("  ✅ Product #{$detail->product_id} - {$detail->available_quantity} units allocated");
             }
 
             // Financial sync
