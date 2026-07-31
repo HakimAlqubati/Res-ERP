@@ -49,36 +49,8 @@ class ReturnedOrderForm
                                         $set('store_id', $transaction->store_id);
                                     }
 
-                                    $returnedDetails = \App\Models\ReturnedOrderDetail::whereHas('returnedOrder', function($q) use ($order) {
-                                        $q->where('original_order_id', $order->id)
-                                          ->where('status', '!=', \App\Models\ReturnedOrder::STATUS_REJECTED);
-                                    })
-                                    ->select('product_id', 'unit_id', \Illuminate\Support\Facades\DB::raw('SUM(quantity) as total_returned'))
-                                    ->groupBy('product_id', 'unit_id')
-                                    ->get()
-                                    ->keyBy(function ($item) {
-                                        return $item->product_id . '_' . $item->unit_id;
-                                    });
-
-                                    $details = $order->orderDetails->map(function ($detail) use ($returnedDetails) {
-                                        $key = $detail->product_id . '_' . $detail->unit_id;
-                                        $returnedQty = $returnedDetails->has($key) ? $returnedDetails->get($key)->total_returned : 0;
-                                        
-                                        $remainingQty = $detail->available_quantity - $returnedQty;
-                                        
-                                        if ($remainingQty <= 0) return null;
-
-                                        return [
-                                            'product_id'   => $detail->product_id,
-                                            'unit_id'      => $detail->unit_id,
-                                            'quantity'     => $remainingQty,
-                                            'price'        => $detail->price,
-                                            'package_size' => $detail->package_size ?? 1,
-                                            'notes'        => 'Auto-filled from order #' . $detail->order_id,
-                                        ];
-                                    })->filter()->toArray();
-
-                                    $set('details', $details);
+                                    $set('details', []);
+                                    $set('product_selector', []);
                                 }
                             }),
 
@@ -113,6 +85,108 @@ class ReturnedOrderForm
                 Fieldset::make('Returned Products Details')->columnSpanFull()
 
                     ->schema([
+                        Select::make('product_selector')
+                            ->label('Add Products')
+                            ->multiple()
+                            ->searchable()
+                            ->columnSpanFull()
+                            ->getSearchResultsUsing(function (string $search, callable $get): array {
+                                $orderId = $get('original_order_id');
+                                if (!$orderId) return [];
+                                
+                                $productIdsInOrder = \App\Models\OrderDetails::where('order_id', $orderId)
+                                    ->pluck('product_id');
+                                    
+                                return Product::whereIn('id', $productIdsInOrder)
+                                    ->where(function ($query) use ($search) {
+                                        $query->where('name', 'like', "%{$search}%")
+                                            ->orWhere('code', 'like', "%{$search}%");
+                                    })
+                                    ->limit(50)
+                                    ->get()
+                                    ->mapWithKeys(fn ($product) => [
+                                        $product->id => "{$product->code} - {$product->name}",
+                                    ])
+                                    ->toArray();
+                            })
+                            ->getOptionLabelsUsing(fn (array $values): array => Product::whereIn('id', $values)
+                                ->get()
+                                ->mapWithKeys(fn ($product) => [
+                                    $product->id => "{$product->code} - {$product->name}",
+                                ])
+                                ->toArray()
+                            )
+                            ->options(function (callable $get) {
+                                $orderId = $get('original_order_id');
+                                if (!$orderId) return [];
+                                
+                                $productIdsInOrder = \App\Models\OrderDetails::where('order_id', $orderId)
+                                    ->limit(15)
+                                    ->pluck('product_id');
+                                    
+                                return Product::whereIn('id', $productIdsInOrder)
+                                    ->get()
+                                    ->mapWithKeys(fn ($product) => [
+                                        $product->id => "{$product->code} - {$product->name}",
+                                    ])
+                                    ->toArray();
+                            })
+                            ->visible(fn ($record) => blank($record)) // يظهر فقط أثناء الإضافة
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                $orderId = $get('original_order_id');
+                                if (!$orderId) return;
+                                
+                                $order = Order::with('orderDetails')->find($orderId);
+                                if (!$order) return;
+
+                                $details = $get('details') ?? [];
+                                $existingProductIds = collect($details)->pluck('product_id')->all();
+                                $newProductIds = array_diff($state ?? [], $existingProductIds);
+                                
+                                if (!empty($newProductIds)) {
+                                    $returnedDetails = \App\Models\ReturnedOrderDetail::whereHas('returnedOrder', function($q) use ($order) {
+                                        $q->where('original_order_id', $order->id)
+                                          ->where('status', '!=', \App\Models\ReturnedOrder::STATUS_REJECTED);
+                                    })
+                                    ->whereIn('product_id', $newProductIds)
+                                    ->select('product_id', 'unit_id', \Illuminate\Support\Facades\DB::raw('SUM(quantity) as total_returned'))
+                                    ->groupBy('product_id', 'unit_id')
+                                    ->get()
+                                    ->keyBy(function ($item) {
+                                        return $item->product_id . '_' . $item->unit_id;
+                                    });
+
+                                    foreach ($newProductIds as $productId) {
+                                        $detail = $order->orderDetails->where('product_id', $productId)->first();
+                                        if (!$detail) continue;
+                                        
+                                        $key = $detail->product_id . '_' . $detail->unit_id;
+                                        $returnedQty = $returnedDetails->has($key) ? $returnedDetails->get($key)->total_returned : 0;
+                                        $remainingQty = $detail->available_quantity - $returnedQty;
+                                        
+                                        if ($remainingQty > 0) {
+                                            $details[] = [
+                                                'product_id'   => $detail->product_id,
+                                                'unit_id'      => $detail->unit_id,
+                                                'quantity'     => $remainingQty,
+                                                'price'        => $detail->price,
+                                                'package_size' => $detail->package_size ?? 1,
+                                                'notes'        => 'Auto-filled from order #' . $detail->order_id,
+                                            ];
+                                        }
+                                    }
+                                }
+
+                                $remainingProductIds = $state ?? [];
+                                $details = collect($details)
+                                    ->filter(fn ($item) => in_array($item['product_id'], $remainingProductIds))
+                                    ->values()
+                                    ->toArray();
+
+                                $set('details', $details);
+                            }),
+
                         Repeater::make('details')
                             ->relationship()
                             ->minItems(1)
