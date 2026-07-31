@@ -49,14 +49,20 @@ class ReturnedOrderForm
                                         $set('store_id', $transaction->store_id);
                                     }
 
-                                    $details = $order->orderDetails->map(function ($detail) use ($order) {
-                                        $returnedQty = \App\Models\ReturnedOrderDetail::whereHas('returnedOrder', function($q) use ($order) {
-                                            $q->where('original_order_id', $order->id)
-                                              ->where('status', '!=', \App\Models\ReturnedOrder::STATUS_REJECTED);
-                                        })
-                                        ->where('product_id', $detail->product_id)
-                                        ->where('unit_id', $detail->unit_id)
-                                        ->sum('quantity');
+                                    $returnedDetails = \App\Models\ReturnedOrderDetail::whereHas('returnedOrder', function($q) use ($order) {
+                                        $q->where('original_order_id', $order->id)
+                                          ->where('status', '!=', \App\Models\ReturnedOrder::STATUS_REJECTED);
+                                    })
+                                    ->select('product_id', 'unit_id', \Illuminate\Support\Facades\DB::raw('SUM(quantity) as total_returned'))
+                                    ->groupBy('product_id', 'unit_id')
+                                    ->get()
+                                    ->keyBy(function ($item) {
+                                        return $item->product_id . '_' . $item->unit_id;
+                                    });
+
+                                    $details = $order->orderDetails->map(function ($detail) use ($returnedDetails) {
+                                        $key = $detail->product_id . '_' . $detail->unit_id;
+                                        $returnedQty = $returnedDetails->has($key) ? $returnedDetails->get($key)->total_returned : 0;
                                         
                                         $remainingQty = $detail->available_quantity - $returnedQty;
                                         
