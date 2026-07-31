@@ -1175,4 +1175,8 @@ return [
   'employee_file_types' => 'أنواع ملفات الموظفين',
   'employee_file_type' => 'أنواع ملفات الموظفين',
   'rejected_by' => 'تم الرفض بواسطة',
+    'municipality_license_issue_date' => 'تاريخ إصدار رخصة البلدية',
+    'municipality_license_end_date' => 'تاريخ إنتهاء رخصة البلدية',
+    'municipality_license_notes' => 'ملاحظات رخصة البلدية',
+    'municipality_license_file' => 'ملف رخصة البلدية',
 ];

@@ -198,6 +198,29 @@ class BranchForm
                                 ]),
 
                         ]),
+                    Step::make('Municipality License')
+                        ->icon('heroicon-o-document-text')
+                        ->schema([
+                            Fieldset::make()->columns(2)->schema([
+                                \Filament\Forms\Components\DatePicker::make('municipality_license_issue_date')
+                                    ->label(__('lang.municipality_license_issue_date'))
+                                    ->nullable(),
+                                \Filament\Forms\Components\DatePicker::make('municipality_license_end_date')
+                                    ->label(__('lang.municipality_license_end_date'))
+                                    ->nullable()
+                                    ->after('municipality_license_issue_date'),
+                                Textarea::make('municipality_license_notes')
+                                    ->label(__('lang.municipality_license_notes'))
+                                    ->columnSpanFull()
+                                    ->nullable(),
+                                SpatieMediaLibraryFileUpload::make('municipality_license')
+                                    ->collection('municipality_license')
+                                    ->label(__('lang.municipality_license_file'))
+                                    ->columnSpanFull()
+                                    ->downloadable()
+                                    ->openable(),
+                            ]),
+                        ]),
                     Step::make('Images')
                         ->icon('heroicon-o-user-circle')
                         ->schema([
