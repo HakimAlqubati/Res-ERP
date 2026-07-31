@@ -99,7 +99,6 @@ return [
     'tenant_aware_jobs' => [
         // App\Jobs\GenerateUnauditedStocktakeJob::class,
         // Illuminate\Notifications\SendQueuedNotifications::class,
-        \Illuminate\Queue\CallQueuedClosure::class,
 
     ],
 
