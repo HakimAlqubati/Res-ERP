@@ -30,6 +30,7 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -272,13 +273,13 @@ class StockTransferOrderResource extends Resource
                 TextColumn::make('id')->label('ID')->sortable()->searchable()->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('fromStore.name')->label('From')->sortable()->searchable()->alignCenter(false)
-                ->limit(20)
-                ->tooltip(fn($state) => $state)
-                ->toggleable(),
+                    ->limit(20)
+                    ->tooltip(fn ($state) => $state)
+                    ->toggleable(),
                 TextColumn::make('toStore.name')->label('To')->sortable()->searchable()->alignCenter(false)
-                ->limit(20)
-                ->tooltip(fn($state) => $state)
-                ->toggleable(),
+                    ->limit(20)
+                    ->tooltip(fn ($state) => $state)
+                    ->toggleable(),
                 TextColumn::make('date')->date()->sortable()->searchable()->alignCenter(true)->toggleable(),
                 TextColumn::make('status')->badge()->sortable()->searchable()->alignCenter(true)->toggleable()->color(fn (string $state): string => match ($state) {
                     StockTransferOrder::STATUS_CREATED => 'gray',
@@ -286,7 +287,7 @@ class StockTransferOrderResource extends Resource
                     StockTransferOrder::STATUS_REJECTED => 'danger',
                     default => 'secondary',
                 }),
-                TextColumn::make('created_at')->dateTime()->sortable()->searchable()->alignCenter(true)->toggleable(isToggledHiddenByDefault:true),
+                TextColumn::make('created_at')->dateTime()->sortable()->searchable()->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('details_count')->alignCenter(true)->toggleable(),
                 TextColumn::make('creator.name')->alignCenter(false)->toggleable(),
             ])
@@ -353,7 +354,9 @@ class StockTransferOrderResource extends Resource
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                    ->visible(fn()=>static::canDeleteAny())
+                    ,
                 ]),
             ]);
     }
@@ -389,6 +392,24 @@ class StockTransferOrderResource extends Resource
             return true;
         }
 
+        return false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        if(isHakimOrAdel()){
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        if(isHakimOrAdel()){
+            return true;
+        }
+        
         return false;
     }
 }
