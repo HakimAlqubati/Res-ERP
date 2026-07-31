@@ -124,15 +124,6 @@ class ReturnedOrderForm
                                 Select::make('product_id')
                                     ->label('Product')
                                     ->searchable()
-                                    ->options(function () {
-                                        return Product::active()
-                                            ->orderBy('id', 'asc')
-                                            ->get(['id', 'code', 'name', 'active'])
-
-                                            ->mapWithKeys(fn($product) => [
-                                                $product->id => "{$product->code} - {$product->name}",
-                                            ]);
-                                    })
                                     ->getSearchResultsUsing(function (string $search): array {
                                         return Product::active()
                                             ->where(function ($query) use ($search) {
