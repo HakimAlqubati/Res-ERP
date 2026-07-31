@@ -234,4 +234,11 @@ class GoodsReceivedNote extends Model implements Auditable
             return (float) $detail->quantity * (float) $price;
         }));
     }
+
+    public function getActualTotalAmountAttribute(): float
+    {
+        return max(0.0, (float) $this->grnDetails->sum(function ($detail) {
+            return (float) $detail->quantity * (float) ($detail->price ?? 0);
+        }));
+    }
 }

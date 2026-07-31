@@ -502,7 +502,7 @@ class GoodsReceivedNoteResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('details_count')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('total_amount')
+                TextColumn::make('actual_total_amount')
                     ->label(__('lang.total_amount'))
                     ->alignCenter(true)
                     ->formatStateUsing(function ($state) {
@@ -511,7 +511,7 @@ class GoodsReceivedNoteResource extends Resource
                     ->summarize(
                         Summarizer::make()
                             ->using(function (Table $table) {
-                                $total  = $table->getRecords()->sum(fn($record) => $record->total_amount);
+                                $total  = $table->getRecords()->sum(fn($record) => $record->actual_total_amount);
                                 if (is_numeric($total)) {
                                     return formatMoneyWithCurrency($total);
                                 }
