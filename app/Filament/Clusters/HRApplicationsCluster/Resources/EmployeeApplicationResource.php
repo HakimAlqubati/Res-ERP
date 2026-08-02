@@ -529,7 +529,9 @@ class EmployeeApplicationResource extends Resource
                                     static::_recalcDeductionEnd($get, $set, 1);
                                 }
                             })
-                            ->dehydrated(),
+                            ->dehydrated()
+                            ->minValue(1)
+                            ,
 
                         TextInput::make('monthly_deduction_amount')
                             ->label(__('lang.monthly_deduction'))

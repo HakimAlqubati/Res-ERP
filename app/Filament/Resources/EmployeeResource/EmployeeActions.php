@@ -76,6 +76,7 @@ class EmployeeActions
                                                 if (!$branchId) return [];
                                                 return \App\Models\WorkPeriod::where('branch_id', $branchId)->pluck('name', 'id');
                                             })
+                                            ->required(fn(Get $get) => !empty($get('branch_id')))
                                             ->helperText('Select the employee\'s work periods.'),
                                         \Filament\Schemas\Components\Fieldset::make()->schema([
                                             \Filament\Forms\Components\CheckboxList::make('period_days')
