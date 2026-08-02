@@ -78,10 +78,10 @@ class StoreStockInventoryRequest extends FormRequest
                 // Get actual quantity from inventory summary
        
 
-                $actualQuantity = MultiProductsInventoryService::quickReport($storeId, $detail['product_id'], $detail['unit_id'])[0][0]['remaining_qty'];
+                $reportData = MultiProductsInventoryService::quickReport($storeId, $detail['product_id'], $detail['unit_id'])[0];
+                $actualQuantity = collect($reportData)->firstWhere('unit_id', $detail['unit_id'])['remaining_qty'] ?? 0;
                 $systemQuantity = (float) $detail['system_quantity'];
-
-                // Validate system_quantity matches actual inventory
+  // Validate system_quantity matches actual inventory
                 if ($systemQuantity != $actualQuantity) {
                     $validator->errors()->add(
                         "details.{$index}.system_quantity",

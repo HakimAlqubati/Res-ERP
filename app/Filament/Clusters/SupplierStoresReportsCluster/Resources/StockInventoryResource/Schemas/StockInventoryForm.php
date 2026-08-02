@@ -230,7 +230,8 @@ class StockInventoryForm
                             ->schema([
                                 DatePicker::make('inventory_date')
                                     ->required()->default(now())
-                                    ->label('Inventory Date')->disabledOn('edit'),
+                                    ->label('Inventory Date')
+                                    ->disabled(fn (?\App\Models\StockInventory $record, string $operation) => $operation === 'edit' && (!(isSystemManager() || isSuperAdmin()) && $record?->finalized)),
 
                                 Select::make('store_id')->label(__('lang.store'))
                                     ->default(getDefaultStore())

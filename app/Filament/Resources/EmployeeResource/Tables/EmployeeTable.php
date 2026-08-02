@@ -30,6 +30,7 @@ class EmployeeTable
     public static function configure(Table $table): Table
     {
         return $table->striped()
+        ->deferLoading()
             ->paginated([10, 25, 50, 100])
 
             ->defaultSort('id', 'desc')
@@ -174,18 +175,18 @@ class EmployeeTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                // TextColumn::make('unrequired_documents_count')->label(__('lang.unrequired_docs'))->alignCenter(true)
-                //     ->toggleable(isToggledHiddenByDefault: true)
-                //     ->formatStateUsing(function ($state) {
+                TextColumn::make('unrequired_documents_count')->label(__('lang.unrequired_docs'))->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->formatStateUsing(function ($state) {
 
-                //         return '('.$state.') docs of '.EmployeeFileType::getCountByRequirement()['unrequired_count'];
-                //     }),
-                // TextColumn::make('required_documents_count')->label(__('lang.required_docs'))->alignCenter(true)
-                //     ->toggleable(isToggledHiddenByDefault: true)
-                //     ->formatStateUsing(function ($state) {
+                        return '('.$state.') docs of '.EmployeeFileType::getCountByRequirement()['unrequired_count'];
+                    }),
+                TextColumn::make('required_documents_count')->label(__('lang.required_docs'))->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->formatStateUsing(function ($state) {
 
-                //         return '('.$state.') docs of '.EmployeeFileType::getCountByRequirement()['required_count'];
-                //     }),
+                        return '('.$state.') docs of '.EmployeeFileType::getCountByRequirement()['required_count'];
+                    }),
                 IconColumn::make('active')
                     ->label(__('lang.active'))
                     ->boolean()

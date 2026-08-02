@@ -107,3 +107,28 @@ Route::get('/test/clearAttendanceCacheForMonth', function () {
         'execution_time_seconds' => $executionTime,
     ]);
 });
+
+Route::match(['get', 'post'], '/test/checkPriceChange', function () {
+    $items = request('items');
+
+    if (!is_array($items) || empty($items)) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Missing or invalid items array. Please send an "items" array where each item contains: product_id, unit_id, price, and optionally package_size.'
+        ], 400);
+    }
+
+    $results = \App\Modules\Stock\PriceValidation\Services\PriceChecker::checkMany($items);
+return $results;
+    $formattedResults = [];
+    foreach ($results as $key => $result) {
+        $formattedResults[$key] = [
+            'raw_data' => $result->toArray(),
+            'summary'  => $result->toSummary(),
+        ];
+    }
+
+    return response()->json([
+        'results' => $formattedResults,
+    ]);
+});

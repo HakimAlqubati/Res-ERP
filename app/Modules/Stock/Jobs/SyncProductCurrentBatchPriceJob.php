@@ -12,6 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Spatie\Multitenancy\Models\Tenant;
 
 final class SyncProductCurrentBatchPriceJob implements ShouldQueue
 {
@@ -20,26 +21,24 @@ final class SyncProductCurrentBatchPriceJob implements ShouldQueue
     public function __construct(
         private readonly int $productId,
         private readonly int $storeId,
-        // private readonly ?int $tenantId = null
+        private readonly ?int $tenantId = null
     ) {
-        // $this->onConnection('database');
+        $this->onConnection('database');
     }
 
-    public function handle(SyncProductCurrentBatchPriceAction $action): void
+    public function handle(): void
     {
-        // Log::info('SyncProductCurrentBatchPriceJob Working with Tenant ID: ' . $this->tenantId);
-        // تفعيل اتصال قاعدة بيانات الـ Tenant أولاً وقبل أي استعلام
-        // if ($this->tenantId) {
-        //     $tenant = \Spatie\Multitenancy\Models\Tenant::find($this->tenantId);
-        //     if ($tenant) {
-        //         $tenant->makeCurrent();
-        //     }
-        // }
+        Log::info('SyncProductCurrentBatchPriceJob Working with Tenant ID: '.$this->tenantId);
 
+        if ($this->tenantId) {
+            $tenant = Tenant::find($this->tenantId);
+            if ($tenant) {
+                $tenant->makeCurrent();
+            }
+        }
         // جلب موديل المخزن من قاعدة بيانات الـ Tenant
         $store = Store::findOrFail($this->storeId);
-
-        // تنفيذ الإجراء
+        $action = app(SyncProductCurrentBatchPriceAction::class);
         $action->execute($this->productId, $store);
     }
 }

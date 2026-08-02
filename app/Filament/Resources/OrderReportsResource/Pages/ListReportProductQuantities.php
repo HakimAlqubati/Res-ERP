@@ -31,6 +31,7 @@ class ListReportProductQuantities extends ListRecords
             'end_date' => $this->getTable()->getFilters()['date']->getState()['end_date'] ?? null,
             'product_id' => $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null,
             'category_id' => $this->getTable()->getFilters()['category_id']->getState()['values'] ?? [],
+            'order_number' => $this->getTable()->getFilters()['order_number']->getState()['order_number'] ?? null,
         ];
 
         if (empty($filters['branch_id'])) {

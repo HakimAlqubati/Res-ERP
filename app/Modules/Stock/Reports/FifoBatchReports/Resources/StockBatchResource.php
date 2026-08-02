@@ -38,7 +38,11 @@ final class StockBatchResource extends JsonResource
             'original_price' => (float) $this->price,
             'unit_price' => (float) $this->unit_price,
             'remaining_total_price' => (float) $this->remaining_total_price,
-
+            'price_formatted' =>[
+                'original_price' => formatMoneyWithCurrency($this->price),
+                'unit_price' => formatMoneyWithCurrency($this->unit_price),
+                'remaining_total_price' => formatMoneyWithCurrency($this->remaining_total_price),
+            ],
             'is_current_batch' => (bool) $this->is_current_batch,
         ];
     }

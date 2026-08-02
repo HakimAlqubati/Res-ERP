@@ -60,10 +60,12 @@ class AttendanceHandler
         }
 
         if (!$shiftInfo) {
-            if (!$this->config->isNoShiftAttendanceAllowed()) {
+            $hasShiftToday = $this->shiftResolver->hasShiftOnDate($context->employee, clone $context->requestTime);
+
+            if ($hasShiftToday || !$this->config->isNoShiftAttendanceAllowed()) {
                 throw new NoShiftFoundException();
             }
-            // الإعداد مفعّل: نكمل بدون شيفت (period_id = null)
+            // الإعداد مفعّل والموظف بدون ورديات اليوم: نكمل بدون شيفت (period_id = null)
         } else {
             $context->setShiftInfo($shiftInfo);
         }

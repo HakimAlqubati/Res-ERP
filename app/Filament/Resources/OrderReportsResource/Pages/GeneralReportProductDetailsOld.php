@@ -83,12 +83,7 @@ FROM (
       0
     ) / COALESCE(it_in.package_size, 1.0) AS remaining_qty_unit,
 
-    CASE 
-      WHEN it_in.price IS NULL OR it_in.price = 0 
-      THEN COALESCE(up.price, 0)
-      ELSE it_in.price
-    END AS unit_price,
-    -- COALESCE(it_in.price, 0) AS unit_price,
+    COALESCE(it_in.price, 0) AS unit_price,
 
     (
       GREATEST(
@@ -96,13 +91,7 @@ FROM (
         - COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0),
         0
       ) / COALESCE(it_in.package_size, 1.0)
-    ) *
-    CASE 
-      WHEN it_in.price IS NULL OR it_in.price = 0 
-      THEN COALESCE(up.price, 0)
-      ELSE it_in.price
-    END AS remaining_value
-    -- COALESCE(it_in.price, 0) AS remaining_value
+    ) * COALESCE(it_in.price, 0) AS remaining_value
 
   FROM inventory_transactions AS it_in
   LEFT JOIN inventory_transactions AS it_out
@@ -110,14 +99,10 @@ FROM (
    AND it_out.movement_type = 'out'
    AND it_out.store_id = it_in.store_id
    AND it_out.deleted_at IS  NULL
-   and it_out.transactionable_type = :returned_orders
+   AND it_out.transactionable_type IN (:returned_orders, :stock_transfer_orders)
 
   LEFT JOIN units AS u
     ON u.id = it_in.unit_id
-
-  LEFT JOIN unit_prices AS up
-    ON up.product_id = it_in.product_id
-   AND up.unit_id    = it_in.unit_id
 
   INNER JOIN products AS p
     ON p.id = it_in.product_id
@@ -133,7 +118,6 @@ FROM (
     it_in.id, it_in.product_id, p.code, p.name,
     it_in.unit_id, u.name,
     it_in.package_size, it_in.quantity, it_in.price
-    , up.price
     , it_in.movement_date
 ) AS t
 GROUP BY
@@ -150,7 +134,8 @@ SQL;
       'from_date'   => $fromDate,
       'to_date'     => $toDate,
       'order_morph'  => 'App\\Models\\Order',
-      'returned_orders' => 'App\\Models\\ReturnedOrder'
+      'returned_orders' => 'App\\Models\\ReturnedOrder',
+      'stock_transfer_orders' => 'App\\Models\\StockTransferOrder'
     ]);
   }
 

@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Traits\Scopes\BranchScope;
-use Illuminate\Database\Eloquent\Builder;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +12,8 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class WorkPeriod extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, BranchScope;
+    use BranchScope, HasFactory, \OwenIt\Auditing\Auditable, SoftDeletes;
+
     protected $table = 'hr_work_periods';
 
     // Define fillable fields
@@ -32,6 +32,7 @@ class WorkPeriod extends Model implements Auditable
         'all_branches',
         'day_and_night',
     ];
+
     protected $auditInclude = [
         'id',
         'name',
@@ -59,9 +60,19 @@ class WorkPeriod extends Model implements Auditable
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
+
     public function branch()
     {
         return $this->belongsTo(Branch::class, 'branch_id');
+    }
+
+    public function getBranchNameAttribute()
+    {
+        if ($this->all_branches) {
+            return 'All Branches';
+        }
+
+        return $this->branch()->value('name');
     }
 
     // Accessor for supposed_duration
@@ -69,7 +80,7 @@ class WorkPeriod extends Model implements Auditable
     {
         // Parse start_at and end_at using Carbon
         $start = Carbon::parse($this->start_at);
-        $end   = Carbon::parse($this->end_at);
+        $end = Carbon::parse($this->end_at);
 
         // If end_at is before start_at, it's an overnight shift, so add a day to the end time
         if ($end->lt($start)) {
@@ -80,12 +91,13 @@ class WorkPeriod extends Model implements Auditable
         $totalMinutes = $start->diffInMinutes($end);
 
         // Convert minutes to hours with decimal (fractional hours)
-        $hours   = intdiv($totalMinutes, 60); // Get whole hours
+        $hours = intdiv($totalMinutes, 60); // Get whole hours
         $minutes = $totalMinutes % 60;        // Get remaining minutes
 
         // Return the duration as hours + decimal (fractional) part for the minutes
         // $result = $hours + round($minutes / 60, 2);
         $result = sprintf('%02d:%02d', $hours, $minutes);
+
         return $result;
     }
 
@@ -94,7 +106,7 @@ class WorkPeriod extends Model implements Auditable
     {
         // Parse start_at and end_at
         $start = Carbon::parse($this->start_at);
-        $end   = Carbon::parse($this->end_at);
+        $end = Carbon::parse($this->end_at);
 
         // Handle overnight shifts by adding a day if necessary
         if ($end->lt($start)) {
@@ -109,7 +121,7 @@ class WorkPeriod extends Model implements Auditable
 
         return $totalMinutes;
         // Convert minutes to hours and minutes
-        $totalHours       = intdiv($totalMinutes, 60);
+        $totalHours = intdiv($totalMinutes, 60);
         $remainingMinutes = $totalMinutes % 60;
 
         // Return the total duration as a formatted string (e.g., 5 days as "12h 30m")
@@ -121,7 +133,7 @@ class WorkPeriod extends Model implements Auditable
     protected static function booted()
     {
         static::creating(function ($workPeriod) {
-            if(empty($workPeriod->created_by)){
+            if (empty($workPeriod->created_by)) {
                 $workPeriod->created_by = Auth::user()->id;
             }
             if (empty($workPeriod->days)) {

@@ -21,7 +21,7 @@ class SalaryTransactionForm
                 ->schema([
                     Grid::make(3)->columnSpanFull()->schema([
                         Select::make('employee_id')->disabledOn('edit')
-                            ->label(__('Employee'))
+                            ->label(__('lang.employee'))
                             ->options(fn() => \App\Models\Employee::active()
                                 ->orderBy('name')
                                 ->pluck('name', 'id'))

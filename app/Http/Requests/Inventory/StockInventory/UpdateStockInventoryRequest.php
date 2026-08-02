@@ -84,6 +84,20 @@ class UpdateStockInventoryRequest extends FormRequest
                         "Product '{$productName}' (Unit: {$unitName}): The system quantity ({$systemQuantity}) does not match the actual inventory quantity ({$actualQuantity})"
                     );
                 }
+
+                if (isset($detail['package_size'])) {
+                    $unitPriceExists = \App\Models\UnitPrice::where('product_id', $detail['product_id'])
+                        ->where('unit_id', $detail['unit_id'])
+                        ->where('package_size', $detail['package_size'])
+                        ->exists();
+
+                    if (!$unitPriceExists) {
+                        $validator->errors()->add(
+                            "details.{$index}.unit_id",
+                            "Product '{$productName}' (Unit: {$unitName}): The combination of unit and package size does not match the product's unit prices."
+                        );
+                    }
+                }
             }
         });
     }

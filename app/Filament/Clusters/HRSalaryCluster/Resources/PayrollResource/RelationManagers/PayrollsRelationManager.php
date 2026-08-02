@@ -40,6 +40,7 @@ class PayrollsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table->striped()
+            ->paginated([10, 25, 50, 100])
             ->deferFilters(false)
             ->defaultKeySort(false)
 
@@ -215,8 +216,9 @@ class PayrollsRelationManager extends RelationManager
                                 ->whereIn('payroll_id', $this->payrollIdsForDisplay($record))
                                 ->get();
                             $employeeName = $record->employee?->name ?? 'Employee';
+                            $netSalary = (float) $record->getRawOriginal('net_salary');
                             $fileName = 'transactions-' . $employeeName . '.xlsx';
-                            return Excel::download(new PayrollTransactionsExport($transactions, $employeeName), $fileName);
+                            return Excel::download(new PayrollTransactionsExport($transactions, $employeeName, $netSalary), $fileName);
                         }),
                     self::quickShowAction(),
                 ]),

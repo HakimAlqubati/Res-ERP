@@ -41,10 +41,12 @@ final class StockBatchIndexResponse implements Responsable
                 'current_summary' => [
                     'total_batches' => $currentItems->count(),
                     'total_price'   => round($currentTotalPrice, 4),
+                    'total_price_formatted' => formatMoneyWithCurrency($currentTotalPrice),
                 ],
                 'all_summary'     => [
                     'total_batches' => $this->result->totalBatches,
                     'total_price'   => round($this->result->totalPrice, 4),
+                    'total_price_formatted' => formatMoneyWithCurrency($this->result->totalPrice),
                 ],
             ])
             ->toResponse($request);

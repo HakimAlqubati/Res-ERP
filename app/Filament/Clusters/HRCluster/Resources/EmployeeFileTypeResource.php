@@ -155,4 +155,25 @@ class EmployeeFileTypeResource extends Resource
     {
         return false;
     }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('lang.employee_file_types');
+    }
+
+    public static function getPluralLabel(): ?string
+    {
+        return __('lang.employee_file_types');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('lang.employee_file_types');
+    }
+
+    public static function getLabel(): ?string
+    {
+        return __('lang.employee_file_types');
+    }
+
 }

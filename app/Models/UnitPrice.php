@@ -38,6 +38,7 @@ class UnitPrice extends Model implements Auditable
         'minimum_quantity',
         'usage_scope',
         'selling_price',
+        'date','notes',
     ];
     public function product()
     {

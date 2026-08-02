@@ -24,7 +24,7 @@ final class GetAvailableStockBatchesQuery implements GetAvailableStockBatchesQue
         $rawBatches = $this->rawBatchesSubquery($filters);
         $layer1     = $this->layer1RunningTotal($rawBatches);
         $layer2     = $this->layer2MaxPrev($layer1);
-        $layer3     = $this->layer3Filtered($layer2);
+        $layer3     = $this->layer3Filtered($layer2, $filters);
         
         // الطبقة النهائية
         $query = $this->layer4Final($layer3);
@@ -63,13 +63,12 @@ final class GetAvailableStockBatchesQuery implements GetAvailableStockBatchesQue
                 $totalBatches,
                 $filters->perPage,
                 $page,
-                ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath(), 'pageName' => 'reportPage']
+                ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath(), 'pageName' => 'page']
             );
          }else{
             $batches = $query->get();
          }
         return new StockBatchReportResult($batches, $totalBatches, $totalPrice);
-        return $query->get();
     }
 
     /**
@@ -174,14 +173,34 @@ final class GetAvailableStockBatchesQuery implements GetAvailableStockBatchesQue
     /**
      * الطبقة 3: تصفية الباتشات الموجبة وحساب الرصيد الفعلي.
      */
-    private function layer3Filtered(Builder $source): Builder
+    private function layer3Filtered(Builder $source, StockBatchFilterDTO $filters): Builder
     {
-        return DB::query()
+        $query = DB::query()
             ->fromSub($source, 'cte_layer2_max_prev')
-            ->selectRaw('*')
-            ->selectRaw('GREATEST(0, running_total - GREATEST(0, max_prev_rt)) AS real_current_stock')
-            ->whereRaw('current_stock > 0')
-            ->whereRaw('GREATEST(0, running_total - GREATEST(0, max_prev_rt)) > 0');
+            ->selectRaw('*');
+
+        if ($filters->deductPreviousDeficits) {
+            // السلوك الافتراضي: ترحيل العجز (السوالب) وخصمه من الباتشات الجديدة
+            if ($filters->showNegativeBatches) {
+                $query->selectRaw('(running_total - GREATEST(0, max_prev_rt)) AS real_current_stock')
+                      ->whereRaw('(running_total - GREATEST(0, max_prev_rt)) != 0');
+            } else {
+                $query->selectRaw('GREATEST(0, running_total - GREATEST(0, max_prev_rt)) AS real_current_stock')
+                      ->whereRaw('current_stock > 0')
+                      ->whereRaw('GREATEST(0, running_total - GREATEST(0, max_prev_rt)) > 0');
+            }
+        } else {
+            // السلوك الجديد: تجاهل العجز السابق (الباتش يحتفظ برصيده الفعلي الخاص به فقط)
+            if ($filters->showNegativeBatches) {
+                $query->selectRaw('current_stock AS real_current_stock')
+                      ->whereRaw('current_stock != 0');
+            } else {
+                $query->selectRaw('current_stock AS real_current_stock')
+                      ->whereRaw('current_stock > 0');
+            }
+        }
+
+        return $query;
     }
 
     /**

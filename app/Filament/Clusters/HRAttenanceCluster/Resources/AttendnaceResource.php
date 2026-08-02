@@ -2,64 +2,55 @@
 
 namespace App\Filament\Clusters\HRAttenanceCluster\Resources;
 
-use Filament\Pages\Enums\SubNavigationPosition;
-use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Fieldset;
-use Filament\Schemas\Components\Grid;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\TimePicker;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
-use Filament\Forms\Components\ToggleButtons;
-use Filament\Forms\Components\Textarea;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\TrashedFilter;
-use Filament\Actions\Action;
-use Exception;
-use Filament\Actions\ViewAction;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\ForceDeleteAction;
-use Filament\Actions\RestoreAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\ForceDeleteBulkAction;
-use Filament\Actions\RestoreBulkAction;
-use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages\ListAttendnaces;
-use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages\CreateAttendnace;
-use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages\ViewAttendnace;
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages\CreateAttendnace;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages\ListAttendnaces;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages\ViewAttendnace;
 use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\Setting;
 use Carbon\Carbon;
-use DateTime;
-use Filament\Facades\Filament;
-use Filament\Forms;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TimePicker;
+use Filament\Forms\Components\ToggleButtons;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\Summarizers\Average;
 use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\DB;
 
 class AttendnaceResource extends Resource
 {
     protected static ?string $model = Attendance::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = Heroicon::Identification;
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::Identification;
 
     protected static ?string $cluster = HRAttenanceCluster::class;
 
@@ -78,8 +69,10 @@ class AttendnaceResource extends Resource
         return __('lang.attendance_log');
     }
 
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
     protected static ?int $navigationSort = 2;
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -132,11 +125,9 @@ class AttendnaceResource extends Resource
                             ->options(Attendance::getCheckTypes())
                             ->required(),
 
-                            TextInput::make('source')->label(__('lang.attendance_type'))
+                        TextInput::make('source')->label(__('lang.attendance_type')),
 
                     ]),
-
-
 
             ]);
     }
@@ -160,7 +151,7 @@ class AttendnaceResource extends Resource
                 IconColumn::make('accepted')
                     ->label('Appr')
                     ->alignCenter(true)
-                    ->toggleable(isToggledHiddenByDefault: false)
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->boolean(),
 
                 TextColumn::make('id')
@@ -171,6 +162,8 @@ class AttendnaceResource extends Resource
                 TextColumn::make('employee.name')
                     ->label('Employee')
                     ->sortable()
+                    ->limit(30)
+                    ->tooltip(fn($state)=>$state    )
                     ->searchable(),
 
                 TextColumn::make('check_type')
@@ -183,7 +176,8 @@ class AttendnaceResource extends Resource
                     ->label('Period')
                     ->tooltip(function ($record) {
                         $period = $record->period;
-                        return '(' . $period->start_at . ' - ' . $period->end_at . ') _ (' . $period->id . ' - ' . $period->name . ')';
+
+                        return '('.$period->start_at.' - '.$period->end_at.') _ ('.$period->id.' - '.$period->name.')';
                     }),
                 TextColumn::make('branch.name')
                     ->label('Branch')->toggleable(isToggledHiddenByDefault: true)
@@ -201,6 +195,9 @@ class AttendnaceResource extends Resource
                     ->label('Check Time'),
                 TextColumn::make('status')
                     ->label('Status'),
+                TextColumn::make('branch.name')
+                    ->label('Branch')
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('delay_minutes')
                     ->formatStateUsing(function ($record) {
                         if ($record->delay_minutes <= Setting::getSetting('early_attendance_minutes')) {
@@ -209,26 +206,26 @@ class AttendnaceResource extends Resource
                             return $record->delay_minutes;
                         }
                     })
-                    ->label('Delay Minuts')->sortable()->summarize(Sum::make()->query(fn(\Illuminate\Database\Query\Builder $query) => $query->where('delay_minutes', '>', 10)))
+                    ->label('Delay Minuts')->sortable()->summarize(Sum::make()->query(fn (\Illuminate\Database\Query\Builder $query) => $query->where('delay_minutes', '>', 10)))
                     // ->summarize(fn($record): integer => 11)
                     ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
                 TextColumn::make('day')
-                    ->label('Day'),
+                    ->label('Day')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('late_departure_minutes')
                     ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
                 TextColumn::make('message')
-                    ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true)->limit(50)->tooltip(fn($state): string => $state ?? 'null'),
+                    ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true)->limit(50)->tooltip(fn ($state): string => $state ?? 'null'),
                 TextColumn::make('early_departure_minutes')
                     ->label('Early departure minutes')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ->summarize(Sum::make()->query(fn(\Illuminate\Database\Query\Builder $query) => $query->where('early_departure_minutes', '>', 20))),
+                    ->summarize(Sum::make()->query(fn (\Illuminate\Database\Query\Builder $query) => $query->where('early_departure_minutes', '>', 20))),
                 // TextColumn::make('attendance_type')->alignCenter(true),
                 TextColumn::make('created_at')->alignCenter(true)->sortable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('source_label')
                     ->label(__('lang.attendance_type'))
-                    ->toggleable()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->alignCenter(true),
-
 
             ])
             ->filtersFormColumns(3)
@@ -242,14 +239,15 @@ class AttendnaceResource extends Resource
                     ->query(function (Builder $query, array $data): Builder {
                         return $query->when(
                             $data['id'],
-                            fn(Builder $query, $id): Builder => $query->where('id', $id)
+                            fn (Builder $query, $id): Builder => $query->where('id', $id)
                         );
                     })
                     ->indicateUsing(function (array $data): ?string {
                         if (! $data['id']) {
                             return null;
                         }
-                        return 'ID: ' . $data['id'];
+
+                        return 'ID: '.$data['id'];
                     }),
                 Filter::make('check_date')
                     ->form([
@@ -298,120 +296,13 @@ class AttendnaceResource extends Resource
             ], FiltersLayout::Modal)
             ->recordActions([
 
-                Action::make('fixCheckout')
-                    ->visible(fn($record): bool => (isSuperAdmin() && $record->check_type == Attendance::CHECKTYPE_CHECKOUT))
-                    ->button()->schema(function ($record) {
-                        $checkInData = $record->checkinRecord;
+                ActionGroup::make([
+                    ViewAction::make(),
+                    DeleteAction::make(),
+                    // ForceDeleteAction::make(),
+                    RestoreAction::make(),
 
-                        $checkInTime = $checkInData?->check_time;
-                        $checkInDate = $checkInData?->check_date;
-
-                        $checkOutTime = $record?->check_time;
-                        $checkOutDate = $record?->check_date;
-                        $periodStartAt = $record?->period?->start_at;
-                        $periodEndAt = $record?->period?->end_at;
-                        $checkINTimeDate = Carbon::parse($checkInDate . ' ' . $checkInTime);
-                        $checkOutTimeDate = Carbon::parse($checkOutDate . ' ' . $checkOutTime);
-                        $periodEndAtTimeDate = Carbon::parse($checkOutDate . ' ' . $periodEndAt)->addDay();
-
-
-                        $earlyMinutsDepature = round($checkOutTimeDate->diffInMinutes($periodEndAtTimeDate), 2);
-                        return [
-                            Fieldset::make()->columnSpanFull()->disabled()->label('Checkin')->columns(2)->schema([
-                                TextInput::make('check_in_time')->default($checkInTime),
-                                TextInput::make('check_in_date')->default($checkInDate),
-                            ]),
-
-                            Fieldset::make()->columnSpanFull()->disabled()->label('Period')->columns(2)->schema([
-                                TextInput::make('period_start_at')->default($periodStartAt),
-                                TextInput::make('period_end_at')->default($periodEndAt),
-                            ]),
-                            Fieldset::make()->columnSpanFull()->label('Checkout')->columns(5)->schema([
-                                TextInput::make('check_time')->default($checkOutTime),
-                                TextInput::make('check_date')->default($checkOutDate),
-                                TextInput::make('early_minuts_departure')->default($record->early_departure_minutes),
-                                TextInput::make('late_departure_minutes')->default($record->late_departure_minutes),
-                                Select::make('status_2')->label('Status')->options(Attendance::getStatuses())
-                                    ->default($record->status),
-                            ]),
-                        ];
-                    })->modalCancelAction(false)
-                    ->action(function ($record, $data) {
-                        DB::beginTransaction();
-
-                        try {
-                            //code...
-                            $record->update([
-                                'status' => $data['status_2'],
-                                'early_departure_minutes' => $data['early_minuts_departure'],
-                                'check_date' => $data['check_date'],
-                                'check_time' => $data['check_time'],
-                                'late_departure_minutes' => $data['late_departure_minutes'],
-                            ]);
-                            DB::commit();
-                            showSuccessNotifiMessage('Done');
-                        } catch (Exception $th) {
-                            DB::rollBack();
-                            showWarningNotifiMessage($th->getMessage());
-                            throw $th;
-                        }
-                    })->hidden(),
-                Action::make('fixCheckin')
-                    ->visible(fn($record): bool => (isSuperAdmin() && $record->check_type == Attendance::CHECKTYPE_CHECKIN))
-                    ->button()
-                    ->schema(function ($record) {
-
-                        $checkInTime = $record?->check_time;
-
-                        $checkInDate = $record?->check_date;
-
-
-                        $periodStartAt = $record?->period?->start_at;
-                        $periodEndAt = $record?->period?->end_at;
-                        $checkINTimeDate = Carbon::parse($checkInDate . ' ' . $checkInTime);
-                        $periodStartAtTimeDate = Carbon::parse($checkInDate . ' ' . $checkInTime);
-
-                        $delayMinutes = round($checkINTimeDate->diffInMinutes($periodStartAtTimeDate), 2);
-                        return [
-
-
-                            Fieldset::make()->columnSpanFull()->label('Checkout')->columns(4)->schema([
-                                TextInput::make('check_time')->default($checkInTime),
-                                TextInput::make('delay_minutes')->default($record->delay_minutes),
-                                TextInput::make('check_in_date_')->default($checkInDate),
-                                Select::make('status_2')->label('Status')->options(Attendance::getStatuses())
-                                    ->default($record->status),
-                            ]),
-                            Fieldset::make()->columnSpanFull()->disabled()->label('Period')->columns(2)->schema([
-                                TextInput::make('period_start_at')->default($periodStartAt),
-                                TextInput::make('period_end_at')->default($periodEndAt),
-                            ]),
-
-
-                        ];
-                    })->modalCancelAction(false)
-                    ->action(function ($record, $data) {
-                        DB::beginTransaction();
-
-                        try {
-                            $record->update([
-                                'status' => $data['status_2'],
-                                'delay_minutes' => $data['delay_minutes'],
-                                'check_date' => $data['check_in_date_'],
-                                'check_time' => $data['check_time'],
-                            ]);
-                            DB::commit();
-                            showSuccessNotifiMessage('Done');
-                        } catch (Exception $th) {
-                            DB::rollBack();
-                            showWarningNotifiMessage($th->getMessage());
-                            throw $th;
-                        }
-                    })->hidden(),
-                ViewAction::make(),
-                DeleteAction::make(),
-                // ForceDeleteAction::make(),
-                RestoreAction::make(),
+                ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -457,6 +348,7 @@ class AttendnaceResource extends Resource
         $query->whereHas('employee', function ($q) {
             $q->whereNull('deleted_at'); // ignore soft-deleted employees
         });
+
         return $query;
     }
 
@@ -465,6 +357,7 @@ class AttendnaceResource extends Resource
         if (isSuperAdmin() || isHR()) {
             return true;
         }
+
         return false;
     }
 
@@ -473,6 +366,7 @@ class AttendnaceResource extends Resource
         if (isSuperAdmin()) {
             return true;
         }
+
         return false;
     }
 
@@ -481,6 +375,7 @@ class AttendnaceResource extends Resource
         if (isSuperAdmin() && isHakimOrAdel()) {
             return true;
         }
+
         return false;
     }
 
@@ -489,6 +384,7 @@ class AttendnaceResource extends Resource
         if (isSuperAdmin() && isHakimOrAdel()) {
             return true;
         }
+
         return false;
     }
 
@@ -497,12 +393,14 @@ class AttendnaceResource extends Resource
         if (isSystemManager() || isSuperAdmin() || isHR()) {
             return true;
         }
+
         return false;
     }
 
     public static function canCreate(): bool
     {
         return false;
+
         return static::can('create');
     }
 }

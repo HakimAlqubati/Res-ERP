@@ -19,7 +19,7 @@ class FinancialTransactionObserver
         if ($financialTransaction->reference_type && $financialTransaction->reference_id) {
             // Check if the referenced model record actually exists in the database
             if ($financialTransaction->reference()->exists()) {
-                throw new Exception("Cannot delete this financial transaction because it is linked to a related record.");
+                // throw new Exception("Cannot delete this financial transaction because it is linked to a related record.");
             }
         }
     }

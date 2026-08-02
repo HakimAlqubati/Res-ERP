@@ -29,6 +29,8 @@ class GoodsReceivedNote extends Model implements Auditable
         'is_purchase_invoice_created',
         'approve_date',
         'cancelled',
+        'rejected_date',
+        'rejected_reason',
     ];
 
     protected $auditInclude = [
@@ -63,6 +65,7 @@ class GoodsReceivedNote extends Model implements Auditable
     protected $casts = [
         'grn_date' => 'date',
         'approve_date' => 'datetime',
+        'rejected_date' => 'datetime',
     ];
 
     // ✅ العلاقات
@@ -229,6 +232,13 @@ class GoodsReceivedNote extends Model implements Auditable
 
             $price = $priceFromUnit ?? ($detail->price ?? 0);
             return (float) $detail->quantity * (float) $price;
+        }));
+    }
+
+    public function getActualTotalAmountAttribute(): float
+    {
+        return max(0.0, (float) $this->grnDetails->sum(function ($detail) {
+            return (float) $detail->quantity * (float) ($detail->price ?? 0);
         }));
     }
 }

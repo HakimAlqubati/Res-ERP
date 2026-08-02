@@ -42,6 +42,10 @@ class PayrollsExport implements FromView
                     continue;
                 }
 
+                if ($typeVal === SalaryTransactionType::TYPE_ADVANCE->value) {
+                    continue;
+                }
+
                 $columnName = $this->normalizedColumnName($transaction);
                 if (empty($columnName)) {
                     continue;
@@ -62,8 +66,10 @@ class PayrollsExport implements FromView
         $totals = [
             'base_salary'            => 0,
             'total_additions'        => 0,
+            'gross_salary'           => 0,
             'total_deductions'       => 0,
             'employer_contributions' => [],
+            'advance'                => 0,
             'advance_wages'          => 0,
             'net_salary'             => 0,
             'additions'              => [],
@@ -92,6 +98,7 @@ class PayrollsExport implements FromView
                 'net_salary'             => $group['net_salary'],
                 'employer_contribution'  => 0,
                 'employer_contributions' => [],
+                'advance'                => 0,
                 'advance_wages'          => 0,
                 'additions'              => [],
                 'total_additions'        => 0,
@@ -129,6 +136,11 @@ class PayrollsExport implements FromView
                     continue;
                 }
 
+                if ($typeVal === SalaryTransactionType::TYPE_ADVANCE->value) {
+                    $row['advance'] += $transaction->amount;
+                    continue;
+                }
+
                 $columnName = $this->normalizedColumnName($transaction);
 
                 if ($transaction->operation === '+') {
@@ -144,10 +156,14 @@ class PayrollsExport implements FromView
                 }
             }
 
+            $row['gross_salary'] = $row['base_salary'] + $row['total_additions'];
+
             $totals['base_salary'] += $row['base_salary'] ?? 0;
             $totals['net_salary'] += $row['net_salary'] ?? 0;
+            $totals['advance'] += $row['advance'] ?? 0;
             $totals['advance_wages'] += $row['advance_wages'] ?? 0;
             $totals['total_additions'] += $row['total_additions'] ?? 0;
+            $totals['gross_salary'] += $row['gross_salary'] ?? 0;
             $totals['total_deductions'] += $row['total_deductions'] ?? 0;
 
             foreach ($additionHeaders as $col) {

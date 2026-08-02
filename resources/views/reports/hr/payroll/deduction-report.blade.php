@@ -106,13 +106,13 @@
         }
     </style>
 
-    @if ($reportData && ($reportData['employee_id'] || $reportData['branch_id']))
+    @if ($reportData && ($reportData['employee_id'] || !empty($reportData['branch_ids'])))
     @php
     $employee = \App\Models\Employee::find($reportData['employee_id']);
-    $branch = \App\Models\Branch::find($reportData['branch_id']);
+    $branches = !empty($reportData['branch_ids']) ? \App\Models\Branch::whereIn('id', $reportData['branch_ids'])->get() : collect();
 
     $avatarUrl = $employee ? $employee->avatar_image : url('/storage/workbench.png');
-    $displayName = $employee ? $employee->name : ($branch ? $branch->name . ' - ' . __('Branch') : __('All Employees'));
+    $displayName = $employee ? $employee->name : ($branches->isNotEmpty() ? ($branches->count() > 2 ? __('Multiple Branches') : $branches->pluck('name')->join(' & ') . ' - ' . __('Branch')) : __('All Employees'));
     @endphp
 
     <table class="w-full text-sm text-left pretty" id="report-table">
@@ -122,7 +122,7 @@
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">
                         {{-- Left: Buttons --}}
                         <div style="display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;">
-                            <button onclick="exportToExcel()" class="btn btn-primary">
+                            <button type="button" onclick="event.preventDefault(); exportToExcel();" class="btn btn-primary">
                                 &#128200; {{ __('Export Excel') }}
                             </button>
                         </div>
@@ -161,7 +161,7 @@
             <!-- Employee Header Row -->
             <tr>
                 <td colspan="2" style="background-color: #e5e7eb !important; color: #111827 !important; font-weight: bold; text-align: center; padding: 12px; font-size: 1.1em;">
-                    {{ $empData['employee_name'] }}
+                    {{ $empData['employee_name'] }} - ({{ $empData['branch_name'] ?? __('Unknown Branch') }})
                 </td>
             </tr>
 
@@ -192,7 +192,7 @@
             <!-- Employee Footer Row -->
             <tr>
                 <td style="text-align: right; font-weight: bold; background-color: #d1d5db !important; color: #111827 !important;">
-                    {{ __('Total Deductions for Employee') }} ({{ $empData['employee_name'] }})
+                    {{ __('Total Deductions for Staff') }} ({{ $empData['employee_name'] }} - {{ $empData['branch_name'] ?? __('Unknown Branch') }})
                 </td>
                 <td style="text-align: right; font-weight: bold; background-color: #d1d5db !important; color: #d9534f !important;">
                     {{ formatMoneyWithCurrency($empData['total_deductions']) }}
@@ -227,9 +227,36 @@
 
 
     {{-- Excel Export Script --}}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script>
         function exportToExcel() {
+            if (typeof XLSX === 'undefined') {
+                if (!document.getElementById('xlsx-library-script')) {
+                    var script = document.createElement('script');
+                    script.id = 'xlsx-library-script';
+                    script.src = 'https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js';
+                    script.onload = function() {
+                        performExcelExport();
+                    };
+                    script.onerror = function() {
+                        var fallback = document.createElement('script');
+                        fallback.src = 'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js';
+                        fallback.onload = function() {
+                            performExcelExport();
+                        };
+                        fallback.onerror = function() {
+                            alert('تعذر تحميل مكتبة الإكسل. يرجى التأكد من اتصالك بالإنترنت والتحقق من عدم حجب روابط الـ CDN.');
+                        };
+                        document.head.appendChild(fallback);
+                    };
+                    document.head.appendChild(script);
+                }
+                return;
+            }
+            performExcelExport();
+        }
+
+        function performExcelExport() {
             var elt = document.getElementById('report-table');
             var clone = elt.cloneNode(true);
 
@@ -252,9 +279,9 @@
             var workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, wb, "Deductions Report");
             
-            var reportTitle = "{{ preg_replace('/[^A-Za-z0-9_\-]/', '_', $reportData['report_title']) }}";
-            var fromDate = "{{ $reportData['from_date'] }}";
-            var toDate = "{{ $reportData['to_date'] }}";
+            var reportTitle = "{{ preg_replace('/[^A-Za-z0-9_\-]/', '_', $reportData['report_title'] ?? 'Report') }}";
+            var fromDate = "{{ $reportData['from_date'] ?? '' }}";
+            var toDate = "{{ $reportData['to_date'] ?? '' }}";
             var fileName = "Deductions_" + reportTitle + "_" + fromDate + "_to_" + toDate + ".xlsx";
             
             XLSX.writeFile(workbook, fileName);

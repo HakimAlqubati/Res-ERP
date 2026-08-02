@@ -71,7 +71,12 @@ class AuthController extends Controller
                 // نحدث وقت آخر دخول
                 $user->touchDeviceLogin($deviceId);
             }
-
+            if ($user->employee && $user->employee->pendingTerminationRequest()->exists()) {
+                Auth::logout();
+                return response()->json([
+                    'error' => 'Your account is pending termination. Please contact the administrator.'
+                ], 403);
+            }
 
             $token = $user->createToken('MyApp')->accessToken;
 

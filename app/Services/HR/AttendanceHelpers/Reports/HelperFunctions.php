@@ -68,7 +68,7 @@ class HelperFunctions
                     // Not incrementing required_days, as they are no longer required to work.
                     break;
                 case AttendanceReportStatus::NoPeriods->value:
-                    if ($employee && $employee->no_shift_is_present) {
+                    if ($employee && !$employee->has_auto_weekly_leave) {
                         $stats['present_days']++;
                         $stats['required_days']++;
                     } else {

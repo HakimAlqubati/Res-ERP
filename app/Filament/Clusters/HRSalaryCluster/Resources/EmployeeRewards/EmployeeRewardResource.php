@@ -32,6 +32,27 @@ class EmployeeRewardResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'reason';
 
+     public static function getNavigationLabel(): string
+    {
+        return __('lang.rewards');
+    }
+
+    public static function getPluralLabel(): ?string
+    {
+        return __('lang.rewards');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('lang.reward');
+    }
+
+    public static function getLabel(): ?string
+    {
+        return __('lang.rewards');
+    }
+
+
     public static function form(Schema $schema): Schema
     {
         return EmployeeRewardForm::configure($schema);

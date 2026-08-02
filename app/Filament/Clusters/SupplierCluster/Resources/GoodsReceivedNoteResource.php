@@ -108,6 +108,7 @@ class GoodsReceivedNoteResource extends Resource
                                     ->helperText('Enter GRN Number')->required(),
                                 DatePicker::make('grn_date')
                                     ->label('GRN Date')->default(now())
+                                    ->minDate(now()->subYears(2))
                                     ->required()->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
 
 
@@ -121,6 +122,7 @@ class GoodsReceivedNoteResource extends Resource
                                     ->label('Status')->default(GoodsReceivedNote::STATUS_CREATED)
                                     ->options(GoodsReceivedNote::getStatusOptions())
                                     ->required()
+                                    ->hiddenOn('create')
                                     ->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
                                 Select::make('supplier_id')->label(__('lang.supplier'))
                                     ->getSearchResultsUsing(fn(string $search): array => Supplier::where('name', 'like', "%{$search}%")->limit(10)->pluck('name', 'id')->toArray())
@@ -315,6 +317,10 @@ class GoodsReceivedNoteResource extends Resource
                         ->schema([
                             Repeater::make('grnDetails')->columnSpanFull()
                                 ->relationship()
+                                ->mutateRelationshipDataBeforeFillUsing(function (array $data): array {
+                                    $data['total_price'] = round((float) ($data['quantity'] ?? 0) * (float) ($data['price'] ?? 0), 2);
+                                    return $data;
+                                })
                                 ->label('Items')
                                 ->columns(6)
                                 ->schema([
@@ -386,7 +392,7 @@ class GoodsReceivedNoteResource extends Resource
                                         ->numeric()
                                         ->minValue(0.1)
                                         ->default(1)
-                                        ->maxLength(6)
+                                        ->maxValue(999999999)
                                         ->live(onBlur: true)
                                         ->afterStateUpdated(function ($set, $get) {
                                             $quantity = (float) ($get('quantity') ?? 0);
@@ -477,10 +483,26 @@ class GoodsReceivedNoteResource extends Resource
                     ->searchable()->toggleable(),
                 TextColumn::make('supplier.name')->label('Supplier')
                     ->searchable()->toggleable(isToggledHiddenByDefault: false),
-                // TextColumn::make('status')->label('Status')->badge()->toggleable(),
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => \App\Models\GoodsReceivedNote::getStatusOptions()[$state] ?? $state)
+                    ->color(fn (string $state): string => match ($state) {
+                        \App\Models\GoodsReceivedNote::STATUS_CREATED => 'gray',
+                        \App\Models\GoodsReceivedNote::STATUS_APPROVED => 'success',
+                        \App\Models\GoodsReceivedNote::STATUS_REJECTED => 'danger',
+                        \App\Models\GoodsReceivedNote::STATUS_CANCELLED => 'warning',
+                        default => 'primary',
+                    })
+                    ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('rejected_reason')
+                    ->label('Reject Reason')
+                    ->limit(40)
+                    ->tooltip(fn($state)=>$state)
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('details_count')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('total_amount')
+                TextColumn::make('actual_total_amount')
                     ->label(__('lang.total_amount'))
                     ->alignCenter(true)
                     ->formatStateUsing(function ($state) {
@@ -489,7 +511,7 @@ class GoodsReceivedNoteResource extends Resource
                     ->summarize(
                         Summarizer::make()
                             ->using(function (Table $table) {
-                                $total  = $table->getRecords()->sum(fn($record) => $record->total_amount);
+                                $total  = $table->getRecords()->sum(fn($record) => $record->actual_total_amount);
                                 if (is_numeric($total)) {
                                     return formatMoneyWithCurrency($total);
                                 }
@@ -521,7 +543,8 @@ class GoodsReceivedNoteResource extends Resource
                 IconColumn::make('cancelled')
                     ->label('Cancelled')->toggleable(isToggledHiddenByDefault: true)->boolean()->alignCenter(),
                 IconColumn::make('has_attachment')->alignCenter(true)->label(__('lang.has_attachment'))
-                    ->boolean()->toggleable(),
+                    ->boolean()->toggleable(isToggledHiddenByDefault: true)
+                    ,
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
@@ -566,6 +589,7 @@ class GoodsReceivedNoteResource extends Resource
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
             ->recordActions([
+                self::getExportExcelAction(Action::class),
                 EditAction::make()
                     ->visible(fn($record): bool => $record->status == GoodsReceivedNote::STATUS_CREATED),
                 // Tables\Actions\Action::make('Reject')
@@ -634,41 +658,7 @@ class GoodsReceivedNoteResource extends Resource
                                 report($e);
                             }
                         })
-                        ->visible(fn(GoodsReceivedNote $record) => ! $record->cancelled),
-                    Action::make('create_inventory')
-                        ->label('Create Inventory')
-                        ->icon('heroicon-o-plus-circle')->button()
-                        ->color('success')
-                        ->visible(fn($record) => !$record->has_inventory_transaction)
-                        ->action(function ($record) {
-                            DB::beginTransaction();
-                            try {
-                                $notes = 'GRN with id ' . $record->id;
-                                if ($record->store?->name) {
-                                    $notes .= ' in (' . $record->store->name . ')';
-                                }
-                                foreach ($record->grnDetails as $detail) {
-                                    InventoryTransaction::moveToStore([
-                                        'product_id' => $detail->product_id,
-                                        'movement_type' => InventoryTransaction::MOVEMENT_IN,
-                                        'quantity' => $detail->quantity,
-                                        'unit_id' => $detail->unit_id,
-                                        'package_size' => $detail->package_size,
-                                        'store_id' => $record->store_id,
-                                        'price' => $detail->price,
-                                        'transaction_date' => $record->date,
-                                        'movement_date' => $record->date,
-                                        'notes' => $notes,
-                                        'transactionable' => $record,
-                                    ]);
-                                }
-                                DB::commit();
-                                showSuccessNotifiMessage('Done');
-                            } catch (Exception $e) {
-                                DB::rollBack();
-                                showWarningNotifiMessage($e->getMessage());
-                            }
-                        })->hidden(),
+                        ->visible(fn(GoodsReceivedNote $record) => ! $record->cancelled)->hidden(),
                     Action::make('restore')
                         ->label('Restore')
                         ->icon(Heroicon::ArrowPath)
@@ -691,33 +681,19 @@ class GoodsReceivedNoteResource extends Resource
                                 return redirect(url($file_link));
                             }
                         })->hidden(fn($record) => !(strlen($record['attachment']) > 0))
-                        ->color('green'),
+                        ->color('green') ->hidden(),
                 ]),
-                Action::make('Approve')
-                    ->label(fn($record): string =>  $record->status == GoodsReceivedNote::STATUS_APPROVED ? 'Approved' : 'Approve')
-                    ->disabled(fn($record): bool =>  $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false)
-                    ->color('success')->button()
-                    ->icon('heroicon-o-check-badge')
-                    ->requiresConfirmation()
-                    ->action(function ($record, array $data) {
-                        $record->update([
-                            'status' => GoodsReceivedNote::STATUS_APPROVED,
-                            'approved_by' => auth()->id(),
-                            'approve_date' => now(),
-                        ]);
-                    })
-                    ->requiresConfirmation(),
-                Action::make('CreatePurchaseInvoice')
-                    ->label('Input Prices')
+                Action::make('PreviewAndApprove')
+                    ->label(new \Illuminate\Support\HtmlString('Review & <br> Approve'))
                     ->color('primary')
-                    ->icon('heroicon-o-clipboard-document-check')
+                    // ->icon('heroicon-o-clipboard-document-check')
                     ->url(fn($record) => static::getUrl('create-purchase-invoice', ['record' => $record]))
                     ->button()
                     ->visible(function ($record) {
                         $allowedRoles = setting('grn_approver_role_id', []);
                         $userRoles = auth()->user()?->roles->pluck('id')->toArray() ?? [];
 
-                        return $record->status == GoodsReceivedNote::STATUS_APPROVED && !$record->is_purchase_invoice_created  &&
+                        return $record->status == GoodsReceivedNote::STATUS_CREATED && !$record->is_purchase_invoice_created  &&
                             (count(array_intersect($userRoles, $allowedRoles)) > 0);
                     }),
 
@@ -797,5 +773,21 @@ class GoodsReceivedNoteResource extends Resource
     public static function getGlobalSearchResultsLimit(): int
     {
         return 15;
+    }
+
+    public static function getExportExcelAction(string $actionClass)
+    {
+        return $actionClass::make('export_excel')
+            ->label('Export Excel')
+            ->icon('heroicon-o-document-arrow-down')
+            ->color('success')
+            ->action(function (GoodsReceivedNote $record) {
+                $fileName = "GRN_{$record->grn_number}.xlsx";
+
+                return \Maatwebsite\Excel\Facades\Excel::download(
+                    new \App\Exports\GoodsReceivedNoteExport($record),
+                    $fileName
+                );
+            });
     }
 }

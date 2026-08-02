@@ -75,6 +75,7 @@ class EmployeeForm
                                                     return [];
                                                 })
                                                 ->rules('string')
+                                                ->unique(ignoreRecord: true)
                                                 ->columnSpan(2)->required(),
 
                                             TextInput::make('known_name')
@@ -95,6 +96,10 @@ class EmployeeForm
                                                         ->disabled(),
                                                     Textarea::make('termination_reason')
                                                         ->label(__('lang.termination_reason'))
+                                                        ->columnSpanFull()
+                                                        ->disabled(),
+                                                    Textarea::make('notes')
+                                                        ->label(__('lang.notes'))
                                                         ->columnSpanFull()
                                                         ->disabled(),
                                                 ]),
@@ -131,7 +136,7 @@ class EmployeeForm
                                                 ->columnSpan(1)
                                                 // ->required()
                                                 ->defaultCountry('my') // اليمن كدولة افتراضية
-                                                ->onlyCountries(['sa', 'ye', 'ae', 'my']) // حصر القائمة في السعودية، اليمن، والإمارات
+                                                // ->onlyCountries(['sa', 'ye', 'ae', 'my']) // حصر القائمة في السعودية، اليمن، والإمارات
                                                 ->countryValidations([
                                                     'sa' => [
                                                         // السعودية: يجب أن يبدأ بـ 5
@@ -193,7 +198,43 @@ class EmployeeForm
                                     static::avatar()
                                         ->columnSpan(1),
                                 ]),
+                                   Fieldset::make(__('lang.emergency_contact'))
+                                   ->columnSpanFull()
+                                   ->columns(3)
+                                ->schema([ 
+                                        TextInput::make('emergency_number.name')
+                                            ->label(__('lang.name'))
+                                            ->required(false),
+                                            
+                                        PhoneInput::make('emergency_number.phone')
+                                            ->label(__('lang.phone_number'))
+                                            ->required(false)
+                                            ->defaultCountry('my')
+                                            ->onlyCountries(['sa', 'ye', 'ae', 'my'])
+                                            ->countryValidations([
+                                                'sa' => [
+                                                    'starts_with' => ['+9665'],
+                                                    'length' => 13,
+                                                ],
+                                                'my' => [
+                                                    'starts_with' => ['+601'],
+                                                    'length' => [12, 13],
+                                                ],
+                                                'ye' => [
+                                                    'starts_with' => ['+96777', '+96773', '+96771', '+96770'],
+                                                    'length' => 13,
+                                                ],
+                                            ]),
+                                            
+                                        TextInput::make('emergency_number.relation')
+                                            ->label(__('lang.kinship'))
+                                            ->nullable(),
+
+                                ]),
+
                             Textarea::make('address')->label('')->columnSpanFull(),
+
+                         
                         ]),
 
                     Step::make(__('lang.employment'))
@@ -238,6 +279,7 @@ class EmployeeForm
                                                     ->whereIn('type', [
                                                         Branch::TYPE_BRANCH,
                                                         Branch::TYPE_HQ,
+                                                        Branch::TYPE_CENTRAL_KITCHEN
                                                     ])
                                                     ->get()
                                                     ->pluck('name', 'id')
@@ -337,6 +379,10 @@ class EmployeeForm
                                         Toggle::make('can_add_branch_order')->columnSpan(1)
 
                                             ->label(__('lang.can_add_branch_order'))->default(0)->inline(false),
+
+                                        Toggle::make('allow_attendance_from_any_branch')->columnSpan(1)
+                                            ->disabled(fn(): bool => isBranchManager())
+                                            ->label(__('lang.allow_attendance_from_any_branch'))->default(0)->inline(false),
 
                                     ]),
                                 ]),
@@ -449,7 +495,7 @@ class EmployeeForm
                                                     fn (): bool => isBranchManager() && ! (isSuperAdmin()
                                                         || isSystemManager())
                                                 )
-                                                ->hidden(fn () => isHR()),
+                                                ->hidden(fn (string $operation) => isHR() && $operation !== 'create'),
 
                                             Select::make('salary_allocation_rule')
                                                 ->label(__('Salary Allocation Override (Branch Transfers)'))
@@ -500,6 +546,10 @@ class EmployeeForm
                                                         ->live(onBlur: true)
                                                         ->afterStateUpdated(fn ($state, $set) => $set('bank_account_number', $state)),
 
+                                                    TextInput::make('payment_details.full_name')
+                                                        ->label(__('Full Name'))
+                                                        ->nullable(),
+
                                                     TextInput::make('payment_details.note')
                                                         ->label(fn (Get $get) => EmployeePaymentMethod::find($get('payment_method_id'))?->getNoteLabel() ?? __('Remarks'))
                                                         ->columnSpanFull(),
@@ -523,10 +573,6 @@ class EmployeeForm
 
                                         Toggle::make('has_auto_weekly_leave')->columnSpan(1)
                                             ->label(__('lang.has_auto_weekly_leave'))->default(1)->inline(false)->live(),
-
-                                        Toggle::make('no_shift_is_present')->columnSpan(1)
-                                            ->label(__('lang.no_shift_is_present'))
-                                            ->default(0)->inline(false),
 
                                     ]),
 
@@ -581,8 +627,7 @@ class EmployeeForm
                                                                 ->minValue(0)
                                                                 ->step(1)
                                                                 ->maxValue(100)
-                                                                ->default(0)
-                                                                ->rtl(),
+                                                                ->default(0),
                                                         ]),
                                                 ]),
 
@@ -632,6 +677,7 @@ class EmployeeForm
                                                             Select::make('deduction_id')
                                                                 ->columnSpan(['default' => 1])
                                                                 ->label(__('lang.deduction'))
+                                                                ->searchable()
                                                                 ->options(Deduction::where('active', 1)->where('is_specific', 1)->get()->pluck('name', 'id'))
                                                                 ->required(),
                                                             Toggle::make('is_percentage')->live()->default(false)->columnSpan(['default' => 1]),
@@ -662,8 +708,7 @@ class EmployeeForm
                                                                 ->minValue(0)
                                                                 ->step(1)
                                                                 ->maxValue(100)
-                                                                ->default(0)
-                                                                ->rtl(),
+                                                                ->default(0),
                                                         ]),
                                                 ]),
                                         ]),

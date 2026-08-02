@@ -25,6 +25,7 @@ use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Tables\Enums\FiltersLayout;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
@@ -187,6 +188,32 @@ class FinancialTransactionsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+
+                SelectFilter::make('reference_type')
+                    ->options(function () {
+                        return \App\Models\FinancialTransaction::select('reference_type')
+                            ->distinct()
+                            ->whereNotNull('reference_type')
+                            ->pluck('reference_type', 'reference_type')
+                            ->mapWithKeys(function ($type) {
+                                return [$type => class_basename($type)];
+                            })
+                            ->toArray();
+                    })
+                    ->label('Reference Type'),
+
+                Filter::make('reference_id')
+                    ->form([
+                        TextInput::make('reference_id')
+                            ->label('Reference ID'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['reference_id'],
+                                fn(Builder $query, $value): Builder => $query->where('reference_id', $value),
+                            );
+                    }),
 
                 TrashedFilter::make(),
                 SelectFilter::make('type')

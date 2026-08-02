@@ -35,11 +35,31 @@ class AttendanceService
      */
     public function handle(array $payload): AttendanceResultDTO
     {
+        // 0. التحقق من صحة branch_id إذا تم إرساله
+        if (isset($payload['branch_id'])) {
+            $validator = \Illuminate\Support\Facades\Validator::make($payload, [
+                'branch_id' => 'exists:branches,id,deleted_at,NULL',
+            ]);
+
+            if ($validator->fails()) {
+                return AttendanceResultDTO::failure(__('Selected branch is invalid.'));
+            }
+        }
+
         // 1. تحديد الموظف
         $employee = $this->resolveEmployee->execute($payload);
 
         if (!$employee) {
             return AttendanceResultDTO::failure(__('Employee not found.'));
+        }
+
+        // 1.1 التحقق من صلاحية الفرع للموظف
+        if (
+            isset($payload['branch_id']) &&
+            (int) $payload['branch_id'] !== (int) $employee->branch_id &&
+            ! $employee->allow_attendance_from_any_branch
+        ) {
+            return AttendanceResultDTO::failure(__('Employee is not allowed to attend from this branch.'));
         }
 
         // 2. تحليل الوقت

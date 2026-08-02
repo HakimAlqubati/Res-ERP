@@ -43,7 +43,7 @@ class StockSupplyOrderController extends Controller
             $query->whereDate('order_date', '<=', $request->to_date);
         }
 
-        // $query->where('created_by', auth()->user()->id);
+        $query->where('created_by', auth()->user()->id);
         if (isBranchManager()) {
 
             if (!isStoreManager() && auth()->user()->branch->is_kitchen) {
@@ -143,7 +143,7 @@ class StockSupplyOrderController extends Controller
             DB::rollBack();
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to create supply order',
+                'message' => $e->getMessage(),
                 'error' => $e->getMessage()
             ], 500);
         }

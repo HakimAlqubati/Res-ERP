@@ -100,7 +100,6 @@ return [
         // App\Jobs\GenerateUnauditedStocktakeJob::class,
         // Illuminate\Notifications\SendQueuedNotifications::class,
 
-
     ],
 
     /*
@@ -108,7 +107,7 @@ return [
      */
     'not_tenant_aware_jobs' => [
         // ...
-        \App\Modules\Stock\Jobs\SyncPriceOnNewStockEntryJob::class,
-        \App\Modules\Stock\Jobs\SyncProductCurrentBatchPriceJob::class,
+        // \App\Modules\Stock\Jobs\SyncPriceOnNewStockEntryJob::class,
+        // \App\Modules\Stock\Jobs\SyncProductCurrentBatchPriceJob::class,
     ],
 ];

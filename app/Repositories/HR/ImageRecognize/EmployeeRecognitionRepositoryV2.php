@@ -92,7 +92,7 @@ class EmployeeRecognitionRepositoryV2
         }
 
         // 2) التحقق من الفرع
-        if ($globalEmployee->branch_id != $currentBranchId) {
+        if ($globalEmployee->branch_id != $currentBranchId && !$globalEmployee->allow_attendance_from_any_branch) {
             return [$name, $empId, null, true]; // وجدنا الموظف لكنه في فرع آخر
         }
 

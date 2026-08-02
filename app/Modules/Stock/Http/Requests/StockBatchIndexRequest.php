@@ -23,6 +23,7 @@ class StockBatchIndexRequest extends FormRequest
             'category_id'    => 'nullable|integer|exists:categories,id',
             'current_batch'  => 'nullable|boolean',
             'per_page'       => 'nullable|integer|min:1|max:100',
+            'page'           => 'nullable|integer|min:1',
         ];
     }
 
@@ -35,7 +36,8 @@ class StockBatchIndexRequest extends FormRequest
                 ? (bool) $this->input('current_batch')
                 : null,
             categoryId:     $this->filled('category_id') ? (int) $this->input('category_id') : null,
-           perPage: (int) $this->input('per_page', 20),
+            perPage: (int) $this->input('per_page', 20),
+            page: (int) $this->input('page', 1),
         );
     }
 }

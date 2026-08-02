@@ -16,8 +16,10 @@
             @foreach($employerContributionColumns as $col)
                 <th>{{ __($col) }}</th>
             @endforeach
-            <th>{{ __('Advance Wages') }}</th>
-            <th>{{ __('Net Salary') }}</th>
+            <th>{{ __('GROSS SALARY') }}</th>
+            <th>{{ __('ADVANCE') }}</th>
+            <th>{{ __('ADVANCE WAGES') }}</th>
+            <th>{{ __('NETT') }}</th>
         </tr>
     </thead>
     <tbody>
@@ -32,7 +34,6 @@
             <td>{{ $row['additions'][$col] ?? 0 }}</td>
             @endforeach
             <td>{{ $row['total_additions'] }}</td>
-
             @foreach($deductionColumns as $col)
             <td>{{ $row['deductions'][$col] ?? 0 }}</td>
             @endforeach
@@ -40,6 +41,8 @@
             @foreach($employerContributionColumns as $col)
                 <td>{{ $row['employer_contributions'][$col] ?? 0 }}</td>
             @endforeach
+            <td>{{ $row['gross_salary'] ?? 0 }}</td>
+            <td>{{ $row['advance'] ?? 0 }}</td>
             <td>{{ $row['advance_wages'] ?? 0 }}</td>
             <td>{{ $row['net_salary'] }}</td>
         </tr>
@@ -54,7 +57,6 @@
             <td style="font-weight: bold;">{{ $totals['additions'][$col] ?? 0 }}</td>
             @endforeach
             <td style="font-weight: bold;">{{ $totals['total_additions'] }}</td>
-
             @foreach($deductionColumns as $col)
             <td style="font-weight: bold;">{{ $totals['deductions'][$col] ?? 0 }}</td>
             @endforeach
@@ -62,6 +64,8 @@
             @foreach($employerContributionColumns as $col)
                 <td style="font-weight: bold;">{{ $totals['employer_contributions'][$col] ?? 0 }}</td>
             @endforeach
+            <td style="font-weight: bold;">{{ $totals['gross_salary'] ?? 0 }}</td>
+            <td style="font-weight: bold;">{{ $totals['advance'] ?? 0 }}</td>
             <td style="font-weight: bold;">{{ $totals['advance_wages'] ?? 0 }}</td>
             <td style="font-weight: bold;">{{ $totals['net_salary'] }}</td>
         </tr>

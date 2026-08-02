@@ -44,13 +44,15 @@ class EmployeeApplicationTable
             TextColumn::make('employee.name')
                 ->label(__('lang.employee'))
                 ->sortable()
-                // ->limit(20)
+                ->url(fn ($record) => \App\Filament\Resources\EmployeeResource::getUrl('view', ['record' => $record->employee_id]),true)
+                ->limit(20)
                 ->tooltip(fn ($state) => $state)
                 ->searchable(),
 
             TextColumn::make('createdBy.name')
                 ->limit(20)
                 ->sortable()
+                  ->tooltip(fn ($state) => $state)
                 ->toggleable(isToggledHiddenByDefault: true)
                 ->searchable(),
 
@@ -174,7 +176,18 @@ class EmployeeApplicationTable
                 ->formatStateUsing(fn ($state) => formatMoneyWithCurrency($state));
         }
         $columns[] = TextColumn::make('approvedBy.name')
-            ->label(__('lang.approved_by'));
+            ->label(__('lang.approved_by'))
+          ->tooltip(fn ($state) => $state)
+          ->limit(20)
+          ->toggleable(isToggledHiddenByDefault:false)
+        ;
+        
+        $columns[] = TextColumn::make('rejectedBy.name')
+            ->label(__('lang.rejected_by'))
+          ->tooltip(fn ($state) => $state)
+          ->limit(20)
+          ->toggleable(isToggledHiddenByDefault:true)
+        ;
         $columns[] = SpatieMediaLibraryImageColumn::make('images')
             ->label(__('lang.images'))
             ->collection('images')
@@ -192,6 +205,13 @@ class EmployeeApplicationTable
             ->toggleable(isToggledHiddenByDefault: true)
             ->alignCenter(true)
             ->limit(3);
+        $columns[] = TextColumn::make('branch.name')
+            ->label(__('lang.branch'))
+            ->searchable()
+            ->default('-')
+            ->toggleable(isToggledHiddenByDefault: true)
+            ->alignCenter(false)
+           ;
 
         return $table->defaultSort('id', 'desc')
             ->paginated([10, 25, 50, 100])
@@ -542,8 +562,9 @@ class EmployeeApplicationTable
                     return false;
                 }),
 
-                EmployeeApplicationResource::approveMealRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager() || isHR()) {
+                EmployeeApplicationResource::approveMealRequest()
+                ->hidden(function ($record) {
+                    if (isstuff() ||  isHR()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {

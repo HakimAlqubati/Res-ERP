@@ -1,6 +1,15 @@
 <x-filament::page>
     {{ $this->getTableFiltersForm() }}
 
+    <div class="flex justify-end mt-4 mb-4 no-print">
+        <button onclick="exportTableToExcel('report-table', 'Product_Quantities_Report')" style="background-color: #10b981; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem;" class="hover:bg-green-600 transition shadow">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
+            </svg>
+            {{ __('lang.export_to_excel') ?? 'Export to Excel' }}
+        </button>
+    </div>
+
     <style>
         table {
             /* border-collapse: collapse; */
@@ -178,4 +187,23 @@
             <h1 class="please_select_message_text">{{ __('lang.please_select_product') }}</h1>
     </div>
     @endif --}}
+
+    <script type="text/javascript" src="https://unpkg.com/xlsx@0.15.1/dist/xlsx.full.min.js"></script>
+    <script>
+        function exportTableToExcel(tableID, filename = ''){
+            var tableSelect = document.getElementById(tableID);
+            // Clone the table to avoid modifying the original
+            var clonedTable = tableSelect.cloneNode(true);
+            
+            // Remove any images or unwanted elements from the cloned table if needed
+            var images = clonedTable.getElementsByTagName('img');
+            while(images.length > 0){
+                images[0].parentNode.removeChild(images[0]);
+            }
+
+            var wb = XLSX.utils.table_to_book(clonedTable, {sheet: "Report"});
+            filename = filename ? filename + '.xlsx' : 'excel_data.xlsx';
+            XLSX.writeFile(wb, filename);
+        }
+    </script>
 </x-filament::page>

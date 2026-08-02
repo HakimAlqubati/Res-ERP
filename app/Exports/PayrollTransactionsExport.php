@@ -10,11 +10,13 @@ class PayrollTransactionsExport implements FromView
 {
     private $transactions;
     private string $employeeName;
+    private float $netSalary;
 
-    public function __construct($transactions, string $employeeName = '')
+    public function __construct($transactions, string $employeeName = '', float $netSalary = 0.0)
     {
         $this->transactions = $transactions;
         $this->employeeName = $employeeName;
+        $this->netSalary = $netSalary;
     }
 
     public function view(): View
@@ -29,6 +31,7 @@ class PayrollTransactionsExport implements FromView
         return view('export.reports.hr.payrolls.payroll-transactions-excel', [
             'transactions' => $transactions,
             'employeeName' => $this->employeeName,
+            'netSalary' => $this->netSalary,
         ]);
     }
 

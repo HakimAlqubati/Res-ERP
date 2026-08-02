@@ -6,9 +6,11 @@ use Filament\Actions\DeleteAction;
 use App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use App\Filament\Traits\HasPriceChangeWarning;
 
 class EditGoodsReceivedNote extends EditRecord
 {
+    use HasPriceChangeWarning;
     protected static string $resource = GoodsReceivedNoteResource::class;
 
     protected function getHeaderActions(): array
@@ -27,5 +29,10 @@ class EditGoodsReceivedNote extends EditRecord
             $this->getSaveFormAction(),
             $this->getCancelFormAction(),
         ];
+    }
+
+    protected function beforeSave(): void
+    {
+        $this->checkPriceChanges();
     }
 }

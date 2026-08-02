@@ -37,7 +37,8 @@ class BranchForm
                         ->icon('heroicon-o-user-circle')
                         ->schema([
                             Fieldset::make()->columns(2)->schema([
-                                TextInput::make('name')->required()->label(__('lang.name')),
+                                TextInput::make('name')->required()->label(__('lang.name'))
+                                    ->unique(ignoreRecord: true),
                                 Select::make('manager_id')
                                     ->label(__('lang.branch_manager'))
                                     ->options(User::whereHas('roles', function ($q) {
@@ -104,8 +105,10 @@ class BranchForm
 
                                         Select::make('store_id')
                                             ->label(__('stock.store_id'))
-                                            ->options(Store::active()
-                                                ->centralKitchen()->pluck('name', 'id'))
+                                            ->relationship(
+                                                'store',
+                                                'name'
+                                            )
                                             ->searchable()
                                         // ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN)
                                         // ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN)
@@ -194,6 +197,29 @@ class BranchForm
 
                                 ]),
 
+                        ]),
+                    Step::make('Municipality License')
+                        ->icon('heroicon-o-document-text')
+                        ->schema([
+                            Fieldset::make()->columns(2)->schema([
+                                \Filament\Forms\Components\DatePicker::make('municipality_license_issue_date')
+                                    ->label(__('lang.municipality_license_issue_date'))
+                                    ->nullable(),
+                                \Filament\Forms\Components\DatePicker::make('municipality_license_end_date')
+                                    ->label(__('lang.municipality_license_end_date'))
+                                    ->nullable()
+                                    ->after('municipality_license_issue_date'),
+                                Textarea::make('municipality_license_notes')
+                                    ->label(__('lang.municipality_license_notes'))
+                                    ->columnSpanFull()
+                                    ->nullable(),
+                                SpatieMediaLibraryFileUpload::make('municipality_license')
+                                    ->collection('municipality_license')
+                                    ->label(__('lang.municipality_license_file'))
+                                    ->columnSpanFull()
+                                    ->downloadable()
+                                    ->openable(),
+                            ]),
                         ]),
                     Step::make('Images')
                         ->icon('heroicon-o-user-circle')

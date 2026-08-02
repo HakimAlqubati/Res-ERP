@@ -77,11 +77,13 @@ class Employee extends Model implements Auditable
         'birthday',
         'salary_allocation_rule',
         'can_add_branch_order',
+        'allow_attendance_from_any_branch',
         'created_by',
         'updated_by',
         'payment_method_id',
         'payment_details',
         'dynamic_field_values',
+        'emergency_number',
     ];
 
     // ─────────────────────────────────────────────────────────────
@@ -143,7 +145,9 @@ class Employee extends Model implements Auditable
         'no_shift_is_present',
         'birthday',
         'can_add_branch_order',
+        'allow_attendance_from_any_branch',
         'dynamic_field_values',
+        'emergency_number',
     ];
 
     protected $casts = [
@@ -152,10 +156,13 @@ class Employee extends Model implements Auditable
         'changes'                => 'array',
         'is_mtd_applicable'      => 'boolean',
         'has_auto_weekly_leave'  => 'boolean',
+        'can_add_branch_order'                => 'boolean',
+        'allow_attendance_from_any_branch'   => 'boolean',
         'max_weekly_leave_days'  => 'integer',
         'no_shift_is_present'    => 'boolean',
         'can_add_branch_order'   => 'boolean',
         'salary_allocation_rule' => \App\Enums\HR\Payroll\SalaryAllocationRule::class,
+        'emergency_number'       => \App\Casts\EmergencyContactCast::class,
     ];
 
     // ─────────────────────────────────────────────────────────────
