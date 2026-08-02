@@ -1194,4 +1194,8 @@ return [
     'employee_file_types' => 'Staff File Types',
     'employee_file_type' => 'Staff File Type',
     'rejected_by' => 'Rejected By',
+    'municipality_license_issue_date' => 'Municipality License Issue Date',
+    'municipality_license_end_date' => 'Municipality License End Date',
+    'municipality_license_notes' => 'Municipality License Notes',
+    'municipality_license_file' => 'Municipality License File',
 ];
