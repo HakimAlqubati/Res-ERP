@@ -37,6 +37,8 @@ class EmployeeWorkPeriodService
                 throw new Exception('There are overlapping shifts with overlapping periods and times. Please check your selection.');
             }
 
+            $this->ensureNoUnassignedAttendance($employee->id, $data['start_date'], $data['end_date'] ?? null, $data['period_days'] ?? []);
+
             $dataPeriods = array_map('intval', $data['periods']);
 
             // Insert new periods into hr_employee_periods table
@@ -172,6 +174,26 @@ class EmployeeWorkPeriodService
             ->where('employee_id', $employeeId)
             ->orderBy('id', 'desc')
             ->get();
+    }
+
+    /**
+     * Ensure no attendance records exist without an assigned shift
+     * in the given date range and matching weekdays.
+     *
+     * @throws Exception
+     */
+    private function ensureNoUnassignedAttendance(int $employeeId, string $startDate, ?string $endDate, array $periodDays): void
+    {
+        $count = Attendance::where('employee_id', $employeeId)
+            ->whereNull('period_id')
+            ->where('check_date', '>=', $startDate)
+            ->when($endDate, fn ($q, $end) => $q->where('check_date', '<=', $end))
+            ->whereIn('day', $periodDays)
+            ->count();
+
+        if ($count > 0) {
+            throw new Exception("Cannot assign shift: {$count} attendance record(s) without a shift exist on the selected days.");
+        }
     }
 
     private function isInternalPeriodsOverlappingWithDates($selectedPeriodsWithDates)
