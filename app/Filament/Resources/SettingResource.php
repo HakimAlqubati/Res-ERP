@@ -71,7 +71,7 @@ class SettingResource extends Resource
                             // })
                             ->icon('heroicon-o-building-office')
                             ->schema([
-                                Fieldset::make()->columns(3)->label('Company Info')->schema([
+                                Fieldset::make()->columns(4)->label('Company Info')->schema([
                                     TextInput::make("company_name")
                                         ->label('Name'),
                                     TextInput::make("company_phone")
@@ -82,6 +82,7 @@ class SettingResource extends Resource
                                         ->label('Locale')
                                         ->searchable()
                                         ->options(getNationalitiesAsCountries()),
+                                        TextInput::make('currency_symbol')->label(__('system_settings.currency_symbol')),
 
                                     TextInput::make("website")
                                         ->label('Website')
