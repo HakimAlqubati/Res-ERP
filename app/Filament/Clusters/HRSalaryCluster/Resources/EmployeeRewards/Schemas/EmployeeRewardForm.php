@@ -6,6 +6,7 @@ use App\Models\Employee;
 use App\Models\EmployeeReward;
 use App\Models\MonthlyIncentive;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Hidden;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -62,7 +63,7 @@ class EmployeeRewardForm
 
                 // Hidden fields for automated payroll targeting
                 TextInput::make('year')->hidden(),
-                TextInput::make('month')->hidden(),
+                Hidden::make('month'),
             ]);
     }
 }
