@@ -207,7 +207,7 @@ class DeliveredResellerOrdersResource extends Resource
                                         $unitPrice = \App\Models\UnitPrice::where('product_id', $get('product_id'))
                                             ->where('unit_id', $state)->first();
                                         $price = (float) ($unitPrice->price ?? 0);
-                                        $qty   = (float) ($get('quantity') ?? 1);
+                                        $qty   = (float) ($get('available_quantity') ?? $get('quantity') ?? 1);
 
                                         $set('price', $price);
                                         $set('package_size', (float) ($unitPrice->package_size ?? 0));
@@ -225,6 +225,21 @@ class DeliveredResellerOrdersResource extends Resource
                                     ->minValue(1)
                                     ->default(1)
                                     ->live(onBlur: true)
+                                    ->hiddenOn(['edit', 'view'])
+                                    ->afterStateUpdated(function (Set $set, $state, Get $get) {
+                                        $qty   = (float) ($state ?? 0);
+                                        $price = (float) ($get('price') ?? 0);
+                                        $set('total_price', max(0, ($qty * $price)));
+                                    })
+                                    ->required(),
+
+                                \Filament\Forms\Components\TextInput::make('available_quantity')
+                                    ->label(__('lang.quantity'))
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->default(1)
+                                    ->live(onBlur: true)
+                                    ->hiddenOn('create')
                                     ->afterStateUpdated(function (Set $set, $state, Get $get) {
                                         $qty   = (float) ($state ?? 0);
                                         $price = (float) ($get('price') ?? 0);
