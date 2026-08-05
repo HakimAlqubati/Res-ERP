@@ -102,7 +102,7 @@ class PayrollsRelationManager extends RelationManager
                     ->limit(15)
                     ->label(__('lang.employee'))
                     ->color(function (Payroll $record) {
-                        if ($record->employee?->serviceTermination) {
+                        if ($record->employee?->serviceTermination && !$record->employee->active) {
                             return 'danger';
                         }
                         return 'primary';
