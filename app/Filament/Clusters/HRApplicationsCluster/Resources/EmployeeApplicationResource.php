@@ -1419,12 +1419,12 @@ class EmployeeApplicationResource extends Resource
                             ->label(__('lang.cost'))
                             ->default($mealRequest?->cost),
                         Textarea::make('meal_details')
-                            ->label(__('lang.notes'))
+                            ->label(__('lang.meal_details'))
                             ->default($mealRequest?->meal_details)
                             ->columnSpanFull(),
                         Textarea::make('notes')
                             ->label(__('lang.notes'))
-                            ->default($mealRequest?->notes)
+                            ->default($mealRequest?->notes ?? $record->notes)
                             ->columnSpanFull(),
                     ]),
 
@@ -1481,6 +1481,8 @@ class EmployeeApplicationResource extends Resource
                     $data['year']                  = $data['detail_year'] ?? now()->year;
                     $data['month']                 = $data['detail_month'] ?? now()->month;
                     $data['days_count']            = $data['detail_days_count'];
+                    $data['reason']                = $state['reason'] ?? $record->notes ?? null;
+                    $record->leaveRequest()->updateOrCreate([], $data);
                     return $data;
                 })->schema([
                     Grid::make()->columns(4)->schema([
@@ -1621,7 +1623,7 @@ class EmployeeApplicationResource extends Resource
                         'deduction_ends_at'             => $state['detail_deduction_ends_at'] ?? null,
                         'number_of_months_of_deduction' => $state['detail_number_of_months_of_deduction'] ?? null,
                         'date'                          => $state['detail_date'] ?? null,
-                        'reason'                        => $state['reason'] ?? null,
+                        'reason'                        => $state['reason'] ?? $record->notes ?? null,
                         'application_type_id'           => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST,
                         'application_type_name'         => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_NAMES[\App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST],
                     ];
@@ -1786,6 +1788,7 @@ class EmployeeApplicationResource extends Resource
                         'employee_id'           => $state['employee_id'] ?? $record->employee_id,
                         'date'                  => $state['detail_date'] ?? null,
                         'time'                  => $state['detail_time'] ?? null,
+                        'reason'                => $state['reason'] ?? $record->notes ?? null,
                         'application_type_id'   => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
                         'application_type_name' => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_NAMES[\App\Models\EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST],
                     ];
@@ -1818,6 +1821,7 @@ class EmployeeApplicationResource extends Resource
                         'employee_id'           => $state['employee_id'] ?? $record->employee_id,
                         'date'                  => $state['date'] ?? null,
                         'time'                  => $state['time'] ?? null,
+                        'reason'                => $state['reason'] ?? $record->notes ?? null,
                         'application_type_id'   => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST,
                         'application_type_name' => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_NAMES[\App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST],
                     ];
@@ -1889,7 +1893,7 @@ class EmployeeApplicationResource extends Resource
                         'branch_id'             => $state['branch_id'],
                         'meal_details'          => $state['meal_details'] ?? null,
                         'cost'                  => $state['cost'] ?? 0,
-                        'notes'                 => $state['notes'] ?? null,
+                        'notes'                 => $state['notes'] ?? $record->notes ?? null,
                         'date'                  => $state['date'] ?? null,
                         'application_type_id'   => EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST,
                         'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST],
@@ -1930,7 +1934,7 @@ class EmployeeApplicationResource extends Resource
                             ->default(0),
 
                         Textarea::make('meal_details')
-                            ->label(__('lang.notes'))
+                            ->label(__('lang.meal_details'))
                             ->required()
                             ->columnSpanFull(),
                     ]),

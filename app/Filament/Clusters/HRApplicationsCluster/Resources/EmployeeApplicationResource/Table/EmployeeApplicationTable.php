@@ -165,6 +165,10 @@ class EmployeeApplicationTable
 
         // أعمدة خاصة بطلب وجبات (Employee Meals Request)
         if ($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[5]) {
+            $columns[] = TextColumn::make('application_date')->hidden();
+            $columns[] = TextColumn::make('mealRequest.date')
+                ->label(__('lang.date'))
+                ->date();
             $columns[] = TextColumn::make('mealRequest.meal_details')
                 ->label(__('lang.meal_details'))
                 ->limit(50);

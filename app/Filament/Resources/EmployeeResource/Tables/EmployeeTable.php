@@ -175,6 +175,13 @@ class EmployeeTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
+                TextColumn::make('branch_logs_count')
+                    ->counts('branchLogs')
+                    ->label(__('lang.branch_logs_count'))
+                    ->numeric()
+                    ->sortable()->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('unrequired_documents_count')->label(__('lang.unrequired_docs'))->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->formatStateUsing(function ($state) {
