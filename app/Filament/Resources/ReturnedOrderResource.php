@@ -59,7 +59,17 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
                 TextColumn::make('branch.name')->label('Branch')->sortable()->toggleable(),
                 TextColumn::make('store.name')->label('Store')->sortable()->toggleable(),
                 TextColumn::make('returned_date')->label('Returned Date')->date()->toggleable(),
-                TextColumn::make('status')->label('Status')->badge()->toggleable()->alignCenter(true),
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        \App\Models\ReturnedOrder::STATUS_CREATED => 'gray',
+                        \App\Models\ReturnedOrder::STATUS_APPROVED => 'success',
+                        \App\Models\ReturnedOrder::STATUS_REJECTED => 'danger',
+                        default => 'primary',
+                    })
+                    ->toggleable()
+                    ->alignCenter(true),
                 TextColumn::make('creator.name')->label('Created By')->toggleable(),
                 TextColumn::make('itemsCount')->label('Items Count')->toggleable()->alignCenter(true),
                 // TextColumn::make('totalAmount')->label('Total Amount')->money('MYR')->toggleable()->alignCenter(true),

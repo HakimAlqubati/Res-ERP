@@ -68,7 +68,7 @@ class ReturnedOrderForm
                             ->required(),
 
                         Select::make('status')
-                            ->label('Status')->disabledOn('create')
+                            ->label('Status')->disabledOn(['create','edit'])
                             ->options(ReturnedOrder::getStatusOptions())
                             ->default(ReturnedOrder::STATUS_CREATED),
 
@@ -131,7 +131,6 @@ class ReturnedOrderForm
                                     ])
                                     ->toArray();
                             })
-                            ->visible(fn ($record) => blank($record)) // يظهر فقط أثناء الإضافة
                             ->live(onBlur: true)
                             ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                 $orderId = $get('original_order_id');
@@ -219,6 +218,10 @@ class ReturnedOrderForm
                                     })
                                     ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
                                     ->required()
+                                    ->rule(fn (callable $get) => new \App\Rules\Orders\ProductInOriginalOrder(
+                                        $get('../../original_order_id'),
+                                        $get('unit_id')
+                                    ))
                                     ->reactive()
                                     ->afterStateUpdated(function ($set, $state, $get) {
                                         $set('unit_id', null);

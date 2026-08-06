@@ -22,6 +22,8 @@ use App\Models\Branch;
 use App\Models\DeliveredResellerOrders;
 use App\Models\Order;
 use App\Models\Store;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
@@ -346,6 +348,12 @@ class DeliveredResellerOrdersResource extends Resource
                         )?->creator?->name;
                     }),
             ])
+            ->toolbarActions(
+BulkActionGroup::make([
+    DeleteBulkAction::make()
+])
+
+            )
             ->recordActions([
 
                 Action::make('print_delivery_order')
