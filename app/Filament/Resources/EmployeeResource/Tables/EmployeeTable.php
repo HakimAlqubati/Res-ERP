@@ -223,6 +223,10 @@ class EmployeeTable
                     ->sortable()
                     ->visible(fn () => isHakimOrAdel())
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('createdBy.name')
+                    ->label(__('lang.created_by'))
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->label(__('lang.created_at'))
                     ->dateTime()
