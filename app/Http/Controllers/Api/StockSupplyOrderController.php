@@ -18,7 +18,7 @@ class StockSupplyOrderController extends Controller
     {
 
         $otherBranchesCategories = Branch::centralKitchens()
-            ->where('id', '!=', auth()->user()->branch->id) // نستثني فرع المستخدم
+            ->where('id', '!=', auth()->user()->branch?->id) // نستثني فرع المستخدم
             ->with('categories:id')
             ->get()
             ->pluck('categories')
@@ -29,6 +29,7 @@ class StockSupplyOrderController extends Controller
 
 
         $query = StockSupplyOrder::with(['store', 'details.product', 'details.unit'])
+            ->uncancelled()
             ->orderBy('created_at', 'desc');
 
         if ($request->has('store_id')) {
@@ -54,7 +55,7 @@ class StockSupplyOrderController extends Controller
                 });
             }
         }
-        if (!isStoreManager() && auth()->user()->branch->is_kitchen) {
+        if (!isStoreManager() && auth()->user()->branch?->is_kitchen) {
             $query->with(['details' => function ($q) use ($otherBranchesCategories) {
                 $q->whereHas('product.category', function ($q2) use ($otherBranchesCategories) {
                     $q2->where('is_manafacturing', true)
