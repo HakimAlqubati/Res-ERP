@@ -1514,6 +1514,32 @@ class EmployeeApplicationResource extends Resource
                             ->reactive()
                             ->default(date('Y-m-d'))
                             ->required()
+                            ->rules([
+                                fn (Get $get, $record) => function (string $attribute, $value, \Closure $fail) use ($get, $record) {
+                                    $empId = $get('../../employee_id') ?? $get('../employee_id') ?? $get('employee_id') ?? $record?->employee_id;
+                                    $ignoreAppId = null;
+                                    $ignoreLeaveId = null;
+
+                                    if ($record instanceof \App\Models\LeaveRequest) {
+                                        $empId = $empId ?? $record->employee_id ?? $record->application?->employee_id;
+                                        $ignoreAppId = $record->application_id;
+                                        $ignoreLeaveId = $record->id;
+                                    } elseif ($record instanceof \App\Models\EmployeeApplicationV2) {
+                                        $empId = $empId ?? $record->employee_id;
+                                        $ignoreAppId = $record->id;
+                                        $ignoreLeaveId = $record->leaveRequest?->id;
+                                    }
+
+                                    $rule = new \App\Rules\HR\Applications\NoLeaveOverlapRule(
+                                        employeeId: $empId,
+                                        startDate: $value ?? $get('detail_from_date'),
+                                        endDate: $get('detail_to_date'),
+                                        ignoreApplicationId: $ignoreAppId,
+                                        ignoreLeaveRequestId: $ignoreLeaveId,
+                                    );
+                                    $rule->validate($attribute, $value, $fail);
+                                },
+                            ])
                             ->dehydrated()
                             ->afterStateUpdated(function ($state, callable $set, $get) {
                                 $fromDate = $get('detail_from_date');
@@ -1532,6 +1558,32 @@ class EmployeeApplicationResource extends Resource
                             ->default(Carbon::tomorrow()->addDays(1)->format('Y-m-d'))
                             ->reactive()
                             ->required()
+                            ->rules([
+                                fn (Get $get, $record) => function (string $attribute, $value, \Closure $fail) use ($get, $record) {
+                                    $empId = $get('../../employee_id') ?? $get('../employee_id') ?? $get('employee_id') ?? $record?->employee_id;
+                                    $ignoreAppId = null;
+                                    $ignoreLeaveId = null;
+
+                                    if ($record instanceof \App\Models\LeaveRequest) {
+                                        $empId = $empId ?? $record->employee_id ?? $record->application?->employee_id;
+                                        $ignoreAppId = $record->application_id;
+                                        $ignoreLeaveId = $record->id;
+                                    } elseif ($record instanceof \App\Models\EmployeeApplicationV2) {
+                                        $empId = $empId ?? $record->employee_id;
+                                        $ignoreAppId = $record->id;
+                                        $ignoreLeaveId = $record->leaveRequest?->id;
+                                    }
+
+                                    $rule = new \App\Rules\HR\Applications\NoLeaveOverlapRule(
+                                        employeeId: $empId,
+                                        startDate: $get('detail_from_date'),
+                                        endDate: $value ?? $get('detail_to_date'),
+                                        ignoreApplicationId: $ignoreAppId,
+                                        ignoreLeaveRequestId: $ignoreLeaveId,
+                                    );
+                                    $rule->validate($attribute, $value, $fail);
+                                },
+                            ])
                             ->afterStateUpdated(function ($state, callable $set, $get) {
                                 $fromDate = $get('detail_from_date');
                                 $toDate   = $get('detail_to_date');
