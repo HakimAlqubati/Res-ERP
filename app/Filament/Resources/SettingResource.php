@@ -88,7 +88,7 @@ class SettingResource extends Resource
                                         ->label('Website')
                                         ->url()
                                         ->placeholder('https://example.com')
-                                        ->columnSpan(3),
+                                        ->columnSpan(4),
 
                                     FileUpload::make('company_logo')
                                         ->label('Logo')
@@ -96,7 +96,7 @@ class SettingResource extends Resource
                                         ->directory('company_logo')
                                         ->image()->disk('public')
                                         ->visibility('public')
-                                        ->columnSpan(3)
+                                        ->columnSpan(4)
                                         ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                                             return Str::random(15) . "." . $file->getClientOriginalExtension();
                                         }),
