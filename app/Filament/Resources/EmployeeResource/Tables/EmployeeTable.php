@@ -9,11 +9,13 @@ use App\Models\Employee;
 use App\Models\EmployeeFileType;
 use App\Models\User;
 use App\Models\UserType;
+use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Support\Enums\FontWeight;
+use Filament\Tables\Actions\HeaderActionsPosition;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -292,7 +294,7 @@ class EmployeeTable
 
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
-            ->headerActions(HeaderActions::actions())
+            ->headerActions(HeaderActions::actions(),HeaderActionsPosition::Bottom)
             ->recordActions([
                 RecordActions::actionGroup(),
 

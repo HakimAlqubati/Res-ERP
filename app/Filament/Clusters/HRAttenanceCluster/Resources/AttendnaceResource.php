@@ -7,6 +7,7 @@ use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages\CreateAttendnace;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages\ListAttendnaces;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages\ViewAttendnace;
+use App\Filament\Tables\Actions\RefreshAction;
 use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\Attendance;
 use App\Models\Branch;
@@ -137,6 +138,7 @@ class AttendnaceResource extends Resource
         return $table
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
+            ->headerActions([RefreshAction::make()])
             ->striped()
             ->columns([
                 SoftDeleteColumn::make(),

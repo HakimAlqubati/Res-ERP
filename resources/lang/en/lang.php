@@ -1198,4 +1198,5 @@ return [
     'municipality_license_end_date' => 'Municipality License End Date',
     'municipality_license_notes' => 'Municipality License Notes',
     'municipality_license_file' => 'Municipality License File',
+    'refreshed' => 'Refereshed',
 ];

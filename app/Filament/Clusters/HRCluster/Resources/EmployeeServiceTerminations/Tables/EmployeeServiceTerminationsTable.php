@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRCluster\Resources\EmployeeServiceTerminations\Tables;
 
+use App\Filament\Tables\Actions\RefreshAction;
 use App\Models\EmployeeServiceTermination;
 use App\Modules\HR\Employee\Services\EmployeeLifecycleService;
 use Carbon\Carbon;
@@ -136,6 +137,7 @@ class EmployeeServiceTerminationsTable
                         }
                     }),
             ])
+            ->headerActions([RefreshAction::make()])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),

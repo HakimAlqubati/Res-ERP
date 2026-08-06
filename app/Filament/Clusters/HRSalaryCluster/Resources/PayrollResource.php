@@ -9,6 +9,7 @@ use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\PayrollActio
 use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\PayrollForm;
 use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\PayrollTable;
 use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\RelationManagers\PayrollsRelationManager;
+use App\Filament\Tables\Actions\RefreshAction;
 use App\Models\PayrollRun;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -77,6 +78,7 @@ class PayrollResource extends Resource
                 PayrollTable::getFilters(),
                 FiltersLayout::Modal
             )
+            ->headerActions([RefreshAction::make()])
             ->filtersFormColumns(4)
             ->recordActions([
                 ActionGroup::make([

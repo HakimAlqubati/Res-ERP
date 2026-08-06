@@ -1179,4 +1179,5 @@ return [
     'municipality_license_end_date' => 'تاريخ إنتهاء رخصة البلدية',
     'municipality_license_notes' => 'ملاحظات رخصة البلدية',
     'municipality_license_file' => 'ملف رخصة البلدية',
+    'refreshed' => 'تم التحديث',
 ];

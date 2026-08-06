@@ -123,6 +123,8 @@ class HeaderActions
                         throw $th;
                     }
                 }),
+
+            \App\Filament\Tables\Actions\RefreshAction::make(),
         ];
     }
 }
