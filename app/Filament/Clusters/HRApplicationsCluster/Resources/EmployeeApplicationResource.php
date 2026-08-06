@@ -1437,9 +1437,8 @@ class EmployeeApplicationResource extends Resource
 
     public static function leaveRequestForm($set, $get)
     {
-        $employeeId = $get('employee_id');
-        $set('from_to_date', date('Y-m-d'));
-
+        $employeeId = $get('employee_id'); 
+        
         // Fetch leave types that are active AND the employee still has available balance
         // Available balance = entitled_days - (used_days + pending_days)
         $leaveTypes = LeaveType::query()
@@ -1452,7 +1451,7 @@ class EmployeeApplicationResource extends Resource
             ->select('name', 'id')
             ->get()
             ->pluck('name', 'id');
-
+            
         return [
             Fieldset::make('leaveRequest')
                 ->relationship('leaveRequest')->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
@@ -1464,10 +1463,8 @@ class EmployeeApplicationResource extends Resource
                     $data['leave_type']  = $data['detail_leave_type_id'];
                     $data['start_date']  = $data['detail_from_date'];
                     $data['end_date']    = $data['detail_to_date'];
-
-                    $data['year']       = $data['detail_year'];
-                    $data['month']      = $data['detail_month']; // Stored on the request record for historical reference
-                    $data['days_count'] = $data['detail_days_count'];
+ 
+                      $data['days_count'] = $data['detail_days_count'];
                     return $data;
                 })
                 ->saveRelationshipsUsing(static function ($record, $state) {
@@ -1478,14 +1475,14 @@ class EmployeeApplicationResource extends Resource
                     $data['leave_type']            = $data['detail_leave_type_id'] ?? null;
                     $data['start_date']            = $data['detail_from_date'] ?? null;
                     $data['end_date']              = $data['detail_to_date'] ?? null;
-                    $data['year']                  = $data['detail_year'] ?? now()->year;
-                    $data['month']                 = $data['detail_month'] ?? now()->month;
+                    $data['year']                  =  now()->year;
+                    $data['month']                 =  now()->month;
                     $data['days_count']            = $data['detail_days_count'];
                     $data['reason']                = $state['reason'] ?? $record->notes ?? null;
                     $record->leaveRequest()->updateOrCreate([], $data);
                     return $data;
                 })->schema([
-                    Grid::make()->columns(4)->schema([
+                    Grid::make()->columnSpanFull()->columns(5)->schema([
 
                         Select::make('detail_leave_type_id')->label('Leave type')
                             ->requiredIf('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST)
@@ -1497,34 +1494,20 @@ class EmployeeApplicationResource extends Resource
                                 $balance = LeaveBalance::query()
                                     ->where('employee_id', $get('../employee_id'))
                                     ->where('leave_type_id', $state)
-                                    ->where('year', $get('detail_year') ?? now()->year)
+                                    ->where('year',  now()->year)
                                     ->first();
 
                                 $set('detail_balance', $balance?->available_balance ?? 0);
                             }),
 
-                        Select::make('detail_year')->label('Year')
-                            ->options([
-                                2025 => 2025,
-                                2026 => 2026,
-                                2027 => 2027,
-                            ])
-                            ->required()
-                            // ->disabled()->dehydrated()
-
-                            ->live(),
-
-                        Select::make('detail_month')->label('Month')
-                            ->options(getMonthArrayWithKeys())
-                            ->live()
-                            ->dehydrated(),
+                      
+ 
 
                         TextInput::make('detail_balance')
                             ->label('Available Balance')
                             ->disabled(),
 
-                    ]),
-                    Grid::make()->columns(3)->schema([
+                   
 
                         DatePicker::make('detail_from_date')
                             ->label('From Date')
