@@ -1602,6 +1602,33 @@ class EmployeeApplicationResource extends Resource
                             ->minValue(1)
                             ->live()
                             ->required()
+                            ->rules([
+                                fn (Get $get, $record) => function (string $attribute, $value, \Closure $fail) use ($get, $record) {
+                                    $empId = $get('../../employee_id') ?? $get('../employee_id') ?? $get('employee_id') ?? $record?->employee_id;
+                                    $ignoreAppId = null;
+
+                                    if ($record instanceof \App\Models\LeaveRequest) {
+                                        $empId = $empId ?? $record->employee_id ?? $record->application?->employee_id;
+                                        $ignoreAppId = $record->application_id;
+                                    } elseif ($record instanceof \App\Models\EmployeeApplicationV2) {
+                                        $empId = $empId ?? $record->employee_id;
+                                        $ignoreAppId = $record->id;
+                                    }
+
+                                    $leaveRequest = new \App\Models\LeaveRequest();
+                                    $leaveRequest->employee_id = $empId;
+                                    $leaveRequest->leave_type  = $get('detail_leave_type_id');
+                                    $leaveRequest->start_date  = $get('detail_from_date');
+                                    $leaveRequest->end_date    = $get('detail_to_date');
+                                    $leaveRequest->days_count  = $value ?? $get('detail_days_count');
+
+                                    $rule = new \App\Rules\HR\Applications\MaxLeavePerMonthRule(
+                                        leaveRequest: $leaveRequest,
+                                        excludeApplicationId: $ignoreAppId,
+                                    );
+                                    $rule->validate($attribute, $value, $fail);
+                                },
+                            ])
                             ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                 $state    = (int) $state;
                                 $nextDate = Carbon::parse($get('detail_from_date'))->addDays($state - 1)->format('Y-m-d');
