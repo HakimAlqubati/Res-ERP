@@ -36,7 +36,7 @@ class EmployeeRewardObserver
         // 1. Ensure month and year are always synchronized with the date
         if ($reward->date) {
             $date = Carbon::parse($reward->date);
-            $reward->month = (int) $date->month;
+            // $reward->month = (int) $date->month;
             $reward->year = (int) $date->year;
         }
 
