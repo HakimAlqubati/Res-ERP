@@ -7,7 +7,7 @@ use App\Models\AdvanceRequest;
 use App\Models\EmployeeAdvanceInstallment;
 use App\Models\PayrollRun;
 use App\Modules\HR\Payroll\Contracts\PayrollFinancialSyncInterface;
-
+use Illuminate\Support\Facades\Log;
 
 /**
  * Observer for PayrollRun model.
@@ -38,6 +38,7 @@ class PayrollRunObserver
 
         $summary = $this->checker->getDashboardSummary($filters);
 
+        Log::info('summary_from_payroll_run_observer', $summary);
         if ($summary['has_pending']) {
             $message = "Cannot create payroll. Please approve or reject all pending employee applications for this period first.";
 
