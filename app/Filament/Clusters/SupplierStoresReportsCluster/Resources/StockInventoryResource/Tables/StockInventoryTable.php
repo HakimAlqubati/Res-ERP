@@ -96,6 +96,10 @@ class StockInventoryTable
                     })
                     ->placeholder('-'),
 
+                    TextColumn::make('created_at')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->label('created_at'),
+
             ])->deferFilters(true)->filtersFormColumns(4)
             ->filters([
                 TrashedFilter::make(),
