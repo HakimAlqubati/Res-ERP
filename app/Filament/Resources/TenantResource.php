@@ -170,6 +170,7 @@ class TenantResource extends Resource
                 Action::make('download_backup')
                     ->label('Download Backup')
                     ->requiresConfirmation()
+                    ->modalHeading(fn($record) => $record->name)
                     ->button()
                     ->action(function ($record) {
                         return self::generateTenantBackup($record);
@@ -288,8 +289,12 @@ class TenantResource extends Resource
             $googlePath = 'backups/' . $zipFileName;
             Storage::disk('google')->put($googlePath, fopen($zipPath, 'r'));
 
-            // Return the response for download
-            return Response::download($zipPath)->deleteFileAfterSend(true);
+            // Delete the local ZIP file after uploading to Google Drive
+            if (file_exists($zipPath)) {
+                unlink($zipPath);
+            }
+
+            showSuccessNotifiMessage('Backup uploaded to Google Drive successfully');
         } catch (Throwable $th) {
             showWarningNotifiMessage($th->getMessage());
 
