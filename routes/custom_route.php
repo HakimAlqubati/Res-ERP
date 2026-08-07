@@ -129,7 +129,7 @@ Route::get('/testAllocateFifoNew', function (Request $request, FifoAllocatorInte
     //     ? array_map('intval', explode(',', $request->product_ids))
     //     : [(int) ($request->product_id ?? 25)];
 
-    $productIds = range(1, 100);
+    $productIds = range(1, 15);
     // $productIds = UnitPrice::where('unit_id',1)
     // ->join('products','products.id','unit_prices.product_id')
     // ->join('categories','categories.id','products.category_id')

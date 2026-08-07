@@ -17,6 +17,8 @@ use Illuminate\Support\Collection;
 final class FifoAllocationService implements FifoAllocatorInterface
 { 
 
+    private array $unitPriceCache = [];
+
     public function __construct(
         private InventoryStockRepositoryInterface $stockRepository,
         private FifoAllocationMapper $mapper
@@ -230,6 +232,13 @@ final class FifoAllocationService implements FifoAllocatorInterface
      */
     private function resolveTargetUnit(int $productId, int $unitId): UnitPrice
     {
+        $cacheKey = "{$productId}-{$unitId}";
+
+    // جلب من الذاكرة المؤقتة إن وُجد
+        if (isset($this->unitPriceCache[$cacheKey])) {
+            return $this->unitPriceCache[$cacheKey];
+        }
+
         $targetUnit = UnitPrice::where('product_id', $productId)
             ->where('unit_id', $unitId)
             ->with('unit')
@@ -241,6 +250,9 @@ final class FifoAllocationService implements FifoAllocatorInterface
             );
         }
 
+        // حفظ النتيجة في الذاكرة المؤقتة للاستخدام القادم
+        $this->unitPriceCache[$cacheKey] = $targetUnit;
+        
         return $targetUnit;
     }
 
