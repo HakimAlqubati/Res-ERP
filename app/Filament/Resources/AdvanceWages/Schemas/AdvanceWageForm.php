@@ -4,6 +4,7 @@ namespace App\Filament\Resources\AdvanceWages\Schemas;
 
 use App\Models\AdvanceWage;
 use App\Rules\HR\Payroll\AdvanceWageLimitRule;
+use App\Rules\HR\Payroll\PayrollLockRule;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -35,11 +36,17 @@ class AdvanceWageForm
                         ->required()
                         ->live(onBlur: true)
                         ->rules([
-                            fn(Get $get) => new AdvanceWageLimitRule(
+                            fn(Get $get, $record) => new AdvanceWageLimitRule(
                                 $get('employee_id'),
-                                (int) now()->setDateFrom(\Carbon\Carbon::parse($get('date') ?: now()))->year,
-                                (int) now()->setDateFrom(\Carbon\Carbon::parse($get('date') ?: now()))->month,
-                            )
+                                (int) \Carbon\Carbon::parse($get('date') ?: now())->year,
+                                (int) \Carbon\Carbon::parse($get('date') ?: now())->month,
+                                $record?->id,
+                            ),
+                            fn(Get $get) => new PayrollLockRule(
+                                $get('employee_id'),
+                                (int) \Carbon\Carbon::parse($get('date') ?: now())->year,
+                                (int) \Carbon\Carbon::parse($get('date') ?: now())->month,
+                            ),
                         ])
                         ->columnSpan(1),
 
@@ -48,6 +55,13 @@ class AdvanceWageForm
                         ->default(now()->toDateString())
                         ->required()
                         ->live()
+                        ->rules([
+                            fn(Get $get) => new PayrollLockRule(
+                                $get('employee_id'),
+                                (int) \Carbon\Carbon::parse($get('date') ?: now())->year,
+                                (int) \Carbon\Carbon::parse($get('date') ?: now())->month,
+                            ),
+                        ])
                         ->native(false)
                         ->displayFormat('Y-m-d')
                         ->columnSpan(2),

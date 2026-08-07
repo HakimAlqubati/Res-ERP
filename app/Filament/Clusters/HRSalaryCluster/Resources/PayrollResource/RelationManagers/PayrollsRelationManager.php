@@ -40,6 +40,7 @@ class PayrollsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table->striped()
+            ->paginated([10, 25, 50, 100])
             ->deferFilters(false)
             ->defaultKeySort(false)
 
@@ -101,7 +102,7 @@ class PayrollsRelationManager extends RelationManager
                     ->limit(15)
                     ->label(__('lang.employee'))
                     ->color(function (Payroll $record) {
-                        if ($record->employee?->serviceTermination) {
+                        if ($record->employee?->serviceTermination && !$record->employee->active) {
                             return 'danger';
                         }
                         return 'primary';

@@ -66,20 +66,17 @@ class StockInventoryTable
                 TextColumn::make('closing_stock_value')
                     ->label('Closing Stock Value')
                     ->sortable(false)
-                    ->state(fn($record) => (float) ($record->closing_stock_value ?? 0))
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->toggleable()
                     ->summarize(
                         Summarizer::make()
                             ->using(function (Table $table) {
-                                $total = $table->getRecords()->sum(fn($record) => $record->closing_stock_value);
+                                $total = $table->getRecords()->sum('closing_stock_value');
                                 return is_numeric($total) ? formatMoneyWithCurrency($total) : $total;
                             })
                     )
-                    ->visible(fn($record)=> ( (isSuperAdmin() || isHakim()) ))
-                    // ->hidden()
-                    ,
-
+                    ->visible(fn($record)=> ( (isSuperAdmin() || isHakim()) )),
+ 
                 TextColumn::make('responsibleUser.name')
                 ->limit(15)
                 ->tooltip(fn($state) => $state)
@@ -98,6 +95,10 @@ class StockInventoryTable
                             ->value('adjustment_date') ?? $record->updated_at;
                     })
                     ->placeholder('-'),
+
+                    TextColumn::make('created_at')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->label('created_at'),
 
             ])->deferFilters(true)->filtersFormColumns(4)
             ->filters([
@@ -145,6 +146,7 @@ class StockInventoryTable
                         ->visible(fn($record)=> (isSuperAdmin()
                         && $record->finalized
                         ))
+                        ->hidden()
                         // ->visible(fn()=>isHakimOrAdel())
                         ->url(fn($record): string => StockInventoryResource::getUrl('value-details', ['record' => $record])),
                 // ])
@@ -159,7 +161,7 @@ class StockInventoryTable
                             return Excel::download(new StockInventoriesExport($records), 'stock_inventories.xlsx');
                         })
                         ->deselectRecordsAfterCompletion()
-                        ->visible(fn()=>isHakimOrAdel())
+                        ->visible(fn()=>isSuperAdmin())
                         ,
                     DeleteBulkAction::make()
                         ->visible(fn(): bool => StockInventoryResource::canDeleteAny()),

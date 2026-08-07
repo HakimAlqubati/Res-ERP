@@ -72,9 +72,9 @@ class WeeklyLeaveCalculator
             //   - الموظف بشهر كامل: earnedOffDays كافٍ → cappedEarnedDays >= absentDays → لا تغيير
             //   - بدون has_auto_weekly_leave: applyWeeklyLeave=false → لا تغيير
             //   - الرصيد مستنفَد: remainingCap = cappedEarnedDays → لا تغيير
-            if ($applyWeeklyLeave && $absentDays > $cappedEarnedDays && $remainingCap > $cappedEarnedDays) {
-                $cappedEarnedDays += min($remainingCap - $cappedEarnedDays, $absentDays - $cappedEarnedDays);
-            }
+            // if ($applyWeeklyLeave && $absentDays > $cappedEarnedDays && $remainingCap > $cappedEarnedDays) {
+            //     $cappedEarnedDays += min($remainingCap - $cappedEarnedDays, $absentDays - $cappedEarnedDays);
+            // }
 
 
             // =================================================================

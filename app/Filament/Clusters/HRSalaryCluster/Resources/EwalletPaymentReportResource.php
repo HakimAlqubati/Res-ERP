@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\HRSalaryCluster\Resources;
 
 use App\Filament\Clusters\HRSalaryCluster;
 use App\Filament\Clusters\HRSalaryCluster\Resources\EwalletPaymentReportResource\Pages;
+use App\Filament\Tables\Actions\RefreshAction;
 use App\Models\EwalletPaymentReport;
 use App\Modules\HR\PayrollReports\Exports\EwalletPaymentExport;
 use Carbon\Carbon;
@@ -64,6 +65,7 @@ class EwalletPaymentReportResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+        ->headerActions([RefreshAction::make()])
             ->columns([
                 TextColumn::make('year')
                     ->label('Year')

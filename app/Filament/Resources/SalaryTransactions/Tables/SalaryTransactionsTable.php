@@ -31,7 +31,7 @@ class SalaryTransactionsTable
         // dd($employerContributions);
         return $table->striped()
             ->paginated([10, 25, 50, 100])
-
+->defaultSort('id','desc')
             ->recordUrl(fn(SalaryTransaction $record): string => SalaryTransactionResource::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('employee.name')
@@ -98,7 +98,7 @@ class SalaryTransactionsTable
                 // التاريخ
                 TextColumn::make('date')->alignCenter()->toggleable()
                     ->label(__('Date'))->toggleable(isToggledHiddenByDefault: true)
-                    ->date('Y-m-d')
+                    ->date('d-m-Y')
                     ->sortable(),
 
                 // // الحالة

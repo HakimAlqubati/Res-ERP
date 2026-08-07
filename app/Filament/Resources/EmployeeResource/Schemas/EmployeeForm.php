@@ -75,6 +75,7 @@ class EmployeeForm
                                                     return [];
                                                 })
                                                 ->rules('string')
+                                                ->unique(ignoreRecord: true)
                                                 ->columnSpan(2)->required(),
 
                                             TextInput::make('known_name')
@@ -95,6 +96,10 @@ class EmployeeForm
                                                         ->disabled(),
                                                     Textarea::make('termination_reason')
                                                         ->label(__('lang.termination_reason'))
+                                                        ->columnSpanFull()
+                                                        ->disabled(),
+                                                    Textarea::make('notes')
+                                                        ->label(__('lang.notes'))
                                                         ->columnSpanFull()
                                                         ->disabled(),
                                                 ]),
@@ -131,7 +136,7 @@ class EmployeeForm
                                                 ->columnSpan(1)
                                                 // ->required()
                                                 ->defaultCountry('my') // اليمن كدولة افتراضية
-                                                ->onlyCountries(['sa', 'ye', 'ae', 'my']) // حصر القائمة في السعودية، اليمن، والإمارات
+                                                // ->onlyCountries(['sa', 'ye', 'ae', 'my']) // حصر القائمة في السعودية، اليمن، والإمارات
                                                 ->countryValidations([
                                                     'sa' => [
                                                         // السعودية: يجب أن يبدأ بـ 5
@@ -569,11 +574,6 @@ class EmployeeForm
                                         Toggle::make('has_auto_weekly_leave')->columnSpan(1)
                                             ->label(__('lang.has_auto_weekly_leave'))->default(1)->inline(false)->live(),
 
-                                        Toggle::make('no_shift_is_present')->columnSpan(1)
-                                            // ->label(__('lang.no_shift_is_present'))
-                                            ->label('Paid Unscheduled Shift Days')
-                                            ->default(0)->inline(false),
-
                                     ]),
 
                                     Grid::make(3)->columnSpanFull()
@@ -627,8 +627,7 @@ class EmployeeForm
                                                                 ->minValue(0)
                                                                 ->step(1)
                                                                 ->maxValue(100)
-                                                                ->default(0)
-                                                                ->rtl(),
+                                                                ->default(0),
                                                         ]),
                                                 ]),
 
@@ -678,6 +677,7 @@ class EmployeeForm
                                                             Select::make('deduction_id')
                                                                 ->columnSpan(['default' => 1])
                                                                 ->label(__('lang.deduction'))
+                                                                ->searchable()
                                                                 ->options(Deduction::where('active', 1)->where('is_specific', 1)->get()->pluck('name', 'id'))
                                                                 ->required(),
                                                             Toggle::make('is_percentage')->live()->default(false)->columnSpan(['default' => 1]),
@@ -708,8 +708,7 @@ class EmployeeForm
                                                                 ->minValue(0)
                                                                 ->step(1)
                                                                 ->maxValue(100)
-                                                                ->default(0)
-                                                                ->rtl(),
+                                                                ->default(0),
                                                         ]),
                                                 ]),
                                         ]),

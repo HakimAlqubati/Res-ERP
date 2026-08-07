@@ -24,12 +24,12 @@ class ListPayrollDeductionReports extends ListRecords
         $groupByState = $groupingState['group_by'] ?? DeductionReportFilterDTO::GROUP_BY_EMPLOYEE;
         
         $employeeId = $groupByState === DeductionReportFilterDTO::GROUP_BY_EMPLOYEE ? ($groupingState['employee_id'] ?? null) : null;
-        $branchId = $groupByState === DeductionReportFilterDTO::GROUP_BY_BRANCH ? ($groupingState['branch_id'] ?? null) : null;
+        $branchIds = $groupByState === DeductionReportFilterDTO::GROUP_BY_BRANCH ? ($groupingState['branch_ids'] ?? []) : [];
         
         // Infer branch from employee if grouped by employee and none selected
-        if ($employeeId && !$branchId) {
+        if ($employeeId && empty($branchIds)) {
             $employee = \App\Models\Employee::find($employeeId);
-            $branchId = $employee ? $employee->branch_id : null;
+            $branchIds = $employee && $employee->branch_id ? [$employee->branch_id] : [];
         }
 
         $dateRange = $filters['date_range']->getState();
@@ -53,7 +53,7 @@ class ListPayrollDeductionReports extends ListRecords
                 'from_date' => $fromDate,
                 'to_date' => $toDate,
                 'employee_id' => $employeeId,
-                'branch_id' => $branchId,
+                'branch_ids' => $branchIds,
                 'include_employer_contribution' => $includeEmployerContribution,
                 'deduction_types' => $deductionTypes,
                 'group_by' => $groupByState

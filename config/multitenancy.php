@@ -100,7 +100,6 @@ return [
         // App\Jobs\GenerateUnauditedStocktakeJob::class,
         // Illuminate\Notifications\SendQueuedNotifications::class,
 
-
     ],
 
     /*

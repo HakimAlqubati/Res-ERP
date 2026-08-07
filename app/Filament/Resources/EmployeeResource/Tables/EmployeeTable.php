@@ -9,11 +9,13 @@ use App\Models\Employee;
 use App\Models\EmployeeFileType;
 use App\Models\User;
 use App\Models\UserType;
+use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Support\Enums\FontWeight;
+use Filament\Tables\Actions\HeaderActionsPosition;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -30,6 +32,7 @@ class EmployeeTable
     public static function configure(Table $table): Table
     {
         return $table->striped()
+        ->deferLoading()
             ->paginated([10, 25, 50, 100])
 
             ->defaultSort('id', 'desc')
@@ -174,6 +177,13 @@ class EmployeeTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
+                TextColumn::make('branch_logs_count')
+                    ->counts('branchLogs')
+                    ->label(__('lang.branch_logs_count'))
+                    ->numeric()
+                    ->sortable()->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('unrequired_documents_count')->label(__('lang.unrequired_docs'))->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->formatStateUsing(function ($state) {
@@ -214,6 +224,10 @@ class EmployeeTable
                     ->alignCenter(true)
                     ->sortable()
                     ->visible(fn () => isHakimOrAdel())
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('createdBy.name')
+                    ->label(__('lang.created_by'))
+                    ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->label(__('lang.created_at'))
@@ -280,7 +294,7 @@ class EmployeeTable
 
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
-            ->headerActions(HeaderActions::actions())
+            ->headerActions(HeaderActions::actions(),HeaderActionsPosition::Bottom)
             ->recordActions([
                 RecordActions::actionGroup(),
 

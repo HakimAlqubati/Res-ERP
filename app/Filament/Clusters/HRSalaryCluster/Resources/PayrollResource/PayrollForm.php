@@ -31,7 +31,7 @@ class PayrollForm
                     ->disabled()
                     ->suffixIcon('heroicon-o-exclamation-triangle')
                     ->suffixIconColor('warning')
-                    ->default('Staffs who have not had their work periods added, will not appear on the payroll.'),
+                    ->default('Staff who have not had their work periods added, will not appear on the payroll.'),
                 Placeholder::make('salary_warning')
                     ->label('Warning')
                     ->columnSpan(3)
@@ -137,11 +137,11 @@ class PayrollForm
                 ->visible(fn(Get $get) => filled($get('branch_id')))
                 ->schema([
                     Toggle::make('all_employees')
-                        ->label('All Staffs')
+                        ->label('All Staff')
                         ->default(true)
                         ->live(),
                     CheckboxList::make('employee_ids')
-                        ->label('Select Staffs')
+                        ->label('Select Staff')
                         ->bulkToggleable()
 
                         ->searchable()

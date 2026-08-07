@@ -45,6 +45,9 @@ class Branch extends Model implements HasMedia, Auditable
         'type',
         'start_date',
         'end_date',
+        'municipality_license_issue_date',
+        'municipality_license_end_date',
+        'municipality_license_notes',
         'more_description',
         'is_hidden',
     ];
@@ -60,6 +63,9 @@ class Branch extends Model implements HasMedia, Auditable
         'type',
         'start_date',
         'end_date',
+        'municipality_license_issue_date',
+        'municipality_license_end_date',
+        'municipality_license_notes',
         'more_description',
         'is_hidden',
     ];
@@ -69,6 +75,8 @@ class Branch extends Model implements HasMedia, Auditable
         'is_hidden'  => 'boolean',
         'start_date' => 'date:Y-m-d',
         'end_date'   => 'date:Y-m-d',
+        'municipality_license_issue_date' => 'date:Y-m-d',
+        'municipality_license_end_date'   => 'date:Y-m-d',
 
     ];
 
@@ -83,6 +91,11 @@ class Branch extends Model implements HasMedia, Auditable
         'status_label',
         'is_expired',
     ];
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('municipality_license')->singleFile();
+    }
 
     public function toArray(): array
     {

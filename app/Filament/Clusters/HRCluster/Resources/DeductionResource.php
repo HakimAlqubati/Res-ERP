@@ -87,7 +87,7 @@ class DeductionResource extends Resource
                         Select::make('applied_by')->live()->label('Borne by')->options(
                             Deduction::getAppliedByOptions()
 
-                        )->default(Deduction::APPLIED_BY_EMPLOYEE)->hidden(fn($get): bool => ($get('is_penalty') || $get('is_specific'))),
+                        )->default(Deduction::APPLIED_BY_EMPLOYEE)->hidden(fn($get): bool => ($get('is_penalty'))),
                         TextInput::make('less_salary_to_apply')
                             ->label('Less salary to apply')->numeric()
                             // ->visible(fn($get): bool => $get('condition_applied_v2') != Deduction::CONDITION_ALL)
@@ -118,7 +118,7 @@ class DeductionResource extends Resource
                         ->hidden(fn($get): bool => ($get('is_penalty')))->live(),
                     Toggle::make('active')->default(true),
                     Toggle::make('has_brackets')->default(false)->live()
-                        ->hidden(fn($get): bool => ($get('is_penalty') || $get('is_specific'))),
+                        ->hidden(fn($get): bool => ($get('is_penalty'))),
                     Toggle::make('is_mtd_deduction')
                         ->label('Is MTD Deduction')
                         ->helperText('Apply to employees with MTD applicable flag, regardless of the condition above')
@@ -129,10 +129,10 @@ class DeductionResource extends Resource
                             'is_percentage' => 'Is percentage',
                             'is_amount' => 'Is amount',
                         ])->default('is_amount')
-                        ->hidden(fn($get): bool => ($get('is_penalty') || $get('is_specific'))),
+                        ->hidden(fn($get): bool => ($get('is_penalty'))),
 
                     Grid::make()->columnSpanFull()
-                        ->hidden(fn($get): bool => ($get('is_penalty') || $get('is_specific')))
+                        ->hidden(fn($get): bool => ($get('is_penalty')))
                         ->schema([
 
                             TextInput::make('amount')->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_amount'))->numeric()
@@ -171,8 +171,7 @@ class DeductionResource extends Resource
                                 ->minValue(0)
                                 ->step(0.1)
                                 ->maxValue(100)
-                                ->default(0)
-                                ->rtl(),
+                                ->default(0),
                             TextInput::make('employer_amount')
                                 ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_amount') && (in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])))
                                 ->numeric()
@@ -204,8 +203,7 @@ class DeductionResource extends Resource
                                 ->minValue(0)
                                 ->step(0.01)
                                 ->maxValue(100)
-                                ->default(0)
-                                ->rtl(),
+                                ->default(0),
 
                             Toggle::make('has_cap')
                                 ->label('Has Cap')

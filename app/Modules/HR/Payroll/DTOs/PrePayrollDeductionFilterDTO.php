@@ -20,7 +20,7 @@ final class PrePayrollDeductionFilterDTO
         public readonly int  $year,
         public readonly int  $month,
         public readonly ?int $employeeId = null,
-        public readonly ?int $branchId   = null,
+        public readonly ?array $branchIds  = null,
         public readonly string $groupBy  = self::GROUP_BY_EMPLOYEE,
     ) {
         if ($this->month < 1 || $this->month > 12) {
@@ -38,7 +38,7 @@ final class PrePayrollDeductionFilterDTO
             year:       (int) ($data['year']        ?? now()->year),
             month:      (int) ($data['month']       ?? now()->month),
             employeeId: isset($data['employee_id']) ? (int) $data['employee_id'] : null,
-            branchId:   isset($data['branch_id'])   ? (int) $data['branch_id']   : null,
+            branchIds:  isset($data['branch_ids'])  ? (array) $data['branch_ids']  : [],
             groupBy:    $data['group_by']            ?? self::GROUP_BY_EMPLOYEE,
         );
     }

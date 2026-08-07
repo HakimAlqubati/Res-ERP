@@ -16,6 +16,7 @@ use App\Models\ReturnedOrder;
 use App\Services\MultiProductsInventoryService;
 use Exception;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -53,12 +54,22 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
     {
         return $table->striped()->defaultSort('id', 'desc')->deferFilters(false)
             ->columns([
-                TextColumn::make('id')->label('#')->alignCenter(true)->toggleable(),
+                TextColumn::make('id')->label('#')->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('order.id')->label('Original Order ID')->sortable()->alignCenter(true)->toggleable(),
                 TextColumn::make('branch.name')->label('Branch')->sortable()->toggleable(),
                 TextColumn::make('store.name')->label('Store')->sortable()->toggleable(),
                 TextColumn::make('returned_date')->label('Returned Date')->date()->toggleable(),
-                TextColumn::make('status')->label('Status')->badge()->toggleable()->alignCenter(true),
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        \App\Models\ReturnedOrder::STATUS_CREATED => 'gray',
+                        \App\Models\ReturnedOrder::STATUS_APPROVED => 'success',
+                        \App\Models\ReturnedOrder::STATUS_REJECTED => 'danger',
+                        default => 'primary',
+                    })
+                    ->toggleable()
+                    ->alignCenter(true),
                 TextColumn::make('creator.name')->label('Created By')->toggleable(),
                 TextColumn::make('itemsCount')->label('Items Count')->toggleable()->alignCenter(true),
                 // TextColumn::make('totalAmount')->label('Total Amount')->money('MYR')->toggleable()->alignCenter(true),
@@ -67,6 +78,8 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
                 //
             ])
             ->recordActions([
+                ActionGroup::make([
+
                 EditAction::make()->visible(fn ($record): bool => $record->status === ReturnedOrder::STATUS_CREATED),
                 Action::make('Approve')->button()
                     ->label('Approve')
@@ -101,6 +114,14 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
                                             throw new Exception("Insufficient stock in branch store ({$record->branch->name}) for product ID: {$detail->product_id}");
                                         }
 
+                                        // البحث عن الحركة الأصلية (IN) الخاصة بالطلب
+                                        $sourceTransaction = InventoryTransaction::where('transactionable_type', \App\Models\Order::class)
+                                            ->where('transactionable_id', $record->original_order_id)
+                                            ->where('product_id', $detail->product_id)
+                                            ->where('unit_id', $detail->unit_id)
+                                            ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+                                            ->first();
+
                                         // أولاً نُخرج الكمية من المخزن الخاص بالفرع (باعتباره مصدر المرتجع)
                                         $transaction = InventoryTransaction::moveOutFromStore([
                                             'product_id' => $detail->product_id,
@@ -113,6 +134,7 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
                                             'movement_date' => $record->returned_date,
                                             'notes' => 'Auto-out from branch for returned order #'.$record->id,
                                             'transactionable' => $record,
+                                            'source_transaction_id' => $sourceTransaction?->id,
                                         ]);
                                         if (! $transaction) {
                                             // فشل الصرف، ممكن تسجل لوج أو تتجاهل بناءً على منطقك
@@ -165,6 +187,8 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
                             showWarningNotifiMessage('Failed to reject returned order: '.$e->getMessage());
                         }
                     }),
+                    
+                ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -238,7 +262,6 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
 
     public static function canViewAny(): bool
     {
-        return false;
         if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) {
             return true;
         }

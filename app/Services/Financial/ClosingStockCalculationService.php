@@ -36,24 +36,12 @@ class ClosingStockCalculationService
         foreach ($inventory->details as $detail) {
             $physicalQty = (float) $detail->physical_quantity;
             $productId   = $detail->product_id;
-            if($detail->difference <= 0) continue;
+            
+            // تقييم المخزون الختامي يعتمد على الكمية الفعلية كاملة
+            if ($physicalQty <= 0) continue;
 
-            // جلب السعر من الحركة المخزنية المرتبطة عبر التسوية (إن وجدت)
-            $transaction = \Illuminate\Support\Facades\DB::table('inventory_transactions as it')
-                ->join('stock_adjustment_details as sad', function ($join) {
-                    $join->on('it.transactionable_id', '=', 'sad.id')
-                         ->where('it.transactionable_type', '=', \App\Models\StockAdjustmentDetail::class);
-                })
-                ->where('sad.source_type', \App\Models\StockInventory::class)
-                ->where('sad.source_id', $inventory->id)
-                ->where('sad.product_id', $productId)
-                ->where('sad.unit_id', $detail->unit_id)
-                ->where('it.movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
-                ->select('it.price', 'it.package_size')
-                ->first();
-
-                $unitPrice = $transaction->price ?? 0;
- 
+            // جلب سعر الوحدة المعياري للصنف والوحدة
+            $unitPrice = getUnitPrice($productId, $detail->unit_id) ?? 0;
 
             $totalValue = $physicalQty * $unitPrice;
 

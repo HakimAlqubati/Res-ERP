@@ -30,6 +30,7 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -57,6 +58,7 @@ class StockTransferOrderResource extends Resource
                             ->label('From Store')
                             ->options(Store::active()->get(['name', 'id'])->pluck('name', 'id'))
                             ->required()->searchable()
+                            ->different('to_store_id')
                             ->live()
                             ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                 $details = collect($get('details') ?? [])
@@ -78,7 +80,8 @@ class StockTransferOrderResource extends Resource
                         Select::make('to_store_id')
                             ->label('To Store')
                             ->options(Store::active()->get(['name', 'id'])->pluck('name', 'id'))
-                            ->required()->searchable(),
+                            ->required()->searchable()
+                            ->different('from_store_id'),
 
                         DatePicker::make('date')
                             ->required()->default(now()),
@@ -144,7 +147,7 @@ class StockTransferOrderResource extends Resource
                                         'package_size' => $unitPrice?->package_size ?? 1,
                                         'quantity' => 1,
                                         'remaining_quantity' => $availableQty,
-                                        'notes' => '',
+                                        'note' => '',
                                     ];
                                 }
 
@@ -243,7 +246,7 @@ class StockTransferOrderResource extends Resource
                                     ->reactive()
                                     ->columnSpan(1),
 
-                                Textarea::make('notes')->label('Notes')->columnSpanFull(),
+                                Textarea::make('note')->label('Notes')->columnSpanFull(),
 
                             ])
 
@@ -271,8 +274,14 @@ class StockTransferOrderResource extends Resource
             ->columns([
                 TextColumn::make('id')->label('ID')->sortable()->searchable()->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('fromStore.name')->label('From')->sortable()->searchable()->alignCenter(true)->toggleable(),
-                TextColumn::make('toStore.name')->label('To')->sortable()->searchable()->alignCenter(true)->toggleable(),
+                TextColumn::make('fromStore.name')->label('From')->sortable()->searchable()->alignCenter(false)
+                    ->limit(20)
+                    ->tooltip(fn ($state) => $state)
+                    ->toggleable(),
+                TextColumn::make('toStore.name')->label('To')->sortable()->searchable()->alignCenter(false)
+                    ->limit(20)
+                    ->tooltip(fn ($state) => $state)
+                    ->toggleable(),
                 TextColumn::make('date')->date()->sortable()->searchable()->alignCenter(true)->toggleable(),
                 TextColumn::make('status')->badge()->sortable()->searchable()->alignCenter(true)->toggleable()->color(fn (string $state): string => match ($state) {
                     StockTransferOrder::STATUS_CREATED => 'gray',
@@ -280,7 +289,7 @@ class StockTransferOrderResource extends Resource
                     StockTransferOrder::STATUS_REJECTED => 'danger',
                     default => 'secondary',
                 }),
-                TextColumn::make('created_at')->dateTime()->sortable()->searchable()->alignCenter(true)->toggleable(),
+                TextColumn::make('created_at')->dateTime()->sortable()->searchable()->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('details_count')->alignCenter(true)->toggleable(),
                 TextColumn::make('creator.name')->alignCenter(false)->toggleable(),
             ])
@@ -326,7 +335,7 @@ class StockTransferOrderResource extends Resource
                     ->label('Approve')
                     ->color('success')->button()
                     ->icon('heroicon-o-check-circle')
-                    // ->requiresConfirmation()
+                    ->requiresConfirmation()
                     ->visible(fn ($record) => $record->status === StockTransferOrder::STATUS_CREATED)
                     ->action(function ($record) {
                         try {
@@ -347,7 +356,9 @@ class StockTransferOrderResource extends Resource
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                    ->visible(fn()=>static::canDeleteAny())
+                    ,
                 ]),
             ]);
     }
@@ -383,6 +394,24 @@ class StockTransferOrderResource extends Resource
             return true;
         }
 
+        return false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        if(isHakimOrAdel()){
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        if(isHakimOrAdel()){
+            return true;
+        }
+        
         return false;
     }
 }

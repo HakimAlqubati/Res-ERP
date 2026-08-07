@@ -62,7 +62,7 @@ class StoreResource extends Resource
         return $schema
             ->components([
                 Fieldset::make()->columnSpanFull()->columns(4)->schema([
-                    TextInput::make('name')->label(__('lang.name'))->required(),
+                    TextInput::make('name')->label(__('lang.name'))->required()->unique(ignoreRecord: true),
                     Select::make('storekeeper_id')->searchable()
                         ->label(__('stock.storekeeper'))
                         ->options(User::select('name', 'id')

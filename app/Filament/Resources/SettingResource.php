@@ -71,7 +71,7 @@ class SettingResource extends Resource
                             // })
                             ->icon('heroicon-o-building-office')
                             ->schema([
-                                Fieldset::make()->columns(3)->label('Company Info')->schema([
+                                Fieldset::make()->columns(4)->label('Company Info')->schema([
                                     TextInput::make("company_name")
                                         ->label('Name'),
                                     TextInput::make("company_phone")
@@ -82,12 +82,13 @@ class SettingResource extends Resource
                                         ->label('Locale')
                                         ->searchable()
                                         ->options(getNationalitiesAsCountries()),
+                                        TextInput::make('currency_symbol')->label(__('system_settings.currency_symbol')),
 
                                     TextInput::make("website")
                                         ->label('Website')
                                         ->url()
                                         ->placeholder('https://example.com')
-                                        ->columnSpan(3),
+                                        ->columnSpan(4),
 
                                     FileUpload::make('company_logo')
                                         ->label('Logo')
@@ -95,7 +96,7 @@ class SettingResource extends Resource
                                         ->directory('company_logo')
                                         ->image()->disk('public')
                                         ->visibility('public')
-                                        ->columnSpan(3)
+                                        ->columnSpan(4)
                                         ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                                             return Str::random(15) . "." . $file->getClientOriginalExtension();
                                         }),
@@ -492,6 +493,19 @@ class SettingResource extends Resource
                                                 ->offColor('danger')
                                                 ->helperText('Purchase Invoice Number is mandatory and becomes non-editable once entered.')
                                                 ->default(false),
+                                            TextInput::make('max_price_change_percent')
+                                                ->label('Price Change Alert Limit (±%)')
+                                                ->numeric()
+                                                ->minValue(0)
+                                                ->maxValue(100)
+                                                ->suffix('%')
+                                                ->helperText('Alerts if the new price change exceeds this percentage')
+                                                ->default(50)
+                                                ->afterStateHydrated(function (TextInput $component, $state) {
+                                                    if (blank($state)) {
+                                                        $component->state(50);
+                                                    }
+                                                }),
                                         ]),
                                     ]),
                                     Tab::make('GRN Workflow Settings')->columnSpanFull()->schema([

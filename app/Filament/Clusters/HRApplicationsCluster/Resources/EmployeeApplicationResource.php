@@ -529,7 +529,9 @@ class EmployeeApplicationResource extends Resource
                                     static::_recalcDeductionEnd($get, $set, 1);
                                 }
                             })
-                            ->dehydrated(),
+                            ->dehydrated()
+                            ->minValue(1)
+                            ,
 
                         TextInput::make('monthly_deduction_amount')
                             ->label(__('lang.monthly_deduction'))
@@ -1417,12 +1419,12 @@ class EmployeeApplicationResource extends Resource
                             ->label(__('lang.cost'))
                             ->default($mealRequest?->cost),
                         Textarea::make('meal_details')
-                            ->label(__('lang.notes'))
+                            ->label(__('lang.meal_details'))
                             ->default($mealRequest?->meal_details)
                             ->columnSpanFull(),
                         Textarea::make('notes')
                             ->label(__('lang.notes'))
-                            ->default($mealRequest?->notes)
+                            ->default($mealRequest?->notes ?? $record->notes)
                             ->columnSpanFull(),
                     ]),
 
@@ -1435,9 +1437,8 @@ class EmployeeApplicationResource extends Resource
 
     public static function leaveRequestForm($set, $get)
     {
-        $employeeId = $get('employee_id');
-        $set('from_to_date', date('Y-m-d'));
-
+        $employeeId = $get('employee_id'); 
+        
         // Fetch leave types that are active AND the employee still has available balance
         // Available balance = entitled_days - (used_days + pending_days)
         $leaveTypes = LeaveType::query()
@@ -1450,7 +1451,7 @@ class EmployeeApplicationResource extends Resource
             ->select('name', 'id')
             ->get()
             ->pluck('name', 'id');
-
+            
         return [
             Fieldset::make('leaveRequest')
                 ->relationship('leaveRequest')->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
@@ -1462,10 +1463,8 @@ class EmployeeApplicationResource extends Resource
                     $data['leave_type']  = $data['detail_leave_type_id'];
                     $data['start_date']  = $data['detail_from_date'];
                     $data['end_date']    = $data['detail_to_date'];
-
-                    $data['year']       = $data['detail_year'];
-                    $data['month']      = $data['detail_month']; // Stored on the request record for historical reference
-                    $data['days_count'] = $data['detail_days_count'];
+ 
+                      $data['days_count'] = $data['detail_days_count'];
                     return $data;
                 })
                 ->saveRelationshipsUsing(static function ($record, $state) {
@@ -1476,12 +1475,14 @@ class EmployeeApplicationResource extends Resource
                     $data['leave_type']            = $data['detail_leave_type_id'] ?? null;
                     $data['start_date']            = $data['detail_from_date'] ?? null;
                     $data['end_date']              = $data['detail_to_date'] ?? null;
-                    $data['year']                  = $data['detail_year'] ?? now()->year;
-                    $data['month']                 = $data['detail_month'] ?? now()->month;
+                    $data['year']                  =  now()->year;
+                    $data['month']                 =  now()->month;
                     $data['days_count']            = $data['detail_days_count'];
+                    $data['reason']                = $state['reason'] ?? $record->notes ?? null;
+                    $record->leaveRequest()->updateOrCreate([], $data);
                     return $data;
                 })->schema([
-                    Grid::make()->columns(4)->schema([
+                    Grid::make()->columnSpanFull()->columns(5)->schema([
 
                         Select::make('detail_leave_type_id')->label('Leave type')
                             ->requiredIf('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST)
@@ -1493,40 +1494,52 @@ class EmployeeApplicationResource extends Resource
                                 $balance = LeaveBalance::query()
                                     ->where('employee_id', $get('../employee_id'))
                                     ->where('leave_type_id', $state)
-                                    ->where('year', $get('detail_year') ?? now()->year)
+                                    ->where('year',  now()->year)
                                     ->first();
 
                                 $set('detail_balance', $balance?->available_balance ?? 0);
                             }),
 
-                        Select::make('detail_year')->label('Year')
-                            ->options([
-                                2025 => 2025,
-                                2026 => 2026,
-                                2027 => 2027,
-                            ])
-                            ->required()
-                            // ->disabled()->dehydrated()
-
-                            ->live(),
-
-                        Select::make('detail_month')->label('Month')
-                            ->options(getMonthArrayWithKeys())
-                            ->live()
-                            ->dehydrated(),
+                      
+ 
 
                         TextInput::make('detail_balance')
                             ->label('Available Balance')
                             ->disabled(),
 
-                    ]),
-                    Grid::make()->columns(3)->schema([
+                   
 
                         DatePicker::make('detail_from_date')
                             ->label('From Date')
                             ->reactive()
                             ->default(date('Y-m-d'))
                             ->required()
+                            ->rules([
+                                fn (Get $get, $record) => function (string $attribute, $value, \Closure $fail) use ($get, $record) {
+                                    $empId = $get('../../employee_id') ?? $get('../employee_id') ?? $get('employee_id') ?? $record?->employee_id;
+                                    $ignoreAppId = null;
+                                    $ignoreLeaveId = null;
+
+                                    if ($record instanceof \App\Models\LeaveRequest) {
+                                        $empId = $empId ?? $record->employee_id ?? $record->application?->employee_id;
+                                        $ignoreAppId = $record->application_id;
+                                        $ignoreLeaveId = $record->id;
+                                    } elseif ($record instanceof \App\Models\EmployeeApplicationV2) {
+                                        $empId = $empId ?? $record->employee_id;
+                                        $ignoreAppId = $record->id;
+                                        $ignoreLeaveId = $record->leaveRequest?->id;
+                                    }
+
+                                    $rule = new \App\Rules\HR\Applications\NoLeaveOverlapRule(
+                                        employeeId: $empId,
+                                        startDate: $value ?? $get('detail_from_date'),
+                                        endDate: $get('detail_to_date'),
+                                        ignoreApplicationId: $ignoreAppId,
+                                        ignoreLeaveRequestId: $ignoreLeaveId,
+                                    );
+                                    $rule->validate($attribute, $value, $fail);
+                                },
+                            ])
                             ->dehydrated()
                             ->afterStateUpdated(function ($state, callable $set, $get) {
                                 $fromDate = $get('detail_from_date');
@@ -1545,6 +1558,32 @@ class EmployeeApplicationResource extends Resource
                             ->default(Carbon::tomorrow()->addDays(1)->format('Y-m-d'))
                             ->reactive()
                             ->required()
+                            ->rules([
+                                fn (Get $get, $record) => function (string $attribute, $value, \Closure $fail) use ($get, $record) {
+                                    $empId = $get('../../employee_id') ?? $get('../employee_id') ?? $get('employee_id') ?? $record?->employee_id;
+                                    $ignoreAppId = null;
+                                    $ignoreLeaveId = null;
+
+                                    if ($record instanceof \App\Models\LeaveRequest) {
+                                        $empId = $empId ?? $record->employee_id ?? $record->application?->employee_id;
+                                        $ignoreAppId = $record->application_id;
+                                        $ignoreLeaveId = $record->id;
+                                    } elseif ($record instanceof \App\Models\EmployeeApplicationV2) {
+                                        $empId = $empId ?? $record->employee_id;
+                                        $ignoreAppId = $record->id;
+                                        $ignoreLeaveId = $record->leaveRequest?->id;
+                                    }
+
+                                    $rule = new \App\Rules\HR\Applications\NoLeaveOverlapRule(
+                                        employeeId: $empId,
+                                        startDate: $get('detail_from_date'),
+                                        endDate: $value ?? $get('detail_to_date'),
+                                        ignoreApplicationId: $ignoreAppId,
+                                        ignoreLeaveRequestId: $ignoreLeaveId,
+                                    );
+                                    $rule->validate($attribute, $value, $fail);
+                                },
+                            ])
                             ->afterStateUpdated(function ($state, callable $set, $get) {
                                 $fromDate = $get('detail_from_date');
                                 $toDate   = $get('detail_to_date');
@@ -1563,6 +1602,33 @@ class EmployeeApplicationResource extends Resource
                             ->minValue(1)
                             ->live()
                             ->required()
+                            ->rules([
+                                fn (Get $get, $record) => function (string $attribute, $value, \Closure $fail) use ($get, $record) {
+                                    $empId = $get('../../employee_id') ?? $get('../employee_id') ?? $get('employee_id') ?? $record?->employee_id;
+                                    $ignoreAppId = null;
+
+                                    if ($record instanceof \App\Models\LeaveRequest) {
+                                        $empId = $empId ?? $record->employee_id ?? $record->application?->employee_id;
+                                        $ignoreAppId = $record->application_id;
+                                    } elseif ($record instanceof \App\Models\EmployeeApplicationV2) {
+                                        $empId = $empId ?? $record->employee_id;
+                                        $ignoreAppId = $record->id;
+                                    }
+
+                                    $leaveRequest = new \App\Models\LeaveRequest();
+                                    $leaveRequest->employee_id = $empId;
+                                    $leaveRequest->leave_type  = $get('detail_leave_type_id');
+                                    $leaveRequest->start_date  = $get('detail_from_date');
+                                    $leaveRequest->end_date    = $get('detail_to_date');
+                                    $leaveRequest->days_count  = $value ?? $get('detail_days_count');
+
+                                    $rule = new \App\Rules\HR\Applications\MaxLeavePerMonthRule(
+                                        leaveRequest: $leaveRequest,
+                                        excludeApplicationId: $ignoreAppId,
+                                    );
+                                    $rule->validate($attribute, $value, $fail);
+                                },
+                            ])
                             ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                 $state    = (int) $state;
                                 $nextDate = Carbon::parse($get('detail_from_date'))->addDays($state - 1)->format('Y-m-d');
@@ -1619,7 +1685,7 @@ class EmployeeApplicationResource extends Resource
                         'deduction_ends_at'             => $state['detail_deduction_ends_at'] ?? null,
                         'number_of_months_of_deduction' => $state['detail_number_of_months_of_deduction'] ?? null,
                         'date'                          => $state['detail_date'] ?? null,
-                        'reason'                        => $state['reason'] ?? null,
+                        'reason'                        => $state['reason'] ?? $record->notes ?? null,
                         'application_type_id'           => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST,
                         'application_type_name'         => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_NAMES[\App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST],
                     ];
@@ -1784,6 +1850,7 @@ class EmployeeApplicationResource extends Resource
                         'employee_id'           => $state['employee_id'] ?? $record->employee_id,
                         'date'                  => $state['detail_date'] ?? null,
                         'time'                  => $state['detail_time'] ?? null,
+                        'reason'                => $state['reason'] ?? $record->notes ?? null,
                         'application_type_id'   => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
                         'application_type_name' => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_NAMES[\App\Models\EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST],
                     ];
@@ -1816,6 +1883,7 @@ class EmployeeApplicationResource extends Resource
                         'employee_id'           => $state['employee_id'] ?? $record->employee_id,
                         'date'                  => $state['date'] ?? null,
                         'time'                  => $state['time'] ?? null,
+                        'reason'                => $state['reason'] ?? $record->notes ?? null,
                         'application_type_id'   => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST,
                         'application_type_name' => \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_NAMES[\App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST],
                     ];
@@ -1887,7 +1955,7 @@ class EmployeeApplicationResource extends Resource
                         'branch_id'             => $state['branch_id'],
                         'meal_details'          => $state['meal_details'] ?? null,
                         'cost'                  => $state['cost'] ?? 0,
-                        'notes'                 => $state['notes'] ?? null,
+                        'notes'                 => $state['notes'] ?? $record->notes ?? null,
                         'date'                  => $state['date'] ?? null,
                         'application_type_id'   => EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST,
                         'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST],
@@ -1928,7 +1996,7 @@ class EmployeeApplicationResource extends Resource
                             ->default(0),
 
                         Textarea::make('meal_details')
-                            ->label(__('lang.notes'))
+                            ->label(__('lang.meal_details'))
                             ->required()
                             ->columnSpanFull(),
                     ]),

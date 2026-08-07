@@ -6,6 +6,7 @@ use App\Exports\OrdersExport2;
 use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\Order;
 use App\Filament\Resources\OrderResource;
+use App\Filament\Tables\Actions\RefreshAction;
 use App\Services\Orders\OrderCostAnalysisService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -47,6 +48,7 @@ class OrderTable
             $pagination = [10, 25, 50, 100,250,400,500];
         }
         return $table
+        ->headerActions([RefreshAction::make()])
             ->paginated($pagination)
             ->deferLoading()
             ->striped()
@@ -133,6 +135,10 @@ class OrderTable
                     ->sortable(),
 
 
+                TextColumn::make('logs_count')->counts('logs')
+                    ->label('Order Logs')->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: false)
+                    ->visible(fn()=>isHakimOrAdel()),
                 // TextColumn::make('recorded'),
                 // TextColumn::make('orderDetails'),
             ])
@@ -268,7 +274,9 @@ class OrderTable
                     self::showCostDetailsAction(),
                     ViewAction::make(),
                     EditAction::make(),
-                    DeleteAction::make(),
+                    DeleteAction::make()
+                    ->visible(fn()=> isHakimOrAdel())
+                    ,
 
 
                 ]),

@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource;
 use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\Branch;
 use App\Models\PayrollRun;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -33,7 +34,16 @@ class PayrollTable
                 ->sortable(),
             TextColumn::make('employees_count')
                 ->label(__('lang.employees_count'))
-                ->alignCenter(),
+                ->alignCenter()
+                ->summarize([
+                    \Filament\Tables\Columns\Summarizers\Summarizer::make()
+                        ->label('')
+                        ->using(function (\Illuminate\Database\Query\Builder $query) {
+                            $ids = $query->clone()->pluck('hr_payroll_runs.id');
+                            return \App\Models\PayrollRun::whereIn('id', $ids)->get()->sum(fn($record) => $record->employees_count);
+                        })
+                ])
+                ,
             TextColumn::make('total_net')
                 ->label('Net Salary')
                 ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))

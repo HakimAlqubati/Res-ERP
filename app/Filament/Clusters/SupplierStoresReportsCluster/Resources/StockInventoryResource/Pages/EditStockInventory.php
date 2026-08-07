@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages;
 
+use App\Exports\StockInventoryDetailsExport;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource;
 use App\Models\InventoryTransaction;
 use App\Models\StockAdjustmentDetail;
@@ -11,6 +12,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
 
 class EditStockInventory extends EditRecord
@@ -28,7 +30,7 @@ class EditStockInventory extends EditRecord
                 ->modalHeading('Rollback Inventory Finalization')
                 ->modalDescription('This will permanently delete all stock adjustments and inventory transactions created during this stocktake, and reopen the inventory for editing. This action cannot be undone.')
                 ->modalSubmitActionLabel('Yes, Rollback')
-                ->visible(fn () => (bool) $this->record?->finalized && isSuperAdmin())
+                ->visible(fn () => (bool) $this->record?->finalized && isHakim())
                 ->action(function () {
                     DB::beginTransaction();
                     try {
@@ -80,6 +82,15 @@ class EditStockInventory extends EditRecord
                 })
                 // ->hidden()
                 ,
+                   Action::make('export_excel')
+                ->label('Export to Excel')
+                ->icon('heroicon-o-document-arrow-down')
+                ->color('success')
+                ->action(function () {
+                    $record = $this->getRecord();
+                    $filename = 'stock_inventory_details_' . $record->id . '_' . now()->format('Y_m_d_H_i_s') . '.xlsx';
+                    return Excel::download(new StockInventoryDetailsExport($record), $filename);
+                }),
         ];
     }
 
@@ -97,9 +108,8 @@ class EditStockInventory extends EditRecord
     {
         return [
             $this->getSaveFormAction()
-                ->disabled(fn () => ! ($this->data['edit_enabled'] ?? false))
-                ->hidden()
-                ->tooltip('Enable editing first to save changes.'),
+                ->disabled(fn () => (!(isSystemManager() || isSuperAdmin()) || $this->record->finalized))
+                ->hidden(fn () => (!(isSystemManager() || isSuperAdmin()) || $this->record->finalized)),
             $this->getCancelFormAction()->hidden(),
         ];
     }

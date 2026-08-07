@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\HR\Payroll\Calculators;
 
+use App\Models\Deduction;
 use App\Modules\HR\Payroll\DTOs\CalculationContext;
 
 /**
@@ -27,7 +28,7 @@ class CustomDeductionCalculator
 
         // البدلات الخاصة بالموظف
         $specificDeductions = $context->employee->deductions()
-            ->with('deduction:id,name,is_percentage,amount,percentage')
+            ->with('deduction:id,name,is_percentage,amount,percentage,applied_by')
             ->get();
 
         foreach ($specificDeductions as $empDeduction) {
@@ -56,9 +57,12 @@ class CustomDeductionCalculator
                 'is_percentage' => (bool) $isPercentage,
                 'value'         => $isPercentage ? $percentage : $fixedAmount,
                 'type'          => 'specific',
+                'applied_by'    => $d->applied_by,
             ];
 
-            $deductionTotal += $amount;
+            if ($d->applied_by !== Deduction::APPLIED_BY_EMPLOYER) {
+                $deductionTotal += $amount;
+            }
         }
 
         return [
