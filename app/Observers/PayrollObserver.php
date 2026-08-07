@@ -31,8 +31,7 @@ class PayrollObserver
             'employee_ids' => [$payroll->employee_id],
         ];
 
-        $summary = $this->checker->getDashboardSummary($filters); 
-        dd($summary); 
+        $summary = $this->checker->getDashboardSummary($filters);  
         if ($summary['has_pending']) {
             $message = "Cannot create payroll. Please approve or reject all pending employee applications for this period first.";
 
