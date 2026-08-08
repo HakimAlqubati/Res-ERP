@@ -12,12 +12,16 @@ class StockInventory extends Model implements Auditable
 {
     use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
 
+    public const TYPE_ZEROING = 'zeroing';
+    public const TYPE_MANUAL = 'manual';
+
     protected $fillable = [
         'inventory_date',
         'store_id',
         'responsible_user_id',
         'finalized',
         'created_by',
+        'inventory_type',
     ];
     protected $auditInclude = [
         'inventory_date',
@@ -25,6 +29,7 @@ class StockInventory extends Model implements Auditable
         'responsible_user_id',
         'finalized',
         'created_by',
+        'inventory_type',
     ];
 
     protected $appends = ['details_count', 'categories_names', 'closing_stock_value'];
@@ -76,5 +81,15 @@ class StockInventory extends Model implements Auditable
     public function getClosingStockValueAttribute(): float
     {
         return app(ClosingStockCalculationService::class)->calculateClosingStockValue($this);
+    }
+
+    public function isZeroing()
+    {
+        return $this->inventory_type === self::TYPE_ZEROING;
+    }
+
+    public function scopeZeroing($query)
+    {
+        return $query->where('inventory_type', self::TYPE_ZEROING);
     }
 }
