@@ -79,7 +79,7 @@ class EmployeeApplicationV2 extends Model implements Auditable, HasMedia
     const APPLICATION_TYPES = [
         1 => 'Leave request',
         2 => 'Missed check-in',
-        5 => 'Meal advance',
+        5 => 'Expense advance',
         4 => 'Missed check-out',
         3 => 'Advance request',
     ];
@@ -89,7 +89,7 @@ class EmployeeApplicationV2 extends Model implements Auditable, HasMedia
         self::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => 'Missed check-in',
         self::APPLICATION_TYPE_ADVANCE_REQUEST => 'Advance request',
         self::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => 'Missed check-out',
-        self::APPLICATION_TYPE_MEAL_REQUEST => 'Meal advance',
+        self::APPLICATION_TYPE_MEAL_REQUEST => 'Expense advance',
     ];
 
     const APPLICATION_TYPE_FILTERS = [
