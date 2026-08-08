@@ -8,6 +8,7 @@ use Filament\Actions\BulkAction;
 use Filament\Schemas\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use App\Contracts\InventoryPriceResolver;
 use App\Models\StockInventory;
 use App\Models\InventoryTransaction;
 use App\Services\FifoMethodService;
@@ -50,6 +51,21 @@ class DetailsRelationManager extends RelationManager
     protected static string $relationship = 'details';
     protected static ?string $title = '';
 
+    /**
+     * Cached resolved prices — loaded once per request, no N+1.
+     */
+    protected ?Collection $resolvedPrices = null;
+
+    protected function getResolvedPrices(): Collection
+    {
+        if ($this->resolvedPrices === null) {
+            $resolver = app(InventoryPriceResolver::class);
+            $this->resolvedPrices = $resolver->resolveForInventory($this->ownerRecord);
+        }
+
+        return $this->resolvedPrices;
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema
@@ -76,18 +92,22 @@ class DetailsRelationManager extends RelationManager
                     ->label('Total Price')
                     ->alignCenter(true)->toggleable()
                     ->getStateUsing(function ($record) {
-                        $unitPrice = getUnitPrice($record->product_id, $record->unit_id) ?? 0;
-                        $physicalQty = $record->physical_quantity ?? 0;
-                        return (float)($physicalQty * $unitPrice);
+                        $key = $record->product_id . '_' . $record->unit_id;
+                        $priceData = $this->getResolvedPrices()->get($key);
+                        $unitPrice = $priceData ? (float) $priceData->unit_price : 0;
+                        return (float)(($record->physical_quantity ?? 0) * $unitPrice);
                     })
-                    ->formatStateUsing(fn($state)=> formatMoneyWithCurrency($state))
+                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->summarize(
                         \Filament\Tables\Columns\Summarizers\Summarizer::make()
                             ->using(function (\Illuminate\Database\Query\Builder $query) {
+                                $prices = $this->getResolvedPrices();
                                 $records = $query->get();
                                 $sum = 0;
                                 foreach ($records as $record) {
-                                    $unitPrice = getUnitPrice($record->product_id, $record->unit_id) ?? 0;
+                                    $key = $record->product_id . '_' . $record->unit_id;
+                                    $priceData = $prices->get($key);
+                                    $unitPrice = $priceData ? (float) $priceData->unit_price : 0;
                                     $sum += ($record->physical_quantity ?? 0) * $unitPrice;
                                 }
                                 return $sum;
