@@ -29,6 +29,7 @@ use App\Models\Product;
 use App\Models\StockInventory;
 use App\Models\Store;
 use App\Exports\StockInventoriesExport;
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Database\Eloquent\Collection;
 use App\Services\MultiProductsInventoryService;
@@ -55,6 +56,7 @@ class StockInventoryTable
             ->recordUrl(fn(StockInventory $record): string => StockInventoryResource::getUrl('edit', ['record' => $record]))
 
             ->columns([
+                SoftDeleteColumn::make(),
                 TextColumn::make('id')->sortable()->label('ID')->searchable()->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('inventory_date')->sortable()->label('Date')->toggleable(),
