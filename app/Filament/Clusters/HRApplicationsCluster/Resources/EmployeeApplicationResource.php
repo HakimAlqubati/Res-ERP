@@ -1978,7 +1978,7 @@ class EmployeeApplicationResource extends Resource
                             ->options(Branch::where('type', Branch::TYPE_BRANCH)
                             ->active()
                             ->pluck('name', 'id'))
-                        // ->required()
+                        ->required()
                         ->searchable()
                         // ->live()
                         // ->afterStateUpdated(function ($set, $state) {

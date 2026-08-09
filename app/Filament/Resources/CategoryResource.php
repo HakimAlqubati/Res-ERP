@@ -28,6 +28,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Filament\Tables;
+use Filament\Tables\Columns\IconColumn;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -122,9 +123,16 @@ class CategoryResource extends Resource
                     ->searchable()
                     ->tooltip('Used to auto-generate product codes')
                     ->alignCenter(true)->toggleable(),
+                IconColumn::make('is_manafacturing')
+                    ->trueIcon(Heroicon::CheckCircle)
+                    ->falseIcon(Heroicon::XCircle)->trueColor('success')->falseColor('gray')
+                    ->label('Manufacturing')
+                    ->alignCenter()
+                    ,
                 TextColumn::make('branch_names')
                     ->label('Customized for Branches')
                     ->limit(50)
+                    ->tooltip(fn($state)=>$state)
                     ->toggleable(isToggledHiddenByDefault: true),
                 // Tables\Columns\TextColumn::make('waste_stock_percentage')
                 //     ->label('Waste %')
