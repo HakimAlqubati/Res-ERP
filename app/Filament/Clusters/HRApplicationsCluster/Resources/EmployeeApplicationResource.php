@@ -1823,7 +1823,7 @@ class EmployeeApplicationResource extends Resource
         $form = [
             DatePicker::make('detail_date')->maxDate(now()->toDateString())
                 ->label('Date')->required()
-                ->default('Y-m-d')->live(),
+                ->default(now()->toDateString())->live(),
             TimePicker::make('detail_time')
                 ->label('Time')->required()
                 ->seconds(false),
@@ -1909,7 +1909,7 @@ class EmployeeApplicationResource extends Resource
                     [
                         DatePicker::make('date')->maxDate(now()->toDateString())
                             ->label('Date')->required()
-                            ->default('Y-m-d')
+                            ->default(now()->toDateString())
                             ->rules([
                                 fn($get) => function ($attribute, $value, $fail) use ($get) {
                                     return;

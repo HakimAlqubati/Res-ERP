@@ -376,7 +376,10 @@ class EmployeeApplicationObserver
                 $targetDate = $app->leaveRequest?->start_date;
                 break;
             case EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST:
-                $targetDate = $app->application_date;
+                $targetDate = $app->advanceRequest?->date ?? $app->application_date;
+                break;
+            case EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST:
+                $targetDate = $app->mealRequest?->date ?? $app->application_date;
                 break;
             default:
                 $targetDate = $app->application_date;
