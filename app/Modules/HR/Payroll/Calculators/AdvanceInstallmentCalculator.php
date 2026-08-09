@@ -7,6 +7,7 @@ namespace App\Modules\HR\Payroll\Calculators;
 use App\Models\AdvanceRequest;
 use App\Models\EmployeeAdvanceInstallment;
 use App\Modules\HR\Payroll\DTOs\CalculationContext;
+use Carbon\Carbon;
 
 /**
  * حساب أقساط السلف المستحقة
@@ -35,9 +36,12 @@ class AdvanceInstallmentCalculator
         }
 
         // حدود الشهر الكاملة — الأقساط مجدولة شهرياً ومستقلة عن الفرع
-        // لا نستخدم periodStart() هنا حتى لا تضيع الأقساط عند الانتقال بين الفروع
+        // نستخدم بداية ونهاية الشهر الكاملة دائماً حتى لا تضيع الأقساط عند الانتقال بين الفروع
         $start = sprintf('%04d-%02d-01', $context->periodYear, $context->periodMonth);
-        $end   = $context->periodEnd(); // نهاية الشهر دائماً
+        $end   = date('Y-m-t', strtotime($start)); // نهاية الشهر الفعلية دائماً
+
+        // نسبة أيام هذا الـ segment من إجمالي أيام الشهر (للتوزيع النسبي عند multi-segment)
+        $ratio = $this->calculateSegmentRatio($context);
 
         // جلب أقساط الموظف المجدولة وغير المسددة ضمن الشهر
         // نستبعد الأقساط المؤجلة (skipped) أو الملغاة (cancelled)
@@ -85,7 +89,13 @@ class AdvanceInstallmentCalculator
         foreach ($rows as $r) {
             $meta = $codesByApp[$r->application_id] ?? ['code' => '', 'advance_request_id' => null, 'months' => 0];
 
-            $amount = (float) $r->installment_amount;
+            $fullAmount = (float) $r->installment_amount;
+            if ($fullAmount <= 0) {
+                continue;
+            }
+
+            // توزيع مبلغ القسط نسبياً حسب أيام الفترة (segment)
+            $amount = $this->round($fullAmount * $ratio);
             if ($amount <= 0) {
                 continue;
             }
@@ -96,7 +106,7 @@ class AdvanceInstallmentCalculator
                 'advance_request_id' => $meta['advance_request_id'],
                 'sequence' => (int) $r->sequence,
                 'months' => (int) $meta['months'],
-                'amount' => $this->round($amount),
+                'amount' => $amount,
                 'due_date' => $r->due_date,
                 'code' => $meta['code'],
             ];
@@ -108,6 +118,29 @@ class AdvanceInstallmentCalculator
             'items' => $advanceItems,
             'total' => $this->round($advanceInstallmentsTotal),
         ];
+    }
+
+    /**
+     * حساب نسبة أيام الفترة الحالية (segment) من إجمالي أيام الشهر.
+     * إذا كانت الفترة تغطي الشهر كاملاً، ترجع 1.0.
+     */
+    protected function calculateSegmentRatio(CalculationContext $context): float
+    {
+        $monthStart = sprintf('%04d-%02d-01', $context->periodYear, $context->periodMonth);
+        $monthEnd   = date('Y-m-t', strtotime($monthStart));
+        $totalDays  = (int) date('t', strtotime($monthStart));
+
+        $segStart = $context->periodStartDate ?? $monthStart;
+        $segEnd   = $context->periodEndDate   ?? $monthEnd;
+
+        // إذا كانت الفترة تغطي الشهر كاملاً — لا حاجة للتوزيع
+        if ($segStart <= $monthStart && $segEnd >= $monthEnd) {
+            return 1.0;
+        }
+
+        $segDays = (int) Carbon::parse($segStart)->diffInDays(Carbon::parse($segEnd)) + 1;
+
+        return min(1.0, max(0.0, $segDays / $totalDays));
     }
 
     protected function round(float $value): float
