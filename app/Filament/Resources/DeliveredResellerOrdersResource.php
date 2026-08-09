@@ -18,6 +18,7 @@ use App\Filament\Resources\DeliveredResellerOrdersResource\Pages;
 use App\Filament\Resources\DeliveredResellerOrdersResource\Pages\CreateDeliveredResellerOrder;
 use App\Filament\Resources\DeliveredResellerOrdersResource\RelationManagers;
 use App\Filament\Resources\OrderResource\RelationManagers\OrderDetailsRelationManager;
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\Branch;
 use App\Models\DeliveredResellerOrders;
 use App\Models\Order;
@@ -264,10 +265,11 @@ class DeliveredResellerOrdersResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->deferFilters(false)
+        return $table->deferFilters(true)
             ->striped()
             ->paginated([10, 25, 50, 100])
             ->columns([
+                SoftDeleteColumn::make(),
                 TextColumn::make('id')
                     ->label('DO-ID')
                     ->searchable()->alignCenter()
@@ -486,7 +488,8 @@ BulkActionGroup::make([
                 SelectFilter::make('branch_id')
                     ->label('Reseller')->searchable()
                     ->options(Branch::active()->resellers()->get(['id', 'name'])->pluck('name', 'id')),
-            ], FiltersLayout::AboveContent)
+            ], FiltersLayout::Modal)
+            ->filtersFormColumns(4)
             ->defaultSort('id', 'desc');
     }
 
@@ -529,9 +532,6 @@ BulkActionGroup::make([
             ->whereHas('orderDetails')
             ->whereHas('branch', function ($query) {
                 $query->where('type', Branch::TYPE_RESELLER);
-            })
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ]);
+            });
     }
 }
