@@ -359,7 +359,7 @@ BulkActionGroup::make([
             ->recordActions([
 
                 Action::make('print_delivery_order')
-                    ->label(__('Print Delivery Order'))
+                    ->label(__('Print'))
                     ->icon('heroicon-o-printer')->button()
                     ->color('gray')
                     // ->visible(fn($record) => $record->status === Order::DELEVIRED)
@@ -387,7 +387,8 @@ BulkActionGroup::make([
 
                 EditAction::make()->label(__('Edit'))
                     ->icon(Heroicon::Pencil)
-                    ->color(Color::Green)->button()
+                    ->color(Color::Gray)
+                    ->button()
                     // ->requiresConfirmation()
                     ->visible(fn(Order $record): bool => !in_array($record->status, [
                         Order::DELEVIRED,
@@ -488,6 +489,7 @@ BulkActionGroup::make([
                 SelectFilter::make('branch_id')
                     ->label('Reseller')->searchable()
                     ->options(Branch::active()->resellers()->get(['id', 'name'])->pluck('name', 'id')),
+                \Filament\Tables\Filters\TrashedFilter::make(),
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
             ->defaultSort('id', 'desc');
@@ -532,6 +534,9 @@ BulkActionGroup::make([
             ->whereHas('orderDetails')
             ->whereHas('branch', function ($query) {
                 $query->where('type', Branch::TYPE_RESELLER);
-            });
+            })
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
     }
 }
