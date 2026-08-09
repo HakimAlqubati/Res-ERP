@@ -237,6 +237,15 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
         return false;
     }
 
+    public static function canDelete(Model $record): bool
+    {
+        if ($record->status === ReturnedOrder::STATUS_APPROVED) {
+            return false;
+        }
+
+        return true;
+    }
+
     public static function getOrderSearchQuery(string $search)
     {
         return Order::where('id', 'like', "%{$search}%")
@@ -262,6 +271,7 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
 
     public static function canViewAny(): bool
     {
+        
         if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) {
             return true;
         }
