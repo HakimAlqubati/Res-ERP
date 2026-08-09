@@ -9,6 +9,7 @@ use App\Filament\Resources\ReturnedOrderResource\Pages\EditReturnedOrder;
 use App\Filament\Resources\ReturnedOrderResource\Pages\ListReturnedOrders;
 use App\Filament\Resources\ReturnedOrderResource\Pages\ViewReturnedOrder;
 use App\Filament\Resources\ReturnedOrderResource\Schema\ReturnedOrderForm;
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\Branch;
 use App\Models\InventoryTransaction;
 use App\Models\Order;
@@ -62,8 +63,11 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
     {
         return $table->striped()->defaultSort('id', 'desc')->deferFilters(false)
             ->columns([
+                SoftDeleteColumn::make(),
                 TextColumn::make('id')->label('#')->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('order.id')->label('Original Order ID')->sortable()->alignCenter(true)->toggleable(),
+                TextColumn::make('order.id')
+                ->label('Order ID')
+                ->sortable()->alignCenter(true)->toggleable(),
                 TextColumn::make('branch.name')->label('Branch')->sortable()->toggleable(),
                 TextColumn::make('store.name')->label('Store')->sortable()->toggleable(),
                 TextColumn::make('returned_date')->label('Returned Date')->date()->toggleable(),
@@ -78,8 +82,8 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
                     })
                     ->toggleable()
                     ->alignCenter(true),
-                TextColumn::make('creator.name')->label('Created By')->toggleable(),
-                TextColumn::make('itemsCount')->label('Items Count')->toggleable()->alignCenter(true),
+                TextColumn::make('creator.short_name')->label('Created By')->toggleable(),
+                TextColumn::make('itemsCount')->label('Items')->toggleable()->alignCenter(true),
                 // TextColumn::make('totalAmount')->label('Total Amount')->money('MYR')->toggleable()->alignCenter(true),
             ])
             ->filters([
@@ -93,8 +97,8 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
                 ActionGroup::make([
 
                 EditAction::make()->visible(fn ($record): bool => $record->status === ReturnedOrder::STATUS_CREATED),
-                DeleteAction::make(),
-                ForceDeleteAction::make(),
+                DeleteAction::make()->hidden(fn ($record) => $record->status === ReturnedOrder::STATUS_APPROVED),
+                ForceDeleteAction::make()->hidden(fn ($record) => $record->status === ReturnedOrder::STATUS_APPROVED),
                 RestoreAction::make(),
                 Action::make('Approve')->button()
                     ->label('Approve')

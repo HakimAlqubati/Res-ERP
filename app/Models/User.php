@@ -452,4 +452,15 @@ class User extends Authenticatable implements FilamentUser, Auditable
         }
         return true;
     }
+
+    public function getShortNameAttribute()
+    {
+        $parts = explode(' ', trim($this->name));
+        
+        if (count($parts) > 1) {
+            return $parts[0] . ' ' . end($parts);
+        }
+
+        return $this->name;
+    }
 }
