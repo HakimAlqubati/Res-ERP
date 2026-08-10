@@ -19,12 +19,32 @@ class EmployeeRewardForm
     {
         return $schema
             ->components([
-                Fieldset::make()->columnSpanFull()->label('Reward/Bonus Information')->columns(3)->schema([
+                Fieldset::make()->columnSpanFull()->label('Reward/Bonus Information')->columns(4)->schema([
+                    Select::make('month')
+                        ->label('Month')
+                        ->options([
+                            1 => 'January',
+                            2 => 'February',
+                            3 => 'March',
+                            4 => 'April',
+                            5 => 'May',
+                            6 => 'June',
+                            7 => 'July',
+                            8 => 'August',
+                            9 => 'September',
+                            10 => 'October',
+                            11 => 'November',
+                            12 => 'December',
+                        ])
+                        ->live()
+                        ->required(),
+
                     DatePicker::make('date')
                         ->label('Date')
                         ->default(now()->toDateString())
                         ->required()
                         ->live()
+                        ->visible(fn ($get) => filled($get('month')))
                         ->afterStateUpdated(function ($set, $state) {
                             if ($state) {
                                 $date = \Carbon\Carbon::parse($state);
@@ -63,7 +83,6 @@ class EmployeeRewardForm
 
                 // Hidden fields for automated payroll targeting
                 TextInput::make('year')->hidden(),
-                Hidden::make('month'),
             ]);
     }
 }
