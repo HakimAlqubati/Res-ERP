@@ -611,6 +611,11 @@ class SettingResource extends Resource
                                                 ->inline(false)
                                                 ->label('Show Old System Code')
                                                 ->default(false),
+                                            Select::make('product_code_generation_method')
+                                                ->label('Product Code Generation Method')
+                                                ->options(\App\Enums\ProductCodeGenerationMethod::options())
+                                                ->default(\App\Enums\ProductCodeGenerationMethod::AUTO->value)
+                                                ->required(),
                                         ]),
                                     ]),
                                 ]),
