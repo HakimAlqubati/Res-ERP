@@ -63,8 +63,14 @@ class ListEwalletPaymentReports extends ListRecords
 
                         
                         ]), 
-                        Placeholder::make('Note that!')
-                        ->content('Note: Employees who have already been paid will be automatically excluded from this report.')
+                        Placeholder::make('important_reminder')
+                        ->label(new \Illuminate\Support\HtmlString('<span style="color: red;">Important Reminder Before Generating the eWallet Payment Report:</span>'))
+                        ->content(new \Illuminate\Support\HtmlString('
+                            <div style="font-size: 1.05rem; color: red;">
+                                <p style="margin-bottom: 1rem;">Please ensure you have marked all staff members who were paid manually or left mid-month as "<b>Paid</b>" in the Payroll before running this report.</p>
+                                <p style="margin-left: 2.5rem;">Once marked, the system will automatically filter them out. This prevents<br>duplicate payouts when the final batch file is generated.</p>
+                            </div>
+                        '))
                         ->columnSpanFull(),
                 ])
                 ->action(function (array $data) {
