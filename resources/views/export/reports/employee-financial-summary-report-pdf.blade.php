@@ -44,6 +44,9 @@
             <tr>
                 <th>#</th>
                 <th>{{ __('lang.employee') ?? 'Employee' }}</th>
+                @if(empty($branch_id))
+                <th>{{ __('lang.branch') ?? 'Branch' }}</th>
+                @endif
                 <th>{{ __('lang.incentive_types') ?? 'Incentive Types' }}</th>
                 <th>{{ __('lang.allowance_types') ?? 'Allowance Types' }}</th>
                 <th>{{ __('lang.deduction_types') ?? 'Deduction Types' }}</th>
@@ -54,6 +57,9 @@
             <tr>
                 <td>{{ $index + 1 }}</td>
                 <td>{{ $item->employeeName }}</td>
+                @if(empty($branch_id))
+                <td>{{ $item->branchName }}</td>
+                @endif
                 <td>{{ $item->incentiveTypes }}</td>
                 <td>{{ $item->allowanceTypes }}</td>
                 <td>{{ $item->deductionTypes }}</td>

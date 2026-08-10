@@ -41,18 +41,14 @@
         <button type="button" class="btn-export" style="background-color: #ef4444; border-color: #ef4444;" wire:click="exportPdf">
             &#128196; {{ __('Export PDF') }}
         </button>
-        <button type="button" class="btn-export" onclick="exportToExcel()">
-            &#128202; {{ __('Export Excel') }}
-        </button>
     </div>
 
-    @if(!empty($branch_id))
     <div class="overflow-x-auto">
         {{-- Report Table --}}
         <table class="w-full text-sm text-left pretty reports" id="financial-summary-table">
             <thead class="fixed-header" style="top:64px;">
                 <tr class="header_report">
-                    <th colspan="5" style="padding: 12px 16px;">
+                    <th colspan="{{ empty($branch_id) ? '6' : '5' }}" style="padding: 12px 16px;">
                         @php
                             $branch = \App\Models\Branch::find($branch_id);
                         @endphp
@@ -65,7 +61,7 @@
                             {{-- Center: Report Name + Branch --}}
                             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; flex: 1;">
                                 <span style="font-size: 16px; font-weight: bold; text-transform: uppercase;">{{ __('lang.employee_financial_summary_report') ?? 'Employee Financial Summary' }}</span>
-                                <span style="font-size: 14px; font-weight: bold; color: #374151;">{{ $branch?->name ?? __('lang.choose_branch') }}</span>
+                                <span style="font-size: 14px; font-weight: bold; color: #374151;">{{ $branch?->name ?? __('lang.all_branches') ?? 'All Branches' }}</span>
                             </div>
 
                             {{-- Far Right: Total + System Logo --}}
@@ -83,6 +79,9 @@
                 <tr>
                     <th style="width:40px;">#</th>
                     <th>{{ __('lang.employee') ?? 'Employee' }}</th>
+                    @if(empty($branch_id))
+                    <th style="text-align:center;">{{ __('lang.branch') ?? 'Branch' }}</th>
+                    @endif
                     <th style="text-align:center;">{{ __('lang.incentive_types') ?? 'Incentive Types' }}</th>
                     <th style="text-align:center;">{{ __('lang.allowance_types') ?? 'Allowance Types' }}</th>
                     <th style="text-align:center;">{{ __('lang.deduction_types') ?? 'Deduction Types' }}</th>
@@ -93,46 +92,20 @@
                 <tr>
                     <td>{{ $index + 1 }}</td>
                     <td>{{ $item->employeeName }}</td>
+                    @if(empty($branch_id))
+                    <td style="text-align:center;">{{ $item->branchName }}</td>
+                    @endif
                     <td style="text-align:center;">{{ $item->incentiveTypes }}</td>
                     <td style="text-align:center;">{{ $item->allowanceTypes }}</td>
                     <td style="text-align:center;">{{ $item->deductionTypes }}</td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" style="text-align:center; padding: 20px;">{{ __('lang.no_data') ?? 'No Data' }}</td>
+                    <td colspan="{{ empty($branch_id) ? '6' : '5' }}" style="text-align:center; padding: 20px;">{{ __('lang.no_data') ?? 'No Data' }}</td>
                 </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
-    @else
-    <div class="please_select_message_div" style="text-align: center; margin-top: 40px;">
-        <h1 class="please_select_message_text">{{ __('lang.please_select_branch') ?? 'Please select a branch to view the report' }}</h1>
-    </div>
-    @endif
 
-    {{-- Excel Export Script --}}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script>
-        function exportToExcel() {
-            var elt = document.getElementById('financial-summary-table');
-            if(!elt) return;
-            var clone = elt.cloneNode(true);
-            var wb = XLSX.utils.table_to_sheet(clone, {
-                raw: true
-            });
-
-            var wscols = [];
-            for (var i = 0; i < 5; i++) {
-                wscols.push({
-                    wch: 22
-                });
-            }
-            wb['!cols'] = wscols;
-
-            var workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, wb, "Financial Summary");
-            XLSX.writeFile(workbook, "financial_summary_report.xlsx");
-        }
-    </script>
 </x-filament-panels::page>

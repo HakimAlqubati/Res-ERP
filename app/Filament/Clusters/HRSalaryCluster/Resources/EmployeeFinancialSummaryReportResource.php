@@ -46,7 +46,7 @@ class EmployeeFinancialSummaryReportResource extends Resource
             ->filters([
                 SelectFilter::make('branch_id')
                     ->label(__('lang.branch') ?? 'Branch')
-                    ->placeholder(__('lang.choose') ?? 'Choose')
+                    ->placeholder(__('lang.all_branches') ?? 'All Branches')
                     ->options(Branch::active()->forBranchManager('id')->get()->pluck('name', 'id')->toArray())
                     ->searchable(),
 

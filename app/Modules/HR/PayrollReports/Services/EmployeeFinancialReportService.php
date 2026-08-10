@@ -12,6 +12,7 @@ class EmployeeFinancialReportService implements EmployeeFinancialReportServiceIn
     public function generateForEmployee(int $employeeId): EmployeeFinancialSummaryDTO
     {
         $employee = Employee::with([
+            'branch',
             'monthlyIncentives.monthlyIncentive', 
             'allowances.allowance', 
             'deductions.deduction'
@@ -23,6 +24,7 @@ class EmployeeFinancialReportService implements EmployeeFinancialReportServiceIn
     public function generateForEmployees(array $employeeIds): Collection
     {
         $employees = Employee::with([
+            'branch',
             'monthlyIncentives.monthlyIncentive', 
             'allowances.allowance', 
             'deductions.deduction'
@@ -62,6 +64,7 @@ class EmployeeFinancialReportService implements EmployeeFinancialReportServiceIn
         return new EmployeeFinancialSummaryDTO(
             employeeId: $employee->id,
             employeeName: $employee->name ?? 'Unknown',
+            branchName: $employee->branch?->name ?? 'Unknown',
             incentiveTypes: $incentiveTypes ?: '-',
             allowanceTypes: $allowanceTypes ?: '-',
             deductionTypes: $deductionTypes ?: '-'

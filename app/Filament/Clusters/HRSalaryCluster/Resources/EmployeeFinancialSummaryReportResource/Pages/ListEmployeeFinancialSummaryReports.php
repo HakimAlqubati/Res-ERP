@@ -19,12 +19,14 @@ class ListEmployeeFinancialSummaryReports extends ListRecords
         $branchId  = $this->getTable()->getFilters()['branch_id']->getState()['value'] ?? null;
 
         $items = collect([]);
+        $employeeQuery = Employee::query();
         if ($branchId) {
-            $employeeIds = Employee::where('branch_id', $branchId)->pluck('id')->toArray();
-            
-            if (!empty($employeeIds)) {
-                $items = app(EmployeeFinancialReportService::class)->generateForEmployees($employeeIds);
-            }
+            $employeeQuery->where('branch_id', $branchId);
+        }
+
+        $employeeIds = $employeeQuery->pluck('id')->toArray();
+        if (!empty($employeeIds)) {
+            $items = app(EmployeeFinancialReportService::class)->generateForEmployees($employeeIds);
         }
 
         return [
@@ -45,9 +47,9 @@ class ListEmployeeFinancialSummaryReports extends ListRecords
         }
 
         $branch      = Branch::find($data['branch_id']);
-        $branchName  = $branch?->name ?? 'Branch';
+        $branchName  = $branch?->name ?? __('lang.all_branches') ?? 'All Branches';
         
-        $branchManager  = $branch?->user?->name ?? '';
+        $branchManager  = $branch?->user?->name ?? '-';
         $financeManager = \App\Models\User::whereHas('roles', function ($query) {
             $query->where('id', 16);
         })->first()?->name ?? '';
@@ -65,6 +67,7 @@ class ListEmployeeFinancialSummaryReports extends ListRecords
             'items'             => $data['items'],
             'summary'           => $data['summary'],
             'branchName'        => $branchName,
+            'branch_id'         => $data['branch_id'],
             'companyLogo'       => $companyLogo,
             'branchManager'     => $branchManager,
             'financeManager'    => $financeManager,
