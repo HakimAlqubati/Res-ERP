@@ -554,7 +554,6 @@ class SettingResource extends Resource
                                             //     ->helperText('Choose method calculating orders.')
                                             //     ->native(false)
                                             //     ->required(),
-                                            TextInput::make('currency_symbol')->label(__('system_settings.currency_symbol')),
                                             TextInput::make('limit_days_orders')->numeric()->label(__('system_settings.limit_days_orders')),
                                             Grid::make()->columns(2)->schema([
                                                 // Toggle::make('completed_order_if_not_qty')->inline(false)
