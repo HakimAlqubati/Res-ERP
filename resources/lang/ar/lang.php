@@ -1180,4 +1180,8 @@ return [
     'municipality_license_notes' => 'ملاحظات رخصة البلدية',
     'municipality_license_file' => 'ملف رخصة البلدية',
     'refreshed' => 'تم التحديث',
+    'employee_financial_summary_report' => 'تقرير المزايا المالية للموظفين',
+    'incentive_types' => 'أنواع الحوافز',
+    'allowance_types' => 'أنواع البدلات',
+    'deduction_types' => 'أنواع الاستقطاعات',
 ];

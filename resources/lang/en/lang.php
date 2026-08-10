@@ -1199,4 +1199,8 @@ return [
     'municipality_license_notes' => 'Municipality License Notes',
     'municipality_license_file' => 'Municipality License File',
     'refreshed' => 'Refereshed',
+    'employee_financial_summary_report' => 'Employee Financial Summary Report',
+    'incentive_types' => 'Incentive Types',
+    'allowance_types' => 'Allowance Types',
+    'deduction_types' => 'Deduction Types',
 ];
