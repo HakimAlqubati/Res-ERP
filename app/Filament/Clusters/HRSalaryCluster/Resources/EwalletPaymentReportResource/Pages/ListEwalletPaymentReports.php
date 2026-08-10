@@ -64,11 +64,16 @@ class ListEwalletPaymentReports extends ListRecords
                         
                         ]), 
                         Placeholder::make('important_reminder')
-                        ->label(new \Illuminate\Support\HtmlString('<span style="color: red;">Important Reminder Before Generating the eWallet Payment Report:</span>'))
+                        ->hiddenLabel()
                         ->content(new \Illuminate\Support\HtmlString('
-                            <div style="font-size: 1.05rem; color: red;">
-                                <p style="margin-bottom: 1rem;">Please ensure you have marked all staff members who were paid manually or left mid-month as "<b>Paid</b>" in the Payroll before running this report.</p>
-                                <p style="margin-left: 2.5rem;">Once marked, the system will automatically filter them out. This prevents<br>duplicate payouts when the final batch file is generated.</p>
+                            <div class="flex flex-col gap-2 p-4 rounded-xl bg-danger-50 text-danger-900 dark:bg-danger-500/10 dark:text-danger-400 ring-1 ring-inset ring-danger-600/20 dark:ring-danger-500/20">
+                                <strong class="font-semibold text-base" style="color: red;">Important Reminder Before Generating the eWallet Payment Report</strong>
+                                <p class="text-sm">
+                                    Please ensure you have marked all staff members who were paid manually or left mid-month as <strong>"Paid"</strong> in the Payroll before running this report.
+                                </p>
+                                <p class="text-sm">
+                                    Once marked, the system will automatically filter them out. This prevents duplicate payouts when the final batch file is generated.
+                                </p>
                             </div>
                         '))
                         ->columnSpanFull(),
