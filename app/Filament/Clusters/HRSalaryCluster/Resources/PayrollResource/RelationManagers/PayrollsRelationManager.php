@@ -82,6 +82,8 @@ class PayrollsRelationManager extends RelationManager
                         MIN(hr_payrolls.status) as status,
                         MAX(hr_payrolls.is_paid) as is_paid,
                         MAX(hr_payrolls.payment_date) as payment_date,
+                        MAX(hr_payrolls.paid_at) as paid_at,
+                        MAX(hr_payrolls.paid_by) as paid_by,
                         MIN(hr_payrolls.created_at) as created_at,
                         MAX(hr_payrolls.updated_at) as updated_at,
                         MAX(hr_employee_service_terminations.termination_reason) as termination_reason,
@@ -150,6 +152,12 @@ class PayrollsRelationManager extends RelationManager
                 TextColumn::make('payment_date')
                     ->label(__('Payment Date'))
                     ->date('Y-m-d')->alignCenter()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('paid_at')
+                    ->label(__('Paid At'))
+                    ->dateTime()->alignCenter()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('payer.name')
+                    ->label(__('Paid By'))
+                    ->alignCenter()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('net_salary')
                     ->label(__('Net Salary'))->alignCenter()
                     ->getStateUsing(fn(Payroll $record) => (float) $record->getRawOriginal('net_salary'))
@@ -249,6 +257,8 @@ class PayrollsRelationManager extends RelationManager
                                 'is_paid'      => true,
                                 'payment_date' => now(),
                                 'status'       => Payroll::STATUS_PAID,
+                                'paid_by'      => auth()->id(),
+                                'paid_at'      => now(),
                             ]);
                     }),
 
@@ -313,6 +323,8 @@ class PayrollsRelationManager extends RelationManager
                                 'is_paid'      => true,
                                 'payment_date' => now(),
                                 'status'       => Payroll::STATUS_PAID,
+                                'paid_by'      => auth()->id(),
+                                'paid_at'      => now(),
                             ]);
                     }),
                 DeleteBulkAction::make()
