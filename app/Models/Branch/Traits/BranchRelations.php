@@ -53,6 +53,12 @@ trait BranchRelations
         return $this->belongsToMany(Category::class, 'branch_category', 'branch_id', 'category_id');
     }
 
+    public function manufacturingCategories()
+    {
+        return $this->belongsToMany(Category::class, 'branch_category', 'branch_id', 'category_id')
+                    ->where('is_manafacturing', true);
+    }
+
     public function resellerSales()
     {
         return $this->hasMany(ResellerSale::class, 'branch_id');
