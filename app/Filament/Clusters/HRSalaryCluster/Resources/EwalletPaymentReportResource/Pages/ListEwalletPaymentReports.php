@@ -88,10 +88,11 @@ class ListEwalletPaymentReports extends ListRecords
                         ->where('month', $month)
                         ->where('year', $year)
                         ->whereNotNull('approved_at')
-                        ->selectRaw('MAX(id) as id, branch_id')
-                        ->groupBy('branch_id')
+                        ->select('id','branch_id')
+                        // ->selectRaw('MAX(id) as id, branch_id')
+                        // ->groupBy('branch_id')
                         ->pluck('id');
-
+                        
                     if ($latestRunIds->isEmpty()) {
                         Notification::make()
                             ->title("No approved payroll runs found for this month.")
