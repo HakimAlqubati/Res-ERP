@@ -204,13 +204,9 @@ class EmployeeAttendanceRangeService
             }
         }
 
-        [$previousWorkDays, $previousUsedLeaves] = $this->previousAutoWeeklyLeaveState($dates->first(), $employee);
-        $monthWorkDays       = $previousWorkDays + $totalWorkDays;
-        $monthlyLeaveCap     = $employee->max_weekly_leave_days ?? PHP_INT_MAX;
-        $totalEntitledLeaves = min((int) floor($monthWorkDays / $workDaysPerLeave), $monthlyLeaveCap);
-        $availableLeaves     = max(0, $totalEntitledLeaves - $previousUsedLeaves);
-        $workDaysTowardsNext = $monthWorkDays % $workDaysPerLeave;
-        $leavesToUse         = min($availableLeaves, count($absentDates));
+        $totalEntitledLeaves = floor($totalWorkDays / $workDaysPerLeave);
+        $workDaysTowardsNext = $totalWorkDays % $workDaysPerLeave;
+        $leavesToUse         = min($totalEntitledLeaves, count($absentDates),$employee?->max_weekly_leave_days ?? $totalEntitledLeaves);
         $usedLeaves          = 0;
 
         foreach ($absentDates as $date) {
@@ -240,54 +236,12 @@ class EmployeeAttendanceRangeService
         }
 
         $report->put('weekly_leave_stats', [
-            'total_work_days'        => $monthWorkDays,
+            'total_work_days'        => $totalWorkDays,
             'entitled_leaves'        => $totalEntitledLeaves,
-            'used_leaves'            => $previousUsedLeaves + $usedLeaves,
-            'remaining_leaves'       => $totalEntitledLeaves - ($previousUsedLeaves + $usedLeaves),
+            'used_leaves'            => $usedLeaves,
+            'remaining_leaves'       => $totalEntitledLeaves - $usedLeaves,
             'remaining_absences'     => count($absentDates) - $usedLeaves,
             'work_days_towards_next' => $workDaysTowardsNext,
         ]);
-    }
-
-    /**
-     * Return the auto-leave state accumulated before this report segment within
-     * the same month. This keeps branch transfers from restarting the 6-day
-     * entitlement counter.
-     */
-    private function previousAutoWeeklyLeaveState(?string $segmentStart, Employee $employee): array
-    {
-        if (!$segmentStart) {
-            return [0, 0];
-        }
-
-        $start = Carbon::parse($segmentStart);
-        if ($start->day === 1) {
-            return [0, 0];
-        }
-
-        // Preserve the existing behaviour for employees who stayed in one
-        // branch. Carrying this state is needed only when payroll/reporting is
-        // split because of a branch transfer.
-        $monthStart = $start->copy()->startOfMonth();
-        $monthEnd   = $start->copy()->endOfMonth();
-        if (\App\Models\EmployeeBranchLog::getSalarySegments($employee, $monthStart, $monthEnd)->count() <= 1) {
-            return [0, 0];
-        }
-
-        $previousReport = app(\App\Modules\HR\AttendanceReports\Contracts\AttendanceReportInterface::class)
-            ->getEmployeesRangeReport(
-                collect([$employee]),
-                $monthStart,
-                $start->copy()->subDay(),
-                true,
-            )
-            ->first();
-
-        $stats = $previousReport['weekly_leave_stats'] ?? [];
-
-        return [
-            (int) ($stats['total_work_days'] ?? 0),
-            (int) ($stats['used_leaves'] ?? 0),
-        ];
     }
 }
