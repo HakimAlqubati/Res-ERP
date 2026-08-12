@@ -164,7 +164,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             // Last segment of a branch-transfer employee in a 31-day month:
             // subtract the rate-days already consumed by prior segments
             // so the total across all segments equals 30 (not 31).
-            $previousUsedDays = (int) round(($periodStart->day - 1) / $monthDays * $rateWorkingDays);
+            $previousUsedDays = (int) round(($periodStart->day) / $monthDays * $rateWorkingDays);
             $payableDays      = max(0, $rateWorkingDays - $previousUsedDays);
         }
 
