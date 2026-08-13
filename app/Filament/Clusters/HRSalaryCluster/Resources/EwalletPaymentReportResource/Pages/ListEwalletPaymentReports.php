@@ -120,9 +120,11 @@ class ListEwalletPaymentReports extends ListRecords
                         return;
                     }
 
-                    DB::transaction(function () use ($month, $year, $payrolls) {
+                    $groupedPayrolls = $payrolls->groupBy('employee_id');
+
+                    DB::transaction(function () use ($month, $year, $payrolls, $groupedPayrolls) {
                         $totalAmount = $payrolls->sum('net_salary');
-                        $employeesCount = $payrolls->count();
+                        $employeesCount = $groupedPayrolls->count();
 
                         $report = EwalletPaymentReport::create([
                             'month' => $month,
@@ -136,18 +138,28 @@ class ListEwalletPaymentReports extends ListRecords
                         $items = [];
                         $monthName = \Carbon\Carbon::create()->month($month)->format('F');
 
-                        foreach ($payrolls as $payroll) {
-                            $branchName = $payroll->branch?->name ?? $payroll->employee?->branch?->name ?? 'Unknown Branch';
+                        foreach ($groupedPayrolls as $employeeId => $empPayrolls) {
+                            $firstPayroll = $empPayrolls->first();
+                            $employee = $firstPayroll->employee;
+
+                            $branchNames = $empPayrolls
+                                ->map(fn ($p) => $p->branch?->name ?? $p->employee?->branch?->name)
+                                ->filter()
+                                ->unique()
+                                ->implode(' / ');
+
+                            $branchName = !empty($branchNames) ? $branchNames : 'Unknown Branch';
                             $rewardDescription = "Salary - {$monthName} {$year} - {$branchName}";
-                            $rewardName = $payroll->employee?->payment_details['full_name'] ?? $payroll->employee?->name ?? '';
-                            $accountNumber = $payroll->employee?->payment_details['account_number'] ?? null;
+                            $rewardName = $employee?->payment_details['full_name'] ?? $employee?->name ?? '';
+                            $accountNumber = $employee?->payment_details['account_number'] ?? null;
+                            $netSalary = $empPayrolls->sum('net_salary');
 
                             $items[] = [
                                 'hr_ewallet_payment_report_id' => $report->id,
-                                'payroll_id' => $payroll->id,
-                                'employee_id' => $payroll->employee_id,
+                                'payroll_id' => $firstPayroll->id,
+                                'employee_id' => $employeeId,
                                 'account_number' => $accountNumber,
-                                'net_salary' => $payroll->net_salary,
+                                'net_salary' => $netSalary,
                                 'reward_name' => $rewardName,
                                 'reward_description' => $rewardDescription,
                                 'created_at' => now(),
@@ -167,7 +179,7 @@ class ListEwalletPaymentReports extends ListRecords
 
                     Notification::make()
                         ->title("Report generated successfully.")
-                        ->body("Included branches: {$branchNames} | Employees: {$payrolls->count()}")
+                        ->body("Included branches: {$branchNames} | Employees: {$groupedPayrolls->count()}")
                         ->success()
                         ->send();
                 }),

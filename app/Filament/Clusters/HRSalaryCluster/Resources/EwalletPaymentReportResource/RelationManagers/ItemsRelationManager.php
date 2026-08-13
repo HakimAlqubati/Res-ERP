@@ -56,6 +56,7 @@ class ItemsRelationManager extends RelationManager
                 TextColumn::make('reward_description')
                     ->label('Reward Description')
                     ->limit(50)
+                    ->tooltip(fn($state) => $state)
                     ->toggleable()
                     ->limit(50),
             ])
