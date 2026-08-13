@@ -168,17 +168,36 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         //     $payableDays      = max(0, $rateWorkingDays - $previousUsedDays);
         // }
 
-        $cumulativeRateDaysAt = fn (int $calendarDayIndex): int =>
-     (int) round($calendarDayIndex / $monthDays * $rateWorkingDays);
+      
+    if ($isMultiSegment) {
+    // Branch-transfer employee (2+ segments in the same month): distribute
+    // $rateWorkingDays proportionally across ALL segments using cumulative
+    // boundaries, so segments telescope to exactly $rateWorkingDays —
+    // regardless of segment count, month length, or $dailyRateMethod.
+    $cumulativeRateDaysAt = fn (int $calendarDayIndex): int =>
+        (int) round($calendarDayIndex / $monthDays * $rateWorkingDays);
 
-        $startBoundary = $periodStart ? max(0, $periodStart->day - 1) : 0;
-        $endBoundary   = $periodEnd ? min($periodEnd->day, $monthDays) : $monthDays;
+    $startBoundary = $periodStart ? max(0, $periodStart->day - 1) : 0;
+    $endBoundary   = $periodEnd ? min($periodEnd->day, $monthDays) : $monthDays;
 
-        $payableDays = max(
-            0,
-            $cumulativeRateDaysAt($endBoundary) - $cumulativeRateDaysAt($startBoundary)
-        );
+    $payableDays = max(
+        0,
+        $cumulativeRateDaysAt($endBoundary) - $cumulativeRateDaysAt($startBoundary)
+    );
+    } elseif ($periodEnd && $periodEnd->day < $monthDays) {
+        // Single-segment employee ending mid-month (new hire / termination):
+        // use the calendar end-day directly. The $requiredDays cap below is
+        // the real limiter for this case — it must NOT be scaled proportionally.
+        $payableDays = $periodEnd->day;
+    }
+        // if($startBoundary != 0){
 
+        //     dd($cumulativeRateDaysAt,
+        //     $startBoundary,
+        //     $endBoundary,
+        //     $cumulativeRateDaysAt);
+            
+        // }   
         // Cap payable days by required shift days (exclude no_periods days)
         // For By30Days method: only skip the cap if the employee covers the full month
         // (requiredDays >= monthDays), so short months like February still get full salary.
