@@ -79,6 +79,13 @@ class ProductsSchema
                                                 }
                                             }),
                                         TextInput::make('code')->required(fn() => \App\Models\Setting::getSetting('product_code_generation_method', \App\Enums\ProductCodeGenerationMethod::AUTO->value) === \App\Enums\ProductCodeGenerationMethod::MANUAL->value)
+                                            ->maxLength(function ($get) {
+                                                $prefixLength = 0;
+                                                if ($categoryId = $get('category_id')) {
+                                                    $prefixLength = strlen((string) \App\Models\Category::find($categoryId)?->code_starts_with);
+                                                }
+                                                return $prefixLength + (int) \App\Models\Setting::getSetting('product_code_length', 3);
+                                            })
                                             ->unique(ignoreRecord: true)
                                             ->label(__('lang.code'))
                                             ->readOnly(fn() => \App\Models\Setting::getSetting('product_code_generation_method', \App\Enums\ProductCodeGenerationMethod::AUTO->value) === \App\Enums\ProductCodeGenerationMethod::AUTO->value)

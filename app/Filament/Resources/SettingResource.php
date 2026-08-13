@@ -616,6 +616,13 @@ class SettingResource extends Resource
                                                 ->options(\App\Enums\ProductCodeGenerationMethod::options())
                                                 ->default(\App\Enums\ProductCodeGenerationMethod::AUTO->value)
                                                 ->required(),
+                                            TextInput::make('product_code_length')
+                                                ->label('Product Code Length')
+                                                ->numeric()
+                                                ->default(3)
+                                                ->minValue(1)
+                                                ->maxValue(15)
+                                                ->required(),
                                         ]),
                                     ]),
                                 ]),
