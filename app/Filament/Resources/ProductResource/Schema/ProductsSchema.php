@@ -84,7 +84,7 @@ class ProductsSchema
                                                 if ($categoryId = $get('category_id')) {
                                                     $prefixLength = strlen((string) \App\Models\Category::find($categoryId)?->code_starts_with);
                                                 }
-                                                return $prefixLength + (int) \App\Models\Setting::getSetting('product_code_length', 3);
+                                                return  (int) \App\Models\Setting::getSetting('product_code_length', 3);
                                             })
                                             ->unique(ignoreRecord: true)
                                             ->label(__('lang.code'))
