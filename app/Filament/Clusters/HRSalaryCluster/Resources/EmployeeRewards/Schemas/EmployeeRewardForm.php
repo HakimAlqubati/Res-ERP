@@ -5,12 +5,14 @@ namespace App\Filament\Clusters\HRSalaryCluster\Resources\EmployeeRewards\Schema
 use App\Models\Employee;
 use App\Models\EmployeeReward;
 use App\Models\MonthlyIncentive;
+use App\Rules\HR\Payroll\PayrollLockRule;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 
 class EmployeeRewardForm
@@ -37,7 +39,14 @@ class EmployeeRewardForm
                             12 => 'December',
                         ])
                         ->live()
-                        ->required(),
+                        ->required()
+                        ->rules([
+                            fn (Get $get) => new PayrollLockRule(
+                                $get('employee_id'),
+                                (int) ($get('year') ?: ($get('date') ? \Carbon\Carbon::parse($get('date'))->year : now()->year)),
+                                (int) $get('month'),
+                            ),
+                        ]),
 
                     DatePicker::make('date')
                         ->label('Date')
@@ -58,6 +67,7 @@ class EmployeeRewardForm
                         ->relationship('employee', 'name')
                         ->searchable()
                         ->preload()
+                        ->live()
                         ->required(),
 
                     Select::make('incentive_id')
@@ -82,7 +92,9 @@ class EmployeeRewardForm
                 ]),
 
                 // Hidden fields for automated payroll targeting
-                TextInput::make('year')->hidden(),
+                TextInput::make('year')
+                    ->default(now()->year)
+                    ->hidden(),
             ]);
     }
 }
