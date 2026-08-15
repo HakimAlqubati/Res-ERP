@@ -167,7 +167,9 @@ class PayrollSimulationService implements PayrollSimulatorInterface
                 );
             }
 
-            $attendanceArray = $this->fetchAttendance($employee, $log->start, $log->end);
+            $isMultiSegment = $forceMultiSegment || ($segmentCountPerEmployee[$employee->id] ?? 1) > 1;
+
+            $attendanceArray = $this->fetchAttendance($employee, $log->start, $log->end, $isMultiSegment);
 
             $totalApprovedOvertime = $employee->overtimes()
                 ->where('branch_id', $log->branch_id)
@@ -190,7 +192,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
                 periodMonth:           $month,
                 periodEnd:             $log->end,
                 periodStart:           $log->start,   // ← تخصيص فترة الفرع بدقة
-                isMultiSegment:        $forceMultiSegment || ($segmentCountPerEmployee[$employee->id] ?? 1) > 1,
+                isMultiSegment:        $isMultiSegment,
             );
 
             $results[] = $this->buildResult($employee, $result, $monthlySalary, $dailyHours, $monthDays, $attendanceArray, $log);
@@ -202,10 +204,10 @@ class PayrollSimulationService implements PayrollSimulatorInterface
     /**
      * جلب تقرير الحضور لموظف في فترة محددة.
      */
-    private function fetchAttendance(Employee $employee, Carbon $start, Carbon $end): array
+    private function fetchAttendance(Employee $employee, Carbon $start, Carbon $end, bool $isMultiSegment): array
     {
         $data = $this->reportManager
-            ->getEmployeesRangeReport(collect([$employee]), $start, $end, true) // 👈 استبعاد التحضيرات no_shift
+            ->getEmployeesRangeReport(collect([$employee]), $start, $end, true, isMultiSegment: $isMultiSegment) // 👈 استبعاد التحضيرات no_shift
             ->get($employee->id);
 
         return (array) $data?->toArray();

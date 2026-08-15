@@ -45,7 +45,7 @@ class AttendanceReportManager implements AttendanceReportInterface
     {
         return $this->fetcher->getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
     }
-    public function getEmployeesRangeReport($employees, Carbon $startDate, Carbon $endDate, bool $excludeNoShift = false): Collection
+    public function getEmployeesRangeReport($employees, Carbon $startDate, Carbon $endDate, bool $excludeNoShift = false,bool $isMultiSegment = false): Collection
     {
         $employees = collect($employees);
         $results = collect();
@@ -89,7 +89,7 @@ class AttendanceReportManager implements AttendanceReportInterface
                     'workPeriodMap' => $bulkData['workPeriodMap'],
                 ];
 
-                $processedData = $this->rangeService->processRangeWithData($employee, $startDate, $endDate, $employeeData);
+                $processedData = $this->rangeService->processRangeWithData($employee, $startDate, $endDate, $employeeData,$isMultiSegment);
                 $results->put($employee->id, $processedData);
 
                 if ($isSingleDay) {
