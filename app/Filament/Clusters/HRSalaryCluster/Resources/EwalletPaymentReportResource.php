@@ -41,14 +41,14 @@ class EwalletPaymentReportResource extends Resource
 
     protected static ?string $cluster = HRSalaryCluster::class;
 
-    protected static ?string $label = "eWallet Sheet";
+    protected static ?string $label = "Payment Sheet";
 
-    protected static ?string $pluralLabel = "eWallet Sheet";
-    protected static ?string $pluralModelLabel = 'eWallet Sheet';
+    protected static ?string $pluralLabel = "Payment Sheet";
+    protected static ?string $pluralModelLabel = 'Payment Sheet';
 
     // Disable Filament's default title casing (which applies ucwords())
     protected static bool $hasTitleCaseModelLabel = false;
-    protected static ?string $navigationLabel = 'eWallet Sheet';
+    protected static ?string $navigationLabel = 'Payment Sheet';
 
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
@@ -94,6 +94,14 @@ class EwalletPaymentReportResource extends Resource
                     ->sortable()
                     ->alignCenter()
                     ,
+                TextColumn::make('payment_type')
+                    ->label('Payment Type')
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => $state === 'bank' ? 'Bank' : 'eWallet')
+                    ->color(fn ($state) => $state === 'bank' ? 'success' : 'info')
+                    ->icon(fn ($state) => $state === 'bank' ? 'heroicon-o-building-library' : 'heroicon-o-device-phone-mobile')
+                    ->sortable()
+                    ->alignCenter(),
             
                 TextColumn::make('creator.name')
                     ->label('Created By')
