@@ -51,6 +51,11 @@ class ListEwalletPaymentReports extends ListRecords
         ];
     }
 
+    public function getDefaultActiveTab(): string | int | null
+    {
+        return 'ewallet';
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -81,7 +86,7 @@ class ListEwalletPaymentReports extends ListRecords
                             EwalletPaymentReport::TYPE_EWALLET => 'info',
                             EwalletPaymentReport::TYPE_BANK => 'success',
                         ])
-                        ->default(EwalletPaymentReport::TYPE_EWALLET)
+                        ->default(fn () => $this->activeTab === 'bank' ? EwalletPaymentReport::TYPE_BANK : EwalletPaymentReport::TYPE_EWALLET)
                         ->inline()
                         ->required()
                         ->columnSpanFull(),
