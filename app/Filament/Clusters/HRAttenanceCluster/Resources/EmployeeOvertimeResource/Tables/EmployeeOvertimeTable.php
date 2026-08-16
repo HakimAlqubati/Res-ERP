@@ -102,6 +102,11 @@ class EmployeeOvertimeTable
                         }))
                     // ->icon(Heroicon::Clock)
                     ->iconPosition(IconPosition::After),
+                TextColumn::make('hours_formatted')
+                    ->label('Hours Formatted')
+                    ->toggleable(isToggledHiddenByDefault: true)->alignCenter()
+                    // ->icon(Heroicon::Clock)
+                    ->iconPosition(IconPosition::After),
 
                 TextColumn::make('status')->toggleable(isToggledHiddenByDefault: false)
                     ->label('Status')

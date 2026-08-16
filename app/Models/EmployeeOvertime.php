@@ -22,6 +22,10 @@ class EmployeeOvertime extends Model implements Auditable
         StatusScope;
     protected $table = 'hr_employee_overtime';
 
+    protected $appends = [
+        'hours_formatted',
+    ];
+
     public const STATUS_PENDING = 'pending';
     public const STATUS_APPROVED = 'approved';
     public const STATUS_REJECTED = 'rejected';
@@ -170,5 +174,30 @@ class EmployeeOvertime extends Model implements Auditable
                 break;
         }
         return $type;
+    }
+
+    /**
+     * Accessor for the 'hours_formatted' attribute.
+     * Formats decimal hours (e.g. 1.50) into 'H:i' format (e.g. 1:30).
+     */
+    public function getHoursFormattedAttribute(): ?string
+    {
+        if ($this->hours === null || $this->hours === '') {
+            return null;
+        }
+
+        $hours = (float) $this->hours;
+        $isNegative = $hours < 0;
+        $absHours = abs($hours);
+
+        $h = floor($absHours);
+        $m = round(($absHours - $h) * 60);
+
+        if ($m >= 60) {
+            $h += 1;
+            $m = 0;
+        }
+
+        return ($isNegative ? '-' : '') . sprintf('%d:%02d', $h, $m);
     }
 }
