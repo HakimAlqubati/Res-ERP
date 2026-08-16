@@ -187,9 +187,11 @@ class EmployeeAttendanceRangeService
 
             $status = $day['day_status'];
 
+            
             if (in_array($status, [
                 \App\Enums\HR\Attendance\AttendanceReportStatus::Present->value,
                 \App\Enums\HR\Attendance\AttendanceReportStatus::IncompleteCheckoutOnly->value,
+                \App\Enums\HR\Attendance\AttendanceReportStatus::Leave->value,
             ])) {
                 $totalWorkDays++;
             } elseif (
