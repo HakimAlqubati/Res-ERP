@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>eWallet Verified Sheet</title>
+    <title>{{ ($isBank ?? false) ? 'Bank Verified Sheet' : 'eWallet Verified Sheet' }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <style>
@@ -109,7 +109,7 @@
                 </td>
                 <td class="center-box">
                     <div class="comp">{{ settingWithDefault('company_name', 'Company Name') }}</div>
-                    <div class="title">eWallet Verified Sheet</div>
+                    <div class="title">{{ ($isBank ?? false) ? 'Bank Verified Sheet' : 'eWallet Verified Sheet' }}</div>
                 </td>
                 <td class="logoBox" style="text-align: right;">
                     @if(setting('company_logo'))
@@ -138,7 +138,7 @@
             <thead>
                 <tr>
                     <th style="width: 6%;">#</th>
-                    <th style="width: 24%;">eWallet Account No.</th>
+                    <th style="width: 24%;">{{ ($isBank ?? false) ? 'Bank Account No.' : 'eWallet Account No.' }}</th>
                     <th style="width: 25%;">Reward Name</th>
                     <th style="width: 15%;" class="text-right">Net Salary</th>
                     <th style="width: 30%;">Reward Description</th>
