@@ -43,7 +43,7 @@ class ListEwalletPaymentReports extends ListRecords
                 ->badge(EwalletPaymentReport::query()->where('payment_type', EwalletPaymentReport::TYPE_EWALLET)->count())
                 ->badgeColor('info'),
 
-            'bank' => Tab::make(__('Bank'))
+            'bank' => Tab::make(__('Bank Transfer'))
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('payment_type', EwalletPaymentReport::TYPE_BANK))
                 ->icon('heroicon-o-building-library')
                 ->badge(EwalletPaymentReport::query()->where('payment_type', EwalletPaymentReport::TYPE_BANK)->count())
