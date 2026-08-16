@@ -259,7 +259,7 @@ class EmployeeApplicationResource extends Resource
                             TimePicker::make('request_check_time')
                                 ->default($record?->missedCheckoutRequest?->time)
                                 ->label('Time')->readOnly(),
-                            static::getSystemNotePlaceholder(),
+                            static::getSystemNotePlaceholder($record),
                         ]),
                     static::getAttachmentsPlaceholder($record),
                 ];
@@ -1065,7 +1065,7 @@ class EmployeeApplicationResource extends Resource
                     Fieldset::make()->disabled(false)->label('Request data')->columns(3)->schema([
                         DatePicker::make('request_check_date')->default($details->date)->label('Date'),
                         TimePicker::make('request_check_time')->default($details->time)->label('Time'),
-                        static::getSystemNotePlaceholder(),
+                        static::getSystemNotePlaceholder($record),
                     ]),
 
                     static::getAttachmentsPlaceholder($record),
@@ -2018,15 +2018,26 @@ class EmployeeApplicationResource extends Resource
         return $query->forBranchManager();
     }
 
-    public static function getSystemNotePlaceholder(): \Filament\Forms\Components\Placeholder
+    public static function getSystemNotePlaceholder($record = null): \Filament\Forms\Components\Placeholder
     {
         return \Filament\Forms\Components\Placeholder::make('is_auto_generated')
             ->label('System Note')
-            ->content(function ($record) {
-                $isAuto = (bool) $record?->is_auto_generated;
-                if ($isAuto) {
-                    return new \Illuminate\Support\HtmlString('<span class="text-gray-500 dark:text-gray-400 font-medium italic">System-generated: The employee selected "checkout" instead of "check-in".</span>');
+            ->content(function ($recordComponent = null) use ($record) {
+                $rec = $record ?? $recordComponent;
+                if (!$rec) {
+                    return '-';
                 }
+
+                $isAuto = (bool) ($rec->is_auto_generated ?? $rec->missedCheckoutRequest?->is_auto_generated);
+                if ($isAuto) {
+                    return new \Illuminate\Support\HtmlString('<span class="text-warning-600 dark:text-warning-400 font-medium italic">System-generated: The employee selected "checkout" instead of "check-in".</span>');
+                }
+
+                $notes = $rec->notes ?? $rec->missedCheckoutRequest?->reason;
+                if (!empty($notes)) {
+                    return $notes;
+                }
+
                 return '-';
             })
             ->columnSpanFull();
