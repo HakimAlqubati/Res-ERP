@@ -285,6 +285,7 @@
             $lastCheckoutStatus =
             $period['attendances']['checkout']['lastcheckout']['status'] ?? '-';
             $lastCheckoutStatusLabel = $period['attendances']['checkout']['lastcheckout']['status_label'] ?? '-';
+            $hasCheckout = !empty($period['attendances']['checkout']['lastcheckout']['check_time']) && $period['attendances']['checkout']['lastcheckout']['check_time'] !== '-';
             @endphp
 
             <tr>
@@ -313,7 +314,7 @@
                     {{ $period['end_time'] ?? '-' }}
                 </td>
 
-                @if ($period['final_status'] == 'absent')
+                @if ($period['final_status'] == 'absent' && empty($checkIns))
                 <td colspan="7">
                     {{ __('lang.absent') }}
                 </td>
@@ -321,7 +322,7 @@
                 <td colspan="7">
                     {{ '-' }}
                 </td>
-                @elseif ($period['final_status'] == 'weekly_leave')
+                @elseif ($period['final_status'] == 'weekly_leave' && empty($checkIns))
                 <td colspan="7">
                     {{ __('lang.weekly_leave') }}
                 </td>
@@ -339,6 +340,7 @@
                 </td>
                 @endif
 
+                @if ($hasCheckout)
                 <td>
                     {{ $period['attendances']['checkout']['lastcheckout']['check_time'] ?? '-' }}
                 </td>
@@ -353,8 +355,7 @@
                 @endif
 
                 <td>
-                    {{ $period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'] ?? '-' }}
-
+                    {{ $period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'] ?? ($period['supposed_duration'] ?? '-') }}
                 </td>
                 <td>
                     @php
@@ -362,20 +363,29 @@
                     ->filter(fn($v, $k) => is_int($k))
                     ->values()
                     ->all();
-
+                    $actualFormatted = $period['attendances']['checkout']['lastcheckout']['total_actual_druation_hourly_formatted'] ?? null;
                     @endphp
+                    @if ($actualFormatted)
                     <button
                         class="text-blue-600 font-semibold hover:text-blue-900 transition flex items-center justify-between w-full"
                         wire:click="showDetails('{{ $date }}', {{ $employee_id }}, {{ $period['period_id'] }})"
                         style="cursor:pointer; border:none; background:none; padding:0;"
                         title="Show all check-in/out details">
-                        <span class="underline">{{ $period['attendances']['checkout']['lastcheckout']['total_actual_druation_hourly_formatted'] ?? '-' }}</span>
+                        <span class="underline">{{ $actualFormatted }}</span>
                         <span class="star-badge">&#9733;</span>
                     </button>
+                    @else
+                    -
+                    @endif
                 </td>
                 <td>
                     {{ $period['attendances']['checkout']['lastcheckout']['approved_overtime'] ?? '-' }}
                 </td>
+                @else
+                <td colspan="5" class="text-center text-gray-500 font-bold">
+                    {{ __('No Checkout') }}
+                </td>
+                @endif
                 @endif
             </tr>
             @endforeach
