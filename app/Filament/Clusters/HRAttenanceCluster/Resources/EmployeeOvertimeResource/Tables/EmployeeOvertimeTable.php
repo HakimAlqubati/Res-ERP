@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeRes
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Columns\Summarizers\Summarizer;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
@@ -105,6 +106,10 @@ class EmployeeOvertimeTable
                 TextColumn::make('hours_formatted')
                     ->label('Hours Formatted')
                     ->toggleable(isToggledHiddenByDefault: true)->alignCenter()
+                    ->summarize(Summarizer::make()
+                        ->label('')
+                        ->using(fn (\Illuminate\Database\Query\Builder $query) => $query->sum('hours'))
+                        ->formatStateUsing(fn ($state) => EmployeeOvertime::formatHours($state)))
                     // ->icon(Heroicon::Clock)
                     ->iconPosition(IconPosition::After),
 

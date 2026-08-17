@@ -362,7 +362,7 @@
                     <td class="text-center">{{ $item->date }}</td>
                     <td class="text-center">{{ $item->start_time ?? '-' }}</td>
                     <td class="text-center">{{ $item->end_time ?? '-' }}</td>
-                    <td class="font-bold text-gray-900 text-center">{{ $item->hours }}</td>
+                    <td class="font-bold text-gray-900 text-center">{{ $item->hours_formatted }}</td>
                     <td class="text-center">
                         <span class="{{ $item->status_badge_class }}">{{ $item->status_label }}</span>
                     </td>
