@@ -63,10 +63,10 @@ class EmployeeOvertimeTable
                     ->sortable()->hidden()
                     ->wrap()
                     ->searchable()->toggleable(isToggledHiddenByDefault: false),
-                TextColumn::make('employee.name')
+                TextColumn::make('employee.short_name')
                     ->label('Employee')
                     ->sortable()
-                    ->wrap()
+                    // ->wrap()
                     ->searchable()->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('branch.name')
                     ->label('Branch')
@@ -95,7 +95,7 @@ class EmployeeOvertimeTable
 
                 TextColumn::make('hours')
                     ->label('Hours')
-                    ->sortable()->toggleable(isToggledHiddenByDefault: false)->alignCenter()
+                    ->sortable()->toggleable(isToggledHiddenByDefault: true)->alignCenter()
                     ->summarize(Sum::make()
                         ->label('')
                         ->query(function (\Illuminate\Database\Query\Builder $query) {
@@ -104,8 +104,8 @@ class EmployeeOvertimeTable
                     // ->icon(Heroicon::Clock)
                     ->iconPosition(IconPosition::After),
                 TextColumn::make('hours_formatted')
-                    ->label('Hours Formatted')
-                    ->toggleable(isToggledHiddenByDefault: true)->alignCenter()
+                    ->label('Hours.')
+                    ->toggleable(isToggledHiddenByDefault: false)->alignCenter()
                     ->summarize(Summarizer::make()
                         ->label('')
                         ->using(fn (\Illuminate\Database\Query\Builder $query) => $query->sum('hours'))
