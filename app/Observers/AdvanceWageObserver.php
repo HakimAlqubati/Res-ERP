@@ -34,8 +34,8 @@ class AdvanceWageObserver
             $advanceWage->created_by = \Illuminate\Support\Facades\Auth::id();
         }
 
-        // استخراج السنة والشهر تلقائياً من تاريخ الأجر المقدم
-        if ($advanceWage->date) {
+        // استخراج السنة والشهر تلقائياً من تاريخ الأجر المقدم في حال لم يتم تحديدها مسبقاً
+        if (empty($advanceWage->year) && empty($advanceWage->month) && $advanceWage->date) {
             $date = Carbon::parse($advanceWage->date);
             $advanceWage->year  = $date->year;
             $advanceWage->month = $date->month;
