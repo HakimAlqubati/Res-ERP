@@ -62,6 +62,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\FileUpload;
+use Filament\Infolists\Components\TextEntry;
 
 
 
@@ -2018,11 +2019,11 @@ class EmployeeApplicationResource extends Resource
         return $query->forBranchManager();
     }
 
-    public static function getSystemNotePlaceholder($record = null): \Filament\Forms\Components\Placeholder
+    public static function getSystemNotePlaceholder($record = null): TextEntry
     {
-        return \Filament\Forms\Components\Placeholder::make('is_auto_generated')
+        return TextEntry::make('is_auto_generated')
             ->label('System Note')
-            ->content(function ($recordComponent = null) use ($record) {
+            ->state(function ($recordComponent = null) use ($record) {
                 $rec = $record ?? $recordComponent;
                 if (!$rec) {
                     return '-';
@@ -2043,12 +2044,12 @@ class EmployeeApplicationResource extends Resource
             ->columnSpanFull();
     }
 
-    private static function getAttachmentsPlaceholder($record): \Filament\Forms\Components\Placeholder
+    private static function getAttachmentsPlaceholder($record): TextEntry
     {
-        return \Filament\Forms\Components\Placeholder::make('attachments_preview')
+        return TextEntry::make('attachments_preview')
             ->label(__('lang.attachments'))
             ->columnSpanFull()
-            ->content(function () use ($record) {
+            ->state(function () use ($record) {
                 if (!$record) {
                     return '—';
                 }
