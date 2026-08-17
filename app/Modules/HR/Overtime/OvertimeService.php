@@ -384,7 +384,9 @@ class OvertimeService
             $query->where('branch_id', $filters['branch_id']);
         }
 
-        return $query->latest('id')->paginate($filters['per_page'] ?? 15);
+        return $query->latest('id')->paginate($filters['per_page'] ?? 15)
+        ->through(fn ($item) => $item->append('hours_formatted'));
+        
     }
 
     /**
