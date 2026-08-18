@@ -78,7 +78,7 @@ class EmployeeBranchLog extends Model
                 $q->whereNull('end_at')
                     ->orWhere('end_at', '>=', $periodStart->toDateTimeString());
             })
-            ->orderBy('start_at', 'desc')
+            ->orderBy('start_at', 'asc')
             ->get()
             ->pluck('branch')
             ->filter()
