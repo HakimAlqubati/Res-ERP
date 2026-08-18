@@ -40,7 +40,7 @@ interface AttendanceReportInterface
      * @param Carbon $endDate End bounds.
      * @return Collection Indexed sequential reports (employee_id => report).
      */
-    public function getEmployeesRangeReport($employees, Carbon $startDate, Carbon $endDate, bool $excludeNoShift = false,bool $isMultiSegment = false): Collection;
+    public function getEmployeesRangeReport($employees, Carbon $startDate, Carbon $endDate, bool $excludeNoShift = false): Collection;
 
     public function getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
 }

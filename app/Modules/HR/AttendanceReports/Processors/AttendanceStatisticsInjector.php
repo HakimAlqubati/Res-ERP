@@ -121,12 +121,12 @@ class AttendanceStatisticsInjector
      * @param Employee $employee The targeted employee to evaluate exemption rules.
      * @return void
      */
-    public function inject(Collection $report, Employee $employee, bool $isMultiSegment = false): void
+    public function inject(Collection $report, Employee $employee): void
     {
         $stats = HelperFunctions::calculateAttendanceStats($report, $employee);
 
         // 1. حساب الأيام المستحقة مسبقاً والباقي إذا كان التقرير يبدأ بعد يوم 1 في الشهر
-        [$alreadyEarned, $prevRemainder] = $this->calculatePreviousEarnedAndRemainder($report, $employee,$isMultiSegment);
+        [$alreadyEarned, $prevRemainder] = $this->calculatePreviousEarnedAndRemainder($report, $employee);
 
         // Restore legacy: Inject the Golden Equation weekly leave calculation
         $calculator = new \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator();
@@ -140,12 +140,11 @@ class AttendanceStatisticsInjector
                 'already_earned'        => $alreadyEarned,
                 'prev_remainder'        => $prevRemainder,
                 'max_monthly_leave'     => $employee->max_weekly_leave_days, // null = استخدم الافتراضي (4)
-                'is_multi_segment'      => $isMultiSegment,
             ]
         );
 
         // 2. إضافة تفصيل الفروع (branches_breakdown) إذا كان التقرير يشمل أكثر من فرع
-        $breakdown = $this->buildBranchesBreakdown($report, $employee, $calculator, $alreadyEarned, $prevRemainder, $isMultiSegment);
+        $breakdown = $this->buildBranchesBreakdown($report, $employee, $calculator, $alreadyEarned, $prevRemainder);
          if ($breakdown) {
             $stats['weekly_leave_calculation']['branches_breakdown'] = $breakdown;
         }
@@ -212,7 +211,7 @@ class AttendanceStatisticsInjector
     /**
      * @return array [alreadyEarned, prevRemainder]
      */
-    private function calculatePreviousEarnedAndRemainder(Collection $report, Employee $employee, bool $isMultiSegment = false): array
+    private function calculatePreviousEarnedAndRemainder(Collection $report, Employee $employee): array
     {
         $alreadyEarned = 0;
         $prevRemainder = 0;
@@ -227,7 +226,7 @@ class AttendanceStatisticsInjector
                 $previousEnd   = $startDate->copy()->subDay();
 
                 $reportManager = app(\App\Modules\HR\AttendanceReports\Contracts\AttendanceReportInterface::class);
-                $previousReport = $reportManager->getEmployeesRangeReport(collect([$employee]), $previousStart, $previousEnd, true,$isMultiSegment)->first();
+                $previousReport = $reportManager->getEmployeesRangeReport(collect([$employee]), $previousStart, $previousEnd, true)->first();
 
                 if ($previousReport) {
                     $prevCalc         = $previousReport['statistics']['weekly_leave_calculation'] ?? [];
@@ -245,7 +244,7 @@ class AttendanceStatisticsInjector
         return [$alreadyEarned, $prevRemainder];
     }
 
-    private function buildBranchesBreakdown(Collection $report, Employee $employee, \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator $calculator, int $alreadyEarned, int $prevRemainder ,bool $isMultiSegment = false): ?array
+    private function buildBranchesBreakdown(Collection $report, Employee $employee, \App\Modules\HR\Overtime\WeeklyLeaveCalculator\WeeklyLeaveCalculator $calculator, int $alreadyEarned, int $prevRemainder): ?array
     {
         $dates = $report->keys()->filter(fn($key) => preg_match('/^\d{4}-\d{2}-\d{2}$/', $key))->sort()->values();
         $startDateStr = $dates->first();
@@ -287,7 +286,6 @@ class AttendanceStatisticsInjector
                         'already_earned'        => $cumulativeAlreadyEarned,
                         'prev_remainder'        => $cumulativeRemainder,
                         'max_monthly_leave'     => $employee->max_weekly_leave_days, // null = استخدم الافتراضي (4)
-                        'is_multi_segment'      => $isMultiSegment,
                     ]
                 );
                 

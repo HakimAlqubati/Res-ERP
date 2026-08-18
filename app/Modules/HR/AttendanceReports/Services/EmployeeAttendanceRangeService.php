@@ -44,7 +44,7 @@ class EmployeeAttendanceRangeService
      * @param Carbon $endDate The limits mapping the ending of the evaluation bounds.
      * @return Collection The sequential collection of evaluated day reports and inclusive metadata.
      */
-    public function fetchRange(Employee $employee, Carbon $startDate, Carbon $endDate,bool $isMultiSegment = false): Collection
+    public function fetchRange(Employee $employee, Carbon $startDate, Carbon $endDate): Collection
     {
         $startDateStr = $startDate->toDateString();
         $endDateStr   = $endDate->toDateString();
@@ -52,7 +52,7 @@ class EmployeeAttendanceRangeService
 
         $data = $this->fetcher->fetchForSingleEmployeeRange($empId, $startDateStr, $endDateStr);
 
-        return $this->processRangeWithData($employee, $startDate, $endDate, $data, $isMultiSegment);
+        return $this->processRangeWithData($employee, $startDate, $endDate, $data);
     }
 
     /**
@@ -65,7 +65,7 @@ class EmployeeAttendanceRangeService
      * @param array $data Pre-fetched collections (histories, attendances, etc.).
      * @return Collection Processed report.
      */
-    public function processRangeWithData(Employee $employee, Carbon $startDate, Carbon $endDate, array $data, bool $isMultiSegment = false): Collection
+    public function processRangeWithData(Employee $employee, Carbon $startDate, Carbon $endDate, array $data): Collection
     {
         extract($data);
 
@@ -154,7 +154,7 @@ class EmployeeAttendanceRangeService
             $this->statsInjector->subtractTotalDurationSeconds($deductionSeconds);
         }
 
-        $this->statsInjector->inject($report, $employee, $isMultiSegment);
+        $this->statsInjector->inject($report, $employee);
 
         $isPreviousMonth = $startDate->format('Y-m') < now()->format('Y-m');
         if ($isPreviousMonth && $employee->has_auto_weekly_leave) {
@@ -187,11 +187,9 @@ class EmployeeAttendanceRangeService
 
             $status = $day['day_status'];
 
-            
             if (in_array($status, [
                 \App\Enums\HR\Attendance\AttendanceReportStatus::Present->value,
                 \App\Enums\HR\Attendance\AttendanceReportStatus::IncompleteCheckoutOnly->value,
-                \App\Enums\HR\Attendance\AttendanceReportStatus::Leave->value,
             ])) {
                 $totalWorkDays++;
             } elseif (
