@@ -67,10 +67,17 @@ class ProductForm
                                 }),
                             TextInput::make('code')
                                 ->required(fn() => \App\Models\Setting::getSetting('product_code_generation_method', \App\Enums\ProductCodeGenerationMethod::AUTO->value) === \App\Enums\ProductCodeGenerationMethod::MANUAL->value)
+                                ->maxLength(function ($get) {
+                                    if (\App\Models\Setting::getSetting('product_code_generation_method', \App\Enums\ProductCodeGenerationMethod::AUTO->value) === \App\Enums\ProductCodeGenerationMethod::AUTO->value) {
+                                        return null;
+                                    }
+
+                                    return (int) \App\Models\Setting::getSetting('product_code_length', 3);
+                                })
                                 ->unique(ignoreRecord: true)
                                 ->label(__('lang.code'))
                                 ->readOnly(fn() => \App\Models\Setting::getSetting('product_code_generation_method', \App\Enums\ProductCodeGenerationMethod::AUTO->value) === \App\Enums\ProductCodeGenerationMethod::AUTO->value)
-                                ->helperText(__('lang.product_code_helper'))
+                                ->helperText(fn() => \App\Models\Setting::getSetting('product_code_generation_method', \App\Enums\ProductCodeGenerationMethod::AUTO->value) === \App\Enums\ProductCodeGenerationMethod::AUTO->value ? __('lang.product_code_helper') : null)
                                 ->placeholder(fn() => \App\Models\Setting::getSetting('product_code_generation_method', \App\Enums\ProductCodeGenerationMethod::AUTO->value) === \App\Enums\ProductCodeGenerationMethod::AUTO->value ? 'Code generates automatically' : 'Enter code manually')
                                 ->disabled(fn() => \App\Models\Setting::getSetting('product_code_generation_method', \App\Enums\ProductCodeGenerationMethod::AUTO->value) === \App\Enums\ProductCodeGenerationMethod::AUTO->value)
                                 ->dehydrated()

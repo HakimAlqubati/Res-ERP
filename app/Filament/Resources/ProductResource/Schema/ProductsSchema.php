@@ -89,7 +89,7 @@ class ProductsSchema
                                             ->unique(ignoreRecord: true)
                                             ->label(__('lang.code'))
                                             ->readOnly(fn() => \App\Models\Setting::getSetting('product_code_generation_method', \App\Enums\ProductCodeGenerationMethod::AUTO->value) === \App\Enums\ProductCodeGenerationMethod::AUTO->value)
-                                            ->helperText(__('lang.product_code_helper'))
+                                            ->helperText(fn() => \App\Models\Setting::getSetting('product_code_generation_method', \App\Enums\ProductCodeGenerationMethod::AUTO->value) === \App\Enums\ProductCodeGenerationMethod::AUTO->value ? __('lang.product_code_helper') : null)
                                             ->placeholder(fn() => \App\Models\Setting::getSetting('product_code_generation_method', \App\Enums\ProductCodeGenerationMethod::AUTO->value) === \App\Enums\ProductCodeGenerationMethod::AUTO->value ? 'Code generates automatically' : 'Enter code manually')
                                             ->disabled(fn() => \App\Models\Setting::getSetting('product_code_generation_method', \App\Enums\ProductCodeGenerationMethod::AUTO->value) === \App\Enums\ProductCodeGenerationMethod::AUTO->value)
                                             ->dehydrated()
