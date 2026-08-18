@@ -71,10 +71,10 @@ class EmployeeBranchLog extends Model
     {
         return static::with('branch')
             ->where('employee_id', $employeeId)
-            ->where('start_at', '<=', $periodEnd->toDateTimeString())
+            ->where('start_at', '<=', $periodEnd->copy()->endOfDay()->toDateTimeString())
             ->where(function ($q) use ($periodStart) {
                 $q->whereNull('end_at')
-                    ->orWhere('end_at', '>=', $periodStart->toDateTimeString());
+                    ->orWhere('end_at', '>=', $periodStart->copy()->startOfDay()->toDateString());
             })
             ->orderByDesc('start_at')
             ->orderByDesc('id')

@@ -156,18 +156,13 @@ class Payroll extends Model
     }
 
     /**
-     * جلب اسم الفرع للفترة الحالية للراتب من سجلات الفروع EmployeeBranchLog.
+     * جلب اسم الفرع للفترة الحالية للراتب من آخر سجل فروع EmployeeBranchLog لذاك الشهر.
      */
     public function getBranchNameForPeriod(): string
     {
-        if ($this->employee_id) {
-            $periodStart = $this->period_start_date
-                ? Carbon::parse($this->period_start_date)->startOfDay()
-                : Carbon::create($this->year, $this->month, 1)->startOfMonth();
-
-            $periodEnd = $this->period_end_date
-                ? Carbon::parse($this->period_end_date)->endOfDay()
-                : Carbon::create($this->year, $this->month, 1)->endOfMonth();
+        if ($this->employee_id && $this->year && $this->month) {
+            $periodStart = Carbon::create($this->year, $this->month, 1)->startOfMonth();
+            $periodEnd   = Carbon::create($this->year, $this->month, 1)->endOfMonth();
 
             $branchName = EmployeeBranchLog::getBranchNameForPeriod(
                 (int) $this->employee_id,
@@ -199,14 +194,9 @@ class Payroll extends Model
     protected function periodBranch(): Attribute
     {
         return Attribute::get(function () {
-            if ($this->employee_id) {
-                $periodStart = $this->period_start_date
-                    ? Carbon::parse($this->period_start_date)->startOfDay()
-                    : Carbon::create($this->year, $this->month, 1)->startOfMonth();
-
-                $periodEnd = $this->period_end_date
-                    ? Carbon::parse($this->period_end_date)->endOfDay()
-                    : Carbon::create($this->year, $this->month, 1)->endOfMonth();
+            if ($this->employee_id && $this->year && $this->month) {
+                $periodStart = Carbon::create($this->year, $this->month, 1)->startOfMonth();
+                $periodEnd   = Carbon::create($this->year, $this->month, 1)->endOfMonth();
 
                 $branch = EmployeeBranchLog::getLastBranchForPeriod(
                     (int) $this->employee_id,
