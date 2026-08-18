@@ -70,15 +70,15 @@ class ProductForm
                             TextInput::make('code')
                                 ->required(fn () => ProductCodeGenerationMethod::isManual())
                                 ->maxLength(fn () => ProductCodeGenerationMethod::isAuto() ? null : (int) Setting::getSetting('product_code_length', 3))
-                                ->rules(fn () => ProductCodeGenerationMethod::isManual() ? ['regex:/^[A-Z0-9][A-Z0-9-]*$/'] : [])
+                                ->rules(fn () => ProductCodeGenerationMethod::isManual() ? ['regex:/^[A-Z0-9]+(-[A-Z0-9]+)*$/'] : [])
                                 ->validationMessages([
                                     'regex' => __('lang.product_code_invalid_format'),
                                 ])
                                 ->extraInputAttributes(fn () => ProductCodeGenerationMethod::isManual() ? [
                                     'style' => 'text-transform: uppercase;',
-                                    'oninput' => "this.value = this.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').replace(/^-+/, '');",
+                                    'oninput' => "this.value = this.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').replace(/^-+/, '').replace(/-{2,}/g, '-');",
                                 ] : [])
-                                ->dehydrateStateUsing(fn ($state) => $state ? ltrim(preg_replace('/[^A-Z0-9-]/', '', strtoupper($state)), '-') : $state)
+                                ->dehydrateStateUsing(fn ($state) => $state ? trim(preg_replace('/-+/', '-', preg_replace('/[^A-Z0-9-]/', '', strtoupper($state))), '-') : $state)
                                 ->unique(ignoreRecord: true)
                                 ->label(__('lang.code'))
                                 ->readOnly(fn () => ProductCodeGenerationMethod::isAuto())
