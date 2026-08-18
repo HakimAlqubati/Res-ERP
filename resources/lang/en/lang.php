@@ -199,6 +199,8 @@ return [
     'central_kitchen'                             => 'Manufacturing Branch',
     'hq'                                          => 'Head Office',
     'product_code_helper'                         => 'This code is automatically generated based on the selected category. It ensures each product has a unique identifier like FOO001, FOO002, etc.',
+    'product_code_manual_helper'                  => 'Only uppercase English letters, numbers, and hyphens (-) are allowed. Cannot start with a hyphen or contain spaces.',
+    'product_code_invalid_format'                 => 'The product code must start with an uppercase letter or number, and can only contain uppercase English letters, numbers, and hyphens without spaces.',
     'status_active'                               => 'Active',
     'status_unactive'                             => 'Unactive',
     'waste_stock_percentage'                      => 'Waste %',

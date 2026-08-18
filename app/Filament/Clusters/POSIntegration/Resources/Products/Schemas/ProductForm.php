@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\POSIntegration\Resources\Products\Schemas;
 
+use App\Enums\ProductCodeGenerationMethod;
 use App\Filament\Resources\ProductResource\Support\ProductResourceActions as PRA;
 use App\Models\Category;
 use App\Models\InventoryTransaction;
@@ -9,6 +10,7 @@ use App\Models\OrderDetails;
 use App\Models\Product;
 use App\Models\ProductItem;
 use App\Models\PurchaseInvoiceDetail;
+use App\Models\Setting;
 use App\Models\StockIssueOrderDetail;
 use App\Models\Unit;
 use App\Models\UnitPrice;
@@ -61,27 +63,33 @@ class ProductForm
                                     return Category::query()->forPos()->pluck('name', 'id');
                                 })
                                 ->afterStateUpdated(function ($set, $state) {
-                                    if (\App\Models\Setting::getSetting('product_code_generation_method', \App\Enums\ProductCodeGenerationMethod::AUTO->value) === \App\Enums\ProductCodeGenerationMethod::AUTO->value) {
+                                    if (ProductCodeGenerationMethod::isAuto()) {
                                         $set('code', Product::generateProductCode($state));
                                     }
                                 }),
                             TextInput::make('code')
-                                ->required(fn() => \App\Models\Setting::getSetting('product_code_generation_method', \App\Enums\ProductCodeGenerationMethod::AUTO->value) === \App\Enums\ProductCodeGenerationMethod::MANUAL->value)
-                                ->maxLength(function ($get) {
-                                    if (\App\Models\Setting::getSetting('product_code_generation_method', \App\Enums\ProductCodeGenerationMethod::AUTO->value) === \App\Enums\ProductCodeGenerationMethod::AUTO->value) {
-                                        return null;
-                                    }
-
-                                    return (int) \App\Models\Setting::getSetting('product_code_length', 3);
-                                })
+                                ->required(fn () => ProductCodeGenerationMethod::isManual())
+                                ->maxLength(fn () => ProductCodeGenerationMethod::isAuto() ? null : (int) Setting::getSetting('product_code_length', 3))
+                                ->rules(fn () => ProductCodeGenerationMethod::isManual() ? ['regex:/^[A-Z0-9][A-Z0-9-]*$/'] : [])
+                                ->validationMessages([
+                                    'regex' => __('lang.product_code_invalid_format'),
+                                ])
+                                ->extraInputAttributes(fn () => ProductCodeGenerationMethod::isManual() ? [
+                                    'style' => 'text-transform: uppercase;',
+                                    'oninput' => "this.value = this.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').replace(/^-+/, '');",
+                                ] : [])
+                                ->dehydrateStateUsing(fn ($state) => $state ? ltrim(preg_replace('/[^A-Z0-9-]/', '', strtoupper($state)), '-') : $state)
                                 ->unique(ignoreRecord: true)
                                 ->label(__('lang.code'))
-                                ->readOnly(fn() => \App\Models\Setting::getSetting('product_code_generation_method', \App\Enums\ProductCodeGenerationMethod::AUTO->value) === \App\Enums\ProductCodeGenerationMethod::AUTO->value)
-                                ->helperText(fn() => \App\Models\Setting::getSetting('product_code_generation_method', \App\Enums\ProductCodeGenerationMethod::AUTO->value) === \App\Enums\ProductCodeGenerationMethod::AUTO->value ? __('lang.product_code_helper') : null)
-                                ->placeholder(fn() => \App\Models\Setting::getSetting('product_code_generation_method', \App\Enums\ProductCodeGenerationMethod::AUTO->value) === \App\Enums\ProductCodeGenerationMethod::AUTO->value ? 'Code generates automatically' : 'Enter code manually')
-                                ->disabled(fn() => \App\Models\Setting::getSetting('product_code_generation_method', \App\Enums\ProductCodeGenerationMethod::AUTO->value) === \App\Enums\ProductCodeGenerationMethod::AUTO->value)
+                                ->readOnly(fn () => ProductCodeGenerationMethod::isAuto())
+                                ->helperText(fn () => ProductCodeGenerationMethod::isAuto()
+                                    ? __('lang.product_code_helper')
+                                    : __('lang.product_code_manual_helper')
+                                )
+                                ->placeholder(fn () => ProductCodeGenerationMethod::isAuto() ? 'Code generates automatically' : 'Enter code manually')
+                                ->disabled(fn () => ProductCodeGenerationMethod::isAuto())
                                 ->dehydrated()
-                                ->default(fn($get) => \App\Models\Setting::getSetting('product_code_generation_method', \App\Enums\ProductCodeGenerationMethod::AUTO->value) === \App\Enums\ProductCodeGenerationMethod::AUTO->value ? Product::generateProductCode($get('category_id')) : null),
+                                ->default(fn ($get) => ProductCodeGenerationMethod::isAuto() ? Product::generateProductCode($get('category_id')) : null),
                             Grid::make()->columns(4)->columnSpanFull()->schema([
                                 TextInput::make('sku')
                                     ->label('SKU')

@@ -163,7 +163,7 @@ class StepUnmanufacturingUnits
                             })->minValue(0),
                         TextInput::make('package_size')
 
-                            ->numeric()->default(0)->required()->minValue(0)
+                            ->numeric()->default(0)->required()->minValue(0.00000001)
                             // ->maxLength(4)
                             ->label(__('lang.package_size'))
                             ->live(onBlur: true)
