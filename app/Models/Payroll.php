@@ -194,7 +194,7 @@ class Payroll extends Model
     }
 
     /**
-     * Accessor for period branch model.
+     * Accessor for period branch model (آخر فرع للموظف في ذاك الشهر/الفترة).
      */
     protected function periodBranch(): Attribute
     {
@@ -208,14 +208,14 @@ class Payroll extends Model
                     ? Carbon::parse($this->period_end_date)->endOfDay()
                     : Carbon::create($this->year, $this->month, 1)->endOfMonth();
 
-                $branches = EmployeeBranchLog::getBranchesForPeriod(
+                $branch = EmployeeBranchLog::getLastBranchForPeriod(
                     (int) $this->employee_id,
                     $periodStart,
                     $periodEnd
                 );
 
-                if ($branches->isNotEmpty()) {
-                    return $branches->first();
+                if ($branch) {
+                    return $branch;
                 }
             }
 
