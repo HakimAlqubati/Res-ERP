@@ -119,7 +119,7 @@ class PayrollsRelationManager extends RelationManager
                             return $record->branch?->name;
                         }
 
-                        return $record->employee?->branch?->name;
+                        return $record->period_branch_name ?? $record->employee?->branch?->name;
                     })
                     ->visible(fn () => $this->isShowingBranchSplits())
                     // ->toggleable()

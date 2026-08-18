@@ -93,7 +93,7 @@ class PayrollsExport implements FromView
             $row = [
                 'employee_no'            => $payroll->employee?->employee_no,
                 'employee_name'          => $payroll->employee?->name,
-                'branch_name'            => $payroll->employee?->branch?->name,
+                'branch_name'            => $payroll->period_branch_name ?? '-',
                 'base_salary'            => $group['base_salary'],
                 'net_salary'             => $group['net_salary'],
                 'employer_contribution'  => 0,
