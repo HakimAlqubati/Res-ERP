@@ -65,6 +65,42 @@ class EmployeeBranchLog extends Model
     }
 
     /**
+     * جلب قائمة الفروع التي ارتبط بها الموظف خلال فترة زمنية محددة.
+     *
+     * @return Collection<int, Branch>
+     */
+    public static function getBranchesForPeriod(int $employeeId, Carbon $periodStart, Carbon $periodEnd): Collection
+    {
+        return static::with('branch')
+            ->where('employee_id', $employeeId)
+            ->where('start_at', '<=', $periodEnd->toDateTimeString())
+            ->where(function ($q) use ($periodStart) {
+                $q->whereNull('end_at')
+                    ->orWhere('end_at', '>=', $periodStart->toDateTimeString());
+            })
+            ->orderBy('start_at')
+            ->get()
+            ->pluck('branch')
+            ->filter()
+            ->unique('id')
+            ->values();
+    }
+
+    /**
+     * جلب اسم الفرع (أو الفروع مدمجة) للموظف خلال فترة زمنية محددة.
+     */
+    public static function getBranchNameForPeriod(int $employeeId, Carbon $periodStart, Carbon $periodEnd): ?string
+    {
+        $branches = static::getBranchesForPeriod($employeeId, $periodStart, $periodEnd);
+
+        if ($branches->isNotEmpty()) {
+            return $branches->pluck('name')->filter()->implode(' / ');
+        }
+
+        return null;
+    }
+
+    /**
      * حساب عدد الأيام المتقاطعة بين هذا السجل وفترة الراتب.
      */
     public function daysOverlapWith(Carbon $periodStart, Carbon $periodEnd): int

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\Scopes\BranchScope;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -151,6 +152,74 @@ class Payroll extends Model
             $result = $additions - $deductions;
             $result = $result >= 0 ? $result : 0;
             return $result;
+        });
+    }
+
+    /**
+     * جلب اسم الفرع للفترة الحالية للراتب من سجلات الفروع EmployeeBranchLog.
+     */
+    public function getBranchNameForPeriod(): string
+    {
+        if ($this->employee_id) {
+            $periodStart = $this->period_start_date
+                ? Carbon::parse($this->period_start_date)->startOfDay()
+                : Carbon::create($this->year, $this->month, 1)->startOfMonth();
+
+            $periodEnd = $this->period_end_date
+                ? Carbon::parse($this->period_end_date)->endOfDay()
+                : Carbon::create($this->year, $this->month, 1)->endOfMonth();
+
+            $branchName = EmployeeBranchLog::getBranchNameForPeriod(
+                (int) $this->employee_id,
+                $periodStart,
+                $periodEnd
+            );
+
+            if (!empty($branchName)) {
+                return $branchName;
+            }
+        }
+
+        return $this->branch?->name
+            ?? $this->employee?->branch?->name
+            ?? '-';
+    }
+
+    /**
+     * Accessor for period branch name.
+     */
+    protected function periodBranchName(): Attribute
+    {
+        return Attribute::get(fn () => $this->getBranchNameForPeriod());
+    }
+
+    /**
+     * Accessor for period branch model.
+     */
+    protected function periodBranch(): Attribute
+    {
+        return Attribute::get(function () {
+            if ($this->employee_id) {
+                $periodStart = $this->period_start_date
+                    ? Carbon::parse($this->period_start_date)->startOfDay()
+                    : Carbon::create($this->year, $this->month, 1)->startOfMonth();
+
+                $periodEnd = $this->period_end_date
+                    ? Carbon::parse($this->period_end_date)->endOfDay()
+                    : Carbon::create($this->year, $this->month, 1)->endOfMonth();
+
+                $branches = EmployeeBranchLog::getBranchesForPeriod(
+                    (int) $this->employee_id,
+                    $periodStart,
+                    $periodEnd
+                );
+
+                if ($branches->isNotEmpty()) {
+                    return $branches->first();
+                }
+            }
+
+            return $this->branch ?? $this->employee?->branch;
         });
     }
 }
