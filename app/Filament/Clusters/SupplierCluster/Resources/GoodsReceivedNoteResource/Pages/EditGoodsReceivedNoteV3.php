@@ -170,6 +170,7 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
                     'purchase_invoice_id' => $invoice->id,
                     'approved_by' => auth()->id(),
                     'approve_date' => now(),
+                    'notes' => $data['description'],
                 ]);
 
                 foreach ($data['units'] as $item) {
