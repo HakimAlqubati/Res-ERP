@@ -190,7 +190,32 @@ class StockTransferOrderResource extends Resource
                                             ])
                                             ->toArray();
                                     })
-                                    ->getOptionLabelUsing(fn ($value): ?string => Product::find($value)?->code.' - '.Product::find($value)?->name),
+                                    ->getOptionLabelUsing(fn ($value): ?string => Product::find($value)?->code.' - '.Product::find($value)?->name)
+                                    ->reactive()
+                                    ->afterStateUpdated(function (Set $set, $state, $get) {
+                                        if (! $state) {
+                                            $set('unit_id', null);
+                                            $set('package_size', 1);
+                                            $set('remaining_quantity', null);
+
+                                            return;
+                                        }
+
+                                        $product = Product::find($state);
+                                        $firstUnitPrice = $product?->supplyOutUnitPrices->first();
+                                        $unitId = $firstUnitPrice?->unit_id;
+                                        $fromStoreId = $get('../../from_store_id');
+
+                                        $set('unit_id', $unitId);
+                                        $set('package_size', $firstUnitPrice?->package_size ?? 1);
+
+                                        if ($unitId && $fromStoreId) {
+                                            $remainingQty = MultiProductsInventoryService::getRemainingQty($state, $unitId, $fromStoreId);
+                                            $set('remaining_quantity', $remainingQty);
+                                        } else {
+                                            $set('remaining_quantity', null);
+                                        }
+                                    }),
 
                                 Select::make('unit_id')->label('Unit')
                                     ->options(function (callable $get) {

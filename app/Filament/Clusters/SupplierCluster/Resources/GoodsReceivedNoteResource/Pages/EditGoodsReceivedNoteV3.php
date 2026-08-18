@@ -70,7 +70,7 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
 
                 TextInput::make('invoice_no')
                     ->label('Invoice No')->columnSpan(2)
-                    ->required()
+                    // ->required()
                     ->statePath('formData.invoice_no'),
 
                 DatePicker::make('date')
