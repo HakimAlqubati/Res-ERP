@@ -80,15 +80,16 @@ class EditStockInventory extends EditRecord
                             ->send();
                     }
                 })
-                // ->hidden()
-                ,
-                   Action::make('export_excel')
+            // ->hidden()
+            ,
+            Action::make('export_excel')
                 ->label('Export to Excel')
                 ->icon('heroicon-o-document-arrow-down')
                 ->color('success')
                 ->action(function () {
                     $record = $this->getRecord();
-                    $filename = 'stock_inventory_details_' . $record->id . '_' . now()->format('Y_m_d_H_i_s') . '.xlsx';
+                    $filename = 'stock_inventory_details_'.$record->id.'_'.now()->format('Y_m_d_H_i_s').'.xlsx';
+
                     return Excel::download(new StockInventoryDetailsExport($record), $filename);
                 }),
         ];
@@ -108,8 +109,8 @@ class EditStockInventory extends EditRecord
     {
         return [
             $this->getSaveFormAction()
-                ->disabled(fn () => (!(isSystemManager() || isSuperAdmin()) || $this->record->finalized))
-                ->hidden(fn () => (!(isSystemManager() || isSuperAdmin()) || $this->record->finalized)),
+                ->disabled(fn () => (! (isSystemManager() || isSuperAdmin()) || $this->record->finalized))
+                ->hidden(fn () => (! (isSystemManager() || isSuperAdmin()) || $this->record->finalized)),
             $this->getCancelFormAction()->hidden(),
         ];
     }
