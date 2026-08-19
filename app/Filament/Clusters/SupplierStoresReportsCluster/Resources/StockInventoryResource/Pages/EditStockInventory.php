@@ -103,7 +103,7 @@ class EditStockInventory extends EditRecord
                             ->unique()
                             ->implode(', ');
 
-                        throw new \Exception("Cannot rollback inventory: stock added during this inventory has already been consumed by subsequent transactions for: [{$productNames}].");
+                        throw new \Exception("Cannot rollback: Added stock has already been used for ({$productNames}).");
                     }
                 }
 
