@@ -268,6 +268,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
             'employee_id'                 => $employee->id,
             'employee_no'                 => $employee->employee_no,
             'name'                        => $employee->name,
+            'branch_id'                   => (int) ($log->branch_id ?? 0),
             'working_days'                => $result['working_days'],
             'working_hours'               => $dailyHours,
             'monthly_salary'              => $monthlySalary,
@@ -291,6 +292,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
             'penalties'                   => $result['penalties'] ?? [],
             'daily_rate_method'           => $result['daily_rate_method'] ?? '',
             'data' => [
+                'branch_id'         => (int) ($log->branch_id ?? 0),
                 'base_salary'       => $result['base_salary'],
                 'gross_salary'      => $result['gross_salary'],
                 'net_salary'        => $netSalary,
