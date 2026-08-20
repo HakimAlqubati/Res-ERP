@@ -30,4 +30,9 @@ class EditProduct extends EditRecord
         }
         return $data;
     }
+
+    protected function afterSave(): void
+    {
+        \App\Filament\Resources\ProductResource\Support\ProductResourceActions::recalculateManufacturingProductUnitPrices($this->record);
+    }
 }

@@ -20,4 +20,8 @@ class CreateProduct extends CreateRecord
         return $this->getResource()::getUrl('index');
     }
 
+    protected function afterCreate(): void
+    {
+        \App\Filament\Resources\ProductResource\Support\ProductResourceActions::recalculateManufacturingProductUnitPrices($this->record);
+    }
 }
