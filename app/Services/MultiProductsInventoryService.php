@@ -89,9 +89,6 @@ class MultiProductsInventoryService
         if ($this->isActive) {
             $query->where('active', true);
         }
-        if(isHakim()){
-            $query->where('active',false);
-        }
 
         if ($this->categoryId) {
             $query->where('category_id', $this->categoryId);
