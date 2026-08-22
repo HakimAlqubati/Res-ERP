@@ -9,6 +9,7 @@ use App\Filament\Resources\ReturnedOrderResource\Pages\EditReturnedOrder;
 use App\Filament\Resources\ReturnedOrderResource\Pages\ListReturnedOrders;
 use App\Filament\Resources\ReturnedOrderResource\Pages\ViewReturnedOrder;
 use App\Filament\Resources\ReturnedOrderResource\Schema\ReturnedOrderForm;
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\Branch;
 use App\Models\InventoryTransaction;
 use App\Models\Order;
@@ -18,17 +19,25 @@ use Exception;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\RestoreBulkAction;
 use Filament\Facades\Filament;
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Pages\Page;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -54,8 +63,11 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
     {
         return $table->striped()->defaultSort('id', 'desc')->deferFilters(false)
             ->columns([
+                SoftDeleteColumn::make(),
                 TextColumn::make('id')->label('#')->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('order.id')->label('Original Order ID')->sortable()->alignCenter(true)->toggleable(),
+                TextColumn::make('order.id')
+                ->label('Order ID')
+                ->sortable()->alignCenter(true)->toggleable(),
                 TextColumn::make('branch.name')->label('Branch')->sortable()->toggleable(),
                 TextColumn::make('store.name')->label('Store')->sortable()->toggleable(),
                 TextColumn::make('returned_date')->label('Returned Date')->date()->toggleable(),
@@ -70,17 +82,24 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
                     })
                     ->toggleable()
                     ->alignCenter(true),
-                TextColumn::make('creator.name')->label('Created By')->toggleable(),
-                TextColumn::make('itemsCount')->label('Items Count')->toggleable()->alignCenter(true),
+                TextColumn::make('creator.short_name')->label('Created By')->toggleable(),
+                TextColumn::make('itemsCount')->label('Items')->toggleable()->alignCenter(true),
                 // TextColumn::make('totalAmount')->label('Total Amount')->money('MYR')->toggleable()->alignCenter(true),
             ])
             ->filters([
-                //
-            ])
+                TrashedFilter::make(),
+            ],FiltersLayout::Modal)
+            ->filtersFormColumns(4)
+            
+                
+            ->deferFilters(true)
             ->recordActions([
                 ActionGroup::make([
 
                 EditAction::make()->visible(fn ($record): bool => $record->status === ReturnedOrder::STATUS_CREATED),
+                DeleteAction::make()->hidden(fn ($record) => $record->status === ReturnedOrder::STATUS_APPROVED),
+                ForceDeleteAction::make()->hidden(fn ($record) => $record->status === ReturnedOrder::STATUS_APPROVED),
+                RestoreAction::make(),
                 Action::make('Approve')->button()
                     ->label('Approve')
                     ->color('success')
@@ -193,6 +212,8 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -237,6 +258,15 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
         return false;
     }
 
+    public static function canDelete(Model $record): bool
+    {
+        if ($record->status === ReturnedOrder::STATUS_APPROVED) {
+            return false;
+        }
+
+        return true;
+    }
+
     public static function getOrderSearchQuery(string $search)
     {
         return Order::where('id', 'like', "%{$search}%")
@@ -248,7 +278,9 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = static::getModel()::query()->whereHas('order');
+        $query = static::getModel()::query()->whereHas('order')->withoutGlobalScopes([
+            SoftDeletingScope::class,
+        ]);
 
         if (
             static::isScopedToTenant() &&
@@ -262,6 +294,7 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
 
     public static function canViewAny(): bool
     {
+        
         if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) {
             return true;
         }

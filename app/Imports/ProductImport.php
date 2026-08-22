@@ -65,7 +65,9 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
                     'id' => $productId,
                     'name' => $productName,
                     'code_old_system' => $codeOldSystem,
-                    'code' =>  Product::generateProductCode($category->id),
+                    'code' => \App\Models\Setting::getSetting('product_code_generation_method', \App\Enums\ProductCodeGenerationMethod::AUTO->value) === \App\Enums\ProductCodeGenerationMethod::AUTO->value 
+                        ? Product::generateProductCode($category->id) 
+                        : (trim($row['code'] ?? '') ?: null),
                     'description' => '',
                     'active' => true,
                     'category_id' => $category->id,

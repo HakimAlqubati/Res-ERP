@@ -229,7 +229,7 @@
                 @else
                 <th class="internal_cell">{{ __('lang.status') }}</th>
                 @endif
-                <th class="internal_cell">{{ __('lang.supposed') }}</th>
+                <th class="internal_cell">{{ 'Scheduled' }}</th>
                 <th class="internal_cell">{{ __('lang.total_hours_worked') }}</th>
                 <th class="internal_cell">{{ __('lang.approved') }}</th>
             </tr>

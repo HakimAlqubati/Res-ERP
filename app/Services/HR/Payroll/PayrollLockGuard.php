@@ -54,12 +54,21 @@ final class PayrollLockGuard
             $targetDate = $appData['missedCheckinRequest']['date']
                 ?? $appData['missed_checkin_request']['date'] ?? null;
         } elseif ($applicationTypeId == \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST) {
-            $targetDate = $appData['missedCheckoutRequest']['date']
+            $targetDate = $appData['missedCheckoutRequest']['detail_date']
+                ?? $appData['missed_checkout_request']['detail_date']
+                ?? $appData['missedCheckoutRequest']['date']
                 ?? $appData['missed_checkout_request']['date'] ?? null;
         } elseif ($applicationTypeId == \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST) {
-
             $targetDate = $appData['leaveRequest']['detail_from_date']
                 ?? $appData['leave_request']['detail_from_date'] ?? null;
+        } elseif ($applicationTypeId == \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST) {
+            $targetDate = $appData['advanceRequest']['detail_date']
+                ?? $appData['advance_request']['detail_date']
+                ?? $appData['advanceRequest']['date']
+                ?? $appData['advance_request']['date'] ?? null;
+        } elseif ($applicationTypeId == \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST) {
+            $targetDate = $appData['mealRequest']['date']
+                ?? $appData['meal_request']['date'] ?? null;
         }
 
         if ($targetDate) {

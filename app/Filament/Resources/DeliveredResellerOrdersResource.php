@@ -18,6 +18,7 @@ use App\Filament\Resources\DeliveredResellerOrdersResource\Pages;
 use App\Filament\Resources\DeliveredResellerOrdersResource\Pages\CreateDeliveredResellerOrder;
 use App\Filament\Resources\DeliveredResellerOrdersResource\RelationManagers;
 use App\Filament\Resources\OrderResource\RelationManagers\OrderDetailsRelationManager;
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\Branch;
 use App\Models\DeliveredResellerOrders;
 use App\Models\Order;
@@ -264,10 +265,11 @@ class DeliveredResellerOrdersResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->deferFilters(false)
+        return $table->deferFilters(true)
             ->striped()
             ->paginated([10, 25, 50, 100])
             ->columns([
+                SoftDeleteColumn::make(),
                 TextColumn::make('id')
                     ->label('DO-ID')
                     ->searchable()->alignCenter()
@@ -357,7 +359,7 @@ BulkActionGroup::make([
             ->recordActions([
 
                 Action::make('print_delivery_order')
-                    ->label(__('Print Delivery Order'))
+                    ->label(__('Print'))
                     ->icon('heroicon-o-printer')->button()
                     ->color('gray')
                     // ->visible(fn($record) => $record->status === Order::DELEVIRED)
@@ -385,7 +387,8 @@ BulkActionGroup::make([
 
                 EditAction::make()->label(__('Edit'))
                     ->icon(Heroicon::Pencil)
-                    ->color(Color::Green)->button()
+                    ->color(Color::Gray)
+                    ->button()
                     // ->requiresConfirmation()
                     ->visible(fn(Order $record): bool => !in_array($record->status, [
                         Order::DELEVIRED,
@@ -486,7 +489,9 @@ BulkActionGroup::make([
                 SelectFilter::make('branch_id')
                     ->label('Reseller')->searchable()
                     ->options(Branch::active()->resellers()->get(['id', 'name'])->pluck('name', 'id')),
-            ], FiltersLayout::AboveContent)
+                \Filament\Tables\Filters\TrashedFilter::make(),
+            ], FiltersLayout::Modal)
+            ->filtersFormColumns(4)
             ->defaultSort('id', 'desc');
     }
 

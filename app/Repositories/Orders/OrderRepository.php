@@ -191,16 +191,14 @@ class OrderRepository implements OrderRepositoryInterface
             // Array to hold IDs of manufactured products.
             $allManufacturingBranches = Branch::active()
                 ->centralKitchens()
-                ->with('categories:id')
-                ->get(['id', 'store_id']);
+                ->with('manufacturingCategories:id')
+                ->get(['id','name', 'store_id']);
 
-            $manufacturedProductIds = [];
-
+            $manufacturedProductIds = []; 
             // Loop through each manufacturing branch to handle orders related to manufacturing products.
             foreach ($allManufacturingBranches as $branch) {
                 // Get categories for the current branch.
-                $categories = $branch->categories->pluck('id')->toArray();
-
+                $categories = $branch->manufacturingCategories->pluck('id')->toArray();
                 // Filter order details based on whether they belong to a manufacturing category.
                 $productsForThisBranch = collect($allOrderDetails)->filter(function ($item) use ($categories, $branch) {
                     $product = Product::find($item['product_id']);

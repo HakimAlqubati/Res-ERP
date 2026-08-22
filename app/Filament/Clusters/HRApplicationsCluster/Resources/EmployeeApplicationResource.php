@@ -441,7 +441,7 @@ class EmployeeApplicationResource extends Resource
                         \Filament\Notifications\Notification::make()
                             ->danger()
                             ->title(__('lang.error') ?: 'Error')
-                            ->body('Cannot process records for this employee in this period.')
+                            ->body('Payroll is locked for this employee during this period.')
                             ->send();
 
                         DB::rollBack();
@@ -1823,7 +1823,7 @@ class EmployeeApplicationResource extends Resource
         $form = [
             DatePicker::make('detail_date')->maxDate(now()->toDateString())
                 ->label('Date')->required()
-                ->default('Y-m-d')->live(),
+                ->default(now()->toDateString())->live(),
             TimePicker::make('detail_time')
                 ->label('Time')->required()
                 ->seconds(false),
@@ -1909,7 +1909,7 @@ class EmployeeApplicationResource extends Resource
                     [
                         DatePicker::make('date')->maxDate(now()->toDateString())
                             ->label('Date')->required()
-                            ->default('Y-m-d')
+                            ->default(now()->toDateString())
                             ->rules([
                                 fn($get) => function ($attribute, $value, $fail) use ($get) {
                                     return;
@@ -1978,7 +1978,7 @@ class EmployeeApplicationResource extends Resource
                             ->options(Branch::where('type', Branch::TYPE_BRANCH)
                             ->active()
                             ->pluck('name', 'id'))
-                        // ->required()
+                        ->required()
                         ->searchable()
                         // ->live()
                         // ->afterStateUpdated(function ($set, $state) {

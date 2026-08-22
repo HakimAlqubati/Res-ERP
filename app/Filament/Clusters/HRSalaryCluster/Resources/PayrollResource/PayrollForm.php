@@ -15,6 +15,7 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Fieldset;
 use App\Models\EmployeeBranchLog;
+use App\Modules\HR\EmployeeApplications\Checker\MonthlyPendingApplicationChecker;
 use Carbon\Carbon;
 
 class PayrollForm
@@ -57,6 +58,37 @@ class PayrollForm
                                 </h3>
                                 <ul class='list-disc list-inside mt-2 text-sm font-medium space-y-1'>
                                     {$namesList}
+                                </ul>
+                            </div>
+                        ");
+                    }),
+                Placeholder::make('pending_applications_warning')
+                    ->label('Pending Requests Warning')
+                    ->columnSpan(3)
+                    ->visible(fn (Get $get) => filled($get('branch_id')) && self::hasPendingApplications($get))
+                    ->content(function (Get $get) {
+                        $summary = self::getPendingApplicationsSummary($get);
+                        if (!$summary || empty($summary['breakdown'])) {
+                            return null;
+                        }
+                        
+                        $breakdownList = implode('', array_map(fn($item) => '<li>' . e($item['type']) . ': ' . e($item['count']) . '</li>', $summary['breakdown']));
+                        
+                        return new \Illuminate\Support\HtmlString("
+                            <style>
+                                .payroll-pending-warning { border: 1px solid #fecaca; }
+                                .payroll-pending-warning h3 { color: #991b1b; }
+                                .payroll-pending-warning ul { color: #b91c1c; }
+                                .dark .payroll-pending-warning { border-color: rgba(127, 29, 29, 0.5); }
+                                .dark .payroll-pending-warning h3 { color: #fca5a5; }
+                                .dark .payroll-pending-warning ul { color: #f87171; }
+                            </style>
+                            <div class='p-4 rounded-lg payroll-pending-warning mt-4'>
+                                <h3 class='text-sm font-semibold'>
+                                    Warning: Cannot create payroll. Please approve or reject all pending requests for this period first:
+                                </h3>
+                                <ul class='list-disc list-inside mt-2 text-sm font-medium space-y-1'>
+                                    {$breakdownList}
                                 </ul>
                             </div>
                         ");
@@ -202,6 +234,53 @@ class PayrollForm
         )->first();
 
         return (int) ($ownerSegment['branch_id'] ?? 0) === $branchId;
+    }
+
+    private static function getPendingApplicationsSummary(Get $get): ?array
+    {
+        $branchId = $get('branch_id');
+        $monthValue = $get('name');
+        
+        if (!$branchId || !$monthValue) {
+            return null;
+        }
+
+        if (!str_contains($monthValue, ' ')) {
+            return null;
+        }
+
+        try {
+            [$monthName, $year] = explode(' ', $monthValue);
+            $monthNumber = Carbon::parse("1 $monthValue")->month;
+            $year = (int) $year;
+
+            $filters = [
+                'year' => $year,
+                'month' => $monthNumber,
+                'branch_id' => $branchId,
+            ];
+
+            $allEmployees = $get('all_employees');
+            if (!$allEmployees) {
+                $employeeIds = $get('employee_ids');
+                if (!empty($employeeIds)) {
+                    $filters['employee_ids'] = $employeeIds;
+                }
+            }
+
+            /** @var MonthlyPendingApplicationChecker $checker */
+            $checker = app(MonthlyPendingApplicationChecker::class);
+            
+            return $checker->getDashboardSummary($filters);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    private static function hasPendingApplications(Get $get): bool
+    {
+        $summary = self::getPendingApplicationsSummary($get);
+        return $summary['has_pending'] ?? false;
     }
 
     private static function getZeroSalaryEmployees(Get $get): array

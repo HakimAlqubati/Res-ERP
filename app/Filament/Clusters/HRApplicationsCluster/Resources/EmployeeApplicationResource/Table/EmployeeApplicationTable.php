@@ -8,6 +8,7 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeApplicationV2;
 use Exception;
+use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -221,43 +222,20 @@ class EmployeeApplicationTable
             ->paginated([10, 25, 50, 100])
             ->striped()
             ->columns($columns)
-            // ->columns([
-            //     TextColumn::make('id')
-            //         ->sortable()
-            //         ->searchable(),
-            //     TextColumn::make('employee.name')
-            //         ->sortable()->limit(20)
-            //         ->searchable(),
-            //     TextColumn::make('createdBy.name')->limit(20)
-            //         ->sortable()->toggleable(isToggledHiddenByDefault: true)
-            //         ->searchable(),
-            //     TextColumn::make('application_date')->label('Request date')
-            //         ->sortable(),
-            //     // TextColumn::make('approvedBy.name')->label('Approved by')
-            //     //     ->sortable(),
-            //     // TextColumn::make('approved_at')->label('Approved at')
-            //     //     ->sortable()
-            //     // ,
-
-            //     TextColumn::make('status')->label('Status')->alignCenter(true)
-            //         ->badge()
-            //         ->icon('heroicon-m-check-badge')
-            //         ->color(fn(string $state): string    => match ($state) {
-            //             EmployeeApplicationV2::STATUS_PENDING  => 'warning',
-            //             EmployeeApplicationV2::STATUS_REJECTED => 'danger',
-            //             EmployeeApplicationV2::STATUS_APPROVED => 'success',
-            //         })
-            //         ->toggleable(isToggledHiddenByDefault: false),
-            //     TextColumn::make('application_type_id')
-            //         ->label('Request Type')
-            //         ->badge()
-            //         ->formatStateUsing(function ($state) {
-            //             return \App\Models\EmployeeApplicationV2::APPLICATION_TYPE_NAMES[$state] ?? 'Unknown';
-            //         })
-            //         ->sortable()
-            //         ->toggleable(isToggledHiddenByDefault: false),
-            // ])
-
+            ->headerActions([
+                Action::make('export_excel')
+                    ->label(__('lang.export_to_excel') ?? 'Export Excel')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('success')
+                    ->action(function ($livewire) {
+                        $records = $livewire->getFilteredTableQuery()->get();
+                        return \Maatwebsite\Excel\Facades\Excel::download(
+                            new \App\Exports\AdvanceRequestsExport($records),
+                            'advance_requests.xlsx'
+                        );
+                    })
+                    ->visible($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[3])
+            ])
             ->filters([
                 TrashedFilter::make(),
                 Filter::make('application_date')

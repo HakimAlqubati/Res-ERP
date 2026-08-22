@@ -173,6 +173,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
                 ->where('branch_id', $log->branch_id)
                 ->whereYear('date', $year)
                 ->whereMonth('date', $month)
+                ->whereBetween('date', [$log->start, $log->end])
                 ->sum('hours');
 
             $result = $this->salaryCalculatorService->calculate(

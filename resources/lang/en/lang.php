@@ -369,8 +369,8 @@ return [
     'monthly_bonus' => 'Monthly Bonus',
     'deductions' => 'Deductions',
     'deduction' => 'Deduction',
-    'custom_deductions' => 'Custom Deductions',
-    'custom_deduction' => 'Custom Deduction',
+    'custom_deductions' => 'Custom Deductions / Contributions',
+    'custom_deduction' => 'Custom Deduction / Contribution',
     'type' => 'Type',
     'percentage' => 'Percentage',
     'amount_percentage' => 'Amount / %',
@@ -1103,8 +1103,8 @@ return [
     // ===========================================
     // Employee Meals Request
     // ===========================================
-    'employee_meals_request' => 'Meal advance',
-    'meal_details'           => 'Meal Details',
+    'employee_meals_request' => 'Expense advance',
+    'meal_details'           => 'Details',
     'cost'                   => 'Cost',
     'rejected_reason'        => 'Rejected Reason',
     'approve'                => 'Approve',
@@ -1199,4 +1199,8 @@ return [
     'municipality_license_notes' => 'Municipality License Notes',
     'municipality_license_file' => 'Municipality License File',
     'refreshed' => 'Refereshed',
+    'employee_financial_summary_report' => 'Employee Financial Summary Report',
+    'incentive_types' => 'Incentive Types',
+    'allowance_types' => 'Allowance Types',
+    'deduction_types' => 'Deduction Types',
 ];

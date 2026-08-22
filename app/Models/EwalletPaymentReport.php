@@ -12,12 +12,16 @@ class EwalletPaymentReport extends Model
     use SoftDeletes;
     protected $table = 'hr_ewallet_payment_reports';
 
+    public const TYPE_EWALLET = 'ewallet';
+    public const TYPE_BANK = 'bank';
+
     protected $fillable = [
         'month',
         'year',
         'total_amount',
         'employees_count',
         'status',
+        'payment_type',
         'created_by',
     ];
 

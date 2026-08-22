@@ -13,6 +13,8 @@ use App\Filament\Resources\BranchResource\RelationManagers\WorkPeriodsRelationMa
 use App\Filament\Resources\BranchResource\Schemas\BranchForm;
 use App\Filament\Resources\BranchResource\Tables\BranchTable;
 use App\Models\Branch;
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
@@ -27,6 +29,8 @@ class BranchResource extends Resource
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-office-2';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Branches';
+
+      protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     public static function getNavigationLabel(): string
     {
@@ -53,6 +57,15 @@ class BranchResource extends Resource
         ];
     }
 
+       public static function getRecordSubNavigation(Page $page): array
+    {
+        return $page->generateNavigationItems([
+            ManageBranches::class,
+            CreateBranch::class,
+            EditBranch::class,
+            // Pages\ViewEmployee::class,
+        ]);
+    }
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::branches()

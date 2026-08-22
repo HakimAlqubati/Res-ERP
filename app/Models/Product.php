@@ -257,7 +257,6 @@ class Product extends Model implements Auditable
             $lastCode = (int)substr($lastProduct->code, strlen($prefix));
             $nextNumber = $lastCode + 1;
         }
-
         return $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
     }
     public function productPriceHistories()

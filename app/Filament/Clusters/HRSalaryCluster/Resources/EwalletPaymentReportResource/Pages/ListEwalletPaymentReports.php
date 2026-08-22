@@ -9,14 +9,47 @@ use App\Models\Payroll;
 use App\Models\PayrollRun;
 use App\Models\EmployeePaymentMethod;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Support\Enums\Width;
+use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 class ListEwalletPaymentReports extends ListRecords
 {
     protected static string $resource = EwalletPaymentReportResource::class;
+
+    /**
+     * Define tabs for payment type filtering.
+     */
+    public function getTabs(): array
+    {
+        return [
+            // 'all' => Tab::make(__('All'))
+            //     ->modifyQueryUsing(fn(Builder $query) => $query)
+            //     ->icon('heroicon-o-circle-stack')
+            //     ->badge(EwalletPaymentReport::query()->count())
+            //     ->badgeColor('gray'),
+
+            'ewallet' => Tab::make(__('eWallet'))
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('payment_type', EwalletPaymentReport::TYPE_EWALLET))
+                ->icon('heroicon-o-device-phone-mobile')
+                ->badge(EwalletPaymentReport::query()->where('payment_type', EwalletPaymentReport::TYPE_EWALLET)->count())
+                ->badgeColor('info'),
+
+            'bank' => Tab::make(__('Bank'))
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('payment_type', EwalletPaymentReport::TYPE_BANK))
+                ->icon('heroicon-o-building-library')
+                ->badge(EwalletPaymentReport::query()->where('payment_type', EwalletPaymentReport::TYPE_BANK)->count())
+                ->badgeColor('success'),
+        ];
+    }
 
     protected function getHeaderActions(): array
     {
@@ -24,18 +57,35 @@ class ListEwalletPaymentReports extends ListRecords
             Action::make('generate_report')
                 ->label('Generate')
                 ->icon('heroicon-o-plus')
-                ->color('primary')
-                ->form([
-                    Select::make('month')
-                        ->label('Month')
+                ->color('info')
+                ->modalDescription('Generate a new payment report for eWallet or Bank employees.')
+                ->modalHeading('Generate Payment Report')
+                // ->slideOver(true)
+                ->closeModalByClickingAway(false)
+                ->closeModalByEscaping(false)
+                ->modalIcon(Heroicon::ChartBarSquare)
+                ->modalWidth(Width::SevenExtraLarge)
+                ->schema([
+              Grid::make()->columnSpanFull()->columns(3)->schema([
+                  ToggleButtons::make('payment_type')
+                        ->label('Payment Type')
                         ->options([
-                            1 => 'January', 2 => 'February', 3 => 'March',
-                            4 => 'April', 5 => 'May', 6 => 'June',
-                            7 => 'July', 8 => 'August', 9 => 'September',
-                            10 => 'October', 11 => 'November', 12 => 'December',
+                            EwalletPaymentReport::TYPE_EWALLET => 'eWallet',
+                            EwalletPaymentReport::TYPE_BANK => 'Bank',
                         ])
-                        ->required(),
-                    Select::make('year')
+                        ->icons([
+                            EwalletPaymentReport::TYPE_EWALLET => 'heroicon-o-device-phone-mobile',
+                            EwalletPaymentReport::TYPE_BANK => 'heroicon-o-building-library',
+                        ])
+                        ->colors([
+                            EwalletPaymentReport::TYPE_EWALLET => 'info',
+                            EwalletPaymentReport::TYPE_BANK => 'success',
+                        ])
+                        ->default(EwalletPaymentReport::TYPE_EWALLET)
+                        ->inline()
+                        ->required()
+                        ->columnSpanFull(),
+                  Select::make('year')
                         ->label('Year')
                         ->options(function () {
                             $years = [];
@@ -45,12 +95,46 @@ class ListEwalletPaymentReports extends ListRecords
                             }
                             return $years;
                         })
-                        ->default(date('Y'))
+                        ->default(date('Y')) 
                         ->required(),
+                      Select::make('month')
+                        ->label('Month')
+                        ->options([
+                            1 => 'January', 2 => 'February', 3 => 'March',
+                            4 => 'April', 5 => 'May', 6 => 'June',
+                            7 => 'July', 8 => 'August', 9 => 'September',
+                            10 => 'October', 11 => 'November', 12 => 'December',
+                        ])
+                        ->required(),
+
+                        
+                        ]), 
+                        Placeholder::make('important_reminder')
+                        ->hiddenLabel()
+                        ->content(new \Illuminate\Support\HtmlString('
+                            <div class="flex flex-col gap-2 p-4 rounded-xl bg-danger-50 text-danger-900 dark:bg-danger-500/10 dark:text-danger-400 ring-1 ring-inset ring-danger-600/20 dark:ring-danger-500/20">
+                                <strong class="font-semibold text-base" style="color: red;">Important Reminder Before Generating the Payment Report</strong>
+                                <p class="text-sm">
+                                    Please ensure you have marked all staff members who were paid manually or left mid-month as <strong>"Paid"</strong> in the Payroll before running this report.
+                                </p>
+                                <p class="text-sm">
+                                    Once marked, the system will automatically filter them out. This prevents duplicate payouts when the final batch file is generated.
+                                </p>
+                            </div>
+                        '))
+                        ->columnSpanFull(),
                 ])
                 ->action(function (array $data) {
                     $month = $data['month'];
                     $year = $data['year'];
+                    $paymentType = $data['payment_type'];
+
+                    // Determine the payment method code based on selected type
+                    $paymentMethodCode = $paymentType === EwalletPaymentReport::TYPE_BANK
+                        ? EmployeePaymentMethod::CODE_BANK
+                        : EmployeePaymentMethod::CODE_EWALLET;
+
+                    $paymentTypeLabel = $paymentType === EwalletPaymentReport::TYPE_BANK ? 'Bank' : 'eWallet';
 
                     // 1. Get the latest approved PayrollRun per branch for this month/year
                     $latestRunIds = PayrollRun::query()
@@ -58,10 +142,11 @@ class ListEwalletPaymentReports extends ListRecords
                         ->where('month', $month)
                         ->where('year', $year)
                         ->whereNotNull('approved_at')
-                        ->selectRaw('MAX(id) as id, branch_id')
-                        ->groupBy('branch_id')
+                        ->select('id','branch_id')
+                        // ->selectRaw('MAX(id) as id, branch_id')
+                        // ->groupBy('branch_id')
                         ->pluck('id');
-
+                        
                     if ($latestRunIds->isEmpty()) {
                         Notification::make()
                             ->title("No approved payroll runs found for this month.")
@@ -70,35 +155,30 @@ class ListEwalletPaymentReports extends ListRecords
                         return;
                     }
 
-                    // 2. Get payroll IDs already included in previous (non-deleted) eWallet reports
-                    $alreadyIncludedPayrollIds = EwalletPaymentReportItem::query()
-                        ->whereHas('report', function ($q) {
-                            $q->whereNull('deleted_at');
-                        })
-                        ->pluck('payroll_id');
-
-                    // 3. Get payrolls from the latest runs, eWallet only, excluding already included
+                    // 2. Get payrolls from the latest runs, filtered by payment method, excluding already paid
                     $payrolls = Payroll::with(['employee', 'branch', 'employee.branch'])
                         ->where('status', Payroll::STATUS_APPROVED)
                         ->whereIn('payroll_run_id', $latestRunIds)
-                        ->whereNotIn('id', $alreadyIncludedPayrollIds)
-                        ->whereHas('employee.paymentMethod', function ($q) {
-                            $q->where('code', EmployeePaymentMethod::CODE_EWALLET);
+                        ->where('is_paid', false)
+                        ->whereHas('employee.paymentMethod', function ($q) use ($paymentMethodCode) {
+                            $q->where('code', $paymentMethodCode);
                         })
                         ->get();
 
                     if ($payrolls->isEmpty()) {
                         Notification::make()
-                            ->title("No new eWallet payrolls found.")
-                            ->body("All payrolls from the latest approved runs have already been included in previous reports.")
+                            ->title("No unpaid {$paymentTypeLabel} payrolls found.")
+                            ->body("All {$paymentTypeLabel} payrolls from the latest approved runs have already been paid.")
                             ->warning()
                             ->send();
                         return;
                     }
 
-                    DB::transaction(function () use ($month, $year, $payrolls) {
+                    $groupedPayrolls = $payrolls->groupBy('employee_id');
+
+                    DB::transaction(function () use ($month, $year, $paymentType, $payrolls, $groupedPayrolls) {
                         $totalAmount = $payrolls->sum('net_salary');
-                        $employeesCount = $payrolls->count();
+                        $employeesCount = $groupedPayrolls->count();
 
                         $report = EwalletPaymentReport::create([
                             'month' => $month,
@@ -106,24 +186,35 @@ class ListEwalletPaymentReports extends ListRecords
                             'total_amount' => $totalAmount,
                             'employees_count' => $employeesCount,
                             'status' => 'pending',
+                            'payment_type' => $paymentType,
                             'created_by' => auth()->id(),
                         ]);
 
                         $items = [];
                         $monthName = \Carbon\Carbon::create()->month($month)->format('F');
 
-                        foreach ($payrolls as $payroll) {
-                            $branchName = $payroll->branch?->name ?? $payroll->employee?->branch?->name ?? 'Unknown Branch';
+                        foreach ($groupedPayrolls as $employeeId => $empPayrolls) {
+                            $firstPayroll = $empPayrolls->first();
+                            $employee = $firstPayroll->employee;
+
+                            $branchNames = $empPayrolls
+                                ->map(fn ($p) => $p->branch?->name ?? $p->employee?->branch?->name)
+                                ->filter()
+                                ->unique()
+                                ->implode(' / ');
+
+                            $branchName = !empty($branchNames) ? $branchNames : 'Unknown Branch';
                             $rewardDescription = "Salary - {$monthName} {$year} - {$branchName}";
-                            $rewardName = $payroll->employee?->payment_details['full_name'] ?? $payroll->employee?->name ?? '';
-                            $accountNumber = $payroll->employee?->payment_details['account_number'] ?? null;
+                            $rewardName = $employee?->payment_details['full_name'] ?? $employee?->name ?? '';
+                            $accountNumber = $employee?->payment_details['account_number'] ?? null;
+                            $netSalary = $empPayrolls->sum('net_salary');
 
                             $items[] = [
                                 'hr_ewallet_payment_report_id' => $report->id,
-                                'payroll_id' => $payroll->id,
-                                'employee_id' => $payroll->employee_id,
+                                'payroll_id' => $firstPayroll->id,
+                                'employee_id' => $employeeId,
                                 'account_number' => $accountNumber,
-                                'net_salary' => $payroll->net_salary,
+                                'net_salary' => $netSalary,
                                 'reward_name' => $rewardName,
                                 'reward_description' => $rewardDescription,
                                 'created_at' => now(),
@@ -143,7 +234,7 @@ class ListEwalletPaymentReports extends ListRecords
 
                     Notification::make()
                         ->title("Report generated successfully.")
-                        ->body("Included branches: {$branchNames} | Employees: {$payrolls->count()}")
+                        ->body("Type: {$paymentTypeLabel} | Included branches: {$branchNames} | Employees: {$groupedPayrolls->count()}")
                         ->success()
                         ->send();
                 }),

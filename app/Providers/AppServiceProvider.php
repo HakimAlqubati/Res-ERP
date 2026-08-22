@@ -68,6 +68,15 @@ class AppServiceProvider extends ServiceProvider
             \App\Services\WhatsApp\Contracts\WhatsAppServiceInterface::class,
             \App\Services\WhatsApp\WhatsAppService::class
         );
+
+        // ── Inventory Price Resolver ──────────────────────────────────
+        // Switch pricing strategy by changing the implementation here:
+        //   TransactionPriceResolver → actual FIFO cost from inventory_transactions
+        //   UnitTablePriceResolver   → static price from unit_prices table
+        $this->app->bind(
+            \App\Contracts\InventoryPriceResolver::class,
+            \App\Services\Financial\Pricing\TransactionPriceResolver::class
+        );
     }
 
     /**
