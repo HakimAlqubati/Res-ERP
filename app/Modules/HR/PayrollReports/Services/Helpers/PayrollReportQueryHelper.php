@@ -104,6 +104,10 @@ class PayrollReportQueryHelper
             $query->where('hr_payrolls.pay_date', '<=', $filter->dateTo);
         }
 
+        if ($filter->paymentMethodId !== null) {
+            $query->where('hr_employees.payment_method_id', $filter->paymentMethodId);
+        }
+
         return $query;
     }
 }
