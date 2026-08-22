@@ -36,7 +36,7 @@ class EwalletPaymentReportResource extends Resource
 {
     protected static ?string $model = EwalletPaymentReport::class;
 
-    protected static ?string $slug = 'payment-report';
+    protected static ?string $slug = 'payment-sheet';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::ClipboardDocumentList;
 
