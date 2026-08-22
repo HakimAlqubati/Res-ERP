@@ -32,7 +32,7 @@ class EditStockInventory extends EditRecord
                 ->modalHeading('Rollback Inventory Finalization')
                 ->modalDescription('This will permanently delete all stock adjustments and inventory transactions created during this stocktake, and reopen the inventory for editing. This action cannot be undone.')
                 ->modalSubmitActionLabel('Yes, Rollback')
-                ->visible(fn () => (bool) $this->record?->finalized && isHakim())
+                ->visible(fn () => (bool) $this->record?->finalized && isSuperAdmin())
                 ->action(fn ()=> $this->rollbackInventoryFinalize() )
             // ->hidden()
             ,
@@ -71,7 +71,7 @@ class EditStockInventory extends EditRecord
 
     protected function rollbackInventoryFinalize(): void
     {
-        abort_unless(isHakim(), 403);
+        abort_unless(isSuperAdmin(), 403);
 
         DB::beginTransaction();
         try {
