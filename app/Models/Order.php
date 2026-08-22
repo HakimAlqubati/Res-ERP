@@ -249,28 +249,38 @@ class Order extends Model implements Auditable
                 $order->getOriginal('status') !== self::READY_FOR_DELEVIRY
             ) {
                 $fifoAllocator = app(\App\Modules\Stock\Reports\FifoBatchReports\Contracts\FifoAllocatorInterface::class);
-                $storeId = defaultManufacturingStore($order->orderDetails->first()->product)->id ?? 1;
-
-                // 1. بناء مصفوفة الأصناف — بدون أي استعلام
-                $items = $order->orderDetails->map(fn ($d) => [
-                    'product_id' => $d->product_id,
-                    'unit_id'    => $d->unit_id,
-                    'qty'        => $d->available_quantity,
-                ])->all();
-
-                // 2. استعلام واحد بدلاً من N × M استعلام
-                $allAllocations = $fifoAllocator->allocateMany($items, $storeId, $order);
-
-                // 3. تطبيق النتائج على كل detail
+                $defaultStoreId = Store::defaultStore()?->id ?? 1;
                 $hasBranchStore = $order->branch?->store?->active;
 
-                foreach ($order->orderDetails as $detail) {
-                    $productAllocations = $allAllocations[$detail->product_id]['allocations'] ?? [];
+                // 1. تحميل العلاقات لتفادي استعلامات N+1
+                $order->loadMissing(['orderDetails.product.category', 'branch.store']);
 
-                    self::moveFromInventory($productAllocations, $detail);
+                // 2. تجميع تفاصيل الطلب حسب مخزن كل صنف المخصص لفئته
+                $detailsByStore = $order->orderDetails->groupBy(function ($detail) use ($defaultStoreId) {
+                    if (! $detail->product) {
+                        return $defaultStoreId;
+                    }
+                    return defaultManufacturingStore($detail->product)?->id ?? $defaultStoreId;
+                });
 
-                    if ($hasBranchStore) {
-                        self::receiveIntoBranchStore($productAllocations, $detail);
+                // 3. تخصيص وصرف لكل مخزن على حدة دفعة واحدة
+                foreach ($detailsByStore as $storeId => $details) {
+                    $items = $details->map(fn ($d) => [
+                        'product_id' => $d->product_id,
+                        'unit_id'    => $d->unit_id,
+                        'qty'        => $d->available_quantity,
+                    ])->all();
+
+                    $allocationsByProduct = $fifoAllocator->allocateMany($items, (int) $storeId, $order);
+
+                    foreach ($details as $detail) {
+                        $productAllocations = $allocationsByProduct[$detail->product_id]['allocations'] ?? [];
+
+                        self::moveFromInventory($productAllocations, $detail);
+
+                        if ($hasBranchStore) {
+                            self::receiveIntoBranchStore($productAllocations, $detail);
+                        }
                     }
                 }
             }
