@@ -22,4 +22,19 @@ enum ProductCodeGenerationMethod: string
             self::MANUAL->value => self::MANUAL->label(),
         ];
     }
+
+    public static function current(): string
+    {
+        return \App\Models\Setting::getSetting('product_code_generation_method', self::AUTO->value);
+    }
+
+    public static function isAuto(): bool
+    {
+        return self::current() === self::AUTO->value;
+    }
+
+    public static function isManual(): bool
+    {
+        return self::current() === self::MANUAL->value;
+    }
 }

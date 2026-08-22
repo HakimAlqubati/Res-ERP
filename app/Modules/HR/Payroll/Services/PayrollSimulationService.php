@@ -17,6 +17,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
     public function __construct(
         protected AttendanceReportInterface $reportManager,
         protected SalaryCalculatorService $salaryCalculatorService,
+        protected WeeklyLeaveSegmentAllocator $weeklyLeaveAllocator,
     ) {}
 
     // ─────────────────────────────────────────────────────────────
@@ -46,7 +47,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
         $employees = $this->resolveEmployees($employeeIds, $branchId, $periodStart, $periodEnd);
         $segments  = $this->buildSegments($employees, $periodStart, $periodEnd, $branchId);
 
-        return $this->processSegments($segments, $year, $month, $periodStart, $forceMultiSegment);
+        return $this->processSegments($segments, $year, $month, $periodStart, $periodEnd, $forceMultiSegment);
     }
 
     /**
@@ -60,7 +61,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
         $employees = Employee::whereIn('id', $employeeIds)->get();
         $segments  = $this->buildSegments($employees, $periodStart, $periodEnd, $run->branch_id);
 
-        return $this->processSegments($segments, $run->year, $run->month, $periodStart);
+        return $this->processSegments($segments, $run->year, $run->month, $periodStart, $periodEnd);
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -136,23 +137,17 @@ class PayrollSimulationService implements PayrollSimulatorInterface
      * معالجة كل فترة عمل واحتساب الراتب الخاص بها.
      * هذا هو الكود المشترك بين simulateForEmployees و simulateForRunEmployees.
      */
-    private function processSegments(Collection $segments, int $year, int $month, Carbon $periodStart, bool $forceMultiSegment = false): array
+    private function processSegments(Collection $segments, int $year, int $month, Carbon $periodStart, Carbon $periodEnd, bool $forceMultiSegment = false): array
     {
         $monthDays = (int) $periodStart->daysInMonth;
         $results   = [];
 
-        // عدّ Segments لكل موظف — أو استخدم الفلاج المُمرَّر مباشرة من PayrollRunService
-        $segmentCountPerEmployee = $forceMultiSegment
-            ? []   // سيُعتمد على $forceMultiSegment مباشرة أدناه
-            : $segments->countBy(fn($s) => $s['employee']->id)->all();
-
-        foreach ($segments as $segment) {
+        foreach ($segments->groupBy(fn($s) => $s['employee']->id) as $employeeSegments) {
             /** @var Employee $employee */
-            $employee = $segment['employee'];
-            $log      = $segment['log'];
+            $employee       = $employeeSegments->first()['employee'];
+            $isMultiSegment = $forceMultiSegment || $employeeSegments->count() > 1;
 
             $monthlySalary = (float) ($employee->salary ?? 0);
-
             if ($monthlySalary <= 0) {
                 $results[] = $this->failedResult($employee, 'Salary not set or zero.');
                 continue;
@@ -160,43 +155,91 @@ class PayrollSimulationService implements PayrollSimulatorInterface
 
             $dailyHours = (int) ($employee->working_hours ?? 0);
             $workDays   = (int) ($employee->working_days ?? 0);
-
             if ($dailyHours <= 0 || $workDays <= 0) {
                 throw new \InvalidArgumentException(
                     "Missing working_hours or working_days for employee [{$employee->name}] (No: {$employee->employee_no})"
                 );
             }
 
-            $attendanceArray = $this->fetchAttendance($employee, $log->start, $log->end);
+            // 1. جلب بيانات الحضور الخاصة بكل Segment بمعزل (وقائع خام: حضور/غياب/ساعات)
+            $segmentData = $employeeSegments->values()->map(fn($segment) => [
+                'log'  => $segment['log'],
+                'data' => $this->fetchAttendance($employee, $segment['log']->start, $segment['log']->end),
+            ]);
 
-            $totalApprovedOvertime = $employee->overtimes()
-                ->where('branch_id', $log->branch_id)
-                ->whereYear('date', $year)
-                ->whereMonth('date', $month)
-                ->whereBetween('date', [$log->start, $log->end])
-                ->sum('hours');
+            // 2. لموظفي تعدد الفروع: احسب الإجازة الأسبوعية مرة واحدة فقط على الفترة
+            //    الكاملة (مصدر حقيقة واحد، بدون تجزئة)، ثم وزّعها تناسبيًا على كل Segment.
+            if ($isMultiSegment) {
+                $unifiedResult = $this->computeUnifiedWeeklyLeave($employee, $periodStart, $periodEnd);
 
-            $result = $this->salaryCalculatorService->calculate(
-                employee:              $employee,
-                employeeData:          $attendanceArray,
-                salary:                $monthlySalary,
-                workingDays:           $workDays,
-                dailyHours:            $dailyHours,
-                monthDays:             $monthDays,
-                totalDuration:         $attendanceArray['total_duration_hours']        ?? '0:00:00',
-                totalActualDuration:   $attendanceArray['total_actual_duration_hours'] ?? '0:00:00',
-                totalApprovedOvertime: $totalApprovedOvertime,
-                periodYear:            $year,
-                periodMonth:           $month,
-                periodEnd:             $log->end,
-                periodStart:           $log->start,   // ← تخصيص فترة الفرع بدقة
-                isMultiSegment:        $forceMultiSegment || ($segmentCountPerEmployee[$employee->id] ?? 1) > 1,
-            );
+                $segmentStats = $segmentData->map(function ($item) {
+                    $wlc = $item['data']['statistics']['weekly_leave_calculation'] ?? [];
+                    return [
+                        'worked_days' => (int) ($wlc['analysis']['worked_days'] ?? 0),
+                        'absent_days' => (int) ($item['data']['statistics']['absent'] ?? 0),
+                    ];
+                })->all();
 
-            $results[] = $this->buildResult($employee, $result, $monthlySalary, $dailyHours, $monthDays, $attendanceArray, $log);
+                $allocations = $this->weeklyLeaveAllocator->allocate($unifiedResult, $segmentStats);
+
+                $segmentData = $segmentData->values()->map(function ($item, $i) use ($allocations) {
+                    if (isset($item['data']['statistics']['weekly_leave_calculation'])) {
+                        $item['data']['statistics']['weekly_leave_calculation']['result'] = $allocations[$i]['result'];
+                        $item['data']['statistics']['weekly_leave_calculation']['analysis']['earned_leave_days']
+                            = $allocations[$i]['earned_leave_days'];
+                    }
+                    return $item;
+                });
+            }
+
+            // 3. احتساب الراتب لكل Segment باستخدام بياناته (المُوزَّعة تناسبيًا إن كان متعدد الفروع)
+            foreach ($segmentData as $item) {
+                $log             = $item['log'];
+                $attendanceArray = $item['data'];
+
+                $totalApprovedOvertime = $employee->overtimes()
+                    ->where('branch_id', $log->branch_id)
+                    ->whereYear('date', $year)
+                    ->whereMonth('date', $month)
+                    ->whereBetween('date', [$log->start, $log->end])
+                    ->sum('hours');
+
+                $result = $this->salaryCalculatorService->calculate(
+                    employee:              $employee,
+                    employeeData:          $attendanceArray,
+                    salary:                $monthlySalary,
+                    workingDays:           $workDays,
+                    dailyHours:            $dailyHours,
+                    monthDays:             $monthDays,
+                    totalDuration:         $attendanceArray['total_duration_hours']        ?? '0:00:00',
+                    totalActualDuration:   $attendanceArray['total_actual_duration_hours'] ?? '0:00:00',
+                    totalApprovedOvertime: $totalApprovedOvertime,
+                    periodYear:            $year,
+                    periodMonth:           $month,
+                    periodEnd:             $log->end,
+                    periodStart:           $log->start,   // ← تخصيص فترة الفرع بدقة
+                    isMultiSegment:        $isMultiSegment,
+                );
+
+                $results[] = $this->buildResult($employee, $result, $monthlySalary, $dailyHours, $monthDays, $attendanceArray, $log);
+            }
         }
 
         return $results;
+    }
+
+    /**
+     * احتساب "الإجازة الأسبوعية" مرة واحدة فقط على كامل فترة الموظف (كل الفروع مجتمعة)،
+     * كمصدر حقيقة وحيد يُستخدم لاحقًا لتوزيع الخصم/البدل على الفروع تناسبيًا.
+     * لا يوجد أي تجزئة أو تخمين هنا — تمامًا كأن الموظف لم ينتقل فرعًا إطلاقًا.
+     */
+    private function computeUnifiedWeeklyLeave(Employee $employee, Carbon $periodStart, Carbon $periodEnd): array
+    {
+        $fullReport = $this->reportManager
+            ->getEmployeesRangeReport(collect([$employee]), $periodStart, $periodEnd, true)
+            ->get($employee->id);
+
+        return (array) ($fullReport['statistics']['weekly_leave_calculation'] ?? []);
     }
 
     /**
@@ -225,6 +268,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
             'employee_id'                 => $employee->id,
             'employee_no'                 => $employee->employee_no,
             'name'                        => $employee->name,
+            'branch_id'                   => (int) ($log->branch_id ?? 0),
             'working_days'                => $result['working_days'],
             'working_hours'               => $dailyHours,
             'monthly_salary'              => $monthlySalary,
@@ -248,6 +292,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
             'penalties'                   => $result['penalties'] ?? [],
             'daily_rate_method'           => $result['daily_rate_method'] ?? '',
             'data' => [
+                'branch_id'         => (int) ($log->branch_id ?? 0),
                 'base_salary'       => $result['base_salary'],
                 'gross_salary'      => $result['gross_salary'],
                 'net_salary'        => $netSalary,

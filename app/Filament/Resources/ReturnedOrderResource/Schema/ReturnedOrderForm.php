@@ -75,7 +75,9 @@ class ReturnedOrderForm
                         Select::make('approved_by')
                             ->label('Approved By')
                             ->relationship('approver', 'name')
-                            ->searchable()->hiddenOn('create'),
+                            ->searchable()->hiddenOn('create')
+                            ->disabled()
+                            ,
 
                         Textarea::make('reason')
                             ->label('Return Reason')->columnSpanFull()

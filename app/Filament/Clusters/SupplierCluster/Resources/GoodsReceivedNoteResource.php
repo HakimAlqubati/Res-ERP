@@ -683,19 +683,8 @@ class GoodsReceivedNoteResource extends Resource
                         })->hidden(fn($record) => !(strlen($record['attachment']) > 0))
                         ->color('green') ->hidden(),
                 ]),
-                Action::make('PreviewAndApprove')
-                    ->label(new \Illuminate\Support\HtmlString('Review & <br> Approve'))
-                    ->color('primary')
-                    // ->icon('heroicon-o-clipboard-document-check')
-                    ->url(fn($record) => static::getUrl('create-purchase-invoice', ['record' => $record]))
-                    ->button()
-                    ->visible(function ($record) {
-                        $allowedRoles = setting('grn_approver_role_id', []);
-                        $userRoles = auth()->user()?->roles->pluck('id')->toArray() ?? [];
-
-                        return $record->status == GoodsReceivedNote::STATUS_CREATED && !$record->is_purchase_invoice_created  &&
-                            (count(array_intersect($userRoles, $allowedRoles)) > 0);
-                    }),
+                
+                static::previewAndApproveAction(),
 
             ])
             ->toolbarActions([
@@ -789,5 +778,21 @@ class GoodsReceivedNoteResource extends Resource
                     $fileName
                 );
             });
+    }
+    public static function previewAndApproveAction(): Action
+    {
+        return   Action::make('PreviewAndApprove')
+                    ->label(new \Illuminate\Support\HtmlString('Review & <br> Approve'))
+                    ->color('primary')
+                    // ->icon('heroicon-o-clipboard-document-check')
+                    ->url(fn($record) => static::getUrl('create-purchase-invoice', ['record' => $record]))
+                    ->button()
+                    ->visible(function ($record) {
+                        $allowedRoles = setting('grn_approver_role_id', []);
+                        $userRoles = auth()->user()?->roles->pluck('id')->toArray() ?? [];
+
+                        return $record->status == GoodsReceivedNote::STATUS_CREATED && !$record->is_purchase_invoice_created  &&
+                            (count(array_intersect($userRoles, $allowedRoles)) > 0);
+         });
     }
 }

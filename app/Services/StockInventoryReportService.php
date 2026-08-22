@@ -38,6 +38,10 @@ class StockInventoryReportService
             ->whereNotIn('id', $inventoriedProductIds)
             ->with(['category:id,name']);
 
+        if ($endDate) {
+            $query->whereDate('created_at', '<=', $endDate);
+        }
+
         if ($hideZero) {
             $bindings = [\App\Models\InventoryTransaction::MOVEMENT_IN, \App\Models\InventoryTransaction::MOVEMENT_OUT];
             $storeCondition = '';

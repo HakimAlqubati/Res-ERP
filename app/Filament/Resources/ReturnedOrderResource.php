@@ -211,8 +211,12 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                    ForceDeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                    ->visible(fn()=> isSuperAdmin())
+                    ,
+                    ForceDeleteBulkAction::make()
+                    ->visible(fn()=> isSuperAdmin())
+                    ,
                     RestoreBulkAction::make(),
                 ]),
             ]);

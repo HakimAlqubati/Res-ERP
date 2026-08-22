@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\Scopes\BranchScope;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -151,6 +152,64 @@ class Payroll extends Model
             $result = $additions - $deductions;
             $result = $result >= 0 ? $result : 0;
             return $result;
+        });
+    }
+
+    /**
+     * جلب اسم الفرع للفترة الحالية للراتب من آخر سجل فروع EmployeeBranchLog لذاك الشهر.
+     */
+    public function getBranchNameForPeriod(): string
+    {
+        if ($this->employee_id && $this->year && $this->month) {
+            $periodStart = Carbon::create($this->year, $this->month, 1)->startOfMonth();
+            $periodEnd   = Carbon::create($this->year, $this->month, 1)->endOfMonth();
+
+            $branchName = EmployeeBranchLog::getBranchNameForPeriod(
+                (int) $this->employee_id,
+                $periodStart,
+                $periodEnd
+            );
+
+            if (!empty($branchName)) {
+                return $branchName;
+            }
+        }
+
+        return $this->branch?->name
+            ?? $this->employee?->branch?->name
+            ?? '-';
+    }
+
+    /**
+     * Accessor for period branch name.
+     */
+    protected function periodBranchName(): Attribute
+    {
+        return Attribute::get(fn () => $this->getBranchNameForPeriod());
+    }
+
+    /**
+     * Accessor for period branch model (آخر فرع للموظف في ذاك الشهر/الفترة).
+     */
+    protected function periodBranch(): Attribute
+    {
+        return Attribute::get(function () {
+            if ($this->employee_id && $this->year && $this->month) {
+                $periodStart = Carbon::create($this->year, $this->month, 1)->startOfMonth();
+                $periodEnd   = Carbon::create($this->year, $this->month, 1)->endOfMonth();
+
+                $branch = EmployeeBranchLog::getLastBranchForPeriod(
+                    (int) $this->employee_id,
+                    $periodStart,
+                    $periodEnd
+                );
+
+                if ($branch) {
+                    return $branch;
+                }
+            }
+
+            return $this->branch ?? $this->employee?->branch;
         });
     }
 }

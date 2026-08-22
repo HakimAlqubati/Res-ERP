@@ -23,13 +23,20 @@ class ListPayrollReports extends ListRecords
         
         $branchId = $filterState['branch_id'] ?? null;
         $period = $filterState['period'] ?? null;
+        $paymentMethodId = $filterState['payment_method_id'] ?? null;
 
         $reportData = null;
         $branchName = null;
+        $paymentMethodName = null;
 
         if ($branchId && $period) {
             $branch = \App\Models\Branch::find($branchId);
             $branchName = $branch?->name;
+
+            if ($paymentMethodId) {
+                $paymentMethod = \App\Models\EmployeePaymentMethod::find($paymentMethodId);
+                $paymentMethodName = $paymentMethod?->name;
+            }
 
             try {
                 // Parse period (e.g., "April 2026")
@@ -40,7 +47,8 @@ class ListPayrollReports extends ListRecords
                 $filterDto = new PayrollReportFilterDTO(
                     branchId: (int) $branchId,
                     month: $month,
-                    year: $year
+                    year: $year,
+                    paymentMethodId: $paymentMethodId ? (int) $paymentMethodId : null,
                 );
 
                 $service = new PayrollReportService();
@@ -53,10 +61,12 @@ class ListPayrollReports extends ListRecords
         }
 
         return [
-            'reportData' => $reportData,
-            'branchId'   => $branchId,
-            'branchName' => $branchName,
-            'period'     => $period,
+            'reportData'        => $reportData,
+            'branchId'          => $branchId,
+            'branchName'        => $branchName,
+            'period'            => $period,
+            'paymentMethodId'   => $paymentMethodId,
+            'paymentMethodName' => $paymentMethodName,
         ];
     }
 }

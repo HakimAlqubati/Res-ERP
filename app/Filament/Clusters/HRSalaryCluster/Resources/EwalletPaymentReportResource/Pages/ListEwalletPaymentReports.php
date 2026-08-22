@@ -43,12 +43,23 @@ class ListEwalletPaymentReports extends ListRecords
                 ->badge(EwalletPaymentReport::query()->where('payment_type', EwalletPaymentReport::TYPE_EWALLET)->count())
                 ->badgeColor('info'),
 
-            'bank' => Tab::make(__('Bank'))
+            'bank' => Tab::make(__('Bank Transfer'))
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('payment_type', EwalletPaymentReport::TYPE_BANK))
                 ->icon('heroicon-o-building-library')
                 ->badge(EwalletPaymentReport::query()->where('payment_type', EwalletPaymentReport::TYPE_BANK)->count())
                 ->badgeColor('success'),
+
+            'cash' => Tab::make(__('Cash'))
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('payment_type', EwalletPaymentReport::TYPE_CASH))
+                ->icon('heroicon-o-banknotes')
+                ->badge(EwalletPaymentReport::query()->where('payment_type', EwalletPaymentReport::TYPE_CASH)->count())
+                ->badgeColor('warning'),
         ];
+    }
+
+    public function getDefaultActiveTab(): string | int | null
+    {
+        return 'ewallet';
     }
 
     protected function getHeaderActions(): array
@@ -58,7 +69,7 @@ class ListEwalletPaymentReports extends ListRecords
                 ->label('Generate')
                 ->icon('heroicon-o-plus')
                 ->color('info')
-                ->modalDescription('Generate a new payment report for eWallet or Bank employees.')
+                ->modalDescription('Generate a new payment report for eWallet, Bank, or Cash employees.')
                 ->modalHeading('Generate Payment Report')
                 // ->slideOver(true)
                 ->closeModalByClickingAway(false)
@@ -72,16 +83,23 @@ class ListEwalletPaymentReports extends ListRecords
                         ->options([
                             EwalletPaymentReport::TYPE_EWALLET => 'eWallet',
                             EwalletPaymentReport::TYPE_BANK => 'Bank',
+                            EwalletPaymentReport::TYPE_CASH => 'Cash',
                         ])
                         ->icons([
                             EwalletPaymentReport::TYPE_EWALLET => 'heroicon-o-device-phone-mobile',
                             EwalletPaymentReport::TYPE_BANK => 'heroicon-o-building-library',
+                            EwalletPaymentReport::TYPE_CASH => 'heroicon-o-banknotes',
                         ])
                         ->colors([
                             EwalletPaymentReport::TYPE_EWALLET => 'info',
                             EwalletPaymentReport::TYPE_BANK => 'success',
+                            EwalletPaymentReport::TYPE_CASH => 'warning',
                         ])
-                        ->default(EwalletPaymentReport::TYPE_EWALLET)
+                        ->default(fn () => match ($this->activeTab) {
+                            'bank' => EwalletPaymentReport::TYPE_BANK,
+                            'cash' => EwalletPaymentReport::TYPE_CASH,
+                            default => EwalletPaymentReport::TYPE_EWALLET,
+                        })
                         ->inline()
                         ->required()
                         ->columnSpanFull(),
@@ -130,11 +148,17 @@ class ListEwalletPaymentReports extends ListRecords
                     $paymentType = $data['payment_type'];
 
                     // Determine the payment method code based on selected type
-                    $paymentMethodCode = $paymentType === EwalletPaymentReport::TYPE_BANK
-                        ? EmployeePaymentMethod::CODE_BANK
-                        : EmployeePaymentMethod::CODE_EWALLET;
+                    $paymentMethodCode = match ($paymentType) {
+                        EwalletPaymentReport::TYPE_BANK => EmployeePaymentMethod::CODE_BANK,
+                        EwalletPaymentReport::TYPE_CASH => EmployeePaymentMethod::CODE_CASH,
+                        default => EmployeePaymentMethod::CODE_EWALLET,
+                    };
 
-                    $paymentTypeLabel = $paymentType === EwalletPaymentReport::TYPE_BANK ? 'Bank' : 'eWallet';
+                    $paymentTypeLabel = match ($paymentType) {
+                        EwalletPaymentReport::TYPE_BANK => 'Bank',
+                        EwalletPaymentReport::TYPE_CASH => 'Cash',
+                        default => 'eWallet',
+                    };
 
                     // 1. Get the latest approved PayrollRun per branch for this month/year
                     $latestRunIds = PayrollRun::query()
@@ -206,7 +230,9 @@ class ListEwalletPaymentReports extends ListRecords
                             $branchName = !empty($branchNames) ? $branchNames : 'Unknown Branch';
                             $rewardDescription = "Salary - {$monthName} {$year} - {$branchName}";
                             $rewardName = $employee?->payment_details['full_name'] ?? $employee?->name ?? '';
-                            $accountNumber = $employee?->payment_details['account_number'] ?? null;
+                            $accountNumber = $paymentType === EwalletPaymentReport::TYPE_CASH
+                                ? ($employee?->employee_no ?? null)
+                                : ($employee?->payment_details['account_number'] ?? null);
                             $netSalary = $empPayrolls->sum('net_salary');
 
                             $items[] = [

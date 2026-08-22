@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Traits\Scopes\BranchScope;
 use App\Traits\Scopes\StatusScope;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -152,23 +153,47 @@ class EmployeeOvertime extends Model implements Auditable
         return $query->where('type', static::TYPE_BASED_ON_MONTH);
     }
 
-    // Accessor for the 'type' attribute
-    public function getTypeValueAttribute()
+    /**
+     * Accessor for the 'type_value' attribute.
+     */
+    protected function typeValue(): Attribute
     {
-        $type = $this->type;
-        switch ($type) {
-            case self::TYPE_BASED_ON_DAY:
-                $type = 'Houly';
-                break;
+        return Attribute::get(fn (): string => match ($this->type) {
+            self::TYPE_BASED_ON_DAY => 'Hourly',
+            self::TYPE_BASED_ON_MONTH => 'Daily',
+            default => 'Unknown',
+        })->shouldCache();
+    }
 
-            case self::TYPE_BASED_ON_MONTH:
-                $type = 'Daily';
-                break;
-
-            default:
-                $type = 'Unnkown';
-                break;
+    /**
+     * Format decimal hours (e.g. 1.50) into 'H:i' format (e.g. 1:30).
+     */
+    public static function formatHours(float|int|string|null $hours): ?string
+    {
+        if ($hours === null || $hours === '') {
+            return null;
         }
-        return $type;
+
+        $hours = (float) $hours;
+        $isNegative = $hours < 0;
+        $absHours = abs($hours);
+
+        $h = (int) $absHours;
+        $m = (int) round(($absHours - $h) * 60);
+
+        if ($m >= 60) {
+            $h += 1;
+            $m = 0;
+        }
+
+        return ($isNegative ? '-' : '') . sprintf('%d:%02d', $h, $m);
+    }
+
+    /**
+     * Accessor for the 'hours_formatted' attribute.
+     */
+    protected function hoursFormatted(): Attribute
+    {
+        return Attribute::get(fn (): ?string => static::formatHours($this->hours))->shouldCache();
     }
 }

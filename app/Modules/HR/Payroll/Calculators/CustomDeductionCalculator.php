@@ -6,6 +6,7 @@ namespace App\Modules\HR\Payroll\Calculators;
 
 use App\Models\Deduction;
 use App\Modules\HR\Payroll\DTOs\CalculationContext;
+use Carbon\Carbon;
 
 /**
  * حساب الخصومات الخاصة بالموظف
@@ -26,7 +27,10 @@ class CustomDeductionCalculator
         $deductionItems = [];
         $deductionTotal = 0.0;
 
-        // البدلات الخاصة بالموظف
+        // نسبة أيام هذا الـ segment من إجمالي أيام الشهر (للتوزيع النسبي عند multi-segment)
+        $ratio = $this->calculateSegmentRatio($context);
+
+        // الاستقطاعات الخاصة بالموظف
         $specificDeductions = $context->employee->deductions()
             ->with('deduction:id,name,is_percentage,amount,percentage,applied_by')
             ->get();
@@ -42,9 +46,16 @@ class CustomDeductionCalculator
             $percentage   = $empDeduction->percentage   ?? $d->percentage;
             $fixedAmount  = $empDeduction->amount       ?? $d->amount;
 
-            $amount = $isPercentage
+            $fullAmount = $isPercentage
                 ? ($context->salary * ($percentage / 100))
                 : (float) $fixedAmount;
+
+            if ($fullAmount <= 0) {
+                continue;
+            }
+
+            // توزيع مبلغ الاستقطاع نسبياً حسب أيام الفترة (segment)
+            $amount = $this->round($fullAmount * $ratio);
 
             if ($amount <= 0) {
                 continue;
@@ -53,7 +64,7 @@ class CustomDeductionCalculator
             $deductionItems[] = [
                 'id'            => $d->id,
                 'name'          => $d->name,
-                'amount'        => $this->round($amount),
+                'amount'        => $amount,
                 'is_percentage' => (bool) $isPercentage,
                 'value'         => $isPercentage ? $percentage : $fixedAmount,
                 'type'          => 'specific',
@@ -69,6 +80,33 @@ class CustomDeductionCalculator
             'items' => $deductionItems,
             'total' => $this->round($deductionTotal),
         ];
+    }
+
+    /**
+     * حساب نسبة أيام الفترة الحالية (segment) من إجمالي أيام الشهر.
+     * إذا كانت الفترة تغطي الشهر كاملاً، ترجع 1.0.
+     */
+    protected function calculateSegmentRatio(CalculationContext $context): float
+    {
+        if (!$context->periodYear || !$context->periodMonth) {
+            return 1.0;
+        }
+
+        $monthStart = sprintf('%04d-%02d-01', $context->periodYear, $context->periodMonth);
+        $monthEnd   = date('Y-m-t', strtotime($monthStart));
+        $totalDays  = (int) date('t', strtotime($monthStart));
+
+        $segStart = $context->periodStartDate ?? $monthStart;
+        $segEnd   = $context->periodEndDate   ?? $monthEnd;
+
+        // إذا كانت الفترة تغطي الشهر كاملاً — لا حاجة للتوزيع
+        if ($segStart <= $monthStart && $segEnd >= $monthEnd) {
+            return 1.0;
+        }
+
+        $segDays = (int) Carbon::parse($segStart)->diffInDays(Carbon::parse($segEnd)) + 1;
+
+        return min(1.0, max(0.0, $segDays / $totalDays));
     }
 
     protected function round(float $value): float

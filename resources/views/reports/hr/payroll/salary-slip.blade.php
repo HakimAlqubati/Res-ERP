@@ -253,7 +253,7 @@
                 </tr>
                 <tr>
                     <td class="label">Branch:</td>
-                    <td>{{ $payroll->employee?->branch?->name ?? '-' }}</td>
+                    <td>{{ $payroll->period_branch_name ?? '-' }}</td>
                 </tr>
             </table>
 
