@@ -63,7 +63,7 @@ class EmployeeOvertimeTable
                     ->sortable()->hidden()
                     ->wrap()
                     ->searchable()->toggleable(isToggledHiddenByDefault: false),
-                TextColumn::make('employee.short_name')
+                TextColumn::make('employee.name')
                     ->label('Employee')
                     ->sortable()
                     // ->wrap()
