@@ -6,6 +6,7 @@ use App\Filament\Clusters\HRSalaryCluster;
 use App\Filament\Clusters\HRSalaryCluster\Resources\EwalletPaymentReportResource\Pages;
 use App\Filament\Tables\Actions\RefreshAction;
 use App\Models\EwalletPaymentReport;
+use App\Modules\HR\PayrollReports\Exports\CashPaymentExport;
 use App\Modules\HR\PayrollReports\Exports\EwalletPaymentExport;
 use Carbon\Carbon;
 use Filament\Actions\Action;
@@ -35,7 +36,7 @@ class EwalletPaymentReportResource extends Resource
 {
     protected static ?string $model = EwalletPaymentReport::class;
 
-    protected static ?string $slug = 'ewallet-payment-report';
+    protected static ?string $slug = 'payment-report';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::ClipboardDocumentList;
 
@@ -97,9 +98,21 @@ class EwalletPaymentReportResource extends Resource
                 TextColumn::make('payment_type')
                     ->label('Payment Type')
                     ->badge()
-                    ->formatStateUsing(fn ($state) => $state === 'bank' ? 'Bank' : 'eWallet')
-                    ->color(fn ($state) => $state === 'bank' ? 'success' : 'info')
-                    ->icon(fn ($state) => $state === 'bank' ? 'heroicon-o-building-library' : 'heroicon-o-device-phone-mobile')
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        EwalletPaymentReport::TYPE_BANK => 'Bank',
+                        EwalletPaymentReport::TYPE_CASH => 'Cash',
+                        default => 'eWallet',
+                    })
+                    ->color(fn ($state) => match ($state) {
+                        EwalletPaymentReport::TYPE_BANK => 'success',
+                        EwalletPaymentReport::TYPE_CASH => 'warning',
+                        default => 'info',
+                    })
+                    ->icon(fn ($state) => match ($state) {
+                        EwalletPaymentReport::TYPE_BANK => 'heroicon-o-building-library',
+                        EwalletPaymentReport::TYPE_CASH => 'heroicon-o-banknotes',
+                        default => 'heroicon-o-device-phone-mobile',
+                    })
                     ->sortable()
                     ->alignCenter(),
             
@@ -142,12 +155,20 @@ class EwalletPaymentReportResource extends Resource
             ->color('success')
             ->action(function (EwalletPaymentReport $record) {
                 $monthName = Carbon::create()->month($record->month)->format('F');
-                $isBank = $record->payment_type === EwalletPaymentReport::TYPE_BANK;
-                $prefix = $isBank ? 'Bank_Payment_Report' : 'TnG_Payment_Report';
+                $prefix = match ($record->payment_type) {
+                    EwalletPaymentReport::TYPE_BANK => 'Bank_Payment_Report',
+                    EwalletPaymentReport::TYPE_CASH => 'Cash_Payment_Report',
+                    default => 'TnG_Payment_Report',
+                };
                 $fileName = "{$prefix}_{$monthName}_{$record->year}.xlsx";
 
+                $export = match ($record->payment_type) {
+                    EwalletPaymentReport::TYPE_CASH => new CashPaymentExport($record),
+                    default => new EwalletPaymentExport($record),
+                };
+
                 return Excel::download(
-                    new EwalletPaymentExport($record),
+                    $export,
                     $fileName
                 );
             });
@@ -160,16 +181,22 @@ class EwalletPaymentReportResource extends Resource
             ->icon('heroicon-o-document-arrow-down')
             ->color('danger')
             ->action(function (EwalletPaymentReport $record) {
-                $record->load('items');
+                $record->load(['items.employee', 'items.payroll']);
                 $isBank = $record->payment_type === EwalletPaymentReport::TYPE_BANK;
+                $isCash = $record->payment_type === EwalletPaymentReport::TYPE_CASH;
                 $pdf = \Mccarlosen\LaravelMpdf\Facades\LaravelMpdf::loadView('reports.hr.ewallet-payment-report-pdf', [
                     'report' => $record,
                     'paymentType' => $record->payment_type,
                     'isBank' => $isBank,
+                    'isCash' => $isCash,
                 ]);
                 
                 $monthName = Carbon::create()->month($record->month)->format('F');
-                $prefix = $isBank ? 'Bank_Sheet' : 'eWallet_Sheet';
+                $prefix = match ($record->payment_type) {
+                    EwalletPaymentReport::TYPE_BANK => 'Bank_Sheet',
+                    EwalletPaymentReport::TYPE_CASH => 'Cash_Sheet',
+                    default => 'eWallet_Sheet',
+                };
                 $fileName = "{$prefix}_{$monthName}_{$record->year}.pdf";
 
                 return response()->streamDownload(function () use ($pdf) {

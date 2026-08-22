@@ -14,6 +14,8 @@ class EwalletPaymentReport extends Model
 
     public const TYPE_EWALLET = 'ewallet';
     public const TYPE_BANK = 'bank';
+    public const TYPE_CASH = 'cash';
+    public const TYPE_CACHE = 'cash';
 
     protected $fillable = [
         'month',

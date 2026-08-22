@@ -8,7 +8,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 
-class EwalletPaymentExport implements FromCollection, WithMapping, WithHeadings, ShouldAutoSize
+class CashPaymentExport implements FromCollection, WithMapping, WithHeadings, ShouldAutoSize
 {
     protected EwalletPaymentReport $report;
 
@@ -24,36 +24,33 @@ class EwalletPaymentExport implements FromCollection, WithMapping, WithHeadings,
 
     public function collection()
     {
-        // Get all items belonging to this report
-        return $this->report->items;
+        // Get all items belonging to this report with employee loaded
+        return $this->report->items()->with('employee')->get();
     }
 
     public function map($item): array
     {
-        $rewardName = substr($item->reward_name ?? '', 0, 20);
+        $employeeNo = $item->employee?->employee_no ?? $item->account_number ?? '-';
+        $employeeName = $item->reward_name ?? $item->employee?->name ?? '';
         $rewardDescription = substr($item->reward_description ?? '', 0, 200);
 
         return [
-            "'" . $item->account_number,
+            $employeeNo,
+            $employeeName,
             $item->net_salary,
-            $rewardName,
             $rewardDescription,
+            '', // Blank space for physical signature upon cash handover
         ];
     }
 
     public function headings(): array
     {
-        $accountLabel = match ($this->report->payment_type) {
-            EwalletPaymentReport::TYPE_BANK => 'Bank Account Number',
-            EwalletPaymentReport::TYPE_CASH => 'Employee No',
-            default => 'eWallet Account Number',
-        };
-
         return [
-            $accountLabel,
-            "Rm'",
-            'Reward Name (Max 20 characters)',
-            'Reward Description (Max 200 characters)',
+            'Employee No',
+            'Employee Name',
+            "Net Salary (RM)",
+            'Description',
+            'Signature / Acknowledgment',
         ];
     }
 }
