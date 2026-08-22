@@ -79,7 +79,7 @@ class InventoryTransactionReportResource extends Resource
                     })
                     ->getOptionLabelUsing(fn ($value): ?string => Product::find($value)?->code.' - '.Product::find($value)?->name)
                     ->options(function () {
-                        return Product::where('active', 0)
+                        return Product::where('active', 1)
                             ->get()
                             ->mapWithKeys(fn ($product) => [
                                 $product->id => "{$product->code} - {$product->name}",
