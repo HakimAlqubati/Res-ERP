@@ -25,13 +25,20 @@ use App\Imports\InventoryTransactionsImport;
 use App\Models\Inventory;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
+use App\Models\Unit;
+use App\Services\MultiProductsInventoryService;
 use Dom\Text;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Grid;
+use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Columns\Summarizers\Sum;
@@ -106,6 +113,8 @@ class InventoryResource extends Resource
                 // ->visible(fn()=>isHakimOrAdel())
                 ->visible(fn()=>isSuperAdmin())
                 ,
+
+                static::getZeroDisabledProductsAction(),
             ])
             ->columns([
 
@@ -581,5 +590,249 @@ class InventoryResource extends Resource
                 SoftDeletingScope::class,
             ])->with(['sourceTransaction']);
         return $query;
+    }
+
+    public static function getDefaultDisabledProductsItems(?int $storeId = 1): array
+    {
+        $targetCodes = ['09080', '10026', '10012', '19016', '9080'];
+        $products = Product::whereIn('code', $targetCodes)
+            ->with(['allUnitPrices.unit', 'supplyOutUnitPrices.unit', 'units'])
+            ->get();
+
+        $items = [];
+        foreach ($products as $product) {
+            // Get the smallest unit with package size 1 (or smallest package size)
+            $unitPrice = $product->allUnitPrices->firstWhere('package_size', 1)
+                ?? $product->supplyOutUnitPrices->firstWhere('package_size', 1)
+                ?? $product->allUnitPrices->sortBy('package_size')->first()
+                ?? $product->supplyOutUnitPrices->sortBy('package_size')->first();
+
+            $unitId = $unitPrice?->unit_id ?? $product->main_unit_id;
+            $unitName = $unitPrice?->unit?->name ?? Unit::find($unitId)?->name ?? 'الوحدة الأساسية';
+            $packageSize = $unitPrice?->package_size ?? 1;
+            $price = $unitPrice?->price ?? $product->basic_price ?? 0;
+
+            $quantity = 0;
+            if ($storeId && $unitId) {
+                try {
+                    $remaining = MultiProductsInventoryService::getRemainingQty(
+                        (int) $product->id,
+                        (int) $unitId,
+                        (int) $storeId
+                    );
+                    $quantity = max(0, $remaining);
+                } catch (\Throwable $e) {
+                    $quantity = 0;
+                }
+            }
+
+            $items[] = [
+                'product_id'      => $product->id,
+                'product_display' => "({$product->code}) {$product->name}",
+                'unit_id'         => $unitId,
+                'unit_name'       => $unitName,
+                'package_size'    => $packageSize,
+                'quantity'        => $quantity,
+                'price'           => $price,
+                'notes'           => 'تصفير المنتجات المعطلة',
+            ];
+        }
+
+        return $items;
+    }
+
+    public static function getZeroDisabledProductsAction(): Action
+    {
+        return Action::make('zero_disabled_products')
+            ->label('تصفير المنتجات المعطلة')
+            ->icon('heroicon-o-minus-circle')
+            ->visible(fn()=>isHakimOrAdel())
+            ->color('danger')
+            ->button()
+            ->modalHeading('تصفير المنتجات المعطلة')
+            ->modalDescription('إنشاء حركات مخزنية للمنتجات المعطلة (09080, 10026, 10012, 19016)')
+            ->modalWidth(Width::FiveExtraLarge)
+            ->modalSubmitActionLabel('تنفيذ وتأكيد الحركات')
+            ->fillForm(function () {
+                $storeId = 1;
+
+                return [
+                    'store_id'      => $storeId,
+                    'movement_type' => InventoryTransaction::MOVEMENT_OUT,
+                    'movement_date' => now()->format('Y-m-d H:i:s'),
+                    'notes'         => 'تصفير المنتجات المعطلة',
+                    'items'         => self::getDefaultDisabledProductsItems($storeId),
+                ];
+            })
+            ->schema([
+                Grid::make(3)->schema([
+                    Select::make('store_id')
+                        ->label('المستودع')
+                        ->options(fn () => Store::active()->pluck('name', 'id')->toArray())
+                        ->default(1)
+                        ->required()
+                        ->searchable()
+                        ->preload()
+                        ->live()
+                        ->afterStateUpdated(function ($state, $set, $get) {
+                            if (! $state) {
+                                return;
+                            }
+                            $currentItems = $get('items') ?? [];
+                            if (empty($currentItems)) {
+                                $currentItems = self::getDefaultDisabledProductsItems((int) $state);
+                            } else {
+                                foreach ($currentItems as &$item) {
+                                    if (! empty($item['product_id']) && ! empty($item['unit_id'])) {
+                                        try {
+                                            $rem = MultiProductsInventoryService::getRemainingQty(
+                                                (int) $item['product_id'],
+                                                (int) $item['unit_id'],
+                                                (int) $state
+                                            );
+                                            $item['quantity'] = max(0, $rem);
+                                        } catch (\Throwable $e) {
+                                            // Keep current quantity
+                                        }
+                                    }
+                                }
+                            }
+                            $set('items', $currentItems);
+                        }),
+
+                    Select::make('movement_type')
+                        ->label('نوع الحركة')
+                        ->options([
+                            InventoryTransaction::MOVEMENT_OUT => 'صرف / تصفير (Out)',
+                            InventoryTransaction::MOVEMENT_IN  => 'توريد / إدخال (In)',
+                        ])
+                        ->default(InventoryTransaction::MOVEMENT_OUT)
+                        ->required(),
+
+                    DateTimePicker::make('movement_date')
+                        ->label('تاريخ الحركة')
+                        ->default(now())
+                        ->required(),
+                ]),
+
+                TextInput::make('notes')
+                    ->label('الملاحظات العامة')
+                    ->default('تصفير المنتجات المعطلة')
+                    ->required()
+                    ->columnSpanFull(),
+
+                Repeater::make('items')
+                    ->label('المنتجات (09080, 10026, 10012, 19016)')
+                    ->schema([
+                        Hidden::make('product_id'),
+                        TextInput::make('product_display')
+                            ->label('المنتج')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->columnSpan(2),
+
+                        Select::make('unit_id')
+                            ->label('الوحدة')
+                            ->options(function ($get) {
+                                $productId = $get('product_id');
+                                if (! $productId) {
+                                    return [];
+                                }
+                                $product = Product::with(['allUnitPrices.unit'])->find($productId);
+                                if (! $product) {
+                                    return [];
+                                }
+                                $opts = [];
+                                foreach ($product->allUnitPrices as $up) {
+                                    $opts[$up->unit_id] = ($up->unit?->name ?? 'Unit') . " (حجم: {$up->package_size})";
+                                }
+                                if (empty($opts) && $product->main_unit_id) {
+                                    $u = Unit::find($product->main_unit_id);
+                                    if ($u) {
+                                        $opts[$u->id] = $u->name . ' (حجم: 1)';
+                                    }
+                                }
+                                return $opts;
+                            })
+                            ->required()
+                            ->columnSpan(1),
+
+                        TextInput::make('package_size')
+                            ->label('حجم التعبئة')
+                            ->numeric()
+                            ->default(1)
+                            ->required()
+                            ->columnSpan(1),
+
+                        TextInput::make('quantity')
+                            ->label('الكمية')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default(0)
+                            ->required()
+                            ->columnSpan(1),
+
+                        TextInput::make('price')
+                            ->label('السعر')
+                            ->numeric()
+                            ->default(0)
+                            ->columnSpan(1),
+
+                        TextInput::make('notes')
+                            ->label('ملاحظات البند')
+                            ->default('تصفير المنتجات المعطلة')
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(6)
+                    ->addable(false)
+                    ->deletable(true)
+                    ->reorderable(false)
+                    ->columnSpanFull(),
+            ])
+            ->action(function (array $data) {
+                $storeId = $data['store_id'];
+                $movementType = $data['movement_type'] ?? InventoryTransaction::MOVEMENT_OUT;
+                $movementDate = $data['movement_date'] ?? now();
+                $mainNotes = $data['notes'] ?? 'تصفير المنتجات المعطلة';
+                $items = $data['items'] ?? [];
+
+                $createdCount = 0;
+
+                DB::transaction(function () use ($items, $storeId, $movementType, $movementDate, $mainNotes, &$createdCount) {
+                    foreach ($items as $item) {
+                        $quantity = (float) ($item['quantity'] ?? 0);
+                        if ($quantity <= 0) {
+                            continue;
+                        }
+
+                        InventoryTransaction::create([
+                            'product_id'       => $item['product_id'],
+                            'store_id'         => $storeId,
+                            'unit_id'          => $item['unit_id'],
+                            'quantity'         => $quantity,
+                            'package_size'     => $item['package_size'] ?? 1,
+                            'price'            => $item['price'] ?? 0,
+                            'movement_type'    => $movementType,
+                            'movement_date'    => $movementDate,
+                            'transaction_date' => $movementDate,
+                            'notes'            => ! empty($item['notes']) ? $item['notes'] : $mainNotes,
+                        ]);
+
+                        $createdCount++;
+                    }
+                });
+
+                if ($createdCount > 0) {
+                    Notification::make()
+                        ->title("✅ تم إنشاء {$createdCount} حركة مخزنية بنجاح.")
+                        ->success()
+                        ->send();
+                } else {
+                    Notification::make()
+                        ->title('⚠️ لم يتم إنشاء حركات مخزنية. يرجى إدخال كمية أكبر من صفر.')
+                        ->warning()
+                        ->send();
+                }
+            });
     }
 }
