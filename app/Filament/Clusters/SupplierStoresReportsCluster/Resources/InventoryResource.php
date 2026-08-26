@@ -595,6 +595,8 @@ class InventoryResource extends Resource
     public static function getDefaultDisabledProductsItems(?int $storeId = 1): array
     {
         $targetCodes = ['09080', '10026', '10012', '19016', '9080'];
+        Product::whereIn('code', $targetCodes)->update(['active' => 0]);
+
         $products = Product::whereIn('code', $targetCodes)
             ->with(['allUnitPrices.unit', 'supplyOutUnitPrices.unit', 'units'])
             ->get();
@@ -820,6 +822,9 @@ class InventoryResource extends Resource
 
                         $createdCount++;
                     }
+
+                    $targetCodes = ['09080', '10026', '10012', '19016', '9080'];
+                    Product::whereIn('code', $targetCodes)->update(['active' => 0]);
                 });
 
                 if ($createdCount > 0) {
