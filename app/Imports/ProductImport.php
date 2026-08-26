@@ -9,27 +9,40 @@ use App\Models\Product;
 use App\Models\Unit;
 use App\Models\UnitPrice;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
+use Maatwebsite\Excel\Validators\Failure;
 
 class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFailure
 {
-    use SkipsFailures;
+    use SkipsFailures {
+        onFailure as parentOnFailure;
+    }
 
     private int $successCount = 0;
 
+    public function onFailure(Failure ...$failures)
+    {
+        $this->parentOnFailure(...$failures);
+
+        foreach ($failures as $failure) {
+            Log::warning("ProductImport [Row {$failure->row()}] Validation Error on field '{$failure->attribute()}': " . implode(', ', $failure->errors()), [
+                'values' => $failure->values(),
+            ]);
+        }
+    }
 
     public function model(array $row)
     {
         // DB::beginTransaction();
         try {
             $packageSize = (int) ($row['qty_per_pack'] ?? 1);
-            $productId = (int) $row['id'];
+            $productId = (int) ($row['id'] ?? 0);
             $productName = trim($row['product_name'] ?? '');
             $categoryName = trim($row['category'] ?? '');
             $codeOldSystem = trim($row['code_old_system'] ?? '');
@@ -40,13 +53,30 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
             $stockQty = (float) ($row['stock_qty'] ?? 0);
 
             if (!$productId || !$productName || !$categoryName || !$unitName || $price <= 0) {
+                Log::warning("ProductImport skipped row: Missing required fields or invalid price.", [
+                    'id' => $productId,
+                    'product_name' => $productName,
+                    'category' => $categoryName,
+                    'unit' => $unitName,
+                    'price' => $price,
+                    'row' => $row,
+                ]);
                 return null;
             }
 
             $category = Category::where('name', $categoryName)->first();
-            $unit = Unit::where('name', $unitName)->first();
+            if (!$category) {
+                Log::warning("ProductImport skipped row (ID: {$productId}): Category '{$categoryName}' not found in database.", [
+                    'row' => $row,
+                ]);
+                return null;
+            }
 
-            if (!$category || !$unit) {
+            $unit = Unit::where('name', $unitName)->first();
+            if (!$unit) {
+                Log::warning("ProductImport skipped row (ID: {$productId}): Unit '{$unitName}' not found in database.", [
+                    'row' => $row,
+                ]);
                 return null;
             }
 
@@ -54,6 +84,9 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
             if ($packageSize > 1 && $unitPerPackName) {
                 $unitPerPack = Unit::where('name', $unitPerPackName)->first();
                 if (!$unitPerPack) {
+                    Log::warning("ProductImport skipped row (ID: {$productId}): Unit Per Pack '{$unitPerPackName}' not found in database.", [
+                        'row' => $row,
+                    ]);
                     return null;
                 }
             }
@@ -147,7 +180,11 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
             $this->successCount++;
             // DB::commit();
         } catch (Exception $e) {
-            // Silent fail
+            Log::error("ProductImport exception on row (ID: " . ($row['id'] ?? 'unknown') . "): " . $e->getMessage(), [
+                'row' => $row,
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
         }
 
         return null; // we're handling manually
