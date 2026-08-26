@@ -40,6 +40,20 @@
             {{-- Toolbar: Actions --}}
             <div class="flex justify-end items-center gap-2 my-4">
                 <button type="button"
+                    wire:click="exportPdf"
+                    wire:loading.attr="disabled"
+                    class="flex items-center gap-2 px-5 py-2 font-semibold rounded-md border border-red-600 bg-red-600 hover:bg-red-800 text-white transition duration-300 shadow-md cursor-pointer disabled:opacity-50">
+                    <span wire:loading.remove wire:target="exportPdf">📄 Export PDF</span>
+                    <span wire:loading wire:target="exportPdf" class="flex items-center gap-1">
+                        <svg class="animate-spin h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                        </svg>
+                        Exporting...
+                    </span>
+                </button>
+
+                <button type="button"
                     wire:click="exportExcel"
                     wire:loading.attr="disabled"
                     class="flex items-center gap-2 px-5 py-2 font-semibold rounded-md border border-emerald-600 bg-emerald-600 hover:bg-emerald-800 text-white transition duration-300 shadow-md cursor-pointer disabled:opacity-50">
