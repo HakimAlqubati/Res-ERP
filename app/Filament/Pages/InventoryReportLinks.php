@@ -135,8 +135,8 @@ class InventoryReportLinks extends Page
                 'url' => StockPositionBatchReportResource::getUrl(),
             ],
             [
-                'title' => 'Stock Inventory Valuation Report',
-                'description' => 'Stock inventory closing value report by store and date',
+                'title' => 'Stocktake Valuation Report',
+                'description' => 'Stocktake closing value report by store and date',
                 'icon' => 'heroicon-o-calculator',
                 'url' => StockInventoryValuationReportResource::getUrl(),
             ],

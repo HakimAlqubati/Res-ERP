@@ -38,17 +38,17 @@ class StockInventoryValuationReportResource extends Resource
 
     public static function getLabel(): ?string
     {
-        return 'Stock Inventory Valuation Report';
+        return 'Stocktake Valuation Report';
     }
 
     public static function getNavigationLabel(): string
     {
-        return 'Stock Inventory Valuation Report';
+        return 'Stocktake Valuation Report';
     }
 
     public static function getPluralLabel(): ?string
     {
-        return 'Stock Inventory Valuation Reports';
+        return 'Stocktake Valuation Report';
     }
 
     public static function table(Table $table): Table
@@ -69,7 +69,7 @@ class StockInventoryValuationReportResource extends Resource
                             ->afterStateUpdated(fn (callable $set) => $set('inventory_date', null)),
 
                         Select::make('inventory_date')
-                            ->label('Inventory Date')
+                            ->label('Date')
                             ->placeholder('Select Inventory Date')
                             ->searchable()
                             ->live()
