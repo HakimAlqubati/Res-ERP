@@ -20,6 +20,7 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\ManufacturingIn
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\MinimumProductQtyReportResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReportResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentSummaryReportResource;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryValuationReportResource;
 use App\Filament\Resources\InVSReportResource;
 use App\Filament\Resources\StockSupplyOrderReportResource;
 use Filament\Pages\Page;
@@ -132,6 +133,12 @@ class InventoryReportLinks extends Page
                 'description' => __('lang.stock_position_batch_report_desc'),
                 'icon' => 'heroicon-o-presentation-chart-bar',
                 'url' => StockPositionBatchReportResource::getUrl(),
+            ],
+            [
+                'title' => 'Stock Inventory Valuation Report',
+                'description' => 'Stock inventory closing value report by store and date',
+                'icon' => 'heroicon-o-calculator',
+                'url' => StockInventoryValuationReportResource::getUrl(),
             ],
             // [
             //     'title'       => MinimumProductQtyReportResource::getPluralLabel(),
