@@ -39,9 +39,18 @@
         @if ($reportData && count($reportData->items) > 0)
             {{-- Toolbar: Actions --}}
             <div class="flex justify-end items-center gap-2 my-4">
-                <button type="button" onclick="exportToExcel()"
-                    class="px-5 py-2 font-semibold rounded-md border border-emerald-600 bg-emerald-600 hover:bg-emerald-800 text-white transition duration-300 shadow-md">
-                    📥 Export Excel
+                <button type="button"
+                    wire:click="exportExcel"
+                    wire:loading.attr="disabled"
+                    class="flex items-center gap-2 px-5 py-2 font-semibold rounded-md border border-emerald-600 bg-emerald-600 hover:bg-emerald-800 text-white transition duration-300 shadow-md cursor-pointer disabled:opacity-50">
+                    <span wire:loading.remove wire:target="exportExcel">📥 Export Excel</span>
+                    <span wire:loading wire:target="exportExcel" class="flex items-center gap-1">
+                        <svg class="animate-spin h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                        </svg>
+                        Exporting...
+                    </span>
                 </button>
             </div>
 
@@ -135,27 +144,4 @@
             </h2>
         </div>
     @endif
-
-    {{-- Script for Excel Export --}}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script>
-        function exportToExcel() {
-            const table = document.getElementById('valuation-table');
-            if (!table) {
-                alert('No table data to export.');
-                return;
-            }
-
-            // Clone table to prepare for clean excel export without modifying UI
-            const clone = table.cloneNode(true);
-
-            // Remove all img elements from the clone so SheetJS parses headers cleanly
-            clone.querySelectorAll('img').forEach(el => el.remove());
-
-            const wb = XLSX.utils.table_to_book(clone, { sheet: 'Stocktake Valuation' });
-            const dateStr = "{{ $reportData->inventoryDate ?? date('Y-m-d') }}";
-            const filename = 'stocktake_valuation_' + dateStr + '.xlsx';
-            XLSX.writeFile(wb, filename);
-        }
-    </script>
 </x-filament::page>

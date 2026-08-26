@@ -2,10 +2,14 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryValuationReportResource\Pages;
 
+use App\Exports\StocktakeValuationReportExport;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryValuationReportResource;
 use App\Filament\Traits\HasBackButtonAction;
 use App\Modules\Stock\Reports\StockInventoryValuationReport\Contracts\StockInventoryValuationServiceInterface;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ListStockInventoryValuationReport extends ListRecords
 {
@@ -39,5 +43,31 @@ class ListStockInventoryValuationReport extends ListRecords
             'inventoryDate' => $inventoryDate,
             'reportData'    => $reportData,
         ];
+    }
+
+    /**
+     * Export the valuation report to Excel via backend Maatwebsite Excel.
+     */
+    public function exportExcel(): ?BinaryFileResponse
+    {
+        $data       = $this->getViewData();
+        $reportData = $data['reportData'] ?? null;
+
+        if (! $reportData || empty($reportData->items)) {
+            Notification::make()
+                ->title('No data to export')
+                ->warning()
+                ->send();
+
+            return null;
+        }
+
+        $storeName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $reportData->storeName);
+        $fileName  = "stocktake_valuation_{$storeName}_{$reportData->inventoryDate}.xlsx";
+
+        return Excel::download(
+            new StocktakeValuationReportExport($reportData),
+            $fileName
+        );
     }
 }
