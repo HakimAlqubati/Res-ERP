@@ -32,6 +32,11 @@ class EditUser extends EditRecord
         return $data;
     }
 
+    protected function afterSave(): void
+    {
+        $this->record->branches()->sync($this->data['extra_branches'] ?? []);
+    }
+
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');

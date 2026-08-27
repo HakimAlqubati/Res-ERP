@@ -136,6 +136,36 @@ class User extends Authenticatable implements FilamentUser, Auditable
     {
         return $this->belongsTo(Branch::class, 'branch_id');
     }
+
+    /**
+     * الفروع الإضافية المرتبطة بالمستخدم عبر جدول branch_user
+     */
+    public function branches()
+    {
+        return $this->belongsToMany(Branch::class, 'branch_user')
+                    ->withTimestamps();
+    }
+
+    /**
+     * كل الفروع (الأساسي + الإضافية) كـ query builder
+     */
+    public function allBranches()
+    {
+        return Branch::whereIn('id', $this->all_branch_ids);
+    }
+
+    /**
+     * مصفوفة بكل IDs الفروع (الأساسي + الإضافية)
+     */
+    public function getAllBranchIdsAttribute(): array
+    {
+        $extraIds = $this->branches()->pluck('branches.id')->toArray();
+        return array_values(array_unique(array_merge(
+            array_filter([$this->branch_id]),
+            $extraIds
+        )));
+    }
+
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');

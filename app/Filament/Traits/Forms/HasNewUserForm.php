@@ -112,6 +112,29 @@ trait HasNewUserForm
                                     ->pluck('name', 'id');;
                             }),
 
+                        Select::make('extra_branches')
+                            ->label('Extra Branches')
+                            ->multiple()
+                            ->searchable()
+                            ->preload()
+                            ->options(function (Get $get) {
+                                $primaryBranchId = $get('branch_id');
+                                return Branch::query()
+                                    ->whereIn('type', [Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN, Branch::TYPE_RESELLER, Branch::TYPE_POPUP, Branch::TYPE_HQ])
+                                    ->select('id', 'name')
+                                    ->active()
+                                    ->when($primaryBranchId, fn($q) => $q->where('id', '!=', $primaryBranchId))
+                                    ->get()
+                                    ->pluck('name', 'id');
+                            })
+                            ->afterStateHydrated(function (Select $component, ?User $record) {
+                                if ($record) {
+                                    $component->state(
+                                        $record->branches()->pluck('branches.id')->toArray()
+                                    );
+                                }
+                            }),
+
                     ]),
 
                 ]),

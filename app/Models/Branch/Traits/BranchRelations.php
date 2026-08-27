@@ -102,4 +102,13 @@ trait BranchRelations
     {
         return $this->belongsToMany(LeaveType::class, 'hr_branch_leave_types', 'branch_id', 'leave_type_id');
     }
+
+    /**
+     * المستخدمين المُعيّنين لهذا الفرع كفرع إضافي (عبر branch_user)
+     */
+    public function assignedUsers()
+    {
+        return $this->belongsToMany(User::class, 'branch_user')
+                    ->withTimestamps();
+    }
 }

@@ -50,5 +50,10 @@ class CreateUser extends CreateRecord
             $user->assignRole(17);
             $user->removeRole(11);
         }
+
+        // Sync extra branches
+        if (!empty($this->data['extra_branches'])) {
+            $this->record->branches()->sync($this->data['extra_branches']);
+        }
     }
 }
