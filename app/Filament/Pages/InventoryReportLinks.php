@@ -92,12 +92,12 @@ class InventoryReportLinks extends Page
                 'icon' => 'heroicon-o-currency-dollar',
                 'url' => InventoryWithUsageReportResource::getUrl(),
             ],
-            [
-                'title' => __('lang.store_position_report'),
-                'description' => __('lang.store_position_report_desc'),
-                'icon' => 'heroicon-o-archive-box',
-                'url' => InventoryTransactionPurchaseReportResource::getUrl(),
-            ],
+            // [
+            //     'title' => __('lang.store_position_report'),
+            //     'description' => __('lang.store_position_report_desc'),
+            //     'icon' => 'heroicon-o-archive-box',
+            //     'url' => InventoryTransactionPurchaseReportResource::getUrl(),
+            // ],
             [
                 'title' => __('lang.stock_adjustment_report'),
                 'description' => __('lang.stock_adjustment_report_desc'),
