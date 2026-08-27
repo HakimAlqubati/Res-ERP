@@ -205,8 +205,12 @@ class ProductsTable
             ])
 
             ->filters([
-                Filter::make('active')->label(__('lang.active'))
-                    ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
+                SelectFilter::make('active')
+                    ->label(__('lang.active'))
+                    ->options([
+                        1 => __('lang.active'),
+                        0 => __('lang.status_unactive'),
+                    ]),
                 SelectFilter::make('category_id')
                     ->searchable()
                     ->multiple()
@@ -230,6 +234,7 @@ class ProductsTable
                     }),
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
+            ->deferFilters(true)
             ->recordActions([
                 // Action::make('updateUnitPrice')
                 //     ->label('Update Unit Price')->button()->action(function ($record) {
