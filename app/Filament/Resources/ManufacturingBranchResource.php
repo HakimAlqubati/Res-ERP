@@ -92,7 +92,7 @@ class ManufacturingBranchResource extends Resource
                                 Select::make('manager_id')
                                     ->label(__('lang.account_manager'))
                                     ->options(User::whereHas('roles', function ($q) {
-                                        $q->where('id', 7);
+                                        // $q->where('id', 7);
                                     })
                                         ->get(['name', 'id'])->pluck('name', 'id'))
                                     ->searchable(),
@@ -107,8 +107,9 @@ class ManufacturingBranchResource extends Resource
 
                                     Select::make('store_id')
                                         ->label(__('stock.store_id'))
-                                        ->options(Store::active()
-                                            ->centralKitchen()->pluck('name', 'id'))
+                                        // ->options(Store::active()
+                                        //     ->centralKitchen()->pluck('name', 'id'))
+                                        ->relationship('store', 'name')
                                         ->searchable(),
                                     Select::make('categories')
                                         ->label(__('stock.customized_manufacturing_categories'))
@@ -295,11 +296,14 @@ class ManufacturingBranchResource extends Resource
                             TextInput::make('name')->required()->label(__('lang.name'))->default($record->name),
                             Select::make('manager_id')
                                 ->label(__('lang.branch_manager'))->default($record->manager_id)
-                                ->options(User::whereHas('roles', fn($q) => $q->where('id', 7))
-                                    ->pluck('name', 'id')),
+                                ->options(User::whereHas('roles', fn($q) => $q
+                                ->where('id', 7)
+                                )
+                                    ->pluck('name', 'id'))
+                                    ,
                             Select::make('store_id')
                                 ->label(__('stock.store_id'))->default($record->store_id)
-                                ->options(Store::active()->centralKitchen()->pluck('name', 'id'))
+                                ->options(Store::active()->pluck('name', 'id'))
                                 ->searchable(),
 
                         ];
@@ -310,7 +314,9 @@ class ManufacturingBranchResource extends Resource
                             ->title(__('Updated successfully'))
                             ->success()
                             ->send();
-                    }),
+                    })
+                    ->hidden()
+                    ,
                 EditAction::make(),
                 DeleteAction::make(),
                 RestoreAction::make(),
