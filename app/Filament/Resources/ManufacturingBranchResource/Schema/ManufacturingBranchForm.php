@@ -8,6 +8,7 @@ use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Components\Fieldset;
  
+use App\Models\Branch;
 use App\Models\City;
 use App\Models\Country;
 use App\Models\District;
@@ -39,10 +40,13 @@ class ManufacturingBranchForm
                                 TextInput::make('name')->required()->label(__('lang.name')),
                                 Select::make('manager_id')
                                     ->label(__('lang.account_manager'))
-                                    ->options(User::whereHas('roles', function ($q) {
-                                        // $q->where('id', 7);
+                                    ->options(function (?Branch $record) {
+                                        if (! $record?->id) {
+                                            return User::pluck('name', 'id');
+                                        }
+
+                                        return $record->allUsers()->pluck('name', 'id');
                                     })
-                                        ->get(['name', 'id'])->pluck('name', 'id'))
                                     ->searchable(),
                                 Toggle::make('active')
                                     ->inline(false)->default(true),
