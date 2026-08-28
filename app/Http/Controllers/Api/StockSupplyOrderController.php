@@ -93,10 +93,13 @@ class StockSupplyOrderController extends Controller
         try {
             DB::beginTransaction();
 
-            // Get the branch and check if it is a central kitchen
-            $branch = auth()->user()->branch;
+            // Get the branch and check if it is a central kitchen (primary or extra)
+            $user = auth()->user();
+            $branch = ($user->branch && $user->branch->is_central_kitchen)
+                ? $user->branch
+                : $user->allBranches()->where('type', Branch::TYPE_CENTRAL_KITCHEN)->first();
 
-            if ($branch->is_central_kitchen) {
+            if ($branch && $branch->is_central_kitchen) {
                 $storeId = $branch->store_id;
             } else {
                 return response()->json([
