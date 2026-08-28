@@ -298,6 +298,7 @@ class InventoryResource extends Resource
                         'App\Models\ResellerSaleItem' => 'Reseller Sale Item',
                         'App\Models\PosSale' => 'Pos Sale',
                         'App\Models\GoodsReceivedNote' => 'Goods Received Note',
+                        'App\Models\StockSupplyOrder' => 'Stock Supply Order',
                     ])
                     ->searchable(),
 

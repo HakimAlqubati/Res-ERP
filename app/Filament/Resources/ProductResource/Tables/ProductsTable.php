@@ -215,11 +215,7 @@ class ProductsTable
                     ->searchable()
                     ->multiple()
                     ->label(__('lang.category'))->relationship('category', 'name'),
-                // New Filter for Manufacturing Products
-                Filter::make('is_manufacturing')
-                    ->label(__('lang.is_manufacturing'))
-                    ->query(fn(Builder $query): Builder => $query->whereHas('category', fn($q) => $q->where('is_manafacturing', true))),
-
+    
                 TrashedFilter::make(),
                 Filter::make('smallest_package_not_one')
                     ->label('Min Package Size ≠ 1')
