@@ -11,9 +11,10 @@ interface StockInventoryValuationServiceInterface
      *
      * @param int $storeId
      * @param string $inventoryDate
+     * @param int|null $categoryId
      * @return StockInventoryValuationReportDTO|null
      */
-    public function getReport(int $storeId, string $inventoryDate): ?StockInventoryValuationReportDTO;
+    public function getReport(int $storeId, string $inventoryDate, ?int $categoryId = null): ?StockInventoryValuationReportDTO;
 
     /**
      * Get distinct inventory dates available for a store.

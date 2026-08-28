@@ -2,6 +2,7 @@
 
 namespace App\Modules\Stock\Reports\StockInventoryValuationReport\Services;
 
+use App\Models\Category;
 use App\Modules\Stock\Reports\StockInventoryValuationReport\Contracts\StockInventoryValuationRepositoryInterface;
 use App\Modules\Stock\Reports\StockInventoryValuationReport\Contracts\StockInventoryValuationServiceInterface;
 use App\Modules\Stock\Reports\StockInventoryValuationReport\DTOs\StockInventoryValuationItemDTO;
@@ -18,15 +19,16 @@ class StockInventoryValuationReportService implements StockInventoryValuationSer
     /**
      * {@inheritDoc}
      */
-    public function getReport(int $storeId, string $inventoryDate): ?StockInventoryValuationReportDTO
+    public function getReport(int $storeId, string $inventoryDate, ?int $categoryId = null): ?StockInventoryValuationReportDTO
     {
-        $inventories = $this->repository->getInventoriesByStoreAndDate($storeId, $inventoryDate);
+        $inventories = $this->repository->getInventoriesByStoreAndDate($storeId, $inventoryDate, $categoryId);
 
         if ($inventories->isEmpty()) {
             return null;
         }
 
-        $storeName = $inventories->first()?->store?->name ?? 'Store #' . $storeId;
+        $storeName    = $inventories->first()?->store?->name ?? 'Store #' . $storeId;
+        $categoryName = $categoryId ? Category::find($categoryId)?->name : null;
         $aggregatedRows = [];
 
         foreach ($inventories as $inventory) {
@@ -90,6 +92,7 @@ class StockInventoryValuationReportService implements StockInventoryValuationSer
             grandTotalValue: $grandTotalValue,
             totalItemsCount: count($items),
             inventoriesCount: $inventories->count(),
+            categoryName: $categoryName,
         );
     }
 

@@ -108,6 +108,10 @@
                     Store: <strong>{{ $reportData->storeName }}</strong>
                     &nbsp;|&nbsp;
                     Date: <strong>{{ $reportData->inventoryDate }}</strong>
+                    @if(!empty($reportData->categoryName))
+                        &nbsp;|&nbsp;
+                        Category: <strong>{{ $reportData->categoryName }}</strong>
+                    @endif
                 </div>
             </td>
             <td style="width: 25%; text-align: right; font-size: 9px; color: #6b7280;">

@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
 use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryValuationReportResource\Pages\ListStockInventoryValuationReport;
+use App\Models\Category;
 use App\Models\StockInventory;
 use App\Models\Store;
 use App\Modules\Stock\Reports\StockInventoryValuationReport\Contracts\StockInventoryValuationServiceInterface;
@@ -57,7 +58,7 @@ class StockInventoryValuationReportResource extends Resource
             ->deferFilters(false)
             ->filters([
                 Filter::make('valuation_filter')
-                ->columnSpanFull()
+                    ->columnSpanFull()
                     ->schema([
                         Select::make('store_id')
                             ->label('Store')
@@ -82,8 +83,16 @@ class StockInventoryValuationReportResource extends Resource
                                 return app(StockInventoryValuationServiceInterface::class)
                                     ->getAvailableDatesByStore((int) $storeId);
                             }),
+
+                        Select::make('category_id')
+                            ->label('Category')
+                            ->placeholder('All Categories')
+                            ->options(Category::active()->pluck('name', 'id')->toArray())
+                            ->searchable()
+                            ->preload()
+                            ->live(),
                     ])
-                    ->columns(2),
+                    ->columns(3),
             ], layout: FiltersLayout::AboveContent);
     }
 
