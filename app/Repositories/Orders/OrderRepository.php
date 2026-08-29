@@ -459,6 +459,21 @@ class OrderRepository implements OrderRepositoryInterface
                 ], 404);
             }
 
+            // If order is "ready for delivery", only allow changing to "delivered"
+            if (
+                $order->status === Order::READY_FOR_DELEVIRY
+                && $request->has('status')
+                && $request->status !== Order::DELEVIRED
+            ) {
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'orderId' => $order->id,
+                    'message' => 'Ready for delivery orders can only be changed to delivered.',
+                ], 422);
+            }
+
             // Validate the request data
             $validatedData = $request->validate([
                 'status' => [
