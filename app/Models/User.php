@@ -151,7 +151,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
      */
     public function allBranches()
     {
-        return Branch::whereIn('id', $this->all_branch_ids);
+        return Branch::withoutGlobalScopes()->whereIn('branches.id', $this->all_branch_ids);
     }
 
     /**
@@ -159,11 +159,30 @@ class User extends Authenticatable implements FilamentUser, Auditable
      */
     public function getAllBranchIdsAttribute(): array
     {
-        $extraIds = $this->branches()->pluck('branches.id')->toArray();
+        $extraIds = $this->branches()->withoutGlobalScopes()->pluck('branches.id')->toArray();
         return array_values(array_unique(array_merge(
             array_filter([$this->branch_id]),
             $extraIds
         )));
+    }
+
+    /**
+     * التحقق مما إذا كان الفرع الأساسي أو أي من الفروع الإضافية مطبخاً مركزياً
+     */
+    public function hasCentralKitchen(): bool
+    {
+        if ($this->branch?->is_kitchen) {
+            return true;
+        }
+
+        if ($this->relationLoaded('branches')) {
+            return $this->branches->contains(fn ($branch) => (bool) $branch->is_kitchen);
+        }
+
+        return $this->branches()
+            ->withoutGlobalScopes()
+            ->where('branches.type', Branch::TYPE_CENTRAL_KITCHEN)
+            ->exists();
     }
 
     public function owner()

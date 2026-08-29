@@ -34,11 +34,11 @@ trait BranchScopes
         }
 
         if ($isBranchManager) {
-            return $query->where('id', auth()->user()->branch->id);
+            return $query->where('branches.id', auth()->user()->branch->id);
         }
 
         if ($isStuff) {
-            return $query->where('id', auth()->user()->branch_id);
+            return $query->where('branches.id', auth()->user()->branch_id);
         }
 
         return $query;
