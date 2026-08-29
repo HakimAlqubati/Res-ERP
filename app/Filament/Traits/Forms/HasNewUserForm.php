@@ -229,7 +229,7 @@ trait HasNewUserForm
                                 return [];
                             }
 
-                            return User::where('branch_id', $branchId)->whereIn('user_type', [1, 2, 3])
+                            return User::where('branch_id', $branchId)->whereIn('user_type', [1, 2, 3,0])
                                 ->forBranchManager()
                                 ->select('id', 'name')
                                 ->pluck('name', 'id');
