@@ -204,6 +204,7 @@ return [
   'manager' => 'المدير',
   'reseller' => 'نقطة بيع',
   'account_manager' => 'مدير الحساب',
+  'chef_assistants' => 'المساعدين',
   'delivery_orders' => 'اوامر التسليم',
   'delivery_order' => 'أمر تسليم',
   'selling_price' => 'سعر البيع',

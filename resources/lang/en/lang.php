@@ -222,6 +222,7 @@ return [
     'manager'                                     => 'Manager',
     'reseller'                                    => 'Reseller',
     'account_manager'                             => 'Account Manager',
+    'chef_assistants'                             => 'Chef Assistants',
     'delivery_orders'                             => 'Delivery Orders',
     'delivery_order'                             => 'Delivery Order',
     'selling_price'                               => 'Selling Price (for resellers only)',

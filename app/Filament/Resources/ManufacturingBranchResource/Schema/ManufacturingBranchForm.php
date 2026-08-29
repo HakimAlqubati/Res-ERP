@@ -51,6 +51,20 @@ class ManufacturingBranchForm
                                 Toggle::make('active')
                                     ->inline(false)->default(true),
 
+                                Select::make('chefAssistants')
+                                    ->label(__('lang.chef_assistants'))
+                                    ->relationship('chefAssistants', 'name')
+                                    ->options(function (?Branch $record) {
+                                        if (! $record?->id) {
+                                            return User::pluck('name', 'id');
+                                        }
+
+                                        return $record->allUsers()->pluck('name', 'id');
+                                    })
+                                    ->multiple()
+                                    ->searchable()
+                                    ->preload(),
+
                                 Grid::make()->columnSpanFull()->columns(3)->schema([
                                     Toggle::make('manager_abel_show_orders')
                                         ->label(__('stock.manager_abel_show_orders'))

@@ -130,4 +130,13 @@ trait BranchRelations
                   ->orWhereHas('branches', fn($q) => $q->where('branches.id', $this->id));
         });
     }
+
+    /**
+     * مساعدين الطباخ الرئيسي / مدير المعمل المركزي
+     */
+    public function chefAssistants()
+    {
+        return $this->belongsToMany(User::class, 'chef_assistants')
+                    ->withTimestamps();
+    }
 }
