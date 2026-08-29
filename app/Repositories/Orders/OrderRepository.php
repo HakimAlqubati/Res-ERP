@@ -433,7 +433,7 @@ class OrderRepository implements OrderRepositoryInterface
             // Start a database transaction
             DB::beginTransaction();
 
-            if (auth()->user()->managedStores->count() == 0 && isStoreManager()) {
+            if (empty(auth()->user()->managed_stores_ids) && isStoreManager()) {
                 return response()->json([
                     'success' => false,
                     'orderId' => null,

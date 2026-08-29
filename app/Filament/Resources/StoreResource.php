@@ -69,7 +69,7 @@ class StoreResource extends Resource
                             ->stores()->pluck('name', 'id')),
                     Select::make('storekeepers')
                         ->label(__('stock.extra_storekeepers'))
-                        ->relationship('storekeepers', 'name', modifyQueryUsing: fn(Builder $query) => $query)
+                        ->relationship('storekeepers', 'name', modifyQueryUsing: fn(Builder $query) => $query->stores())
                         ->multiple()
                         ->preload()
                         ->searchable(),
