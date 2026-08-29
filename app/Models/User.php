@@ -218,6 +218,10 @@ class User extends Authenticatable implements FilamentUser, Auditable
     {
         return in_array(15, $this->roles->pluck('id')->toArray());
     }
+    public function isAccountant()
+    {
+        return in_array(9, $this->roles->pluck('id')->toArray());
+    }
     public function isBranchManager()
     {
         // dd(
