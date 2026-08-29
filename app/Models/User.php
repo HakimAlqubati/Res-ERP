@@ -358,13 +358,34 @@ class User extends Authenticatable implements FilamentUser, Auditable
         return $this->hasMany(Store::class, 'storekeeper_id');
     }
 
-    public function getManagedStoresIdsAttribute()
+    /**
+     * المخازن الإضافية التي يديرها المستخدم كأمين مخزن عبر جدول store_user
+     */
+    public function extraManagedStores()
     {
-        if (! auth()->check()) {
-            return [];
-        }
-        $ids = auth()->user()->managedStores->pluck('id')->toArray() ?? [];
-        return $ids;
+        return $this->belongsToMany(Store::class, 'store_user')->withTimestamps();
+    }
+
+    /**
+     * كل المخازن (الأساسي + الإضافية) كـ query builder
+     */
+    public function allManagedStores()
+    {
+        return Store::whereIn('id', $this->managed_stores_ids);
+    }
+
+    /**
+     * مصفوفة بكل IDs المخازن التي يديرها المستخدم (الأساسي + الإضافية)
+     */
+    public function getManagedStoresIdsAttribute(): array
+    {
+        $primaryIds = $this->managedStores()->pluck('id')->toArray();
+        $extraIds = $this->extraManagedStores()->pluck('stores.id')->toArray();
+
+        return array_values(array_unique(array_merge(
+            $primaryIds,
+            $extraIds
+        )));
     }
 
     public function routeNotificationForFcm($notification)

@@ -67,6 +67,12 @@ class StoreResource extends Resource
                         ->label(__('stock.storekeeper'))
                         ->options(User::select('name', 'id')
                             ->stores()->pluck('name', 'id')),
+                    Select::make('storekeepers')
+                        ->label(__('stock.extra_storekeepers'))
+                        ->relationship('storekeepers', 'name', modifyQueryUsing: fn(Builder $query) => $query)
+                        ->multiple()
+                        ->preload()
+                        ->searchable(),
                     Toggle::make('active')->label(__('lang.active'))->default(1)->inline(false),
                     Toggle::make('default_store')->label(__('lang.default'))->default(0)->inline(false),
                     // Toggle::make('is_central_kitchen')->label(__('stock.is_central_kitchen'))->default(0)->inline(false),
