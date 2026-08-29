@@ -61,8 +61,8 @@ class TestController4 extends Controller
         // ✅ Role-based filters
         $user = auth()->user();
 
-        if (isBranchUser()) {
-            $where[] = 'o.customer_id = ' . (int) $user->owner->id;
+       if (isBranchUser() && !isStoreManager() && !isBranchManager() && !isSuperAdmin() && !isSystemManager()) {
+            $where[] = 'o.customer_id = ' . (int) $user->owner?->id;
         }
 
         if (isDriver()) {
