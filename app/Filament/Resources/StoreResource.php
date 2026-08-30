@@ -91,9 +91,15 @@ class StoreResource extends Resource
             ->columns([
                 TextColumn::make('id')->searchable()->label(__('lang.id'))->toggleable(),
                 TextColumn::make('name')->searchable()->label(__('lang.name'))->toggleable(),
-                TextColumn::make('location')->searchable()->label(__('lang.location'))->toggleable(),
+                TextColumn::make('location')->searchable()->label(__('lang.location'))
+                ->words(5)
+                ->tooltip(fn($state) => $state)
+                ->toggleable(isToggledHiddenByDefault: true),
                 CheckboxColumn::make('active')->label(__('lang.active'))->toggleable(),
-                TextColumn::make('storekeeper_name')->label(__('stock.storekeeper'))->toggleable()->default('-'),
+                TextColumn::make('storekeeper_name')
+                ->words(5)
+                ->tooltip(fn($state) => $state)
+                ->label(__('stock.storekeeper'))->toggleable()->default('-'),
                 CheckboxColumn::make('default_store')
                     ->label(__('lang.default'))->disableClick()->toggleable()->alignCenter(true),
                 // CheckboxColumn::make('is_central_kitchen')
