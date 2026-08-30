@@ -11,15 +11,27 @@ class StockInventoryValuationRepository implements StockInventoryValuationReposi
     /**
      * {@inheritDoc}
      */
-    public function getInventoriesByStoreAndDate(int $storeId, string $inventoryDate): Collection
+    public function getInventoriesByStoreAndDate(int $storeId, string $inventoryDate, ?int $categoryId = null): Collection
     {
         return StockInventory::with([
             'store',
+            'details' => function ($query) use ($categoryId) {
+                if ($categoryId) {
+                    $query->whereHas('product', function ($q) use ($categoryId) {
+                        $q->where('category_id', $categoryId);
+                    });
+                }
+            },
             'details.product',
             'details.unit',
         ])
         ->where('store_id', $storeId)
         ->where('inventory_date', $inventoryDate)
+        ->when($categoryId, function ($query) use ($categoryId) {
+            $query->whereHas('details.product', function ($q) use ($categoryId) {
+                $q->where('category_id', $categoryId);
+            });
+        })
         ->get();
     }
 

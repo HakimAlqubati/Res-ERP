@@ -29,21 +29,24 @@ class ListStockInventoryValuationReport extends ListRecords
 
         $storeId       = $filterState['store_id'] ?? null;
         $inventoryDate = $filterState['inventory_date'] ?? null;
+        $categoryId    = ! empty($filterState['category_id']) ? (int) $filterState['category_id'] : null;
 
         if (! $storeId || ! $inventoryDate) {
             return [
                 'storeId'       => $storeId,
                 'inventoryDate' => $inventoryDate,
+                'categoryId'    => $categoryId,
                 'reportData'    => null,
             ];
         }
 
         $service    = app(StockInventoryValuationServiceInterface::class);
-        $reportData = $service->getReport((int) $storeId, (string) $inventoryDate);
+        $reportData = $service->getReport((int) $storeId, (string) $inventoryDate, $categoryId);
 
         return [
             'storeId'       => $storeId,
             'inventoryDate' => $inventoryDate,
+            'categoryId'    => $categoryId,
             'reportData'    => $reportData,
         ];
     }
@@ -65,8 +68,14 @@ class ListStockInventoryValuationReport extends ListRecords
             return null;
         }
 
+        $categorySuffix = '';
+        if (! empty($reportData->categoryName)) {
+            $catSlug = preg_replace('/[^A-Za-z0-9_\-]/', '_', $reportData->categoryName);
+            $categorySuffix = "_{$catSlug}";
+        }
+
         $storeName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $reportData->storeName);
-        $fileName  = "stocktake_valuation_{$storeName}_{$reportData->inventoryDate}.xlsx";
+        $fileName  = "stocktake_valuation_{$storeName}_{$reportData->inventoryDate}{$categorySuffix}.xlsx";
 
         return Excel::download(
             new StocktakeValuationReportExport($reportData),
@@ -124,8 +133,14 @@ class ListStockInventoryValuationReport extends ListRecords
             restore_error_handler();
         }
 
+        $categorySuffix = '';
+        if (! empty($reportData->categoryName)) {
+            $catSlug = preg_replace('/[^A-Za-z0-9_\-]/', '_', $reportData->categoryName);
+            $categorySuffix = "_{$catSlug}";
+        }
+
         $storeName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $reportData->storeName);
-        $fileName  = "stocktake_valuation_{$storeName}_{$reportData->inventoryDate}.pdf";
+        $fileName  = "stocktake_valuation_{$storeName}_{$reportData->inventoryDate}{$categorySuffix}.pdf";
 
         return response()->streamDownload(function () use ($pdfContent) {
             echo $pdfContent;

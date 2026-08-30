@@ -41,6 +41,15 @@ if (!function_exists('isSuperVisor')) {
         return false;
     }
 }
+if (!function_exists('isAccountant')) {
+    function isAccountant()
+    {
+        if (auth()->check()) {
+            return auth()->user()->isAccountant();
+        }
+        return false;
+    }
+}
 if (!function_exists('isBranchUser')) {
     function isBranchUser()
     {

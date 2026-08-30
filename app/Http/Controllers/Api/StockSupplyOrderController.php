@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\Branch;
 use Exception;
 use App\Http\Controllers\Controller;
+use App\Models\Product;
 use App\Models\StockSupplyOrder;
 use App\Models\StockSupplyOrderDetail;
 use App\Models\UnitPrice;
@@ -90,13 +91,30 @@ class StockSupplyOrderController extends Controller
             ], 422);
         }
 
+        // Validate that all products are composite (have items)
+        $productIds = collect($request->details)->pluck('product_id')->unique()->values();
+        $products = Product::whereIn('id', $productIds)->withCount('productItems')->get();
+
+        $productsWithoutItems = $products->filter(fn($p) => $p->product_items_count === 0);
+
+        if ($productsWithoutItems->isNotEmpty()) {
+            $names = $productsWithoutItems->map(fn($p) => "{$p->name} (ID: {$p->id})")->implode(', ');
+            return response()->json([
+                'status' => 'error',
+                'message' => "The following products have no items: {$names}",
+            ], 422);
+        }
+
         try {
             DB::beginTransaction();
 
-            // Get the branch and check if it is a central kitchen
-            $branch = auth()->user()->branch;
+            // Get the branch and check if it is a central kitchen (primary or extra)
+            $user = auth()->user();
+            $branch = ($user->branch && $user->branch->is_central_kitchen)
+                ? $user->branch
+                : $user->allBranches()->where('type', Branch::TYPE_CENTRAL_KITCHEN)->first();
 
-            if ($branch->is_central_kitchen) {
+            if ($branch && $branch->is_central_kitchen) {
                 $storeId = $branch->store_id;
             } else {
                 return response()->json([

@@ -102,4 +102,41 @@ trait BranchRelations
     {
         return $this->belongsToMany(LeaveType::class, 'hr_branch_leave_types', 'branch_id', 'leave_type_id');
     }
+
+    /**
+     * المستخدمين المُعيّنين لهذا الفرع كفرع إضافي (عبر branch_user)
+     */
+    public function assignedUsers()
+    {
+        return $this->belongsToMany(User::class, 'branch_user')
+                    ->withTimestamps();
+    }
+
+    /**
+     * المستخدمين المرتبطين بهذا الفرع بشكل مباشر (branch_id)
+     */
+    public function directUsers()
+    {
+        return $this->hasMany(User::class, 'branch_id');
+    }
+
+    /**
+     * كل المستخدمين المرتبطين بهذا الفرع (بشكل مباشر أو كفرع إضافي)
+     */
+    public function allUsers()
+    {
+        return User::query()->where(function ($query) {
+            $query->where('branch_id', $this->id)
+                  ->orWhereHas('branches', fn($q) => $q->where('branches.id', $this->id));
+        });
+    }
+
+    /**
+     * مساعدين الطباخ الرئيسي / مدير المعمل المركزي
+     */
+    public function chefAssistants()
+    {
+        return $this->belongsToMany(User::class, 'chef_assistants')
+                    ->withTimestamps();
+    }
 }

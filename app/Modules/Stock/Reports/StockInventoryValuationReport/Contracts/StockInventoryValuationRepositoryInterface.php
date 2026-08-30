@@ -11,9 +11,10 @@ interface StockInventoryValuationRepositoryInterface
      *
      * @param int $storeId
      * @param string $inventoryDate
+     * @param int|null $categoryId
      * @return Collection
      */
-    public function getInventoriesByStoreAndDate(int $storeId, string $inventoryDate): Collection;
+    public function getInventoriesByStoreAndDate(int $storeId, string $inventoryDate, ?int $categoryId = null): Collection;
 
     /**
      * Fetch unique/distinct inventory dates for a specific store.

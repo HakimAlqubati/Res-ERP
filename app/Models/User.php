@@ -136,6 +136,55 @@ class User extends Authenticatable implements FilamentUser, Auditable
     {
         return $this->belongsTo(Branch::class, 'branch_id');
     }
+
+    /**
+     * الفروع الإضافية المرتبطة بالمستخدم عبر جدول branch_user
+     */
+    public function branches()
+    {
+        return $this->belongsToMany(Branch::class, 'branch_user')
+                    ->withTimestamps();
+    }
+
+    /**
+     * كل الفروع (الأساسي + الإضافية) كـ query builder
+     */
+    public function allBranches()
+    {
+        return Branch::withoutGlobalScopes()->whereIn('branches.id', $this->all_branch_ids);
+    }
+
+    /**
+     * مصفوفة بكل IDs الفروع (الأساسي + الإضافية)
+     */
+    public function getAllBranchIdsAttribute(): array
+    {
+        $extraIds = $this->branches()->withoutGlobalScopes()->pluck('branches.id')->toArray();
+        return array_values(array_unique(array_merge(
+            array_filter([$this->branch_id]),
+            $extraIds
+        )));
+    }
+
+    /**
+     * التحقق مما إذا كان الفرع الأساسي أو أي من الفروع الإضافية مطبخاً مركزياً
+     */
+    public function hasCentralKitchen(): bool
+    {
+        if ($this->branch?->is_kitchen) {
+            return true;
+        }
+
+        if ($this->relationLoaded('branches')) {
+            return $this->branches->contains(fn ($branch) => (bool) $branch->is_kitchen);
+        }
+
+        return $this->branches()
+            ->withoutGlobalScopes()
+            ->where('branches.type', Branch::TYPE_CENTRAL_KITCHEN)
+            ->exists();
+    }
+
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');
@@ -187,6 +236,10 @@ class User extends Authenticatable implements FilamentUser, Auditable
     public function isSuperVisor()
     {
         return in_array(15, $this->roles->pluck('id')->toArray());
+    }
+    public function isAccountant()
+    {
+        return in_array(9, $this->roles->pluck('id')->toArray());
     }
     public function isBranchManager()
     {
@@ -305,13 +358,34 @@ class User extends Authenticatable implements FilamentUser, Auditable
         return $this->hasMany(Store::class, 'storekeeper_id');
     }
 
-    public function getManagedStoresIdsAttribute()
+    /**
+     * المخازن الإضافية التي يديرها المستخدم كأمين مخزن عبر جدول store_user
+     */
+    public function extraManagedStores()
     {
-        if (! auth()->check()) {
-            return [];
-        }
-        $ids = auth()->user()->managedStores->pluck('id')->toArray() ?? [];
-        return $ids;
+        return $this->belongsToMany(Store::class, 'store_user')->withTimestamps();
+    }
+
+    /**
+     * كل المخازن (الأساسي + الإضافية) كـ query builder
+     */
+    public function allManagedStores()
+    {
+        return Store::whereIn('id', $this->managed_stores_ids);
+    }
+
+    /**
+     * مصفوفة بكل IDs المخازن التي يديرها المستخدم (الأساسي + الإضافية)
+     */
+    public function getManagedStoresIdsAttribute(): array
+    {
+        $primaryIds = $this->managedStores()->pluck('id')->toArray();
+        $extraIds = $this->extraManagedStores()->pluck('stores.id')->toArray();
+
+        return array_values(array_unique(array_merge(
+            $primaryIds,
+            $extraIds
+        )));
     }
 
     public function routeNotificationForFcm($notification)

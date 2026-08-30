@@ -640,7 +640,7 @@ if (!function_exists('getDefaultStoreForCurrentStoreKeeper')) {
     function getDefaultStoreForCurrentStoreKeeper()
     {
         if (isStoreManager()) {
-            $stores = auth()->user()->managedStores()->get(['id', 'default_store'])->toArray() ?? [];
+            $stores = auth()->user()->allManagedStores()->get(['stores.id', 'stores.default_store'])->toArray() ?? [];
 
             switch (count($stores)) {
                 case 0:

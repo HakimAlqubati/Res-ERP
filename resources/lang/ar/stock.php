@@ -2,6 +2,7 @@
 return [
     'is_adjustmented' => 'تم ضبط المخزون؟',
     'storekeeper' => 'مسؤول المخزن',
+    'extra_storekeepers' => 'أمناء المخزن الإضافيون',
     'minimum_quantity' => 'الحد الأدنى للكمية',
     'minimum_quantity_desc' => 'الحد الأدنى لتنبيه عن كمية منخفضة',
     'is_central_kitchen' => 'هل هو مطبخ مركزي؟',
