@@ -125,6 +125,7 @@ class DashboardService
     public function getAttendanceSummaries(DashboardFilterDTO $dto): array
     {
         $branchesQuery = Branch::where('active', 1)->where('is_hidden', 0)
+        ->where('type',Branch::TYPE_BRANCH)
             ->forBranchManager('id')
             ->forEmployee('id');
         if ($dto->branchId) {
