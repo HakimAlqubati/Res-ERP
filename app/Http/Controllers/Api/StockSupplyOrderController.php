@@ -91,7 +91,7 @@ class StockSupplyOrderController extends Controller
             ], 422);
         }
 
-        // Validate that all products are composite (have product items/components)
+        // Validate that all products are composite (have items)
         $productIds = collect($request->details)->pluck('product_id')->unique()->values();
         $products = Product::whereIn('id', $productIds)->withCount('productItems')->get();
 
@@ -101,7 +101,7 @@ class StockSupplyOrderController extends Controller
             $names = $productsWithoutItems->map(fn($p) => "{$p->name} (ID: {$p->id})")->implode(', ');
             return response()->json([
                 'status' => 'error',
-                'message' => "The following products have no components (items) and cannot be used in a supply order: {$names}. All products in a supply order must be composite products with defined items.",
+                'message' => "The following products have no items: {$names}",
             ], 422);
         }
 
