@@ -61,7 +61,7 @@ class TestController4 extends Controller
         // ✅ Role-based filters
         $user = auth()->user();
 
-       if (isBranchUser() && !isStoreManager() && !isBranchManager() && !isSuperAdmin() && !isSystemManager()) {
+       if (isBranchUser() && !isStoreManager() && !isBranchManager() && !isSuperAdmin() && !isSystemManager() && !$user->hasCentralKitchen()) {
             $where[] = 'o.customer_id = ' . (int) $user->owner?->id;
         }
 
@@ -92,15 +92,17 @@ class TestController4 extends Controller
                         ->pluck('id')
                         ->unique()
                         ->toArray();
-                    $otherBranchesCategoriesStr = implode(',', $otherBranchesCategories);
                     $branchIdsStr = implode(',', $branchIds);
                     $where[] = "(o.branch_id IN ($branchIdsStr) OR o.branch_id = {$kitchenBranch->id})";
+                    $categoryExclusion = count($otherBranchesCategories)
+                        ? 'AND c.id NOT IN (' . implode(',', $otherBranchesCategories) . ')'
+                        : '';
                     $where[] = "(EXISTS (
                         SELECT 1
                         FROM orders_details od
                         JOIN products p ON od.product_id = p.id
                         JOIN categories c ON p.category_id = c.id
-                        WHERE od.order_id = o.id AND c.is_manafacturing = 1 and c.id NOT IN ($otherBranchesCategoriesStr)
+                        WHERE od.order_id = o.id AND c.is_manafacturing = 1 $categoryExclusion
                     ) OR o.customer_id = {$user->id})";
                 } else {
                     $where[] = "o.branch_id = {$kitchenBranch->id}";
