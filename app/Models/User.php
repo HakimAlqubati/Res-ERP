@@ -185,6 +185,33 @@ class User extends Authenticatable implements FilamentUser, Auditable
             ->exists();
     }
 
+    /**
+     * جلب أول فرع تصنيعي (مطبخ مركزي) للمستخدم — الأساسي أولاً ثم الإضافية
+     */
+    public function getCentralKitchenBranch(): ?Branch
+    {
+        if ($this->branch?->is_kitchen) {
+            return $this->branch;
+        }
+
+        return $this->branches()
+            ->withoutGlobalScopes()
+            ->where('branches.type', Branch::TYPE_CENTRAL_KITCHEN)
+            ->first();
+    }
+
+    /**
+     * جلب الفئات المخصصة من الفرع التصنيعي للمستخدم
+     */
+    public function getCentralKitchenCategories(): array
+    {
+        $kitchenBranch = $this->getCentralKitchenBranch();
+        if (!$kitchenBranch) {
+            return [];
+        }
+        return $kitchenBranch->categories()->pluck('category_id')->toArray();
+    }
+
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');

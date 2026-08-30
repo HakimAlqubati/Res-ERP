@@ -72,53 +72,52 @@ class TestController4 extends Controller
             ];
             $where[] = 'o.status IN (' . implode(',', $statuses) . ')';
         }
+        // ✅ فلترة الفروع التصنيعية (المطبخ المركزي) — يدعم الفرع الأساسي والإضافي
+        $kitchenBranch = $user->getCentralKitchenBranch();
 
-        if (isBranchManager()) {
-            if (!isStoreManager() && $user->branch->is_kitchen) {
-                if ($user->branch->manager_abel_show_orders) {
-                    $branchIds = DB::table('branches')
-                        ->where('active', 1)
-                        ->where('id', '!=', $user->branch->id)
-                        ->pluck('id')->toArray();
+        if ($kitchenBranch && !isStoreManager()) {
+            if ($kitchenBranch->manager_abel_show_orders) {
+                $branchIds = DB::table('branches')
+                    ->where('active', 1)
+                    ->where('id', '!=', $kitchenBranch->id)
+                    ->pluck('id')->toArray();
 
-                    if (count($branchIds)) {
-                        $otherBranchesCategories = Branch::centralKitchens()
-                            ->where('id', '!=', auth()->user()?->branch?->id)
-                            ->with('categories:id')
-                            ->get()
-                            ->pluck('categories')
-                            ->flatten()
-                            ->pluck('id')
-                            ->unique()
-                            ->toArray();
-                        $otherBranchesCategoriesStr = implode(',', $otherBranchesCategories);
-                        $branchIdsStr = implode(',', $branchIds);
-                        $where[] = "(o.branch_id IN ($branchIdsStr) OR o.branch_id = {$user->branch->id})";
-                        $where[] = "(EXISTS (
-                            SELECT 1
-                            FROM orders_details od
-                            JOIN products p ON od.product_id = p.id
-                            JOIN categories c ON p.category_id = c.id
-                            WHERE od.order_id = o.id AND c.is_manafacturing = 1 and c.id NOT IN ($otherBranchesCategoriesStr)
-                        ) OR o.customer_id = {$user->id})";
-                    } else {
-                        $where[] = "o.branch_id = {$user->branch->id}";
-                    }
+                if (count($branchIds)) {
+                    $otherBranchesCategories = Branch::centralKitchens()
+                        ->where('id', '!=', $kitchenBranch->id)
+                        ->with('categories:id')
+                        ->get()
+                        ->pluck('categories')
+                        ->flatten()
+                        ->pluck('id')
+                        ->unique()
+                        ->toArray();
+                    $otherBranchesCategoriesStr = implode(',', $otherBranchesCategories);
+                    $branchIdsStr = implode(',', $branchIds);
+                    $where[] = "(o.branch_id IN ($branchIdsStr) OR o.branch_id = {$kitchenBranch->id})";
+                    $where[] = "(EXISTS (
+                        SELECT 1
+                        FROM orders_details od
+                        JOIN products p ON od.product_id = p.id
+                        JOIN categories c ON p.category_id = c.id
+                        WHERE od.order_id = o.id AND c.is_manafacturing = 1 and c.id NOT IN ($otherBranchesCategoriesStr)
+                    ) OR o.customer_id = {$user->id})";
                 } else {
-                    $where[] = "o.branch_id = {$user->branch->id}";
+                    $where[] = "o.branch_id = {$kitchenBranch->id}";
                 }
-            } elseif (!$user->branch->is_kitchen) {
-                $where[] = "o.branch_id = {$user->branch->id}";
+            } else {
+                $where[] = "o.branch_id = {$kitchenBranch->id}";
             }
+        } elseif (isBranchManager() && !$kitchenBranch) {
+            // مدير فرع عادي (ليس تصنيعي) → يرى طلبات فرعه فقط
+            $where[] = "o.branch_id = {$user->branch->id}";
         }
 
         if (isStoreManager()) {
 
             $where[] = "o.status != '" . Order::PENDING_APPROVAL . "'";
-            $customCategories = $user->branch?->categories()->pluck('category_id')->toArray() ?? [];
-            if (isBranchManager() && $user->branch?->is_central_kitchen && count($customCategories)) {
-                // Can't filter by category easily in raw SQL, handled in Eloquent, you may ignore here or redesign this logic
-                // You can later filter on front-end if needed
+            $customCategories = $user->getCentralKitchenCategories();
+            if ($kitchenBranch && count($customCategories)) {
                 $categoryIds = implode(',', $customCategories);
 
                 $where[] = "(EXISTS (
@@ -265,8 +264,11 @@ class TestController4 extends Controller
         //     }
         // }
 
+        // ✅ يدعم الفرع الأساسي والإضافي
+        $kitchenBranch = $user->getCentralKitchenBranch();
+
         $otherBranchesCategories = Branch::centralKitchens()
-            ->where('id', '!=', auth()->user()?->branch?->id)
+            ->where('id', '!=', $kitchenBranch?->id)
             ->with('categories:id')
             ->get()
             ->pluck('categories')
@@ -291,7 +293,7 @@ class TestController4 extends Controller
             od.is_created_due_to_qty_preivous_order,
             od.previous_order_id
         FROM orders_details od ";
-        if (isBranchManager() &&  $user->branch->is_kitchen) {
+        if ($kitchenBranch) {
 
             if (!isStoreManager()) {
                 $query .= "JOIN products p ON od.product_id = p.id
@@ -311,7 +313,7 @@ class TestController4 extends Controller
                     $query .= " and c.id NOT IN ($otherBranchesCategoriesStr) ";
                 }
             } else {
-                $customCategories = $user->branch?->categories()->pluck('category_id')->toArray() ?? [];
+                $customCategories = $user->getCentralKitchenCategories();
                 $query .= "JOIN products p ON od.product_id = p.id
                 JOIN categories c ON p.category_id = c.id 
                 JOIN orders o ON od.order_id = o.id
@@ -346,16 +348,9 @@ class TestController4 extends Controller
                         $query .= " and c.id NOT IN ($otherBranchesCategoriesStr) ";
                     }
                 }
-
-                // $query .= " AND (
-                //      (o.customer_id != {$user->id} AND c.is_manafacturing = 1 and c.id IN ($categoryIds)) 
-                //     OR
-                //     (o.customer_id = {$user->id} AND (c.is_manafacturing = 1 OR c.is_manafacturing = 0))
-                //      )
-                //  ";
             }
         }
-        if (isStoreManager() && !isBranchManager()) {
+        if (isStoreManager() && !$kitchenBranch) {
             $allCustomizedCategories = Branch::centralKitchens()
                 ->with('categories:id')
                 ->get()
