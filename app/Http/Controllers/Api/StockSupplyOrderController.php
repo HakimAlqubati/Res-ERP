@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\Branch;
 use Exception;
 use App\Http\Controllers\Controller;
+use App\Models\Product;
 use App\Models\StockSupplyOrder;
 use App\Models\StockSupplyOrderDetail;
 use App\Models\UnitPrice;
@@ -87,6 +88,20 @@ class StockSupplyOrderController extends Controller
                 'status' => 'error',
                 'message' => 'Validation failed',
                 'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Validate that all products are composite (have product items/components)
+        $productIds = collect($request->details)->pluck('product_id')->unique()->values();
+        $products = Product::whereIn('id', $productIds)->withCount('productItems')->get();
+
+        $productsWithoutItems = $products->filter(fn($p) => $p->product_items_count === 0);
+
+        if ($productsWithoutItems->isNotEmpty()) {
+            $names = $productsWithoutItems->map(fn($p) => "{$p->name} (ID: {$p->id})")->implode(', ');
+            return response()->json([
+                'status' => 'error',
+                'message' => "The following products have no components (items) and cannot be used in a supply order: {$names}. All products in a supply order must be composite products with defined items.",
             ], 422);
         }
 
