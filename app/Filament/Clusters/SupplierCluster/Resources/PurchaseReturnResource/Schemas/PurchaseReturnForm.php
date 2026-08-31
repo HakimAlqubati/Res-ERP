@@ -20,8 +20,6 @@ use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -57,7 +55,7 @@ class PurchaseReturnForm
                                 })
                                 ->searchable()
                                 ->live()
-                                ->afterStateUpdated(function ($state, Set $set) {
+                                ->afterStateUpdated(function ($state,   $set) {
                                     if ($state) {
                                         $query = app(GetInvoiceReturnableItemsQuery::class);
                                         $data = $query->execute((int) $state);
@@ -160,7 +158,7 @@ class PurchaseReturnForm
                                     ->minValue(0.0001)
                                     ->default(1)
                                     ->live(onBlur: true)
-                                    ->afterStateUpdated(function (Set $set, $state, Get $get) {
+                                    ->afterStateUpdated(function (  $set, $state,   $get) {
                                         $qty = (float) $state;
                                         $price = (float) ($get('unit_price') ?? 0);
                                         $total = round($qty * $price, 4);
@@ -177,7 +175,7 @@ class PurchaseReturnForm
                                     ->label('Unit Price')
                                     ->numeric()
                                     ->live(onBlur: true)
-                                    ->afterStateUpdated(function (Set $set, $state, Get $get) {
+                                    ->afterStateUpdated(function (  $set, $state,   $get) {
                                         $price = (float) $state;
                                         $qty = (float) ($get('quantity') ?? 0);
                                         $total = round($qty * $price, 4);
