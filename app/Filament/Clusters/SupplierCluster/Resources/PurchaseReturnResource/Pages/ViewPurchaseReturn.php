@@ -24,4 +24,23 @@ class ViewPurchaseReturn extends ViewRecord
                 ->after(fn() => $this->fillForm()),
         ];
     }
+
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $data['details'] = $this->record->details()->with('purchaseInvoiceDetail')->get()->map(function ($detail) {
+            return [
+                'purchase_invoice_detail_id' => $detail->purchase_invoice_detail_id,
+                'product_id'                 => $detail->product_id,
+                'unit_id'                    => $detail->unit_id,
+                'package_size'               => $detail->package_size,
+                'purchased_quantity'         => $detail->purchaseInvoiceDetail?->quantity,
+                'quantity'                   => $detail->quantity,
+                'unit_price'                 => $detail->unit_price,
+                'total_price'                => $detail->total_price,
+                'notes'                      => $detail->notes,
+            ];
+        })->toArray();
+
+        return $data;
+    }
 }

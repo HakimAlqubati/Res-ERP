@@ -76,8 +76,9 @@ class PurchaseReturnResource extends Resource
             ->requiresConfirmation()
             ->modalHeading('Approve Purchase Return')
             ->modalDescription('Approving this return will deduct items from inventory and create a supplier debit note. Are you sure you want to proceed?')
-            ->action(function (PurchaseReturn $record, ApprovePurchaseReturnAction $action) {
+            ->action(function (PurchaseReturn $record) {
                 try {
+                    $action = app(ApprovePurchaseReturnAction::class);
                     $action->execute($record, (int) auth()->id());
 
                     Notification::make()
@@ -110,8 +111,9 @@ class PurchaseReturnResource extends Resource
                     ->label('Cancellation Reason')
                     ->required(),
             ])
-            ->action(function (PurchaseReturn $record, array $data, CancelPurchaseReturnAction $action) {
+            ->action(function (PurchaseReturn $record, array $data) {
                 try {
+                    $action = app(CancelPurchaseReturnAction::class);
                     $action->execute($record, $data['cancel_reason'], (int) auth()->id());
 
                     Notification::make()

@@ -134,7 +134,6 @@ class PurchaseReturnForm
                         ->schema([
                             Repeater::make('details')
                                 ->label('Return Line Items')
-                                ->relationship('details')
                                 ->defaultItems(0)
                                 ->minItems(1)
                                 ->required()

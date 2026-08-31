@@ -18,7 +18,8 @@ final class CreateFinancialDebitNotePipe
         $total = (float) $return->total_amount;
 
         if ($total > 0) {
-            $categoryId = FinancialCategory::where('code', 'PURCHASE_RETURN')->value('id');
+            $categoryId = FinancialCategory::where('code', 'PURCHASE_RETURN')->value('id')
+                ?? FinancialCategory::where('type', FinancialTransaction::TYPE_INCOME)->value('id');
 
             FinancialTransaction::create([
                 'branch_id'          => $context->store?->branch_id,
