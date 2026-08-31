@@ -46,14 +46,7 @@ final class ReturnQuantityWithinLimitRule implements ValidationRule
             return;
         }
 
-        $previouslyReturned = (float) PurchaseReturnDetail::query()
-            ->where('purchase_invoice_detail_id', $detail->id)
-            ->when($this->excludeReturnId, fn($q) => $q->where('purchase_return_id', '!=', $this->excludeReturnId))
-            ->whereHas('purchaseReturn', fn($q) => $q->where('status', PurchaseReturn::STATUS_APPROVED))
-            ->sum('quantity');
-
-        $purchasedQty = (float) $detail->quantity;
-        $maxReturnable = max(0.0, $purchasedQty - $previouslyReturned);
+        $maxReturnable = $detail->getRemainingReturnableQuantityForReturn($this->excludeReturnId);
 
         if ($qty > $maxReturnable) {
             $productName = $detail->product?->name ?? "Product #{$detail->product_id}";

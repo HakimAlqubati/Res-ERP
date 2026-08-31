@@ -148,6 +148,25 @@ class PurchaseReturn extends Model implements Auditable
         return $this->creator?->name;
     }
 
+    public function getFormDetails(): array
+    {
+        return $this->details()
+            ->with('purchaseInvoiceDetail')
+            ->get()
+            ->map(fn(PurchaseReturnDetail $d) => [
+                'purchase_invoice_detail_id' => $d->purchase_invoice_detail_id,
+                'product_id'                 => $d->product_id,
+                'unit_id'                    => $d->unit_id,
+                'package_size'               => $d->package_size,
+                'purchased_quantity'         => $d->purchaseInvoiceDetail?->quantity,
+                'quantity'                   => $d->quantity,
+                'unit_price'                 => $d->unit_price,
+                'total_price'                => $d->total_price,
+                'notes'                      => $d->notes,
+            ])
+            ->toArray();
+    }
+
     public static function autoReturnNo(): string
     {
         return (string) (((int) self::withTrashed()->max('id')) + 1);

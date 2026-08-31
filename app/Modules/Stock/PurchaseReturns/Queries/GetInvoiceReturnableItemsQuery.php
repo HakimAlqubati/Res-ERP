@@ -23,11 +23,8 @@ final class GetInvoiceReturnableItemsQuery
         $items = [];
 
         foreach ($invoice->purchaseInvoiceDetails as $detail) {
-            $returnedQuantity = (float) PurchaseReturnDetail::where('purchase_invoice_detail_id', $detail->id)
-                ->whereHas('purchaseReturn', fn($q) => $q->where('status', PurchaseReturn::STATUS_APPROVED))
-                ->sum('quantity');
-
-            $remainingInvoiceQty = max(0.0, (float) $detail->quantity - $returnedQuantity);
+            $returnedQuantity = $detail->returned_quantity;
+            $remainingInvoiceQty = $detail->remaining_returnable_quantity;
 
             $availableShelfStock = MultiProductsInventoryService::getRemainingQty(
                 (int) $detail->product_id,

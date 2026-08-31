@@ -127,8 +127,18 @@ class PurchaseInvoiceDetail extends Model implements Auditable
             ->sum('quantity');
     }
 
+    public function getRemainingReturnableQuantityForReturn(?int $excludeReturnId = null): float
+    {
+        $previouslyReturned = (float) $this->returnDetails()
+            ->when($excludeReturnId, fn($q) => $q->where('purchase_return_id', '!=', $excludeReturnId))
+            ->whereHas('purchaseReturn', fn($q) => $q->where('status', PurchaseReturn::STATUS_APPROVED))
+            ->sum('quantity');
+
+        return max(0.0, (float) $this->quantity - $previouslyReturned);
+    }
+
     public function getRemainingReturnableQuantityAttribute(): float
     {
-        return max(0.0, (float) $this->quantity - $this->returned_quantity);
+        return $this->getRemainingReturnableQuantityForReturn();
     }
 }

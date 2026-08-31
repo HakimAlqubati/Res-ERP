@@ -79,20 +79,13 @@ final class ValidateQuantityNotExceedingInvoicePipe
 
             foreach ($requestedQuantitiesByDetailId as $detailId => $totalRequestedQty) {
                 $invoiceDetail = $detailsById->get($detailId);
-
-                $previouslyReturnedQty = (float) PurchaseReturnDetail::query()
-                    ->where('purchase_invoice_detail_id', $detailId)
-                    ->when($currentReturnId, fn($q) => $q->where('purchase_return_id', '!=', $currentReturnId))
-                    ->whereHas('purchaseReturn', fn($q) => $q->where('status', PurchaseReturn::STATUS_APPROVED))
-                    ->sum('quantity');
-
-                $purchasedQty = (float) $invoiceDetail->quantity;
-                $maxReturnableQty = max(0.0, $purchasedQty - $previouslyReturnedQty);
+                $maxReturnableQty = $invoiceDetail->getRemainingReturnableQuantityForReturn($currentReturnId);
 
                 if ($totalRequestedQty > $maxReturnableQty) {
                     $productName = $invoiceDetail->product?->name ?? "Product #{$invoiceDetail->product_id}";
+                    $purchasedQty = (float) $invoiceDetail->quantity;
                     throw new ReturnQuantityExceededException(
-                        "Total return quantity for [{$productName}] ({$totalRequestedQty}) exceeds the remaining returnable limit ({$maxReturnableQty}) in Invoice #{$invoiceNo}. Purchased: {$purchasedQty}, Already Returned: {$previouslyReturnedQty}."
+                        "Total return quantity for [{$productName}] ({$totalRequestedQty}) exceeds the remaining returnable limit ({$maxReturnableQty}) in Invoice #{$invoiceNo}. Purchased in invoice: {$purchasedQty}."
                     );
                 }
             }
