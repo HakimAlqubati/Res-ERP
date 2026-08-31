@@ -19,6 +19,8 @@ final class PurchaseReturnPipelineContext
     public ?Store $store = null;
     public ?PurchaseReturn $purchaseReturn = null;
 
+    public readonly ?string $attachment;
+
     public function __construct(
         public readonly ?int $purchaseInvoiceId,
         public readonly int $supplierId,
@@ -28,10 +30,18 @@ final class PurchaseReturnPipelineContext
         array $items,
         public readonly ?string $reason = null,
         public readonly ?string $notes = null,
-        public readonly ?string $attachment = null,
+        string|array|null $attachment = null,
         public readonly ?int $paymentMethodId = null,
         ?PurchaseReturn $existingReturn = null,
     ) {
+        $finalAttachment = $attachment;
+        if (is_array($finalAttachment)) {
+            $finalAttachment = ! empty($finalAttachment) ? (string) array_values($finalAttachment)[0] : null;
+        } elseif (is_string($finalAttachment) && trim($finalAttachment) === '') {
+            $finalAttachment = null;
+        }
+        $this->attachment = $finalAttachment;
+
         $this->items = collect($items)->map(
             fn($item) => $item instanceof PurchaseReturnItemDTO ? $item : PurchaseReturnItemDTO::fromArray((array) $item)
         );

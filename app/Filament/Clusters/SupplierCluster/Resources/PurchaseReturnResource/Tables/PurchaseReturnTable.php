@@ -15,7 +15,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Support\Enums\FontWeight;
-use Filament\Tables\Columns\Summarizers\Summarizer;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
@@ -82,11 +82,12 @@ class PurchaseReturnTable
                     ->alignEnd()
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->summarize(
-                        Summarizer::make()
-                            ->using(fn(Table $t) => formatMoneyWithCurrency($t->getRecords()->sum('total_amount')))
+                        Sum::make()
+                            ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ),
 
                 TextColumn::make('details_count')
+                    ->counts('details')
                     ->label('Items')
                     ->alignCenter(),
 
@@ -105,13 +106,15 @@ class PurchaseReturnTable
 
                 SelectFilter::make('supplier_id')
                     ->label('Supplier')
-                    ->options(Supplier::pluck('name', 'id'))
-                    ->searchable(),
+                    ->relationship('supplier', 'name')
+                    ->searchable()
+                    ->preload(),
 
                 SelectFilter::make('store_id')
                     ->label('Store')
-                    ->options(Store::where('active', 1)->pluck('name', 'id'))
-                    ->searchable(),
+                    ->relationship('store', 'name')
+                    ->searchable()
+                    ->preload(),
 
                 Filter::make('return_date_range')
                     ->schema([

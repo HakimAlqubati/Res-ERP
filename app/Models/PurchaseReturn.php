@@ -150,8 +150,7 @@ class PurchaseReturn extends Model implements Auditable
 
     public static function autoReturnNo(): string
     {
-        $nextId = (self::withTrashed()->max('id') ?? 0) + 1;
-        return 'PR-' . date('Ymd') . '-' . str_pad((string) $nextId, 4, '0', STR_PAD_LEFT);
+        return (string) (((int) self::withTrashed()->max('id')) + 1);
     }
 
     public static function getStatusOptions(): array

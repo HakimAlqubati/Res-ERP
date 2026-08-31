@@ -7,8 +7,10 @@ namespace App\Filament\Clusters\SupplierCluster\Resources\PurchaseReturnResource
 use App\Filament\Clusters\SupplierCluster\Resources\PurchaseReturnResource;
 use App\Modules\Stock\PurchaseReturns\Actions\CreatePurchaseReturnDraftAction;
 use App\Modules\Stock\PurchaseReturns\DataTransferObjects\CreatePurchaseReturnDTO;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
+use Throwable;
 
 class EditPurchaseReturn extends EditRecord
 {
@@ -26,9 +28,23 @@ class EditPurchaseReturn extends EditRecord
 
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
+        $rawState = $this->form->getRawState();
+        $data['details'] = $rawState['details'] ?? $data['details'] ?? [];
+
         $action = app(CreatePurchaseReturnDraftAction::class);
         $dto = CreatePurchaseReturnDTO::fromRequest($data, (int) auth()->id(), (int) $record->id);
 
-        return $action->execute($dto);
+        try {
+            return $action->execute($dto);
+        } catch (Throwable $e) {
+            Notification::make()
+                ->title('Validation Failed')
+                ->body($e->getMessage())
+                ->danger()
+                ->persistent()
+                ->send();
+
+            $this->halt();
+        }
     }
 }

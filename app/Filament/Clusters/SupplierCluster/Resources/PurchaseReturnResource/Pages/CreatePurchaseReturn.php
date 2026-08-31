@@ -1,13 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Clusters\SupplierCluster\Resources\PurchaseReturnResource\Pages;
 
 use App\Filament\Clusters\SupplierCluster\Resources\PurchaseReturnResource;
 use App\Modules\Stock\PurchaseReturns\Actions\CreatePurchaseReturnDraftAction;
 use App\Modules\Stock\PurchaseReturns\DataTransferObjects\CreatePurchaseReturnDTO;
 use App\Modules\Stock\PurchaseReturns\Queries\GetInvoiceReturnableItemsQuery;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
+use Throwable;
 
 class CreatePurchaseReturn extends CreateRecord
 {
@@ -32,9 +36,29 @@ class CreatePurchaseReturn extends CreateRecord
 
     protected function handleRecordCreation(array $data): Model
     {
+        // Retrieve full form state to guarantee relationship repeater items are included
+        $rawState = $this->form->getRawState();
+        $data['details'] = $rawState['details'] ?? $data['details'] ?? [];
+
         $action = app(CreatePurchaseReturnDraftAction::class);
         $dto = CreatePurchaseReturnDTO::fromRequest($data, (int) auth()->id());
 
-        return $action->execute($dto);
+        try {
+            return $action->execute($dto);
+        } catch (Throwable $e) {
+            Notification::make()
+                ->title('Validation Failed')
+                ->body($e->getMessage())
+                ->danger()
+                ->persistent()
+                ->send();
+
+            $this->halt();
+        }
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('view', ['record' => $this->record]);
     }
 }

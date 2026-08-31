@@ -30,8 +30,15 @@ final readonly class CreatePurchaseReturnDTO
 
     public static function fromRequest(array $data, int $userId, ?int $returnId = null): self
     {
+        $attachment = $data['attachment'] ?? null;
+        if (is_array($attachment)) {
+            $attachment = ! empty($attachment) ? (string) array_values($attachment)[0] : null;
+        } elseif (is_string($attachment) && trim($attachment) === '') {
+            $attachment = null;
+        }
+
         return new self(
-            purchaseInvoiceId: isset($data['purchase_invoice_id']) && !empty($data['purchase_invoice_id']) ? (int) $data['purchase_invoice_id'] : null,
+            purchaseInvoiceId: isset($data['purchase_invoice_id']) && ! empty($data['purchase_invoice_id']) ? (int) $data['purchase_invoice_id'] : null,
             supplierId: (int) $data['supplier_id'],
             storeId: (int) $data['store_id'],
             returnDate: (string) ($data['return_date'] ?? date('Y-m-d')),
@@ -39,8 +46,8 @@ final readonly class CreatePurchaseReturnDTO
             items: $data['items'] ?? $data['units'] ?? $data['details'] ?? [],
             reason: $data['reason'] ?? null,
             notes: $data['notes'] ?? null,
-            attachment: $data['attachment'] ?? null,
-            paymentMethodId: isset($data['payment_method_id']) && !empty($data['payment_method_id']) ? (int) $data['payment_method_id'] : null,
+            attachment: $attachment,
+            paymentMethodId: isset($data['payment_method_id']) && ! empty($data['payment_method_id']) ? (int) $data['payment_method_id'] : null,
             returnId: $returnId,
         );
     }

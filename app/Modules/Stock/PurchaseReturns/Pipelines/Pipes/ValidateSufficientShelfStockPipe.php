@@ -14,24 +14,37 @@ final class ValidateSufficientShelfStockPipe
 {
     public function handle(PurchaseReturnPipelineContext $context, Closure $next)
     {
+        // Aggregate requested quantities per product and unit
+        $aggregatedQuantities = [];
+
         foreach ($context->items as $item) {
-            if ($item->quantity <= 0) {
-                throw new InsufficientShelfStockException('Return quantity must be greater than zero.');
-            }
+            $key = "{$item->productId}_{$item->unitId}";
+            $aggregatedQuantities[$key] = ($aggregatedQuantities[$key] ?? [
+                'product_id' => $item->productId,
+                'unit_id'    => $item->unitId,
+                'quantity'   => 0.0,
+            ]);
+            $aggregatedQuantities[$key]['quantity'] += $item->quantity;
+        }
+
+        foreach ($aggregatedQuantities as $data) {
+            $productId = (int) $data['product_id'];
+            $unitId    = (int) $data['unit_id'];
+            $totalQty  = (float) $data['quantity'];
 
             $availableQty = MultiProductsInventoryService::getRemainingQty(
-                $item->productId,
-                $item->unitId,
+                $productId,
+                $unitId,
                 $context->storeId
             );
 
-            if ($availableQty < $item->quantity) {
-                $product = Product::find($item->productId);
-                $productName = $product?->name ?? "Product #{$item->productId}";
+            if ($availableQty < $totalQty) {
+                $product = Product::find($productId);
+                $productName = $product?->name ?? "Product #{$productId}";
                 $storeName = $context->store?->name ?? "Store #{$context->storeId}";
 
                 throw new InsufficientShelfStockException(
-                    "Insufficient shelf stock for [{$productName}] in [{$storeName}]. Available on shelf: {$availableQty}, Requested return: {$item->quantity}. Please perform a stock adjustment if needed."
+                    "Insufficient shelf stock for [{$productName}] in [{$storeName}]. Available on shelf: {$availableQty}, Requested return: {$totalQty}. Please perform a stock adjustment if needed."
                 );
             }
         }
