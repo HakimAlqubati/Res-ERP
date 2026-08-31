@@ -212,6 +212,29 @@ class User extends Authenticatable implements FilamentUser, Auditable
         return $kitchenBranch->categories()->pluck('category_id')->toArray();
     }
 
+    /**
+     * جلب أول فرع إضافي المستخدم مُعيّن كمدير له (manager_id)
+     * يبحث في الفروع الإضافية عبر branch_user حيث الفرع manager_id = هذا المستخدم
+     */
+    public function getManagedAdditionalBranch(): ?Branch
+    {
+        return $this->branches()
+            ->withoutGlobalScopes()
+            ->where('branches.manager_id', $this->id)
+            ->first();
+    }
+
+    /**
+     * هل المستخدم مدير لفرع إضافي (بغض النظر عن الـ role)
+     */
+    public function isAdditionalBranchManager(): bool
+    {
+        return $this->branches()
+            ->withoutGlobalScopes()
+            ->where('branches.manager_id', $this->id)
+            ->exists();
+    }
+
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');

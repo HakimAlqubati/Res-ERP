@@ -155,18 +155,24 @@ class OrderRepository implements OrderRepositoryInterface
         try {
             DB::beginTransaction();
 
-            $branchId = auth()->user()->branch?->id;
+            $user = auth()->user();
+            $managedBranch = $user->getManagedAdditionalBranch();
+
+            // الأولوية: الفرع الإضافي المُدار → ثم الفرع الأساسي
+            $effectiveBranch = $managedBranch ?? $user->branch;
+            $branchId = $effectiveBranch?->id;
             
             if (!$branchId) {
                 throw new \Exception('You cannot create an order because you are not associated with any branch.');
             }
 
-            $customerId = isBranchManager()
-                ? auth()->user()->id
-                : (isBranchUser() ? auth()->user()->owner->id : null);
+            $isEffectiveManager = isBranchManager() || $managedBranch !== null;
+            $customerId = $isEffectiveManager
+                ? $user->id
+                : (isBranchUser() ? $user->owner->id : null);
             $pendingOrderId = checkIfUserHasPendingForApprovalOrder($branchId);
 
-            $orderStatus = isBranchManager() ? Order::ORDERED : Order::PENDING_APPROVAL;
+            $orderStatus = $isEffectiveManager ? Order::ORDERED : Order::PENDING_APPROVAL;
 
 
 
@@ -200,10 +206,11 @@ class OrderRepository implements OrderRepositoryInterface
                 // Get categories for the current branch.
                 $categories = $branch->categories->pluck('id')->toArray();
                 // Filter order details based on whether they belong to a manufacturing category.
-                $productsForThisBranch = collect($allOrderDetails)->filter(function ($item) use ($categories, $branch) {
+                $productsForThisBranch = collect($allOrderDetails)->filter(function ($item) use ($categories, $branch, $user) {
                     $product = Product::find($item['product_id']);
+                    $userBranchIds = $user->all_branch_ids;
                     $isForbidden = auth()->check() &&
-                        auth()->user()->branch_id === $branch->id &&
+                        in_array($branch->id, $userBranchIds) &&
                         in_array($product->category_id, $categories);
                     if ($isForbidden) {
                         throw new Exception("You cannot request the product ({$product->name}-{$product->id}) because it belongs to a manufacturing category assigned to your own branch.");
@@ -216,7 +223,7 @@ class OrderRepository implements OrderRepositoryInterface
                     $manufacturingOrder = Order::create([
                         'status' => Order::ORDERED,
                         'customer_id' => $customerId,
-                        'branch_id' => auth()->user()->branch->id,
+                        'branch_id' => $effectiveBranch?->id,
                         'store_id' => $branch->store_id,
                         'type' => Order::TYPE_MANUFACTURING,
                         'notes' => $notes,
@@ -249,11 +256,11 @@ class OrderRepository implements OrderRepositoryInterface
                 $order = Order::create([
                     'status' => $orderStatus,
                     'customer_id' => $customerId,
-                    'branch_id' => auth()->user()?->branch?->id,
+                    'branch_id' => $effectiveBranch?->id,
                     'type' => Order::TYPE_NORMAL,
                     'notes' => $notes,
                     'description' => $description,
-                    'store_id' =>  auth()->user()?->branch?->valid_store_id,
+                    'store_id' => $effectiveBranch?->valid_store_id,
                 ]);
 
                 $orderId = $order->id;
