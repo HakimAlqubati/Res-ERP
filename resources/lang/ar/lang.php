@@ -42,6 +42,7 @@ return [
   'order_id' => 'رقم الطلبية',
   'branch' => 'الفرع',
   'branch_manager' => 'مدير الفرع',
+  'order_owner' => 'صاحب الطلب',
   'order_status' => 'حالة الطلبية',
   'order_id_copied' => 'تم نسخ رقم الطلبية',
   'item_counts' => 'عدد المنتجات',

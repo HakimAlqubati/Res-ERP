@@ -71,9 +71,9 @@ class OrderTable
                     ->copyMessageDuration(1500)
                     ->sortable()->searchable()
                     ->searchable(isIndividual: true, isGlobal: false),
-                TextColumn::make('customer.name')->label(__('lang.branch_manager'))->toggleable()
+                TextColumn::make('customer.name')->label(__('lang.order_owner'))->toggleable()
                     ->searchable(isIndividual: true)->toggleable(isToggledHiddenByDefault: true)
-                    ->tooltip(fn(Model $record): string => "By {$record->customer->name}"),
+                    ->tooltip(fn(Model $record): string => "By {$record->customer?->name}"),
                 TextColumn::make('branch.name')->label(__('lang.branch')),
                 // TextColumn::make('store.name')->label(__('lang.store')),
                 // TextColumn::make('store_names')->label(__('lang.store'))->toggleable(isToggledHiddenByDefault: true),

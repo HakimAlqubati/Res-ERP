@@ -42,6 +42,7 @@ return [
     'order_id'                                    => 'Order id',
     'branch'                                      => 'Branch',
     'branch_manager'                              => 'Branch manager',
+    'order_owner'                                 => 'Order owner',
     'order_status'                                => 'Order status',
     'order_id_copied'                             => 'Order id copied',
     'item_counts'                                 => 'Item counts',
