@@ -114,4 +114,21 @@ class PurchaseInvoiceDetail extends Model implements Auditable
             ->where('transactionable_id', $this->purchase_invoice_id)
             ->where('transactionable_type', PurchaseInvoice::class);
     }
+
+    public function returnDetails()
+    {
+        return $this->hasMany(PurchaseReturnDetail::class, 'purchase_invoice_detail_id');
+    }
+
+    public function getReturnedQuantityAttribute(): float
+    {
+        return (float) $this->returnDetails()
+            ->whereHas('purchaseReturn', fn($q) => $q->where('status', PurchaseReturn::STATUS_APPROVED))
+            ->sum('quantity');
+    }
+
+    public function getRemainingReturnableQuantityAttribute(): float
+    {
+        return max(0.0, (float) $this->quantity - $this->returned_quantity);
+    }
 }
