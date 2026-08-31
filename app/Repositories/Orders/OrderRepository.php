@@ -157,19 +157,30 @@ class OrderRepository implements OrderRepositoryInterface
 
             $user = auth()->user();
             $managedBranch = $user->getManagedAdditionalBranch();
+            $isDefaultStoreKeeper = $user->isDefaultStoreManager();
 
-            // الأولوية: الفرع الإضافي المُدار → ثم الفرع الأساسي
-            $effectiveBranch = $managedBranch ?? $user->branch;
+            // الأولوية: مدير الفرع أو مدير المخزن الرئيسي يستخدم فرعه المباشر
+            // غير ذلك: الفرع الإضافي المُدار → ثم الفرع الأساسي
+            if (isBranchManager() || $isDefaultStoreKeeper) {
+                $effectiveBranch = $user->branch;
+            } else {
+                $effectiveBranch = $managedBranch ?? $user->branch;
+            }
             $branchId = $effectiveBranch?->id;
             
             if (!$branchId) {
                 throw new \Exception('You cannot create an order because you are not associated with any branch.');
             }
 
-            $isEffectiveManager = isBranchManager() || $managedBranch !== null;
+            $isEffectiveManager = isBranchManager() || $isDefaultStoreKeeper || $managedBranch !== null;
             $customerId = $isEffectiveManager
                 ? $user->id
-                : (isBranchUser() ? $user->owner->id : null);
+                : (isBranchUser() ? $user->owner?->id : null);
+
+            if (!$customerId) {
+                throw new \Exception('You cannot create an order because you are not a manager or authorized branch user.');
+            }
+
             $pendingOrderId = checkIfUserHasPendingForApprovalOrder($branchId);
 
             $orderStatus = $isEffectiveManager ? Order::ORDERED : Order::PENDING_APPROVAL;

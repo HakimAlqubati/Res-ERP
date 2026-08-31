@@ -102,6 +102,16 @@ if (!function_exists('isStoreManager')) {
     }
 }
 
+if (!function_exists('isDefaultStoreManager')) {
+    function isDefaultStoreManager()
+    {
+        if (auth()->check()) {
+            return auth()->user()->isDefaultStoreManager();
+        }
+        return false;
+    }
+}
+
 if (!function_exists('isMaintenanceManager')) {
     function isMaintenanceManager()
     {

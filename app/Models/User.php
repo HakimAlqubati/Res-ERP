@@ -348,6 +348,14 @@ class User extends Authenticatable implements FilamentUser, Auditable
         }
         return false;
     }
+    public function isDefaultStoreManager(): bool
+    {
+        if (!$this->isStoreManager()) {
+            return false;
+        }
+
+        return $this->allManagedStores()->where('default_store', true)->exists();
+    }
     public function isBranchUser()
     {
         return in_array(8, $this->roles->pluck('id')->toArray());
