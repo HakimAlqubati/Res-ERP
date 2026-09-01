@@ -15,70 +15,74 @@ class UpdateBatchProductPricesService
 {
     /**
      * Data mapping based on the price sheet:
-     * Product Code => [ [ 'unit' => 'UnitName/Code', 'price' => float ], ... ]
+     * - Box Price = 990.00 (Package Size = 6.0 KG)
+     * - KG Price  = 990.00 / 6 = 165.00 (Package Size = 1.0 KG)
+     * - Product 311-013 & 311-016: KG Price = 100.00 (Package Size = 1.0 KG)
+     *
+     * Product Code => [ [ 'unit' => 'UnitName/Code', 'price' => float, 'package_size' => float ], ... ]
      */
     public const PRICE_MAP = [
         '311-001' => [
-            ['unit' => 'KG',  'price' => 6.00],
-            ['unit' => 'Box', 'price' => 990.00],
+            ['unit' => 'KG',  'price' => 165.00, 'package_size' => 1.0], // 990 / 6
+            ['unit' => 'Box', 'price' => 990.00, 'package_size' => 6.0],
         ],
         '311-002' => [
-            ['unit' => 'KG',  'price' => 6.00],
-            ['unit' => 'Box', 'price' => 990.00],
+            ['unit' => 'KG',  'price' => 165.00, 'package_size' => 1.0], // 990 / 6
+            ['unit' => 'Box', 'price' => 990.00, 'package_size' => 6.0],
         ],
         '311-003' => [
-            ['unit' => 'KG',  'price' => 6.00],
-            ['unit' => 'Box', 'price' => 990.00],
+            ['unit' => 'KG',  'price' => 165.00, 'package_size' => 1.0], // 990 / 6
+            ['unit' => 'Box', 'price' => 990.00, 'package_size' => 6.0],
         ],
         '311-004' => [
-            ['unit' => 'KG',  'price' => 6.00],
-            ['unit' => 'Box', 'price' => 990.00],
+            ['unit' => 'KG',  'price' => 165.00, 'package_size' => 1.0], // 990 / 6
+            ['unit' => 'Box', 'price' => 990.00, 'package_size' => 6.0],
         ],
         '311-005' => [
-            ['unit' => 'KG',  'price' => 6.00],
-            ['unit' => 'Box', 'price' => 990.00],
+            ['unit' => 'KG',  'price' => 165.00, 'package_size' => 1.0], // 990 / 6
+            ['unit' => 'Box', 'price' => 990.00, 'package_size' => 6.0],
         ],
         '311-006' => [
-            ['unit' => 'KG',  'price' => 6.00],
-            ['unit' => 'Box', 'price' => 990.00],
+            ['unit' => 'KG',  'price' => 165.00, 'package_size' => 1.0], // 990 / 6
+            ['unit' => 'Box', 'price' => 990.00, 'package_size' => 6.0],
         ],
         '311-007' => [
-            ['unit' => 'KG',  'price' => 6.00],
-            ['unit' => 'Box', 'price' => 990.00],
+            ['unit' => 'KG',  'price' => 165.00, 'package_size' => 1.0], // 990 / 6
+            ['unit' => 'Box', 'price' => 990.00, 'package_size' => 6.0],
         ],
         '311-008' => [
-            ['unit' => 'KG',  'price' => 6.00],
-            ['unit' => 'Box', 'price' => 990.00],
+            ['unit' => 'KG',  'price' => 165.00, 'package_size' => 1.0], // 990 / 6
+            ['unit' => 'Box', 'price' => 990.00, 'package_size' => 6.0],
         ],
         '311-009' => [
-            ['unit' => 'KG',  'price' => 6.00],
-            ['unit' => 'Box', 'price' => 990.00],
+            ['unit' => 'KG',  'price' => 165.00, 'package_size' => 1.0], // 990 / 6
+            ['unit' => 'Box', 'price' => 990.00, 'package_size' => 6.0],
         ],
         '311-010' => [
-            ['unit' => 'KG',  'price' => 6.00],
-            ['unit' => 'Box', 'price' => 990.00],
+            ['unit' => 'KG',  'price' => 165.00, 'package_size' => 1.0], // 990 / 6
+            ['unit' => 'Box', 'price' => 990.00, 'package_size' => 6.0],
         ],
         '311-011' => [
-            ['unit' => 'KG',  'price' => 6.00],
-            ['unit' => 'Box', 'price' => 990.00],
+            ['unit' => 'KG',  'price' => 165.00, 'package_size' => 1.0], // 990 / 6
+            ['unit' => 'Box', 'price' => 990.00, 'package_size' => 6.0],
         ],
         '311-012' => [
-            ['unit' => 'KG',  'price' => 6.00],
-            ['unit' => 'Box', 'price' => 990.00],
+            ['unit' => 'KG',  'price' => 165.00, 'package_size' => 1.0], // 990 / 6
+            ['unit' => 'Box', 'price' => 990.00, 'package_size' => 6.0],
         ],
         '311-013' => [
-            ['unit' => 'KG',  'price' => 100.00],
+            ['unit' => 'KG',  'price' => 100.00, 'package_size' => 1.0],
         ],
         '311-014' => [
-            ['unit' => 'KG',  'price' => 6.00],
-            ['unit' => 'Box', 'price' => 990.00],
+            ['unit' => 'KG',  'price' => 165.00, 'package_size' => 1.0], // 990 / 6
+            ['unit' => 'Box', 'price' => 990.00, 'package_size' => 6.0],
         ],
         '311-015' => [
-            ['unit' => 'KG',  'price' => 6.00],
-            ['unit' => 'Box', 'price' => 990.00],
+            ['unit' => 'KG',  'price' => 165.00, 'package_size' => 1.0], // 990 / 6
+            ['unit' => 'Box', 'price' => 990.00, 'package_size' => 6.0],
         ],
         '311-016' => [
-            ['unit' => 'KG',  'price' => 100.00],
+            ['unit' => 'KG',  'price' => 100.00, 'package_size' => 1.0],
         ],
     ];
 
@@ -124,6 +128,7 @@ class UpdateBatchProductPricesService
                 foreach ($unitsList as $unitData) {
                     $unitIdentifier = trim($unitData['unit']);
                     $newPrice       = (float) $unitData['price'];
+                    $packageSize    = (float) ($unitData['package_size'] ?? 1.0);
 
                     // 2. Resolve unit
                     $unit = $this->resolveUnit($unitIdentifier, $allUnits);
@@ -145,8 +150,8 @@ class UpdateBatchProductPricesService
                         $unitPriceRecord->update([
                             'price'         => $newPrice,
                             'selling_price' => $newPrice,
+                            'package_size'  => $packageSize,
                         ]);
-                        $packageSize = $unitPriceRecord->package_size ?? 1;
                         $report['unit_prices_updated']++;
                     } else {
                         // Create UnitPrice if not already attached
@@ -156,10 +161,9 @@ class UpdateBatchProductPricesService
                             'unit_id'       => $unit->id,
                             'price'         => $newPrice,
                             'selling_price' => $newPrice,
-                            'package_size'  => 1,
+                            'package_size'  => $packageSize,
                             'usage_scope'   => UnitPrice::USAGE_ALL,
                         ]);
-                        $packageSize = 1;
                         $report['unit_prices_updated']++;
                     }
 
@@ -176,6 +180,7 @@ class UpdateBatchProductPricesService
 
                         $transactionsQuery->update([
                             'price'               => $newPrice,
+                            'package_size'        => $packageSize,
                             'price_per_base_unit' => $pricePerBaseUnit,
                         ]);
 
@@ -186,6 +191,7 @@ class UpdateBatchProductPricesService
                         'product_code'         => $productCode,
                         'product_name'         => $product->name,
                         'unit'                 => $unit->name ?? $unitIdentifier,
+                        'package_size'         => $packageSize,
                         'old_price'            => $oldPrice,
                         'new_price'            => $newPrice,
                         'transactions_updated' => $txCount,

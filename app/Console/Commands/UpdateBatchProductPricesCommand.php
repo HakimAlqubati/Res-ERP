@@ -57,12 +57,13 @@ class UpdateBatchProductPricesCommand extends Command
             if (!empty($report['details'])) {
                 $this->newLine();
                 $this->table(
-                    ['Product Code', 'Product Name', 'Unit', 'Old Price', 'New Price', 'Transactions Updated'],
+                    ['Product Code', 'Product Name', 'Unit', 'Package Size', 'Old Price', 'New Price', 'Transactions Updated'],
                     array_map(function ($row) {
                         return [
                             $row['product_code'],
                             $row['product_name'],
                             $row['unit'],
+                            $row['package_size'] ?? 1,
                             number_format($row['old_price'], 2),
                             number_format($row['new_price'], 2),
                             $row['transactions_updated'],
