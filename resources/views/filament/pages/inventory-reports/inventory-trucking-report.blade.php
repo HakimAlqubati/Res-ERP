@@ -72,9 +72,19 @@
                 @if (isset($showGradiants) && $showGradiants)
                 <td style="vertical-align: top; text-align: {{ app()->getLocale() == 'ar' ? 'right' : 'left' }};">
                     @if ($data->movement_type == 'in' && ($data->transactionable_type == 'App\Models\StockSupplyOrder' || $data->transactionable_type == \App\Models\StockSupplyOrder::class))
-                        @if ($product && $product->productItems && $product->productItems->isNotEmpty())
+                        @php
+                            $excludedCodes = ['11076', '06002'];
+                            $filteredItems = $product && $product->productItems 
+                                ? $product->productItems->filter(function($item) use ($excludedCodes) {
+                                    $code = (string) ($item->product?->code ?? '');
+                                    $id = (string) ($item->product_id ?? '');
+                                    return !in_array($code, $excludedCodes, true) && !in_array($id, $excludedCodes, true);
+                                })
+                                : collect();
+                        @endphp
+                        @if ($filteredItems->isNotEmpty())
                             <div style="display: flex; flex-direction: column; gap: 3px; font-size: 11px;">
-                                @foreach ($product->productItems as $item)
+                                @foreach ($filteredItems as $item)
                                     @php
                                         $itemCode = $item->product?->code ?? '';
                                         $itemName = $item->product?->name ?? '';

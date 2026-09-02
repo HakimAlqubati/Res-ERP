@@ -25,7 +25,17 @@ class ListInventoryTransactionTruckingReport extends ListRecords
         $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
         $transactionableType = $this->getTable()->getFilters()['transactionable_type']->getState()['value'] ?? null;
 
-        $product = !empty($productId) ? Product::with(['category', 'productItems.product', 'productItems.unit'])->find($productId) : null;
+        $product = !empty($productId) ? Product::with([
+            'category',
+            'productItems' => function ($query) {
+                $query->whereHas('product', function ($q) {
+                    $q->whereNotIn('code', ['11076', '06002'])
+                      ->whereNotIn('id', [11076, 6002]);
+                });
+            },
+            'productItems.product',
+            'productItems.unit'
+        ])->find($productId) : null;
 
         $reportData = collect();
 
