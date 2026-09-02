@@ -42,7 +42,7 @@
                 <th>{{ 'Qty' }}</th>
                 <th>{{ 'Store' }}</th>
                 @if (isset($showGradiants) && $showGradiants)
-                <th>{{ 'Gradiants' }}</th>
+                <th>{{ 'Ingradiants' }}</th>
                 @endif
                 <th colspan="3">{{ 'Notes' }}</th>
             </tr>
@@ -83,7 +83,7 @@
                                 : collect();
                         @endphp
                         @if ($filteredItems->isNotEmpty())
-                            <div style="display: flex; flex-direction: column; gap: 3px; font-size: 11px;">
+                            <div style="display: flex; flex-direction: column; gap: 5px; font-size: 13px;">
                                 @foreach ($filteredItems as $item)
                                     @php
                                         $itemCode = $item->product?->code ?? '';
@@ -93,7 +93,7 @@
                                         $supplyQty = (float) $data->quantity + 0;
                                         $totalQty = round($recipeQty * $supplyQty, 4) + 0;
                                     @endphp
-                                    <div style="white-space: nowrap; line-height: 1.3;">
+                                    <div style="white-space: nowrap; line-height: 1.5;">
                                         <strong>{{ $itemCode }}</strong> - <bdi>{{ $itemName }}</bdi> - <span dir="ltr"><strong>{{ $recipeQty }} {{ $unitName }}</strong> * <strong>{{ $supplyQty }}</strong> = <strong>{{ $totalQty }} {{ $unitName }}</strong></span>
                                     </div>
                                 @endforeach
