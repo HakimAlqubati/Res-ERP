@@ -29,7 +29,7 @@ class Store extends Model implements Auditable
         'is_central_kitchen',
     ];
 
-    protected $appends = ['storekeeper_name'];
+    protected $appends = ['storekeeper_name', 'storekeeper_email'];
     /**
      * Scope to get only active stores.
      *
@@ -105,6 +105,24 @@ class Store extends Model implements Auditable
         $all = array_values(array_unique(array_merge($names, $extra)));
 
         return !empty($all) ? implode(', ', $all) : '';
+    }
+
+    public function getStorekeeperEmailAttribute(): ?string
+    {
+        $emails = [];
+        if ($this->storekeeper && $this->storekeeper->email) {
+            $emails[] = $this->storekeeper->email;
+        }
+
+        if ($this->relationLoaded('storekeepers')) {
+            $extra = $this->storekeepers->pluck('email')->filter()->toArray();
+        } else {
+            $extra = $this->storekeepers()->pluck('email')->filter()->toArray();
+        }
+
+        $all = array_values(array_unique(array_merge($emails, $extra)));
+
+        return !empty($all) ? implode(', ', $all) : null;
     }
 
     public function scopeCentralKitchenStores($query)

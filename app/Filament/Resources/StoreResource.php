@@ -97,9 +97,15 @@ class StoreResource extends Resource
                 ->toggleable(isToggledHiddenByDefault: true),
                 CheckboxColumn::make('active')->label(__('lang.active'))->toggleable(),
                 TextColumn::make('storekeeper_name')
-                ->words(5)
-                ->tooltip(fn($state) => $state)
-                ->label(__('stock.storekeeper'))->toggleable()->default('-'),
+                    ->words(5)
+                    ->tooltip(fn($state) => $state)
+                    ->label(__('stock.storekeeper'))->toggleable()->default('-'),
+                TextColumn::make('storekeeper_email')
+                    ->label(__('lang.email'))
+                    ->copyable()
+                    ->tooltip(fn($state) => $state)
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->default('-'),
                 CheckboxColumn::make('default_store')
                     ->label(__('lang.default'))->disableClick()->toggleable()->alignCenter(true),
                 // CheckboxColumn::make('is_central_kitchen')
@@ -144,7 +150,8 @@ class StoreResource extends Resource
         $query = parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
+            ])
+            ->with(['storekeeper', 'storekeepers']);
         $query->withManagedStores();
         return $query;
     }

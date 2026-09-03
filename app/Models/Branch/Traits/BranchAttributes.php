@@ -170,4 +170,26 @@ trait BranchAttributes
 
         return $name;
     }
+
+    public function getChefAssistantsNamesAttribute(): string
+    {
+        if ($this->relationLoaded('chefAssistants')) {
+            $names = $this->chefAssistants->pluck('name')->filter()->toArray();
+        } else {
+            $names = $this->chefAssistants()->pluck('name')->filter()->toArray();
+        }
+
+        return !empty($names) ? implode(', ', $names) : '';
+    }
+
+    public function getChefAssistantsEmailsAttribute(): ?string
+    {
+        if ($this->relationLoaded('chefAssistants')) {
+            $emails = $this->chefAssistants->pluck('email')->filter()->toArray();
+        } else {
+            $emails = $this->chefAssistants()->pluck('email')->filter()->toArray();
+        }
+
+        return !empty($emails) ? implode(', ', $emails) : null;
+    }
 }
