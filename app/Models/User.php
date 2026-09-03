@@ -147,6 +147,15 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
 
     /**
+     * الفروع المرتبطة بالمستخدم كمساعد طباخ / شيف عبر جدول chef_assistants
+     */
+    public function chefAssistantBranches()
+    {
+        return $this->belongsToMany(Branch::class, 'chef_assistants')
+                    ->withTimestamps();
+    }
+
+    /**
      * كل الفروع (الأساسي + الإضافية) كـ query builder
      */
     public function allBranches()
@@ -155,14 +164,16 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
 
     /**
-     * مصفوفة بكل IDs الفروع (الأساسي + الإضافية)
+     * مصفوفة بكل IDs الفروع (الأساسي + الإضافية + مساعدي الشيف)
      */
     public function getAllBranchIdsAttribute(): array
     {
         $extraIds = $this->branches()->withoutGlobalScopes()->pluck('branches.id')->toArray();
+        $chefIds  = $this->chefAssistantBranches()->withoutGlobalScopes()->pluck('branches.id')->toArray();
         return array_values(array_unique(array_merge(
             array_filter([$this->branch_id]),
-            $extraIds
+            $extraIds,
+            $chefIds
         )));
     }
 
@@ -233,6 +244,42 @@ class User extends Authenticatable implements FilamentUser, Auditable
             ->withoutGlobalScopes()
             ->where('branches.manager_id', $this->id)
             ->exists();
+    }
+
+    /**
+     * جلب الفرع التصنيعي المرتبط بالمستخدم كمساعد شيف (سواء كفرع إضافي أو في جدول مساعدي الشيف)
+     */
+    public function getChefAssistantManufacturingBranch(): ?Branch
+    {
+        // 1) البحث في الفروع الإضافية (branch_user) التي تكون معامل تصنيعية والمستخدم مسجل فيها كمساعد شيف
+        $branch = $this->branches()
+            ->withoutGlobalScopes()
+            ->where('branches.type', Branch::TYPE_CENTRAL_KITCHEN)
+            ->whereHas('chefAssistants', fn($q) => $q->where('users.id', $this->id))
+            ->first();
+
+        if ($branch) {
+            return $branch;
+        }
+
+        // 2) البحث المباشر في جدول chef_assistants عن أي فرع تصنيعي
+        return $this->chefAssistantBranches()
+            ->withoutGlobalScopes()
+            ->where('branches.type', Branch::TYPE_CENTRAL_KITCHEN)
+            ->first();
+    }
+
+    /**
+     * هل المستخدم مساعد طباخ في فرع تصنيعي؟
+     */
+    public function isChefAssistantInManufacturingBranch(): bool
+    {
+        return $this->getChefAssistantManufacturingBranch() !== null;
+    }
+
+    public function isChefAssistant(): bool
+    {
+        return $this->isChefAssistantInManufacturingBranch();
     }
 
     public function owner()

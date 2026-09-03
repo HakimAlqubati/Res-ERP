@@ -105,9 +105,17 @@ class OrderRepository implements OrderRepositoryInterface
         if (
             isBranchUser() && isset(auth()->user()->branch)
         ) {
-            $query->where('customer_id', auth()->user()->owner->id)
-                ->where('branch_id', auth()->user()->branch_id)
-            ;
+            if (auth()->user()->isChefAssistantInManufacturingBranch()) {
+                $kitchenBranch = auth()->user()->getChefAssistantManufacturingBranch();
+                $query->where(function ($q) use ($kitchenBranch) {
+                    $q->where('branch_id', $kitchenBranch->id)
+                      ->orWhere('customer_id', auth()->id());
+                });
+            } else {
+                $query->where('customer_id', auth()->user()->owner->id)
+                    ->where('branch_id', auth()->user()->branch_id)
+                ;
+            }
         }
         if ($request->has('id')) {
             $query->where('id', $request->id);
@@ -158,10 +166,16 @@ class OrderRepository implements OrderRepositoryInterface
             $user = auth()->user();
             $managedBranch = $user->getManagedAdditionalBranch();
             $isDefaultStoreKeeper = $user->isDefaultStoreManager();
+            $chefAssistantBranch = $user->getChefAssistantManufacturingBranch();
+            $isChefAssistant = $chefAssistantBranch !== null;
 
-            // الأولوية: مدير الفرع أو مدير المخزن الرئيسي يستخدم فرعه المباشر
-            // غير ذلك: الفرع الإضافي المُدار → ثم الفرع الأساسي
-            if (isBranchManager() || $isDefaultStoreKeeper) {
+            // الأولوية:
+            // 1) إذا كان المستخدم مساعد طباخ في فرع تصنيعي → الفرع التصنيعي (المرتبط به كإكسترا برانش أو مسجل كمساعد شيف)
+            // 2) مدير الفرع أو مدير المخزن الرئيسي يستخدم فرعه المباشر
+            // 3) الفرع الإضافي المُدار → ثم الفرع الأساسي
+            if ($isChefAssistant) {
+                $effectiveBranch = $chefAssistantBranch;
+            } elseif (isBranchManager() || $isDefaultStoreKeeper) {
                 $effectiveBranch = $user->branch;
             } else {
                 $effectiveBranch = $managedBranch ?? $user->branch;
@@ -172,7 +186,7 @@ class OrderRepository implements OrderRepositoryInterface
                 throw new \Exception('You cannot create an order because you are not associated with any branch.');
             }
 
-            $isEffectiveManager = isBranchManager() || $isDefaultStoreKeeper || $managedBranch !== null;
+            $isEffectiveManager = isBranchManager() || $isDefaultStoreKeeper || $managedBranch !== null || $isChefAssistant;
             $customerId = $isEffectiveManager
                 ? $user->id
                 : (isBranchUser() ? $user->owner?->id : null);
@@ -339,8 +353,14 @@ class OrderRepository implements OrderRepositoryInterface
             }
             $pendingOrderId = 0;
             $message = '';
-            // check if user has pending for approval order to determine branchId & orderId & orderStatus
-            if ($currnetRole == 7) {
+            $isChefAssistant = auth()->user()->isChefAssistantInManufacturingBranch();
+            $chefAssistantBranch = auth()->user()->getChefAssistantManufacturingBranch();
+
+            if ($isChefAssistant) {
+                $branchId = $chefAssistantBranch?->id;
+                $customerId = auth()->user()->id;
+                $orderStatus = Order::ORDERED;
+            } else if ($currnetRole == 7) {
                 $branchId = auth()->user()?->branch?->id;
                 $customerId = auth()->user()->id;
                 if (!isset($branchId)) {

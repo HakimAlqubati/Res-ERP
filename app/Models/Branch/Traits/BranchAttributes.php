@@ -48,7 +48,10 @@ trait BranchAttributes
 
         if (
             auth()->check()
-            && $this->manager_id === auth()->id()
+            && (
+                $this->manager_id === auth()->id()
+                || $this->chefAssistants()->where('users.id', auth()->id())->exists()
+            )
             && $this->is_kitchen
             && $this->store
         ) {
