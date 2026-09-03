@@ -102,20 +102,18 @@ class OrderRepository implements OrderRepositoryInterface
             ;
         }
 
-        if (
+        if (auth()->check() && auth()->user()->isChefAssistantInManufacturingBranch()) {
+            $kitchenBranch = auth()->user()->getChefAssistantManufacturingBranch();
+            $query->where(function ($q) use ($kitchenBranch) {
+                $q->where('branch_id', $kitchenBranch->id)
+                  ->orWhere('customer_id', auth()->id());
+            });
+        } elseif (
             isBranchUser() && isset(auth()->user()->branch)
         ) {
-            if (auth()->user()->isChefAssistantInManufacturingBranch()) {
-                $kitchenBranch = auth()->user()->getChefAssistantManufacturingBranch();
-                $query->where(function ($q) use ($kitchenBranch) {
-                    $q->where('branch_id', $kitchenBranch->id)
-                      ->orWhere('customer_id', auth()->id());
-                });
-            } else {
-                $query->where('customer_id', auth()->user()->owner->id)
-                    ->where('branch_id', auth()->user()->branch_id)
-                ;
-            }
+            $query->where('customer_id', auth()->user()->owner->id)
+                ->where('branch_id', auth()->user()->branch_id)
+            ;
         }
         if ($request->has('id')) {
             $query->where('id', $request->id);
@@ -195,7 +193,7 @@ class OrderRepository implements OrderRepositoryInterface
                 throw new \Exception('You cannot create an order because you are not a manager or authorized branch user.');
             }
 
-            $pendingOrderId = checkIfUserHasPendingForApprovalOrder($branchId);
+            $pendingOrderId = !$isEffectiveManager ? checkIfUserHasPendingForApprovalOrder($branchId) : 0;
 
             $orderStatus = $isEffectiveManager ? Order::ORDERED : Order::PENDING_APPROVAL;
 
@@ -375,7 +373,7 @@ class OrderRepository implements OrderRepositoryInterface
                 $branchId = auth()->user()->owner->branch->id;
                 $customerId = auth()->user()->owner->id;
             }
-            $pendingOrderId  = checkIfUserHasPendingForApprovalOrder($branchId);
+            $pendingOrderId  = ($isChefAssistant || $currnetRole == 7) ? 0 : checkIfUserHasPendingForApprovalOrder($branchId);
 
             // Map order data from request body
             $orderData = [

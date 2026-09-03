@@ -50,7 +50,9 @@ trait BranchAttributes
             auth()->check()
             && (
                 $this->manager_id === auth()->id()
-                || $this->chefAssistants()->where('users.id', auth()->id())->exists()
+                || ($this->relationLoaded('chefAssistants')
+                    ? $this->chefAssistants->contains('id', auth()->id())
+                    : $this->chefAssistants()->where('users.id', auth()->id())->exists())
             )
             && $this->is_kitchen
             && $this->store
