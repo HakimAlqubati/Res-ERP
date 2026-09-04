@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Stock\Actions\Allocations;
 
+use App\Models\Store;
 use App\Models\UnitPrice;
 use App\Modules\Stock\Reports\StockBalanceReport\Contracts\StockBalanceRepositoryInterface;
 use App\Modules\Stock\Reports\StockBalanceReport\DataTransferObjects\StockBalanceFilterDTO;
@@ -99,6 +100,9 @@ final class ValidateStockForAllocationAction
             if ($count > 2) {
                 $message .= " (and " . ($count - 2) . " more)";
             }
+
+            $storeName = Store::withTrashed()->where('id', $storeId)->value('name') ?? "Store #{$storeId}";
+            $message .= " in '{$storeName}'";
 
             throw ValidationException::withMessages(['stock' => $message]);
         }
