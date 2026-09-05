@@ -101,6 +101,7 @@ class GoodsReceivedNoteResource extends Resource
                                 TextInput::make('grn_number')
                                     ->label('GRN Number')
                                     ->default(fn(): int => (GoodsReceivedNote::query()
+                                        ->withTrashed()
                                         ->orderBy('id', 'desc')
                                         ->value('id') + 1 ?? 1))
                                     ->unique(ignoreRecord: true)
