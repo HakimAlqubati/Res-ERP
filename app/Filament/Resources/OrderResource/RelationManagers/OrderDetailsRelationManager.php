@@ -85,7 +85,9 @@ class OrderDetailsRelationManager extends RelationManager
                         $remainingQty = $service->getInventoryForProduct($record->product_id)[0]['remaining_qty'] ?? 0;
 
                         return $remainingQty;
-                    }),
+                    })
+                    ->hidden()
+                    ,
                 // TextColumn::make('price')->label(__('lang.unit_price'))
                 //     ->summarize(Sum::make()->query(function (\Illuminate\Database\Query\Builder $query) {
                 //         return $query->select('price');
