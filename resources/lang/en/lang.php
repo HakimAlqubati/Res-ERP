@@ -89,6 +89,7 @@ return [
     'ordered_quantity_by_branch'                  => 'Orderd quantity',
     'quantity_after_modification'                 => 'Qty after modification',
     'qty_larger_than_remaining'                   => 'Qty after modification > Remaining Qty',
+    'export_shortage_pdf'                         => 'Export Deficit Report (PDF)',
     'order_details'                               => 'Order details',
     'branch_store_report'                         => 'Branch store report',
     'qty_in_stock'                                => 'Qty in Stock',
