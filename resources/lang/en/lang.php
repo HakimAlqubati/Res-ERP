@@ -88,6 +88,7 @@ return [
     'store_responsiple'                           => 'Store staff responsiple',
     'ordered_quantity_by_branch'                  => 'Orderd quantity',
     'quantity_after_modification'                 => 'Qty after modification',
+    'qty_larger_than_remaining'                   => 'Qty after modification > Remaining Qty',
     'order_details'                               => 'Order details',
     'branch_store_report'                         => 'Branch store report',
     'qty_in_stock'                                => 'Qty in Stock',

@@ -88,6 +88,7 @@ return [
   'store_responsiple' => 'موظف المخزن المسؤول',
   'ordered_quantity_by_branch' => 'الكمية المطلوبة',
   'quantity_after_modification' => 'الكمية بعد التعديل',
+  'qty_larger_than_remaining' => 'الكمية بعد التعديل أكبر من الرصيد المتبقي',
   'order_details' => 'تفاصيل الطلبية',
   'branch_store_report' => 'تقرير مخزن الفروع',
   'qty_in_stock' => 'الكمية في المخزن',

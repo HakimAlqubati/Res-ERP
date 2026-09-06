@@ -18,6 +18,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Hamcrest\Type\IsNumeric;
+use Filament\Tables\Filters\Filter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -27,6 +28,44 @@ class OrderDetailsRelationManager extends RelationManager
     protected static string $relationship = 'orderDetails';
 
     protected static ?string $recordTitleAttribute = 'order_id';
+
+    protected static ?int $currentRequestId = null;
+    protected static array $remainingQuantityCache = [];
+
+    public static function getRemainingQuantity(Model $record): float
+    {
+        $product = $record->product;
+        if (! $product) {
+            return 0.0;
+        }
+
+        $storeId = defaultManufacturingStore($product)->id ?? null;
+        if (! $storeId) {
+            return 0.0;
+        }
+
+        $req = request();
+        $reqId = $req ? spl_object_id($req) : 0;
+        if (static::$currentRequestId !== $reqId) {
+            static::$currentRequestId = $reqId;
+            static::$remainingQuantityCache = [];
+        }
+
+        $cacheKey = "{$record->product_id}_{$record->unit_id}_{$storeId}";
+
+        if (! array_key_exists($cacheKey, static::$remainingQuantityCache)) {
+            $service = new MultiProductsInventoryService(
+                null,
+                $record->product_id,
+                $record->unit_id,
+                $storeId
+            );
+            $remainingQty = $service->getInventoryForProduct($record->product_id)[0]['remaining_qty'] ?? 0;
+            static::$remainingQuantityCache[$cacheKey] = (float) $remainingQty;
+        }
+
+        return static::$remainingQuantityCache[$cacheKey];
+    }
 
     public static function getTitle(Model $ownerRecord, string $pageClass): string
     {
@@ -43,6 +82,7 @@ class OrderDetailsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table->striped()
+            ->modifyQueryUsing(fn(Builder $query) => $query->with(['product.category', 'unit']))
             ->columns([
                 TextColumn::make('id')->label(__('lang.id'))->alignCenter(true)->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)->copyable(),
@@ -61,32 +101,21 @@ class OrderDetailsRelationManager extends RelationManager
                 TextColumn::make('returned_quantity')
                     ->label('Returned Qty')
                     ->getStateUsing(fn($record) => $record->returned_quantity)
-                    ->alignCenter(),
+                    ->alignCenter()
+                    ->toggleable()
+                    ,
 
                 TextColumn::make('remaining_after_return')
                     ->label('Qty After Returned')
                     ->getStateUsing(fn($record) => $record->remaining_after_return)
-                    ->alignCenter(),
+                    ->alignCenter()
+                    ->toggleable()
+                    ,
 
                 TextColumn::make('remaining_quantity')->label(__('stock.remaining_quantity'))
                     ->alignCenter(true)
-                    ->getStateUsing(function ($record) {
-                        $product = $record->product;
-                        $storeId = defaultManufacturingStore($product)->id ?? null;
-                        if (!$storeId) {
-                            return 0;
-                        }
-                        $service = new  MultiProductsInventoryService(
-                            null,
-                            $record->product_id,
-                            $record->unit_id,
-                            $storeId
-                        );
-                        $remainingQty = $service->getInventoryForProduct($record->product_id)[0]['remaining_qty'] ?? 0;
-
-                        return $remainingQty;
-                    })
-                    ->hidden()
+                    ->getStateUsing(fn(Model $record) => static::getRemainingQuantity($record))
+                    // ->hidden()
                     ,
                 // TextColumn::make('price')->label(__('lang.unit_price'))
                 //     ->summarize(Sum::make()->query(function (\Illuminate\Database\Query\Builder $query) {
@@ -106,7 +135,22 @@ class OrderDetailsRelationManager extends RelationManager
                 //     ->hidden(fn(): bool => isStoreManager()),
             ])
             ->filters([
-                //
+                Filter::make('qty_exceeds_remaining')
+                    ->label(__('lang.qty_larger_than_remaining'))
+                    ->query(function (Builder $query) {
+                        $records = (clone $query)->with(['product.category'])->get();
+                        $matchingIds = [];
+
+                        foreach ($records as $record) {
+                            $remainingQty = static::getRemainingQuantity($record);
+
+                            if ((float) $record->available_quantity > (float) $remainingQty) {
+                                $matchingIds[] = $record->id;
+                            }
+                        }
+
+                        $query->whereIn($query->getModel()->getQualifiedKeyName(), $matchingIds);
+                    }),
             ])
             ->headerActions([
                 CreateAction::make(),
