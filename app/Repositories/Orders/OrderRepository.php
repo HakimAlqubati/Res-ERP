@@ -529,10 +529,8 @@ class OrderRepository implements OrderRepositoryInterface
             $order->updated_by = auth()->user()->id;
             // Fill the order with the validated data and save it to the database
 
-            if (in_array($request->status, [Order::READY_FOR_DELEVIRY])) {
-                $order->update([
-                    'transfer_date' => now(),
-                ]);
+            if (in_array($request->status, [Order::READY_FOR_DELEVIRY]) && empty($order->transfer_date)) {
+                $order->transfer_date = now();
             }
             $order->fill($validatedData)->save();
 
