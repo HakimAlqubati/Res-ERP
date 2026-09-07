@@ -17,6 +17,8 @@ use App\Filament\Clusters\SettingsCluster;
 use App\Filament\Resources\SettingResource\Pages;
 use App\Models\Attendance;
 use App\Models\Setting;
+use App\Enums\ProductCodeGenerationMethod;
+use App\Enums\ProductUnitsSortDirection;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -606,15 +608,15 @@ class SettingResource extends Resource
                                         ]),
                                     ]),
                                     Tab::make('Products Settings')->columnSpanFull()->schema([
-                                        Grid::make()->columnSpanFull()->columns(3)->schema([
+                                        Grid::make()->columnSpanFull()->columns(4)->schema([
                                             Toggle::make('show_old_system_code')
                                                 ->inline(false)
                                                 ->label('Show Old System Code')
                                                 ->default(false),
                                             Select::make('product_code_generation_method')
                                                 ->label('Product Code Generation Method')
-                                                ->options(\App\Enums\ProductCodeGenerationMethod::options())
-                                                ->default(\App\Enums\ProductCodeGenerationMethod::AUTO->value)
+                                                ->options(ProductCodeGenerationMethod::options())
+                                                ->default(ProductCodeGenerationMethod::AUTO->value)
                                                 ->live()
                                                 ->required(),
                                             TextInput::make('product_code_length')
@@ -623,8 +625,13 @@ class SettingResource extends Resource
                                                 ->default(3)
                                                 ->minValue(1)
                                                 ->maxValue(15)
-                                                ->visible(fn(Get $get) => $get('product_code_generation_method') === \App\Enums\ProductCodeGenerationMethod::MANUAL->value)
-                                                ->required(fn(Get $get) => $get('product_code_generation_method') === \App\Enums\ProductCodeGenerationMethod::MANUAL->value),
+                                                ->visible(fn(Get $get) => $get('product_code_generation_method') === ProductCodeGenerationMethod::MANUAL->value)
+                                                ->required(fn(Get $get) => $get('product_code_generation_method') === ProductCodeGenerationMethod::MANUAL->value),
+                                            Select::make(ProductUnitsSortDirection::SETTING_KEY)
+                                                ->label('Product Units Sort Direction')
+                                                ->options(ProductUnitsSortDirection::options())
+                                                ->default(ProductUnitsSortDirection::DEFAULT)
+                                                ->required(),
                                         ]),
                                     ]),
                                 ]),
