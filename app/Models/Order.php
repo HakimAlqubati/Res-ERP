@@ -250,10 +250,20 @@ class Order extends Model implements Auditable
             ) {
                 $fifoAllocator = app(\App\Modules\Stock\Reports\FifoBatchReports\Contracts\FifoAllocatorInterface::class);
                 $defaultStoreId = Store::defaultStore()?->id ?? 1;
-                $hasBranchStore = $order->branch?->store?->active;
+
+                // جلب فرع الطلب ومخزنه بتجاوز أي Global Scopes (صلاحيات الفروع) في هذا الموضع فقط
+                $branch = $order->branch_id
+                    ? Branch::withoutGlobalScopes()->with(['store' => fn($q) => $q->withoutGlobalScopes()])->find($order->branch_id)
+                    : null;
+                $branchStore = $branch?->store;
+                $hasBranchStore = (bool) ($branchStore && $branchStore->active);
+
+                if ($branch) {
+                    $order->setRelation('branch', $branch);
+                }
 
                 // 1. تحميل العلاقات لتفادي استعلامات N+1
-                $order->loadMissing(['orderDetails.product.category', 'branch.store']);
+                $order->loadMissing(['orderDetails.product.category']);
 
                 // 2. تجميع تفاصيل الطلب حسب مخزن كل صنف المخصص لفئته
                 $detailsByStore = $order->orderDetails->groupBy(function ($detail) use ($defaultStoreId) {
@@ -279,7 +289,7 @@ class Order extends Model implements Auditable
                         self::moveFromInventory($productAllocations, $detail);
 
                         if ($hasBranchStore) {
-                            self::receiveIntoBranchStore($productAllocations, $detail);
+                            self::receiveIntoBranchStore($productAllocations, $detail, $branchStore->id);
                         }
                     }
                 }
@@ -337,10 +347,16 @@ class Order extends Model implements Auditable
     }
 
 
-    public static function receiveIntoBranchStore($allocations, $detail)
+    public static function receiveIntoBranchStore($allocations, $detail, ?int $targetStoreId = null)
     {
         $order = $detail->order;
-        $targetStoreId = $order->branch->store->id;
+        $targetStoreId = $targetStoreId
+            ?? $order->branch?->store?->id
+            ?? Branch::withoutGlobalScopes()->where('id', $order->branch_id)->value('store_id');
+
+        if (! $targetStoreId) {
+            return;
+        }
 
         foreach ($allocations as $alloc) {
             InventoryTransaction::create([
