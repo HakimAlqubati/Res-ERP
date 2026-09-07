@@ -154,10 +154,24 @@ class SalarySlipReport
             return $typeVal !== SalaryTransactionType::TYPE_CARRY_FORWARD->value;
         })->sum('amount');
 
+        // Carry forward value
+        $carryForward = $deductions->filter(function ($t) {
+            $typeVal = $t->type instanceof \BackedEnum ? $t->type->value : $t->type;
+            return $typeVal === SalaryTransactionType::TYPE_CARRY_FORWARD->value;
+        })->sum('amount');
 
-        
+
         // $net = max($gross - $totalDeductions, 0);
-        $net = $gross - $totalDeductions;
+        $net = $gross - $totalDeductions - $carryForward;
+        if ($net <= 0) {
+            $net = 0;
+        }
+        // dd([
+        //     'gross' => $gross,
+        //     'totalDeductions' => $totalDeductions,
+        //     'net' => $net,
+        //     'carryForward' => $carryForward,
+        // ]);
         $totalEmployer = $employerContrib->sum('amount');
 
         // Helper for words (placeholder)
@@ -178,6 +192,7 @@ class SalarySlipReport
             'employerContrib' => $employerContrib->values(),
             'gross'           => $gross,
             'totalDeductions' => $totalDeductions,
+            'carryForward'    => $carryForward,
             'net'             => $net,
             'totalEmployer'   => $totalEmployer,
             'amountInWords'   => $amountInWords($net),
@@ -207,7 +222,7 @@ class SalarySlipReport
 
                 if ($first->type === SalaryTransactionType::TYPE_SALARY->value) {
                     $branchName = $first->payroll?->branch?->name;
-                    $label = "Earned Basic Salary (Prorated) " . (float)$qtySum . " days" . ($branchName ? " - {$branchName}" : "");
+                    $label = "Basic Salary (Prorated) " . (float)$qtySum . " days" . ($branchName ? " - {$branchName}" : "");
                 } else {
                     $label = $this->mergeLabel($first);
                 }
