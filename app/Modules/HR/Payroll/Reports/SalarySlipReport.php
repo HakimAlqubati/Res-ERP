@@ -160,17 +160,53 @@ class SalarySlipReport
             return $typeVal === SalaryTransactionType::TYPE_CARRY_FORWARD->value;
         })->sum('amount');
 
+        // فحص إذا يوجد 2 carry forward وكان الأول عبارة عن سداد للسابق
+        $cfTransactions = $deductions->filter(function ($t) {
+            $typeVal = $t->type instanceof \BackedEnum ? $t->type->value : $t->type;
+            return $typeVal === SalaryTransactionType::TYPE_CARRY_FORWARD->value;
+        })->values();
 
-        // $net = max($gross - $totalDeductions, 0);
-        $net = $gross - $totalDeductions - $carryForward;
-        if ($net <= 0) {
-            $net = 0;
+        $deductedCarryForward = 0.0;
+        $lastCarryForward = 0.0;
+         
+        if ($cfTransactions->count() >= 2) {
+            $firstCf = $cfTransactions[0];
+            $secondCf = $cfTransactions[1];
+
+            $isFirstRecovery = ($firstCf->reference_type ?? null) === \App\Models\CarryForward::class
+                || Str::contains(strtolower($firstCf->description ?? ''), ['recovery', 'سداد', 'استرداد']);
+
+            if ($isFirstRecovery) {
+                $deductedCarryForward = (float) $firstCf->amount - (float) $secondCf->amount;
+            }
+
+            // آخر كاري فورورد (المؤجل للشهر القادم)
+            $lastCarryForward = (float) $secondCf->amount;
+        } elseif ($cfTransactions->count() === 1) {
+            $singleCf = $cfTransactions[0];
+            $isRecovery = ($singleCf->reference_type ?? null) === \App\Models\CarryForward::class
+                || Str::contains(strtolower($singleCf->description ?? ''), ['recovery', 'سداد', 'استرداد']);
+
+            // إذا لم يكن سداداً لسابق، فهو كاري فورورد جديد مؤجل للشهر القادم
+            if (!$isRecovery) {
+                $lastCarryForward = (float) $singleCf->amount;
+            }
         }
+
+
+        $totalDeductions += $deductedCarryForward;
+        // $net = max($gross - $totalDeductions, 0);
+        $net = $gross - $totalDeductions - $lastCarryForward;
+        // if ($net <= 0) {
+        //     $net = 0;
+        // }
         // dd([
         //     'gross' => $gross,
         //     'totalDeductions' => $totalDeductions,
         //     'net' => $net,
         //     'carryForward' => $carryForward,
+        //     'deductedCarryForward'=> $deductedCarryForward,
+        //     'lastCarryForward'=> $lastCarryForward,
         // ]);
         $totalEmployer = $employerContrib->sum('amount');
 
@@ -184,18 +220,20 @@ class SalarySlipReport
         };
 
         return [
-            'payroll'         => $payroll,
-            'transactions'    => $transactions,
-            'earnings'        => $earnings->values(),
-            'deductions'      => $deductions->values(),
-            'deductionRows'   => $deductionRows,
-            'employerContrib' => $employerContrib->values(),
-            'gross'           => $gross,
-            'totalDeductions' => $totalDeductions,
-            'carryForward'    => $carryForward,
-            'net'             => $net,
-            'totalEmployer'   => $totalEmployer,
-            'amountInWords'   => $amountInWords($net),
+            'payroll'              => $payroll,
+            'transactions'         => $transactions,
+            'earnings'             => $earnings->values(),
+            'deductions'           => $deductions->values(),
+            'deductionRows'        => $deductionRows,
+            'employerContrib'      => $employerContrib->values(),
+            'gross'                => $gross,
+            'totalDeductions'      => $totalDeductions,
+            'carryForward'         => $carryForward,
+            'deductedCarryForward' => $deductedCarryForward,
+            'lastCarryForward'     => $lastCarryForward,
+            'net'                  => $net,
+            'totalEmployer'        => $totalEmployer,
+            'amountInWords'        => $amountInWords($net),
         ];
     }
 
@@ -228,18 +266,20 @@ class SalarySlipReport
                 }
 
                 return (object) [
-                    'id'          => $first->id,
-                    'operation'   => $first->operation,
-                    'type'        => $first->type,
-                    'sub_type'    => $first->sub_type,
-                    'description' => $label,
-                    'notes'       => $first->notes,
-                    'amount'      => round((float) $group->sum('amount'), 2),
-                    'date'        => $first->date,
-                    'unit'        => $first->unit,
-                    'qty'         => $qtySum,
-                    'rate'        => $first->rate,
-                    'multiplier'  => $first->multiplier,
+                    'id'             => $first->id,
+                    'operation'      => $first->operation,
+                    'type'           => $first->type,
+                    'sub_type'       => $first->sub_type,
+                    'reference_type' => $first->reference_type,
+                    'reference_id'   => $first->reference_id,
+                    'description'    => $label,
+                    'notes'          => $first->notes,
+                    'amount'         => round((float) $group->sum('amount'), 2),
+                    'date'           => $first->date,
+                    'unit'           => $first->unit,
+                    'qty'            => $qtySum,
+                    'rate'           => $first->rate,
+                    'multiplier'     => $first->multiplier,
                 ];
             })
             ->values();
