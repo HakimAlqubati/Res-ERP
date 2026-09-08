@@ -6,6 +6,8 @@ use Illuminate\Http\Response;
 use App\Repositories\Products\ProductRepository;
 use App\Repositories\Products\V2\ProductRepository as V2ProductRepository;
 use App\Models\Branch;
+use App\Filament\Resources\OrderReportsResource\GeneralReportOfProductsResource;
+use App\Filament\Resources\OrderReportsResource\Pages\GeneralReportProductDetailsOld;
 use App\Modules\Stock\Reports\OrderTransfersReports\Actions\FetchOrderTransferReportAction;
 use App\Modules\Stock\Reports\OrderTransfersReports\DTOs\OrderTransferReportFilterDTO;
 use Illuminate\Http\Request;
@@ -107,6 +109,85 @@ class ProductController extends Controller
     public function reportProductsv2Details(Request $request, $category_id)
     {
         return $this->productRepository->reportv2Details($request, $category_id);
+    }
+
+    public function reportProductsv3(Request $request)
+    {
+        $fromDate = $request->input('from_date', $request->input('start_date', now()->firstOfMonth()->format('Y-m-d')));
+        $toDate   = $request->input('to_date', $request->input('end_date', now()->endOfMonth()->format('Y-m-d')));
+
+        if (function_exists('isBranchManager') && isBranchManager()) {
+            $branchId = function_exists('getBranchId') ? getBranchId() : null;
+        } else {
+            $branchId = $request->input('branch_id');
+        }
+
+        $categoryId = $request->input('category_id');
+
+        if (is_array($branchId) || (is_string($branchId) && str_contains($branchId, ','))) {
+            $branchIds = is_array($branchId) ? array_filter($branchId) : array_filter(explode(',', $branchId));
+            $allReportData = [];
+            $totalQuantity = 0.0;
+            $totalPrice = 0.0;
+
+            foreach ($branchIds as $bId) {
+                $reportData = GeneralReportOfProductsResource::processReportData($fromDate, $toDate, $bId, $categoryId);
+                if (!empty($reportData['data'])) {
+                    $branchName = $bId ? Branch::find($bId)?->name : '';
+                    foreach ($reportData['data'] as $item) {
+                        $item->branch_name = $branchName;
+                        $allReportData[] = $item;
+                    }
+                }
+                if (isset($reportData['total_price'])) {
+                    $priceClean = filter_var(str_replace(',', '', $reportData['total_price']), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+                    $totalPrice += (float) $priceClean;
+                }
+                if (isset($reportData['total_quantity'])) {
+                    $qtyClean = filter_var(str_replace(',', '', $reportData['total_quantity']), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+                    $totalQuantity += (float) $qtyClean;
+                }
+            }
+
+            $data = [
+                'data'           => $allReportData,
+                'total_price'    => formatMoneyWithCurrency($totalPrice),
+                'total_quantity' => formatQunantity($totalQuantity),
+            ];
+        } else {
+            $data = GeneralReportOfProductsResource::processReportData($fromDate, $toDate, $branchId, $categoryId);
+        }
+
+        return response()->json([
+            'branches' => Branch::where('active', 1)->pluck('name', 'id'),
+            'data'     => $data,
+        ]);
+    }
+
+    public function reportProductsv3Details(Request $request, $category_id)
+    {
+        if (function_exists('isBranchManager') && isBranchManager()) {
+            $branchId = function_exists('getBranchId') ? getBranchId() : null;
+        } else {
+            $branchId = $request->input('branch_id');
+        }
+
+        $fromDate = $request->input('from_date', $request->input('start_date', now()->firstOfMonth()->format('Y-m-d')));
+        $toDate   = $request->input('to_date', $request->input('end_date', now()->endOfMonth()->format('Y-m-d')));
+
+        $reportDetailsInstance = app(GeneralReportProductDetailsOld::class);
+        $reportDetailsInstance->branch_id = $branchId;
+        $reportData = $reportDetailsInstance->getReportDetails($fromDate, $toDate, $branchId, $category_id);
+
+        if ($request->filled('product_id') && !empty($reportData['data'])) {
+            $productId = $request->input('product_id');
+            $reportData['data'] = array_values(array_filter($reportData['data'], function ($item) use ($productId) {
+                return (isset($item->product_id) && $item->product_id == $productId)
+                    || (isset($item->product_code) && $item->product_code == $productId);
+            }));
+        }
+
+        return response()->json($reportData);
     }
     public function getProductOrderQuantities(Request $request)
     {
