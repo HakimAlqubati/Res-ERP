@@ -83,6 +83,7 @@ Route::middleware(['auth:api', 'lastSeen'])->group(function () {
     Route::get('/v2/report_products/details/{category_id}', [ProductController::class, 'reportProductsv2Details']);
     Route::get('/getProductOrderQuantities', [ProductController::class, 'getProductOrderQuantities']);
     Route::get('/v2/productOrderQuantities', [ProductController::class, 'getProductOrderQuantitiesV2']);
+    Route::get('/v3/productOrderQuantities', [ProductController::class, 'getProductOrderQuantitiesV3']);
 });
 
 Route::post('/user/updateBranch', [AuthController::class, 'updateBranch'])
