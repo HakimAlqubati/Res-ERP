@@ -195,7 +195,8 @@ class OrderRepository implements OrderRepositoryInterface
                 throw new \Exception('You cannot create an order because you are not a manager or authorized branch user.');
             }
 
-            $pendingOrderId = !$isEffectiveManager ? checkIfUserHasPendingForApprovalOrder($branchId) : 0;
+            // $pendingOrderId = !$isEffectiveManager ? checkIfUserHasPendingForApprovalOrder($branchId) : 0;
+            $pendingOrderId = checkIfUserHasPendingForApprovalOrder($branchId) ;
 
             $orderStatus = $isEffectiveManager ? Order::ORDERED : Order::PENDING_APPROVAL;
 
