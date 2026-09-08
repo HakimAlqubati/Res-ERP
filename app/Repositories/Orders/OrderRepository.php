@@ -106,7 +106,7 @@ class OrderRepository implements OrderRepositoryInterface
             $kitchenBranch = auth()->user()->getChefAssistantManufacturingBranch();
             $query->where(function ($q) use ($kitchenBranch) {
                 $q->where('branch_id', $kitchenBranch->id)
-                  ->orWhere('customer_id', auth()->id());
+                    ->orWhere('customer_id', auth()->id());
             });
         } elseif (
             isBranchUser() && isset(auth()->user()->branch)
@@ -179,7 +179,7 @@ class OrderRepository implements OrderRepositoryInterface
                 $effectiveBranch = $managedBranch ?? $user->branch;
             }
             $branchId = $effectiveBranch?->id;
-            
+
             if (!$branchId) {
                 throw new \Exception('You cannot create an order because you are not associated with any branch.');
             }
@@ -204,15 +204,16 @@ class OrderRepository implements OrderRepositoryInterface
             $allOrderDetails = $request->input('order_details');
             $notes = $request->input('notes');
             $description = $request->input('description');
- 
+
 
             // Array to hold IDs of manufactured products.
             $allManufacturingBranches = Branch::active()
+                ->withoutGlobalScopes()
                 ->centralKitchens()
                 ->with('categories:id')
-                ->get(['id','name', 'store_id']);
+                ->get(['id', 'name', 'store_id']);
 
-            $manufacturedProductIds = []; 
+            $manufacturedProductIds = [];
             // Loop through each manufacturing branch to handle orders related to manufacturing products.
             foreach ($allManufacturingBranches as $branch) {
                 // Get categories for the current branch.
@@ -229,6 +230,7 @@ class OrderRepository implements OrderRepositoryInterface
                     }
                     return $product && in_array($product->category_id, $categories);
                 })->values()->all();
+
 
                 // If there are any products for this branch, create a manufacturing order.
                 if (count($productsForThisBranch) > 0) {
@@ -471,8 +473,6 @@ class OrderRepository implements OrderRepositoryInterface
             try {
                 // Find the order by the given ID or throw a ModelNotFoundException
                 $order = Order::lockForUpdate()->findOrFail($id);
-
-              
             } catch (ModelNotFoundException $e) {
                 // Roll back the transaction and return an error response if the order is not found
                 DB::rollBack();
