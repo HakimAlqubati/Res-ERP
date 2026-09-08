@@ -167,10 +167,10 @@ class OrderRepository implements OrderRepositoryInterface
             $chefAssistantBranch = $user->getChefAssistantManufacturingBranch();
             $isChefAssistant = $chefAssistantBranch !== null;
 
-            // الأولوية:
-            // 1) إذا كان المستخدم مساعد طباخ في فرع تصنيعي → الفرع التصنيعي (المرتبط به كإكسترا برانش أو مسجل كمساعد شيف)
-            // 2) مدير الفرع أو مدير المخزن الرئيسي يستخدم فرعه المباشر
-            // 3) الفرع الإضافي المُدار → ثم الفرع الأساسي
+            // Branch Priority:
+            // 1) Chef Assistant -> Manufacturing branch
+            // 2) Branch / Store Manager -> Direct branch
+            // 3) Other users -> Managed branch, then primary branch
             if ($isChefAssistant) {
                 $effectiveBranch = $chefAssistantBranch;
             } elseif (isBranchManager() || $isDefaultStoreKeeper) {
@@ -184,6 +184,8 @@ class OrderRepository implements OrderRepositoryInterface
                 throw new \Exception('You cannot create an order because you are not associated with any branch.');
             }
 
+            // Check if user is a manager or chef assistant.
+            // If yes: Order is created directly (no approval needed).
             $isEffectiveManager = isBranchManager() || $isDefaultStoreKeeper || $managedBranch !== null || $isChefAssistant;
             $customerId = $isEffectiveManager
                 ? $user->id
@@ -202,20 +204,7 @@ class OrderRepository implements OrderRepositoryInterface
             $allOrderDetails = $request->input('order_details');
             $notes = $request->input('notes');
             $description = $request->input('description');
-
-            // 👇 تحديد الفئات الخاصة بالتصنيع
-            $manufacturingCategoryIds = Category::Manufacturing()->pluck('id')->toArray();
-
-            // // 👇 إذا الفرع الحالي هو مطبخ مركزي
-            // if (auth()->user()?->branch?->is_kitchen) {
-            //     foreach ($allOrderDetails as $item) {
-            //         $product = \App\Models\Product::find($item['product_id']);
-            //         if ($product && in_array($product->category_id, $manufacturingCategoryIds)) {
-            //             // throw new \Exception("Central kitchens are not allowed to create orders that contain manufacturing products such as ({$product->name}-{$product->id}).");
-            //         }
-            //     }
-            // }
-
+ 
 
             // Array to hold IDs of manufactured products.
             $allManufacturingBranches = Branch::active()

@@ -224,8 +224,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
 
     /**
-     * جلب أول فرع إضافي المستخدم مُعيّن كمدير له (manager_id)
-     * يبحث في الفروع الإضافية عبر branch_user حيث الفرع manager_id = هذا المستخدم
+     * Get the first additional branch managed by this user.
+     * (Checks additional branches where manager_id = this user)
      */
     public function getManagedAdditionalBranch(): ?Branch
     {
