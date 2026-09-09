@@ -38,6 +38,10 @@ class StockInventoryReportService
             ->whereNotIn('id', $inventoriedProductIds)
             ->with(['category:id,name']);
 
+        if ($endDate) {
+            $query->whereDate('created_at', '<=', $endDate);
+        }
+
         if ($hideZero) {
             $bindings = [\App\Models\InventoryTransaction::MOVEMENT_IN, \App\Models\InventoryTransaction::MOVEMENT_OUT];
             $storeCondition = '';
@@ -47,7 +51,7 @@ class StockInventoryReportService
             }
 
             $query->whereRaw(
-                '(SELECT COALESCE(SUM(CASE WHEN movement_type = ? THEN IFNULL(base_quantity, quantity * package_size) ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN movement_type = ? THEN IFNULL(base_quantity, quantity * package_size) ELSE 0 END), 0) FROM inventory_transactions WHERE product_id = products.id AND deleted_at IS NULL' . $storeCondition . ') > 0',
+                '(SELECT COALESCE(SUM(CASE WHEN movement_type = ? THEN quantity * COALESCE(package_size, 1) ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN movement_type = ? THEN quantity * COALESCE(package_size, 1) ELSE 0 END), 0) FROM inventory_transactions WHERE product_id = products.id AND deleted_at IS NULL' . $storeCondition . ') > 0',
                 $bindings
             );
         }

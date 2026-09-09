@@ -6,7 +6,6 @@ namespace App\Modules\Stock\Reports\FifoBatchReports\Responses;
 
 use App\Modules\Stock\Reports\FifoBatchReports\DataTransferObjects\StockBatchReportResult;
 use App\Modules\Stock\Reports\FifoBatchReports\Resources\StockBatchResource;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Support\Collection;
@@ -26,7 +25,7 @@ final class StockBatchIndexResponse implements Responsable
     public function toResponse($request): Response
     {
         // 1. استخراج بيانات الصفحة الحالية لعمليات الجمع
-        $currentItems = $this->result->batches instanceof LengthAwarePaginator
+        $currentItems = $this->result->batches instanceof Paginator
             ? collect($this->result->batches->items())
             : $this->result->batches;
 

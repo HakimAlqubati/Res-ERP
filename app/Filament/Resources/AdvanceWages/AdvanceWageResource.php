@@ -22,7 +22,7 @@ class AdvanceWageResource extends Resource
 {
     protected static ?string $model = AdvanceWage::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedWallet;
 
     protected static ?string $recordTitleAttribute = 'employee.name';
 

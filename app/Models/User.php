@@ -136,6 +136,152 @@ class User extends Authenticatable implements FilamentUser, Auditable
     {
         return $this->belongsTo(Branch::class, 'branch_id');
     }
+
+    /**
+     * الفروع الإضافية المرتبطة بالمستخدم عبر جدول branch_user
+     */
+    public function branches()
+    {
+        return $this->belongsToMany(Branch::class, 'branch_user')
+                    ->withTimestamps();
+    }
+
+    /**
+     * الفروع المرتبطة بالمستخدم كمساعد طباخ / شيف عبر جدول chef_assistants
+     */
+    public function chefAssistantBranches()
+    {
+        return $this->belongsToMany(Branch::class, 'chef_assistants')
+                    ->withTimestamps();
+    }
+
+    /**
+     * كل الفروع (الأساسي + الإضافية) كـ query builder
+     */
+    public function allBranches()
+    {
+        return Branch::withoutGlobalScopes()->whereIn('branches.id', $this->all_branch_ids);
+    }
+
+    /**
+     * مصفوفة بكل IDs الفروع (الأساسي + الإضافية + مساعدي الشيف)
+     */
+    public function getAllBranchIdsAttribute(): array
+    {
+        $extraIds = $this->branches()->withoutGlobalScopes()->pluck('branches.id')->toArray();
+        $chefIds  = $this->chefAssistantBranches()->withoutGlobalScopes()->pluck('branches.id')->toArray();
+        return array_values(array_unique(array_merge(
+            array_filter([$this->branch_id]),
+            $extraIds,
+            $chefIds
+        )));
+    }
+
+    /**
+     * التحقق مما إذا كان الفرع الأساسي أو أي من الفروع الإضافية مطبخاً مركزياً
+     */
+    public function hasCentralKitchen(): bool
+    {
+        if ($this->branch?->is_kitchen) {
+            return true;
+        }
+
+        if ($this->relationLoaded('branches')) {
+            return $this->branches->contains(fn ($branch) => (bool) $branch->is_kitchen);
+        }
+
+        return $this->branches()
+            ->withoutGlobalScopes()
+            ->where('branches.type', Branch::TYPE_CENTRAL_KITCHEN)
+            ->exists();
+    }
+
+    /**
+     * جلب أول فرع تصنيعي (مطبخ مركزي) للمستخدم — الأساسي أولاً ثم الإضافية
+     */
+    public function getCentralKitchenBranch(): ?Branch
+    {
+        if ($this->branch?->is_kitchen) {
+            return $this->branch;
+        }
+
+        return $this->branches()
+            ->withoutGlobalScopes()
+            ->where('branches.type', Branch::TYPE_CENTRAL_KITCHEN)
+            ->first();
+    }
+
+    /**
+     * جلب الفئات المخصصة من الفرع التصنيعي للمستخدم
+     */
+    public function getCentralKitchenCategories(): array
+    {
+        $kitchenBranch = $this->getCentralKitchenBranch();
+        if (!$kitchenBranch) {
+            return [];
+        }
+        return $kitchenBranch->categories()->pluck('category_id')->toArray();
+    }
+
+    /**
+     * Get the first additional branch managed by this user.
+     * (Checks additional branches where manager_id = this user)
+     */
+    public function getManagedAdditionalBranch(): ?Branch
+    {
+        return $this->branches()
+            ->withoutGlobalScopes()
+            ->where('branches.manager_id', $this->id)
+            ->first();
+    }
+
+    /**
+     * هل المستخدم مدير لفرع إضافي (بغض النظر عن الـ role)
+     */
+    public function isAdditionalBranchManager(): bool
+    {
+        return $this->branches()
+            ->withoutGlobalScopes()
+            ->where('branches.manager_id', $this->id)
+            ->exists();
+    }
+
+    /**
+     * جلب الفرع التصنيعي المرتبط بالمستخدم كمساعد شيف (سواء كفرع إضافي أو في جدول مساعدي الشيف)
+     */
+    public function getChefAssistantManufacturingBranch(): ?Branch
+    {
+        // 1) البحث في الفروع الإضافية (branch_user) التي تكون معامل تصنيعية والمستخدم مسجل فيها كمساعد شيف
+        $branch = $this->branches()
+            ->withoutGlobalScopes()
+            ->where('branches.type', Branch::TYPE_CENTRAL_KITCHEN)
+            ->whereHas('chefAssistants', fn($q) => $q->where('users.id', $this->id))
+            ->first();
+
+        if ($branch) {
+            return $branch;
+        }
+
+        // 2) البحث المباشر في جدول chef_assistants عن أي فرع تصنيعي
+        return $this->chefAssistantBranches()
+            ->withoutGlobalScopes()
+            ->where('branches.type', Branch::TYPE_CENTRAL_KITCHEN)
+            ->first();
+    }
+
+    /**
+     * هل المستخدم مساعد طباخ في فرع تصنيعي؟
+     */
+    public function isChefAssistantInManufacturingBranch(): bool
+    {
+        return $this->getChefAssistantManufacturingBranch() !== null;
+    }
+
+    public function isChefAssistant(): bool
+    {
+        return $this->isChefAssistantInManufacturingBranch();
+    }
+
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');
@@ -187,6 +333,10 @@ class User extends Authenticatable implements FilamentUser, Auditable
     public function isSuperVisor()
     {
         return in_array(15, $this->roles->pluck('id')->toArray());
+    }
+    public function isAccountant()
+    {
+        return in_array(9, $this->roles->pluck('id')->toArray());
     }
     public function isBranchManager()
     {
@@ -244,6 +394,14 @@ class User extends Authenticatable implements FilamentUser, Auditable
             return true;
         }
         return false;
+    }
+    public function isDefaultStoreManager(): bool
+    {
+        if (!$this->isStoreManager()) {
+            return false;
+        }
+
+        return $this->allManagedStores()->where('default_store', true)->exists();
     }
     public function isBranchUser()
     {
@@ -305,13 +463,34 @@ class User extends Authenticatable implements FilamentUser, Auditable
         return $this->hasMany(Store::class, 'storekeeper_id');
     }
 
-    public function getManagedStoresIdsAttribute()
+    /**
+     * المخازن الإضافية التي يديرها المستخدم كأمين مخزن عبر جدول store_user
+     */
+    public function extraManagedStores()
     {
-        if (! auth()->check()) {
-            return [];
-        }
-        $ids = auth()->user()->managedStores->pluck('id')->toArray() ?? [];
-        return $ids;
+        return $this->belongsToMany(Store::class, 'store_user')->withTimestamps();
+    }
+
+    /**
+     * كل المخازن (الأساسي + الإضافية) كـ query builder
+     */
+    public function allManagedStores()
+    {
+        return Store::whereIn('id', $this->managed_stores_ids);
+    }
+
+    /**
+     * مصفوفة بكل IDs المخازن التي يديرها المستخدم (الأساسي + الإضافية)
+     */
+    public function getManagedStoresIdsAttribute(): array
+    {
+        $primaryIds = $this->managedStores()->pluck('id')->toArray();
+        $extraIds = $this->extraManagedStores()->pluck('stores.id')->toArray();
+
+        return array_values(array_unique(array_merge(
+            $primaryIds,
+            $extraIds
+        )));
     }
 
     public function routeNotificationForFcm($notification)
@@ -451,5 +630,16 @@ class User extends Authenticatable implements FilamentUser, Auditable
             return setting('can_create_missed_check_requests', false);
         }
         return true;
+    }
+
+    public function getShortNameAttribute()
+    {
+        $parts = explode(' ', trim($this->name));
+        
+        if (count($parts) > 1) {
+            return $parts[0] . ' ' . end($parts);
+        }
+
+        return $this->name;
     }
 }

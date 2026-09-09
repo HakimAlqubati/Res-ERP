@@ -349,7 +349,7 @@
                     <th class="text-center">{{ __('lang.end_time') }}</th>
                     <th class="text-center">{{ __('lang.hours') }}</th>
                     <th class="text-center">{{ __('lang.status') }}</th>
-                    <th class="text-center">{{ __('lang.approved_by') }}</th>
+                    <th class="text-center">Action By <br><span style="font-size: 10px; font-weight: normal; color: #6b7280;">(Approved / Rejected)</span></th>
                 </tr>
             </thead>
             <tbody>
@@ -362,11 +362,23 @@
                     <td class="text-center">{{ $item->date }}</td>
                     <td class="text-center">{{ $item->start_time ?? '-' }}</td>
                     <td class="text-center">{{ $item->end_time ?? '-' }}</td>
-                    <td class="font-bold text-gray-900 text-center">{{ $item->hours }}</td>
+                    <td class="font-bold text-gray-900 text-center">{{ $item->hours_formatted }}</td>
                     <td class="text-center">
                         <span class="{{ $item->status_badge_class }}">{{ $item->status_label }}</span>
                     </td>
-                    <td class="text-center">{{ $item->approvedBy->name ?? '-' }}</td>
+                    <td class="text-center">
+                        @if($item->approvedBy)
+                            <span class="text-green-600 font-medium">
+                                {{ $item->approvedBy->short_name }}
+                            </span>
+                        @elseif($item->rejectedBy)
+                            <span class="text-red-600 font-medium">
+                                {{ $item->rejectedBy->short_name }}
+                            </span>
+                        @else
+                            -
+                        @endif
+                    </td>
                 </tr>
                 @endforeach
             </tbody>

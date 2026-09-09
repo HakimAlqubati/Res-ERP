@@ -135,7 +135,11 @@ class DeductionResource extends Resource
                         ->hidden(fn($get): bool => ($get('is_penalty')))
                         ->schema([
 
-                            TextInput::make('amount')->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_amount'))->numeric()
+                            TextInput::make('amount')
+                            ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_amount')
+                            )
+                            ->hidden(fn($get): bool => $get('applied_by') == Deduction::APPLIED_BY_EMPLOYER)
+                            ->numeric()
                                 ->suffixIcon('heroicon-o-calculator')
                                 ->suffixIconColor('success'),
                             // TextInput::make('percentage')
@@ -173,7 +177,8 @@ class DeductionResource extends Resource
                                 ->maxValue(100)
                                 ->default(0),
                             TextInput::make('employer_amount')
-                                ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_amount') && (in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])))
+                                ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_amount') &&
+                                 (in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])))
                                 ->numeric()
                                 ->suffixIcon('heroicon-o-calculator')
                                 ->suffixIconColor('success'),

@@ -67,4 +67,25 @@ trait BranchScope
 
         return $query;
     }
+
+    /**
+     * Scope يدعم تعدد الفروع — يفلتر بكل فروع المستخدم (الأساسي + الإضافية)
+     *
+     * Usage:
+     *   Employee::forUserBranches()->get();
+     *   Order::forUserBranches('branch_id')->get();
+     */
+    public function scopeForUserBranches(Builder $query, string $branchColumn = 'branch_id'): Builder
+    {
+        if (auth()->check() && (isSuperAdmin() || isSystemManager())) {
+            return $query;
+        }
+
+        if (auth()->check()) {
+            $branchIds = auth()->user()->all_branch_ids;
+            return $query->whereIn($branchColumn, $branchIds);
+        }
+
+        return $query;
+    }
 }

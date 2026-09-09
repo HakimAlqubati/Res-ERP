@@ -29,7 +29,7 @@ class Store extends Model implements Auditable
         'is_central_kitchen',
     ];
 
-    protected $appends = ['storekeeper_name'];
+    protected $appends = ['storekeeper_name', 'storekeeper_email'];
     /**
      * Scope to get only active stores.
      *
@@ -61,16 +61,75 @@ class Store extends Model implements Auditable
         return $this->belongsTo(User::class, 'storekeeper_id');
     }
 
+    /**
+     * أمناء المخزن الإضافيون المرتبطون بالمخزن عبر جدول store_user
+     */
+    public function storekeepers()
+    {
+        return $this->belongsToMany(User::class, 'store_user')->withTimestamps();
+    }
+
+    /**
+     * كل أمناء المخزن (الأساسي + الإضافيون) كـ query builder
+     */
+    public function allStorekeepers()
+    {
+        return User::whereIn('id', $this->all_storekeeper_ids);
+    }
+
+    /**
+     * مصفوفة بكل IDs أمناء المخزن (الأساسي + الإضافيون)
+     */
+    public function getAllStorekeeperIdsAttribute(): array
+    {
+        $extraIds = $this->storekeepers()->pluck('users.id')->toArray();
+        return array_values(array_unique(array_merge(
+            array_filter([$this->storekeeper_id]),
+            $extraIds
+        )));
+    }
+
+    public function getStorekeeperNameAttribute()
+    {
+        $names = [];
+        if ($this->storekeeper) {
+            $names[] = $this->storekeeper->name;
+        }
+
+        if ($this->relationLoaded('storekeepers')) {
+            $extra = $this->storekeepers->pluck('name')->toArray();
+        } else {
+            $extra = $this->storekeepers()->pluck('name')->toArray();
+        }
+
+        $all = array_values(array_unique(array_merge($names, $extra)));
+
+        return !empty($all) ? implode(', ', $all) : '';
+    }
+
+    public function getStorekeeperEmailAttribute(): ?string
+    {
+        $emails = [];
+        if ($this->storekeeper && $this->storekeeper->email) {
+            $emails[] = $this->storekeeper->email;
+        }
+
+        if ($this->relationLoaded('storekeepers')) {
+            $extra = $this->storekeepers->pluck('email')->filter()->toArray();
+        } else {
+            $extra = $this->storekeepers()->pluck('email')->filter()->toArray();
+        }
+
+        $all = array_values(array_unique(array_merge($emails, $extra)));
+
+        return !empty($all) ? implode(', ', $all) : null;
+    }
+
     public function scopeCentralKitchenStores($query)
     {
         if (auth()->user()?->branch?->is_kitchen) {
             return $query->where('id', auth()->user()->branch->store_id);
         };
-    }
-
-    public function getStorekeeperNameAttribute()
-    {
-        return $this->storekeeper->name ?? '';
     }
 
     public function scopeWithManagedStores($query)

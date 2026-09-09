@@ -179,11 +179,11 @@ class GoodsReceivedNote extends Model implements Auditable
                         'quantity' => $detail->quantity,
                         'package_size' => $detail->package_size,
                         'price' => $detail->price,
-                        'movement_date' => $grn->grn_date ?? now(),
                         'unit_id' => $detail->unit_id,
                         'store_id' => $grn->store_id,
                         'notes' => $notes,
-                        'transaction_date' => $grn->grn_date ?? now(),
+                        'movement_date' => $grn->grn_date ? $grn->grn_date->format('Y-m-d') . ' ' . now()->format('H:i:s') : now(),
+                        'transaction_date' => $grn->grn_date ? $grn->grn_date->format('Y-m-d') . ' ' . now()->format('H:i:s') : now(),
                         'transactionable_id' => $grn->id,
                         'transactionable_type' => self::class,
                     ]);

@@ -16,6 +16,7 @@ class ViewGoodsReceivedNote extends ViewRecord
         return [
             GoodsReceivedNoteResource::getExportExcelAction(\Filament\Actions\Action::class),
             DeleteAction::make(),
+            GoodsReceivedNoteResource::previewAndApproveAction(),
         ];
     }
     

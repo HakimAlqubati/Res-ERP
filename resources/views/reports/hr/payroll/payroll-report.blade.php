@@ -122,7 +122,7 @@
 
                             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; flex: 1;">
                                 <span style="font-size: 16px; font-weight: bold;">{{ $displayName }}</span>
-                                <span style="font-size: 13px; font-weight: 600; color: #666;">{{ __('Period') . ': ' . $period }}</span>
+                                <span style="font-size: 13px; font-weight: 600; color: #666;">{{ __('Period') . ': ' . $period . ($paymentMethodName ? ' | ' . __('Payment Method') . ': ' . $paymentMethodName : '') }}</span>
                             </div>
 
                             <div style="flex-shrink: 0; text-align: right;">
@@ -208,7 +208,8 @@
             
             var branchName = "{{ $branchName ? preg_replace('/[^A-Za-z0-9_\-]/', '_', $branchName) : 'All' }}";
             var period = "{{ preg_replace('/[^A-Za-z0-9_\-]/', '_', $period) }}";
-            var fileName = "Payroll_Report_" + branchName + "_" + period + ".xlsx";
+            var paymentMethod = "{{ $paymentMethodName ? '_' . preg_replace('/[^A-Za-z0-9_\-]/', '_', $paymentMethodName) : '' }}";
+            var fileName = "Payroll_Report_" + branchName + "_" + period + paymentMethod + ".xlsx";
             
             XLSX.writeFile(workbook, fileName);
         }

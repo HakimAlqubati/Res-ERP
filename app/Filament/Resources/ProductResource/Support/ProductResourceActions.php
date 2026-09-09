@@ -7,6 +7,7 @@ use App\Models\PurchaseInvoiceDetail;
 use App\Models\InventoryTransaction;
 use App\Models\StockIssueOrderDetail;
 use App\Models\GoodsReceivedNoteDetail;
+use App\Models\Product;
 use App\Models\ProductItem;
 use App\Models\UnitPrice;
 use Filament\Support\Exceptions\Halt;
@@ -29,7 +30,15 @@ final class ProductResourceActions
     public static function updateFinalPriceEachUnit($set, $get, $state, $withOut = false)
     {
         // 🔄 Calculate the new total net price of product items
-        $totalNetPrice = collect($state)->sum('total_price_after_waste') ?? 0;
+        $totalNetPrice = collect($state)->sum(function ($item) {
+            if (isset($item['total_price_after_waste']) && is_numeric($item['total_price_after_waste']) && $item['total_price_after_waste'] > 0) {
+                return (float) $item['total_price_after_waste'];
+            }
+            $qty = (float) ($item['quantity'] ?? 0);
+            $price = (float) ($item['price'] ?? 0);
+            $waste = (float) ($item['qty_waste_percentage'] ?? 0);
+            return ProductItem::calculateTotalPriceAfterWaste($qty * $price, $waste);
+        }) ?? 0;
 
         // 🔄 Retrieve existing units
         if ($withOut) {
@@ -37,21 +46,64 @@ final class ProductResourceActions
         } else {
             $units = $get('../../units') ?? [];
         }
-        $updatedUnits = array_map(function ($unit) use ($totalNetPrice) {
+
+        if (empty($units)) {
+            return;
+        }
+
+        $updatedUnits = [];
+        foreach ($units as $key => $unit) {
             $packageSize = $unit['package_size'] ?? 1;
             $basePrice   = $packageSize * $totalNetPrice;
-            $markup      = 1;
-            return array_merge($unit, [
+            $updatedUnits[$key] = array_merge($unit, [
                 'price'         => round($basePrice, 4),
                 'selling_price' => round($basePrice, 4),
             ]);
-        }, $units);
+        }
 
         // 🔄 Replace the `units` array completely
         if ($withOut) {
             $set('units', $updatedUnits);
         } else {
             $set('../../units', $updatedUnits);
+        }
+    }
+
+    /**
+     * Recalculate and persist manufacturing product unit prices in DB upon save.
+     */
+    public static function recalculateManufacturingProductUnitPrices(Product|int|null $product): void
+    {
+        if (! $product) {
+            return;
+        }
+
+        if (is_int($product)) {
+            $product = Product::find($product);
+        }
+
+        if (! $product || ! $product->is_manufacturing) {
+            return;
+        }
+
+        $product->load(['productItems', 'allUnitPrices']);
+
+        $finalPrice = (float) ($product->productItems->sum('total_price_after_waste') ?? 0);
+
+        foreach ($product->allUnitPrices as $unitPrice) {
+            $packageSize = (float) ($unitPrice->package_size ?: 1);
+            $newPrice = round($packageSize * $finalPrice, 4);
+
+            $oldPrice = (float) $unitPrice->price;
+            $oldSellingPrice = (float) $unitPrice->selling_price;
+
+            if (round($oldPrice, 4) === $newPrice && round($oldSellingPrice, 4) === $newPrice) {
+                continue;
+            }
+
+            $unitPrice->price = $newPrice;
+            $unitPrice->selling_price = $newPrice;
+            $unitPrice->save();
         }
     }
 

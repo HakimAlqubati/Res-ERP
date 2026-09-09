@@ -43,8 +43,14 @@ class EwalletPaymentExport implements FromCollection, WithMapping, WithHeadings,
 
     public function headings(): array
     {
+        $accountLabel = match ($this->report->payment_type) {
+            EwalletPaymentReport::TYPE_BANK => 'Bank Account Number',
+            EwalletPaymentReport::TYPE_CASH => 'Employee No',
+            default => 'eWallet Account Number',
+        };
+
         return [
-            'eWallet Account Number',
+            $accountLabel,
             "Rm'",
             'Reward Name (Max 20 characters)',
             'Reward Description (Max 200 characters)',

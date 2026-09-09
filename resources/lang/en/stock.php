@@ -2,6 +2,7 @@
 return [
     'is_adjustmented' => 'Adjusted?',
     'storekeeper' => 'Store keeper',
+    'extra_storekeepers' => 'Extra Storekeepers',
     'minimum_quantity' => 'Minimum Stock',
     'minimum_quantity_desc' => 'Minimum Quantity to Notify About Low Stock, This option will be applied on the largest unit.',
     'is_central_kitchen' => 'Is Central Kitchen?',

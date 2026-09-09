@@ -89,6 +89,7 @@ class GenerateUnauditedStocktakeJob implements ShouldQueue
                 'responsible_user_id' => $this->userId,
                 'created_by'          => $this->userId,
                 'finalized'           => 0,
+                'inventory_type'      => StockInventory::TYPE_ZEROING,
             ]);
 
             $detailsBatch = [];

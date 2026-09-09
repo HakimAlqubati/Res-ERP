@@ -20,6 +20,7 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\ManufacturingIn
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\MinimumProductQtyReportResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReportResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentSummaryReportResource;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryValuationReportResource;
 use App\Filament\Resources\InVSReportResource;
 use App\Filament\Resources\StockSupplyOrderReportResource;
 use Filament\Pages\Page;
@@ -91,12 +92,12 @@ class InventoryReportLinks extends Page
                 'icon' => 'heroicon-o-currency-dollar',
                 'url' => InventoryWithUsageReportResource::getUrl(),
             ],
-            [
-                'title' => __('lang.store_position_report'),
-                'description' => __('lang.store_position_report_desc'),
-                'icon' => 'heroicon-o-archive-box',
-                'url' => InventoryTransactionPurchaseReportResource::getUrl(),
-            ],
+            // [
+            //     'title' => __('lang.store_position_report'),
+            //     'description' => __('lang.store_position_report_desc'),
+            //     'icon' => 'heroicon-o-archive-box',
+            //     'url' => InventoryTransactionPurchaseReportResource::getUrl(),
+            // ],
             [
                 'title' => __('lang.stock_adjustment_report'),
                 'description' => __('lang.stock_adjustment_report_desc'),
@@ -132,6 +133,12 @@ class InventoryReportLinks extends Page
                 'description' => __('lang.stock_position_batch_report_desc'),
                 'icon' => 'heroicon-o-presentation-chart-bar',
                 'url' => StockPositionBatchReportResource::getUrl(),
+            ],
+            [
+                'title' => 'Stocktake Valuation Report',
+                'description' => 'Stocktake closing value report by store and date',
+                'icon' => 'heroicon-o-calculator',
+                'url' => StockInventoryValuationReportResource::getUrl(),
             ],
             // [
             //     'title'       => MinimumProductQtyReportResource::getPluralLabel(),

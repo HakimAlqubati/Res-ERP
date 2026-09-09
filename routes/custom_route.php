@@ -20,6 +20,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\PurchaseInvoice;
 use App\Models\StockIssueOrder;
+use App\Models\UnitPrice;
 use App\Modules\Stock\Reports\FifoBatchReports\Contracts\FifoAllocatorInterface;
 use App\Services\FifoMethodService;
 use App\Services\FixFifo\FifoAllocatorService;
@@ -117,16 +118,36 @@ Route::get('/testAllocateFifo', function (Request $request) {
  return $allocations; 
 });
 
-Route::get('/testAllocateFifoNew', function (Request $request,FifoAllocatorInterface $fifoAllocator) {
-   
-    $allocations = $fifoAllocator->allocate(
-        productId: (int) ($request->product_id ?? 25),
-        unitId:    (int) ($request->unit_id ?? 10),
-        requestedQty: (float) ($request->qty ?? 50),
-        storeId:   (int) ($request->store_id ?? 1),
-    );
+Route::get('/testAllocateFifoNew', function (Request $request, FifoAllocatorInterface $fifoAllocator) {
 
-    return $allocations;
+    $unitId    = (int) ($request->unit_id ?? 10);
+    $qty       = (float) ($request->qty ?? 50);
+    $storeId   = (int) ($request->store_id ?? 1);
+
+    // دعم عدة منتجات: ?product_ids=25,30,42  أو منتج واحد: ?product_id=25
+    // $productIds = $request->product_ids
+    //     ? array_map('intval', explode(',', $request->product_ids))
+    //     : [(int) ($request->product_id ?? 25)];
+
+    $productIds = range(1, 15);
+    // $productIds = UnitPrice::where('unit_id',1)
+    // ->join('products','products.id','unit_prices.product_id')
+    // ->join('categories','categories.id','products.category_id')
+    // ->where('categories.is_manafacturing',0)
+    // ->where('products.active',1)
+    // ->pluck('product_id')->toArray();
+    
+    // بناء مصفوفة items لـ allocateMany
+    $items = array_map(fn (int $pid) => [
+        'product_id' => $pid,
+        'unit_id'    => $unitId,
+        'qty'        => $qty,
+    ], $productIds);
+
+    // استعلام SQL واحد لكل المنتجات بدلاً من N استعلام
+    $results = $fifoAllocator->allocateMany($items, $storeId);
+
+    return response()->json($results);
 });
 
 Route::get('/testUpdateUnitPrice', function () {

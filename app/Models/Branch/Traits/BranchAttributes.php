@@ -48,7 +48,12 @@ trait BranchAttributes
 
         if (
             auth()->check()
-            && $this->manager_id === auth()->id()
+            && (
+                $this->manager_id === auth()->id()
+                || ($this->relationLoaded('chefAssistants')
+                    ? $this->chefAssistants->contains('id', auth()->id())
+                    : $this->chefAssistants()->where('users.id', auth()->id())->exists())
+            )
             && $this->is_kitchen
             && $this->store
         ) {
@@ -169,5 +174,27 @@ trait BranchAttributes
         }
 
         return $name;
+    }
+
+    public function getChefAssistantsNamesAttribute(): string
+    {
+        if ($this->relationLoaded('chefAssistants')) {
+            $names = $this->chefAssistants->pluck('name')->filter()->toArray();
+        } else {
+            $names = $this->chefAssistants()->pluck('name')->filter()->toArray();
+        }
+
+        return !empty($names) ? implode(', ', $names) : '';
+    }
+
+    public function getChefAssistantsEmailsAttribute(): ?string
+    {
+        if ($this->relationLoaded('chefAssistants')) {
+            $emails = $this->chefAssistants->pluck('email')->filter()->toArray();
+        } else {
+            $emails = $this->chefAssistants()->pluck('email')->filter()->toArray();
+        }
+
+        return !empty($emails) ? implode(', ', $emails) : null;
     }
 }

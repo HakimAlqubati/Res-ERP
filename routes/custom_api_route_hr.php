@@ -161,6 +161,7 @@ Route::prefix('hr')
 
         Route::get('/employees/{id}/leaveBalances', [EmployeeController::class, 'leaveBalances']);
         Route::get('/employees/leaveBalances', [EmployeeController::class, 'leaveBalancesAll']);
+        Route::post('/employees/{id}/toggleCanAddBranchOrder', [EmployeeController::class, 'toggleCanAddBranchOrder']);
 
         // Advance Wages
         Route::apiResource('/advanceWages', \App\Modules\HR\AdvanceWages\Http\Controllers\AdvanceWageController::class);

@@ -25,6 +25,7 @@ class EmployeeController extends Controller
             'salary',
             'phone_number',
             'email',
+            'can_add_branch_order',
         )
             ->when(request('branch_id'), function ($query, $branchId) {
                 $query->where('branch_id', $branchId);
@@ -67,6 +68,7 @@ class EmployeeController extends Controller
                     'salary' => $emp->salary,
                     'phone_number' => $emp->phone_number,
                     'email' => $emp->email,
+                    'can_add_branch_order' => (bool) $emp->can_add_branch_order,
                 ];
             });
 
@@ -89,6 +91,7 @@ class EmployeeController extends Controller
             'salary',
             'phone_number',
             'email',
+            'can_add_branch_order',
         )
         ->with('branch:id,name')
             ->when(request('branch_id'), function ($query, $branchId) {
@@ -136,6 +139,7 @@ class EmployeeController extends Controller
                     'salary' => !isHR() ? $emp->salary: 0,
                     'phone_number' => $emp->phone_number,
                     'email' => $emp->email,
+                    'can_add_branch_order' => (bool) $emp->can_add_branch_order,
                 ];
             });
 
@@ -260,5 +264,44 @@ class EmployeeController extends Controller
     {
         $employees = $employeeService->getEmployeesWithoutUser();
         return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\EmployeesWithoutUserExport($employees), 'employees_without_users.xlsx');
+    }
+
+    /**
+     * Update or toggle the `can_add_branch_order` field for an employee.
+     *
+     * @param Request $request
+     * @param int|Employee $employee
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function toggleCanAddBranchOrder(Request $request, $employee)
+    {
+        $employeeModel = $employee instanceof Employee ? $employee : Employee::findOrFail($employee);
+
+        $request->validate([
+            'can_add_branch_order' => 'nullable|boolean',
+            'value'                => 'nullable|boolean',
+        ]);
+
+        if ($request->has('can_add_branch_order')) {
+            $employeeModel->can_add_branch_order = $request->boolean('can_add_branch_order');
+        } elseif ($request->has('value')) {
+            $employeeModel->can_add_branch_order = $request->boolean('value');
+        } else {
+            $employeeModel->can_add_branch_order = ! (bool) $employeeModel->can_add_branch_order;
+        }
+
+        $employeeModel->save();
+
+        return response()->json([
+            'success'              => true,
+            'message'              => __('Employee branch order permission updated successfully.'),
+            'employee_id'          => $employeeModel->id,
+            'can_add_branch_order' => (bool) $employeeModel->can_add_branch_order,
+            'employee'             => [
+                'id'                   => $employeeModel->id,
+                'name'                 => $employeeModel->name,
+                'can_add_branch_order' => (bool) $employeeModel->can_add_branch_order,
+            ],
+        ]);
     }
 }

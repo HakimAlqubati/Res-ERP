@@ -53,7 +53,7 @@ class EmployeeAdvanceReportResource extends Resource
             ->columns([
                 TextColumn::make('application_id')
                     ->label('Request ID')
-                    ->searchable()->toggleable(isToggledHiddenByDefault: false)
+                    ->searchable()->toggleable(isToggledHiddenByDefault: true)
                     ->sortable()
                     ->copyable(),
                 TextColumn::make('code')
@@ -85,7 +85,7 @@ class EmployeeAdvanceReportResource extends Resource
                     ->trueColor('success')
                     ->falseColor('warning')
                     ->alignCenter()
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('advance_amount')
                     ->label(__('lang.advance_amount'))
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
@@ -159,7 +159,9 @@ class EmployeeAdvanceReportResource extends Resource
                     ->tooltip(fn($record) => $record->finance_approved_at
                         ? $record->finance_approved_at->format('Y-m-d H:i')
                         : null
-                    ),
+                    )
+                    ->words(1)
+                    ,
 
              
             ])

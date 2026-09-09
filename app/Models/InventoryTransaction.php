@@ -95,7 +95,13 @@ class InventoryTransaction extends Model implements Auditable
 
     public function getFormattedTransactionableTypeAttribute(): ?string
     {
-        return class_basename($this->transactionable_type);
+        $type = class_basename($this->transactionable_type);
+
+        if ($type === 'GoodsReceivedNote') {
+            return 'GRN';
+        }
+
+        return $type;
     }
 
     public function scopeByModelType($query, $modelClass)

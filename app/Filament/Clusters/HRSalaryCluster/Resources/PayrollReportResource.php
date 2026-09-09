@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRSalaryCluster\Resources;
 use App\Filament\Clusters\HRSalaryCluster;
 use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollReportResource\Pages\ListPayrollReports;
 use App\Models\Branch;
+use App\Models\EmployeePaymentMethod;
 use App\Models\FakeModelHRReports\EmployeeAttendanceReport;
 use Filament\Forms\Components\Select;
 use Filament\Pages\Enums\SubNavigationPosition;
@@ -58,11 +59,23 @@ class PayrollReportResource extends Resource
                             ->required()
                             ->live()
                             ->default(now()->format('F Y')),
+
+                        Select::make('payment_method_id')
+                            ->label(__('Payment Method'))
+                            ->options(function () {
+                                return EmployeePaymentMethod::where('active', 1)
+                                    ->pluck('name', 'id')
+                                    ->all();
+                            })
+                            ->searchable()
+                            ->placeholder(__('All Payment Methods'))
+                            ->nullable()
+                            ->live(),
                     ])
                     ->query(function (Builder $query) {
                         return $query;
                     })
-                    ->columns(2),
+                    ->columns(3),
             ], FiltersLayout::AboveContent)
             ->actions([])
             ->bulkActions([]);

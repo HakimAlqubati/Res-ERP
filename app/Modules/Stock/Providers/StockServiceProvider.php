@@ -63,9 +63,19 @@ class StockServiceProvider extends ServiceProvider
         );
 
         $this->app->bind(
-    \App\Modules\Stock\Reports\OrderTransfersReports\Interfaces\OrderTransferReportRepositoryInterface::class,
-    \App\Modules\Stock\Reports\OrderTransfersReports\Repositories\OrderTransferReportRepository::class
-);
+            \App\Modules\Stock\Reports\OrderTransfersReports\Interfaces\OrderTransferReportRepositoryInterface::class,
+            \App\Modules\Stock\Reports\OrderTransfersReports\Repositories\OrderTransferReportRepository::class
+        );
+
+        $this->app->bind(
+            \App\Modules\Stock\Reports\StockInventoryValuationReport\Contracts\StockInventoryValuationRepositoryInterface::class,
+            \App\Modules\Stock\Reports\StockInventoryValuationReport\Repositories\StockInventoryValuationRepository::class
+        );
+
+        $this->app->bind(
+            \App\Modules\Stock\Reports\StockInventoryValuationReport\Contracts\StockInventoryValuationServiceInterface::class,
+            \App\Modules\Stock\Reports\StockInventoryValuationReport\Services\StockInventoryValuationReportService::class
+        );
     }
 
     /**

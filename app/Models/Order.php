@@ -248,38 +248,51 @@ class Order extends Model implements Auditable
                 $order->status === self::READY_FOR_DELEVIRY &&
                 $order->getOriginal('status') !== self::READY_FOR_DELEVIRY
             ) {
-                foreach ($order->orderDetails as $detail) {
-                    $fifoService = new FifoMethodService($order);
+                $fifoAllocator = app(\App\Modules\Stock\Reports\FifoBatchReports\Contracts\FifoAllocatorInterface::class);
+                $defaultStoreId = Store::defaultStore()?->id ?? 1;
 
-                    $allocations = $fifoService->getAllocateFifo(
-                        $detail->product_id,
-                        $detail->unit_id,
-                        $detail->available_quantity
-                    );
+                // جلب فرع الطلب ومخزنه بتجاوز أي Global Scopes (صلاحيات الفروع) في هذا الموضع فقط
+                $branch = $order->branch_id
+                    ? Branch::withoutGlobalScopes()->with(['store' => fn($q) => $q->withoutGlobalScopes()])->find($order->branch_id)
+                    : null;
+                $branchStore = $branch?->store;
+                $hasBranchStore = (bool) ($branchStore && $branchStore->active);
 
-                    self::moveFromInventory($allocations, $detail);
-
-                    if ($order->branch && $order->branch->store && $order->branch->store->active) {
-                        self::receiveIntoBranchStore($allocations, $detail);
-                    }
+                if ($branch) {
+                    $order->setRelation('branch', $branch);
                 }
 
-                // ✅ New logic: Update costing for composite (manufacturing) product when a component product is affected
+                // 1. تحميل العلاقات لتفادي استعلامات N+1
+                $order->loadMissing(['orderDetails.product.category']);
 
-                // foreach ($order->orderDetails as $detail) {
-                // $parentProducts = ProductItem::whereIn('product_id', $order->orderDetails->pluck('product_id')->toArray())
-                //     ->pluck('parent_product_id')
-                //     ->unique();
+                // 2. تجميع تفاصيل الطلب حسب مخزن كل صنف المخصص لفئته
+                $detailsByStore = $order->orderDetails->groupBy(function ($detail) use ($defaultStoreId) {
+                    if (! $detail->product) {
+                        return $defaultStoreId;
+                    }
+                    return defaultManufacturingStore($detail->product)?->id ?? $defaultStoreId;
+                });
 
-                // foreach ($parentProducts as $parentProductId) {
-                //     try {
-                //         // $count = ProductCostingService::updateComponentPricesForProduct($parentProductId);
-                //         // Log::info("🔄 تم تحديث أسعار {$count} مكونات لـ منتج مركب ID {$parentProductId}");
-                //     // } catch (\Throwable $e) {
-                //         // Log::error("❌ خطأ أثناء تحديث سعر المنتج المركب {$parentProductId}: {$e->getMessage()}");
-                //     }
-                // }
-                // }
+                // 3. تخصيص وصرف لكل مخزن على حدة دفعة واحدة
+                foreach ($detailsByStore as $storeId => $details) {
+                    $items = $details->map(fn ($d) => [
+                        'product_id' => $d->product_id,
+                        'unit_id'    => $d->unit_id,
+                        'qty'        => $d->available_quantity,
+                    ])->all();
+
+                    $allocationsByProduct = $fifoAllocator->allocateMany($items, (int) $storeId, $order);
+
+                    foreach ($details as $detail) {
+                        $productAllocations = $allocationsByProduct[$detail->product_id]['allocations'] ?? [];
+
+                        self::moveFromInventory($productAllocations, $detail);
+
+                        if ($hasBranchStore) {
+                            self::receiveIntoBranchStore($productAllocations, $detail, $branchStore->id);
+                        }
+                    }
+                }
             }
 
 
@@ -334,10 +347,16 @@ class Order extends Model implements Auditable
     }
 
 
-    public static function receiveIntoBranchStore($allocations, $detail)
+    public static function receiveIntoBranchStore($allocations, $detail, ?int $targetStoreId = null)
     {
         $order = $detail->order;
-        $targetStoreId = $order->branch->store->id;
+        $targetStoreId = $targetStoreId
+            ?? $order->branch?->store?->id
+            ?? Branch::withoutGlobalScopes()->where('id', $order->branch_id)->value('store_id');
+
+        if (! $targetStoreId) {
+            return;
+        }
 
         foreach ($allocations as $alloc) {
             InventoryTransaction::create([

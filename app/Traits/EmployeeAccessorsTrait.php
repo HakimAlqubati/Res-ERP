@@ -246,4 +246,35 @@ trait EmployeeAccessorsTrait
             ->where('month', $month)
             ->get();
     }
+
+    /**
+     * Get the employee's short name: "FirstName LastName".
+     * If the name has only one word, returns it as-is.
+     * Accessible via $employee->short_name
+     */
+    public function getShortNameAttribute(): string
+    {
+        $name = trim($this->name ?? '');
+
+        if ($name === '') {
+            return '';
+        }
+
+        // Find the first space to extract the first name
+        $firstSpace = strpos($name, ' ');
+
+        if ($firstSpace === false) {
+            return $name;
+        }
+
+        $firstName = substr($name, 0, $firstSpace);
+
+        // Find the last space to extract the last name
+        $lastSpace = strrpos($name, ' ');
+
+        // If first and last space are the same, the name has only two parts
+        $lastName = substr($name, $lastSpace + 1);
+
+        return $firstName . ' ' . $lastName;
+    }
 }

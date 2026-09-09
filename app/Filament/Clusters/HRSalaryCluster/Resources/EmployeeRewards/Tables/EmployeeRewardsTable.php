@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRSalaryCluster\Resources\EmployeeRewards\Tables;
 
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\EmployeeReward;
 use App\Models\User;
 use Filament\Actions\BulkActionGroup;
@@ -15,6 +16,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
+use Filament\Tables\Enums\FiltersLayout;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -22,9 +24,10 @@ class EmployeeRewardsTable
 {
     public static function configure(Table $table): Table
     {
-        return $table
+        return $table->striped()
             ->defaultSort('id', 'desc')
             ->columns([
+                SoftDeleteColumn::make(),
                 TextColumn::make('id')
                     ->label('ID')
                     ->sortable()
@@ -33,6 +36,10 @@ class EmployeeRewardsTable
                 TextColumn::make('employee.name')
                     ->label(__('lang.employee'))
                     ->searchable()
+                    ->sortable()->toggleable(),
+                TextColumn::make('branch.name')
+                    ->label(__('lang.branch'))
+                    ->toggleable()
                     ->sortable(),
 
                 TextColumn::make('rewardType.name')
@@ -94,10 +101,11 @@ class EmployeeRewardsTable
                         'rejected' => 'Rejected',
                     ]),
                 SelectFilter::make('employee_id')
-                    ->relationship('employee', 'name')
+                    ->relationship('employee', 'name')->label(__('lang.employee'))
                     ->searchable()
                     ->preload(),
-            ])
+                ],FiltersLayout::Modal)
+                ->filtersFormColumns(4)
             ->recordActions([
                 EditAction::make()
                     ->visible(fn($record) => $record->status === EmployeeReward::STATUS_PENDING),

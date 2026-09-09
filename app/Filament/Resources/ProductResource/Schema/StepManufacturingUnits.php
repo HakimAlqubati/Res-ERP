@@ -42,7 +42,9 @@ class StepManufacturingUnits
                         TableColumn::make(__('Weight'))->alignCenter()->width('10rem'),
                     ])
 
-                    ->columnSpanFull()->minItems(1)
+                    ->columnSpanFull()
+                    ->minItems(1)
+                    ->maxItems(1)
                     ->collapsible()->defaultItems(0)
                     ->relationship('allUnitPrices')
                     ->deleteAction(function (Action $action) {

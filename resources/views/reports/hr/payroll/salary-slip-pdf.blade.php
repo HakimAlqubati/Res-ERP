@@ -208,7 +208,7 @@
                     <td class="label"><strong>Job:</strong></td>
                     <td>{{ $payroll->employee?->job_title ?? '-' }}</td>
                     <td class="label"><strong>Branch:</strong></td>
-                    <td>{{ $payroll->employee?->branch?->name ?? '-' }}</td>
+                    <td>{{ $payroll->period_branch_name ?? '-' }}</td>
                 </tr>
             </table>
 
@@ -235,12 +235,14 @@
                     </tr>
                     @endforeach
                 </tbody>
+                <!--
                 <tfoot>
                     <tr>
-                        <td style="padding: 12px 5px 8px 5px; font-weight: 800; color: #222;">Gross Pay</td>
-                        <td style="padding: 12px 5px 8px 5px; text-align: right; font-weight: 800; color: #0d7c66;">{{ formatMoneyWithCurrency($gross) }}</td>
+                         <td style="padding: 12px 5px 8px 5px; font-weight: 800; color: #222;">Gross Pay</td>
+                        <td style="padding: 12px 5px 8px 5px; text-align: right; font-weight: 800; color: #0d7c66;">{{ formatMoneyWithCurrency($gross) }}</td> 
                     </tr>
                 </tfoot>
+                -->
             </table>
 
             <!-- Deductions Table -->

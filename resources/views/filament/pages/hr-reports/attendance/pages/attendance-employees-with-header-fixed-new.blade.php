@@ -196,7 +196,7 @@
                     <!-- <span id="checkout_status-arrow" class="arrow-icon">&#x2195;</span> Arrow for Check-out -->
                 </th>
 
-                <th class="internal_cell">{{ __('Supposed') }}</th>
+                <th class="internal_cell">{{ __('Scheduled') }}</th>
                 <th class="internal_cell">{{ __('Total Hours Worked') }}</th>
                 <th class="internal_cell">{{ __('Approved') }}</th>
             </tr>

@@ -58,6 +58,7 @@ class StockTransferOrderResource extends Resource
                             ->label('From Store')
                             ->options(Store::active()->get(['name', 'id'])->pluck('name', 'id'))
                             ->required()->searchable()
+                            ->different('to_store_id')
                             ->live()
                             ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                 $details = collect($get('details') ?? [])
@@ -79,7 +80,8 @@ class StockTransferOrderResource extends Resource
                         Select::make('to_store_id')
                             ->label('To Store')
                             ->options(Store::active()->get(['name', 'id'])->pluck('name', 'id'))
-                            ->required()->searchable(),
+                            ->required()->searchable()
+                            ->different('from_store_id'),
 
                         DatePicker::make('date')
                             ->required()->default(now()),
@@ -188,7 +190,32 @@ class StockTransferOrderResource extends Resource
                                             ])
                                             ->toArray();
                                     })
-                                    ->getOptionLabelUsing(fn ($value): ?string => Product::find($value)?->code.' - '.Product::find($value)?->name),
+                                    ->getOptionLabelUsing(fn ($value): ?string => Product::find($value)?->code.' - '.Product::find($value)?->name)
+                                    ->reactive()
+                                    ->afterStateUpdated(function (Set $set, $state, $get) {
+                                        if (! $state) {
+                                            $set('unit_id', null);
+                                            $set('package_size', 1);
+                                            $set('remaining_quantity', null);
+
+                                            return;
+                                        }
+
+                                        $product = Product::find($state);
+                                        $firstUnitPrice = $product?->supplyOutUnitPrices->first();
+                                        $unitId = $firstUnitPrice?->unit_id;
+                                        $fromStoreId = $get('../../from_store_id');
+
+                                        $set('unit_id', $unitId);
+                                        $set('package_size', $firstUnitPrice?->package_size ?? 1);
+
+                                        if ($unitId && $fromStoreId) {
+                                            $remainingQty = MultiProductsInventoryService::getRemainingQty($state, $unitId, $fromStoreId);
+                                            $set('remaining_quantity', $remainingQty);
+                                        } else {
+                                            $set('remaining_quantity', null);
+                                        }
+                                    }),
 
                                 Select::make('unit_id')->label('Unit')
                                     ->options(function (callable $get) {

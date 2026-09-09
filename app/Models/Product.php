@@ -229,8 +229,12 @@ class Product extends Model implements Auditable
     {
         return $this->unitPrices->map(function ($unitPrice) {
             $unitName = $unitPrice->unit->name ?? 'N/A';
-            $price = $unitPrice->price ?? 0;
-            $qtyPerPack = $unitPrice->package_size ?? '-';
+            $price = isset($unitPrice->price) && is_numeric($unitPrice->price)
+                ? number_format((float) $unitPrice->price, 2)
+                : number_format(0, 2);
+            $qtyPerPack = isset($unitPrice->package_size) && is_numeric($unitPrice->package_size)
+                ? number_format((float) $unitPrice->package_size, 2)
+                : '-';
 
             return "{$unitName} : {$price} (Qty per Pack: {$qtyPerPack})";
         })->implode(', ');
@@ -257,7 +261,6 @@ class Product extends Model implements Auditable
             $lastCode = (int)substr($lastProduct->code, strlen($prefix));
             $nextNumber = $lastCode + 1;
         }
-
         return $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
     }
     public function productPriceHistories()

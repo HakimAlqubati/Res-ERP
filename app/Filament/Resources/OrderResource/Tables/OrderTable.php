@@ -6,7 +6,9 @@ use App\Exports\OrdersExport2;
 use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\Order;
 use App\Filament\Resources\OrderResource;
+use App\Filament\Tables\Actions\RefreshAction;
 use App\Services\Orders\OrderCostAnalysisService;
+use App\Services\CopyOrderOutToBranchStoreService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
@@ -14,6 +16,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Textarea;
@@ -47,6 +50,7 @@ class OrderTable
             $pagination = [10, 25, 50, 100,250,400,500];
         }
         return $table
+        ->headerActions([RefreshAction::make()])
             ->paginated($pagination)
             ->deferLoading()
             ->striped()
@@ -68,9 +72,9 @@ class OrderTable
                     ->copyMessageDuration(1500)
                     ->sortable()->searchable()
                     ->searchable(isIndividual: true, isGlobal: false),
-                TextColumn::make('customer.name')->label(__('lang.branch_manager'))->toggleable()
+                TextColumn::make('customer.name')->label(__('lang.order_owner'))->toggleable()
                     ->searchable(isIndividual: true)->toggleable(isToggledHiddenByDefault: true)
-                    ->tooltip(fn(Model $record): string => "By {$record->customer->name}"),
+                    ->tooltip(fn(Model $record): string => "By {$record->customer?->name}"),
                 TextColumn::make('branch.name')->label(__('lang.branch')),
                 // TextColumn::make('store.name')->label(__('lang.store')),
                 // TextColumn::make('store_names')->label(__('lang.store'))->toggleable(isToggledHiddenByDefault: true),
@@ -269,6 +273,7 @@ class OrderTable
 
 
                 ActionGroup::make([
+                    self::syncBranchStockInAction(),
                     self::showCostDetailsAction(),
                     ViewAction::make(),
                     EditAction::make(),
@@ -285,6 +290,7 @@ class OrderTable
             ->toolbarActions([
                 DeleteBulkAction::make(),
                 ForceDeleteBulkAction::make(),
+                RestoreBulkAction::make(),
                 BulkAction::make('exportOrdersWithDetails')
                     ->label('Export Orders + Details')
                     ->action(function ($records) {
@@ -332,5 +338,39 @@ class OrderTable
             ])
             // إظهار الزر فقط إذا كان الطلب جاهزاً للتحليل (تم شحنه/تسليمه)
             ->hidden(fn(Order $record): bool => !in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED]));
+    }
+
+    /**
+     * يعيد الإجراء (Action) لتكرار حركات الصرف (OUT) كحركات دخول (IN) لمخزن الفرع.
+     */
+    public static function syncBranchStockInAction(): Action
+    {
+        return Action::make('syncBranchStockIn')
+            ->label(__('توليد حركات دخول الفرع'))
+            ->icon('heroicon-o-arrow-down-tray')
+            ->color(Color::Emerald)
+            ->requiresConfirmation()
+            ->modalHeading(__('توليد حركات دخول لمخزن الفرع'))
+            ->modalDescription(fn(Order $record): string => "سيتم تكرار حركات الصرف (OUT) للطلب #{$record->id} كحركات دخول (IN) لمخزن الفرع بنفس التواريخ والكميات دون إعادة احتساب FIFO.")
+            ->modalSubmitActionLabel(__('تأكيد التوليد'))
+->visible(fn()=> isHakimOrAdel())
+            ->action(function (Order $record) {
+                $service = app(CopyOrderOutToBranchStoreService::class);
+                $result = $service->handleForOrder($record);
+
+                if ($result['success']) {
+                    Notification::make()
+                        ->title(__('تم بنجاح'))
+                        ->body($result['message'])
+                        ->success()
+                        ->send();
+                } else {
+                    Notification::make()
+                        ->title(__('تنبيه'))
+                        ->body($result['message'])
+                        ->warning()
+                        ->send();
+                }
+            });
     }
 }

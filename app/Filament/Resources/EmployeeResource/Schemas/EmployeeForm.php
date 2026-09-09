@@ -63,20 +63,7 @@ class EmployeeForm
                                     Grid::make(3)
                                         ->columnSpan(3)
                                         ->schema([
-                                            TextInput::make('name')->label(__('lang.full_name'))
-                                                ->dehydrateStateUsing(fn ($state) => preg_replace('/\s+/u', ' ', trim((string) $state)))
-                                                ->extraInputAttributes(function ($record) {
-                                                    if ($record && ! $record->active) {
-                                                        return [
-                                                            'style' => 'color: #ef4444 !important; -webkit-text-fill-color: #ef4444 !important; font-weight: bold;',
-                                                        ];
-                                                    }
-
-                                                    return [];
-                                                })
-                                                ->rules('string')
-                                                ->unique(ignoreRecord: true)
-                                                ->columnSpan(2)->required(),
+                                            static::name(),
 
                                             TextInput::make('known_name')
                                                 ->label(__('lang.known_name'))
@@ -789,5 +776,33 @@ class EmployeeForm
             ->maxSize(20000)
             ->columnSpan(2)
             ->reactive();
+    }
+
+    public static function name(): TextInput
+    {
+        return TextInput::make('name')
+            ->label(__('lang.full_name'))
+            ->dehydrateStateUsing(fn ($state) => static::formatTitleCase($state))
+            ->extraInputAttributes(function ($record) {
+                $styles = ['text-transform: capitalize;'];
+
+                if ($record && ! $record->active) {
+                    $styles[] = 'color: #ef4444 !important; -webkit-text-fill-color: #ef4444 !important; font-weight: bold;';
+                }
+
+                return [
+                    'style' => implode(' ', $styles),
+                    'x-on:input' => '$el.value = $el.value.replace(/(^|\s)\p{L}/gu, (char) => char.toUpperCase())',
+                ];
+            })
+            ->rules('string')
+            ->unique(ignoreRecord: true)
+            ->columnSpan(2)
+            ->required();
+    }
+
+    public static function formatTitleCase(?string $state): string
+    {
+        return Str::title(preg_replace('/\s+/u', ' ', trim((string) $state)));
     }
 }

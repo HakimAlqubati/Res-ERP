@@ -7,8 +7,7 @@ use App\Models\FinancialCategory;
 use App\Models\FinancialTransaction;
 use App\Enums\FinancialCategoryCode;
 use App\Modules\HR\Payroll\Contracts\PayrollSimulatorInterface;
-use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker;
-use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService;
+use App\Rules\HR\Payroll\AdvanceWageLimitRule;
 use App\Services\HR\Payroll\PayrollLockGuard;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
@@ -36,8 +35,8 @@ class AdvanceWageObserver
             $advanceWage->created_by = \Illuminate\Support\Facades\Auth::id();
         }
 
-        // استخراج السنة والشهر تلقائياً من تاريخ الأجر المقدم
-        if ($advanceWage->date) {
+        // استخراج السنة والشهر تلقائياً من تاريخ الأجر المقدم في حال لم يتم تحديدها مسبقاً
+        if (empty($advanceWage->year) && empty($advanceWage->month) && $advanceWage->date) {
             $date = Carbon::parse($advanceWage->date);
             $advanceWage->year  = $date->year;
             $advanceWage->month = $date->month;
@@ -64,16 +63,7 @@ class AdvanceWageObserver
         $this->guardPeriod($advanceWage);
 
         // Validate amount against net salary
-        $simulator = app(PayrollSimulatorInterface::class);
-        $results = $simulator->simulateForEmployees([$advanceWage->employee_id], (int) $advanceWage->year, (int) $advanceWage->month);
-
-        $netSalary = (float) ($results[0]['data']['net_salary'] ?? 0);
-
-        if ((float)$advanceWage->amount > $netSalary) {
-            throw ValidationException::withMessages([
-                'amount' => __('The amount exceeds the employee\'s net salary for this period (:amount).', ['amount' => formatMoneyWithCurrency($netSalary)]),
-            ]);
-        }
+        AdvanceWageLimitRule::check($advanceWage);
     }
 
     /**
@@ -94,6 +84,7 @@ class AdvanceWageObserver
     public function updating(AdvanceWage $advanceWage): void
     {
         $this->guardPeriod($advanceWage);
+        AdvanceWageLimitRule::check($advanceWage);
     }
 
     /**

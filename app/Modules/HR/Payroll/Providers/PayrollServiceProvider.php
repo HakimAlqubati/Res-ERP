@@ -40,6 +40,7 @@ use App\Modules\HR\Payroll\Calculators\GeneralDeductionCalculator;
 use App\Modules\HR\Payroll\Calculators\TransactionBuilder;
 use App\Modules\HR\Payroll\Calculators\MonthlyIncentiveCalculator;
 use App\Modules\HR\Payroll\Calculators\CustomDeductionCalculator;
+use App\Modules\HR\Payroll\Services\WeeklyLeaveSegmentAllocator;
 
 class PayrollServiceProvider extends ServiceProvider
 {
@@ -94,7 +95,8 @@ class PayrollServiceProvider extends ServiceProvider
         $this->app->singleton(PayrollSimulatorInterface::class, function ($app) {
             return new PayrollSimulationService(
                 $app->make(\App\Modules\HR\AttendanceReports\Contracts\AttendanceReportInterface::class),
-                $app->make(SalaryCalculatorInterface::class)
+                $app->make(SalaryCalculatorInterface::class),
+                $app->make(WeeklyLeaveSegmentAllocator::class),
             );
         });
         $this->app->singleton(PayrollSimulationService::class, function ($app) {

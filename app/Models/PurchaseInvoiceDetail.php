@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Services\UnitPriceFifoUpdater;
 use App\Services\ProductCostingService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -94,11 +95,11 @@ class PurchaseInvoiceDetail extends Model implements Auditable
                 'quantity' => $purchaseInvoiceDetail->quantity,
                 'package_size' => $purchaseInvoiceDetail->package_size,
                 'price' => $purchaseInvoiceDetail->price,
-                'movement_date' => $purchaseInvoiceDetail->purchaseInvoice->date ?? now(),
                 'unit_id' => $purchaseInvoiceDetail->unit_id,
                 'store_id' => $purchaseInvoiceDetail->purchaseInvoice?->store_id,
                 'notes' => $notes,
-                'transaction_date' => $purchaseInvoiceDetail->purchaseInvoice->date ?? now(),
+                'movement_date' => $purchaseInvoiceDetail->purchaseInvoice?->date ? Carbon::parse($purchaseInvoiceDetail->purchaseInvoice->date)->format('Y-m-d') . ' ' . now()->format('H:i:s') : now(),
+                'transaction_date' => $purchaseInvoiceDetail->purchaseInvoice?->date ? Carbon::parse($purchaseInvoiceDetail->purchaseInvoice->date)->format('Y-m-d') . ' ' . now()->format('H:i:s') : now(),
                 'transactionable_id' => $purchaseInvoiceDetail->purchase_invoice_id,
                 'transactionable_type' => PurchaseInvoice::class,
                 'waste_stock_percentage' => $purchaseInvoiceDetail->waste_stock_percentage,

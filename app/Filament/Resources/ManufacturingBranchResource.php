@@ -24,6 +24,7 @@ use App\Filament\Resources\ManufacturingBranchResource\Pages\CreateManufacturing
 use App\Filament\Resources\ManufacturingBranchResource\Pages\EditManufacturingBranch;
 use App\Filament\Clusters\ManufacturingBranchesCluster;
 use App\Filament\Resources\ManufacturingBranchResource\Pages;
+use App\Filament\Resources\ManufacturingBranchResource\Schema\ManufacturingBranchForm;
 use App\Models\Branch;
 use App\Models\City;
 use App\Models\Country;
@@ -80,127 +81,7 @@ class ManufacturingBranchResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->components([
-
-                Wizard::make([
-                    Step::make('Basic data')
-                        ->icon('heroicon-o-user-circle')
-                        ->schema([
-                            Fieldset::make()->columns(3)->schema([
-                                TextInput::make('name')->required()->label(__('lang.name')),
-                                Select::make('manager_id')
-                                    ->label(__('lang.account_manager'))
-                                    ->options(User::whereHas('roles', function ($q) {
-                                        $q->where('id', 7);
-                                    })
-                                        ->get(['name', 'id'])->pluck('name', 'id'))
-                                    ->searchable(),
-                                Toggle::make('active')
-                                    ->inline(false)->default(true),
-
-                                Grid::make()->columnSpanFull()->columns(3)->schema([
-                                    Toggle::make('manager_abel_show_orders')
-                                        ->label(__('stock.manager_abel_show_orders'))
-                                        ->inline(false)
-                                        ->default(false),
-
-                                    Select::make('store_id')
-                                        ->label(__('stock.store_id'))
-                                        ->options(Store::active()
-                                            ->centralKitchen()->pluck('name', 'id'))
-                                        ->searchable(),
-                                    Select::make('categories')
-                                        ->label(__('stock.customized_manufacturing_categories'))
-                                        // ->options(\App\Models\Category::Manufacturing()->pluck('name', 'id'))
-                                        ->relationship('categories', 'name')
-
-                                        ->searchable()->multiple(),
-
-                                ]),
-                                Textarea::make('address')
-                                    ->columnSpanFull()
-                                    ->label(__('lang.address')),
-                            ]),
-
-                        ]),
-                    Step::make('Location')
-                        ->icon('heroicon-o-map-pin')
-                        ->schema([
-                            Fieldset::make()
-                                ->relationship('location')
-                                ->columns(3)->schema([
-                                    Select::make('country_id')
-                                        ->label(__('Country'))->searchable()
-                                        // ->relationship('city', 'name')
-                                        ->options(Country::get(['id', 'name'])->pluck('name', 'id'))
-                                        ->reactive()
-                                        ->required(false),
-                                    Select::make('city_id')
-                                        ->label(__('City'))->searchable()
-                                        // ->relationship('city', 'name')
-                                        ->options(function (callable $get) {
-                                            $countryId = $get('country_id');
-                                            return $countryId ? City::where('country_id', $countryId)->pluck('name', 'id') : [];
-                                        })
-                                        ->reactive()
-                                        ->required(false),
-
-                                    Select::make('district_id')
-                                        ->label(__('District'))
-                                        ->searchable()
-                                        ->options(function (callable $get) {
-                                            $cityId = $get('city_id');
-                                            return $cityId ? District::where('city_id', $cityId)->pluck('name', 'id') : [];
-                                        })
-                                        ->reactive()
-                                        ->required(false),
-                                    Textarea::make('address')->label(__('lang.address'))->columnSpanFull(),
-                                ]),
-
-                        ]),
-                    Step::make('Images')
-                        ->icon('heroicon-o-user-circle')
-                        ->schema([
-                            Fieldset::make()->columns(1)->schema([
-                                FileUpload::make('images')
-                                    ->disk('public')
-                                    ->label('')
-                                    ->directory('branches')
-                                    ->columnSpanFull()
-                                    ->image()
-                                    ->multiple()
-                                    ->downloadable()
-                                    ->moveFiles()
-                                    ->previewable()
-                                    ->imagePreviewHeight('250')
-                                    ->loadingIndicatorPosition('right')
-                                    ->panelLayout('integrated')
-                                    ->removeUploadedFileButtonPosition('right')
-                                    ->uploadButtonPosition('right')
-                                    ->uploadProgressIndicatorPosition('right')
-                                    ->panelLayout('grid')
-                                    ->reorderable()
-                                    ->openable()
-                                    ->downloadable(true)
-                                    ->previewable(true)
-                                    ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                        return (string) str($file->getClientOriginalName())->prepend('branch-');
-                                    })
-                                    ->imageEditor()
-                                    ->imageEditorAspectRatios([
-                                        '16:9',
-                                        '4:3',
-                                        '1:1',
-                                    ])->maxSize(800)
-                                    ->imageEditorMode(2)
-                                    ->imageEditorEmptyFillColor('#fff000')
-                                    ->circleCropper(),
-                            ]),
-                        ]),
-                ])->columnSpanFull()->skippable(),
-
-            ]);
+        return ManufacturingBranchForm::configure($schema);     
     }
 
     public static function table(Table $table): Table
@@ -222,6 +103,18 @@ class ManufacturingBranchResource extends Resource
                 TextColumn::make('user.name')->label(__('lang.branch_manager')),
                 TextColumn::make('category_names')->label(__('stock.customized_manufacturing_categories'))->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('user.email')->label('Email')->copyable(),
+                TextColumn::make('chef_assistants_names')
+                    ->label(__('lang.chef_assistants'))
+                    ->words(5)
+                    ->tooltip(fn($state) => $state)
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->default('-'),
+                TextColumn::make('chef_assistants_emails')
+                    ->label(__('lang.chef_assistants') . ' (' . __('lang.email') . ')')
+                    ->copyable()
+                    ->tooltip(fn($state) => $state)
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->default('-'),
                 TextColumn::make('total_quantity')->label(__('lang.quantity'))
                     ->action(function ($record) {
                         redirect('admin/branch-store-report?tableFilters[branch_id][value]=' . $record->id);
@@ -295,11 +188,14 @@ class ManufacturingBranchResource extends Resource
                             TextInput::make('name')->required()->label(__('lang.name'))->default($record->name),
                             Select::make('manager_id')
                                 ->label(__('lang.branch_manager'))->default($record->manager_id)
-                                ->options(User::whereHas('roles', fn($q) => $q->where('id', 7))
-                                    ->pluck('name', 'id')),
+                                ->options(User::whereHas('roles', fn($q) => $q
+                                ->where('id', 7)
+                                )
+                                    ->pluck('name', 'id'))
+                                    ,
                             Select::make('store_id')
                                 ->label(__('stock.store_id'))->default($record->store_id)
-                                ->options(Store::active()->centralKitchen()->pluck('name', 'id'))
+                                ->options(Store::active()->pluck('name', 'id'))
                                 ->searchable(),
 
                         ];
@@ -310,7 +206,9 @@ class ManufacturingBranchResource extends Resource
                             ->title(__('Updated successfully'))
                             ->success()
                             ->send();
-                    }),
+                    })
+                    ->hidden()
+                    ,
                 EditAction::make(),
                 DeleteAction::make(),
                 RestoreAction::make(),
@@ -349,7 +247,7 @@ class ManufacturingBranchResource extends Resource
             static::scopeEloquentQueryToTenant($query, $tenant);
         }
 
-        return $query;
+        return $query->with(['chefAssistants', 'user', 'store']);
     }
 
     public static function getNavigationBadge(): ?string

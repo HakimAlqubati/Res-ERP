@@ -21,6 +21,7 @@ class StockSupplyOrderReportService
     ): array {
         $orders = StockSupplyOrder::with(['details.product', 'details.unit'])
             ->where('store_id', $storeId)
+            ->uncancelled ()
             ->whereBetween('order_date', [$startDate, $endDate])
             ->get();
 

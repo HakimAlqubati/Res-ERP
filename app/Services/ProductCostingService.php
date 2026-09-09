@@ -177,7 +177,7 @@ class ProductCostingService
 
     public static function recalculateManufacturingProductFromItems(int $productId): void
     {
-        $product = Product::with(['productItems', 'unitPrices'])->find($productId);
+        $product = Product::with(['productItems', 'allUnitPrices'])->find($productId);
 
         if (! $product || ! $product->is_manufacturing) {
             return;
@@ -185,15 +185,19 @@ class ProductCostingService
 
         $finalPrice = (float) ($product->productItems->sum('total_price_after_waste') ?? 0);
 
-        foreach ($product->unitPrices as $unitPrice) {
-            $packageSize = $unitPrice->package_size ?: 1;
-            $newPrice = round($packageSize * $finalPrice, 2);
+        foreach ($product->allUnitPrices as $unitPrice) {
+            $packageSize = (float) ($unitPrice->package_size ?: 1);
+            $newPrice = round($packageSize * $finalPrice, 4);
 
-            if (round((float) $unitPrice->price, 2) === $newPrice) {
+            $oldPrice = (float) $unitPrice->price;
+            $oldSellingPrice = (float) $unitPrice->selling_price;
+
+            if (round($oldPrice, 4) === $newPrice && round($oldSellingPrice, 4) === $newPrice) {
                 continue;
             }
 
             $unitPrice->price = $newPrice;
+            $unitPrice->selling_price = $newPrice;
             $unitPrice->save();
         }
     }

@@ -41,11 +41,29 @@ if (!function_exists('isSuperVisor')) {
         return false;
     }
 }
+if (!function_exists('isAccountant')) {
+    function isAccountant()
+    {
+        if (auth()->check()) {
+            return auth()->user()->isAccountant();
+        }
+        return false;
+    }
+}
 if (!function_exists('isBranchUser')) {
     function isBranchUser()
     {
         if (auth()->check()) {
             return auth()->user()->isBranchUser();
+        }
+        return false;
+    }
+}
+if (!function_exists('isChefAssistant')) {
+    function isChefAssistant()
+    {
+        if (auth()->check()) {
+            return auth()->user()->isChefAssistant();
         }
         return false;
     }
@@ -90,6 +108,16 @@ if (!function_exists('isStoreManager')) {
     function isStoreManager()
     {
         return auth()->user()->isStoreManager();
+    }
+}
+
+if (!function_exists('isDefaultStoreManager')) {
+    function isDefaultStoreManager()
+    {
+        if (auth()->check()) {
+            return auth()->user()->isDefaultStoreManager();
+        }
+        return false;
     }
 }
 

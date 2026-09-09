@@ -22,7 +22,7 @@ class EmployeeActions
     {
         return Action::make('changeBranch')->icon('heroicon-o-arrow-path-rounded-square')
             ->label(__('lang.change_branch')) // Label for the action button
-            ->visible(isSystemManager() || isSuperAdmin())
+            ->visible(isSystemManager() || isSuperAdmin() || isHR())
             // ->icon('heroicon-o-annotation') // Icon for the button
             ->modalHeading(__('lang.change_employee_branch')) // Modal heading
             ->modalButton('Save')                    // Button inside the modal
