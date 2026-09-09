@@ -195,8 +195,14 @@ class OrderRepository implements OrderRepositoryInterface
                 throw new \Exception('You cannot create an order because you are not a manager or authorized branch user.');
             }
 
-            // $pendingOrderId = !$isEffectiveManager ? checkIfUserHasPendingForApprovalOrder($branchId) : 0;
-            $pendingOrderId = checkIfUserHasPendingForApprovalOrder($branchId) ;
+            // Only look for pending TYPE_NORMAL orders to avoid mixing with manufacturing orders
+            $pendingOrderId = !$isEffectiveManager
+                ? (Order::where('status', Order::PENDING_APPROVAL)
+                    ->where('branch_id', $branchId)
+                    ->where('type', Order::TYPE_NORMAL)
+                    ->where('active', 1)
+                    ->value('id') ?? 0)
+                : 0;
 
             $orderStatus = $isEffectiveManager ? Order::ORDERED : Order::PENDING_APPROVAL;
 
@@ -235,23 +241,17 @@ class OrderRepository implements OrderRepositoryInterface
 
                 // If there are any products for this branch, create a manufacturing order.
                 if (count($productsForThisBranch) > 0) {
-                    $manufacturingOrder = Order::create([
-                        'status' => Order::ORDERED,
-                        'customer_id' => $customerId,
-                        'branch_id' => $effectiveBranch?->id,
-                        'store_id' => $branch->store_id,
-                        'type' => Order::TYPE_MANUFACTURING,
-                        'notes' => $notes,
-                        'description' => $description,
-                    ]);
-
-                    // Loop through each product and add it to the manufacturing order.
-                    foreach ($productsForThisBranch as $productDetail) {
-                        $productDetail['price'] = getUnitPrice($productDetail['product_id'], $productDetail['unit_id']);
-                        $productDetail['order_id'] = $manufacturingOrder->id;
-                        OrderDetails::create($productDetail);
-                        $manufacturedProductIds[] = $productDetail['product_id'];
-                    }
+                    $ids = $this->storeManufacturingOrderDetails(
+                        $productsForThisBranch,
+                        $isEffectiveManager,
+                        $orderStatus,
+                        $customerId,
+                        $effectiveBranch,
+                        $branch,
+                        $notes,
+                        $description
+                    );
+                    $manufacturedProductIds = array_merge($manufacturedProductIds, $ids);
                 }
             }
 
@@ -327,6 +327,74 @@ class OrderRepository implements OrderRepositoryInterface
         }
     }
 
+    /**
+     * Find or create a manufacturing order for a specific manufacturing branch,
+     * and save/merge the order details into it.
+     * If a pending manufacturing order already exists for the same branch, merge into it.
+     */
+    private function storeManufacturingOrderDetails(
+        array $productsForBranch,
+        bool $isEffectiveManager,
+        string $orderStatus,
+        ?int $customerId,
+        ?Branch $effectiveBranch,
+        Branch $manufacturingBranch,
+        ?string $notes,
+        ?string $description
+    ): array {
+        $manufacturedProductIds = [];
+
+        // Check for existing pending manufacturing order for this specific manufacturing branch
+        $manufacturingOrder = null;
+        if (!$isEffectiveManager) {
+            $manufacturingOrder = Order::where('status', Order::PENDING_APPROVAL)
+                ->where('branch_id', $effectiveBranch?->id)
+                ->where('store_id', $manufacturingBranch->store_id)
+                ->where('type', Order::TYPE_MANUFACTURING)
+                ->where('active', 1)
+                ->first();
+        }
+
+        if ($manufacturingOrder) {
+            $manufacturingOrder->update(['updated_by' => auth()->id()]);
+        } else {
+            $manufacturingOrder = Order::create([
+                'status' => $orderStatus,
+                'customer_id' => $customerId,
+                'branch_id' => $effectiveBranch?->id,
+                'store_id' => $manufacturingBranch->store_id,
+                'type' => Order::TYPE_MANUFACTURING,
+                'notes' => $notes,
+                'description' => $description,
+            ]);
+        }
+
+        // Save or merge order details
+        foreach ($productsForBranch as $productDetail) {
+            $existingDetail = OrderDetails::where([
+                ['order_id', '=', $manufacturingOrder->id],
+                ['product_id', '=', $productDetail['product_id']],
+                ['unit_id', '=', $productDetail['unit_id']],
+            ])->first();
+
+            if ($existingDetail) {
+                $newQty = $existingDetail->quantity + $productDetail['quantity'];
+                $existingDetail->update([
+                    'quantity' => $newQty,
+                    'available_quantity' => $newQty,
+                    'price' => getUnitPrice($productDetail['product_id'], $productDetail['unit_id']),
+                ]);
+            } else {
+                $productDetail['price'] = getUnitPrice($productDetail['product_id'], $productDetail['unit_id']);
+                $productDetail['order_id'] = $manufacturingOrder->id;
+                OrderDetails::create($productDetail);
+            }
+
+            $manufacturedProductIds[] = $productDetail['product_id'];
+        }
+
+        return $manufacturedProductIds;
+    }
 
 
     public function storeWithUnitPricing($request)
