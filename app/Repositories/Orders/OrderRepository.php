@@ -196,13 +196,11 @@ class OrderRepository implements OrderRepositoryInterface
             }
 
             // Only look for pending TYPE_NORMAL orders to avoid mixing with manufacturing orders
-            $pendingOrderId = !$isEffectiveManager
-                ? (Order::where('status', Order::PENDING_APPROVAL)
-                    ->where('branch_id', $branchId)
-                    ->where('type', Order::TYPE_NORMAL)
-                    ->where('active', 1)
-                    ->value('id') ?? 0)
-                : 0;
+            $pendingOrderId = Order::where('status', Order::PENDING_APPROVAL)
+                ->where('branch_id', $branchId)
+                ->where('type', Order::TYPE_NORMAL)
+                ->where('active', 1)
+                ->value('id') ?? 0;
 
             $orderStatus = $isEffectiveManager ? Order::ORDERED : Order::PENDING_APPROVAL;
 
@@ -345,15 +343,12 @@ class OrderRepository implements OrderRepositoryInterface
         $manufacturedProductIds = [];
 
         // Check for existing pending manufacturing order for this specific manufacturing branch
-        $manufacturingOrder = null;
-        if (!$isEffectiveManager) {
-            $manufacturingOrder = Order::where('status', Order::PENDING_APPROVAL)
-                ->where('branch_id', $effectiveBranch?->id)
-                ->where('store_id', $manufacturingBranch->store_id)
-                ->where('type', Order::TYPE_MANUFACTURING)
-                ->where('active', 1)
-                ->first();
-        }
+        $manufacturingOrder = Order::where('status', Order::PENDING_APPROVAL)
+            ->where('branch_id', $effectiveBranch?->id)
+            ->where('store_id', $manufacturingBranch->store_id)
+            ->where('type', Order::TYPE_MANUFACTURING)
+            ->where('active', 1)
+            ->first();
 
         if ($manufacturingOrder) {
             $manufacturingOrder->update(['updated_by' => auth()->id()]);
