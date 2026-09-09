@@ -123,7 +123,7 @@ class AppServiceProvider extends ServiceProvider
             // Js::make('example-local-script', asset('js/tune.js')),
         // ]);
         FilamentView::registerRenderHook(
-            TablesRenderHook::TOOLBAR_SEARCH_BEFORE,
+            TablesRenderHook::FILTER_INDICATORS,
             fn (): View => view('filament.clusters.hr-salary-cluster.resources.payroll-resource.total-net-header'),
             scopes: ListPayrolls::class,
         );
