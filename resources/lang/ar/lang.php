@@ -44,6 +44,7 @@ return [
   'branch_manager' => 'مدير الفرع',
   'order_owner' => 'صاحب الطلب',
   'order_status' => 'حالة الطلبية',
+  'in_transit' => 'في الطريق',
   'order_id_copied' => 'تم نسخ رقم الطلبية',
   'item_counts' => 'عدد المنتجات',
   'total_amount' => 'المبلغ الكلي',

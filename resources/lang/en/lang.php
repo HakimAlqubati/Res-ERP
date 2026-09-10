@@ -44,6 +44,7 @@ return [
     'branch_manager'                              => 'Branch manager',
     'order_owner'                                 => 'Order owner',
     'order_status'                                => 'Order status',
+    'in_transit'                                  => 'In Transit',
     'order_id_copied'                             => 'Order id copied',
     'item_counts'                                 => 'Item counts',
     'total_amount'                                => 'Total amount',
