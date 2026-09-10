@@ -12,7 +12,7 @@ class CopyOrderOutToBranchStoreService
     public function handle(?int $branchId = null): void
     {
         Order::with(['branch.store'])
-            ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
+            ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])
             ->whereNull('deleted_at')
             ->when($branchId, function ($q) use ($branchId) {
                 $q->where('branch_id', $branchId);

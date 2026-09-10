@@ -84,6 +84,7 @@ class OrderTable
                         'primary',
                         'secondary' => static fn($state): bool => $state === Order::PENDING_APPROVAL,
                         'warning' => static fn($state): bool => $state === Order::READY_FOR_DELEVIRY,
+                        'info' => static fn($state): bool => $state === Order::IN_TRANSIT,
                         'success' => static fn($state): bool => $state === Order::DELEVIRED,
                         'danger' => static fn($state): bool => in_array($state, [Order::PROCESSING, Order::CANCELLED]),
                     ])
@@ -95,7 +96,7 @@ class OrderTable
                     ->numeric()
                     ->hidden(fn(): bool => isStoreManager())
                     ->state(function (Order $record, OrderCostAnalysisService $service) {
-                        if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
+                        if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])) {
                             $analysis = $service->getOrderValues($record->id);
                             return $analysis['total_cost_from_inventory_transactions'] ?? $record->total_amount;
                         }
@@ -109,7 +110,7 @@ class OrderTable
                             ->using(function (Table $table) {
                                 $service = app(OrderCostAnalysisService::class);
                                 $total = $table->getRecords()->sum(function ($record) use ($service) {
-                                    if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
+                                    if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])) {
                                         $analysis = $service->getOrderValues($record->id);
                                         return $analysis['total_cost_from_inventory_transactions'] ?? $record->total_amount;
                                     }
@@ -152,14 +153,7 @@ class OrderTable
                     ->label(__('lang.order_status'))
                     ->multiple()
                     ->searchable()
-                    ->options([
-                        'ordered' => 'Ordered',
-                        'processing' => 'Processing',
-                        'ready_for_delivery' => 'Ready for deleviry',
-                        'delevired' => 'Delevired',
-                        'pending_approval' => 'Pending approval',
-                        'cancelled' => 'Cancelled',
-                    ]),
+                    ->options(fn () => Order::getStatusLabels()),
                 SelectFilter::make('customer_id')
                     ->searchable()
                     ->multiple()
@@ -337,7 +331,7 @@ class OrderTable
                 ]),
             ])
             // إظهار الزر فقط إذا كان الطلب جاهزاً للتحليل (تم شحنه/تسليمه)
-            ->hidden(fn(Order $record): bool => !in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED]));
+            ->hidden(fn(Order $record): bool => !in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED]));
     }
 
     /**

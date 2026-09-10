@@ -133,7 +133,7 @@ class OrderRepository implements OrderRepositoryInterface
             }
         }
         if (isDriver()) {
-            $query->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED]);
+            $query->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED]);
         }
 
         // $query->where('branch_id', '!=', auth()->user()->branch_id);
@@ -548,9 +548,29 @@ class OrderRepository implements OrderRepositoryInterface
                 ], 404);
             }
 
-            // If order is "ready for delivery", only allow changing to "delivered"
+            // If order is "ready for delivery", validate allowed transitions
             if (
                 $order->status === Order::READY_FOR_DELEVIRY
+                && $request->has('status')
+            ) {
+                $allowedNext = isInTransitOrderEnabled()
+                    ? [Order::IN_TRANSIT, Order::DELEVIRED]
+                    : [Order::DELEVIRED];
+
+                if (!in_array($request->status, $allowedNext, true)) {
+                    DB::rollBack();
+
+                    return response()->json([
+                        'success' => false,
+                        'orderId' => $order->id,
+                        'message' => 'Ready for delivery orders can only be changed to ' . implode(' or ', $allowedNext) . '.',
+                    ], 422);
+                }
+            }
+
+            // If order is "in transit", only allow changing to "delivered"
+            if (
+                $order->status === Order::IN_TRANSIT
                 && $request->has('status')
                 && $request->status !== Order::DELEVIRED
             ) {
@@ -559,21 +579,26 @@ class OrderRepository implements OrderRepositoryInterface
                 return response()->json([
                     'success' => false,
                     'orderId' => $order->id,
-                    'message' => 'Ready for delivery orders can only be changed to delivered.',
+                    'message' => 'In transit orders can only be changed to delivered.',
                 ], 422);
+            }
+
+            $allowedStatuses = [
+                Order::PROCESSING,
+                Order::READY_FOR_DELEVIRY,
+                Order::DELEVIRED,
+                Order::ORDERED,
+                Order::CANCELLED,
+            ];
+            if (isInTransitOrderEnabled() || $order->status === Order::IN_TRANSIT) {
+                $allowedStatuses[] = Order::IN_TRANSIT;
             }
 
             // Validate the request data
             $validatedData = $request->validate([
                 'status' => [
                     'string',
-                    Rule::in([
-                        Order::PROCESSING,
-                        Order::READY_FOR_DELEVIRY,
-                        Order::DELEVIRED,
-                        Order::ORDERED,
-                        Order::CANCELLED,
-                    ]),
+                    Rule::in($allowedStatuses),
                 ],
                 'notes' => 'string',
                 'full_quantity' => 'boolean',
@@ -582,7 +607,7 @@ class OrderRepository implements OrderRepositoryInterface
             $order->updated_by = auth()->user()->id;
             // Fill the order with the validated data and save it to the database
 
-            if (in_array($request->status, [Order::READY_FOR_DELEVIRY]) && empty($order->transfer_date)) {
+            if (in_array($request->status, [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT]) && empty($order->transfer_date)) {
                 $order->transfer_date = now();
             }
             $order->fill($validatedData)->save();
@@ -615,7 +640,7 @@ class OrderRepository implements OrderRepositoryInterface
         $order_branch = Branch::find($order->branch_id)->name;
         $order_status = $order->status;
         $file_name = __('lang.order-no-') . $id;
-        if (in_array($order_status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
+        if (in_array($order_status, [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])) {
             $file_name = __('lang.transfer-no-') . $id . ' - ' . $order->transfer_date;
         }
         return Excel::download(new OrdersExport($id), $order_branch . ' - ' . $file_name . '.xlsx');

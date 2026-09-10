@@ -249,7 +249,7 @@ class ProductRepository implements ProductRepositoryInterface
             ->when($branch_id && is_array($branch_id), function ($query) use ($branch_id) {
                 return $query->whereIn('orders.branch_id', $branch_id);
             })
-            ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
+            ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT])
             // ->where('orders.active', 1)
             ->whereNull('orders.deleted_at')
             ->groupBy(
@@ -758,7 +758,7 @@ class ProductRepository implements ProductRepositoryInterface
                 AND (? IS NULL OR o.transfer_date >= ?)
                 AND (? IS NULL OR o.transfer_date <= ?)
                 -- Ensure we only pick orders that are effectively 'IN' stock (Delivered/Ready)
-                AND o.status IN ('ready_for_delivery', 'delevired')
+                AND o.status IN ('ready_for_delivery', 'in_transit', 'delevired')
 
         ) AS t
         GROUP BY 
@@ -868,7 +868,7 @@ class ProductRepository implements ProductRepositoryInterface
             //     //     dd($branch_id);
             //     return $query->whereIn('orders.branch_id', $branch_id);
             // })
-            ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
+            ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT])
             // ->where('orders.active', 1)
             ->whereNull('orders.deleted_at')
             // ->groupBy(

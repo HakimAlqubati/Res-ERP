@@ -22,6 +22,7 @@ class OrderDeliveryReportService
             })
             ->whereIn('status', [
                 Order::READY_FOR_DELEVIRY,
+                Order::IN_TRANSIT,
                 Order::DELEVIRED,
             ])
             ->get();

@@ -22,6 +22,7 @@ class Order extends Model implements Auditable
     public const ORDERED = 'ordered';
     public const PROCESSING = 'processing';
     public const READY_FOR_DELEVIRY = 'ready_for_delivery';
+    public const IN_TRANSIT = 'in_transit';
     public const DELEVIRED = 'delevired';
     public const PENDING_APPROVAL = 'pending_approval';
     public const CANCELLED = 'cancelled';
@@ -147,12 +148,33 @@ class Order extends Model implements Auditable
 
 
     // Status Labels
+    // Status Labels
     public static function getStatusLabels(): array
+    {
+        $statuses = [
+            self::ORDERED => 'Ordered',
+            self::PROCESSING => 'Processing',
+            self::READY_FOR_DELEVIRY => 'Ready for Delivery',
+        ];
+
+        if (isInTransitOrderEnabled()) {
+            $statuses[self::IN_TRANSIT] = 'In Transit';
+        }
+
+        $statuses[self::DELEVIRED] = 'Delivered';
+        $statuses[self::PENDING_APPROVAL] = 'Pending Approval';
+        $statuses[self::CANCELLED] = 'Cancelled';
+
+        return $statuses;
+    }
+
+    public static function getAllStatusLabels(): array
     {
         return [
             self::ORDERED => 'Ordered',
             self::PROCESSING => 'Processing',
             self::READY_FOR_DELEVIRY => 'Ready for Delivery',
+            self::IN_TRANSIT => 'In Transit',
             self::DELEVIRED => 'Delivered',
             self::PENDING_APPROVAL => 'Pending Approval',
             self::CANCELLED => 'Cancelled',
@@ -165,6 +187,7 @@ class Order extends Model implements Auditable
             self::ORDERED => 'blue',
             self::PROCESSING => 'yellow',
             self::READY_FOR_DELEVIRY => 'orange',
+            self::IN_TRANSIT => 'sky',
             self::DELEVIRED => 'green',
             self::PENDING_APPROVAL => 'purple',
             self::CANCELLED => 'red',
@@ -177,7 +200,8 @@ class Order extends Model implements Auditable
         return match ($status) {
             self::ORDERED => 'heroicon-o-shopping-cart',
             self::PROCESSING => 'heroicon-o-cog',
-            self::READY_FOR_DELEVIRY => 'heroicon-o-truck',
+            self::READY_FOR_DELEVIRY => 'heroicon-o-archive-box',
+            self::IN_TRANSIT => 'heroicon-o-truck',
             self::DELEVIRED => 'heroicon-o-check-circle',
             self::PENDING_APPROVAL => 'heroicon-o-clock',
             self::CANCELLED => 'heroicon-o-x-circle',
@@ -232,13 +256,14 @@ class Order extends Model implements Auditable
 
         static::updated(function ($order) {
 
-            if (in_array($order->status, [self::PROCESSING, self::READY_FOR_DELEVIRY]) && $order->isDirty('status')) {
+            if (in_array($order->status, [self::PROCESSING, self::READY_FOR_DELEVIRY, self::IN_TRANSIT]) && $order->isDirty('status')) {
                 $customer = $order->customer;
                 if ($customer && $customer->fcm_token) {
+                    $label = self::getAllStatusLabels()[$order->status] ?? $order->status;
                     sendNotification(
                         $customer->fcm_token,
                         '📦 تحديث حالة الطلب',
-                        "تم تحديث حالة طلبك رقم #{$order->id} إلى: " . self::getStatusLabels()[$order->status]
+                        "تم تحديث حالة طلبك رقم #{$order->id} إلى: " . $label
                     );
                 }
             }
@@ -311,7 +336,7 @@ class Order extends Model implements Auditable
         });
 
         static::saved(function (Order $order) {
-            if (in_array($order->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) { 
+            if (in_array($order->status, [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])) { 
                 // Create Financial Transaction for Transfers (only for non-reseller branches)
                 if ($order->branch && $order->branch->type !== Branch::TYPE_RESELLER) {
                     app(\App\Services\Financial\TransferFinancialSyncService::class)->syncOrder($order);
@@ -429,8 +454,12 @@ class Order extends Model implements Auditable
                 ];
                 //     ];
             case self::READY_FOR_DELEVIRY:
+                return isInTransitOrderEnabled()
+                    ? [self::IN_TRANSIT => 'In Transit']
+                    : [self::DELEVIRED => 'Delivered'];
+            case self::IN_TRANSIT:
                 return [
-                    self::DELEVIRED => 'Delevired',
+                    self::DELEVIRED => 'Delivered',
                 ];
             case self::CANCELLED:
                 return []; // No transitions available from cancelled
