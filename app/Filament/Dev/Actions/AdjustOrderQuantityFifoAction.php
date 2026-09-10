@@ -26,26 +26,26 @@ class AdjustOrderQuantityFifoAction extends Action
     {
         parent::setUp();
 
-        $this->label(__('📦 تعديل كمية الطلب (FIFO)'))
+        $this->label('Adjust Order Qty (FIFO)')
             ->icon('heroicon-o-adjustments-horizontal')
             ->color(Color::Amber)
-            ->modalHeading(__('تعديل كمية صنف في طلب مع تخصيص الفارق عبر FIFO'))
-            ->modalDescription(__('سيتم حساب الفارق بين الكمية الحالية والجديدة وسحبه من المخزن عبر دفعات الـ FIFO وتحديث حركات المخزن وتفاصيل الطلب والقيد المالي تلقائياً.'))
-            ->modalSubmitActionLabel(__('تأكيد التعديل والتخصيص'))
+            ->modalHeading('Adjust Order Item Quantity (FIFO Allocation)')
+            ->modalDescription('The difference between current and new quantity will be calculated and deducted from inventory via FIFO batches, automatically updating inventory transactions, order details, and financial transactions.')
+            ->modalSubmitActionLabel('Confirm & Allocate FIFO')
             ->modalWidth('lg')
             ->schema([
                 TextInput::make('order_id')
-                    ->label(__('رقم الطلب (Order ID)'))
-                    ->placeholder(__('أدخل رقم الطلب مثلاً 105'))
+                    ->label('Order ID')
+                    ->placeholder('Enter order ID, e.g. 105')
                     ->required()
                     ->numeric()
                     ->live(onBlur: true)
                     ->afterStateUpdated(fn (Set $set) => $set('product_id', null))
-                    ->helperText(__('أدخل رقم الطلب ثم اختر الصنف أدناه')),
+                    ->helperText('Enter the order ID to load its items below'),
 
                 Select::make('product_id')
-                    ->label(__('الصنف (Product)'))
-                    ->placeholder(__('اختر الصنف من أصناف الطلب'))
+                    ->label('Product')
+                    ->placeholder('Select product from order')
                     ->required()
                     ->searchable()
                     ->options(function (Get $get) {
@@ -60,7 +60,7 @@ class AdjustOrderQuantityFifoAction extends Action
                             ->mapWithKeys(function ($d) {
                                 $productName = $d->product?->name ?? "Product #{$d->product_id}";
                                 $unitName = $d->unit?->name ?? '';
-                                return [$d->product_id => "{$productName} (الكمية الحالية: {$d->available_quantity} {$unitName})"];
+                                return [$d->product_id => "{$productName} (Current: {$d->available_quantity} {$unitName})"];
                             })
                             ->toArray();
                     })
@@ -78,19 +78,19 @@ class AdjustOrderQuantityFifoAction extends Action
                                 $price = function_exists('formatMoneyWithCurrency')
                                     ? formatMoneyWithCurrency($detail->price)
                                     : (string) $detail->price;
-                                return "الكمية الحالية: {$detail->available_quantity} {$unitName} | سعر الوحدة: {$price}";
+                                return "Current Quantity: {$detail->available_quantity} {$unitName} | Unit Price: {$price}";
                             }
                         }
-                        return __('اختر الصنف المراد تعديل كميته');
+                        return 'Select the product to adjust quantity';
                     }),
 
                 TextInput::make('new_qty')
-                    ->label(__('الكمية الجديدة المطلوبة (New Quantity)'))
-                    ->placeholder(__('مثال: 2.5'))
+                    ->label('New Quantity')
+                    ->placeholder('e.g. 2.5')
                     ->required()
                     ->numeric()
                     ->minValue(0.0001)
-                    ->helperText(__('أدخل الكمية الإجمالية الجديدة (مثلاً 2.5). سيتم حساب الفارق وإخراجه عبر FIFO تلقائياً.')),
+                    ->helperText('Enter the new total quantity (e.g. 2.5). The difference will be allocated via FIFO automatically.'),
             ])
             ->action(function (array $data) {
                 $orderId   = (int) $data['order_id'];
@@ -109,22 +109,22 @@ class AdjustOrderQuantityFifoAction extends Action
 
                     if ($exitCode === 0) {
                         Notification::make()
-                            ->title(__('تم تعديل كمية الطلب بنجاح عبر FIFO'))
-                            ->body("تم تحديث الطلب #{$orderId} للصنف #{$productId} إلى الكمية {$newQty} وتخصيص الفارق عبر FIFO بنجاح.")
+                            ->title('Order Quantity Adjusted Successfully via FIFO')
+                            ->body("Order #{$orderId} item #{$productId} updated to {$newQty} and difference allocated via FIFO.")
                             ->success()
                             ->persistent()
                             ->send();
                     } else {
                         Notification::make()
-                            ->title(__('فشل تعديل كمية الطلب'))
-                            ->body($output ?: __('حدث خطأ أثناء تنفيذ عملية التخصيص.'))
+                            ->title('Failed to Adjust Order Quantity')
+                            ->body($output ?: 'An error occurred while executing FIFO allocation.')
                             ->danger()
                             ->persistent()
                             ->send();
                     }
                 } catch (Throwable $e) {
                     Notification::make()
-                        ->title(__('خطأ غير متوقع'))
+                        ->title('Unexpected Error')
                         ->body($e->getMessage())
                         ->danger()
                         ->persistent()
