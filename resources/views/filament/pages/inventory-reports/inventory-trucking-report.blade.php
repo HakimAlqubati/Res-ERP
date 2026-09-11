@@ -22,7 +22,7 @@
                     class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
                     {{ $product->name }}
                 </th>
-                <th colspan="{{ (isset($showGradiants) && $showGradiants) ? 5 : 4 }}" class="no_border_right_left" style="text-align: center;">
+                <th colspan="{{ (isset($showGradiants) && $showGradiants) ? 6 : 5 }}" class="no_border_right_left" style="text-align: center;">
                     <h3>({{ 'Inventory Tracking' }})</h3>
                 </th>
                 <th colspan="3" style="text-align: center;"
@@ -40,6 +40,7 @@
                 <th>{{ 'Unit' }}</th>
                 <th>{{ 'Qty per Pack' }}</th>
                 <th>{{ 'Qty' }}</th>
+                <th>{{ 'Remaining Qty' }}</th>
                 <th>{{ 'Store' }}</th>
                 @if (isset($showGradiants) && $showGradiants)
                 <th>{{ 'Ingradiants' }}</th>
@@ -68,6 +69,7 @@
 
                 <td> {{ $data->package_size }} </td>
                 <td> {{ $data->quantity }} </td>
+                <td> {{ $data->remaining_quantity }} </td>
                 <td> {{ $data->store->name ?? '' }} </td>
                 @if (isset($showGradiants) && $showGradiants)
                 <td style="vertical-align: top; text-align: {{ app()->getLocale() == 'ar' ? 'right' : 'left' }};">
@@ -106,7 +108,7 @@
                     @endif
                 </td>
                 @endif
-                <td colspan="2"> {{ $data->notes }} </td>
+                <td colspan="3"> {{ $data->notes }} </td>
             </tr>
             @php
             $totalQty += $data->quantity;
@@ -116,10 +118,10 @@
         @if ($unitId && !is_null($unitId) && isset($movementType) && !is_null($movementType))
         <tfoot>
             <tr class="font-bold bg-gray-100">
-                <td colspan="6" class="text-right">Total
+                <td colspan="7" class="text-right">Total
                     Quantity:</td>
                 <td>{{ $totalQty }}</td>
-                <td colspan="{{ (isset($showGradiants) && $showGradiants) ? 3 : 2 }}"></td>
+                <td colspan="{{ (isset($showGradiants) && $showGradiants) ? 5 : 4 }}"></td>
             </tr>
         </tfoot>
         @endif

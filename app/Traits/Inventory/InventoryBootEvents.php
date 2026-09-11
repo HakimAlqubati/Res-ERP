@@ -62,6 +62,16 @@ trait InventoryBootEvents
             if (is_null($transaction->waste_stock_percentage)) {
                 $transaction->waste_stock_percentage = 0;
             }
+
+            if (empty($transaction->package_size) && $currentUnitPrice) {
+                $transaction->package_size = $currentUnitPrice->package_size;
+            }
+
+            // 6. حساب الرصيد المتبقي التراكمي (remaining_quantity) للصنف في المخزن بوحدة الحركة
+            if ($transaction->store_id) {
+                $transaction->remaining_quantity = app(\App\Services\Inventory\InventoryBalanceService::class)
+                    ->calculateRemainingForTransaction($transaction);
+            }
         });
         static::created(function ($transaction) {
 
@@ -96,14 +106,6 @@ trait InventoryBootEvents
                 //     $transaction
                 // );
             }
-
-            // $availableQty = MultiProductsInventoryService::getRemainingQty(
-            //     $transaction->product_id,
-            //     $transaction->unit_id,
-            //     $transaction->store_id
-            // );
-            // $transaction->remaining_quantity = $availableQty;
-             $transaction->save();
         });
     }
 }
