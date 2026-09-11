@@ -15,7 +15,11 @@ class ReprocessOrderFifo extends Command
     public function handle()
     {
         $orderId = $this->argument('orderId');
-        $order = Order::with('orderDetails', 'branch.store')->find($orderId);
+        $order = Order::withoutGlobalScopes()->with([
+            'orderDetails',
+            'branch' => fn ($q) => $q->withoutGlobalScopes(),
+            'branch.store' => fn ($q) => $q->withoutGlobalScopes(),
+        ])->find($orderId);
 
         if (!$order) {
             $this->error("Order #{$orderId} not found.");
@@ -55,7 +59,7 @@ class ReprocessOrderFifo extends Command
                     Order::moveFromInventory($allocations, $detail);
 
                     if ($order->branch && $order->branch->store && $order->branch->store->active) {
-                        Order::receiveIntoBranchStore($allocations, $detail);
+                        Order::receiveIntoBranchStore($allocations, $detail, $order->branch->store->id);
                     }
 
                     $this->info("  ✅ Product #{$detail->product_id} - {$detail->available_quantity} units allocated");

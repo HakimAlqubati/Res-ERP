@@ -90,6 +90,8 @@ class Branch extends Model implements HasMedia, Auditable
         'is_kitchen',
         'status_label',
         'is_expired',
+        'chef_assistants_names',
+        'chef_assistants_emails',
     ];
 
     public function registerMediaCollections(): void

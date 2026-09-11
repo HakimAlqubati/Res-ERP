@@ -24,6 +24,8 @@ class DeveloperTools extends Page
     protected function getHeaderActions(): array
     {
         return [
+            \App\Filament\Dev\Actions\AdjustOrderQuantityFifoAction::make(),
+
             Action::make('Rebuild Inventory')
                 ->label('♻️ Rebuild Inventory From Sources')
                 ->color('gray')
@@ -116,6 +118,24 @@ class DeveloperTools extends Page
                     }
                 }),
 
+            Action::make('update_311_product_prices')
+                ->label('🏷️ Update Product Prices (311 Series)')
+                ->icon('heroicon-m-currency-dollar')
+                ->color('success')
+                ->requiresConfirmation()
+                ->modalHeading('Update Product Prices (311 Series)')
+                ->modalDescription('This will update prices for products 311-001 to 311-016 in unit_prices and inventory_transactions tables based on the price sheet. Are you sure you want to proceed?')
+                ->action(function () {
+                    try {
+                        $service = app(\App\Services\Products\UpdateBatchProductPricesService::class);
+                        $report = $service->execute();
+
+                        $msg = "Processed {$report['products_processed']} products, updated {$report['unit_prices_updated']} unit prices and {$report['transactions_updated']} inventory transactions.";
+                        showSuccessNotifiMessage('✅ Prices updated successfully.', $msg);
+                    } catch (Throwable $th) {
+                        showWarningNotifiMessage("❌ Error: " . $th->getMessage());
+                    }
+                }),
         ];
     }
     public static function shouldRegisterNavigation(): bool

@@ -25,6 +25,10 @@
                 Randomize Salaries
             </x-filament::button>
 
+            <x-filament::button wire:click="updateProductPrices" color="success" icon="heroicon-m-tag">
+                Update 311 Product Prices
+            </x-filament::button>
+
         </div>
     </x-filament::section>
 

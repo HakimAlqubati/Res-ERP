@@ -59,6 +59,15 @@ if (!function_exists('isBranchUser')) {
         return false;
     }
 }
+if (!function_exists('isChefAssistant')) {
+    function isChefAssistant()
+    {
+        if (auth()->check()) {
+            return auth()->user()->isChefAssistant();
+        }
+        return false;
+    }
+}
 if (!function_exists('isDriver')) {
     function isDriver()
     {
@@ -99,6 +108,16 @@ if (!function_exists('isStoreManager')) {
     function isStoreManager()
     {
         return auth()->user()->isStoreManager();
+    }
+}
+
+if (!function_exists('isDefaultStoreManager')) {
+    function isDefaultStoreManager()
+    {
+        if (auth()->check()) {
+            return auth()->user()->isDefaultStoreManager();
+        }
+        return false;
     }
 }
 

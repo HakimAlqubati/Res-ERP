@@ -269,6 +269,8 @@ Route::get('/', function () {
 
 Route::get('orders/export/{id}', [OrderController::class, 'export']);
 Route::get('orders/export-transfer/{id}', [OrderController::class, 'exportTransfer']);
+Route::get('orders/shortage-report/pdf', [\App\Http\Controllers\Reports\OrderShortageReportController::class, 'download'])->name('orders.shortage.pdf');
+Route::get('orders/shortage-report/preview', [\App\Http\Controllers\Reports\OrderShortageReportController::class, 'preview'])->name('orders.shortage.preview');
 
 Route::get('/import_page_units', [ImportController::class, 'import_units_view']);
 Route::post('/import_units', [

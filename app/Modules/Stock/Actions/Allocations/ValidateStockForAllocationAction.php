@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Stock\Actions\Allocations;
 
+use App\Models\Store;
 use App\Models\UnitPrice;
 use App\Modules\Stock\Reports\StockBalanceReport\Contracts\StockBalanceRepositoryInterface;
 use App\Modules\Stock\Reports\StockBalanceReport\DataTransferObjects\StockBalanceFilterDTO;
@@ -57,11 +58,11 @@ final class ValidateStockForAllocationAction
             $requiredQuantitiesInPieces[$productId] += $qtyInPieces;
         }
 
-        // 2. جلب الأسماء الأصلية للمنتجات
-        $productNames = \App\Models\Product::withTrashed()
+        // 2. جلب الأسماء الأصلية للمنتجات وأكوادها
+        $products = \App\Models\Product::withTrashed()
             ->whereIn('id', $productIds)
-            ->pluck('name', 'id')
-            ->toArray();
+            ->get(['id', 'name', 'code', 'product_code'])
+            ->keyBy('id');
 
         // 3. جلب الأرصدة المتاحة من Repository التجميعي السريع جداً
         /** @var StockBalanceRepositoryInterface $stockBalanceRepo */
@@ -85,8 +86,19 @@ final class ValidateStockForAllocationAction
 
             // استخدام دالة التقريب لتفادي مشاكل الأرقام العشرية
             if (round($availablePieces, 4) < round($requiredPieces, 4)) {
-                $name = $productNames[$productId] ?? "Product #{$productId}";
-                $shortages[] = $name;
+                $product = $products->get($productId);
+                $code = $product?->code ?: $product?->product_code;
+                $name = $product?->name;
+
+                if ($code && $name) {
+                    $displayName = "{$code}-{$name}";
+                } elseif ($name) {
+                    $displayName = $name;
+                } else {
+                    $displayName = "Product #{$productId}";
+                }
+
+                $shortages[] = $displayName;
             }
         }
 
@@ -99,6 +111,9 @@ final class ValidateStockForAllocationAction
             if ($count > 2) {
                 $message .= " (and " . ($count - 2) . " more)";
             }
+
+            $storeName = Store::withTrashed()->where('id', $storeId)->value('name') ?? "Store #{$storeId}";
+            $message .= " in '{$storeName}'";
 
             throw ValidationException::withMessages(['stock' => $message]);
         }

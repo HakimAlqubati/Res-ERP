@@ -25,7 +25,17 @@ class ListInventoryTransactionTruckingReport extends ListRecords
         $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
         $transactionableType = $this->getTable()->getFilters()['transactionable_type']->getState()['value'] ?? null;
 
-        $product = Product::find($productId);
+        $product = !empty($productId) ? Product::with([
+            'category',
+            'productItems' => function ($query) {
+                $query->whereHas('product', function ($q) {
+                    $q->whereNotIn('code', ['11076', '06002'])
+                      ->whereNotIn('id', [11076, 6002]);
+                });
+            },
+            'productItems.product',
+            'productItems.unit'
+        ])->find($productId) : null;
 
         $reportData = collect();
 
@@ -55,6 +65,20 @@ class ListInventoryTransactionTruckingReport extends ListRecords
                 return $item;
             });
         }
-        return ['reportData' => $reportData, 'product' => $product, 'unitId' => $unitId, 'movementType' => $movementType];
+
+        $isManufacturing = (bool) ($product && $product->is_manufacturing);
+        $isMovementIn = in_array($movementType, ['in', InventoryTransaction::MOVEMENT_IN], true);
+        $isStockSupply = in_array($transactionableType, ['App\Models\StockSupplyOrder', \App\Models\StockSupplyOrder::class], true);
+
+        $showGradiants = $isManufacturing && ($isMovementIn || empty($movementType)) && ($isStockSupply || empty($transactionableType));
+
+        return [
+            'reportData' => $reportData,
+            'product' => $product,
+            'unitId' => $unitId,
+            'movementType' => $movementType,
+            'transactionableType' => $transactionableType,
+            'showGradiants' => $showGradiants,
+        ];
     }
 }

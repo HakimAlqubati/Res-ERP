@@ -2,6 +2,7 @@
 
 namespace App\Modules\HR\Payroll\Reports;
 
+use App\Enums\HR\Payroll\SalaryTransactionSubType;
 use App\Enums\HR\Payroll\SalaryTransactionType;
 use App\Models\Payroll;
 use App\Models\SalaryTransaction;
@@ -47,7 +48,7 @@ class SalarySlipReport
                 ->orderBy('date')
                 ->get()
         );
-        
+
         // Split transactions
         $earnings = $transactions->filter(fn($t) => $t->operation === '+');
         $deductions = $transactions->filter(fn($t) => $t->operation === '-');
@@ -62,6 +63,9 @@ class SalarySlipReport
         foreach ($deductions->values() as $d) {
             // Add the employee deduction row
             $dDesc = $d->description ?: ucfirst(str_replace('_', ' ', $d->sub_type ?? ($d->type ?? '')));
+            if ($this->isAdvanceWage($d) && !Str::contains($dDesc, '(Advance Wages)', true)) {
+                $dDesc .= ' (Advance Wages)';
+            }
             $deductionRows->push((object)[
                 'description' => $dDesc,
                 'amount'      => $d->amount,
@@ -137,16 +141,73 @@ class SalarySlipReport
 
         // Exclude *new* Carry Forward (deficit recording) from the TOTAL sum,
         // but include Carry Forward *recovery* (which has a reference_type).
+        // $totalDeductions = $deductions->filter(function ($t) {
+        //     if ($t->type === SalaryTransactionType::TYPE_CARRY_FORWARD->value) {
+        //         // If it's a recovery deduction, include it in the sum
+        //         return $t->type === SalaryTransactionType::TYPE_CARRY_FORWARD->value;
+        //     }
+        //     return true;
+        // })->sum('amount');
+
         $totalDeductions = $deductions->filter(function ($t) {
-            if ($t->type === SalaryTransactionType::TYPE_CARRY_FORWARD->value) {
-                // If it's a recovery deduction, include it in the sum
-                return $t->type === SalaryTransactionType::TYPE_CARRY_FORWARD->value;
-            }
-            return true;
+            $typeVal = $t->type instanceof \BackedEnum ? $t->type->value : $t->type;
+            return $typeVal !== SalaryTransactionType::TYPE_CARRY_FORWARD->value;
         })->sum('amount');
 
+        // Carry forward value
+        $carryForward = $deductions->filter(function ($t) {
+            $typeVal = $t->type instanceof \BackedEnum ? $t->type->value : $t->type;
+            return $typeVal === SalaryTransactionType::TYPE_CARRY_FORWARD->value;
+        })->sum('amount');
+
+        // فحص إذا يوجد 2 carry forward وكان الأول عبارة عن سداد للسابق
+        $cfTransactions = $deductions->filter(function ($t) {
+            $typeVal = $t->type instanceof \BackedEnum ? $t->type->value : $t->type;
+            return $typeVal === SalaryTransactionType::TYPE_CARRY_FORWARD->value;
+        })->values();
+
+        $deductedCarryForward = 0.0;
+        $lastCarryForward = 0.0;
+         
+        if ($cfTransactions->count() >= 2) {
+            $firstCf = $cfTransactions[0];
+            $secondCf = $cfTransactions[1];
+
+            $isFirstRecovery = ($firstCf->reference_type ?? null) === \App\Models\CarryForward::class
+                || Str::contains(strtolower($firstCf->description ?? ''), ['recovery', 'سداد', 'استرداد']);
+
+            if ($isFirstRecovery) {
+                $deductedCarryForward = (float) $firstCf->amount - (float) $secondCf->amount;
+            }
+
+            // آخر كاري فورورد (المؤجل للشهر القادم)
+            $lastCarryForward = (float) $secondCf->amount;
+        } elseif ($cfTransactions->count() === 1) {
+            $singleCf = $cfTransactions[0];
+            $isRecovery = ($singleCf->reference_type ?? null) === \App\Models\CarryForward::class
+                || Str::contains(strtolower($singleCf->description ?? ''), ['recovery', 'سداد', 'استرداد']);
+
+            // إذا لم يكن سداداً لسابق، فهو كاري فورورد جديد مؤجل للشهر القادم
+            if (!$isRecovery) {
+                $lastCarryForward = (float) $singleCf->amount;
+            }
+        }
+
+
+        $totalDeductions += $deductedCarryForward;
         // $net = max($gross - $totalDeductions, 0);
-        $net = $gross - $totalDeductions;
+        $net = $gross - $totalDeductions - $lastCarryForward;
+        // if ($net <= 0) {
+        //     $net = 0;
+        // }
+        // dd([
+        //     'gross' => $gross,
+        //     'totalDeductions' => $totalDeductions,
+        //     'net' => $net,
+        //     'carryForward' => $carryForward,
+        //     'deductedCarryForward'=> $deductedCarryForward,
+        //     'lastCarryForward'=> $lastCarryForward,
+        // ]);
         $totalEmployer = $employerContrib->sum('amount');
 
         // Helper for words (placeholder)
@@ -159,17 +220,20 @@ class SalarySlipReport
         };
 
         return [
-            'payroll'         => $payroll,
-            'transactions'    => $transactions,
-            'earnings'        => $earnings->values(),
-            'deductions'      => $deductions->values(),
-            'deductionRows'   => $deductionRows,
-            'employerContrib' => $employerContrib->values(),
-            'gross'           => $gross,
-            'totalDeductions' => $totalDeductions,
-            'net'             => $net,
-            'totalEmployer'   => $totalEmployer,
-            'amountInWords'   => $amountInWords($net),
+            'payroll'              => $payroll,
+            'transactions'         => $transactions,
+            'earnings'             => $earnings->values(),
+            'deductions'           => $deductions->values(),
+            'deductionRows'        => $deductionRows,
+            'employerContrib'      => $employerContrib->values(),
+            'gross'                => $gross,
+            'totalDeductions'      => $totalDeductions,
+            'carryForward'         => $carryForward,
+            'deductedCarryForward' => $deductedCarryForward,
+            'lastCarryForward'     => $lastCarryForward,
+            'net'                  => $net,
+            'totalEmployer'        => $totalEmployer,
+            'amountInWords'        => $amountInWords($net),
         ];
     }
 
@@ -193,27 +257,29 @@ class SalarySlipReport
                 /** @var SalaryTransaction $first */
                 $first = $group->first();
                 $qtySum = $group->sum('qty');
-                
+
                 if ($first->type === SalaryTransactionType::TYPE_SALARY->value) {
                     $branchName = $first->payroll?->branch?->name;
-                    $label = "Earned Basic Salary (Prorated) " . (float)$qtySum . " days" . ($branchName ? " - {$branchName}" : "");
+                    $label = "Basic Salary (Prorated) " . (float)$qtySum . " days" . ($branchName ? " - {$branchName}" : "");
                 } else {
                     $label = $this->mergeLabel($first);
                 }
 
                 return (object) [
-                    'id'          => $first->id,
-                    'operation'   => $first->operation,
-                    'type'        => $first->type,
-                    'sub_type'    => $first->sub_type,
-                    'description' => $label,
-                    'notes'       => $first->notes,
-                    'amount'      => round((float) $group->sum('amount'), 2),
-                    'date'        => $first->date,
-                    'unit'        => $first->unit,
-                    'qty'         => $qtySum,
-                    'rate'        => $first->rate,
-                    'multiplier'  => $first->multiplier,
+                    'id'             => $first->id,
+                    'operation'      => $first->operation,
+                    'type'           => $first->type,
+                    'sub_type'       => $first->sub_type,
+                    'reference_type' => $first->reference_type,
+                    'reference_id'   => $first->reference_id,
+                    'description'    => $label,
+                    'notes'          => $first->notes,
+                    'amount'         => round((float) $group->sum('amount'), 2),
+                    'date'           => $first->date,
+                    'unit'           => $first->unit,
+                    'qty'            => $qtySum,
+                    'rate'           => $first->rate,
+                    'multiplier'     => $first->multiplier,
                 ];
             })
             ->values();
@@ -228,7 +294,30 @@ class SalarySlipReport
         $label = $transaction->description
             ?: ucfirst(str_replace('_', ' ', $transaction->sub_type ?? ($transaction->type ?? '')));
 
-        return trim((string) preg_replace('/\s*\([^)]*\d+\s*days?[^)]*\)\s*/i', ' ', $label));
+        $label = trim((string) preg_replace('/\s*\([^)]*\d+\s*days?[^)]*\)\s*/i', ' ', $label));
+
+        if ($this->isAdvanceWage($transaction) && !Str::contains($label, '(Advance Wages)', true)) {
+            $label .= ' (Advance Wages)';
+        }
+
+        return $label;
+    }
+
+    /**
+     * Check if a salary transaction or deduction item is an advance wage.
+     */
+    private function isAdvanceWage(object|array $transaction): bool
+    {
+        $type = is_array($transaction) ? ($transaction['type'] ?? null) : ($transaction->type ?? null);
+        $subType = is_array($transaction) ? ($transaction['sub_type'] ?? null) : ($transaction->sub_type ?? null);
+        $refType = is_array($transaction) ? ($transaction['reference_type'] ?? null) : ($transaction->reference_type ?? null);
+
+        $typeVal = $type instanceof \BackedEnum ? $type->value : (string) $type;
+        $subTypeVal = $subType instanceof \BackedEnum ? $subType->value : (string) $subType;
+
+        return in_array($typeVal, [SalaryTransactionType::TYPE_ADVANCE_WAGE->value, 'advance_wage', 'advance_wages'], true)
+            || in_array($subTypeVal, [SalaryTransactionSubType::ADVANCE_WAGE->value, 'advance_wage', 'advance_wages'], true)
+            || ($refType === \App\Models\AdvanceWage::class);
     }
 
     /**

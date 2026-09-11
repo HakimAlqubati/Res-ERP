@@ -103,6 +103,18 @@ class ManufacturingBranchResource extends Resource
                 TextColumn::make('user.name')->label(__('lang.branch_manager')),
                 TextColumn::make('category_names')->label(__('stock.customized_manufacturing_categories'))->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('user.email')->label('Email')->copyable(),
+                TextColumn::make('chef_assistants_names')
+                    ->label(__('lang.chef_assistants'))
+                    ->words(5)
+                    ->tooltip(fn($state) => $state)
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->default('-'),
+                TextColumn::make('chef_assistants_emails')
+                    ->label(__('lang.chef_assistants') . ' (' . __('lang.email') . ')')
+                    ->copyable()
+                    ->tooltip(fn($state) => $state)
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->default('-'),
                 TextColumn::make('total_quantity')->label(__('lang.quantity'))
                     ->action(function ($record) {
                         redirect('admin/branch-store-report?tableFilters[branch_id][value]=' . $record->id);
@@ -235,7 +247,7 @@ class ManufacturingBranchResource extends Resource
             static::scopeEloquentQueryToTenant($query, $tenant);
         }
 
-        return $query;
+        return $query->with(['chefAssistants', 'user', 'store']);
     }
 
     public static function getNavigationBadge(): ?string

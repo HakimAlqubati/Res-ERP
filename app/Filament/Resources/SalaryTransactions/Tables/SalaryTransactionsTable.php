@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\SalaryTransactions\Tables;
 
 use App\Enums\HR\Payroll\SalaryTransactionType;
+use App\Models\Employee;
 use App\Models\SalaryTransaction;
 use App\Filament\Resources\SalaryTransactions\SalaryTransactionResource;
 use Filament\Actions\BulkActionGroup;
@@ -16,6 +17,7 @@ use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class SalaryTransactionsTable
 {
@@ -129,16 +131,16 @@ class SalaryTransactionsTable
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable()
                     ->sortable(),
-            ])->deferFilters(false)
+            ])->deferFilters(true)
             ->filters([
                 TrashedFilter::make(),
                 // تصفية حسب الموظف
                 SelectFilter::make('employee_id')
                     ->label(__('Employee'))
-
-                    ->options(function () {
-                        return \App\Models\Employee::active()->orderBy('name')->pluck('name', 'id');
-                    }),
+                    ->relationship('employee', 'name', fn (Builder $query) => $query->active()->orderBy('name'))
+                    ->getOptionLabelFromRecordUsing(fn (Employee $record) => "{$record->id} - {$record->name}")
+                    ->searchable(['id', 'name'])
+                    ->preload(),
 
                 // السنة
                 SelectFilter::make('year')

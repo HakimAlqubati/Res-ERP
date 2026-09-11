@@ -101,6 +101,7 @@ class GoodsReceivedNoteResource extends Resource
                                 TextInput::make('grn_number')
                                     ->label('GRN Number')
                                     ->default(fn(): int => (GoodsReceivedNote::query()
+                                        ->withTrashed()
                                         ->orderBy('id', 'desc')
                                         ->value('id') + 1 ?? 1))
                                     ->unique(ignoreRecord: true)
@@ -123,7 +124,7 @@ class GoodsReceivedNoteResource extends Resource
                                     ->options(GoodsReceivedNote::getStatusOptions())
                                     ->required()
                                     ->hiddenOn('create')
-                                    ->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
+                                    ->disabled(fn($record): bool => $isEditOperation && in_array($record?->status, [GoodsReceivedNote::STATUS_APPROVED, GoodsReceivedNote::STATUS_REJECTED])),
                                 Select::make('supplier_id')->label(__('lang.supplier'))
                                     ->getSearchResultsUsing(fn(string $search): array => Supplier::where('name', 'like', "%{$search}%")->limit(10)->pluck('name', 'id')->toArray())
                                     ->getOptionLabelUsing(fn($value): ?string => Supplier::find($value)?->name)

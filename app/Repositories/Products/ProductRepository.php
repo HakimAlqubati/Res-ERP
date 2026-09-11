@@ -7,6 +7,7 @@ use Exception;
 use App\Filament\Resources\OrderReportsResource\GeneralReportOfProductsResource;
 use App\Filament\Resources\OrderReportsResource\Pages\GeneralReportProductDetails;
 use App\Http\Resources\ProductResource;
+use App\Enums\ProductUnitsSortDirection;
 use App\Interfaces\Products\ProductRepositoryInterface;
 use App\Models\Branch;
 use App\Models\InventoryTransaction;
@@ -35,6 +36,11 @@ class ProductRepository implements ProductRepositoryInterface
         $isManufacturing = $request->input('is_manufacturing', false); // Default to true if not specified
         $branch = auth()->user()->branch ?? null;
 
+        $unitsSortParam = $request->input('units_sort');
+        $sortDirection = ($unitsSortParam && ProductUnitsSortDirection::tryFrom(strtolower($unitsSortParam)))
+            ? strtolower($unitsSortParam)
+            : ProductUnitsSortDirection::current()->value;
+
         // Query the database to get all active products, or filter by ID and/or category ID if they're set.
         $query = Product::active()
             // ->when($isManufacturing, function ($query) {
@@ -52,9 +58,15 @@ class ProductRepository implements ProductRepositoryInterface
                 $branch && $branch->type === Branch::TYPE_RESELLER,
                 fn($query) => $query->visibleToBranch($branch)
             )
-            ->with(['unitPrices' => function ($query) {
-                $query->orderBy('order', 'asc');
-            }])
+            ->with([
+                'category',
+                'productItems',
+                'outUnitPrices' => function ($query) use ($sortDirection) {
+                    $query->reorder()
+                        ->orderBy('package_size', $sortDirection)
+                        ->with('unit:id,name');
+                },
+            ])
             ->when($id, function ($query) use ($id) {
                 return $query->where('id', $id);
             })
