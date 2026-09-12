@@ -40,7 +40,7 @@
                 <th>{{ 'Unit' }}</th>
                 <th>{{ 'Qty per Pack' }}</th>
                 <th>{{ 'Qty' }}</th>
-                <th>{{ 'Remaining Qty' }}</th>
+                <th>{{ 'Balance' }}</th>
                 <th>{{ 'Store' }}</th>
                 @if (isset($showGradiants) && $showGradiants)
                 <th>{{ 'Ingradiants' }}</th>
