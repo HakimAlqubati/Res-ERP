@@ -260,6 +260,7 @@ return [
     'upcoming' => 'Upcoming',
     'active'   => 'Active',
     'normal'   => 'Normal',
+    'manufacturing' => 'Manufacturing',
     'no_data'   => 'No data',
     'cancel' => 'Cancel',
     'cancel_reason' => 'Cancel Reason',

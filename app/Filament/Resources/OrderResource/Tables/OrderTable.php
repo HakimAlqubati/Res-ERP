@@ -89,6 +89,19 @@ class OrderTable
                         'danger' => static fn($state): bool => in_array($state, [Order::PROCESSING, Order::CANCELLED]),
                     ])
                     ->iconPosition('after')->toggleable(isToggledHiddenByDefault: false),
+                BadgeColumn::make('type')
+                    ->label(__('lang.type'))
+                    ->colors([
+                        'secondary' => static fn($state): bool => in_array($state, [Order::TYPE_NORMAL, __('lang.normal'), 'Normal', 'عادي']),
+                        'warning' => static fn($state): bool => in_array($state, [Order::TYPE_MANUFACTURING, __('lang.manufacturing'), 'Manufacturing', 'تصنيع']),
+                    ])
+                    ->formatStateUsing(fn(?string $state): ?string => match ($state) {
+                        Order::TYPE_NORMAL => __('lang.normal'),
+                        Order::TYPE_MANUFACTURING => __('lang.manufacturing'),
+                        default => $state,
+                    })
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('item_count')->label(__('lang.item_counts'))->alignCenter(true)->sortable(),
                 TextColumn::make(
                     'total_amount'

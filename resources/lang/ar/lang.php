@@ -243,6 +243,7 @@ return [
   'upcoming' => 'قادِم',
   'active'   => 'نشِط',
   'normal'   => 'عادي',
+  'manufacturing' => 'تصنيع',
   'no_data'   => 'لا توجد بيانات',
   'cancel' => 'إلغاء',
   'cancel_reason' => 'سبب الالغاء',

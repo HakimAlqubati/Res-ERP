@@ -147,7 +147,14 @@ class Order extends Model implements Auditable
     }
 
 
-    // Status Labels
+    public static function getTypeLabels(): array
+    {
+        return [
+            self::TYPE_NORMAL => __('lang.normal'),
+            self::TYPE_MANUFACTURING => __('lang.manufacturing'),
+        ];
+    }
+
     // Status Labels
     public static function getStatusLabels(): array
     {
