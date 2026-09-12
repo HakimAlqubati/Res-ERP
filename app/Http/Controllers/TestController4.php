@@ -117,7 +117,7 @@ class TestController4 extends Controller
 
         if (isStoreManager()) {
 
-            // $where[] = "o.status != '" . Order::PENDING_APPROVAL . "'";
+            $where[] = "o.status != '" . Order::PENDING_APPROVAL . "'";
 
             
             if (!$user->isDefaultStoreManager()) {
