@@ -74,7 +74,7 @@ class InventoryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->striped()
-            ->paginated([10, 25, 50, 150,400])
+            ->paginated([10, 25, 50, 150, 400])
             ->defaultSort('id', 'desc')
             ->headerActions([
                 Action::make('import_inventory')->hidden()
@@ -110,9 +110,8 @@ class InventoryResource extends Resource
                     }),
 
                 static::makeStockInNonManufacturingAction()
-                // ->visible(fn()=>isHakimOrAdel())
-                ->visible(fn()=>isSuperAdmin())
-                ,
+                    // ->visible(fn()=>isHakimOrAdel())
+                    ->visible(fn() => isSuperAdmin()),
 
                 static::getZeroDisabledProductsAction(),
             ])
@@ -142,7 +141,7 @@ class InventoryResource extends Resource
                     ->label(__('Remaining Qty'))
                     ->sortable()
                     ->formatStateUsing(fn($state) => formatQunantity($state))
-                     ->toggleable()
+                    ->toggleable()
                     ->alignCenter(),
                 TextColumn::make('unit.name')
                     ->label('Unit'),
@@ -169,6 +168,11 @@ class InventoryResource extends Resource
                     ->label('Movement Date')->date('Y-m-d')
                     ->sortable(),
 
+                TextColumn::make('transaction_date')
+                    ->label('Transaction Date')
+                    ->date('Y-m-d')
+                    ->sortable()
+                    ->toggleable(),
 
 
 
@@ -238,8 +242,8 @@ class InventoryResource extends Resource
                             ->toArray();
                     })
                     ->getOptionLabelUsing(fn($value) => "ID: $value")
-                    // ->hidden()
-                    ,
+                // ->hidden()
+                ,
 
                 SelectFilter::make('movement_type')
                     ->label('Movement Type')
@@ -341,15 +345,15 @@ class InventoryResource extends Resource
             ->filtersFormColumns(4)
             ->deferFilters(true)
             ->recordActions([
- 
+
                 Action::make('editTransaction')
                     ->label('Edit Package Size')
                     ->icon('heroicon-o-pencil-square')
                     ->color('warning')
-                    ->visible(fn()=>isHakimOrAdel() && 1>2)
+                    ->visible(fn() => isHakimOrAdel() && 1 > 2)
                     ->action(function ($record, $data) {
                         $newPackageSize = $data['package_size'];
-                        
+
                         $record->update([
                             'package_size' => $newPackageSize,
                             'temp_qty' => $data['temp_qty'],
@@ -358,7 +362,7 @@ class InventoryResource extends Resource
                         // Check if it's from a StockAdjustmentDetail
                         if ($record->formatted_transactionable_type === 'StockAdjustmentDetail' || $record->transactionable_type === \App\Models\StockAdjustmentDetail::class) {
                             $adjDetail = \App\Models\StockAdjustmentDetail::find($record->transactionable_id);
-                            
+
                             if ($adjDetail) {
                                 $adjDetail->update(['package_size' => $newPackageSize]);
 
@@ -378,27 +382,27 @@ class InventoryResource extends Resource
                             ->body('Package size updated successfully.')
                             ->send();
                     })
-                     ->schema([
+                    ->schema([
                         TextInput::make('package_size')
                             ->label('Package Size')
                             ->required()
                             ->numeric()->default(fn($record): float => $record->package_size ?? 0)
                             ->minValue(0),
-                            TextInput::make('temp_qty')
+                        TextInput::make('temp_qty')
                             ->label('Temp qty')
                             ->default(fn($record): float => $record->temp_qty ?? 0)->numeric()
                     ]),
                 ActionGroup::make([
 
                     Action::make('editQuantity')
-                      
-                    ->visible(fn()=>isHakimOrAdel())
+
+                        ->visible(fn() => isHakimOrAdel())
                         ->schema([
                             TextInput::make('quantity')
                                 ->required()
                                 ->numeric()->default(fn($record): float => $record->quantity)
-                                // ->minValue(0.1)
-                                ,
+                            // ->minValue(0.1)
+                            ,
                         ])
                         ->action(function ($record, $data) {
                             $record->update([
@@ -416,7 +420,7 @@ class InventoryResource extends Resource
                         ->icon('heroicon-m-pencil-square'),
 
 
-                   
+
 
                 ])
             ])
@@ -477,9 +481,9 @@ class InventoryResource extends Resource
             ->unique()
             ->values();
 
-            if(isHakim()){
-                $manufacturingStoreIds[] = 1;
-            }
+        if (isHakim()) {
+            $manufacturingStoreIds[] = 1;
+        }
         return Store::active()
             ->whereIn('id', $manufacturingStoreIds)
             ->get(['id', 'name'])
@@ -501,7 +505,7 @@ class InventoryResource extends Resource
             ->active()
             ->unmanufacturingCategory()
             ->where('type', '!=', Product::TYPE_FINISHED_POS)   // exclude POS products
-            ->with(['unitPrices' => fn ($q) => $q->forSupply()->orderBy('package_size', 'asc')])
+            ->with(['unitPrices' => fn($q) => $q->forSupply()->orderBy('package_size', 'asc')])
             ->get();
 
         $createdCount = 0;
@@ -649,7 +653,7 @@ class InventoryResource extends Resource
         return Action::make('zero_disabled_products')
             ->label('تصفير المنتجات المعطلة')
             ->icon('heroicon-o-minus-circle')
-            ->visible(fn()=>isHakimOrAdel())
+            ->visible(fn() => isHakimOrAdel())
             ->color('danger')
             ->button()
             ->modalHeading('تصفير المنتجات المعطلة')
@@ -671,7 +675,7 @@ class InventoryResource extends Resource
                 Grid::make(3)->schema([
                     Select::make('store_id')
                         ->label('المستودع')
-                        ->options(fn () => Store::active()->pluck('name', 'id')->toArray())
+                        ->options(fn() => Store::active()->pluck('name', 'id')->toArray())
                         ->default(1)
                         ->required()
                         ->searchable()
