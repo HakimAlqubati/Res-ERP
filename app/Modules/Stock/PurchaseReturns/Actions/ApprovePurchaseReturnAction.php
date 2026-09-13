@@ -24,39 +24,44 @@ final class ApprovePurchaseReturnAction
 
     public function execute(PurchaseReturn $purchaseReturn, int $approverId): PurchaseReturn
     {
-        if ($purchaseReturn->status === PurchaseReturn::STATUS_APPROVED) {
-            throw new PurchaseReturnValidationException('This purchase return is already approved.');
-        }
+        return DB::transaction(function () use ($purchaseReturn, $approverId) {
+            // Lock the return row to prevent race condition / concurrent double approval
+            $lockedReturn = PurchaseReturn::where('id', $purchaseReturn->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        if ($purchaseReturn->cancelled) {
-            throw new PurchaseReturnValidationException('Cannot approve a cancelled purchase return.');
-        }
+            if ($lockedReturn->status === PurchaseReturn::STATUS_APPROVED) {
+                throw new PurchaseReturnValidationException('This purchase return is already approved.');
+            }
 
-        $items = $purchaseReturn->details->map(fn($d) => new PurchaseReturnItemDTO(
-            productId: (int) $d->product_id,
-            unitId: (int) $d->unit_id,
-            quantity: (float) $d->quantity,
-            unitPrice: (float) $d->unit_price,
-            purchaseInvoiceDetailId: $d->purchase_invoice_detail_id,
-            packageSize: (float) $d->package_size,
-            notes: $d->notes
-        ))->toArray();
+            if ($lockedReturn->cancelled) {
+                throw new PurchaseReturnValidationException('Cannot approve a cancelled purchase return.');
+            }
 
-        $context = new PurchaseReturnPipelineContext(
-            purchaseInvoiceId: $purchaseReturn->purchase_invoice_id,
-            supplierId: (int) $purchaseReturn->supplier_id,
-            storeId: (int) $purchaseReturn->store_id,
-            returnDate: $purchaseReturn->return_date ? $purchaseReturn->return_date->format('Y-m-d') : date('Y-m-d'),
-            userId: $approverId,
-            items: $items,
-            reason: $purchaseReturn->reason,
-            notes: $purchaseReturn->notes,
-            attachment: $purchaseReturn->attachment,
-            paymentMethodId: $purchaseReturn->payment_method_id,
-            existingReturn: $purchaseReturn
-        );
+            $items = $lockedReturn->details->map(fn($d) => new PurchaseReturnItemDTO(
+                productId: (int) $d->product_id,
+                unitId: (int) $d->unit_id,
+                quantity: (float) $d->quantity,
+                unitPrice: (float) $d->unit_price,
+                purchaseInvoiceDetailId: $d->purchase_invoice_detail_id,
+                packageSize: (float) $d->package_size,
+                notes: $d->notes
+            ))->toArray();
 
-        return DB::transaction(function () use ($context, $approverId) {
+            $context = new PurchaseReturnPipelineContext(
+                purchaseInvoiceId: $lockedReturn->purchase_invoice_id,
+                supplierId: (int) $lockedReturn->supplier_id,
+                storeId: (int) $lockedReturn->store_id,
+                returnDate: $lockedReturn->return_date ? $lockedReturn->return_date->format('Y-m-d') : date('Y-m-d'),
+                userId: $approverId,
+                items: $items,
+                reason: $lockedReturn->reason,
+                notes: $lockedReturn->notes,
+                attachment: $lockedReturn->attachment,
+                paymentMethodId: $lockedReturn->payment_method_id,
+                existingReturn: $lockedReturn
+            );
+
             $this->pipeline
                 ->send($context)
                 ->through([
@@ -74,7 +79,7 @@ final class ApprovePurchaseReturnAction
                     ]);
                 });
 
-            return $context->purchaseReturn->fresh(['details', 'supplier', 'store']);
+            return $lockedReturn->fresh(['details', 'supplier', 'store']);
         });
     }
 }

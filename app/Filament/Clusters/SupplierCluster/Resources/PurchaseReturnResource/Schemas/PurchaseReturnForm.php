@@ -114,9 +114,14 @@ class PurchaseReturnForm
                                     
                                 Hidden::make('total_amount')
                                     ->default(0),
-
-                                Hidden::make('attachment'),
                             ]),
+
+                            FileUpload::make('attachment')
+                                ->label('Attachment / Invoice Copy')
+                                ->directory('purchase_returns')
+                                ->disk('public')
+                                ->image()
+                                ->columnSpanFull(),
 
                             Textarea::make('reason')
                                 ->label('Return Reason')
@@ -244,7 +249,7 @@ class PurchaseReturnForm
                                     TextInput::make('quantity')
                                         ->label('Quantity')
                                         ->numeric()
-                                        ->minValue(0.0001)
+                                        ->minValue(0)
                                         ->default(1)
                                         ->live(onBlur: true)
                                         ->rules([
@@ -252,6 +257,7 @@ class PurchaseReturnForm
                                                 purchaseInvoiceId: (int) $get('../../purchase_invoice_id') ?: null,
                                                 productId: (int) $get('product_id') ?: null,
                                                 purchaseInvoiceDetailId: (int) $get('purchase_invoice_detail_id') ?: null,
+                                                packageSize: (float) ($get('package_size') ?? 1.0),
                                             ),
                                         ])
                                         ->afterStateUpdated(function ($set, $state, $get) {

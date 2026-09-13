@@ -42,9 +42,10 @@ final class PurchaseReturnPipelineContext
         }
         $this->attachment = $finalAttachment;
 
-        $this->items = collect($items)->map(
-            fn($item) => $item instanceof PurchaseReturnItemDTO ? $item : PurchaseReturnItemDTO::fromArray((array) $item)
-        );
+        $this->items = collect($items)
+            ->map(fn($item) => $item instanceof PurchaseReturnItemDTO ? $item : PurchaseReturnItemDTO::fromArray((array) $item))
+            ->filter(fn(PurchaseReturnItemDTO $item) => $item->quantity > 0)
+            ->values();
         $this->purchaseReturn = $existingReturn;
     }
 

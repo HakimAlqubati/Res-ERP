@@ -27,6 +27,16 @@ final class DeductInventoryStockPipe
                     ->where('unit_id', $item->unitId)
                     ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
                     ->value('id');
+
+                if (! $sourceTxId && $context->purchaseInvoice?->grn) {
+                    $sourceTxId = InventoryTransaction::query()
+                        ->where('transactionable_type', \App\Models\GoodsReceivedNote::class)
+                        ->where('transactionable_id', $context->purchaseInvoice->grn->id)
+                        ->where('product_id', $item->productId)
+                        ->where('unit_id', $item->unitId)
+                        ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+                        ->value('id');
+                }
             }
 
             InventoryTransaction::create([

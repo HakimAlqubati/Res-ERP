@@ -17,14 +17,20 @@ final class ReturnQuantityWithinLimitRule implements ValidationRule
         private readonly ?int $productId = null,
         private readonly ?int $purchaseInvoiceDetailId = null,
         private readonly ?int $excludeReturnId = null,
+        private readonly ?float $packageSize = 1.0,
     ) {}
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $qty = (float) $value;
 
-        if ($qty <= 0) {
-            $fail('Return quantity must be greater than zero.');
+        if ($qty < 0) {
+            $fail('Return quantity cannot be negative.');
+            return;
+        }
+
+        // 0 will be filtered out on submit, so it shouldn't trigger a failure
+        if ($qty == 0) {
             return;
         }
 
@@ -46,7 +52,8 @@ final class ReturnQuantityWithinLimitRule implements ValidationRule
             return;
         }
 
-        $maxReturnable = $detail->getRemainingReturnableQuantityForReturn($this->excludeReturnId);
+        $pkgSize = max(1.0, (float) ($this->packageSize ?? 1.0));
+        $maxReturnable = $detail->getRemainingReturnableQuantityForReturn($this->excludeReturnId, $pkgSize);
 
         if ($qty > $maxReturnable) {
             $productName = $detail->product?->name ?? "Product #{$detail->product_id}";

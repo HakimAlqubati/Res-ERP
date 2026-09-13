@@ -23,15 +23,24 @@ final class CancelPurchaseReturnAction
         }
 
         return DB::transaction(function () use ($purchaseReturn, $reason, $cancellerId) {
-            // If it had generated inventory transactions, remove them
-            InventoryTransaction::where('transactionable_type', PurchaseReturn::class)
+            // Retrieve inventory transactions before deletion to know affected products/stores
+            $inventoryTxs = InventoryTransaction::where('transactionable_type', PurchaseReturn::class)
                 ->where('transactionable_id', $purchaseReturn->id)
-                ->delete();
+                ->get();
 
-            // If it had generated financial transactions, remove them
+            $affectedProducts = $inventoryTxs->map(fn($tx) => [
+                'product_id' => (int) $tx->product_id,
+                'store_id'   => (int) $tx->store_id,
+            ])->unique(fn($item) => $item['product_id'] . '_' . $item['store_id'])->values();
+
+            // Delete individual transactions to trigger Eloquent events
+            $inventoryTxs->each->delete();
+
+            // If it had generated financial transactions, remove them via model
             FinancialTransaction::where('reference_type', PurchaseReturn::class)
                 ->where('reference_id', $purchaseReturn->id)
-                ->delete();
+                ->get()
+                ->each->delete();
 
             $purchaseReturn->update([
                 'status'        => PurchaseReturn::STATUS_CANCELLED,
@@ -40,6 +49,20 @@ final class CancelPurchaseReturnAction
                 'cancelled_by'  => $cancellerId,
                 'cancelled_at'  => now(),
             ]);
+
+            // Re-sync batch prices for all affected products
+            $tenantId = app(\Spatie\Multitenancy\Contracts\IsTenant::class)::current()?->id;
+            foreach ($affectedProducts as $item) {
+                try {
+                    \App\Modules\Stock\Jobs\SyncProductCurrentBatchPriceJob::dispatch(
+                        $item['product_id'],
+                        $item['store_id'],
+                        $tenantId
+                    )->onConnection('tenant');
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("Failed to dispatch SyncProductCurrentBatchPriceJob on return cancellation: {$e->getMessage()}");
+                }
+            }
 
             return $purchaseReturn->fresh(['details', 'supplier', 'store']);
         });

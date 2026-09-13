@@ -18,6 +18,7 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -140,4 +141,15 @@ class PurchaseReturnResource extends Resource
             'view'   => ViewPurchaseReturn::route('/{record}'),
         ];
     }
+
+     public static function getRecordSubNavigation(Page $page): array
+    {
+        return $page->generateNavigationItems([
+            ListPurchaseReturns::class,
+            CreatePurchaseReturn::class,
+            EditPurchaseReturn::class,
+            // Pages\ViewEmployee::class,
+        ]);
+    }
+
 }

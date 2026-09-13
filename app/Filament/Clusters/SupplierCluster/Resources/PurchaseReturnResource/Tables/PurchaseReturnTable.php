@@ -28,6 +28,7 @@ class PurchaseReturnTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn(Builder $query) => $query->with(['supplier', 'store', 'purchaseInvoice', 'creator']))
             ->striped()
             ->defaultSort('id', 'desc')
             ->recordUrl(fn(PurchaseReturn $record): string => PurchaseReturnResource::getUrl('view', ['record' => $record]))
@@ -138,7 +139,21 @@ class PurchaseReturnTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                            $approvedCount = $records->where('status', PurchaseReturn::STATUS_APPROVED)->count();
+                            $deletableRecords = $records->where('status', '!=', PurchaseReturn::STATUS_APPROVED);
+
+                            if ($approvedCount > 0) {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Bulk Delete Notice')
+                                    ->body("{$approvedCount} approved return(s) cannot be deleted and were skipped.")
+                                    ->warning()
+                                    ->send();
+                            }
+
+                            $deletableRecords->each(fn(PurchaseReturn $record) => $record->delete());
+                        }),
                 ]),
             ]);
     }

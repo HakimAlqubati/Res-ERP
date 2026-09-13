@@ -16,6 +16,21 @@ class EditPurchaseReturn extends EditRecord
 {
     protected static string $resource = PurchaseReturnResource::class;
 
+    public function mount(int|string $record): void
+    {
+        parent::mount($record);
+
+        if ($this->record->status !== \App\Models\PurchaseReturn::STATUS_DRAFT || $this->record->cancelled) {
+            Notification::make()
+                ->title('Cannot Edit Return')
+                ->body('Only draft purchase returns can be edited.')
+                ->danger()
+                ->send();
+
+            $this->redirect(PurchaseReturnResource::getUrl('view', ['record' => $this->record]));
+        }
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -35,6 +50,16 @@ class EditPurchaseReturn extends EditRecord
 
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
+        if ($record->status !== \App\Models\PurchaseReturn::STATUS_DRAFT || $record->cancelled) {
+            Notification::make()
+                ->title('Cannot Edit Return')
+                ->body('Approved or cancelled purchase returns cannot be modified.')
+                ->danger()
+                ->send();
+
+            $this->halt();
+        }
+
         $rawState = $this->form->getRawState();
         $data['details'] = $rawState['details'] ?? $data['details'] ?? [];
 

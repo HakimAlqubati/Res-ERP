@@ -22,6 +22,18 @@ final class CreatePurchaseReturnDraftAction
     public function execute(CreatePurchaseReturnDTO $dto): PurchaseReturn
     {
         $existing = $dto->returnId ? PurchaseReturn::find($dto->returnId) : null;
+        if ($existing) {
+            if ($existing->status !== PurchaseReturn::STATUS_DRAFT) {
+                throw new \App\Modules\Stock\PurchaseReturns\Exceptions\PurchaseReturnValidationException(
+                    "Cannot modify purchase return #{$existing->return_no} because it is already {$existing->status}."
+                );
+            }
+            if ($existing->cancelled) {
+                throw new \App\Modules\Stock\PurchaseReturns\Exceptions\PurchaseReturnValidationException(
+                    "Cannot modify purchase return #{$existing->return_no} because it has been cancelled."
+                );
+            }
+        }
 
         $context = new PurchaseReturnPipelineContext(
             purchaseInvoiceId: $dto->purchaseInvoiceId,

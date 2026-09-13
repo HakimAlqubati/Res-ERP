@@ -192,5 +192,13 @@ class PurchaseReturn extends Model implements Auditable
                 $model->return_no = self::autoReturnNo();
             }
         });
+
+        static::deleting(function (self $model) {
+            if ($model->status === self::STATUS_APPROVED) {
+                throw new \RuntimeException(
+                    "Cannot delete an approved purchase return [#{$model->return_no}]. Please cancel the return instead to ensure accounting and stock integrity."
+                );
+            }
+        });
     }
 }
