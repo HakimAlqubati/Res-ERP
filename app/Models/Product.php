@@ -103,10 +103,14 @@ class Product extends Model implements Auditable
 
     public function unitsForOrders()
     {
-        return $this->hasMany(UnitPrice::class)->where(
-            'use_in_orders',
-            1
-        );
+        return $this->hasMany(UnitPrice::class)
+            ->forOrders()
+            ->orderBy('package_size', 'asc');
+    }
+
+    public function forOrders()
+    {
+        return $this->unitsForOrders();
     }
 
 
