@@ -114,4 +114,43 @@ class PurchaseInvoiceDetail extends Model implements Auditable
             ->where('transactionable_id', $this->purchase_invoice_id)
             ->where('transactionable_type', PurchaseInvoice::class);
     }
+
+    public function returnDetails()
+    {
+        return $this->hasMany(PurchaseReturnDetail::class, 'purchase_invoice_detail_id');
+    }
+
+    public function getReturnedQuantityAttribute(): float
+    {
+        return (float) $this->returnDetails()
+            ->whereHas('purchaseReturn', fn($q) => $q->where('status', PurchaseReturn::STATUS_APPROVED))
+            ->sum('quantity');
+    }
+
+    public function getRemainingReturnableBaseQuantity(?int $excludeReturnId = null): float
+    {
+        $invoicePackageSize = max(1.0, (float) ($this->package_size ?? 1.0));
+        $totalPurchasedBase = ((float) $this->quantity) * $invoicePackageSize;
+
+        $previouslyReturnedBase = (float) $this->returnDetails()
+            ->when($excludeReturnId, fn($q) => $q->where('purchase_return_id', '!=', $excludeReturnId))
+            ->whereHas('purchaseReturn', fn($q) => $q->where('status', PurchaseReturn::STATUS_APPROVED))
+            ->get()
+            ->sum(fn(PurchaseReturnDetail $d) => ((float) $d->quantity) * max(1.0, (float) ($d->package_size ?? 1.0)));
+
+        return max(0.0, $totalPurchasedBase - $previouslyReturnedBase);
+    }
+
+    public function getRemainingReturnableQuantityForReturn(?int $excludeReturnId = null, ?float $targetPackageSize = null): float
+    {
+        $remainingBase = $this->getRemainingReturnableBaseQuantity($excludeReturnId);
+        $pkgSize = max(1.0, (float) ($targetPackageSize ?? $this->package_size ?? 1.0));
+
+        return round($remainingBase / $pkgSize, 4);
+    }
+
+    public function getRemainingReturnableQuantityAttribute(): float
+    {
+        return $this->getRemainingReturnableQuantityForReturn();
+    }
 }

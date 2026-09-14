@@ -25,6 +25,13 @@ trait CanCancelPurchaseInvoice
             ];
         }
 
+        if ($invoice->returns()->where('status', \App\Models\PurchaseReturn::STATUS_APPROVED)->exists()) {
+            return [
+                'status' => false,
+                'message' => 'Cannot cancel invoice: approved purchase returns exist against this invoice.',
+            ];
+        }
+
         if (empty($reason)) {
             return [
                 'status' => false,
