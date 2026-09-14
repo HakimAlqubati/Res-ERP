@@ -232,8 +232,17 @@ final class DeductCompositeProductComponentsAction
         \Illuminate\Support\Carbon $now
     ): void {
         $movementDate = $order->order_date ?? $now;
+        $storeId = (int) $order->store_id;
+
+        $currentBaseBalance = app(\App\Services\Inventory\InventoryBalanceService::class)
+            ->getCurrentBaseBalance((int) $component->product_id, $storeId);
 
         foreach ($allocations as $alloc) {
+            $pkgSize = max((float) ($alloc['target_unit_package_size'] ?? 1), 0.000001);
+            $deductedBase = (float) $alloc['deducted_qty'] * $pkgSize;
+            $currentBaseBalance -= $deductedBase;
+            $remainingQty = round($currentBaseBalance / $pkgSize, 4);
+
             $transactionsArray[] = [
                 'product_id' => $component->product_id,
                 'movement_type' => InventoryTransaction::MOVEMENT_OUT,
@@ -244,7 +253,8 @@ final class DeductCompositeProductComponentsAction
                 'package_size' => $alloc['target_unit_package_size'],
                 'movement_date' => $movementDate,
                 'transaction_date' => $now,
-                'store_id' => $alloc['store_id'],
+                'store_id' => $alloc['store_id'] ?? $storeId,
+                'remaining_quantity' => $remainingQty,
                 'notes' => "Manufacturing deduction for {$compositeProductName} in Supply Order #{$order->id}",
                 'transactionable_id' => $order->id,
                 'transactionable_type' => StockSupplyOrder::class,
