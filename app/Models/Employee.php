@@ -23,7 +23,12 @@ class Employee extends Model implements Auditable
 
     public function serviceTermination()
     {
-        return $this->hasOne(EmployeeServiceTermination::class);
+        return $this->hasOne(EmployeeServiceTermination::class)->latestOfMany();
+    }
+
+    public function serviceTerminations()
+    {
+        return $this->hasMany(EmployeeServiceTermination::class)->latest();
     }
     
     public function paymentMethod()
@@ -33,7 +38,11 @@ class Employee extends Model implements Auditable
     
     public function pendingTerminationRequest()
     {
-        return $this->hasOne(EmployeeServiceTermination::class)->pending();
+        return $this->hasOne(EmployeeServiceTermination::class)->ofMany([
+            'id' => 'max',
+        ], function ($query) {
+            $query->where('status', EmployeeServiceTermination::STATUS_PENDING);
+        });
     }
 
     protected $table = 'hr_employees';

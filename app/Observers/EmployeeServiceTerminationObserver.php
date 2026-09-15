@@ -21,23 +21,31 @@ class EmployeeServiceTerminationObserver
             $employeeServiceTermination->created_by = auth()->id();
         }
 
-        if (!$employeeServiceTermination->branch_id) {
-            // Retrieve employee if not already loaded
+        if (!$employeeServiceTermination->branch_id || !$employeeServiceTermination->service_start_date) {
             $employeeServiceTermination->loadMissing('employee');
-            $employeeServiceTermination->branch_id = $employeeServiceTermination->employee?->branch_id;
+            if (!$employeeServiceTermination->branch_id) {
+                $employeeServiceTermination->branch_id = $employeeServiceTermination->employee?->branch_id;
+            }
+            if (!$employeeServiceTermination->service_start_date && $employeeServiceTermination->employee?->join_date) {
+                $employeeServiceTermination->service_start_date = $employeeServiceTermination->employee->join_date;
+            }
         }
 
-        // Prevent creating multiple terminations if one is already pending or approved.
-        $hasActiveTermination = EmployeeServiceTermination::where('employee_id', $employeeServiceTermination->employee_id)
-            ->whereIn('status', [
-                EmployeeServiceTermination::STATUS_PENDING, 
-                EmployeeServiceTermination::STATUS_APPROVED
-            ])
+        // Prevent creating multiple pending termination requests for the same employee
+        $hasPendingTermination = EmployeeServiceTermination::where('employee_id', $employeeServiceTermination->employee_id)
+            ->where('status', EmployeeServiceTermination::STATUS_PENDING)
             ->exists();
 
-        if ($hasActiveTermination) {
+        if ($hasPendingTermination) {
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'employee_id' => 'Employee already has an active termination request.'
+                'employee_id' => 'Employee already has a pending termination request.'
+            ]);
+        }
+
+        // Prevent requesting termination for an already inactive employee
+        if ($employeeServiceTermination->employee && ! $employeeServiceTermination->employee->active) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'employee_id' => 'Cannot request termination for an employee who is already inactive.'
             ]);
         }
     }

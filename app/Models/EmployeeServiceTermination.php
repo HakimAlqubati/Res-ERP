@@ -20,6 +20,7 @@ class EmployeeServiceTermination extends Model
     protected $fillable = [
         'employee_id',
         'branch_id',
+        'service_start_date',
         'termination_date',
         'termination_reason',
         'notes',
@@ -33,12 +34,15 @@ class EmployeeServiceTermination extends Model
         'rejected_by',
         'approved_at',
         'rejected_at',
+        'rehired_at',
     ];
 
     protected $casts = [
+        'service_start_date' => 'date',
         'termination_date' => 'date',
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
+        'rehired_at' => 'datetime',
         'auto_approve' => 'boolean',
     ];
 

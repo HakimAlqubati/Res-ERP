@@ -29,9 +29,10 @@ class EmployeeLifecycleService
         $this->ensureFinancialClearance($employee);
 
         return DB::transaction(function () use ($employee, $data) {
-            $termination = $employee->serviceTermination()->create([
+            $termination = $employee->serviceTerminations()->create([
                 'termination_date'   => $data['termination_date'],
                 'termination_reason' => $data['termination_reason'],
+                'service_start_date' => $employee->join_date,
                 'notes'              => $data['notes'] ?? null,
                 'status'             => EmployeeServiceTermination::STATUS_PENDING,
             ]);
@@ -131,13 +132,25 @@ class EmployeeLifecycleService
     {
         DB::beginTransaction();
         try {
-            // 1. Reactivate employee and update join date
+            // 1. Mark latest approved termination as rehired
+            $latestApproved = $employee->serviceTerminations()
+                ->where('status', EmployeeServiceTermination::STATUS_APPROVED)
+                ->whereNull('rehired_at')
+                ->first();
+
+            if ($latestApproved) {
+                $latestApproved->update([
+                    'rehired_at' => now(),
+                ]);
+            }
+
+            // 2. Reactivate employee and update join date
             $employee->update([
                 'active' => 1,
                 'join_date' => $data['join_date'],
             ]);
 
-            // 2. Reactivate/Restore linked user if exists
+            // 3. Reactivate/Restore linked user if exists
             if ($employee->user_id) {
                 $user = User::withTrashed()->find($employee->user_id);
                 if ($user) {
@@ -148,8 +161,8 @@ class EmployeeLifecycleService
                 }
             }
 
-            // 3. Cancel any pending termination requests
-            $employee->serviceTermination()
+            // 4. Cancel any pending termination requests
+            $employee->serviceTerminations()
                 ->where('status', EmployeeServiceTermination::STATUS_PENDING)
                 ->update([
                     'status' => EmployeeServiceTermination::STATUS_CANCEL,

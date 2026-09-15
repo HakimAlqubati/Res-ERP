@@ -47,7 +47,10 @@ class PayrollsRelationManager extends RelationManager
             ->recordTitleAttribute('employee')
             ->modifyQueryUsing(function (Builder $query): Builder {
                 $query->with(['employee.branch', 'branch'])
-                      ->leftJoin('hr_employee_service_terminations', 'hr_employee_service_terminations.employee_id', '=', 'hr_payrolls.employee_id');
+                      ->leftJoin('hr_employee_service_terminations', function ($join) {
+                          $join->on('hr_employee_service_terminations.employee_id', '=', 'hr_payrolls.employee_id')
+                               ->whereRaw('hr_employee_service_terminations.id = (SELECT MAX(t.id) FROM hr_employee_service_terminations t WHERE t.employee_id = hr_payrolls.employee_id)');
+                      });
 
                 if ($this->isShowingBranchSplits()) {
                     return $query->select('hr_payrolls.*', 'hr_employee_service_terminations.termination_reason');

@@ -139,11 +139,15 @@ class EmployeeTable
                 TextColumn::make('serviceTermination.termination_date')
                     ->label(__('lang.termination_date'))
                     ->date()
+                    ->formatStateUsing(fn ($record, $state) => $record->active ? null : $state)
+                    ->placeholder('-')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('serviceTermination.termination_reason')
                     ->label(__('lang.termination_reason'))
                     ->limit(40)
+                    ->formatStateUsing(fn ($record, $state) => $record->active ? null : $state)
+                    ->placeholder('-')
                     ->tooltip(fn ($state) => $state)
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('salary')->sortable()->label(__('lang.salary'))
