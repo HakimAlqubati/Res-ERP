@@ -11,6 +11,13 @@ class DevDashboard extends BaseDashboard
     protected static ?string $navigationLabel = 'Console';
 
 
+    public function getHeaderActions(): array
+    {
+        return [
+            \App\Filament\Dev\Actions\AdjustOrderQuantityFifoAction::make(),
+        ];
+    }
+
     public function getWidgets(): array
     {
         return [

@@ -72,4 +72,16 @@ trait HasScopedUnitPrices
             ->first();
     }
 
+    public function unitsForOrders()
+    {
+        return $this->hasMany(UnitPrice::class)
+            ->forOrders()
+            ->orderBy('package_size', 'asc');
+    }
+
+    public function forOrders()
+    {
+        return $this->unitsForOrders();
+    }
+
 }

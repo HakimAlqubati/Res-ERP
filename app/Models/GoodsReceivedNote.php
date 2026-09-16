@@ -31,6 +31,7 @@ class GoodsReceivedNote extends Model implements Auditable
         'cancelled',
         'rejected_date',
         'rejected_reason',
+        'rejected_by',
     ];
 
     protected $auditInclude = [
@@ -49,6 +50,9 @@ class GoodsReceivedNote extends Model implements Auditable
         'status',
         'is_purchase_invoice_created',
         'approve_date',
+        'rejected_date',
+        'rejected_reason',
+        'rejected_by',
     ];
     protected $appends = [
         'details_count',
@@ -117,6 +121,16 @@ class GoodsReceivedNote extends Model implements Auditable
     public function canceller()
     {
         return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
+    public function rejectedBy()
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
+    }
+
+    public function rejector()
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
     }
 
     // في حال إضافة جدول التفاصيل لاحقًا

@@ -40,6 +40,14 @@ class UnitPrice extends Model implements Auditable
         'selling_price',
         'date','notes',
     ];
+
+    protected $casts = [
+        'use_in_orders'    => 'boolean',
+        'show_in_invoices' => 'boolean',
+        'package_size'     => 'float',
+        'price'            => 'float',
+        'selling_price'    => 'float',
+    ];
     public function product()
     {
         return $this->belongsTo(Product::class);
@@ -134,6 +142,28 @@ class UnitPrice extends Model implements Auditable
             self::USAGE_ALL,
             self::USAGE_OUT_ONLY,
         ]);
+    }
+
+    public function scopeForOrders($query)
+    {
+        return $query->forOut()
+            ->where(function ($q) {
+                $q->where('use_in_orders', 1)
+                    ->orWhere(function ($fallback) {
+                        $fallback->where('package_size', 1)
+                            ->whereNotExists(function ($sub) {
+                                $sub->selectRaw(1)
+                                    ->from('unit_prices as up_check')
+                                    ->whereColumn('up_check.product_id', 'unit_prices.product_id')
+                                    ->whereNull('up_check.deleted_at')
+                                    ->whereIn('up_check.usage_scope', [
+                                        self::USAGE_ALL,
+                                        self::USAGE_OUT_ONLY,
+                                    ])
+                                    ->where('up_check.use_in_orders', 1);
+                            });
+                    });
+            });
     }
 
     public function scopeForOperations($query)
