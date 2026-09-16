@@ -360,7 +360,9 @@ class OrderTable
             ->modalHeading(__('توليد حركات دخول لمخزن الفرع'))
             ->modalDescription(fn(Order $record): string => "سيتم تكرار حركات الصرف (OUT) للطلب #{$record->id} كحركات دخول (IN) لمخزن الفرع بنفس التواريخ والكميات دون إعادة احتساب FIFO.")
             ->modalSubmitActionLabel(__('تأكيد التوليد'))
-->visible(fn()=> isHakimOrAdel())
+            ->visible(fn()=> isHakimOrAdel())
+            ->disabled(fn(Order $record): bool => isInTransitOrderEnabled() && $record->status !== Order::DELEVIRED)
+            ->tooltip(fn(Order $record): ?string => (isInTransitOrderEnabled() && $record->status !== Order::DELEVIRED) ? __('لا يمكن توليد حركات الدخول لأن الطلب لم يتم استلامه بعد (Delivered)') : null)
             ->action(function (Order $record) {
                 $service = app(CopyOrderOutToBranchStoreService::class);
                 $result = $service->handleForOrder($record);

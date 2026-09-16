@@ -320,11 +320,18 @@ class Order extends Model implements Auditable
 
                         self::moveFromInventory($productAllocations, $detail);
 
-                        if ($hasBranchStore) {
+                        if ($hasBranchStore && ! isInTransitOrderEnabled()) {
                             self::receiveIntoBranchStore($productAllocations, $detail, $branchStore->id);
                         }
                     }
                 }
+            }
+
+            if (
+                $order->status === self::DELEVIRED &&
+                $order->getOriginal('status') !== self::DELEVIRED
+            ) {
+                self::recordBranchReceiptIfPending($order);
             }
 
 
@@ -405,6 +412,63 @@ class Order extends Model implements Auditable
                 'transactionable_id'   => $detail->order_id,
                 'transactionable_type' => \App\Models\Order::class,
                 'source_transaction_id' => $alloc['transaction_id'],
+            ]);
+        }
+    }
+
+    /**
+     * تسجيل حركات الدخول (IN) لمخزن الفرع عند وصول الطلب لحالة التسليم (Delivered)
+     * في حال كانت معلقة ولم تُسجل مسبقاً (عند تفعيل خيار in_transit).
+     */
+    public static function recordBranchReceiptIfPending(Order $order): void
+    {
+        $branch = $order->branch_id
+            ? Branch::withoutGlobalScopes()->with(['store' => fn($q) => $q->withoutGlobalScopes()])->find($order->branch_id)
+            : null;
+
+        $branchStore = $branch?->store;
+        if (! $branchStore || ! $branchStore->active) {
+            return;
+        }
+
+        // فحص الحماية من التكرار (Idempotency): إذا كانت حركات الدخول قد سُجلت بالفعل لهذا الطلب ومخزن الفرع
+        $hasIn = InventoryTransaction::where('transactionable_type', self::class)
+            ->where('transactionable_id', $order->id)
+            ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+            ->where('store_id', $branchStore->id)
+            ->exists();
+
+        if ($hasIn) {
+            return;
+        }
+
+        // جلب حركات الصرف (OUT) المرتبطة بهذا الطلب
+        $outTransactions = InventoryTransaction::where('transactionable_type', self::class)
+            ->where('transactionable_id', $order->id)
+            ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
+            ->get();
+
+        if ($outTransactions->isEmpty()) {
+            return;
+        }
+
+        $receiptDate = now();
+
+        foreach ($outTransactions as $out) {
+            InventoryTransaction::create([
+                'product_id'            => $out->product_id,
+                'movement_type'         => InventoryTransaction::MOVEMENT_IN,
+                'quantity'              => $out->quantity,
+                'unit_id'               => $out->unit_id,
+                'package_size'          => $out->package_size,
+                'price'                 => $out->price,
+                'movement_date'         => $receiptDate,
+                'transaction_date'      => $receiptDate,
+                'notes'                 => $out->notes ? ($out->notes . ' (Delivered)') : ('Supplied from Order #' . $order->id),
+                'store_id'              => $branchStore->id,
+                'transactionable_type'  => self::class,
+                'transactionable_id'    => $order->id,
+                'source_transaction_id' => $out->id,
             ]);
         }
     }

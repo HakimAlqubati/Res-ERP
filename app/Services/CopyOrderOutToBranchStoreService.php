@@ -11,8 +11,12 @@ class CopyOrderOutToBranchStoreService
 {
     public function handle(?int $branchId = null): void
     {
+        $allowedStatuses = isInTransitOrderEnabled()
+            ? [Order::DELEVIRED]
+            : [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED];
+
         Order::with(['branch.store'])
-            ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])
+            ->whereIn('status', $allowedStatuses)
             ->whereNull('deleted_at')
             ->when($branchId, function ($q) use ($branchId) {
                 $q->where('branch_id', $branchId);
@@ -68,6 +72,14 @@ class CopyOrderOutToBranchStoreService
             return [
                 'success' => false,
                 'message' => __('الفرع غير مرتبط بمخزن صالح أو نشط.'),
+                'count'   => 0,
+            ];
+        }
+
+        if (isInTransitOrderEnabled() && $order->status !== Order::DELEVIRED) {
+            return [
+                'success' => false,
+                'message' => __('لا يمكن توليد حركات دخول لمخزن الفرع لأن خيار (في الطريق) مفعل والطلب لم يصل لحالة تم الاستلام (Delivered) بعد.'),
                 'count'   => 0,
             ];
         }

@@ -30,7 +30,11 @@ class OrderObserver
 
     public function updated(Order $order)
     {
-        if (in_array($order->status, [Order::DELEVIRED, Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT])) {
+        $availableStatuses = isInTransitOrderEnabled()
+            ? [Order::DELEVIRED]
+            : [Order::DELEVIRED, Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT];
+
+        if (in_array($order->status, $availableStatuses, true)) {
             OrderDetails::where('order_id', $order->id)->update(['available_in_store' => 1]);
 
             // Sync to financial transactions if it's a transfer (not reseller)
