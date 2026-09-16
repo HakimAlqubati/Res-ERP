@@ -257,13 +257,9 @@ final class ProductResourceActions
             return false;
         }
 
-        // السماح دائمًا بالقيمة الحالية وبـ none، وكذلك بخيار All عند إعادة التفعيل بعد التعطيل
+        // السماح دائمًا بالقيمة الحالية و بـ none
         $currentValue = $record->usage_scope ?? null;
-        if (
-            $optionValue === UnitPrice::USAGE_NONE ||
-            $optionValue === $currentValue ||
-            ($currentValue === UnitPrice::USAGE_NONE && $optionValue === UnitPrice::USAGE_ALL)
-        ) {
+        if ($optionValue === UnitPrice::USAGE_NONE || $optionValue === $currentValue) {
             return false;
         }
 
