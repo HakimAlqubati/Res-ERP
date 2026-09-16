@@ -37,20 +37,10 @@ class PurchaseReturnForm
                 Wizard::make([
                     // Step 1: General Information
                     Step::make('General Information')
-                    
+
                         ->icon('heroicon-o-information-circle')
                         ->schema([
                             Grid::make(3)->schema([
-                                TextInput::make('return_no')
-                                    ->label('Return Number')
-                                    ->default(fn() => PurchaseReturn::autoReturnNo())
-                                    ->readOnly()
-                                    ->required(),
-
-                                DatePicker::make('return_date')
-                                    ->label('Return Date')
-                                    ->default(date('Y-m-d'))
-                                    ->required(),
 
                                 Select::make('purchase_invoice_id')
                                     ->label('Original Purchase Invoice')
@@ -80,6 +70,19 @@ class PurchaseReturnForm
                                             $set('total_amount', round($total, 4));
                                         }
                                     }),
+
+                                TextInput::make('return_no')
+                                    ->label('Return Number')
+                                    ->default(fn() => PurchaseReturn::autoReturnNo())
+                                    ->readOnly()
+                                    ->required(),
+
+                                DatePicker::make('return_date')
+                                    ->label('Return Date')
+                                    ->default(date('Y-m-d'))
+                                    ->required(),
+
+
                             ]),
 
                             Grid::make(3)->schema([
@@ -91,7 +94,7 @@ class PurchaseReturnForm
                                             ->toArray();
                                     })
                                     ->searchable()
-                                    ->required(),
+                                    ->required(false),
 
                                 Select::make('store_id')
                                     ->label('Store')
@@ -112,7 +115,7 @@ class PurchaseReturnForm
                                             ->toArray();
                                     })
                                     ->searchable(),
-                                    
+
                                 Hidden::make('total_amount')
                                     ->default(0),
                             ]),
@@ -420,11 +423,8 @@ class PurchaseReturnForm
                                         ->columnSpan(1),
                                 ]),
                         ])
-                        ->visible(fn($get) => $get('purchase_invoice_id'))
-                        ,
-                ])->columnSpanFull()->skippable()
-                
-                ,
+                        ->visible(fn($get) => $get('purchase_invoice_id')),
+                ])->columnSpanFull()->skippable(),
             ]);
     }
 }
