@@ -233,6 +233,7 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
                             'status' => GoodsReceivedNote::STATUS_REJECTED,
                             'rejected_reason' => $data['rejected_reason'],
                             'rejected_date' => now(),
+                            'rejected_by' => auth()->id(),
                         ]);
                     });
 

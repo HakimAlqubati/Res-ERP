@@ -101,7 +101,7 @@ class GoodsReceivedNoteResource extends Resource
                             ->hiddenLabel()
                             ->content(fn($record) => new \Illuminate\Support\HtmlString(
                                 '<div class="p-4 rounded-lg bg-danger-50 border border-danger-200 text-danger-700 dark:bg-danger-950/50 dark:border-danger-800 dark:text-danger-300">' .
-                                '<div class="font-bold text-sm mb-1">This Goods Received Note was rejected by the accountant.</div>' .
+                                '<div class="font-bold text-sm mb-1">This Goods Received Note was rejected' . ($record?->rejectedBy?->name ? ' by ' . e($record->rejectedBy->name) : '') . '.</div>' .
                                 '<div><span class="font-semibold">Reason: </span>' . e($record?->rejected_reason) . '</div>' .
                                 ($record?->rejected_date ? '<div class="text-xs text-gray-500 mt-1">Rejected Date: ' . $record->rejected_date->format('Y-m-d H:i') . '</div>' : '') .
                                 '</div>'
