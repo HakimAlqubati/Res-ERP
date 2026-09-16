@@ -271,23 +271,56 @@ class PurchaseReturnForm
                                         ->live()
                                         ->afterStateUpdated(function ($state, $set, $get) {
                                             $productId = $get('product_id');
-                                            if ($productId && $state) {
-                                                $unitPrice = UnitPrice::where('product_id', $productId)
-                                                    ->where('unit_id', $state)
-                                                    ->first();
-                                                if ($unitPrice) {
-                                                    $set('package_size', $unitPrice->package_size ?? 1);
-                                                    if (! $get('purchase_invoice_detail_id')) {
-                                                        $set('unit_price', $unitPrice->price ?? 0);
-                                                        $qty = (float) ($get('quantity') ?? 1);
-                                                        $set('total_price', round($qty * (float) ($unitPrice->price ?? 0), 4));
+                                            if (! $productId || ! $state) {
+                                                return;
+                                            }
 
-                                                        $rows = $get('../../details') ?? [];
-                                                        $sum = collect($rows)->sum(fn($r) => (float) ($r['total_price'] ?? 0));
-                                                        $set('../../total_amount', round($sum, 4));
-                                                    }
+                                            $unitPrice = UnitPrice::where('product_id', $productId)
+                                                ->where('unit_id', $state)
+                                                ->first();
+
+                                            $newPackageSize = max(1.0, (float) ($unitPrice?->package_size ?? 1.0));
+                                            $set('package_size', $newPackageSize);
+
+                                            $detailId = $get('purchase_invoice_detail_id');
+                                            $invoiceId = $get('../../purchase_invoice_id');
+                                            $detail = null;
+
+                                            if ($detailId) {
+                                                $detail = \App\Models\PurchaseInvoiceDetail::find($detailId);
+                                            } elseif ($invoiceId) {
+                                                $detail = \App\Models\PurchaseInvoiceDetail::where('purchase_invoice_id', $invoiceId)
+                                                    ->where('product_id', $productId)
+                                                    ->first();
+                                                if ($detail) {
+                                                    $set('purchase_invoice_detail_id', $detail->id);
                                                 }
                                             }
+
+                                            if ($detail) {
+                                                $invPackageSize = max(1.0, (float) ($detail->package_size ?? 1.0));
+                                                $convertedPurchasedQty = round(((float) $detail->quantity * $invPackageSize) / $newPackageSize, 4);
+
+                                                if ((float) $detail->price > 0) {
+                                                    $newUnitPrice = round(((float) $detail->price / $invPackageSize) * $newPackageSize, 4);
+                                                } else {
+                                                    $newUnitPrice = (float) ($unitPrice?->price ?? 0);
+                                                }
+
+                                                $set('purchased_quantity', $convertedPurchasedQty);
+                                                $set('unit_price', $newUnitPrice);
+                                            } else {
+                                                $newUnitPrice = (float) ($unitPrice?->price ?? 0);
+                                                $set('purchased_quantity', null);
+                                                $set('unit_price', $newUnitPrice);
+                                            }
+
+                                            $qty = (float) ($get('quantity') ?? 1);
+                                            $set('total_price', round($qty * $newUnitPrice, 4));
+
+                                            $rows = $get('../../details') ?? [];
+                                            $sum = collect($rows)->sum(fn($r) => (float) ($r['total_price'] ?? 0));
+                                            $set('../../total_amount', round($sum, 4));
                                         })
                                         ->required()
                                         ->columnSpan(1),
@@ -305,13 +338,29 @@ class PurchaseReturnForm
                                         ->readOnly()
                                         ->dehydrated(false)
                                         ->formatStateUsing(function ($state, $record, $get) {
-                                            if (! empty($state)) {
+                                            $detailId = $get('purchase_invoice_detail_id');
+                                            $invoiceId = $get('../../purchase_invoice_id');
+                                            $productId = $get('product_id');
+
+                                            $detail = null;
+                                            if ($detailId) {
+                                                $detail = \App\Models\PurchaseInvoiceDetail::find($detailId);
+                                            } elseif ($invoiceId && $productId) {
+                                                $detail = \App\Models\PurchaseInvoiceDetail::where('purchase_invoice_id', $invoiceId)
+                                                    ->where('product_id', $productId)
+                                                    ->first();
+                                            }
+
+                                            if ($detail) {
+                                                $invPackageSize = max(1.0, (float) ($detail->package_size ?? 1.0));
+                                                $curPackageSize = max(1.0, (float) ($get('package_size') ?? 1.0));
+                                                return round(((float) $detail->quantity * $invPackageSize) / $curPackageSize, 4);
+                                            }
+
+                                            if ($state !== null && $state !== '') {
                                                 return $state;
                                             }
-                                            $detailId = $get('purchase_invoice_detail_id');
-                                            if ($detailId) {
-                                                return \App\Models\PurchaseInvoiceDetail::where('id', $detailId)->value('quantity');
-                                            }
+
                                             return '-';
                                         })
                                         ->columnSpan(1),
@@ -370,7 +419,9 @@ class PurchaseReturnForm
                                         ->label('Notes')
                                         ->columnSpan(1),
                                 ]),
-                        ]),
+                        ])
+                        ->visible(fn($get) => $get('purchase_invoice_id'))
+                        ,
                 ])->columnSpanFull()->skippable()
                 
                 ,
