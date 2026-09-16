@@ -11,6 +11,7 @@ use App\Models\PurchaseReturn;
 use App\Models\Store;
 use App\Models\Supplier;
 use App\Models\Unit;
+use App\Models\UnitPrice;
 use App\Modules\Stock\PurchaseReturns\Queries\GetInvoiceReturnableItemsQuery;
 use App\Modules\Stock\PurchaseReturns\Rules\ProductBelongsToInvoiceRule;
 use App\Modules\Stock\PurchaseReturns\Rules\ReturnQuantityWithinLimitRule;
@@ -205,7 +206,32 @@ class PurchaseReturnForm
                                                     $rows = $get('../../details') ?? [];
                                                     $sum = collect($rows)->sum(fn($r) => (float) ($r['total_price'] ?? 0));
                                                     $set('../../total_amount', round($sum, 4));
+                                                    return;
                                                 }
+                                            }
+
+                                            if ($state) {
+                                                $product = Product::with('unitPrices')->find($state);
+                                                $firstUnitPrice = $product?->unitPrices?->first();
+                                                $set('purchase_invoice_detail_id', null);
+                                                $set('unit_id', $firstUnitPrice?->unit_id);
+                                                $set('package_size', $firstUnitPrice?->package_size ?? 1);
+                                                $set('unit_price', $firstUnitPrice?->price ?? 0);
+                                                $set('purchased_quantity', null);
+
+                                                $qty = (float) ($get('quantity') ?? 1);
+                                                $set('total_price', round($qty * (float) ($firstUnitPrice?->price ?? 0), 4));
+
+                                                $rows = $get('../../details') ?? [];
+                                                $sum = collect($rows)->sum(fn($r) => (float) ($r['total_price'] ?? 0));
+                                                $set('../../total_amount', round($sum, 4));
+                                            } else {
+                                                $set('purchase_invoice_detail_id', null);
+                                                $set('unit_id', null);
+                                                $set('package_size', 1);
+                                                $set('unit_price', 0);
+                                                $set('purchased_quantity', null);
+                                                $set('total_price', 0);
                                             }
                                         })
                                         ->required()
@@ -213,12 +239,56 @@ class PurchaseReturnForm
 
                                     Select::make('unit_id')
                                         ->label('Unit')
-                                        ->options(function () {
-                                            return Unit::pluck('name', 'id')
-                                                ->mapWithKeys(fn($name, $id) => [$id => (string) ($name ?? "Unit #{$id}")])
+                                        ->options(function ($get) {
+                                            $productId = $get('product_id');
+                                            if (! $productId) {
+                                                return [];
+                                            }
+
+                                            $product = Product::with('unitPrices.unit')->find($productId);
+                                            if (! $product) {
+                                                return [];
+                                            }
+
+                                            $options = $product->unitPrices
+                                                ->filter(fn($up) => $up->unit !== null)
+                                                ->mapWithKeys(fn($up) => [
+                                                    $up->unit_id => (string) ($up->unit->name ?? "Unit #{$up->unit_id}"),
+                                                ])
                                                 ->toArray();
+
+                                            $selectedUnitId = $get('unit_id');
+                                            if ($selectedUnitId && ! isset($options[$selectedUnitId])) {
+                                                $unit = Unit::find($selectedUnitId);
+                                                if ($unit) {
+                                                    $options[$selectedUnitId] = (string) ($unit->name ?? "Unit #{$selectedUnitId}");
+                                                }
+                                            }
+
+                                            return $options;
                                         })
-                                        ->searchable()
+                                        ->searchable(false)
+                                        ->live()
+                                        ->afterStateUpdated(function ($state, $set, $get) {
+                                            $productId = $get('product_id');
+                                            if ($productId && $state) {
+                                                $unitPrice = UnitPrice::where('product_id', $productId)
+                                                    ->where('unit_id', $state)
+                                                    ->first();
+                                                if ($unitPrice) {
+                                                    $set('package_size', $unitPrice->package_size ?? 1);
+                                                    if (! $get('purchase_invoice_detail_id')) {
+                                                        $set('unit_price', $unitPrice->price ?? 0);
+                                                        $qty = (float) ($get('quantity') ?? 1);
+                                                        $set('total_price', round($qty * (float) ($unitPrice->price ?? 0), 4));
+
+                                                        $rows = $get('../../details') ?? [];
+                                                        $sum = collect($rows)->sum(fn($r) => (float) ($r['total_price'] ?? 0));
+                                                        $set('../../total_amount', round($sum, 4));
+                                                    }
+                                                }
+                                            }
+                                        })
                                         ->required()
                                         ->columnSpan(1),
 
