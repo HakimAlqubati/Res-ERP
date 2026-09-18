@@ -565,6 +565,47 @@ class OrderRepository implements OrderRepositoryInterface
                 ], 422);
             }
 
+            // If order is "pending approval", only allow approving to "ordered" or cancelling
+            if (
+                $order->status === Order::PENDING_APPROVAL
+                && $request->has('status')
+            ) {
+                if (!in_array($request->status, [Order::ORDERED, Order::CANCELLED], true)) {
+                    DB::rollBack();
+
+                    return response()->json([
+                        'success' => false,
+                        'orderId' => $order->id,
+                        'message' => 'Pending approval orders can only be approved or cancelled.',
+                    ], 422);
+                }
+
+                if ($request->status === Order::ORDERED && !auth()->user()->canApproveOrder($order)) {
+                    DB::rollBack();
+
+                    return response()->json([
+                        'success' => false,
+                        'orderId' => $order->id,
+                        'message' => 'Only the branch manager is authorized to approve this order.',
+                    ], 403);
+                }
+            }
+
+            // Do not allow changing other statuses back to "ordered"
+            if (
+                $request->has('status')
+                && $request->status === Order::ORDERED
+                && !in_array($order->status, [Order::PENDING_APPROVAL, Order::ORDERED], true)
+            ) {
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'orderId' => $order->id,
+                    'message' => 'Orders cannot be changed back to ordered.',
+                ], 422);
+            }
+
             // If order is "ready for delivery", validate allowed transitions
             if (
                 $order->status === Order::READY_FOR_DELEVIRY

@@ -188,3 +188,10 @@ if (!function_exists('canTransitOrder')) {
         return auth()->check() && auth()->user()->canTransitOrder($order);
     }
 }
+
+if (!function_exists('canApproveOrder')) {
+    function canApproveOrder($order): bool
+    {
+        return auth()->check() && auth()->user()->canApproveOrder($order);
+    }
+}

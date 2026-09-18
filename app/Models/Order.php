@@ -513,6 +513,10 @@ class Order extends Model implements Auditable
     public function getNextStatuses()
     {
         switch ($this->status) {
+            case self::PENDING_APPROVAL:
+                return [
+                    self::ORDERED => 'Ordered',
+                ];
             case self::ORDERED:
                 return [
                     // self::STATUS_PENDING => 'Pending',

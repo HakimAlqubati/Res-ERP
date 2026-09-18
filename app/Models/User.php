@@ -486,8 +486,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
 
             $manufacturingBranch = Branch::withoutGlobalScopes()
                 ->where(function ($q) {
-                    $q->where('type', Branch::TYPE_CENTRAL_KITCHEN)
-                      ->orWhere('is_kitchen', true);
+                    $q->where('type', Branch::TYPE_CENTRAL_KITCHEN);
                 })
                 ->where('store_id', $order->store_id)
                 ->first();
@@ -536,6 +535,46 @@ class User extends Authenticatable implements FilamentUser, Auditable
     public function canTransitOrder(Order $order): bool
     {
         return $this->canInTransitOrder($order);
+    }
+
+    /**
+     * التحقق مما إذا كان المستخدم مخولاً باعتماد الطلب (تحويله من pending_approval إلى ordered)
+     * (مدير الفرع المعني أو المشرف العام / مدير النظام)
+     */
+    public function canApproveOrder(Order $order): bool
+    {
+        if ($this->isSuperAdmin() || $this->isSystemManager()) {
+            return true;
+        }
+
+        // مدير الفرع المسجل كـ manager_id في جدول branches
+        if (!empty($order->branch_id)) {
+            $isBranchManagerDirect = Branch::withoutGlobalScopes()
+                ->where('id', $order->branch_id)
+                ->where('manager_id', $this->id)
+                ->exists();
+
+            if ($isBranchManagerDirect) {
+                return true;
+            }
+        }
+
+        // مدير فرع مرتبط بالفرع مباشرة عبر users.branch_id
+        if ($this->isBranchManager() && !empty($this->branch_id) && (int) $this->branch_id === (int) $order->branch_id) {
+            return true;
+        }
+
+        // يدير الفرع عبر علاقة manageBranches
+        if (!empty($order->branch_id) && $this->manageBranches()->where('branches.id', $order->branch_id)->exists()) {
+            return true;
+        }
+
+        // مدير الفرع مالك الطلب كـ customer_id
+        if ($this->isBranchManager() && (int) $order->customer_id === (int) $this->id) {
+            return true;
+        }
+
+        return false;
     }
 
 
