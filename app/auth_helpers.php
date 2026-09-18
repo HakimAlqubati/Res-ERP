@@ -160,3 +160,10 @@ if (!function_exists('isHakim')) {
         ]);
     }
 }
+
+if (!function_exists('canDeliverOrder')) {
+    function canDeliverOrder($order): bool
+    {
+        return auth()->check() && auth()->user()->canDeliverOrder($order);
+    }
+}

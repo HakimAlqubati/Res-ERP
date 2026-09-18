@@ -602,6 +602,21 @@ class OrderRepository implements OrderRepositoryInterface
                 ], 422);
             }
 
+            // Only the branch manager owning the order or direct branch user (and super admins) are authorized to transition order to delivered
+            if (
+                $request->has('status')
+                && $request->status === Order::DELEVIRED
+                && !auth()->user()->canDeliverOrder($order)
+            ) {
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'orderId' => $order->id,
+                    'message' => 'Only the branch manager owning the order or users belonging directly to the branch are authorized to confirm delivery.',
+                ], 403);
+            }
+
             $allowedStatuses = [
                 Order::PROCESSING,
                 Order::READY_FOR_DELEVIRY,

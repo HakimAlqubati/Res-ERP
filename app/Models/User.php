@@ -431,6 +431,42 @@ class User extends Authenticatable implements FilamentUser, Auditable
 
     public function getIsBranchManagerAttribute() {}
 
+    /**
+     * التحقق مما إذا كان المستخدم مخولاً بتحويل الطلب إلى delivered
+     * (مدير الفرع مالك الطلبية أو يوزر يتبع للفرع بشكل مباشر عبر الحقل users.branch_id)
+     */
+    public function canDeliverOrder(Order $order): bool
+    {
+        if ($this->isSuperAdmin() || $this->isSystemManager()) {
+            return true;
+        }
+
+        // يتبع الفرع بشكل مباشر عبر الحقل users.branch_id
+        if (!empty($this->branch_id) && (int) $this->branch_id === (int) $order->branch_id) {
+            return true;
+        }
+
+        // مدير الفرع مالك الطلبية
+        if ($this->isBranchManager()) {
+            // مالك الطلبية كـ customer_id
+            if ((int) $order->customer_id === (int) $this->id) {
+                return true;
+            }
+
+            // مدير الفرع المسجل في جدول branches
+            if ($order->branch && (int) $order->branch->manager_id === (int) $this->id) {
+                return true;
+            }
+
+            // أو لديه إدارة لهذا الفرع عبر علاقة manageBranches
+            if ($this->manageBranches()->where('branches.id', $order->branch_id)->exists()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 
 
     public function getHasEmployeeAttribute()
