@@ -67,8 +67,8 @@ class TestController4 extends Controller
 
         if (isDriver()) {
             $statuses = [
-                "'" . Order::READY_FOR_DELEVIRY . "'",
-                "'" . Order::DELEVIRED . "'"
+                "'" . Order::IN_TRANSIT . "'",
+                "'" . Order::READY_FOR_DELEVIRY . "'"
             ];
             $where[] = 'o.status IN (' . implode(',', $statuses) . ')';
         }

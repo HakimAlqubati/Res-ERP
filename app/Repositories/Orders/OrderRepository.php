@@ -133,7 +133,10 @@ class OrderRepository implements OrderRepositoryInterface
             }
         }
         if (isDriver()) {
-            $query->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED]);
+            $query->whereIn('status', [
+                Order::READY_FOR_DELEVIRY,
+                Order::IN_TRANSIT,
+            ]);
         }
 
         // $query->where('branch_id', '!=', auth()->user()->branch_id);
@@ -554,7 +557,7 @@ class OrderRepository implements OrderRepositoryInterface
                 && $request->has('status')
             ) {
                 $allowedNext = isInTransitOrderEnabled()
-                    ? [Order::IN_TRANSIT, Order::DELEVIRED]
+                    ? [Order::IN_TRANSIT]
                     : [Order::DELEVIRED];
 
                 if (!in_array($request->status, $allowedNext, true)) {
@@ -566,6 +569,22 @@ class OrderRepository implements OrderRepositoryInterface
                         'message' => 'Ready for delivery orders can only be changed to ' . implode(' or ', $allowedNext) . '.',
                     ], 422);
                 }
+            }
+
+            // Only drivers (and super admins) are authorized to transition order to in_transit
+            if (
+                $request->has('status')
+                && $request->status === Order::IN_TRANSIT
+                && !isDriver()
+                && !isSuperAdmin()
+            ) {
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'orderId' => $order->id,
+                    'message' => 'Only drivers are authorized to change order status to in transit.',
+                ], 403);
             }
 
             // If order is "in transit", only allow changing to "delivered"
