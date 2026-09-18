@@ -613,7 +613,7 @@ class OrderRepository implements OrderRepositoryInterface
                 return response()->json([
                     'success' => false,
                     'orderId' => $order->id,
-                    'message' => 'Only the branch manager owning the order or users belonging directly to the branch are authorized to confirm delivery.',
+                    'message' => 'Only branch manager or branch staff can confirm delivery.',
                 ], 403);
             }
 
