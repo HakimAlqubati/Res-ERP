@@ -551,6 +551,20 @@ class OrderRepository implements OrderRepositoryInterface
                 ], 404);
             }
 
+            // If order is already delivered or cancelled, do not allow modifying or re-submitting status
+            if (
+                in_array($order->status, [Order::DELEVIRED, Order::CANCELLED], true)
+                && $request->has('status')
+            ) {
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'orderId' => $order->id,
+                    'message' => 'Delivered or cancelled orders cannot be modified.',
+                ], 422);
+            }
+
             // If order is "ready for delivery", validate allowed transitions
             if (
                 $order->status === Order::READY_FOR_DELEVIRY
@@ -590,8 +604,7 @@ class OrderRepository implements OrderRepositoryInterface
             if (
                 $request->has('status')
                 && $request->status === Order::IN_TRANSIT
-                && !isDriver()
-                && !isSuperAdmin()
+                && !auth()->user()->canInTransitOrder($order)
             ) {
                 DB::rollBack();
 

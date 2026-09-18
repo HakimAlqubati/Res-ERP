@@ -520,6 +520,24 @@ class User extends Authenticatable implements FilamentUser, Auditable
         return in_array((int) $this->id, array_map('intval', $store->all_storekeeper_ids), true);
     }
 
+    /**
+     * التحقق مما إذا كان المستخدم مخولاً بتحويل الطلب إلى in_transit
+     * (السائق أو المشرف العام / مدير النظام)
+     */
+    public function canInTransitOrder(Order $order): bool
+    {
+        if ($this->isSuperAdmin() || $this->isSystemManager()) {
+            return true;
+        }
+
+        return $this->isDriver();
+    }
+
+    public function canTransitOrder(Order $order): bool
+    {
+        return $this->canInTransitOrder($order);
+    }
+
 
 
     public function getHasEmployeeAttribute()

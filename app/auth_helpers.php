@@ -174,3 +174,17 @@ if (!function_exists('canReadyForDelivery')) {
         return auth()->check() && auth()->user()->canReadyForDelivery($order);
     }
 }
+
+if (!function_exists('canInTransitOrder')) {
+    function canInTransitOrder($order): bool
+    {
+        return auth()->check() && auth()->user()->canInTransitOrder($order);
+    }
+}
+
+if (!function_exists('canTransitOrder')) {
+    function canTransitOrder($order): bool
+    {
+        return auth()->check() && auth()->user()->canTransitOrder($order);
+    }
+}
