@@ -571,6 +571,21 @@ class OrderRepository implements OrderRepositoryInterface
                 }
             }
 
+            // Only authorized manufacturing branch staff or default storekeepers can mark order as ready for delivery
+            if (
+                $request->has('status')
+                && $request->status === Order::READY_FOR_DELEVIRY
+                && !auth()->user()->canReadyForDelivery($order)
+            ) {
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'orderId' => $order->id,
+                    'message' => 'Unauthorized to mark order as ready for delivery.',
+                ], 403);
+            }
+
             // Only drivers (and super admins) are authorized to transition order to in_transit
             if (
                 $request->has('status')
@@ -599,6 +614,21 @@ class OrderRepository implements OrderRepositoryInterface
                     'success' => false,
                     'orderId' => $order->id,
                     'message' => 'In transit orders can only be changed to delivered.',
+                ], 422);
+            }
+
+            // Only orders that are "ready for delivery" or "in transit" can be changed to "delivered"
+            if (
+                $request->has('status')
+                && $request->status === Order::DELEVIRED
+                && !in_array($order->status, [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT], true)
+            ) {
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'orderId' => $order->id,
+                    'message' => 'Orders can only be changed to delivered from ready for delivery or in transit.',
                 ], 422);
             }
 

@@ -367,7 +367,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
     public function isSuperAdmin()
     {
         $roleIds = $this->roles->pluck('id')->toArray();
-        return in_array(1, $roleIds) || in_array(11, $roleIds);
+        return in_array(1, $roleIds);
         if (getCurrentRole() == 1) {
             return true;
         }
@@ -465,6 +465,59 @@ class User extends Authenticatable implements FilamentUser, Auditable
         }
 
         return false;
+    }
+
+    /**
+     * التحقق مما إذا كان المستخدم مخولاً بتحويل الطلب إلى ready_for_delivery
+     * - إذا كان الطلب تصنيعياً: يجب أن يكون مخزن الطلب تابعاً لفرع تصنيعي، واليوزر إما مدير الفرع أو مساعد شيف فيه.
+     * - إذا كان الطلب عادياً: يجب أن يكون المخزن هو المخزن الافتراضي، واليوزر هو أمين المخزن الأساسي أو الإضافي.
+     */
+    public function canReadyForDelivery(Order $order): bool
+    {
+        if ($this->isSuperAdmin() || $this->isSystemManager()) { 
+            return true;
+        }
+
+        // 1. في حال كان الطلب تصنيعياً
+        if ($order->type === Order::TYPE_MANUFACTURING) {
+            if (empty($order->store_id)) {
+                return false;
+            }
+
+            $manufacturingBranch = Branch::withoutGlobalScopes()
+                ->where(function ($q) {
+                    $q->where('type', Branch::TYPE_CENTRAL_KITCHEN)
+                      ->orWhere('is_kitchen', true);
+                })
+                ->where('store_id', $order->store_id)
+                ->first();
+
+            if (!$manufacturingBranch) {
+                return false;
+            }
+
+            // مدير الفرع التصنيعي
+            if ((int) $manufacturingBranch->manager_id === (int) $this->id) {
+                return true;
+            }
+
+            // مساعد شيف عبر العلاقة chefAssistants
+            if ($manufacturingBranch->chefAssistants()->where('users.id', $this->id)->exists()) {
+                return true;
+            }
+
+            return false;
+        }
+
+        // 2. في حال كان الطلب عادياً (غير تصنيعي)
+        $store = $order->store_id ? Store::find($order->store_id) : Store::defaultStore();
+
+        if (!$store || !$store->default_store) {
+            return false;
+        }
+
+        // أمين المخزن الأساسي أو الإضافي
+        return in_array((int) $this->id, array_map('intval', $store->all_storekeeper_ids), true);
     }
 
 

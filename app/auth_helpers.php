@@ -167,3 +167,10 @@ if (!function_exists('canDeliverOrder')) {
         return auth()->check() && auth()->user()->canDeliverOrder($order);
     }
 }
+
+if (!function_exists('canReadyForDelivery')) {
+    function canReadyForDelivery($order): bool
+    {
+        return auth()->check() && auth()->user()->canReadyForDelivery($order);
+    }
+}
