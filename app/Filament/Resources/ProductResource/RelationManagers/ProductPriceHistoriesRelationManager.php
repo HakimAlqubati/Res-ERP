@@ -64,7 +64,7 @@ class ProductPriceHistoriesRelationManager extends RelationManager
                     ->date()->hidden()
                     ->sortable(),
                 TextColumn::make('created_at')
-                    ->label('created at')
+                    ->label('Created At')
                     // ->date()
                     ->sortable(),
             ])
