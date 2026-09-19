@@ -293,6 +293,21 @@ class EmployeeTable
                     ->searchable()
                     ->multiple()
                     ->preload(),
+                SelectFilter::make('has_payment_method')
+                    ->label(__('Payment Method Status'))
+                    ->options([
+                        'all' => __('lang.all'),
+                        'with' => app()->getLocale() === 'ar' ? 'مع وسيلة دفع' : 'With Payment Method',
+                        'without' => app()->getLocale() === 'ar' ? 'بدون وسيلة دفع' : 'Without Payment Method',
+                    ])
+                    ->default('all')
+                    ->query(function ($query, array $data) {
+                        if (($data['value'] ?? null) === 'with') {
+                            $query->whereNotNull('payment_method_id');
+                        } elseif (($data['value'] ?? null) === 'without') {
+                            $query->whereNull('payment_method_id');
+                        }
+                    }),
                 // SelectFilter::make('manager_id')
                 //     ->label(__('lang.manager'))
 
