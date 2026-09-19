@@ -177,6 +177,21 @@ class EmployeeTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
+                TextColumn::make('paymentMethod.name')
+                    ->label(__('lang.payment_method'))
+                    ->sortable()
+                    ->searchable()
+                    ->placeholder('-')
+                    ->description(fn (Employee $record): ?string => $record->payment_details['account_number'] ?? $record->bank_account_number ?? null)
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('bank_account_number')
+                    ->label(__('lang.bank_account_number'))
+                    ->sortable()
+                    ->searchable()
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('branch_logs_count')
                     ->counts('branchLogs')
                     ->label(__('lang.branch_logs_count'))
@@ -272,6 +287,12 @@ class EmployeeTable
                     ->options(UserType::where('active', 1)->pluck('name', 'id')->toArray())
                     ->searchable()
                     ->multiple(),
+                SelectFilter::make('payment_method_id')
+                    ->label(__('lang.payment_method'))
+                    ->relationship('paymentMethod', 'name')
+                    ->searchable()
+                    ->multiple()
+                    ->preload(),
                 // SelectFilter::make('manager_id')
                 //     ->label(__('lang.manager'))
 

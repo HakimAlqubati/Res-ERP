@@ -141,7 +141,7 @@ class EmployeeResource extends Resource
             // ->where('role_id',8)
             ->forBranchManager()
             ->with(['branch:id,name', 'pendingTerminationRequest',
-                'serviceTermination'])
+                'serviceTermination', 'paymentMethod:id,name'])
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

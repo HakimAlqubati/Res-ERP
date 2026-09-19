@@ -26,7 +26,7 @@ class HeaderActions
                 ->action(function () {
                     $data = Employee::where('active', 1)
                         ->forBranchManager()
-                        ->with(['branch', 'manager', 'periods', 'serviceTermination', 'employeeType'])
+                        ->with(['branch', 'manager', 'periods', 'serviceTermination', 'employeeType', 'paymentMethod'])
                         ->get();
 
                     return Excel::download(new EmployeesExport($data), 'employees.xlsx');
@@ -38,7 +38,7 @@ class HeaderActions
                 ->action(function () {
                     $data = Employee::where('active', 1)
                         ->forBranchManager()
-                        ->with(['branch', 'manager', 'periods', 'serviceTermination', 'employeeType'])
+                        ->with(['branch', 'manager', 'periods', 'serviceTermination', 'employeeType', 'paymentMethod'])
                         ->get();
                     $pdf = PDF::loadView('export.reports.hr.employees.export-employees-as-pdf', ['data' => $data]);
 

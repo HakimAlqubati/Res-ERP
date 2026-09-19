@@ -19,6 +19,8 @@
             <th>{{ __('lang.working_days') }}</th>
             <th>{{ __('lang.job_title') }}</th>
             <th>{{ __('lang.role_type') }}</th>
+            <th>{{ __('lang.payment_method') }}</th>
+            <th>{{ __('lang.bank_account_number') }}</th>
             <th>{{ __('lang.unrequired_docs') }}</th>
             <th>{{ __('lang.required_docs') }}</th>
             <th>{{ __('lang.active') }}</th>
@@ -48,6 +50,8 @@
                 <td>{{ $item->working_days }}</td>
                 <td>{{ $item->job_title }}</td>
                 <td>{{ $item->employeeType?->name }}</td>
+                <td>{{ $item->paymentMethod?->name }}</td>
+                <td>{{ $item->payment_details['account_number'] ?? $item->bank_account_number }}</td>
                 <td>{{ $item->unrequired_documents_count }}</td>
                 <td>{{ $item->required_documents_count }}</td>
                 <td>{{ $item->active ? __('lang.active') : __('lang.terminated') }}</td>
