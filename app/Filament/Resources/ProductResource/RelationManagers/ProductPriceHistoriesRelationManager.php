@@ -24,7 +24,7 @@ class ProductPriceHistoriesRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->defaultSort('date', 'desc')
+            ->defaultSort('created_at', 'desc')
             ->striped()
             ->paginated([10, 25, 50, 100])
             ->columns([
@@ -61,7 +61,7 @@ class ProductPriceHistoriesRelationManager extends RelationManager
 
                 TextColumn::make('date')
                     ->label('Date')
-                    ->date()
+                    ->date()->hidden()
                     ->sortable(),
                 TextColumn::make('created_at')
                     ->label('created at')
