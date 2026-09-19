@@ -1210,4 +1210,5 @@ return [
     'allowance_types' => 'Allowance Types',
     'deduction_types' => 'Deduction Types',
     'month' => 'Month',
+    'employee_statement_report' => 'Employee Statement Report',
 ];

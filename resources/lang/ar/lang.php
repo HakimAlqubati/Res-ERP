@@ -1191,4 +1191,5 @@ return [
     'allowance_types' => 'أنواع البدلات',
     'deduction_types' => 'أنواع الاستقطاعات',
     'month' => 'الشهر',
+    'employee_statement_report' => 'كشف حركات رواتب الموظف',
 ];
