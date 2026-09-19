@@ -7,13 +7,15 @@
             margin-top: 16px;
         }
 
+        /* ─── Light Mode Styles (Default) ─── */
         .statement-card {
             border: 2px solid #0d7c66;
             border-radius: 8px;
             padding: 24px;
             background: #ffffff;
-            box-shadow: 0 4px 12px rgba(13, 124, 102, 0.08);
+            box-shadow: 0 4px 14px rgba(13, 124, 102, 0.08);
             position: relative;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
         }
 
         .report-header-toolbar {
@@ -84,6 +86,31 @@
             margin: 0 0 20px;
         }
 
+        .employee-meta-name {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 15px;
+        }
+
+        .employee-meta-period {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .employee-meta-period strong {
+            color: #1e293b;
+        }
+
+        .badge-subtle {
+            display: inline-block;
+            background: #e6f4f1;
+            color: #0d7c66;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 4px;
+            padding: 2px 8px;
+        }
+
         .statement-table {
             width: 100%;
             border-collapse: collapse;
@@ -109,12 +136,51 @@
             font-size: 13px;
         }
 
+        /* Explicit light mode row and column colors */
+        .statement-table td {
+            color: #1e293b;
+        }
+
+        .statement-table tbody tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+
         .statement-table tbody tr:nth-child(even) {
             background-color: #f5f9f8;
         }
 
         .statement-table tbody tr:hover {
             background-color: #eef7f5;
+        }
+
+        .statement-table .col-index {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .statement-table .col-type {
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .statement-table .col-sub-type {
+            color: #475569;
+        }
+
+        .statement-table .col-amount {
+            font-weight: 600;
+            color: #1e293b;
+            text-align: center;
+        }
+
+        .statement-table .col-date {
+            color: #334155;
+        }
+
+        .statement-table .col-desc {
+            color: #1e293b;
+            text-align: left;
+            padding-left: 14px;
         }
 
         .statement-table .op-plus {
@@ -153,17 +219,186 @@
             font-size: 17px;
         }
 
-        .badge-subtle {
-            display: inline-block;
-            background: #e6f4f1;
-            color: #0d7c66;
-            font-size: 12px;
-            font-weight: 600;
-            border-radius: 4px;
-            padding: 2px 8px;
+        /* ─── Dark Mode Support ─── */
+        :is(.dark, [data-theme="dark"]) .statement-card {
+            background: #111827;
+            border-color: #0d7c66;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
         }
 
-        /* Print Specific Styling */
+        :is(.dark, [data-theme="dark"]) .report-header-toolbar {
+            border-color: #374151;
+        }
+
+        :is(.dark, [data-theme="dark"]) .report-title {
+            color: #2dd4bf;
+        }
+
+        :is(.dark, [data-theme="dark"]) .report-subtitle {
+            color: #94a3b8;
+        }
+
+        :is(.dark, [data-theme="dark"]) .employee-meta-name {
+            color: #f8fafc;
+        }
+
+        :is(.dark, [data-theme="dark"]) .employee-meta-period {
+            color: #94a3b8;
+        }
+
+        :is(.dark, [data-theme="dark"]) .employee-meta-period strong {
+            color: #f1f5f9;
+        }
+
+        :is(.dark, [data-theme="dark"]) .badge-subtle {
+            background: #064e3b;
+            color: #a7f3d0;
+        }
+
+        :is(.dark, [data-theme="dark"]) .btn-excel {
+            background-color: #064e3b;
+            color: #6ee7b7;
+            border-color: #059669;
+        }
+
+        :is(.dark, [data-theme="dark"]) .btn-excel:hover {
+            background-color: #059669;
+            color: #ffffff;
+        }
+
+        :is(.dark, [data-theme="dark"]) .btn-print {
+            background-color: #1f2937;
+            color: #e2e8f0;
+            border-color: #4b5563;
+        }
+
+        :is(.dark, [data-theme="dark"]) .btn-print:hover {
+            background-color: #374151;
+            color: #ffffff;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table {
+            background: #111827;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table th {
+            background-color: #0d7c66;
+            color: #ffffff;
+            border-color: #0d7c66;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table td {
+            border-color: #374151;
+            color: #f1f5f9 !important;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table tbody tr:nth-child(odd) {
+            background-color: #111827;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table tbody tr:nth-child(even) {
+            background-color: #1f2937;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table tbody tr:hover {
+            background-color: #2d3748;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table .col-index,
+        :is(.dark, [data-theme="dark"]) .statement-table .col-type,
+        :is(.dark, [data-theme="dark"]) .statement-table .col-amount {
+            color: #f8fafc !important;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table .col-sub-type {
+            color: #94a3b8 !important;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table .col-date {
+            color: #cbd5e1 !important;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table .col-desc {
+            color: #f1f5f9 !important;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table .op-plus {
+            color: #34d399;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table .op-minus {
+            color: #f87171;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table .row-employer-contribution {
+            background-color: #133827 !important;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table tfoot td {
+            background-color: #111827;
+            color: #2dd4bf !important;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table tfoot .total-row-add td {
+            border-top: 1px solid #374151;
+        }
+
+        /* ─── Empty State ─── */
+        .empty-state-card {
+            text-align: center;
+            padding: 48px 24px;
+            background: #ffffff;
+            border: 2px dashed #0d7c66;
+            border-radius: 8px;
+            margin-top: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .empty-state-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background-color: #e6f4f1;
+            color: #0d7c66;
+            margin-bottom: 16px;
+        }
+
+        .empty-state-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .empty-state-desc {
+            color: #64748b;
+            max-width: 500px;
+            margin: 0 auto;
+            font-size: 14px;
+        }
+
+        :is(.dark, [data-theme="dark"]) .empty-state-card {
+            background: #111827;
+            border-color: #0d7c66;
+        }
+
+        :is(.dark, [data-theme="dark"]) .empty-state-icon {
+            background-color: #064e3b;
+            color: #2dd4bf;
+        }
+
+        :is(.dark, [data-theme="dark"]) .empty-state-title {
+            color: #f8fafc;
+        }
+
+        :is(.dark, [data-theme="dark"]) .empty-state-desc {
+            color: #94a3b8;
+        }
+
+        /* ─── Print Specific Styling ─── */
         @media print {
             body * {
                 visibility: hidden !important;
@@ -179,6 +414,7 @@
                 top: 0;
                 left: 0;
                 width: 100% !important;
+                background: #ffffff !important;
                 border: 2px solid #0d7c66 !important;
                 box-shadow: none !important;
                 padding: 10px !important;
@@ -188,8 +424,17 @@
                 display: none !important;
             }
 
+            .report-title {
+                color: #0d7c66 !important;
+            }
+
+            .report-subtitle {
+                color: #555555 !important;
+            }
+
             .statement-table {
                 width: 100% !important;
+                background: #ffffff !important;
                 border-collapse: collapse !important;
             }
 
@@ -200,13 +445,40 @@
                 print-color-adjust: exact;
             }
 
+            .statement-table td {
+                color: #111827 !important;
+                border: 1px solid #e5e7eb !important;
+            }
+
+            .statement-table tbody tr:nth-child(odd) {
+                background-color: #ffffff !important;
+            }
+
             .statement-table tbody tr:nth-child(even) {
                 background-color: #f5f9f8 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
 
+            .statement-table .op-plus {
+                color: #0d7c66 !important;
+            }
+
+            .statement-table .op-minus {
+                color: #c0392b !important;
+            }
+
+            .statement-table .col-index,
+            .statement-table .col-type,
+            .statement-table .col-sub-type,
+            .statement-table .col-amount,
+            .statement-table .col-date,
+            .statement-table .col-desc {
+                color: #111827 !important;
+            }
+
             .statement-table tfoot td {
+                background-color: #ffffff !important;
                 color: #0d7c66 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
@@ -241,15 +513,15 @@
                                 style="width: 44px; height: 44px; border-radius: 8px; object-fit: cover; border: 2px solid #0d7c66;">
                         @endif
                         <div style="text-align: right; line-height: 1.4;">
-                            <span style="font-weight: 700; color: #1e293b; font-size: 15px;">{{ $reportData['employee_name'] }}</span>
+                            <span class="employee-meta-name">{{ $reportData['employee_name'] }}</span>
                             @if (!empty($reportData['branch_name']))
                                 <span class="badge-subtle" style="margin-inline-start: 6px;">{{ $reportData['branch_name'] }}</span>
                             @endif
-                            <div style="font-size: 12px; color: #64748b;">
+                            <div class="employee-meta-period">
                                 {{ __('From') }}: <strong>{{ $reportData['from_date'] }}</strong> &nbsp;|&nbsp; {{ __('To') }}: <strong>{{ $reportData['to_date'] }}</strong>
                             </div>
                         </div>
-                        <img src="{{ url('/storage/workbench.png') }}" alt="Logo"
+                        <img src="{{ asset('workbench.png') }}" alt="Logo" onerror="this.style.display='none'"
                             style="width: 44px; height: 44px; object-fit: contain;">
                     </div>
                 </div>
@@ -273,10 +545,11 @@
                     </thead>
                     <tbody>
                         @forelse ($reportData['transactions'] as $tx)
-                            <tr @if (!empty($tx['is_employer_contribution'])) style="background-color: #e6ffc8;" @endif>
-                                <td style="font-weight: 600;">{{ $tx['index'] }}</td>
-                                <td style="font-weight: 500;">{{ __($tx['type']) }}</td>
-                                <td style="color: #475569;">{{ !empty($tx['sub_type']) ? __($tx['sub_type']) : '' }}</td>
+                            <tr class="{{ !empty($tx['is_employer_contribution']) ? 'row-employer-contribution' : '' }}"
+                                @if (!empty($tx['is_employer_contribution'])) style="background-color: #e6ffc8;" @endif>
+                                <td class="col-index">{{ $tx['index'] }}</td>
+                                <td class="col-type">{{ __($tx['type']) }}</td>
+                                <td class="col-sub-type">{{ !empty($tx['sub_type']) ? __($tx['sub_type']) : '' }}</td>
                                 <td>
                                     @if ($tx['operation'] === '+')
                                         <span class="op-plus">+</span>
@@ -284,9 +557,9 @@
                                         <span class="op-minus">-</span>
                                     @endif
                                 </td>
-                                <td style="font-weight: 600; text-align: center;">{{ $tx['amount'] }}</td>
-                                <td>{{ $tx['date'] }}</td>
-                                <td style="text-align: left; padding-left: 14px; color: #1e293b;">{{ $tx['description'] }}</td>
+                                <td class="col-amount">{{ $tx['amount'] }}</td>
+                                <td class="col-date">{{ $tx['date'] }}</td>
+                                <td class="col-desc">{{ $tx['description'] }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -351,16 +624,16 @@
 
     @else
         {{-- Friendly Empty State Prompt --}}
-        <div style="text-align: center; padding: 48px 24px; background: #ffffff; border: 2px dashed #0d7c66; border-radius: 8px; margin-top: 16px;">
-            <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 50%; background-color: #e6f4f1; color: #0d7c66; margin-bottom: 16px;">
+        <div class="empty-state-card">
+            <div class="empty-state-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
             </div>
-            <h3 style="font-size: 1.25rem; font-weight: 700; color: #1e293b; margin-bottom: 8px;">
+            <h3 class="empty-state-title">
                 {{ __('Select Employee & Date Range') }}
             </h3>
-            <p style="color: #64748b; max-width: 500px; margin: 0 auto; font-size: 14px;">
+            <p class="empty-state-desc">
                 {{ __('Please select an employee and choose the start and end dates from the filters above to generate the payroll transactions statement.') }}
             </p>
         </div>
