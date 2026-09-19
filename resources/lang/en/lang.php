@@ -1209,4 +1209,5 @@ return [
     'incentive_types' => 'Incentive Types',
     'allowance_types' => 'Allowance Types',
     'deduction_types' => 'Deduction Types',
+    'month' => 'Month',
 ];

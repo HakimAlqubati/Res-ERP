@@ -1190,4 +1190,5 @@ return [
     'incentive_types' => 'أنواع الحوافز',
     'allowance_types' => 'أنواع البدلات',
     'deduction_types' => 'أنواع الاستقطاعات',
+    'month' => 'الشهر',
 ];
