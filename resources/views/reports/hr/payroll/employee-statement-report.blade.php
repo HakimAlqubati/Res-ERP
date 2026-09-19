@@ -521,8 +521,20 @@
                                 {{ __('From') }}: <strong>{{ $reportData['from_date'] }}</strong> &nbsp;|&nbsp; {{ __('To') }}: <strong>{{ $reportData['to_date'] }}</strong>
                             </div>
                         </div>
-                        <img src="{{ asset('workbench.png') }}" alt="Logo" onerror="this.style.display='none'"
-                            style="width: 44px; height: 44px; object-fit: contain;">
+                        @php
+                            $companyLogo = setting('company_logo');
+                            if ($companyLogo) {
+                                $logoUrl = str_starts_with($companyLogo, 'http')
+                                    ? $companyLogo
+                                    : (str_starts_with($companyLogo, 'storage/') || str_starts_with($companyLogo, '/storage/')
+                                        ? asset($companyLogo)
+                                        : asset('/storage/' . $companyLogo));
+                            } else {
+                                $logoUrl = asset('workbench.png');
+                            }
+                        @endphp
+                        <img src="{{ $logoUrl }}" alt="Company Logo" onerror="this.style.display='none'"
+                            style="width: 50px; height: 50px; object-fit: contain;">
                     </div>
                 </div>
 
