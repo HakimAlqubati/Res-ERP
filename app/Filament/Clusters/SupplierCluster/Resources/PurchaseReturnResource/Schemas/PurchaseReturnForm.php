@@ -48,14 +48,66 @@ class PurchaseReturnForm
                                         return PurchaseInvoice::query()
                                             ->where('cancelled', false)
                                             ->orderBy('id', 'desc')
-                                            ->limit(100)
+                                            ->limit(5)
                                             ->get(['id', 'invoice_no'])
                                             ->mapWithKeys(fn($inv) => [
-                                                $inv->id => ! empty($inv->invoice_no) ? "{$inv->invoice_no} (#{$inv->id})" : "Invoice #{$inv->id}",
+                                                $inv->id => ! empty($inv->invoice_no) ? "{$inv->id} ({$inv->invoice_no})" : (string) $inv->id,
                                             ])
                                             ->toArray();
                                     })
                                     ->searchable()
+                                    ->getSearchResultsUsing(function (string $search): array {
+                                        $search = trim($search);
+
+                                        if (strlen($search) < 1) {
+                                            return PurchaseInvoice::query()
+                                                ->where('cancelled', false)
+                                                ->orderBy('id', 'desc')
+                                                ->limit(5)
+                                                ->get(['id', 'invoice_no'])
+                                                ->mapWithKeys(fn($inv) => [
+                                                    $inv->id => ! empty($inv->invoice_no) ? "{$inv->id} ({$inv->invoice_no})" : (string) $inv->id,
+                                                ])
+                                                ->toArray();
+                                        }
+
+                                        $query = PurchaseInvoice::query()
+                                            ->where('cancelled', false)
+                                            ->where(function ($q) use ($search) {
+                                                if (is_numeric($search)) {
+                                                    $q->where('id', (int) $search)
+                                                        ->orWhere('id', 'like', "%{$search}%")
+                                                        ->orWhere('invoice_no', 'like', "%{$search}%");
+                                                } else {
+                                                    $q->where('invoice_no', 'like', "%{$search}%")
+                                                        ->orWhere('id', 'like', "%{$search}%");
+                                                }
+                                            });
+
+                                        if (is_numeric($search)) {
+                                            $query->orderByRaw('CASE WHEN id = ? THEN 0 ELSE 1 END', [(int) $search]);
+                                        }
+
+                                        return $query->orderBy('id', 'desc')
+                                            ->limit(5)
+                                            ->get(['id', 'invoice_no'])
+                                            ->mapWithKeys(fn($inv) => [
+                                                $inv->id => ! empty($inv->invoice_no) ? "{$inv->id} ({$inv->invoice_no})" : (string) $inv->id,
+                                            ])
+                                            ->toArray();
+                                    })
+                                    ->getOptionLabelUsing(function ($value): ?string {
+                                        if (! $value) {
+                                            return null;
+                                        }
+
+                                        $inv = PurchaseInvoice::find($value);
+                                        if (! $inv) {
+                                            return null;
+                                        }
+
+                                        return ! empty($inv->invoice_no) ? "{$inv->id} ({$inv->invoice_no})" : (string) $inv->id;
+                                    })
                                     ->live()
                                     ->afterStateUpdated(function ($state, $set) {
                                         if ($state) {
