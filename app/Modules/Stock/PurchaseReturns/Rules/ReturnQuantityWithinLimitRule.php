@@ -25,7 +25,7 @@ final class ReturnQuantityWithinLimitRule implements ValidationRule
         $qty = (float) $value;
 
         if ($qty < 0) {
-            $fail('Return quantity cannot be negative.');
+            $fail('Invalid return quantity');
             return;
         }
 
@@ -56,8 +56,7 @@ final class ReturnQuantityWithinLimitRule implements ValidationRule
         $maxReturnable = $detail->getRemainingReturnableQuantityForReturn($this->excludeReturnId, $pkgSize);
 
         if ($qty > $maxReturnable) {
-            $productName = $detail->product?->name ?? "Product #{$detail->product_id}";
-            $fail("Return quantity ({$qty}) for [{$productName}] exceeds the remaining invoice limit ({$maxReturnable}).");
+            $fail('Exceeds invoice limit');
         }
     }
 }
