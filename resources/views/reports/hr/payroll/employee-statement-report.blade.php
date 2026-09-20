@@ -18,39 +18,84 @@
             transition: background-color 0.2s ease, border-color 0.2s ease;
         }
 
-        .report-header-toolbar {
+        /* ─── Header Layout & Components ─── */
+        .report-header-wrapper {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .report-header-top {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 20px;
-            padding-bottom: 14px;
-            border-bottom: 1px dashed #e2e8f0;
             gap: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e2e8f0;
             flex-wrap: wrap;
+        }
+
+        .header-col-actions {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            min-width: 270px;
+        }
+
+        .header-col-title {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            flex: 2;
+            min-width: 240px;
+        }
+
+        .header-col-logo {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            flex: 1;
+            min-width: 80px;
         }
 
         .action-btns {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             align-items: center;
         }
 
         .btn-report-action {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
+            justify-content: center;
+            gap: 8px;
+            height: 38px;
+            min-width: 130px;
+            padding: 0 16px;
             border-radius: 6px;
             font-size: 13px;
             font-weight: 600;
+            white-space: nowrap;
+            box-sizing: border-box;
             cursor: pointer;
             transition: all 0.2s ease;
+        }
+
+        .btn-report-action svg {
+            width: 16px;
+            height: 16px;
+            min-width: 16px;
+            min-height: 16px;
+            flex-shrink: 0;
         }
 
         .btn-excel {
             background-color: #f0fdf4;
             color: #0b7a5a;
-            border: 1px solid #0b7a5a;
+            border: 1.5px solid #0b7a5a;
         }
 
         .btn-excel:hover {
@@ -61,54 +106,108 @@
         .btn-print {
             background-color: #f8fafc;
             color: #334155;
-            border: 1px solid #cbd5e1;
+            border: 1.5px solid #cbd5e1;
         }
 
         .btn-print:hover {
             background-color: #e2e8f0;
             color: #0f172a;
+            border-color: #94a3b8;
         }
 
-        .report-title {
-            text-align: center;
-            font-size: 26px;
-            font-weight: 700;
+        .report-main-title {
+            font-size: 22px;
+            font-weight: 800;
             color: #0d7c66;
             margin: 0 0 6px;
-            letter-spacing: -0.5px;
+            letter-spacing: -0.3px;
         }
 
-        .report-subtitle {
-            text-align: center;
+        .report-period-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background-color: #f0fdf4;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+            padding: 4px 14px;
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .report-period-badge svg {
+            width: 14px;
+            height: 14px;
+            color: #0d7c66;
+            flex-shrink: 0;
+        }
+
+        .company-logo {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+        }
+
+        /* ─── Employee Profile Banner ─── */
+        .employee-profile-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .employee-profile-main {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .employee-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 2px solid #0d7c66;
+            box-shadow: 0 2px 6px rgba(13, 124, 102, 0.12);
+        }
+
+        .employee-details-box {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .employee-name-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .employee-name-title {
             font-size: 16px;
-            font-weight: 500;
-            color: #555555;
-            margin: 0 0 20px;
-        }
-
-        .employee-meta-name {
             font-weight: 700;
-            color: #1e293b;
-            font-size: 15px;
+            color: #0f172a;
+            line-height: 1.2;
         }
 
-        .employee-meta-period {
-            font-size: 12px;
-            color: #64748b;
-        }
-
-        .employee-meta-period strong {
-            color: #1e293b;
-        }
-
-        .badge-subtle {
-            display: inline-block;
+        .badge-branch {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
             background: #e6f4f1;
             color: #0d7c66;
             font-size: 12px;
             font-weight: 600;
-            border-radius: 4px;
             padding: 2px 8px;
+            border-radius: 6px;
         }
 
         .statement-table {
@@ -228,55 +327,60 @@
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
         }
 
-        :is(.dark, [data-theme="dark"]) .report-header-toolbar {
+        :is(.dark, [data-theme="dark"]) .report-header-top {
             border-color: #374151;
         }
 
-        :is(.dark, [data-theme="dark"]) .report-title {
+        :is(.dark, [data-theme="dark"]) .report-main-title {
             color: #2dd4bf;
         }
 
-        :is(.dark, [data-theme="dark"]) .report-subtitle {
-            color: #94a3b8;
+        :is(.dark, [data-theme="dark"]) .report-period-badge {
+            background-color: rgba(6, 78, 59, 0.4);
+            color: #a7f3d0;
+            border-color: #059669;
         }
 
-        :is(.dark, [data-theme="dark"]) .employee-meta-name {
+        :is(.dark, [data-theme="dark"]) .report-period-badge svg {
+            color: #2dd4bf;
+        }
+
+        :is(.dark, [data-theme="dark"]) .employee-profile-banner {
+            background: #1e293b;
+            border-color: #374151;
+        }
+
+        :is(.dark, [data-theme="dark"]) .employee-name-title {
             color: #f8fafc;
         }
 
-        :is(.dark, [data-theme="dark"]) .employee-meta-period {
-            color: #94a3b8;
-        }
-
-        :is(.dark, [data-theme="dark"]) .employee-meta-period strong {
-            color: #f1f5f9;
-        }
-
-        :is(.dark, [data-theme="dark"]) .badge-subtle {
+        :is(.dark, [data-theme="dark"]) .badge-branch {
             background: #064e3b;
-            color: #a7f3d0;
+            color: #6ee7b7;
         }
 
         :is(.dark, [data-theme="dark"]) .btn-excel {
             background-color: #064e3b;
             color: #6ee7b7;
-            border-color: #059669;
+            border: 1.5px solid #059669;
         }
 
         :is(.dark, [data-theme="dark"]) .btn-excel:hover {
             background-color: #059669;
             color: #ffffff;
+            border-color: #059669;
         }
 
         :is(.dark, [data-theme="dark"]) .btn-print {
             background-color: #1f2937;
             color: #e2e8f0;
-            border-color: #4b5563;
+            border: 1.5px solid #4b5563;
         }
 
         :is(.dark, [data-theme="dark"]) .btn-print:hover {
             background-color: #374151;
             color: #ffffff;
+            border-color: #6b7280;
         }
 
         :is(.dark, [data-theme="dark"]) .statement-table {
@@ -426,16 +530,37 @@
                 padding: 10px !important;
             }
 
-            .report-header-toolbar {
+            .action-btns {
                 display: none !important;
             }
 
-            .report-title {
-                color: #0d7c66 !important;
+            .report-header-top {
+                border-bottom: 2px solid #0d7c66 !important;
+                padding-bottom: 8px !important;
             }
 
-            .report-subtitle {
-                color: #555555 !important;
+            .report-main-title {
+                color: #0d7c66 !important;
+                font-size: 20px !important;
+            }
+
+            .report-period-badge {
+                background-color: #ffffff !important;
+                color: #0d7c66 !important;
+                border: 1px solid #0d7c66 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .employee-profile-banner {
+                background: #f8fafc !important;
+                border: 1px solid #e2e8f0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .employee-name-title {
+                color: #0f172a !important;
             }
 
             .statement-table {
@@ -502,58 +627,77 @@
     @if (!empty($reportData) && $reportData['has_data'])
         <div class="report-wrapper">
             <div class="statement-card" id="statement-card">
-                {{-- Action Bar --}}
-                <div class="report-header-toolbar">
-                    <div class="action-btns">
-                        <button type="button" onclick="exportToExcel()" class="btn-report-action btn-excel">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            {{ __('Export Excel') }}
-                        </button>
-                        <button type="button" onclick="window.print()" class="btn-report-action btn-print">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                            </svg>
-                            {{ __('Print') }}
-                        </button>
-                    </div>
-
-                    {{-- Employee & Period Badges --}}
-                    <div style="display: flex; align-items: center; gap: 14px;">
-                        @if ($reportData['avatar_image'])
-                            <img src="{{ $reportData['avatar_image'] }}" alt="{{ $reportData['employee_name'] }}"
-                                style="width: 44px; height: 44px; border-radius: 8px; object-fit: cover; border: 2px solid #0d7c66;">
-                        @endif
-                        <div style="text-align: right; line-height: 1.4;">
-                            <span class="employee-meta-name">{{ $reportData['employee_name'] }}</span>
-                            @if (!empty($reportData['branch_name']))
-                                <span class="badge-subtle" style="margin-inline-start: 6px;">{{ $reportData['branch_name'] }}</span>
-                            @endif
-                            <div class="employee-meta-period">
-                                {{ __('From') }}: <strong>{{ $reportData['from_date'] }}</strong> &nbsp;|&nbsp; {{ __('To') }}: <strong>{{ $reportData['to_date'] }}</strong>
+                {{-- Redesigned Clean Header (Non-redundant) --}}
+                <div class="report-header-wrapper">
+                    {{-- Row 1: Actions (Left), Main Title & Unified Period (Center), Company Logo (Right) --}}
+                    <div class="report-header-top">
+                        <div class="header-col-actions">
+                            <div class="action-btns">
+                                <button type="button" onclick="exportToExcel()" class="btn-report-action btn-excel">
+                                    <svg xmlns="http://www.w3.org/2000/svg" style="width: 16px; height: 16px; flex-shrink: 0;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <span>{{ __('Export Excel') }}</span>
+                                </button>
+                                <button type="button" onclick="window.print()" class="btn-report-action btn-print">
+                                    <svg xmlns="http://www.w3.org/2000/svg" style="width: 16px; height: 16px; flex-shrink: 0;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                    </svg>
+                                    <span>{{ __('Print') }}</span>
+                                </button>
                             </div>
                         </div>
-                        @php
-                            $companyLogo = setting('company_logo');
-                            if ($companyLogo) {
-                                $logoUrl = str_starts_with($companyLogo, 'http')
-                                    ? $companyLogo
-                                    : (str_starts_with($companyLogo, 'storage/') || str_starts_with($companyLogo, '/storage/')
-                                        ? asset($companyLogo)
-                                        : asset('/storage/' . $companyLogo));
-                            } else {
-                                $logoUrl = asset('workbench.png');
-                            }
-                        @endphp
-                        <img src="{{ $logoUrl }}" alt="Company Logo" onerror="this.style.display='none'"
-                            style="width: 50px; height: 50px; object-fit: contain;">
+
+                        <div class="header-col-title">
+                            <h1 class="report-main-title">{{ __('Financial Statement') }}</h1>
+                            <div class="report-period-badge">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <span>{{ $reportData['from_date'] }} &nbsp;—&nbsp; {{ $reportData['to_date'] }}</span>
+                            </div>
+                        </div>
+
+                        <div class="header-col-logo">
+                            @php
+                                $companyLogo = setting('company_logo');
+                                if ($companyLogo) {
+                                    $logoUrl = str_starts_with($companyLogo, 'http')
+                                        ? $companyLogo
+                                        : (str_starts_with($companyLogo, 'storage/') || str_starts_with($companyLogo, '/storage/')
+                                            ? asset($companyLogo)
+                                            : asset('/storage/' . $companyLogo));
+                                } else {
+                                    $logoUrl = asset('workbench.png');
+                                }
+                            @endphp
+                            <img src="{{ $logoUrl }}" alt="Company Logo" class="company-logo" onerror="this.style.display='none'">
+                        </div>
+                    </div>
+
+                    {{-- Row 2: Clean Employee Profile Banner (No redundant dates/titles) --}}
+                    <div class="employee-profile-banner">
+                        <div class="employee-profile-main">
+                            @if ($reportData['avatar_image'])
+                                <img src="{{ $reportData['avatar_image'] }}" alt="{{ $reportData['employee_name'] }}" class="employee-avatar">
+                            @endif
+                            <div class="employee-details-box">
+                                <div class="employee-name-row">
+                                    <span class="employee-name-title">{{ $reportData['employee_name'] }}</span>
+                                    @if (!empty($reportData['branch_name']))
+                                        <span class="badge-branch">
+                                            <svg xmlns="http://www.w3.org/2000/svg" style="width: 12px; height: 12px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                            {{ $reportData['branch_name'] }}
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                {{-- Header Titles Matching Attached Design --}}
-                <h1 class="report-title">{{ __('Financial Statement') }}</h1>
-                <h2 class="report-subtitle">{{ $reportData['employee_name'] }} — {{ $reportData['period_label'] }}</h2>
 
                 {{-- Table Structure Matching Attached Design --}}
                 <table class="statement-table" id="report-table">
