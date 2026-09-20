@@ -29,13 +29,26 @@ final class EmployeeStatementFilterDTO
             ? (int) $data['employee_id']
             : null;
 
-        $fromDate = !empty($data['from_date'])
-            ? Carbon::parse($data['from_date'])->startOfDay()
-            : now()->startOfMonth()->startOfDay();
+        $parseDate = function ($value, Carbon $default): Carbon {
+            if (empty($value)) {
+                return $default;
+            }
+            if ($value instanceof Carbon) {
+                return $value;
+            }
+            try {
+                $str = trim((string) $value);
+                if (preg_match('/^\d{2}-\d{2}-\d{4}$/', $str)) {
+                    return Carbon::createFromFormat('d-m-Y', $str);
+                }
+                return Carbon::parse($str);
+            } catch (\Throwable) {
+                return $default;
+            }
+        };
 
-        $toDate = !empty($data['to_date'])
-            ? Carbon::parse($data['to_date'])->endOfDay()
-            : now()->endOfMonth()->endOfDay();
+        $fromDate = $parseDate($data['from_date'] ?? null, now()->startOfMonth())->startOfDay();
+        $toDate = $parseDate($data['to_date'] ?? null, now()->endOfMonth())->endOfDay();
 
         return new self(
             employeeId: $employeeId,
@@ -52,6 +65,6 @@ final class EmployeeStatementFilterDTO
 
     public function getFormattedPeriod(): string
     {
-        return $this->fromDate->format('Y-m-d') . ' — ' . $this->toDate->format('Y-m-d');
+        return $this->fromDate->format('d-m-Y') . ' — ' . $this->toDate->format('d-m-Y');
     }
 }

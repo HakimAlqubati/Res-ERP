@@ -85,17 +85,17 @@ class EmployeeStatementReportResource extends Resource
                         DatePicker::make('from_date')
                             ->label(__('From Date'))
                             ->native(false)
-                            ->displayFormat('Y-m-d')
-                            ->format('Y-m-d')
-                            ->default(now()->startOfMonth()->format('Y-m-d'))
+                            ->displayFormat('d-m-Y')
+                            ->format('d-m-Y')
+                            ->default(now()->startOfMonth()->format('d-m-Y'))
                             ->live(),
 
                         DatePicker::make('to_date')
                             ->label(__('To Date'))
                             ->native(false)
-                            ->displayFormat('Y-m-d')
-                            ->format('Y-m-d')
-                            ->default(now()->endOfMonth()->format('Y-m-d'))
+                            ->displayFormat('d-m-Y')
+                            ->format('d-m-Y')
+                            ->default(now()->endOfMonth()->format('d-m-Y'))
                             ->live(),
                     ])
                     ->query(fn (Builder $query) => $query)

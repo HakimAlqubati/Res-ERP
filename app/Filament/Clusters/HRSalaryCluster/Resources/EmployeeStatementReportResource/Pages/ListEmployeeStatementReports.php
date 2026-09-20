@@ -23,8 +23,8 @@ class ListEmployeeStatementReports extends ListRecords
         $statementState = $filters['statement_filter']->getState() ?? [];
 
         $employeeId = ! empty($statementState['employee_id']) ? (int) $statementState['employee_id'] : null;
-        $fromDate   = $statementState['from_date'] ?? now()->startOfMonth()->format('Y-m-d');
-        $toDate     = $statementState['to_date'] ?? now()->endOfMonth()->format('Y-m-d');
+        $fromDate   = $statementState['from_date'] ?? now()->startOfMonth()->format('d-m-Y');
+        $toDate     = $statementState['to_date'] ?? now()->endOfMonth()->format('d-m-Y');
 
         try {
             $dto = EmployeeStatementFilterDTO::fromArray([

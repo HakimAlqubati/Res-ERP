@@ -184,11 +184,9 @@
             gap: 4px;
         }
 
-        .employee-name-row {
+        .employee-branch-row {
             display: flex;
             align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
         }
 
         .employee-name-title {
@@ -682,9 +680,9 @@
                                 <img src="{{ $reportData['avatar_image'] }}" alt="{{ $reportData['employee_name'] }}" class="employee-avatar">
                             @endif
                             <div class="employee-details-box">
-                                <div class="employee-name-row">
-                                    <span class="employee-name-title">{{ $reportData['employee_name'] }}</span>
-                                    @if (!empty($reportData['branch_name']))
+                                <span class="employee-name-title">{{ $reportData['employee_name'] }}</span>
+                                @if (!empty($reportData['branch_name']))
+                                    <div class="employee-branch-row">
                                         <span class="badge-branch">
                                             <svg xmlns="http://www.w3.org/2000/svg" style="width: 12px; height: 12px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -692,8 +690,8 @@
                                             </svg>
                                             {{ $reportData['branch_name'] }}
                                         </span>
-                                    @endif
-                                </div>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -750,7 +748,7 @@
                         </tr>
                         <tr class="total-row-final">
                             <td colspan="6">
-                                {{ __('Final Result') }}: {{ $reportData['final_result'] }}
+                                {{ __('Final Net Result') }}: {{ $reportData['final_result'] }}
                             </td>
                         </tr>
                     </tfoot>

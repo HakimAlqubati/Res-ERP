@@ -545,6 +545,8 @@ return [
   'gross_salary' => 'إجمالي الراتب',
   'total_deductions' => 'إجمالي الخصومات',
   'total_allowances' => 'إجمالي البدلات',
+  'total_additions' => 'إجمالي الإضافات',
+  'final_net_result' => 'صافي النتيجة النهائية',
   'employees_count' => 'الموظفين',
   'total_salaries' => 'الإجمالي',
 

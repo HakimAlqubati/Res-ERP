@@ -564,6 +564,8 @@ return [
     'gross_salary' => 'Gross Salary',
     'total_deductions' => 'Total Deductions',
     'total_allowances' => 'Total Allowances',
+    'total_additions' => 'Total Additions',
+    'final_net_result' => 'Final Net Result',
     'employees_count' => 'Staff',
     'total_salaries' => 'Total',
 

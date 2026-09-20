@@ -7,5 +7,8 @@
     "Net Balance": "صافي الرصيد",
     "transactions": "معاملات",
     "total transactions": "إجمالي المعاملات",
-    "Transaction Details": "تفاصيل المعاملة"
+    "Transaction Details": "تفاصيل المعاملة",
+    "Total Additions": "إجمالي الإضافات",
+    "Total Deductions": "إجمالي الخصومات",
+    "Final Net Result": "صافي النتيجة النهائية"
 }

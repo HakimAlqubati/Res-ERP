@@ -116,6 +116,12 @@ class EmployeeAdvanceInstallmentResource extends Resource
                     ->sortable()
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),
+               TextColumn::make('advanceRequest.code')
+                    ->label(__('lang.code'))
+                    ->searchable()
+                    ->sortable()
+                    ->copyable()
+                    ->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('employee.employee_no')
                     ->label(__('lang.employee_no'))
@@ -136,22 +142,16 @@ class EmployeeAdvanceInstallmentResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
 
-                TextColumn::make('advanceRequest.code')
-                    ->label(__('lang.code'))
-                    ->searchable()
-                    ->sortable()
-                    ->copyable()
-                    ->toggleable(isToggledHiddenByDefault: false),
-
+              
                 TextColumn::make('sequence')
                     ->label('#')
                     ->alignCenter()
                     ->sortable()
-                    ->badge()
+                    ->badge()->hidden()
                     ->color('gray'),
 
                 TextColumn::make('installment_amount')
-                    ->label(__('lang.installment_amount'))
+                    ->label(__('lang.amount'))
                     ->formatStateUsing(fn ($state) => formatMoneyWithCurrency($state))
                     ->sortable()
                     ->alignEnd()
