@@ -65,6 +65,6 @@ final class EmployeeStatementFilterDTO
 
     public function getFormattedPeriod(): string
     {
-        return $this->fromDate->format('d-m-Y') . ' — ' . $this->toDate->format('d-m-Y');
+        return $this->fromDate->format('Y-m-d') . ' — ' . $this->toDate->format('Y-m-d');
     }
 }
