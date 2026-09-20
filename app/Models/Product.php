@@ -234,8 +234,8 @@ class Product extends Model implements Auditable
         return $this->unitPrices->map(function ($unitPrice) {
             $unitName = $unitPrice->unit->name ?? 'N/A';
             $price = isset($unitPrice->price) && is_numeric($unitPrice->price)
-                ? number_format((float) $unitPrice->price, 2)
-                : number_format(0, 2);
+                ? formatMoneyWithCurrency($unitPrice->price)
+                : formatMoneyWithCurrency(0);
             $qtyPerPack = isset($unitPrice->package_size) && is_numeric($unitPrice->package_size)
                 ? number_format((float) $unitPrice->package_size, 2)
                 : '-';

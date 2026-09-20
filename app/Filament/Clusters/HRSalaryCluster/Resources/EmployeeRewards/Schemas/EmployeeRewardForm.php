@@ -24,20 +24,24 @@ class EmployeeRewardForm
                 Fieldset::make()->columnSpanFull()->label('Reward/Bonus Information')->columns(4)->schema([
                     Select::make('month')
                         ->label('Month')
-                        ->options([
-                            1 => 'January',
-                            2 => 'February',
-                            3 => 'March',
-                            4 => 'April',
-                            5 => 'May',
-                            6 => 'June',
-                            7 => 'July',
-                            8 => 'August',
-                            9 => 'September',
-                            10 => 'October',
-                            11 => 'November',
-                            12 => 'December',
-                        ])
+                        ->options(function (Get $get) {
+                            $year = (int) ($get('year') ?: ($get('date') ? \Carbon\Carbon::parse($get('date'))->year : now()->year));
+                            $months = [
+                                1  => 'January',
+                                2  => 'February',
+                                3  => 'March',
+                                4  => 'April',
+                                5  => 'May',
+                                6  => 'June',
+                                7  => 'July',
+                                8  => 'August',
+                                9  => 'September',
+                                10 => 'October',
+                                11 => 'November',
+                                12 => 'December',
+                            ];
+                            return collect($months)->mapWithKeys(fn ($name, $m) => [$m => "{$name}-{$year}"])->toArray();
+                        })
                         ->live()
                         ->required()
                         ->rules([

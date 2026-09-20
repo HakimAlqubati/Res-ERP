@@ -313,6 +313,7 @@ class ProductsSchema
                                             PRA::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
                                         })->required()->minValue(0.000000001),
                                     TextInput::make('price')
+                                        ->prefix(settingWithDefault('currency_symbol', 'RM'))
                                         ->label(__('lang.price'))
                                         ->numeric()
                                         ->default(1)

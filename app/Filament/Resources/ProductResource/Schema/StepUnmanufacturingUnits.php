@@ -82,7 +82,9 @@ class StepUnmanufacturingUnits
                                 }
                                 return PRA::isProductLocked($livewire->form->getRecord(), $record);
                             }),
-                        TextInput::make('price')->numeric()->default(1)->required()
+                        TextInput::make('price')
+                            ->prefix(settingWithDefault('currency_symbol', 'RM'))
+                            ->numeric()->default(1)->required()
                             ->label(__('lang.price'))
                             ->disabled(function (callable $get, $livewire, $record) {
                                 $isNew = is_null($get('id'));

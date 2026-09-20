@@ -32,7 +32,7 @@ class StepManufacturingUnits
                         if (PRA::isProductLocked($livewire->form->getRecord(), $record)) {
                             return '⚠️ You cannot edit units because this product has related transactions.' . "\n" . 'However, you are allowed to add new units that will be used for manufacturing';
                         }
-                        return 'Please add units in order from largest to smallest.';
+                        return null;
                     })
                     ->table([
                         TableColumn::make(__('Unit'))->alignCenter()->width('14rem'),
@@ -108,7 +108,7 @@ class StepManufacturingUnits
                                 }
                                 $res = round($packageSize * $finalPrice, 8);
                                 $set('price', $res);
-                                $set('selling_price', $res);
+                                $set('selling_price', round($packageSize * $finalPrice, 2));
                             }),
                         TextInput::make('package_size')
                             ->numeric()->default(1)->required()
@@ -134,7 +134,7 @@ class StepManufacturingUnits
                                 }
                                 $res = round($state * $finalPrice, 8);
                                 $set('price', $res);
-                                $set('selling_price', $res);
+                                $set('selling_price', round($state * $finalPrice, 2));
                             })
                             ->extraInputAttributes(function (callable $get, $livewire, $record) {
                                 return PRA::isProductLocked($livewire->form->getRecord(), $record)
@@ -143,6 +143,7 @@ class StepManufacturingUnits
                             })
                             ->label(__('lang.package_size')),
                         TextInput::make('price')
+                            ->prefix(settingWithDefault('currency_symbol', 'RM'))
                             ->numeric()
                             ->default(function ($record, $livewire) {
                                 $finalPrice = $livewire->form->getRecord()->final_price ?? 0;
@@ -156,20 +157,16 @@ class StepManufacturingUnits
                             })
                             ->label(__('lang.price')),
                         TextInput::make('selling_price')
+                            ->prefix(settingWithDefault('currency_symbol', 'RM'))
                             ->numeric()
-                            ->minValue(1)
+                            ->step('0.01')
+                            ->formatStateUsing(fn ($state) => $state !== null ? number_format((float) $state, 2, '.', '') : null)
+                            ->minValue(0.01)
                             ->label(__('lang.selling_price'))
                             ->default(function ($record, $livewire) {
                                 $finalPrice = $livewire->form->getRecord()->final_price ?? 0;
-                                return $finalPrice;
-                            })
-                        // ->default(function ($record, $livewire) {
-                        //     return 0;
-                        //     // يمكن تعديل هذا الحساب حسب منطقك إن كان هناك ربط بالهامش أو غيره
-                        //     $finalPrice = $livewire->form->getRecord()->final_price ?? 0;
-                        //     return $finalPrice > 0 ? round($finalPrice * 1.2, 2) : null;
-                        // })
-                        ,
+                                return round($finalPrice, 2);
+                            }),
                         TextInput::make('weight')
                             ->numeric()
                             ->nullable()

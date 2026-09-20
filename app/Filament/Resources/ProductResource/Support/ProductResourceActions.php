@@ -57,7 +57,7 @@ final class ProductResourceActions
             $basePrice   = $packageSize * $totalNetPrice;
             $updatedUnits[$key] = array_merge($unit, [
                 'price'         => round($basePrice, 4),
-                'selling_price' => round($basePrice, 4),
+                'selling_price' => round($basePrice, 2),
             ]);
         }
 
