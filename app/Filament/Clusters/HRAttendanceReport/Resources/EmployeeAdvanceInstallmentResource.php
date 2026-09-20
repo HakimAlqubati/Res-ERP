@@ -49,6 +49,59 @@ class EmployeeAdvanceInstallmentResource extends Resource
         return __('lang.installments') ?? 'Advance Installments';
     }
 
+    protected static ?string $recordTitleAttribute = 'id';
+
+    protected static bool $isGloballySearchable = true;
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return [
+            'advanceRequest.code',
+            'employee.name',
+            'employee.employee_no',
+        ];
+    }
+
+    public static function getGlobalSearchResultTitle(Model $record): string
+    {
+        /** @var EmployeeAdvanceInstallment $record */
+        $code = $record->advanceRequest?->code ?? ('#' . $record->id);
+        $employeeName = $record->employee?->name ?? '';
+
+        return $employeeName ? "{$code} — {$employeeName} (#{$record->sequence})" : $code;
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        /** @var EmployeeAdvanceInstallment $record */
+        $details = [];
+
+        if ($record->employee?->name) {
+            $details[__('lang.employee')] = $record->employee->name;
+        }
+
+        if ($record->installment_amount) {
+            $details[__('lang.installment_amount')] = formatMoneyWithCurrency($record->installment_amount);
+        }
+
+        if ($record->due_date) {
+            $details[__('lang.due_date')] = $record->due_date->format('Y-m-d');
+        }
+
+        if ($record->status) {
+            $details[__('lang.status')] = ucfirst($record->status);
+        }
+
+        return $details;
+    }
+
+    public static function getGlobalSearchResultUrl(Model $record): ?string
+    {
+        return static::getUrl('index', [
+            'tableSearch' => $record->advanceRequest?->code ?? $record->employee?->name,
+        ]);
+    }
+
     public static function table(Table $table): Table
     {
         return $table

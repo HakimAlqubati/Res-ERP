@@ -29,6 +29,7 @@ use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class EmployeeAdvanceReportResource extends Resource
 {
@@ -42,6 +43,45 @@ class EmployeeAdvanceReportResource extends Resource
 
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
+
+    protected static ?string $recordTitleAttribute = 'code';
+
+    protected static bool $isGloballySearchable = true;
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return [
+            'code',
+            'employee.name',
+            'employee.employee_no',
+        ];
+    }
+
+    public static function getGlobalSearchResultTitle(Model $record): string
+    {
+        /** @var AdvanceRequest $record */
+        $code = $record->code ?? ('#' . $record->id);
+        $name = $record->employee?->name ?? '';
+
+        return $name ? "{$code} — {$name}" : $code;
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        /** @var AdvanceRequest $record */
+        return array_filter([
+            __('lang.employee')       => $record->employee?->name,
+            __('lang.advance_amount') => $record->advance_amount ? formatMoneyWithCurrency($record->advance_amount) : null,
+            __('lang.remaining')      => formatMoneyWithCurrency($record->remaining_total),
+        ]);
+    }
+
+    public static function getGlobalSearchResultUrl(Model $record): ?string
+    {
+        return static::getUrl('index', [
+            'tableSearch' => $record->code ?? $record->employee?->name,
+        ]);
+    }
 
     public static function table(Table $table): Table
     {
