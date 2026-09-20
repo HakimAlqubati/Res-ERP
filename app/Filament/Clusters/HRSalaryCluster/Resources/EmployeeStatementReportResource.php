@@ -32,18 +32,18 @@ class EmployeeStatementReportResource extends Resource
 
     protected static ?int $navigationSort = 6;
 
-    protected static ?string $pluralLabel = 'Employee Statement Report';
+    protected static ?string $pluralLabel = 'Employee Financial Statement';
 
-    protected static ?string $pluralModelLabel = 'Employee Statement Report';
+    protected static ?string $pluralModelLabel = 'Employee Financial Statement';
 
     public static function getModelLabel(): string
     {
-        return __('lang.employee_statement_report') ?: 'Employee Statement Report';
+        return __('lang.employee_statement_report') ?: 'Employee Financial Statement';
     }
 
     public static function getNavigationLabel(): string
     {
-        return __('lang.employee_statement_report') ?: 'Employee Statement Report';
+        return __('lang.employee_statement_report') ?: 'Employee Financial Statement';
     }
 
     public static function getPluralLabel(): string
@@ -84,11 +84,17 @@ class EmployeeStatementReportResource extends Resource
 
                         DatePicker::make('from_date')
                             ->label(__('From Date'))
+                            ->native(false)
+                            ->displayFormat('Y-m-d')
+                            ->format('Y-m-d')
                             ->default(now()->startOfMonth()->format('Y-m-d'))
                             ->live(),
 
                         DatePicker::make('to_date')
                             ->label(__('To Date'))
+                            ->native(false)
+                            ->displayFormat('Y-m-d')
+                            ->format('Y-m-d')
                             ->default(now()->endOfMonth()->format('Y-m-d'))
                             ->live(),
                     ])

@@ -52,14 +52,6 @@ final class EmployeeStatementFilterDTO
 
     public function getFormattedPeriod(): string
     {
-        if (
-            $this->fromDate->format('Y-m') === $this->toDate->format('Y-m') &&
-            $this->fromDate->isSameDay($this->fromDate->copy()->startOfMonth()) &&
-            $this->toDate->isSameDay($this->toDate->copy()->endOfMonth())
-        ) {
-            return $this->fromDate->format('Y/m');
-        }
-
         return $this->fromDate->format('Y-m-d') . ' — ' . $this->toDate->format('Y-m-d');
     }
 }

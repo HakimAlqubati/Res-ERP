@@ -163,10 +163,6 @@
             color: #1e293b;
         }
 
-        .statement-table .col-sub-type {
-            color: #475569;
-        }
-
         .statement-table .col-amount {
             font-weight: 600;
             color: #1e293b;
@@ -195,6 +191,11 @@
             font-size: 16px;
         }
 
+        .statement-table .amount-deduction {
+            color: #c0392b !important;
+            font-weight: 700;
+        }
+
         .statement-table tfoot td {
             font-weight: 700;
             text-align: right;
@@ -212,6 +213,7 @@
         .statement-table tfoot .total-row-ded td {
             border-bottom: none;
             border-top: none;
+            color: #c0392b !important;
         }
 
         .statement-table tfoot .total-row-final td {
@@ -310,10 +312,6 @@
             color: #f8fafc !important;
         }
 
-        :is(.dark, [data-theme="dark"]) .statement-table .col-sub-type {
-            color: #94a3b8 !important;
-        }
-
         :is(.dark, [data-theme="dark"]) .statement-table .col-date {
             color: #cbd5e1 !important;
         }
@@ -330,6 +328,10 @@
             color: #f87171;
         }
 
+        :is(.dark, [data-theme="dark"]) .statement-table .amount-deduction {
+            color: #f87171 !important;
+        }
+
         :is(.dark, [data-theme="dark"]) .statement-table .row-employer-contribution {
             background-color: #133827 !important;
         }
@@ -341,6 +343,10 @@
 
         :is(.dark, [data-theme="dark"]) .statement-table tfoot .total-row-add td {
             border-top: 1px solid #374151;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table tfoot .total-row-ded td {
+            color: #f87171 !important;
         }
 
         /* ─── Empty State ─── */
@@ -468,9 +474,12 @@
                 color: #c0392b !important;
             }
 
+            .statement-table .amount-deduction {
+                color: #c0392b !important;
+            }
+
             .statement-table .col-index,
             .statement-table .col-type,
-            .statement-table .col-sub-type,
             .statement-table .col-amount,
             .statement-table .col-date,
             .statement-table .col-desc {
@@ -482,6 +491,10 @@
                 color: #0d7c66 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+            }
+
+            .statement-table tfoot .total-row-ded td {
+                color: #c0392b !important;
             }
         }
     </style>
@@ -539,7 +552,7 @@
                 </div>
 
                 {{-- Header Titles Matching Attached Design --}}
-                <h1 class="report-title">{{ __('Payroll Transactions') }}</h1>
+                <h1 class="report-title">{{ __('Financial Statement') }}</h1>
                 <h2 class="report-subtitle">{{ $reportData['employee_name'] }} — {{ $reportData['period_label'] }}</h2>
 
                 {{-- Table Structure Matching Attached Design --}}
@@ -547,12 +560,11 @@
                     <thead>
                         <tr>
                             <th style="width: 5%;">#</th>
-                            <th style="width: 15%;">{{ __('TYPE') }}</th>
-                            <th style="width: 16%;">{{ __('SUB TYPE') }}</th>
+                            <th style="width: 16%;">{{ __('TYPE') }}</th>
                             <th style="width: 8%;">{{ __('OP') }}</th>
-                            <th style="width: 15%;">{{ __('AMOUNT') }}</th>
-                            <th style="width: 14%;">{{ __('DATE') }}</th>
-                            <th style="width: 27%;">{{ __('DESCRIPTION') }}</th>
+                            <th style="width: 16%;">{{ __('AMOUNT') }}</th>
+                            <th style="width: 15%;">{{ __('DATE') }}</th>
+                            <th style="width: 40%;">{{ __('Transaction Details') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -561,7 +573,6 @@
                                 @if (!empty($tx['is_employer_contribution'])) style="background-color: #e6ffc8;" @endif>
                                 <td class="col-index">{{ $tx['index'] }}</td>
                                 <td class="col-type">{{ __($tx['type']) }}</td>
-                                <td class="col-sub-type">{{ !empty($tx['sub_type']) ? __($tx['sub_type']) : '' }}</td>
                                 <td>
                                     @if ($tx['operation'] === '+')
                                         <span class="op-plus">+</span>
@@ -569,13 +580,13 @@
                                         <span class="op-minus">-</span>
                                     @endif
                                 </td>
-                                <td class="col-amount">{{ $tx['amount'] }}</td>
+                                <td class="col-amount {{ $tx['operation'] === '-' ? 'amount-deduction' : '' }}">{{ $tx['amount'] }}</td>
                                 <td class="col-date">{{ $tx['date'] }}</td>
                                 <td class="col-desc">{{ $tx['description'] }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" style="text-align: center; padding: 30px; color: #64748b; font-weight: 600;">
+                                <td colspan="6" style="text-align: center; padding: 30px; color: #64748b; font-weight: 600;">
                                     {{ __('No transactions found for this employee within the specified date range.') }}
                                 </td>
                             </tr>
@@ -584,17 +595,17 @@
 
                     <tfoot>
                         <tr class="total-row-add">
-                            <td colspan="7">
+                            <td colspan="6">
                                 {{ __('Total Additions') }}: {{ $reportData['total_additions'] }}
                             </td>
                         </tr>
                         <tr class="total-row-ded">
-                            <td colspan="7">
+                            <td colspan="6">
                                 {{ __('Total Deductions') }}: {{ $reportData['total_deductions'] }}
                             </td>
                         </tr>
                         <tr class="total-row-final">
-                            <td colspan="7">
+                            <td colspan="6">
                                 {{ __('Final Result') }}: {{ $reportData['final_result'] }}
                             </td>
                         </tr>
@@ -616,12 +627,11 @@
                 var wb = XLSX.utils.table_to_sheet(clone, { raw: true });
                 wb['!cols'] = [
                     { wch: 6 },
-                    { wch: 18 },
-                    { wch: 22 },
+                    { wch: 20 },
                     { wch: 8 },
                     { wch: 18 },
                     { wch: 14 },
-                    { wch: 38 }
+                    { wch: 45 }
                 ];
 
                 var workbook = XLSX.utils.book_new();
