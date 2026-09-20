@@ -568,6 +568,7 @@ return [
     'final_net_result' => 'Final Net Result',
     'employees_count' => 'Staff',
     'total_salaries' => 'Total',
+    'date_format' => 'Date Format',
 
     // ===========================================
     // HRMS - Holidays

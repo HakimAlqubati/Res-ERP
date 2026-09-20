@@ -86,11 +86,20 @@ class SettingResource extends Resource
                                         ->options(getNationalitiesAsCountries()),
                                         TextInput::make('currency_symbol')->label(__('system_settings.currency_symbol')),
 
+                                    Select::make('date_format')
+                                        ->label(__('lang.date_format') ?: 'Date Format')
+                                        ->options([
+                                            'Y-m-d' => 'YYYY-MM-DD (e.g. ' . date('Y-m-d') . ')',
+                                            'd-m-Y' => 'DD-MM-YYYY (e.g. ' . date('d-m-Y') . ')',
+                                             ])
+                                        ->default('Y-m-d')
+                                        ->columnSpan(2),
+
                                     TextInput::make("website")
                                         ->label('Website')
                                         ->url()
                                         ->placeholder('https://example.com')
-                                        ->columnSpan(4),
+                                        ->columnSpan(2),
 
                                     FileUpload::make('company_logo')
                                         ->label('Logo')

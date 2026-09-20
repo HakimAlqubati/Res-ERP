@@ -38,8 +38,19 @@ final class EmployeeStatementFilterDTO
             }
             try {
                 $str = trim((string) $value);
+                $systemFormat = function_exists('settingWithDefault') ? settingWithDefault('date_format', 'Y-m-d') : 'Y-m-d';
+                if (!empty($systemFormat)) {
+                    try {
+                        return Carbon::createFromFormat($systemFormat, $str);
+                    } catch (\Throwable) {
+                        // ignore and try other formats
+                    }
+                }
                 if (preg_match('/^\d{2}-\d{2}-\d{4}$/', $str)) {
                     return Carbon::createFromFormat('d-m-Y', $str);
+                }
+                if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $str)) {
+                    return Carbon::createFromFormat('d/m/Y', $str);
                 }
                 return Carbon::parse($str);
             } catch (\Throwable) {
@@ -63,8 +74,9 @@ final class EmployeeStatementFilterDTO
         return !empty($this->employeeId);
     }
 
-    public function getFormattedPeriod(): string
+    public function getFormattedPeriod(?string $format = null): string
     {
-        return $this->fromDate->format('Y-m-d') . ' — ' . $this->toDate->format('Y-m-d');
+        $displayFormat = $format ?: (function_exists('settingWithDefault') ? settingWithDefault('date_format', 'Y-m-d') : 'Y-m-d');
+        return $this->fromDate->format($displayFormat) . ' — ' . $this->toDate->format($displayFormat);
     }
 }

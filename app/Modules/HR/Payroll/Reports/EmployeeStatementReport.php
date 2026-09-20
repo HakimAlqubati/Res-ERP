@@ -79,8 +79,9 @@ class EmployeeStatementReport
         });
 
         $finalResult = $totalAdditions - $totalDeductions;
+        $displayDateFormat = function_exists('settingWithDefault') ? settingWithDefault('date_format', 'Y-m-d') : 'Y-m-d';
 
-        $formattedTransactions = $transactions->values()->map(function (SalaryTransaction $tx, int $index) use ($currency) {
+        $formattedTransactions = $transactions->values()->map(function (SalaryTransaction $tx, int $index) use ($currency, $displayDateFormat) {
             $typeVal = $tx->type instanceof \BackedEnum ? $tx->type->value : (string) $tx->type;
             $subTypeVal = $tx->sub_type instanceof \BackedEnum ? $tx->sub_type->value : (string) ($tx->sub_type ?? '');
 
@@ -92,7 +93,7 @@ class EmployeeStatementReport
                 'operation'                => $tx->operation === '-' ? '-' : '+',
                 'amount'                   => formatMoneyWithCurrency($tx->amount, $currency),
                 'raw_amount'               => (float) $tx->amount,
-                'date'                     => $tx->date ? \Carbon\Carbon::parse($tx->date)->format('Y-m-d') : '',
+                'date'                     => $tx->date ? \Carbon\Carbon::parse($tx->date)->format($displayDateFormat) : '',
                 'description'              => $tx->description ?: ($tx->notes ?: '-'),
                 'is_employer_contribution' => $typeVal === SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value,
             ];
@@ -107,8 +108,8 @@ class EmployeeStatementReport
             'branch_name'          => $employee->branch?->name,
             'avatar_image'         => $employee->avatar_image,
             'period_label'         => $filters->getFormattedPeriod(),
-            'from_date'            => $filters->fromDate->format('Y-m-d'),
-            'to_date'              => $filters->toDate->format('Y-m-d'),
+            'from_date'            => $filters->fromDate->format($displayDateFormat),
+            'to_date'              => $filters->toDate->format($displayDateFormat),
             'transactions'         => $formattedTransactions,
             'total_additions'      => formatMoneyWithCurrency($totalAdditions, $currency),
             'total_deductions'     => formatMoneyWithCurrency($totalDeductions, $currency),
@@ -128,6 +129,8 @@ class EmployeeStatementReport
      */
     protected function emptyResponse(EmployeeStatementFilterDTO $filters): array
     {
+        $displayDateFormat = function_exists('settingWithDefault') ? settingWithDefault('date_format', 'Y-m-d') : 'Y-m-d';
+
         return [
             'has_data'             => false,
             'employee'             => null,
@@ -137,8 +140,8 @@ class EmployeeStatementReport
             'branch_name'          => null,
             'avatar_image'         => null,
             'period_label'         => $filters->getFormattedPeriod(),
-            'from_date'            => $filters->fromDate->format('Y-m-d'),
-            'to_date'              => $filters->toDate->format('Y-m-d'),
+            'from_date'            => $filters->fromDate->format($displayDateFormat),
+            'to_date'              => $filters->toDate->format($displayDateFormat),
             'transactions'         => collect(),
             'total_additions'      => formatMoneyWithCurrency(0),
             'total_deductions'     => formatMoneyWithCurrency(0),

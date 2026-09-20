@@ -549,6 +549,7 @@ return [
   'final_net_result' => 'صافي النتيجة النهائية',
   'employees_count' => 'الموظفين',
   'total_salaries' => 'الإجمالي',
+  'date_format' => 'صيغة التاريخ',
 
   // ===========================================
   // HRMS - Holidays
