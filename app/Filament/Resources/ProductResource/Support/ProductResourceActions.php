@@ -208,6 +208,33 @@ final class ProductResourceActions
             }
             return;
         }
+
+        // 4️⃣ ممنوع إضافة أكثر من وحدة بنفس الـ package_size
+        $duplicates = $packageSizes->duplicates();
+        if ($duplicates->isNotEmpty()) {
+            $duplicateValues = $duplicates->unique()->implode(', ');
+            $message = __('⚠️ Duplicate package size (:sizes) is not allowed.', ['sizes' => $duplicateValues]);
+            if ($fail) {
+                $fail($message);
+            } else {
+                showWarningNotifiMessage($message);
+            }
+            return;
+        }
+
+        // 5️⃣ منع تعطيل خيار ظهور الوحدة في الطلبات للمنتجات التي لديها وحدة واحدة
+        if ($count === 1 && isset($filteredUnits[0])) {
+            $onlyUnit = $filteredUnits[0];
+            if (isset($onlyUnit['use_in_orders']) && ! $onlyUnit['use_in_orders']) {
+                $message = __('⚠️ Products with only one unit must have orders visibility enabled.');
+                if ($fail) {
+                    $fail($message);
+                } else {
+                    showWarningNotifiMessage($message);
+                }
+                return;
+            }
+        }
     }
 
     public static function isProductLocked(

@@ -225,7 +225,18 @@ class StepUnmanufacturingUnits
                         Toggle::make('use_in_orders')
                             ->label('Orders')
                             ->default(true)
-                            ->inline(false),
+                            ->inline(false)
+                            ->disabled(function (callable $get) {
+                                $units = $get('../../units') ?? [];
+                                return count($units) <= 1;
+                            })
+                            ->dehydrated()
+                            ->afterStateHydrated(function (callable $get, callable $set) {
+                                $units = $get('../../units') ?? [];
+                                if (count($units) <= 1) {
+                                    $set('use_in_orders', true);
+                                }
+                            }),
 
                     ])
                     ->orderColumn('order')

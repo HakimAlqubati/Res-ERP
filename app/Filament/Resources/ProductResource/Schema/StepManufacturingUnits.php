@@ -136,9 +136,17 @@ class StepManufacturingUnits
                                 $set('price', $res);
                                 $set('selling_price', round($state * $finalPrice, 2));
                             })
+                            ->readOnly(function (callable $get, $livewire, $record) {
+                                return PRA::isProductLocked($livewire->form->getRecord(), $record);
+                            })
+                            ->extraAttributes(function (callable $get, $livewire, $record) {
+                                return PRA::isProductLocked($livewire->form->getRecord(), $record)
+                                    ? ['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;']
+                                    : [];
+                            })
                             ->extraInputAttributes(function (callable $get, $livewire, $record) {
                                 return PRA::isProductLocked($livewire->form->getRecord(), $record)
-                                    ? ['readonly' => true]
+                                    ? ['style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;']
                                     : [];
                             })
                             ->label(__('lang.package_size')),
@@ -150,9 +158,17 @@ class StepManufacturingUnits
                                 return $finalPrice;
                             })->minValue(0.0001)
                             ->required()
+                            ->readOnly(function (callable $get, $livewire, $record) {
+                                return PRA::isProductLocked($livewire->form->getRecord(), $record);
+                            })
+                            ->extraAttributes(function (callable $get, $livewire, $record) {
+                                return PRA::isProductLocked($livewire->form->getRecord(), $record)
+                                    ? ['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;']
+                                    : [];
+                            })
                             ->extraInputAttributes(function (callable $get, $livewire, $record) {
                                 return PRA::isProductLocked($livewire->form->getRecord(), $record)
-                                    ? ['readonly' => true]
+                                    ? ['style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;']
                                     : [];
                             })
                             ->label(__('lang.price')),
