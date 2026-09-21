@@ -39,9 +39,9 @@ trait HasNewUserForm
             ->schema([
 
                 Grid::make()->columns(3)->columnSpanFull()->schema([
-                    Fieldset::make()->columnSpanFull()->label('Personal data')->schema([
-                        TextInput::make('name')->required()->unique(ignoreRecord: true),
-                        TextInput::make('email')->required()->unique(ignoreRecord: true)
+                    Fieldset::make()->columnSpanFull()->label(__('lang.personal_data'))->schema([
+                        TextInput::make('name')->label(__('lang.name'))->required()->unique(ignoreRecord: true),
+                        TextInput::make('email')->label(__('lang.email'))->required()->unique(ignoreRecord: true)
                             ->email()->required(),
                         \App\Filament\Forms\Components\PhoneInput::make('phone_number')
                             ->label(__('lang.phone_number'))
@@ -69,10 +69,10 @@ trait HasNewUserForm
                                 [],
                             ]),
                         Select::make('gender')
-                            ->label('Gender')
+                            ->label(__('lang.gender'))
                             ->options([
-                                1 => 'Male',
-                                0 => 'Female',
+                                1 => __('lang.male'),
+                                0 => __('lang.female'),
                             ])
                             // ->default(1)
                             ->required(),
@@ -83,12 +83,12 @@ trait HasNewUserForm
                             ->inline(false),
 
                         Select::make('nationality')
-                            ->label('Nationality')
+                            ->label(__('lang.nationality'))
                             ->options(getNationalities()) // Loads nationalities from JSON file
                             ->searchable()
                             ->nullable(),
                         Select::make('branch_id')
-                            ->label('Branch')
+                            ->label(__('lang.branch'))
                             // ->required()
                             ->visible(function (Get $get) {
                                 $roles = $get('roles') ?? [];
@@ -113,7 +113,7 @@ trait HasNewUserForm
                             }),
 
                         Select::make('extra_branches')
-                            ->label('Extra Branches')
+                            ->label(__('lang.extra_branches'))
                             ->multiple()
                             ->searchable()
                             ->preload()
@@ -140,19 +140,19 @@ trait HasNewUserForm
                 ]),
 
                 Checkbox::make('edit_role_and_permissions')
-                    ->label('Edit Role and Permissions')
+                    ->label(__('lang.edit_role_and_permissions'))
                     ->live()
                     ->visible(fn(string $context): bool => $context === 'edit'),
 
                 Fieldset::make()->columnSpanFull()
                     ->visible(fn(Get $get, string $context): bool => $context === 'create' || $get('edit_role_and_permissions'))
 
-                    ->label('Set user type and role')->schema([
+                    ->label(__('lang.set_user_type_and_role'))->schema([
                         Select::make('user_type')
-                            ->label('User type')
+                            ->label(__('lang.user_type'))
                             ->options(function () {
                                 return
-                                    [0 => 'All'] +
+                                    [0 => __('lang.all')] +
                                     UserType::select('name', 'id')->get()->pluck('name', 'id')->toArray();
                             })
                             ->default(0)
@@ -173,7 +173,7 @@ trait HasNewUserForm
                         //     }
                         // }),
                         CheckboxList::make('roles')->required()
-                            ->label('Roles')
+                            ->label(__('lang.roles'))
                             ->columns(3)
                             ->relationship(
                                 name: 'roles',
@@ -200,14 +200,14 @@ trait HasNewUserForm
                                 // إجبار الحفظ على مسح كل الرولز القديمة تماماً، وإبقاء الرولز المحددة فقط 
                                 $record->syncRoles($state ?? []);
                             })
-                            ->validationAttribute('Roles')
+                            ->validationAttribute(__('lang.roles'))
                             ->validationMessages([
                                 // Error triggered on each item: roles.*.in
-                                '*.in'     => 'The selected role is not valid for the current user type. Please choose only from the available roles or change the user type.',
+                                '*.in'     => __('lang.role_not_valid_for_user_type'),
                                 // Fallback if error comes on the whole array
-                                'in'       => 'One of the selected roles is not valid for the current user type.',
-                                'array'    => 'The roles list format is invalid.',
-                                'required' => 'Please select at least one role.',
+                                'in'       => __('lang.one_role_not_valid'),
+                                'array'    => __('lang.roles_list_invalid'),
+                                'required' => __('lang.role_required'),
                             ])
 
                             ->live(),
@@ -221,7 +221,7 @@ trait HasNewUserForm
                             }
                         })
 
-                        ->label('Manager')
+                        ->label(__('lang.manager'))
                         ->searchable()
                         ->options(function ($get) {
                             $branchId = $get('branch_id');
@@ -241,13 +241,14 @@ trait HasNewUserForm
                     Grid::make()->columns(2)->columnSpanFull()->schema([
                         setting('password_contains_for') == 'easy_password' ?
                             TextInput::make('password')
+                            ->label(__('lang.password'))
                             ->password()
                             ->required(fn(string $context) => $context === 'create')
                             ->reactive()
                             ->dehydrateStateUsing(fn($state) => Hash::make($state))
 
                             : TextInput::make('password')
-                            ->label('Password')
+                            ->label(__('lang.password'))
                             ->password()
                             ->required(fn(string $context) => $context === 'create')
                             ->reactive()
@@ -266,7 +267,7 @@ trait HasNewUserForm
                             ->password()
                             ->required(fn(string $context) => $context === 'create')
                             ->same('password')
-                            ->label('Confirm Password'),
+                            ->label(__('lang.confirm_password')),
                     ]),
                 ]),
             ]);
