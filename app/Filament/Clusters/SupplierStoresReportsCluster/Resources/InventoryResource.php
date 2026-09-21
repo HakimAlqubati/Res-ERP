@@ -118,10 +118,9 @@ class InventoryResource extends Resource
                     // ->visible(fn()=>isHakimOrAdel())
                     ->visible(fn() => isSuperAdmin()),
 
-                static::getZeroDisabledProductsAction(),
-
+ 
                 Action::make('export_excel')
-                    ->label(__('lang.export_to_excel') ?? 'Export to Excel')
+                    ->label('Export to Excel')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('success')
                     ->action(function ($livewire) {
@@ -130,8 +129,8 @@ class InventoryResource extends Resource
 
                         if ($count === 0) {
                             Notification::make()
-                                ->title(__('lang.no_records_found') ?? 'لا توجد سجلات')
-                                ->body(__('لا توجد حركات مخزنية لتصديرها بناءً على الفلاتر الحالية.'))
+                                ->title('No Records Found')
+                                ->body('There are no inventory transactions to export for the current filters.')
                                 ->warning()
                                 ->send();
                             return null;
@@ -139,9 +138,9 @@ class InventoryResource extends Resource
 
                         if ($count > static::MAX_EXPORT_RECORDS) {
                             Notification::make()
-                                ->title(__('تجاوز الحد الأقصى للتصدير'))
+                                ->title('Export Limit Exceeded')
                                 ->body(
-                                    __('الفلترة الحالية تحتوي على :count حركة مخزنية، والحد الأقصى المسموح لتصديره هو :max حركة. يرجى تضييق نطاق الفلترة (مثل تحديد فترة تاريخ محددة أو اختيار متجر معين) لتجنب بطء المتصفح.', [
+                                    __('The current filter contains :count transactions, which exceeds the limit of :max transactions. Please narrow down your filters (e.g. choose a date range or store) to export smoothly.', [
                                         'count' => number_format($count),
                                         'max'   => number_format(static::MAX_EXPORT_RECORDS),
                                     ])
@@ -473,7 +472,7 @@ class InventoryResource extends Resource
             ->toolbarActions([
                 BulkActionGroup::make([
                     BulkAction::make('export_selected')
-                        ->label(__('lang.export_to_excel') ?? 'Export to Excel')
+                        ->label('Export to Excel')
                         ->icon('heroicon-o-document-arrow-down')
                         ->color('success')
                         ->action(function (Collection $records) {
@@ -481,7 +480,7 @@ class InventoryResource extends Resource
 
                             if ($count === 0) {
                                 Notification::make()
-                                    ->title(__('لا توجد سجلات محددة'))
+                                    ->title('No Records Selected')
                                     ->warning()
                                     ->send();
                                 return null;
@@ -489,9 +488,9 @@ class InventoryResource extends Resource
 
                             if ($count > static::MAX_EXPORT_RECORDS) {
                                 Notification::make()
-                                    ->title(__('تجاوز الحد الأقصى للتصدير'))
+                                    ->title('Export Limit Exceeded')
                                     ->body(
-                                        __('تم تحديد :count حركة مخزنية، والحد الأقصى المسموح لتصديره دفعة واحدة هو :max حركة.', [
+                                        __(':count transactions selected. The maximum export limit is :max transactions at a time.', [
                                             'count' => number_format($count),
                                             'max'   => number_format(static::MAX_EXPORT_RECORDS),
                                         ])
@@ -725,208 +724,11 @@ class InventoryResource extends Resource
                 'package_size'    => $packageSize,
                 'quantity'        => $quantity,
                 'price'           => $price,
-                'notes'           => 'تصفير المنتجات المعطلة',
+                'notes'           => 'Zero out disabled products',
             ];
         }
 
         return $items;
     }
-
-    public static function getZeroDisabledProductsAction(): Action
-    {
-        return Action::make('zero_disabled_products')
-            ->label('تصفير المنتجات المعطلة')
-            ->icon('heroicon-o-minus-circle')
-            ->visible(fn() => isHakimOrAdel())
-            ->color('danger')
-            ->button()
-            ->modalHeading('تصفير المنتجات المعطلة')
-            ->modalDescription('إنشاء حركات مخزنية للمنتجات المعطلة (09080, 10026, 10012, 19016)')
-            ->modalWidth(Width::FiveExtraLarge)
-            ->modalSubmitActionLabel('تنفيذ وتأكيد الحركات')
-            ->fillForm(function () {
-                $storeId = 1;
-
-                return [
-                    'store_id'      => $storeId,
-                    'movement_type' => InventoryTransaction::MOVEMENT_OUT,
-                    'movement_date' => now()->format('Y-m-d H:i:s'),
-                    'notes'         => 'تصفير المنتجات المعطلة',
-                    'items'         => self::getDefaultDisabledProductsItems($storeId),
-                ];
-            })
-            ->schema([
-                Grid::make(3)->schema([
-                    Select::make('store_id')
-                        ->label('المستودع')
-                        ->options(fn() => Store::active()->pluck('name', 'id')->toArray())
-                        ->default(1)
-                        ->required()
-                        ->searchable()
-                        ->preload()
-                        ->live()
-                        ->afterStateUpdated(function ($state, $set, $get) {
-                            if (! $state) {
-                                return;
-                            }
-                            $currentItems = $get('items') ?? [];
-                            if (empty($currentItems)) {
-                                $currentItems = self::getDefaultDisabledProductsItems((int) $state);
-                            } else {
-                                foreach ($currentItems as &$item) {
-                                    if (! empty($item['product_id']) && ! empty($item['unit_id'])) {
-                                        try {
-                                            $rem = MultiProductsInventoryService::getRemainingQty(
-                                                (int) $item['product_id'],
-                                                (int) $item['unit_id'],
-                                                (int) $state
-                                            );
-                                            $item['quantity'] = max(0, $rem);
-                                        } catch (\Throwable $e) {
-                                            // Keep current quantity
-                                        }
-                                    }
-                                }
-                            }
-                            $set('items', $currentItems);
-                        }),
-
-                    Select::make('movement_type')
-                        ->label('نوع الحركة')
-                        ->options([
-                            InventoryTransaction::MOVEMENT_OUT => 'صرف / تصفير (Out)',
-                            InventoryTransaction::MOVEMENT_IN  => 'توريد / إدخال (In)',
-                        ])
-                        ->default(InventoryTransaction::MOVEMENT_OUT)
-                        ->required(),
-
-                    DateTimePicker::make('movement_date')
-                        ->label('تاريخ الحركة')
-                        ->default(now())
-                        ->required(),
-                ]),
-
-                TextInput::make('notes')
-                    ->label('الملاحظات العامة')
-                    ->default('تصفير المنتجات المعطلة')
-                    ->required()
-                    ->columnSpanFull(),
-
-                Repeater::make('items')
-                    ->label('المنتجات (09080, 10026, 10012, 19016)')
-                    ->schema([
-                        Hidden::make('product_id'),
-                        TextInput::make('product_display')
-                            ->label('المنتج')
-                            ->disabled()
-                            ->dehydrated(false)
-                            ->columnSpan(2),
-
-                        Select::make('unit_id')
-                            ->label('الوحدة')
-                            ->options(function ($get) {
-                                $productId = $get('product_id');
-                                if (! $productId) {
-                                    return [];
-                                }
-                                $product = Product::with(['allUnitPrices.unit'])->find($productId);
-                                if (! $product) {
-                                    return [];
-                                }
-                                $opts = [];
-                                foreach ($product->allUnitPrices as $up) {
-                                    $opts[$up->unit_id] = ($up->unit?->name ?? 'Unit') . " (حجم: {$up->package_size})";
-                                }
-                                if (empty($opts) && $product->main_unit_id) {
-                                    $u = Unit::find($product->main_unit_id);
-                                    if ($u) {
-                                        $opts[$u->id] = $u->name . ' (حجم: 1)';
-                                    }
-                                }
-                                return $opts;
-                            })
-                            ->required()
-                            ->columnSpan(1),
-
-                        TextInput::make('package_size')
-                            ->label('حجم التعبئة')
-                            ->numeric()
-                            ->default(1)
-                            ->required()
-                            ->columnSpan(1),
-
-                        TextInput::make('quantity')
-                            ->label('الكمية')
-                            ->numeric()
-                            ->minValue(0)
-                            ->default(0)
-                            ->required()
-                            ->columnSpan(1),
-
-                        TextInput::make('price')
-                            ->label('السعر')
-                            ->numeric()
-                            ->default(0)
-                            ->columnSpan(1),
-
-                        TextInput::make('notes')
-                            ->label('ملاحظات البند')
-                            ->default('تصفير المنتجات المعطلة')
-                            ->columnSpanFull(),
-                    ])
-                    ->columns(6)
-                    ->addable(false)
-                    ->deletable(true)
-                    ->reorderable(false)
-                    ->columnSpanFull(),
-            ])
-            ->action(function (array $data) {
-                $storeId = $data['store_id'];
-                $movementType = $data['movement_type'] ?? InventoryTransaction::MOVEMENT_OUT;
-                $movementDate = $data['movement_date'] ?? now();
-                $mainNotes = $data['notes'] ?? 'تصفير المنتجات المعطلة';
-                $items = $data['items'] ?? [];
-
-                $createdCount = 0;
-
-                DB::transaction(function () use ($items, $storeId, $movementType, $movementDate, $mainNotes, &$createdCount) {
-                    foreach ($items as $item) {
-                        $quantity = (float) ($item['quantity'] ?? 0);
-                        if ($quantity <= 0) {
-                            continue;
-                        }
-
-                        InventoryTransaction::create([
-                            'product_id'       => $item['product_id'],
-                            'store_id'         => $storeId,
-                            'unit_id'          => $item['unit_id'],
-                            'quantity'         => $quantity,
-                            'package_size'     => $item['package_size'] ?? 1,
-                            'price'            => $item['price'] ?? 0,
-                            'movement_type'    => $movementType,
-                            'movement_date'    => $movementDate,
-                            'transaction_date' => $movementDate,
-                            'notes'            => ! empty($item['notes']) ? $item['notes'] : $mainNotes,
-                        ]);
-
-                        $createdCount++;
-                    }
-
-                    $targetCodes = ['09080', '10026', '10012', '19016', '9080'];
-                    Product::whereIn('code', $targetCodes)->update(['active' => 0]);
-                });
-
-                if ($createdCount > 0) {
-                    Notification::make()
-                        ->title("✅ تم إنشاء {$createdCount} حركة مخزنية بنجاح.")
-                        ->success()
-                        ->send();
-                } else {
-                    Notification::make()
-                        ->title('⚠️ لم يتم إنشاء حركات مخزنية. يرجى إدخال كمية أكبر من صفر.')
-                        ->warning()
-                        ->send();
-                }
-            });
-    }
+ 
 }
