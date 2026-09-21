@@ -59,7 +59,7 @@ class Product extends Model implements Auditable
         'type',
         'image',
     ];
-    protected $appends = ['unit_prices_count', 'product_items_count', 'is_manufacturing', 'formatted_unit_prices', 'display_name', 'image_url'];
+    protected $appends = ['unit_prices_count', 'product_items_count', 'is_manufacturing', 'formatted_unit_prices', 'display_name', 'image_url', 'price_before_waste'];
 
     public const TYPE_RAW           = 'raw';
     public const TYPE_SEMI_FINISHED = 'semi_finished';
@@ -192,6 +192,21 @@ class Product extends Model implements Auditable
     public function getFinalPriceAttribute()
     {
         return $this->productItems->sum('total_price_after_waste');
+    }
+
+    /**
+     * Get the total price before waste from related ProductItems.
+     *
+     * @return float
+     */
+    public function getPriceBeforeWasteAttribute(): float
+    {
+        return (float) ($this->productItems->sum(function ($item) {
+            if ($item->total_price !== null && (float) $item->total_price > 0) {
+                return (float) $item->total_price;
+            }
+            return (float) ($item->quantity ?? 0) * (float) ($item->price ?? 0);
+        }) ?? 0);
     }
 
     /**

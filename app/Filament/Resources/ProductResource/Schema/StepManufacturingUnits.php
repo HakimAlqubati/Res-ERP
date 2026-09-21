@@ -12,6 +12,8 @@ use App\Models\OrderDetails;
 use App\Models\PurchaseInvoiceDetail;
 use App\Models\StockIssueOrderDetail;
 use App\Models\Unit;
+use App\Models\UnitPrice;
+use App\Models\Product;
 use Closure;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
@@ -35,7 +37,7 @@ class StepManufacturingUnits
                 }
                 return false;
             })
-            ->columns(4)
+            ->columns(5)
             // ->hiddenOn(Pages\EditProduct::class)
             ->helperText(function (callable $get, $livewire, $record) {
                 if (PRA::isProductLocked($livewire->form->getRecord(), $record)) {
@@ -45,6 +47,7 @@ class StepManufacturingUnits
             })
             ->table([
                 TableColumn::make(__('Unit'))->alignCenter()->width('16rem'),
+                TableColumn::make('Price Before Waste')->alignCenter()->width('14rem'),
                 TableColumn::make(__('Price'))->alignCenter()->width('12rem'),
                 TableColumn::make(__('Selling'))->alignCenter()->width('14rem'),
                 TableColumn::make(__('Weight'))->alignCenter()->width('12rem'),
@@ -58,6 +61,19 @@ class StepManufacturingUnits
             ->deletable(false)
             ->collapsible(false)
             ->relationship('allUnitPrices')
+            ->mutateRelationshipDataBeforeFillUsing(function (array $data, $livewire): array {
+                if (! empty($data['id'])) {
+                    $unitPrice = UnitPrice::find($data['id']);
+                    $data['price_before_waste'] = $unitPrice?->price_before_waste;
+                } else {
+                    $product = method_exists($livewire, 'getRecord') ? $livewire->getRecord() : null;
+                    if (! $product && method_exists($livewire, 'form')) {
+                        $product = $livewire->form->getRecord();
+                    }
+                    $data['price_before_waste'] = $product?->price_before_waste;
+                }
+                return $data;
+            })
                     ->deleteAction(function (Action $action) {
                         $action->before(function (array $arguments, Repeater $component, $record) {
                             $unitPriceRecordId = null;
@@ -75,7 +91,7 @@ class StepManufacturingUnits
                             function (string $attribute, $value, Closure $fail) use ($get) {
                                 $units = $get('units') ?? [];
 
-                                // validation مع رسالة رسمية
+                                // Validate units package size order
                                 PRA::validateUnitsPackageSizeOrder($units, $fail);
                             },
                         ];
@@ -120,10 +136,89 @@ class StepManufacturingUnits
                                 $res = round($packageSize * $finalPrice, 8);
                                 $set('price', $res);
                                 $set('selling_price', round($packageSize * $finalPrice, 2));
+
+                                $totalBeforeWaste = PRA::calculateTotalBeforeWaste($productItems);
+                                if ($totalBeforeWaste == 0) {
+                                    $record = method_exists($livewire, 'form') ? $livewire->form->getRecord() : null;
+                                    if ($record && method_exists($record, 'productItems')) {
+                                        $totalBeforeWaste = (float) ($record->productItems()->sum('total_price') ?? 0);
+                                    }
+                                }
+                                $set('price_before_waste', round($packageSize * $totalBeforeWaste, 4));
                             }),
                         Hidden::make('package_size')
                             ->default(1)
                             ->dehydrated(),
+                        TextInput::make('price_before_waste')
+                            ->prefix(settingWithDefault('currency_symbol', 'RM'))
+                            ->numeric()
+                            ->label('Price Before Waste')
+                            ->readOnly()
+                            ->dehydrated(false)
+                            ->formatStateUsing(function ($state, $record = null, $livewire = null) {
+                                if ($state !== null && $state !== '') {
+                                    return $state;
+                                }
+
+                                if ($record instanceof UnitPrice) {
+                                    return $record->price_before_waste;
+                                }
+
+                                $product = method_exists($livewire, 'getRecord') ? $livewire->getRecord() : null;
+                                if (! $product && $livewire && method_exists($livewire, 'form')) {
+                                    $product = $livewire->form->getRecord();
+                                }
+
+                                return $product?->price_before_waste ?? 0;
+                            })
+                            ->afterStateHydrated(function ($component, $state, $record = null, $livewire = null, ?Get $get = null) {
+                                if ($state !== null && $state !== '') {
+                                    return;
+                                }
+
+                                if ($record instanceof UnitPrice) {
+                                    $component->state($record->price_before_waste);
+                                    return;
+                                }
+
+                                $product = method_exists($livewire, 'getRecord') ? $livewire->getRecord() : null;
+                                if (! $product && $livewire && method_exists($livewire, 'form')) {
+                                    $product = $livewire->form->getRecord();
+                                }
+
+                                if ($product && (float) $product->price_before_waste > 0) {
+                                    $component->state($product->price_before_waste);
+                                    return;
+                                }
+
+                                if ($get) {
+                                    $productItems = $get('../../productItems') ?? $get('../productItems') ?? $get('productItems') ?? [];
+                                    $component->state(round(PRA::calculateTotalBeforeWaste($productItems), 4));
+                                }
+                            })
+                            ->default(function ($record = null, $livewire = null, ?Get $get = null) {
+                                if ($record instanceof UnitPrice) {
+                                    return $record->price_before_waste;
+                                }
+
+                                $product = method_exists($livewire, 'getRecord') ? $livewire->getRecord() : null;
+                                if (! $product && $livewire && method_exists($livewire, 'form')) {
+                                    $product = $livewire->form->getRecord();
+                                }
+
+                                if ($product && (float) $product->price_before_waste > 0) {
+                                    return $product->price_before_waste;
+                                }
+
+                                if ($get) {
+                                    $productItems = $get('../../productItems') ?? $get('../productItems') ?? $get('productItems') ?? [];
+                                    return round(PRA::calculateTotalBeforeWaste($productItems), 4);
+                                }
+
+                                return 0;
+                            })
+                            ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
+                            ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;']),
                         TextInput::make('price')
                             ->prefix(settingWithDefault('currency_symbol', 'RM'))
                             ->numeric()

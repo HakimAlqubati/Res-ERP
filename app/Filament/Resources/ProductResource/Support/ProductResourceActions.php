@@ -27,8 +27,29 @@ final class ProductResourceActions
      * @return array
      */
 
+    /**
+     * Calculate total price before waste for a list of product items.
+     *
+     * @param array|iterable $items
+     * @return float
+     */
+    public static function calculateTotalBeforeWaste($items): float
+    {
+        return (float) collect($items)->sum(function ($item) {
+            if (isset($item['total_price']) && is_numeric($item['total_price']) && $item['total_price'] > 0) {
+                return (float) $item['total_price'];
+            }
+            $qty = (float) ($item['quantity'] ?? 0);
+            $price = (float) ($item['price'] ?? 0);
+            return $qty * $price;
+        }) ?? 0;
+    }
+
     public static function updateFinalPriceEachUnit($set, $get, $state, $withOut = false)
     {
+        // 🔄 Calculate total price before waste
+        $totalBeforeWaste = self::calculateTotalBeforeWaste($state);
+
         // 🔄 Calculate the new total net price of product items
         $totalNetPrice = collect($state)->sum(function ($item) {
             if (isset($item['total_price_after_waste']) && is_numeric($item['total_price_after_waste']) && $item['total_price_after_waste'] > 0) {
@@ -50,10 +71,11 @@ final class ProductResourceActions
         if (empty($units)) {
             $updatedUnits = [
                 'item-default' => [
-                    'unit_id'       => null,
-                    'package_size'  => 1,
-                    'price'         => round($totalNetPrice, 4),
-                    'selling_price' => round($totalNetPrice, 2),
+                    'unit_id'            => null,
+                    'package_size'       => 1,
+                    'price_before_waste' => round($totalBeforeWaste, 4),
+                    'price'              => round($totalNetPrice, 4),
+                    'selling_price'      => round($totalNetPrice, 2),
                 ]
             ];
             if ($withOut) {
@@ -78,10 +100,12 @@ final class ProductResourceActions
         foreach ($units as $key => $unit) {
             $packageSize = 1;
             $basePrice   = $packageSize * $totalNetPrice;
+            $basePriceBeforeWaste = $packageSize * $totalBeforeWaste;
             $updatedUnits[$key] = array_merge($unit, [
-                'package_size'  => 1,
-                'price'         => round($basePrice, 4),
-                'selling_price' => round($basePrice, 2),
+                'package_size'       => 1,
+                'price_before_waste' => round($basePriceBeforeWaste, 4),
+                'price'              => round($basePrice, 4),
+                'selling_price'      => round($basePrice, 2),
             ]);
         }
 
