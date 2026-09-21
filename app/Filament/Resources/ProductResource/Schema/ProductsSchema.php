@@ -183,6 +183,7 @@ class ProductsSchema
                         ->visible(fn($get): bool => ($get('category_id') !== null && Category::find($get('category_id'))->is_manafacturing))
                         ->label('Items')
                         ->schema([
+                            StepManufacturingUnits::repeater(),
                             Repeater::make('productItems')
                                 ->relationship('productItems')
 
@@ -317,9 +318,6 @@ class ProductsSchema
                                         ->label(__('lang.price'))
                                         ->numeric()
                                         ->default(1)
-                                        ->readOnly()
-                                        ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
-                                        ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;'])
                                         ->live(onBlur: true)
                                         ->afterStateUpdated(function (Set $set, $state, $get) {
                                             $res = ((float) $state) * ((float) $get('quantity'));
@@ -380,8 +378,6 @@ class ProductsSchema
 
                         ]),
                     StepUnmanufacturingUnits::step(),
-                    StepManufacturingUnits::step(),
-
 
                     self::productionDetailsStep(),
                 ])

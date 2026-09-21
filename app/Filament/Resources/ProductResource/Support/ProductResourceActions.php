@@ -42,20 +42,44 @@ final class ProductResourceActions
 
         // 🔄 Retrieve existing units
         if ($withOut) {
-            $units = $get('units') ?? [];
+            $units = $get('units') ?? $get('../units') ?? [];
         } else {
-            $units = $get('../../units') ?? [];
+            $units = $get('../../units') ?? $get('../units') ?? $get('units') ?? [];
         }
 
         if (empty($units)) {
+            $updatedUnits = [
+                'item-default' => [
+                    'unit_id'       => null,
+                    'package_size'  => 1,
+                    'price'         => round($totalNetPrice, 4),
+                    'selling_price' => round($totalNetPrice, 2),
+                ]
+            ];
+            if ($withOut) {
+                if ($get('units') !== null) {
+                    $set('units', $updatedUnits);
+                } else {
+                    $set('../units', $updatedUnits);
+                }
+            } else {
+                if ($get('../../units') !== null) {
+                    $set('../../units', $updatedUnits);
+                } elseif ($get('../units') !== null) {
+                    $set('../units', $updatedUnits);
+                } else {
+                    $set('units', $updatedUnits);
+                }
+            }
             return;
         }
 
         $updatedUnits = [];
         foreach ($units as $key => $unit) {
-            $packageSize = $unit['package_size'] ?? 1;
+            $packageSize = 1;
             $basePrice   = $packageSize * $totalNetPrice;
             $updatedUnits[$key] = array_merge($unit, [
+                'package_size'  => 1,
                 'price'         => round($basePrice, 4),
                 'selling_price' => round($basePrice, 2),
             ]);
@@ -63,9 +87,19 @@ final class ProductResourceActions
 
         // 🔄 Replace the `units` array completely
         if ($withOut) {
-            $set('units', $updatedUnits);
+            if ($get('units') !== null) {
+                $set('units', $updatedUnits);
+            } else {
+                $set('../units', $updatedUnits);
+            }
         } else {
-            $set('../../units', $updatedUnits);
+            if ($get('../../units') !== null) {
+                $set('../../units', $updatedUnits);
+            } elseif ($get('../units') !== null) {
+                $set('../units', $updatedUnits);
+            } else {
+                $set('units', $updatedUnits);
+            }
         }
     }
 

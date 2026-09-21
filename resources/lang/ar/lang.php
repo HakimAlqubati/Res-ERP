@@ -72,6 +72,7 @@ return [
   'code' => 'الكود',
   'category' => 'الفئة',
   'units_prices' => 'وحدات التسعير',
+  'final_price' => 'السعر النهائي',
   'order-no-' => 'الطلبية رقم ',
   'transfer-no-' => 'المناقلة رقم ',
   'export_excel' => 'تصدير أكسل',

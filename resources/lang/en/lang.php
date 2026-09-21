@@ -72,6 +72,7 @@ return [
     'code'                                        => 'Code',
     'category'                                    => 'Category',
     'units_prices'                                => 'Units prices',
+    'final_price'                                 => 'Final Price',
     'order-no-'                                   => 'Order no ',
     'transfer-no-'                                => 'Transfer no ',
     'export_excel'                                => 'Export Excel',
