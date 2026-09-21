@@ -116,7 +116,7 @@ class InventoryResource extends Resource
 
                 static::makeStockInNonManufacturingAction()
                     // ->visible(fn()=>isHakimOrAdel())
-                    ->visible(fn() => isSuperAdmin()),
+                    ->visible(fn() => isHakimOrAdelOrMaha()),
 
  
                 Action::make('export_excel')

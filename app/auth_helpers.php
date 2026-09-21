@@ -148,6 +148,20 @@ if (!function_exists('isHakimOrAdel')) {
         ]);
     }
 }
+if (!function_exists('isHakimOrAdelOrMaha')) {
+    function isHakimOrAdelOrMaha(): bool
+    {
+        if (!auth()->check()) {
+            return false;
+        }
+
+        return in_array(auth()->user()->email, [
+            'hakimahmed123321@gmail.com',
+            'adelalqubati12@gmail.com',
+            'yeolbyun2002@gmail.com'
+        ]);
+    }
+}
 if (!function_exists('isHakim')) {
     function isHakim(): bool
     {
