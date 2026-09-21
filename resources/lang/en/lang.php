@@ -12,6 +12,8 @@ return [
     'user_and_roles'                              => 'Users & Roles',
     'users'                                       => 'Users',
     'roles'                                       => 'Roles',
+    'app_version'                                 => 'App Version',
+    'app_versions'                                => 'App Versions',
     'all'                                         => 'All',
     'my_employees'                                => 'My Staffs',
     'my_employees_only'                           => 'My Staffs Only',
