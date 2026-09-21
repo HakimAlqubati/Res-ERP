@@ -138,11 +138,10 @@ class InventoryResource extends Resource
 
                         if ($count > static::MAX_EXPORT_RECORDS) {
                             Notification::make()
-                                ->title('Export Limit Exceeded')
+                                ->title('Cannot Export')
                                 ->body(
-                                    __('The current filter contains :count transactions, which exceeds the limit of :max transactions. Please narrow down your filters (e.g. choose a date range or store) to export smoothly.', [
-                                        'count' => number_format($count),
-                                        'max'   => number_format(static::MAX_EXPORT_RECORDS),
+                                    __('You can only export up to :max records. Please filter to reduce the number of records.', [
+                                        'max' => number_format(static::MAX_EXPORT_RECORDS),
                                     ])
                                 )
                                 ->danger()
@@ -488,9 +487,9 @@ class InventoryResource extends Resource
 
                             if ($count > static::MAX_EXPORT_RECORDS) {
                                 Notification::make()
-                                    ->title('Export Limit Exceeded')
+                                    ->title('Cannot Export')
                                     ->body(
-                                        __(':count transactions selected. The maximum export limit is :max transactions at a time.', [
+                                        __('You can only export up to :max records. You selected :count records.', [
                                             'count' => number_format($count),
                                             'max'   => number_format(static::MAX_EXPORT_RECORDS),
                                         ])
