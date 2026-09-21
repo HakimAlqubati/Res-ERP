@@ -15,7 +15,6 @@ use App\Models\Product;
 use App\Models\Store;
 use App\Models\Unit;
 use App\Models\UnitPrice;
-use App\Services\MultiProductsInventoryService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
@@ -602,56 +601,5 @@ class InventoryResource extends Resource
                 'unit:id,name', 'sourceTransaction']);
 
         return $query;
-    }
-
-    public static function getDefaultDisabledProductsItems(?int $storeId = 1): array
-    {
-        $targetCodes = ['09080', '10026', '10012', '19016', '9080'];
-        Product::whereIn('code', $targetCodes)->update(['active' => 0]);
-
-        $products = Product::whereIn('code', $targetCodes)
-            ->with(['allUnitPrices.unit', 'supplyOutUnitPrices.unit', 'units'])
-            ->get();
-
-        $items = [];
-        foreach ($products as $product) {
-            // Get the smallest unit with package size 1 (or smallest package size)
-            $unitPrice = $product->allUnitPrices->firstWhere('package_size', 1)
-                ?? $product->supplyOutUnitPrices->firstWhere('package_size', 1)
-                ?? $product->allUnitPrices->sortBy('package_size')->first()
-                ?? $product->supplyOutUnitPrices->sortBy('package_size')->first();
-
-            $unitId = $unitPrice?->unit_id ?? $product->main_unit_id;
-            $unitName = $unitPrice?->unit?->name ?? Unit::find($unitId)?->name ?? 'الوحدة الأساسية';
-            $packageSize = $unitPrice?->package_size ?? 1;
-            $price = $unitPrice?->price ?? $product->basic_price ?? 0;
-
-            $quantity = 0;
-            if ($storeId && $unitId) {
-                try {
-                    $remaining = MultiProductsInventoryService::getRemainingQty(
-                        (int) $product->id,
-                        (int) $unitId,
-                        (int) $storeId
-                    );
-                    $quantity = max(0, $remaining);
-                } catch (Throwable $e) {
-                    $quantity = 0;
-                }
-            }
-
-            $items[] = [
-                'product_id' => $product->id,
-                'product_display' => "({$product->code}) {$product->name}",
-                'unit_id' => $unitId,
-                'unit_name' => $unitName,
-                'package_size' => $packageSize,
-                'quantity' => $quantity,
-                'price' => $price,
-                'notes' => 'Zero out disabled products',
-            ];
-        }
-
-        return $items;
     }
 }
