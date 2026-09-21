@@ -13,9 +13,12 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\TextInput;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\BulkAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
+use App\Exports\InventoryTransactionsExport;
+use Illuminate\Database\Eloquent\Collection;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResource\Pages\ListInventories;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResource\Pages;
@@ -56,6 +59,8 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class InventoryResource extends Resource
 {
+    public const MAX_EXPORT_RECORDS = 3000;
+
     protected static ?string $model = InventoryTransaction::class;
 
     protected static string | \BackedEnum | null $navigationIcon = Heroicon::RectangleStack;
@@ -114,6 +119,47 @@ class InventoryResource extends Resource
                     ->visible(fn() => isSuperAdmin()),
 
                 static::getZeroDisabledProductsAction(),
+
+                Action::make('export_excel')
+                    ->label(__('lang.export_to_excel') ?? 'Export to Excel')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('success')
+                    ->action(function ($livewire) {
+                        $query = $livewire->getFilteredTableQuery();
+                        $count = (clone $query)->count();
+
+                        if ($count === 0) {
+                            Notification::make()
+                                ->title(__('lang.no_records_found') ?? 'لا توجد سجلات')
+                                ->body(__('لا توجد حركات مخزنية لتصديرها بناءً على الفلاتر الحالية.'))
+                                ->warning()
+                                ->send();
+                            return null;
+                        }
+
+                        if ($count > static::MAX_EXPORT_RECORDS) {
+                            Notification::make()
+                                ->title(__('تجاوز الحد الأقصى للتصدير'))
+                                ->body(
+                                    __('الفلترة الحالية تحتوي على :count حركة مخزنية، والحد الأقصى المسموح لتصديره هو :max حركة. يرجى تضييق نطاق الفلترة (مثل تحديد فترة تاريخ محددة أو اختيار متجر معين) لتجنب بطء المتصفح.', [
+                                        'count' => number_format($count),
+                                        'max'   => number_format(static::MAX_EXPORT_RECORDS),
+                                    ])
+                                )
+                                ->danger()
+                                ->duration(10000)
+                                ->send();
+                            return null;
+                        }
+
+                        @ini_set('memory_limit', '512M');
+                        @set_time_limit(300);
+
+                        return Excel::download(
+                            new InventoryTransactionsExport($query),
+                            'inventory_transactions_' . now()->format('Y-m-d_H-i-s') . '.xlsx'
+                        );
+                    }),
             ])
             ->columns([
 
@@ -426,6 +472,44 @@ class InventoryResource extends Resource
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('export_selected')
+                        ->label(__('lang.export_to_excel') ?? 'Export to Excel')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->action(function (Collection $records) {
+                            $count = $records->count();
+
+                            if ($count === 0) {
+                                Notification::make()
+                                    ->title(__('لا توجد سجلات محددة'))
+                                    ->warning()
+                                    ->send();
+                                return null;
+                            }
+
+                            if ($count > static::MAX_EXPORT_RECORDS) {
+                                Notification::make()
+                                    ->title(__('تجاوز الحد الأقصى للتصدير'))
+                                    ->body(
+                                        __('تم تحديد :count حركة مخزنية، والحد الأقصى المسموح لتصديره دفعة واحدة هو :max حركة.', [
+                                            'count' => number_format($count),
+                                            'max'   => number_format(static::MAX_EXPORT_RECORDS),
+                                        ])
+                                    )
+                                    ->danger()
+                                    ->send();
+                                return null;
+                            }
+
+                            @ini_set('memory_limit', '512M');
+                            @set_time_limit(300);
+
+                            return Excel::download(
+                                new InventoryTransactionsExport($records),
+                                'inventory_transactions_' . now()->format('Y-m-d_H-i-s') . '.xlsx'
+                            );
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                     ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),
