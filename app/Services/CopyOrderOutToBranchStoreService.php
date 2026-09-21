@@ -22,7 +22,7 @@ class CopyOrderOutToBranchStoreService
                 foreach ($orders as $order) {
                     $store = $order->branch?->store;
                     if (! $store) {
-                        continue; // لا يوجد مخزن للفرع
+                        continue; // Skip if branch has no store
                     }
                     DB::transaction(function () use ($store, $order) {
 
@@ -46,7 +46,7 @@ class CopyOrderOutToBranchStoreService
                                 'movement_date' => $order->transfer_date,
                                 'transaction_date' => $order->transfer_date,
                                 'package_size' => $out->package_size,
-                                'price' => $out->price,
+                                'price' => $order->calculateTransferPrice((float) $out->price),
                                 'notes' => 'Supplied from Order #' . $order->id,
                                 'store_id' => $store->id,
                                 'transactionable_type' => Order::class,
@@ -86,7 +86,7 @@ class CopyOrderOutToBranchStoreService
                 ];
             }
 
-            // حذف حركات الدخول السابقة لمخزن الفرع لنفس الطلب لتجنب التكرار
+            // Delete previous IN transactions to avoid duplicates
             InventoryTransaction::where('transactionable_type', Order::class)
                 ->where('transactionable_id', $order->id)
                 ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
@@ -101,7 +101,7 @@ class CopyOrderOutToBranchStoreService
                     'quantity'              => $out->quantity,
                     'unit_id'               => $out->unit_id,
                     'package_size'          => $out->package_size,
-                    'price'                 => $out->price,
+                    'price'                 => $order->calculateTransferPrice((float) $out->price),
                     'movement_date'         => $out->movement_date ?? $order->transfer_date ?? now(),
                     'transaction_date'      => $out->transaction_date ?? $order->transfer_date ?? now(),
                     'notes'                 => $out->notes ?? ('Supplied from Order #' . $order->id),

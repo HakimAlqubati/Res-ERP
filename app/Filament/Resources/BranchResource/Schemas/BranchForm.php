@@ -109,18 +109,17 @@ class BranchForm
                                                 'store',
                                                 'name'
                                             )
-                                            ->searchable()
-                                        // ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN)
-                                        // ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN)
-                                        ,
-                                        // Select::make('categories')
-                                        //     ->label(__('stock.customized_manufacturing_categories'))
-                                        //     // ->options(\App\Models\Category::Manufacturing()->pluck('name', 'id'))
-                                        //     ->relationship('categories', 'name')
+                                            ->searchable(),
 
-                                        //     ->searchable()->multiple()
-                                        //     ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN),
-
+                                        TextInput::make('transfer_markup_percentage')
+                                            ->label('Transfer Markup (%)')
+                                            ->numeric()
+                                            ->suffix('%')
+                                            ->default(0)
+                                            ->minValue(0)
+                                            ->maxValue(100)
+                                            ->helperText('Markup percentage added to incoming branch orders.')
+                                            ->visible(fn(callable $get) => $get('type') === Branch::TYPE_BRANCH || filled($get('store_id'))),
                                     ]),
 
                                 ]),

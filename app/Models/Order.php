@@ -52,6 +52,7 @@ class Order extends Model implements Auditable
         'store_id',
         'cancel_reason',
         'type',
+        'transfer_markup_percentage',
     ];
     protected $auditInclude = [
         'customer_id',
@@ -71,6 +72,11 @@ class Order extends Model implements Auditable
         'store_id',
         'cancel_reason',
         'type',
+        'transfer_markup_percentage',
+    ];
+
+    protected $casts = [
+        'transfer_markup_percentage' => 'float',
     ];
 
     protected $appends = [
@@ -206,6 +212,14 @@ class Order extends Model implements Auditable
     protected static function boot()
     {
         parent::boot();
+
+        static::creating(function ($order) {
+            // Snapshot branch markup percentage on creation
+            if (is_null($order->transfer_markup_percentage) && $order->branch_id) {
+                $branch = $order->branch ?? Branch::withoutGlobalScopes()->find($order->branch_id);
+                $order->transfer_markup_percentage = $branch?->transfer_markup_percentage ?? 0;
+            }
+        });
 
         static::created(function ($order) {
 
@@ -347,6 +361,18 @@ class Order extends Model implements Auditable
     }
 
 
+    /**
+     * Calculate transfer price with markup percentage.
+     */
+    public function calculateTransferPrice(float $basePrice): float
+    {
+        $percentage = (float) ($this->transfer_markup_percentage ?? $this->branch?->transfer_markup_percentage ?? 0);
+
+        return $percentage > 0
+            ? round($basePrice * (1 + ($percentage / 100)), 4)
+            : $basePrice;
+    }
+
     public static function receiveIntoBranchStore($allocations, $detail, ?int $targetStoreId = null)
     {
         $order = $detail->order;
@@ -365,7 +391,7 @@ class Order extends Model implements Auditable
                 'quantity'             => $alloc['deducted_qty'],
                 'unit_id'              => $alloc['target_unit_id'],
                 'package_size'         => $alloc['target_unit_package_size'],
-                'price'                => $alloc['price_based_on_unit'],
+                'price'                => $order->calculateTransferPrice((float) $alloc['price_based_on_unit']),
                 'movement_date'        => $order->transfer_date ?? now(),
                 'transaction_date'     => $order->transfer_date ?? now(),
                 'store_id'             => $targetStoreId,

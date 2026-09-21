@@ -50,6 +50,7 @@ class Branch extends Model implements HasMedia, Auditable
         'municipality_license_notes',
         'more_description',
         'is_hidden',
+        'transfer_markup_percentage',
     ];
 
     protected $auditInclude = [
@@ -68,11 +69,13 @@ class Branch extends Model implements HasMedia, Auditable
         'municipality_license_notes',
         'more_description',
         'is_hidden',
+        'transfer_markup_percentage',
     ];
 
     protected $casts = [
         'active'     => 'boolean',
         'is_hidden'  => 'boolean',
+        'transfer_markup_percentage' => 'float',
         'start_date' => 'date:Y-m-d',
         'end_date'   => 'date:Y-m-d',
         'municipality_license_issue_date' => 'date:Y-m-d',

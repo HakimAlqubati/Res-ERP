@@ -41,8 +41,8 @@ class CopyOutToInForOrdersJob implements ShouldQueue
             }
         }
 
-        Order::select(['id', 'branch_id', 'created_at'])
-            ->with(['branch:id,store_id', 'branch.store:id'])
+        Order::select(['id', 'branch_id', 'created_at', 'transfer_markup_percentage'])
+            ->with(['branch:id,store_id,transfer_markup_percentage', 'branch.store:id'])
             ->whereNull('deleted_at')
             ->when($this->branchId, fn($q) => $q->where('branch_id', $this->branchId))
 
@@ -52,7 +52,7 @@ class CopyOutToInForOrdersJob implements ShouldQueue
                 foreach ($orders as $order) {
                     $store = $order->branch?->store;
                     if (! $store) {
-                        continue; // لا يوجد مخزن للفرع
+                        continue; // Skip if branch has no store
                     }
                     DB::transaction(function () use ($store, $order) {
 
@@ -77,7 +77,7 @@ class CopyOutToInForOrdersJob implements ShouldQueue
                                 'movement_date' => $order->created_at,
                                 'transaction_date' => $order->created_at,
                                 'package_size' => $out->package_size,
-                                'price' => $out->price,
+                                'price' => $order->calculateTransferPrice((float) $out->price),
                                 'notes' => 'Supplied from Order #' . $order->id,
                                 'store_id' => $store->id,
                                 'transactionable_type' => Order::class,

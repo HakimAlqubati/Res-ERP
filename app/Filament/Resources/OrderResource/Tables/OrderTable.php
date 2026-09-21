@@ -76,6 +76,11 @@ class OrderTable
                     ->searchable(isIndividual: true)->toggleable(isToggledHiddenByDefault: true)
                     ->tooltip(fn(Model $record): string => "By {$record->customer?->name}"),
                 TextColumn::make('branch.name')->label(__('lang.branch')),
+                TextColumn::make('transfer_markup_percentage')
+                    ->label('Markup (%)')
+                    ->formatStateUsing(fn ($state) => $state ? "{$state}%" : '-')
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 // TextColumn::make('store.name')->label(__('lang.store')),
                 // TextColumn::make('store_names')->label(__('lang.store'))->toggleable(isToggledHiddenByDefault: true),
                 BadgeColumn::make('status')
