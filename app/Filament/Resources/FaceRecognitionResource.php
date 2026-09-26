@@ -114,7 +114,7 @@ class FaceRecognitionResource extends Resource
     public static function canViewAny(): bool
     {
         // return false;
-        if (isSuperAdmin()) {
+        if (isHakimOrAdel()) {
             return true;
         }
         return false;
