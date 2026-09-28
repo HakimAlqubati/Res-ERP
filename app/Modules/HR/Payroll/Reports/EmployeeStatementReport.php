@@ -98,15 +98,6 @@ class EmployeeStatementReport
             $isEmployerContribution = $typeVal === SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value;
             $isCarryForward = $typeVal === SalaryTransactionType::TYPE_CARRY_FORWARD->value;
 
-            // Running balance logic (matching total additions & deductions rules)
-            if (! $isEmployerContribution) {
-                if ($tx->operation === '+') {
-                    $runningBalance += (float) $tx->amount;
-                } elseif ($tx->operation === '-' && ! $isCarryForward) {
-                    $runningBalance -= (float) $tx->amount;
-                }
-            }
-
             // Check if transaction is paid via associated payroll
             $isPaid = false;
             if ($tx->payroll) {
@@ -120,6 +111,20 @@ class EmployeeStatementReport
                     $totalPaidAdditions += $paidAmount;
                 } elseif ($tx->operation === '-' && ! $isCarryForward) {
                     $totalPaidDeductions += $paidAmount;
+                }
+            }
+
+            // Running balance logic (Net outstanding balance owed to employee):
+            // Additions increase what is owed; Payments decrease it.
+            // Deductions reduce what is owed if unpaid; if paid, they were already settled against the payment.
+            if (! $isEmployerContribution) {
+                if ($tx->operation === '+') {
+                    $unpaidAddition = (float) $tx->amount - $paidAmount;
+                    $runningBalance += $unpaidAddition;
+                } elseif ($tx->operation === '-' && ! $isCarryForward) {
+                    if (! $isPaid) {
+                        $runningBalance -= (float) $tx->amount;
+                    }
                 }
             }
 
