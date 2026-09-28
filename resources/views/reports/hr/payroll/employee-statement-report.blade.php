@@ -705,11 +705,11 @@
                     <thead>
                         <tr>
                             <th style="width: 5%;">#</th>
+                            <th style="width: 14%;">{{ __('DATE') }}</th>
                             <th style="width: 16%;">{{ __('TYPE') }}</th>
                             <th style="width: 8%;">{{ __('OP') }}</th>
                             <th style="width: 16%;">{{ __('AMOUNT') }}</th>
-                            <th style="width: 15%;">{{ __('DATE') }}</th>
-                            <th style="width: 40%;">{{ __('Transaction Details') }}</th>
+                            <th style="width: 41%;">{{ __('Transaction Details') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -717,6 +717,7 @@
                             <tr class="{{ !empty($tx['is_employer_contribution']) ? 'row-employer-contribution' : '' }}"
                                 @if (!empty($tx['is_employer_contribution'])) style="background-color: #e6ffc8;" @endif>
                                 <td class="col-index">{{ $tx['index'] }}</td>
+                                <td class="col-date">{{ $tx['date'] }}</td>
                                 <td class="col-type">{{ __($tx['type']) }}</td>
                                 <td>
                                     @if ($tx['operation'] === '+')
@@ -726,7 +727,6 @@
                                     @endif
                                 </td>
                                 <td class="col-amount {{ $tx['operation'] === '-' ? 'amount-deduction' : '' }}">{{ $tx['amount'] }}</td>
-                                <td class="col-date">{{ $tx['date'] }}</td>
                                 <td class="col-desc">{{ $tx['description'] }}</td>
                             </tr>
                         @empty
@@ -772,10 +772,10 @@
                 var wb = XLSX.utils.table_to_sheet(clone, { raw: true });
                 wb['!cols'] = [
                     { wch: 6 },
+                    { wch: 14 },
                     { wch: 20 },
                     { wch: 8 },
                     { wch: 18 },
-                    { wch: 14 },
                     { wch: 45 }
                 ];
 
