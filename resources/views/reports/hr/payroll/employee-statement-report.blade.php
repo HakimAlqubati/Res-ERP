@@ -269,6 +269,27 @@
             text-align: center;
         }
 
+        .statement-table .col-paid {
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .statement-table .col-balance {
+            font-weight: 700;
+            color: #0d7c66;
+            text-align: center;
+        }
+
+        .statement-table .paid-badge-success {
+            color: #0d7c66;
+            font-weight: 600;
+        }
+
+        .statement-table .paid-badge-unpaid {
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
         .statement-table .col-date {
             color: #334155;
         }
@@ -415,6 +436,22 @@
         :is(.dark, [data-theme="dark"]) .statement-table .col-type,
         :is(.dark, [data-theme="dark"]) .statement-table .col-amount {
             color: #f8fafc !important;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table .col-paid {
+            color: #f8fafc !important;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table .col-balance {
+            color: #2dd4bf !important;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table .paid-badge-success {
+            color: #34d399 !important;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table .paid-badge-unpaid {
+            color: #64748b !important;
         }
 
         :is(.dark, [data-theme="dark"]) .statement-table .col-date {
@@ -607,6 +644,8 @@
             .statement-table .col-index,
             .statement-table .col-type,
             .statement-table .col-amount,
+            .statement-table .col-paid,
+            .statement-table .col-balance,
             .statement-table .col-date,
             .statement-table .col-desc {
                 color: #111827 !important;
@@ -704,12 +743,14 @@
                 <table class="statement-table" id="report-table">
                     <thead>
                         <tr>
-                            <th style="width: 5%;">#</th>
-                            <th style="width: 14%;">{{ __('DATE') }}</th>
-                            <th style="width: 16%;">{{ __('TYPE') }}</th>
-                            <th style="width: 8%;">{{ __('OP') }}</th>
-                            <th style="width: 16%;">{{ __('AMOUNT') }}</th>
-                            <th style="width: 41%;">{{ __('Transaction Details') }}</th>
+                            <th style="width: 4%;">#</th>
+                            <th style="width: 12%;">{{ __('DATE') }}</th>
+                            <th style="width: 13%;">{{ __('TYPE') }}</th>
+                            <th style="width: 5%;">{{ __('OP') }}</th>
+                            <th style="width: 14%;">{{ __('AMOUNT') }}</th>
+                            <th style="width: 14%;">{{ __('PAID') }}</th>
+                            <th style="width: 14%;">{{ __('BALANCE') }}</th>
+                            <th style="width: 24%;">{{ __('Transaction Details') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -727,11 +768,19 @@
                                     @endif
                                 </td>
                                 <td class="col-amount {{ $tx['operation'] === '-' ? 'amount-deduction' : '' }}">{{ $tx['amount'] }}</td>
+                                <td class="col-paid">
+                                    @if(!empty($tx['is_paid']))
+                                        <span class="paid-badge-success">{{ $tx['paid'] }}</span>
+                                    @else
+                                        <span class="paid-badge-unpaid">{{ $tx['paid'] }}</span>
+                                    @endif
+                                </td>
+                                <td class="col-balance">{{ $tx['balance'] }}</td>
                                 <td class="col-desc">{{ $tx['description'] }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" style="text-align: center; padding: 30px; color: #64748b; font-weight: 600;">
+                                <td colspan="8" style="text-align: center; padding: 30px; color: #64748b; font-weight: 600;">
                                     {{ __('No transactions found for this employee within the specified date range.') }}
                                 </td>
                             </tr>
@@ -740,20 +789,34 @@
 
                     <tfoot>
                         <tr class="total-row-add">
-                            <td colspan="6">
+                            <td colspan="8">
                                 {{ __('Total Additions') }}: {{ $reportData['total_additions'] }}
                             </td>
                         </tr>
                         <tr class="total-row-ded">
-                            <td colspan="6">
+                            <td colspan="8">
                                 {{ __('Total Deductions') }}: {{ $reportData['total_deductions'] }}
                             </td>
                         </tr>
                         <tr class="total-row-final">
-                            <td colspan="6">
+                            <td colspan="8">
                                 {{ __('Final Net Result') }}: {{ $reportData['final_result'] }}
                             </td>
                         </tr>
+                        @if(isset($reportData['total_paid']))
+                        <tr class="total-row-paid">
+                            <td colspan="8" style="color: #0d7c66;">
+                                {{ __('Total Paid') }}: {{ $reportData['total_paid'] }}
+                            </td>
+                        </tr>
+                        @endif
+                        @if(isset($reportData['remaining_balance']))
+                        <tr class="total-row-balance" style="font-size: 17px; color: #0d7c66; border-top: 1px dashed #cbd5e1;">
+                            <td colspan="8">
+                                {{ __('Remaining Balance') }}: {{ $reportData['remaining_balance'] }}
+                            </td>
+                        </tr>
+                        @endif
                     </tfoot>
                 </table>
             </div>
@@ -773,10 +836,12 @@
                 wb['!cols'] = [
                     { wch: 6 },
                     { wch: 14 },
-                    { wch: 20 },
-                    { wch: 8 },
                     { wch: 18 },
-                    { wch: 45 }
+                    { wch: 8 },
+                    { wch: 16 },
+                    { wch: 16 },
+                    { wch: 16 },
+                    { wch: 40 }
                 ];
 
                 var workbook = XLSX.utils.book_new();

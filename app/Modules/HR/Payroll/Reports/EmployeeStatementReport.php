@@ -47,7 +47,8 @@ class EmployeeStatementReport
         }
 
         /** @var Collection<int, SalaryTransaction> $transactions */
-        $transactions = $query->orderBy('date', 'asc')
+        $transactions = $query->with(['payroll'])
+            ->orderBy('date', 'asc')
             ->orderBy('id', 'asc')
             ->get();
 
@@ -81,9 +82,46 @@ class EmployeeStatementReport
         $finalResult = $totalAdditions - $totalDeductions;
         $displayDateFormat = function_exists('settingWithDefault') ? settingWithDefault('date_format', 'Y-m-d') : 'Y-m-d';
 
-        $formattedTransactions = $transactions->values()->map(function (SalaryTransaction $tx, int $index) use ($currency, $displayDateFormat) {
+        $runningBalance = 0.0;
+        $totalPaidAdditions = 0.0;
+        $totalPaidDeductions = 0.0;
+
+        $formattedTransactions = $transactions->values()->map(function (SalaryTransaction $tx, int $index) use (
+            $currency,
+            $displayDateFormat,
+            &$runningBalance,
+            &$totalPaidAdditions,
+            &$totalPaidDeductions
+        ) {
             $typeVal = $tx->type instanceof \BackedEnum ? $tx->type->value : (string) $tx->type;
             $subTypeVal = $tx->sub_type instanceof \BackedEnum ? $tx->sub_type->value : (string) ($tx->sub_type ?? '');
+            $isEmployerContribution = $typeVal === SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value;
+            $isCarryForward = $typeVal === SalaryTransactionType::TYPE_CARRY_FORWARD->value;
+
+            // Running balance logic (matching total additions & deductions rules)
+            if (! $isEmployerContribution) {
+                if ($tx->operation === '+') {
+                    $runningBalance += (float) $tx->amount;
+                } elseif ($tx->operation === '-' && ! $isCarryForward) {
+                    $runningBalance -= (float) $tx->amount;
+                }
+            }
+
+            // Check if transaction is paid via associated payroll
+            $isPaid = false;
+            if ($tx->payroll) {
+                $isPaid = (bool) ($tx->payroll->is_paid || $tx->payroll->status === 'paid');
+            }
+
+            $paidAmount = 0.0;
+            if ($isPaid && ! $isEmployerContribution) {
+                $paidAmount = (float) $tx->amount;
+                if ($tx->operation === '+') {
+                    $totalPaidAdditions += $paidAmount;
+                } elseif ($tx->operation === '-' && ! $isCarryForward) {
+                    $totalPaidDeductions += $paidAmount;
+                }
+            }
 
             return [
                 'index'                    => $index + 1,
@@ -93,31 +131,43 @@ class EmployeeStatementReport
                 'operation'                => $tx->operation === '-' ? '-' : '+',
                 'amount'                   => formatMoneyWithCurrency($tx->amount, $currency),
                 'raw_amount'               => (float) $tx->amount,
+                'paid'                     => $isPaid ? formatMoneyWithCurrency($paidAmount, $currency) : formatMoneyWithCurrency(0, $currency),
+                'raw_paid'                 => $paidAmount,
+                'is_paid'                  => $isPaid,
+                'balance'                  => formatMoneyWithCurrency($runningBalance, $currency),
+                'raw_balance'              => round($runningBalance, 2),
                 'date'                     => $tx->date ? \Carbon\Carbon::parse($tx->date)->format($displayDateFormat) : '',
                 'description'              => $tx->description ?: ($tx->notes ?: '-'),
-                'is_employer_contribution' => $typeVal === SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value,
+                'is_employer_contribution' => $isEmployerContribution,
             ];
         });
 
+        $totalPaid = max(0, $totalPaidAdditions - $totalPaidDeductions);
+        $remainingBalance = $finalResult - $totalPaid;
+
         return [
-            'has_data'             => true,
-            'employee'             => $employee,
-            'employee_id'          => $employee->id,
-            'employee_name'        => $employee->name,
-            'employee_code'        => $employee->id,
-            'branch_name'          => $employee->branch?->name,
-            'avatar_image'         => $employee->avatar_image,
-            'period_label'         => $filters->getFormattedPeriod(),
-            'from_date'            => $filters->fromDate->format($displayDateFormat),
-            'to_date'              => $filters->toDate->format($displayDateFormat),
-            'transactions'         => $formattedTransactions,
-            'total_additions'      => formatMoneyWithCurrency($totalAdditions, $currency),
-            'total_deductions'     => formatMoneyWithCurrency($totalDeductions, $currency),
-            'final_result'         => formatMoneyWithCurrency($finalResult, $currency),
-            'raw_total_additions'  => round($totalAdditions, 2),
-            'raw_total_deductions' => round($totalDeductions, 2),
-            'raw_final_result'     => round($finalResult, 2),
-            'currency'             => $currency,
+            'has_data'              => true,
+            'employee'              => $employee,
+            'employee_id'           => $employee->id,
+            'employee_name'         => $employee->name,
+            'employee_code'         => $employee->id,
+            'branch_name'           => $employee->branch?->name,
+            'avatar_image'          => $employee->avatar_image,
+            'period_label'          => $filters->getFormattedPeriod(),
+            'from_date'             => $filters->fromDate->format($displayDateFormat),
+            'to_date'               => $filters->toDate->format($displayDateFormat),
+            'transactions'          => $formattedTransactions,
+            'total_additions'       => formatMoneyWithCurrency($totalAdditions, $currency),
+            'total_deductions'      => formatMoneyWithCurrency($totalDeductions, $currency),
+            'final_result'          => formatMoneyWithCurrency($finalResult, $currency),
+            'total_paid'            => formatMoneyWithCurrency($totalPaid, $currency),
+            'remaining_balance'     => formatMoneyWithCurrency($remainingBalance, $currency),
+            'raw_total_additions'   => round($totalAdditions, 2),
+            'raw_total_deductions'  => round($totalDeductions, 2),
+            'raw_final_result'      => round($finalResult, 2),
+            'raw_total_paid'        => round($totalPaid, 2),
+            'raw_remaining_balance' => round($remainingBalance, 2),
+            'currency'              => $currency,
         ];
     }
 
@@ -132,24 +182,28 @@ class EmployeeStatementReport
         $displayDateFormat = function_exists('settingWithDefault') ? settingWithDefault('date_format', 'Y-m-d') : 'Y-m-d';
 
         return [
-            'has_data'             => false,
-            'employee'             => null,
-            'employee_id'          => null,
-            'employee_name'        => null,
-            'employee_code'        => null,
-            'branch_name'          => null,
-            'avatar_image'         => null,
-            'period_label'         => $filters->getFormattedPeriod(),
-            'from_date'            => $filters->fromDate->format($displayDateFormat),
-            'to_date'              => $filters->toDate->format($displayDateFormat),
-            'transactions'         => collect(),
-            'total_additions'      => formatMoneyWithCurrency(0),
-            'total_deductions'     => formatMoneyWithCurrency(0),
-            'final_result'         => formatMoneyWithCurrency(0),
-            'raw_total_additions'  => 0.0,
-            'raw_total_deductions' => 0.0,
-            'raw_final_result'     => 0.0,
-            'currency'             => SalaryTransaction::defaultCurrency(),
+            'has_data'              => false,
+            'employee'              => null,
+            'employee_id'           => null,
+            'employee_name'         => null,
+            'employee_code'         => null,
+            'branch_name'           => null,
+            'avatar_image'          => null,
+            'period_label'          => $filters->getFormattedPeriod(),
+            'from_date'             => $filters->fromDate->format($displayDateFormat),
+            'to_date'               => $filters->toDate->format($displayDateFormat),
+            'transactions'          => collect(),
+            'total_additions'       => formatMoneyWithCurrency(0),
+            'total_deductions'      => formatMoneyWithCurrency(0),
+            'final_result'          => formatMoneyWithCurrency(0),
+            'total_paid'            => formatMoneyWithCurrency(0),
+            'remaining_balance'     => formatMoneyWithCurrency(0),
+            'raw_total_additions'   => 0.0,
+            'raw_total_deductions'  => 0.0,
+            'raw_final_result'      => 0.0,
+            'raw_total_paid'        => 0.0,
+            'raw_remaining_balance' => 0.0,
+            'currency'              => SalaryTransaction::defaultCurrency(),
         ];
     }
 }
