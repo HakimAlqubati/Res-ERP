@@ -128,6 +128,17 @@ class EmployeeStatementReport
                 }
             }
 
+            // Display Paid: Only earnings/additions represent cash payouts to the employee.
+            // Deductions are withholdings, so they display an em dash (—).
+            $displayPaid = '—';
+            $isPaidAddition = false;
+            if ($tx->operation === '+' && ! $isEmployerContribution) {
+                $isPaidAddition = $isPaid;
+                $displayPaid = $isPaid
+                    ? formatMoneyWithCurrency($paidAmount, $currency)
+                    : formatMoneyWithCurrency(0, $currency);
+            }
+
             return [
                 'index'                    => $index + 1,
                 'id'                       => $tx->id,
@@ -136,9 +147,9 @@ class EmployeeStatementReport
                 'operation'                => $tx->operation === '-' ? '-' : '+',
                 'amount'                   => formatMoneyWithCurrency($tx->amount, $currency),
                 'raw_amount'               => (float) $tx->amount,
-                'paid'                     => $isPaid ? formatMoneyWithCurrency($paidAmount, $currency) : formatMoneyWithCurrency(0, $currency),
-                'raw_paid'                 => $paidAmount,
-                'is_paid'                  => $isPaid,
+                'paid'                     => $displayPaid,
+                'raw_paid'                 => ($tx->operation === '+' && ! $isEmployerContribution) ? $paidAmount : 0.0,
+                'is_paid'                  => $isPaidAddition,
                 'balance'                  => formatMoneyWithCurrency($runningBalance, $currency),
                 'raw_balance'              => round($runningBalance, 2),
                 'date'                     => $tx->date ? \Carbon\Carbon::parse($tx->date)->format($displayDateFormat) : '',

@@ -769,7 +769,9 @@
                                 </td>
                                 <td class="col-amount {{ $tx['operation'] === '-' ? 'amount-deduction' : '' }}">{{ $tx['amount'] }}</td>
                                 <td class="col-paid">
-                                    @if(!empty($tx['is_paid']))
+                                    @if($tx['paid'] === '—' || $tx['paid'] === '-')
+                                        <span style="color: #94a3b8; font-weight: 600;">—</span>
+                                    @elseif(!empty($tx['is_paid']))
                                         <span class="paid-badge-success">{{ $tx['paid'] }}</span>
                                     @else
                                         <span class="paid-badge-unpaid">{{ $tx['paid'] }}</span>
