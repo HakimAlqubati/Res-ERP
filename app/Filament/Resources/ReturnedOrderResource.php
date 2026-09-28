@@ -141,7 +141,11 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
                                             ->first();
 
                                         $branchPrice = $sourceTransaction?->price ?? $detail->price;
-                                        $orderMarkup = (float) ($record->order?->transfer_markup_percentage ?? $record->branch?->transfer_markup_percentage ?? 0);
+                                        $orderMarkup = (float) (
+                                            $record->order?->resolveItemMarkupPercentage((int) $detail->product_id)
+                                            ?? $record->branch?->resolveTransferMarkupForCategory($detail->product?->category_id)
+                                            ?? 0
+                                        );
                                         $warehousePrice = ($orderMarkup > 0 && $sourceTransaction)
                                             ? round($sourceTransaction->price / (1 + ($orderMarkup / 100)), 4)
                                             : $branchPrice;

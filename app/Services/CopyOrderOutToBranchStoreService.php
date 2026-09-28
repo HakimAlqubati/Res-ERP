@@ -11,7 +11,11 @@ class CopyOrderOutToBranchStoreService
 {
     public function handle(?int $branchId = null): void
     {
-        Order::with(['branch.store'])
+        Order::with([
+            'branch.store',
+            'branch.categoryMarkups',
+            'orderDetails:id,order_id,product_id,transfer_markup_percentage',
+        ])
             ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
             ->whereNull('deleted_at')
             ->when($branchId, function ($q) use ($branchId) {
@@ -46,7 +50,7 @@ class CopyOrderOutToBranchStoreService
                                 'movement_date' => $order->transfer_date,
                                 'transaction_date' => $order->transfer_date,
                                 'package_size' => $out->package_size,
-                                'price' => $order->calculateTransferPrice((float) $out->price),
+                                'price' => $order->calculateTransferPrice((float) $out->price, (int) $out->product_id),
                                 'notes' => 'Supplied from Order #' . $order->id,
                                 'store_id' => $store->id,
                                 'transactionable_type' => Order::class,
@@ -61,7 +65,11 @@ class CopyOrderOutToBranchStoreService
 
     public function handleForOrder(Order $order): array
     {
-        $order->loadMissing('branch.store');
+        $order->loadMissing([
+            'branch.store',
+            'branch.categoryMarkups',
+            'orderDetails:id,order_id,product_id,transfer_markup_percentage',
+        ]);
         $store = $order->branch?->store;
 
         if (! $store) {
@@ -101,7 +109,7 @@ class CopyOrderOutToBranchStoreService
                     'quantity'              => $out->quantity,
                     'unit_id'               => $out->unit_id,
                     'package_size'          => $out->package_size,
-                    'price'                 => $order->calculateTransferPrice((float) $out->price),
+                    'price'                 => $order->calculateTransferPrice((float) $out->price, (int) $out->product_id),
                     'movement_date'         => $out->movement_date ?? $order->transfer_date ?? now(),
                     'transaction_date'      => $out->transaction_date ?? $order->transfer_date ?? now(),
                     'notes'                 => $out->notes ?? ('Supplied from Order #' . $order->id),
