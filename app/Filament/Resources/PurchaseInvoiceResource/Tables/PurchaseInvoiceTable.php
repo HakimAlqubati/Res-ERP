@@ -217,6 +217,14 @@ class PurchaseInvoiceTable
                                 showWarningNotifiMessage($e->getMessage());
                             }
                         })->hidden(),
+                    Action::make('create_return')
+                        ->label('Create Return')
+                        ->icon('heroicon-o-arrow-uturn-left')
+                        ->color('warning')
+                        ->visible(fn(PurchaseInvoice $record) => ! $record->cancelled && $record->return_status !== 'fully_returned')
+                        ->url(fn(PurchaseInvoice $record) => \App\Filament\Clusters\SupplierCluster\Resources\PurchaseReturnResource::getUrl('create', [
+                            'purchase_invoice_id' => $record->id,
+                        ])),
                     EditAction::make()
                         ->icon('heroicon-s-pencil'),
                     Action::make('download')

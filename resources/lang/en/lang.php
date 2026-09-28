@@ -72,6 +72,7 @@ return [
     'code'                                        => 'Code',
     'category'                                    => 'Category',
     'units_prices'                                => 'Units prices',
+    'final_price'                                 => 'Final Price',
     'order-no-'                                   => 'Order no ',
     'transfer-no-'                                => 'Transfer no ',
     'export_excel'                                => 'Export Excel',
@@ -564,8 +565,11 @@ return [
     'gross_salary' => 'Gross Salary',
     'total_deductions' => 'Total Deductions',
     'total_allowances' => 'Total Allowances',
+    'total_additions' => 'Total Additions',
+    'final_net_result' => 'Final Net Result',
     'employees_count' => 'Staff',
     'total_salaries' => 'Total',
+    'date_format' => 'Date Format',
 
     // ===========================================
     // HRMS - Holidays
@@ -1209,4 +1213,24 @@ return [
     'incentive_types' => 'Incentive Types',
     'allowance_types' => 'Allowance Types',
     'deduction_types' => 'Deduction Types',
+    'month' => 'Month',
+    'employee_statement_report' => 'Employee Financial Statement',
+
+    // ===========================================
+    // Users Management & Form
+    // ===========================================
+    'password' => 'Password',
+    'confirm_password' => 'Confirm Password',
+    'attendance_user' => 'Attendance User',
+    'new_user' => 'New User',
+    'user_type' => 'User Type',
+    'extra_branches' => 'Extra Branches',
+    'edit_role_and_permissions' => 'Edit Role and Permissions',
+    'set_user_type_and_role' => 'Set User Type and Role',
+    'role' => 'Role',
+    'device_description' => 'Device Description',
+    'role_not_valid_for_user_type' => 'The selected role is not valid for the current user type. Please choose only from the available roles or change the user type.',
+    'one_role_not_valid' => 'One of the selected roles is not valid for the current user type.',
+    'roles_list_invalid' => 'The roles list format is invalid.',
+    'role_required' => 'Please select at least one role.',
 ];

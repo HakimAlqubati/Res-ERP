@@ -32,7 +32,7 @@ class Setting extends Model  implements Auditable
     {
         $setting = static::where('key', $key)->first();
 
-        return $setting ? $setting->value : $default;
+        return ($setting && $setting->value !== null && $setting->value !== '') ? $setting->value : $default;
     }
 
     /**

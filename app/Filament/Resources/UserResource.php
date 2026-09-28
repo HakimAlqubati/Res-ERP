@@ -30,14 +30,10 @@ class UserResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-users';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'User & Roles';
-
-    // protected static ?string $cluster = UserCluster::class;
-    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-
-    protected static ?string $recordTitleAttribute = 'name';
-
-    protected static bool $isGloballySearchable = true;
+    public static function getNavigationGroup(): ?string
+    {
+        return __('lang.user_and_roles');
+    }
 
     public static function getNavigationLabel(): string
     {
@@ -55,8 +51,8 @@ class UserResource extends Resource
                     ->inline()
                     ->options([
                         // 'existing_employee' => 'Existing Employee',
-                        'attendance_user' => 'Attendance User',
-                        'new_user' => 'New User',
+                        'attendance_user' => __('lang.attendance_user'),
+                        'new_user' => __('lang.new_user'),
                     ])
                     ->icons([
                         // 'existing_employee' => 'heroicon-o-identification',

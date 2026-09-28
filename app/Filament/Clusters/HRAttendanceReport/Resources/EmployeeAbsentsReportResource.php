@@ -72,32 +72,17 @@ class EmployeeAbsentsReportResource extends Resource
                     ->searchable(),
                 Filter::make('date_range')
                     ->schema([
-                        \Filament\Forms\Components\Select::make('type')
-                            ->label(__('lang.type'))
-                            ->options([
-                                'single' => __('lang.date'),
-                                'range'  => __('lang.date_range'),
-                            ])
-                            ->default('single')
-                            ->live(),
-
-                        DatePicker::make('date')
-                            ->label(__('lang.date'))
-                            ->default(now()->format('Y-m-d'))
-                            ->hidden(fn($get) => $get('type') !== 'single')
-                            ->live()
-                            ,
+                        \Filament\Forms\Components\Hidden::make('type')
+                            ->default('range'),
 
                         DatePicker::make('start_date')
                             ->label(__('lang.start_date'))
                             ->default(now()->startOfMonth()->format('Y-m-d'))
-                            ->hidden(fn($get) => $get('type') !== 'range')
                             ->live(),
 
                         DatePicker::make('end_date')
                             ->label(__('lang.end_date'))
                             ->default(now()->format('Y-m-d'))
-                            ->hidden(fn($get) => $get('type') !== 'range')
                             ->live(),
                     ]),
             ], FiltersLayout::AboveContent)

@@ -183,6 +183,7 @@ class ProductsSchema
                         ->visible(fn($get): bool => ($get('category_id') !== null && Category::find($get('category_id'))->is_manafacturing))
                         ->label('Items')
                         ->schema([
+                            StepManufacturingUnits::repeater(),
                             Repeater::make('productItems')
                                 ->relationship('productItems')
 
@@ -313,6 +314,7 @@ class ProductsSchema
                                             PRA::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
                                         })->required()->minValue(0.000000001),
                                     TextInput::make('price')
+                                        ->prefix(settingWithDefault('currency_symbol', 'RM'))
                                         ->label(__('lang.price'))
                                         ->numeric()
                                         ->default(1)
@@ -329,7 +331,9 @@ class ProductsSchema
                                         })->required()->minValue(0.000000001),
                                     TextInput::make('total_price')->default(0)
                                         ->type('text')
-                                        ->extraInputAttributes(['readonly' => true]),
+                                        ->readOnly()
+                                        ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
+                                        ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;']),
                                     TextInput::make('qty_waste_percentage')
                                         ->label('Waste %')
                                         ->default(0)
@@ -357,7 +361,9 @@ class ProductsSchema
 
                                     TextInput::make('total_price_after_waste')->default(0)
                                         ->type('text')->label('Net Price')
-                                        ->extraInputAttributes(['readonly' => true]),
+                                        ->readOnly()
+                                        ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
+                                        ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;']),
                                     Hidden::make('quantity_after_waste'),
                                     // TextInput::make('quantity_after_waste')->default(0)
                                     //     ->type('text')
@@ -372,8 +378,6 @@ class ProductsSchema
 
                         ]),
                     StepUnmanufacturingUnits::step(),
-                    StepManufacturingUnits::step(),
-
 
                     self::productionDetailsStep(),
                 ])

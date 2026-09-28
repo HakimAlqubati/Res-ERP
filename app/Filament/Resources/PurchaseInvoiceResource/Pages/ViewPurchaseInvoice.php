@@ -16,6 +16,14 @@ class ViewPurchaseInvoice extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            \Filament\Actions\Action::make('create_return')
+                ->label('Create Return')
+                ->icon('heroicon-o-arrow-uturn-left')
+                ->color('warning')
+                ->visible(fn() => ! $this->record->cancelled && $this->record->return_status !== 'fully_returned')
+                ->url(fn() => \App\Filament\Clusters\SupplierCluster\Resources\PurchaseReturnResource::getUrl('create', [
+                    'purchase_invoice_id' => $this->record->id,
+                ])),
             EditAction::make(),
         ];
     }

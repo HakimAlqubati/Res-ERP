@@ -35,6 +35,7 @@ class ProductRepository implements ProductRepositoryInterface
         $categoryId      = $request->input('category_id');
         $isManufacturing = $request->input('is_manufacturing', false); // Default to true if not specified
         $branch = auth()->user()->branch ?? null;
+        $forOrders       = $request->input('for') === 'orders';
 
         $unitsSortParam = $request->input('units_sort');
         $sortDirection = ($unitsSortParam && ProductUnitsSortDirection::tryFrom(strtolower($unitsSortParam)))
@@ -53,7 +54,13 @@ class ProductRepository implements ProductRepositoryInterface
             }, function ($query) {
                 // return $query->unmanufacturingCategory();
             })
-            ->HasUnitPrices()
+            ->when($forOrders, function ($query) {
+                $query->whereHas('outUnitPrices', function ($q) {
+                    $q->forOrders();
+                });
+            }, function ($query) {
+                $query->HasUnitPrices();
+            })
             ->when(
                 $branch && $branch->type === Branch::TYPE_RESELLER,
                 fn($query) => $query->visibleToBranch($branch)
@@ -61,9 +68,12 @@ class ProductRepository implements ProductRepositoryInterface
             ->with([
                 'category',
                 'productItems',
-                'outUnitPrices' => function ($query) use ($sortDirection) {
+                'outUnitPrices' => function ($query) use ($sortDirection, $forOrders) {
                     $query->reorder()
                         ->orderBy('package_size', $sortDirection)
+                        ->when($forOrders, function ($q) {
+                            $q->forOrders();
+                        })
                         ->with('unit:id,name');
                 },
             ])

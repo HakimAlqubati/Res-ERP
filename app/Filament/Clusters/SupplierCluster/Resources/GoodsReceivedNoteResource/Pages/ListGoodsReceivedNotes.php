@@ -28,6 +28,11 @@ class ListGoodsReceivedNotes extends ListRecords
                 ->icon('heroicon-o-check-circle')
                 ->badge(GoodsReceivedNote::query()->where('cancelled', 0)->count())
                 ->badgeColor('success'),
+            'Rejected' => Tab::make()
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('cancelled', 0)->where('status', GoodsReceivedNote::STATUS_REJECTED))
+                ->icon('heroicon-o-exclamation-circle')
+                ->badge(GoodsReceivedNote::query()->where('cancelled', 0)->where('status', GoodsReceivedNote::STATUS_REJECTED)->count())
+                ->badgeColor('danger'),
             'Cancelled' => Tab::make()
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('cancelled', 1))
                 ->icon('heroicon-o-x-circle')

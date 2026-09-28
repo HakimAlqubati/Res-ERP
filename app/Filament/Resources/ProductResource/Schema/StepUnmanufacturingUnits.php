@@ -17,6 +17,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 
@@ -40,6 +41,7 @@ class StepUnmanufacturingUnits
                         TableColumn::make(__('lang.price'))->alignCenter()->width('18rem'),
                         TableColumn::make(__('lang.psize'))->alignCenter()->width('10rem'),
                         TableColumn::make(__('Usage'))->alignCenter()->width('12rem'),
+                        TableColumn::make(__('Orders'))->alignCenter()->width('8rem'),
                     ])
                     ->rules(function (Get $get, callable $livewire) {
                         return [
@@ -80,7 +82,9 @@ class StepUnmanufacturingUnits
                                 }
                                 return PRA::isProductLocked($livewire->form->getRecord(), $record);
                             }),
-                        TextInput::make('price')->numeric()->default(1)->required()
+                        TextInput::make('price')
+                            ->prefix(settingWithDefault('currency_symbol', 'RM'))
+                            ->numeric()->default(1)->required()
                             ->label(__('lang.price'))
                             ->disabled(function (callable $get, $livewire, $record) {
                                 $isNew = is_null($get('id'));
@@ -217,10 +221,22 @@ class StepUnmanufacturingUnits
                             })
 
                             ->dehydrated()
-                            ->required()
-                            ->columnSpan(2)
-                        // ->native(false)
-                        ,
+                            ->required(),
+                        Toggle::make('use_in_orders')
+                            ->label('Orders')
+                            ->default(true)
+                            ->inline(false)
+                            ->disabled(function (callable $get) {
+                                $units = $get('../../units') ?? [];
+                                return count($units) <= 1;
+                            })
+                            ->dehydrated()
+                            ->afterStateHydrated(function (callable $get, callable $set) {
+                                $units = $get('../../units') ?? [];
+                                if (count($units) <= 1) {
+                                    $set('use_in_orders', true);
+                                }
+                            }),
 
                     ])
                     ->orderColumn('order')

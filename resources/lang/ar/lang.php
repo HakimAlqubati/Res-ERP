@@ -72,6 +72,7 @@ return [
   'code' => 'الكود',
   'category' => 'الفئة',
   'units_prices' => 'وحدات التسعير',
+  'final_price' => 'السعر النهائي',
   'order-no-' => 'الطلبية رقم ',
   'transfer-no-' => 'المناقلة رقم ',
   'export_excel' => 'تصدير أكسل',
@@ -545,8 +546,11 @@ return [
   'gross_salary' => 'إجمالي الراتب',
   'total_deductions' => 'إجمالي الخصومات',
   'total_allowances' => 'إجمالي البدلات',
+  'total_additions' => 'إجمالي الإضافات',
+  'final_net_result' => 'صافي النتيجة النهائية',
   'employees_count' => 'الموظفين',
   'total_salaries' => 'الإجمالي',
+  'date_format' => 'صيغة التاريخ',
 
   // ===========================================
   // HRMS - Holidays
@@ -1190,4 +1194,24 @@ return [
     'incentive_types' => 'أنواع الحوافز',
     'allowance_types' => 'أنواع البدلات',
     'deduction_types' => 'أنواع الاستقطاعات',
+    'month' => 'الشهر',
+    'employee_statement_report' => 'كشف حركات رواتب الموظف',
+
+    // ===========================================
+    // Users Management & Form
+    // ===========================================
+    'password' => 'كلمة المرور',
+    'confirm_password' => 'تأكيد كلمة المرور',
+    'attendance_user' => 'مستخدم الحضور والانصراف',
+    'new_user' => 'مستخدم جديد',
+    'user_type' => 'نوع المستخدم',
+    'extra_branches' => 'فروع إضافية',
+    'edit_role_and_permissions' => 'تعديل الدور والصلاحيات',
+    'set_user_type_and_role' => 'تحديد نوع المستخدم والدور',
+    'role' => 'الدور',
+    'device_description' => 'وصف الجهاز',
+    'role_not_valid_for_user_type' => 'الدور المحدد غير صالح لنوع المستخدم الحالي. يرجى الاختيار فقط من الأدوار المتاحة أو تغيير نوع المستخدم.',
+    'one_role_not_valid' => 'أحد الأدوار المحددة غير صالح لنوع المستخدم الحالي.',
+    'roles_list_invalid' => 'صيغة قائمة الأدوار غير صالحة.',
+    'role_required' => 'يرجى تحديد دور واحد على الأقل.',
 ];

@@ -56,6 +56,11 @@ class Store extends Model implements Auditable
         return $query->where('is_central_kitchen', true)->first();
     }
 
+    public function branch()
+    {
+        return $this->hasOne(Branch::class, 'store_id');
+    }
+
     public function storekeeper()
     {
         return $this->belongsTo(User::class, 'storekeeper_id');

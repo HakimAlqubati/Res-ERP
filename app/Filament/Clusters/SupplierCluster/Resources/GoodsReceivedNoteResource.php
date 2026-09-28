@@ -94,6 +94,21 @@ class GoodsReceivedNoteResource extends Resource
         return $schema
             ->components([
 
+                Section::make('Rejection Notice')
+                    ->icon('heroicon-o-exclamation-triangle')->columnSpanFull()
+                    ->schema([
+                        Placeholder::make('rejected_notice')->columnSpanFull()
+                            ->hiddenLabel()
+                            ->content(fn($record) => new \Illuminate\Support\HtmlString(
+                                '<div class="p-4 rounded-lg bg-danger-50 border border-danger-200 text-danger-700 dark:bg-danger-950/50 dark:border-danger-800 dark:text-danger-300">' .
+                                '<div class="font-bold text-sm mb-1">This Goods Received Note was rejected' . ($record?->rejectedBy?->name ? ' by ' . e($record->rejectedBy->name) : '') . '.</div>' .
+                                '<div><span class="font-semibold">Reason: </span>' . e($record?->rejected_reason) . '</div>' .
+                                ($record?->rejected_date ? '<div class="text-xs text-gray-500 mt-1">Rejected Date: ' . $record->rejected_date->format('Y-m-d H:i') . '</div>' : '') .
+                                '</div>'
+                            )),
+                    ])
+                    ->visible(fn($record) => $record?->status === GoodsReceivedNote::STATUS_REJECTED && !empty($record?->rejected_reason)),
+
                 Section::make([
                     Grid::make(2)->columnSpanFull()->schema([
                         Grid::make(3)
@@ -119,12 +134,12 @@ class GoodsReceivedNoteResource extends Resource
                                     )->default(getDefaultStore())
                                     ->label('Store')->searchable()
                                     ->required()->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
-                                Select::make('status')->disabled()->dehydrated()
+                                Select::make('status')
                                     ->label('Status')->default(GoodsReceivedNote::STATUS_CREATED)
                                     ->options(GoodsReceivedNote::getStatusOptions())
                                     ->required()
                                     ->hiddenOn('create')
-                                    ->disabled(fn($record): bool => $isEditOperation && in_array($record?->status, [GoodsReceivedNote::STATUS_APPROVED, GoodsReceivedNote::STATUS_REJECTED])),
+                                    ->disabled(),
                                 Select::make('supplier_id')->label(__('lang.supplier'))
                                     ->getSearchResultsUsing(fn(string $search): array => Supplier::where('name', 'like', "%{$search}%")->limit(10)->pluck('name', 'id')->toArray())
                                     ->getOptionLabelUsing(fn($value): ?string => Supplier::find($value)?->name)
@@ -387,7 +402,9 @@ class GoodsReceivedNoteResource extends Resource
                                         })
                                         ->columnSpan(2)->required(),
                                     TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
-                                        ->label(__('lang.package_size')),
+                                        ->label(__('lang.package_size'))
+                                        ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
+                                        ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;', 'readonly' => true]),
                                     TextInput::make('quantity')
                                         ->label(__('lang.quantity'))
                                         ->numeric()
@@ -417,7 +434,9 @@ class GoodsReceivedNoteResource extends Resource
                                         ,
                                     TextInput::make('total_price')
                                         ->label(__('lang.total_price'))
-                                        ->disabled()
+                                        ->readOnly()
+                                        ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
+                                        ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;', 'readonly' => true])
                                         ->numeric()
                                         ->default(0)
                                         // ->minValue(0.1)
@@ -495,6 +514,7 @@ class GoodsReceivedNoteResource extends Resource
                         \App\Models\GoodsReceivedNote::STATUS_CANCELLED => 'warning',
                         default => 'primary',
                     })
+                    ->tooltip(fn ($record) => $record->status === \App\Models\GoodsReceivedNote::STATUS_REJECTED ? $record->rejected_reason : null)
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('rejected_reason')
                     ->label('Reject Reason')
@@ -591,8 +611,11 @@ class GoodsReceivedNoteResource extends Resource
             ->filtersFormColumns(4)
             ->recordActions([
                 self::getExportExcelAction(Action::class),
-                EditAction::make()
-                    ->visible(fn($record): bool => $record->status == GoodsReceivedNote::STATUS_CREATED),
+                 EditAction::make()
+                ->visible(fn($record): bool => in_array($record->status, [
+                    GoodsReceivedNote::STATUS_CREATED,
+                    GoodsReceivedNote::STATUS_REJECTED,
+                ])),
                 // Tables\Actions\Action::make('Reject')
                 //     ->label('Reject')
                 //     ->color('danger')->button()

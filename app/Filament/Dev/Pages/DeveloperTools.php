@@ -24,6 +24,8 @@ class DeveloperTools extends Page
     protected function getHeaderActions(): array
     {
         return [
+            \App\Filament\Dev\Actions\AdjustOrderQuantityFifoAction::make(),
+
             Action::make('Rebuild Inventory')
                 ->label('♻️ Rebuild Inventory From Sources')
                 ->color('gray')

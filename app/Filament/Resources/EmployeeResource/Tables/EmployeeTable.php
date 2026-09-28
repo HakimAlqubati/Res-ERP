@@ -177,6 +177,21 @@ class EmployeeTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
+                TextColumn::make('paymentMethod.name')
+                    ->label(__('lang.payment_method'))
+                    ->sortable()
+                    ->searchable()
+                    ->placeholder('-')
+                    ->description(fn (Employee $record): ?string => $record->payment_details['account_number'] ?? $record->bank_account_number ?? null)
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('bank_account_number')
+                    ->label(__('lang.bank_account_number'))
+                    ->sortable()
+                    ->searchable()
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('branch_logs_count')
                     ->counts('branchLogs')
                     ->label(__('lang.branch_logs_count'))
@@ -272,6 +287,27 @@ class EmployeeTable
                     ->options(UserType::where('active', 1)->pluck('name', 'id')->toArray())
                     ->searchable()
                     ->multiple(),
+                SelectFilter::make('payment_method_id')
+                    ->label(__('lang.payment_method'))
+                    ->relationship('paymentMethod', 'name')
+                    ->searchable()
+                    ->multiple()
+                    ->preload(),
+                SelectFilter::make('has_payment_method')
+                    ->label(__('Payment Method Status'))
+                    ->options([
+                        'all' => __('lang.all'),
+                        'with' => app()->getLocale() === 'ar' ? 'مع وسيلة دفع' : 'With Payment Method',
+                        'without' => app()->getLocale() === 'ar' ? 'بدون وسيلة دفع' : 'Without Payment Method',
+                    ])
+                    ->default('all')
+                    ->query(function ($query, array $data) {
+                        if (($data['value'] ?? null) === 'with') {
+                            $query->whereNotNull('payment_method_id');
+                        } elseif (($data['value'] ?? null) === 'without') {
+                            $query->whereNull('payment_method_id');
+                        }
+                    }),
                 // SelectFilter::make('manager_id')
                 //     ->label(__('lang.manager'))
 

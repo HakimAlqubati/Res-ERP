@@ -233,6 +233,7 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
                             'status' => GoodsReceivedNote::STATUS_REJECTED,
                             'rejected_reason' => $data['rejected_reason'],
                             'rejected_date' => now(),
+                            'rejected_by' => auth()->id(),
                         ]);
                     });
 
@@ -241,6 +242,21 @@ class EditGoodsReceivedNoteV3 extends Page implements HasForms
                         ->body('Goods Received Note Rejected Successfully')
                         ->success()
                         ->send();
+
+                    if ($this->record->creator) {
+                        Notification::make()
+                            ->title('GRN Rejected: #' . $this->record->grn_number)
+                            ->body('Reason: ' . $data['rejected_reason'])
+                            ->danger()
+                            ->actions([
+                                \Filament\Notifications\Actions\Action::make('edit')
+                                    ->label('Edit GRN')
+                                    ->button()
+                                    ->url(GoodsReceivedNoteResource::getUrl('edit', ['record' => $this->record])),
+                            ])
+                            ->sendToDatabase($this->record->creator);
+                    }
+
                     $this->redirect(GoodsReceivedNoteResource::getUrl('index'));
                 } catch (Exception $e) {
                     Notification::make()

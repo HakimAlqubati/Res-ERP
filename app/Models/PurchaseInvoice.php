@@ -219,4 +219,38 @@ class PurchaseInvoice extends Model implements Auditable
     {
         return $this->morphMany(InventoryTransaction::class, 'transactionable');
     }
+
+    public function returns()
+    {
+        return $this->hasMany(PurchaseReturn::class, 'purchase_invoice_id');
+    }
+
+    public function getApprovedReturnedAmountAttribute(): float
+    {
+        return (float) $this->returns()
+            ->approved()
+            ->sum('total_amount');
+    }
+
+    public function getNetAmountAttribute(): float
+    {
+        return max(0.0, (float) $this->total_amount - $this->approved_returned_amount);
+    }
+
+    public function getReturnStatusAttribute(): string
+    {
+        $returned = $this->approved_returned_amount;
+        if ($returned <= 0) {
+            return 'none';
+        }
+        if ($returned >= (float) $this->total_amount) {
+            return 'fully_returned';
+        }
+        return 'partially_returned';
+    }
+
+    public function getHasReturnsAttribute(): bool
+    {
+        return $this->returns()->exists();
+    }
 }
