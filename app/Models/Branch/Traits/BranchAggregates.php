@@ -20,7 +20,7 @@ trait BranchAggregates
     {
         return $this->orders()
             ->join('orders_details', 'orders_details.order_id', '=', 'orders.id')
-            ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
+            ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT])
             ->sum('orders_details.available_quantity');
     }
 

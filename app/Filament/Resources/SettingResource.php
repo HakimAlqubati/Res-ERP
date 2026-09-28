@@ -567,7 +567,9 @@ class SettingResource extends Resource
                                             //     ->native(false)
                                             //     ->required(),
                                             TextInput::make('limit_days_orders')->numeric()->label(__('system_settings.limit_days_orders')),
-                                            Grid::make()->columns(2)->schema([
+                                            Grid::make()
+                                            ->columnSpanFull()
+                                            ->columns(2)->schema([
                                                 // Toggle::make('completed_order_if_not_qty')->inline(false)
                                                 //     ->label(__('system_settings.completed_order_if_not_qty'))
                                                 //     // ->onIcon('heroicon-s-lightning-bolt')
@@ -586,6 +588,11 @@ class SettingResource extends Resource
                                                     ->inline(false)
                                                     ->label('Auto-create order if stock is unavailable')
                                                     ->helperText('Automatically create a new order  if inventory is empty and update original quantity to zero.')
+                                                    ->default(false),
+                                                Toggle::make('enable_in_transit_order_status')
+                                                    ->inline(false)
+                                                    ->label(__('system_settings.enable_in_transit_order_status'))
+                                                    ->helperText(__('system_settings.in_transit_order_status_helper'))
                                                     ->default(false),
                                             ]),
 

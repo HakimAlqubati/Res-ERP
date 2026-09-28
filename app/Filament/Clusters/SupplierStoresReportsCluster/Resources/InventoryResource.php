@@ -77,6 +77,7 @@ class InventoryResource extends Resource
             ->paginated([10, 25, 50, 150, 400])
             ->defaultSort('id', 'desc')
             ->headerActions([
+                RefreshAction::make(),
                 Action::make('import_inventory')->hidden()
                     ->label('Import Inventory Excel')
                     ->icon('heroicon-o-arrow-up-tray')

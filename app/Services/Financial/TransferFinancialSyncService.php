@@ -57,7 +57,7 @@ class TransferFinancialSyncService
         // Build query for transfer orders
         $query = Order::query()
             ->where('branch_id', $branchId)
-            ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
+            ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])
             ->where('status', '!=', Order::CANCELLED)
             ->whereHas('branch', function ($q) {
                 $q->where('type', '!=', Branch::TYPE_RESELLER);

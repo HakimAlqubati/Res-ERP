@@ -190,12 +190,12 @@ class TransferOrderResource extends Resource
             ->whereHas('branch', function ($query) {
                 $query->where('type', '!=', Branch::TYPE_RESELLER); // غيّر "warehouse" لنوع الفرع الذي تريده
             })
-            ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED]);
+            ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED]);
     }
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
+        return static::getModel()::whereIn('status', [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])
             ->whereHas('branch', function ($query) {
                 $query->where('type', '!=', Branch::TYPE_RESELLER); // غيّر "warehouse" لنوع الفرع الذي تريده
             })->forBranchManager()

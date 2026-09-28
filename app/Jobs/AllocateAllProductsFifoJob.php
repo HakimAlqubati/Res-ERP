@@ -32,14 +32,14 @@ class AllocateAllProductsFifoJob implements ShouldQueue
 
         $productIds = DB::table('orders_details as od')
             ->join('orders as o', 'od.order_id', '=', 'o.id')
-            ->whereIn('o.status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
+            ->whereIn('o.status', [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])
             ->whereNull('o.deleted_at')
             ->distinct()
             ->pluck('od.product_id');
 
         $productIdsFromOrders = DB::table('orders_details as od')
             ->join('orders as o', 'od.order_id', '=', 'o.id')
-            ->whereIn('o.status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
+            ->whereIn('o.status', [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])
             ->whereNull('o.deleted_at')
             ->pluck('od.product_id');
 

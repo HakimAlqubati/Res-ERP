@@ -133,7 +133,10 @@ class OrderRepository implements OrderRepositoryInterface
             }
         }
         if (isDriver()) {
-            $query->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED]);
+            $query->whereIn('status', [
+                Order::READY_FOR_DELEVIRY,
+                Order::IN_TRANSIT,
+            ]);
         }
 
         // $query->where('branch_id', '!=', auth()->user()->branch_id);
@@ -548,9 +551,114 @@ class OrderRepository implements OrderRepositoryInterface
                 ], 404);
             }
 
-            // If order is "ready for delivery", only allow changing to "delivered"
+            // If order is already delivered or cancelled, do not allow modifying or re-submitting status
+            if (
+                in_array($order->status, [Order::DELEVIRED, Order::CANCELLED], true)
+                && $request->has('status')
+            ) {
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'orderId' => $order->id,
+                    'message' => 'Delivered or cancelled orders cannot be modified.',
+                ], 422);
+            }
+
+            // If order is "pending approval", only allow approving to "ordered" or cancelling
+            if (
+                $order->status === Order::PENDING_APPROVAL
+                && $request->has('status')
+            ) {
+                if (!in_array($request->status, [Order::ORDERED, Order::CANCELLED], true)) {
+                    DB::rollBack();
+
+                    return response()->json([
+                        'success' => false,
+                        'orderId' => $order->id,
+                        'message' => 'Pending approval orders can only be approved or cancelled.',
+                    ], 422);
+                }
+
+                if ($request->status === Order::ORDERED && !auth()->user()->canApproveOrder($order)) {
+                    DB::rollBack();
+
+                    return response()->json([
+                        'success' => false,
+                        'orderId' => $order->id,
+                        'message' => 'Only the branch manager is authorized to approve this order.',
+                    ], 403);
+                }
+            }
+
+            // Do not allow changing other statuses back to "ordered"
+            if (
+                $request->has('status')
+                && $request->status === Order::ORDERED
+                && !in_array($order->status, [Order::PENDING_APPROVAL, Order::ORDERED], true)
+            ) {
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'orderId' => $order->id,
+                    'message' => 'Orders cannot be changed back to ordered.',
+                ], 422);
+            }
+
+            // If order is "ready for delivery", validate allowed transitions
             if (
                 $order->status === Order::READY_FOR_DELEVIRY
+                && $request->has('status')
+            ) {
+                $allowedNext = isInTransitOrderEnabled()
+                    ? [Order::IN_TRANSIT]
+                    : [Order::DELEVIRED];
+
+                if (!in_array($request->status, $allowedNext, true)) {
+                    DB::rollBack();
+
+                    return response()->json([
+                        'success' => false,
+                        'orderId' => $order->id,
+                        'message' => 'Ready for delivery orders can only be changed to ' . implode(' or ', $allowedNext) . '.',
+                    ], 422);
+                }
+            }
+
+            // Only authorized manufacturing branch staff or default storekeepers can mark order as ready for delivery
+            if (
+                $request->has('status')
+                && $request->status === Order::READY_FOR_DELEVIRY
+                && !auth()->user()->canReadyForDelivery($order)
+            ) {
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'orderId' => $order->id,
+                    'message' => 'Unauthorized to mark order as ready for delivery.',
+                ], 403);
+            }
+
+            // Only drivers (and super admins) are authorized to transition order to in_transit
+            if (
+                $request->has('status')
+                && $request->status === Order::IN_TRANSIT
+                && !auth()->user()->canInTransitOrder($order)
+            ) {
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'orderId' => $order->id,
+                    'message' => 'Only drivers are authorized to change order status to in transit.',
+                ], 403);
+            }
+
+            // If order is "in transit", only allow changing to "delivered"
+            if (
+                $order->status === Order::IN_TRANSIT
                 && $request->has('status')
                 && $request->status !== Order::DELEVIRED
             ) {
@@ -559,21 +667,56 @@ class OrderRepository implements OrderRepositoryInterface
                 return response()->json([
                     'success' => false,
                     'orderId' => $order->id,
-                    'message' => 'Ready for delivery orders can only be changed to delivered.',
+                    'message' => 'In transit orders can only be changed to delivered.',
                 ], 422);
+            }
+
+            // Only orders that are "ready for delivery" or "in transit" can be changed to "delivered"
+            if (
+                $request->has('status')
+                && $request->status === Order::DELEVIRED
+                && !in_array($order->status, [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT], true)
+            ) {
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'orderId' => $order->id,
+                    'message' => 'Orders can only be changed to delivered from ready for delivery or in transit.',
+                ], 422);
+            }
+
+            // Only the branch manager owning the order or direct branch user (and super admins) are authorized to transition order to delivered
+            if (
+                $request->has('status')
+                && $request->status === Order::DELEVIRED
+                && !auth()->user()->canDeliverOrder($order)
+            ) {
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'orderId' => $order->id,
+                    'message' => 'Only branch manager or branch staff can confirm delivery.',
+                ], 403);
+            }
+
+            $allowedStatuses = [
+                Order::PROCESSING,
+                Order::READY_FOR_DELEVIRY,
+                Order::DELEVIRED,
+                Order::ORDERED,
+                Order::CANCELLED,
+            ];
+            if (isInTransitOrderEnabled() || $order->status === Order::IN_TRANSIT) {
+                $allowedStatuses[] = Order::IN_TRANSIT;
             }
 
             // Validate the request data
             $validatedData = $request->validate([
                 'status' => [
                     'string',
-                    Rule::in([
-                        Order::PROCESSING,
-                        Order::READY_FOR_DELEVIRY,
-                        Order::DELEVIRED,
-                        Order::ORDERED,
-                        Order::CANCELLED,
-                    ]),
+                    Rule::in($allowedStatuses),
                 ],
                 'notes' => 'string',
                 'full_quantity' => 'boolean',
@@ -582,7 +725,7 @@ class OrderRepository implements OrderRepositoryInterface
             $order->updated_by = auth()->user()->id;
             // Fill the order with the validated data and save it to the database
 
-            if (in_array($request->status, [Order::READY_FOR_DELEVIRY]) && empty($order->transfer_date)) {
+            if (in_array($request->status, [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT]) && empty($order->transfer_date)) {
                 $order->transfer_date = now();
             }
             $order->fill($validatedData)->save();
@@ -615,7 +758,7 @@ class OrderRepository implements OrderRepositoryInterface
         $order_branch = Branch::find($order->branch_id)->name;
         $order_status = $order->status;
         $file_name = __('lang.order-no-') . $id;
-        if (in_array($order_status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
+        if (in_array($order_status, [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])) {
             $file_name = __('lang.transfer-no-') . $id . ' - ' . $order->transfer_date;
         }
         return Excel::download(new OrdersExport($id), $order_branch . ' - ' . $file_name . '.xlsx');

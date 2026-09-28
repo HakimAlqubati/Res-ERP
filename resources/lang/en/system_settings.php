@@ -13,4 +13,7 @@ return [
     'body_message_you_cannot_update_calculating_method' => 'because you started work and you have orders',
     'limit_days_orders' => 'Number of last days to return orders in mobile',
     'enable_user_orders_to_store' => 'Enable user orders sent to Store directly',
+    'enable_in_transit_order_status' => 'Enable "In Transit" status for order shipments',
+    'in_transit_order_status_helper' => 'When enabled, an intermediate status (In Transit) is added between Ready for Delivery and Delivered to allow drivers to track shipments.',
 ];
+

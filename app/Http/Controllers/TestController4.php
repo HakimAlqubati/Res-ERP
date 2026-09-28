@@ -62,14 +62,14 @@ class TestController4 extends Controller
         // ✅ Role-based filters
         $user = auth()->user();
 
-       if (isBranchUser() && !isStoreManager() && !isBranchManager() && !isSuperAdmin() && !isSystemManager() && !$user->hasCentralKitchen()) {
+       if (isBranchUser() && !isDriver() && !isStoreManager() && !isBranchManager() && !isSuperAdmin() && !isSystemManager() && !$user->hasCentralKitchen()) {
             $where[] = 'o.customer_id = ' . (int) $user->owner?->id;
         }
 
         if (isDriver()) {
             $statuses = [
-                "'" . Order::READY_FOR_DELEVIRY . "'",
-                "'" . Order::DELEVIRED . "'"
+                "'" . Order::IN_TRANSIT . "'",
+                "'" . Order::READY_FOR_DELEVIRY . "'"
             ];
             $where[] = 'o.status IN (' . implode(',', $statuses) . ')';
         }
@@ -119,35 +119,39 @@ class TestController4 extends Controller
         if (isStoreManager()) {
 
             $where[] = "o.status != '" . Order::PENDING_APPROVAL . "'";
-            $customCategories = $user->getCentralKitchenCategories();
-            if ($kitchenBranch && count($customCategories)) {
-                $categoryIds = implode(',', $customCategories);
 
-                $where[] = "(EXISTS (
-                    SELECT 1
-                    FROM orders_details od
-                    JOIN products p ON od.product_id = p.id
-                    JOIN categories c ON p.category_id = c.id
-                    WHERE od.order_id = o.id AND c.id IN ($categoryIds)
-                ) OR o.customer_id = {$user->id})";
-            } else {
-                $allCustomizedCategories = Branch::centralKitchens()
-                    ->with('categories:id')
-                    ->get()
-                    ->pluck('categories')
-                    ->flatten()
-                    ->pluck('id')
-                    ->unique()
-                    ->toArray();
-                if (count($allCustomizedCategories)) {
-                    $allCustomizedCategoriesStr = implode(',', $allCustomizedCategories);
-                    $where[] = "EXISTS (
+            
+            if (!$user->isDefaultStoreManager()) {
+                $customCategories = $user->getCentralKitchenCategories();
+                if ($kitchenBranch && count($customCategories)) {
+                    $categoryIds = implode(',', $customCategories);
+
+                    $where[] = "(EXISTS (
                         SELECT 1
                         FROM orders_details od
                         JOIN products p ON od.product_id = p.id
                         JOIN categories c ON p.category_id = c.id
-                        WHERE od.order_id = o.id AND c.id NOT IN  ($allCustomizedCategoriesStr)
-                    ) OR o.customer_id = {$user->id}";
+                        WHERE od.order_id = o.id AND c.id IN ($categoryIds)
+                    ) OR o.customer_id = {$user->id})";
+                } else {
+                    $allCustomizedCategories = Branch::centralKitchens()
+                        ->with('categories:id')
+                        ->get()
+                        ->pluck('categories')
+                        ->flatten()
+                        ->pluck('id')
+                        ->unique()
+                        ->toArray();
+                    if (count($allCustomizedCategories)) {
+                        $allCustomizedCategoriesStr = implode(',', $allCustomizedCategories);
+                        $where[] = "EXISTS (
+                            SELECT 1
+                            FROM orders_details od
+                            JOIN products p ON od.product_id = p.id
+                            JOIN categories c ON p.category_id = c.id
+                            WHERE od.order_id = o.id AND c.id NOT IN  ($allCustomizedCategoriesStr)
+                        ) OR o.customer_id = {$user->id}";
+                    }
                 }
             }
         }
@@ -184,6 +188,7 @@ class TestController4 extends Controller
         SELECT
             o.id, 
             o.active, 
+            o.type,
             o.customer_id,
             o.status,
             o.branch_id,
@@ -216,6 +221,7 @@ class TestController4 extends Controller
             return [
                 'id' => $order->id,
                 'active' => $order->active,
+                'type' => $order?->type,
                 'created_by' => $order->customer_id,
                 'created_by_user_name' => $customers[$order->customer_id]->name ?? null,
                 'request_state_name' => $order->status,
@@ -350,7 +356,7 @@ class TestController4 extends Controller
                 }
             }
         }
-        if (isStoreManager() && !$kitchenBranch) {
+        if (isStoreManager() && !$kitchenBranch && !$user->isDefaultStoreManager()) {
             $allCustomizedCategories = Branch::centralKitchens()
                 ->with('categories:id')
                 ->get()
