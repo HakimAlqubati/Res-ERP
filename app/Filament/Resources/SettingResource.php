@@ -93,6 +93,7 @@ class SettingResource extends Resource
                                             'd-m-Y' => 'DD-MM-YYYY (e.g. ' . date('d-m-Y') . ')',
                                              ])
                                         ->default('Y-m-d')
+                                        ->required()
                                         ->columnSpan(2),
 
                                     TextInput::make("website")

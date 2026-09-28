@@ -38,7 +38,7 @@ final class EmployeeStatementFilterDTO
             }
             try {
                 $str = trim((string) $value);
-                $systemFormat = function_exists('settingWithDefault') ? settingWithDefault('date_format', 'Y-m-d') : 'Y-m-d';
+                $systemFormat = (function_exists('settingWithDefault') ? settingWithDefault('date_format', 'Y-m-d') : null) ?: 'Y-m-d';
                 if (!empty($systemFormat)) {
                     try {
                         return Carbon::createFromFormat($systemFormat, $str);
@@ -76,7 +76,7 @@ final class EmployeeStatementFilterDTO
 
     public function getFormattedPeriod(?string $format = null): string
     {
-        $displayFormat = $format ?: (function_exists('settingWithDefault') ? settingWithDefault('date_format', 'Y-m-d') : 'Y-m-d');
+        $displayFormat = $format ?: ((function_exists('settingWithDefault') ? settingWithDefault('date_format', 'Y-m-d') : null) ?: 'Y-m-d');
         return $this->fromDate->format($displayFormat) . ' — ' . $this->toDate->format($displayFormat);
     }
 }
