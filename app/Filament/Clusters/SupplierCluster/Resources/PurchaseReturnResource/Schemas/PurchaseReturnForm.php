@@ -48,14 +48,66 @@ class PurchaseReturnForm
                                         return PurchaseInvoice::query()
                                             ->where('cancelled', false)
                                             ->orderBy('id', 'desc')
-                                            ->limit(100)
+                                            ->limit(5)
                                             ->get(['id', 'invoice_no'])
                                             ->mapWithKeys(fn($inv) => [
-                                                $inv->id => ! empty($inv->invoice_no) ? "{$inv->invoice_no} (#{$inv->id})" : "Invoice #{$inv->id}",
+                                                $inv->id => ! empty($inv->invoice_no) ? "{$inv->id} ({$inv->invoice_no})" : (string) $inv->id,
                                             ])
                                             ->toArray();
                                     })
                                     ->searchable()
+                                    ->getSearchResultsUsing(function (string $search): array {
+                                        $search = trim($search);
+
+                                        if (strlen($search) < 1) {
+                                            return PurchaseInvoice::query()
+                                                ->where('cancelled', false)
+                                                ->orderBy('id', 'desc')
+                                                ->limit(5)
+                                                ->get(['id', 'invoice_no'])
+                                                ->mapWithKeys(fn($inv) => [
+                                                    $inv->id => ! empty($inv->invoice_no) ? "{$inv->id} ({$inv->invoice_no})" : (string) $inv->id,
+                                                ])
+                                                ->toArray();
+                                        }
+
+                                        $query = PurchaseInvoice::query()
+                                            ->where('cancelled', false)
+                                            ->where(function ($q) use ($search) {
+                                                if (is_numeric($search)) {
+                                                    $q->where('id', (int) $search)
+                                                        ->orWhere('id', 'like', "%{$search}%")
+                                                        ->orWhere('invoice_no', 'like', "%{$search}%");
+                                                } else {
+                                                    $q->where('invoice_no', 'like', "%{$search}%")
+                                                        ->orWhere('id', 'like', "%{$search}%");
+                                                }
+                                            });
+
+                                        if (is_numeric($search)) {
+                                            $query->orderByRaw('CASE WHEN id = ? THEN 0 ELSE 1 END', [(int) $search]);
+                                        }
+
+                                        return $query->orderBy('id', 'desc')
+                                            ->limit(5)
+                                            ->get(['id', 'invoice_no'])
+                                            ->mapWithKeys(fn($inv) => [
+                                                $inv->id => ! empty($inv->invoice_no) ? "{$inv->id} ({$inv->invoice_no})" : (string) $inv->id,
+                                            ])
+                                            ->toArray();
+                                    })
+                                    ->getOptionLabelUsing(function ($value): ?string {
+                                        if (! $value) {
+                                            return null;
+                                        }
+
+                                        $inv = PurchaseInvoice::find($value);
+                                        if (! $inv) {
+                                            return null;
+                                        }
+
+                                        return ! empty($inv->invoice_no) ? "{$inv->id} ({$inv->invoice_no})" : (string) $inv->id;
+                                    })
                                     ->live()
                                     ->afterStateUpdated(function ($state, $set) {
                                         if ($state) {
@@ -163,6 +215,30 @@ class PurchaseReturnForm
                                 ->schema([
                                     Hidden::make('purchase_invoice_detail_id'),
 
+                                    Hidden::make('unit_id')
+                                        ->formatStateUsing(function ($state, $get) {
+                                            if ($state) {
+                                                return $state;
+                                            }
+
+                                            $detailId = $get('purchase_invoice_detail_id');
+                                            $invoiceId = $get('../../purchase_invoice_id');
+                                            $productId = $get('product_id');
+
+                                            if ($detailId) {
+                                                return \App\Models\PurchaseInvoiceDetail::whereKey($detailId)->value('unit_id');
+                                            }
+
+                                            if ($invoiceId && $productId) {
+                                                return \App\Models\PurchaseInvoiceDetail::where('purchase_invoice_id', $invoiceId)
+                                                    ->where('product_id', $productId)
+                                                    ->value('unit_id');
+                                            }
+
+                                            return $state;
+                                        })
+                                        ->required(),
+
                                     Select::make('product_id')
                                         ->label('Product')
                                         ->options(function ($get) {
@@ -193,12 +269,14 @@ class PurchaseReturnForm
                                         ->afterStateUpdated(function ($set, $state, $get) {
                                             $invoiceId = $get('../../purchase_invoice_id');
                                             if ($invoiceId && $state) {
-                                                $detail = \App\Models\PurchaseInvoiceDetail::where('purchase_invoice_id', $invoiceId)
+                                                $detail = \App\Models\PurchaseInvoiceDetail::with('unit')
+                                                    ->where('purchase_invoice_id', $invoiceId)
                                                     ->where('product_id', $state)
                                                     ->first();
                                                 if ($detail) {
                                                     $set('purchase_invoice_detail_id', $detail->id);
                                                     $set('unit_id', $detail->unit_id);
+                                                    $set('unit_name', $detail->unit?->name ?? Unit::find($detail->unit_id)?->name ?? '-');
                                                     $set('package_size', $detail->package_size);
                                                     $set('unit_price', $detail->price);
                                                     $set('purchased_quantity', $detail->quantity);
@@ -214,10 +292,11 @@ class PurchaseReturnForm
                                             }
 
                                             if ($state) {
-                                                $product = Product::with('unitPrices')->find($state);
+                                                $product = Product::with('unitPrices.unit')->find($state);
                                                 $firstUnitPrice = $product?->unitPrices?->first();
                                                 $set('purchase_invoice_detail_id', null);
                                                 $set('unit_id', $firstUnitPrice?->unit_id);
+                                                $set('unit_name', $firstUnitPrice?->unit?->name ?? '-');
                                                 $set('package_size', $firstUnitPrice?->package_size ?? 1);
                                                 $set('unit_price', $firstUnitPrice?->price ?? 0);
                                                 $set('purchased_quantity', null);
@@ -231,6 +310,7 @@ class PurchaseReturnForm
                                             } else {
                                                 $set('purchase_invoice_detail_id', null);
                                                 $set('unit_id', null);
+                                                $set('unit_name', '-');
                                                 $set('package_size', 1);
                                                 $set('unit_price', 0);
                                                 $set('purchased_quantity', null);
@@ -240,92 +320,43 @@ class PurchaseReturnForm
                                         ->required()
                                         ->columnSpan(2),
 
-                                    Select::make('unit_id')
+                                    TextInput::make('unit_name')
                                         ->label('Unit')
-                                        ->options(function ($get) {
-                                            $productId = $get('product_id');
-                                            if (! $productId) {
-                                                return [];
-                                            }
-
-                                            $product = Product::with('unitPrices.unit')->find($productId);
-                                            if (! $product) {
-                                                return [];
-                                            }
-
-                                            $options = $product->unitPrices
-                                                ->filter(fn($up) => $up->unit !== null)
-                                                ->mapWithKeys(fn($up) => [
-                                                    $up->unit_id => (string) ($up->unit->name ?? "Unit #{$up->unit_id}"),
-                                                ])
-                                                ->toArray();
-
-                                            $selectedUnitId = $get('unit_id');
-                                            if ($selectedUnitId && ! isset($options[$selectedUnitId])) {
-                                                $unit = Unit::find($selectedUnitId);
-                                                if ($unit) {
-                                                    $options[$selectedUnitId] = (string) ($unit->name ?? "Unit #{$selectedUnitId}");
-                                                }
-                                            }
-
-                                            return $options;
-                                        })
-                                        ->searchable(false)
-                                        ->live()
-                                        ->afterStateUpdated(function ($state, $set, $get) {
-                                            $productId = $get('product_id');
-                                            if (! $productId || ! $state) {
-                                                return;
-                                            }
-
-                                            $unitPrice = UnitPrice::where('product_id', $productId)
-                                                ->where('unit_id', $state)
-                                                ->first();
-
-                                            $newPackageSize = max(1.0, (float) ($unitPrice?->package_size ?? 1.0));
-                                            $set('package_size', $newPackageSize);
-
+                                        ->readOnly()
+                                        ->dehydrated(false)
+                                        ->formatStateUsing(function ($state, $record, $get) {
                                             $detailId = $get('purchase_invoice_detail_id');
                                             $invoiceId = $get('../../purchase_invoice_id');
-                                            $detail = null;
+                                            $productId = $get('product_id');
 
+                                            $detail = null;
                                             if ($detailId) {
-                                                $detail = \App\Models\PurchaseInvoiceDetail::find($detailId);
-                                            } elseif ($invoiceId) {
-                                                $detail = \App\Models\PurchaseInvoiceDetail::where('purchase_invoice_id', $invoiceId)
+                                                $detail = \App\Models\PurchaseInvoiceDetail::with('unit')->find($detailId);
+                                            } elseif ($invoiceId && $productId) {
+                                                $detail = \App\Models\PurchaseInvoiceDetail::with('unit')
+                                                    ->where('purchase_invoice_id', $invoiceId)
                                                     ->where('product_id', $productId)
                                                     ->first();
-                                                if ($detail) {
-                                                    $set('purchase_invoice_detail_id', $detail->id);
+                                            }
+
+                                            if ($detail && $detail->unit) {
+                                                return $detail->unit->name;
+                                            }
+
+                                            $unitId = $get('unit_id');
+                                            if ($unitId) {
+                                                $unit = Unit::find($unitId);
+                                                if ($unit) {
+                                                    return $unit->name;
                                                 }
                                             }
 
-                                            if ($detail) {
-                                                $invPackageSize = max(1.0, (float) ($detail->package_size ?? 1.0));
-                                                $convertedPurchasedQty = round(((float) $detail->quantity * $invPackageSize) / $newPackageSize, 4);
-
-                                                if ((float) $detail->price > 0) {
-                                                    $newUnitPrice = round(((float) $detail->price / $invPackageSize) * $newPackageSize, 4);
-                                                } else {
-                                                    $newUnitPrice = (float) ($unitPrice?->price ?? 0);
-                                                }
-
-                                                $set('purchased_quantity', $convertedPurchasedQty);
-                                                $set('unit_price', $newUnitPrice);
-                                            } else {
-                                                $newUnitPrice = (float) ($unitPrice?->price ?? 0);
-                                                $set('purchased_quantity', null);
-                                                $set('unit_price', $newUnitPrice);
+                                            if ($state !== null && $state !== '') {
+                                                return $state;
                                             }
 
-                                            $qty = (float) ($get('quantity') ?? 1);
-                                            $set('total_price', round($qty * $newUnitPrice, 4));
-
-                                            $rows = $get('../../details') ?? [];
-                                            $sum = collect($rows)->sum(fn($r) => (float) ($r['total_price'] ?? 0));
-                                            $set('../../total_amount', round($sum, 4));
+                                            return '-';
                                         })
-                                        ->required()
                                         ->columnSpan(1),
 
                                     TextInput::make('package_size')

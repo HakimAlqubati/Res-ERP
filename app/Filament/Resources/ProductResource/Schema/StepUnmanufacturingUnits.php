@@ -82,7 +82,9 @@ class StepUnmanufacturingUnits
                                 }
                                 return PRA::isProductLocked($livewire->form->getRecord(), $record);
                             }),
-                        TextInput::make('price')->numeric()->default(1)->required()
+                        TextInput::make('price')
+                            ->prefix(settingWithDefault('currency_symbol', 'RM'))
+                            ->numeric()->default(1)->required()
                             ->label(__('lang.price'))
                             ->disabled(function (callable $get, $livewire, $record) {
                                 $isNew = is_null($get('id'));
@@ -223,7 +225,18 @@ class StepUnmanufacturingUnits
                         Toggle::make('use_in_orders')
                             ->label('Orders')
                             ->default(true)
-                            ->inline(false),
+                            ->inline(false)
+                            ->disabled(function (callable $get) {
+                                $units = $get('../../units') ?? [];
+                                return count($units) <= 1;
+                            })
+                            ->dehydrated()
+                            ->afterStateHydrated(function (callable $get, callable $set) {
+                                $units = $get('../../units') ?? [];
+                                if (count($units) <= 1) {
+                                    $set('use_in_orders', true);
+                                }
+                            }),
 
                     ])
                     ->orderColumn('order')

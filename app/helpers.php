@@ -539,7 +539,9 @@ if (!function_exists('setting')) {
 if (!function_exists('settingWithDefault')) {
     function settingWithDefault($key, $default = null)
     {
-        return Setting::getSetting($key, $default);
+        $value = Setting::getSetting($key, $default);
+
+        return ($value !== null && $value !== '') ? $value : $default;
     }
 }
 

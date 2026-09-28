@@ -26,7 +26,7 @@ final class ProductBelongsToInvoiceRule implements ValidationRule
             ->exists();
 
         if (! $exists) {
-            $fail('The selected product was not purchased in the referenced invoice.');
+            $fail('Product not in invoice');
         }
     }
 }

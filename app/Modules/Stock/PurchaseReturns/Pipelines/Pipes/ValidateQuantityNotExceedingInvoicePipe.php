@@ -18,32 +18,25 @@ final class ValidateQuantityNotExceedingInvoicePipe
     {
         // 1. Guard: Check if items collection is empty
         if ($context->items->isEmpty()) {
-            throw new PurchaseReturnValidationException('A purchase return must contain at least one item with quantity greater than zero.');
+            throw new PurchaseReturnValidationException('No items provided');
         }
 
         // 2. Validate individual item fields
         foreach ($context->items as $item) {
             if ($item->quantity <= 0) {
-                $productName = Product::find($item->productId)?->name ?? "Product #{$item->productId}";
-                throw new PurchaseReturnValidationException("Return quantity for product [{$productName}] must be greater than zero.");
+                throw new PurchaseReturnValidationException('Invalid return quantity');
             }
 
             if ($item->unitPrice < 0) {
-                $productName = Product::find($item->productId)?->name ?? "Product #{$item->productId}";
-                throw new PurchaseReturnValidationException("Unit price for product [{$productName}] cannot be negative.");
+                throw new PurchaseReturnValidationException('Invalid unit price');
             }
         }
 
         // 3. If linked to an original purchase invoice, strictly enforce invoice boundaries
         if ($context->purchaseInvoice) {
-            $invoiceNo = $context->purchaseInvoice->invoice_no ?? "ID #{$context->purchaseInvoice->id}";
-
             // Check store consistency
             if ((int) $context->purchaseInvoice->store_id !== (int) $context->storeId) {
-                $invStoreName = $context->purchaseInvoice->store?->name ?? "Store #{$context->purchaseInvoice->store_id}";
-                throw new PurchaseReturnValidationException(
-                    "Selected store does not match the store where items were received in Invoice #{$invoiceNo} ({$invStoreName})."
-                );
+                throw new PurchaseReturnValidationException('Store mismatch');
             }
 
             $invoiceDetails = $context->purchaseInvoice->purchaseInvoiceDetails;
@@ -72,11 +65,7 @@ final class ValidateQuantityNotExceedingInvoicePipe
 
                 // If product was NOT found in the invoice, reject immediately
                 if (! $invoiceDetail) {
-                    $product = Product::find($item->productId);
-                    $productName = $product?->name ?? "Product #{$item->productId}";
-                    throw new PurchaseReturnValidationException(
-                        "Product [{$productName}] does not exist in the selected Purchase Invoice #{$invoiceNo}. You cannot return products that were not purchased in this invoice."
-                    );
+                    throw new PurchaseReturnValidationException('Product not in invoice');
                 }
 
                 // Verify return unit price does not exceed original purchased rate
@@ -85,11 +74,7 @@ final class ValidateQuantityNotExceedingInvoicePipe
                 $maxAllowedUnitPrice = round(((float) $invoiceDetail->price / $invPackageSize) * $itemPackageSize, 4);
 
                 if ($item->unitPrice > $maxAllowedUnitPrice) {
-                    $product = Product::find($item->productId);
-                    $productName = $product?->name ?? "Product #{$item->productId}";
-                    throw new PurchaseReturnValidationException(
-                        "Return unit price for product [{$productName}] ({$item->unitPrice}) cannot exceed the original purchased price rate ({$maxAllowedUnitPrice}) in Invoice #{$invoiceNo}."
-                    );
+                    throw new PurchaseReturnValidationException('Price exceeds invoice');
                 }
 
                 $detailId = (int) $invoiceDetail->id;
@@ -105,15 +90,7 @@ final class ValidateQuantityNotExceedingInvoicePipe
                 $maxReturnableBaseQty = $invoiceDetail->getRemainingReturnableBaseQuantity($currentReturnId);
 
                 if ($totalRequestedBaseQty > $maxReturnableBaseQty) {
-                    $invPackageSize = max(1.0, (float) ($invoiceDetail->package_size ?? 1.0));
-                    $productName = $invoiceDetail->product?->name ?? "Product #{$invoiceDetail->product_id}";
-                    $purchasedQty = (float) $invoiceDetail->quantity;
-                    $maxReturnableInInvUnits = round($maxReturnableBaseQty / $invPackageSize, 4);
-                    $requestedInInvUnits = round($totalRequestedBaseQty / $invPackageSize, 4);
-
-                    throw new ReturnQuantityExceededException(
-                        "Total return quantity for [{$productName}] ({$requestedInInvUnits} in invoice units) exceeds the remaining returnable limit ({$maxReturnableInInvUnits}) in Invoice #{$invoiceNo}. Purchased in invoice: {$purchasedQty}."
-                    );
+                    throw new ReturnQuantityExceededException('Exceeds invoice limit');
                 }
             }
         }

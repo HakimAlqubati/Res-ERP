@@ -39,13 +39,7 @@ final class ValidateSufficientShelfStockPipe
             );
 
             if ($availableQty < $totalQty) {
-                $product = Product::find($productId);
-                $productName = $product?->name ?? "Product #{$productId}";
-                $storeName = $context->store?->name ?? "Store #{$context->storeId}";
-
-                throw new InsufficientShelfStockException(
-                    "Insufficient shelf stock for [{$productName}] in [{$storeName}]. Available on shelf: {$availableQty}, Requested return: {$totalQty}. Please perform a stock adjustment if needed."
-                );
+                throw new InsufficientShelfStockException('Insufficient shelf stock');
             }
         }
 
