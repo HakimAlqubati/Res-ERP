@@ -28,6 +28,7 @@ class StoreEmployeeRewardRequest extends FormRequest
             'reason'        => 'required|string|max:1000',
             'date'          => 'required|date',
             'month'         => 'required|integer|between:1,12',
+            'year'          => 'required|integer|digits:4',
         ];
     }
 }

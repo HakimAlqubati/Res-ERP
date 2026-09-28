@@ -52,6 +52,7 @@ class Order extends Model implements Auditable
         'store_id',
         'cancel_reason',
         'type',
+        'transfer_markup_percentage',
     ];
     protected $auditInclude = [
         'customer_id',
@@ -71,6 +72,11 @@ class Order extends Model implements Auditable
         'store_id',
         'cancel_reason',
         'type',
+        'transfer_markup_percentage',
+    ];
+
+    protected $casts = [
+        'transfer_markup_percentage' => 'float',
     ];
 
     protected $appends = [
@@ -207,6 +213,14 @@ class Order extends Model implements Auditable
     {
         parent::boot();
 
+        static::creating(function ($order) {
+            // Snapshot branch markup percentage on creation
+            if (is_null($order->transfer_markup_percentage) && $order->branch_id) {
+                $branch = $order->branch ?? Branch::withoutGlobalScopes()->find($order->branch_id);
+                $order->transfer_markup_percentage = $branch?->transfer_markup_percentage ?? 0;
+            }
+        });
+
         static::created(function ($order) {
 
             // Send notification to users with role ID = 5
@@ -253,7 +267,12 @@ class Order extends Model implements Auditable
 
                 // جلب فرع الطلب ومخزنه بتجاوز أي Global Scopes (صلاحيات الفروع) في هذا الموضع فقط
                 $branch = $order->branch_id
-                    ? Branch::withoutGlobalScopes()->with(['store' => fn($q) => $q->withoutGlobalScopes()])->find($order->branch_id)
+                    ? Branch::withoutGlobalScopes()
+                        ->with([
+                            'store' => fn($q) => $q->withoutGlobalScopes(),
+                            'categoryMarkups',
+                        ])
+                        ->find($order->branch_id)
                     : null;
                 $branchStore = $branch?->store;
                 $hasBranchStore = (bool) ($branchStore && $branchStore->active);
@@ -346,6 +365,50 @@ class Order extends Model implements Auditable
         return;
     }
 
+    /**
+     * Resolve the effective transfer markup percentage for a specific order item/product.
+     */
+    public function resolveItemMarkupPercentage(?int $productId = null, ?OrderDetails $detail = null): float
+    {
+        if ($detail && ! is_null($detail->transfer_markup_percentage)) {
+            return (float) $detail->transfer_markup_percentage;
+        }
+
+        if ($productId && $this->relationLoaded('orderDetails')) {
+            $matchedDetail = $this->orderDetails->firstWhere('product_id', $productId);
+            if ($matchedDetail && ! is_null($matchedDetail->transfer_markup_percentage)) {
+                return (float) $matchedDetail->transfer_markup_percentage;
+            }
+        }
+
+        $branch = $this->relationLoaded('branch')
+            ? $this->branch
+            : ($this->branch_id ? Branch::withoutGlobalScopes()->with('categoryMarkups')->find($this->branch_id) : null);
+
+        if ($branch && $branch->has_custom_category_markup) {
+            $categoryId = ($detail && $detail->relationLoaded('product'))
+                ? $detail->product?->category_id
+                : ($productId ? Product::whereKey($productId)->value('category_id') : null);
+
+            if ($categoryId) {
+                return $branch->resolveTransferMarkupForCategory((int) $categoryId);
+            }
+        }
+
+        return (float) ($this->transfer_markup_percentage ?? $branch?->transfer_markup_percentage ?? 0);
+    }
+
+    /**
+     * Calculate transfer price with markup percentage.
+     */
+    public function calculateTransferPrice(float $basePrice, ?int $productId = null, ?OrderDetails $detail = null): float
+    {
+        $percentage = $this->resolveItemMarkupPercentage($productId, $detail);
+
+        return $percentage > 0
+            ? round($basePrice * (1 + ($percentage / 100)), 4)
+            : $basePrice;
+    }
 
     public static function receiveIntoBranchStore($allocations, $detail, ?int $targetStoreId = null)
     {
@@ -365,7 +428,7 @@ class Order extends Model implements Auditable
                 'quantity'             => $alloc['deducted_qty'],
                 'unit_id'              => $alloc['target_unit_id'],
                 'package_size'         => $alloc['target_unit_package_size'],
-                'price'                => $alloc['price_based_on_unit'],
+                'price'                => $order->calculateTransferPrice((float) $alloc['price_based_on_unit'], (int) $detail->product_id, $detail),
                 'movement_date'        => $order->transfer_date ?? now(),
                 'transaction_date'     => $order->transfer_date ?? now(),
                 'store_id'             => $targetStoreId,

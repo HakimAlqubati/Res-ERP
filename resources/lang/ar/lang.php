@@ -12,6 +12,8 @@ return [
   'user_and_roles' => 'المستخدمين والصلاحيات',
   'users' => 'المستخدمين',
   'roles' => 'أدوار المستخدمين',
+  'app_version' => 'إصدار التطبيق',
+  'app_versions' => 'إصدارات التطبيق',
   'all' => 'الكل',
   'my_employees' => 'موظفيي',
   'my_employees_only' => 'موظفيي فقط',

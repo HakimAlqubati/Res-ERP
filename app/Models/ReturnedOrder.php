@@ -40,7 +40,7 @@ class ReturnedOrder extends Model implements Auditable
 
     protected $appends = ['total_amount'];
     protected $casts = [
-        'returned_date' => 'date',
+        'returned_date' => 'date:Y-m-d',
     ];
 
     public function details()
@@ -136,7 +136,8 @@ class ReturnedOrder extends Model implements Auditable
         // You can customize the response here
         // For example, you might want to format dates or add additional fields
         $array['total_amount'] = formatMoneyWithCurrency($this->total_amount);
-        $array['formatted_returned_date'] = Carbon::parse($this->returned_date)->format('Y-m-d'); // Format the returned_date
+        $array['returned_date'] = $this->returned_date ? Carbon::parse($this->getRawOriginal('returned_date') ?? $this->returned_date)->format('Y-m-d') : null;
+        $array['formatted_returned_date'] = $array['returned_date'];
 
         return $array;
     }

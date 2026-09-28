@@ -28,6 +28,7 @@ class UpdateEmployeeRewardRequest extends FormRequest
             'reason'        => 'sometimes|required|string|max:1000',
             'date'          => 'sometimes|required|date',
             'month'         => 'sometimes|required|integer|between:1,12',
+            'year'          => 'sometimes|required|integer|digits:4',
         ];
     }
 }

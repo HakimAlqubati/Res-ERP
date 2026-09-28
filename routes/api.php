@@ -187,8 +187,15 @@ Route::get('/testFun', function () {
         'data' => 'test'
     ]);
 });
+
+// App Versions Public Check
+Route::get('/appVersions/check', [\App\Http\Controllers\Api\AppVersionController::class, 'check']);
+
 Route::middleware('auth:api')->group(function () {
     Route::put('updateFcmToken', [FcmController::class, 'updateDeviceToken']);
+
+    // App Versions Management
+    Route::apiResource('appVersions', \App\Http\Controllers\Api\AppVersionController::class);
 
     // Inventory Routes
     Route::prefix('inventory')->group(function () {

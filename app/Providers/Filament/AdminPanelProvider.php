@@ -42,6 +42,7 @@ use App\Filament\Pages\Dashboard as PagesDashboard;
 use App\Filament\Pages\EmployeeRecords;
 use App\Filament\Pages\InventoryReportLinks;
 use App\Filament\Resources\AppLogs\AppLogResource;
+use App\Filament\Resources\AppVersions\AppVersionResource;
 use App\Filament\Resources\ApprovalResource;
 use App\Filament\Resources\BranchResource;
 use App\Filament\Resources\BranchSalesReports\BranchSalesReportResource;
@@ -204,6 +205,7 @@ class AdminPanelProvider extends PanelProvider
                         NavigationGroup::make(__('menu.system_settings'))->collapsed(1)
                             ->items(array_merge(
                                 (isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR()) ? SettingResource::getNavigationItems() : [],
+                                (isSuperAdmin() || isSystemManager() || isHakimOrAdel()) ? AppVersionResource::getNavigationItems() : [],
                                 ((isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager() || isHR()) &&
 
                                     ($currentTenant && is_array($currentTenant->modules) && in_array(CustomTenantModel::MODULE_HR, $currentTenant->modules))

@@ -48,6 +48,7 @@ class TestController4 extends Controller
         }
 
         $where[] = ' o.deleted_at is null ';
+        $where[] = 'EXISTS (SELECT 1 FROM orders_details od WHERE od.order_id = o.id)';
 
         if ($request->has('branch_type')) {
             $branchType = addslashes($request->branch_type);
@@ -191,9 +192,6 @@ class TestController4 extends Controller
             (SELECT COALESCE(SUM(amount), 0) FROM order_paid_amounts WHERE order_id = o.id) AS total_paid
         FROM orders o
         WHERE $whereSql
-          AND EXISTS (
-        SELECT 1 FROM orders_details od WHERE od.order_id = o.id
-        )
         ORDER BY o.created_at DESC
         LIMIT $perPage OFFSET $offset
     ");
@@ -237,7 +235,7 @@ class TestController4 extends Controller
             'per_page' => $perPage,
             'total' => $total,
             'total_paid' => (float) $totalPaidAll,
-            'last_page' => ceil($total / $perPage),
+            'last_page' => (int) max(1, ceil($total / $perPage)),
             'data' => $orders,
         ]);
     }
