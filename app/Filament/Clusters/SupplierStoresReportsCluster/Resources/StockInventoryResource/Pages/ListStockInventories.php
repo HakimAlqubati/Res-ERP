@@ -85,6 +85,16 @@ class ListStockInventories extends ListRecords
 
                 ->label('Print Stocktake Template')
                 ->schema([
+                    Select::make('store_id')
+                        ->label(__('lang.store'))
+                        ->default(getDefaultStore())
+                        ->options(
+                            Store::active()
+                                ->withManagedStores()
+                                ->pluck('name', 'id')
+                        )
+                        ->searchable()
+                        ->required(),
                     Select::make('category_id')->label('Category')->columnSpanFull()
                         ->options(Category::active()
                             ->notForPos()
@@ -93,7 +103,7 @@ class ListStockInventories extends ListRecords
                 ])
                 ->action(function ($data) {
 
-                    return redirect('/printStock?' . 'category_id=' . $data['category_id']);
+                    return redirect('/printStock?category_id=' . ($data['category_id'] ?? '') . '&store_id=' . ($data['store_id'] ?? getDefaultStore()));
                 })
                 // ->openUrlInNewTab()
                 // ->url(fn() => url('/printStock'))
