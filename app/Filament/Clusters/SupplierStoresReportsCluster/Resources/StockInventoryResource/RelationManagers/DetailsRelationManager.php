@@ -75,6 +75,7 @@ class DetailsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table->striped()
+        ->maxSelectableRecords(100)
             ->columns([
                 TextColumn::make('product.name')->searchable()->toggleable()
                     ->getStateUsing(function ($record) {
