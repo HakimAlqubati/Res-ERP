@@ -114,7 +114,7 @@ class EmployeeStatementReport
 
                 if ($tx->payroll) {
                     $monthPayroll = $tx->payroll;
-                    if ($tx->payroll->is_paid || $tx->payroll->status === 'paid') {
+                    if ($tx->payroll->is_paid || $tx->payroll->status === 'paid' || ! empty($tx->payroll->paid_at)) {
                         $isMonthPaid = true;
                     }
                 }
@@ -166,7 +166,7 @@ class EmployeeStatementReport
                     ->where('year', (int) substr($monthKey, 0, 4))
                     ->where('month', (int) substr($monthKey, 5, 2))
                     ->first();
-                if ($monthPayroll && ($monthPayroll->is_paid || $monthPayroll->status === 'paid')) {
+                if ($monthPayroll && ($monthPayroll->is_paid || $monthPayroll->status === 'paid' || ! empty($monthPayroll->paid_at))) {
                     $isMonthPaid = true;
                 }
             }
@@ -182,21 +182,25 @@ class EmployeeStatementReport
                     $runningBalance = max(0.0, round($runningBalance - $monthNetPaid, 2));
                     $totalPaymentsMade += $monthNetPaid;
 
-                    // Payment date: End of the month pertaining to this payroll
-                    $payrollMonthEnd = null;
-                    if ($monthPayroll && ! empty($monthPayroll->year) && ! empty($monthPayroll->month)) {
-                        $payrollMonthEnd = \Carbon\Carbon::createFromDate((int) $monthPayroll->year, (int) $monthPayroll->month, 1)->endOfMonth();
+                    // Payment date: Prioritize paid_at from the Payroll model, then payment_date, or end of payroll month
+                    $paymentDateObj = null;
+                    if ($monthPayroll && ! empty($monthPayroll->paid_at)) {
+                        $paymentDateObj = \Carbon\Carbon::parse($monthPayroll->paid_at);
+                    } elseif ($monthPayroll && ! empty($monthPayroll->payment_date)) {
+                        $paymentDateObj = \Carbon\Carbon::parse($monthPayroll->payment_date);
+                    } elseif ($monthPayroll && ! empty($monthPayroll->year) && ! empty($monthPayroll->month)) {
+                        $paymentDateObj = \Carbon\Carbon::createFromDate((int) $monthPayroll->year, (int) $monthPayroll->month, 1)->endOfMonth();
                     } elseif ($monthPayroll && ! empty($monthPayroll->period_end_date)) {
-                        $payrollMonthEnd = \Carbon\Carbon::parse($monthPayroll->period_end_date)->endOfMonth();
+                        $paymentDateObj = \Carbon\Carbon::parse($monthPayroll->period_end_date)->endOfMonth();
                     } elseif (preg_match('/^\d{4}-\d{2}$/', (string) $monthKey)) {
-                        $payrollMonthEnd = \Carbon\Carbon::createFromFormat('Y-m', (string) $monthKey)->endOfMonth();
+                        $paymentDateObj = \Carbon\Carbon::createFromFormat('Y-m', (string) $monthKey)->endOfMonth();
                     } elseif ($lastTxDateRaw) {
-                        $payrollMonthEnd = \Carbon\Carbon::parse($lastTxDateRaw)->endOfMonth();
+                        $paymentDateObj = \Carbon\Carbon::parse($lastTxDateRaw)->endOfMonth();
                     } else {
-                        $payrollMonthEnd = $filters->toDate ? $filters->toDate->copy()->endOfMonth() : \Carbon\Carbon::now()->endOfMonth();
+                        $paymentDateObj = $filters->toDate ? $filters->toDate->copy()->endOfMonth() : \Carbon\Carbon::now()->endOfMonth();
                     }
 
-                    $paymentDateFormatted = $payrollMonthEnd->format($displayDateFormat ?: 'Y-m-d');
+                    $paymentDateFormatted = $paymentDateObj->format($displayDateFormat ?: 'Y-m-d');
 
                     $formattedTransactions->push([
                         'index'                    => $rowIndex++,
