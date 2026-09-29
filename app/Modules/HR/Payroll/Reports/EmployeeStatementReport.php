@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\HR\Payroll\Reports;
 
+use App\Enums\HR\Payroll\SalaryTransactionSubType;
 use App\Enums\HR\Payroll\SalaryTransactionType;
 use App\Models\Employee;
 use App\Models\SalaryTransaction;
@@ -85,81 +86,142 @@ class EmployeeStatementReport
         $runningBalance = 0.0;
         $totalPaidAdditions = 0.0;
         $totalPaidDeductions = 0.0;
+        $totalPaymentsMade = 0.0;
 
-        $formattedTransactions = $transactions->values()->map(function (SalaryTransaction $tx, int $index) use (
-            $currency,
-            $displayDateFormat,
-            &$runningBalance,
-            &$totalPaidAdditions,
-            &$totalPaidDeductions
-        ) {
-            $typeVal = $tx->type instanceof \BackedEnum ? $tx->type->value : (string) $tx->type;
-            $subTypeVal = $tx->sub_type instanceof \BackedEnum ? $tx->sub_type->value : (string) ($tx->sub_type ?? '');
-            $isEmployerContribution = $typeVal === SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value;
-            $isCarryForward = $typeVal === SalaryTransactionType::TYPE_CARRY_FORWARD->value;
-
-            // Check if transaction is paid via associated payroll
-            $isPaid = false;
-            if ($tx->payroll) {
-                $isPaid = (bool) ($tx->payroll->is_paid || $tx->payroll->status === 'paid');
-            }
-
-            $paidAmount = 0.0;
-            if ($isPaid && ! $isEmployerContribution) {
-                $paidAmount = (float) $tx->amount;
-                if ($tx->operation === '+') {
-                    $totalPaidAdditions += $paidAmount;
-                } elseif ($tx->operation === '-' && ! $isCarryForward) {
-                    $totalPaidDeductions += $paidAmount;
-                }
-            }
-
-            // Running balance logic (Net outstanding balance owed to employee):
-            // Additions increase what is owed; Payments decrease it.
-            // Deductions reduce what is owed if unpaid; if paid, they were already settled against the payment.
-            if (! $isEmployerContribution) {
-                if ($tx->operation === '+') {
-                    $unpaidAddition = (float) $tx->amount - $paidAmount;
-                    $runningBalance += $unpaidAddition;
-                } elseif ($tx->operation === '-' && ! $isCarryForward) {
-                    if (! $isPaid) {
-                        $runningBalance -= (float) $tx->amount;
-                    }
-                }
-            }
-
-            // Display Paid: Only earnings/additions represent cash payouts to the employee.
-            // Deductions are withholdings, so they display an em dash (—).
-            $displayPaid = '—';
-            $isPaidAddition = false;
-            if ($tx->operation === '+' && ! $isEmployerContribution) {
-                $isPaidAddition = $isPaid;
-                $displayPaid = $isPaid
-                    ? formatMoneyWithCurrency($paidAmount, $currency)
-                    : formatMoneyWithCurrency(0, $currency);
-            }
-
-            return [
-                'index'                    => $index + 1,
-                'id'                       => $tx->id,
-                'type'                     => ucfirst(str_replace('_', ' ', $typeVal)),
-                'sub_type'                 => ! empty($subTypeVal) ? ucfirst(str_replace('_', ' ', $subTypeVal)) : '',
-                'operation'                => $tx->operation === '-' ? '-' : '+',
-                'amount'                   => formatMoneyWithCurrency($tx->amount, $currency),
-                'raw_amount'               => (float) $tx->amount,
-                'paid'                     => $displayPaid,
-                'raw_paid'                 => ($tx->operation === '+' && ! $isEmployerContribution) ? $paidAmount : 0.0,
-                'is_paid'                  => $isPaidAddition,
-                'balance'                  => formatMoneyWithCurrency($runningBalance, $currency),
-                'raw_balance'              => round($runningBalance, 2),
-                'date'                     => $tx->date ? \Carbon\Carbon::parse($tx->date)->format($displayDateFormat ?: 'Y-m-d') : '',
-                'description'              => $tx->description ?: ($tx->notes ?: '-'),
-                'is_employer_contribution' => $isEmployerContribution,
-            ];
+        // Group transactions by month (e.g. YYYY-MM) to allow synthesizing a Payment transaction at the end of each paid month/payroll
+        $groupedByMonth = $transactions->groupBy(function (SalaryTransaction $tx) {
+            return $tx->date
+                ? \Carbon\Carbon::parse($tx->date)->format('Y-m')
+                : ($tx->year && $tx->month ? sprintf('%04d-%02d', $tx->year, $tx->month) : 'general');
         });
 
-        $totalPaid = max(0, $totalPaidAdditions - $totalPaidDeductions);
-        $remainingBalance = $finalResult - $totalPaid;
+        $formattedTransactions = collect();
+        $rowIndex = 1;
+
+        foreach ($groupedByMonth as $monthKey => $monthTransactions) {
+            $monthAdditions = 0.0;
+            $monthDeductions = 0.0;
+            $monthPayroll = null;
+            $isMonthPaid = false;
+            $lastTxDate = null;
+            $lastTxDateRaw = null;
+
+            foreach ($monthTransactions as $tx) {
+                $typeVal = $tx->type instanceof \BackedEnum ? $tx->type->value : (string) $tx->type;
+                $subTypeVal = $tx->sub_type instanceof \BackedEnum ? $tx->sub_type->value : (string) ($tx->sub_type ?? '');
+                $isEmployerContribution = $typeVal === SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value;
+                $isCarryForward = $typeVal === SalaryTransactionType::TYPE_CARRY_FORWARD->value;
+
+                if ($tx->payroll) {
+                    $monthPayroll = $tx->payroll;
+                    if ($tx->payroll->is_paid || $tx->payroll->status === 'paid') {
+                        $isMonthPaid = true;
+                    }
+                }
+
+                if (! $isEmployerContribution) {
+                    if ($tx->operation === '+') {
+                        $runningBalance += (float) $tx->amount;
+                        $monthAdditions += (float) $tx->amount;
+                        if ($isMonthPaid) {
+                            $totalPaidAdditions += (float) $tx->amount;
+                        }
+                    } elseif ($tx->operation === '-' && ! $isCarryForward) {
+                        $runningBalance -= (float) $tx->amount;
+                        $monthDeductions += (float) $tx->amount;
+                        if ($isMonthPaid) {
+                            $totalPaidDeductions += (float) $tx->amount;
+                        }
+                    }
+                }
+
+                if ($tx->date) {
+                    $lastTxDateRaw = $tx->date;
+                    $lastTxDate = \Carbon\Carbon::parse($tx->date)->format($displayDateFormat ?: 'Y-m-d');
+                }
+
+                $formattedTransactions->push([
+                    'index'                    => $rowIndex++,
+                    'id'                       => $tx->id,
+                    'type'                     => ucfirst(str_replace('_', ' ', $typeVal)),
+                    'sub_type'                 => ! empty($subTypeVal) ? ucfirst(str_replace('_', ' ', $subTypeVal)) : '',
+                    'operation'                => $tx->operation === '-' ? '-' : '+',
+                    'amount'                   => formatMoneyWithCurrency($tx->amount, $currency),
+                    'raw_amount'               => (float) $tx->amount,
+                    'payment'                  => '—',
+                    'paid'                     => '—',
+                    'raw_paid'                 => 0.0,
+                    'is_paid'                  => false,
+                    'balance'                  => formatMoneyWithCurrency($runningBalance, $currency),
+                    'raw_balance'              => round($runningBalance, 2),
+                    'date'                     => $tx->date ? \Carbon\Carbon::parse($tx->date)->format($displayDateFormat ?: 'Y-m-d') : '',
+                    'description'              => $tx->description ?: ($tx->notes ?: ''),
+                    'is_employer_contribution' => $isEmployerContribution,
+                ]);
+            }
+
+            // Fallback: check if a Payroll record exists in database for this employee and month
+            if (! $monthPayroll && $filters->hasEmployee() && strlen((string) $monthKey) === 7) {
+                $monthPayroll = \App\Models\Payroll::where('employee_id', $filters->employeeId)
+                    ->where('year', (int) substr($monthKey, 0, 4))
+                    ->where('month', (int) substr($monthKey, 5, 2))
+                    ->first();
+                if ($monthPayroll && ($monthPayroll->is_paid || $monthPayroll->status === 'paid')) {
+                    $isMonthPaid = true;
+                }
+            }
+
+            // Synthesize Payment transaction if this month's payroll was paid
+            if ($isMonthPaid) {
+                $monthNetPaid = max(0.0, $monthAdditions - $monthDeductions);
+                if ($monthPayroll && (float) $monthPayroll->net_salary > 0) {
+                    $monthNetPaid = (float) $monthPayroll->net_salary;
+                }
+
+                if ($monthNetPaid > 0) {
+                    $runningBalance = max(0.0, round($runningBalance - $monthNetPaid, 2));
+                    $totalPaymentsMade += $monthNetPaid;
+
+                    // Payment date: End of the month pertaining to this payroll
+                    $payrollMonthEnd = null;
+                    if ($monthPayroll && ! empty($monthPayroll->year) && ! empty($monthPayroll->month)) {
+                        $payrollMonthEnd = \Carbon\Carbon::createFromDate((int) $monthPayroll->year, (int) $monthPayroll->month, 1)->endOfMonth();
+                    } elseif ($monthPayroll && ! empty($monthPayroll->period_end_date)) {
+                        $payrollMonthEnd = \Carbon\Carbon::parse($monthPayroll->period_end_date)->endOfMonth();
+                    } elseif (preg_match('/^\d{4}-\d{2}$/', (string) $monthKey)) {
+                        $payrollMonthEnd = \Carbon\Carbon::createFromFormat('Y-m', (string) $monthKey)->endOfMonth();
+                    } elseif ($lastTxDateRaw) {
+                        $payrollMonthEnd = \Carbon\Carbon::parse($lastTxDateRaw)->endOfMonth();
+                    } else {
+                        $payrollMonthEnd = $filters->toDate ? $filters->toDate->copy()->endOfMonth() : \Carbon\Carbon::now()->endOfMonth();
+                    }
+
+                    $paymentDateFormatted = $payrollMonthEnd->format($displayDateFormat ?: 'Y-m-d');
+
+                    $formattedTransactions->push([
+                        'index'                    => $rowIndex++,
+                        'id'                       => null,
+                        'type'                     => 'Payment',
+                        'sub_type'                 => 'salary_payment',
+                        'operation'                => '-',
+                        'amount'                   => '—',
+                        'raw_amount'               => 0.0,
+                        'payment'                  => formatMoneyWithCurrency($monthNetPaid, $currency),
+                        'paid'                     => formatMoneyWithCurrency($monthNetPaid, $currency),
+                        'raw_paid'                 => $monthNetPaid,
+                        'is_paid'                  => true,
+                        'balance'                  => formatMoneyWithCurrency($runningBalance, $currency),
+                        'raw_balance'              => round($runningBalance, 2),
+                        'date'                     => $paymentDateFormatted,
+                        'description'              => __('Salary Payment'),
+                        'is_employer_contribution' => false,
+                    ]);
+                }
+            }
+        }
+
+        $totalPaid = $totalPaymentsMade > 0 ? $totalPaymentsMade : max(0.0, $totalPaidAdditions - $totalPaidDeductions);
+        $remainingBalance = max(0.0, $finalResult - $totalPaid);
 
         return [
             'has_data'              => true,

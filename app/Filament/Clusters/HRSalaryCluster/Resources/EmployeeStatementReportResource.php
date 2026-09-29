@@ -32,23 +32,23 @@ class EmployeeStatementReportResource extends Resource
 
     protected static ?int $navigationSort = 6;
 
-    protected static ?string $pluralLabel = 'Employee Financial Statement';
+    protected static ?string $pluralLabel = 'Staff Financial Statement';
 
-    protected static ?string $pluralModelLabel = 'Employee Financial Statement';
+    protected static ?string $pluralModelLabel = 'Staff Financial Statement';
 
     public static function getModelLabel(): string
     {
-        return __('lang.employee_statement_report') ?: 'Employee Financial Statement';
+        return __('lang.employee_statement_report') ?: 'Staff Financial Statement';
     }
 
     public static function getNavigationLabel(): string
     {
-        return __('lang.employee_statement_report') ?: 'Employee Financial Statement';
+        return __('lang.employee_statement_report') ?: 'Staff Financial Statement';
     }
 
     public static function getPluralLabel(): string
     {
-        return __('lang.employee_statement_report') ?: 'Employee Statement Report';
+        return __('lang.employee_statement_report') ?: 'Staff Financial Statement';
     }
 
     public static function table(Table $table): Table
