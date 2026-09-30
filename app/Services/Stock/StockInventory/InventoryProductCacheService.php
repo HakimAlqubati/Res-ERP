@@ -16,11 +16,24 @@ class InventoryProductCacheService
     const ALL_PRODUCTS_CACHE_KEY = 'inventory_active_products_all';
 
     /**
+     * الحصول على مفتاح الكاش مع مراعاة التينانت الحالي
+     */
+    private static function getTenantCacheKey(string $key): string
+    {
+        $tenantId = 'central';
+        if (class_exists(\Spatie\Multitenancy\Models\Tenant::class)) {
+            $tenantId = \Spatie\Multitenancy\Models\Tenant::current()?->id ?? 'central';
+        }
+        return "tenant_{$tenantId}_{$key}";
+    }
+
+    /**
      * جلب أول 5 منتجات افتراضية لواجهة البحث، مرتبة حسب id من الأصغر للأكبر
      */
     public static function getDefaultOptions()
     {
-        return Cache::remember('inventory_products_default_options', self::CACHE_TTL, function () {
+        $cacheKey = self::getTenantCacheKey('inventory_products_default_options');
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () {
             return Product::where('active', 1)
                 ->orderBy('id')
                 ->limit(5)
@@ -34,7 +47,7 @@ class InventoryProductCacheService
     public static function search($search)
     {
         $trimmed  = trim(mb_strtolower($search));
-        $cacheKey = 'inventory_products_search_' . md5($trimmed);
+        $cacheKey = self::getTenantCacheKey('inventory_products_search_' . md5($trimmed));
 
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($trimmed) {
             return Product::where('active', 1)
@@ -53,15 +66,16 @@ class InventoryProductCacheService
      */
     public static function cacheAllActiveProducts()
     {
+        $cacheKey = self::getTenantCacheKey(self::ALL_PRODUCTS_CACHE_KEY);
         // إذا الكاش موجود بالفعل، لا تفعل شيئًا
-        if (Cache::has(self::ALL_PRODUCTS_CACHE_KEY)) {
+        if (Cache::has($cacheKey)) {
             return;
         }
         $products = Product::where('active', 1)
             ->orderBy('id')
             ->get(['id', 'name', 'code']);
 
-        Cache::put(self::ALL_PRODUCTS_CACHE_KEY, $products, self::CACHE_TTL);
+        Cache::put($cacheKey, $products, self::CACHE_TTL);
     }
 
     /**
@@ -69,7 +83,8 @@ class InventoryProductCacheService
      */
     public static function getAllActiveProducts()
     {
-        return Cache::remember(self::ALL_PRODUCTS_CACHE_KEY, self::CACHE_TTL, function () {
+        $cacheKey = self::getTenantCacheKey(self::ALL_PRODUCTS_CACHE_KEY);
+        return Cache::remember($cacheKey, self::CACHE_TTL, function () {
             return Product::where('active', 1)
                 ->orderBy('id')
                 ->get(['id', 'name', 'code']);
@@ -81,8 +96,8 @@ class InventoryProductCacheService
      */
     public static function clearAllCache()
     {
-        Cache::forget('inventory_products_default_options');
-        Cache::forget(self::ALL_PRODUCTS_CACHE_KEY);
+        Cache::forget(self::getTenantCacheKey('inventory_products_default_options'));
+        Cache::forget(self::getTenantCacheKey(self::ALL_PRODUCTS_CACHE_KEY));
         // لحذف كاش البحث ينصح استخدام prefix أو tags لو كنت تستخدم Redis
 
         // حذف كاشات المخزون حسب المخازن التي لديها بيانات
@@ -92,14 +107,14 @@ class InventoryProductCacheService
             ->pluck('store_id');
 
         foreach ($storeIds as $storeId) {
-            $cacheKey = "inventory_products_with_units:store:$storeId";
+            $cacheKey = self::getTenantCacheKey("inventory_products_with_units:store:$storeId");
             Cache::forget($cacheKey);
         }
     }
 
     public static function cacheInventoryWithUnitsForAllProducts(int $storeId): void
     {
-        $cacheKey = "inventory_products_with_units:store:$storeId";
+        $cacheKey = self::getTenantCacheKey("inventory_products_with_units:store:$storeId");
 
         // جلب المنتجات مع وحداتها مرة واحدة
         $products = Product::where('active', 1)
@@ -155,7 +170,7 @@ class InventoryProductCacheService
 
     public static function getCachedInventoryForProduct(int $productId, int $unitId, int $storeId): ?array
     {
-        $cacheKey = "inventory_products_with_units:store:$storeId";
+        $cacheKey = self::getTenantCacheKey("inventory_products_with_units:store:$storeId");
 
         $allInventory = Cache::get($cacheKey);
 
