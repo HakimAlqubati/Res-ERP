@@ -808,6 +808,8 @@
                                 <td>
                                     @if ($tx['operation'] === '+')
                                         <span class="op-plus">+</span>
+                                    @elseif ($tx['operation'] === 'info')
+                                        <span style="color: #3b82f6; font-weight: 600; font-size: 11px;">Info</span>
                                     @else
                                         <span class="op-minus">-</span>
                                     @endif

@@ -207,7 +207,7 @@ class EmployeeStatementReport
                         'id'                       => null,
                         'type'                     => 'Salary Payout',
                         'sub_type'                 => 'salary_payment',
-                        'operation'                => '-',
+                        'operation'                => 'info',
                         'amount'                   => '—',
                         'raw_amount'               => 0.0,
                         'payment'                  => formatMoneyWithCurrency($monthNetPaid, $currency),
