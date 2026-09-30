@@ -143,7 +143,7 @@ class EmployeeStatementReport
                 $formattedTransactions->push([
                     'index'                    => $rowIndex++,
                     'id'                       => $tx->id,
-                    'type'                     => ucfirst(str_replace('_', ' ', $typeVal)),
+                    'type'                     => $this->resolveDisplayType($typeVal, $subTypeVal, $tx->description ?: ($tx->notes ?: '')),
                     'sub_type'                 => ! empty($subTypeVal) ? ucfirst(str_replace('_', ' ', $subTypeVal)) : '',
                     'operation'                => $tx->operation === '-' ? '-' : '+',
                     'amount'                   => formatMoneyWithCurrency($tx->amount, $currency),
@@ -205,7 +205,7 @@ class EmployeeStatementReport
                     $formattedTransactions->push([
                         'index'                    => $rowIndex++,
                         'id'                       => null,
-                        'type'                     => 'Payment',
+                        'type'                     => 'Salary Payout',
                         'sub_type'                 => 'salary_payment',
                         'operation'                => '-',
                         'amount'                   => '—',
@@ -287,5 +287,62 @@ class EmployeeStatementReport
             'raw_remaining_balance' => 0.0,
             'currency'              => SalaryTransaction::defaultCurrency(),
         ];
+    }
+
+    /**
+     * Map raw transaction type/sub_type values to the required display labels.
+     *
+     * Display types required:
+     *  - Basic Salary
+     *  - Allowance
+     *  - Overtime
+     *  - Bonus
+     *  - Deduction
+     *  - Salary advance recovery
+     *  - Expense advance recovery
+     *  - Salary Payout
+     */
+    protected function resolveDisplayType(string $typeVal, string $subTypeVal, string $description = ''): string
+    {
+        // Map by main type value
+        $typeMap = [
+            SalaryTransactionType::TYPE_SALARY->value              => 'Basic Salary',
+            SalaryTransactionType::TYPE_ALLOWANCE->value           => 'Allowance',
+            SalaryTransactionType::TYPE_OVERTIME->value            => 'Bonus',
+            SalaryTransactionType::TYPE_BONUS->value               => 'Bonus',
+            SalaryTransactionType::TYPE_DEDUCTION->value           => 'Deduction',
+            SalaryTransactionType::TYPE_PENALTY->value             => 'Deduction',
+            SalaryTransactionType::TYPE_ADVANCE->value             => 'Salary advance recovery',
+            SalaryTransactionType::TYPE_INSTALL->value             => 'Salary advance recovery',
+            SalaryTransactionType::TYPE_ADVANCE_WAGE->value        => 'Expense advance recovery',
+            SalaryTransactionType::TYPE_NET_SALARY->value          => 'Salary Payout',
+            SalaryTransactionType::TYPE_ADJUSTMENT->value          => 'Adjustment',
+            SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value => 'Employer Contribution',
+            SalaryTransactionType::TYPE_CARRY_FORWARD->value       => 'Carry Forward',
+            SalaryTransactionType::TYPE_OTHER->value               => 'Other',
+        ];
+
+        // Sub-type overrides: e.g. advance_installment sub_type should show as recovery
+        $subTypeOverrides = [
+            SalaryTransactionSubType::ADVANCE_INSTALLMENT->value       => 'Salary advance recovery',
+            SalaryTransactionSubType::EARLY_ADVANCE_INSTALLMENT->value => 'Salary advance recovery',
+            SalaryTransactionSubType::OVERTIME->value                  => 'Bonus',
+            SalaryTransactionSubType::OVERTIME_DAYS->value             => 'Bonus',
+            SalaryTransactionSubType::BASE_SALARY->value               => 'Basic Salary',
+            SalaryTransactionSubType::ADVANCE_WAGE->value              => 'Expense advance recovery',
+        ];
+
+        // Check sub-type overrides first for more specific labelling
+        if (! empty($subTypeVal) && isset($subTypeOverrides[$subTypeVal])) {
+            return $subTypeOverrides[$subTypeVal];
+        }
+
+        // Fallback: detect overtime from description when sub_type is missing
+        if ($typeVal === SalaryTransactionType::TYPE_ALLOWANCE->value
+            && stripos($description, 'overtime') !== false) {
+            return 'Bonus';
+        }
+
+        return $typeMap[$typeVal] ?? ucfirst(str_replace('_', ' ', $typeVal));
     }
 }
