@@ -74,7 +74,7 @@ class ListStockInventories extends ListRecords
                         ->info()
                         ->send();
                 })
-                ->visible(fn(): bool => isSuperAdmin()),
+                ->visible(fn(): bool => isSuperAdmin() || isSystemManager()),
 
             CreateAction::make()
                 ->icon('heroicon-o-plus-circle')
