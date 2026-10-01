@@ -48,6 +48,8 @@ class FixMissingOrderTransactions extends Command
         $this->info('Starting to fix missing inventory transactions...');
 
         // Fetch the raw results from the query provided by the user
+        // We included an EXISTS subquery to match your `HAVING COUNT(*) > 1` condition, 
+        // ensuring we only process products that were repeated in the same order.
         $missingTransactions = DB::select("
             SELECT 
                 o.id AS order_id,
@@ -63,6 +65,7 @@ class FixMissingOrderTransactions extends Command
             JOIN branches b ON b.id = o.branch_id
             JOIN categories c ON c.id = p.category_id
             WHERE o.status IN ('ready_for_delivery', 'delevired')
+              AND od.available_quantity > 0
               AND NOT EXISTS (
                   SELECT 1
                   FROM inventory_transactions it
@@ -71,6 +74,14 @@ class FixMissingOrderTransactions extends Command
                     AND it.product_id           = od.product_id
                     AND it.movement_type        = 'in'
                     AND it.deleted_at IS NULL
+              )
+              AND EXISTS (
+                  SELECT 1 
+                  FROM orders_details od2
+                  WHERE od2.order_id = od.order_id 
+                    AND od2.product_id = od.product_id
+                  GROUP BY od2.order_id, od2.product_id
+                  HAVING COUNT(*) > 1
               )
             ORDER BY od.order_id DESC
         ");
