@@ -3,10 +3,13 @@
 namespace App\Console\Commands;
 
 use App\Models\Branch;
+use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Models\Store;
+use App\Modules\Stock\Reports\FifoBatchReports\Contracts\FifoAllocatorInterface;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Spatie\Multitenancy\Models\Tenant;
 
 class FixMissingOrderTransactions extends Command
 {
@@ -15,7 +18,7 @@ class FixMissingOrderTransactions extends Command
      *
      * @var string
      */
-    protected $signature = 'app:fix-missing-order-transactions';
+    protected $signature = 'app:fix-missing-order-transactions {--tenant= : Optional tenant ID to run the command under}';
 
     /**
      * The console command description.
@@ -29,6 +32,19 @@ class FixMissingOrderTransactions extends Command
      */
     public function handle()
     {
+        $tenantId = $this->option('tenant');
+
+        if ($tenantId) {
+            $tenant = Tenant::find($tenantId);
+            if (! $tenant) {
+                $this->error("❌ Tenant with ID {$tenantId} not found.");
+
+                return;
+            }
+            $tenant->makeCurrent();
+            $this->info("🏢 Tenant [{$tenant->name} (ID: {$tenant->id})] activated.");
+        }
+
         $this->info('Starting to fix missing inventory transactions...');
 
         // Fetch the raw results from the query provided by the user
@@ -61,100 +77,106 @@ class FixMissingOrderTransactions extends Command
 
         if (empty($missingTransactions)) {
             $this->info('No missing transactions found.');
+
             return;
         }
 
-        $this->info('Found ' . count($missingTransactions) . ' order details with missing transactions.');
+        $this->info('Found '.count($missingTransactions).' order details with missing transactions.');
 
-        $fifoAllocator = app(\App\Modules\Stock\Reports\FifoBatchReports\Contracts\FifoAllocatorInterface::class);
+        // return;
+        $fifoAllocator = app(FifoAllocatorInterface::class);
         $defaultStoreId = Store::defaultStore()?->id ?? 1;
 
         // Group by order to process them per order
         $groupedByOrder = collect($missingTransactions)->groupBy('order_id');
 
-        DB::beginTransaction();
-        try {
-            foreach ($groupedByOrder as $orderId => $details) {
-                $order = Order::with(['orderDetails.product.category', 'branch'])->find($orderId);
-                
-                if (!$order) {
+        foreach ($groupedByOrder as $orderId => $details) {
+            $order = Order::with(['orderDetails.product.category', 'branch'])->find($orderId);
+
+            if (! $order) {
+                continue;
+            }
+
+            $branch = $order->branch_id
+                ? Branch::withoutGlobalScopes()->with(['store' => fn ($q) => $q->withoutGlobalScopes()])->find($order->branch_id)
+                : null;
+            $branchStore = $branch?->store;
+            $hasBranchStore = (bool) ($branchStore && $branchStore->active);
+
+            if ($branch) {
+                $order->setRelation('branch', $branch);
+            }
+
+            $this->info("Processing Order #{$order->id}...");
+
+            // Map order details to the standard format, combining quantities if the same product is repeated
+            // We will process them item by item to avoid the allocateMany bug with duplicate product IDs
+
+            foreach ($details as $missingDetail) {
+                $detail = $order->orderDetails->firstWhere('id', $missingDetail->order_detail_id);
+                if (! $detail) {
                     continue;
                 }
 
-                $branch = $order->branch_id
-                    ? Branch::withoutGlobalScopes()->with(['store' => fn($q) => $q->withoutGlobalScopes()])->find($order->branch_id)
-                    : null;
-                $branchStore = $branch?->store;
-                $hasBranchStore = (bool) ($branchStore && $branchStore->active);
-
-                if ($branch) {
-                    $order->setRelation('branch', $branch);
+                // Find store for this product
+                $storeId = $defaultStoreId;
+                if ($detail->product) {
+                    $storeId = defaultManufacturingStore($detail->product)?->id ?? $defaultStoreId;
                 }
 
-                $this->info("Processing Order #{$order->id}...");
+                $items = [[
+                    'product_id' => $detail->product_id,
+                    'unit_id' => $detail->unit_id,
+                    'qty' => $detail->available_quantity,
+                ]];
 
-                // Map order details to the standard format, combining quantities if the same product is repeated
-                // We will process them item by item to avoid the allocateMany bug with duplicate product IDs
-                
-                foreach ($details as $missingDetail) {
-                    $detail = $order->orderDetails->firstWhere('id', $missingDetail->order_detail_id);
-                    if (!$detail) {
-                        continue;
-                    }
-
-                    // Find store for this product
-                    $storeId = $defaultStoreId;
-                    if ($detail->product) {
-                        $storeId = defaultManufacturingStore($detail->product)?->id ?? $defaultStoreId;
-                    }
-
-                    $items = [[
-                        'product_id' => $detail->product_id,
-                        'unit_id'    => $detail->unit_id,
-                        'qty'        => $detail->available_quantity,
-                    ]];
+                try {
+                    DB::beginTransaction();
 
                     $allocationsByProduct = $fifoAllocator->allocateMany($items, (int) $storeId, $order);
                     $productAllocations = $allocationsByProduct[$detail->product_id]['allocations'] ?? [];
 
                     if (empty($productAllocations) || (isset($allocationsByProduct[$detail->product_id]['status']) && $allocationsByProduct[$detail->product_id]['status'] === 'error')) {
-                        $msg = $allocationsByProduct[$detail->product_id]['message'] ?? 'Unknown error';
+                        $msg = $allocationsByProduct[$detail->product_id]['message'] ?? 'No available stock or unknown error';
                         $this->warn("Failed to allocate for Product ID {$detail->product_id} in Order {$order->id}: {$msg}");
+                        DB::rollBack();
+
                         continue;
                     }
 
                     // Before moving from inventory, check if an 'out' transaction already exists for this detail to prevent duplicates
                     // Since the query checks for 'in' missing, we'll recreate both or just 'in'?
                     // Actually, if 'in' is missing, it's safer to check if 'out' is missing as well.
-                    $outExists = \App\Models\InventoryTransaction::where('transactionable_id', $order->id)
-                        ->where('transactionable_type', \App\Models\Order::class)
+                    $outExists = InventoryTransaction::where('transactionable_id', $order->id)
+                        ->where('transactionable_type', Order::class)
                         ->where('product_id', $detail->product_id)
                         ->where('movement_type', 'out')
                         ->exists();
 
-                    if (!$outExists) {
+                    if (! $outExists) {
                         Order::moveFromInventory($productAllocations, $detail);
                     }
 
                     if ($hasBranchStore) {
-                        $inExists = \App\Models\InventoryTransaction::where('transactionable_id', $order->id)
-                            ->where('transactionable_type', \App\Models\Order::class)
+                        $inExists = InventoryTransaction::where('transactionable_id', $order->id)
+                            ->where('transactionable_type', Order::class)
                             ->where('product_id', $detail->product_id)
                             ->where('movement_type', 'in')
                             ->exists();
 
-                        if (!$inExists) {
+                        if (! $inExists) {
                             Order::receiveIntoBranchStore($productAllocations, $detail, $branchStore->id);
                         }
                     }
+
+                    DB::commit();
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    $this->error("Error for Product ID {$detail->product_id} in Order {$order->id}: ".$e->getMessage());
                 }
             }
-
-            DB::commit();
-            $this->info('Successfully fixed missing transactions.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            $this->error('An error occurred: ' . $e->getMessage());
         }
+
+        $this->info('Finished fixing missing transactions.');
     }
 }
