@@ -1197,7 +1197,8 @@ return [
     'allowance_types' => 'أنواع البدلات',
     'deduction_types' => 'أنواع الاستقطاعات',
     'month' => 'الشهر',
-    'employee_statement_report' => 'كشف حركات رواتب الموظف',
+    'employee_statement_report' => 'كشف الحساب المالي للموظف',
+    'staff_financial_statement' => 'كشف الحساب المالي للموظف',
 
     // ===========================================
     // Users Management & Form

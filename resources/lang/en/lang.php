@@ -1216,7 +1216,8 @@ return [
     'allowance_types' => 'Allowance Types',
     'deduction_types' => 'Deduction Types',
     'month' => 'Month',
-    'employee_statement_report' => 'Employee Financial Statement',
+    'employee_statement_report' => 'Staff Financial Statement',
+    'staff_financial_statement' => 'Staff Financial Statement',
 
     // ===========================================
     // Users Management & Form

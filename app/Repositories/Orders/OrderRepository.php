@@ -148,14 +148,46 @@ class OrderRepository implements OrderRepositoryInterface
     {
         $validator = Validator::make($request->all(), [
             'order_details' => 'required|array|min:1',
+            'order_details.*.product_id' => 'required',
             'order_details.*.quantity' => 'required|numeric|min:0.1',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => $validator->errors(),
+                'message' => $validator->errors()->first(),
                 'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        // Check for duplicate products in order_details
+        $orderDetails = $request->input('order_details', []);
+        $productIds = array_values(array_filter(array_column($orderDetails, 'product_id'), fn($id) => !is_null($id) && $id !== ''));
+        $counts = array_count_values($productIds);
+        $duplicateIds = array_keys(array_filter($counts, fn($c) => $c > 1));
+
+        if (!empty($duplicateIds)) {
+            $products = Product::withTrashed()->whereIn('id', $duplicateIds)->pluck('name', 'id');
+            $duplicateNames = array_map(fn($id) => $products[$id] ?? "#$id", $duplicateIds);
+
+            $totalDuplicates = count($duplicateNames);
+            if ($totalDuplicates === 1) {
+                $formattedProducts = $duplicateNames[0];
+            } elseif ($totalDuplicates === 2) {
+                $formattedProducts = "{$duplicateNames[0]} & {$duplicateNames[1]}";
+            } else {
+                $remaining = $totalDuplicates - 2;
+                $formattedProducts = "{$duplicateNames[0]}, {$duplicateNames[1]} & {$remaining} more";
+            }
+
+            $message = "Duplicate products are not allowed: {$formattedProducts}.";
+
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'errors' => [
+                    'order_details' => [$message],
+                ],
             ], 422);
         }
         try {
@@ -281,6 +313,19 @@ class OrderRepository implements OrderRepositoryInterface
 
             // Process the normal order details: update existing items or create new ones.
             foreach ($normalOrderDetails as $detail) {
+                if ($pendingOrderId > 0) {
+                    $existingDifferentUnit = OrderDetails::where('order_id', $orderId)
+                        ->where('product_id', $detail['product_id'])
+                        ->where('unit_id', '!=', $detail['unit_id'])
+                        ->first();
+
+                    if ($existingDifferentUnit) {
+                        $productName = Product::withTrashed()->find($detail['product_id'])?->name;
+                        $productLabel = $productName ? "Product '{$productName}'" : "Product #{$detail['product_id']}";
+                        throw new Exception("{$productLabel} already exists in pending order with a different unit.");
+                    }
+                }
+
                 $existingDetail = OrderDetails::where([
                     ['order_id', '=', $orderId],
                     ['product_id', '=', $detail['product_id']],
@@ -366,6 +411,17 @@ class OrderRepository implements OrderRepositoryInterface
 
         // Save or merge order details
         foreach ($productsForBranch as $productDetail) {
+            $existingDifferentUnit = OrderDetails::where('order_id', $manufacturingOrder->id)
+                ->where('product_id', $productDetail['product_id'])
+                ->where('unit_id', '!=', $productDetail['unit_id'])
+                ->first();
+
+            if ($existingDifferentUnit) {
+                $productName = Product::withTrashed()->find($productDetail['product_id'])?->name;
+                $productLabel = $productName ? "Product '{$productName}'" : "Product #{$productDetail['product_id']}";
+                throw new Exception("{$productLabel} already exists in pending manufacturing order with a different unit.");
+            }
+
             $existingDetail = OrderDetails::where([
                 ['order_id', '=', $manufacturingOrder->id],
                 ['product_id', '=', $productDetail['product_id']],

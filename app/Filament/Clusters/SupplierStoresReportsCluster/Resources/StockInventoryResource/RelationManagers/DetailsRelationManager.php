@@ -39,6 +39,7 @@ use Filament\Tables;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -75,6 +76,8 @@ class DetailsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table->striped()
+        ->paginated([10, 25, 50, 60])
+        ->maxSelectableRecords(60)
             ->columns([
                 TextColumn::make('product.name')->searchable()->toggleable()
                     ->getStateUsing(function ($record) {
@@ -120,8 +123,38 @@ class DetailsRelationManager extends RelationManager
               
             ])
             ->filters([
-                //
-            ])
+                Tables\Filters\SelectFilter::make('product_id')
+                    ->label(__('lang.product'))
+                    ->searchable()
+                    ->options(function () {
+                        return Product::where('active', 1)
+                            ->limit(10)
+                            ->get()
+                            ->mapWithKeys(fn($product) => [
+                                $product->id => "{$product->code} - {$product->name}"
+                            ]);
+                    })
+                    ->getSearchResultsUsing(function (string $search): array {
+                        return Product::query()
+                            ->where(function ($query) use ($search) {
+                                $query->where('name', 'like', "%{$search}%")
+                                    ->orWhere('code', 'like', "%{$search}%");
+                            })
+                            ->limit(10)
+                            ->get()
+                            ->mapWithKeys(fn($product) => [
+                                $product->id => "{$product->code} - {$product->name}"
+                            ])
+                            ->toArray();
+                    })
+                    ->getOptionLabelUsing(function ($value): ?string {
+                        $product = Product::find($value);
+                        return $product ? "{$product->code} - {$product->name}" : null;
+                    })
+                    ->multiple(),
+                ],FiltersLayout::Modal)
+                ->filtersFormColumns(1)
+            
             ->headerActions([
                 // Tables\Actions\CreateAction::make(),
             ])

@@ -47,6 +47,18 @@ class TestController4 extends Controller
             $where[] = 'o.id = ' . (int) $request->id;
         }
 
+        if ($request->filled('branch_id')) {
+            if (is_array($request->branch_id)) {
+                $branchIds = array_map('intval', $request->branch_id);
+                $where[] = 'o.branch_id IN (' . implode(',', $branchIds) . ')';
+            } elseif (str_contains((string) $request->branch_id, ',')) {
+                $branchIds = array_map('intval', explode(',', $request->branch_id));
+                $where[] = 'o.branch_id IN (' . implode(',', $branchIds) . ')';
+            } else {
+                $where[] = 'o.branch_id = ' . (int) $request->branch_id;
+            }
+        }
+
         $where[] = ' o.deleted_at is null ';
         $where[] = 'EXISTS (SELECT 1 FROM orders_details od WHERE od.order_id = o.id)';
 
