@@ -72,6 +72,9 @@ class PayrollObserver
             // 1. التراجع عن أقساط السلف المرتبطة بكشف الراتب هذا
             $this->revertInstallmentsToUnpaid($payroll);
 
+            // 1b. التراجع عن تسوية الـ Carry Forward (قبل حذف الحركات)
+            // app(\App\Modules\HR\Payroll\Services\CarryForwardReverter::class)->revertForPayroll($payroll->id);
+
             // 2. حذف حركات الراتب (Transactions) المرتبطة بهذا الكشف
             $payroll->transactions()->delete();
         } catch (\Exception $e) {
@@ -85,6 +88,9 @@ class PayrollObserver
     public function forceDeleted(Payroll $payroll): void
     {
         try {
+            // التراجع عن الـ Carry Forward للحركات الحيّة فقط (لتفادي العكس المزدوج)
+            // app(\App\Modules\HR\Payroll\Services\CarryForwardReverter::class)->revertForPayroll($payroll->id);
+
             // حذف حركات الراتب نهائياً
             $payroll->transactions()->withTrashed()->forceDelete();
         } catch (\Exception $e) {
