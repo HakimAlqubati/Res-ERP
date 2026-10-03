@@ -315,7 +315,7 @@ class EmployeeAdvanceInstallmentResource extends Resource
                     ->options(fn () => EmployeeAdvanceInstallment::distinct()->whereNotNull('year')->orderByDesc('year')->pluck('year', 'year')->toArray()),
 
                 SelectFilter::make('month')
-                    ->label(__('lang.month'))
+                    ->label(__('lang.month_label'))
                     ->options([
                         1 => '01 - January',
                         2 => '02 - February',
