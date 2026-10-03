@@ -191,6 +191,18 @@ class OrderRepository implements OrderRepositoryInterface
             ], 422);
         }
 
+        // Block products sent without a valid unit (unit_id = 0 / empty)
+        $missingUnitError = $this->validateMissingUnits($orderDetails);
+        if ($missingUnitError !== null) {
+            return response()->json([
+                'success' => false,
+                'message' => $missingUnitError['message'],
+                'errors' => [
+                    'order_details' => $missingUnitError['details'],
+                ],
+            ], 422);
+        }
+
         // Block units that are marked as "manufacturing only" (not orderable)
         $manufacturingOnlyError = $this->validateManufacturingOnlyUnits($orderDetails);
         if ($manufacturingOnlyError !== null) {
@@ -381,6 +393,41 @@ class OrderRepository implements OrderRepositoryInterface
                 'message' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Reject order lines that were sent without a unit (unit_id = 0 / null / missing).
+     * This usually means the product has no units configured for orders.
+     *
+     * @return array{message: string, details: array<int, string>}|null
+     */
+    private function validateMissingUnits(array $orderDetails): ?array
+    {
+        $productIds = collect($orderDetails)
+            ->filter(fn($d) => !empty($d['product_id']) && empty($d['unit_id']))
+            ->pluck('product_id')
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($productIds)) {
+            return null;
+        }
+
+        $products = Product::withTrashed()->whereIn('id', $productIds)->pluck('name', 'id');
+        $names = array_map(fn($id) => "'" . ($products[$id] ?? "#{$id}") . "'", $productIds);
+
+        $total = count($names);
+        $formatted = match (true) {
+            $total === 1 => $names[0],
+            $total === 2 => "{$names[0]} & {$names[1]}",
+            default      => "{$names[0]}, {$names[1]} & " . ($total - 2) . ' others',
+        };
+        $message = "No order units for {$formatted}.";
+
+        $details = array_map(fn($name) => "No order units for {$name}.", $names);
+
+        return ['message' => $message, 'details' => $details];
     }
 
     /**
