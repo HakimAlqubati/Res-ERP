@@ -99,7 +99,7 @@ class PayrollRunObserver
             $this->revertInstallmentsToUnpaid($payrollRun);
 
             // 1b. التراجع عن تسوية الـ Carry Forward (قبل حذف الحركات)
-            // app(\App\Modules\HR\Payroll\Services\CarryForwardReverter::class)->revertForPayrollRun($payrollRun->id);
+            app(\App\Modules\HR\Payroll\Services\CarryForwardReverter::class)->revertForPayrollRun($payrollRun->id);
 
             // 2. حذف المعاملات المالية
             $this->syncService->deletePayrollRunTransactions($payrollRun->id);
@@ -110,7 +110,7 @@ class PayrollRunObserver
             // 4. حذف كشوفات الرواتب
             $payrollRun->payrolls()->delete();
         } catch (\Exception $e) {
-            // Silent fail
+            Log::error('PayrollRun deletion error: ' . $e->getMessage());
         }
     }
 
@@ -126,7 +126,7 @@ class PayrollRunObserver
             $this->revertInstallmentsToUnpaid($payrollRun);
 
             // 1b. التراجع عن الـ Carry Forward للحركات الحيّة فقط (لتفادي العكس المزدوج)
-            // app(\App\Modules\HR\Payroll\Services\CarryForwardReverter::class)->revertForPayrollRun($payrollRun->id);
+            app(\App\Modules\HR\Payroll\Services\CarryForwardReverter::class)->revertForPayrollRun($payrollRun->id);
 
             // 2. حذف المعاملات المالية نهائياً
             $this->syncService->deletePayrollRunTransactions($payrollRun->id);
@@ -137,7 +137,7 @@ class PayrollRunObserver
             // 4. حذف كشوفات الرواتب نهائياً (بما في ذلك المحذوفة مسبقاً)
             $payrollRun->payrolls()->withTrashed()->forceDelete();
         } catch (\Exception $e) {
-            // Silent fail
+            Log::error('PayrollRun force deletion error: ' . $e->getMessage());
         }
     }
 

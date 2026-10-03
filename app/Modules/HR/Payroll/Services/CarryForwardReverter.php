@@ -85,13 +85,15 @@ class CarryForwardReverter
      */
     protected function removeGeneratedDebt(SalaryTransaction $txn): void
     {
-        if (!$txn->payroll_run_id) {
+        $payrollRunId = $txn->payroll_run_id ?? $txn->payroll?->payroll_run_id;
+
+        if (!$payrollRunId) {
             return;
         }
 
         $cf = CarryForward::query()
             ->where('employee_id', $txn->employee_id)
-            ->where('from_payroll_run_id', $txn->payroll_run_id)
+            ->where('from_payroll_run_id', $payrollRunId)
             ->first();
 
         if (!$cf) {
