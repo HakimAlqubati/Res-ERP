@@ -348,9 +348,8 @@ class EmployeeStatementReport
             return $subTypeOverrides[$subTypeVal];
         }
 
-        // Fallback: detect overtime from description when sub_type is missing
-        if ($typeVal === SalaryTransactionType::TYPE_ALLOWANCE->value
-            && stripos($description, 'overtime') !== false) {
+        // Fallback: detect manual allowances (no sub_type) as Bonus instead of Allowance
+        if ($typeVal === SalaryTransactionType::TYPE_ALLOWANCE->value && empty($subTypeVal)) {
             return 'Bonus';
         }
 
