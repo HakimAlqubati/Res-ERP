@@ -80,6 +80,13 @@ class EmployeeStatementReport
             return $tx->operation === '-' ? (float) $tx->amount : 0;
         });
 
+        // Employer Contributions are company-borne costs (informational only, no impact on employee balance)
+        $totalEmployerContributions = (float) $transactions->sum(function (SalaryTransaction $tx) {
+            $typeVal = $tx->type instanceof \BackedEnum ? $tx->type->value : (string) $tx->type;
+
+            return $typeVal === SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION->value ? (float) $tx->amount : 0;
+        });
+
         $finalResult = $totalAdditions - $totalDeductions;
         $displayDateFormat = (function_exists('settingWithDefault') ? settingWithDefault('date_format', 'Y-m-d') : null) ?: 'Y-m-d';
 
@@ -145,7 +152,7 @@ class EmployeeStatementReport
                     'id'                       => $tx->id,
                     'type'                     => $this->resolveDisplayType($typeVal, $subTypeVal, $tx->description ?: ($tx->notes ?: '')),
                     'sub_type'                 => ! empty($subTypeVal) ? ucfirst(str_replace('_', ' ', $subTypeVal)) : '',
-                    'operation'                => $tx->operation === '-' ? '-' : '+',
+                    'operation'                => $isEmployerContribution ? 'info' : ($tx->operation === '-' ? '-' : '+'),
                     'amount'                   => formatMoneyWithCurrency($tx->amount, $currency),
                     'raw_amount'               => (float) $tx->amount,
                     'payment'                  => '—',
@@ -249,6 +256,8 @@ class EmployeeStatementReport
             'raw_final_result'      => round($finalResult, 2),
             'raw_total_paid'        => round($totalPaid, 2),
             'raw_remaining_balance' => round($remainingBalance, 2),
+            'total_employer_contributions'     => formatMoneyWithCurrency($totalEmployerContributions, $currency),
+            'raw_total_employer_contributions' => round($totalEmployerContributions, 2),
             'currency'              => $currency,
         ];
     }
@@ -285,6 +294,8 @@ class EmployeeStatementReport
             'raw_final_result'      => 0.0,
             'raw_total_paid'        => 0.0,
             'raw_remaining_balance' => 0.0,
+            'total_employer_contributions'     => formatMoneyWithCurrency(0),
+            'raw_total_employer_contributions' => 0.0,
             'currency'              => SalaryTransaction::defaultCurrency(),
         ];
     }
