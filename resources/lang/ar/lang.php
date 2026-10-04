@@ -1196,7 +1196,6 @@ return [
     'incentive_types' => 'أنواع الحوافز',
     'allowance_types' => 'أنواع البدلات',
     'deduction_types' => 'أنواع الاستقطاعات',
-    'month' => 'الشهر',
     'employee_statement_report' => 'كشف الحساب المالي للموظف',
     'staff_financial_statement' => 'كشف الحساب المالي للموظف',
 

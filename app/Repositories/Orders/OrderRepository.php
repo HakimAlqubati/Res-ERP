@@ -190,6 +190,31 @@ class OrderRepository implements OrderRepositoryInterface
                 ],
             ], 422);
         }
+
+        // Block products sent without a valid unit (unit_id = 0 / empty)
+        $missingUnitError = $this->validateMissingUnits($orderDetails);
+        if ($missingUnitError !== null) {
+            return response()->json([
+                'success' => false,
+                'message' => $missingUnitError['message'],
+                'errors' => [
+                    'order_details' => $missingUnitError['details'],
+                ],
+            ], 422);
+        }
+
+        // Block units that are marked as "manufacturing only" (not orderable)
+        $manufacturingOnlyError = $this->validateManufacturingOnlyUnits($orderDetails);
+        if ($manufacturingOnlyError !== null) {
+            return response()->json([
+                'success' => false,
+                'message' => $manufacturingOnlyError['message'],
+                'errors' => [
+                    'order_details' => $manufacturingOnlyError['details'],
+                ],
+            ], 422);
+        }
+
         try {
             DB::beginTransaction();
 
@@ -368,6 +393,99 @@ class OrderRepository implements OrderRepositoryInterface
                 'message' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Reject order lines that were sent without a unit (unit_id = 0 / null / missing).
+     * This usually means the product has no units configured for orders.
+     *
+     * @return array{message: string, details: array<int, string>}|null
+     */
+    private function validateMissingUnits(array $orderDetails): ?array
+    {
+        $productIds = collect($orderDetails)
+            ->filter(fn($d) => !empty($d['product_id']) && empty($d['unit_id']))
+            ->pluck('product_id')
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($productIds)) {
+            return null;
+        }
+
+        $products = Product::withTrashed()->whereIn('id', $productIds)->pluck('name', 'id');
+        $names = array_map(fn($id) => "'" . ($products[$id] ?? "#{$id}") . "'", $productIds);
+
+        $total = count($names);
+        $formatted = match (true) {
+            $total === 1 => $names[0],
+            $total === 2 => "{$names[0]} & {$names[1]}",
+            default      => "{$names[0]}, {$names[1]} & " . ($total - 2) . ' others',
+        };
+        $message = "No order units for {$formatted}.";
+
+        $details = array_map(fn($name) => "No order units for {$name}.", $names);
+
+        return ['message' => $message, 'details' => $details];
+    }
+
+    /**
+     * Check the requested product/unit pairs and reject any unit whose
+     * usage scope is "manufacturing only".
+     *
+     * @return array{message: string, details: array<int, string>}|null
+     */
+    private function validateManufacturingOnlyUnits(array $orderDetails): ?array
+    {
+        $requestedPairs = collect($orderDetails)
+            ->filter(fn($d) => !empty($d['product_id']) && !empty($d['unit_id']))
+            ->map(fn($d) => $d['product_id'] . '-' . $d['unit_id'])
+            ->unique()
+            ->all();
+
+        if (empty($requestedPairs)) {
+            return null;
+        }
+
+        $productIds = collect($orderDetails)->pluck('product_id')->filter()->unique()->values();
+
+        $blocked = UnitPrice::with([
+            'product' => fn($q) => $q->withTrashed()->select('id', 'name'),
+            'unit:id,name',
+        ])
+            ->whereIn('product_id', $productIds)
+            ->where('usage_scope', UnitPrice::USAGE_MANUFACTURING_ONLY)
+            ->get(['id', 'product_id', 'unit_id'])
+            ->filter(fn($up) => in_array($up->product_id . '-' . $up->unit_id, $requestedPairs, true))
+            ->values();
+
+        if ($blocked->isEmpty()) {
+            return null;
+        }
+
+        $labels = $blocked->map(function ($up) {
+            $productName = $up->product?->name ?? "#{$up->product_id}";
+            $unitName = $up->unit?->name ?? "#{$up->unit_id}";
+            return "'{$productName}' ({$unitName})";
+        })->all();
+
+        $total = count($labels);
+        if ($total === 1) {
+            $message = "Product {$labels[0]} uses a manufacturing-only unit and cannot be ordered.";
+        } else {
+            $formatted = $total === 2
+                ? "{$labels[0]} & {$labels[1]}"
+                : "{$labels[0]}, {$labels[1]} & " . ($total - 2) . ' more';
+            $message = "Products {$formatted} use manufacturing-only units and cannot be ordered.";
+        }
+
+        $details = array_map(
+            fn($label) => "Product {$label} uses a manufacturing-only unit and cannot be ordered.",
+            $labels
+        );
+
+        return ['message' => $message, 'details' => $details];
     }
 
     /**

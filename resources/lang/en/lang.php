@@ -1215,7 +1215,6 @@ return [
     'incentive_types' => 'Incentive Types',
     'allowance_types' => 'Allowance Types',
     'deduction_types' => 'Deduction Types',
-    'month' => 'Month',
     'employee_statement_report' => 'Staff Financial Statement',
     'staff_financial_statement' => 'Staff Financial Statement',
 

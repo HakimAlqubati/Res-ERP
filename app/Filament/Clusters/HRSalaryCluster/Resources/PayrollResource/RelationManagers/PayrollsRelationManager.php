@@ -197,12 +197,14 @@ class PayrollsRelationManager extends RelationManager
                     ForceDeleteAction::make()
                         ->action(function (Payroll $record): void {
                             $ids = $this->payrollIdsForDisplay($record);
-                            Payroll::query()->whereIn('id', $ids)->forceDelete();
+                            Payroll::withTrashed()->whereIn('id', $ids)->get()->each->forceDelete();
+                            showSuccessNotifiMessage(__('lang.deleted_successfully'));
                         })->label('Force Delete'),
                     DeleteAction::make()
                         ->action(function (Payroll $record): void {
                             $ids = $this->payrollIdsForDisplay($record);
-                            Payroll::query()->whereIn('id', $ids)->delete();
+                            Payroll::whereIn('id', $ids)->get()->each->delete();
+                            showSuccessNotifiMessage(__('lang.deleted_successfully'));
                         })->label('Delete'),
                     Action::make('pdfTransactions')
                         ->label('Transactions')
@@ -281,7 +283,7 @@ class PayrollsRelationManager extends RelationManager
                                 ->values()
                                 ->all();
 
-                            Payroll::query()->whereIn('id', $ids)->forceDelete();
+                            Payroll::withTrashed()->whereIn('id', $ids)->get()->each->forceDelete();
 
                             \Illuminate\Support\Facades\DB::commit();
                             showSuccessNotifiMessage(__('lang.deleted_successfully'));
@@ -328,6 +330,16 @@ class PayrollsRelationManager extends RelationManager
                             ]);
                     }),
                 DeleteBulkAction::make()
+                    ->action(function (Collection $records): void {
+                        $ids = $records
+                            ->flatMap(fn(Payroll $record) => $this->payrollIdsForDisplay($record))
+                            ->unique()
+                            ->values()
+                            ->all();
+
+                        Payroll::whereIn('id', $ids)->get()->each->delete();
+                        showSuccessNotifiMessage(__('lang.deleted_successfully'));
+                    })
                     ->visible(fn(): bool => isSuperAdmin()),
             ]);
     }
