@@ -62,12 +62,12 @@ class EmployeeStatementReportResource extends Resource
                     ->schema([
                         Select::make('employee_id')
                             ->label(__('lang.employee'))
-                            ->options(fn () => Employee::where('active', 1)
+                            ->options(fn () => Employee::query()
                                 ->limit(10)
                                 ->get()
                                 ->mapWithKeys(fn ($e) => [$e->id => "{$e->name} - {$e->id}"])
                                 ->all())
-                            ->getSearchResultsUsing(fn (string $search) => Employee::where('active', 1)
+                            ->getSearchResultsUsing(fn (string $search) => Employee::query()
                                 ->where(fn ($q) => $q
                                     ->where('name', 'like', "%{$search}%")
                                     ->orWhere('id', 'like', "%{$search}%"))
