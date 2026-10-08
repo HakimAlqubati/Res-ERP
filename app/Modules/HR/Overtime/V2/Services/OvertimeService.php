@@ -70,16 +70,20 @@ class OvertimeService
      * Update overtime hours for a specific record.
      *
      * @param int $id
-     * @param float $hours
+     * @param float|int|string $hours
      * @return EmployeeOvertime
      * @throws \Exception
      */
-    public function updateHours(int $id, float $hours): EmployeeOvertime
+    public function updateHours(int $id, float|int|string $hours): EmployeeOvertime
     {
         $overtime = EmployeeOvertime::findOrFail($id);
 
         if ($overtime->status === EmployeeOvertime::STATUS_APPROVED) {
             throw new \Exception('Cannot update an approved overtime record. Please undo the approval first.', 403);
+        }
+
+        if (is_string($hours) && strpos($hours, ':') !== false) {
+            $hours = EmployeeOvertime::parseToDecimalHours($hours);
         }
 
         $overtime->update([

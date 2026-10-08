@@ -32,18 +32,17 @@ class TestController4 extends Controller
     public static function getOrders($request)
     {
         $page = max((int) $request->input('page', 1), 1);
-        $perPage = (int) $request->input('per_page', 20);
+        $perPage = max((int) $request->input('per_page', 20), 1);
         $offset = ($page - 1) * $perPage;
 
         $where = ['1=1']; // default
 
-        // ✅ Basic filters
-        if ($request->has('customer_id')) {
+        // ✅ Basic filters (استخدام filled لتجنب تصفير الفلتر عند إرسال قيم فارغة)
+        if ($request->filled('customer_id')) {
             $where[] = 'o.customer_id = ' . (int) $request->customer_id;
         }
 
-
-        if ($request->has('id')) {
+        if ($request->filled('id')) {
             $where[] = 'o.id = ' . (int) $request->id;
         }
 
@@ -61,20 +60,48 @@ class TestController4 extends Controller
 
         $where[] = ' o.deleted_at is null ';
 
-        if ($request->has('branch_type')) {
-            $branchType = addslashes($request->branch_type);
+        // ✅ التحقق من وجود تفاصيل للطلب (مدمج في WHERE حتى يتطابق total مع عدد الطلبات في البيانات)
+        $where[] = 'EXISTS (SELECT 1 FROM orders_details od WHERE od.order_id = o.id)';
+
+        // ✅ فلترة نوع الفرع (دعم branch_type أو type أو is_reseller خاصة بنوع reseller)
+        $branchType = null;
+        if ($request->filled('branch_type')) {
+            $branchType = $request->branch_type;
+        } elseif ($request->filled('type') && in_array(strtolower($request->type), ['reseller', 'branch', 'central_kitchen', 'hq'])) {
+            $branchType = strtolower($request->type);
+        } elseif ($request->boolean('is_reseller') || $request->input('reseller') === '1') {
+            $branchType = 'reseller';
+        }
+
+        if (!empty($branchType)) {
+            $escapedBranchType = addslashes($branchType);
             $where[] = "EXISTS (
                 SELECT 1
                 FROM branches br
                 WHERE br.id = o.branch_id
-                AND br.type = '{$branchType}'
+                AND br.type = '{$escapedBranchType}'
             )";
         }
+
+        // ✅ فلترة التاريخ إذا كانت ممررة في التقرير
+        if ($request->filled('date_from') || $request->filled('start_date') || $request->filled('from_date')) {
+            $dateFrom = $request->date_from ?? $request->start_date ?? $request->from_date;
+            $where[] = "DATE(o.created_at) >= '" . addslashes($dateFrom) . "'";
+        }
+
+        if ($request->filled('date_to') || $request->filled('end_date') || $request->filled('to_date')) {
+            $dateTo = $request->date_to ?? $request->end_date ?? $request->to_date;
+            $where[] = "DATE(o.created_at) <= '" . addslashes($dateTo) . "'";
+        }
+
         // ✅ Role-based filters
         $user = auth()->user();
 
-       if (isBranchUser() && !isStoreManager() && !isBranchManager() && !isSuperAdmin() && !isSystemManager() && !$user->hasCentralKitchen()) {
-            $where[] = 'o.customer_id = ' . (int) $user->owner?->id;
+        if (isBranchUser() && !isStoreManager() && !isBranchManager() && !isSuperAdmin() && !isSystemManager() && !$user?->hasCentralKitchen()) {
+            $ownerId = $user?->owner?->id ?? $user?->id;
+            if ($ownerId) {
+                $where[] = 'o.customer_id = ' . (int) $ownerId;
+            }
         }
 
         if (isDriver()) {
@@ -85,7 +112,7 @@ class TestController4 extends Controller
             $where[] = 'o.status IN (' . implode(',', $statuses) . ')';
         }
         // ✅ فلترة الفروع التصنيعية (المطبخ المركزي) — يدعم الفرع الأساسي والإضافي
-        $kitchenBranch = $user->getCentralKitchenBranch();
+        $kitchenBranch = $user?->getCentralKitchenBranch();
 
         if ($kitchenBranch && !isStoreManager()) {
             if ($kitchenBranch->manager_abel_show_orders) {
@@ -124,13 +151,15 @@ class TestController4 extends Controller
             }
         } elseif (isBranchManager() && !$kitchenBranch) {
             // مدير فرع عادي (ليس تصنيعي) → يرى طلبات فرعه فقط
-            $where[] = "o.branch_id = {$user->branch->id}";
+            $branchId = $user?->branch_id ?? $user?->branch?->id;
+            if ($branchId) {
+                $where[] = "o.branch_id = {$branchId}";
+            }
         }
 
         if (isStoreManager()) {
-
             $where[] = "o.status != '" . Order::PENDING_APPROVAL . "'";
-            $customCategories = $user->getCentralKitchenCategories();
+            $customCategories = $user?->getCentralKitchenCategories() ?? [];
             if ($kitchenBranch && count($customCategories)) {
                 $categoryIds = implode(',', $customCategories);
 
@@ -175,15 +204,13 @@ class TestController4 extends Controller
         // 🧠 Assemble WHERE clause
         $whereSql = implode(' AND ', array_map(fn($c) => "($c)", $where));
 
-        // dd($whereSql);
-        // dd($whereSql,$user->branch?->is_central_kitchen);
-        // 📊 Get total count
-        $total = DB::table('orders as o')
+        // 📊 Get total count (دقيق ومطابق تماماً لنفس شروط الفلترة ووجود التفاصيل)
+        $total = (int) DB::table('orders as o')
             ->whereRaw($whereSql)
             ->count();
 
         // 💰 Get total paid all
-        $totalPaidAll = DB::table('orders as o')
+        $totalPaidAll = (float) DB::table('orders as o')
             ->join('branches as b', 'o.branch_id', '=', 'b.id')
             ->leftJoin('order_paid_amounts as opa', 'o.id', '=', 'opa.order_id')
             ->whereRaw($whereSql)
@@ -203,9 +230,6 @@ class TestController4 extends Controller
             (SELECT COALESCE(SUM(amount), 0) FROM order_paid_amounts WHERE order_id = o.id) AS total_paid
         FROM orders o
         WHERE $whereSql
-          AND EXISTS (
-        SELECT 1 FROM orders_details od WHERE od.order_id = o.id
-        )
         ORDER BY o.created_at DESC
         LIMIT $perPage OFFSET $offset
     ");
@@ -244,13 +268,19 @@ class TestController4 extends Controller
             ];
         });
 
+        // 📄 Pagination Metadata
+        $lastPage = $perPage > 0 ? (int) ceil($total / $perPage) : 1;
+        $lastPage = max($lastPage, 1);
+
         return response()->json([
-            'current_page' => $page,
-            'per_page' => $perPage,
-            'total' => $total,
-            'total_paid' => (float) $totalPaidAll,
-            'last_page' => ceil($total / $perPage),
-            'data' => $orders,
+            'current_page' => (int) $page,
+            'per_page'     => (int) $perPage,
+            'total'        => $total,
+            'total_paid'   => $totalPaidAll,
+            'last_page'    => $lastPage,
+            'from'         => $total > 0 ? ($offset + 1) : null,
+            'to'           => $total > 0 ? min($offset + count($orders), $total) : null,
+            'data'         => $orders,
         ]);
     }
 

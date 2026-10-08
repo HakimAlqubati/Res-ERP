@@ -150,6 +150,7 @@ trait EmployeeAttendanceTrait
                     'period_id'                 => $period->id,
                     'supposed_duration_minutes' => (int) $overtimeMinutes,
                     'overtime_hours'            => $overtimeHours,
+                    'overtime_formatted'        => EmployeeOvertime::formatMinutes($overtimeMinutes),
                     'overtime'                  => $formattedOvertime,
                     'overtime_start_time'       => $overtimeStartTime->toTimeString(),
                     'overtime_end_time'         => $overtimeEndTime->toTimeString(),
@@ -360,6 +361,7 @@ trait EmployeeAttendanceTrait
                     'period_id'                 => $period->id,
                     'supposed_duration_minutes' => (int) $overtimeMinutes,
                     'overtime_hours'            => $overtimeHours,
+                    'overtime_formatted'        => EmployeeOvertime::formatMinutes($overtimeMinutes),
                     'overtime'                  => $formattedOvertime,
                     'overtime_start_time'       => $firstCheckInTime?->toTimeString(),
                     'overtime_end_time'         => $lastCheckOutTime?->toTimeString(),
@@ -417,6 +419,7 @@ trait EmployeeAttendanceTrait
             'period_id'                 => null, // لا يوجد وردية
             'supposed_duration_minutes' => $totalMinutes,
             'overtime_hours'            => $overtimeHours,
+            'overtime_formatted'        => EmployeeOvertime::formatMinutes($totalMinutes),
             'overtime'                  => $formattedOvertime,
             'overtime_start_time'       => $firstCheckInTime?->toTimeString(),
             'overtime_end_time'         => $lastCheckOutTime?->toTimeString(),

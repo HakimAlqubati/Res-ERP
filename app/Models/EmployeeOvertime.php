@@ -190,6 +190,58 @@ class EmployeeOvertime extends Model implements Auditable
     }
 
     /**
+     * Format minutes (e.g. 87) into 'H:i' format (e.g. 1:27).
+     */
+    public static function formatMinutes(int|float|null $minutes): ?string
+    {
+        if ($minutes === null) {
+            return null;
+        }
+
+        $minutes = (int) round($minutes);
+        $isNegative = $minutes < 0;
+        $absMinutes = abs($minutes);
+
+        $h = intdiv($absMinutes, 60);
+        $m = $absMinutes % 60;
+
+        return ($isNegative ? '-' : '') . sprintf('%d:%02d', $h, $m);
+    }
+
+    /**
+     * Parse duration string (e.g. "1:27" or "1.45") into decimal hours (e.g. 1.45).
+     */
+    public static function parseToDecimalHours(float|int|string|null $value): float
+    {
+        if ($value === null || $value === '') {
+            return 0.0;
+        }
+
+        if (is_numeric($value)) {
+            return (float) $value;
+        }
+
+        if (is_string($value) && strpos($value, ':') !== false) {
+            [$h, $m] = explode(':', $value);
+            return round((float) $h + ((float) $m / 60), 2);
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Attribute for hours. Automatically parses 'H:i' string format to decimal when setting.
+     */
+    protected function hours(): Attribute
+    {
+        return Attribute::make(
+            set: fn ($value) => is_string($value) && strpos($value, ':') !== false
+                ? static::parseToDecimalHours($value)
+                : ($value !== null ? (float) $value : null)
+        );
+    }
+
+    /**
      * Accessor for the 'hours_formatted' attribute.
      */
     protected function hoursFormatted(): Attribute
