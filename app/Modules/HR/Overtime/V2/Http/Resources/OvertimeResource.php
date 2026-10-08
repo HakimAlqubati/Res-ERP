@@ -22,6 +22,7 @@ class OvertimeResource extends JsonResource
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
             'hours' => $this->hours,
+            'hours_formatted' => $this->hours_formatted,
             'notes' => $this->notes,
             'type' => $this->type,
             'branch_id' => $this->branch_id,

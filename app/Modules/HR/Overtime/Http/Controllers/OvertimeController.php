@@ -72,7 +72,17 @@ class OvertimeController extends Controller
             'employees.*.employee_id' => 'required|exists:hr_employees,id',
             'employees.*.start_time' => 'required|date_format:H:i',
             'employees.*.end_time' => 'required|date_format:H:i', // Removed after rule because it might be cross-day
-            'employees.*.hours' => 'required|numeric|min:0',
+            'employees.*.hours' => [
+                'required',
+                function ($attribute, $value, $fail) {
+                    if (!is_numeric($value) && !preg_match('/^\d+:[0-5]\d$/', (string) $value)) {
+                        $fail(__('The :attribute must be a valid number of hours or time format (H:i).'));
+                    }
+                    if (is_numeric($value) && $value < 0) {
+                        $fail(__('The :attribute must be at least 0.'));
+                    }
+                },
+            ],
             'employees.*.notes' => 'nullable|string',
         ];
 
@@ -122,7 +132,17 @@ class OvertimeController extends Controller
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'hours' => 'required|numeric|min:0',
+            'hours' => [
+                'required',
+                function ($attribute, $value, $fail) {
+                    if (!is_numeric($value) && !preg_match('/^\d+:[0-5]\d$/', (string) $value)) {
+                        $fail(__('The :attribute must be a valid number of hours or time format (H:i).'));
+                    }
+                    if (is_numeric($value) && $value < 0) {
+                        $fail(__('The :attribute must be at least 0.'));
+                    }
+                },
+            ],
         ]);
 
         if ($validator->fails()) {
