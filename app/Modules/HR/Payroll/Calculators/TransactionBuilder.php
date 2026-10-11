@@ -283,14 +283,14 @@ class TransactionBuilder
             ];
         }
 
-        // 13. خصومات الوجبات
+        // 13. خصومات سلف المصاريف (Expense advance / Meal requests)
         foreach ($mealRequests['items'] ?? [] as $mr) {
             $tx[] = [
                 'type'           => SalaryTransactionType::TYPE_DEDUCTION,
-                'sub_type'       => 'meal-deduction',
+                'sub_type'       => SalaryTransactionSubType::EXPENSE_ADVANCE->value,
                 'amount'         => $this->round((float)$mr['amount']),
                 'operation'      => '-',
-                'description'    => $mr['meal_details'] ?? 'Meal deduction',
+                'description'    => $mr['meal_details'] ?? 'Expense advance',
                 'reference_type' => EmployeeMealRequest::class,
                 'reference_id'   => $mr['id'],
                 'date'           => $mr['date'],
