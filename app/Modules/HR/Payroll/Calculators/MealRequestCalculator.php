@@ -58,7 +58,7 @@ class MealRequestCalculator
 
             $mealItems[] = [
                 'id'             => $mr->id,
-                'meal_details'   => EmployeeApplicationV2::APPLICATION_TYPES[EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST] ?? 'Employee Meal',
+                'meal_details'   => EmployeeApplicationV2::APPLICATION_TYPES[EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST] ?? 'Expense advance',
                 'amount'         => $this->round($cost),
                 'date'           => $mr->date,
                 'reference_type' => EmployeeMealRequest::class,

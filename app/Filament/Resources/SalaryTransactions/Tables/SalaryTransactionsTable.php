@@ -77,7 +77,7 @@ class SalaryTransactionsTable
                     ->searchable(),
                 TextColumn::make('sub_type')
                     ->label(__('Sub Type'))->toggleable()
-                    // ->alignCenter()
+                    ->formatStateUsing(fn ($record, $state) => $record?->formatted_sub_type ?? ($state ? ucwords(str_replace(['_', '-'], ' ', (string) $state)) : null))
                     ->sortable()
                     ->searchable(),
 

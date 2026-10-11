@@ -97,7 +97,7 @@ class EmployeeApplicationV2 extends Model implements Auditable, HasMedia
         self::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => '?tab=Missed+check-in',
         self::APPLICATION_TYPE_ADVANCE_REQUEST => '?tab=Advance+request',
         self::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => '?tab=Missed+check-out',
-        self::APPLICATION_TYPE_MEAL_REQUEST => '?tab=Meal+advance',
+        self::APPLICATION_TYPE_MEAL_REQUEST => '?tab=Expense+advance',
     ];
 
     // Status constants

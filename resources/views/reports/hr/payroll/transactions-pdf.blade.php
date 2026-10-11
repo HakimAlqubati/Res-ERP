@@ -96,7 +96,7 @@
                     @endif>
                     <td>{{ $i + 1 }}</td>
                     <td>{{ ucfirst($t->type) }}</td>
-                    <td>{{ ucfirst(str_replace('_', ' ', $t->sub_type)) }}</td>
+                    <td>{{ $t->formatted_sub_type ?? ucfirst(str_replace('_', ' ', $t->sub_type ?? '')) }}</td>
                     <td>
                         @if ($t->operation === '+')
                         <span style="color: #0d7c66; font-weight: 700;">+</span>
