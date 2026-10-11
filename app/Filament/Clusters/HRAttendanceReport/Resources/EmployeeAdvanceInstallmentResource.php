@@ -169,7 +169,7 @@ class EmployeeAdvanceInstallmentResource extends Resource
                     ->date('Y-m-d')
                     ->sortable()
                     ->color(fn (EmployeeAdvanceInstallment $record) => $record->isOverdue() ? 'danger' : null)
-                    ->description(fn (EmployeeAdvanceInstallment $record) => $record->isOverdue() ? 'Overdue' : null),
+                    ->description(fn (EmployeeAdvanceInstallment $record) => $record->isOverdue() ? __('lang.overdue') : null),
 
                 TextColumn::make('year')
                     ->label(__('lang.year'))
@@ -177,7 +177,7 @@ class EmployeeAdvanceInstallmentResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('month')
-                    ->label('Month')
+                    ->label(__('lang.month'))
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
@@ -193,9 +193,9 @@ class EmployeeAdvanceInstallmentResource extends Resource
                     })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         EmployeeAdvanceInstallment::STATUS_PAID => __('lang.paid'),
-                        EmployeeAdvanceInstallment::STATUS_SCHEDULED => 'Scheduled',
-                        EmployeeAdvanceInstallment::STATUS_SKIPPED => 'Skipped',
-                        EmployeeAdvanceInstallment::STATUS_CANCELLED => 'Cancelled',
+                        EmployeeAdvanceInstallment::STATUS_SCHEDULED => __('lang.scheduled'),
+                        EmployeeAdvanceInstallment::STATUS_SKIPPED => __('lang.skipped'),
+                        EmployeeAdvanceInstallment::STATUS_CANCELLED => __('lang.cancelled'),
                         default => ucfirst($state),
                     })
                     ->sortable(),
@@ -235,13 +235,13 @@ class EmployeeAdvanceInstallmentResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('skipped_reason')
-                    ->label('Skipped Reason')
+                    ->label(__('lang.skipped_reason'))
                     ->limit(30)
                     ->tooltip(fn ($state) => $state)
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('cancelled_reason')
-                    ->label('Cancelled Reason')
+                    ->label(__('lang.cancelled_reason'))
                     ->limit(30)
                     ->tooltip(fn ($state) => $state)
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -272,10 +272,10 @@ class EmployeeAdvanceInstallmentResource extends Resource
                 SelectFilter::make('status')
                     ->label(__('lang.status'))
                     ->options([
-                        EmployeeAdvanceInstallment::STATUS_SCHEDULED => 'Scheduled',
+                        EmployeeAdvanceInstallment::STATUS_SCHEDULED => __('lang.scheduled'),
                         EmployeeAdvanceInstallment::STATUS_PAID      => __('lang.paid'),
-                        EmployeeAdvanceInstallment::STATUS_SKIPPED   => 'Skipped',
-                        EmployeeAdvanceInstallment::STATUS_CANCELLED => 'Cancelled',
+                        EmployeeAdvanceInstallment::STATUS_SKIPPED   => __('lang.skipped'),
+                        EmployeeAdvanceInstallment::STATUS_CANCELLED => __('lang.cancelled'),
                     ]),
 
                 SelectFilter::make('payment_method')
@@ -300,8 +300,8 @@ class EmployeeAdvanceInstallmentResource extends Resource
 
                 Filter::make('due_date_range')
                     ->form([
-                        DatePicker::make('due_from')->label('Due From'),
-                        DatePicker::make('due_to')->label('Due To'),
+                        DatePicker::make('due_from')->label(__('lang.due_from')),
+                        DatePicker::make('due_to')->label(__('lang.due_to')),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -332,7 +332,7 @@ class EmployeeAdvanceInstallmentResource extends Resource
                     ]),
 
                 Filter::make('overdue')
-                    ->label('Overdue Only')
+                    ->label(__('lang.overdue_only'))
                     ->toggle()
                     ->query(fn (Builder $query): Builder => $query->overdue()),
             ], FiltersLayout::Modal)

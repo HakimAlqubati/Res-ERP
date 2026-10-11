@@ -1241,4 +1241,18 @@ return [
     'one_role_not_valid' => 'One of the selected roles is not valid for the current user type.',
     'roles_list_invalid' => 'The roles list format is invalid.',
     'role_required' => 'Please select at least one role.',
+
+    // ===========================================
+    // Employee Advance Installments
+    // ===========================================
+    'original_amount' => 'Original Amount',
+    'paid_by' => 'Paid By',
+    'installment' => 'Installment',
+    'skipped_reason' => 'Skipped Reason',
+    'cancelled_reason' => 'Cancelled Reason',
+    'scheduled' => 'Scheduled',
+    'skipped' => 'Skipped',
+    'due_from' => 'Due From',
+    'due_to' => 'Due To',
+    'overdue_only' => 'Overdue Only',
 ];
