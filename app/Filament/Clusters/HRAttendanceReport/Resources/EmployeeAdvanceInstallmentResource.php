@@ -85,7 +85,7 @@ class EmployeeAdvanceInstallmentResource extends Resource
         }
 
         if ($record->due_date) {
-            $details[__('lang.due_date')] = $record->due_date->format('Y-m-d');
+            $details[__('lang.due_date')] = formatDate($record->due_date);
         }
 
         if ($record->status) {
@@ -166,7 +166,7 @@ class EmployeeAdvanceInstallmentResource extends Resource
 
                 TextColumn::make('due_date')
                     ->label(__('lang.due_date'))
-                    ->date('Y-m-d')
+                    ->date()
                     ->sortable()
                     ->color(fn (EmployeeAdvanceInstallment $record) => $record->isOverdue() ? 'danger' : null)
                     ->description(fn (EmployeeAdvanceInstallment $record) => $record->isOverdue() ? __('lang.overdue') : null),
@@ -215,7 +215,7 @@ class EmployeeAdvanceInstallmentResource extends Resource
 
                 TextColumn::make('paid_date')
                     ->label(__('lang.paid_date'))
-                    ->dateTime('Y-m-d H:i')
+                    ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 

@@ -546,6 +546,36 @@ if (!function_exists('settingWithDefault')) {
 }
 
 /**
+ * Get the system configured date format from settings.
+ */
+if (!function_exists('getDateFormat')) {
+    function getDateFormat(): string
+    {
+        return settingWithDefault('date_format', 'Y-m-d') ?: 'Y-m-d';
+    }
+}
+
+/**
+ * Format a given date/datetime using the system date format.
+ */
+if (!function_exists('formatDate')) {
+    function formatDate($date, ?string $format = null): string
+    {
+        if (empty($date) || $date === '-' || $date === '—') {
+            return (string) ($date ?? '');
+        }
+
+        $targetFormat = $format ?: getDateFormat();
+
+        try {
+            return \Carbon\Carbon::parse($date)->format($targetFormat);
+        } catch (\Throwable $e) {
+            return (string) $date;
+        }
+    }
+}
+
+/**
  * to get nationalities
  */
 

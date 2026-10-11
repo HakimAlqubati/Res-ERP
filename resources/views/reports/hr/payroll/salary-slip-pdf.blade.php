@@ -300,7 +300,7 @@
 
             <div style="margin-top: 20px; text-align: center; font-size: 14px; color: #444;">
                 <p style="margin-bottom: 20px;">This payslip is computer generated. No signature is required.</p>
-                <p>Printed on: <strong>{{ now()->format('d/m/Y') }}</strong></p>
+                <p>Printed on: <strong>{{ formatDate(now()) }}</strong></p>
             </div>
         </div>
     </div>

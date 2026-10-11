@@ -59,6 +59,7 @@ class EmployeeApplicationTable
 
             TextColumn::make('application_date')->toggleable(isToggledHiddenByDefault: true)
                 ->label(__('lang.request_date'))
+                ->date()
                 ->sortable(),
 
             // TextColumn::make('application_type_name')
@@ -141,7 +142,8 @@ class EmployeeApplicationTable
         // أعمدة خاصة بطلب بصمة الحضور (Missed check-in)
         if ($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[2]) {
             $columns[] = TextColumn::make('detail_date')
-                ->label(__('lang.date'));
+                ->label(__('lang.date'))
+                ->date();
 
             $columns[] = TextColumn::make('detail_time')
 
@@ -151,7 +153,8 @@ class EmployeeApplicationTable
         // أعمدة خاصة بطلب بصمة الانصراف (Missed check-out)
         if ($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[4]) {
             $columns[] = TextColumn::make('detail_date')
-                ->label(__('lang.date'));
+                ->label(__('lang.date'))
+                ->date();
 
             $columns[] = TextColumn::make('detail_time')
                 ->label(__('lang.time'));

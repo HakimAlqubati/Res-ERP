@@ -92,6 +92,8 @@ class EmployeeOvertimeForm
                             DatePicker::make('date')
                                 ->visible(fn($get) => $get('type') === EmployeeOvertime::TYPE_BASED_ON_DAY)
                                 ->label('Overtime Date')
+                                ->native(false)
+                                ->displayFormat(getDateFormat())
                                 ->default(date('Y-m-d'))
                                 ->required()
                                 ->live()

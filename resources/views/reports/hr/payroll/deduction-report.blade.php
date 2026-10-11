@@ -138,9 +138,9 @@
 
                         {{-- Right: Dates --}}
                         <div style="text-align: center; flex-shrink: 0; line-height: 1.8;">
-                            <span style="font-weight: 600;">{{ __('From Date') . ': ' . $reportData['from_date'] }}</span>
+                            <span style="font-weight: 600;">{{ __('From Date') . ': ' . formatDate($reportData['from_date']) }}</span>
                             <br>
-                            <span style="font-weight: 600;">{{ __('To Date') . ': ' . $reportData['to_date'] }}</span>
+                            <span style="font-weight: 600;">{{ __('To Date') . ': ' . formatDate($reportData['to_date']) }}</span>
                         </div>
 
                         {{-- Far Right: Logo --}}

@@ -168,7 +168,7 @@
                     @endif
                 </td>
                 <td>{{ formatMoneyWithCurrency($t->amount) }}</td>
-                <td>{{ $t->date?->format('Y-m-d') }}</td>
+                <td>{{ formatDate($t->date) }}</td>
                 <td>{{ $t->description ?? '-' }}</td>
             </tr>
         @endforeach

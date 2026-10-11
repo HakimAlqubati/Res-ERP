@@ -122,16 +122,12 @@ class OrderTable
                             })
                     ),
                 TextColumn::make('created_at')
-                    ->formatStateUsing(function ($state) {
-                        return date('Y-m-d', strtotime($state)) . ' ' . date('H:i:s', strtotime($state));
-                    })
+                    ->dateTime()
                     ->label(__('lang.created_at'))
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->sortable(),
                 TextColumn::make('transfer_date')
-                    ->formatStateUsing(function ($state) {
-                        return date('Y-m-d', strtotime($state)) . ' ' . date('H:i:s', strtotime($state));
-                    })
+                    ->dateTime()
                     ->label(__('lang.transfer_date'))
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),

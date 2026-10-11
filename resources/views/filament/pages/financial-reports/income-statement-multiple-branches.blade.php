@@ -274,8 +274,8 @@
                 <h1 class="comparison-title">{{ __('Gross Profit Report') }}</h1>
                 <p class="comparison-subtitle">
                     @if($startDate && $endDate)
-                    {{ __('From ') }} {{ \Carbon\Carbon::parse($startDate)->format('d F, Y') }}
-                    {{ __('to') }} {{ \Carbon\Carbon::parse($endDate)->format('d F, Y') }}
+                    {{ __('From ') }} {{ formatDate($startDate) }}
+                    {{ __('to') }} {{ formatDate($endDate) }}
                     @else
                     {{ __('All Time Records') }}
                     @endif
@@ -335,7 +335,7 @@
                 {{-- Center: Generated on --}}
                 <div style="flex: 1; text-align: center;">
                     <p style="font-size: 0.7rem; color: #6b7280; margin: 0; white-space: nowrap;">
-                        {{ __('Generated on') }} {{ \Carbon\Carbon::now()->format('d F, Y - h:i A') }}
+                        {{ __('Generated on') }} {{ formatDate(now()) . ' - ' . now()->format('h:i A') }}
                     </p>
                 </div>
                 {{-- Right: Powered by AWS --}}

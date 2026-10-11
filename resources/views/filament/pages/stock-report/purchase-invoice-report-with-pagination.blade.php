@@ -81,7 +81,7 @@
                         {{ $invoice_item->supplier_name }}
                     </td>
                     <td>
-                        {{ $invoice_item->purchase_date }}
+                        {{ formatDate($invoice_item->purchase_date) }}
                     </td>
                     @if (isSuperAdmin() || isSystemManager() || isFinanceManager())
                         <td> {{ formatMoneyWithCurrency($unit_price) }} </td>

@@ -206,12 +206,12 @@ class InventoryResource extends Resource
                             })
                     )->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('movement_date')
-                    ->label('Movement Date')->date('Y-m-d')
+                    ->label('Movement Date')->date()
                     ->sortable(),
 
                 TextColumn::make('transaction_date')
                     ->label('Transaction Date')
-                    ->date('Y-m-d')
+                    ->date()
                     ->sortable()
                     ->toggleable(),
 

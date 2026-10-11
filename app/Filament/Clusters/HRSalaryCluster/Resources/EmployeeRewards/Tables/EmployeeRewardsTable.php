@@ -84,7 +84,7 @@ class EmployeeRewardsTable
                     ->alignCenter(),
 
                 TextColumn::make('date')
-                    ->date('d-m-Y')
+                    ->date()
                     ->sortable()
                     ->toggleable(),
 

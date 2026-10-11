@@ -170,7 +170,7 @@
                             $flattenedRows[] = [
                                 'no' => $rowNumber++,
                                 'employee_name' => $employeeName,
-                                'date' => $date,
+                                'date' => formatDate($date),
                                 'start_time' => $period['start_time'] ?? '-',
                                 'end_time' => $period['end_time'] ?? '-',
                             ];
@@ -223,9 +223,9 @@
                         <th colspan="3" class="no_border_right_left">
                             <p>
                                 @if($date_from === $date_to)
-                                    {{ __('Date: ') . $date_from }}
+                                    {{ __('Date: ') . formatDate($date_from) }}
                                 @else
-                                    {{ __('Date From: ') . $date_from }} | {{ __('Date To: ') . $date_to }}
+                                    {{ __('Date From: ') . formatDate($date_from) }} | {{ __('Date To: ') . formatDate($date_to) }}
                                 @endif
                             </p>
                         </th>

@@ -151,7 +151,7 @@ class PayrollsRelationManager extends RelationManager
                     ->boolean()->alignCenter(),
                 TextColumn::make('payment_date')
                     ->label(__('Payment Date'))
-                    ->date('Y-m-d')->alignCenter()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                    ->date()->alignCenter()->sortable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('paid_at')
                     ->label(__('Paid At'))
                     ->dateTime()->alignCenter()->sortable()->toggleable(isToggledHiddenByDefault: true),

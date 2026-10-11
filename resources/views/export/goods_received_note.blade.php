@@ -8,7 +8,7 @@
     </tr>
     <tr>
         <th style="font-weight: bold; text-align: left;">GRN Date:</th>
-        <td style="text-align: left;">{{ \Carbon\Carbon::parse($grn->grn_date)->format('Y-m-d') }}</td>
+        <td style="text-align: left;">{{ formatDate($grn->grn_date) }}</td>
     </tr>
     <tr>
         <th style="font-weight: bold; text-align: left;">Store:</th>

@@ -120,12 +120,12 @@
 
                     <div style="margin-bottom: 24px;">
                         <span class="bold-label">Production Date/Tarikh Pemprosesan:</span>
-                        <span style="display: inline;">{{ $row['production_date'] }}</span>
+                        <span style="display: inline;">{{ formatDate($row['production_date']) }}</span>
                     </div>
 
                     <div style="margin-bottom: 24px;">
                         <span class="bold-label">Expiry Date/Tarikh Tamat Tempoh:</span>
-                        <span style="display: inline;">{{ $row['expiry_date'] }}</span>
+                        <span style="display: inline;">{{ formatDate($row['expiry_date']) }}</span>
                     </div>
 
                     <div style="margin-bottom: 4px;">

@@ -102,10 +102,10 @@ class PurchaseInvoiceTable
                     ->label('Creator')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
-                    ->label('Created At')->date('Y-m-d')
+                    ->label('Created At')->dateTime()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('date')
-                    ->label('Date')->date('Y-m-d')
+                    ->label('Date')->date()
                     ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('has_outbound_transactions')
                     ->toggleable(isToggledHiddenByDefault: true)

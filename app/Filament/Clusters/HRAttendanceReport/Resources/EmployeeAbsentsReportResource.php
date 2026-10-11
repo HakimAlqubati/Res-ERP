@@ -78,11 +78,15 @@ class EmployeeAbsentsReportResource extends Resource
                         DatePicker::make('start_date')
                             ->label(__('lang.start_date'))
                             ->default(now()->startOfMonth()->format('Y-m-d'))
+                            ->native(false)
+                            ->displayFormat(getDateFormat())
                             ->live(),
 
                         DatePicker::make('end_date')
                             ->label(__('lang.end_date'))
                             ->default(now()->format('Y-m-d'))
+                            ->native(false)
+                            ->displayFormat(getDateFormat())
                             ->live(),
                     ]),
             ], FiltersLayout::AboveContent)

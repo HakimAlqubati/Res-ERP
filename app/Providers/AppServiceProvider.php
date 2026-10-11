@@ -115,6 +115,26 @@ class AppServiceProvider extends ServiceProvider
                 ->locales(['ar', 'en']); // also accepts a closure
         });
 
+        \Filament\Tables\Table::configureUsing(function (\Filament\Tables\Table $table): void {
+            $table->defaultDateDisplayFormat(getDateFormat());
+            $table->defaultDateTimeDisplayFormat(getDateFormat() . ' H:i:s');
+        });
+
+        if (class_exists(\Filament\Schemas\Schema::class)) {
+            \Filament\Schemas\Schema::configureUsing(function (\Filament\Schemas\Schema $schema): void {
+                $schema->defaultDateDisplayFormat(getDateFormat());
+                $schema->defaultDateTimeDisplayFormat(getDateFormat() . ' H:i:s');
+            });
+        }
+
+        \Filament\Forms\Components\DatePicker::configureUsing(function (\Filament\Forms\Components\DatePicker $picker): void {
+            $picker->native(false)->displayFormat(getDateFormat());
+        });
+
+        \Filament\Forms\Components\DateTimePicker::configureUsing(function (\Filament\Forms\Components\DateTimePicker $picker): void {
+            $picker->native(false)->displayFormat(getDateFormat() . ' H:i');
+        });
+
         // FilamentAsset::register([
             // Js::make('custom-script', __DIR__ . '/../../tune.js'),
             // Js::make('custom-script', ''),

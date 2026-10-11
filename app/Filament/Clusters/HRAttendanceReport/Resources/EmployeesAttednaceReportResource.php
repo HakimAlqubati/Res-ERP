@@ -62,7 +62,10 @@ class EmployeesAttednaceReportResource extends Resource
                 )->searchable()->placeholder(__('lang.please_select_branch')),
                 Filter::make('filter_date')->label('')->schema([
                     DatePicker::make('date')
-                        ->label(__('lang.date'))->default(date('Y-m-d')),
+                        ->label(__('lang.date'))
+                        ->native(false)
+                        ->displayFormat(getDateFormat())
+                        ->default(date('d-m-Y')),
                 ]),
 
             ], FiltersLayout::AboveContent);

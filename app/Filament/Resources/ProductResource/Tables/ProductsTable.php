@@ -200,7 +200,9 @@ class ProductsTable
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ->label('Created At'),
+                    ->label('Created At')
+                    ->dateTime()
+                    ->sortable(),
 
             ])
 

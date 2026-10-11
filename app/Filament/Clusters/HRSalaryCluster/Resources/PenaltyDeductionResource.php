@@ -205,14 +205,14 @@ class PenaltyDeductionResource extends Resource
                     })
                     ->sortable(),
                 TextColumn::make('date')->toggleable()
-                    ->date('d-m-Y')
+                    ->date()
                     ->sortable(),
                 TextColumn::make('created_by')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->formatStateUsing(fn ($record) => $record->created_by ? User::find($record->created_by)?->name : '-')
                     ->sortable(),
                 TextColumn::make('created_at')->toggleable(isToggledHiddenByDefault:true)
-                    ->date('d-m-Y H:i')
+                    ->dateTime()
                     ->sortable(),
             ])
             ->filters([

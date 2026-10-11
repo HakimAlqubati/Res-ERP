@@ -56,11 +56,11 @@ class ApprovalResource extends Resource
             ->columns([
                 TextColumn::make('created_by_name')->label('Created By'),
                 TextColumn::make('route_name')->label('Route Name'),
-                TextColumn::make('date')->label('Date')->date('Y-m-d')->alignCenter(true),
+                TextColumn::make('date')->label('Date')->date()->alignCenter(true),
                 TextColumn::make('time')->label('Time')->alignCenter(true),
                 BooleanColumn::make('is_approved')->label('Approved')->alignCenter(true),
                 TextColumn::make('approved_by_name')->label('Approved By'),
-                TextColumn::make('created_at')->label('Requested At'),
+                TextColumn::make('created_at')->label('Requested At')->dateTime(),
             ])
             ->filters([
                 //

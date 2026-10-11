@@ -103,7 +103,7 @@ class GoodsReceivedNoteResource extends Resource
                                 '<div class="p-4 rounded-lg bg-danger-50 border border-danger-200 text-danger-700 dark:bg-danger-950/50 dark:border-danger-800 dark:text-danger-300">' .
                                 '<div class="font-bold text-sm mb-1">This Goods Received Note was rejected' . ($record?->rejectedBy?->name ? ' by ' . e($record->rejectedBy->name) : '') . '.</div>' .
                                 '<div><span class="font-semibold">Reason: </span>' . e($record?->rejected_reason) . '</div>' .
-                                ($record?->rejected_date ? '<div class="text-xs text-gray-500 mt-1">Rejected Date: ' . $record->rejected_date->format('Y-m-d H:i') . '</div>' : '') .
+                                ($record?->rejected_date ? '<div class="text-xs text-gray-500 mt-1">Rejected Date: ' . $record->rejected_date->format(getDateFormat() . ' H:i') . '</div>' : '') .
                                 '</div>'
                             )),
                     ])
@@ -541,12 +541,15 @@ class GoodsReceivedNoteResource extends Resource
                     )
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')->alignCenter(true)
+                    ->dateTime()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
                 TextColumn::make('created_at')->alignCenter(true)
+                    ->dateTime()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
                 TextColumn::make('approve_date')->alignCenter(true)
+                    ->date()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
                 IconColumn::make('has_inventory_transaction')

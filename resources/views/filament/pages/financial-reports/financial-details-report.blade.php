@@ -55,8 +55,8 @@
                         <th colspan="1" class="no_border_right_left text-center">
                             <h3>{{ __('Financial Details Report') }}</h3>
                             <p class="text-sm text-gray-600">
-                                {{ __('From') }}: {{ $filters['start_date'] ?? 'N/A' }} |
-                                {{ __('To') }}: {{ $filters['end_date'] ?? 'N/A' }}
+                                {{ __('From') }}: {{ !empty($filters['start_date']) ? formatDate($filters['start_date']) : 'N/A' }} |
+                                {{ __('To') }}: {{ !empty($filters['end_date']) ? formatDate($filters['end_date']) : 'N/A' }}
                             </p>
                         </th>
                         <th colspan="2"
@@ -120,7 +120,7 @@
                     @foreach ($transactions as $transaction)
                     <tr>
                         <td class="border border-gray-300 px-4 py-2">
-                            {{ $transaction->transaction_date ? $transaction->transaction_date->format('Y-m-d') : 'N/A' }}
+                            {{ $transaction->transaction_date ? formatDate($transaction->transaction_date) : 'N/A' }}
                         </td>
                         <td class="border border-gray-300 px-4 py-2">
                             {{ $transaction->branch->name ?? 'N/A' }}

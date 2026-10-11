@@ -82,6 +82,7 @@ class EmployeeOvertimeTable
 
                 TextColumn::make('date')
                     ->label('Date')
+                    ->date(getDateFormat())
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
 
@@ -127,8 +128,10 @@ class EmployeeOvertimeTable
                     ->label('Approved by')
                     ->wrap()->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('approved_at')->wrap()
+                    ->dateTime(getDateFormat() . ' H:i')
                     ->label('Approved at')->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('created_at')->wrap()
+                    ->dateTime(getDateFormat() . ' H:i')
                     ->label('Created at')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('rejectedBy.name')
                     ->label('Rejected by')
@@ -159,9 +162,13 @@ class EmployeeOvertimeTable
                     ->schema([
                         DatePicker::make('created_from')
                             ->label('From')->default(null)
+                            ->native(false)
+                            ->displayFormat(getDateFormat())
                             ->placeholder('From'),
                         DatePicker::make('created_until')
                             ->label('To')
+                            ->native(false)
+                            ->displayFormat(getDateFormat())
                             ->placeholder('To')->default(null),
                     ])
                     ->query(function (Builder $query, array $data): Builder {

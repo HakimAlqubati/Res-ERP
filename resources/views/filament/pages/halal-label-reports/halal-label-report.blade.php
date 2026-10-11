@@ -45,7 +45,7 @@
                     <th colspan="4" class="no_border_right_left text-left">
                         <h3>Halal Label Report for ({{ $store }})</h3>
                         <h5>
-                            Between {{ $startDate . ' & ' . $endDate }}
+                            Between {{ formatDate($startDate) . ' & ' . formatDate($endDate) }}
                         </h5>
                     </th>
                     <th colspan="2" class="no_border_left text-center">
@@ -67,8 +67,8 @@
                 <tr>
                     <td class="border px-4 py-1 text-center">{{ $row['product_name'] }}</td>
                     <td class="border px-4 py-1 text-center">{{ $row['patch_number'] }}</td>
-                    <td class="border px-4 py-1 text-center">{{ $row['production_date'] }}</td>
-                    <td class="border px-4 py-1 text-center">{{ $row['expiry_date'] }}</td>
+                    <td class="border px-4 py-1 text-center">{{ formatDate($row['production_date']) }}</td>
+                    <td class="border px-4 py-1 text-center">{{ formatDate($row['expiry_date']) }}</td>
                     <td class="border px-4 py-1 text-center">{{ $row['net_weight'] }}</td>
                     <td class="border px-4 py-1 text-center">{{ $row['quantity'] }} {{ $row['unit'] }}</td>
                     <td class="border px-4 py-1 text-center no-print">
@@ -118,12 +118,12 @@
                             <tr>
                                 <td class="align-top uppercase pb-1">PROD. DATE</td>
                                 <td class="align-top pb-1">:</td>
-                                <td class="align-top pb-1">{{ $selectedLabelDetails['production_date'] }}</td>
+                                <td class="align-top pb-1">{{ formatDate($selectedLabelDetails['production_date']) }}</td>
                             </tr>
                             <tr>
                                 <td class="align-top uppercase pb-1">BEST BEFORE</td>
                                 <td class="align-top pb-1">:</td>
-                                <td class="align-top pb-1">{{ $selectedLabelDetails['best_before'] ?? $selectedLabelDetails['expiry_date'] ?? '' }}</td>
+                                <td class="align-top pb-1">{{ formatDate($selectedLabelDetails['best_before'] ?? $selectedLabelDetails['expiry_date'] ?? '') }}</td>
                             </tr>
                             <tr>
                                 <td class="align-top uppercase pb-1">NETT WEIGHT</td>

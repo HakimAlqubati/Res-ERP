@@ -131,16 +131,14 @@ class UserTable
                         } elseif ($date->isYesterday()) {
                             return 'Yesterday '.$date->format('h:i A');
                         } else {
-                            if ($date->year === now()->year) {
-                                return $date->format('M d, h:i A');
-                            }
-
-                            return $date->format('M d, Y h:i A');
+                            return $date->format(getDateFormat() . ', h:i A');
                         }
                     })
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->visible(fn () => isHakimOrAdel()),
                 TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
                     ->label(__('lang.created_at'))
                     ->toggleable(isToggledHiddenByDefault: true),
             ])

@@ -2,7 +2,7 @@
      <x-slot name="heading">
          {{ __('Attendance Details') }}
          @if ($modalData['date'])
-         – {{ $modalData['date'] }}
+         – {{ formatDate($modalData['date']) }}
          @endif
      </x-slot>
 

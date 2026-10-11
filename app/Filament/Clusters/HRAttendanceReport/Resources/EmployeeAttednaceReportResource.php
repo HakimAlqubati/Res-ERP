@@ -101,10 +101,14 @@ class EmployeeAttednaceReportResource extends Resource
                                 $set('end_date', $endNextMonthData['end_month']);
                             })
                             ->label(__('lang.start_date'))
+                            ->native(false)
+                            ->displayFormat(getDateFormat())
                             ->default($currentMonthData['start_month']), // Use function for dynamic default value
 
                         DatePicker::make('end_date')
                             ->label(__('lang.end_date'))
+                            ->native(false)
+                            ->displayFormat(getDateFormat())
                             ->default($currentMonthData['end_month']), // Use function for dynamic default value
                     ]),
                 Filter::make('show_extra_fields')

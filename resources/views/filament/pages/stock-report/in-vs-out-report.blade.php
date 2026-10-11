@@ -25,7 +25,7 @@
             <tr class="header_report">
                  
                 <th colspan="4" class="text-left text-xl font-bold px-4 py-2">
-                    ({{ $store }}) To Date {{ $toDate }}
+                    ({{ $store }}) To Date {{ formatDate($toDate) }}
                 </th>
                 <th colspan="2" style="text-align: center; vertical-align: middle;border:none;"
                     class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">

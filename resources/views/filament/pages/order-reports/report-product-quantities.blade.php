@@ -126,9 +126,9 @@
                     </p>
                 </th>
                 <th colspan="3" class="no_border_right_left">
-                    <p>{{ __('lang.start_date') . ': ' . $start_date }}</p>
+                    <p>{{ __('lang.start_date') . ': ' . formatDate($start_date) }}</p>
                     <br>
-                    <p>{{ __('lang.end_date') . ': ' . $end_date }}</p>
+                    <p>{{ __('lang.end_date') . ': ' . formatDate($end_date) }}</p>
                 </th>
                 <th colspan="3" style="text-align: center; vertical-align: middle;"
                     class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">

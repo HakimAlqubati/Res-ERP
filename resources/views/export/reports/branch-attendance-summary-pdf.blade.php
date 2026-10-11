@@ -96,7 +96,7 @@
         @if($companyLogo)
         <img src="{{ $companyLogo }}" alt="Logo" style="height: 60px; margin-bottom: 5px;">
         @endif
-        <p>Date: {{ \Carbon\Carbon::create($year, $month, 1)->endOfMonth()->format('M jS Y') }}</p>
+        <p>Date: {{ \Carbon\Carbon::create($year, $month, 1)->endOfMonth()->format(getDateFormat()) }}</p>
         <p style="font-weight: bold; font-size: 13px;">{{ $branchName }}</p>
         <h2>ATTENDANCE REPORT &mdash; {{ \Carbon\Carbon::create($year, $month)->format('M Y') }}</h2>
     </div>
@@ -256,7 +256,7 @@
                 <td class="text-center">{{ $row['overtime']['hours'] ?: '0' }}</td>
                 <td class="text-center">{{ $row['deductions']['days'] ?: '0' }}</td>
                 <td class="text-center">{{ $row['deductions']['hours'] ?: '0' }}</td>
-                <td class="text-center">{{ $row['termination_date'] ?? '0' }}</td>
+                <td class="text-center">{{ !empty($row['termination_date']) ? formatDate($row['termination_date']) : '0' }}</td>
                 <td>{{ $row['note'] ?? '0' }}</td>
             </tr>
             @empty

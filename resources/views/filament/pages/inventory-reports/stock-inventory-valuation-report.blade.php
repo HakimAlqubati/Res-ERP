@@ -83,7 +83,7 @@
                                 <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
                                     Store: <strong class="text-gray-800 dark:text-gray-200">{{ $reportData->storeName }}</strong>
                                     &nbsp;|&nbsp;
-                                    Date: <strong class="text-gray-800 dark:text-gray-200">{{ $reportData->inventoryDate }}</strong>
+                                    Date: <strong class="text-gray-800 dark:text-gray-200">{{ formatDate($reportData->inventoryDate) }}</strong>
                                     @if(!empty($reportData->categoryName))
                                         &nbsp;|&nbsp;
                                         Category: <strong class="text-gray-800 dark:text-gray-200">{{ $reportData->categoryName }}</strong>
@@ -92,7 +92,7 @@
                             </th>
                             <th colspan="2" class="no_border_left text-right">
                                 <div class="text-xs text-gray-500 dark:text-gray-400">
-                                    <span>Generated: {{ now()->format('Y-m-d H:i') }}</span>
+                                    <span>Generated: {{ now()->format(getDateFormat() . ' H:i') }}</span>
                                 </div>
                             </th>
                         </tr>

@@ -71,7 +71,7 @@ class StockAdjustmentReportResource extends Resource
                 TextColumn::make('store.name')->toggleable(),
                 TextColumn::make('notes'),
                 TextColumn::make('createdBy.name')->label('Responsible')->searchable()->toggleable(),
-                TextColumn::make('adjustment_date')->label('Date')->searchable()->toggleable()->sortable(),
+                TextColumn::make('adjustment_date')->label('Date')->date()->searchable()->toggleable()->sortable(),
 
             ])
             ->filters([

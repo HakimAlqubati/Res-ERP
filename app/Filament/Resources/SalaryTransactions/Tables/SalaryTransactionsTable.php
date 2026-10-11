@@ -100,7 +100,7 @@ class SalaryTransactionsTable
                 // التاريخ
                 TextColumn::make('date')->alignCenter()->toggleable()
                     ->label(__('Date'))->toggleable(isToggledHiddenByDefault: true)
-                    ->date('d-m-Y')
+                    ->date()
                     ->sortable(),
 
                 // // الحالة

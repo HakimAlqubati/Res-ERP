@@ -43,7 +43,7 @@ class PosImportDataTable
                 TextColumn::make('date')
                     ->label('Import Date')
                     ->sortable()
-                    ->date('Y-m-d')
+                    ->date()
                     ->toggleable(),
 
                 TextColumn::make('branch.name')

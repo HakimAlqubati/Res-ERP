@@ -226,7 +226,7 @@ class StockIssueOrderResource extends Resource
             ->striped()->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('id')->sortable()->label('ID')->searchable(isIndividual: true)->alignCenter(true),
-                TextColumn::make('order_date')->sortable()->label('Order Date'),
+                TextColumn::make('order_date')->sortable()->label('Order Date')->date(),
                 TextColumn::make('store.name')->label('Store'),
                 TextColumn::make('createdBy.name')->label('Created By'),
                 TextColumn::make('item_count')->label('Products Count')->alignCenter(true),
@@ -234,6 +234,7 @@ class StockIssueOrderResource extends Resource
                 IconColumn::make('cancelled')
                     ->label('Cancelled')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
+                    ->dateTime()
                     ->label('Created at')->toggleable(isToggledHiddenByDefault: false),
             ])
             ->filters([

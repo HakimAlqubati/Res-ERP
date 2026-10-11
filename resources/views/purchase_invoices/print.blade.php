@@ -99,7 +99,7 @@
             <div class="title">{{ $meta['title'] }}</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
                 <span class="badge"><span class="dot"></span> No. {{ $meta['invoice_no'] }}</span>
-                <span class="badge"><span class="dot"></span> Date: {{ $meta['date'] }}</span>
+                <span class="badge"><span class="dot"></span> Date: {{ formatDate($meta['date']) }}</span>
                 @if($meta['has_grn'])
                     <span class="badge"><span class="dot"></span> GRN linked</span>
                 @endif
@@ -110,7 +110,7 @@
                     <span class="badge" style="border-color:#fecaca;background:#ffe4e6;color:#9f1239">Cancelled</span>
                 @endif
             </div>
-            <div class="muted" style="margin-top:8px">Generated at {{ now()->format('Y-m-d H:i') }}</div>
+            <div class="muted" style="margin-top:8px">Generated at {{ now()->format(getDateFormat() . ' H:i') }}</div>
         </div>
         <div class="meta-card">
             <div class="meta-grid">
@@ -204,7 +204,7 @@
 
     <div class="footer">
         <div>Printed by {{ $meta['app_name'] }}</div>
-        <div>{{ now()->format('Y-m-d') }}</div>
+        <div>{{ formatDate(now()) }}</div>
     </div>
 </div>
 </body>

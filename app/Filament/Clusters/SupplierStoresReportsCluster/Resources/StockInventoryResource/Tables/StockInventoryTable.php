@@ -59,7 +59,7 @@ class StockInventoryTable
                 SoftDeleteColumn::make(),
                 TextColumn::make('id')->sortable()->label('ID')->searchable()->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('inventory_date')->sortable()->label('Date')->toggleable(),
+                TextColumn::make('inventory_date')->sortable()->label('Date')->date()->toggleable(),
                 TextColumn::make('categories_names')->limit(40)
                     ->weight(FontWeight::Medium)->tooltip(fn($record): string => $record->categories_names)
                     ->wrap()->label('Categories')->toggleable(),
@@ -86,7 +86,7 @@ class StockInventoryTable
                 IconColumn::make('finalized')->sortable()->label('Finalized')->boolean()->alignCenter(true)->toggleable(),
                 TextColumn::make('adjustment_date')
                     ->label('Finalized Date')
-                    ->date('Y-m-d')
+                    ->date()
                     ->sortable(false)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->state(function ($record) {
@@ -99,6 +99,7 @@ class StockInventoryTable
                     ->placeholder('-'),
 
                     TextColumn::make('created_at')
+                    ->dateTime()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('created_at'),
 

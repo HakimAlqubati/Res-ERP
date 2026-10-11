@@ -34,8 +34,8 @@
                         <th colspan="3"
                             class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
 
-                            <p>{{ __('lang.start_date') . ': ' . ($start_date ?? __('lang.not_specified')) }}</p>
-                            <p>{{ __('lang.end_date') . ': ' . ($end_date ?? __('lang.not_specified')) }}</p>
+                            <p>{{ __('lang.start_date') . ': ' . ($start_date ? formatDate($start_date) : __('lang.not_specified')) }}</p>
+                            <p>{{ __('lang.end_date') . ': ' . ($end_date ? formatDate($end_date) : __('lang.not_specified')) }}</p>
                         </th>
                         <th colspan="3" class="no_border_right_left text-center">
                             <p>{{ __('Returned Orders Report') }}</p>
@@ -64,7 +64,7 @@
                     @foreach ($reportData as $row)
                         <tr>
                             <td>{{ $row['id'] }}</td>
-                            <td>{{ $row['date'] }}</td>
+                            <td>{{ formatDate($row['date']) }}</td>
                             <td>{{ $row['branch'] }}</td>
                             <td>{{ $row['store'] }}</td>
                             <td>{{ $row['created_by'] }}</td>

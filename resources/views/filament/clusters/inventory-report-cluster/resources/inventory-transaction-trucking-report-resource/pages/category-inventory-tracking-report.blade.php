@@ -55,7 +55,7 @@
                             <tbody>
                                 @forelse ($transactions as $tx)
                                     <tr class="text-center border-t">
-                                        <td class="px-4 py-2">{{ $tx->movement_date }}</td>
+                                        <td class="px-4 py-2">{{ formatDate($tx->movement_date) }}</td>
                                         <td class="px-4 py-2">{{ $tx->movement_type == 'in' ? 'In' : 'Out' }}</td>
                                         <td class="px-4 py-2">{{ $tx->quantity }}</td>
                                         <td class="px-4 py-2">{{ $tx->unit?->name }}</td>

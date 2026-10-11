@@ -119,7 +119,7 @@ class AdvanceWagesRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('date')
                     ->label(__('Date'))
-                    ->date('Y-m-d')
+                    ->date()
                     ->sortable(),
 
                 TextColumn::make('amount')
@@ -151,7 +151,7 @@ class AdvanceWagesRelationManager extends RelationManager
 
                 TextColumn::make('settled_at')
                     ->label(__('Settled At'))
-                    ->dateTime('Y-m-d')
+                    ->date()
                     ->placeholder('—')
                     ->toggleable(isToggledHiddenByDefault: true),
 

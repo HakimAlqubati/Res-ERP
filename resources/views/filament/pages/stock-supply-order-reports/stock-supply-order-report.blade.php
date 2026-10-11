@@ -34,7 +34,7 @@
                         <th colspan="2" class="no_border_right_left text-left">
                             <h3>Stock Supply Report for ({{ $store }})</h3>
                             <h5>
-                                Between {{ $startDate . ' & ' . $endDate }}
+                                Between {{ formatDate($startDate) . ' & ' . formatDate($endDate) }}
                             </h5>
                         </th>
                         <th class="no_border_left text-center">

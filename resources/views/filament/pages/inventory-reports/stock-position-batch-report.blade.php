@@ -187,7 +187,7 @@
                                 <td>{{ $batch->product_code }}</td>
                                 <td>{{ $batch->product }}</td>
                                 <td>{{ $batch->source_document }}</td>
-                                <td>{{ $batch->movement_date }}</td>
+                                <td>{{ formatDate($batch->movement_date) }}</td>
                                 <td>{{ $batch->base_unit }}</td>
                                 <td>{{ $batch->base_unit_package_size }}</td>
                                 <td style="font-weight: 600;">{{ formatQunantity($batch->current_stock) }}</td>
