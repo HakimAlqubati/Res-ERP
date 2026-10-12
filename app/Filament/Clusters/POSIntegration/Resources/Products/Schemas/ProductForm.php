@@ -252,17 +252,11 @@ class ProductForm
                                         ->label(__('lang.price'))
                                         ->numeric()
                                         ->default(1)
-                                        ->live(onBlur: true)
-                                        ->afterStateUpdated(function (Set $set, $state, $get) {
-                                            $res = ((float) $state) * ((float) $get('quantity'));
-                                            $res = round($res, 8);
-                                            if ($get('qty_waste_percentage') == 0) {
-                                                $set('total_price_after_waste', $res);
-                                            }
-                                            $set('total_price_after_waste', ProductItem::calculateTotalPriceAfterWaste($res, $get('qty_waste_percentage') ?? 0));
-                                            $set('total_price', $res);
-                                            PRA::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
-                                        })->required()->minValue(0.000000001),
+                                        ->readOnly()
+                                        ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
+                                        ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;'])
+                                        ->dehydrated()
+                                        ->required()->minValue(0.000000001),
                                     TextInput::make('total_price')->default(0)
                                         ->type('text')
                                         ->extraInputAttributes(['readonly' => true]),
