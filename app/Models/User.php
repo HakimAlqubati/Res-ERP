@@ -63,6 +63,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
         'is_attendance_user',
         'fcm_token',
         'last_seen_at',
+        'can_add_branch_order',
     ];
     protected $auditInclude = [
         'name',
@@ -81,6 +82,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
         'branch_area_id',
         'is_attendance_user',
         'fcm_token',
+        'can_add_branch_order',
     ];
 
     /**
@@ -99,7 +101,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
      * @var array<string, string>
      */
     protected $casts = [
-        'email_verified_at' => 'datetime',
+        'email_verified_at'    => 'datetime',
+        'can_add_branch_order' => 'boolean',
     ];
 
     protected $appends                = [
@@ -559,9 +562,10 @@ class User extends Authenticatable implements FilamentUser, Auditable
                     'employee_no'   => (Employee::withTrashed()->max('id') ?? 0) + 1,
                     'join_date'     => now(),
                     'job_title'     => $data['job_title'] ?? 'New Employee',
-                    'nationality'   => $this->nationality,      // من اليوزر
-                    'manager_id'    => $managerEmployeeId,      // من اليوزر
-                    'employee_type' => $this->user_type,        // من اليوزر
+                    'nationality'          => $this->nationality,      // من اليوزر
+                    'manager_id'           => $managerEmployeeId,      // من اليوزر
+                    'employee_type'        => $this->user_type,        // من اليوزر
+                    'can_add_branch_order' => (bool) ($this->can_add_branch_order ?? false),
                 ]);
 
                 Notification::make()

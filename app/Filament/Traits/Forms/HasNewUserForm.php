@@ -82,6 +82,11 @@ trait HasNewUserForm
                             ->default(true)
                             ->inline(false),
 
+                        \Filament\Forms\Components\Checkbox::make('can_add_branch_order')
+                            ->label(__('lang.can_add_branch_order'))
+                            ->default(false)
+                            ->inline(false),
+
                         Select::make('nationality')
                             ->label(__('lang.nationality'))
                             ->options(getNationalities()) // Loads nationalities from JSON file

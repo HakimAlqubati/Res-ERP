@@ -42,6 +42,7 @@ class UserResource extends JsonResource
             }) : null,
             'can_create_advance' => (bool)$this->can_create_advance,
             'can_create_missed_check_requests' => (bool)$this->can_create_missed_check_requests,
+            'can_add_branch_order' => (bool)$this->can_add_branch_order,
         ];
     }
 }

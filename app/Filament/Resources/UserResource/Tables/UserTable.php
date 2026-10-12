@@ -88,6 +88,12 @@ class UserTable
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),
 
+                IconColumn::make('can_add_branch_order')
+                    ->label(__('lang.can_add_branch_order'))
+                    ->boolean()
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('branch.name')->searchable()->label('Branch')
                     ->toggleable(isToggledHiddenByDefault: false)->limit(20)
                     ->tooltip(fn ($state) => $state),
