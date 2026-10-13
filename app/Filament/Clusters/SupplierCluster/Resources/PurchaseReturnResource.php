@@ -11,6 +11,7 @@ use App\Filament\Clusters\SupplierCluster\Resources\PurchaseReturnResource\Pages
 use App\Filament\Clusters\SupplierCluster\Resources\PurchaseReturnResource\Pages\ViewPurchaseReturn;
 use App\Filament\Clusters\SupplierCluster\Resources\PurchaseReturnResource\Schemas\PurchaseReturnForm;
 use App\Filament\Clusters\SupplierCluster\Resources\PurchaseReturnResource\Tables\PurchaseReturnTable;
+use App\Filament\Resources\PurchaseInvoiceResource;
 use App\Models\PurchaseReturn;
 use App\Modules\Stock\PurchaseReturns\Actions\ApprovePurchaseReturnAction;
 use App\Modules\Stock\PurchaseReturns\Actions\CancelPurchaseReturnAction;
@@ -152,4 +153,8 @@ class PurchaseReturnResource extends Resource
         ]);
     }
 
+      public static function canViewAny(): bool
+    {
+        return PurchaseInvoiceResource::canCreate();
+    }
 }

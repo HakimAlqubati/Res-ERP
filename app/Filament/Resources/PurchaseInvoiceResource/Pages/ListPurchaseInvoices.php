@@ -18,6 +18,7 @@ class ListPurchaseInvoices extends ListRecords
         return [
             CreateAction::make()
             ->label('New Supplier Invoice')
+            ->visible(fn()=>PurchaseInvoiceResource::canCreate())
             ,
         ];
     }

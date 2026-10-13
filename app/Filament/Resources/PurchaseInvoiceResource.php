@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Clusters\SupplierCluster;
+use App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource;
 use App\Filament\Clusters\SupplierCluster\Resources\PurchaseInvoiceResource\RelationManagers\DetailsRelationManager;
 use App\Filament\Resources\PurchaseInvoiceResource\Pages\CreatePurchaseInvoice;
 use App\Filament\Resources\PurchaseInvoiceResource\Pages\EditPurchaseInvoice;
@@ -123,12 +124,13 @@ class PurchaseInvoiceResource extends Resource
         // if (settingWithDefault('purchase_invoice_from_grn_only', false)) {
         //     return false;
         // }
-        if (isSuperAdmin() || isFinanceManager()) {
+        if (isSuperAdmin() || isFinanceManager() ||GoodsReceivedNoteResource::canCreate()) {
             return true;
         }
         if (isSuperVisor() || isStoreManager()) {
             return false;
         }
+        return false;
 
         return static::can('create');
     }
@@ -154,7 +156,7 @@ class PurchaseInvoiceResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor() || isAccountant()) {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor() || isAccountant() || isHR()) {
             return true;
         }
 
