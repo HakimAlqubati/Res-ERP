@@ -19,6 +19,8 @@ use App\Models\Product;
 use App\Models\StockAdjustment;
 use App\Models\StockAdjustmentDetail;
 use App\Models\StockAdjustmentReason;
+use App\Models\StockInventoryDetail;
+use App\Models\UnitPrice;
 use App\Models\StockIssueOrder;
 use App\Models\StockIssueOrderDetail;
 use App\Models\StockSupplyOrder;
@@ -159,6 +161,7 @@ class DetailsRelationManager extends RelationManager
                 // Tables\Actions\CreateAction::make(),
             ])
             ->recordActions([
+                $this->correctiveStockAdjustmentAction(),
                 Action::make('edit_package_size')
                     ->label('Edit PKS')
                     ->icon('heroicon-o-pencil-square')
@@ -334,6 +337,157 @@ class DetailsRelationManager extends RelationManager
             //throw $th;
             DB::rollBack();
             showWarningNotifiMessage('Faild', $th->getMessage());
+        }
+    }
+
+    public function correctiveStockAdjustmentAction(): Action
+    {
+        return Action::make('corrective_stock_adjustment')
+            ->label('Corrective Adjustment')
+            ->icon('heroicon-o-arrow-path')
+            ->color('warning')
+            ->button()
+            ->modalHeading('Corrective Stock Adjustment')
+            ->modalDescription('Create a corrective stock adjustment (IN or OUT) linked to this inventory.')
+            ->modalWidth(Width::Large)
+            ->schema([
+                TextInput::make('product_info')
+                    ->label('Product')
+                    ->default(fn ($record) => $record->product ? "{$record->product->code} - {$record->product->name}" : 'N/A')
+                    ->disabled()
+                    ->dehydrated(false),
+                Select::make('unit_id')
+                    ->label('Unit')
+                    ->options(fn ($record) => $record->product?->units()->pluck('units.name', 'units.id')->toArray() ?? [])
+                    ->default(fn ($record) => $record->unit_id)
+                    ->required(),
+                Select::make('type')
+                    ->label('Movement Type')
+                    ->options([
+                        'in'  => 'In (Increase / Add to Stock)',
+                        'out' => 'Out (Decrease / Deduct from Stock)',
+                    ])
+                    ->default('in')
+                    ->required(),
+                TextInput::make('quantity')
+                    ->label('Quantity')
+                    ->numeric()
+                    ->minValue(0.0001)
+                    ->required(),
+                Select::make('reason_id')
+                    ->label('Reason')
+                    ->default(StockAdjustmentReason::getFirstId())
+                    ->options(StockAdjustmentReason::active()->pluck('name', 'id'))
+                    ->searchable()
+                    ->required(),
+                Textarea::make('notes')
+                    ->label('Notes')
+                    ->default(fn ($record) => "Corrective stock adjustment for product ({$record->product?->name}) linked to stock inventory #{$record->stock_inventory_id}")
+                    ->required(),
+            ])
+            ->action(function (StockInventoryDetail $record, array $data): void {
+                static::createLinkedStockAdjustment($record, $data);
+            });
+    }
+
+    public static function createLinkedStockAdjustment(StockInventoryDetail $detail, array $data): void
+    {
+        $detail->loadMissing(['inventory', 'product', 'unit']);
+
+        $storeId = $detail->inventory?->store_id;
+        if (!$storeId) {
+            throw new \Exception('Store not found for this inventory.');
+        }
+
+        $productId = (int) $detail->product_id;
+        $unitId = (int) ($data['unit_id'] ?? $detail->unit_id);
+        $quantity = abs((float) ($data['quantity'] ?? 0));
+        $type = ($data['type'] ?? 'in') === 'out' ? 'out' : 'in';
+        $reasonId = !empty($data['reason_id']) ? (int) $data['reason_id'] : StockAdjustmentReason::getFirstId();
+        $notes = !empty($data['notes'])
+            ? $data['notes']
+            : "Corrective stock adjustment for product ({$detail->product?->name}) linked to stock inventory #{$detail->stock_inventory_id}";
+
+        if ($quantity <= 0) {
+            throw new \Exception('Quantity must be greater than zero.');
+        }
+
+        $packageSize = UnitPrice::getPackageSize($productId, $unitId);
+        if (!$packageSize || $packageSize <= 0) {
+            throw new \Exception('Invalid or missing package size for the selected unit.');
+        }
+
+        $adjustmentType = $type === 'in'
+            ? StockAdjustment::ADJUSTMENT_TYPE_INCREASE
+            : StockAdjustment::ADJUSTMENT_TYPE_DECREASE;
+
+        DB::beginTransaction();
+        try {
+            // 1. Create StockAdjustmentDetail linked to this inventory
+            $stockAdjustment = StockAdjustmentDetail::create([
+                'product_id'      => $productId,
+                'unit_id'         => $unitId,
+                'quantity'        => $quantity,
+                'package_size'    => $packageSize,
+                'notes'           => $notes,
+                'store_id'        => $storeId,
+                'reason_id'       => $reasonId,
+                'adjustment_type' => $adjustmentType,
+                'created_by'      => auth()->id(),
+                'adjustment_date' => now(),
+                'source_id'       => $detail->stock_inventory_id,
+                'source_type'     => StockInventory::class,
+            ]);
+
+            // 2. Create InventoryTransaction based on type (IN or OUT via FIFO)
+            if ($type === 'in') {
+                InventoryTransaction::create([
+                    'product_id'           => $productId,
+                    'movement_type'        => InventoryTransaction::MOVEMENT_IN,
+                    'quantity'             => $quantity,
+                    'unit_id'              => $unitId,
+                    'package_size'         => $packageSize,
+                    'price'                => getUnitPrice($productId, $unitId),
+                    'store_id'             => $storeId,
+                    'movement_date'        => now(),
+                    'transaction_date'     => now(),
+                    'notes'                => $notes,
+                    'transactionable_id'   => $stockAdjustment->id,
+                    'transactionable_type' => StockAdjustmentDetail::class,
+                ]);
+            } else {
+                $fifoService = new FifoMethodService($stockAdjustment);
+                $allocations = $fifoService->getAllocateFifo(
+                    $productId,
+                    $unitId,
+                    $quantity,
+                    $storeId
+                );
+
+                self::moveFromInventory($allocations, $stockAdjustment);
+            }
+
+            // Ensure detail is marked as adjusted
+            if (!$detail->is_adjustmented) {
+                $detail->update(['is_adjustmented' => true]);
+            }
+
+            DB::commit();
+
+            Notification::make()
+                ->title('Corrective Adjustment Created')
+                ->body('Corrective adjustment and inventory transaction have been recorded successfully.')
+                ->success()
+                ->send();
+
+        } catch (Throwable $th) {
+            DB::rollBack();
+            Notification::make()
+                ->title('Corrective Adjustment Failed')
+                ->body($th->getMessage())
+                ->danger()
+                ->send();
+            throw $th;
         }
     }
 
