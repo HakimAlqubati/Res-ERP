@@ -387,7 +387,9 @@ class DetailsRelationManager extends RelationManager
             ])
             ->action(function (StockInventoryDetail $record, array $data): void {
                 static::createLinkedStockAdjustment($record, $data);
-            });
+            })
+            ->visible(fn()=>isHakimOrAdelOrMaha())
+            ;
     }
 
     public static function createLinkedStockAdjustment(StockInventoryDetail $detail, array $data): void
