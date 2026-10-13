@@ -586,7 +586,9 @@ class SettingResource extends Resource
                                                     ->inline(false)
                                                     ->label('Auto-create order if stock is unavailable')
                                                     ->helperText('Automatically create a new order  if inventory is empty and update original quantity to zero.')
-                                                    ->default(false),
+                                                    ->default(false)
+                                                    ->hidden()
+                                                    ,
                                             ]),
 
                                             Fieldset::make('Toggle Dashboard Sections')->columnSpanFull()->columns(2)->schema([
