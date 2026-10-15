@@ -6,6 +6,7 @@ namespace App\Modules\HR\Payroll\Calculators;
 
 use App\Models\AdvanceRequest;
 use App\Models\EmployeeAdvanceInstallment;
+use App\Models\EmployeeBranchLog;
 use App\Modules\HR\Payroll\DTOs\CalculationContext;
 use Carbon\Carbon;
 
@@ -40,8 +41,15 @@ class AdvanceInstallmentCalculator
         $start = sprintf('%04d-%02d-01', $context->periodYear, $context->periodMonth);
         $end   = date('Y-m-t', strtotime($start)); // نهاية الشهر الفعلية دائماً
 
-        // نسبة أيام هذا الـ segment من إجمالي أيام الشهر (للتوزيع النسبي عند multi-segment)
-        $ratio = $this->calculateSegmentRatio($context);
+        // السلف تُخصم من الراتب النهائي للموظف في الشهر بنسبة 100% كاملة، وليس بحسب الفرع.
+        // إذا كان الموظف قد تنقل بين فروع، فإن الفروع السابقة لا يُخصم منها أقساط،
+        // ويتم خصم القسط كاملاً (100%) من مسير الراتب النهائي (الفرع الأخير).
+        if (!$this->isFinalSalarySegment($context)) {
+            return [
+                'items' => $advanceItems,
+                'total' => $advanceInstallmentsTotal,
+            ];
+        }
 
         // جلب أقساط الموظف المجدولة وغير المسددة ضمن الشهر
         // نستبعد الأقساط المؤجلة (skipped) أو الملغاة (cancelled)
@@ -94,8 +102,8 @@ class AdvanceInstallmentCalculator
                 continue;
             }
 
-            // توزيع مبلغ القسط نسبياً حسب أيام الفترة (segment)
-            $amount = $this->round($fullAmount * $ratio);
+            // احتساب قسط السلفة كاملاً بنسبة 100% من الراتب النهائي دون تجزئة بحسب الفرع
+            $amount = $this->round($fullAmount);
             if ($amount <= 0) {
                 continue;
             }
@@ -121,26 +129,83 @@ class AdvanceInstallmentCalculator
     }
 
     /**
-     * حساب نسبة أيام الفترة الحالية (segment) من إجمالي أيام الشهر.
-     * إذا كانت الفترة تغطي الشهر كاملاً، ترجع 1.0.
+     * التحقق مما إذا كانت هذه الفترة هي فترة الراتب النهائي للموظف في الشهر الحالي.
+     * السلف لا تُجزأ بحسب الفرع، بل تُخصم 100% بالكامل من الراتب النهائي للموظف.
+     */
+    protected function isFinalSalarySegment(CalculationContext $context): bool
+    {
+        // 1. إذا تم تحديدها صراحة من سياق الاحتساب (مثل محاكي مسير الرواتب)
+        if (!$context->isFinalSegment) {
+            return false;
+        }
+
+        // 2. إذا لم يكن الموظف متعدداً للفروع، فهو حتماً الراتب النهائي
+        if (!$context->isMultiSegment && !$this->hasMultipleBranchesInPeriod($context)) {
+            return true;
+        }
+
+        // 3. كإجراء احتياطي عند تعدد الفروع: التحقق هل توجد شريحة أو سجل فرع لاحق لنفس الموظف في هذا الشهر
+        if ($context->periodYear && $context->periodMonth && $context->periodEndDate && $context->employee?->id) {
+            $monthEnd = date('Y-m-t', strtotime(sprintf('%04d-%02d-01', $context->periodYear, $context->periodMonth)));
+
+            // إذا كان تاريخ نهاية الشريحة يغطي نهاية الشهر، فهو الشريحة النهائية
+            if ($context->periodEndDate >= $monthEnd) {
+                return true;
+            }
+
+            // فحص ما إذا كان يوجد سجل فرع آخر يبدأ بعد نهاية هذه الفترة في نفس الشهر
+            $hasLaterLog = EmployeeBranchLog::query()
+                ->where('employee_id', $context->employee->id)
+                ->where('start_at', '>', $context->periodEndDate)
+                ->where('start_at', '<=', $monthEnd . ' 23:59:59')
+                ->exists();
+
+            if ($hasLaterLog) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * نسبة خصم السلفة للشريحة الحالية:
+     * 1.0 (100%) إذا كانت شريحة الراتب النهائي، و 0.0 إذا كانت شريحة فرع سابق.
      */
     protected function calculateSegmentRatio(CalculationContext $context): float
     {
-        $monthStart = sprintf('%04d-%02d-01', $context->periodYear, $context->periodMonth);
-        $monthEnd   = date('Y-m-t', strtotime($monthStart));
-        $totalDays  = (int) date('t', strtotime($monthStart));
+        return $this->isFinalSalarySegment($context) ? 1.0 : 0.0;
+    }
 
-        $segStart = $context->periodStartDate ?? $monthStart;
-        $segEnd   = $context->periodEndDate   ?? $monthEnd;
-
-        // إذا كانت الفترة تغطي الشهر كاملاً — لا حاجة للتوزيع
-        if ($segStart <= $monthStart && $segEnd >= $monthEnd) {
-            return 1.0;
+    /**
+     * التحقق مما إذا كان الموظف مرتبطاً بأكثر من فرع خلال فترة الراتب الحالية.
+     */
+    protected function hasMultipleBranchesInPeriod(CalculationContext $context): bool
+    {
+        // 1. إذا كان محدداً مسبقاً من مسير الرواتب/المحاكي أن الموظف متعدد الشرائح
+        if ($context->isMultiSegment) {
+            return true;
         }
 
-        $segDays = (int) Carbon::parse($segStart)->diffInDays(Carbon::parse($segEnd)) + 1;
+        // 2. كإجراء احتياطي (Fallback): فحص سجلات الفروع التاريخية للموظف في قاعدة البيانات
+        if (!$context->periodYear || !$context->periodMonth || !$context->employee?->id) {
+            return false;
+        }
 
-        return min(1.0, max(0.0, $segDays / $totalDays));
+        $monthStart = sprintf('%04d-%02d-01', $context->periodYear, $context->periodMonth);
+        $monthEnd   = date('Y-m-t', strtotime($monthStart));
+
+        $branchesCount = EmployeeBranchLog::query()
+            ->where('employee_id', $context->employee->id)
+            ->where('start_at', '<=', $monthEnd . ' 23:59:59')
+            ->where(function ($q) use ($monthStart) {
+                $q->whereNull('end_at')
+                  ->orWhere('end_at', '>=', $monthStart . ' 00:00:00');
+            })
+            ->distinct('branch_id')
+            ->count('branch_id');
+
+        return $branchesCount > 1;
     }
 
     protected function round(float $value): float

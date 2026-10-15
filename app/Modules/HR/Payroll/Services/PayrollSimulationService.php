@@ -193,9 +193,11 @@ class PayrollSimulationService implements PayrollSimulatorInterface
             }
 
             // 3. احتساب الراتب لكل Segment باستخدام بياناته (المُوزَّعة تناسبيًا إن كان متعدد الفروع)
-            foreach ($segmentData as $item) {
+            $totalSegments = $segmentData->count();
+            foreach ($segmentData->values() as $index => $item) {
                 $log             = $item['log'];
                 $attendanceArray = $item['data'];
+                $isFinalSegment  = ($index === $totalSegments - 1);
 
                 $totalApprovedOvertime = $employee->overtimes()
                     ->where('branch_id', $log->branch_id)
@@ -219,6 +221,7 @@ class PayrollSimulationService implements PayrollSimulatorInterface
                     periodEnd:             $log->end,
                     periodStart:           $log->start,   // ← تخصيص فترة الفرع بدقة
                     isMultiSegment:        $isMultiSegment,
+                    isFinalSegment:        $isFinalSegment,
                 );
 
                 $results[] = $this->buildResult($employee, $result, $monthlySalary, $dailyHours, $monthDays, $attendanceArray, $log);

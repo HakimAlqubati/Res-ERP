@@ -113,6 +113,7 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
         ?Carbon $periodEnd = null,
         ?Carbon $periodStart = null,
         bool $isMultiSegment = false, // true عندما للموظف أكثر من Segment في هذا الشهر
+        bool $isFinalSegment = true,  // true عندما تكون هذه الشريحة هي الراتب النهائي للموظف في هذا الشهر
     ): array {
         $this->resetState();
 
@@ -238,6 +239,8 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
             periodMonth: $periodMonth,
             periodEndDate: $periodEnd ? $periodEnd->toDateString() : null,
             periodStartDate: $periodStart?->toDateString(),   // ← بداية فترة الفرع الدقيقة
+            isMultiSegment: $isMultiSegment,
+            isFinalSegment: $isFinalSegment,
         );
 
 
