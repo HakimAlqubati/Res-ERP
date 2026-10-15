@@ -657,7 +657,7 @@ class SettingResource extends Resource
                                                 ->searchable()
                                                 ->preload()
                                                 ->helperText('Select the roles that are allowed to access and view the Inventory Reports page.')
-                                                ->default([1, 3]),
+                                                ->default([1, 3,5,7]),
                                         ]),
                                     ]),
                                 ]),
