@@ -646,6 +646,20 @@ class SettingResource extends Resource
                                                 ->required(),
                                         ]),
                                     ]),
+                                    Tab::make('Inventory Reports Settings')
+                                    ->visible(fn() => isSuperAdmin() || isSystemManager())
+                                    ->columnSpanFull()->schema([
+                                        Grid::make()->columnSpanFull()->columns(2)->schema([
+                                            Select::make('inventory_reports_roles')
+                                                ->multiple()
+                                                ->label('Roles Allowed to View Inventory Reports')
+                                                ->options(Role::pluck('name', 'id')->toArray())
+                                                ->searchable()
+                                                ->preload()
+                                                ->helperText('Select the roles that are allowed to access and view the Inventory Reports page.')
+                                                ->default([1, 3]),
+                                        ]),
+                                    ]),
                                 ]),
 
 

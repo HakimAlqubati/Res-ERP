@@ -56,6 +56,7 @@ class Setting extends Model  implements Auditable
         if (in_array($this->key, [
             'grn_entry_role_id',
             'grn_approver_role_id',
+            'inventory_reports_roles',
         ])) {
             return json_decode($value, true) ?? [];
         }
@@ -76,6 +77,7 @@ class Setting extends Model  implements Auditable
         if (in_array($this->key, [
             'grn_entry_role_id',
             'grn_approver_role_id',
+            'inventory_reports_roles',
         ])) {
             $this->attributes['value'] = json_encode($value);
             return;
