@@ -26,10 +26,14 @@ class PayrollTable
             TextColumn::make('year')
                 ->sortable(),
             TextColumn::make('month')
-                ->formatStateUsing(function ($record) {
+                ->formatStateUsing(function ($state, $record) {
+                    $val = $state ?? $record?->month;
+                    if (!$val) {
+                        return '';
+                    }
                     $months = getMonthArrayWithKeys();
-                    $key = str_pad($record->month, 2, '0', STR_PAD_LEFT);
-                    return $months[$key] ?? '';
+                    $key = str_pad($val, 2, '0', STR_PAD_LEFT);
+                    return $months[$key] ?? $val;
                 })
                 ->sortable(),
             TextColumn::make('employees_count')

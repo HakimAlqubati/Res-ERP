@@ -487,22 +487,35 @@ if (!function_exists('getMonthsArray2')) {
         return array_reverse($months); // Reverse to keep the order from past to current
     }
 }
+if (!function_exists('getMonthTranslation')) {
+    function getMonthTranslation(string $month): string
+    {
+        $key = strtolower($month);
+        $trans = __("lang.month.{$key}");
+        if ($trans === "lang.month.{$key}") {
+            $fallback = __("lang.{$key}");
+            return $fallback !== "lang.{$key}" ? $fallback : ucfirst($key);
+        }
+        return $trans;
+    }
+}
+
 if (!function_exists('getMonthArrayWithKeys')) {
     function getMonthArrayWithKeys()
     {
         return [
-            '01' => __('lang.month.january'),  // January
-            '02' => __('lang.month.february'), // February
-            '03' => __('lang.month.march'),    // March
-            '04' => __('lang.month.april'),    // April
-            '05' => __('lang.month.may'),      // May
-            '06' => __('lang.month.june'),     // June
-            '07' => __('lang.month.july'),     // July
-            '08' => __('lang.month.august'),   // August
-            '09' => __('lang.month.september'), // September
-            '10' => __('lang.month.october'),  // October
-            '11' => __('lang.month.november'), // November
-            '12' => __('lang.month.december'), // December
+            '01' => getMonthTranslation('january'),
+            '02' => getMonthTranslation('february'),
+            '03' => getMonthTranslation('march'),
+            '04' => getMonthTranslation('april'),
+            '05' => getMonthTranslation('may'),
+            '06' => getMonthTranslation('june'),
+            '07' => getMonthTranslation('july'),
+            '08' => getMonthTranslation('august'),
+            '09' => getMonthTranslation('september'),
+            '10' => getMonthTranslation('october'),
+            '11' => getMonthTranslation('november'),
+            '12' => getMonthTranslation('december'),
         ];
     }
 }
@@ -511,18 +524,18 @@ if (!function_exists('getMonthArrayWithIntKeys')) {
     function getMonthArrayWithIntKeys()
     {
         return [
-            1  => __('lang.month.january'),  // January
-            2  => __('lang.month.february'), // February
-            3  => __('lang.month.march'),    // March
-            4  => __('lang.month.april'),    // April
-            5  => __('lang.month.may'),      // May
-            6  => __('lang.month.june'),     // June
-            7  => __('lang.month.july'),     // July
-            8  => __('lang.month.august'),   // August
-            9  => __('lang.month.september'), // September
-            10 => __('lang.month.october'),  // October
-            11 => __('lang.month.november'), // November
-            12 => __('lang.month.december'), // December
+            1  => getMonthTranslation('january'),
+            2  => getMonthTranslation('february'),
+            3  => getMonthTranslation('march'),
+            4  => getMonthTranslation('april'),
+            5  => getMonthTranslation('may'),
+            6  => getMonthTranslation('june'),
+            7  => getMonthTranslation('july'),
+            8  => getMonthTranslation('august'),
+            9  => getMonthTranslation('september'),
+            10 => getMonthTranslation('october'),
+            11 => getMonthTranslation('november'),
+            12 => getMonthTranslation('december'),
         ];
     }
 }

@@ -148,16 +148,73 @@ class OrderRepository implements OrderRepositoryInterface
     {
         $validator = Validator::make($request->all(), [
             'order_details' => 'required|array|min:1',
+            'order_details.*.product_id' => 'required',
             'order_details.*.quantity' => 'required|numeric|min:0.1',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => $validator->errors(),
+                'message' => $validator->errors()->first(),
                 'errors' => $validator->errors(),
             ], 422);
         }
+
+        // Check for duplicate products in order_details
+        $orderDetails = $request->input('order_details', []);
+        $productIds = array_values(array_filter(array_column($orderDetails, 'product_id'), fn($id) => !is_null($id) && $id !== ''));
+        $counts = array_count_values($productIds);
+        $duplicateIds = array_keys(array_filter($counts, fn($c) => $c > 1));
+
+        if (!empty($duplicateIds)) {
+            $products = Product::withTrashed()->whereIn('id', $duplicateIds)->pluck('name', 'id');
+            $duplicateNames = array_map(fn($id) => $products[$id] ?? "#$id", $duplicateIds);
+
+            $totalDuplicates = count($duplicateNames);
+            if ($totalDuplicates === 1) {
+                $formattedProducts = $duplicateNames[0];
+            } elseif ($totalDuplicates === 2) {
+                $formattedProducts = "{$duplicateNames[0]} & {$duplicateNames[1]}";
+            } else {
+                $remaining = $totalDuplicates - 2;
+                $formattedProducts = "{$duplicateNames[0]}, {$duplicateNames[1]} & {$remaining} more";
+            }
+
+            $message = "Duplicate products are not allowed: {$formattedProducts}.";
+
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'errors' => [
+                    'order_details' => [$message],
+                ],
+            ], 422);
+        }
+
+        // Block products sent without a valid unit (unit_id = 0 / empty)
+        $missingUnitError = $this->validateMissingUnits($orderDetails);
+        if ($missingUnitError !== null) {
+            return response()->json([
+                'success' => false,
+                'message' => $missingUnitError['message'],
+                'errors' => [
+                    'order_details' => $missingUnitError['details'],
+                ],
+            ], 422);
+        }
+
+        // Block units that are marked as "manufacturing only" (not orderable)
+        $manufacturingOnlyError = $this->validateManufacturingOnlyUnits($orderDetails);
+        if ($manufacturingOnlyError !== null) {
+            return response()->json([
+                'success' => false,
+                'message' => $manufacturingOnlyError['message'],
+                'errors' => [
+                    'order_details' => $manufacturingOnlyError['details'],
+                ],
+            ], 422);
+        }
+
         try {
             DB::beginTransaction();
 
@@ -281,6 +338,19 @@ class OrderRepository implements OrderRepositoryInterface
 
             // Process the normal order details: update existing items or create new ones.
             foreach ($normalOrderDetails as $detail) {
+                if ($pendingOrderId > 0) {
+                    $existingDifferentUnit = OrderDetails::where('order_id', $orderId)
+                        ->where('product_id', $detail['product_id'])
+                        ->where('unit_id', '!=', $detail['unit_id'])
+                        ->first();
+
+                    if ($existingDifferentUnit) {
+                        $productName = Product::withTrashed()->find($detail['product_id'])?->name;
+                        $productLabel = $productName ? "Product '{$productName}'" : "Product #{$detail['product_id']}";
+                        throw new Exception("{$productLabel} already exists in pending order with a different unit.");
+                    }
+                }
+
                 $existingDetail = OrderDetails::where([
                     ['order_id', '=', $orderId],
                     ['product_id', '=', $detail['product_id']],
@@ -326,6 +396,99 @@ class OrderRepository implements OrderRepositoryInterface
     }
 
     /**
+     * Reject order lines that were sent without a unit (unit_id = 0 / null / missing).
+     * This usually means the product has no units configured for orders.
+     *
+     * @return array{message: string, details: array<int, string>}|null
+     */
+    private function validateMissingUnits(array $orderDetails): ?array
+    {
+        $productIds = collect($orderDetails)
+            ->filter(fn($d) => !empty($d['product_id']) && empty($d['unit_id']))
+            ->pluck('product_id')
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($productIds)) {
+            return null;
+        }
+
+        $products = Product::withTrashed()->whereIn('id', $productIds)->pluck('name', 'id');
+        $names = array_map(fn($id) => "'" . ($products[$id] ?? "#{$id}") . "'", $productIds);
+
+        $total = count($names);
+        $formatted = match (true) {
+            $total === 1 => $names[0],
+            $total === 2 => "{$names[0]} & {$names[1]}",
+            default      => "{$names[0]}, {$names[1]} & " . ($total - 2) . ' others',
+        };
+        $message = "No order units for {$formatted}.";
+
+        $details = array_map(fn($name) => "No order units for {$name}.", $names);
+
+        return ['message' => $message, 'details' => $details];
+    }
+
+    /**
+     * Check the requested product/unit pairs and reject any unit whose
+     * usage scope is "manufacturing only".
+     *
+     * @return array{message: string, details: array<int, string>}|null
+     */
+    private function validateManufacturingOnlyUnits(array $orderDetails): ?array
+    {
+        $requestedPairs = collect($orderDetails)
+            ->filter(fn($d) => !empty($d['product_id']) && !empty($d['unit_id']))
+            ->map(fn($d) => $d['product_id'] . '-' . $d['unit_id'])
+            ->unique()
+            ->all();
+
+        if (empty($requestedPairs)) {
+            return null;
+        }
+
+        $productIds = collect($orderDetails)->pluck('product_id')->filter()->unique()->values();
+
+        $blocked = UnitPrice::with([
+            'product' => fn($q) => $q->withTrashed()->select('id', 'name'),
+            'unit:id,name',
+        ])
+            ->whereIn('product_id', $productIds)
+            ->where('usage_scope', UnitPrice::USAGE_MANUFACTURING_ONLY)
+            ->get(['id', 'product_id', 'unit_id'])
+            ->filter(fn($up) => in_array($up->product_id . '-' . $up->unit_id, $requestedPairs, true))
+            ->values();
+
+        if ($blocked->isEmpty()) {
+            return null;
+        }
+
+        $labels = $blocked->map(function ($up) {
+            $productName = $up->product?->name ?? "#{$up->product_id}";
+            $unitName = $up->unit?->name ?? "#{$up->unit_id}";
+            return "'{$productName}' ({$unitName})";
+        })->all();
+
+        $total = count($labels);
+        if ($total === 1) {
+            $message = "Product {$labels[0]} uses a manufacturing-only unit and cannot be ordered.";
+        } else {
+            $formatted = $total === 2
+                ? "{$labels[0]} & {$labels[1]}"
+                : "{$labels[0]}, {$labels[1]} & " . ($total - 2) . ' more';
+            $message = "Products {$formatted} use manufacturing-only units and cannot be ordered.";
+        }
+
+        $details = array_map(
+            fn($label) => "Product {$label} uses a manufacturing-only unit and cannot be ordered.",
+            $labels
+        );
+
+        return ['message' => $message, 'details' => $details];
+    }
+
+    /**
      * Find or create a manufacturing order for a specific manufacturing branch,
      * and save/merge the order details into it.
      * If a pending manufacturing order already exists for the same branch, merge into it.
@@ -366,6 +529,17 @@ class OrderRepository implements OrderRepositoryInterface
 
         // Save or merge order details
         foreach ($productsForBranch as $productDetail) {
+            $existingDifferentUnit = OrderDetails::where('order_id', $manufacturingOrder->id)
+                ->where('product_id', $productDetail['product_id'])
+                ->where('unit_id', '!=', $productDetail['unit_id'])
+                ->first();
+
+            if ($existingDifferentUnit) {
+                $productName = Product::withTrashed()->find($productDetail['product_id'])?->name;
+                $productLabel = $productName ? "Product '{$productName}'" : "Product #{$productDetail['product_id']}";
+                throw new Exception("{$productLabel} already exists in pending manufacturing order with a different unit.");
+            }
+
             $existingDetail = OrderDetails::where([
                 ['order_id', '=', $manufacturingOrder->id],
                 ['product_id', '=', $productDetail['product_id']],
