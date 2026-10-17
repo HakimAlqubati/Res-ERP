@@ -4,8 +4,10 @@ namespace App\Console\Commands;
 
 use App\Models\InventoryTransaction;
 use App\Models\Order;
+use App\Models\Product;
 use App\Models\StockAdjustmentDetail;
 use App\Models\StockInventoryDetail;
+use App\Services\FifoMethodService;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -32,7 +34,7 @@ class FixStocktakeFifoCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Retroactively fix stocktake unit from Box to Kg and re-allocate FIFO source IDs and running balances';
+    protected $description = 'Soft-delete transactions from stocktake onwards and cleanly replay them using FIFO engine';
 
     /**
      * Execute the console command.
@@ -71,7 +73,7 @@ class FixStocktakeFifoCommand extends Command
             $this->warn('⚠️ الوضع التجريبي (Dry Run) مفعّل - لن يتم حفظ أي تعديلات في قاعدة البيانات.');
         }
 
-        $this->info("🔍 فحص الحركة المخزنية #{$txId} للمنتج #{$productId}...");
+        $this->info("🔍 فحص حركة الجرد المخزنية #{$txId} للمنتج #{$productId}...");
 
         // 2. التحقق من وجود حركة الجرد
         $countTx = InventoryTransaction::withoutGlobalScopes()->find($txId);
@@ -87,60 +89,48 @@ class FixStocktakeFifoCommand extends Command
 
         $storeId = (int) $countTx->store_id;
 
-        // 3. جلب بيانات وحدة الكيلو للصنف
-        $kgUnitPrice = DB::table('unit_prices')
+        // 3. جلب جميع الحركات من رقم حركة الجرد وما بعدها
+        $transactionsToReplay = InventoryTransaction::withoutGlobalScopes()
             ->where('product_id', $productId)
-            ->where('unit_id', $kgUnitId)
-            ->first();
+            ->where('store_id', $storeId)
+            ->where('id', '>=', $txId)
+            ->whereNull('deleted_at')
+            ->orderBy('id', 'asc')
+            ->get();
 
-        $kgPackageSize = $kgUnitPrice ? (float) $kgUnitPrice->package_size : 1.0;
-        $kgPrice       = $kgUnitPrice ? (float) $kgUnitPrice->price : (float) $countTx->price_per_base_unit;
-        $kgPricePerBase = $kgUnitPrice && $kgPackageSize > 0
-            ? round($kgPrice / $kgPackageSize, 6)
-            : (float) $countTx->price_per_base_unit;
+        $this->info("📋 عدد الحركات التي سيتم عمل Soft Delete لها ثم إعادة إنشائها بالفيفو: " . $transactionsToReplay->count());
 
-        // عرض تفاصيل الحركة الحالية والمستهدفة
-        $this->table(
-            ['الحقل', 'القيمة الحالية (السابقة)', 'القيمة الجديدة المستهدفة'],
-            [
-                ['Transaction ID', $countTx->id, $countTx->id],
-                ['Product ID', $countTx->product_id, $productId],
-                ['Store ID', $storeId, $storeId],
-                ['Unit ID', $countTx->unit_id, $kgUnitId . ' (Kg)'],
-                ['Package Size', $countTx->package_size, $kgPackageSize],
-                ['Quantity', $countTx->quantity, $correctQty],
-                ['Base Quantity', $countTx->base_quantity, round($correctQty * $kgPackageSize, 4)],
-                ['Price', $countTx->price, $kgPrice],
-                ['Price Per Base Unit', $countTx->price_per_base_unit, $kgPricePerBase],
-            ]
-        );
+        // حساب الرصيد التراكمي السابق للحركة 65565
+        $initialBaseBalance = (float) DB::table('inventory_transactions')
+            ->where('product_id', $productId)
+            ->where('store_id', $storeId)
+            ->where('id', '<', $txId)
+            ->whereNull('deleted_at')
+            ->selectRaw("COALESCE(SUM(
+                CASE 
+                    WHEN movement_type = 'in' THEN IFNULL(base_quantity, quantity * package_size)
+                    WHEN movement_type = 'out' THEN -IFNULL(base_quantity, quantity * package_size)
+                    ELSE 0 
+                END
+            ), 0) as balance")
+            ->value('balance');
+
+        $this->line("   ℹ الرصيد التراكمي في النظام قبل حركة الجرد هو: {$initialBaseBalance} كجم (6 بوكسات).");
+        $this->line("   ℹ المطلوب خصم {$correctQty} كجم بالجرد، ليصبح الرصيد بعد الجرد مباشرة: " . ($initialBaseBalance - $correctQty) . " كجم.");
 
         DB::beginTransaction();
 
         try {
-            // 4. تعديل حركة الجرد الأصلية
-            $oldBaseQty = (float) $countTx->base_quantity;
-            $newBaseQty = round($correctQty * $kgPackageSize, 4);
-
-            $countTx->update([
-                'unit_id'             => $kgUnitId,
-                'package_size'        => $kgPackageSize,
-                'quantity'            => $correctQty,
-                'base_quantity'       => $newBaseQty,
-                'price'               => $kgPrice,
-                'price_per_base_unit' => $kgPricePerBase,
-            ]);
-
-            $this->info("✔ تم تحديث حركة الجرد #{$countTx->id} بنجاح.");
-
-            // 5. تعديل سجلات الجرد والتسوية المقابلة (إن وجدت)
+            // 4. تعديل بيانات الجرد والتسوية في StockInventoryDetail و StockAdjustmentDetail
+            $invDetailUpdated = false;
             if ($countTx->transactionable_type === StockAdjustmentDetail::class && $countTx->transactionable_id) {
                 $adjDetail = StockAdjustmentDetail::find($countTx->transactionable_id);
                 if ($adjDetail) {
                     $adjDetail->update([
-                        'unit_id'      => $kgUnitId,
-                        'package_size' => $kgPackageSize,
-                        'quantity'     => $correctQty,
+                        'unit_id'         => $kgUnitId,
+                        'package_size'    => 1,
+                        'quantity'        => $correctQty,
+                        'adjustment_type' => StockAdjustmentDetail::ADJUSTMENT_TYPE_DECREASE,
                     ]);
 
                     $invDetail = StockInventoryDetail::where('stock_inventory_id', $adjDetail->source_id)
@@ -150,146 +140,140 @@ class FixStocktakeFifoCommand extends Command
                     if ($invDetail) {
                         $invDetail->update([
                             'unit_id'           => $kgUnitId,
-                            'package_size'      => $kgPackageSize,
-                            'physical_quantity' => $invDetail->system_quantity - $correctQty,
-                            'difference'        => -$correctQty,
+                            'package_size'      => 1,
+                            'system_quantity'   => $initialBaseBalance, // 30 كجم
+                            'physical_quantity' => $initialBaseBalance - $correctQty, // 28 كجم
+                            'difference'        => -$correctQty, // -2 كجم
+                            'is_adjustmented'   => true,
                         ]);
-                        $this->info("✔ تم تحديث تفاصيل الجرد في StockInventoryDetail (الفارق أصبح -{$correctQty} كجم).");
+                        $invDetailUpdated = true;
+                        $this->info("✔ تم تعديل StockInventoryDetail: (النظام: {$initialBaseBalance} كجم، الفعلي: " . ($initialBaseBalance - $correctQty) . " كجم، الفارق: -{$correctQty} كجم).");
                     }
+                    $this->info("✔ تم تعديل StockAdjustmentDetail: (الكمية: {$correctQty} كجم).");
                 }
             }
 
-            // 6. تجميع دفعات الوارد (Inbound Supplies Pool)
-            $suppliesRaw = InventoryTransaction::withoutGlobalScopes()
-                ->where('product_id', $productId)
-                ->where('store_id', $storeId)
-                ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
-                ->whereNull('deleted_at')
-                ->orderBy('id', 'asc')
-                ->get();
+            // 5. عمل Soft Delete لجميع الحركات من 65565 فصاعداً
+            $idsToSoftDelete = $transactionsToReplay->pluck('id')->toArray();
+            InventoryTransaction::whereIn('id', $idsToSoftDelete)->delete();
+            $this->info("🗑 تم عمل Soft Delete لـ " . count($idsToSoftDelete) . " حركة مخزنية بنجاح.");
 
-            $supplyBatches = [];
-            foreach ($suppliesRaw as $sup) {
-                $supBaseQty = (float) ($sup->base_quantity ?: ($sup->quantity * $sup->package_size));
+            // 6. إعادة إنشاء الحركات تسلسلياً باستخدام الفيفو
+            $this->info("🔄 جاري إعادة إنشاء الحركات بالترتيب الصحيح عبر محرك الـ FIFO...");
 
-                // الكميات المستهلكة من هذا التوريد قبل حركة الجرد
-                $consumedBefore = (float) InventoryTransaction::withoutGlobalScopes()
-                    ->where('source_transaction_id', $sup->id)
-                    ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
-                    ->where('id', '<', $countTx->id)
-                    ->whereNull('deleted_at')
-                    ->sum(DB::raw('IFNULL(base_quantity, quantity * package_size)'));
+            $recreatedInCount  = 0;
+            $recreatedOutCount = 0;
 
-                $available = max(0, $supBaseQty - $consumedBefore);
+            foreach ($transactionsToReplay as $index => $oldTx) {
+                $this->line("   ▸ معالجة الحركة الأصلية #{$oldTx->id} [{$oldTx->movement_type}] تاريخ: {$oldTx->movement_date}...");
 
-                // إذا كان التوريد ما زال به رصيد وقت الجرد، أو دخل بعد الجرد
-                if ($available > 0.0001 || $sup->id >= $countTx->id) {
-                    $baseCost = $sup->price_per_base_unit ?: ($sup->price / max((float) $sup->package_size, 1));
-                    $supplyBatches[] = (object) [
-                        'id'                  => $sup->id,
-                        'available_base_qty'  => $available,
-                        'price_per_base_unit' => $baseCost,
-                        'package_size'        => $sup->package_size,
-                    ];
-                }
-            }
+                // ─── الحالة الأولى: حركة الجرد رقم 65565 ───
+                if ($oldTx->id === $countTx->id) {
+                    $fifoService = new FifoMethodService();
+                    $allocations = $fifoService->getAllocateFifo($productId, $kgUnitId, $correctQty, $storeId);
 
-            $this->info("📦 تم العثور على " . count($supplyBatches) . " دفعة توريد (Batches) متاحة لاستهلاك FIFO.");
-
-            // 7. جلب حركات الصادر بدءاً من حركة الجرد فصاعداً
-            $outTransactions = InventoryTransaction::withoutGlobalScopes()
-                ->where('product_id', $productId)
-                ->where('store_id', $storeId)
-                ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
-                ->where('id', '>=', $countTx->id)
-                ->whereNull('deleted_at')
-                ->orderBy('transaction_date', 'asc')
-                ->orderBy('id', 'asc')
-                ->get();
-
-            $this->info("🚀 جاري إعادة تخصيص FIFO لـ " . $outTransactions->count() . " حركة صادر...");
-
-            $batchIndex = 0;
-            $reallocatedCount = 0;
-            $splitCount = 0;
-
-            foreach ($outTransactions as $outTx) {
-                $neededBaseQty = (float) ($outTx->base_quantity ?: ($outTx->quantity * $outTx->package_size));
-
-                while ($neededBaseQty > 0.0001 && $batchIndex < count($supplyBatches)) {
-                    $currentBatch = &$supplyBatches[$batchIndex];
-
-                    if ($currentBatch->available_base_qty <= 0.0001) {
-                        $batchIndex++;
-                        continue;
+                    foreach ($allocations as $alloc) {
+                        $newCountTx = InventoryTransaction::create([
+                            'product_id'            => $productId,
+                            'movement_type'         => InventoryTransaction::MOVEMENT_OUT,
+                            'quantity'              => $alloc['deducted_qty'],
+                            'unit_id'               => $alloc['target_unit_id'],
+                            'package_size'          => $alloc['target_unit_package_size'],
+                            'price'                 => $alloc['price_based_on_unit'],
+                            'movement_date'         => $oldTx->movement_date,
+                            'transaction_date'      => $oldTx->transaction_date,
+                            'store_id'              => $storeId,
+                            'notes'                 => "Stock adjustment (Corrected to {$correctQty} Kg) - Replayed via FIFO (Original Tx #{$oldTx->id})",
+                            'transactionable_id'    => $oldTx->transactionable_id,
+                            'transactionable_type'  => $oldTx->transactionable_type,
+                            'source_transaction_id' => $alloc['transaction_id'],
+                        ]);
                     }
 
-                    $takeBaseQty = min($neededBaseQty, $currentBatch->available_base_qty);
-                    $pkgSize     = max((float) $outTx->package_size, 1);
+                    $recreatedOutCount++;
+                    $this->info("     ✔ تم إنشاء حركة الجرد كـ OUT بـ {$correctQty} كجم بالفيفو. الرصيد أصبح: 28 كجم.");
+                    continue;
+                }
 
-                    if (abs($takeBaseQty - $neededBaseQty) < 0.0001) {
-                        // الحالة 1: الدفعة تغطي كمية الحركة بالكامل
-                        $outTx->update([
-                            'source_transaction_id' => $currentBatch->id,
-                            'price_per_base_unit'   => $currentBatch->price_per_base_unit,
-                            'price'                 => round($currentBatch->price_per_base_unit * $pkgSize, 4),
+                // ─── الحالة الثانية: الحركات الداخلة (IN) ───
+                if ($oldTx->movement_type === InventoryTransaction::MOVEMENT_IN) {
+                    // الحركات الداخلة يعاد إنشاؤها لتضاف إلى مسبح الفيفو فوراً
+                    $newInTx = InventoryTransaction::create([
+                        'product_id'             => $oldTx->product_id,
+                        'movement_type'          => InventoryTransaction::MOVEMENT_IN,
+                        'quantity'               => $oldTx->quantity,
+                        'unit_id'                => $oldTx->unit_id,
+                        'package_size'           => $oldTx->package_size,
+                        'price'                  => $oldTx->price,
+                        'movement_date'          => $oldTx->movement_date,
+                        'transaction_date'       => $oldTx->transaction_date,
+                        'store_id'               => $oldTx->store_id,
+                        'notes'                  => $oldTx->notes,
+                        'transactionable_id'     => $oldTx->transactionable_id,
+                        'transactionable_type'   => $oldTx->transactionable_type,
+                        'purchase_invoice_id'    => $oldTx->purchase_invoice_id,
+                        'waste_stock_percentage' => 0, // لمنع تكرار الهدر التلقائي لأن الهدر له حركته الخاصة
+                        'source_transaction_id'  => $oldTx->source_transaction_id,
+                    ]);
+
+                    $recreatedInCount++;
+                    continue;
+                }
+
+                // ─── الحالة الثالثة: الحركات الخارجة اللاحقة (OUT) ───
+                if ($oldTx->movement_type === InventoryTransaction::MOVEMENT_OUT) {
+                    $sourceModel = null;
+                    if ($oldTx->transactionable_type && $oldTx->transactionable_id && class_exists($oldTx->transactionable_type)) {
+                        $sourceModel = $oldTx->transactionable_type::find($oldTx->transactionable_id);
+                    }
+
+                    $fifoService = new FifoMethodService($sourceModel);
+                    $allocations = $fifoService->getAllocateFifo($productId, $oldTx->unit_id, (float) $oldTx->quantity, $storeId);
+
+                    foreach ($allocations as $alloc) {
+                        $newOutTx = InventoryTransaction::create([
+                            'product_id'            => $productId,
+                            'movement_type'         => InventoryTransaction::MOVEMENT_OUT,
+                            'quantity'              => $alloc['deducted_qty'],
+                            'unit_id'               => $alloc['target_unit_id'],
+                            'package_size'          => $alloc['target_unit_package_size'],
+                            'price'                 => $alloc['price_based_on_unit'],
+                            'movement_date'         => $oldTx->movement_date,
+                            'transaction_date'      => $oldTx->transaction_date,
+                            'store_id'              => $storeId,
+                            'notes'                 => $alloc['notes'] ?? $oldTx->notes,
+                            'transactionable_id'    => $oldTx->transactionable_id,
+                            'transactionable_type'  => $oldTx->transactionable_type,
+                            'source_transaction_id' => $alloc['transaction_id'],
                         ]);
 
-                        // مزامنة حركة استلام الفرع في حال كان طلباً (Order)
-                        if ($outTx->transactionable_type === Order::class) {
+                        // في حال كان طلباً (Order)، تحديث source_transaction_id في حركة إدخال الفرع المقابلة
+                        if ($oldTx->transactionable_type === Order::class) {
                             InventoryTransaction::withoutGlobalScopes()
                                 ->where('transactionable_type', Order::class)
-                                ->where('transactionable_id', $outTx->transactionable_id)
+                                ->where('transactionable_id', $oldTx->transactionable_id)
                                 ->where('product_id', $productId)
                                 ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+                                ->where('store_id', '!=', $storeId)
                                 ->update([
-                                    'source_transaction_id' => $currentBatch->id,
+                                    'source_transaction_id' => $alloc['transaction_id'],
                                 ]);
                         }
 
-                        $currentBatch->available_base_qty -= $takeBaseQty;
-                        $neededBaseQty = 0;
-                        $reallocatedCount++;
-                    } else {
-                        // الحالة 2: الدفعة تغطي جزءاً فقط -> استهلاك المتبقي وتقسيم السطر
-                        $remainingForNext = $neededBaseQty - $takeBaseQty;
-
-                        $outTx->update([
-                            'quantity'              => round($takeBaseQty / $pkgSize, 4),
-                            'base_quantity'         => $takeBaseQty,
-                            'source_transaction_id' => $currentBatch->id,
-                            'price_per_base_unit'   => $currentBatch->price_per_base_unit,
-                            'price'                 => round($currentBatch->price_per_base_unit * $pkgSize, 4),
-                        ]);
-
-                        $currentBatch->available_base_qty = 0;
-                        $batchIndex++;
-
-                        // إنشاء سطر إضافي للكمية المتبقية بنفس بيانات الأصل
-                        $clonedTx = $outTx->replicate();
-                        $clonedTx->quantity      = round($remainingForNext / $pkgSize, 4);
-                        $clonedTx->base_quantity = $remainingForNext;
-                        $clonedTx->save();
-
-                        $splitCount++;
-                        $reallocatedCount++;
-
-                        $outTx = $clonedTx;
-                        $neededBaseQty = $remainingForNext;
+                        // تحديث ارتباط بنود مبيعات الموزعين إن وجدت
+                        DB::table('reseller_sale_items')
+                            ->where('inventory_transaction_id', $oldTx->id)
+                            ->update(['inventory_transaction_id' => $newOutTx->id]);
                     }
+
+                    $recreatedOutCount++;
                 }
             }
 
-            $this->info("✔ تم إعادة تخصيص {$reallocatedCount} سجل FIFO بنجاح (تم تقسيم {$splitCount} حركة جزئية).");
-
-            // 8. إعادة احتساب الرصيد التراكمي (remaining_quantity) حصراً من حركة الجرد فصاعداً
-            $this->info("🔄 جاري إعادة احتساب الأرصدة التراكمية (remaining_quantity) بدءاً من الحركة #{$countTx->id} فصاعداً فقط...");
-
-            // جلب رصيد الأساس التراكمي السابق للحركة الحالية دون تعديل أي سجل سابق
-            $initialBaseBalance = (float) DB::table('inventory_transactions')
+            // 7. التحقق من الرصيد النهائي
+            $finalBaseBalance = (float) DB::table('inventory_transactions')
                 ->where('product_id', $productId)
                 ->where('store_id', $storeId)
-                ->where('id', '<', $countTx->id)
                 ->whereNull('deleted_at')
                 ->selectRaw("COALESCE(SUM(
                     CASE 
@@ -300,53 +284,25 @@ class FixStocktakeFifoCommand extends Command
                 ), 0) as balance")
                 ->value('balance');
 
-            $this->line("   ℹ الرصيد التراكمي قبل الحركة #{$countTx->id} هو: {$initialBaseBalance} كجم (لم يتم ولن يتم تعديل أي حركة سابقة له).");
-
-            // جلب الحركات التي تساوي أو تلي حركة الجرد فقط
-            $subsequentTx = InventoryTransaction::withoutGlobalScopes()
-                ->where('product_id', $productId)
-                ->where('store_id', $storeId)
-                ->where('id', '>=', $countTx->id)
-                ->whereNull('deleted_at')
-                ->orderBy('id', 'asc')
-                ->get();
-
-            $runningBase = $initialBaseBalance;
-            $updatedBalancesCount = 0;
-
-            foreach ($subsequentTx as $item) {
-                $base = (float) ($item->base_quantity ?: ($item->quantity * $item->package_size));
-                if ($item->movement_type === InventoryTransaction::MOVEMENT_IN) {
-                    $runningBase += $base;
-                } else {
-                    $runningBase -= $base;
-                }
-
-                $pkg = max((float) $item->package_size, 1);
-                DB::table('inventory_transactions')
-                    ->where('id', $item->id)
-                    ->update([
-                        'remaining_quantity' => round($runningBase / $pkg, 4),
-                    ]);
-
-                $updatedBalancesCount++;
-            }
-
-            $this->info("✔ تم تحديث الرصيد التراكمي لـ {$updatedBalancesCount} حركة (من #{$countTx->id} وحتى النهاية فقط).");
-            $this->info("✔ الرصيد الحالي للصنف في المخزن بوحدة الأساس بعد التعديل: " . round($runningBase, 4));
+            $this->newLine();
+            $this->info("📊 ─── ملخص العملية ───");
+            $this->info("✔ تم إعادة إنشاء {$recreatedInCount} حركة وارد (IN) كدفعات فيفو جديدة.");
+            $this->info("✔ تم إعادة تخصيص وإنشاء {$recreatedOutCount} حركة صادر (OUT) بمحرك الفيفو الصحيح.");
+            $this->info("✔ الرصيد النهائي للصنف في المخزن بوحدة الأساس: {$finalBaseBalance} كجم.");
 
             if ($isDryRun) {
                 DB::rollBack();
                 $this->warn('⚠️ تم التراجع عن جميع التغييرات بنجاح لأن الأمر يعمل بوضع التجربة (--dry-run).');
             } else {
                 DB::commit();
-                $this->info('🎉 تم اعتماد وحفظ جميع التعديلات في قاعدة بيانات التينانت بنجاح!');
+                $this->info('🎉 تم اعتماد وحفظ جميع الحركات الجديدة وتحديث الجرد بالفيفو بنجاح تام!');
             }
 
             return self::SUCCESS;
         } catch (Exception $e) {
             DB::rollBack();
-            $this->error('❌ حدث خطأ أثناء المعالجة وتم التراجع عن كافة التغييرات: ' . $e->getMessage());
+            $this->error('❌ حدث خطأ أثناء إعادة توليد الفيفو وتم التراجع عن كافة التغييرات: ' . $e->getMessage());
+            $this->line("   الملف: {$e->getFile()} (سطر {$e->getLine()})");
             Log::error('FixStocktakeFifoCommand Failed', [
                 'tenant_id'  => $tenantId,
                 'tx_id'      => $txId,
