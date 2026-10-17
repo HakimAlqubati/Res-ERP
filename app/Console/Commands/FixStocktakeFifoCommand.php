@@ -282,19 +282,39 @@ class FixStocktakeFifoCommand extends Command
 
             $this->info("✔ تم إعادة تخصيص {$reallocatedCount} سجل FIFO بنجاح (تم تقسيم {$splitCount} حركة جزئية).");
 
-            // 8. إعادة احتساب الرصيد التراكمي (remaining_quantity) تسلسلياً
-            $this->info("🔄 جاري إعادة احتساب الأرصدة التراكمية (remaining_quantity) للمخزن بالكامل...");
+            // 8. إعادة احتساب الرصيد التراكمي (remaining_quantity) حصراً من حركة الجرد فصاعداً
+            $this->info("🔄 جاري إعادة احتساب الأرصدة التراكمية (remaining_quantity) بدءاً من الحركة #{$countTx->id} فصاعداً فقط...");
 
-            $allTx = InventoryTransaction::withoutGlobalScopes()
+            // جلب رصيد الأساس التراكمي السابق للحركة الحالية دون تعديل أي سجل سابق
+            $initialBaseBalance = (float) DB::table('inventory_transactions')
                 ->where('product_id', $productId)
                 ->where('store_id', $storeId)
+                ->where('id', '<', $countTx->id)
                 ->whereNull('deleted_at')
-                ->orderBy('transaction_date', 'asc')
+                ->selectRaw("COALESCE(SUM(
+                    CASE 
+                        WHEN movement_type = 'in' THEN IFNULL(base_quantity, quantity * package_size)
+                        WHEN movement_type = 'out' THEN -IFNULL(base_quantity, quantity * package_size)
+                        ELSE 0 
+                    END
+                ), 0) as balance")
+                ->value('balance');
+
+            $this->line("   ℹ الرصيد التراكمي قبل الحركة #{$countTx->id} هو: {$initialBaseBalance} كجم (لم يتم ولن يتم تعديل أي حركة سابقة له).");
+
+            // جلب الحركات التي تساوي أو تلي حركة الجرد فقط
+            $subsequentTx = InventoryTransaction::withoutGlobalScopes()
+                ->where('product_id', $productId)
+                ->where('store_id', $storeId)
+                ->where('id', '>=', $countTx->id)
+                ->whereNull('deleted_at')
                 ->orderBy('id', 'asc')
                 ->get();
 
-            $runningBase = 0.0;
-            foreach ($allTx as $item) {
+            $runningBase = $initialBaseBalance;
+            $updatedBalancesCount = 0;
+
+            foreach ($subsequentTx as $item) {
                 $base = (float) ($item->base_quantity ?: ($item->quantity * $item->package_size));
                 if ($item->movement_type === InventoryTransaction::MOVEMENT_IN) {
                     $runningBase += $base;
@@ -308,9 +328,12 @@ class FixStocktakeFifoCommand extends Command
                     ->update([
                         'remaining_quantity' => round($runningBase / $pkg, 4),
                     ]);
+
+                $updatedBalancesCount++;
             }
 
-            $this->info("✔ تم ضبط الأرصدة التراكمية بنجاح. الرصيد الحالي للصنف في المخزن بوحدة الأساس: " . round($runningBase, 4));
+            $this->info("✔ تم تحديث الرصيد التراكمي لـ {$updatedBalancesCount} حركة (من #{$countTx->id} وحتى النهاية فقط).");
+            $this->info("✔ الرصيد الحالي للصنف في المخزن بوحدة الأساس بعد التعديل: " . round($runningBase, 4));
 
             if ($isDryRun) {
                 DB::rollBack();
