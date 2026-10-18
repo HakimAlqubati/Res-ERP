@@ -272,6 +272,7 @@ class PayrollsRelationManager extends RelationManager
                     ->icon('heroicon-o-trash')
                     ->color('danger')
                     ->requiresConfirmation()
+                    ->deselectRecordsAfterCompletion()
                     ->action(function (Collection $records) {
                         try {
                             \Illuminate\Support\Facades\DB::beginTransaction();
@@ -311,8 +312,14 @@ class PayrollsRelationManager extends RelationManager
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->visible(fn(\Filament\Resources\RelationManagers\RelationManager $livewire) => $livewire->getOwnerRecord()->status === \App\Models\PayrollRun::STATUS_APPROVED)
-                    ->action(function (Collection $records): void {
+                    ->deselectRecordsAfterCompletion()
+                    ->visible(function (\Filament\Resources\RelationManagers\RelationManager $livewire): bool {
+                        $owner = $livewire->getOwnerRecord();
+
+                        return $owner->status === \App\Models\PayrollRun::STATUS_APPROVED
+                            && $owner->payrolls()->where('is_paid', false)->exists();
+                    })
+                    ->action(function (Collection $records, \Filament\Resources\RelationManagers\RelationManager $livewire): void {
                         $ids = $records
                             ->flatMap(fn(Payroll $record) => $this->payrollIdsForDisplay($record))
                             ->unique()
@@ -321,6 +328,7 @@ class PayrollsRelationManager extends RelationManager
 
                         Payroll::query()
                             ->whereIn('id', $ids)
+                            ->where('is_paid', false)
                             ->update([
                                 'is_paid'      => true,
                                 'payment_date' => now(),
@@ -328,6 +336,13 @@ class PayrollsRelationManager extends RelationManager
                                 'paid_by'      => auth()->id(),
                                 'paid_at'      => now(),
                             ]);
+
+                        $livewire->deselectAllTableRecords();
+
+                        \Filament\Notifications\Notification::make()
+                            ->title(__('Done'))
+                            ->success()
+                            ->send();
                     }),
                 DeleteBulkAction::make()
                     ->action(function (Collection $records): void {
