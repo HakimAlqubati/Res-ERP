@@ -381,10 +381,12 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
     public function isSystemManager()
     {
-        if (getCurrentRole() == 3) {
-            return true;
-        }
-        return false;
+        return in_array(3, $this->roles->pluck('id')->toArray());
+    }
+
+    public function isOpsManager()
+    {
+        return $this->isSystemManager();
     }
     public function isStoreManager()
     {
