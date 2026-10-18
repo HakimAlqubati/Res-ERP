@@ -72,7 +72,7 @@ class WorkPeriod extends Model implements Auditable
             return 'All Branches';
         }
 
-        return $this->branch()->value('name');
+        return $this->branch?->name;
     }
 
     // Accessor for supposed_duration
