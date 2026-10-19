@@ -56,7 +56,10 @@
     @endif
 
     <span class="fi-tabs-item-label">
-        {{ $slot }}
+        <span class="fi-tab-text">{{ $slot }}</span>
+        <svg class="fi-tab-active-arrow" viewBox="0 0 10 6" fill="currentColor" aria-hidden="true">
+            <path d="M5 6L0 0H10L5 6Z"/>
+        </svg>
     </span>
 
     @if ($icon && $iconPosition === IconPosition::After)

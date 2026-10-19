@@ -10,6 +10,8 @@ use App\Models\Employee;
 use Filament\Actions\ViewAction;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Schemas\Components\Component;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Storage;
 
 class EditEmployee extends EditRecord
@@ -109,5 +111,25 @@ class EditEmployee extends EditRecord
     public function hasCombinedRelationManagerTabsWithContent(): bool
     {
         return true;
+    }
+
+    public function getExtraBodyAttributes(): array
+    {
+        return [
+            'class' => 'employee-view-profile-page',
+        ];
+    }
+
+    public function getRelationManagersContentComponent(): Component
+    {
+        $component = parent::getRelationManagersContentComponent();
+
+        if (method_exists($component, 'extraAttributes')) {
+            $component->extraAttributes([
+                'class' => 'employee-profile-tabs',
+            ]);
+        }
+
+        return $component;
     }
 }

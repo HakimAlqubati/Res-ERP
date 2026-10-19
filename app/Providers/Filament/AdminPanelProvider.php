@@ -430,6 +430,79 @@ class AdminPanelProvider extends PanelProvider
                         background-color: #374151 !important;
                         color: #9ca3af !important;
                     }
+
+                    /* ========================================================= */
+                    /* Employee Profile Active Tab Indicator (Arrow under word)  */
+                    /* ========================================================= */
+                    .fi-tab-active-arrow {
+                        display: none;
+                    }
+
+                    .fi-resource-employees .fi-tabs:not(.fi-page-sub-navigation-tabs) .fi-tabs-item {
+                        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                    }
+
+                    .fi-resource-employees .fi-tabs:not(.fi-page-sub-navigation-tabs) .fi-tabs-item-label {
+                        display: inline-flex !important;
+                        flex-direction: column !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        line-height: 1.25 !important;
+                    }
+
+                    .fi-resource-employees .fi-tabs:not(.fi-page-sub-navigation-tabs) .fi-tabs-item.fi-active .fi-tab-active-arrow,
+                    .fi-resource-employees .fi-tabs:not(.fi-page-sub-navigation-tabs) .fi-tabs-item[aria-selected="true"] .fi-tab-active-arrow,
+                    .fi-resource-employees .fi-tabs:not(.fi-page-sub-navigation-tabs) .fi-tabs-item[aria-selected="aria-selected"] .fi-tab-active-arrow {
+                        display: block !important;
+                        width: 10px !important;
+                        height: 6px !important;
+                        margin-top: 3px !important;
+                        color: rgb(var(--primary-600, 3 56 28)) !important;
+                        animation: tabArrowBounce 0.2s ease-out !important;
+                    }
+
+                    .fi-resource-employees .fi-tabs:not(.fi-page-sub-navigation-tabs) .fi-tabs-item.fi-active .fi-tab-text,
+                    .fi-resource-employees .fi-tabs:not(.fi-page-sub-navigation-tabs) .fi-tabs-item[aria-selected="true"] .fi-tab-text,
+                    .fi-resource-employees .fi-tabs:not(.fi-page-sub-navigation-tabs) .fi-tabs-item[aria-selected="aria-selected"] .fi-tab-text {
+                        color: rgb(var(--primary-600, 3 56 28)) !important;
+                        font-weight: 700 !important;
+                    }
+
+                    .fi-resource-employees .fi-tabs:not(.fi-page-sub-navigation-tabs) .fi-tabs-item.fi-active,
+                    .fi-resource-employees .fi-tabs:not(.fi-page-sub-navigation-tabs) .fi-tabs-item[aria-selected="true"],
+                    .fi-resource-employees .fi-tabs:not(.fi-page-sub-navigation-tabs) .fi-tabs-item[aria-selected="aria-selected"] {
+                        background-color: rgba(var(--primary-500, 3 56 28), 0.08) !important;
+                        border-radius: 0.5rem !important;
+                    }
+
+                    .dark .fi-resource-employees .fi-tabs:not(.fi-page-sub-navigation-tabs) .fi-tabs-item.fi-active .fi-tab-active-arrow,
+                    .dark .fi-resource-employees .fi-tabs:not(.fi-page-sub-navigation-tabs) .fi-tabs-item[aria-selected="true"] .fi-tab-active-arrow,
+                    .dark .fi-resource-employees .fi-tabs:not(.fi-page-sub-navigation-tabs) .fi-tabs-item[aria-selected="aria-selected"] .fi-tab-active-arrow {
+                        color: rgb(var(--primary-400, 74 222 128)) !important;
+                    }
+
+                    .dark .fi-resource-employees .fi-tabs:not(.fi-page-sub-navigation-tabs) .fi-tabs-item.fi-active .fi-tab-text,
+                    .dark .fi-resource-employees .fi-tabs:not(.fi-page-sub-navigation-tabs) .fi-tabs-item[aria-selected="true"] .fi-tab-text,
+                    .dark .fi-resource-employees .fi-tabs:not(.fi-page-sub-navigation-tabs) .fi-tabs-item[aria-selected="aria-selected"] .fi-tab-text {
+                        color: rgb(var(--primary-400, 74 222 128)) !important;
+                    }
+
+                    .dark .fi-resource-employees .fi-tabs:not(.fi-page-sub-navigation-tabs) .fi-tabs-item.fi-active,
+                    .dark .fi-resource-employees .fi-tabs:not(.fi-page-sub-navigation-tabs) .fi-tabs-item[aria-selected="true"],
+                    .dark .fi-resource-employees .fi-tabs:not(.fi-page-sub-navigation-tabs) .fi-tabs-item[aria-selected="aria-selected"] {
+                        background-color: rgba(var(--primary-400, 74 222 128), 0.12) !important;
+                    }
+
+                    @keyframes tabArrowBounce {
+                        0% {
+                            opacity: 0;
+                            transform: translateY(-3px);
+                        }
+                        100% {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+                    }
                 </style>')
             )
 
