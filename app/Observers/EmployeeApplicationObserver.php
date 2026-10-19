@@ -430,4 +430,36 @@ class EmployeeApplicationObserver
             ]);
         }
     }
+
+    /**
+     * Restore associated child records when an application is restored.
+     */
+    public function restored(EmployeeApplicationV2 $app): void
+    {
+        match ($app->application_type_id) {
+            EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST =>
+                $app->missedCheckinRequest()->withTrashed()->restore(),
+            EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST =>
+                $app->missedCheckoutRequest()->withTrashed()->restore(),
+            EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST =>
+                $app->mealRequest()->withTrashed()->restore(),
+            default => null,
+        };
+    }
+
+    /**
+     * Force delete associated child records when an application is permanently deleted.
+     */
+    public function forceDeleted(EmployeeApplicationV2 $app): void
+    {
+        match ($app->application_type_id) {
+            EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST =>
+                $app->missedCheckinRequest()->withTrashed()->forceDelete(),
+            EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST =>
+                $app->missedCheckoutRequest()->withTrashed()->forceDelete(),
+            EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST =>
+                $app->mealRequest()->withTrashed()->forceDelete(),
+            default => null,
+        };
+    }
 }

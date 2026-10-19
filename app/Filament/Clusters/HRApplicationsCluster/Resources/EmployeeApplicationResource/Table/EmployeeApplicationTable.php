@@ -452,12 +452,32 @@ class EmployeeApplicationTable
                         }
                     }),
                 ]),
-                RestoreAction::make(),
+                RestoreAction::make()
+                    ->after(function (EmployeeApplicationV2 $record) {
+                        match ($record->application_type_id) {
+                            EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST =>
+                                $record->missedCheckinRequest()->withTrashed()->restore(),
+                            EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST =>
+                                $record->missedCheckoutRequest()->withTrashed()->restore(),
+                            EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST =>
+                                $record->mealRequest()->withTrashed()->restore(),
+                            default => null,
+                        };
+                    }),
 
                 ForceDeleteAction::make()->using(function ($record) {
                     DB::beginTransaction();
                     try {
                         $transaction = ApplicationTransaction::where('application_id', $record->id)->whereIn('transaction_type_id', [1, 2, 3, 4])->first();
+                        match ($record->application_type_id) {
+                            EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST =>
+                                $record->missedCheckinRequest()->withTrashed()->forceDelete(),
+                            EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST =>
+                                $record->missedCheckoutRequest()->withTrashed()->forceDelete(),
+                            EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST =>
+                                $record->mealRequest()->withTrashed()->forceDelete(),
+                            default => null,
+                        };
                         $record->forceDelete();
                         if ($transaction) {
                             $transaction->forceDelete();
@@ -578,8 +598,34 @@ class EmployeeApplicationTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    ForceDeleteBulkAction::make(),
-                    RestoreBulkAction::make(),
+                    ForceDeleteBulkAction::make()
+                        ->before(function ($records) {
+                            foreach ($records as $record) {
+                                match ($record->application_type_id) {
+                                    EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST =>
+                                        $record->missedCheckinRequest()->withTrashed()->forceDelete(),
+                                    EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST =>
+                                        $record->missedCheckoutRequest()->withTrashed()->forceDelete(),
+                                    EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST =>
+                                        $record->mealRequest()->withTrashed()->forceDelete(),
+                                    default => null,
+                                };
+                            }
+                        }),
+                    RestoreBulkAction::make()
+                        ->after(function ($records) {
+                            foreach ($records as $record) {
+                                match ($record->application_type_id) {
+                                    EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST =>
+                                        $record->missedCheckinRequest()->withTrashed()->restore(),
+                                    EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST =>
+                                        $record->missedCheckoutRequest()->withTrashed()->restore(),
+                                    EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST =>
+                                        $record->mealRequest()->withTrashed()->restore(),
+                                    default => null,
+                                };
+                            }
+                        }),
                 ]),
             ]);
     }

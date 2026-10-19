@@ -1047,7 +1047,7 @@ class EmployeeApplicationResource extends Resource
             ->form(function ($record) {
                 $details    = $record->missedCheckoutRequest;
                 $attendance = Attendance::where('employee_id', $record?->employee_id)
-                    ->where('check_date', $details->date)
+                    ->where('check_date', $details?->date)
                     ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
                     ->first();
 
@@ -1064,8 +1064,8 @@ class EmployeeApplicationResource extends Resource
                         Hidden::make('period')->default($attendance?->period),
                     ]),
                     Fieldset::make()->disabled(false)->label('Request data')->columns(3)->schema([
-                        DatePicker::make('request_check_date')->default($details->date)->label('Date'),
-                        TimePicker::make('request_check_time')->default($details->time)->label('Time'),
+                        DatePicker::make('request_check_date')->default($details?->date)->label('Date'),
+                        TimePicker::make('request_check_time')->default($details?->time)->label('Time'),
                         static::getSystemNotePlaceholder($record),
                     ]),
 

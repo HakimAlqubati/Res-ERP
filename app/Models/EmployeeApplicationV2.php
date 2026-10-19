@@ -166,12 +166,12 @@ class EmployeeApplicationV2 extends Model implements Auditable, HasMedia
 
     public function missedCheckinRequest()
     {
-        return $this->hasOne(MissedCheckInRequest::class, 'application_id');
+        return $this->hasOne(MissedCheckInRequest::class, 'application_id')->withTrashed();
     }
 
     public function missedCheckoutRequest()
     {
-        return $this->hasOne(MissedCheckOutRequest::class, 'application_id');
+        return $this->hasOne(MissedCheckOutRequest::class, 'application_id')->withTrashed();
     }
 
     public function leaveRequest()
@@ -186,7 +186,7 @@ class EmployeeApplicationV2 extends Model implements Auditable, HasMedia
 
     public function mealRequest()
     {
-        return $this->hasOne(EmployeeMealRequest::class, 'application_id');
+        return $this->hasOne(EmployeeMealRequest::class, 'application_id')->withTrashed();
     }
 
     // ─────────────────────────────────────────────────────────────
