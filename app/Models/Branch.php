@@ -92,7 +92,7 @@ class Branch extends Model implements HasMedia, Auditable
         'reseller_balance',
         'total_paid',
         'total_sales',
-        'total_orders_amount',
+        // 'total_orders_amount', // ⚠️ عالي الخطورة - يسبب بطء شديد
         'is_kitchen',
         'status_label',
         'is_expired',
