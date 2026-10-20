@@ -41,10 +41,9 @@ trait BranchAggregates
 
     public function getTotalOrdersAmountAttribute(): float
     {
-        // يفضّل أن يكون هناك accessor في Order يعيد total_amount بدقّة
+        // ✅ حساب المجموع في DB مباشرةً بدون جلب أي نماذج في الذاكرة
         return (float) $this->orders()
-            ->with('orderDetails') // تقليل N+1
-            ->get()
-            ->sum(fn($order) => $order->total_amount);
+            ->join('orders_details', 'orders_details.order_id', '=', 'orders.id')
+            ->sum('orders_details.total_price');
     }
 }
