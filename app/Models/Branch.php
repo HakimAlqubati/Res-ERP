@@ -87,17 +87,18 @@ class Branch extends Model implements HasMedia, Auditable
     ];
 
     protected $appends = [
-        'customized_categories',
-        'orders_count',
-        'reseller_balance',
-        'total_paid',
-        'total_sales',
-        'total_orders_amount',
+        // ⚠️ أُبقي هنا الحقول الخفيفة فقط (لا تستدعي queries ثقيلة)
         'is_kitchen',
         'status_label',
         'is_expired',
-        'chef_assistants_names',
-        'chef_assistants_emails',
+        // 'customized_categories',   // ثقيل — استخدم append() عند الحاجة
+        // 'orders_count',            // ثقيل — استخدم withCount()
+        // 'reseller_balance',        // ثقيل — استخدم append() عند الحاجة
+        // 'total_paid',              // ثقيل — استخدم append() عند الحاجة
+        // 'total_sales',             // ثقيل — استخدم append() عند الحاجة
+        // 'total_orders_amount',     // ثقيل جداً — يجلب كل الطلبات في الذاكرة
+        // 'chef_assistants_names',   // ثقيل — استخدم append() عند الحاجة
+        // 'chef_assistants_emails',  // ثقيل — استخدم append() عند الحاجة
     ];
 
     public function resolveTransferMarkupForCategory(?int $categoryId): float
