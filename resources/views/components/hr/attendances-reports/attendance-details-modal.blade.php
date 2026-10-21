@@ -53,7 +53,7 @@
              </tbody>
              <tfoot>
                  <tr class="bg-gray-50 font-bold">
-                     <td colspan="2" class="border border-gray-400 px-3 py-2 text-right">
+                     <td colspan="3" class="border border-gray-400 px-3 py-2 text-right">
                          {{ __('Total Hours:') }}
                      </td>
                      <td class="border border-gray-400 px-3 py-2 text-center">

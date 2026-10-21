@@ -1257,4 +1257,17 @@ return [
     'due_from' => 'Due From',
     'due_to' => 'Due To',
     'overdue_only' => 'Overdue Only',
+    
+    // ===========================================
+    // Employee Branch Transfer Logs
+    // ===========================================
+    'employee_branch_transfers' => 'Branch Transfers Report',
+    'employee_branch_transfer' => 'Branch Transfer Report',
+    'transferred_to_branch' => 'Transferred To Branch',
+    'previous_branch' => 'Previous Branch',
+    'transfer_date' => 'Transfer Date',
+    'transfer_status' => 'Assignment Status',
+    'current_active_branch' => 'Current Branch',
+    'past_branches' => 'Past Branches',
+    'ongoing_in_branch' => 'Ongoing in Branch',
 ];

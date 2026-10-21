@@ -1238,4 +1238,17 @@ return [
     'due_from' => 'مستحق من',
     'due_to' => 'مستحق إلى',
     'overdue_only' => 'المتأخر فقط',
+    
+    // ===========================================
+    // Employee Branch Transfer Logs
+    // ===========================================
+    'employee_branch_transfers' => 'تقرير تنقلات الفروع',
+    'employee_branch_transfer' => 'تقرير تنقل فرع',
+    'transferred_to_branch' => 'الفرع المنقول إليه',
+    'previous_branch' => 'الفرع السابق',
+    'transfer_date' => 'تاريخ النقل',
+    'transfer_status' => 'حالة التعيين',
+    'current_active_branch' => 'الفرع الحالي',
+    'past_branches' => 'فروع سابقة',
+    'ongoing_in_branch' => 'مستمر في هذا الفرع',
 ];

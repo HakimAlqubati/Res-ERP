@@ -411,6 +411,17 @@ class RecordActions
                 })->hidden(),
             // Add the Change Branch action
             EmployeeActions::changeBranch(),
+            Action::make('viewBranchLogs')
+                ->label(__('lang.employee_branch_transfers'))
+                ->icon('heroicon-o-arrows-right-left')
+                ->color('info')
+                ->url(fn (Employee $record): string => \App\Filament\Clusters\HRCluster\Resources\EmployeeBranchLogResource::getUrl('index', [
+                    'tableFilters' => [
+                        'employee_id' => [
+                            'value' => $record->id,
+                        ],
+                    ],
+                ])),
             EditAction::make(),
             ViewAction::make(),
             DeleteAction::make(),

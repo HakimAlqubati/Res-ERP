@@ -80,7 +80,7 @@ class CachedAttendanceFetcher
      */
     public function getEmployeePeriodAttendnaceDetails(
         int $employeeId,
-        int $periodId,
+        int|string|null $periodId,
         string $date,
         bool $forceRefresh = false
     ) {

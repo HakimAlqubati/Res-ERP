@@ -67,10 +67,11 @@ class AttendanceDetailsCalculator
         // Group by period_id
         foreach ($data as $detail) {
             $formattedTime = isset($detail['check_time']) ? Carbon::parse($detail['check_time'])->format('H:i') : null;
+            $periodKey = (!isset($detail['period_id']) || $detail['period_id'] === null || $detail['period_id'] == -1) ? 'no_shift' : $detail['period_id'];
             if ($detail['check_type'] === 'checkin') {
-                $attendances[$detail['period_id']]['checkins'][] = $formattedTime;
+                $attendances[$periodKey]['checkins'][] = $formattedTime;
             } elseif ($detail['check_type'] === 'checkout') {
-                $attendances[$detail['period_id']]['checkouts'][] = $formattedTime;
+                $attendances[$periodKey]['checkouts'][] = $formattedTime;
             }
         }
 
@@ -130,13 +131,14 @@ class AttendanceDetailsCalculator
         foreach ($data as $detail) {
             $formattedTime = isset($detail['check_time']) ? Carbon::parse($detail['check_time'])->format('H:i') : null;
             $branchName = $detail['branch']['name'] ?? $detail['branch_name'] ?? '-';
+            $periodKey = (!isset($detail['period_id']) || $detail['period_id'] === null || $detail['period_id'] == -1) ? 'no_shift' : $detail['period_id'];
 
             if ($detail['check_type'] === 'checkin') {
-                $attendances[$detail['period_id']]['checkins'][] = $formattedTime;
-                $attendances[$detail['period_id']]['checkin_branches'][] = $branchName;
+                $attendances[$periodKey]['checkins'][] = $formattedTime;
+                $attendances[$periodKey]['checkin_branches'][] = $branchName;
             } elseif ($detail['check_type'] === 'checkout') {
-                $attendances[$detail['period_id']]['checkouts'][] = $formattedTime;
-                $attendances[$detail['period_id']]['checkout_branches'][] = $branchName;
+                $attendances[$periodKey]['checkouts'][] = $formattedTime;
+                $attendances[$periodKey]['checkout_branches'][] = $branchName;
             }
         }
 

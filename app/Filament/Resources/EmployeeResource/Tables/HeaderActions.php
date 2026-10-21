@@ -19,6 +19,11 @@ class HeaderActions
     public static function actions()
     {
         return [
+            Action::make('branch_transfer_logs')
+                ->label(__('lang.employee_branch_transfers'))
+                ->icon('heroicon-o-arrows-right-left')
+                ->color('info')
+                ->url(fn (): string => \App\Filament\Clusters\HRCluster\Resources\EmployeeBranchLogResource::getUrl('index')),
             Action::make('export_employees')
                 ->label(__('lang.export_to_excel'))
                 ->icon('heroicon-o-document-arrow-down')
