@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\Reports\StoreCostReportController;
 use App\Http\Controllers\Api\ReturnedOrderController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\QuoteController;
+use App\Http\Controllers\Api\StoreController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
@@ -355,7 +356,7 @@ require base_path('routes/custom_api_test.php');
 
 
 
-// Route::get('/stores', fn() => \App\Models\Store::select('id', 'name')->get());
+Route::get('/stores', [StoreController::class, 'index']);
 // Route::get('/products', fn() => \App\Models\Product::select('id', 'name')->get());
 // Route::post('/stock-inventory', function(\Illuminate\Http\Request $request) {
 // من هنا تحفظ البيانات في جدول StockInventory وتعيد رسالة نجاح
