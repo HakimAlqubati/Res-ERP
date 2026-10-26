@@ -177,7 +177,7 @@ class EmployeeAdvanceInstallmentResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('month')
-                    ->label(__('lang.month'))
+                    ->label(__('lang.month_label'))
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 

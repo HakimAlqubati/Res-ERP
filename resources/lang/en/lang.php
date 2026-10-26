@@ -1261,8 +1261,8 @@ return [
     // ===========================================
     // Employee Branch Transfer Logs
     // ===========================================
-    'employee_branch_transfers' => 'Branch Transfers Report',
-    'employee_branch_transfer' => 'Branch Transfer Report',
+    'employee_branch_transfers' => 'Staff Movement Log',
+    'employee_branch_transfer' => 'Staff Movement Log',
     'transferred_to_branch' => 'Transferred To Branch',
     'previous_branch' => 'Previous Branch',
     'transfer_date' => 'Transfer Date',
