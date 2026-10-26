@@ -1251,4 +1251,11 @@ return [
     'current_active_branch' => 'الفرع الحالي',
     'past_branches' => 'فروع سابقة',
     'ongoing_in_branch' => 'مستمر في هذا الفرع',
+
+    // ===========================================
+    // Requests Dashboard
+    // ===========================================
+    'requests_dashboard' => 'لوحة الطلبات',
+    'requests_list' => 'قائمة الطلبات',
 ];
+

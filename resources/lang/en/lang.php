@@ -1270,4 +1270,11 @@ return [
     'current_active_branch' => 'Current Branch',
     'past_branches' => 'Past Branches',
     'ongoing_in_branch' => 'Ongoing in Branch',
+
+    // ===========================================
+    // Requests Dashboard
+    // ===========================================
+    'requests_dashboard' => 'Requests Dashboard',
+    'requests_list' => 'Requests List',
 ];
+

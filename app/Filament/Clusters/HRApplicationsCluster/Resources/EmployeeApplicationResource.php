@@ -70,7 +70,12 @@ class EmployeeApplicationResource extends Resource
 {
     protected static ?string $model = EmployeeApplicationV2::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = Heroicon::PencilSquare;
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::ListBullet;
+
+    protected static ?string $cluster = HRApplicationsCluster::class;
+
+    protected static ?int $navigationSort = 1;
+
     protected ?bool $hasDatabaseTransactions = true;
 
     public static function getModelLabel(): string
@@ -85,7 +90,7 @@ class EmployeeApplicationResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return __('lang.requests');
+        return __('lang.requests_list');
     }
 
     public static function form(Schema $schema): Schema

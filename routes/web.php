@@ -1135,3 +1135,29 @@ Route::get('/batch-report', [BatchReportController::class, 'index'])
 Route::get('/grnCount', [GrnReportController::class, 'index'])
     ->name('reports.grn-count')
     ->middleware('web');
+
+// Legacy routes redirection for employee applications
+Route::middleware(['web'])->group(function () {
+    Route::get('/admin/employee-applications', function (\Illuminate\Http\Request $request) {
+        if ($request->has('tab') || $request->has('tableFilters')) {
+            $target = url('/admin/h-r-applications/employee-applications');
+            $qs = $request->getQueryString();
+            return redirect()->to($qs ? "{$target}?{$qs}" : $target);
+        }
+        return redirect()->to(url('/admin/h-r-applications/dashboard'));
+    });
+
+    Route::get('/admin/employee-applications/create', function (\Illuminate\Http\Request $request) {
+        $target = url('/admin/h-r-applications/employee-applications/create');
+        $qs = $request->getQueryString();
+        return redirect()->to($qs ? "{$target}?{$qs}" : $target);
+    });
+
+    Route::get('/admin/employee-applications/{record}', function ($record) {
+        return redirect()->to(url("/admin/h-r-applications/employee-applications/{$record}"));
+    });
+
+    Route::get('/admin/employee-applications/{record}/edit', function ($record) {
+        return redirect()->to(url("/admin/h-r-applications/employee-applications/{$record}/edit"));
+    });
+});
