@@ -110,12 +110,13 @@ class ProductsSchema
                                             ->dehydrated()
                                             ->default(fn ($get) => ProductCodeGenerationMethod::isAuto() ? Product::generateProductCode($get('category_id')) : null),
                                         TextInput::make('code_old_system')
-                                            ->required()
+                                            ->nullable()
                                             // ->columnSpanFull()
                                             ->unique(ignoreRecord: true)
                                             ->label(__('lang.code_old_system'))
                                             ->helperText(__('lang.code_old_system_helper'))
                                             ->placeholder(__('lang.code_old_system_placeholder'))
+                                            ->dehydrateStateUsing(fn ($state) => filled($state) ? trim($state) : null)
                                             ->visible(fn () => filter_var(Setting::getSetting('show_old_system_code'), FILTER_VALIDATE_BOOLEAN)),
                                                 ]),
                                 ]),

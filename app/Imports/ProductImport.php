@@ -45,7 +45,7 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
             $productId = (int) ($row['id'] ?? 0);
             $productName = trim($row['product_name'] ?? '');
             $categoryName = trim($row['category'] ?? '');
-            $codeOldSystem = trim($row['code_old_system'] ?? '');
+            $codeOldSystem = !empty(trim($row['code_old_system'] ?? '')) ? trim($row['code_old_system']) : null;
             $unitName = trim($row['unit'] ?? '');
             $unitPerPackName = trim($row['unit_per_pack'] ?? '');
             $price = (float) ($row['price'] ?? 0);

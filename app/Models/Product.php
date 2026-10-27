@@ -6,7 +6,7 @@ use App\Services\MultiProductsInventoryService;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Illuminate\Database\Eloquent\Builder;
 use App\Traits\Product\HasScopedUnitPrices;
-use Exception;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -529,5 +529,12 @@ class Product extends Model implements Auditable
         return $this->hasOne(\App\Models\UnitPrice::class, 'product_id')
                     ->where('usage_scope', '!=', 'manufacturing_only')
                     ->orderBy('package_size', 'asc');
+    }
+
+    protected function codeOldSystem(): Attribute
+    {
+        return Attribute::make(
+            set: fn ($value) => filled($value) ? trim($value) : null,
+        );
     }
 }
