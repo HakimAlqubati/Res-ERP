@@ -11,5 +11,8 @@
     "Total Additions": "إجمالي الإضافات",
     "Total Deductions": "إجمالي الخصومات",
     "Final Net Result": "صافي النتيجة النهائية",
-    "Date Format": "صيغة التاريخ"
+    "Date Format": "صيغة التاريخ",
+    "The invoice total field is required and cannot be empty.": "حقل إجمالي الفاتورة مطلوب .",
+    "The invoice total must be greater than zero since items exist in the invoice.": "يجب أن يكون إجمالي الفاتورة أكبر من صفر نظراً لوجود عناصر في الفاتورة.",
+    "The invoice total (:total) does not match the sum of item totals (:sum).": "إجمالي الفاتورة (:total) لا يطابق مجموع العناصر (:sum)."
 }

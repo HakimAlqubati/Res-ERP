@@ -98,25 +98,39 @@ class PurchaseInvoiceForm
                             // ->readOnly()            // نقرأه فقط من الـ repeater
                             ->default(0)
                             ->dehydrated()
+                            ->required()
+                            ->validationMessages([
+                                'required' => __('lang.total_amount_required'),
+                            ])
                             ->suffixIconColor('primary')
-                            ->rule(function (callable $get) {
-                                return function (string $attribute, $value, \Closure $fail) use ($get) {
-                                    // جمع كل total_price من الريبيتر
-                                    $rows = $get('units') ?? [];
-                                    $sum  = collect($rows)->sum(fn($row) => (float) ($row['total_price'] ?? 0));
+                            ->rule(function (callable $get, string $operation, ?\Illuminate\Database\Eloquent\Model $record) {
+                                return function (string $attribute, $value, \Closure $fail) use ($get, $operation, $record) {
+                                    if (blank($value)) {
+                                        $fail(__('lang.total_amount_required'));
+                                        return;
+                                    }
 
-                                    // توحيد الدقة لأربع منازل عشرية
-                                    $expected = round($sum, 4);
-                                    $current  = round((float) $value, 4);
+                                    if ($operation === 'create') {
+                                        // جمع كل total_price من الريبيتر
+                                        $rows = $get('units') ?? [];
+                                        if (!empty($rows)) {
+                                            $sum  = collect($rows)->sum(fn($row) => (float) ($row['total_price'] ?? 0));
 
-                                    if ($current !== $expected) {
-                                        $fail(__(
-                                            'The invoice total (:total) does not match the sum of item totals (:sum).',
-                                            [
-                                                'total' => $current,
-                                                'sum'   => $expected,
-                                            ]
-                                        ));
+                                            // توحيد الدقة لأربع منازل عشرية
+                                            $expected = round($sum, 4);
+                                            $current  = round((float) $value, 4);
+
+                                            if ($current !== $expected) {
+                                                $fail(__('lang.total_amount_mismatch', [
+                                                    'total' => $current,
+                                                    'sum'   => $expected,
+                                                ]));
+                                            }
+                                        }
+                                    } elseif ($operation === 'edit' && $record) {
+                                        if ((float) $value <= 0 && $record->details()->exists()) {
+                                            $fail(__('lang.total_amount_must_be_greater_than_zero'));
+                                        }
                                     }
                                 };
                             })

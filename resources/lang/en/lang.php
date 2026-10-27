@@ -1276,5 +1276,12 @@ return [
     // ===========================================
     'requests_dashboard' => 'Requests Dashboard',
     'requests_list' => 'Requests List',
+
+    // ===========================================
+    // Purchase Invoices
+    // ===========================================
+    'total_amount_required' => 'The invoice total field is required.',
+    'total_amount_must_be_greater_than_zero' => 'The invoice total must be greater than zero since items exist in the invoice.',
+    'total_amount_mismatch' => 'The invoice total (:total) does not match the sum of item totals (:sum).',
 ];
 
