@@ -72,8 +72,9 @@ class StockInventoryTable
                     ->toggleable()
                     ->summarize(
                         Summarizer::make()
-                            ->using(function (Table $table) {
-                                $total = $table->getRecords()->sum('closing_stock_value');
+                            ->using(function ($summarizer) {
+                                $records = $summarizer->getQuery()->with(['details.product', 'details.unit'])->get();
+                                $total = $records->sum('closing_stock_value');
                                 return is_numeric($total) ? formatMoneyWithCurrency($total) : $total;
                             })
                     )

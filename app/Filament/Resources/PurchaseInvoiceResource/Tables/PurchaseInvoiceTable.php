@@ -68,12 +68,19 @@ class PurchaseInvoiceTable
                     })
                     ->summarize(
                         Summarizer::make()
-                            ->using(function (Table $table) {
-                                $total  = $table->getRecords()->sum(fn($record) => $record->total_amount);
-                                if (is_numeric($total)) {
-                                    return formatMoneyWithCurrency($total);
+                            ->using(function ($summarizer) {
+                                $ids = $summarizer->getQuery()->pluck('purchase_invoices.id');
+
+                                if ($ids->isEmpty()) {
+                                    return formatMoneyWithCurrency(0);
                                 }
-                                return $total;
+
+                                $total = DB::table('purchase_invoice_details')
+                                    ->whereIn('purchase_invoice_id', $ids)
+                                    ->whereNull('deleted_at')
+                                    ->sum(DB::raw('quantity * price'));
+
+                                return formatMoneyWithCurrency($total ?? 0);
                             })
                     )
                     ->toggleable(isToggledHiddenByDefault: false),

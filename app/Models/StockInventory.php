@@ -80,6 +80,14 @@ class StockInventory extends Model implements Auditable
 
     public function getClosingStockValueAttribute(): float
     {
+        if ($this->finalized) {
+            return (float) cache()->remember(
+                "stock_inventory_closing_val_{$this->id}",
+                now()->addDays(7),
+                fn () => app(ClosingStockCalculationService::class)->calculateClosingStockValue($this)
+            );
+        }
+
         return app(ClosingStockCalculationService::class)->calculateClosingStockValue($this);
     }
 

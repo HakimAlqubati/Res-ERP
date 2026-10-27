@@ -30,6 +30,8 @@ class OrderObserver
 
     public function updated(Order $order)
     {
+        cache()->forget("order_cost_analysis_{$order->id}");
+
         if (in_array($order->status, [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])) {
             OrderDetails::where('order_id', $order->id)->update(['available_in_store' => 1]);
 
@@ -41,5 +43,10 @@ class OrderObserver
             //     $this->syncService->syncOrder($order);
             // }
         }
+    }
+
+    public function deleted(Order $order)
+    {
+        cache()->forget("order_cost_analysis_{$order->id}");
     }
 }
