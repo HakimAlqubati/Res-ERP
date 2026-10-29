@@ -36,6 +36,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Colors\Color;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -105,6 +106,17 @@ class StockIssueOrderResource extends Resource
                         Textarea::make('cancel_reason')
                             ->label('Cancel Reason')
                             ->hidden(fn ($get) => $get('cancelled') == 0),
+
+                        TextInput::make('cancelled_by_name')
+                            ->label('Cancelled By')
+                            ->default(fn (?StockIssueOrder $record) => $record?->cancelledBy?->name)
+                            ->hidden(fn ($get) => $get('cancelled') == 0)
+                            ->readOnly(),
+
+                        DateTimePicker::make('cancelled_at')
+                            ->label('Cancelled At')
+                            ->hidden(fn ($get) => $get('cancelled') == 0)
+                            ->readOnly(),
 
                         Repeater::make('details')
                             ->relationship('details')->columnSpanFull()
@@ -231,14 +243,43 @@ class StockIssueOrderResource extends Resource
                 TextColumn::make('createdBy.name')->label('Created By'),
                 TextColumn::make('item_count')->label('Products Count')->alignCenter(true),
                 TextColumn::make('notes')->limit(50)->label('Notes'),
-                IconColumn::make('cancelled')
-                    ->label('Cancelled')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('cancelled')
+                    ->label(__('lang.status'))
+                    ->badge()
+                    ->alignCenter()
+                    ->formatStateUsing(fn ($state): string => $state ? __('lang.cancelled') : __('lang.active'))
+                    ->color(fn ($state): string => $state ? 'danger' : 'success')
+                    ->icon(fn ($state): string => $state ? 'heroicon-m-x-circle' : 'heroicon-m-check-circle')
+                    ->tooltip(function (StockIssueOrder $record): ?string {
+                        if (! $record->cancelled) {
+                            return null;
+                        }
+
+                        $parts = [];
+                        if ($record->cancel_reason) {
+                            $parts[] = __('lang.reason') . ': ' . $record->cancel_reason;
+                        }
+                        if ($record->cancelledBy?->name) {
+                            $parts[] = 'بواسطة: ' . $record->cancelledBy->name;
+                        }
+                        if ($record->cancelled_at) {
+                            $parts[] = __('lang.date') . ': ' . $record->cancelled_at;
+                        }
+
+                        return ! empty($parts) ? implode(' | ', $parts) : null;
+                    })
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->label('Created at')->toggleable(isToggledHiddenByDefault: false),
             ])
             ->filters([
-                //
+                TernaryFilter::make('cancelled')
+                    ->label(__('lang.status'))
+                    ->placeholder(__('lang.all'))
+                    ->trueLabel(__('lang.cancelled'))
+                    ->falseLabel(__('lang.active')),
             ])
             ->recordActions([
                 ActionGroup::make([
