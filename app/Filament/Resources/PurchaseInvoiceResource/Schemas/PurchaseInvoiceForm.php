@@ -413,24 +413,14 @@ class PurchaseInvoiceForm
                                 })
                                 ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->code . ' - ' . Product::find($value)?->name)
                                 ->reactive()
-                                ->afterStateUpdated(function ($set, $state, callable $get) {
+                                ->afterStateUpdated(function (Set $set, $state, callable $get) {
                                     $set('unit_id', null);
-                                    $product = Product::find($state);
-                                    $set('waste_stock_percentage', $product?->waste_stock_percentage);
+                                    $set('package_size', null);
+                                    $set('price', null);
+                                    $set('total_price', 0);
 
-                                    if ($product && $product->supplyUnitPrices->isNotEmpty()) {
-                                        $firstUnitPrice = $product->supplyUnitPrices->first();
-
-                                        // تعيين أول وحدة بشكل تلقائي
-                                        $set('unit_id', $firstUnitPrice->unit_id);
-                                        $set('price', $firstUnitPrice->price ?? 0);
-                                        $set('package_size', $firstUnitPrice->package_size ?? 0);
-
-                                        // حساب التوتال بناءً على الكمية الحالية (أو 1 افتراضياً)
-                                        $quantity = (float)($get('quantity') ?? 1);
-                                        $total = round($quantity * (float)($firstUnitPrice->price ?? 0), 2);
-                                        $set('total_price', $total);
-                                    }
+                                    $product = $state ? Product::find($state) : null;
+                                    $set('waste_stock_percentage', $product?->waste_stock_percentage ?? 0);
 
                                     // تحديث إجمالي الفاتورة
                                     self::recalculateTotalAmount($set, $get);
@@ -450,16 +440,15 @@ class PurchaseInvoiceForm
                                 ->searchable()
                                 ->reactive()
                                 ->afterStateUpdated(function (Set $set, $state, $get) {
-                                    $unitPrice = UnitPrice::where(
+                                    $unitPrice = $state ? UnitPrice::where(
                                         'product_id',
                                         $get('product_id')
                                     )
-                                        ->where('unit_id', $state)->first();
-                                    $set('price', $unitPrice->price ?? 0);
-                                    $total = round(((float) ($unitPrice->price ?? 0)) * ((float) $get('quantity')), 2) ?? 0;
+                                        ->where('unit_id', $state)->first() : null;
 
-                                    $set('total_price', $total ?? 0);
-                                    $set('package_size',  $unitPrice->package_size ?? 0);
+                                    $set('package_size',  $unitPrice?->package_size ?? 0);
+                                    $set('price', null);
+                                    $set('total_price', 0);
 
                                     self::recalculateTotalAmount($set, $get);
                                 })->columnSpan(2)->required(),
@@ -478,7 +467,9 @@ class PurchaseInvoiceForm
                                 ->disabledOn('edit')
                                 ->live(onBlur: true)
                                 ->afterStateUpdated(function (Set $set, $state, $get) {
-                                    $total = round(((float) $state) * ((float)$get('price') ?? 0), 2);
+                                    $qty = is_numeric($state) ? (float) $state : 0;
+                                    $price = is_numeric($get('price')) ? (float) $get('price') : 0;
+                                    $total = ($qty > 0 && $price > 0) ? round($qty * $price, 2) : 0;
                                     $set('total_price', $total);
                                     self::recalculateTotalAmount($set, $get);
                                 })->columnSpan(1)->required(),
@@ -491,7 +482,9 @@ class PurchaseInvoiceForm
                                 ->live(onBlur: true)
 
                                 ->afterStateUpdated(function (Set $set, $state, $get) {
-                                    $total = round(((float) $state) * ((float)$get('quantity')), 2);
+                                    $price = is_numeric($state) ? (float) $state : 0;
+                                    $qty = is_numeric($get('quantity')) ? (float) $get('quantity') : 0;
+                                    $total = ($price > 0 && $qty > 0) ? round($price * $qty, 2) : 0;
                                     $set('total_price', $total);
 
                                     self::recalculateTotalAmount($set, $get);
