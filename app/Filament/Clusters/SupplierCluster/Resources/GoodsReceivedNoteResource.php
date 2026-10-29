@@ -153,6 +153,16 @@ class GoodsReceivedNoteResource extends Resource
                                     ->label(__('lang.attachment'))
                                     ->directory('goods-received-notes')
                                     ->columnSpanFull()
+                                    ->acceptedFileTypes(['application/pdf'])
+                                    ->validationMessages([
+                                        'mimetypes' => __('lang.invalid_file_type_pdf_only'),
+                                        'mimes' => __('lang.invalid_file_type_pdf_only'),
+                                    ])
+                                    ->helperText(__('lang.only_pdf_allowed'))
+                                    ->extraInputAttributes([
+                                        'data-label-file-type-not-allowed' => __('lang.invalid_file_type_pdf_only'),
+                                        'data-file-validate-type-label-expected-types' => __('lang.only_pdf_allowed'),
+                                    ])
                                     ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                                         return (string) str($file->getClientOriginalName())->prepend('grn-');
                                     })
@@ -160,6 +170,22 @@ class GoodsReceivedNoteResource extends Resource
                                     ->live()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get, ?\Illuminate\Database\Eloquent\Model $record) {
                                         if (!$state) return;
+
+                                        $uploadedFile = is_array($state) ? (array_values($state)[0] ?? null) : $state;
+
+                                        if ($uploadedFile instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                                            $mime = $uploadedFile->getMimeType();
+                                            $ext = strtolower($uploadedFile->getClientOriginalExtension());
+                                            if ($mime !== 'application/pdf' && $ext !== 'pdf') {
+                                                $set('attachment', null);
+                                                \Filament\Notifications\Notification::make()
+                                                    ->title(__('lang.invalid_file_type_title'))
+                                                    ->body(__('lang.invalid_file_type_pdf_only'))
+                                                    ->danger()
+                                                    ->send();
+                                                return;
+                                            }
+                                        }
 
                                         $attempt = null;
                                         $repo = app(\App\Repositories\Contracts\DocumentAnalysisAttemptRepositoryInterface::class);
@@ -311,18 +337,15 @@ class GoodsReceivedNoteResource extends Resource
                                     }
                                 }
 
+                                if (!$isPdf) {
+                                    return new \Illuminate\Support\HtmlString('<div class="text-danger-600 dark:text-danger-400 p-8 text-center border-2 border-dashed border-danger-300 dark:border-danger-700 rounded-lg">' . e(__('lang.invalid_file_type_pdf_only')) . '</div>');
+                                }
+
                                 if (!$url) {
-                                    if ($isPdf) {
-                                        return new \Illuminate\Support\HtmlString('<div class="text-gray-400 p-8 text-center border-2 border-dashed rounded-lg">PDF file is too large for live preview. Please save to view.</div>');
-                                    }
-                                    return new \Illuminate\Support\HtmlString('<div class="text-gray-400 p-8 text-center border-2 border-dashed rounded-lg">Preview not available</div>');
+                                    return new \Illuminate\Support\HtmlString('<div class="text-gray-400 p-8 text-center border-2 border-dashed rounded-lg">PDF file is too large for live preview. Please save to view.</div>');
                                 }
 
-                                if ($isPdf) {
-                                    return new \Illuminate\Support\HtmlString('<iframe src="' . $url . '" style="width: 100%; height: 75vh;" class="rounded-lg shadow border-0"></iframe>');
-                                }
-
-                                return new \Illuminate\Support\HtmlString('<img src="' . $url . '" style="width: 100%; max-height: 75vh; object-fit: contain;" class="rounded-lg shadow border" />');
+                                return new \Illuminate\Support\HtmlString('<iframe src="' . $url . '" style="width: 100%; height: 75vh;" class="rounded-lg shadow border-0"></iframe>');
                             })
 
 

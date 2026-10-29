@@ -1264,5 +1264,9 @@ return [
     'total_amount_required' => 'حقل إجمالي الفاتورة مطلوب.',
     'total_amount_must_be_greater_than_zero' => 'يجب أن يكون إجمالي الفاتورة أكبر من صفر نظراً لوجود عناصر في الفاتورة.',
     'total_amount_mismatch' => 'إجمالي الفاتورة (:total) لا يطابق مجموع تفاصيل العناصر (:sum).',
+    'only_pdf_allowed' => 'يُقبل فقط ملفات بصيغة PDF',
+    'invalid_file_type_pdf_only' => 'نوع الملف غير صالح، لا يقبل النظام إلا ملفات بصيغة PDF فقط.',
+    'invalid_file_type_title' => 'صيغة غير مسموح بها',
 ];
+
 

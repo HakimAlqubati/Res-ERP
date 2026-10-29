@@ -1283,5 +1283,9 @@ return [
     'total_amount_required' => 'The invoice total field is required.',
     'total_amount_must_be_greater_than_zero' => 'The invoice total must be greater than zero since items exist in the invoice.',
     'total_amount_mismatch' => 'The invoice total (:total) does not match the sum of item totals (:sum).',
+    'only_pdf_allowed' => 'Only PDF files are allowed',
+    'invalid_file_type_pdf_only' => 'Invalid file type. Only PDF files are allowed.',
+    'invalid_file_type_title' => 'Unsupported File Type',
 ];
+
 
