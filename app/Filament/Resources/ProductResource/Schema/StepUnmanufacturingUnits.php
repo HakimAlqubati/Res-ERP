@@ -46,7 +46,7 @@ class StepUnmanufacturingUnits
                     ->rules(function (Get $get, callable $livewire) {
                         return [
                             function (string $attribute, $value, Closure $fail) use ($get) {
-                                $units = $get('units') ?? [];
+                                $units = (is_array($value) && !empty($value)) ? $value : ($get('units') ?? []);
 
                                 // validation مع رسالة رسمية
                                 PRA::validateUnitsPackageSizeOrder($units, $fail);

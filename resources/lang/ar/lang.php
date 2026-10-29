@@ -1267,6 +1267,8 @@ return [
     'only_pdf_allowed' => 'يُقبل فقط ملفات بصيغة PDF',
     'invalid_file_type_pdf_only' => 'نوع الملف غير صالح، لا يقبل النظام إلا ملفات بصيغة PDF فقط.',
     'invalid_file_type_title' => 'صيغة غير مسموح بها',
+    'smallest_package_size_greater_than_one' => 'لا يمكن أن يكون حجم العبوة (package size) لأصغر وحدة أكبر من 1.',
 ];
+
 
 

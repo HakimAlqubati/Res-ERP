@@ -244,15 +244,16 @@ final class ProductResourceActions
             }
         }
 
-        // 2️⃣ التأكد أن آخر واحدة فقط = 1
-        if ($packageSizes->last() !== 1.0) {
-            $message = __('⚠️ The last qty per pack must be exactly 1.');
+        // 2️⃣ التأكد أن أصغر وحدة لا يتجاوز حجم عبوتها 1
+        $minPackageSize = $packageSizes->min();
+        if ($minPackageSize !== null && $minPackageSize > 1.0) {
+            $message = __('lang.smallest_package_size_greater_than_one');
             if ($fail) {
-                // $fail($message);
+                $fail($message);
             } else {
-                // showWarningNotifiMessage($message);
+                showWarningNotifiMessage($message);
             }
-            // return;
+            return;
         }
 
         // 3️⃣ ممنوع أكثر من واحدة قيمتها = 1

@@ -1286,6 +1286,8 @@ return [
     'only_pdf_allowed' => 'Only PDF files are allowed',
     'invalid_file_type_pdf_only' => 'Invalid file type. Only PDF files are allowed.',
     'invalid_file_type_title' => 'Unsupported File Type',
+    'smallest_package_size_greater_than_one' => 'The package size for the smallest unit cannot be greater than 1.',
 ];
+
 
 

@@ -89,7 +89,7 @@ class StepManufacturingUnits
                     ->rules(function (Get $get, callable $livewire) {
                         return [
                             function (string $attribute, $value, Closure $fail) use ($get) {
-                                $units = $get('units') ?? [];
+                                $units = (is_array($value) && !empty($value)) ? $value : ($get('units') ?? []);
 
                                 // Validate units package size order
                                 PRA::validateUnitsPackageSizeOrder($units, $fail);
