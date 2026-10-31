@@ -16,11 +16,13 @@ class FetchOrderTransferReportAction
 
     public function execute(OrderTransferReportFilterDTO $dto): array
     {
-        // 1. جلب الإحصائيات (العدد والإجمالي المالي من SQL)
+        // 1. جلب الإحصائيات (العدد والإجمالي المالي والكمية الكلية من SQL)
         $aggregates = $this->repository->getReportAggregates($dto);
        
         $totalRecords = $aggregates['total_records'];
         $grandTotal = $aggregates['grand_total'];
+        $grandTotalQuantity = $aggregates['grand_total_quantity'] ?? 0.0;
+        $grandAveragePrice = $grandTotalQuantity > 0 ? ($grandTotal / $grandTotalQuantity) : 0.0;
 
         if ($totalRecords === 0) {
             $paginator = new LengthAwarePaginator([], 0, $dto->perPage, $dto->page, [
@@ -29,8 +31,12 @@ class FetchOrderTransferReportAction
 
             return [
                 'paginator' => $paginator,
+                'current_page_quantity_total' => formatQunantity(0),
+                'current_page_average_price' => formatMoneyWithCurrency(0),
                 'current_page_total' => formatMoneyWithCurrency(0),
                 'current_page_price_total' => formatMoneyWithCurrency(0),
+                'grand_total_quantity' => formatQunantity(0),
+                'grand_average_price' => formatMoneyWithCurrency(0),
                 'grand_total' => formatMoneyWithCurrency(0),
             ];
         }
@@ -38,19 +44,17 @@ class FetchOrderTransferReportAction
         // 2. جلب وتنسيق الصفحة الحالية فقط
         $rawReportData = $this->repository->getRawReportData($dto);
         $formattedItems = OrderTransferReportResource::transform($rawReportData);
-        $currentPageSubtotalRaw = collect($formattedItems)->sum(function($item) {
-            return $item->subtotal_raw ?? 0;
+
+        $currentPageQuantityTotalRaw = collect($rawReportData)->sum(function($item) {
+            return (float) ($item->remaining_qty_unit ?? 0);
         });
         $currentPagePriceTotalRaw = collect($rawReportData)->sum(function($item) {
-            return $item->remaining_value ?? 0;
+            return (float) ($item->remaining_value ?? 0);
         });
-        // dd($rawReportData,$formattedItems,$currentPagePriceTotalRaw);
-        
-        // ✅ حساب إجمالي الصفحة الحالية (سريع جداً لأنه يجمع 50 سجلاً فقط كحد أقصى)
-        // $currentPageTotalRaw = collect($formattedItems)->sum('subtotal_raw');
-$currentPageTotalRaw = collect($formattedItems)->sum(function($item) {
-            return $item->subtotal_raw ?? 0;
-        });
+        $currentPageAveragePriceRaw = $currentPageQuantityTotalRaw > 0
+            ? ($currentPagePriceTotalRaw / $currentPageQuantityTotalRaw)
+            : 0.0;
+
         // 3. بناء الباجنيتور
         $paginator = new LengthAwarePaginator(
             $formattedItems,
@@ -63,8 +67,12 @@ $currentPageTotalRaw = collect($formattedItems)->sum(function($item) {
         // 4. إرجاع النتائج جاهزة
         return [
             'paginator' => $paginator,
+            'current_page_quantity_total' => formatQunantity($currentPageQuantityTotalRaw),
+            'current_page_average_price' => formatMoneyWithCurrency($currentPageAveragePriceRaw),
             'current_page_price_total' => formatMoneyWithCurrency($currentPagePriceTotalRaw),
-            'current_page_total' => formatMoneyWithCurrency($currentPageTotalRaw), // إجمالي الصفحة
+            'current_page_total' => formatMoneyWithCurrency($currentPagePriceTotalRaw), // إجمالي الصفحة
+            'grand_total_quantity' => formatQunantity($grandTotalQuantity),
+            'grand_average_price' => formatMoneyWithCurrency($grandAveragePrice),
             'grand_total' => formatMoneyWithCurrency($grandTotal),          // الإجمالي الكلي
         ];
     }

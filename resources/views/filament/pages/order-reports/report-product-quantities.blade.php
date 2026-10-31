@@ -160,13 +160,16 @@
 
 
             <tr class="footer-row-page-total" style="font-weight: bold;">
-                <td colspan="6">{{ __('lang.current_page_total') ?? 'Current Page Total' }}</td>
+                <td colspan="4">{{ __('lang.current_page_total') ?? 'Current Page Total' }}</td>
+                <td>{{ $current_page_quantity_total }}</td>
+                <td>{{ $current_page_average_price }}</td>
                 <td>{{ $current_page_price_total }}</td>
             </tr>
 
             <tr class="footer-row" style="font-weight: bold;">
-                <td colspan="6">{{ __('lang.total') }}</td>
-
+                <td colspan="4">{{ __('lang.total') }}</td>
+                <td>{{ $grand_total_quantity }}</td>
+                <td>{{ $grand_average_price }}</td>
                 <td>{{ $grand_total }}</td>
             </tr>
         </tbody>
