@@ -467,6 +467,18 @@
 
                 <tr class="table-row">
                     <td class="row-label">
+                        <div style="font-weight: 600;">{{ __('Transfer Returns') }}</div>
+                        <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 0rem;">
+                            {{ __('Returns from branch transfers') }}
+                        </div>
+                    </td>
+                    <td class="row-value" style="color: #059669;">
+                        {{ $report['cost_of_goods_sold']['transfer_returns_formatted'] ?? number_format($report['cost_of_goods_sold']['transfer_returns'] ?? 0, 2) }}
+                    </td>
+                </tr>
+
+                <tr class="table-row">
+                    <td class="row-label">
                         <div style="font-weight: 600;">{{ __('Direct Purchase') }}</div>
                     </td>
                     <td class="row-value expense-amount">
@@ -542,7 +554,7 @@
                 Net Profit = Gross Profit - Total Operating Expenses
             </p>
             <p style="font-size: 0.7rem; color: #6b7280; margin: 0 0 0.5rem 0; font-weight: 500; text-align: center;">
-                Gross Profit = Sales + Closing Stock – Transfers – Direct Purchases
+                Gross Profit = Sales + Closing Stock + Transfer Returns – Transfers – Direct Purchases
             </p>
             {{-- Generated on + Powered by AWS (same row) --}}
             <div style="display: flex; align-items: center;">

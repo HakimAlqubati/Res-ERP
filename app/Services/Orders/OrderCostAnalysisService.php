@@ -83,14 +83,14 @@ class OrderCostAnalysisService
             ->sum(DB::raw('inventory_transactions.quantity * inventory_transactions.price'));
 
         // خصم تكلفة الكميات الخارجة من نفس الباتشات (المرتبطة عبر source_transaction_id)
+        // ملاحظة: تم استثناء ReturnedOrder لأن لها قيداً مالياً مستقلاً تحت تصنيف TRANSFER_RETURNS
         $inTransactionIds = (clone $inventoryCostQuery)->pluck('id');
         if ($inTransactionIds->isNotEmpty()) {
             $outgoingCost = InventoryTransaction::query()
                 ->whereIn('source_transaction_id', $inTransactionIds)
                 ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
                 ->whereNull('deleted_at')
-                // ->whereIn('transactionable_type',[ReturnedOrder::class])
-                ->whereIn('transactionable_type',[ReturnedOrder::class,StockTransferOrder::class])
+                ->whereIn('transactionable_type', [StockTransferOrder::class])
                 ->sum(DB::raw('inventory_transactions.quantity * inventory_transactions.price'));
 
             $inventoryCost -= $outgoingCost;

@@ -6,6 +6,7 @@ class FinancialCategoryCode
 {
     // Existing codes
     const TRANSFERS = 'transfers';
+    const TRANSFER_RETURNS = 'transfer_returns';
     const SALES = 'sales';
     const DIRECT_PURCHASE = 'direct_purchase';
     const CLOSING_STOCK = 'closing_stock';
@@ -24,6 +25,7 @@ class FinancialCategoryCode
     {
         return [
             self::TRANSFERS => 'Transfers',
+            self::TRANSFER_RETURNS => 'Transfer Returns',
             self::SALES => 'Sales',
             self::CLOSING_STOCK => 'Closing Stock',
             self::OPENING_STOCK => 'Opening Stock',

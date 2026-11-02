@@ -123,6 +123,7 @@ class FinancialReportService
                     // Exclude the hardcoded ones as they are handled separately below
                     ->whereNotIn('code', [
                         \App\Enums\FinancialCategoryCode::TRANSFERS,
+                        \App\Enums\FinancialCategoryCode::TRANSFER_RETURNS,
                         \App\Enums\FinancialCategoryCode::DIRECT_PURCHASE,
                         \App\Enums\FinancialCategoryCode::CLOSING_STOCK,
                         \App\Enums\FinancialCategoryCode::OPENING_STOCK,
@@ -150,16 +151,17 @@ class FinancialReportService
         }
 
         // 3. Get specific category amounts for Gross Profit calculation
-        $transfers      = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::TRANSFERS);
-        $directPurchase = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::DIRECT_PURCHASE);
-        $closingStock   = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::CLOSING_STOCK);
-        $openingStock   = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::OPENING_STOCK);
+        $transfers       = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::TRANSFERS);
+        $transferReturns = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::TRANSFER_RETURNS);
+        $directPurchase  = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::DIRECT_PURCHASE);
+        $closingStock    = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::CLOSING_STOCK);
+        $openingStock    = $this->getAmountByCode($query, \App\Enums\FinancialCategoryCode::OPENING_STOCK);
         // if ($closingStock <= 0) {
         //     $closingStock = $openingStock + $transfers + $directPurchase;
         // }
 
-        // COGS = Opening Stock + Transfers + Direct Purchase + Dynamic COGS - Closing Stock
-        $costOfGoodsSold = ($openingStock + $transfers + $directPurchase + $dynamicCogsAmount) - $closingStock;
+        // COGS = Opening Stock + Transfers - Transfer Returns + Direct Purchase + Dynamic COGS - Closing Stock
+        $costOfGoodsSold = ($openingStock + $transfers - $transferReturns + $directPurchase + $dynamicCogsAmount) - $closingStock;
 
         // Gross Profit = Revenue - COGS
         $grossProfitValue = $totalRevenue - $costOfGoodsSold;
@@ -180,17 +182,19 @@ class FinancialReportService
                 'details' => [],
             ],
             'cost_of_goods_sold' => [
-                'opening_stock'           => (float) $openingStock,
-                'opening_stock_formatted' => formatMoneyWithCurrency($openingStock),
-                'transfers'               => (float) $transfers,
-                'transfers_formatted'     => formatMoneyWithCurrency($transfers),
-                'direct_purchase'         => (float) $directPurchase,
-                'direct_purchase_formatted' => formatMoneyWithCurrency($directPurchase),
-                'closing_stock'           => (float) $closingStock,
-                'closing_stock_formatted' => formatMoneyWithCurrency($closingStock),
-                'dynamic_details'         => $dynamicCogsDetails,
-                'total'                   => (float) $costOfGoodsSold,
-                'total_formatted'         => formatMoneyWithCurrency($costOfGoodsSold),
+                'opening_stock'              => (float) $openingStock,
+                'opening_stock_formatted'    => formatMoneyWithCurrency($openingStock),
+                'transfers'                  => (float) $transfers,
+                'transfers_formatted'        => formatMoneyWithCurrency($transfers),
+                'transfer_returns'           => (float) $transferReturns,
+                'transfer_returns_formatted' => formatMoneyWithCurrency($transferReturns),
+                'direct_purchase'            => (float) $directPurchase,
+                'direct_purchase_formatted'  => formatMoneyWithCurrency($directPurchase),
+                'closing_stock'              => (float) $closingStock,
+                'closing_stock_formatted'    => formatMoneyWithCurrency($closingStock),
+                'dynamic_details'            => $dynamicCogsDetails,
+                'total'                      => (float) $costOfGoodsSold,
+                'total_formatted'            => formatMoneyWithCurrency($costOfGoodsSold),
             ],
             'gross_profit' => [
                 'value' => (float) $grossProfitValue,

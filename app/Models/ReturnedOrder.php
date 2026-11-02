@@ -68,6 +68,11 @@ class ReturnedOrder extends Model implements Auditable
         return $this->belongsTo(User::class, 'approved_by');
     }
 
+    public function financialTransaction()
+    {
+        return $this->morphOne(FinancialTransaction::class, 'reference');
+    }
+
     public static function getStatusOptions(): array
     {
         return [
@@ -98,6 +103,11 @@ class ReturnedOrder extends Model implements Auditable
             if (auth()->check()) {
                 $model->created_by = auth()->id();
             }
+        });
+
+        static::deleted(function (self $model) {
+            app(\App\Services\Financial\ReturnOrderFinancialSyncService::class)
+                ->deleteReturnedOrderTransaction($model);
         });
     }
     public function store()

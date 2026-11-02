@@ -184,11 +184,13 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
                                         ]);
                                     }
                                 }
+
+                                // 3. Create Financial Transaction for Transfer Returns
+                                app(\App\Services\Financial\ReturnOrderFinancialSyncService::class)
+                                    ->syncReturnedOrder($record, forceUpdate: true);
                             });
                             showSuccessNotifiMessage('Returned order approved successfully.');
-                            DB::commit();
                         } catch (Throwable $e) {
-                            DB::rollBack();
                             showWarningNotifiMessage('Failed to approve returned order: '.$e->getMessage());
                         }
                     }),
@@ -207,9 +209,7 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
                                 ]);
                             });
                             showSuccessNotifiMessage('Returned order rejected.');
-                            DB::commit();
                         } catch (Throwable $e) {
-                            DB::rollBack();
                             showWarningNotifiMessage('Failed to reject returned order: '.$e->getMessage());
                         }
                     }),
