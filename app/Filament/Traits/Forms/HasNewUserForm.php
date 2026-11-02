@@ -95,10 +95,10 @@ trait HasNewUserForm
                         Select::make('branch_id')
                             ->label(__('lang.branch'))
                             // ->required()
-                            ->visible(function (Get $get) {
-                                $roles = $get('roles') ?? [];
-                                return ! in_array(5, $roles);
-                            })
+                            // ->visible(function (Get $get) {
+                            //     $roles = $get('roles') ?? [];
+                            //     return ! in_array(5, $roles);
+                            // })
                             ->live()
                             ->afterStateUpdated(function ($state, callable $set) {
                                 // عند تغيير الفرع -> أفرغ قيمة owner_id
