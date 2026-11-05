@@ -115,6 +115,14 @@ class AdvanceRequest extends Model
     // ===================== Accessors =====================
 
     /**
+     * Get the total amount paid toward this advance.
+     */
+    public function getPaidAmountAttribute(): float
+    {
+        return max(0, round((float) ($this->advance_amount ?? 0) - (float) ($this->remaining_total ?? 0), 2));
+    }
+
+    /**
      * Check if the advance has been paid to the employee
      * (which happens when the financial manager approves it).
      */
