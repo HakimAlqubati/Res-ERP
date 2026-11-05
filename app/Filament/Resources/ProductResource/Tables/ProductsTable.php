@@ -400,8 +400,8 @@ class ProductsTable
             ->label('Order Units')
             ->icon('heroicon-o-scale')
             ->color('warning')
-            ->modalHeading('Edit Units for Orders')
-            ->modalDescription('Specify which units are allowed for use in orders. At least one unit must remain enabled.')
+            ->modalHeading(fn(Product $record): string => "Order Units — {$record->name}")
+            ->modalDescription('Select units available for orders.')
             ->modalSubmitActionLabel('Save')
             ->modalWidth('md')
             ->visible(fn(Product $record): bool => $record->allUnitPrices()->exists())
@@ -449,15 +449,15 @@ class ProductsTable
                         return $record->allUnitPrices()->count() <= 1;
                     })
                     ->validationMessages([
-                        'required' => 'At least one unit must be enabled for orders.',
-                        'min' => 'At least one unit must be enabled for orders.',
+                        'required' => 'At least one unit is required.',
+                        'min' => 'At least one unit is required.',
                     ])
                     ->helperText(function (Product $record): string {
                         if ($record->allUnitPrices()->count() <= 1) {
-                            return 'This product has only one unit, so it must remain enabled for orders.';
+                            return 'Single unit cannot be disabled.';
                         }
 
-                        return 'Select the units that can be used when ordering this product. At least one unit must remain selected.';
+                        return 'At least one unit required.';
                     }),
             ])
             ->action(function (array $data, Product $record): void {
@@ -469,7 +469,7 @@ class ProductsTable
                 if ($selectedIds->isEmpty()) {
                     Notification::make()
                         ->title('Validation Error')
-                        ->body('At least one unit must remain enabled for orders.')
+                        ->body('At least one unit is required.')
                         ->danger()
                         ->send();
 
@@ -491,7 +491,7 @@ class ProductsTable
 
                     Notification::make()
                         ->title('Success')
-                        ->body('Order units updated successfully.')
+                        ->body('Order units updated.')
                         ->success()
                         ->send();
                 } catch (Throwable $e) {
