@@ -108,7 +108,7 @@ class EmployeeAdvanceReportResource extends Resource
                     ->label('Branch')
                     ->searchable()
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('employee.employee_no')
                     ->label(__('lang.employee_no'))
@@ -128,7 +128,7 @@ class EmployeeAdvanceReportResource extends Resource
                     ->label('Advance Date')
                     ->date('Y-m-d')
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 IconColumn::make('is_paid')
                     ->label(__('lang.is_paid'))
@@ -171,7 +171,7 @@ class EmployeeAdvanceReportResource extends Resource
                         $dir = strtolower($direction) === 'desc' ? 'desc' : 'asc';
                         return $query->orderByRaw("(advance_amount - remaining_total) {$dir}");
                     })
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('remaining_total')
                     ->label(__('lang.remaining'))
@@ -192,13 +192,13 @@ class EmployeeAdvanceReportResource extends Resource
                     ->toggleable(),
 
                 TextColumn::make('reason')
-                    ->label('Purpose')
+                    ->label('Reason')
                     ->getStateUsing(fn(AdvanceRequest $record) => $record->reason ?? $record->application?->notes)
                     ->searchable()
                     ->limit(30)
                     ->tooltip(fn(AdvanceRequest $record) => $record->reason ?? $record->application?->notes)
                     ->placeholder('—')
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('application.status')
                     ->label('Manager Approval')
                     ->badge()
