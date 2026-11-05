@@ -10,6 +10,7 @@ use App\Imports\ProductItemsImport;
 use App\Imports\ProductItemsQuantityImport;
 use App\Models\Product;
 use App\Models\ProductHalalCertificate;
+use App\Models\UnitPrice;
 use App\Services\BatchProductCostingService;
 use App\Services\MigrationScripts\ProductMigrationService;
 use App\Services\ProductCostingService;
@@ -26,11 +27,13 @@ use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Schemas\Components\Fieldset;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\CheckboxColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -243,6 +246,7 @@ class ProductsTable
                 //     })->hidden(),
 
                 ActionGroup::make([
+                    static::editOrderUnitsAction(),
                     Action::make('exportItemsPdf')
                         ->label('Export Items PDF')
                         ->icon('heroicon-o-document-arrow-down')
@@ -385,5 +389,118 @@ class ProductsTable
                 // Tables\Actions\ForceDeleteBulkAction::make(),
                 RestoreBulkAction::make(),
             ]);
+    }
+
+    /**
+     * Action to edit product units for the `use_in_orders` field only.
+     */
+    public static function editOrderUnitsAction(): Action
+    {
+        return Action::make('editOrderUnits')
+            ->label('Order Units')
+            ->icon('heroicon-o-scale')
+            ->color('warning')
+            ->modalHeading('Edit Units for Orders')
+            ->modalDescription('Specify which units are allowed for use in orders. At least one unit must remain enabled.')
+            ->modalSubmitActionLabel('Save')
+            ->modalWidth('md')
+            ->visible(fn(Product $record): bool => $record->allUnitPrices()->exists())
+            ->fillForm(function (Product $record): array {
+                $activeUnitIds = $record->allUnitPrices()
+                    ->where('use_in_orders', true)
+                    ->pluck('id')
+                    ->map(fn($id) => (string) $id)
+                    ->toArray();
+
+                if (empty($activeUnitIds)) {
+                    $firstUnit = $record->allUnitPrices()->orderBy('package_size')->first();
+                    if ($firstUnit) {
+                        $activeUnitIds = [(string) $firstUnit->id];
+                    }
+                }
+
+                return [
+                    'order_unit_ids' => $activeUnitIds,
+                ];
+            })
+            ->schema([
+                CheckboxList::make('order_unit_ids')
+                    ->label('Units for Orders')
+                    ->options(function (Product $record): array {
+                        return $record->allUnitPrices()
+                            ->with('unit')
+                            ->orderBy('order')
+                            ->orderBy('package_size')
+                            ->get()
+                            ->mapWithKeys(function (UnitPrice $unitPrice): array {
+                                $unitName = $unitPrice->unit?->name ?? ('Unit #' . $unitPrice->unit_id);
+                                $label = $unitPrice->package_size
+                                    ? "{$unitName} (Size: {$unitPrice->package_size})"
+                                    : $unitName;
+
+                                return [(string) $unitPrice->id => $label];
+                            })
+                            ->toArray();
+                    })
+                    ->columns(1)
+                    ->required()
+                    ->minItems(1)
+                    ->disableOptionWhen(function (string $value, Product $record): bool {
+                        return $record->allUnitPrices()->count() <= 1;
+                    })
+                    ->validationMessages([
+                        'required' => 'At least one unit must be enabled for orders.',
+                        'min' => 'At least one unit must be enabled for orders.',
+                    ])
+                    ->helperText(function (Product $record): string {
+                        if ($record->allUnitPrices()->count() <= 1) {
+                            return 'This product has only one unit, so it must remain enabled for orders.';
+                        }
+
+                        return 'Select the units that can be used when ordering this product. At least one unit must remain selected.';
+                    }),
+            ])
+            ->action(function (array $data, Product $record): void {
+                $selectedIds = collect($data['order_unit_ids'] ?? [])
+                    ->map(fn($id) => (int) $id)
+                    ->filter()
+                    ->values();
+
+                if ($selectedIds->isEmpty()) {
+                    Notification::make()
+                        ->title('Validation Error')
+                        ->body('At least one unit must remain enabled for orders.')
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
+                try {
+                    $allUnits = $record->allUnitPrices;
+
+                    foreach ($allUnits as $unitPrice) {
+                        $shouldUseInOrders = $selectedIds->contains($unitPrice->id);
+
+                        if ((bool) $unitPrice->use_in_orders !== $shouldUseInOrders) {
+                            $unitPrice->update([
+                                'use_in_orders' => $shouldUseInOrders,
+                            ]);
+                        }
+                    }
+
+                    Notification::make()
+                        ->title('Success')
+                        ->body('Order units updated successfully.')
+                        ->success()
+                        ->send();
+                } catch (Throwable $e) {
+                    Notification::make()
+                        ->title('Error')
+                        ->body('Failed to update order units: ' . $e->getMessage())
+                        ->danger()
+                        ->send();
+                }
+            });
     }
 }
