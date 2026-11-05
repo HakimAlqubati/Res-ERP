@@ -280,7 +280,7 @@ class EmployeeAdvanceReportResource extends Resource
                     })
                     ->columns(2),
             ], FiltersLayout::Modal)
-            ->filtersFormColumns(2)
+            ->filtersFormColumns(4)
             ->recordActions([
                 ActionGroup::make([
 
