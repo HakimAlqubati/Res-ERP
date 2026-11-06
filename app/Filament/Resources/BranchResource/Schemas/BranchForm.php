@@ -3,13 +3,14 @@
 namespace App\Filament\Resources\BranchResource\Schemas;
 
 use App\Models\Branch;
+use App\Models\Category;
 use App\Models\City;
 use App\Models\Country;
 use App\Models\District;
 use App\Models\Store;
 use App\Models\User;
 use Filament\Forms\Components\DateTimePicker;
-
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
@@ -37,7 +38,8 @@ class BranchForm
                         ->icon('heroicon-o-user-circle')
                         ->schema([
                             Fieldset::make()->columns(2)->schema([
-                                TextInput::make('name')->required()->label(__('lang.name')),
+                                TextInput::make('name')->required()->label(__('lang.name'))
+                                    ->unique(ignoreRecord: true),
                                 Select::make('manager_id')
                                     ->label(__('lang.branch_manager'))
                                     ->options(User::whereHas('roles', function ($q) {
@@ -108,18 +110,117 @@ class BranchForm
                                                 'store',
                                                 'name'
                                             )
-                                            ->searchable()
-                                        // ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN)
-                                        // ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN)
-                                        ,
-                                        // Select::make('categories')
-                                        //     ->label(__('stock.customized_manufacturing_categories'))
-                                        //     // ->options(\App\Models\Category::Manufacturing()->pluck('name', 'id'))
-                                        //     ->relationship('categories', 'name')
+                                            ->live()
+                                            ->searchable(),
 
-                                        //     ->searchable()->multiple()
-                                        //     ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN),
+                                        TextInput::make('transfer_markup_percentage')
+                                            ->label('Transfer Markup (%)')
+                                            ->numeric()
+                                            ->suffix('%')
+                                            ->default(0)
+                                            ->minValue(0)
+                                            ->maxValue(100)
+                                            ->live(onBlur: true)
+                                            ->helperText('Markup percentage added to incoming branch orders.')
+                                            ->visible(fn(callable $get) => $get('type') === Branch::TYPE_BRANCH || filled($get('store_id'))),
 
+                                        Toggle::make('has_custom_category_markup')
+                                            ->label('Customize Markup by Category')
+                                            ->inline(false)
+                                            ->default(false)
+                                            ->live()
+                                            ->visible(fn(callable $get) => $get('type') === Branch::TYPE_BRANCH || filled($get('store_id')))
+                                            ->afterStateUpdated(function ($state, callable $get, callable $set) {
+                                                if (! $state) {
+                                                    return;
+                                                }
+
+                                                $defaultMarkup = (float) ($get('transfer_markup_percentage') ?? 0);
+                                                $existingItems = collect($get('categoryMarkups') ?? [])
+                                                    ->filter(fn ($item) => ! empty($item['category_id']))
+                                                    ->keyBy(fn ($item) => (int) $item['category_id']);
+
+                                                $categories = Category::query()
+                                                    ->active()
+                                                    ->notForPos()
+                                                    ->orderBy('id')
+                                                    ->get(['id']);
+
+                                                $items = [];
+                                                foreach ($categories as $category) {
+                                                    $existing = $existingItems->get($category->id);
+                                                    $items[] = [
+                                                        'category_id' => $category->id,
+                                                        'transfer_markup_percentage' => $existing['transfer_markup_percentage'] ?? $defaultMarkup,
+                                                    ];
+                                                }
+
+                                                $set('categoryMarkups', $items);
+                                            }),
+
+                                        Repeater::make('categoryMarkups')
+                                            ->relationship('categoryMarkups')
+                                            ->label('Category Transfer Markups')
+                                            ->columnSpanFull()
+                                            ->grid(3)
+                                            ->columns(2)
+                                            ->addable(false)
+                                            ->deletable(false)
+                                            ->reorderable(false)
+                                            ->visible(fn(callable $get) => (bool) $get('has_custom_category_markup') && ($get('type') === Branch::TYPE_BRANCH || filled($get('store_id'))))
+                                            ->afterStateHydrated(function (Repeater $component, $state, callable $get) {
+                                                if (! $get('has_custom_category_markup')) {
+                                                    return;
+                                                }
+
+                                                $defaultMarkup = (float) ($get('transfer_markup_percentage') ?? 0);
+                                                $existingItems = collect($state ?? [])
+                                                    ->filter(fn ($item) => ! empty($item['category_id']))
+                                                    ->keyBy(fn ($item) => (int) $item['category_id']);
+
+                                                $categories = Category::query()
+                                                    ->active()
+                                                    ->notForPos()
+                                                    ->orderBy('id')
+                                                    ->get(['id']);
+
+                                                if ($existingItems->count() === $categories->count()) {
+                                                    return;
+                                                }
+
+                                                $items = [];
+                                                foreach ($categories as $category) {
+                                                    $existing = $existingItems->get($category->id);
+                                                    $items[] = $existing ?? [
+                                                        'category_id' => $category->id,
+                                                        'transfer_markup_percentage' => $defaultMarkup,
+                                                    ];
+                                                }
+
+                                                $component->state($items);
+                                            })
+                                            ->schema([
+                                                Select::make('category_id')
+                                                    ->label('Category')
+                                                    ->options(fn () => Category::query()
+                                                        ->active()
+                                                        ->notForPos()
+                                                        ->orderBy('id')
+                                                        ->pluck('name', 'id')
+                                                        ->toArray())
+                                                    ->disabled()
+                                                    ->dehydrated()
+                                                    ->required(),
+
+                                                TextInput::make('transfer_markup_percentage')
+                                                    ->label('Markup (%)')
+                                                    ->numeric()
+                                                    ->suffix('%')
+                                                    ->default(0)
+                                                    ->minValue(0)
+                                                    ->maxValue(100)
+                                                    ->required(),
+                                            ]),
                                     ]),
 
                                 ]),
@@ -196,6 +297,29 @@ class BranchForm
 
                                 ]),
 
+                        ]),
+                    Step::make('Municipality License')
+                        ->icon('heroicon-o-document-text')
+                        ->schema([
+                            Fieldset::make()->columns(2)->schema([
+                                \Filament\Forms\Components\DatePicker::make('municipality_license_issue_date')
+                                    ->label(__('lang.municipality_license_issue_date'))
+                                    ->nullable(),
+                                \Filament\Forms\Components\DatePicker::make('municipality_license_end_date')
+                                    ->label(__('lang.municipality_license_end_date'))
+                                    ->nullable()
+                                    ->after('municipality_license_issue_date'),
+                                Textarea::make('municipality_license_notes')
+                                    ->label(__('lang.municipality_license_notes'))
+                                    ->columnSpanFull()
+                                    ->nullable(),
+                                SpatieMediaLibraryFileUpload::make('municipality_license')
+                                    ->collection('municipality_license')
+                                    ->label(__('lang.municipality_license_file'))
+                                    ->columnSpanFull()
+                                    ->downloadable()
+                                    ->openable(),
+                            ]),
                         ]),
                     Step::make('Images')
                         ->icon('heroicon-o-user-circle')

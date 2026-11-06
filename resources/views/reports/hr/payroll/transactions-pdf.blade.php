@@ -124,7 +124,7 @@
                 </tr>
                 <tr>
                     <td colspan="7" style="border-top: none;">
-                        Final Result: {{ $total }}
+                        Final Net Result: {{ $total }}
                     </td>
                 </tr>
             </tfoot>

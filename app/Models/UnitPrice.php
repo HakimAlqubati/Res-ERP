@@ -40,9 +40,44 @@ class UnitPrice extends Model implements Auditable
         'selling_price',
         'date','notes',
     ];
+
+    protected $casts = [
+        'use_in_orders'    => 'boolean',
+        'show_in_invoices' => 'boolean',
+        'package_size'     => 'float',
+        'price'            => 'float',
+        'selling_price'    => 'float',
+    ];
+
+    protected $appends = [
+        'price_before_waste',
+    ];
+
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Get the price before waste for this unit price.
+     *
+     * @return float
+     */
+    public function getPriceBeforeWasteAttribute(): float
+    {
+        $product = $this->product;
+        if (! $product && $this->product_id) {
+            $product = Product::find($this->product_id);
+        }
+
+        if (! $product) {
+            return 0.0;
+        }
+
+        $packageSize = (float) ($this->package_size ?: 1);
+        $totalBeforeWaste = (float) ($product->price_before_waste ?? 0);
+
+        return round($packageSize * $totalBeforeWaste, 4);
     }
 
     public function unit()
@@ -68,8 +103,9 @@ class UnitPrice extends Model implements Auditable
     {
         return [
             'unit_id' => $this->unit_id,
-            'unit_name' => $this->unit->name,
+            'unit_name' => $this->unit?->name,
             'price' => $this->price,
+            'price_before_waste' => $this->price_before_waste,
             'package_size' => $this->package_size,
             'order' => $this->order,
             'usage_scope' => $this->usage_scope,
@@ -134,6 +170,28 @@ class UnitPrice extends Model implements Auditable
             self::USAGE_ALL,
             self::USAGE_OUT_ONLY,
         ]);
+    }
+
+    public function scopeForOrders($query)
+    {
+        return $query->forOut()
+            ->where(function ($q) {
+                $q->where('use_in_orders', 1)
+                    ->orWhere(function ($fallback) {
+                        $fallback->where('package_size', 1)
+                            ->whereNotExists(function ($sub) {
+                                $sub->selectRaw(1)
+                                    ->from('unit_prices as up_check')
+                                    ->whereColumn('up_check.product_id', 'unit_prices.product_id')
+                                    ->whereNull('up_check.deleted_at')
+                                    ->whereIn('up_check.usage_scope', [
+                                        self::USAGE_ALL,
+                                        self::USAGE_OUT_ONLY,
+                                    ])
+                                    ->where('up_check.use_in_orders', 1);
+                            });
+                    });
+            });
     }
 
     public function scopeForOperations($query)

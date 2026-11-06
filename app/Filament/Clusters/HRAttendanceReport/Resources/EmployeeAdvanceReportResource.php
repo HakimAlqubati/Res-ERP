@@ -23,12 +23,15 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class EmployeeAdvanceReportResource extends Resource
 {
@@ -43,6 +46,45 @@ class EmployeeAdvanceReportResource extends Resource
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
 
+    protected static ?string $recordTitleAttribute = 'code';
+
+    protected static bool $isGloballySearchable = true;
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return [
+            'code',
+            'employee.name',
+            'employee.employee_no',
+        ];
+    }
+
+    public static function getGlobalSearchResultTitle(Model $record): string
+    {
+        /** @var AdvanceRequest $record */
+        $code = $record->code ?? ('#' . $record->id);
+        $name = $record->employee?->name ?? '';
+
+        return $name ? "{$code} — {$name}" : $code;
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        /** @var AdvanceRequest $record */
+        return array_filter([
+            __('lang.employee')       => $record->employee?->name,
+            __('lang.advance_amount') => $record->advance_amount ? formatMoneyWithCurrency($record->advance_amount) : null,
+            __('lang.remaining')      => formatMoneyWithCurrency($record->remaining_total),
+        ]);
+    }
+
+    public static function getGlobalSearchResultUrl(Model $record): ?string
+    {
+        return static::getUrl('index', [
+            'tableSearch' => $record->code ?? $record->employee?->name,
+        ]);
+    }
+
     public static function table(Table $table): Table
     {
         return $table
@@ -53,7 +95,7 @@ class EmployeeAdvanceReportResource extends Resource
             ->columns([
                 TextColumn::make('application_id')
                     ->label('Request ID')
-                    ->searchable()->toggleable(isToggledHiddenByDefault: false)
+                    ->searchable()->toggleable(isToggledHiddenByDefault: true)
                     ->sortable()
                     ->copyable(),
                 TextColumn::make('code')
@@ -61,6 +103,12 @@ class EmployeeAdvanceReportResource extends Resource
                     ->searchable()->toggleable(isToggledHiddenByDefault: true)
                     ->sortable()
                     ->copyable(),
+
+                TextColumn::make('employee.branch.name')
+                    ->label('Branch')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('employee.employee_no')
                     ->label(__('lang.employee_no'))
@@ -76,6 +124,12 @@ class EmployeeAdvanceReportResource extends Resource
                     ->wrap()
                     ->limit(20),
 
+                TextColumn::make('date')
+                    ->label('Advance Date')
+                    ->date('Y-m-d')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 IconColumn::make('is_paid')
                     ->label(__('lang.is_paid'))
                     ->boolean()
@@ -85,7 +139,7 @@ class EmployeeAdvanceReportResource extends Resource
                     ->trueColor('success')
                     ->falseColor('warning')
                     ->alignCenter()
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('advance_amount')
                     ->label(__('lang.advance_amount'))
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
@@ -108,6 +162,17 @@ class EmployeeAdvanceReportResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->color('success'),
 
+                TextColumn::make('paid_amount')
+                    ->label('Paid Amount')
+                    ->getStateUsing(fn(AdvanceRequest $record) => $record->paid_amount)
+                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
+                    ->alignEnd()
+                    ->sortable(query: function (Builder $query, string $direction): Builder {
+                        $dir = strtolower($direction) === 'desc' ? 'desc' : 'asc';
+                        return $query->orderByRaw("(advance_amount - remaining_total) {$dir}");
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('remaining_total')
                     ->label(__('lang.remaining'))
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
@@ -124,8 +189,16 @@ class EmployeeAdvanceReportResource extends Resource
                     ->label(__('lang.deduction_ends'))
                     ->date('M-Y')
                     ->sortable()
-                    ->toggleable()
-                    ,
+                    ->toggleable(),
+
+                TextColumn::make('reason')
+                    ->label('Reason')
+                    ->getStateUsing(fn(AdvanceRequest $record) => $record->reason ?? $record->application?->notes)
+                    ->searchable()
+                    ->limit(30)
+                    ->tooltip(fn(AdvanceRequest $record) => $record->reason ?? $record->application?->notes)
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('application.status')
                     ->label('Manager Approval')
                     ->badge()
@@ -159,7 +232,9 @@ class EmployeeAdvanceReportResource extends Resource
                     ->tooltip(fn($record) => $record->finance_approved_at
                         ? $record->finance_approved_at->format('Y-m-d H:i')
                         : null
-                    ),
+                    )
+                    ->words(1)
+                    ,
 
              
             ])
@@ -178,13 +253,15 @@ class EmployeeAdvanceReportResource extends Resource
                         );
                     })
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->columnSpan(2),
 
                 SelectFilter::make('employee_id')
                     ->label(__('lang.employee'))
                     ->relationship('employee', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->columnSpan(2),
 
                 SelectFilter::make('payment_status')
                     ->label(__('lang.payment_status'))
@@ -194,9 +271,10 @@ class EmployeeAdvanceReportResource extends Resource
                             $data['value'],
                             fn(Builder $query, $value) => $query->paymentStatus($value)
                         );
-                    }),
+                    })
+                    ->columnSpan(2),
 
-                \Filament\Tables\Filters\Filter::make('deduction_period')
+                Filter::make('deduction_period')
                     ->form([
                         DatePicker::make('deduction_from')
                             ->label(__('lang.deduction_starts')),
@@ -214,9 +292,20 @@ class EmployeeAdvanceReportResource extends Resource
                                 fn(Builder $query, $date): Builder => $query->whereDate('deduction_ends_at', '<=', $date)
                             );
                     })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if ($data['deduction_from'] ?? null) {
+                            $indicators[] = __('lang.deduction_starts') . ': ' . $data['deduction_from'];
+                        }
+                        if ($data['deduction_to'] ?? null) {
+                            $indicators[] = __('lang.deduction_ends') . ': ' . $data['deduction_to'];
+                        }
+                        return $indicators;
+                    })
+                    ->columnSpan(3)
                     ->columns(2),
 
-                \Filament\Tables\Filters\Filter::make('amount_range')
+                Filter::make('amount_range')
                     ->form([
                         TextInput::make('min_amount')
                             ->label(__('lang.min_amount'))
@@ -236,9 +325,23 @@ class EmployeeAdvanceReportResource extends Resource
                                 fn(Builder $query, $amount): Builder => $query->where('advance_amount', '<=', $amount)
                             );
                     })
-                    ->columns(2),
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if ($data['min_amount'] ?? null) {
+                            $indicators[] = __('lang.min_amount') . ': ' . formatMoneyWithCurrency($data['min_amount']);
+                        }
+                        if ($data['max_amount'] ?? null) {
+                            $indicators[] = __('lang.max_amount') . ': ' . formatMoneyWithCurrency($data['max_amount']);
+                        }
+                        return $indicators;
+                    })
+                    ->columnSpan(3)
+                    ->columns(2)
+                    ->hidden()
+                    ,
             ], FiltersLayout::Modal)
-            ->filtersFormColumns(2)
+            ->filtersFormColumns(6)
+            ->filtersFormWidth(Width::SixExtraLarge)
             ->recordActions([
                 ActionGroup::make([
 
@@ -353,7 +456,7 @@ class EmployeeAdvanceReportResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return AdvanceRequest::query()
-            ->with(['employee:id,name,employee_no,branch_id', 'employee.branch:id,name', 'application:id,status', 'financeApprovedBy:id,name'])
+            ->with(['employee:id,name,employee_no,branch_id', 'employee.branch:id,name', 'application:id,status,notes', 'financeApprovedBy:id,name'])
             ->whereHas('application', function ($query) {
                 $query->whereIn('status', [EmployeeApplicationV2::STATUS_APPROVED, EmployeeApplicationV2::STATUS_REJECTED]);
             });

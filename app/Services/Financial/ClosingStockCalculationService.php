@@ -2,6 +2,7 @@
 
 namespace App\Services\Financial;
 
+use App\Contracts\InventoryPriceResolver;
 use App\Enums\FinancialCategoryCode;
 use App\Models\Branch;
 use App\Models\FinancialCategory;
@@ -13,11 +14,12 @@ use Illuminate\Support\Facades\DB;
 
 class ClosingStockCalculationService
 {
+    public function __construct(
+        private readonly InventoryPriceResolver $priceResolver,
+    ) {}
+
     /**
-     * Calculate the total value of closing stock for a StockInventory based on FIFO.
-     *
-     * @param StockInventory $inventory
-     * @return float
+     * Calculate the total value of closing stock for a StockInventory.
      */
     public function calculateClosingStockValue(StockInventory $inventory): float
     {
@@ -26,34 +28,46 @@ class ClosingStockCalculationService
         return (float) array_sum(array_column($detailedValues, 'total_value'));
     }
 
-     
+    /**
+     * Get detailed closing stock values with resolved prices.
+     *
+     * Pricing source depends on the bound InventoryPriceResolver:
+     * - TransactionPriceResolver → actual FIFO cost from inventory_transactions
+     * - UnitTablePriceResolver   → static price from unit_prices table
+     *
+     * @see \App\Contracts\InventoryPriceResolver
+     */
     public function getDetailedClosingStockValues(StockInventory $inventory): array
     {
-        $inventory->loadMissing('details.product');
+        $inventory->loadMissing('details.product', 'details.unit');
 
-         $rows = [];
+        // ── Resolve all prices in one batch (no N+1) ──
+        $prices = $this->priceResolver->resolveForInventory($inventory);
+
+        $rows = [];
 
         foreach ($inventory->details as $detail) {
             $physicalQty = (float) $detail->physical_quantity;
-            $productId   = $detail->product_id;
-            
+
             // تقييم المخزون الختامي يعتمد على الكمية الفعلية كاملة
-            if ($physicalQty <= 0) continue;
+            if ($physicalQty <= 0) {
+                continue;
+            }
 
-            // جلب سعر الوحدة المعياري للصنف والوحدة
-            $unitPrice = getUnitPrice($productId, $detail->unit_id) ?? 0;
-
-            $totalValue = $physicalQty * $unitPrice;
+            $key       = $detail->product_id . '_' . $detail->unit_id;
+            $priceData = $prices->get($key);
+            $unitPrice = $priceData ? (float) $priceData->unit_price : 0;
 
             $rows[] = [
-                'product_id'   => $productId,
+                'product_id'   => $detail->product_id,
                 'product_code' => $detail->product->code ?? '—',
                 'product_name' => $detail->product->name ?? '—',
                 'unit_name'    => optional($detail->unit)->name ?? '—',
                 'package_size' => $detail->package_size ?? 0,
                 'physical_qty' => $physicalQty,
                 'unit_price'   => $unitPrice,
-                'total_value'  => $totalValue,
+                'total_value'  => $physicalQty * $unitPrice,
+                'price_source' => $priceData->source ?? 'none',
             ];
         }
 

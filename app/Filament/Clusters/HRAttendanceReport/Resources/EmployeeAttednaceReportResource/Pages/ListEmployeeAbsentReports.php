@@ -20,7 +20,7 @@ class ListEmployeeAbsentReports extends ListRecords
             ?? null;
 
         $dateFilterState = $this->getTable()->getFilters()['date_range']?->getState() ?? [];
-        $type = $dateFilterState['type'] ?? 'single';
+        $type = $dateFilterState['type'] ?? 'range';
 
         if ($type === 'single') {
             $dateFrom = $dateFilterState['date'] ?? now()->format('Y-m-d');

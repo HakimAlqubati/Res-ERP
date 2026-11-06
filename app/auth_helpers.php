@@ -41,11 +41,29 @@ if (!function_exists('isSuperVisor')) {
         return false;
     }
 }
+if (!function_exists('isAccountant')) {
+    function isAccountant()
+    {
+        if (auth()->check()) {
+            return auth()->user()->isAccountant();
+        }
+        return false;
+    }
+}
 if (!function_exists('isBranchUser')) {
     function isBranchUser()
     {
         if (auth()->check()) {
             return auth()->user()->isBranchUser();
+        }
+        return false;
+    }
+}
+if (!function_exists('isChefAssistant')) {
+    function isChefAssistant()
+    {
+        if (auth()->check()) {
+            return auth()->user()->isChefAssistant();
         }
         return false;
     }
@@ -93,6 +111,16 @@ if (!function_exists('isStoreManager')) {
     }
 }
 
+if (!function_exists('isDefaultStoreManager')) {
+    function isDefaultStoreManager()
+    {
+        if (auth()->check()) {
+            return auth()->user()->isDefaultStoreManager();
+        }
+        return false;
+    }
+}
+
 if (!function_exists('isMaintenanceManager')) {
     function isMaintenanceManager()
     {
@@ -117,6 +145,20 @@ if (!function_exists('isHakimOrAdel')) {
         return in_array(auth()->user()->email, [
             'hakimahmed123321@gmail.com',
             'adelalqubati12@gmail.com',
+        ]);
+    }
+}
+if (!function_exists('isHakimOrAdelOrMaha')) {
+    function isHakimOrAdelOrMaha(): bool
+    {
+        if (!auth()->check()) {
+            return false;
+        }
+
+        return in_array(auth()->user()->email, [
+            'hakimahmed123321@gmail.com',
+            'adelalqubati12@gmail.com',
+            'yeolbyun2002@gmail.com'
         ]);
     }
 }

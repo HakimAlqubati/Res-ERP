@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\Reports\StoreCostReportController;
 use App\Http\Controllers\Api\ReturnedOrderController;
 use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\QuoteController;
+use App\Http\Controllers\Api\StoreController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
@@ -81,8 +82,11 @@ Route::middleware(['auth:api', 'lastSeen'])->group(function () {
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/v2/report_products', [ProductController::class, 'reportProductsv2']);
     Route::get('/v2/report_products/details/{category_id}', [ProductController::class, 'reportProductsv2Details']);
+    Route::get('/v3/report_products', [ProductController::class, 'reportProductsv3']);
+    Route::get('/v3/report_products/details/{category_id}', [ProductController::class, 'reportProductsv3Details']);
     Route::get('/getProductOrderQuantities', [ProductController::class, 'getProductOrderQuantities']);
     Route::get('/v2/productOrderQuantities', [ProductController::class, 'getProductOrderQuantitiesV2']);
+    Route::get('/v3/productOrderQuantities', [ProductController::class, 'getProductOrderQuantitiesV3']);
 });
 
 Route::post('/user/updateBranch', [AuthController::class, 'updateBranch'])
@@ -184,8 +188,15 @@ Route::get('/testFun', function () {
         'data' => 'test'
     ]);
 });
+
+// App Versions Public Check
+Route::get('/appVersions/check', [\App\Http\Controllers\Api\AppVersionController::class, 'check']);
+
 Route::middleware('auth:api')->group(function () {
     Route::put('updateFcmToken', [FcmController::class, 'updateDeviceToken']);
+
+    // App Versions Management
+    Route::apiResource('appVersions', \App\Http\Controllers\Api\AppVersionController::class);
 
     // Inventory Routes
     Route::prefix('inventory')->group(function () {
@@ -345,7 +356,9 @@ require base_path('routes/custom_api_test.php');
 
 
 
-// Route::get('/stores', fn() => \App\Models\Store::select('id', 'name')->get());
+Route::get('/stores', [StoreController::class, 'index'])
+->middleware('auth:api')
+;
 // Route::get('/products', fn() => \App\Models\Product::select('id', 'name')->get());
 // Route::post('/stock-inventory', function(\Illuminate\Http\Request $request) {
 // من هنا تحفظ البيانات في جدول StockInventory وتعيد رسالة نجاح

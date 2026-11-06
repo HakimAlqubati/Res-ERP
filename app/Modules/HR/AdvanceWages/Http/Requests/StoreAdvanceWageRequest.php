@@ -16,8 +16,9 @@ class StoreAdvanceWageRequest extends FormRequest
     public function rules(): array
     {
         $date = $this->input('date', now()->toDateString());
-        $year = (int) now()->setDateFrom(\Carbon\Carbon::parse($date))->year;
-        $month = (int) now()->setDateFrom(\Carbon\Carbon::parse($date))->month;
+        $parsedDate = \Carbon\Carbon::parse($date);
+        $year = (int) ($this->input('year') ?? $parsedDate->year);
+        $month = (int) ($this->input('month') ?? $parsedDate->month);
 
         return [
             'employee_id'         => ['required', 'integer', 'exists:hr_employees,id'],
@@ -28,6 +29,8 @@ class StoreAdvanceWageRequest extends FormRequest
                 new AdvanceWageLimitRule($this->input('employee_id'), $year, $month)
             ],
             'date'                => ['required', 'date'],
+            'month'               => ['nullable', 'integer', 'between:1,12'],
+            'year'                => ['nullable', 'integer', 'digits:4'],
             'reason'              => ['required', 'string', 'max:255'],
             'payment_method'      => ['required', 'string', 'in:' . AdvanceWage::PAYMENT_METHOD_CASH . ',' . AdvanceWage::PAYMENT_METHOD_BANK_TRANSFER],
             'bank_account_number' => ['required_if:payment_method,' . AdvanceWage::PAYMENT_METHOD_BANK_TRANSFER, 'string', 'nullable'],

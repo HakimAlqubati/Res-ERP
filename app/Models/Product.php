@@ -59,7 +59,7 @@ class Product extends Model implements Auditable
         'type',
         'image',
     ];
-    protected $appends = ['unit_prices_count', 'product_items_count', 'is_manufacturing', 'formatted_unit_prices', 'display_name', 'image_url'];
+    protected $appends = ['unit_prices_count', 'product_items_count', 'is_manufacturing', 'formatted_unit_prices', 'display_name', 'image_url', 'price_before_waste'];
 
     public const TYPE_RAW           = 'raw';
     public const TYPE_SEMI_FINISHED = 'semi_finished';
@@ -103,10 +103,14 @@ class Product extends Model implements Auditable
 
     public function unitsForOrders()
     {
-        return $this->hasMany(UnitPrice::class)->where(
-            'use_in_orders',
-            1
-        );
+        return $this->hasMany(UnitPrice::class)
+            ->forOrders()
+            ->orderBy('package_size', 'asc');
+    }
+
+    public function forOrders()
+    {
+        return $this->unitsForOrders();
     }
 
 
@@ -191,6 +195,21 @@ class Product extends Model implements Auditable
     }
 
     /**
+     * Get the total price before waste from related ProductItems.
+     *
+     * @return float
+     */
+    public function getPriceBeforeWasteAttribute(): float
+    {
+        return (float) ($this->productItems->sum(function ($item) {
+            if ($item->total_price !== null && (float) $item->total_price > 0) {
+                return (float) $item->total_price;
+            }
+            return (float) ($item->quantity ?? 0) * (float) ($item->price ?? 0);
+        }) ?? 0);
+    }
+
+    /**
      * Get the count of unit prices for the product.
      *
      * @return int
@@ -229,8 +248,12 @@ class Product extends Model implements Auditable
     {
         return $this->unitPrices->map(function ($unitPrice) {
             $unitName = $unitPrice->unit->name ?? 'N/A';
-            $price = $unitPrice->price ?? 0;
-            $qtyPerPack = $unitPrice->package_size ?? '-';
+            $price = isset($unitPrice->price) && is_numeric($unitPrice->price)
+                ? formatMoneyWithCurrency($unitPrice->price)
+                : formatMoneyWithCurrency(0);
+            $qtyPerPack = isset($unitPrice->package_size) && is_numeric($unitPrice->package_size)
+                ? number_format((float) $unitPrice->package_size, 2)
+                : '-';
 
             return "{$unitName} : {$price} (Qty per Pack: {$qtyPerPack})";
         })->implode(', ');
@@ -257,7 +280,6 @@ class Product extends Model implements Auditable
             $lastCode = (int)substr($lastProduct->code, strlen($prefix));
             $nextNumber = $lastCode + 1;
         }
-
         return $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
     }
     public function productPriceHistories()

@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Contracts\InventoryPriceResolver;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -18,14 +19,23 @@ class StockInventoryDetailsExport implements FromArray, WithHeadings, ShouldAuto
 
     public function array(): array
     {
+        $this->inventory->loadMissing('details.product', 'details.unit');
+
+        // ── Resolve all prices in one batch (same strategy as UI) ──
+        $resolver = app(InventoryPriceResolver::class);
+        $prices   = $resolver->resolveForInventory($this->inventory);
+
         $data = [];
         $totalClosingValue = 0;
 
         foreach ($this->inventory->details as $detail) {
-            $unitPrice = getUnitPrice($detail->product_id, $detail->unit_id) ?? 0;
+            $key       = $detail->product_id . '_' . $detail->unit_id;
+            $priceData = $prices->get($key);
+            $unitPrice = $priceData ? (float) $priceData->unit_price : 0;
+
             $physicalQty = $detail->physical_quantity ?? 0;
-            $totalPrice = $physicalQty * $unitPrice;
-            
+            $totalPrice  = $physicalQty * $unitPrice;
+
             $totalClosingValue += $totalPrice;
 
             $data[] = [
@@ -69,3 +79,4 @@ class StockInventoryDetailsExport implements FromArray, WithHeadings, ShouldAuto
         ];
     }
 }
+

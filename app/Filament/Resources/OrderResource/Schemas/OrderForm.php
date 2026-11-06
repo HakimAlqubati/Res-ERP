@@ -24,7 +24,7 @@ class OrderForm
         return $schema
             ->components([
                 Fieldset::make()->columnSpanFull()->schema([
-                    Grid::make()->columnSpanFull()->columns(3)->schema([
+                    Grid::make()->columnSpanFull()->columns(4)->schema([
                         Select::make('branch_id')->required()
                             ->label(__('lang.branch'))
                             ->options(Branch::where('active', 1)->get(['id', 'name'])->pluck('name', 'id')),
@@ -33,6 +33,12 @@ class OrderForm
                             ->options(Order::getStatusLabels())->default(Order::ORDERED),
                         DateTimePicker::make('created_at')
                             ->label(__('lang.created_at')),
+                        TextInput::make('transfer_markup_percentage')
+                            ->label('Transfer Markup (%)')
+                            ->numeric()
+                            ->suffix('%')
+                            ->readOnly()
+                            ->visible(fn (?Order $record) => $record && (float) $record->transfer_markup_percentage > 0),
                         Select::make('stores')->multiple()->required()
                             ->label(__('lang.store'))
                             // ->disabledOn('edit')

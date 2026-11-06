@@ -34,6 +34,26 @@ class MaintenanceWidget extends Widget
         Notification::make()->title('Config Cleared')->success()->send();
     }
 
+    public function updateProductPrices()
+    {
+        try {
+            $service = app(\App\Services\Products\UpdateBatchProductPricesService::class);
+            $report = $service->execute();
+
+            Notification::make()
+                ->title('✅ Product Prices Updated')
+                ->body("Processed {$report['products_processed']} products, updated {$report['unit_prices_updated']} unit prices and {$report['transactions_updated']} inventory transactions.")
+                ->success()
+                ->send();
+        } catch (\Throwable $th) {
+            Notification::make()
+                ->title('❌ Price Update Failed')
+                ->body($th->getMessage())
+                ->danger()
+                ->send();
+        }
+    }
+
   
 
  

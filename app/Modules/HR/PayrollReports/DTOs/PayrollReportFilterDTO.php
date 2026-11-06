@@ -15,6 +15,7 @@ class PayrollReportFilterDTO
         public readonly ?string $status = null,
         public readonly ?string $dateFrom = null,
         public readonly ?string $dateTo = null,
+        public readonly ?int $paymentMethodId = null,
     ) {
     }
 
@@ -24,14 +25,15 @@ class PayrollReportFilterDTO
     public static function fromArray(array $data): self
     {
         return new self(
-            branchId: $data['branch_id'] ?? null,
-            year: $data['year'] ?? null,
-            month: $data['month'] ?? null,
-            employeeId: $data['employee_id'] ?? null,
-            payrollRunId: $data['payroll_run_id'] ?? null,
+            branchId: isset($data['branch_id']) && $data['branch_id'] !== '' ? (int) $data['branch_id'] : null,
+            year: isset($data['year']) && $data['year'] !== '' ? (int) $data['year'] : null,
+            month: isset($data['month']) && $data['month'] !== '' ? (int) $data['month'] : null,
+            employeeId: isset($data['employee_id']) && $data['employee_id'] !== '' ? (int) $data['employee_id'] : null,
+            payrollRunId: isset($data['payroll_run_id']) && $data['payroll_run_id'] !== '' ? (int) $data['payroll_run_id'] : null,
             status: $data['status'] ?? null,
             dateFrom: $data['date_from'] ?? null,
             dateTo: $data['date_to'] ?? null,
+            paymentMethodId: isset($data['payment_method_id']) && $data['payment_method_id'] !== '' ? (int) $data['payment_method_id'] : null,
         );
     }
 

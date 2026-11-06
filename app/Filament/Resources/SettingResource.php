@@ -17,6 +17,8 @@ use App\Filament\Clusters\SettingsCluster;
 use App\Filament\Resources\SettingResource\Pages;
 use App\Models\Attendance;
 use App\Models\Setting;
+use App\Enums\ProductCodeGenerationMethod;
+use App\Enums\ProductUnitsSortDirection;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -71,7 +73,7 @@ class SettingResource extends Resource
                             // })
                             ->icon('heroicon-o-building-office')
                             ->schema([
-                                Fieldset::make()->columns(3)->label('Company Info')->schema([
+                                Fieldset::make()->columns(4)->label('Company Info')->schema([
                                     TextInput::make("company_name")
                                         ->label('Name'),
                                     TextInput::make("company_phone")
@@ -82,12 +84,23 @@ class SettingResource extends Resource
                                         ->label('Locale')
                                         ->searchable()
                                         ->options(getNationalitiesAsCountries()),
+                                        TextInput::make('currency_symbol')->label(__('system_settings.currency_symbol')),
+
+                                    Select::make('date_format')
+                                        ->label(__('lang.date_format') ?: 'Date Format')
+                                        ->options([
+                                            'Y-m-d' => 'YYYY-MM-DD (e.g. ' . date('Y-m-d') . ')',
+                                            'd-m-Y' => 'DD-MM-YYYY (e.g. ' . date('d-m-Y') . ')',
+                                             ])
+                                        ->default('Y-m-d')
+                                        ->required()
+                                        ->columnSpan(2),
 
                                     TextInput::make("website")
                                         ->label('Website')
                                         ->url()
                                         ->placeholder('https://example.com')
-                                        ->columnSpan(3),
+                                        ->columnSpan(2),
 
                                     FileUpload::make('company_logo')
                                         ->label('Logo')
@@ -95,7 +108,7 @@ class SettingResource extends Resource
                                         ->directory('company_logo')
                                         ->image()->disk('public')
                                         ->visibility('public')
-                                        ->columnSpan(3)
+                                        ->columnSpan(4)
                                         ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                                             return Str::random(15) . "." . $file->getClientOriginalExtension();
                                         }),
@@ -492,6 +505,19 @@ class SettingResource extends Resource
                                                 ->offColor('danger')
                                                 ->helperText('Purchase Invoice Number is mandatory and becomes non-editable once entered.')
                                                 ->default(false),
+                                            TextInput::make('max_price_change_percent')
+                                                ->label('Price Change Alert Limit (±%)')
+                                                ->numeric()
+                                                ->minValue(0)
+                                                ->maxValue(100)
+                                                ->suffix('%')
+                                                ->helperText('Alerts if the new price change exceeds this percentage')
+                                                ->default(50)
+                                                ->afterStateHydrated(function (TextInput $component, $state) {
+                                                    if (blank($state)) {
+                                                        $component->state(50);
+                                                    }
+                                                }),
                                         ]),
                                     ]),
                                     Tab::make('GRN Workflow Settings')->columnSpanFull()->schema([
@@ -540,7 +566,6 @@ class SettingResource extends Resource
                                             //     ->helperText('Choose method calculating orders.')
                                             //     ->native(false)
                                             //     ->required(),
-                                            TextInput::make('currency_symbol')->label(__('system_settings.currency_symbol')),
                                             TextInput::make('limit_days_orders')->numeric()->label(__('system_settings.limit_days_orders')),
                                             Grid::make()->columns(2)->schema([
                                                 // Toggle::make('completed_order_if_not_qty')->inline(false)
@@ -561,7 +586,9 @@ class SettingResource extends Resource
                                                     ->inline(false)
                                                     ->label('Auto-create order if stock is unavailable')
                                                     ->helperText('Automatically create a new order  if inventory is empty and update original quantity to zero.')
-                                                    ->default(false),
+                                                    ->default(false)
+                                                    ->hidden()
+                                                    ,
                                             ]),
 
                                             Fieldset::make('Toggle Dashboard Sections')->columnSpanFull()->columns(2)->schema([
@@ -593,11 +620,44 @@ class SettingResource extends Resource
                                         ]),
                                     ]),
                                     Tab::make('Products Settings')->columnSpanFull()->schema([
-                                        Grid::make()->columnSpanFull()->columns(3)->schema([
+                                        Grid::make()->columnSpanFull()->columns(4)->schema([
                                             Toggle::make('show_old_system_code')
                                                 ->inline(false)
                                                 ->label('Show Old System Code')
                                                 ->default(false),
+                                            Select::make('product_code_generation_method')
+                                                ->label('Product Code Generation Method')
+                                                ->options(ProductCodeGenerationMethod::options())
+                                                ->default(ProductCodeGenerationMethod::AUTO->value)
+                                                ->live()
+                                                ->required(),
+                                            TextInput::make('product_code_length')
+                                                ->label('Product Code Length')
+                                                ->numeric()
+                                                ->default(3)
+                                                ->minValue(1)
+                                                ->maxValue(15)
+                                                ->visible(fn(Get $get) => $get('product_code_generation_method') === ProductCodeGenerationMethod::MANUAL->value)
+                                                ->required(fn(Get $get) => $get('product_code_generation_method') === ProductCodeGenerationMethod::MANUAL->value),
+                                            Select::make(ProductUnitsSortDirection::SETTING_KEY)
+                                                ->label('Product Units Sort Direction')
+                                                ->options(ProductUnitsSortDirection::options())
+                                                ->default(ProductUnitsSortDirection::DEFAULT)
+                                                ->required(),
+                                        ]),
+                                    ]),
+                                    Tab::make('Inventory Reports Settings')
+                                    ->visible(fn() => isSuperAdmin() || isSystemManager())
+                                    ->columnSpanFull()->schema([
+                                        Grid::make()->columnSpanFull()->columns(2)->schema([
+                                            Select::make('inventory_reports_roles')
+                                                ->multiple()
+                                                ->label('Roles Allowed to View Inventory Reports')
+                                                ->options(Role::pluck('name', 'id')->toArray())
+                                                ->searchable()
+                                                ->preload()
+                                                ->helperText('Select the roles that are allowed to access and view the Inventory Reports page.')
+                                                ->default([1, 3,5,7]),
                                         ]),
                                     ]),
                                 ]),

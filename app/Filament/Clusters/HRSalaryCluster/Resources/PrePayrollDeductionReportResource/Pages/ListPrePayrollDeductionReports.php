@@ -25,13 +25,14 @@ class ListPrePayrollDeductionReports extends ListRecords
             ? ($groupingState['employee_id'] ?? null)
             : null;
 
-        $branchId = $groupBy === PrePayrollDeductionFilterDTO::GROUP_BY_BRANCH
-            ? ($groupingState['branch_id'] ?? null)
-            : null;
+        $branchIds = $groupBy === PrePayrollDeductionFilterDTO::GROUP_BY_BRANCH
+            ? ($groupingState['branch_ids'] ?? [])
+            : [];
 
         // استنتاج الفرع من الموظف إذا لم يُحدد صراحةً
-        if ($employeeId && ! $branchId) {
-            $branchId = \App\Models\Employee::find($employeeId)?->branch_id;
+        if ($employeeId && empty($branchIds)) {
+            $employee = \App\Models\Employee::find($employeeId);
+            $branchIds = $employee && $employee->branch_id ? [$employee->branch_id] : [];
         }
 
         $periodState = $filters['period']->getState();
@@ -43,7 +44,7 @@ class ListPrePayrollDeductionReports extends ListRecords
                 'year'        => $year,
                 'month'       => $month,
                 'employee_id' => $employeeId,
-                'branch_id'   => $branchId,
+                'branch_ids'  => $branchIds,
                 'group_by'    => $groupBy,
             ]);
 

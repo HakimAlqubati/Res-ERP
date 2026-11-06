@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\Branch;
 use Exception;
 use App\Http\Controllers\Controller;
+use App\Models\Product;
 use App\Models\StockSupplyOrder;
 use App\Models\StockSupplyOrderDetail;
 use App\Models\UnitPrice;
@@ -18,7 +19,7 @@ class StockSupplyOrderController extends Controller
     {
 
         $otherBranchesCategories = Branch::centralKitchens()
-            ->where('id', '!=', auth()->user()->branch->id) // نستثني فرع المستخدم
+            ->where('id', '!=', auth()->user()->branch?->id) // نستثني فرع المستخدم
             ->with('categories:id')
             ->get()
             ->pluck('categories')
@@ -29,6 +30,7 @@ class StockSupplyOrderController extends Controller
 
 
         $query = StockSupplyOrder::with(['store', 'details.product', 'details.unit'])
+            ->uncancelled()
             ->orderBy('created_at', 'desc');
 
         if ($request->has('store_id')) {
@@ -54,7 +56,7 @@ class StockSupplyOrderController extends Controller
                 });
             }
         }
-        if (!isStoreManager() && auth()->user()->branch->is_kitchen) {
+        if (!isStoreManager() && auth()->user()->branch?->is_kitchen) {
             $query->with(['details' => function ($q) use ($otherBranchesCategories) {
                 $q->whereHas('product.category', function ($q2) use ($otherBranchesCategories) {
                     $q2->where('is_manafacturing', true)
@@ -62,11 +64,17 @@ class StockSupplyOrderController extends Controller
                 });
             }]);
         }
-        $orders = $query->paginate($request->per_page ?? 10);
+        $perPage = (int) $request->input('per_page', 10);
+        $page    = (int) $request->input('page', 1);
+        $orders  = $query->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
-            'status' => 'success',
-            'data' => $orders
+            'status'       => 'success',
+            'current_page' => $orders->currentPage(),
+            'last_page'    => $orders->lastPage(),
+            'per_page'     => $orders->perPage(),
+            'total'        => $orders->total(),
+            'data'         => $orders,
         ]);
     }
 
@@ -89,13 +97,30 @@ class StockSupplyOrderController extends Controller
             ], 422);
         }
 
+        // Validate that all products are composite (have items)
+        $productIds = collect($request->details)->pluck('product_id')->unique()->values();
+        $products = Product::whereIn('id', $productIds)->withCount('productItems')->get();
+
+        $productsWithoutItems = $products->filter(fn($p) => $p->product_items_count === 0);
+
+        if ($productsWithoutItems->isNotEmpty()) {
+            $names = $productsWithoutItems->map(fn($p) => "{$p->name} (ID: {$p->id})")->implode(', ');
+            return response()->json([
+                'status' => 'error',
+                'message' => "The following products have no items: {$names}",
+            ], 422);
+        }
+
         try {
             DB::beginTransaction();
 
-            // Get the branch and check if it is a central kitchen
-            $branch = auth()->user()->branch;
+            // Get the branch and check if it is a central kitchen (primary or extra)
+            $user = auth()->user();
+            $branch = ($user->branch && $user->branch->is_central_kitchen)
+                ? $user->branch
+                : $user->allBranches()->where('type', Branch::TYPE_CENTRAL_KITCHEN)->first();
 
-            if ($branch->is_central_kitchen) {
+            if ($branch && $branch->is_central_kitchen) {
                 $storeId = $branch->store_id;
             } else {
                 return response()->json([

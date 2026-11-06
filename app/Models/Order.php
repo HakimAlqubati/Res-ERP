@@ -52,6 +52,7 @@ class Order extends Model implements Auditable
         'store_id',
         'cancel_reason',
         'type',
+        'transfer_markup_percentage',
     ];
     protected $auditInclude = [
         'customer_id',
@@ -71,6 +72,11 @@ class Order extends Model implements Auditable
         'store_id',
         'cancel_reason',
         'type',
+        'transfer_markup_percentage',
+    ];
+
+    protected $casts = [
+        'transfer_markup_percentage' => 'float',
     ];
 
     protected $appends = [
@@ -207,6 +213,14 @@ class Order extends Model implements Auditable
     {
         parent::boot();
 
+        static::creating(function ($order) {
+            // Snapshot branch markup percentage on creation
+            if (is_null($order->transfer_markup_percentage) && $order->branch_id) {
+                $branch = $order->branch ?? Branch::withoutGlobalScopes()->find($order->branch_id);
+                $order->transfer_markup_percentage = $branch?->transfer_markup_percentage ?? 0;
+            }
+        });
+
         static::created(function ($order) {
 
             // Send notification to users with role ID = 5
@@ -248,38 +262,56 @@ class Order extends Model implements Auditable
                 $order->status === self::READY_FOR_DELEVIRY &&
                 $order->getOriginal('status') !== self::READY_FOR_DELEVIRY
             ) {
-                foreach ($order->orderDetails as $detail) {
-                    $fifoService = new FifoMethodService($order);
+                $fifoAllocator = app(\App\Modules\Stock\Reports\FifoBatchReports\Contracts\FifoAllocatorInterface::class);
+                $defaultStoreId = Store::defaultStore()?->id ?? 1;
 
-                    $allocations = $fifoService->getAllocateFifo(
-                        $detail->product_id,
-                        $detail->unit_id,
-                        $detail->available_quantity
-                    );
+                // جلب فرع الطلب ومخزنه بتجاوز أي Global Scopes (صلاحيات الفروع) في هذا الموضع فقط
+                $branch = $order->branch_id
+                    ? Branch::withoutGlobalScopes()
+                        ->with([
+                            'store' => fn($q) => $q->withoutGlobalScopes(),
+                            'categoryMarkups',
+                        ])
+                        ->find($order->branch_id)
+                    : null;
+                $branchStore = $branch?->store;
+                $hasBranchStore = (bool) ($branchStore && $branchStore->active);
 
-                    self::moveFromInventory($allocations, $detail);
-
-                    if ($order->branch && $order->branch->store && $order->branch->store->active) {
-                        self::receiveIntoBranchStore($allocations, $detail);
-                    }
+                if ($branch) {
+                    $order->setRelation('branch', $branch);
                 }
 
-                // ✅ New logic: Update costing for composite (manufacturing) product when a component product is affected
+                // 1. تحميل العلاقات لتفادي استعلامات N+1
+                $order->loadMissing(['orderDetails.product.category']);
 
-                // foreach ($order->orderDetails as $detail) {
-                // $parentProducts = ProductItem::whereIn('product_id', $order->orderDetails->pluck('product_id')->toArray())
-                //     ->pluck('parent_product_id')
-                //     ->unique();
+                // 2. تجميع تفاصيل الطلب حسب مخزن كل صنف المخصص لفئته
+                $detailsByStore = $order->orderDetails->groupBy(function ($detail) use ($defaultStoreId) {
+                    if (! $detail->product) {
+                        return $defaultStoreId;
+                    }
+                    return defaultManufacturingStore($detail->product)?->id ?? $defaultStoreId;
+                });
 
-                // foreach ($parentProducts as $parentProductId) {
-                //     try {
-                //         // $count = ProductCostingService::updateComponentPricesForProduct($parentProductId);
-                //         // Log::info("🔄 تم تحديث أسعار {$count} مكونات لـ منتج مركب ID {$parentProductId}");
-                //     // } catch (\Throwable $e) {
-                //         // Log::error("❌ خطأ أثناء تحديث سعر المنتج المركب {$parentProductId}: {$e->getMessage()}");
-                //     }
-                // }
-                // }
+                // 3. تخصيص وصرف لكل مخزن على حدة دفعة واحدة
+                foreach ($detailsByStore as $storeId => $details) {
+                    $items = $details->map(fn ($d) => [
+                        'product_id' => $d->product_id,
+                        'unit_id'    => $d->unit_id,
+                        'qty'        => $d->available_quantity,
+                    ])->all();
+
+                    $allocationsByProduct = $fifoAllocator->allocateMany($items, (int) $storeId, $order);
+
+                    foreach ($details as $detail) {
+                        $productAllocations = $allocationsByProduct[$detail->product_id]['allocations'] ?? [];
+
+                        self::moveFromInventory($productAllocations, $detail);
+
+                        if ($hasBranchStore) {
+                            self::receiveIntoBranchStore($productAllocations, $detail, $branchStore->id);
+                        }
+                    }
+                }
             }
 
 
@@ -333,11 +365,61 @@ class Order extends Model implements Auditable
         return;
     }
 
+    /**
+     * Resolve the effective transfer markup percentage for a specific order item/product.
+     */
+    public function resolveItemMarkupPercentage(?int $productId = null, ?OrderDetails $detail = null): float
+    {
+        if ($detail && ! is_null($detail->transfer_markup_percentage)) {
+            return (float) $detail->transfer_markup_percentage;
+        }
 
-    public static function receiveIntoBranchStore($allocations, $detail)
+        if ($productId && $this->relationLoaded('orderDetails')) {
+            $matchedDetail = $this->orderDetails->firstWhere('product_id', $productId);
+            if ($matchedDetail && ! is_null($matchedDetail->transfer_markup_percentage)) {
+                return (float) $matchedDetail->transfer_markup_percentage;
+            }
+        }
+
+        $branch = $this->relationLoaded('branch')
+            ? $this->branch
+            : ($this->branch_id ? Branch::withoutGlobalScopes()->with('categoryMarkups')->find($this->branch_id) : null);
+
+        if ($branch && $branch->has_custom_category_markup) {
+            $categoryId = ($detail && $detail->relationLoaded('product'))
+                ? $detail->product?->category_id
+                : ($productId ? Product::whereKey($productId)->value('category_id') : null);
+
+            if ($categoryId) {
+                return $branch->resolveTransferMarkupForCategory((int) $categoryId);
+            }
+        }
+
+        return (float) ($this->transfer_markup_percentage ?? $branch?->transfer_markup_percentage ?? 0);
+    }
+
+    /**
+     * Calculate transfer price with markup percentage.
+     */
+    public function calculateTransferPrice(float $basePrice, ?int $productId = null, ?OrderDetails $detail = null): float
+    {
+        $percentage = $this->resolveItemMarkupPercentage($productId, $detail);
+
+        return $percentage > 0
+            ? round($basePrice * (1 + ($percentage / 100)), 4)
+            : $basePrice;
+    }
+
+    public static function receiveIntoBranchStore($allocations, $detail, ?int $targetStoreId = null)
     {
         $order = $detail->order;
-        $targetStoreId = $order->branch->store->id;
+        $targetStoreId = $targetStoreId
+            ?? $order->branch?->store?->id
+            ?? Branch::withoutGlobalScopes()->where('id', $order->branch_id)->value('store_id');
+
+        if (! $targetStoreId) {
+            return;
+        }
 
         foreach ($allocations as $alloc) {
             InventoryTransaction::create([
@@ -346,7 +428,7 @@ class Order extends Model implements Auditable
                 'quantity'             => $alloc['deducted_qty'],
                 'unit_id'              => $alloc['target_unit_id'],
                 'package_size'         => $alloc['target_unit_package_size'],
-                'price'                => $alloc['price_based_on_unit'],
+                'price'                => $order->calculateTransferPrice((float) $alloc['price_based_on_unit'], (int) $detail->product_id, $detail),
                 'movement_date'        => $order->transfer_date ?? now(),
                 'transaction_date'     => $order->transfer_date ?? now(),
                 'store_id'             => $targetStoreId,

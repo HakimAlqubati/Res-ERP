@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Observers\EmployeeRewardObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -9,6 +11,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 use App\Traits\Scopes\BranchScope;
 use App\Traits\Scopes\StatusScope;
 
+#[ObservedBy([EmployeeRewardObserver::class])]
 class EmployeeReward extends Model implements Auditable
 {
     use HasFactory,
@@ -125,28 +128,5 @@ class EmployeeReward extends Model implements Auditable
         return $query->where('status', self::STATUS_REJECTED);
     }
 
-    protected static function booted()
-    {
-        static::creating(function ($reward) {
-            if (auth()->check() && empty($reward->created_by)) {
-                $reward->created_by = auth()->id();
-            }
 
-            if ($reward->branch_id == null) {
-                $reward->branch_id = $reward->employee->branch_id;
-            }
-
-            if ($reward->date) {
-                $date = \Carbon\Carbon::parse($reward->date);
-                $reward->year = $date->year;
-            }
-        });
-
-        static::updating(function ($reward) {
-            if ($reward->isDirty('date') && $reward->date) {
-                $date = \Carbon\Carbon::parse($reward->date);
-                $reward->year = $date->year;
-            }
-        });
-    }
 }

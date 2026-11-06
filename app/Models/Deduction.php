@@ -35,6 +35,16 @@ class Deduction extends Model
         'financial_category_id',  // للربط مع الفئة المالية
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function (self $model) {
+            $model->amount = $model->amount ?? 0;
+            $model->employer_amount = $model->employer_amount ?? 0;
+        });
+    }
+
     /**
      * Get the financial category associated with this deduction.
      * If set, a separate financial transaction will be created when payroll is processed.

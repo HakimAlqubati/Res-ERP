@@ -7,6 +7,7 @@ use Exception;
 use App\Filament\Resources\OrderReportsResource\GeneralReportOfProductsResource;
 use App\Filament\Resources\OrderReportsResource\Pages\GeneralReportProductDetails;
 use App\Http\Resources\ProductResource;
+use App\Enums\ProductUnitsSortDirection;
 use App\Interfaces\Products\ProductRepositoryInterface;
 use App\Models\Branch;
 use App\Models\InventoryTransaction;
@@ -28,12 +29,18 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function index($request)
     {
-        // Get the value of the ID and category ID filters from the request, or null if they're not set.
         $id              = $request->input('id');
         $code            = $request->input('code');
+        $search          = $request->input('search', $request->input('q'));
         $categoryId      = $request->input('category_id');
         $isManufacturing = $request->input('is_manufacturing', false); // Default to true if not specified
         $branch = auth()->user()->branch ?? null;
+        $forOrders       = $request->input('for') === 'orders';
+
+        $unitsSortParam = $request->input('units_sort');
+        $sortDirection = ($unitsSortParam && ProductUnitsSortDirection::tryFrom(strtolower($unitsSortParam)))
+            ? strtolower($unitsSortParam)
+            : ProductUnitsSortDirection::current()->value;
 
         // Query the database to get all active products, or filter by ID and/or category ID if they're set.
         $query = Product::active()
@@ -47,21 +54,44 @@ class ProductRepository implements ProductRepositoryInterface
             }, function ($query) {
                 // return $query->unmanufacturingCategory();
             })
-            ->HasUnitPrices()
+            ->when($forOrders, function ($query) {
+                $query->whereHas('outUnitPrices', function ($q) {
+                    $q->forOrders();
+                });
+            }, function ($query) {
+                $query->HasUnitPrices();
+            })
             ->when(
                 $branch && $branch->type === Branch::TYPE_RESELLER,
                 fn($query) => $query->visibleToBranch($branch)
             )
-            ->with(['unitPrices' => function ($query) {
-                $query->orderBy('order', 'asc');
-            }])
+            ->with([
+                'category',
+                'productItems',
+                'outUnitPrices' => function ($query) use ($sortDirection, $forOrders) {
+                    $query->reorder()
+                        ->orderBy('package_size', $sortDirection)
+                        ->when($forOrders, function ($q) {
+                            $q->forOrders();
+                        })
+                        ->with('unit:id,name');
+                },
+            ])
             ->when($id, function ($query) use ($id) {
                 return $query->where('id', $id);
             })
             ->when($code, function ($query) use ($code) {
-                return $query->where('code', $code);
+                return $query->where(function ($q) use ($code) {
+                    $q->where('code', $code)
+                      ->orWhere('code', 'like', "%{$code}%");
+                });
             })
-
+            ->when($search, function ($query) use ($search) {
+                return $query->where(function ($q) use ($search) {
+                    $q->where('code', 'like', "%{$search}%")
+                      ->orWhere('name', 'like', "%{$search}%");
+                });
+            })
             ->when($categoryId, function ($query) use ($categoryId) {
                 return $query->where('category_id', $categoryId);
             });

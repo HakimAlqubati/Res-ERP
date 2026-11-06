@@ -230,7 +230,8 @@ class StockInventoryForm
                             ->schema([
                                 DatePicker::make('inventory_date')
                                     ->required()->default(now())
-                                    ->label('Inventory Date')->disabledOn('edit'),
+                                    ->label('Inventory Date')
+                                    ->disabled(fn (?\App\Models\StockInventory $record, string $operation) => $operation === 'edit' && (!(isSystemManager() || isSuperAdmin()) && $record?->finalized)),
 
                                 Select::make('store_id')->label(__('lang.store'))
                                     ->default(getDefaultStore())
@@ -533,7 +534,8 @@ class StockInventoryForm
 
                                 TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
                                     ->label(__('lang.package_size'))
-                                    ->extraInputAttributes(['class' => 'text-center']),
+                                    ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
+                                    ->extraInputAttributes(['class' => 'text-center cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;', 'readonly' => true]),
 
                                 TextInput::make('physical_quantity')
                                     ->numeric()
@@ -555,11 +557,13 @@ class StockInventoryForm
                                     ->numeric()
                                     ->label('System Qty')
                                     ->required()
-                                    ->extraInputAttributes(['class' => 'text-center']),
+                                    ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
+                                    ->extraInputAttributes(['class' => 'text-center cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;', 'readonly' => true]),
 
                                 TextInput::make('difference')->readOnly()
                                     ->numeric()
-                                    ->extraInputAttributes(['class' => 'text-center']),
+                                    ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
+                                    ->extraInputAttributes(['class' => 'text-center cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;', 'readonly' => true]),
                             ])
                             ->addActionLabel('Add Item')
                             ->columns(8),

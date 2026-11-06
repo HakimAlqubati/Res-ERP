@@ -30,6 +30,7 @@ class ViewEmployee extends ViewRecord
         $terminationData = $this->record?->serviceTermination ?? null;
         $data['termination_date'] = $terminationData?->termination_date;
         $data['termination_reason'] = $terminationData?->termination_reason;
+        $data['notes'] = $terminationData?->notes;
 
         return $data;
     }

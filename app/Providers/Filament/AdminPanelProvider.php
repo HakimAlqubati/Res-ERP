@@ -42,6 +42,7 @@ use App\Filament\Pages\Dashboard as PagesDashboard;
 use App\Filament\Pages\EmployeeRecords;
 use App\Filament\Pages\InventoryReportLinks;
 use App\Filament\Resources\AppLogs\AppLogResource;
+use App\Filament\Resources\AppVersions\AppVersionResource;
 use App\Filament\Resources\ApprovalResource;
 use App\Filament\Resources\BranchResource;
 use App\Filament\Resources\BranchSalesReports\BranchSalesReportResource;
@@ -145,10 +146,10 @@ class AdminPanelProvider extends PanelProvider
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  ProductUnitCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  HalalLabelReportResource::getNavigationItems() : [],
                             //  (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  ReportOrdersCluster::getNavigationItems(): [], 
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  SupplierCluster::getNavigationItems() : [],
+                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor() || isAccountant() || isHR()) ?  SupplierCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  SupplierStoresReportsCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager()) ?  InventoryManagementCluster::getNavigationItems() : [],
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  InventoryReportLinks::getNavigationItems() : [],
+                            InventoryReportLinks::canAccess() ?  InventoryReportLinks::getNavigationItems() : [],
                             // InventoryReportLinks::getNavigationItems(),
 
                         ));
@@ -204,6 +205,7 @@ class AdminPanelProvider extends PanelProvider
                         NavigationGroup::make(__('menu.system_settings'))->collapsed(1)
                             ->items(array_merge(
                                 (isSuperAdmin() || isSystemManager() || isFinanceManager() || isHR()) ? SettingResource::getNavigationItems() : [],
+                                (isSuperAdmin() || isSystemManager() || isHakimOrAdel()) ? AppVersionResource::getNavigationItems() : [],
                                 ((isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager() || isHR()) &&
 
                                     ($currentTenant && is_array($currentTenant->modules) && in_array(CustomTenantModel::MODULE_HR, $currentTenant->modules))
@@ -383,6 +385,55 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::SIDEBAR_START, // بداية الشريط الجانبي
                 fn(): string => view('filament.partials.sidebar-search')->render()
+            )
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn(): \Illuminate\Support\HtmlString => new \Illuminate\Support\HtmlString('<style>
+                    .fi-input-wrp:has(input[readonly]),
+                    .fi-input-wrp:has(input[disabled]),
+                    .fi-input-wrp.fi-disabled,
+                    .fi-input-wrp.bg-readonly-gray {
+                        background-color: #e5e7eb !important;
+                        border-color: #cbd5e1 !important;
+                        cursor: not-allowed !important;
+                    }
+                    .fi-input-wrp:has(input[readonly]) input,
+                    .fi-input-wrp:has(input[disabled]) input,
+                    .fi-input-wrp.fi-disabled input,
+                    .fi-input-wrp.bg-readonly-gray input {
+                        background-color: #e5e7eb !important;
+                        cursor: not-allowed !important;
+                        color: #374151 !important;
+                    }
+                    .fi-input-wrp:has(input[readonly]) .fi-input-wrp-prefix,
+                    .fi-input-wrp:has(input[disabled]) .fi-input-wrp-prefix,
+                    .fi-input-wrp.fi-disabled .fi-input-wrp-prefix,
+                    .fi-input-wrp.bg-readonly-gray .fi-input-wrp-prefix {
+                        background-color: #e5e7eb !important;
+                        color: #6b7280 !important;
+                    }
+                    .dark .fi-input-wrp:has(input[readonly]),
+                    .dark .fi-input-wrp:has(input[disabled]),
+                    .dark .fi-input-wrp.fi-disabled,
+                    .dark .fi-input-wrp.bg-readonly-gray {
+                        background-color: #374151 !important;
+                        border-color: #4b5563 !important;
+                    }
+                    .dark .fi-input-wrp:has(input[readonly]) input,
+                    .dark .fi-input-wrp:has(input[disabled]) input,
+                    .dark .fi-input-wrp.fi-disabled input,
+                    .dark .fi-input-wrp.bg-readonly-gray input {
+                        background-color: #374151 !important;
+                        color: #e5e7eb !important;
+                    }
+                    .dark .fi-input-wrp:has(input[readonly]) .fi-input-wrp-prefix,
+                    .dark .fi-input-wrp:has(input[disabled]) .fi-input-wrp-prefix,
+                    .dark .fi-input-wrp.fi-disabled .fi-input-wrp-prefix,
+                    .dark .fi-input-wrp.bg-readonly-gray .fi-input-wrp-prefix {
+                        background-color: #374151 !important;
+                        color: #9ca3af !important;
+                    }
+                </style>')
             )
 
 

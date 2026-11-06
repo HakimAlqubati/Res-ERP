@@ -102,7 +102,13 @@ class OrderRepository implements OrderRepositoryInterface
             ;
         }
 
-        if (
+        if (auth()->check() && auth()->user()->isChefAssistantInManufacturingBranch()) {
+            $kitchenBranch = auth()->user()->getChefAssistantManufacturingBranch();
+            $query->where(function ($q) use ($kitchenBranch) {
+                $q->where('branch_id', $kitchenBranch->id)
+                    ->orWhere('customer_id', auth()->id());
+            });
+        } elseif (
             isBranchUser() && isset(auth()->user()->branch)
         ) {
             $query->where('customer_id', auth()->user()->owner->id)
@@ -142,31 +148,118 @@ class OrderRepository implements OrderRepositoryInterface
     {
         $validator = Validator::make($request->all(), [
             'order_details' => 'required|array|min:1',
+            'order_details.*.product_id' => 'required',
             'order_details.*.quantity' => 'required|numeric|min:0.1',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => $validator->errors(),
+                'message' => $validator->errors()->first(),
                 'errors' => $validator->errors(),
             ], 422);
         }
+
+        // Check for duplicate products in order_details
+        $orderDetails = $request->input('order_details', []);
+        $productIds = array_values(array_filter(array_column($orderDetails, 'product_id'), fn($id) => !is_null($id) && $id !== ''));
+        $counts = array_count_values($productIds);
+        $duplicateIds = array_keys(array_filter($counts, fn($c) => $c > 1));
+
+        if (!empty($duplicateIds)) {
+            $products = Product::withTrashed()->whereIn('id', $duplicateIds)->pluck('name', 'id');
+            $duplicateNames = array_map(fn($id) => $products[$id] ?? "#$id", $duplicateIds);
+
+            $totalDuplicates = count($duplicateNames);
+            if ($totalDuplicates === 1) {
+                $formattedProducts = $duplicateNames[0];
+            } elseif ($totalDuplicates === 2) {
+                $formattedProducts = "{$duplicateNames[0]} & {$duplicateNames[1]}";
+            } else {
+                $remaining = $totalDuplicates - 2;
+                $formattedProducts = "{$duplicateNames[0]}, {$duplicateNames[1]} & {$remaining} more";
+            }
+
+            $message = "Duplicate products are not allowed: {$formattedProducts}.";
+
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'errors' => [
+                    'order_details' => [$message],
+                ],
+            ], 422);
+        }
+
+        // Block products sent without a valid unit (unit_id = 0 / empty)
+        $missingUnitError = $this->validateMissingUnits($orderDetails);
+        if ($missingUnitError !== null) {
+            return response()->json([
+                'success' => false,
+                'message' => $missingUnitError['message'],
+                'errors' => [
+                    'order_details' => $missingUnitError['details'],
+                ],
+            ], 422);
+        }
+
+        // Block units that are marked as "manufacturing only" (not orderable)
+        $manufacturingOnlyError = $this->validateManufacturingOnlyUnits($orderDetails);
+        if ($manufacturingOnlyError !== null) {
+            return response()->json([
+                'success' => false,
+                'message' => $manufacturingOnlyError['message'],
+                'errors' => [
+                    'order_details' => $manufacturingOnlyError['details'],
+                ],
+            ], 422);
+        }
+
         try {
             DB::beginTransaction();
 
-            $branchId = auth()->user()->branch?->id;
-            
+            $user = auth()->user();
+            $managedBranch = $user->getManagedAdditionalBranch();
+            $isDefaultStoreKeeper = $user->isDefaultStoreManager();
+            $chefAssistantBranch = $user->getChefAssistantManufacturingBranch();
+            $isChefAssistant = $chefAssistantBranch !== null;
+
+            // Branch Priority:
+            // 1) Chef Assistant -> Manufacturing branch
+            // 2) Branch / Store Manager -> Direct branch
+            // 3) Other users -> Managed branch, then primary branch
+            if ($isChefAssistant) {
+                $effectiveBranch = $chefAssistantBranch;
+            } elseif (isBranchManager() || $isDefaultStoreKeeper) {
+                $effectiveBranch = $user->branch;
+            } else {
+                $effectiveBranch = $managedBranch ?? $user->branch;
+            }
+            $branchId = $effectiveBranch?->id;
+
             if (!$branchId) {
                 throw new \Exception('You cannot create an order because you are not associated with any branch.');
             }
 
-            $customerId = isBranchManager()
-                ? auth()->user()->id
-                : (isBranchUser() ? auth()->user()->owner->id : null);
-            $pendingOrderId = checkIfUserHasPendingForApprovalOrder($branchId);
+            // Check if user is a manager or chef assistant.
+            // If yes: Order is created directly (no approval needed).
+            $isEffectiveManager = isBranchManager() || $isDefaultStoreKeeper || $managedBranch !== null || $isChefAssistant;
+            $customerId = $isEffectiveManager
+                ? $user->id
+                : (isBranchUser() ? $user->owner?->id : null);
 
-            $orderStatus = isBranchManager() ? Order::ORDERED : Order::PENDING_APPROVAL;
+            if (!$customerId) {
+                throw new \Exception('You cannot create an order because you are not a manager or authorized branch user.');
+            }
+
+            // Only look for pending TYPE_NORMAL orders to avoid mixing with manufacturing orders
+            $pendingOrderId = Order::where('status', Order::PENDING_APPROVAL)
+                ->where('branch_id', $branchId)
+                ->where('type', Order::TYPE_NORMAL)
+                ->where('active', 1)
+                ->value('id') ?? 0;
+
+            $orderStatus = $isEffectiveManager ? Order::ORDERED : Order::PENDING_APPROVAL;
 
 
 
@@ -174,38 +267,25 @@ class OrderRepository implements OrderRepositoryInterface
             $notes = $request->input('notes');
             $description = $request->input('description');
 
-            // 👇 تحديد الفئات الخاصة بالتصنيع
-            $manufacturingCategoryIds = Category::Manufacturing()->pluck('id')->toArray();
-
-            // // 👇 إذا الفرع الحالي هو مطبخ مركزي
-            // if (auth()->user()?->branch?->is_kitchen) {
-            //     foreach ($allOrderDetails as $item) {
-            //         $product = \App\Models\Product::find($item['product_id']);
-            //         if ($product && in_array($product->category_id, $manufacturingCategoryIds)) {
-            //             // throw new \Exception("Central kitchens are not allowed to create orders that contain manufacturing products such as ({$product->name}-{$product->id}).");
-            //         }
-            //     }
-            // }
-
 
             // Array to hold IDs of manufactured products.
             $allManufacturingBranches = Branch::active()
+                ->withoutGlobalScopes()
                 ->centralKitchens()
                 ->with('categories:id')
-                ->get(['id', 'store_id']);
+                ->get(['id', 'name', 'store_id']);
 
             $manufacturedProductIds = [];
-
             // Loop through each manufacturing branch to handle orders related to manufacturing products.
             foreach ($allManufacturingBranches as $branch) {
                 // Get categories for the current branch.
                 $categories = $branch->categories->pluck('id')->toArray();
-
                 // Filter order details based on whether they belong to a manufacturing category.
-                $productsForThisBranch = collect($allOrderDetails)->filter(function ($item) use ($categories, $branch) {
+                $productsForThisBranch = collect($allOrderDetails)->filter(function ($item) use ($categories, $branch, $user) {
                     $product = Product::find($item['product_id']);
+                    $userBranchIds = $user->all_branch_ids;
                     $isForbidden = auth()->check() &&
-                        auth()->user()->branch_id === $branch->id &&
+                        in_array($branch->id, $userBranchIds) &&
                         in_array($product->category_id, $categories);
                     if ($isForbidden) {
                         throw new Exception("You cannot request the product ({$product->name}-{$product->id}) because it belongs to a manufacturing category assigned to your own branch.");
@@ -213,25 +293,20 @@ class OrderRepository implements OrderRepositoryInterface
                     return $product && in_array($product->category_id, $categories);
                 })->values()->all();
 
+
                 // If there are any products for this branch, create a manufacturing order.
                 if (count($productsForThisBranch) > 0) {
-                    $manufacturingOrder = Order::create([
-                        'status' => Order::ORDERED,
-                        'customer_id' => $customerId,
-                        'branch_id' => auth()->user()->branch->id,
-                        'store_id' => $branch->store_id,
-                        'type' => Order::TYPE_MANUFACTURING,
-                        'notes' => $notes,
-                        'description' => $description,
-                    ]);
-
-                    // Loop through each product and add it to the manufacturing order.
-                    foreach ($productsForThisBranch as $productDetail) {
-                        $productDetail['price'] = getUnitPrice($productDetail['product_id'], $productDetail['unit_id']);
-                        $productDetail['order_id'] = $manufacturingOrder->id;
-                        OrderDetails::create($productDetail);
-                        $manufacturedProductIds[] = $productDetail['product_id'];
-                    }
+                    $ids = $this->storeManufacturingOrderDetails(
+                        $productsForThisBranch,
+                        $isEffectiveManager,
+                        $orderStatus,
+                        $customerId,
+                        $effectiveBranch,
+                        $branch,
+                        $notes,
+                        $description
+                    );
+                    $manufacturedProductIds = array_merge($manufacturedProductIds, $ids);
                 }
             }
 
@@ -251,11 +326,11 @@ class OrderRepository implements OrderRepositoryInterface
                 $order = Order::create([
                     'status' => $orderStatus,
                     'customer_id' => $customerId,
-                    'branch_id' => auth()->user()?->branch?->id,
+                    'branch_id' => $effectiveBranch?->id,
                     'type' => Order::TYPE_NORMAL,
                     'notes' => $notes,
                     'description' => $description,
-                    'store_id' =>  auth()->user()?->branch?->valid_store_id,
+                    'store_id' => $effectiveBranch?->valid_store_id,
                 ]);
 
                 $orderId = $order->id;
@@ -263,6 +338,19 @@ class OrderRepository implements OrderRepositoryInterface
 
             // Process the normal order details: update existing items or create new ones.
             foreach ($normalOrderDetails as $detail) {
+                if ($pendingOrderId > 0) {
+                    $existingDifferentUnit = OrderDetails::where('order_id', $orderId)
+                        ->where('product_id', $detail['product_id'])
+                        ->where('unit_id', '!=', $detail['unit_id'])
+                        ->first();
+
+                    if ($existingDifferentUnit) {
+                        $productName = Product::withTrashed()->find($detail['product_id'])?->name;
+                        $productLabel = $productName ? "Product '{$productName}'" : "Product #{$detail['product_id']}";
+                        throw new Exception("{$productLabel} already exists in pending order with a different unit.");
+                    }
+                }
+
                 $existingDetail = OrderDetails::where([
                     ['order_id', '=', $orderId],
                     ['product_id', '=', $detail['product_id']],
@@ -307,6 +395,175 @@ class OrderRepository implements OrderRepositoryInterface
         }
     }
 
+    /**
+     * Reject order lines that were sent without a unit (unit_id = 0 / null / missing).
+     * This usually means the product has no units configured for orders.
+     *
+     * @return array{message: string, details: array<int, string>}|null
+     */
+    private function validateMissingUnits(array $orderDetails): ?array
+    {
+        $productIds = collect($orderDetails)
+            ->filter(fn($d) => !empty($d['product_id']) && empty($d['unit_id']))
+            ->pluck('product_id')
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($productIds)) {
+            return null;
+        }
+
+        $products = Product::withTrashed()->whereIn('id', $productIds)->pluck('name', 'id');
+        $names = array_map(fn($id) => "'" . ($products[$id] ?? "#{$id}") . "'", $productIds);
+
+        $total = count($names);
+        $formatted = match (true) {
+            $total === 1 => $names[0],
+            $total === 2 => "{$names[0]} & {$names[1]}",
+            default      => "{$names[0]}, {$names[1]} & " . ($total - 2) . ' others',
+        };
+        $message = "No order units for {$formatted}.";
+
+        $details = array_map(fn($name) => "No order units for {$name}.", $names);
+
+        return ['message' => $message, 'details' => $details];
+    }
+
+    /**
+     * Check the requested product/unit pairs and reject any unit whose
+     * usage scope is "manufacturing only".
+     *
+     * @return array{message: string, details: array<int, string>}|null
+     */
+    private function validateManufacturingOnlyUnits(array $orderDetails): ?array
+    {
+        $requestedPairs = collect($orderDetails)
+            ->filter(fn($d) => !empty($d['product_id']) && !empty($d['unit_id']))
+            ->map(fn($d) => $d['product_id'] . '-' . $d['unit_id'])
+            ->unique()
+            ->all();
+
+        if (empty($requestedPairs)) {
+            return null;
+        }
+
+        $productIds = collect($orderDetails)->pluck('product_id')->filter()->unique()->values();
+
+        $blocked = UnitPrice::with([
+            'product' => fn($q) => $q->withTrashed()->select('id', 'name'),
+            'unit:id,name',
+        ])
+            ->whereIn('product_id', $productIds)
+            ->where('usage_scope', UnitPrice::USAGE_MANUFACTURING_ONLY)
+            ->get(['id', 'product_id', 'unit_id'])
+            ->filter(fn($up) => in_array($up->product_id . '-' . $up->unit_id, $requestedPairs, true))
+            ->values();
+
+        if ($blocked->isEmpty()) {
+            return null;
+        }
+
+        $labels = $blocked->map(function ($up) {
+            $productName = $up->product?->name ?? "#{$up->product_id}";
+            $unitName = $up->unit?->name ?? "#{$up->unit_id}";
+            return "'{$productName}' ({$unitName})";
+        })->all();
+
+        $total = count($labels);
+        if ($total === 1) {
+            $message = "Product {$labels[0]} uses a manufacturing-only unit and cannot be ordered.";
+        } else {
+            $formatted = $total === 2
+                ? "{$labels[0]} & {$labels[1]}"
+                : "{$labels[0]}, {$labels[1]} & " . ($total - 2) . ' more';
+            $message = "Products {$formatted} use manufacturing-only units and cannot be ordered.";
+        }
+
+        $details = array_map(
+            fn($label) => "Product {$label} uses a manufacturing-only unit and cannot be ordered.",
+            $labels
+        );
+
+        return ['message' => $message, 'details' => $details];
+    }
+
+    /**
+     * Find or create a manufacturing order for a specific manufacturing branch,
+     * and save/merge the order details into it.
+     * If a pending manufacturing order already exists for the same branch, merge into it.
+     */
+    private function storeManufacturingOrderDetails(
+        array $productsForBranch,
+        bool $isEffectiveManager,
+        string $orderStatus,
+        ?int $customerId,
+        ?Branch $effectiveBranch,
+        Branch $manufacturingBranch,
+        ?string $notes,
+        ?string $description
+    ): array {
+        $manufacturedProductIds = [];
+
+        // Check for existing pending manufacturing order for this specific manufacturing branch
+        $manufacturingOrder = Order::where('status', Order::PENDING_APPROVAL)
+            ->where('branch_id', $effectiveBranch?->id)
+            ->where('store_id', $manufacturingBranch->store_id)
+            ->where('type', Order::TYPE_MANUFACTURING)
+            ->where('active', 1)
+            ->first();
+
+        if ($manufacturingOrder) {
+            $manufacturingOrder->update(['updated_by' => auth()->id()]);
+        } else {
+            $manufacturingOrder = Order::create([
+                'status' => $orderStatus,
+                'customer_id' => $customerId,
+                'branch_id' => $effectiveBranch?->id,
+                'store_id' => $manufacturingBranch->store_id,
+                'type' => Order::TYPE_MANUFACTURING,
+                'notes' => $notes,
+                'description' => $description,
+            ]);
+        }
+
+        // Save or merge order details
+        foreach ($productsForBranch as $productDetail) {
+            $existingDifferentUnit = OrderDetails::where('order_id', $manufacturingOrder->id)
+                ->where('product_id', $productDetail['product_id'])
+                ->where('unit_id', '!=', $productDetail['unit_id'])
+                ->first();
+
+            if ($existingDifferentUnit) {
+                $productName = Product::withTrashed()->find($productDetail['product_id'])?->name;
+                $productLabel = $productName ? "Product '{$productName}'" : "Product #{$productDetail['product_id']}";
+                throw new Exception("{$productLabel} already exists in pending manufacturing order with a different unit.");
+            }
+
+            $existingDetail = OrderDetails::where([
+                ['order_id', '=', $manufacturingOrder->id],
+                ['product_id', '=', $productDetail['product_id']],
+                ['unit_id', '=', $productDetail['unit_id']],
+            ])->first();
+
+            if ($existingDetail) {
+                $newQty = $existingDetail->quantity + $productDetail['quantity'];
+                $existingDetail->update([
+                    'quantity' => $newQty,
+                    'available_quantity' => $newQty,
+                    'price' => getUnitPrice($productDetail['product_id'], $productDetail['unit_id']),
+                ]);
+            } else {
+                $productDetail['price'] = getUnitPrice($productDetail['product_id'], $productDetail['unit_id']);
+                $productDetail['order_id'] = $manufacturingOrder->id;
+                OrderDetails::create($productDetail);
+            }
+
+            $manufacturedProductIds[] = $productDetail['product_id'];
+        }
+
+        return $manufacturedProductIds;
+    }
 
 
     public function storeWithUnitPricing($request)
@@ -323,8 +580,14 @@ class OrderRepository implements OrderRepositoryInterface
             }
             $pendingOrderId = 0;
             $message = '';
-            // check if user has pending for approval order to determine branchId & orderId & orderStatus
-            if ($currnetRole == 7) {
+            $isChefAssistant = auth()->user()->isChefAssistantInManufacturingBranch();
+            $chefAssistantBranch = auth()->user()->getChefAssistantManufacturingBranch();
+
+            if ($isChefAssistant) {
+                $branchId = $chefAssistantBranch?->id;
+                $customerId = auth()->user()->id;
+                $orderStatus = Order::ORDERED;
+            } else if ($currnetRole == 7) {
                 $branchId = auth()->user()?->branch?->id;
                 $customerId = auth()->user()->id;
                 if (!isset($branchId)) {
@@ -339,7 +602,7 @@ class OrderRepository implements OrderRepositoryInterface
                 $branchId = auth()->user()->owner->branch->id;
                 $customerId = auth()->user()->owner->id;
             }
-            $pendingOrderId  = checkIfUserHasPendingForApprovalOrder($branchId);
+            $pendingOrderId  = ($isChefAssistant || $currnetRole == 7) ? 0 : checkIfUserHasPendingForApprovalOrder($branchId);
 
             // Map order data from request body
             $orderData = [
@@ -435,7 +698,7 @@ class OrderRepository implements OrderRepositoryInterface
             // Start a database transaction
             DB::beginTransaction();
 
-            if (auth()->user()->managedStores->count() == 0 && isStoreManager()) {
+            if (empty(auth()->user()->managed_stores_ids) && isStoreManager()) {
                 return response()->json([
                     'success' => false,
                     'orderId' => null,
@@ -448,8 +711,6 @@ class OrderRepository implements OrderRepositoryInterface
             try {
                 // Find the order by the given ID or throw a ModelNotFoundException
                 $order = Order::lockForUpdate()->findOrFail($id);
-
-              
             } catch (ModelNotFoundException $e) {
                 // Roll back the transaction and return an error response if the order is not found
                 DB::rollBack();
@@ -459,6 +720,21 @@ class OrderRepository implements OrderRepositoryInterface
                     'orderId' => null,
                     'message' => "Order not found with $id id",
                 ], 404);
+            }
+
+            // If order is "ready for delivery", only allow changing to "delivered"
+            if (
+                $order->status === Order::READY_FOR_DELEVIRY
+                && $request->has('status')
+                && $request->status !== Order::DELEVIRED
+            ) {
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'orderId' => $order->id,
+                    'message' => 'Ready for delivery orders can only be changed to delivered.',
+                ], 422);
             }
 
             // Validate the request data
@@ -480,10 +756,8 @@ class OrderRepository implements OrderRepositoryInterface
             $order->updated_by = auth()->user()->id;
             // Fill the order with the validated data and save it to the database
 
-            if (in_array($request->status, [Order::READY_FOR_DELEVIRY])) {
-                $order->update([
-                    'transfer_date' => now(),
-                ]);
+            if (in_array($request->status, [Order::READY_FOR_DELEVIRY]) && empty($order->transfer_date)) {
+                $order->transfer_date = now();
             }
             $order->fill($validatedData)->save();
 

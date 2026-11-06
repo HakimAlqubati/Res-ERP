@@ -10,6 +10,7 @@ use App\Imports\ProductItemsImport;
 use App\Imports\ProductItemsQuantityImport;
 use App\Models\Product;
 use App\Models\ProductHalalCertificate;
+use App\Models\UnitPrice;
 use App\Services\BatchProductCostingService;
 use App\Services\MigrationScripts\ProductMigrationService;
 use App\Services\ProductCostingService;
@@ -26,11 +27,13 @@ use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Schemas\Components\Fieldset;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\CheckboxColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -205,17 +208,17 @@ class ProductsTable
             ])
 
             ->filters([
-                Filter::make('active')->label(__('lang.active'))
-                    ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
+                SelectFilter::make('active')
+                    ->label(__('lang.active'))
+                    ->options([
+                        1 => __('lang.active'),
+                        0 => __('lang.status_unactive'),
+                    ]),
                 SelectFilter::make('category_id')
                     ->searchable()
                     ->multiple()
                     ->label(__('lang.category'))->relationship('category', 'name'),
-                // New Filter for Manufacturing Products
-                Filter::make('is_manufacturing')
-                    ->label(__('lang.is_manufacturing'))
-                    ->query(fn(Builder $query): Builder => $query->whereHas('category', fn($q) => $q->where('is_manafacturing', true))),
-
+    
                 TrashedFilter::make(),
                 Filter::make('smallest_package_not_one')
                     ->label('Min Package Size ≠ 1')
@@ -230,6 +233,7 @@ class ProductsTable
                     }),
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
+            ->deferFilters(true)
             ->recordActions([
                 // Action::make('updateUnitPrice')
                 //     ->label('Update Unit Price')->button()->action(function ($record) {
@@ -242,6 +246,7 @@ class ProductsTable
                 //     })->hidden(),
 
                 ActionGroup::make([
+                    static::editOrderUnitsAction(),
                     Action::make('exportItemsPdf')
                         ->label('Export Items PDF')
                         ->icon('heroicon-o-document-arrow-down')
@@ -384,5 +389,118 @@ class ProductsTable
                 // Tables\Actions\ForceDeleteBulkAction::make(),
                 RestoreBulkAction::make(),
             ]);
+    }
+
+    /**
+     * Action to edit product units for the `use_in_orders` field only.
+     */
+    public static function editOrderUnitsAction(): Action
+    {
+        return Action::make('editOrderUnits')
+            ->label('Order Units')
+            ->icon('heroicon-o-scale')
+            ->color('warning')
+            ->modalHeading(fn(Product $record): string => "Order Units — {$record->name}")
+            ->modalDescription('Select units available for orders.')
+            ->modalSubmitActionLabel('Save')
+            ->modalWidth('md')
+            ->visible(fn(Product $record): bool => $record->allUnitPrices()->exists())
+            ->fillForm(function (Product $record): array {
+                $activeUnitIds = $record->allUnitPrices()
+                    ->where('use_in_orders', true)
+                    ->pluck('id')
+                    ->map(fn($id) => (string) $id)
+                    ->toArray();
+
+                if (empty($activeUnitIds)) {
+                    $firstUnit = $record->allUnitPrices()->orderBy('package_size')->first();
+                    if ($firstUnit) {
+                        $activeUnitIds = [(string) $firstUnit->id];
+                    }
+                }
+
+                return [
+                    'order_unit_ids' => $activeUnitIds,
+                ];
+            })
+            ->schema([
+                CheckboxList::make('order_unit_ids')
+                    ->label('Units for Orders')
+                    ->options(function (Product $record): array {
+                        return $record->allUnitPrices()
+                            ->with('unit')
+                            ->orderBy('order')
+                            ->orderBy('package_size')
+                            ->get()
+                            ->mapWithKeys(function (UnitPrice $unitPrice): array {
+                                $unitName = $unitPrice->unit?->name ?? ('Unit #' . $unitPrice->unit_id);
+                                $label = $unitPrice->package_size
+                                    ? "{$unitName} (Size: {$unitPrice->package_size})"
+                                    : $unitName;
+
+                                return [(string) $unitPrice->id => $label];
+                            })
+                            ->toArray();
+                    })
+                    ->columns(1)
+                    ->required()
+                    ->minItems(1)
+                    ->disableOptionWhen(function (string $value, Product $record): bool {
+                        return $record->allUnitPrices()->count() <= 1;
+                    })
+                    ->validationMessages([
+                        'required' => 'At least one unit is required.',
+                        'min' => 'At least one unit is required.',
+                    ])
+                    ->helperText(function (Product $record): string {
+                        if ($record->allUnitPrices()->count() <= 1) {
+                            return 'Single unit cannot be disabled.';
+                        }
+
+                        return 'At least one unit required.';
+                    }),
+            ])
+            ->action(function (array $data, Product $record): void {
+                $selectedIds = collect($data['order_unit_ids'] ?? [])
+                    ->map(fn($id) => (int) $id)
+                    ->filter()
+                    ->values();
+
+                if ($selectedIds->isEmpty()) {
+                    Notification::make()
+                        ->title('Validation Error')
+                        ->body('At least one unit is required.')
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
+                try {
+                    $allUnits = $record->allUnitPrices;
+
+                    foreach ($allUnits as $unitPrice) {
+                        $shouldUseInOrders = $selectedIds->contains($unitPrice->id);
+
+                        if ((bool) $unitPrice->use_in_orders !== $shouldUseInOrders) {
+                            $unitPrice->update([
+                                'use_in_orders' => $shouldUseInOrders,
+                            ]);
+                        }
+                    }
+
+                    Notification::make()
+                        ->title('Success')
+                        ->body('Order units updated.')
+                        ->success()
+                        ->send();
+                } catch (Throwable $e) {
+                    Notification::make()
+                        ->title('Error')
+                        ->body('Failed to update order units: ' . $e->getMessage())
+                        ->danger()
+                        ->send();
+                }
+            });
     }
 }

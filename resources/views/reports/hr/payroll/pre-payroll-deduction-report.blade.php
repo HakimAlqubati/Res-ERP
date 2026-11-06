@@ -119,13 +119,13 @@
         }
     </style>
 
-    @if ($reportData && ($reportData['employee_id'] || $reportData['branch_id']))
+    @if ($reportData && ($reportData['employee_id'] || !empty($reportData['branch_ids'])))
     @php
         $employee    = \App\Models\Employee::find($reportData['employee_id']);
-        $branch      = \App\Models\Branch::find($reportData['branch_id']);
+        $branches    = !empty($reportData['branch_ids']) ? \App\Models\Branch::whereIn('id', $reportData['branch_ids'])->get() : collect();
         $displayName = $employee
             ? $employee->name
-            : ($branch ? $branch->name . ' - ' . __('Branch') : __('All Employees'));
+            : ($branches->isNotEmpty() ? ($branches->count() > 2 ? __('Multiple Branches') : $branches->pluck('name')->join(' & ') . ' - ' . __('Branch')) : __('All Employees'));
     @endphp
 
     <table class="w-full text-sm text-left pretty" id="report-table">
@@ -178,7 +178,7 @@
             {{-- Employee Header --}}
             <tr>
                 <td colspan="2" style="background-color: #e5e7eb !important; color: #111827 !important; font-weight: bold; text-align: center; padding: 12px; font-size: 1.1em;">
-                    {{ $empData['employee_name'] }}
+                    {{ $empData['employee_name'] }} - ({{ $empData['branch_name'] ?? __('Unknown Branch') }})
                 </td>
             </tr>
 
@@ -211,7 +211,7 @@
             {{-- Employee Total --}}
             <tr>
                 <td style="text-align: right; font-weight: bold; background-color: #d1d5db !important; color: #111827 !important;">
-                    {{ __('Total Deductions for Staff') }} ({{ $empData['employee_name'] }})
+                    {{ __('Total Deductions for Staff') }} ({{ $empData['employee_name'] }} - {{ $empData['branch_name'] ?? __('Unknown Branch') }})
                 </td>
                 <td style="text-align: right; font-weight: bold; background-color: #d1d5db !important; color: #d9534f !important;">
                     {{ formatMoneyWithCurrency($empData['total_deductions']) }}

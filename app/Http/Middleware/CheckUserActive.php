@@ -15,8 +15,16 @@ class CheckUserActive
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (auth()->check() && auth()->user()->active == 0) {
-            abort(403, 'Your account is inactive. Please contact the administrator.');
+        if (auth()->check()) {
+            $user = auth()->user();
+            
+            if ($user->active == 0) {
+                abort(403, 'Your account is inactive. Please contact the administrator.');
+            }
+
+            if ($user->employee && $user->employee->pendingTerminationRequest()->exists()) {
+                abort(403, 'Your account is pending termination. Please contact the administrator.');
+            }
         }
 
         return $next($request);

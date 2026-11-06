@@ -152,22 +152,52 @@ class SalaryCalculatorService implements SalaryCalculatorInterface
 
         // Determine how many days should be paid for the current period ($payableDays)
         $payableDays = $rateWorkingDays;
-        if ($periodEnd && $periodEnd->day < $monthDays) {
-            // Segment ends mid-month → use the calendar end-day directly.
-            $payableDays = $periodEnd->day;
-        } elseif (
-            $this->dailyRateMethod === DailyRateMethod::By30Days->value
-            && $isMultiSegment
-            && $monthDays === 31
-            && $periodStart && $periodStart->day > 1
-        ) {
-            // Last segment of a branch-transfer employee in a 31-day month:
-            // subtract the rate-days already consumed by prior segments
-            // so the total across all segments equals 30 (not 31).
-            $previousUsedDays = (int) round(($periodStart->day - 1) / $monthDays * $rateWorkingDays);
-            $payableDays      = max(0, $rateWorkingDays - $previousUsedDays);
-        }
+        // if ($periodEnd && $periodEnd->day < $monthDays) {
+        //     // Segment ends mid-month → use the calendar end-day directly.
+        //     $payableDays = $periodEnd->day;
+        // } elseif (
+        //     $this->dailyRateMethod === DailyRateMethod::By30Days->value
+        //     && $isMultiSegment
+        //     && $monthDays === 31
+        //     && $periodStart && $periodStart->day > 1
+        // ) {
+        //     // Last segment of a branch-transfer employee in a 31-day month:
+        //     // subtract the rate-days already consumed by prior segments
+        //     // so the total across all segments equals 30 (not 31).
+        //     $previousUsedDays = (int) round(($periodStart->day -1) / $monthDays * $rateWorkingDays);
+        //     $payableDays      = max(0, $rateWorkingDays - $previousUsedDays);
+        // }
 
+      
+    if ($isMultiSegment) {
+    // Branch-transfer employee (2+ segments in the same month): distribute
+    // $rateWorkingDays proportionally across ALL segments using cumulative
+    // boundaries, so segments telescope to exactly $rateWorkingDays —
+    // regardless of segment count, month length, or $dailyRateMethod.
+    $cumulativeRateDaysAt = fn (int $calendarDayIndex): int =>
+        (int) round($calendarDayIndex / $monthDays * $rateWorkingDays);
+
+    $startBoundary = $periodStart ? max(0, $periodStart->day - 1) : 0;
+    $endBoundary   = $periodEnd ? min($periodEnd->day, $monthDays) : $monthDays;
+
+    $payableDays = max(
+        0,
+        $cumulativeRateDaysAt($endBoundary) - $cumulativeRateDaysAt($startBoundary)
+    );
+    } elseif ($periodEnd && $periodEnd->day < $monthDays) {
+        // Single-segment employee ending mid-month (new hire / termination):
+        // use the calendar end-day directly. The $requiredDays cap below is
+        // the real limiter for this case — it must NOT be scaled proportionally.
+        $payableDays = $periodEnd->day;
+    }
+        // if($startBoundary != 0){
+
+        //     dd($cumulativeRateDaysAt,
+        //     $startBoundary,
+        //     $endBoundary,
+        //     $cumulativeRateDaysAt);
+            
+        // }   
         // Cap payable days by required shift days (exclude no_periods days)
         // For By30Days method: only skip the cap if the employee covers the full month
         // (requiredDays >= monthDays), so short months like February still get full salary.

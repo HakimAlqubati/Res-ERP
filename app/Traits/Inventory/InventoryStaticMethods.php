@@ -119,6 +119,7 @@ trait InventoryStaticMethods
             'notes'                => $data['notes'] ?? null,
             'transactionable_id'   => $data['transactionable']?->id ?? null,
             'transactionable_type' => $data['transactionable'] ? get_class($data['transactionable']) : null,
+            'source_transaction_id'=> $data['source_transaction_id'] ?? null,
         ]);
     }
     public static function moveOutFromStore(array $data): ?InventoryTransaction
@@ -151,6 +152,7 @@ trait InventoryStaticMethods
             'notes'                => $data['notes'] ?? null,
             'transactionable_id'   => $data['transactionable']?->id ?? null,
             'transactionable_type' => $data['transactionable'] ? get_class($data['transactionable']) : null,
+            'source_transaction_id'=> $data['source_transaction_id'] ?? null,
         ]);
     }
 

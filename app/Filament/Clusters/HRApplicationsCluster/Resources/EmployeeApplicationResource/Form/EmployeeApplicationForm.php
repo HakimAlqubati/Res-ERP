@@ -172,6 +172,7 @@ class EmployeeApplicationForm
                         ->label(__('lang.notes'))
                         ->placeholder(__('lang.notes') . '...')
                         // ->rows(5)
+                        ->required()
                         ->columnSpanFull(),
                 ]),
 

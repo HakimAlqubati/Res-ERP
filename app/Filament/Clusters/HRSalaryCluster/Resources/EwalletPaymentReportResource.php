@@ -4,7 +4,9 @@ namespace App\Filament\Clusters\HRSalaryCluster\Resources;
 
 use App\Filament\Clusters\HRSalaryCluster;
 use App\Filament\Clusters\HRSalaryCluster\Resources\EwalletPaymentReportResource\Pages;
+use App\Filament\Tables\Actions\RefreshAction;
 use App\Models\EwalletPaymentReport;
+use App\Modules\HR\PayrollReports\Exports\CashPaymentExport;
 use App\Modules\HR\PayrollReports\Exports\EwalletPaymentExport;
 use Carbon\Carbon;
 use Filament\Actions\Action;
@@ -34,20 +36,20 @@ class EwalletPaymentReportResource extends Resource
 {
     protected static ?string $model = EwalletPaymentReport::class;
 
-    protected static ?string $slug = 'ewallet-payment-report';
+    protected static ?string $slug = 'payment-sheet';
 
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::ClipboardDocumentList;
 
     protected static ?string $cluster = HRSalaryCluster::class;
 
-    protected static ?string $label = "eWallet Sheet";
+    protected static ?string $label = "Payment Sheet";
 
-    protected static ?string $pluralLabel = "eWallet Sheet";
-    protected static ?string $pluralModelLabel = 'eWallet Sheet';
+    protected static ?string $pluralLabel = "Payment Sheet";
+    protected static ?string $pluralModelLabel = 'Payment Sheet';
 
     // Disable Filament's default title casing (which applies ucwords())
     protected static bool $hasTitleCaseModelLabel = false;
-    protected static ?string $navigationLabel = 'eWallet Sheet';
+    protected static ?string $navigationLabel = 'Payment Sheet';
 
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
@@ -64,6 +66,7 @@ class EwalletPaymentReportResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+        ->headerActions([RefreshAction::make()])
             ->columns([
                 TextColumn::make('year')
                     ->label('Year')
@@ -92,6 +95,26 @@ class EwalletPaymentReportResource extends Resource
                     ->sortable()
                     ->alignCenter()
                     ,
+                TextColumn::make('payment_type')
+                    ->label('Payment Type')
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        EwalletPaymentReport::TYPE_BANK => 'Bank',
+                        EwalletPaymentReport::TYPE_CASH => 'Cash',
+                        default => 'eWallet',
+                    })
+                    ->color(fn ($state) => match ($state) {
+                        EwalletPaymentReport::TYPE_BANK => 'success',
+                        EwalletPaymentReport::TYPE_CASH => 'warning',
+                        default => 'info',
+                    })
+                    ->icon(fn ($state) => match ($state) {
+                        EwalletPaymentReport::TYPE_BANK => 'heroicon-o-building-library',
+                        EwalletPaymentReport::TYPE_CASH => 'heroicon-o-banknotes',
+                        default => 'heroicon-o-device-phone-mobile',
+                    })
+                    ->sortable()
+                    ->alignCenter(),
             
                 TextColumn::make('creator.name')
                     ->label('Created By')
@@ -132,10 +155,20 @@ class EwalletPaymentReportResource extends Resource
             ->color('success')
             ->action(function (EwalletPaymentReport $record) {
                 $monthName = Carbon::create()->month($record->month)->format('F');
-                $fileName = "TnG_Payment_Report_{$monthName}_{$record->year}.xlsx";
+                $prefix = match ($record->payment_type) {
+                    EwalletPaymentReport::TYPE_BANK => 'Bank_Payment_Report',
+                    EwalletPaymentReport::TYPE_CASH => 'Cash_Payment_Report',
+                    default => 'TnG_Payment_Report',
+                };
+                $fileName = "{$prefix}_{$monthName}_{$record->year}.xlsx";
+
+                $export = match ($record->payment_type) {
+                    EwalletPaymentReport::TYPE_CASH => new CashPaymentExport($record),
+                    default => new EwalletPaymentExport($record),
+                };
 
                 return Excel::download(
-                    new EwalletPaymentExport($record),
+                    $export,
                     $fileName
                 );
             });
@@ -148,11 +181,23 @@ class EwalletPaymentReportResource extends Resource
             ->icon('heroicon-o-document-arrow-down')
             ->color('danger')
             ->action(function (EwalletPaymentReport $record) {
-                $record->load('items');
-                $pdf = \Mccarlosen\LaravelMpdf\Facades\LaravelMpdf::loadView('reports.hr.ewallet-payment-report-pdf', ['report' => $record]);
+                $record->load(['items.employee', 'items.payroll']);
+                $isBank = $record->payment_type === EwalletPaymentReport::TYPE_BANK;
+                $isCash = $record->payment_type === EwalletPaymentReport::TYPE_CASH;
+                $pdf = \Mccarlosen\LaravelMpdf\Facades\LaravelMpdf::loadView('reports.hr.ewallet-payment-report-pdf', [
+                    'report' => $record,
+                    'paymentType' => $record->payment_type,
+                    'isBank' => $isBank,
+                    'isCash' => $isCash,
+                ]);
                 
                 $monthName = Carbon::create()->month($record->month)->format('F');
-                $fileName = "eWallet_Sheet_{$monthName}_{$record->year}.pdf";
+                $prefix = match ($record->payment_type) {
+                    EwalletPaymentReport::TYPE_BANK => 'Bank_Sheet',
+                    EwalletPaymentReport::TYPE_CASH => 'Cash_Sheet',
+                    default => 'eWallet_Sheet',
+                };
+                $fileName = "{$prefix}_{$monthName}_{$record->year}.pdf";
 
                 return response()->streamDownload(function () use ($pdf) {
                     echo $pdf->output();

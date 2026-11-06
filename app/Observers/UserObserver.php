@@ -63,6 +63,9 @@ class UserObserver
         if ($user->wasChanged('nationality')) {
             $updates['nationality'] = $user->nationality;
         }
+        if ($user->wasChanged('can_add_branch_order')) {
+            $updates['can_add_branch_order'] = (bool) $user->can_add_branch_order;
+        }
 
         // Always keep employee_type in sync with user_type
         $updates['employee_type'] = $user->user_type;

@@ -126,15 +126,15 @@ class BranchLogRelationManager extends RelationManager
                     ->visible(fn() => isHakimOrAdel())
                     ->successNotificationTitle('Branch log entry created'),
             ])
-            ->actions([
+            ->recordActions([
                 EditAction::make()
                     ->icon('heroicon-m-pencil-square')
                     ->successNotificationTitle('Log entry updated'),
-                DeleteAction::make(),
+                DeleteAction::make()->visible(fn() => isHakimOrAdel()),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()->visible(fn() => isHakimOrAdel()),
                 ]),
             ]);
     }

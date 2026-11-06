@@ -20,6 +20,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\PurchaseInvoice;
 use App\Models\StockIssueOrder;
+use App\Models\UnitPrice;
 use App\Modules\Stock\Reports\FifoBatchReports\Contracts\FifoAllocatorInterface;
 use App\Services\FifoMethodService;
 use App\Services\FixFifo\FifoAllocatorService;
@@ -117,16 +118,45 @@ Route::get('/testAllocateFifo', function (Request $request) {
  return $allocations; 
 });
 
-Route::get('/testAllocateFifoNew', function (Request $request,FifoAllocatorInterface $fifoAllocator) {
-   
-    $allocations = $fifoAllocator->allocate(
-        productId: (int) ($request->product_id ?? 25),
-        unitId:    (int) ($request->unit_id ?? 10),
-        requestedQty: (float) ($request->qty ?? 50),
-        storeId:   (int) ($request->store_id ?? 1),
-    );
+Route::get('/testAllocateFifoNew', function (Request $request, FifoAllocatorInterface $fifoAllocator) {
 
-    return $allocations;
+    $unitId  = (int) ($request->unit_id ?? 10);
+    $qty     = (float) ($request->qty ?? 50);
+    $storeId = (int) ($request->store_id ?? 1);
+
+    // جلب معرفات المنتجات من الـ parameters (يدعم: product_ids, product_id, مصفوفة أو نص مفصول بفواصل مثل 1,2,3 أو from/to)
+    if ($request->filled('product_ids')) {
+        $raw = $request->input('product_ids');
+        $productIds = is_array($raw) ? $raw : explode(',', (string) $raw);
+    } elseif ($request->filled('product_id')) {
+        $raw = $request->input('product_id');
+        $productIds = is_array($raw) ? $raw : explode(',', (string) $raw);
+    } elseif ($request->filled('from') && $request->filled('to')) {
+        $productIds = range((int) $request->from, (int) $request->to);
+    } else {
+        $productIds = range(1, 15);
+    }
+
+    $productIds = array_values(array_filter(array_map('intval', (array) $productIds), fn (int $id) => $id > 0));
+    if (empty($productIds)) {
+        $productIds = range(1, 15);
+    }
+
+    // بناء مصفوفة items لـ allocateMany (أو استخدام items الممررة مباشرة إن وجدت)
+    if ($request->filled('items') && is_array($request->items)) {
+        $items = $request->items;
+    } else {
+        $items = array_map(fn (int $pid) => [
+            'product_id' => $pid,
+            'unit_id'    => $unitId,
+            'qty'        => $qty,
+        ], $productIds);
+    }
+
+    // استعلام SQL واحد لكل المنتجات بدلاً من N استعلام
+    $results = $fifoAllocator->allocateMany($items, $storeId);
+
+    return response()->json($results);
 });
 
 Route::get('/testUpdateUnitPrice', function () {

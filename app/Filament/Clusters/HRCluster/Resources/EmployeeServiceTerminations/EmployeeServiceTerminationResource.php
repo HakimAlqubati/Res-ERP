@@ -25,6 +25,8 @@ class EmployeeServiceTerminationResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserMinus;
 
+    protected static ?string $slug = 'staff-service-terminations';
+
     protected static ?string $cluster = HRCluster::class;
 
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;

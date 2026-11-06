@@ -20,8 +20,10 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\ManufacturingIn
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\MinimumProductQtyReportResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReportResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentSummaryReportResource;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryValuationReportResource;
 use App\Filament\Resources\InVSReportResource;
 use App\Filament\Resources\StockSupplyOrderReportResource;
+use App\Models\Setting;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Htmlable;
 
@@ -91,12 +93,12 @@ class InventoryReportLinks extends Page
                 'icon' => 'heroicon-o-currency-dollar',
                 'url' => InventoryWithUsageReportResource::getUrl(),
             ],
-            [
-                'title' => __('lang.store_position_report'),
-                'description' => __('lang.store_position_report_desc'),
-                'icon' => 'heroicon-o-archive-box',
-                'url' => InventoryTransactionPurchaseReportResource::getUrl(),
-            ],
+            // [
+            //     'title' => __('lang.store_position_report'),
+            //     'description' => __('lang.store_position_report_desc'),
+            //     'icon' => 'heroicon-o-archive-box',
+            //     'url' => InventoryTransactionPurchaseReportResource::getUrl(),
+            // ],
             [
                 'title' => __('lang.stock_adjustment_report'),
                 'description' => __('lang.stock_adjustment_report_desc'),
@@ -133,6 +135,12 @@ class InventoryReportLinks extends Page
                 'icon' => 'heroicon-o-presentation-chart-bar',
                 'url' => StockPositionBatchReportResource::getUrl(),
             ],
+            [
+                'title' => 'Stocktake Valuation Report',
+                'description' => 'Stocktake closing value report by store and date',
+                'icon' => 'heroicon-o-calculator',
+                'url' => StockInventoryValuationReportResource::getUrl(),
+            ],
             // [
             //     'title'       => MinimumProductQtyReportResource::getPluralLabel(),
             //     'description' => '',
@@ -156,8 +164,52 @@ class InventoryReportLinks extends Page
 
     public static function canAccess(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) {
+        $user = auth()->user();
+        if (!$user) {
+            return false;
+        }
+
+        if (isSuperAdmin()) {
             return true;
+        }
+
+        $allowedRoles = Setting::getSetting('inventory_reports_roles');
+
+        // Fallback to previous default access if not configured yet in settings
+        if ($allowedRoles === null) {
+            return isSystemManager() ;
+        }
+
+        if (is_string($allowedRoles)) {
+            $allowedRoles = json_decode($allowedRoles, true) ?? [];
+        }
+
+        if (empty($allowedRoles)) {
+            return false;
+        }
+
+        $userRoleIds = [];
+        if ($user->roles) {
+            $userRoleIds = $user->roles->pluck('id')->map(fn($id) => (string) $id)->toArray();
+        }
+        if (!empty($user->role_id)) {
+            $userRoleIds[] = (string) $user->role_id;
+        }
+        if (function_exists('getCurrentRole') && getCurrentRole()) {
+            $userRoleIds[] = (string) getCurrentRole();
+        }
+
+        $allowedRolesStr = array_map('strval', (array) $allowedRoles);
+
+        if (!empty(array_intersect($userRoleIds, $allowedRolesStr))) {
+            return true;
+        }
+
+        if ($user->roles) {
+            $userRoleNames = $user->roles->pluck('name')->toArray();
+            if (!empty(array_intersect($userRoleNames, $allowedRolesStr))) {
+                return true;
+            }
         }
 
         return false;

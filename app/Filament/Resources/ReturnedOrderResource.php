@@ -9,6 +9,7 @@ use App\Filament\Resources\ReturnedOrderResource\Pages\EditReturnedOrder;
 use App\Filament\Resources\ReturnedOrderResource\Pages\ListReturnedOrders;
 use App\Filament\Resources\ReturnedOrderResource\Pages\ViewReturnedOrder;
 use App\Filament\Resources\ReturnedOrderResource\Schema\ReturnedOrderForm;
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\Branch;
 use App\Models\InventoryTransaction;
 use App\Models\Order;
@@ -16,18 +17,27 @@ use App\Models\ReturnedOrder;
 use App\Services\MultiProductsInventoryService;
 use Exception;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\RestoreBulkAction;
 use Filament\Facades\Filament;
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Pages\Page;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -53,21 +63,43 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
     {
         return $table->striped()->defaultSort('id', 'desc')->deferFilters(false)
             ->columns([
-                TextColumn::make('id')->label('#')->alignCenter(true)->toggleable(),
-                TextColumn::make('order.id')->label('Original Order ID')->sortable()->alignCenter(true)->toggleable(),
+                SoftDeleteColumn::make(),
+                TextColumn::make('id')->label('#')->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('order.id')
+                ->label('Order ID')
+                ->sortable()->alignCenter(true)->toggleable(),
                 TextColumn::make('branch.name')->label('Branch')->sortable()->toggleable(),
                 TextColumn::make('store.name')->label('Store')->sortable()->toggleable(),
                 TextColumn::make('returned_date')->label('Returned Date')->date()->toggleable(),
-                TextColumn::make('status')->label('Status')->badge()->toggleable()->alignCenter(true),
-                TextColumn::make('creator.name')->label('Created By')->toggleable(),
-                TextColumn::make('itemsCount')->label('Items Count')->toggleable()->alignCenter(true),
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        \App\Models\ReturnedOrder::STATUS_CREATED => 'gray',
+                        \App\Models\ReturnedOrder::STATUS_APPROVED => 'success',
+                        \App\Models\ReturnedOrder::STATUS_REJECTED => 'danger',
+                        default => 'primary',
+                    })
+                    ->toggleable()
+                    ->alignCenter(true),
+                TextColumn::make('creator.short_name')->label('Created By')->toggleable(),
+                TextColumn::make('itemsCount')->label('Items')->toggleable()->alignCenter(true),
                 // TextColumn::make('totalAmount')->label('Total Amount')->money('MYR')->toggleable()->alignCenter(true),
             ])
             ->filters([
-                //
-            ])
+                TrashedFilter::make(),
+            ],FiltersLayout::Modal)
+            ->filtersFormColumns(4)
+            
+                
+            ->deferFilters(true)
             ->recordActions([
+                ActionGroup::make([
+
                 EditAction::make()->visible(fn ($record): bool => $record->status === ReturnedOrder::STATUS_CREATED),
+                DeleteAction::make()->hidden(fn ($record) => $record->status === ReturnedOrder::STATUS_APPROVED),
+                ForceDeleteAction::make()->hidden(fn ($record) => $record->status === ReturnedOrder::STATUS_APPROVED),
+                RestoreAction::make(),
                 Action::make('Approve')->button()
                     ->label('Approve')
                     ->color('success')
@@ -90,44 +122,60 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
                                 foreach ($record->details as $detail) {
 
                                     if ($record->branch->hasStore()) {
-                                        // التحقق من الكمية المتوفرة في مخزن الفرع (المصدر)
+                                        // Check available stock in branch store
                                         $availableQty = MultiProductsInventoryService::getRemainingQty(
                                             $detail->product_id,
                                             $detail->unit_id,
                                             $record->branch->store_id,
                                         );
                                         if ($detail->quantity > $availableQty) {
-                                            // أوقف العملية برمتها وأظهر إشعار
                                             throw new Exception("Insufficient stock in branch store ({$record->branch->name}) for product ID: {$detail->product_id}");
                                         }
 
-                                        // أولاً نُخرج الكمية من المخزن الخاص بالفرع (باعتباره مصدر المرتجع)
+                                        // Find original order IN transaction for this product
+                                        $sourceTransaction = InventoryTransaction::where('transactionable_type', \App\Models\Order::class)
+                                            ->where('transactionable_id', $record->original_order_id)
+                                            ->where('product_id', $detail->product_id)
+                                            ->where('unit_id', $detail->unit_id)
+                                            ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+                                            ->first();
+
+                                        $branchPrice = $sourceTransaction?->price ?? $detail->price;
+                                        $orderMarkup = (float) (
+                                            $record->order?->resolveItemMarkupPercentage((int) $detail->product_id)
+                                            ?? $record->branch?->resolveTransferMarkupForCategory($detail->product?->category_id)
+                                            ?? 0
+                                        );
+                                        $warehousePrice = ($orderMarkup > 0 && $sourceTransaction)
+                                            ? round($sourceTransaction->price / (1 + ($orderMarkup / 100)), 4)
+                                            : $branchPrice;
+
+                                        // 1. Move OUT from branch store using branch price
                                         $transaction = InventoryTransaction::moveOutFromStore([
                                             'product_id' => $detail->product_id,
                                             'quantity' => $detail->quantity,
                                             'unit_id' => $detail->unit_id,
-                                            'store_id' => $record->branch?->store_id, // أو مررها حسب لوجيكك
-                                            'price' => $detail->price,
+                                            'store_id' => $record->branch?->store_id,
+                                            'price' => $branchPrice,
                                             'package_size' => $detail->package_size,
                                             'transaction_date' => $record->returned_date,
                                             'movement_date' => $record->returned_date,
                                             'notes' => 'Auto-out from branch for returned order #'.$record->id,
                                             'transactionable' => $record,
+                                            'source_transaction_id' => $sourceTransaction?->id,
                                         ]);
                                         if (! $transaction) {
-                                            // فشل الصرف، ممكن تسجل لوج أو تتجاهل بناءً على منطقك
                                             Log::warning("Insufficient stock to move out for returned order #{$record->id}");
                                         }
 
-                                        // ثم ندخل الكمية إلى مخزن المرتجع
-
+                                        // 2. Move IN to warehouse store using original cost
                                         InventoryTransaction::moveToStore([
                                             'product_id' => $detail->product_id,
                                             'quantity' => $detail->quantity,
                                             'unit_id' => $detail->unit_id,
                                             'store_id' => $record->store_id,
                                             'movement_type' => InventoryTransaction::MOVEMENT_IN,
-                                            'price' => $detail->price,
+                                            'price' => $warehousePrice,
                                             'package_size' => $detail->package_size,
                                             'transaction_date' => $record->returned_date,
                                             'movement_date' => $record->returned_date,
@@ -165,10 +213,18 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
                             showWarningNotifiMessage('Failed to reject returned order: '.$e->getMessage());
                         }
                     }),
+                    
+                ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                    ->visible(fn()=> isSuperAdmin())
+                    ,
+                    ForceDeleteBulkAction::make()
+                    ->visible(fn()=> isSuperAdmin())
+                    ,
+                    RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -213,6 +269,15 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
         return false;
     }
 
+    public static function canDelete(Model $record): bool
+    {
+        if ($record->status === ReturnedOrder::STATUS_APPROVED) {
+            return false;
+        }
+
+        return true;
+    }
+
     public static function getOrderSearchQuery(string $search)
     {
         return Order::where('id', 'like', "%{$search}%")
@@ -224,7 +289,9 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = static::getModel()::query()->whereHas('order');
+        $query = static::getModel()::query()->whereHas('order')->withoutGlobalScopes([
+            SoftDeletingScope::class,
+        ]);
 
         if (
             static::isScopedToTenant() &&
@@ -238,7 +305,7 @@ class ReturnedOrderResource extends BaseReturnedOrderResource
 
     public static function canViewAny(): bool
     {
-        return false;
+        
         if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) {
             return true;
         }

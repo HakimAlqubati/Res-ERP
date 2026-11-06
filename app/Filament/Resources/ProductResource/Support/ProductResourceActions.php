@@ -7,6 +7,7 @@ use App\Models\PurchaseInvoiceDetail;
 use App\Models\InventoryTransaction;
 use App\Models\StockIssueOrderDetail;
 use App\Models\GoodsReceivedNoteDetail;
+use App\Models\Product;
 use App\Models\ProductItem;
 use App\Models\UnitPrice;
 use Filament\Support\Exceptions\Halt;
@@ -26,32 +27,141 @@ final class ProductResourceActions
      * @return array
      */
 
+    /**
+     * Calculate total price before waste for a list of product items.
+     *
+     * @param array|iterable $items
+     * @return float
+     */
+    public static function calculateTotalBeforeWaste($items): float
+    {
+        return (float) collect($items)->sum(function ($item) {
+            if (isset($item['total_price']) && is_numeric($item['total_price']) && $item['total_price'] > 0) {
+                return (float) $item['total_price'];
+            }
+            $qty = (float) ($item['quantity'] ?? 0);
+            $price = (float) ($item['price'] ?? 0);
+            return $qty * $price;
+        }) ?? 0;
+    }
+
     public static function updateFinalPriceEachUnit($set, $get, $state, $withOut = false)
     {
+        // 🔄 Calculate total price before waste
+        $totalBeforeWaste = self::calculateTotalBeforeWaste($state);
+
         // 🔄 Calculate the new total net price of product items
-        $totalNetPrice = collect($state)->sum('total_price_after_waste') ?? 0;
+        $totalNetPrice = collect($state)->sum(function ($item) {
+            if (isset($item['total_price_after_waste']) && is_numeric($item['total_price_after_waste']) && $item['total_price_after_waste'] > 0) {
+                return (float) $item['total_price_after_waste'];
+            }
+            $qty = (float) ($item['quantity'] ?? 0);
+            $price = (float) ($item['price'] ?? 0);
+            $waste = (float) ($item['qty_waste_percentage'] ?? 0);
+            return ProductItem::calculateTotalPriceAfterWaste($qty * $price, $waste);
+        }) ?? 0;
 
         // 🔄 Retrieve existing units
         if ($withOut) {
-            $units = $get('units') ?? [];
+            $units = $get('units') ?? $get('../units') ?? [];
         } else {
-            $units = $get('../../units') ?? [];
+            $units = $get('../../units') ?? $get('../units') ?? $get('units') ?? [];
         }
-        $updatedUnits = array_map(function ($unit) use ($totalNetPrice) {
-            $packageSize = $unit['package_size'] ?? 1;
+
+        if (empty($units)) {
+            $updatedUnits = [
+                'item-default' => [
+                    'unit_id'            => null,
+                    'package_size'       => 1,
+                    'price_before_waste' => round($totalBeforeWaste, 4),
+                    'price'              => round($totalNetPrice, 4),
+                    'selling_price'      => round($totalNetPrice, 2),
+                ]
+            ];
+            if ($withOut) {
+                if ($get('units') !== null) {
+                    $set('units', $updatedUnits);
+                } else {
+                    $set('../units', $updatedUnits);
+                }
+            } else {
+                if ($get('../../units') !== null) {
+                    $set('../../units', $updatedUnits);
+                } elseif ($get('../units') !== null) {
+                    $set('../units', $updatedUnits);
+                } else {
+                    $set('units', $updatedUnits);
+                }
+            }
+            return;
+        }
+
+        $updatedUnits = [];
+        foreach ($units as $key => $unit) {
+            $packageSize = 1;
             $basePrice   = $packageSize * $totalNetPrice;
-            $markup      = 1;
-            return array_merge($unit, [
-                'price'         => round($basePrice, 4),
-                'selling_price' => round($basePrice, 4),
+            $basePriceBeforeWaste = $packageSize * $totalBeforeWaste;
+            $updatedUnits[$key] = array_merge($unit, [
+                'package_size'       => 1,
+                'price_before_waste' => round($basePriceBeforeWaste, 4),
+                'price'              => round($basePrice, 4),
+                'selling_price'      => round($basePrice, 2),
             ]);
-        }, $units);
+        }
 
         // 🔄 Replace the `units` array completely
         if ($withOut) {
-            $set('units', $updatedUnits);
+            if ($get('units') !== null) {
+                $set('units', $updatedUnits);
+            } else {
+                $set('../units', $updatedUnits);
+            }
         } else {
-            $set('../../units', $updatedUnits);
+            if ($get('../../units') !== null) {
+                $set('../../units', $updatedUnits);
+            } elseif ($get('../units') !== null) {
+                $set('../units', $updatedUnits);
+            } else {
+                $set('units', $updatedUnits);
+            }
+        }
+    }
+
+    /**
+     * Recalculate and persist manufacturing product unit prices in DB upon save.
+     */
+    public static function recalculateManufacturingProductUnitPrices(Product|int|null $product): void
+    {
+        if (! $product) {
+            return;
+        }
+
+        if (is_int($product)) {
+            $product = Product::find($product);
+        }
+
+        if (! $product || ! $product->is_manufacturing) {
+            return;
+        }
+
+        $product->load(['productItems', 'allUnitPrices']);
+
+        $finalPrice = (float) ($product->productItems->sum('total_price_after_waste') ?? 0);
+
+        foreach ($product->allUnitPrices as $unitPrice) {
+            $packageSize = (float) ($unitPrice->package_size ?: 1);
+            $newPrice = round($packageSize * $finalPrice, 4);
+
+            $oldPrice = (float) $unitPrice->price;
+            $oldSellingPrice = (float) $unitPrice->selling_price;
+
+            if (round($oldPrice, 4) === $newPrice && round($oldSellingPrice, 4) === $newPrice) {
+                continue;
+            }
+
+            $unitPrice->price = $newPrice;
+            $unitPrice->selling_price = $newPrice;
+            $unitPrice->save();
         }
     }
 
@@ -155,6 +265,33 @@ final class ProductResourceActions
                 showWarningNotifiMessage($message);
             }
             return;
+        }
+
+        // 4️⃣ ممنوع إضافة أكثر من وحدة بنفس الـ package_size
+        $duplicates = $packageSizes->duplicates();
+        if ($duplicates->isNotEmpty()) {
+            $duplicateValues = $duplicates->unique()->implode(', ');
+            $message = __('⚠️ Duplicate package size (:sizes) is not allowed.', ['sizes' => $duplicateValues]);
+            if ($fail) {
+                $fail($message);
+            } else {
+                showWarningNotifiMessage($message);
+            }
+            return;
+        }
+
+        // 5️⃣ منع تعطيل خيار ظهور الوحدة في الطلبات للمنتجات التي لديها وحدة واحدة
+        if ($count === 1 && isset($filteredUnits[0])) {
+            $onlyUnit = $filteredUnits[0];
+            if (isset($onlyUnit['use_in_orders']) && ! $onlyUnit['use_in_orders']) {
+                $message = __('⚠️ Products with only one unit must have orders visibility enabled.');
+                if ($fail) {
+                    $fail($message);
+                } else {
+                    showWarningNotifiMessage($message);
+                }
+                return;
+            }
         }
     }
 

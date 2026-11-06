@@ -40,13 +40,7 @@ class UnitPricesRelationManager extends RelationManager
                     ->options(function () {
                         return Unit::pluck('name', 'id');
                     })->searchable(),
-                TextInput::make('price')->type('number')->default(1)
-                    // ->mask(
-                    //     fn (TextInput\Mask $mask) => $mask
-                    //         ->numeric()
-                    //         ->decimalPlaces(2)
-                    //         ->thousandsSeparator(',')
-                    // ),
+                TextInput::make('price')->numeric()->prefix(settingWithDefault('currency_symbol', 'RM'))->default(1)
             ]);
     }
 
@@ -55,7 +49,7 @@ class UnitPricesRelationManager extends RelationManager
         return $table
             ->columns([
                 TextColumn::make('unit.name'),
-                TextColumn::make('price'),
+                TextColumn::make('price')->formatStateUsing(fn($state) => formatMoneyWithCurrency($state)),
             ])
             ->filters([
                 TrashedFilter::make(),

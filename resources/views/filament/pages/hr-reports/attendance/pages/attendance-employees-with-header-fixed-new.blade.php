@@ -196,7 +196,7 @@
                     <!-- <span id="checkout_status-arrow" class="arrow-icon">&#x2195;</span> Arrow for Check-out -->
                 </th>
 
-                <th class="internal_cell">{{ __('Supposed') }}</th>
+                <th class="internal_cell">{{ __('Scheduled') }}</th>
                 <th class="internal_cell">{{ __('Total Hours Worked') }}</th>
                 <th class="internal_cell">{{ __('Approved') }}</th>
             </tr>
@@ -237,7 +237,7 @@
                 <td class="internal_cell" colspan="2" style="border: none;"> </td>
                 <td colspan="7" class="text-center text-gray-500 font-bold" style="border: none;">
 
-                    {{ __('No periods') }}
+                    {{ __('No Scheduled Shift') }}
                 </td>
                 @else
                 <td colspan="9" style="padding:0;">

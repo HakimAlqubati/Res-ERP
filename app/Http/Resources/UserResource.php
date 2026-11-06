@@ -25,7 +25,7 @@ class UserResource extends JsonResource
             'owner_id' => $this->owner_id,
             'role_id' => $this->roles[0]->id,
             'fcm_token' => $this->fcm_token,
-            'branch_is_central_kitchen' => (int) ($this->branch->is_kitchen ?? 0),
+            'branch_is_central_kitchen' => (int) $this->hasCentralKitchen(),
             'branch' => $this->branch,
             'roles' => $this->roles->pluck('name', 'id'),
             'login_auth_type' => setting('login_auth_type'),
@@ -42,6 +42,7 @@ class UserResource extends JsonResource
             }) : null,
             'can_create_advance' => (bool)$this->can_create_advance,
             'can_create_missed_check_requests' => (bool)$this->can_create_missed_check_requests,
+            'can_add_branch_order' => (bool)$this->can_add_branch_order,
         ];
     }
 }

@@ -24,8 +24,8 @@ class EditEmployeeServiceTermination extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        if ($this->record->status == EmployeeServiceTermination::STATUS_APPROVED) {
-            abort(403, 'This request is already approved, and cannot be edited');
+        if (in_array($this->record->status, [EmployeeServiceTermination::STATUS_APPROVED, EmployeeServiceTermination::STATUS_REJECTED])) {
+            abort(403, 'This request is already ' . $this->record->status . ', and cannot be edited');
         }
         return $data;
     }

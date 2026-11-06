@@ -29,6 +29,9 @@ class GoodsReceivedNote extends Model implements Auditable
         'is_purchase_invoice_created',
         'approve_date',
         'cancelled',
+        'rejected_date',
+        'rejected_reason',
+        'rejected_by',
     ];
 
     protected $auditInclude = [
@@ -47,6 +50,9 @@ class GoodsReceivedNote extends Model implements Auditable
         'status',
         'is_purchase_invoice_created',
         'approve_date',
+        'rejected_date',
+        'rejected_reason',
+        'rejected_by',
     ];
     protected $appends = [
         'details_count',
@@ -63,6 +69,7 @@ class GoodsReceivedNote extends Model implements Auditable
     protected $casts = [
         'grn_date' => 'date',
         'approve_date' => 'datetime',
+        'rejected_date' => 'datetime',
     ];
 
     // ✅ العلاقات
@@ -116,10 +123,20 @@ class GoodsReceivedNote extends Model implements Auditable
         return $this->belongsTo(User::class, 'cancelled_by');
     }
 
+    public function rejectedBy()
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
+    }
+
+    public function rejector()
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
+    }
+
     // في حال إضافة جدول التفاصيل لاحقًا
     public function grnDetails()
     {
-        return $this->hasMany(GoodsReceivedNoteDetail::class, 'grn_id');
+        return $this->hasMany(GoodsReceivedNoteDetail::class, 'grn_id')->orderBy('id', 'asc');
     }
 
     public function inventoryTransactions()
@@ -176,11 +193,11 @@ class GoodsReceivedNote extends Model implements Auditable
                         'quantity' => $detail->quantity,
                         'package_size' => $detail->package_size,
                         'price' => $detail->price,
-                        'movement_date' => $grn->grn_date ?? now(),
                         'unit_id' => $detail->unit_id,
                         'store_id' => $grn->store_id,
                         'notes' => $notes,
-                        'transaction_date' => $grn->grn_date ?? now(),
+                        'movement_date' => $grn->grn_date ? $grn->grn_date->format('Y-m-d') . ' ' . now()->format('H:i:s') : now(),
+                        'transaction_date' => $grn->grn_date ? $grn->grn_date->format('Y-m-d') . ' ' . now()->format('H:i:s') : now(),
                         'transactionable_id' => $grn->id,
                         'transactionable_type' => self::class,
                     ]);
@@ -229,6 +246,13 @@ class GoodsReceivedNote extends Model implements Auditable
 
             $price = $priceFromUnit ?? ($detail->price ?? 0);
             return (float) $detail->quantity * (float) $price;
+        }));
+    }
+
+    public function getActualTotalAmountAttribute(): float
+    {
+        return max(0.0, (float) $this->grnDetails->sum(function ($detail) {
+            return (float) $detail->quantity * (float) ($detail->price ?? 0);
         }));
     }
 }

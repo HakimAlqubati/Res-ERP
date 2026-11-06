@@ -211,15 +211,17 @@ class TransactionBuilder
 
         // 10.5. الخصومات المخصصة للموظف
         foreach ($customDeductions['items'] ?? [] as $cd) {
+            $isEmployer = ($cd['applied_by'] ?? null) === Deduction::APPLIED_BY_EMPLOYER;
+
             $tx[] = [
-                'type'         => SalaryTransactionType::TYPE_DEDUCTION,
-                'sub_type'     => Str::slug($cd['name'] ?? 'custom-deduction'),
-                'amount'       => $this->round($cd['amount']),
-                'operation'    => '-',
-                'description'  => $cd['name'] ?? 'Custom deduction',
-                'deduction_id' => $cd['id'] ?? null,
+                'type'           => $isEmployer ? SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION : SalaryTransactionType::TYPE_DEDUCTION,
+                'sub_type'       => $isEmployer ? SalaryTransactionType::TYPE_EMPLOYER_CONTRIBUTION : Str::slug($cd['name'] ?? 'custom-deduction'),
+                'amount'         => $this->round($cd['amount']),
+                'operation'      => $isEmployer ? null : '-',
+                'description'    => $cd['name'] ?? 'Custom deduction',
+                'deduction_id'   => $cd['id'] ?? null,
                 'reference_type' => Deduction::class,
-                'reference_id' => $cd['id'] ?? null,
+                'reference_id'   => $cd['id'] ?? null,
             ];
         }
 

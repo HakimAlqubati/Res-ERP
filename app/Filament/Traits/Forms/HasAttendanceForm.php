@@ -28,11 +28,11 @@ trait HasAttendanceForm
                 Grid::make()->columns(3)->columnSpanFull()->schema([
                     Fieldset::make()->columnSpanFull()->label('')->schema([
                         Hidden::make('is_attendance_user')->default(1),
-                        TextInput::make('name')->live(onBlur: true)
+                        TextInput::make('name')->label(__('lang.name'))->live(onBlur: true)
                             ->afterStateUpdated(fn($set, $state) => $set('attendanceDevice.name', $state))->required()->unique(ignoreRecord: true),
-                        TextInput::make('email')->required()->unique(ignoreRecord: true)->email()->required(),
+                        TextInput::make('email')->label(__('lang.email'))->required()->unique(ignoreRecord: true)->email()->required(),
 
-                        Select::make('branch_id')->label('Branch')
+                        Select::make('branch_id')->label(__('lang.branch'))
                             ->options(Branch::select('name', 'id')
                                 ->selectable()
                                 ->forBranchManager('id')
@@ -44,7 +44,7 @@ trait HasAttendanceForm
                             })
                             ->live()
                             ->required(),
-                        Select::make('branch_area_id')->label('Branch area')
+                        Select::make('branch_area_id')->label(__('lang.branch_area'))
                             ->options(function (Get $get) {
                                 return BranchArea::query()
                                     ->where('branch_id', $get('branch_id'))
@@ -54,13 +54,14 @@ trait HasAttendanceForm
 
                 ]),
                 Fieldset::make()->columnSpanFull()->relationship('attendanceDevice')->schema([
-                    TextInput::make('name')->columnSpanFull()->label('Device Name'),
-                    Textarea::make('description')->columnSpanFull()->label('Device Description'),
+                    TextInput::make('name')->columnSpanFull()->label(__('lang.device_name')),
+                    Textarea::make('description')->columnSpanFull()->label(__('lang.device_description')),
                 ]),
 
                 Fieldset::make()->columnSpanFull()->label('')->schema([
                     Grid::make()->columnSpanFull()->columns(2)->schema([
                         TextInput::make('password')
+                            ->label(__('lang.password'))
                             ->password()
                             ->required(fn(string $context) => $context === 'create')
                             ->reactive()
@@ -69,7 +70,7 @@ trait HasAttendanceForm
                             ->password()
                             ->required(fn(string $context) => $context === 'create')
                             ->same('password')
-                            ->label('Confirm Password'),
+                            ->label(__('lang.confirm_password')),
                     ]),
                 ]),
             ]);

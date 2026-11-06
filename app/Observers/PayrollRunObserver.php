@@ -7,7 +7,7 @@ use App\Models\AdvanceRequest;
 use App\Models\EmployeeAdvanceInstallment;
 use App\Models\PayrollRun;
 use App\Modules\HR\Payroll\Contracts\PayrollFinancialSyncInterface;
-
+use Illuminate\Support\Facades\Log;
 
 /**
  * Observer for PayrollRun model.
@@ -38,8 +38,9 @@ class PayrollRunObserver
 
         $summary = $this->checker->getDashboardSummary($filters);
 
+        Log::info('summary_from_payroll_run_observer', $summary);
         if ($summary['has_pending']) {
-            $message = "Cannot create payroll. Please approve or reject all pending employee applications for this period first.";
+            $message = "Cannot create payroll. Please approve or reject all pending employee requests for this period first.";
 
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'error' => $message
@@ -97,6 +98,9 @@ class PayrollRunObserver
             // 1. إرجاع أقساط السلف إلى غير مدفوعة
             $this->revertInstallmentsToUnpaid($payrollRun);
 
+            // 1b. التراجع عن تسوية الـ Carry Forward (قبل حذف الحركات)
+            app(\App\Modules\HR\Payroll\Services\CarryForwardReverter::class)->revertForPayrollRun($payrollRun->id);
+
             // 2. حذف المعاملات المالية
             $this->syncService->deletePayrollRunTransactions($payrollRun->id);
 
@@ -106,7 +110,7 @@ class PayrollRunObserver
             // 4. حذف كشوفات الرواتب
             $payrollRun->payrolls()->delete();
         } catch (\Exception $e) {
-            // Silent fail
+            Log::error('PayrollRun deletion error: ' . $e->getMessage());
         }
     }
 
@@ -121,6 +125,9 @@ class PayrollRunObserver
             // 1. إرجاع أقساط السلف إلى غير مدفوعة
             $this->revertInstallmentsToUnpaid($payrollRun);
 
+            // 1b. التراجع عن الـ Carry Forward للحركات الحيّة فقط (لتفادي العكس المزدوج)
+            app(\App\Modules\HR\Payroll\Services\CarryForwardReverter::class)->revertForPayrollRun($payrollRun->id);
+
             // 2. حذف المعاملات المالية نهائياً
             $this->syncService->deletePayrollRunTransactions($payrollRun->id);
 
@@ -130,7 +137,7 @@ class PayrollRunObserver
             // 4. حذف كشوفات الرواتب نهائياً (بما في ذلك المحذوفة مسبقاً)
             $payrollRun->payrolls()->withTrashed()->forceDelete();
         } catch (\Exception $e) {
-            // Silent fail
+            Log::error('PayrollRun force deletion error: ' . $e->getMessage());
         }
     }
 

@@ -44,6 +44,11 @@ class EditProduct extends EditRecord
         return $this->getResource()::getUrl('index');
     }
 
+    protected function afterSave(): void
+    {
+        \App\Filament\Resources\ProductResource\Support\ProductResourceActions::recalculateManufacturingProductUnitPrices($this->record);
+    }
+
     public static function logPriceChange(
         int $productId,
         ?int $productItemId,

@@ -38,6 +38,8 @@ use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\VerticalAlignment;
 use Filament\Support\Facades\FilamentAsset;
 use Filament\Support\Facades\FilamentView;
+use Filament\Tables\View\TablesRenderHook;
+use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\Pages\ListPayrolls;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
@@ -67,6 +69,15 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             \App\Services\WhatsApp\Contracts\WhatsAppServiceInterface::class,
             \App\Services\WhatsApp\WhatsAppService::class
+        );
+
+        // ── Inventory Price Resolver ──────────────────────────────────
+        // Switch pricing strategy by changing the implementation here:
+        //   TransactionPriceResolver → actual FIFO cost from inventory_transactions
+        //   UnitTablePriceResolver   → static price from unit_prices table
+        $this->app->bind(
+            \App\Contracts\InventoryPriceResolver::class,
+            \App\Services\Financial\Pricing\TransactionPriceResolver::class
         );
     }
 
@@ -111,10 +122,11 @@ class AppServiceProvider extends ServiceProvider
             // Css::make('keypad', ''),
             // Js::make('example-local-script', asset('js/tune.js')),
         // ]);
-        // FilamentView::registerRenderHook(
-        //     'panels::auth.login.form.after',
-        //     fn(): View => view('filament.login_extra')
-        // );
+        FilamentView::registerRenderHook(
+            TablesRenderHook::FILTER_INDICATORS,
+            fn (): View => view('filament.clusters.hr-salary-cluster.resources.payroll-resource.total-net-header'),
+            scopes: ListPayrolls::class,
+        );
 
         // Gate::policy(\Spatie\Permission\Models\Role::class, \App\Policies\RolePolicy::class);
         // Gate::policy(Task::class, \App\Policies\TaskPolicy::class);

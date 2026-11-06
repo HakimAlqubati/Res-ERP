@@ -2,60 +2,67 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
-use Filament\Pages\Enums\SubNavigationPosition;
-use Filament\Schemas\Schema;
-use Filament\Notifications\Notification;
-use Throwable;
-use Filament\Tables\Columns\TextColumn;
+use App\Exports\InventoryTransactionsExport;
+use App\Filament\Clusters\SupplierStoresReportsCluster;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResource\Pages;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResource\Pages\ListInventories;
+use App\Filament\Tables\Columns\SoftDeleteColumn;
+use App\Imports\InventoryTransactionsImport;
 use App\Models\Branch;
+use App\Models\Inventory;
+use App\Models\InventoryTransaction;
+use App\Models\Product;
 use App\Models\Store;
-use Filament\Tables\Filters\TrashedFilter;
+use App\Models\Unit;
+use App\Models\UnitPrice;
+use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
-use Filament\Forms\Components\TextInput;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResource\Pages\ListInventories;
-use App\Filament\Clusters\SupplierStoresReportsCluster;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResource\Pages;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResource\RelationManagers;
-use App\Filament\Tables\Columns\SoftDeleteColumn;
-use App\Imports\InventoryTransactionsImport;
-use App\Models\Inventory;
-use App\Models\InventoryTransaction;
-use App\Models\Product;
-use Dom\Text;
-use Filament\Actions\Action;
-use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\Summarizers\Summarizer;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Tables\Enums\FiltersLayout;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
+use Throwable;
 
 class InventoryResource extends Resource
 {
+    public const MAX_EXPORT_RECORDS = 3000;
+
     protected static ?string $model = InventoryTransaction::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = Heroicon::RectangleStack;
+    protected static string|\BackedEnum|null $navigationIcon = Heroicon::RectangleStack;
 
     protected static ?string $cluster = SupplierStoresReportsCluster::class;
-    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
     protected static ?int $navigationSort = 3;
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -67,7 +74,7 @@ class InventoryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->striped()
-            ->paginated([10, 25, 50, 150,400])
+            ->paginated([10, 25, 50, 150, 400])
             ->defaultSort('id', 'desc')
             ->headerActions([
                 Action::make('import_inventory')->hidden()
@@ -82,8 +89,8 @@ class InventoryResource extends Resource
                     ])
                     ->color('success')
                     ->action(function (array $data) {
-                        $path = 'public/' . $data['file'];
-                        $import = new InventoryTransactionsImport();
+                        $path = 'public/'.$data['file'];
+                        $import = new InventoryTransactionsImport;
 
                         try {
                             Excel::import($import, $path);
@@ -97,15 +104,56 @@ class InventoryResource extends Resource
                             Notification::make()
                                 ->title('Import Failed')
                                 ->danger()
-                                ->body('Failed to import inventory: ' . $e->getMessage())
+                                ->body('Failed to import inventory: '.$e->getMessage())
                                 ->send();
                         }
                     }),
 
                 static::makeStockInNonManufacturingAction()
-                // ->visible(fn()=>isHakimOrAdel())
-                ->visible(fn()=>isSuperAdmin())
-                ,
+                    // ->visible(fn()=>isHakimOrAdel())
+                    ->visible(fn () => isHakimOrAdelOrMaha()),
+
+                Action::make('export_excel')
+                    ->label('Export to Excel')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('success')
+                    ->action(function ($livewire) {
+                        $query = $livewire->getFilteredTableQuery();
+                        $count = (clone $query)->count();
+
+                        if ($count === 0) {
+                            Notification::make()
+                                ->title('No Records Found')
+                                ->body('There are no inventory transactions to export for the current filters.')
+                                ->warning()
+                                ->send();
+
+                            return null;
+                        }
+
+                        if ($count > static::MAX_EXPORT_RECORDS) {
+                            Notification::make()
+                                ->title('Cannot Export')
+                                ->body(
+                                    __('You can only export up to :max records. Please filter to reduce the number of records.', [
+                                        'max' => number_format(static::MAX_EXPORT_RECORDS),
+                                    ])
+                                )
+                                ->danger()
+                                ->duration(10000)
+                                ->send();
+
+                            return null;
+                        }
+
+                        @ini_set('memory_limit', '512M');
+                        @set_time_limit(300);
+
+                        return Excel::download(
+                            new InventoryTransactionsExport($query),
+                            'inventory_transactions_'.now()->format('Y-m-d_H-i-s').'.xlsx'
+                        );
+                    }),
             ])
             ->columns([
 
@@ -130,10 +178,10 @@ class InventoryResource extends Resource
                     // ->formatStateUsing(fn($state) => formatQunantity($state))
                     ->sortable(),
                 TextColumn::make('remaining_quantity')
-                    ->label('Remaining Qty')->sortable()
-                    ->formatStateUsing(fn($state) => formatQunantity($state))
-                    // ->description('The remaining quantity of the product at the time this transaction was recorded')
-                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->label(__('Remaining Qty'))
+                    ->sortable()
+                    ->formatStateUsing(fn ($state) => formatQunantity($state))
+                    ->toggleable()
                     ->alignCenter(),
                 TextColumn::make('unit.name')
                     ->label('Unit'),
@@ -149,10 +197,11 @@ class InventoryResource extends Resource
                     ->summarize(
                         Summarizer::make()
                             ->using(function (Table $table) {
-                                $total  = $table->getRecords()->sum(fn($record) => $record->total_price);
+                                $total = $table->getRecords()->sum(fn ($record) => $record->total_price);
                                 if (is_numeric($total)) {
                                     return formatMoneyWithCurrency($total);
                                 }
+
                                 return $total;
                             })
                     )->toggleable(isToggledHiddenByDefault: true),
@@ -160,11 +209,14 @@ class InventoryResource extends Resource
                     ->label('Movement Date')->date('Y-m-d')
                     ->sortable(),
 
-
-
+                TextColumn::make('transaction_date')
+                    ->label('Transaction Date')
+                    ->date('Y-m-d')
+                    ->sortable()
+                    ->toggleable(),
 
                 TextColumn::make('notes')
-                    ->label('Notes')->limit(50)->tooltip(fn($state) => $state),
+                    ->label('Notes')->limit(50)->tooltip(fn ($state) => $state),
                 TextColumn::make('transactionable_id')
                     ->label('Transaction ID')->searchable(isIndividual: true)
                     ->sortable()->alignCenter(true)
@@ -174,7 +226,6 @@ class InventoryResource extends Resource
                     ->label('Transaction Type')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-
 
                 TextColumn::make('sourceTransaction.formatted_transactionable_type')
                     ->label('Source Transaction Type')
@@ -189,7 +240,6 @@ class InventoryResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->alignCenter(),
                 TextColumn::make('created_at'),
-
 
             ])
             ->filters([
@@ -228,9 +278,9 @@ class InventoryResource extends Resource
                             ->pluck('id', 'id')
                             ->toArray();
                     })
-                    ->getOptionLabelUsing(fn($value) => "ID: $value")
-                    // ->hidden()
-                    ,
+                    ->getOptionLabelUsing(fn ($value) => "ID: $value")
+                // ->hidden()
+                ,
 
                 SelectFilter::make('movement_type')
                     ->label('Movement Type')
@@ -244,34 +294,28 @@ class InventoryResource extends Resource
                     ->searchable()
                     ->preload()
                     ->multiple(),
-                SelectFilter::make("product_id")
+                SelectFilter::make('product_id')
                     ->label(__('lang.product'))
                     ->multiple()
                     ->searchable()
-                    ->options(fn() => Product::where('active', 1)
-                        ->get()
-                        ->mapWithKeys(fn($product) => [
-                            $product->id => "{$product->code} - {$product->name}"
-                        ])
-                        ->toArray())
                     ->getSearchResultsUsing(function (string $search): array {
                         return Product::where('active', 1)
-                            ->where(function ($query) use ($search) {
-                                $query->where('name', 'like', "%{$search}%")
-                                    ->orWhere('code', 'like', "%{$search}%");
-                            })
-                            ->limit(50)
+                            ->where(fn ($query) => $query->where('name', 'like', "%{$search}%")->orWhere('code', 'like', "%{$search}%"))
+                            ->limit(30)
                             ->get()
-                            ->mapWithKeys(fn($product) => [
-                                $product->id => "{$product->code} - {$product->name}"
-                            ])
+                            ->mapWithKeys(fn ($p) => [$p->id => "{$p->code} - {$p->name}"])
+                            ->toArray();
+                    })
+                    ->getOptionLabelsUsing(function (array $values): array {
+                        return Product::whereIn('id', $values)
+                            ->get()
+                            ->mapWithKeys(fn ($p) => [$p->id => "{$p->code} - {$p->name}"])
                             ->toArray();
                     })
                     ->getOptionLabelUsing(
-                        fn($value): ?string =>
-                        optional(Product::find($value))->code . ' - ' . optional(Product::find($value))->name
+                        fn ($value): ?string => optional(Product::find($value))->code.' - '.optional(Product::find($value))->name
                     ),
-                SelectFilter::make('store_id')->options(fn() => Store::active()
+                SelectFilter::make('store_id')->options(fn () => Store::active()
                     ->get(['id', 'name'])
                     ->pluck('name', 'id')
 
@@ -289,19 +333,20 @@ class InventoryResource extends Resource
                         'App\Models\ResellerSaleItem' => 'Reseller Sale Item',
                         'App\Models\PosSale' => 'Pos Sale',
                         'App\Models\GoodsReceivedNote' => 'Goods Received Note',
+                        'App\Models\StockSupplyOrder' => 'Stock Supply Order',
                     ])
                     ->searchable(),
 
                 Filter::make('transactionable_id_filter')
                     ->form([
-                        Forms\Components\TextInput::make('transactionable_id')
+                        TextInput::make('transactionable_id')
                             ->label('Transaction ID')
                             ->numeric(),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query->when(
                             $data['transactionable_id'],
-                            fn(Builder $query, $id): Builder => $query->where('transactionable_id', $id)
+                            fn (Builder $query, $id): Builder => $query->where('transactionable_id', $id)
                         );
                     }),
 
@@ -316,11 +361,11 @@ class InventoryResource extends Resource
                         return $query
                             ->when(
                                 $data['from'],
-                                fn(Builder $query, $date): Builder => $query->whereDate('movement_date', '>=', $date),
+                                fn (Builder $query, $date): Builder => $query->whereDate('movement_date', '>=', $date),
                             )
                             ->when(
                                 $data['until'],
-                                fn(Builder $query, $date): Builder => $query->whereDate('movement_date', '<=', $date),
+                                fn (Builder $query, $date): Builder => $query->whereDate('movement_date', '<=', $date),
                             );
                     })
                     ->label(__('Movement Date')),
@@ -331,87 +376,53 @@ class InventoryResource extends Resource
             ->filtersFormColumns(4)
             ->deferFilters(true)
             ->recordActions([
- 
-                Action::make('editTransaction')
-                    ->label('Edit Package Size')
-                    ->icon('heroicon-o-pencil-square')
-                    ->color('warning')
-                    ->visible(fn()=>isHakimOrAdel() && 1>2)
-                    ->action(function ($record, $data) {
-                        $newPackageSize = $data['package_size'];
-                        
-                        $record->update([
-                            'package_size' => $newPackageSize,
-                            'temp_qty' => $data['temp_qty'],
-                        ]);
 
-                        // Check if it's from a StockAdjustmentDetail
-                        if ($record->formatted_transactionable_type === 'StockAdjustmentDetail' || $record->transactionable_type === \App\Models\StockAdjustmentDetail::class) {
-                            $adjDetail = \App\Models\StockAdjustmentDetail::find($record->transactionable_id);
-                            
-                            if ($adjDetail) {
-                                $adjDetail->update(['package_size' => $newPackageSize]);
-
-                                // Check if the adjustment is from a StockInventory
-                                if (str_ends_with($adjDetail->source_type ?? '', 'StockInventory')) {
-                                    \App\Models\StockInventoryDetail::where('stock_inventory_id', $adjDetail->source_id)
-                                        ->where('product_id', $adjDetail->product_id)
-                                        ->where('unit_id', $adjDetail->unit_id)
-                                        ->update(['package_size' => $newPackageSize]);
-                                }
-                            }
-                        }
-
-                        Notification::make()
-                            ->title('Package Size Updated')
-                            ->success()
-                            ->body('Package size updated successfully.')
-                            ->send();
-                    })
-                     ->schema([
-                        TextInput::make('package_size')
-                            ->label('Package Size')
-                            ->required()
-                            ->numeric()->default(fn($record): float => $record->package_size ?? 0)
-                            ->minValue(0),
-                            TextInput::make('temp_qty')
-                            ->label('Temp qty')
-                            ->default(fn($record): float => $record->temp_qty ?? 0)->numeric()
-                    ]),
                 ActionGroup::make([
 
-                    Action::make('editQuantity')
-                      
-                    ->visible(fn()=>isHakimOrAdel())
-                        ->schema([
-                            TextInput::make('quantity')
-                                ->required()
-                                ->numeric()->default(fn($record): float => $record->quantity)
-                                // ->minValue(0.1)
-                                ,
-                        ])
-                        ->action(function ($record, $data) {
-                            $record->update([
-                                'quantity' => $data['quantity'],
-                            ]);
-
-                            Notification::make()
-                                ->title('Quantity Updated')
-                                ->success()
-                                ->body('Quantity updated successfully.')
-                                ->send();
-                        })
-                        ->label('Edit Quantity')
-                        ->color('warning')
-                        ->icon('heroicon-m-pencil-square'),
-
-
-                   
-
-                ])
+                ]),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('export_selected')
+                        ->label('Export to Excel')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->action(function (Collection $records) {
+                            $count = $records->count();
+
+                            if ($count === 0) {
+                                Notification::make()
+                                    ->title('No Records Selected')
+                                    ->warning()
+                                    ->send();
+
+                                return null;
+                            }
+
+                            if ($count > static::MAX_EXPORT_RECORDS) {
+                                Notification::make()
+                                    ->title('Cannot Export')
+                                    ->body(
+                                        __('You can only export up to :max records. You selected :count records.', [
+                                            'count' => number_format($count),
+                                            'max' => number_format(static::MAX_EXPORT_RECORDS),
+                                        ])
+                                    )
+                                    ->danger()
+                                    ->send();
+
+                                return null;
+                            }
+
+                            @ini_set('memory_limit', '512M');
+                            @set_time_limit(300);
+
+                            return Excel::download(
+                                new InventoryTransactionsExport($records),
+                                'inventory_transactions_'.now()->format('Y-m-d_H-i-s').'.xlsx'
+                            );
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                     ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),
@@ -467,9 +478,10 @@ class InventoryResource extends Resource
             ->unique()
             ->values();
 
-            if(isHakim()){
-                $manufacturingStoreIds[] = 1;
-            }
+        if (isHakim()) {
+            $manufacturingStoreIds[] = 1;
+        }
+
         return Store::active()
             ->whereIn('id', $manufacturingStoreIds)
             ->get(['id', 'name'])
@@ -481,9 +493,8 @@ class InventoryResource extends Resource
      * Creates MOVEMENT_IN inventory transactions for every active non-manufacturing
      * product that has at least one unit price, targeting the given store.
      *
-     * @param int $storeId    The destination store ID.
-     * @param int $quantity   The quantity to assign to each transaction.
-     * @return void
+     * @param  int  $storeId  The destination store ID.
+     * @param  int  $quantity  The quantity to assign to each transaction.
      */
     public static function createStockInForNonManufacturingProducts(int $storeId, int $quantity = 100): void
     {
@@ -498,7 +509,7 @@ class InventoryResource extends Resource
 
         DB::transaction(function () use ($products, $storeId, $quantity, &$createdCount) {
             foreach ($products as $product) {
-                /** @var \App\Models\UnitPrice|null $unitPrice */
+                /** @var UnitPrice|null $unitPrice */
                 $unitPrice = $product->unitPrices->first();
 
                 if (! $unitPrice) {
@@ -506,16 +517,16 @@ class InventoryResource extends Resource
                 }
 
                 InventoryTransaction::create([
-                    'product_id'       => $product->id,
-                    'movement_type'    => InventoryTransaction::MOVEMENT_IN,
-                    'quantity'         => $quantity,
-                    'unit_id'          => $unitPrice->unit_id,
-                    'package_size'     => $unitPrice->package_size ?? 1,
-                    'store_id'         => $storeId,
-                    'price'            => $unitPrice->price ?? 0,
-                    'movement_date'    => now(),
+                    'product_id' => $product->id,
+                    'movement_type' => InventoryTransaction::MOVEMENT_IN,
+                    'quantity' => $quantity,
+                    'unit_id' => $unitPrice->unit_id,
+                    'package_size' => $unitPrice->package_size ?? 1,
+                    'store_id' => $storeId,
+                    'price' => $unitPrice->price ?? 0,
+                    'movement_date' => now(),
                     'transaction_date' => now(),
-                    'notes'            => 'Initial stock-in – raw materials for manufacturing',
+                    'notes' => 'Initial stock-in – raw materials for manufacturing',
                 ]);
 
                 $createdCount++;
@@ -552,18 +563,22 @@ class InventoryResource extends Resource
         if (isSuperAdmin() || isFinanceManager() || isSystemManager()) {
             return true;
         }
+
         return false;
     }
 
     public static function getNavigationBadge(): ?string
     {
+        // return '';
         return static::getModel()::count();
     }
+
     public static function canForceDelete(Model $record): bool
     {
         if (isSuperAdmin() || isHakimOrAdel()) {
             return true;
         }
+
         return false;
     }
 
@@ -572,14 +587,19 @@ class InventoryResource extends Resource
         if (isSuperAdmin() || isHakimOrAdel()) {
             return true;
         }
+
         return false;
     }
+
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ])->with(['sourceTransaction']);
+            ])->with(['product:id,code,name',
+                'store:id,name',
+                'unit:id,name', 'sourceTransaction']);
+
         return $query;
     }
 }

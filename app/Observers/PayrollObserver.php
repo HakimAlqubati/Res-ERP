@@ -31,9 +31,10 @@ class PayrollObserver
             'employee_ids' => [$payroll->employee_id],
         ];
 
-        $summary = $this->checker->getDashboardSummary($filters);  
+        $summary = $this->checker->getDashboardSummary($filters); 
+        Log::info('summary_from_payroll_observer', $summary); 
         if ($summary['has_pending']) {
-            $message = "Cannot create payroll. Please approve or reject all pending employee applications for this period first.";
+            $message = "Cannot create payroll. Please approve or reject all pending employee requests for this period first.";
 
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'error' => $message
@@ -71,6 +72,9 @@ class PayrollObserver
             // 1. التراجع عن أقساط السلف المرتبطة بكشف الراتب هذا
             $this->revertInstallmentsToUnpaid($payroll);
 
+            // 1b. التراجع عن تسوية الـ Carry Forward (قبل حذف الحركات)
+            app(\App\Modules\HR\Payroll\Services\CarryForwardReverter::class)->revertForPayroll($payroll->id);
+
             // 2. حذف حركات الراتب (Transactions) المرتبطة بهذا الكشف
             $payroll->transactions()->delete();
         } catch (\Exception $e) {
@@ -84,7 +88,13 @@ class PayrollObserver
     public function forceDeleted(Payroll $payroll): void
     {
         try {
-            // حذف حركات الراتب نهائياً
+            // 1. التراجع عن أقساط السلف المرتبطة بكشف الراتب هذا
+            $this->revertInstallmentsToUnpaid($payroll);
+
+            // 1b. التراجع عن الـ Carry Forward للحركات الحيّة فقط (لتفادي العكس المزدوج)
+            app(\App\Modules\HR\Payroll\Services\CarryForwardReverter::class)->revertForPayroll($payroll->id);
+
+            // 2. حذف حركات الراتب نهائياً
             $payroll->transactions()->withTrashed()->forceDelete();
         } catch (\Exception $e) {
             Log::error('Payroll force deletion error: ' . $e->getMessage());

@@ -5,7 +5,9 @@ namespace App\Rules\HR\Payroll;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use App\Modules\HR\Payroll\Contracts\PayrollSimulatorInterface;
+use App\Models\AdvanceWage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Class AdvanceWageLimitRule
@@ -28,7 +30,35 @@ class AdvanceWageLimitRule implements ValidationRule
         protected ?int $employeeId,
         protected ?int $year,
         protected ?int $month,
+        protected ?int $ignoreAdvanceId = null,
     ) {}
+
+    /**
+     * One-liner façade for use in Observers or Services.
+     *
+     * @throws ValidationException
+     */
+    public static function check(AdvanceWage $advanceWage): void
+    {
+        $errors = [];
+
+        (new static(
+            employeeId: $advanceWage->employee_id ? (int) $advanceWage->employee_id : null,
+            year: $advanceWage->year ? (int) $advanceWage->year : null,
+            month: $advanceWage->month ? (int) $advanceWage->month : null,
+            ignoreAdvanceId: $advanceWage->id ? (int) $advanceWage->id : null,
+        ))->validate(
+            attribute: 'amount',
+            value: $advanceWage->amount,
+            fail: static function (string $message) use (&$errors): void {
+                $errors[] = $message;
+            },
+        );
+
+        if (! empty($errors)) {
+            throw ValidationException::withMessages(['amount' => $errors]);
+        }
+    }
 
     /**
      * Run the validation rule.
@@ -60,7 +90,11 @@ class AdvanceWageLimitRule implements ValidationRule
             
             // Calculate existing approved pending advance wages
             $employee = \App\Models\Employee::find($this->employeeId);
-            $existingAdvances = $employee ? $employee->approvedPendingAdvanceWagesTotal((int) $this->year, (int) $this->month) : 0;
+            $query = $employee ? $employee->approvedPendingAdvanceWagesByPeriod((int) $this->year, (int) $this->month) : null;
+            if ($query && $this->ignoreAdvanceId) {
+                $query->where('id', '!=', $this->ignoreAdvanceId);
+            }
+            $existingAdvances = $query ? (float) $query->sum('amount') : 0;
             
             // Available amount
             $availableAmount = max(0, $netSalary - $existingAdvances);

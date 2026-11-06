@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRCluster\Resources\EmployeeServiceTerminations\Tables;
 
+use App\Filament\Tables\Actions\RefreshAction;
 use App\Models\EmployeeServiceTermination;
 use App\Modules\HR\Employee\Services\EmployeeLifecycleService;
 use Carbon\Carbon;
@@ -29,11 +30,24 @@ class EmployeeServiceTerminationsTable
             ->columns([
                 TextColumn::make('employee.name')
                     ->label(__('lang.employee'))
+                    ->url(fn ($record) => \App\Filament\Resources\EmployeeResource::getUrl('view', ['record' => $record->employee_id]))
+                    ->openUrlInNewTab()
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('termination_date')
                     ->label(__('lang.termination_date'))
                     ->date()
+                    ->sortable(),
+             
+                TextColumn::make('termination_reason')
+                    ->label(__('lang.termination_reason'))
+                    ->limit(50)
+                    ->tooltip(fn($state)=>$state)
+                    ->sortable(),
+                       TextColumn::make('notes')
+                    ->label(__('lang.notes'))
+                    ->limit(50)
+                    ->tooltip(fn($state)=>$state)
                     ->sortable(),
                 TextColumn::make('status')
                     ->label(__('lang.status'))
@@ -123,6 +137,7 @@ class EmployeeServiceTerminationsTable
                         }
                     }),
             ])
+            ->headerActions([RefreshAction::make()])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),

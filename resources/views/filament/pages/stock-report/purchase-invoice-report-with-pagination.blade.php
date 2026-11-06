@@ -48,7 +48,7 @@
                 @endif
                 <th>{{ __('lang.supplier') }}</th>
                 <th> {{ __('lang.date') }} </th>
-                @if (!isStoreManager())
+                @if (isSuperAdmin() || isSystemManager() || isFinanceManager())
                     <th>{{ __('lang.unit_price') }}</th>
                     <th>{{ __('lang.total_amount') }}</th>
                 @endif
@@ -83,7 +83,7 @@
                     <td>
                         {{ $invoice_item->purchase_date }}
                     </td>
-                    @if (!isStoreManager())
+                    @if (isSuperAdmin() || isSystemManager() || isFinanceManager())
                         <td> {{ formatMoneyWithCurrency($unit_price) }} </td>
                         <td> {{ formatMoneyWithCurrency($sub_total) }} </td>
                     @endif
@@ -92,7 +92,7 @@
 
         </tbody>
 
-        @if (!isStoreManager())
+        @if (isSuperAdmin() || isSystemManager() || isFinanceManager())
             <tbody class="sticky-footer">
                 <tr>
                     <td colspan="{{ $show_invoice_no ? '8' : '7' }}"> {{ __('lang.total') }}

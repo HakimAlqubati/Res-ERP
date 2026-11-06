@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Services\UnitPriceFifoUpdater;
 use App\Services\ProductCostingService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -94,11 +95,11 @@ class PurchaseInvoiceDetail extends Model implements Auditable
                 'quantity' => $purchaseInvoiceDetail->quantity,
                 'package_size' => $purchaseInvoiceDetail->package_size,
                 'price' => $purchaseInvoiceDetail->price,
-                'movement_date' => $purchaseInvoiceDetail->purchaseInvoice->date ?? now(),
                 'unit_id' => $purchaseInvoiceDetail->unit_id,
                 'store_id' => $purchaseInvoiceDetail->purchaseInvoice?->store_id,
                 'notes' => $notes,
-                'transaction_date' => $purchaseInvoiceDetail->purchaseInvoice->date ?? now(),
+                'movement_date' => $purchaseInvoiceDetail->purchaseInvoice?->date ? Carbon::parse($purchaseInvoiceDetail->purchaseInvoice->date)->format('Y-m-d') . ' ' . now()->format('H:i:s') : now(),
+                'transaction_date' => $purchaseInvoiceDetail->purchaseInvoice?->date ? Carbon::parse($purchaseInvoiceDetail->purchaseInvoice->date)->format('Y-m-d') . ' ' . now()->format('H:i:s') : now(),
                 'transactionable_id' => $purchaseInvoiceDetail->purchase_invoice_id,
                 'transactionable_type' => PurchaseInvoice::class,
                 'waste_stock_percentage' => $purchaseInvoiceDetail->waste_stock_percentage,
@@ -112,5 +113,44 @@ class PurchaseInvoiceDetail extends Model implements Auditable
             ->where('unit_id', $this->unit_id)
             ->where('transactionable_id', $this->purchase_invoice_id)
             ->where('transactionable_type', PurchaseInvoice::class);
+    }
+
+    public function returnDetails()
+    {
+        return $this->hasMany(PurchaseReturnDetail::class, 'purchase_invoice_detail_id');
+    }
+
+    public function getReturnedQuantityAttribute(): float
+    {
+        return (float) $this->returnDetails()
+            ->whereHas('purchaseReturn', fn($q) => $q->where('status', PurchaseReturn::STATUS_APPROVED))
+            ->sum('quantity');
+    }
+
+    public function getRemainingReturnableBaseQuantity(?int $excludeReturnId = null): float
+    {
+        $invoicePackageSize = max(1.0, (float) ($this->package_size ?? 1.0));
+        $totalPurchasedBase = ((float) $this->quantity) * $invoicePackageSize;
+
+        $previouslyReturnedBase = (float) $this->returnDetails()
+            ->when($excludeReturnId, fn($q) => $q->where('purchase_return_id', '!=', $excludeReturnId))
+            ->whereHas('purchaseReturn', fn($q) => $q->where('status', PurchaseReturn::STATUS_APPROVED))
+            ->get()
+            ->sum(fn(PurchaseReturnDetail $d) => ((float) $d->quantity) * max(1.0, (float) ($d->package_size ?? 1.0)));
+
+        return max(0.0, $totalPurchasedBase - $previouslyReturnedBase);
+    }
+
+    public function getRemainingReturnableQuantityForReturn(?int $excludeReturnId = null, ?float $targetPackageSize = null): float
+    {
+        $remainingBase = $this->getRemainingReturnableBaseQuantity($excludeReturnId);
+        $pkgSize = max(1.0, (float) ($targetPackageSize ?? $this->package_size ?? 1.0));
+
+        return round($remainingBase / $pkgSize, 4);
+    }
+
+    public function getRemainingReturnableQuantityAttribute(): float
+    {
+        return $this->getRemainingReturnableQuantityForReturn();
     }
 }

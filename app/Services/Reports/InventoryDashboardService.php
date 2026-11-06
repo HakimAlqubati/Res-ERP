@@ -24,7 +24,7 @@ class InventoryDashboardService
         $startOfMonth = Carbon::now()->startOfMonth();
         // ✅ PROCUREMENT
         $grnsCount = GoodsReceivedNote::approved()
-            ->whereDate('created_at', '>=', $startOfMonth)
+            ->whereDate('grn_date', '>=', $startOfMonth)
             ->count();
 
         $invoicesQuery = PurchaseInvoice::query()

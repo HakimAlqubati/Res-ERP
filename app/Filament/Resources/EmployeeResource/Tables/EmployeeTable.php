@@ -9,11 +9,13 @@ use App\Models\Employee;
 use App\Models\EmployeeFileType;
 use App\Models\User;
 use App\Models\UserType;
+use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Support\Enums\FontWeight;
+use Filament\Tables\Actions\HeaderActionsPosition;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -175,6 +177,28 @@ class EmployeeTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
+                TextColumn::make('paymentMethod.name')
+                    ->label(__('lang.payment_method'))
+                    ->sortable()
+                    ->searchable()
+                    ->placeholder('-')
+                    ->description(fn (Employee $record): ?string => $record->payment_details['account_number'] ?? $record->bank_account_number ?? null)
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('bank_account_number')
+                    ->label(__('lang.bank_account_number'))
+                    ->sortable()
+                    ->searchable()
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('branch_logs_count')
+                    ->counts('branchLogs')
+                    ->label(__('lang.branch_logs_count'))
+                    ->numeric()
+                    ->sortable()->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('unrequired_documents_count')->label(__('lang.unrequired_docs'))->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->formatStateUsing(function ($state) {
@@ -215,6 +239,10 @@ class EmployeeTable
                     ->alignCenter(true)
                     ->sortable()
                     ->visible(fn () => isHakimOrAdel())
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('createdBy.name')
+                    ->label(__('lang.created_by'))
+                    ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->label(__('lang.created_at'))
@@ -259,6 +287,27 @@ class EmployeeTable
                     ->options(UserType::where('active', 1)->pluck('name', 'id')->toArray())
                     ->searchable()
                     ->multiple(),
+                SelectFilter::make('payment_method_id')
+                    ->label(__('lang.payment_method'))
+                    ->relationship('paymentMethod', 'name')
+                    ->searchable()
+                    ->multiple()
+                    ->preload(),
+                SelectFilter::make('has_payment_method')
+                    ->label(__('Payment Method Status'))
+                    ->options([
+                        'all' => __('lang.all'),
+                        'with' => app()->getLocale() === 'ar' ? 'مع وسيلة دفع' : 'With Payment Method',
+                        'without' => app()->getLocale() === 'ar' ? 'بدون وسيلة دفع' : 'Without Payment Method',
+                    ])
+                    ->default('all')
+                    ->query(function ($query, array $data) {
+                        if (($data['value'] ?? null) === 'with') {
+                            $query->whereNotNull('payment_method_id');
+                        } elseif (($data['value'] ?? null) === 'without') {
+                            $query->whereNull('payment_method_id');
+                        }
+                    }),
                 // SelectFilter::make('manager_id')
                 //     ->label(__('lang.manager'))
 
@@ -281,7 +330,7 @@ class EmployeeTable
 
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
-            ->headerActions(HeaderActions::actions())
+            ->headerActions(HeaderActions::actions(),HeaderActionsPosition::Bottom)
             ->recordActions([
                 RecordActions::actionGroup(),
 

@@ -16,7 +16,10 @@ class ListPurchaseInvoices extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()
+            ->label('New Supplier Invoice')
+            ->visible(fn()=>PurchaseInvoiceResource::canCreate())
+            ,
         ];
     }
     public function getTabs(): array

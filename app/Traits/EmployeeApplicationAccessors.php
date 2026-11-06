@@ -52,7 +52,7 @@ trait EmployeeApplicationAccessors
     public function getDetailAdvanceAmountAttribute()
     {
         if ($this->application_type_id == 3) {
-            return $this->advanceRequest->advance_amount;
+            return $this->advanceRequest?->advance_amount;
         }
         return null;
     }
@@ -76,7 +76,7 @@ trait EmployeeApplicationAccessors
     public function getDetailNumberOfMonthsOfDeductionAttribute()
     {
         if ($this->application_type_id == 3) {
-            return $this->advanceRequest->number_of_months_of_deduction;
+            return $this->advanceRequest?->number_of_months_of_deduction;
         }
         return null;
     }

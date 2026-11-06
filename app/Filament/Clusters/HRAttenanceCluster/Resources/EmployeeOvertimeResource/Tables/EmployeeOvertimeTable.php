@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeRes
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Columns\Summarizers\Summarizer;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
@@ -65,7 +66,7 @@ class EmployeeOvertimeTable
                 TextColumn::make('employee.name')
                     ->label('Employee')
                     ->sortable()
-                    ->wrap()
+                    // ->wrap()
                     ->searchable()->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('branch.name')
                     ->label('Branch')
@@ -94,12 +95,21 @@ class EmployeeOvertimeTable
 
                 TextColumn::make('hours')
                     ->label('Hours')
-                    ->sortable()->toggleable(isToggledHiddenByDefault: false)->alignCenter()
+                    ->sortable()->toggleable(isToggledHiddenByDefault: true)->alignCenter()
                     ->summarize(Sum::make()
                         ->label('')
                         ->query(function (\Illuminate\Database\Query\Builder $query) {
                             return $query->select('hours');
                         }))
+                    // ->icon(Heroicon::Clock)
+                    ->iconPosition(IconPosition::After),
+                TextColumn::make('hours_formatted')
+                    ->label('Hours.')
+                    ->toggleable(isToggledHiddenByDefault: false)->alignCenter()
+                    ->summarize(Summarizer::make()
+                        ->label('')
+                        ->using(fn (\Illuminate\Database\Query\Builder $query) => $query->sum('hours'))
+                        ->formatStateUsing(fn ($state) => EmployeeOvertime::formatHours($state)))
                     // ->icon(Heroicon::Clock)
                     ->iconPosition(IconPosition::After),
 

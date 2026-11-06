@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRSalaryCluster\Resources\EmployeeRewards\Tables;
 
+use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Models\EmployeeReward;
 use App\Models\User;
 use Filament\Actions\BulkActionGroup;
@@ -15,6 +16,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
+use Filament\Tables\Enums\FiltersLayout;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -22,9 +24,10 @@ class EmployeeRewardsTable
 {
     public static function configure(Table $table): Table
     {
-        return $table
+        return $table->striped()
             ->defaultSort('id', 'desc')
             ->columns([
+                SoftDeleteColumn::make(),
                 TextColumn::make('id')
                     ->label('ID')
                     ->sortable()
@@ -33,6 +36,10 @@ class EmployeeRewardsTable
                 TextColumn::make('employee.name')
                     ->label(__('lang.employee'))
                     ->searchable()
+                    ->sortable()->toggleable(),
+                TextColumn::make('branch.name')
+                    ->label(__('lang.branch'))
+                    ->toggleable()
                     ->sortable(),
 
                 TextColumn::make('rewardType.name')
@@ -50,12 +57,12 @@ class EmployeeRewardsTable
                     ->label('Month')
                     ->getStateUsing(function ($record) {
                         $months = [
-                            '01' => 'Jan', '02' => 'Feb', '03' => 'Mar', '04' => 'Apr',
-                            '05' => 'May', '06' => 'Jun', '07' => 'Jul', '08' => 'Aug',
-                            '09' => 'Sep', '10' => 'Oct', '11' => 'Nov', '12' => 'Dec'
+                            1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April',
+                            5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August',
+                            9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
                         ];
-                        $monthKey = str_pad((string) $record->month, 2, '0', STR_PAD_LEFT);
-                        return $months[$monthKey] ?? $record->month;
+                        $monthName = $months[(int)$record->month] ?? $record->month;
+                        return $record->year ? "{$monthName}-{$record->year}" : $monthName;
                     })
                     ->sortable()
                     ->alignCenter(),
@@ -94,10 +101,11 @@ class EmployeeRewardsTable
                         'rejected' => 'Rejected',
                     ]),
                 SelectFilter::make('employee_id')
-                    ->relationship('employee', 'name')
+                    ->relationship('employee', 'name')->label(__('lang.employee'))
                     ->searchable()
                     ->preload(),
-            ])
+                ],FiltersLayout::Modal)
+                ->filtersFormColumns(4)
             ->recordActions([
                 EditAction::make()
                     ->visible(fn($record) => $record->status === EmployeeReward::STATUS_PENDING),

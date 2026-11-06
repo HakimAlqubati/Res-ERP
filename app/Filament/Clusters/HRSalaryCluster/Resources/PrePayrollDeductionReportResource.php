@@ -54,10 +54,11 @@ class PrePayrollDeductionReportResource extends Resource
                             ->live()
                             ->afterStateUpdated(function (callable $set, string $state) {
                                 $set('employee_id', null);
-                                $set('branch_id', null);
+                                $set('branch_ids', []);
                             }),
 
-                        Select::make('branch_id')
+                        Select::make('branch_ids')
+                            ->multiple()
                             ->label(__('Branch'))
                             ->options(fn () => Branch::where('active', 1)
                                 ->forBranchManager('id')

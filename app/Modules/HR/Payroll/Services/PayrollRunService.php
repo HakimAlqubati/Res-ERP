@@ -35,36 +35,48 @@ class PayrollRunService implements PayrollRunnerInterface
     {
         [$periodStart, $periodEnd] = $this->computePeriod($input->year, $input->month);
 
-        $segments = $this->buildSegments($input->branchId, $input->year, $input->month, $periodStart, $periodEnd);
+        $employees = $this->eligibleEmployees($input->branchId, $input->year, $input->month, $periodStart, $periodEnd, $input->employeeIds);
 
-        // عدّ Segments لكل موظف لتحديد من لديه انتقال فرع
-        $segmentCountPerEmployee = $segments->countBy(fn($s) => $s['employee']->id)->all();
+        if ($employees->isEmpty()) {
+            return [
+                'success' => true,
+                'message' => 'No eligible employees found for this branch and payroll period.',
+                'meta'    => [
+                    'branch_id'    => $input->branchId,
+                    'year'         => $input->year,
+                    'month'        => $input->month,
+                    'period_start' => $periodStart->toDateString(),
+                    'period_end'   => $periodEnd->toDateString(),
+                ],
+                'totals' => ['base_salary' => 0.0, 'overtime_amount' => 0.0, 'total_allowances' => 0.0, 'total_deductions' => 0.0, 'gross_salary' => 0.0, 'net_salary' => 0.0, 'count' => 0],
+                'items'  => [],
+            ];
+        }
+
+        // استدعاء المحاكي للموظفين على كامل الفترة الشهرية ليتم احتساب وتوزيع الإجازات التلقائية بشكل موحد
+        $simulations = $this->simulator->simulateForEmployees(
+            $employees->pluck('id')->all(),
+            $input->year,
+            $input->month,
+            $input->branchId,
+            $periodStart,
+            $periodEnd,
+        );
 
         $items  = [];
         $totals = ['base_salary' => 0.0, 'overtime_amount' => 0.0, 'total_allowances' => 0.0, 'total_deductions' => 0.0, 'gross_salary' => 0.0, 'net_salary' => 0.0, 'count' => 0];
 
-        foreach ($segments as ['employee' => $employee, 'log' => $log]) {
-            $isMultiSegment = ($segmentCountPerEmployee[$employee->id] ?? 1) > 1;
-
-            // استدعاء المحاكي مباشرة بالفترة الدقيقة للفترة — لا إعادة بناء للـ Segments
-            $simulation = $this->simulator->simulateForEmployees(
-                [$employee->id], $input->year, $input->month,
-                $log->branch_id, $log->start, $log->end,
-                $isMultiSegment,
-            )[0] ?? null;
-
-            if (!$simulation || !$simulation['success']) {
-                continue; // صفوف الفشل تُعالج داخل processSegments في المحاكي
+        foreach ($simulations as $calc) {
+            if (!($calc['success'] ?? false)) {
+                continue;
             }
 
-            $calc = $simulation; // الـ shape متوافق مباشرة
-
             $row = [
-                'employee_id'       => $employee->id,
-                'employee_name'     => $employee->name,
-                'branch_id'         => $log->branch_id,
-                'period_start'      => $log->start->toDateString(),
-                'period_end'        => $log->end->toDateString(),
+                'employee_id'       => $calc['employee_id'],
+                'employee_name'     => $calc['name'],
+                'branch_id'         => $calc['branch_id'] ?? $calc['data']['branch_id'] ?? $input->branchId,
+                'period_start'      => $calc['data']['period_start']     ?? $periodStart->toDateString(),
+                'period_end'        => $calc['data']['period_end']       ?? $periodEnd->toDateString(),
                 'base_salary'       => $calc['data']['base_salary']      ?? 0,
                 'overtime_amount'   => $calc['data']['overtime_amount']  ?? 0,
                 'total_allowances'  => $calc['data']['allowance_total']  ?? 0,
@@ -106,9 +118,9 @@ class PayrollRunService implements PayrollRunnerInterface
     {
         [$periodStart, $periodEnd] = $this->computePeriod($input->year, $input->month);
 
-        $segments = $this->buildSegments($input->branchId, $input->year, $input->month, $periodStart, $periodEnd, $input->employeeIds);
+        $employees = $this->eligibleEmployees($input->branchId, $input->year, $input->month, $periodStart, $periodEnd, $input->employeeIds);
 
-        if ($segments->isEmpty()) {
+        if ($employees->isEmpty()) {
             return [
                 'success' => false,
                 'message' => 'No eligible employees found for this branch and payroll period.',
@@ -123,24 +135,37 @@ class PayrollRunService implements PayrollRunnerInterface
         $updated = 0;
         $rows    = [];
 
-        DB::transaction(function () use ($segments, $input, $run, &$created, &$updated, &$rows) {
-            // عدّ Segments لكل موظف لتحديد من لديه انتقال فرع
-            $segmentCountPerEmployee = $segments->countBy(fn($s) => $s['employee']->id)->all();
+        // استدعاء المحاكي للموظفين على كامل الفترة الشهرية لاحتساب وتوزيع الإجازات التلقائية بشكل موحد
+        $simulations = $this->simulator->simulateForEmployees(
+            $employees->pluck('id')->all(),
+            $input->year,
+            $input->month,
+            $input->branchId,
+            $periodStart,
+            $periodEnd,
+        );
 
-            foreach ($segments as ['employee' => $employee, 'log' => $log]) {
-                $isMultiSegment = ($segmentCountPerEmployee[$employee->id] ?? 1) > 1;
+        $employeeMap = $employees->keyBy('id');
 
-                // استدعاء المحاكي مباشرة بالفترة الدقيقة — لا إعادة بناء للـ Segments
-                $simulation = $this->simulator->simulateForEmployees(
-                    [$employee->id], $input->year, $input->month,
-                    $log->branch_id, $log->start, $log->end,
-                    $isMultiSegment,
-                )[0] ?? null;
-
-                if (!$simulation || !$simulation['success']) {
-                    $rows[] = ['employee_id' => $employee->id, 'status' => 'failed', 'message' => $simulation['message'] ?? 'Unknown error'];
+        DB::transaction(function () use ($simulations, $employeeMap, $input, $run, &$created, &$updated, &$rows) {
+            foreach ($simulations as $simulation) {
+                if (!$simulation || !($simulation['success'] ?? false)) {
+                    $rows[] = [
+                        'employee_id' => $simulation['employee_id'] ?? null,
+                        'status'      => 'failed',
+                        'message'     => $simulation['message'] ?? 'Unknown error',
+                    ];
                     continue;
                 }
+
+                $employeeId = $simulation['employee_id'];
+                $employee   = $employeeMap->get($employeeId) ?? Employee::find($employeeId);
+
+                $log = (object) [
+                    'branch_id' => (int) ($simulation['branch_id'] ?? $simulation['data']['branch_id'] ?? $input->branchId),
+                    'start'     => Carbon::parse($simulation['data']['period_start']),
+                    'end'       => Carbon::parse($simulation['data']['period_end']),
+                ];
 
                 // تحويل شكل نتيجة المحاكي إلى الشكل المتوقع من fillPayroll/generateSalaryTransactions
                 $calc = [

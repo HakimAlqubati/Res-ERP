@@ -8,6 +8,7 @@ use Filament\Actions\BulkAction;
 use Filament\Schemas\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use App\Contracts\InventoryPriceResolver;
 use App\Models\StockInventory;
 use App\Models\InventoryTransaction;
 use App\Services\FifoMethodService;
@@ -18,6 +19,8 @@ use App\Models\Product;
 use App\Models\StockAdjustment;
 use App\Models\StockAdjustmentDetail;
 use App\Models\StockAdjustmentReason;
+use App\Models\StockInventoryDetail;
+use App\Models\UnitPrice;
 use App\Models\StockIssueOrder;
 use App\Models\StockIssueOrderDetail;
 use App\Models\StockSupplyOrder;
@@ -38,6 +41,7 @@ use Filament\Tables;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -50,6 +54,21 @@ class DetailsRelationManager extends RelationManager
     protected static string $relationship = 'details';
     protected static ?string $title = '';
 
+    /**
+     * Cached resolved prices — loaded once per request, no N+1.
+     */
+    protected ?Collection $resolvedPrices = null;
+
+    protected function getResolvedPrices(): Collection
+    {
+        if ($this->resolvedPrices === null) {
+            $resolver = app(InventoryPriceResolver::class);
+            $this->resolvedPrices = $resolver->resolveForInventory($this->ownerRecord);
+        }
+
+        return $this->resolvedPrices;
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema
@@ -59,6 +78,8 @@ class DetailsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table->striped()
+        ->paginated([10, 25, 50, 60])
+        ->maxSelectableRecords(60)
             ->columns([
                 TextColumn::make('product.name')->searchable()->toggleable()
                     ->getStateUsing(function ($record) {
@@ -76,18 +97,22 @@ class DetailsRelationManager extends RelationManager
                     ->label('Total Price')
                     ->alignCenter(true)->toggleable()
                     ->getStateUsing(function ($record) {
-                        $unitPrice = getUnitPrice($record->product_id, $record->unit_id) ?? 0;
-                        $physicalQty = $record->physical_quantity ?? 0;
-                        return (float)($physicalQty * $unitPrice);
+                        $key = $record->product_id . '_' . $record->unit_id;
+                        $priceData = $this->getResolvedPrices()->get($key);
+                        $unitPrice = $priceData ? (float) $priceData->unit_price : 0;
+                        return (float)(($record->physical_quantity ?? 0) * $unitPrice);
                     })
-                    ->formatStateUsing(fn($state)=> formatMoneyWithCurrency($state))
+                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->summarize(
                         \Filament\Tables\Columns\Summarizers\Summarizer::make()
                             ->using(function (\Illuminate\Database\Query\Builder $query) {
+                                $prices = $this->getResolvedPrices();
                                 $records = $query->get();
                                 $sum = 0;
                                 foreach ($records as $record) {
-                                    $unitPrice = getUnitPrice($record->product_id, $record->unit_id) ?? 0;
+                                    $key = $record->product_id . '_' . $record->unit_id;
+                                    $priceData = $prices->get($key);
+                                    $unitPrice = $priceData ? (float) $priceData->unit_price : 0;
                                     $sum += ($record->physical_quantity ?? 0) * $unitPrice;
                                 }
                                 return $sum;
@@ -97,36 +122,46 @@ class DetailsRelationManager extends RelationManager
                 TextColumn::make('difference')->alignCenter(true)->toggleable()->sortable(),
                 IconColumn::make('is_adjustmented')->boolean()->alignCenter(true)->label(__('stock.is_adjustmented'))
                     ->toggleable()->sortable(),
-                TextColumn::make('remaining_quantity')
-                ->hidden()
-                ->label('Real Qty in Stock')
-                    ->alignCenter(true)
-                    ->getStateUsing(function ($record) {
-                        $remQty = MultiProductsInventoryService::quickReport($this->ownerRecord->store_id, $record->product_id, $record->unit_id)[0][0]['remaining_qty'] ?? 0;
-                        return $remQty;
-                        $product = $record->product;
-                        $storeId = defaultManufacturingStore($product)->id ?? null;
-                        if (!$storeId) {
-                            return 0;
-                        }
-                        $service = new  MultiProductsInventoryService(
-                            null,
-                            $record->product_id,
-                            $record->unit_id,
-                            $storeId
-                        );
-                        $remainingQty = $service->getInventoryForProduct($record->product_id)[0]['remaining_qty'] ?? 0;
-
-                        return $remainingQty;
-                    }),
+              
             ])
             ->filters([
-                //
-            ])
+                Tables\Filters\SelectFilter::make('product_id')
+                    ->label(__('lang.product'))
+                    ->searchable()
+                    ->options(function () {
+                        return Product::where('active', 1)
+                            ->limit(10)
+                            ->get()
+                            ->mapWithKeys(fn($product) => [
+                                $product->id => "{$product->code} - {$product->name}"
+                            ]);
+                    })
+                    ->getSearchResultsUsing(function (string $search): array {
+                        return Product::query()
+                            ->where(function ($query) use ($search) {
+                                $query->where('name', 'like', "%{$search}%")
+                                    ->orWhere('code', 'like', "%{$search}%");
+                            })
+                            ->limit(10)
+                            ->get()
+                            ->mapWithKeys(fn($product) => [
+                                $product->id => "{$product->code} - {$product->name}"
+                            ])
+                            ->toArray();
+                    })
+                    ->getOptionLabelUsing(function ($value): ?string {
+                        $product = Product::find($value);
+                        return $product ? "{$product->code} - {$product->name}" : null;
+                    })
+                    ->multiple(),
+                ],FiltersLayout::Modal)
+                ->filtersFormColumns(1)
+            
             ->headerActions([
                 // Tables\Actions\CreateAction::make(),
             ])
             ->recordActions([
+                $this->correctiveStockAdjustmentAction(),
                 Action::make('edit_package_size')
                     ->label('Edit PKS')
                     ->icon('heroicon-o-pencil-square')
@@ -200,8 +235,8 @@ class DetailsRelationManager extends RelationManager
                 'unit_id'              => $alloc['target_unit_id'],
                 'package_size'         => $alloc['target_unit_package_size'],
                 'price'                => $alloc['price_based_on_unit'],
-                'movement_date'        => $order->order_date ?? now(),
-                'transaction_date'     => $order->order_date ?? now(),
+                'movement_date'        =>  now(),
+                'transaction_date'     =>  now(),
                 'store_id'             => $alloc['store_id'],
                 'notes' => $alloc['notes'],
 
@@ -302,6 +337,159 @@ class DetailsRelationManager extends RelationManager
             //throw $th;
             DB::rollBack();
             showWarningNotifiMessage('Faild', $th->getMessage());
+        }
+    }
+
+    public function correctiveStockAdjustmentAction(): Action
+    {
+        return Action::make('corrective_stock_adjustment')
+            ->label('Corrective Adjustment')
+            ->icon('heroicon-o-arrow-path')
+            ->color('warning')
+            ->button()
+            ->modalHeading('Corrective Stock Adjustment')
+            ->modalDescription('Create a corrective stock adjustment (IN or OUT) linked to this inventory.')
+            ->modalWidth(Width::Large)
+            ->schema([
+                TextInput::make('product_info')
+                    ->label('Product')
+                    ->default(fn ($record) => $record->product ? "{$record->product->code} - {$record->product->name}" : 'N/A')
+                    ->disabled()
+                    ->dehydrated(false),
+                Select::make('unit_id')
+                    ->label('Unit')
+                    ->options(fn ($record) => $record->product?->units()->pluck('units.name', 'units.id')->toArray() ?? [])
+                    ->default(fn ($record) => $record->unit_id)
+                    ->required(),
+                Select::make('type')
+                    ->label('Movement Type')
+                    ->options([
+                        'in'  => 'In (Increase / Add to Stock)',
+                        'out' => 'Out (Decrease / Deduct from Stock)',
+                    ])
+                    ->default('in')
+                    ->required(),
+                TextInput::make('quantity')
+                    ->label('Quantity')
+                    ->numeric()
+                    ->minValue(0.0001)
+                    ->required(),
+                Select::make('reason_id')
+                    ->label('Reason')
+                    ->default(StockAdjustmentReason::getFirstId())
+                    ->options(StockAdjustmentReason::active()->pluck('name', 'id'))
+                    ->searchable()
+                    ->required(),
+                Textarea::make('notes')
+                    ->label('Notes')
+                    ->default(fn ($record) => "Corrective stock adjustment for product ({$record->product?->name}) linked to stock inventory #{$record->stock_inventory_id}")
+                    ->required(),
+            ])
+            ->action(function (StockInventoryDetail $record, array $data): void {
+                static::createLinkedStockAdjustment($record, $data);
+            })
+            ->visible(fn()=>isHakimOrAdelOrMaha())
+            ;
+    }
+
+    public static function createLinkedStockAdjustment(StockInventoryDetail $detail, array $data): void
+    {
+        $detail->loadMissing(['inventory', 'product', 'unit']);
+
+        $storeId = $detail->inventory?->store_id;
+        if (!$storeId) {
+            throw new \Exception('Store not found for this inventory.');
+        }
+
+        $productId = (int) $detail->product_id;
+        $unitId = (int) ($data['unit_id'] ?? $detail->unit_id);
+        $quantity = abs((float) ($data['quantity'] ?? 0));
+        $type = ($data['type'] ?? 'in') === 'out' ? 'out' : 'in';
+        $reasonId = !empty($data['reason_id']) ? (int) $data['reason_id'] : StockAdjustmentReason::getFirstId();
+        $notes = !empty($data['notes'])
+            ? $data['notes']
+            : "Corrective stock adjustment for product ({$detail->product?->name}) linked to stock inventory #{$detail->stock_inventory_id}";
+
+        if ($quantity <= 0) {
+            throw new \Exception('Quantity must be greater than zero.');
+        }
+
+        $packageSize = UnitPrice::getPackageSize($productId, $unitId);
+        if (!$packageSize || $packageSize <= 0) {
+            throw new \Exception('Invalid or missing package size for the selected unit.');
+        }
+
+        $adjustmentType = $type === 'in'
+            ? StockAdjustment::ADJUSTMENT_TYPE_INCREASE
+            : StockAdjustment::ADJUSTMENT_TYPE_DECREASE;
+
+        DB::beginTransaction();
+        try {
+            // 1. Create StockAdjustmentDetail linked to this inventory
+            $stockAdjustment = StockAdjustmentDetail::create([
+                'product_id'      => $productId,
+                'unit_id'         => $unitId,
+                'quantity'        => $quantity,
+                'package_size'    => $packageSize,
+                'notes'           => $notes,
+                'store_id'        => $storeId,
+                'reason_id'       => $reasonId,
+                'adjustment_type' => $adjustmentType,
+                'created_by'      => auth()->id(),
+                'adjustment_date' => now(),
+                'source_id'       => $detail->stock_inventory_id,
+                'source_type'     => StockInventory::class,
+            ]);
+
+            // 2. Create InventoryTransaction based on type (IN or OUT via FIFO)
+            if ($type === 'in') {
+                InventoryTransaction::create([
+                    'product_id'           => $productId,
+                    'movement_type'        => InventoryTransaction::MOVEMENT_IN,
+                    'quantity'             => $quantity,
+                    'unit_id'              => $unitId,
+                    'package_size'         => $packageSize,
+                    'price'                => getUnitPrice($productId, $unitId),
+                    'store_id'             => $storeId,
+                    'movement_date'        => now(),
+                    'transaction_date'     => now(),
+                    'notes'                => $notes,
+                    'transactionable_id'   => $stockAdjustment->id,
+                    'transactionable_type' => StockAdjustmentDetail::class,
+                ]);
+            } else {
+                $fifoService = new FifoMethodService($stockAdjustment);
+                $allocations = $fifoService->getAllocateFifo(
+                    $productId,
+                    $unitId,
+                    $quantity,
+                    $storeId
+                );
+
+                self::moveFromInventory($allocations, $stockAdjustment);
+            }
+
+            // Ensure detail is marked as adjusted
+            if (!$detail->is_adjustmented) {
+                $detail->update(['is_adjustmented' => true]);
+            }
+
+            DB::commit();
+
+            Notification::make()
+                ->title('Corrective Adjustment Created')
+                ->body('Corrective adjustment and inventory transaction have been recorded successfully.')
+                ->success()
+                ->send();
+
+        } catch (Throwable $th) {
+            DB::rollBack();
+            Notification::make()
+                ->title('Corrective Adjustment Failed')
+                ->body($th->getMessage())
+                ->danger()
+                ->send();
+            throw $th;
         }
     }
 

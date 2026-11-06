@@ -45,8 +45,13 @@ class Branch extends Model implements HasMedia, Auditable
         'type',
         'start_date',
         'end_date',
+        'municipality_license_issue_date',
+        'municipality_license_end_date',
+        'municipality_license_notes',
         'more_description',
         'is_hidden',
+        'transfer_markup_percentage',
+        'has_custom_category_markup',
     ];
 
     protected $auditInclude = [
@@ -60,15 +65,24 @@ class Branch extends Model implements HasMedia, Auditable
         'type',
         'start_date',
         'end_date',
+        'municipality_license_issue_date',
+        'municipality_license_end_date',
+        'municipality_license_notes',
         'more_description',
         'is_hidden',
+        'transfer_markup_percentage',
+        'has_custom_category_markup',
     ];
 
     protected $casts = [
         'active'     => 'boolean',
         'is_hidden'  => 'boolean',
+        'transfer_markup_percentage' => 'float',
+        'has_custom_category_markup' => 'boolean',
         'start_date' => 'date:Y-m-d',
         'end_date'   => 'date:Y-m-d',
+        'municipality_license_issue_date' => 'date:Y-m-d',
+        'municipality_license_end_date'   => 'date:Y-m-d',
 
     ];
 
@@ -78,11 +92,37 @@ class Branch extends Model implements HasMedia, Auditable
         'reseller_balance',
         'total_paid',
         'total_sales',
-        'total_orders_amount',
+        // 'total_orders_amount',
         'is_kitchen',
         'status_label',
         'is_expired',
+        'chef_assistants_names',
+        'chef_assistants_emails',
     ];
+
+    public function resolveTransferMarkupForCategory(?int $categoryId): float
+    {
+        $defaultMarkup = (float) ($this->transfer_markup_percentage ?? 0);
+
+        if (! $this->has_custom_category_markup || ! $categoryId) {
+            return $defaultMarkup;
+        }
+
+        $categoryMarkup = $this->relationLoaded('categoryMarkups')
+            ? $this->categoryMarkups->firstWhere('category_id', $categoryId)
+            : $this->categoryMarkups()->where('category_id', $categoryId)->first();
+
+        if ($categoryMarkup && ! is_null($categoryMarkup->transfer_markup_percentage)) {
+            return (float) $categoryMarkup->transfer_markup_percentage;
+        }
+
+        return $defaultMarkup;
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('municipality_license')->singleFile();
+    }
 
     public function toArray(): array
     {

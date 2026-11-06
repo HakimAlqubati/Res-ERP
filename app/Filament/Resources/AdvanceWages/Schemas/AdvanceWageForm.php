@@ -4,7 +4,9 @@ namespace App\Filament\Resources\AdvanceWages\Schemas;
 
 use App\Models\AdvanceWage;
 use App\Rules\HR\Payroll\AdvanceWageLimitRule;
+use App\Rules\HR\Payroll\PayrollLockRule;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
@@ -35,12 +37,32 @@ class AdvanceWageForm
                         ->required()
                         ->live(onBlur: true)
                         ->rules([
-                            fn(Get $get) => new AdvanceWageLimitRule(
+                            fn(Get $get, $record) => new AdvanceWageLimitRule(
                                 $get('employee_id'),
-                                (int) now()->setDateFrom(\Carbon\Carbon::parse($get('date') ?: now()))->year,
-                                (int) now()->setDateFrom(\Carbon\Carbon::parse($get('date') ?: now()))->month,
-                            )
+                                (int) \Carbon\Carbon::parse($get('wage_month') ?: now())->year,
+                                (int) \Carbon\Carbon::parse($get('wage_month') ?: now())->month,
+                                $record?->id,
+                            ),
+                            fn(Get $get) => new PayrollLockRule(
+                                $get('employee_id'),
+                                (int) \Carbon\Carbon::parse($get('wage_month') ?: now())->year,
+                                (int) \Carbon\Carbon::parse($get('wage_month') ?: now())->month,
+                            ),
                         ])
+                        ->columnSpan(1),
+
+                    TextInput::make('wage_month')
+                        // ->label(__('lang.month'))
+                        ->type('month')
+                        ->default(now()->format('Y-m'))
+                        ->required()
+                        ->live()
+                        ->afterStateHydrated(function ($component, $record) {
+                            if ($record && $record->year && $record->month) {
+                                $component->state(sprintf('%04d-%02d', $record->year, $record->month));
+                            }
+                        })
+                        ->dehydrated(false)
                         ->columnSpan(1),
 
                     DatePicker::make('date')
@@ -48,9 +70,22 @@ class AdvanceWageForm
                         ->default(now()->toDateString())
                         ->required()
                         ->live()
+                        ->rules([
+                            fn(Get $get) => new PayrollLockRule(
+                                $get('employee_id'),
+                                (int) \Carbon\Carbon::parse($get('wage_month') ?: now())->year,
+                                (int) \Carbon\Carbon::parse($get('wage_month') ?: now())->month,
+                            ),
+                        ])
                         ->native(false)
                         ->displayFormat('Y-m-d')
-                        ->columnSpan(2),
+                        ->columnSpan(1),
+
+                    Hidden::make('year')
+                        ->dehydrateStateUsing(fn (Get $get) => $get('wage_month') ? (int) \Carbon\Carbon::parse($get('wage_month'))->year : null),
+
+                    Hidden::make('month')
+                        ->dehydrateStateUsing(fn (Get $get) => $get('wage_month') ? (int) \Carbon\Carbon::parse($get('wage_month'))->month : null),
 
                 ])->columnSpanFull(),
 

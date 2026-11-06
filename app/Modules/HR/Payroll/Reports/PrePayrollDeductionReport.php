@@ -41,16 +41,19 @@ class PrePayrollDeductionReport
             employeeIds: $employeeIds,
             year:        $filters->year,
             month:       $filters->month,
-            branchId:    $filters->branchId,
+            branchId:    count($filters->branchIds ?? []) === 1 ? $filters->branchIds[0] : null,
         );
 
         $monthKey  = sprintf('%04d-%02d', $filters->year, $filters->month);
         $monthName = Carbon::createFromFormat('Y-m', $monthKey)->translatedFormat('F Y');
 
+        $employeesMap = Employee::with('branch')->whereIn('id', $employeeIds)->get()->keyBy('id');
+
         $employeesDeductions = $this->buildEmployeesDeductions(
             $simulationResults,
             $monthKey,
             $monthName,
+            $employeesMap
         );
 
         if (empty($employeesDeductions)) {
@@ -64,7 +67,7 @@ class PrePayrollDeductionReport
             'from_date'           => Carbon::create($filters->year, $filters->month, 1)->format('Y-m-d'),
             'to_date'             => Carbon::create($filters->year, $filters->month, 1)->endOfMonth()->format('Y-m-d'),
             'employee_id'         => $filters->employeeId,
-            'branch_id'           => $filters->branchId,
+            'branch_ids'          => $filters->branchIds,
             'monthly_deductions'  => $this->buildMonthlyAggregate($employeesDeductions, $monthKey, $monthName),
             'employees_deductions' => $employeesDeductions,
             'grand_total'         => $grandTotal,
@@ -88,8 +91,8 @@ class PrePayrollDeductionReport
             return [$filters->employeeId];
         }
 
-        if ($filters->branchId) {
-            $query->where('branch_id', $filters->branchId);
+        if (!empty($filters->branchIds)) {
+            $query->whereIn('branch_id', $filters->branchIds);
         }
 
         return $query->pluck('id')->all();
@@ -104,6 +107,7 @@ class PrePayrollDeductionReport
         array  $simulationResults,
         string $monthKey,
         string $monthName,
+        Collection $employeesMap
     ): array {
         $result = [];
 
@@ -122,9 +126,12 @@ class PrePayrollDeductionReport
 
             $total = round(array_sum(array_column($deductions, 'deduction_amount')), 2);
 
+            $emp = $employeesMap[$sim['employee_id']] ?? null;
+
             $result[] = [
                 'employee_id'       => $sim['employee_id'],
                 'employee_name'     => $sim['name'],
+                'branch_name'       => $emp?->branch?->name ?? __('Unknown Branch'),
                 'monthly_deductions' => [
                     [
                         'month'           => $monthKey,
@@ -223,7 +230,7 @@ class PrePayrollDeductionReport
             'from_date'            => Carbon::create($filters->year, $filters->month, 1)->format('Y-m-d'),
             'to_date'              => Carbon::create($filters->year, $filters->month, 1)->endOfMonth()->format('Y-m-d'),
             'employee_id'          => $filters->employeeId,
-            'branch_id'            => $filters->branchId,
+            'branch_ids'           => $filters->branchIds,
             'monthly_deductions'   => [],
             'employees_deductions' => [],
             'grand_total'          => 0.0,
@@ -239,8 +246,12 @@ class PrePayrollDeductionReport
             return Employee::find($filters->employeeId)?->name ?? 'Unknown Employee';
         }
 
-        if ($filters->branchId) {
-            return Branch::find($filters->branchId)?->name ?? 'Unknown Branch';
+        if (!empty($filters->branchIds)) {
+            $branches = Branch::whereIn('id', $filters->branchIds)->pluck('name');
+            if ($branches->count() > 2) {
+                return __('Multiple Branches');
+            }
+            return $branches->isNotEmpty() ? $branches->join(' & ') . ' - ' . __('Branch') : 'Unknown Branch';
         }
 
         return __('All Employees');

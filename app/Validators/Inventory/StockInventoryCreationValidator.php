@@ -31,7 +31,7 @@ class StockInventoryCreationValidator
             return;
         }
 
-        self::checkDefaultStoreOrders($store);
+        // self::checkDefaultStoreOrders($store);
         self::checkBranchProcessingOrders($store);
     }
 

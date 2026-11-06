@@ -14,4 +14,9 @@ class CreateProduct extends CreateRecord
         $data['type'] = Product::TYPE_FINISHED_POS;
         return $data;
     }
+
+    protected function afterCreate(): void
+    {
+        \App\Filament\Resources\ProductResource\Support\ProductResourceActions::recalculateManufacturingProductUnitPrices($this->record);
+    }
 }

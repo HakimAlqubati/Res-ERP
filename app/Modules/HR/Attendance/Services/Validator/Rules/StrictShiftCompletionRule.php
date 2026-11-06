@@ -56,10 +56,10 @@ class StrictShiftCompletionRule implements ValidationRuleInterface
                 $checkOutTime->addDay();
             }
         }
-
+        
         // التحقق: هل الخروج تم بعد انتهاء الوردية؟
         // أو هل الوقت المطلوب يسبق وقت الخروج المسجل (محاولة تسجيل في فترة مغلقة)
-        if ($checkOutTime->gte($bounds['end']) || $context->requestTime->lt($checkOutTime)) {
+        if ($checkOutTime->gte($bounds['windowEnd']) || $context->requestTime->lt($checkOutTime)) {
             $shiftName = $checkInRecord->period->name ?? 'Shift';
             throw new AttendanceCompletedException(
                 $context->date,

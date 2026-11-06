@@ -110,4 +110,9 @@ class StockSupplyOrder extends Model implements Auditable
     {
         return $this->cancelStockSupplyOrder($order, $reason);
     }
+
+    public function scopeUncancelled($query)
+    {
+        return $query->where('cancelled', false);
+    }
 }

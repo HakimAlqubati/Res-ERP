@@ -22,18 +22,22 @@ class OvertimeService
         try {
             $employees = $data['employees'];
             foreach ($employees as $index => $employee) {
+                $hours = $employee['hours'];
+                if (is_string($hours) && strpos($hours, ':') !== false) {
+                    [$h, $m] = explode(':', $hours);
+                    $hours = round((float)$h + ((float)$m / 60), 2);
+                }
                 EmployeeOvertime::create([
                     'employee_id' => $employee['employee_id'],
                     'date'        => $data['date'],
                     'start_time'  => $employee['start_time'],
                     'end_time'    => $employee['end_time'],
-                    'hours'       => $employee['hours'],
+                    'hours'       => $hours,
                     'notes'       => $employee['notes'],
                     'branch_id'   => $data['branch_id'],
                     'created_by'  => auth()->id(),
                     'type'        => EmployeeOvertime::TYPE_BASED_ON_DAY,
                     'status'      => EmployeeOvertime::STATUS_PENDING,
-
                 ]);
             }
             DB::commit();
@@ -384,7 +388,9 @@ class OvertimeService
             $query->where('branch_id', $filters['branch_id']);
         }
 
-        return $query->latest('id')->paginate($filters['per_page'] ?? 15);
+        return $query->latest('id')->paginate($filters['per_page'] ?? 15)
+        ->through(fn ($item) => $item->append('hours_formatted'));
+        
     }
 
     /**
@@ -466,7 +472,7 @@ class OvertimeService
                             'name'        => $employee->name,
                             'start_time'  => $result['overtime_start_time'],
                             'end_time'    => $result['overtime_end_time'],
-                            'hours'       => $result['overtime_hours'],
+                            'hours'       => $this->formatOvertimeHours($result),
                             'notes'       => null,
                         ];
                     }
@@ -532,7 +538,7 @@ class OvertimeService
                         'name'        => $employee->name,
                         'start_time'  => $result['overtime_start_time'],
                         'end_time'    => $result['overtime_end_time'],
-                        'hours'       => $result['overtime_hours'],
+                        'hours'       => $this->formatOvertimeHours($result),
                         'notes'       => null,
                     ];
                 }
@@ -544,5 +550,24 @@ class OvertimeService
         }
 
         return $groupedOvertime;
+    }
+
+    /**
+     * Format overtime hours to H:i format (e.g. 1:27)
+     *
+     * @param array $result
+     * @return string
+     */
+    private function formatOvertimeHours(array $result): string
+    {
+        if (isset($result['supposed_duration_minutes'])) {
+            $totalMinutes = (int) $result['supposed_duration_minutes'];
+            $hours = intdiv($totalMinutes, 60);
+            $minutes = $totalMinutes % 60;
+            return sprintf('%d:%02d', $hours, $minutes);
+        }
+
+        $rawHours = (string) ($result['overtime_hours'] ?? 0);
+        return str_replace('.', ':', $rawHours);
     }
 }

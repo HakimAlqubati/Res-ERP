@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\LeaveRequest;
 use App\Rules\HR\Applications\MaxLeavePerMonthRule;
+use App\Rules\HR\Applications\NoLeaveOverlapRule;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 
@@ -59,35 +60,7 @@ class LeaveRequestObserver
      */
     private function validateNoOverlap(LeaveRequest $leaveRequest): void
     {
-        $startDate = $leaveRequest->start_date;
-        $endDate   = $leaveRequest->end_date;
-
-        if (! $startDate || ! $endDate) {
-            return;
-        }
-
-        $start = Carbon::parse($startDate);
-        $end   = Carbon::parse($endDate);
-
-        $hasOverlap = LeaveRequest::where('employee_id', $leaveRequest->employee_id)
-            ->where('start_date', '<=', $end->toDateString())
-            ->where('end_date', '>=', $start->toDateString())
-            ->when(
-                $leaveRequest->application_id,
-                fn ($q) => $q->where('application_id', '!=', $leaveRequest->application_id)
-            )
-            ->whereDoesntHave('application', function ($query) {
-                $query->where('status', \App\Models\EmployeeApplicationV2::STATUS_REJECTED);
-            })
-            ->exists();
-
-        if ($hasOverlap) {
-            throw ValidationException::withMessages([
-                'start_date' => __('notifications.leave_request_overlap',
-                    ['default' => 'An approved leave request already exists that overlaps with the selected dates.']
-                ),
-            ]);
-        }
+        NoLeaveOverlapRule::check($leaveRequest);
     }
 
     /**

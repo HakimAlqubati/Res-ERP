@@ -140,7 +140,7 @@ class EmployeeResource extends Resource
         return parent::getEloquentQuery()
             ->forBranchManager()
             ->with(['branch:id,name', 'pendingTerminationRequest',
-                'serviceTermination'])
+                'serviceTermination', 'paymentMethod:id,name'])
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\POSIntegration\Resources\Products\Schemas;
 
+use App\Enums\ProductCodeGenerationMethod;
 use App\Filament\Resources\ProductResource\Support\ProductResourceActions as PRA;
 use App\Models\Category;
 use App\Models\InventoryTransaction;
@@ -9,6 +10,7 @@ use App\Models\OrderDetails;
 use App\Models\Product;
 use App\Models\ProductItem;
 use App\Models\PurchaseInvoiceDetail;
+use App\Models\Setting;
 use App\Models\StockIssueOrderDetail;
 use App\Models\Unit;
 use App\Models\UnitPrice;
@@ -61,18 +63,33 @@ class ProductForm
                                     return Category::query()->forPos()->pluck('name', 'id');
                                 })
                                 ->afterStateUpdated(function ($set, $state) {
-                                    $set('code', Product::generateProductCode($state));
+                                    if (ProductCodeGenerationMethod::isAuto()) {
+                                        $set('code', Product::generateProductCode($state));
+                                    }
                                 }),
                             TextInput::make('code')
-                                ->required(false)
+                                ->required(fn () => ProductCodeGenerationMethod::isManual())
+                                ->maxLength(fn () => ProductCodeGenerationMethod::isAuto() ? null : (int) Setting::getSetting('product_code_length', 3))
+                                ->rules(fn () => ProductCodeGenerationMethod::isManual() ? ['regex:/^[A-Z0-9]+(-[A-Z0-9]+)*$/'] : [])
+                                ->validationMessages([
+                                    'regex' => __('lang.product_code_invalid_format'),
+                                ])
+                                ->extraInputAttributes(fn () => ProductCodeGenerationMethod::isManual() ? [
+                                    'style' => 'text-transform: uppercase;',
+                                    'oninput' => "this.value = this.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').replace(/^-+/, '').replace(/-{2,}/g, '-');",
+                                ] : [])
+                                ->dehydrateStateUsing(fn ($state) => $state ? trim(preg_replace('/-+/', '-', preg_replace('/[^A-Z0-9-]/', '', strtoupper($state))), '-') : $state)
                                 ->unique(ignoreRecord: true)
                                 ->label(__('lang.code'))
-                                ->readOnly()
-                                ->helperText(__('lang.product_code_helper'))
-                                ->placeholder('Code generates automatically')
-                                ->disabled()
+                                ->readOnly(fn () => ProductCodeGenerationMethod::isAuto())
+                                ->helperText(fn () => ProductCodeGenerationMethod::isAuto()
+                                    ? __('lang.product_code_helper')
+                                    : __('lang.product_code_manual_helper')
+                                )
+                                ->placeholder(fn () => ProductCodeGenerationMethod::isAuto() ? 'Code generates automatically' : 'Enter code manually')
+                                ->disabled(fn () => ProductCodeGenerationMethod::isAuto())
                                 ->dehydrated()
-                                ->default(fn($get) => Product::generateProductCode($get('category_id'))),
+                                ->default(fn ($get) => ProductCodeGenerationMethod::isAuto() ? Product::generateProductCode($get('category_id')) : null),
                             Grid::make()->columns(4)->columnSpanFull()->schema([
                                 TextInput::make('sku')
                                     ->label('SKU')
@@ -235,17 +252,11 @@ class ProductForm
                                         ->label(__('lang.price'))
                                         ->numeric()
                                         ->default(1)
-                                        ->live(onBlur: true)
-                                        ->afterStateUpdated(function (Set $set, $state, $get) {
-                                            $res = ((float) $state) * ((float) $get('quantity'));
-                                            $res = round($res, 8);
-                                            if ($get('qty_waste_percentage') == 0) {
-                                                $set('total_price_after_waste', $res);
-                                            }
-                                            $set('total_price_after_waste', ProductItem::calculateTotalPriceAfterWaste($res, $get('qty_waste_percentage') ?? 0));
-                                            $set('total_price', $res);
-                                            PRA::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
-                                        })->required()->minValue(0.000000001),
+                                        ->readOnly()
+                                        ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
+                                        ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;'])
+                                        ->dehydrated()
+                                        ->required()->minValue(0.000000001),
                                     TextInput::make('total_price')->default(0)
                                         ->type('text')
                                         ->extraInputAttributes(['readonly' => true]),

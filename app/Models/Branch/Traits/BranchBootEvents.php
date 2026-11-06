@@ -19,7 +19,7 @@ trait BranchBootEvents
                 });
             } elseif (isStuff()) {
                 static::addGlobalScope('stuff_scope', function ($builder) {
-                    $builder->where('id', auth()->user()->branch_id);
+                    $builder->whereIn('branches.id', auth()->user()->all_branch_ids);
                 });
             }
         }

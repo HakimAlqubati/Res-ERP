@@ -40,6 +40,7 @@ class PayrollsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table->striped()
+            ->paginated([10, 25, 50, 100])
             ->deferFilters(false)
             ->defaultKeySort(false)
 
@@ -81,6 +82,8 @@ class PayrollsRelationManager extends RelationManager
                         MIN(hr_payrolls.status) as status,
                         MAX(hr_payrolls.is_paid) as is_paid,
                         MAX(hr_payrolls.payment_date) as payment_date,
+                        MAX(hr_payrolls.paid_at) as paid_at,
+                        MAX(hr_payrolls.paid_by) as paid_by,
                         MIN(hr_payrolls.created_at) as created_at,
                         MAX(hr_payrolls.updated_at) as updated_at,
                         MAX(hr_employee_service_terminations.termination_reason) as termination_reason,
@@ -101,7 +104,7 @@ class PayrollsRelationManager extends RelationManager
                     ->limit(15)
                     ->label(__('lang.employee'))
                     ->color(function (Payroll $record) {
-                        if ($record->employee?->serviceTermination) {
+                        if ($record->employee?->serviceTermination && !$record->employee->active) {
                             return 'danger';
                         }
                         return 'primary';
@@ -116,7 +119,7 @@ class PayrollsRelationManager extends RelationManager
                             return $record->branch?->name;
                         }
 
-                        return $record->employee?->branch?->name;
+                        return $record->period_branch_name ?? $record->employee?->branch?->name;
                     })
                     ->visible(fn () => $this->isShowingBranchSplits())
                     // ->toggleable()
@@ -149,6 +152,12 @@ class PayrollsRelationManager extends RelationManager
                 TextColumn::make('payment_date')
                     ->label(__('Payment Date'))
                     ->date('Y-m-d')->alignCenter()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('paid_at')
+                    ->label(__('Paid At'))
+                    ->dateTime()->alignCenter()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('payer.name')
+                    ->label(__('Paid By'))
+                    ->alignCenter()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('net_salary')
                     ->label(__('Net Salary'))->alignCenter()
                     ->getStateUsing(fn(Payroll $record) => (float) $record->getRawOriginal('net_salary'))
@@ -188,12 +197,14 @@ class PayrollsRelationManager extends RelationManager
                     ForceDeleteAction::make()
                         ->action(function (Payroll $record): void {
                             $ids = $this->payrollIdsForDisplay($record);
-                            Payroll::query()->whereIn('id', $ids)->forceDelete();
+                            Payroll::withTrashed()->whereIn('id', $ids)->get()->each->forceDelete();
+                            showSuccessNotifiMessage(__('lang.deleted_successfully'));
                         })->label('Force Delete'),
                     DeleteAction::make()
                         ->action(function (Payroll $record): void {
                             $ids = $this->payrollIdsForDisplay($record);
-                            Payroll::query()->whereIn('id', $ids)->delete();
+                            Payroll::whereIn('id', $ids)->get()->each->delete();
+                            showSuccessNotifiMessage(__('lang.deleted_successfully'));
                         })->label('Delete'),
                     Action::make('pdfTransactions')
                         ->label('Transactions')
@@ -248,6 +259,8 @@ class PayrollsRelationManager extends RelationManager
                                 'is_paid'      => true,
                                 'payment_date' => now(),
                                 'status'       => Payroll::STATUS_PAID,
+                                'paid_by'      => auth()->id(),
+                                'paid_at'      => now(),
                             ]);
                     }),
 
@@ -270,7 +283,7 @@ class PayrollsRelationManager extends RelationManager
                                 ->values()
                                 ->all();
 
-                            Payroll::query()->whereIn('id', $ids)->forceDelete();
+                            Payroll::withTrashed()->whereIn('id', $ids)->get()->each->forceDelete();
 
                             \Illuminate\Support\Facades\DB::commit();
                             showSuccessNotifiMessage(__('lang.deleted_successfully'));
@@ -312,9 +325,21 @@ class PayrollsRelationManager extends RelationManager
                                 'is_paid'      => true,
                                 'payment_date' => now(),
                                 'status'       => Payroll::STATUS_PAID,
+                                'paid_by'      => auth()->id(),
+                                'paid_at'      => now(),
                             ]);
                     }),
                 DeleteBulkAction::make()
+                    ->action(function (Collection $records): void {
+                        $ids = $records
+                            ->flatMap(fn(Payroll $record) => $this->payrollIdsForDisplay($record))
+                            ->unique()
+                            ->values()
+                            ->all();
+
+                        Payroll::whereIn('id', $ids)->get()->each->delete();
+                        showSuccessNotifiMessage(__('lang.deleted_successfully'));
+                    })
                     ->visible(fn(): bool => isSuperAdmin()),
             ]);
     }
