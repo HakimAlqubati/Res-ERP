@@ -12,6 +12,8 @@ return [
   'user_and_roles' => 'المستخدمين والصلاحيات',
   'users' => 'المستخدمين',
   'roles' => 'أدوار المستخدمين',
+  'app_version' => 'إصدار التطبيق',
+  'app_versions' => 'إصدارات التطبيق',
   'all' => 'الكل',
   'my_employees' => 'موظفيي',
   'my_employees_only' => 'موظفيي فقط',
@@ -1196,8 +1198,8 @@ return [
     'incentive_types' => 'أنواع الحوافز',
     'allowance_types' => 'أنواع البدلات',
     'deduction_types' => 'أنواع الاستقطاعات',
-    'month' => 'الشهر',
-    'employee_statement_report' => 'كشف حركات رواتب الموظف',
+    'employee_statement_report' => 'كشف الحساب المالي للموظف',
+    'staff_financial_statement' => 'كشف الحساب المالي للموظف',
 
     // ===========================================
     // Users Management & Form

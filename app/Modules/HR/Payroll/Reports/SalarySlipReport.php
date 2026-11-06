@@ -187,16 +187,22 @@ class SalarySlipReport
             $isRecovery = ($singleCf->reference_type ?? null) === \App\Models\CarryForward::class
                 || Str::contains(strtolower($singleCf->description ?? ''), ['recovery', 'سداد', 'استرداد']);
 
+            // إذا كان سداداً لسابق، يجب أن يُخصم هذا الشهر
+            if ($isRecovery) {
+                $deductedCarryForward = (float) $singleCf->amount;
+            } 
             // إذا لم يكن سداداً لسابق، فهو كاري فورورد جديد مؤجل للشهر القادم
-            if (!$isRecovery) {
+            else {
                 $lastCarryForward = (float) $singleCf->amount;
             }
         }
 
-
         $totalDeductions += $deductedCarryForward;
         // $net = max($gross - $totalDeductions, 0);
-        $net = $gross - $totalDeductions - $lastCarryForward;
+        $net = $gross - $totalDeductions 
+        // - $lastCarryForward
+        ;
+        // dd($gross,$totalDeductions,$lastCarryForward,$deductedCarryForward,$net);
         // if ($net <= 0) {
         //     $net = 0;
         // }

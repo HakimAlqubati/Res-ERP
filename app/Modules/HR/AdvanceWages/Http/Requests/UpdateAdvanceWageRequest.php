@@ -17,6 +17,8 @@ class UpdateAdvanceWageRequest extends FormRequest
         return [
             'amount'              => ['sometimes', 'required', 'numeric', 'min:0.01'],
             'date'                => ['sometimes', 'required', 'date'],
+            'month'               => ['sometimes', 'nullable', 'integer', 'between:1,12'],
+            'year'                => ['sometimes', 'nullable', 'integer', 'digits:4'],
             'reason'              => ['sometimes', 'required', 'string', 'max:255'],
             'payment_method'      => ['sometimes', 'required', 'string', 'in:' . AdvanceWage::PAYMENT_METHOD_CASH . ',' . AdvanceWage::PAYMENT_METHOD_BANK_TRANSFER],
             'bank_account_number' => ['required_if:payment_method,' . AdvanceWage::PAYMENT_METHOD_BANK_TRANSFER, 'string', 'nullable'],

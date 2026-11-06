@@ -29,9 +29,9 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function index($request)
     {
-        // Get the value of the ID and category ID filters from the request, or null if they're not set.
         $id              = $request->input('id');
         $code            = $request->input('code');
+        $search          = $request->input('search', $request->input('q'));
         $categoryId      = $request->input('category_id');
         $isManufacturing = $request->input('is_manufacturing', false); // Default to true if not specified
         $branch = auth()->user()->branch ?? null;
@@ -81,9 +81,17 @@ class ProductRepository implements ProductRepositoryInterface
                 return $query->where('id', $id);
             })
             ->when($code, function ($query) use ($code) {
-                return $query->where('code', $code);
+                return $query->where(function ($q) use ($code) {
+                    $q->where('code', $code)
+                      ->orWhere('code', 'like', "%{$code}%");
+                });
             })
-
+            ->when($search, function ($query) use ($search) {
+                return $query->where(function ($q) use ($search) {
+                    $q->where('code', 'like', "%{$search}%")
+                      ->orWhere('name', 'like', "%{$search}%");
+                });
+            })
             ->when($categoryId, function ($query) use ($categoryId) {
                 return $query->where('category_id', $categoryId);
             });

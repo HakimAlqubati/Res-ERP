@@ -109,15 +109,20 @@ class TestController3 extends Controller
     }
     public function printStock()
     {
+        $storeId = request('store_id') ?: getDefaultStore();
+        $categoryId = request('category_id');
 
-        $categoryId = request()->query()['category_id'] ?? null;
+        $store = \App\Models\Store::find($storeId);
+        $category = $categoryId ? \App\Models\Category::find($categoryId) : null;
+
         $products = Product::active()
             ->when($categoryId, function ($query) use ($categoryId) {
                 return $query->where('category_id', $categoryId);
             })
-            ->with(['unitPrices.unit']) // Load unit name
+            ->with(['unitPrices.unit', 'category']) // Load unit name & category
             ->get(['name', 'category_id', 'id', 'code']);
-        return view('filament.clusters.inventory-management-cluster.resources.stock-inventory-resource.pages.stock-print', compact('products'));
+
+        return view('filament.clusters.inventory-management-cluster.resources.stock-inventory-resource.pages.stock-print', compact('products', 'store', 'category', 'storeId'));
     }
     public function getEmployeesWithOddAttendances($startDate = null, $endDate = null, $branchId = null)
     {

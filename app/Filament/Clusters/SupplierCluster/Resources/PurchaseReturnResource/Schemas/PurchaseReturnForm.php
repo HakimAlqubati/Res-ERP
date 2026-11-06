@@ -146,7 +146,7 @@ class PurchaseReturnForm
                                             ->toArray();
                                     })
                                     ->searchable()
-                                    ->required(false),
+                                    ->required(),
 
                                 Select::make('store_id')
                                     ->label('Store')
@@ -429,17 +429,7 @@ class PurchaseReturnForm
                                     TextInput::make('unit_price')
                                         ->label('Unit Price')
                                         ->numeric()
-                                        ->live(onBlur: true)
-                                        ->afterStateUpdated(function ($set, $state, $get) {
-                                            $price = (float) $state;
-                                            $qty = (float) ($get('quantity') ?? 0);
-                                            $total = round($qty * $price, 4);
-                                            $set('total_price', $total);
-
-                                            $rows = $get('../../details') ?? [];
-                                            $sum = collect($rows)->sum(fn($r) => (float) ($r['total_price'] ?? 0));
-                                            $set('../../total_amount', round($sum, 4));
-                                        })
+                                        ->readOnly()
                                         ->required()
                                         ->columnSpan(1),
 

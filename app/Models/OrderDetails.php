@@ -31,6 +31,7 @@ class OrderDetails extends Model implements Auditable
         'is_created_due_to_qty_preivous_order',
         'previous_order_id',
         'total_unit_price',
+        'transfer_markup_percentage',
     ];
     protected $auditInclude = [
         'order_id',
@@ -52,6 +53,11 @@ class OrderDetails extends Model implements Auditable
         'is_created_due_to_qty_preivous_order',
         'previous_order_id',
         // 'total_unit_price',
+        'transfer_markup_percentage',
+    ];
+
+    protected $casts = [
+        'transfer_markup_percentage' => 'float',
     ];
 
     protected $appends = ['total_price', 'returned_quantity', 'remaining_after_return'];
@@ -133,6 +139,19 @@ class OrderDetails extends Model implements Auditable
                 $orderDetail->package_size = $unitPrice?->package_size ?? 1; // fallback to 1 if still null
             }
             $orderDetail->available_quantity = $orderDetail->quantity;
+
+            if (is_null($orderDetail->transfer_markup_percentage) && $orderDetail->order_id) {
+                $order = $orderDetail->relationLoaded('order')
+                    ? $orderDetail->order
+                    : Order::withoutGlobalScopes()->find($orderDetail->order_id);
+
+                if ($order) {
+                    $orderDetail->transfer_markup_percentage = $order->resolveItemMarkupPercentage(
+                        (int) $orderDetail->product_id,
+                        $orderDetail
+                    );
+                }
+            }
         });
         static::updated(function ($orderDetail) {
             if (is_null($orderDetail->package_size)) {

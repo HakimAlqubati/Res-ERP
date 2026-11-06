@@ -228,12 +228,13 @@
         }
 
         .statement-table th {
-            background-color: #0d7c66;
-            color: #ffffff;
+            background-color: #f1f5f9;
+            color: #334155;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            font-size: 13px;
+            font-size: 12px;
+            border-bottom: 2px solid #cbd5e1;
         }
 
         /* Explicit light mode row and column colors */
@@ -246,11 +247,11 @@
         }
 
         .statement-table tbody tr:nth-child(even) {
-            background-color: #f5f9f8;
+            background-color: #f8fafc;
         }
 
         .statement-table tbody tr:hover {
-            background-color: #eef7f5;
+            background-color: #f1f5f9;
         }
 
         .statement-table .col-index {
@@ -261,6 +262,18 @@
         .statement-table .col-type {
             font-weight: 500;
             color: #1e293b;
+        }
+
+        .tx-type-title {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .tx-ref-subtitle {
+            font-size: 11px;
+            color: #64748b;
+            font-family: monospace;
+            margin-top: 2px;
         }
 
         .statement-table .col-amount {
@@ -294,12 +307,6 @@
             color: #334155;
         }
 
-        .statement-table .col-desc {
-            color: #1e293b;
-            text-align: left;
-            padding-left: 14px;
-        }
-
         .statement-table .op-plus {
             color: #0d7c66;
             font-weight: 700;
@@ -317,29 +324,41 @@
             font-weight: 700;
         }
 
+        .statement-table .deduction-badge {
+            display: inline-block;
+            background-color: #fee2e2;
+            color: #b91c1c;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
         .statement-table tfoot td {
             font-weight: 700;
             text-align: right;
-            color: #0d7c66;
-            font-size: 16px;
+            color: #0f172a;
+            font-size: 15px;
             padding: 8px 16px;
             background-color: #ffffff;
-        }
-
-        .statement-table tfoot .total-row-add td {
-            border-bottom: none;
             border-top: 1px solid #e5e7eb;
         }
 
-        .statement-table tfoot .total-row-ded td {
-            border-bottom: none;
-            border-top: none;
-            color: #c0392b !important;
+        .statement-table tfoot .total-row-final td {
+            font-size: 15px;
+            color: #0f172a;
+            border-top: 2px solid #cbd5e1;
         }
 
-        .statement-table tfoot .total-row-final td {
+        .statement-table tfoot .total-row-paid td {
+            font-size: 15px;
+            color: #0d7c66;
             border-top: none;
-            font-size: 17px;
+        }
+
+        .statement-table tfoot .total-row-balance td {
+            font-size: 15px;
+            color: #0f172a;
+            border-top: none;
         }
 
         /* ─── Dark Mode Support ─── */
@@ -410,9 +429,17 @@
         }
 
         :is(.dark, [data-theme="dark"]) .statement-table th {
-            background-color: #0d7c66;
-            color: #ffffff;
-            border-color: #0d7c66;
+            background-color: #1e293b;
+            color: #f8fafc;
+            border-color: #374151;
+        }
+
+        :is(.dark, [data-theme="dark"]) .tx-type-title {
+            color: #f8fafc;
+        }
+
+        :is(.dark, [data-theme="dark"]) .tx-ref-subtitle {
+            color: #94a3b8;
         }
 
         :is(.dark, [data-theme="dark"]) .statement-table td {
@@ -458,10 +485,6 @@
             color: #cbd5e1 !important;
         }
 
-        :is(.dark, [data-theme="dark"]) .statement-table .col-desc {
-            color: #f1f5f9 !important;
-        }
-
         :is(.dark, [data-theme="dark"]) .statement-table .op-plus {
             color: #34d399;
         }
@@ -474,21 +497,32 @@
             color: #f87171 !important;
         }
 
+        :is(.dark, [data-theme="dark"]) .statement-table .deduction-badge {
+            background-color: rgba(185, 28, 28, 0.25);
+            color: #f87171 !important;
+        }
+
         :is(.dark, [data-theme="dark"]) .statement-table .row-employer-contribution {
             background-color: #133827 !important;
         }
 
         :is(.dark, [data-theme="dark"]) .statement-table tfoot td {
             background-color: #111827;
-            color: #2dd4bf !important;
-        }
-
-        :is(.dark, [data-theme="dark"]) .statement-table tfoot .total-row-add td {
+            color: #f8fafc !important;
             border-top: 1px solid #374151;
         }
 
-        :is(.dark, [data-theme="dark"]) .statement-table tfoot .total-row-ded td {
-            color: #f87171 !important;
+        :is(.dark, [data-theme="dark"]) .statement-table tfoot .total-row-final td {
+            color: #f8fafc !important;
+            border-top: 2px solid #4b5563;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table tfoot .total-row-paid td {
+            color: #34d399 !important;
+        }
+
+        :is(.dark, [data-theme="dark"]) .statement-table tfoot .total-row-balance td {
+            color: #f8fafc !important;
         }
 
         /* ─── Empty State ─── */
@@ -608,8 +642,9 @@
             }
 
             .statement-table th {
-                background-color: #0d7c66 !important;
-                color: #ffffff !important;
+                background-color: #f1f5f9 !important;
+                color: #334155 !important;
+                border: 1px solid #cbd5e1 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
@@ -624,7 +659,7 @@
             }
 
             .statement-table tbody tr:nth-child(even) {
-                background-color: #f5f9f8 !important;
+                background-color: #f8fafc !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
@@ -641,25 +676,31 @@
                 color: #c0392b !important;
             }
 
+            .statement-table .deduction-badge {
+                background-color: #fee2e2 !important;
+                color: #b91c1c !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
             .statement-table .col-index,
             .statement-table .col-type,
             .statement-table .col-amount,
             .statement-table .col-paid,
             .statement-table .col-balance,
-            .statement-table .col-date,
-            .statement-table .col-desc {
+            .statement-table .col-date {
                 color: #111827 !important;
             }
 
             .statement-table tfoot td {
                 background-color: #ffffff !important;
-                color: #0d7c66 !important;
+                color: #0f172a !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
 
-            .statement-table tfoot .total-row-ded td {
-                color: #c0392b !important;
+            .statement-table tfoot .total-row-paid td {
+                color: #0d7c66 !important;
             }
         }
     </style>
@@ -689,7 +730,7 @@
                         </div>
 
                         <div class="header-col-title">
-                            <h1 class="report-main-title">{{ __('Employee Financial Statement') }}</h1>
+                            <h1 class="report-main-title">{{ __('Staff Financial Statement') }}</h1>
                             <div class="report-period-badge">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -739,18 +780,17 @@
                     </div>
                 </div>
 
-                {{-- Table Structure Matching Attached Design --}}
+                {{-- Table Structure Matching Staff Financial Statement Design --}}
                 <table class="statement-table" id="report-table">
                     <thead>
                         <tr>
-                            <th style="width: 4%;">#</th>
-                            <th style="width: 12%;">{{ __('DATE') }}</th>
-                            <th style="width: 13%;">{{ __('TYPE') }}</th>
-                            <th style="width: 5%;">{{ __('OP') }}</th>
-                            <th style="width: 14%;">{{ __('AMOUNT') }}</th>
-                            <th style="width: 14%;">{{ __('PAID') }}</th>
-                            <th style="width: 14%;">{{ __('BALANCE') }}</th>
-                            <th style="width: 24%;">{{ __('Transaction Details') }}</th>
+                            <th style="width: 5%;">#</th>
+                            <th style="width: 14%;">{{ __('DATE') }}</th>
+                            <th style="width: 25%;">{{ __('TYPE') }}</th>
+                            <th style="width: 6%;">{{ __('OP') }}</th>
+                            <th style="width: 16%;">{{ __('AMOUNT') }}</th>
+                            <th style="width: 16%;">{{ __('PAYMENT') }}</th>
+                            <th style="width: 18%;">{{ __('BALANCE') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -759,17 +799,32 @@
                                 @if (!empty($tx['is_employer_contribution'])) style="background-color: #e6ffc8;" @endif>
                                 <td class="col-index">{{ $tx['index'] }}</td>
                                 <td class="col-date">{{ $tx['date'] }}</td>
-                                <td class="col-type">{{ __($tx['type']) }}</td>
+                                <td class="col-type">
+                                    <div class="tx-type-title">{{ __($tx['type']) }}</div>
+                                    @if (!empty($tx['description']) && $tx['description'] !== '-')
+                                        <div class="tx-ref-subtitle">{{ $tx['description'] }}</div>
+                                    @endif
+                                </td>
                                 <td>
                                     @if ($tx['operation'] === '+')
                                         <span class="op-plus">+</span>
+                                    @elseif ($tx['operation'] === 'info')
+                                        <span style="color: #3b82f6; font-weight: 600; font-size: 11px;">Info</span>
                                     @else
                                         <span class="op-minus">-</span>
                                     @endif
                                 </td>
-                                <td class="col-amount {{ $tx['operation'] === '-' ? 'amount-deduction' : '' }}">{{ $tx['amount'] }}</td>
+                                <td class="col-amount {{ $tx['operation'] === '-' && $tx['amount'] !== '—' && $tx['amount'] !== '-' ? 'amount-deduction' : '' }}">
+                                    @if ($tx['amount'] === '—' || $tx['amount'] === '-')
+                                        <span style="color: #94a3b8; font-weight: 600;">—</span>
+                                    @elseif ($tx['operation'] === '-')
+                                        <span class="deduction-badge">{{ $tx['amount'] }}</span>
+                                    @else
+                                        {{ $tx['amount'] }}
+                                    @endif
+                                </td>
                                 <td class="col-paid">
-                                    @if($tx['paid'] === '—' || $tx['paid'] === '-')
+                                    @if($tx['paid'] === '—' || $tx['paid'] === '-' || empty($tx['paid']))
                                         <span style="color: #94a3b8; font-weight: 600;">—</span>
                                     @elseif(!empty($tx['is_paid']))
                                         <span class="paid-badge-success">{{ $tx['paid'] }}</span>
@@ -778,11 +833,10 @@
                                     @endif
                                 </td>
                                 <td class="col-balance">{{ $tx['balance'] }}</td>
-                                <td class="col-desc">{{ $tx['description'] }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" style="text-align: center; padding: 30px; color: #64748b; font-weight: 600;">
+                                <td colspan="7" style="text-align: center; padding: 30px; color: #64748b; font-weight: 600;">
                                     {{ __('No transactions found for this employee within the specified date range.') }}
                                 </td>
                             </tr>
@@ -790,31 +844,21 @@
                     </tbody>
 
                     <tfoot>
-                        <tr class="total-row-add">
-                            <td colspan="8">
-                                {{ __('Total Additions') }}: {{ $reportData['total_additions'] }}
-                            </td>
-                        </tr>
-                        <tr class="total-row-ded">
-                            <td colspan="8">
-                                {{ __('Total Deductions') }}: {{ $reportData['total_deductions'] }}
-                            </td>
-                        </tr>
                         <tr class="total-row-final">
-                            <td colspan="8">
+                            <td colspan="7">
                                 {{ __('Final Net Result') }}: {{ $reportData['final_result'] }}
                             </td>
                         </tr>
                         @if(isset($reportData['total_paid']))
                         <tr class="total-row-paid">
-                            <td colspan="8" style="color: #0d7c66;">
+                            <td colspan="7">
                                 {{ __('Total Paid') }}: {{ $reportData['total_paid'] }}
                             </td>
                         </tr>
                         @endif
                         @if(isset($reportData['remaining_balance']))
-                        <tr class="total-row-balance" style="font-size: 17px; color: #0d7c66; border-top: 1px dashed #cbd5e1;">
-                            <td colspan="8">
+                        <tr class="total-row-balance">
+                            <td colspan="7">
                                 {{ __('Remaining Balance') }}: {{ $reportData['remaining_balance'] }}
                             </td>
                         </tr>
@@ -838,21 +882,20 @@
                 wb['!cols'] = [
                     { wch: 6 },
                     { wch: 14 },
-                    { wch: 18 },
+                    { wch: 26 },
                     { wch: 8 },
                     { wch: 16 },
                     { wch: 16 },
-                    { wch: 16 },
-                    { wch: 40 }
+                    { wch: 18 }
                 ];
 
                 var workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, wb, "Payroll Transactions");
+                XLSX.utils.book_append_sheet(workbook, wb, "Staff Financial Statement");
 
                 var employeeName = "{{ preg_replace('/[^A-Za-z0-9_\\-]/', '_', $reportData['employee_name'] ?? 'Employee') }}";
                 var fromDate = "{{ $reportData['from_date'] ?? '' }}";
                 var toDate = "{{ $reportData['to_date'] ?? '' }}";
-                XLSX.writeFile(workbook, "Payroll_Transactions_" + employeeName + "_" + fromDate + "_to_" + toDate + ".xlsx");
+                XLSX.writeFile(workbook, "Staff_Financial_Statement_" + employeeName + "_" + fromDate + "_to_" + toDate + ".xlsx");
             }
         </script>
 

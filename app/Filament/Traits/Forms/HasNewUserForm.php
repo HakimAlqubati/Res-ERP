@@ -82,6 +82,11 @@ trait HasNewUserForm
                             ->default(true)
                             ->inline(false),
 
+                        \Filament\Forms\Components\Checkbox::make('can_add_branch_order')
+                            ->label(__('lang.can_add_branch_order'))
+                            ->default(false)
+                            ->inline(false),
+
                         Select::make('nationality')
                             ->label(__('lang.nationality'))
                             ->options(getNationalities()) // Loads nationalities from JSON file
@@ -90,10 +95,10 @@ trait HasNewUserForm
                         Select::make('branch_id')
                             ->label(__('lang.branch'))
                             // ->required()
-                            ->visible(function (Get $get) {
-                                $roles = $get('roles') ?? [];
-                                return ! in_array(5, $roles);
-                            })
+                            // ->visible(function (Get $get) {
+                            //     $roles = $get('roles') ?? [];
+                            //     return ! in_array(5, $roles);
+                            // })
                             ->live()
                             ->afterStateUpdated(function ($state, callable $set) {
                                 // عند تغيير الفرع -> أفرغ قيمة owner_id
