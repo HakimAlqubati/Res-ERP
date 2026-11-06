@@ -10,6 +10,7 @@ use App\Http\Controllers\TestController3;
 use App\Http\Resources\OrderResource;
 use App\Interfaces\Orders\OrderRepositoryInterface;
 use App\Models\Branch;
+use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Models\OrderDetails;
 use App\Models\Store;
@@ -828,6 +829,28 @@ class OrderRepository implements OrderRepositoryInterface
                     'orderId' => $order->id,
                     'message' => 'Only drivers are authorized to change order status to in transit.',
                 ], 403);
+            }
+
+            // Do not allow transitioning from ready for delivery to in transit if incoming inventory transactions exist
+            if (
+                $order->status === Order::READY_FOR_DELEVIRY
+                && $request->has('status')
+                && $request->status === Order::IN_TRANSIT
+            ) {
+                $hasInboundTransaction = InventoryTransaction::where('transactionable_type', Order::class)
+                    ->where('transactionable_id', $order->id)
+                    ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+                    ->exists();
+
+                if ($hasInboundTransaction) {
+                    DB::rollBack();
+
+                    return response()->json([
+                        'success' => false,
+                        'orderId' => $order->id,
+                        'message' => 'Cannot change order status to in transit because inbound inventory transactions already exist for this order.',
+                    ], 422);
+                }
             }
 
             // If order is "in transit", only allow changing to "delivered"

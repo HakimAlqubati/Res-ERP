@@ -19,6 +19,15 @@ class EmployeeApplicationController extends Controller
      */
     public function index(Request $request)
     {
+        $allowedRoles = [1, 3, 4, 5, 7, 8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20];
+
+        if (! $request->user()?->hasAnyRole($allowedRoles)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. You do not have permission to view applications.',
+            ], 403);
+        }
+
         $apps = EmployeeApplicationV2::with([
             'employee',
             'leaveRequest',
