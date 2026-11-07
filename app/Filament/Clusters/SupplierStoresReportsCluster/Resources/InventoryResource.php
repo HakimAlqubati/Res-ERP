@@ -6,6 +6,7 @@ use App\Exports\InventoryTransactionsExport;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResource\Pages;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResource\Pages\ListInventories;
+use App\Filament\Tables\Actions\RefreshAction;
 use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Imports\InventoryTransactionsImport;
 use App\Models\Branch;
