@@ -87,6 +87,11 @@ class StockInventoryController extends Controller
                 'data' => new StockInventoryResource($inventory),
             ], 201);
         } catch (Exception $e) {
+            \Illuminate\Support\Facades\Log::error('StockInventoryController@store error: ' . $e->getMessage(), [
+                'exception' => $e,
+                'request' => $request->all(),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create stock inventory',

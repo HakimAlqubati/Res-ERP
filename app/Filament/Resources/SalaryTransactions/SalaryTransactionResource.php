@@ -18,6 +18,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class SalaryTransactionResource extends Resource
@@ -88,5 +89,48 @@ class SalaryTransactionResource extends Resource
         }
 
         return false;
+    }
+
+    public static function isUserSuperAdmin(): bool
+    {
+        if (! auth()->check()) {
+            return false;
+        }
+
+        $user = auth()->user();
+
+        return $user->roles->contains('id', 1)
+            || $user->hasRole('super_admin')
+            || $user->isSuperAdmin();
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return static::isUserSuperAdmin();
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return static::isUserSuperAdmin();
+    }
+
+    public static function canForceDelete(Model $record): bool
+    {
+        return false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        return false;
+    }
+
+    public static function canRestore(Model $record): bool
+    {
+        return static::isUserSuperAdmin();
+    }
+
+    public static function canRestoreAny(): bool
+    {
+        return static::isUserSuperAdmin();
     }
 }
