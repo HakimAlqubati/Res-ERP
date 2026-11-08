@@ -802,19 +802,19 @@ class OrderRepository implements OrderRepositoryInterface
             }
 
             // Only authorized manufacturing branch staff or default storekeepers can mark order as ready for delivery
-            if (
-                $request->has('status')
-                && $request->status === Order::READY_FOR_DELEVIRY
-                && !auth()->user()->canReadyForDelivery($order)
-            ) {
-                DB::rollBack();
+            // if (
+            //     $request->has('status')
+            //     && $request->status === Order::READY_FOR_DELEVIRY
+            //     && !auth()->user()->canReadyForDelivery($order)
+            // ) {
+            //     DB::rollBack();
 
-                return response()->json([
-                    'success' => false,
-                    'orderId' => $order->id,
-                    'message' => 'Unauthorized to mark order as ready for delivery.',
-                ], 403);
-            }
+            //     return response()->json([
+            //         'success' => false,
+            //         'orderId' => $order->id,
+            //         'message' => 'Unauthorized to mark order as ready for delivery.',
+            //     ], 403);
+            // }
 
             // Only drivers (and super admins) are authorized to transition order to in_transit
             if (

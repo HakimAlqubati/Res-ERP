@@ -483,9 +483,9 @@ class User extends Authenticatable implements FilamentUser, Auditable
 
         // 1. في حال كان الطلب تصنيعياً
         if ($order->type === Order::TYPE_MANUFACTURING) {
-            // if (empty($order->store_id)) {
-            //     return false;
-            // }
+            if (empty($order->store_id)) {
+                return false;
+            }
 
             $manufacturingBranch = Branch::withoutGlobalScopes()
                 ->where(function ($q) {
