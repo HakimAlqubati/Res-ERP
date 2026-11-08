@@ -19,8 +19,9 @@ use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Forms;
 use Filament\Forms\Components\FileUpload;
@@ -376,9 +377,9 @@ class InventoryResource extends Resource
             ->filtersFormColumns(4)
             ->deferFilters(true)
             ->recordActions([
-
                 ActionGroup::make([
-
+                    DeleteAction::make()->visible(fn () => static::isUserSuperAdmin()),
+                    RestoreAction::make()->visible(fn () => static::isUserSuperAdmin()),
                 ]),
             ])
             ->toolbarActions([
@@ -423,9 +424,8 @@ class InventoryResource extends Resource
                             );
                         })
                         ->deselectRecordsAfterCompletion(),
-                    DeleteBulkAction::make(),
-                    ForceDeleteBulkAction::make(),
-                    RestoreBulkAction::make(),
+                    DeleteBulkAction::make()->visible(fn () => static::isUserSuperAdmin()),
+                    RestoreBulkAction::make()->visible(fn () => static::isUserSuperAdmin()),
                 ]),
             ]);
     }
@@ -573,22 +573,47 @@ class InventoryResource extends Resource
         return static::getModel()::count();
     }
 
-    public static function canForceDelete(Model $record): bool
+    public static function isUserSuperAdmin(): bool
     {
-        if (isSuperAdmin() || isHakimOrAdel()) {
-            return true;
+        if (! auth()->check()) {
+            return false;
         }
 
+        $user = auth()->user();
+
+        return $user->roles->contains('id', 1)
+            || $user->hasRole('super_admin')
+            || $user->isSuperAdmin();
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return static::isUserSuperAdmin();
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return static::isUserSuperAdmin();
+    }
+
+    public static function canForceDelete(Model $record): bool
+    {
         return false;
     }
 
     public static function canForceDeleteAny(): bool
     {
-        if (isSuperAdmin() || isHakimOrAdel()) {
-            return true;
-        }
-
         return false;
+    }
+
+    public static function canRestore(Model $record): bool
+    {
+        return static::isUserSuperAdmin();
+    }
+
+    public static function canRestoreAny(): bool
+    {
+        return static::isUserSuperAdmin();
     }
 
     public static function getEloquentQuery(): Builder
