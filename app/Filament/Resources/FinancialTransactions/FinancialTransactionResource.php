@@ -94,34 +94,46 @@ class FinancialTransactionResource extends Resource
         return static::getModel()::query()->whereHas('branch');
     }
 
+    public static function isUserSuperAdmin(): bool
+    {
+        if (! auth()->check()) {
+            return false;
+        }
+
+        $user = auth()->user();
+
+        return $user->roles->contains('id', 1)
+            || $user->hasRole('super_admin')
+            || $user->isSuperAdmin();
+    }
+
     public static function canDelete(Model $record): bool
     {
-        if (isSuperAdmin()) {
-            return true;
-        }
-        return false;
+        return static::isUserSuperAdmin();
     }
 
     public static function canDeleteAny(): bool
     {
-        if (isSuperAdmin()) {
-            return true;
-        }
-        return false;
+        return static::isUserSuperAdmin();
     }
+
     public static function canForceDelete(Model $record): bool
     {
-        if (isSuperAdmin()) {
-            return true;
-        }
         return false;
     }
 
     public static function canForceDeleteAny(): bool
     {
-        if (isSuperAdmin()) {
-            return true;
-        }
         return false;
+    }
+
+    public static function canRestore(Model $record): bool
+    {
+        return static::isUserSuperAdmin();
+    }
+
+    public static function canRestoreAny(): bool
+    {
+        return static::isUserSuperAdmin();
     }
 }

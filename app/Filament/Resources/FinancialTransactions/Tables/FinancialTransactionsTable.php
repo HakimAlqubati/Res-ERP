@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\FinancialTransactions\Tables;
 
 use App\Enums\FinancialCategoryCode;
+use App\Filament\Resources\FinancialTransactions\FinancialTransactionResource;
 use App\Filament\Tables\Columns\SoftDeleteColumn;
 use App\Imports\FinancialTransactionsFromExcelImport;
 use Filament\Actions\BulkActionGroup;
@@ -258,20 +259,17 @@ class FinancialTransactionsTable
             ], FiltersLayout::Modal)
             ->filtersFormColumns(4)
             ->recordActions([
-                // EditAction::make()
-                //     ->hidden(fn($record) => $record->reference_type !== null),
                 ViewAction::make(),
-                // DeleteAction::make()
-                //     ->hidden(fn($record) => $record->reference_type !== null),
+                DeleteAction::make()
+                    ->hidden(fn($record) => $record->reference_type !== null)
+                    ->visible(fn() => FinancialTransactionResource::isUserSuperAdmin()),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make()
-                        ->visible(fn() => isSuperAdmin() || isHakimOrAdel()),
-                    ForceDeleteBulkAction::make()
-                        ->visible(fn() => isSuperAdmin() || isHakimOrAdel()),
+                        ->visible(fn() => FinancialTransactionResource::isUserSuperAdmin()),
                     RestoreBulkAction::make()
-                        ->visible(fn() => isSuperAdmin()),
+                        ->visible(fn() => FinancialTransactionResource::isUserSuperAdmin()),
                 ]),
             ]);
     }
