@@ -262,8 +262,8 @@ class GoodsReceivedNoteResource extends Resource
                                                             'unit_id'                 => $unitId,                                    // ← قيمة رقمية أو null
                                                             'package_size'            => (float)($item['package_size'] ?? 0),
                                                             'quantity'                => $qty,
-                                                            'price'                   => $unitPrice,
-                                                            'total_price'             => $totalRow,
+                                                            'price'                   => number_format($unitPrice, 2, '.', ''),
+                                                            'total_price'             => number_format($totalRow, 2, '.', ''),
                                                             'waste_stock_percentage'  => 0,
                                                         ];
                                                     }
@@ -366,7 +366,9 @@ class GoodsReceivedNoteResource extends Resource
                             Repeater::make('grnDetails')->columnSpanFull()
                                 ->relationship()
                                 ->mutateRelationshipDataBeforeFillUsing(function (array $data): array {
-                                    $data['total_price'] = round((float) ($data['quantity'] ?? 0) * (float) ($data['price'] ?? 0), 2);
+                                    $price = (float) ($data['price'] ?? 0);
+                                    $data['price'] = number_format($price, 2, '.', '');
+                                    $data['total_price'] = number_format((float) ($data['quantity'] ?? 0) * $price, 2, '.', '');
                                     return $data;
                                 })
                                 ->label('Items')
@@ -456,7 +458,7 @@ class GoodsReceivedNoteResource extends Resource
                                         ->afterStateUpdated(function ($set, $get) {
                                             $quantity = (float) ($get('quantity') ?? 0);
                                             $price = (float) ($get('price') ?? 0);
-                                            $set('total_price', round($quantity * $price, 2));
+                                            $set('total_price', number_format($quantity * $price, 2, '.', ''));
                                             static::recalculateTotalAmount($set, $get);
                                         })
                                         ->columnSpan(1)->required()
@@ -464,17 +466,20 @@ class GoodsReceivedNoteResource extends Resource
                                     TextInput::make('price')
                                         ->label(__('lang.price'))
                                         ->numeric()
-                                        ->minValue(0.1)
+                                        ->minValue(0.01)
+                                        ->step(0.01)
                                         ->live(onBlur: true)
-                                        ->afterStateUpdated(function ($set, $get) {
+                                        ->afterStateUpdated(function ($set, $get, $state) {
                                             $quantity = (float) ($get('quantity') ?? 0);
-                                            $price = (float) ($get('price') ?? 0);
-                                            $set('total_price', round($quantity * $price, 2));
+                                            $price = (float) ($state ?? 0);
+                                            if (filled($state)) {
+                                                $set('price', number_format($price, 2, '.', ''));
+                                            }
+                                            $set('total_price', number_format($quantity * $price, 2, '.', ''));
                                             static::recalculateTotalAmount($set, $get);
                                         })
                                         ->columnSpan(1)->required()
-                                        // ->formatStateUsing(fn($state) => round((float) $state, 2))
-                                        ,
+                                        ->formatStateUsing(fn($state) => filled($state) ? number_format((float) $state, 2, '.', '') : null),
                                     TextInput::make('total_price')
                                         ->label(__('lang.total_price'))
                                         ->readOnly()
@@ -482,11 +487,9 @@ class GoodsReceivedNoteResource extends Resource
                                         ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;', 'readonly' => true])
                                         ->numeric()
                                         ->default(0)
-                                        // ->minValue(0.1)
                                         ->live(onBlur: true)
                                         ->columnSpan(1)->required()
-                                        // ->formatStateUsing(fn($state) => round((float) $state, 2))
-                                        ,
+                                        ->formatStateUsing(fn($state) => filled($state) ? number_format((float) $state, 2, '.', '') : '0.00'),
 
 
                                 ])
