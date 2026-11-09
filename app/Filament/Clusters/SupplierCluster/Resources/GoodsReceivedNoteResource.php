@@ -7,6 +7,7 @@ use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Actions\EditAction;
 use Filament\Actions\ActionGroup;
@@ -251,17 +252,25 @@ class GoodsReceivedNoteResource extends Resource
                                                                 ->value('id');
                                                         }
 
+                                                        $qty = (float)($item['quantity'] ?? 1);
+                                                        $unitPrice = (float)($item['unit_price'] ?? $item['price'] ?? 0);
+                                                        $totalRow = round($qty * $unitPrice, 2);
+
                                                         // 3) بناء عنصر الريبيتر بقيم نهائية (بدون Closures)
                                                         $items[] = [
                                                             'product_id'              => $item['existing_product_id'] ?? null,
                                                             'unit_id'                 => $unitId,                                    // ← قيمة رقمية أو null
                                                             'package_size'            => (float)($item['package_size'] ?? 0),
-                                                            'quantity'                => (float)($item['quantity'] ?? 1),
+                                                            'quantity'                => $qty,
+                                                            'price'                   => $unitPrice,
+                                                            'total_price'             => $totalRow,
                                                             'waste_stock_percentage'  => 0,
                                                         ];
                                                     }
 
                                                     $set('grnDetails', $items);
+                                                    $total = collect($items)->sum(fn($row) => (float)($row['total_price'] ?? 0));
+                                                    $set('total_amount', round($total, 2));
 
                                                     if ($attempt) {
                                                         $repo->markAsSuccess($attempt, $items);
@@ -362,6 +371,13 @@ class GoodsReceivedNoteResource extends Resource
                                 })
                                 ->label('Items')
                                 ->columns(6)
+                                ->live()
+                                ->afterStateUpdated(function (callable $set, callable $get) {
+                                    static::recalculateTotalAmount($set, $get);
+                                })
+                                ->deleteAction(
+                                    fn (Action $action) => $action->after(fn (callable $set, callable $get) => static::recalculateTotalAmount($set, $get))
+                                )
                                 ->schema([
                                     Select::make('product_id')
                                         ->label(__('lang.product'))
@@ -396,10 +412,11 @@ class GoodsReceivedNoteResource extends Resource
                                         })
                                         ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->code . ' - ' . Product::find($value)?->name)
                                         ->reactive()
-                                        ->afterStateUpdated(function ($set, $state) {
+                                        ->afterStateUpdated(function ($set, $state, callable $get) {
                                             $set('unit_id', null);
                                             $product = Product::find($state);
                                             $set('waste_stock_percentage', $product?->waste_stock_percentage);
+                                            static::recalculateTotalAmount($set, $get);
                                         })
                                         ->searchable()->columnSpan(2)
                                         ->required(),
@@ -422,6 +439,7 @@ class GoodsReceivedNoteResource extends Resource
                                             )
                                                 ->where('unit_id', $state)->first();
                                             $set('package_size',  $unitPrice->package_size ?? 0);
+                                            static::recalculateTotalAmount($set, $get);
                                         })
                                         ->columnSpan(2)->required(),
                                     TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
@@ -439,6 +457,7 @@ class GoodsReceivedNoteResource extends Resource
                                             $quantity = (float) ($get('quantity') ?? 0);
                                             $price = (float) ($get('price') ?? 0);
                                             $set('total_price', round($quantity * $price, 2));
+                                            static::recalculateTotalAmount($set, $get);
                                         })
                                         ->columnSpan(1)->required()
                                         ->formatStateUsing(fn($state) => round((float) $state, 2)),
@@ -451,6 +470,7 @@ class GoodsReceivedNoteResource extends Resource
                                             $quantity = (float) ($get('quantity') ?? 0);
                                             $price = (float) ($get('price') ?? 0);
                                             $set('total_price', round($quantity * $price, 2));
+                                            static::recalculateTotalAmount($set, $get);
                                         })
                                         ->columnSpan(1)->required()
                                         // ->formatStateUsing(fn($state) => round((float) $state, 2))
@@ -489,6 +509,41 @@ class GoodsReceivedNoteResource extends Resource
                                     return true;
                                 })
                                 ->defaultItems(1),
+
+                            Group::make([
+                                TextInput::make('total_amount')
+                                    ->label(__('lang.total_amount'))
+                                    ->numeric()
+                                    ->readOnly()
+                                    ->default(0)
+                                    ->dehydrated(false)
+                                    ->extraFieldWrapperAttributes([
+                                        'style' => 'width: 14rem; max-width: 100%;',
+                                    ])
+                                    ->extraAttributes([
+                                        'class' => 'bg-readonly-gray',
+                                        'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed; width: 100%;',
+                                    ])
+                                    ->extraInputAttributes([
+                                        'class' => 'cursor-not-allowed font-bold text-end',
+                                        'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;',
+                                        'readonly' => true,
+                                    ])
+                                    ->prefix(fn() => settingWithDefault('currency_symbol', 'RM'))
+                                    ->suffixIcon(Heroicon::Banknotes)
+                                    ->suffixIconColor('primary')
+                                    ->formatStateUsing(fn($state) => $state !== null ? number_format((float) $state, 2, '.', '') : '0.00')
+                                    ->afterStateHydrated(function ($set, $state, ?GoodsReceivedNote $record) {
+                                        if ($record) {
+                                            $set('total_amount', round((float) $record->actual_total_amount, 2));
+                                        }
+                                    }),
+                            ])
+                                ->columnSpanFull()
+                                ->extraAttributes([
+                                    'class' => 'flex justify-end w-full pt-2',
+                                    'style' => 'display: flex; justify-content: flex-end;',
+                                ]),
                         ]),
 
 
@@ -844,5 +899,26 @@ class GoodsReceivedNoteResource extends Resource
                         return $record->status == GoodsReceivedNote::STATUS_CREATED && !$record->is_purchase_invoice_created  &&
                             (count(array_intersect($userRoles, $allowedRoles)) > 0);
          });
+    }
+
+    public static function recalculateTotalAmount(callable $set, callable $get): void
+    {
+        $rows = $get('../../grnDetails') ?? $get('../grnDetails') ?? $get('grnDetails') ?? [];
+
+        $total = collect($rows)->sum(function ($row) {
+            $qty = (float) ($row['quantity'] ?? 0);
+            $price = (float) ($row['price'] ?? 0);
+            return round($qty * $price, 2);
+        });
+
+        $total = round($total, 2);
+
+        if ($get('../../grnDetails') !== null) {
+            $set('../../total_amount', $total);
+        } elseif ($get('../grnDetails') !== null) {
+            $set('../total_amount', $total);
+        } else {
+            $set('total_amount', $total);
+        }
     }
 }
