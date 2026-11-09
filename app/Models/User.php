@@ -181,6 +181,18 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
 
     /**
+     * التحقق مما إذا كان المستخدم ينتمي لفرع معين (الفرع الأساسي أو الفروع الإضافية)
+     */
+    public function belongsToBranch($branchId): bool
+    {
+        if (empty($branchId)) {
+            return false;
+        }
+
+        return in_array((int) $branchId, array_map('intval', $this->all_branch_ids), true);
+    }
+
+    /**
      * التحقق مما إذا كان الفرع الأساسي أو أي من الفروع الإضافية مطبخاً مركزياً
      */
     public function hasCentralKitchen(): bool
@@ -436,7 +448,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
 
     /**
      * التحقق مما إذا كان المستخدم مخولاً بتحويل الطلب إلى delivered
-     * (مدير الفرع مالك الطلبية أو يوزر يتبع للفرع بشكل مباشر عبر الحقل users.branch_id)
+     * (مدير الفرع مالك الطلبية أو يوزر يتبع للفرع بشكل مباشر أو عبر الفروع الإضافية extra branches)
      */
     public function canDeliverOrder(Order $order): bool
     {
@@ -444,8 +456,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
             return true;
         }
 
-        // يتبع الفرع بشكل مباشر عبر الحقل users.branch_id
-        if (!empty($this->branch_id) && (int) $this->branch_id === (int) $order->branch_id) {
+        // يتبع الفرع بشكل مباشر أو عبر الفروع الإضافية (extra branches) ويكون الطلب تابعاً للفرع
+        if (!empty($order->branch_id) && $this->belongsToBranch($order->branch_id)) {
             return true;
         }
 
