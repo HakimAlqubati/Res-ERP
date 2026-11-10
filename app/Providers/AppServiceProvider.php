@@ -39,6 +39,7 @@ use Filament\Support\Enums\VerticalAlignment;
 use Filament\Support\Facades\FilamentAsset;
 use Filament\Support\Facades\FilamentView;
 use Filament\Tables\View\TablesRenderHook;
+use App\Filament\Clusters\HRAttendanceReport\Resources\ListEmployeeAdvanceReport;
 use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\Pages\ListPayrolls;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
@@ -126,6 +127,12 @@ class AppServiceProvider extends ServiceProvider
             TablesRenderHook::FILTER_INDICATORS,
             fn (): View => view('filament.clusters.hr-salary-cluster.resources.payroll-resource.total-net-header'),
             scopes: ListPayrolls::class,
+        );
+
+        FilamentView::registerRenderHook(
+            TablesRenderHook::TOOLBAR_SEARCH_BEFORE,
+            fn (): View => view('filament.clusters.hr-attendance-report.resources.employee-advance-report-resource.total-amounts-header'),
+            scopes: ListEmployeeAdvanceReport::class,
         );
 
         // Gate::policy(\Spatie\Permission\Models\Role::class, \App\Policies\RolePolicy::class);
