@@ -30,6 +30,12 @@ class PendingApprovalPreviousOrderDetailsReportResource extends Resource
     protected static ?string $cluster = OrderReportsCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
+    protected static bool $shouldRegisterNavigation = false;
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
 
     public static function getLabel(): ?string
     {
