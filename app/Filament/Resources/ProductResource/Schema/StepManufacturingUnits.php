@@ -64,13 +64,17 @@ class StepManufacturingUnits
             ->mutateRelationshipDataBeforeFillUsing(function (array $data, $livewire): array {
                 if (! empty($data['id'])) {
                     $unitPrice = UnitPrice::find($data['id']);
-                    $data['price_before_waste'] = $unitPrice?->price_before_waste;
+                    $data['price_before_waste'] = $unitPrice?->price_before_waste !== null ? number_format((float) $unitPrice->price_before_waste, 2, '.', '') : null;
+                    $data['price'] = $unitPrice?->price !== null ? number_format((float) $unitPrice->price, 2, '.', '') : null;
+                    $data['selling_price'] = $unitPrice?->selling_price !== null ? number_format((float) $unitPrice->selling_price, 2, '.', '') : null;
                 } else {
                     $product = method_exists($livewire, 'getRecord') ? $livewire->getRecord() : null;
                     if (! $product && method_exists($livewire, 'form')) {
                         $product = $livewire->form->getRecord();
                     }
-                    $data['price_before_waste'] = $product?->price_before_waste;
+                    $data['price_before_waste'] = $product?->price_before_waste !== null ? number_format((float) $product->price_before_waste, 2, '.', '') : null;
+                    $data['price'] = $product?->final_price !== null ? number_format((float) $product->final_price, 2, '.', '') : null;
+                    $data['selling_price'] = $product?->final_price !== null ? number_format((float) $product->final_price, 2, '.', '') : null;
                 }
                 return $data;
             })
@@ -133,9 +137,9 @@ class StepManufacturingUnits
                                 if ($finalPrice == 0) {
                                     $finalPrice = $totalNetPrice;
                                 }
-                                $res = round($packageSize * $finalPrice, 8);
+                                $res = number_format((float) ($packageSize * $finalPrice), 2, '.', '');
                                 $set('price', $res);
-                                $set('selling_price', round($packageSize * $finalPrice, 2));
+                                $set('selling_price', $res);
 
                                 $totalBeforeWaste = PRA::calculateTotalBeforeWaste($productItems);
                                 if ($totalBeforeWaste == 0) {
@@ -144,7 +148,7 @@ class StepManufacturingUnits
                                         $totalBeforeWaste = (float) ($record->productItems()->sum('total_price') ?? 0);
                                     }
                                 }
-                                $set('price_before_waste', round($packageSize * $totalBeforeWaste, 4));
+                                $set('price_before_waste', number_format((float) ($packageSize * $totalBeforeWaste), 2, '.', ''));
                             }),
                         Hidden::make('package_size')
                             ->default(1)
@@ -152,16 +156,17 @@ class StepManufacturingUnits
                         TextInput::make('price_before_waste')
                             ->prefix(settingWithDefault('currency_symbol', 'RM'))
                             ->numeric()
+                            ->step('0.01')
                             ->label('Price Before Waste')
                             ->readOnly()
                             ->dehydrated(false)
                             ->formatStateUsing(function ($state, $record = null, $livewire = null) {
                                 if ($state !== null && $state !== '') {
-                                    return $state;
+                                    return number_format((float) $state, 2, '.', '');
                                 }
 
                                 if ($record instanceof UnitPrice) {
-                                    return $record->price_before_waste;
+                                    return number_format((float) ($record->price_before_waste ?? 0), 2, '.', '');
                                 }
 
                                 $product = method_exists($livewire, 'getRecord') ? $livewire->getRecord() : null;
@@ -169,15 +174,16 @@ class StepManufacturingUnits
                                     $product = $livewire->form->getRecord();
                                 }
 
-                                return $product?->price_before_waste ?? 0;
+                                return number_format((float) ($product?->price_before_waste ?? 0), 2, '.', '');
                             })
                             ->afterStateHydrated(function ($component, $state, $record = null, $livewire = null, ?Get $get = null) {
                                 if ($state !== null && $state !== '') {
+                                    $component->state(number_format((float) $state, 2, '.', ''));
                                     return;
                                 }
 
                                 if ($record instanceof UnitPrice) {
-                                    $component->state($record->price_before_waste);
+                                    $component->state(number_format((float) ($record->price_before_waste ?? 0), 2, '.', ''));
                                     return;
                                 }
 
@@ -187,18 +193,18 @@ class StepManufacturingUnits
                                 }
 
                                 if ($product && (float) $product->price_before_waste > 0) {
-                                    $component->state($product->price_before_waste);
+                                    $component->state(number_format((float) $product->price_before_waste, 2, '.', ''));
                                     return;
                                 }
 
                                 if ($get) {
                                     $productItems = $get('../../productItems') ?? $get('../productItems') ?? $get('productItems') ?? [];
-                                    $component->state(round(PRA::calculateTotalBeforeWaste($productItems), 4));
+                                    $component->state(number_format((float) PRA::calculateTotalBeforeWaste($productItems), 2, '.', ''));
                                 }
                             })
                             ->default(function ($record = null, $livewire = null, ?Get $get = null) {
                                 if ($record instanceof UnitPrice) {
-                                    return $record->price_before_waste;
+                                    return number_format((float) ($record->price_before_waste ?? 0), 2, '.', '');
                                 }
 
                                 $product = method_exists($livewire, 'getRecord') ? $livewire->getRecord() : null;
@@ -207,27 +213,44 @@ class StepManufacturingUnits
                                 }
 
                                 if ($product && (float) $product->price_before_waste > 0) {
-                                    return $product->price_before_waste;
+                                    return number_format((float) $product->price_before_waste, 2, '.', '');
                                 }
 
                                 if ($get) {
                                     $productItems = $get('../../productItems') ?? $get('../productItems') ?? $get('productItems') ?? [];
-                                    return round(PRA::calculateTotalBeforeWaste($productItems), 4);
+                                    return number_format((float) PRA::calculateTotalBeforeWaste($productItems), 2, '.', '');
                                 }
 
-                                return 0;
+                                return '0.00';
                             })
                             ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
                             ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;']),
                         TextInput::make('price')
                             ->prefix(settingWithDefault('currency_symbol', 'RM'))
                             ->numeric()
+                            ->step('0.01')
+                            ->formatStateUsing(function ($state, $record = null, $livewire = null) {
+                                if ($state !== null && $state !== '') {
+                                    return number_format((float) $state, 2, '.', '');
+                                }
+                                $finalPrice = $livewire?->form?->getRecord()?->final_price ?? 0;
+                                return number_format((float) $finalPrice, 2, '.', '');
+                            })
+                            ->afterStateHydrated(function ($component, $state, $record = null, $livewire = null) {
+                                if ($state !== null && $state !== '') {
+                                    $component->state(number_format((float) $state, 2, '.', ''));
+                                    return;
+                                }
+                                $finalPrice = $livewire?->form?->getRecord()?->final_price ?? 0;
+                                $component->state(number_format((float) $finalPrice, 2, '.', ''));
+                            })
                             ->default(function ($record, $livewire) {
-                                $finalPrice = $livewire->form->getRecord()?->final_price ?? 0;
-                                return $finalPrice;
+                                $finalPrice = $livewire?->form?->getRecord()?->final_price ?? 0;
+                                return number_format((float) $finalPrice, 2, '.', '');
                             })->minValue(0.0001)
                             ->required()
                             ->readOnly()
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? (float) $state : null)
                             ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
                             ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;'])
                             ->label(__('lang.price')),
@@ -235,13 +258,28 @@ class StepManufacturingUnits
                             ->prefix(settingWithDefault('currency_symbol', 'RM'))
                             ->numeric()
                             ->step('0.01')
-                            ->formatStateUsing(fn ($state) => $state !== null ? number_format((float) $state, 2, '.', '') : null)
                             ->minValue(0.01)
+                            ->formatStateUsing(fn ($state) => filled($state) ? number_format((float) $state, 2, '.', '') : '0.00')
+                            ->afterStateHydrated(function ($component, $state, $record = null, $livewire = null) {
+                                if (filled($state)) {
+                                    $component->state(number_format((float) $state, 2, '.', ''));
+                                    return;
+                                }
+                                $finalPrice = $livewire?->form?->getRecord()?->final_price ?? 0;
+                                $component->state(number_format((float) $finalPrice, 2, '.', ''));
+                            })
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function (Set $set, $state) {
+                                if (filled($state) && is_numeric($state)) {
+                                    $set('selling_price', number_format((float) $state, 2, '.', ''));
+                                }
+                            })
                             ->label(__('lang.selling_price'))
                             ->default(function ($record, $livewire) {
-                                $finalPrice = $livewire->form->getRecord()->final_price ?? 0;
-                                return round($finalPrice, 2);
-                            }),
+                                $finalPrice = $livewire?->form?->getRecord()?->final_price ?? 0;
+                                return number_format((float) $finalPrice, 2, '.', '');
+                            })
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? (float) $state : null),
                         TextInput::make('weight')
                             ->numeric()
                             ->nullable()

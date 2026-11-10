@@ -96,8 +96,8 @@ class StepUnmanufacturingUnits
                             }),
                         TextInput::make('price')
                             ->prefix(settingWithDefault('currency_symbol', 'RM'))
-                            ->type('text')
-                            ->inputMode('decimal')
+                            ->numeric()
+                            ->step('0.01')
                             ->rules(['numeric', 'min:0'])
                             ->formatStateUsing(fn ($state) => filled($state) ? number_format((float) $state, 2, '.', '') : '0.00')
                             ->default('0.00')
@@ -226,7 +226,8 @@ class StepUnmanufacturingUnits
                                 $firstPackageSize = $firstUnit['package_size'] ?? null;
 
                                 if ($firstPrice && $state != 0) {
-                                    $set('price', round(($firstPrice / $firstPackageSize) * $state, 8));
+                                    $calculatedPrice = ($firstPrice / $firstPackageSize) * $state;
+                                    $set('price', number_format((float) $calculatedPrice, 2, '.', ''));
                                 }
                             })->disabled(function (callable $get, $livewire, $record) {
                                 $isNew = is_null($get('id'));

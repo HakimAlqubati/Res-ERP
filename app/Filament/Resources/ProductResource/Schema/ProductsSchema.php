@@ -187,6 +187,18 @@ class ProductsSchema
                             StepManufacturingUnits::repeater(),
                             Repeater::make('productItems')
                                 ->relationship('productItems')
+                                ->mutateRelationshipDataBeforeFillUsing(function (array $data): array {
+                                    if (isset($data['price']) && $data['price'] !== '') {
+                                        $data['price'] = number_format((float) $data['price'], 2, '.', '');
+                                    }
+                                    if (isset($data['total_price']) && $data['total_price'] !== '') {
+                                        $data['total_price'] = number_format((float) $data['total_price'], 2, '.', '');
+                                    }
+                                    if (isset($data['total_price_after_waste']) && $data['total_price_after_waste'] !== '') {
+                                        $data['total_price_after_waste'] = number_format((float) $data['total_price_after_waste'], 2, '.', '');
+                                    }
+                                    return $data;
+                                })
 
                                 ->table([
                                     TableColumn::make(__('Product'))->width('24rem'),
@@ -271,17 +283,14 @@ class ProductsSchema
                                                 'product_id',
                                                 $get('product_id')
                                             )->where('unit_id', $state)->first() ?? null;
-                                            $set('price', ($unitPrice->price ?? 0));
-                                            $total = ((float) ($unitPrice->price ?? 0)) * ((float) $get('quantity'));
-                                            $set('total_price', $total);
-                                            // if ($get('qty_waste_percentage') <= 0) {
-                                            //     $set('total_price_after_waste', $total);
-                                            // } else {
-                                            // }
-                                            // $set('total_price_after_waste', $total);
-                                            $set('total_price_after_waste', ProductItem::calculateTotalPriceAfterWaste($total ?? 0, $get('qty_waste_percentage') ?? 0));
-                                            // $set('package_size', $unitPrice->package_size ?? 0);
-                                            $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($get('quantity') ?? 0, $get('qty_waste_percentage') ?? 0));
+                                            $price = (float) ($unitPrice->price ?? 0);
+                                            $set('price', number_format($price, 2, '.', ''));
+                                            $total = $price * ((float) ($get('quantity') ?? 1));
+                                            $set('total_price', number_format($total, 2, '.', ''));
+                                            $waste = (float) ($get('qty_waste_percentage') ?? 0);
+                                            $totalNet = ProductItem::calculateTotalPriceAfterWaste($total, $waste);
+                                            $set('total_price_after_waste', number_format($totalNet, 2, '.', ''));
+                                            $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste((float) ($get('quantity') ?? 1), $waste));
                                             PRA::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
                                         })
                                         ->columnSpan(1),
@@ -296,21 +305,16 @@ class ProductsSchema
 
                                             $currentPrice = (float) $get('price');
                                             if ($currentPrice <= 0) {
-                                                $currentPrice = getUnitPrice($get('product_id'), $get('unit_id'));
-                                                $set('price', $currentPrice);
+                                                $currentPrice = (float) getUnitPrice($get('product_id'), $get('unit_id'));
+                                                $set('price', number_format($currentPrice, 2, '.', ''));
                                             }
-                                            $unitPrice = $currentPrice;
-
-                                            $res = ((float) $state) * ($unitPrice);
-
-                                            $res = round($res, 8);
-                                            if ($get('qty_waste_percentage') == 0) {
-                                                $set('total_price_after_waste', $res);
-                                            }
-                                            $set('total_price', $res);
-
-                                            $set('total_price_after_waste', ProductItem::calculateTotalPriceAfterWaste($res ?? 0, $get('qty_waste_percentage') ?? 0));
-                                            $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($state ?? 0, $get('qty_waste_percentage') ?? 0));
+                                            $qty = (float) $state;
+                                            $res = $qty * $currentPrice;
+                                            $waste = (float) ($get('qty_waste_percentage') ?? 0);
+                                            $totalNet = ProductItem::calculateTotalPriceAfterWaste($res, $waste);
+                                            $set('total_price', number_format($res, 2, '.', ''));
+                                            $set('total_price_after_waste', number_format($totalNet, 2, '.', ''));
+                                            $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($qty, $waste));
 
                                             PRA::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
                                         })->required()->minValue(0.000000001),
@@ -318,21 +322,44 @@ class ProductsSchema
                                         ->prefix(settingWithDefault('currency_symbol', 'RM'))
                                         ->label(__('lang.price'))
                                         ->numeric()
-                                        ->default(1)
+                                        ->step('0.01')
+                                        ->rules(['numeric', 'min:0'])
+                                        ->formatStateUsing(fn ($state) => filled($state) ? number_format((float) $state, 2, '.', '') : '0.00')
+                                        ->afterStateHydrated(function ($component, $state) {
+                                            if (filled($state)) {
+                                                $component->state(number_format((float) $state, 2, '.', ''));
+                                            }
+                                        })
+                                        ->default('0.00')
                                         ->live(onBlur: true)
                                         ->afterStateUpdated(function (Set $set, $state, $get) {
-                                            $res = ((float) $state) * ((float) $get('quantity'));
-                                            $res = round($res, 8);
-                                            if ($get('qty_waste_percentage') == 0) {
-                                                $set('total_price_after_waste', $res);
+                                            if (filled($state) && is_numeric($state)) {
+                                                $set('price', number_format((float) $state, 2, '.', ''));
                                             }
-                                            $set('total_price_after_waste', ProductItem::calculateTotalPriceAfterWaste($res, $get('qty_waste_percentage') ?? 0));
-                                            $set('total_price', $res);
+                                            $price = (float) $state;
+                                            $qty = (float) ($get('quantity') ?? 0);
+                                            $res = $price * $qty;
+                                            $waste = (float) ($get('qty_waste_percentage') ?? 0);
+                                            $totalNet = ProductItem::calculateTotalPriceAfterWaste($res, $waste);
+                                            $set('total_price', number_format($res, 2, '.', ''));
+                                            $set('total_price_after_waste', number_format($totalNet, 2, '.', ''));
                                             PRA::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
-                                        })->required()->minValue(0.000000001),
-                                    TextInput::make('total_price')->default(0)
-                                        ->type('text')
+                                        })
+                                        ->dehydrateStateUsing(fn ($state) => filled($state) ? (float) $state : null)
+                                        ->required()
+                                        ->minValue(0.000000001),
+                                    TextInput::make('total_price')
+                                        ->default('0.00')
+                                        ->numeric()
+                                        ->step('0.01')
                                         ->readOnly()
+                                        ->formatStateUsing(fn ($state) => filled($state) ? number_format((float) $state, 2, '.', '') : '0.00')
+                                        ->afterStateHydrated(function ($component, $state) {
+                                            if (filled($state)) {
+                                                $component->state(number_format((float) $state, 2, '.', ''));
+                                            }
+                                        })
+                                        ->dehydrateStateUsing(fn ($state) => filled($state) ? (float) $state : null)
                                         ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
                                         ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;']),
                                     TextInput::make('qty_waste_percentage')
@@ -349,20 +376,29 @@ class ProductsSchema
                                         ->live(onBlur: true)
                                         ->afterStateUpdated(function (Set $set, $state, $get) {
                                             $totalPrice = (float) $get('total_price');
-
-                                            $res = ProductItem::calculateTotalPriceAfterWaste($totalPrice ?? 0, $state ?? 0);
-                                            $res = round($res, 8);
-                                            $set('total_price_after_waste', $res);
+                                            $waste = (float) ($state ?? 0);
+                                            $res = ProductItem::calculateTotalPriceAfterWaste($totalPrice, $waste);
+                                            $set('total_price_after_waste', number_format($res, 2, '.', ''));
                                             $qty = $get('quantity') ?? 0;
                                             if (is_numeric($qty) && $qty > 0) {
-                                                $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($qty, $state ?? 0));
+                                                $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste((float) $qty, $waste));
                                                 PRA::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
                                             }
                                         }),
 
-                                    TextInput::make('total_price_after_waste')->default(0)
-                                        ->type('text')->label('Net Price')
+                                    TextInput::make('total_price_after_waste')
+                                        ->default('0.00')
+                                        ->numeric()
+                                        ->step('0.01')
+                                        ->label('Net Price')
                                         ->readOnly()
+                                        ->formatStateUsing(fn ($state) => filled($state) ? number_format((float) $state, 2, '.', '') : '0.00')
+                                        ->afterStateHydrated(function ($component, $state) {
+                                            if (filled($state)) {
+                                                $component->state(number_format((float) $state, 2, '.', ''));
+                                            }
+                                        })
+                                        ->dehydrateStateUsing(fn ($state) => filled($state) ? (float) $state : null)
                                         ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
                                         ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;']),
                                     Hidden::make('quantity_after_waste'),

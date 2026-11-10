@@ -73,9 +73,9 @@ final class ProductResourceActions
                 'item-default' => [
                     'unit_id'            => null,
                     'package_size'       => 1,
-                    'price_before_waste' => round($totalBeforeWaste, 4),
-                    'price'              => round($totalNetPrice, 4),
-                    'selling_price'      => round($totalNetPrice, 2),
+                    'price_before_waste' => number_format((float) $totalBeforeWaste, 2, '.', ''),
+                    'price'              => number_format((float) $totalNetPrice, 2, '.', ''),
+                    'selling_price'      => number_format((float) $totalNetPrice, 2, '.', ''),
                 ]
             ];
             if ($withOut) {
@@ -103,9 +103,9 @@ final class ProductResourceActions
             $basePriceBeforeWaste = $packageSize * $totalBeforeWaste;
             $updatedUnits[$key] = array_merge($unit, [
                 'package_size'       => 1,
-                'price_before_waste' => round($basePriceBeforeWaste, 4),
-                'price'              => round($basePrice, 4),
-                'selling_price'      => round($basePrice, 2),
+                'price_before_waste' => number_format((float) $basePriceBeforeWaste, 2, '.', ''),
+                'price'              => number_format((float) $basePrice, 2, '.', ''),
+                'selling_price'      => number_format((float) $basePrice, 2, '.', ''),
             ]);
         }
 
