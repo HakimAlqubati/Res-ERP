@@ -133,6 +133,14 @@ class StockInventoryTable
             ], FiltersLayout::Modal)
 
             ->recordActions([
+                \Filament\Actions\Action::make('continue_draft')
+                    ->label(fn () => __('lang.continue_stocktake'))
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('warning')
+                    ->button()
+                    ->visible(fn($record): bool => ! $record->finalized)
+                    ->url(fn($record): string => StockInventoryResource::getUrl('create', ['draft_id' => $record->id])),
+
                 EditAction::make()
                     ->label('Finalize')
                     ->button()

@@ -1268,6 +1268,19 @@ return [
     'invalid_file_type_pdf_only' => 'نوع الملف غير صالح، لا يقبل النظام إلا ملفات بصيغة PDF فقط.',
     'invalid_file_type_title' => 'صيغة غير مسموح بها',
     'smallest_package_size_greater_than_one' => 'لا يمكن أن يكون حجم العبوة (package size) لأصغر وحدة أكبر من 1.',
+
+    // ===========================================
+    // Stock Inventory Pagination & Actions
+    // ===========================================
+    'previous' => 'السابق',
+    'next' => 'التالي',
+    'page' => 'الصفحة',
+    'page_x_of_y' => 'صفحة :page من :total',
+    'start_new_stocktake' => 'بدء جرد جديد',
+    'continue_stocktake' => 'متابعة الجرد',
+    'create_stocktake' => 'إنشاء الجرد',
+    'jump_to_page' => 'الانتقال إلى صفحة',
+    'go' => 'انتقال',
 ];
 
 

@@ -1287,6 +1287,19 @@ return [
     'invalid_file_type_pdf_only' => 'Invalid file type. Only PDF files are allowed.',
     'invalid_file_type_title' => 'Unsupported File Type',
     'smallest_package_size_greater_than_one' => 'The package size for the smallest unit cannot be greater than 1.',
+
+    // ===========================================
+    // Stock Inventory Pagination & Actions
+    // ===========================================
+    'previous' => 'Previous',
+    'next' => 'Next',
+    'page' => 'Page',
+    'page_x_of_y' => 'Page :page of :total',
+    'start_new_stocktake' => 'Start New Stocktake',
+    'continue_stocktake' => 'Continue Stocktake',
+    'create_stocktake' => 'Create Stocktake',
+    'jump_to_page' => 'Jump to Page',
+    'go' => 'Go',
 ];
 
 
