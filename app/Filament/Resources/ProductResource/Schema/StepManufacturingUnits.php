@@ -223,8 +223,8 @@ class StepManufacturingUnits
 
                                 return '0.00';
                             })
-                            ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
-                            ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;']),
+                            ->extraAttributes(['class' => 'bg-readonly-gray'])
+                            ->extraInputAttributes(['class' => 'cursor-not-allowed']),
                         TextInput::make('price')
                             ->prefix(settingWithDefault('currency_symbol', 'RM'))
                             ->numeric()
@@ -251,8 +251,8 @@ class StepManufacturingUnits
                             ->required()
                             ->readOnly()
                             ->dehydrateStateUsing(fn ($state) => filled($state) ? (float) $state : null)
-                            ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
-                            ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;'])
+                            ->extraAttributes(['class' => 'bg-readonly-gray'])
+                            ->extraInputAttributes(['class' => 'cursor-not-allowed'])
                             ->label(__('lang.price')),
                         TextInput::make('selling_price')
                             ->prefix(settingWithDefault('currency_symbol', 'RM'))

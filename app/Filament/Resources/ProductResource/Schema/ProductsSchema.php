@@ -360,8 +360,8 @@ class ProductsSchema
                                             }
                                         })
                                         ->dehydrateStateUsing(fn ($state) => filled($state) ? (float) $state : null)
-                                        ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
-                                        ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;']),
+                                        ->extraAttributes(['class' => 'bg-readonly-gray'])
+                                        ->extraInputAttributes(['class' => 'cursor-not-allowed']),
                                     TextInput::make('qty_waste_percentage')
                                         ->label('Waste %')
                                         ->default(0)
@@ -399,8 +399,8 @@ class ProductsSchema
                                             }
                                         })
                                         ->dehydrateStateUsing(fn ($state) => filled($state) ? (float) $state : null)
-                                        ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
-                                        ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;']),
+                                        ->extraAttributes(['class' => 'bg-readonly-gray'])
+                                        ->extraInputAttributes(['class' => 'cursor-not-allowed']),
                                     Hidden::make('quantity_after_waste'),
                                     // TextInput::make('quantity_after_waste')->default(0)
                                     //     ->type('text')

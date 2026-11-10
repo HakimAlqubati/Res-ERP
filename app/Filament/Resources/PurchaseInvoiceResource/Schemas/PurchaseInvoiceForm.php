@@ -454,8 +454,8 @@ class PurchaseInvoiceForm
                                 })->columnSpan(2)->required(),
                             TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
                                 ->label(__('lang.package_size'))
-                                ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
-                                ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;', 'readonly' => true]),
+                                ->extraAttributes(['class' => 'bg-readonly-gray'])
+                                ->extraInputAttributes(['class' => 'cursor-not-allowed', 'readonly' => true]),
                             TextInput::make('quantity')
                                 ->label(__('lang.quantity'))
 
@@ -492,8 +492,8 @@ class PurchaseInvoiceForm
                             TextInput::make('total_price')->minValue(1)->label('Total Price')
                                 ->numeric()
                                 ->readOnly()
-                                ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
-                                ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;', 'readonly' => true])->columnSpan(1),
+                                ->extraAttributes(['class' => 'bg-readonly-gray'])
+                                ->extraInputAttributes(['class' => 'cursor-not-allowed', 'readonly' => true])->columnSpan(1),
                             TextInput::make('waste_stock_percentage')
                                 ->label(__('lang.waste_stock_percentage'))
                                 ->suffix('%')

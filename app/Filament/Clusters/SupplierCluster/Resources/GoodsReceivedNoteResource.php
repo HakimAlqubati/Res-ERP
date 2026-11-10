@@ -446,8 +446,8 @@ class GoodsReceivedNoteResource extends Resource
                                         ->columnSpan(2)->required(),
                                     TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
                                         ->label(__('lang.package_size'))
-                                        ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
-                                        ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;', 'readonly' => true]),
+                                        ->extraAttributes(['class' => 'bg-readonly-gray'])
+                                        ->extraInputAttributes(['class' => 'cursor-not-allowed', 'readonly' => true]),
                                     TextInput::make('quantity')
                                         ->label(__('lang.quantity'))
                                         ->numeric()
@@ -483,8 +483,8 @@ class GoodsReceivedNoteResource extends Resource
                                     TextInput::make('total_price')
                                         ->label(__('lang.total_price'))
                                         ->readOnly()
-                                        ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
-                                        ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;', 'readonly' => true])
+                                        ->extraAttributes(['class' => 'bg-readonly-gray'])
+                                        ->extraInputAttributes(['class' => 'cursor-not-allowed', 'readonly' => true])
                                         ->numeric()
                                         ->default(0)
                                         ->live(onBlur: true)
@@ -525,11 +525,10 @@ class GoodsReceivedNoteResource extends Resource
                                     ])
                                     ->extraAttributes([
                                         'class' => 'bg-readonly-gray',
-                                        'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed; width: 100%;',
+                                        'style' => 'width: 100%;',
                                     ])
                                     ->extraInputAttributes([
                                         'class' => 'cursor-not-allowed font-bold text-end',
-                                        'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;',
                                         'readonly' => true,
                                     ])
                                     ->prefix(fn() => settingWithDefault('currency_symbol', 'RM'))
