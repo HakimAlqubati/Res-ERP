@@ -17,7 +17,7 @@ trait BranchBootEvents
                 static::addGlobalScope('branch_manager_scope', function ($builder) {
                     // مثال: $builder->where('id', auth()->user()->branch_id);
                 });
-            } elseif (isStuff()) {
+            } elseif ((isStuff() && !(isBranchManager() || isFinanceManager() || isSuperAdmin() || isSystemManager()))) {
                 static::addGlobalScope('stuff_scope', function ($builder) {
                     $builder->whereIn('branches.id', auth()->user()->all_branch_ids);
                 });

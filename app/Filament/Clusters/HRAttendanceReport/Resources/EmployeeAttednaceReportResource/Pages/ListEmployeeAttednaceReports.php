@@ -41,7 +41,9 @@ class ListEmployeeAttednaceReports extends ListRecords
 
     protected function getViewData(): array
     {
-        if (! isStuff()) {
+        if (isBranchManager() || isFinanceManager() || isSuperAdmin() || isSystemManager() || isAccountant() || isHR()
+            || isMaintenanceManager() || isOwner()
+            ) {
             $employee_id = $this->getTable()->getFilters()['employee_id']->getState()['value'];
         } else {
             $employee_id = auth()->user()?->employee?->id;
