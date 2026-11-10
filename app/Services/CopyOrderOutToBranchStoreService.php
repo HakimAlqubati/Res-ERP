@@ -15,7 +15,13 @@ class CopyOrderOutToBranchStoreService
             ? [Order::DELEVIRED]
             : [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED];
 
-        Order::with(['branch.store'])
+        
+    
+        Order::with([
+            'branch.store',
+            'branch.categoryMarkups',
+            'orderDetails:id,order_id,product_id,transfer_markup_percentage',
+        ])
             ->whereIn('status', $allowedStatuses)
             ->whereNull('deleted_at')
             ->when($branchId, function ($q) use ($branchId) {

@@ -6,6 +6,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\RestoreAction;
 use App\Filament\Resources\EmployeeResource;
 use App\Filament\Resources\EmployeeResource\EmployeeActions;
+use App\Filament\Resources\UserResource;
 use App\Models\Employee;
 use Filament\Actions\ViewAction;
 use Filament\Pages\Actions;
@@ -53,6 +54,13 @@ class EditEmployee extends EditRecord
                             ->send();
                     }
                 }),
+                \Filament\Actions\Action::make('show_user_page')
+                ->label(__('User Page'))
+                ->color('gray')
+                ->icon('heroicon-o-user')
+                ->url(fn ($record) => $record->user_id ? UserResource::getUrl('edit', ['record' => $record->user_id]) : null)
+                ->visible(fn ($record) => $record->user_id !== null)
+                ->openUrlInNewTab(),
         ];
     }
 

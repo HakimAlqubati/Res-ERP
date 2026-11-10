@@ -32,23 +32,23 @@ class EmployeeStatementReportResource extends Resource
 
     protected static ?int $navigationSort = 6;
 
-    protected static ?string $pluralLabel = 'Employee Financial Statement';
+    protected static ?string $pluralLabel = 'Staff Financial Statement';
 
-    protected static ?string $pluralModelLabel = 'Employee Financial Statement';
+    protected static ?string $pluralModelLabel = 'Staff Financial Statement';
 
     public static function getModelLabel(): string
     {
-        return __('lang.employee_statement_report') ?: 'Employee Financial Statement';
+        return __('lang.employee_statement_report') ?: 'Staff Financial Statement';
     }
 
     public static function getNavigationLabel(): string
     {
-        return __('lang.employee_statement_report') ?: 'Employee Financial Statement';
+        return __('lang.employee_statement_report') ?: 'Staff Financial Statement';
     }
 
     public static function getPluralLabel(): string
     {
-        return __('lang.employee_statement_report') ?: 'Employee Statement Report';
+        return __('lang.employee_statement_report') ?: 'Staff Financial Statement';
     }
 
     public static function table(Table $table): Table
@@ -62,12 +62,12 @@ class EmployeeStatementReportResource extends Resource
                     ->schema([
                         Select::make('employee_id')
                             ->label(__('lang.employee'))
-                            ->options(fn () => Employee::where('active', 1)
+                            ->options(fn () => Employee::query()
                                 ->limit(10)
                                 ->get()
                                 ->mapWithKeys(fn ($e) => [$e->id => "{$e->name} - {$e->id}"])
                                 ->all())
-                            ->getSearchResultsUsing(fn (string $search) => Employee::where('active', 1)
+                            ->getSearchResultsUsing(fn (string $search) => Employee::query()
                                 ->where(fn ($q) => $q
                                     ->where('name', 'like', "%{$search}%")
                                     ->orWhere('id', 'like', "%{$search}%"))

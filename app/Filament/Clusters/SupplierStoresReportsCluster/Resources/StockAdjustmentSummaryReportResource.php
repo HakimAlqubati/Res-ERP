@@ -75,6 +75,9 @@ class StockAdjustmentSummaryReportResource extends Resource
                     ->label('From Date')
                     ->schema([
                         DatePicker::make('from_date')->maxDate(now())
+                        ->native(false)
+                           ->displayFormat(fn () => settingWithDefault('date_format', 'Y-m-d') ?: 'Y-m-d')
+                           ->format('Y-m-d')
                             ->default(now()),
                     ])
                     ->indicateUsing(function (array $data): ?string {
@@ -85,7 +88,10 @@ class StockAdjustmentSummaryReportResource extends Resource
                     ->label('To Date')
                     ->schema([
                         DatePicker::make('to_date')
-                            // ->maxDate(now())
+                        // ->maxDate(now())
+                           ->native(false)
+                           ->displayFormat(fn () => settingWithDefault('date_format', 'Y-m-d') ?: 'Y-m-d')
+                           ->format('Y-m-d')
                             ->default(now()),
                     ])
                     ->indicateUsing(function (array $data): ?string {

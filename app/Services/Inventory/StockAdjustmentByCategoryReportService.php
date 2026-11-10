@@ -26,6 +26,10 @@ class StockAdjustmentByCategoryReportService
         ?array $categoryIds = null,
         bool $withDetails = false
     ): Collection {
+        // Normalize dates to pure Y-m-d (strip any time part that may come from filter state / defaults)
+        $fromDate = $fromDate ? \Carbon\Carbon::parse($fromDate)->toDateString() : null;
+        $toDate   = $toDate ? \Carbon\Carbon::parse($toDate)->toDateString() : null;
+
         $query = StockAdjustmentDetail::with(['product.category', 'store', 'inventoryTransaction'])
             ->whereHas('inventoryTransaction')
             ->when($adjustmentType, fn($q) => $q->where('adjustment_type', $adjustmentType))

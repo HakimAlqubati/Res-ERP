@@ -63,6 +63,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
         'is_attendance_user',
         'fcm_token',
         'last_seen_at',
+        'can_add_branch_order',
     ];
     protected $auditInclude = [
         'name',
@@ -81,6 +82,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
         'branch_area_id',
         'is_attendance_user',
         'fcm_token',
+        'can_add_branch_order',
     ];
 
     /**
@@ -99,7 +101,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
      * @var array<string, string>
      */
     protected $casts = [
-        'email_verified_at' => 'datetime',
+        'email_verified_at'    => 'datetime',
+        'can_add_branch_order' => 'boolean',
     ];
 
     protected $appends                = [
@@ -175,6 +178,18 @@ class User extends Authenticatable implements FilamentUser, Auditable
             $extraIds,
             $chefIds
         )));
+    }
+
+    /**
+     * التحقق مما إذا كان المستخدم ينتمي لفرع معين (الفرع الأساسي أو الفروع الإضافية)
+     */
+    public function belongsToBranch($branchId): bool
+    {
+        if (empty($branchId)) {
+            return false;
+        }
+
+        return in_array((int) $branchId, array_map('intval', $this->all_branch_ids), true);
     }
 
     /**
@@ -433,7 +448,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
 
     /**
      * التحقق مما إذا كان المستخدم مخولاً بتحويل الطلب إلى delivered
-     * (مدير الفرع مالك الطلبية أو يوزر يتبع للفرع بشكل مباشر عبر الحقل users.branch_id)
+     * (مدير الفرع مالك الطلبية أو يوزر يتبع للفرع بشكل مباشر أو عبر الفروع الإضافية extra branches)
      */
     public function canDeliverOrder(Order $order): bool
     {
@@ -441,8 +456,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
             return true;
         }
 
-        // يتبع الفرع بشكل مباشر عبر الحقل users.branch_id
-        if (!empty($this->branch_id) && (int) $this->branch_id === (int) $order->branch_id) {
+        // يتبع الفرع بشكل مباشر أو عبر الفروع الإضافية (extra branches) ويكون الطلب تابعاً للفرع
+        if (!empty($order->branch_id) && $this->belongsToBranch($order->branch_id)) {
             return true;
         }
 
@@ -705,9 +720,10 @@ class User extends Authenticatable implements FilamentUser, Auditable
                     'employee_no'   => (Employee::withTrashed()->max('id') ?? 0) + 1,
                     'join_date'     => now(),
                     'job_title'     => $data['job_title'] ?? 'New Employee',
-                    'nationality'   => $this->nationality,      // من اليوزر
-                    'manager_id'    => $managerEmployeeId,      // من اليوزر
-                    'employee_type' => $this->user_type,        // من اليوزر
+                    'nationality'          => $this->nationality,      // من اليوزر
+                    'manager_id'           => $managerEmployeeId,      // من اليوزر
+                    'employee_type'        => $this->user_type,        // من اليوزر
+                    'can_add_branch_order' => (bool) ($this->can_add_branch_order ?? false),
                 ]);
 
                 Notification::make()

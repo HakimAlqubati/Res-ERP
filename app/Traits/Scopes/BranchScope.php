@@ -7,20 +7,25 @@ use Illuminate\Database\Eloquent\Builder;
 trait BranchScope
 {
     /**
-     * Scope records by current branch manager
+     * Scope records by current branch manager (or current employee for staff)
      *
      * Usage:
      *   Employee::forBranchManager()->get();
      *   Branch::forBranchManager('id')->get();
+     *   Task::forBranchManager('branch_id', 'assigned_to')->get();
      */
-    public function scopeForBranchManager(Builder $query, string $branchColumn = 'branch_id'): Builder
+    public function scopeForBranchManager(Builder $query, string $branchColumn = 'branch_id', string $employeeColumn = 'employee_id'): Builder
     {
-        if (auth()->check() && (isSuperAdmin() || isSystemManager())) {
+        if (auth()->check() && (isSuperAdmin() || isSystemManager() || isFinanceManager())) {
             return $query;
         }
-        
+
         if (auth()->check() && isBranchManager()) {
             return $query->where($branchColumn, auth()->user()->branch_id);
+        }
+
+        if (auth()->check() && isStuff() && in_array($employeeColumn, $this->getFillable())) {
+            return $query->where($employeeColumn, auth()->user()?->employee?->id);
         }
 
         return $query;

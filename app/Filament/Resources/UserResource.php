@@ -30,6 +30,8 @@ class UserResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-users';
 
+        protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
     public static function getNavigationGroup(): ?string
     {
         return __('lang.user_and_roles');
