@@ -32,7 +32,7 @@ class BranchConsumptionAnalysisService
         $query = DB::table('branches')
             ->leftJoin('orders', function ($join) use ($startDate, $endDate) {
                 $join->on('branches.id', '=', 'orders.branch_id')
-                    ->whereIn('orders.status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
+                    ->whereIn('orders.status', [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])
                     ->whereBetween('orders.created_at', [$startDate, $endDate]);
             })
             ->leftJoin('orders_details', 'orders.id', '=', 'orders_details.order_id')

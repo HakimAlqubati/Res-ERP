@@ -32,17 +32,17 @@ class EmployeeAttednaceReportResource extends Resource
     protected static ?string $cluster = HRAttendanceReport::class;
     public static function getModelLabel(): string
     {
-        return isStuff() ? __('lang.my_attendance') : __('lang.attendance_by_employee');
+        return (isStuff() && !(isBranchManager() || isFinanceManager() || isSuperAdmin() || isSystemManager())) ? __('lang.my_attendance') : __('lang.attendance_by_employee');
     }
 
     public static function getNavigationLabel(): string
     {
-        return isStuff() ? __('lang.my_attendance') : __('lang.attendance_by_employee');
+        return (isStuff() && !(isBranchManager() || isFinanceManager() || isSuperAdmin() || isSystemManager())) ? __('lang.my_attendance') : __('lang.attendance_by_employee');
     }
 
     public static function getPluralLabel(): string
     {
-        return isStuff() ? __('lang.my_attendance') : __('lang.attendance_by_employee');
+        return (isStuff() && !(isBranchManager() || isFinanceManager() || isSuperAdmin() || isSystemManager())) ? __('lang.my_attendance') : __('lang.attendance_by_employee');
     }
 
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
@@ -90,7 +90,7 @@ class EmployeeAttednaceReportResource extends Resource
                         return $employee ? "{$employee->name} - {$employee->id}" : null;
                     })
 
-                    ->hidden(fn() => isStuff() || isMaintenanceManager())
+                    ->hidden(fn() => (isStuff() && !(isBranchManager() || isFinanceManager() || isSuperAdmin() || isSystemManager())) || isMaintenanceManager())
                     ->searchable(),
 
                 Filter::make('date_range')

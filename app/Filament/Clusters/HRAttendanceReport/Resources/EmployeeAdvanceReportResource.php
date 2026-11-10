@@ -25,6 +25,8 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Columns\Summarizers\Summarizer;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
@@ -88,6 +90,7 @@ class EmployeeAdvanceReportResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->selectable()
             ->paginated([10, 25, 50, 100])
             ->defaultPaginationPageOption(50)
             ->emptyStateHeading(__('lang.no_data'))
@@ -144,6 +147,10 @@ class EmployeeAdvanceReportResource extends Resource
                     ->label(__('lang.advance_amount'))
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->sortable()
+                    ->summarize([
+                        Sum::make()->label('')
+                            ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state)),
+                    ])
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('number_of_months_of_deduction')
@@ -153,7 +160,11 @@ class EmployeeAdvanceReportResource extends Resource
 
                 TextColumn::make('monthly_deduction_amount')
                     ->label(__('lang.monthly_deduction'))
-                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state)),
+                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
+                    ->summarize([
+                        Sum::make()->label('')
+                            ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state)),
+                    ]),
 
                 TextColumn::make('paid_installments')
                     ->label(__('lang.paid_installments'))
@@ -171,13 +182,24 @@ class EmployeeAdvanceReportResource extends Resource
                         $dir = strtolower($direction) === 'desc' ? 'desc' : 'asc';
                         return $query->orderByRaw("(advance_amount - remaining_total) {$dir}");
                     })
+                    ->summarize([
+                        Summarizer::make()
+                            ->label('')
+                            ->using(fn (\Illuminate\Database\Query\Builder $query) => formatMoneyWithCurrency(
+                                (float) $query->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(advance_amount, 0) - COALESCE(remaining_total, 0)'))
+                            )),
+                    ])
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('remaining_total')
                     ->label(__('lang.remaining'))
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->alignEnd()
-                    ->color(fn($state) => $state > 0 ? 'danger' : 'success'),
+                    ->color(fn($state) => $state > 0 ? 'danger' : 'success')
+                    ->summarize([
+                        Sum::make()->label('')
+                            ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state)),
+                    ]),
 
                 TextColumn::make('deduction_starts_from')
                     ->label(__('lang.deduction_starts'))

@@ -15,8 +15,8 @@ class HRAttendanceReport extends Cluster
 
     public static function getNavigationLabel(): string
     {
-        if (isStuff()) {
-            return __('lang.my_records');
+        if(isStuff() && !(isBranchManager() || isFinanceManager() || isSuperAdmin() || isSystemManager())){
+            return 'My Records';
         }
         return __('lang.hr_reports_cluster');
     }

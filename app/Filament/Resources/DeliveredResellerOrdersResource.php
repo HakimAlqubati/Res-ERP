@@ -282,6 +282,7 @@ class DeliveredResellerOrdersResource extends Resource
                         'primary',
                         'secondary' => static fn($state): bool => $state === Order::PENDING_APPROVAL,
                         'warning' => static fn($state): bool => $state === Order::READY_FOR_DELEVIRY,
+                        'info' => static fn($state): bool => $state === Order::IN_TRANSIT,
                         'success' => static fn($state): bool => $state === Order::DELEVIRED,
                         'danger' => static fn($state): bool => $state === Order::PROCESSING,
                     ])
@@ -392,7 +393,8 @@ BulkActionGroup::make([
                     // ->requiresConfirmation()
                     ->visible(fn(Order $record): bool => !in_array($record->status, [
                         Order::DELEVIRED,
-                        Order::READY_FOR_DELEVIRY
+                        Order::READY_FOR_DELEVIRY,
+                        Order::IN_TRANSIT,
                     ])),
                 Action::make('approve')
                     ->label(__('Approve'))
@@ -403,6 +405,7 @@ BulkActionGroup::make([
                     ->visible(fn(Order $record): bool => ! in_array($record->status, [
                         Order::DELEVIRED,
                         Order::READY_FOR_DELEVIRY,
+                        Order::IN_TRANSIT,
                     ], true))
                     ->databaseTransaction()
                     ->action(function (Order $record): void {
@@ -414,7 +417,7 @@ BulkActionGroup::make([
                                 ->firstOrFail();
 
                             // تحقق من الحالة
-                            if (in_array($order->status, [Order::DELEVIRED, Order::READY_FOR_DELEVIRY], true)) {
+                            if (in_array($order->status, [Order::DELEVIRED, Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT], true)) {
                                 throw new \Exception(__('The order is already processed.'));
                             }
 

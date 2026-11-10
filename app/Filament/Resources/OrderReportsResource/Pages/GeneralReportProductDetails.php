@@ -103,7 +103,7 @@ FROM (
     AND o.branch_id = :branch_id
     AND p.category_id = :category_id
     AND o.transfer_date BETWEEN :from_date AND :to_date
-    AND o.status IN ('ready_for_delivery', 'delevired')
+    AND o.status IN ('ready_for_delivery', 'in_transit', 'delevired')
 
 ) AS t
 GROUP BY

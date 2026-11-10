@@ -174,3 +174,38 @@ if (!function_exists('isHakim')) {
         ]);
     }
 }
+
+if (!function_exists('canDeliverOrder')) {
+    function canDeliverOrder($order): bool
+    {
+        return auth()->check() && auth()->user()->canDeliverOrder($order);
+    }
+}
+
+if (!function_exists('canReadyForDelivery')) {
+    function canReadyForDelivery($order): bool
+    {
+        return auth()->check() && auth()->user()->canReadyForDelivery($order);
+    }
+}
+
+if (!function_exists('canInTransitOrder')) {
+    function canInTransitOrder($order): bool
+    {
+        return auth()->check() && auth()->user()->canInTransitOrder($order);
+    }
+}
+
+if (!function_exists('canTransitOrder')) {
+    function canTransitOrder($order): bool
+    {
+        return auth()->check() && auth()->user()->canTransitOrder($order);
+    }
+}
+
+if (!function_exists('canApproveOrder')) {
+    function canApproveOrder($order): bool
+    {
+        return auth()->check() && auth()->user()->canApproveOrder($order);
+    }
+}

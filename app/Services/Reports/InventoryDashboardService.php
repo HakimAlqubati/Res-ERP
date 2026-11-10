@@ -35,7 +35,7 @@ class InventoryDashboardService
 
         // ✅ BRANCH ORDERS
         $branchOrders = Order::with('branch')
-            ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
+            ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])
             ->whereDate('created_at', '>=', $startOfMonth)
             ->whereHas('branch', function ($query) {
                 // $query->branches();

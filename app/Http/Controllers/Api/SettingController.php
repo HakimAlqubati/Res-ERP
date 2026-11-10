@@ -13,6 +13,8 @@ class SettingController extends Controller
 {
     public function show(Request $request)
     {
+        $logo = Setting::getSetting('company_logo');
+
         // يمكنك إضافة وسيطات platform/version في المستقبل
         return response()->json([
             // مفاتيح أخرى إن أردت (countdown, screensaver, ovalRxPct, ...)
@@ -23,6 +25,11 @@ class SettingController extends Controller
             'cropScale' => (float) Setting::getSetting('crop_scale', 0.7),
             'showKeypadScreen' => (bool) Setting::getSetting('show_keypad_screen', true),
             'showCameraScreen' => (bool) Setting::getSetting('show_camera_screen', true),
+            'name' => Setting::getSetting('company_name'),
+            'company_name' => Setting::getSetting('company_name'),
+            'address' => Setting::getSetting('address'),
+            'logo' => $logo ? Storage::disk('public')->url($logo) : null,
+            'enableInTransitOrderStatus' => (bool) Setting::getSetting('enable_in_transit_order_status', false),
             'updatedAt' => now()->toIso8601String(),
         ]);
     }

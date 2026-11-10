@@ -35,7 +35,9 @@ class DetailsRelationManager extends RelationManager
             ->recordTitleAttribute('purchase_invoice_id')
             ->columns([
                 // Tables\Columns\TextColumn::make('purchase_invoice_id'),
-                TextColumn::make('product.name')->label(__('lang.product')),
+                TextColumn::make('product.name')->label(__('lang.product'))
+                ->searchable()
+                ,
                 TextColumn::make('unit.name')->label(__('lang.unit')),
                 TextColumn::make('quantity')->label(__('lang.quantity'))->alignCenter(true)
                 // ->summarize(Sum::make())

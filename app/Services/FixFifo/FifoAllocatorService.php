@@ -63,7 +63,7 @@ class FifoAllocatorService
         $orders = DB::table('orders_details as od')
             ->join('orders as o', 'od.order_id', '=', 'o.id')
             ->where('od.product_id', $productId)
-            ->whereIn('o.status', ['ready_for_delivery', 'delevired'])
+            ->whereIn('o.status', ['ready_for_delivery', 'in_transit', 'delevired'])
             ->whereNull('o.deleted_at')
             ->orderBy('o.id') // order matters for FIFO matching
             ->get([

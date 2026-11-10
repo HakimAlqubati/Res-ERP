@@ -17,6 +17,7 @@ class OrderCostAnalysisService
      */
     protected const VALID_STATUSES = [
         Order::READY_FOR_DELEVIRY,
+        Order::IN_TRANSIT,
         Order::DELEVIRED,
     ];
 
