@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\SalaryTransactions\Pages;
 
 use App\Filament\Resources\SalaryTransactions\SalaryTransactionResource;
+use Filament\Actions\DeleteAction;
+
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -14,6 +16,7 @@ class ViewSalaryTransaction extends ViewRecord
     {
         return [
             EditAction::make(),
+            DeleteAction::make()->visible(fn() => SalaryTransactionResource::isUserSuperAdmin()),
         ];
     }
 }

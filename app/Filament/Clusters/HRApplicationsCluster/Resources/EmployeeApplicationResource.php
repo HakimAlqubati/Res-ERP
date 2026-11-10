@@ -70,7 +70,12 @@ class EmployeeApplicationResource extends Resource
 {
     protected static ?string $model = EmployeeApplicationV2::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = Heroicon::PencilSquare;
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::ListBullet;
+
+    protected static ?string $cluster = HRApplicationsCluster::class;
+
+    protected static ?int $navigationSort = 1;
+
     protected ?bool $hasDatabaseTransactions = true;
 
     public static function getModelLabel(): string
@@ -85,7 +90,7 @@ class EmployeeApplicationResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return __('lang.requests');
+        return __('lang.requests_list');
     }
 
     public static function form(Schema $schema): Schema
@@ -814,8 +819,8 @@ class EmployeeApplicationResource extends Resource
             ->color('warning')
             ->icon('heroicon-o-arrow-path')
             ->requiresConfirmation()
-            ->modalHeading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_title' .'id'.'#' . $record->id))
-            ->modalSubheading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_body'))
+            ->modalHeading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_attendance_confirmation_title', ['id' => '#' . $record->id]))
+            ->modalSubheading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_attendance_confirmation_body'))
             ->action(function (EmployeeApplicationV2 $record) {
                 try {
                     app(\App\Services\HR\Applications\EmployeeApplicationService::class)
@@ -840,8 +845,8 @@ class EmployeeApplicationResource extends Resource
             ->color('warning')
             ->icon('heroicon-o-arrow-path')
             ->requiresConfirmation()
-            ->modalHeading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_title' .' id'.'#' . $record->id))
-            ->modalSubheading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_confirmation_body'))
+            ->modalHeading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_departure_confirmation_title', ['id' => '#' . $record->id]))
+            ->modalSubheading(fn(EmployeeApplicationV2 $record) => __('lang.undo_approve_departure_confirmation_body'))
             ->action(function (EmployeeApplicationV2 $record) {
                 try {
                     app(\App\Services\HR\Applications\EmployeeApplicationService::class)
@@ -995,7 +1000,7 @@ class EmployeeApplicationResource extends Resource
             ->form(function ($record) {
                 $details    = $record->missedCheckoutRequest;
                 $attendance = Attendance::where('employee_id', $record?->employee_id)
-                    ->where('check_date', $details->date)
+                    ->where('check_date', $details?->date)
                     ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
                     ->first();
 
@@ -1012,8 +1017,8 @@ class EmployeeApplicationResource extends Resource
                         Hidden::make('period')->default($attendance?->period),
                     ]),
                     Fieldset::make()->disabled(false)->label('Request data')->columns(3)->schema([
-                        DatePicker::make('request_check_date')->default($details->date)->label('Date'),
-                        TimePicker::make('request_check_time')->default($details->time)->label('Time'),
+                        DatePicker::make('request_check_date')->default($details?->date)->label('Date'),
+                        TimePicker::make('request_check_time')->default($details?->time)->label('Time'),
                         static::getSystemNotePlaceholder($record),
                     ]),
 

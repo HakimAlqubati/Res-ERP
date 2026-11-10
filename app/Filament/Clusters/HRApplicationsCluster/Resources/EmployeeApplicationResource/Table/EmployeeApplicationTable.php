@@ -59,6 +59,7 @@ class EmployeeApplicationTable
 
             TextColumn::make('application_date')->toggleable(isToggledHiddenByDefault: true)
                 ->label(__('lang.request_date'))
+                ->date()
                 ->sortable(),
 
             // TextColumn::make('application_type_name')
@@ -141,7 +142,8 @@ class EmployeeApplicationTable
         // أعمدة خاصة بطلب بصمة الحضور (Missed check-in)
         if ($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[2]) {
             $columns[] = TextColumn::make('detail_date')
-                ->label(__('lang.date'));
+                ->label(__('lang.date'))
+                ->date();
 
             $columns[] = TextColumn::make('detail_time')
 
@@ -151,7 +153,8 @@ class EmployeeApplicationTable
         // أعمدة خاصة بطلب بصمة الانصراف (Missed check-out)
         if ($activeTab == EmployeeApplicationV2::APPLICATION_TYPE_NAMES[4]) {
             $columns[] = TextColumn::make('detail_date')
-                ->label(__('lang.date'));
+                ->label(__('lang.date'))
+                ->date();
 
             $columns[] = TextColumn::make('detail_time')
                 ->label(__('lang.time'));
@@ -449,12 +452,32 @@ class EmployeeApplicationTable
                         }
                     }),
                 ]),
-                RestoreAction::make(),
+                RestoreAction::make()
+                    ->after(function (EmployeeApplicationV2 $record) {
+                        match ($record->application_type_id) {
+                            EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST =>
+                                $record->missedCheckinRequest()->withTrashed()->restore(),
+                            EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST =>
+                                $record->missedCheckoutRequest()->withTrashed()->restore(),
+                            EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST =>
+                                $record->mealRequest()->withTrashed()->restore(),
+                            default => null,
+                        };
+                    }),
 
                 ForceDeleteAction::make()->using(function ($record) {
                     DB::beginTransaction();
                     try {
                         $transaction = ApplicationTransaction::where('application_id', $record->id)->whereIn('transaction_type_id', [1, 2, 3, 4])->first();
+                        match ($record->application_type_id) {
+                            EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST =>
+                                $record->missedCheckinRequest()->withTrashed()->forceDelete(),
+                            EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST =>
+                                $record->missedCheckoutRequest()->withTrashed()->forceDelete(),
+                            EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST =>
+                                $record->mealRequest()->withTrashed()->forceDelete(),
+                            default => null,
+                        };
                         $record->forceDelete();
                         if ($transaction) {
                             $transaction->forceDelete();
@@ -575,8 +598,34 @@ class EmployeeApplicationTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    ForceDeleteBulkAction::make(),
-                    RestoreBulkAction::make(),
+                    ForceDeleteBulkAction::make()
+                        ->before(function ($records) {
+                            foreach ($records as $record) {
+                                match ($record->application_type_id) {
+                                    EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST =>
+                                        $record->missedCheckinRequest()->withTrashed()->forceDelete(),
+                                    EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST =>
+                                        $record->missedCheckoutRequest()->withTrashed()->forceDelete(),
+                                    EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST =>
+                                        $record->mealRequest()->withTrashed()->forceDelete(),
+                                    default => null,
+                                };
+                            }
+                        }),
+                    RestoreBulkAction::make()
+                        ->after(function ($records) {
+                            foreach ($records as $record) {
+                                match ($record->application_type_id) {
+                                    EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST =>
+                                        $record->missedCheckinRequest()->withTrashed()->restore(),
+                                    EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST =>
+                                        $record->missedCheckoutRequest()->withTrashed()->restore(),
+                                    EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST =>
+                                        $record->mealRequest()->withTrashed()->restore(),
+                                    default => null,
+                                };
+                            }
+                        }),
                 ]),
             ]);
     }

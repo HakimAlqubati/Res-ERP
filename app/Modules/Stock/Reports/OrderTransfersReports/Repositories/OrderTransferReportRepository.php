@@ -107,12 +107,13 @@ class OrderTransferReportRepository implements OrderTransferReportRepositoryInte
     {
         $components = $this->prepareQueryComponents($dto);
         if (empty($components['store_ids'])) {
-            return ['total_records' => 0, 'grand_total' => 0.0];
+            return ['total_records' => 0, 'grand_total' => 0.0, 'grand_total_quantity' => 0.0];
         }
 
         $sql = "
             SELECT 
                 COUNT(*) AS total_records, 
+                COALESCE(SUM(final_t.remaining_qty_unit), 0) AS grand_total_quantity,
                 COALESCE(SUM(final_t.remaining_value), 0) AS grand_total
             FROM (
                 SELECT 
@@ -140,6 +141,7 @@ class OrderTransferReportRepository implements OrderTransferReportRepositoryInte
         return [
             'total_records' => (int) ($result[0]->total_records ?? 0),
             'grand_total' => (float) ($result[0]->grand_total ?? 0.0),
+            'grand_total_quantity' => (float) ($result[0]->grand_total_quantity ?? 0.0),
         ];
     }
 }

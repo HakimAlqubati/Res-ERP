@@ -48,7 +48,7 @@
                 <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}"></th>
                 <th colspan="{{ $storeId == 'all' ? 3 : 2 }}" class="no_border_right_left text-center">
                     <h3 class="text-lg font-bold">
-                        Products Not Inventoried ({{ $startDate }} - {{ $endDate }})
+                        Products Not Inventoried ({{ formatDate($startDate) }} - {{ formatDate($endDate) }})
                         <br>
                         <span class="text-sm font-normal">Store: {{ $store }}</span>
                     </h3>

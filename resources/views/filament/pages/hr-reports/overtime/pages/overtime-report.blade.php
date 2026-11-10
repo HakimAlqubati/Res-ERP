@@ -283,10 +283,10 @@
                                         @endif
                                     </span>
                                     <span style="font-size: 11px; color: #6b7280; font-weight: 600;">
-                                        {{ __('lang.start_date') }}: {{ $start_date }}
+                                        {{ __('lang.start_date') }}: {{ formatDate($start_date) }}
                                     </span>
                                     <span style="font-size: 11px; color: #6b7280; font-weight: 600;">
-                                        {{ __('lang.end_date') }}: {{ $end_date }}
+                                        {{ __('lang.end_date') }}: {{ formatDate($end_date) }}
                                     </span>
                                     @if($employee)
                                     <span style="font-size: 11px; color: #4b5563; font-weight: 600;">
@@ -359,7 +359,7 @@
                     @if (!$branch_id)
                         <td class="text-left">{{ $item->employee->branch->name ?? '-' }}</td>
                     @endif
-                    <td class="text-center">{{ $item->date }}</td>
+                    <td class="text-center">{{ formatDate($item->date) }}</td>
                     <td class="text-center">{{ $item->start_time ?? '-' }}</td>
                     <td class="text-center">{{ $item->end_time ?? '-' }}</td>
                     <td class="font-bold text-gray-900 text-center">{{ $item->hours_formatted }}</td>

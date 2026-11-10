@@ -261,7 +261,7 @@
                 @if ($show_branch)
                 <td>{{ $data['branch_name'] ?? '' }}</td>
                 @endif
-                <td>{{ $date }}</td>
+                <td>{{ formatDate($date) }}</td>
                 <td colspan="9" class="text-center text-gray-500 font-bold">
                     {{ $data['leave_type'] }}
                 </td>
@@ -302,7 +302,7 @@
                 </td>
                 @endif
                 <td rowspan="{{ count($periods) }}">
-                    {{ $date }}
+                    {{ formatDate($date) }}
                 </td>
                 @endif
 

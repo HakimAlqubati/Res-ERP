@@ -88,9 +88,13 @@ class OvertimeReportResource extends Resource
                     ->schema([
                         DatePicker::make('date_from')
                             ->label(__('lang.start_date'))
+                            ->native(false)
+                            ->displayFormat(getDateFormat())
                             ->default($currentMonthData['start_month']),
                         DatePicker::make('date_to')
                             ->label(__('lang.end_date'))
+                            ->native(false)
+                            ->displayFormat(getDateFormat())
                             ->default($currentMonthData['end_month']),
                     ]),
 

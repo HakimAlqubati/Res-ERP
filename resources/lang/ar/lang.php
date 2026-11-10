@@ -1150,8 +1150,18 @@ return [
   'terminated' => 'موقف',
   'access_denied' => 'ممنوع من الوصول',
   'undo_approve' => 'إلغاء الموافقة',
-  'undo_approve_confirmation_title' => 'إلغاء الموافقة على طلب الإجازة #{id}',
+  'undo_approve_confirmation_title' => 'إلغاء الموافقة على طلب الإجازة :id',
   'undo_approve_confirmation_body' => 'هل أنت متأكد من رغبتك في إلغاء الموافقة على طلب الإجازة هذا؟ لا يمكن التراجع عن هذا الإجراء.',
+  'undo_approve_leave_confirmation_title' => 'إلغاء الموافقة على طلب الإجازة :id',
+  'undo_approve_leave_confirmation_body' => 'هل أنت متأكد من رغبتك في إلغاء الموافقة على طلب الإجازة هذا؟ لا يمكن التراجع عن هذا الإجراء.',
+  'undo_approve_attendance_confirmation_title' => 'إلغاء الموافقة على طلب بصمة الحضور :id',
+  'undo_approve_attendance_confirmation_body' => 'هل أنت متأكد من رغبتك في إلغاء الموافقة على طلب بصمة الحضور هذا؟ لا يمكن التراجع عن هذا الإجراء.',
+  'undo_approve_departure_confirmation_title' => 'إلغاء الموافقة على طلب بصمة الانصراف :id',
+  'undo_approve_departure_confirmation_body' => 'هل أنت متأكد من رغبتك في إلغاء الموافقة على طلب بصمة الانصراف هذا؟ لا يمكن التراجع عن هذا الإجراء.',
+  'shift_start_date' => 'تاريخ بدء الشيفت',
+  'shift_start_date_helper_text' => 'تاريخ سريان الشيفت الجديد للموظف في الفرع الجديد.',
+  'shift_change_must_be_next_day' => 'الموظف لديه تحضير دخول في تاريخ الانتقال (:date). لا يمكن تغيير الشيفت إلا من تاريخ اليوم التالي (:next_day) فصاعداً.',
+  'shift_start_date_cannot_be_before_transfer_date' => 'تاريخ بدء الشيفت لا يمكن أن يكون قبل تاريخ نقل الفرع.',
   'branch_logs_count' => 'عدد سجلات الفروع',
   'attendance_type' => 'نوع التحضير',
   'cannot_process_financial_clearance' => 'لا يمكن إتمام المخالصة المالية. الموظف لديه أقساط سلف غير مدفوعة تبلغ: :amount',
@@ -1218,4 +1228,64 @@ return [
     'one_role_not_valid' => 'أحد الأدوار المحددة غير صالح لنوع المستخدم الحالي.',
     'roles_list_invalid' => 'صيغة قائمة الأدوار غير صالحة.',
     'role_required' => 'يرجى تحديد دور واحد على الأقل.',
+
+    // ===========================================
+    // Employee Advance Installments
+    // ===========================================
+    'original_amount' => 'المبلغ الأصلي',
+    'paid_by' => 'تم الدفع بواسطة',
+    'installment' => 'القسط',
+    'skipped_reason' => 'سبب التخطي',
+    'cancelled_reason' => 'سبب الإلغاء',
+    'scheduled' => 'مجدول',
+    'skipped' => 'تم التخطي',
+    'due_from' => 'مستحق من',
+    'due_to' => 'مستحق إلى',
+    'overdue_only' => 'المتأخر فقط',
+    
+    // ===========================================
+    // Employee Branch Transfer Logs
+    // ===========================================
+    'employee_branch_transfers' => 'تقرير تنقلات الفروع',
+    'employee_branch_transfer' => 'تقرير تنقل فرع',
+    'transferred_to_branch' => 'الفرع المنقول إليه',
+    'previous_branch' => 'الفرع السابق',
+    'transfer_date' => 'تاريخ النقل',
+    'transfer_status' => 'حالة التعيين',
+    'current_active_branch' => 'الفرع الحالي',
+    'past_branches' => 'فروع سابقة',
+    'ongoing_in_branch' => 'مستمر في هذا الفرع',
+
+    // ===========================================
+    // Requests Dashboard
+    // ===========================================
+    'requests_dashboard' => 'لوحة الطلبات',
+    'requests_list' => 'قائمة الطلبات',
+
+    // ===========================================
+    // Purchase Invoices
+    // ===========================================
+    'total_amount_required' => 'حقل إجمالي الفاتورة مطلوب.',
+    'total_amount_must_be_greater_than_zero' => 'يجب أن يكون إجمالي الفاتورة أكبر من صفر نظراً لوجود عناصر في الفاتورة.',
+    'total_amount_mismatch' => 'إجمالي الفاتورة (:total) لا يطابق مجموع تفاصيل العناصر (:sum).',
+    'only_pdf_allowed' => 'يُقبل فقط ملفات بصيغة PDF',
+    'invalid_file_type_pdf_only' => 'نوع الملف غير صالح، لا يقبل النظام إلا ملفات بصيغة PDF فقط.',
+    'invalid_file_type_title' => 'صيغة غير مسموح بها',
+    'smallest_package_size_greater_than_one' => 'لا يمكن أن يكون حجم العبوة (package size) لأصغر وحدة أكبر من 1.',
+
+    // ===========================================
+    // Stock Inventory Pagination & Actions
+    // ===========================================
+    'previous' => 'السابق',
+    'next' => 'التالي',
+    'page' => 'الصفحة',
+    'page_x_of_y' => 'صفحة :page من :total',
+    'start_new_stocktake' => 'بدء جرد جديد',
+    'continue_stocktake' => 'متابعة الجرد',
+    'create_stocktake' => 'إنشاء الجرد',
+    'jump_to_page' => 'الانتقال إلى صفحة',
+    'go' => 'انتقال',
 ];
+
+
+

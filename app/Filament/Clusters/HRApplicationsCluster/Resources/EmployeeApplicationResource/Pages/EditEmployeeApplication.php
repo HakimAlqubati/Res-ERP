@@ -11,6 +11,11 @@ class EditEmployeeApplication extends EditRecord
 {
     protected static string $resource = EmployeeApplicationResource::class;
 
+    public function getSubNavigation(): array
+    {
+        return [];
+    }
+
     protected function getHeaderActions(): array
     {
         return [

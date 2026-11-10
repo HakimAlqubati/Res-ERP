@@ -115,8 +115,8 @@
                             <th colspan="2" class="no_border_right_left text-center">
                                 <h3>{{ __('Financial Category Report') }}</h3>
                                 <p class="text-sm text-gray-600">
-                                    {{ __('From') }}: {{ $filters['start_date'] ?? 'N/A' }} |
-                                    {{ __('To') }}: {{ $filters['end_date'] ?? 'N/A' }}
+                                    {{ __('From') }}: {{ !empty($filters['start_date']) ? formatDate($filters['start_date']) : 'N/A' }} |
+                                    {{ __('To') }}: {{ !empty($filters['end_date']) ? formatDate($filters['end_date']) : 'N/A' }}
                                 </p>
                             </th>
                             <th colspan="3"

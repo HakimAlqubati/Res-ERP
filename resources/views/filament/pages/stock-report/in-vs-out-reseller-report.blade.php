@@ -115,7 +115,7 @@
 
 
                     <th colspan="{{ empty($store) ? 8 : 7 }}" class="text-left text-xl font-bold px-4 py-2">
-                        ({{ $store ?? 'All' }}) To Date {{ $toDate }}
+                        ({{ $store ?? 'All' }}) To Date {{ formatDate($toDate) }}
                     </th>
                 </tr>
                 <tr class="bg-blue-50 text-xs text-gray-700">

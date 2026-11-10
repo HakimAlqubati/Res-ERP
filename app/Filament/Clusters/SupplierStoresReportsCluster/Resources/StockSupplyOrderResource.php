@@ -192,6 +192,7 @@ class StockSupplyOrderResource extends Resource
                     ->color('primary')
                     ->weight(FontWeight::Bold),
                 TextColumn::make('order_date')->sortable()->label('Order Date')
+                    ->date()
                     ->toggleable(),
                 TextColumn::make('store.name')->label('Store')->toggleable()->searchable(),
                 TextColumn::make('item_count')->label('Products Count')->alignCenter(true)->toggleable(),
@@ -199,6 +200,7 @@ class StockSupplyOrderResource extends Resource
                 // IconColumn::make('cancelled')
                 //     ->label('Cancelled')->toggleable(isToggledHiddenByDefault: true)->boolean()->alignCenter(),
                 TextColumn::make('created_at')
+                    ->dateTime()
                     ->label('Created at')->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('creator.name')
                     ->label('Created By')->toggleable(isToggledHiddenByDefault: false)->sortable(),

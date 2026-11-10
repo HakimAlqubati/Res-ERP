@@ -73,9 +73,9 @@ final class ProductResourceActions
                 'item-default' => [
                     'unit_id'            => null,
                     'package_size'       => 1,
-                    'price_before_waste' => round($totalBeforeWaste, 4),
-                    'price'              => round($totalNetPrice, 4),
-                    'selling_price'      => round($totalNetPrice, 2),
+                    'price_before_waste' => number_format((float) $totalBeforeWaste, 2, '.', ''),
+                    'price'              => number_format((float) $totalNetPrice, 2, '.', ''),
+                    'selling_price'      => number_format((float) $totalNetPrice, 2, '.', ''),
                 ]
             ];
             if ($withOut) {
@@ -103,9 +103,9 @@ final class ProductResourceActions
             $basePriceBeforeWaste = $packageSize * $totalBeforeWaste;
             $updatedUnits[$key] = array_merge($unit, [
                 'package_size'       => 1,
-                'price_before_waste' => round($basePriceBeforeWaste, 4),
-                'price'              => round($basePrice, 4),
-                'selling_price'      => round($basePrice, 2),
+                'price_before_waste' => number_format((float) $basePriceBeforeWaste, 2, '.', ''),
+                'price'              => number_format((float) $basePrice, 2, '.', ''),
+                'selling_price'      => number_format((float) $basePrice, 2, '.', ''),
             ]);
         }
 
@@ -244,15 +244,16 @@ final class ProductResourceActions
             }
         }
 
-        // 2️⃣ التأكد أن آخر واحدة فقط = 1
-        if ($packageSizes->last() !== 1.0) {
-            $message = __('⚠️ The last qty per pack must be exactly 1.');
+        // 2️⃣ التأكد أن أصغر وحدة لا يتجاوز حجم عبوتها 1
+        $minPackageSize = $packageSizes->min();
+        if ($minPackageSize !== null && $minPackageSize > 1.0) {
+            $message = __('lang.smallest_package_size_greater_than_one');
             if ($fail) {
-                // $fail($message);
+                $fail($message);
             } else {
-                // showWarningNotifiMessage($message);
+                showWarningNotifiMessage($message);
             }
-            // return;
+            return;
         }
 
         // 3️⃣ ممنوع أكثر من واحدة قيمتها = 1

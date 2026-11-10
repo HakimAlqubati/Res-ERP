@@ -22,7 +22,7 @@
             <td>{{ $transaction->operation === '+' ? 'Addition' : 'Deduction' }}</td>
             <td>{{ number_format($transaction->amount, 2) }}</td>
             <td>{{ $transaction->status }}</td>
-            <td>{{ $transaction->date?->format('Y-m-d') }}</td>
+            <td>{{ formatDate($transaction->date) }}</td>
         </tr>
         @endforeach
         <tr>

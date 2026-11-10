@@ -4,9 +4,7 @@ namespace App\Filament\Resources\FinancialTransactions\Pages;
 
 use App\Filament\Resources\FinancialTransactions\FinancialTransactionResource;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\ForceDeleteAction;
-use Filament\Actions\RestoreAction;
- use Filament\Resources\Pages\ViewRecord;
+use Filament\Resources\Pages\ViewRecord;
 
 class ViewFinancialTransaction extends ViewRecord
 {
@@ -15,8 +13,9 @@ class ViewFinancialTransaction extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-          
+            DeleteAction::make()
+                ->hidden(fn ($record) => $record->reference_type !== null)
+                ->visible(fn () => FinancialTransactionResource::isUserSuperAdmin()),
         ];
     }
- 
 }

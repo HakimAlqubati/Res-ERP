@@ -1,9 +1,12 @@
 <?php 
 namespace App\Filament\Resources\EmployeeResource;
 
+use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Services\HR\EmployeeBranchTransferService;
+use Carbon\Carbon;
+use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
@@ -14,6 +17,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Notifications\Notification;
 
 class EmployeeActions
@@ -29,8 +33,21 @@ class EmployeeActions
             ->fillForm(function(Employee $record): array {
                 $data = $record->load('branchLogs')->toArray();
                 unset($data['branch_id']); // Remove current branch so the select is empty
+
+                $today = now()->toDateString();
+                $hasCheckIn = Attendance::where('employee_id', $record->id)
+                    ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+                    ->whereDate('check_date', $today)
+                    ->exists();
+
+                $data['start_at'] = $today;
+                $data['shift_start_date'] = $hasCheckIn
+                    ? Carbon::parse($today)->addDay()->toDateString()
+                    : $today;
+
                 return $data;
             })
+            ->modalWidth('4xl')
             ->schema([
                 Tabs::make('Tabs')
                     ->columnSpanFull()
@@ -61,6 +78,19 @@ class EmployeeActions
                                             ->label(__('lang.start_date'))
                                             ->default(now())
                                             ->live()
+                                            ->afterStateUpdated(function ($state, Set $set, ?Employee $record) {
+                                                if ($state && $record) {
+                                                    $hasCheckIn = Attendance::where('employee_id', $record->id)
+                                                        ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+                                                        ->whereDate('check_date', $state)
+                                                        ->exists();
+                                                    if ($hasCheckIn) {
+                                                        $set('shift_start_date', Carbon::parse($state)->addDay()->toDateString());
+                                                    } else {
+                                                        $set('shift_start_date', $state);
+                                                    }
+                                                }
+                                            })
                                             ->required(),
                                         DatePicker::make('end_at')
                                             ->label(__('lang.end_date')),
@@ -68,6 +98,54 @@ class EmployeeActions
                                 \Filament\Schemas\Components\Section::make(__('lang.assign_shifts') ?? 'Assign Shifts')
                                     ->description(__('lang.assign_shifts_description') ?? 'You can assign new shifts for this branch. If left empty, the employee will have no shift.')
                                     ->schema([
+                                        DatePicker::make('shift_start_date')
+                                            ->label(__('lang.shift_start_date'))
+                                            ->default(function (Get $get, ?Employee $record) {
+                                                $startAt = $get('start_at') ?? now()->toDateString();
+                                                if (!$record) {
+                                                    return $startAt;
+                                                }
+                                                $hasCheckIn = Attendance::where('employee_id', $record->id)
+                                                    ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+                                                    ->whereDate('check_date', $startAt)
+                                                    ->exists();
+                                                return $hasCheckIn ? Carbon::parse($startAt)->addDay()->toDateString() : $startAt;
+                                            })
+                                            ->required(fn(Get $get) => !empty($get('periods')))
+                                            ->live()
+                                            ->rules([
+                                                fn(Get $get, Employee $record) => function (string $attribute, $value, Closure $fail) use ($get, $record) {
+                                                    if (!$value) {
+                                                        return;
+                                                    }
+
+                                                    $transferDate = $get('start_at');
+                                                    if (!$transferDate) {
+                                                        return;
+                                                    }
+
+                                                    if (Carbon::parse($value)->lt(Carbon::parse($transferDate))) {
+                                                        $fail(__('lang.shift_start_date_cannot_be_before_transfer_date'));
+                                                        return;
+                                                    }
+
+                                                    $hasCheckIn = Attendance::where('employee_id', $record->id)
+                                                        ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+                                                        ->whereDate('check_date', $transferDate)
+                                                        ->exists();
+
+                                                    if ($hasCheckIn) {
+                                                        $nextDay = Carbon::parse($transferDate)->addDay()->toDateString();
+                                                        if (Carbon::parse($value)->lt(Carbon::parse($nextDay))) {
+                                                            $fail(__('lang.shift_change_must_be_next_day', [
+                                                                'date' => Carbon::parse($transferDate)->toDateString(),
+                                                                'next_day' => $nextDay,
+                                                            ]));
+                                                        }
+                                                    }
+                                                }
+                                            ])
+                                            ->helperText(__('lang.shift_start_date_helper_text')),
                                         \Filament\Forms\Components\ToggleButtons::make('periods')
                                             ->label('Work Periods')
                                             ->columns(3)->multiple()
@@ -130,17 +208,22 @@ class EmployeeActions
                     ])
             ])
             ->action(function (array $data, Employee $record) {
+                $shiftStartDate = !empty($data['periods'])
+                    ? ($data['shift_start_date'] ?? $data['start_at'])
+                    : $data['start_at'];
+
                 app(EmployeeBranchTransferService::class)->execute(
                     employee: $record,
                     newBranchId: (int) $data['branch_id'],
                     startAt: $data['start_at'],
                     endAt: $data['end_at'] ?? null,
+                    shiftStartDate: $shiftStartDate,
                 );
 
                 if (!empty($data['periods']) && !empty($data['period_days'])) {
                     try {
                         $shiftData = [
-                            'start_date' => $data['start_at'],
+                            'start_date' => $shiftStartDate,
                             'end_date' => $data['end_at'] ?? null,
                             'periods' => $data['periods'],
                             'period_days' => $data['period_days'],

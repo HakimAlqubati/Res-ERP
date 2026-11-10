@@ -21,6 +21,11 @@ class CreateEmployeeApplication extends CreateRecord
     protected ?bool $hasDatabaseTransactions = true;
     protected static string $resource = EmployeeApplicationResource::class;
 
+    public function getSubNavigation(): array
+    {
+        return [];
+    }
+
 
     public function create(bool $another = false): void
     {

@@ -92,9 +92,11 @@ class TransferOrderResource extends Resource
                     ,
                 TextColumn::make('transfer_date')
                     ->label(__('lang.transfer_date'))
+                    ->dateTime()
                     ->sortable(),
                 TextColumn::make('created_at')
                     ->label(__('lang.created_at'))
+                    ->dateTime()
                     ->sortable(),
                 // TextColumn::make('recorded'),
                 // TextColumn::make('orderDetails'),

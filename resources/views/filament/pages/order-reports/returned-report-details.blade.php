@@ -3,7 +3,7 @@
     <div class="mb-6 p-6 rounded-lg shadow bg-white border border-gray-200">
         <h2 class="text-2xl font-bold mb-4 text-primary-700">🧾 Returned Order #{{ $order->id }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
-            <p><span class="font-semibold"> Date:</span> {{ $order->returned_date->format('Y-m-d') }}</p>
+            <p><span class="font-semibold"> Date:</span> {{ formatDate($order->returned_date) }}</p>
             <p><span class="font-semibold"> Branch:</span> {{ $order->branch->name ?? '-' }}</p>
             <p><span class="font-semibold"> Store:</span> {{ $order->store->name ?? '-' }}</p>
             <p><span class="font-semibold"> Created By:</span> {{ $order->creator->name ?? '-' }}</p>

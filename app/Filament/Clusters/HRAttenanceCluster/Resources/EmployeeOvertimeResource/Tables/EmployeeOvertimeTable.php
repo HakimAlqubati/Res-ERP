@@ -82,6 +82,7 @@ class EmployeeOvertimeTable
 
                 TextColumn::make('date')
                     ->label('Date')
+                    ->date(getDateFormat())
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
 
@@ -127,8 +128,10 @@ class EmployeeOvertimeTable
                     ->label('Approved by')
                     ->wrap()->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('approved_at')->wrap()
+                    ->dateTime(getDateFormat() . ' H:i')
                     ->label('Approved at')->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('created_at')->wrap()
+                    ->dateTime(getDateFormat() . ' H:i')
                     ->label('Created at')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('rejectedBy.name')
                     ->label('Rejected by')
@@ -159,9 +162,13 @@ class EmployeeOvertimeTable
                     ->schema([
                         DatePicker::make('created_from')
                             ->label('From')->default(null)
+                            ->native(false)
+                            ->displayFormat(getDateFormat())
                             ->placeholder('From'),
                         DatePicker::make('created_until')
                             ->label('To')
+                            ->native(false)
+                            ->displayFormat(getDateFormat())
                             ->placeholder('To')->default(null),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
@@ -245,7 +252,7 @@ class EmployeeOvertimeTable
                         if ($record->status == EmployeeOvertime::STATUS_APPROVED) {
                             return true;
                         }
-                        if (isSuperAdmin()) {
+                        if (static::canManageOvertime()) {
                             return false;
                         }
                         return true;
@@ -282,7 +289,7 @@ class EmployeeOvertimeTable
                         // if ($record->approved == 1) {
                         //     return true;
                         // }
-                        if (isSuperAdmin() || isBranchManager() || isSystemManager() || isHR()) {
+                        if (static::canManageOvertime()) {
                             return false;
                         }
                         return true;
@@ -340,12 +347,27 @@ class EmployeeOvertimeTable
                                 Notification::make()->title(__('Faild'))->body($e->getMessage())->danger()->send();
                             }
                         })
-                        ->hidden(function () {
-                            if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
-                                return false;
+                        ->hidden(fn () => !static::canManageOvertime()),
+                    BulkAction::make('Reject')
+                        ->requiresConfirmation()
+                        ->color('danger')
+                        ->icon('heroicon-o-x-mark')
+                        ->action(function (Collection $records) {
+                            try {
+                                DB::transaction(function () use ($records) {
+                                    $records->filter(fn($r) => $r->status !== EmployeeOvertime::STATUS_APPROVED)
+                                        ->each->update([
+                                            'status' => EmployeeOvertime::STATUS_REJECTED,
+                                            'rejected_by' => auth()->id(),
+                                            'rejected_at' => now(),
+                                        ]);
+                                });
+                                Notification::make()->title(__('Done'))->success()->send();
+                            } catch (\Throwable $e) {
+                                Notification::make()->title(__('Faild'))->body($e->getMessage())->danger()->send();
                             }
-                            return true;
-                        }),
+                        })
+                        ->hidden(fn () => !static::canManageOvertime()),
                     BulkAction::make('Revoke approved')
                         ->requiresConfirmation()
                         ->icon('heroicon-o-x-mark')
@@ -357,12 +379,7 @@ class EmployeeOvertimeTable
                                 Notification::make()->title(__('Faild'))->body($e->getMessage())->danger()->send();
                             }
                         })
-                        ->hidden(function () {
-                            if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
-                                return false;
-                            }
-                            return true;
-                        }),
+                        ->hidden(fn () => !static::canManageOvertime()),
                     BulkAction::make('Revoke rejected')
                         ->requiresConfirmation()
                         ->icon('heroicon-o-arrow-uturn-left')
@@ -374,13 +391,20 @@ class EmployeeOvertimeTable
                                 Notification::make()->title(__('Faild'))->body($e->getMessage())->danger()->send();
                             }
                         })
-                        ->hidden(function () {
-                            if (isSuperAdmin()) {
-                                return false;
-                            }
-                            return true;
-                        }),
+                        ->hidden(fn () => !static::canManageOvertime()),
                 ]),
             ]);
+    }
+
+    /**
+     * Check if the authenticated user has permission to approve/reject overtime
+     */
+    public static function canManageOvertime(): bool
+    {
+        return isSuperAdmin()
+            || isBranchManager()
+            || isSystemManager()
+            || isOpsManager()
+            || isHR();
     }
 }

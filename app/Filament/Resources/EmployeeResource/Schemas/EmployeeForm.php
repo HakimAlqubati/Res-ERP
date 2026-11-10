@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\EmployeeResource\Schemas;
 
-use App\Enums\HR\Payroll\SalaryAllocationRule;
 use App\Filament\Forms\Components\PhoneInput;
 use App\Models\Allowance;
 use App\Models\Branch;
@@ -21,6 +20,7 @@ use Carbon\Carbon;
 use Closure;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
@@ -483,13 +483,6 @@ class EmployeeForm
                                                         || isSystemManager())
                                                 )
                                                 ->hidden(fn (string $operation) => isHR() && $operation !== 'create'),
-
-                                            Select::make('salary_allocation_rule')
-                                                ->label(__('Salary Allocation Override (Branch Transfers)'))
-                                                ->helperText(__('Overrides the default system rule for this specific employee when transferred between branches.'))
-                                                ->options(SalaryAllocationRule::class)
-                                                ->placeholder(__('Use System Default')) // Fallback to system general setting
-                                                ->columnSpan(1),
 
                                             TextInput::make('tax_identification_number')
                                                 ->label(__('lang.tax_identification_number'))->required()

@@ -45,7 +45,7 @@ class PosSalesTable
 
                 TextColumn::make('formatted_sale_date')
                     ->label('Sale Date')
-                    ->dateTime('Y-m-d H:i')
+                    ->dateTime()
                     ->sortable(),
 
                 TextColumn::make('branch.name')

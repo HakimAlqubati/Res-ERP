@@ -29,6 +29,11 @@ class OrderCostAnalysisService
      */
     public function getOrderValues(int $orderId): array
     {
+        $cacheKey = "order_cost_analysis_{$orderId}";
+        if (cache()->has($cacheKey)) {
+            return cache()->get($cacheKey);
+        }
+
         // 1. استرجاع الطلب مع تحميل علاقة الفرع ومخزن الفرع
         $order = Order::query()
             ->where('id', $orderId)
@@ -127,7 +132,7 @@ class OrderCostAnalysisService
 
 
         // 5. إرجاع النتائج
-        return [
+        $result = [
             'order_id' => $orderId,
             'status' => $order->status,
             'branch_store_id' => $branchStoreId,
@@ -137,6 +142,12 @@ class OrderCostAnalysisService
             'message' => 'Analysis complete.',
             'notes' => $notes,
         ];
+
+        if ($order->status === Order::DELEVIRED) {
+            cache()->put($cacheKey, $result, now()->addDays(7));
+        }
+
+        return $result;
     }
 
     /**

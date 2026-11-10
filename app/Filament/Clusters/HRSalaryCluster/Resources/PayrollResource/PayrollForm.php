@@ -17,6 +17,12 @@ use Filament\Schemas\Components\Fieldset;
 use App\Models\EmployeeBranchLog;
 use App\Modules\HR\EmployeeApplications\Checker\MonthlyPendingApplicationChecker;
 use Carbon\Carbon;
+use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeResource;
+use App\Filament\Clusters\HRSalaryCluster\Resources\EmployeeRewards\EmployeeRewardResource;
+use App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource;
+use App\Filament\Clusters\HRSalaryCluster\Resources\PenaltyDeductionResource;
+use App\Filament\Resources\AdvanceWages\AdvanceWageResource;
 
 class PayrollForm
 {
@@ -63,7 +69,7 @@ class PayrollForm
                         ");
                     }),
                 Placeholder::make('pending_applications_warning')
-                    ->label('Pending Requests Warning')
+                    ->label(__('Pending Requests Warning'))
                     ->columnSpan(3)
                     ->visible(fn (Get $get) => filled($get('branch_id')) && self::hasPendingApplications($get))
                     ->content(function (Get $get) {
@@ -72,16 +78,33 @@ class PayrollForm
                             return null;
                         }
                         
-                        $breakdownList = implode('', array_map(fn($item) => '<li>' . e($item['type']) . ': ' . e($item['count']) . '</li>', $summary['breakdown']));
+                        $branchId = $get('branch_id');
+                        $breakdownList = implode('', array_map(function ($item) use ($branchId) {
+                            $typeName = e($item['type']);
+                            $count = e($item['count']);
+                            $url = self::getPendingRequestTypeUrl($item['type'], $branchId);
+
+                            if ($url) {
+                                $link = "<a href='{$url}' target='_blank' rel='noopener noreferrer' class='underline font-semibold hover:opacity-80'>{$typeName}</a>";
+                            } else {
+                                $link = "<span class='font-semibold'>{$typeName}</span>";
+                            }
+
+                            return "<li>{$link}: {$count}</li>";
+                        }, $summary['breakdown']));
                         
                         return new \Illuminate\Support\HtmlString("
                             <style>
-                                .payroll-pending-warning { border: 1px solid #fecaca; }
+                                .payroll-pending-warning { border: 1px solid #fecaca; background-color: #fef2f2; }
                                 .payroll-pending-warning h3 { color: #991b1b; }
                                 .payroll-pending-warning ul { color: #b91c1c; }
-                                .dark .payroll-pending-warning { border-color: rgba(127, 29, 29, 0.5); }
+                                .payroll-pending-warning a { color: inherit; text-decoration: underline; font-weight: 600; }
+                                .payroll-pending-warning a:hover { color: #7f1d1d; opacity: 0.8; }
+                                .dark .payroll-pending-warning { border-color: rgba(127, 29, 29, 0.5); background-color: rgba(127, 29, 29, 0.15); }
                                 .dark .payroll-pending-warning h3 { color: #fca5a5; }
                                 .dark .payroll-pending-warning ul { color: #f87171; }
+                                .dark .payroll-pending-warning a { color: #fca5a5; }
+                                .dark .payroll-pending-warning a:hover { color: #ffffff; }
                             </style>
                             <div class='p-4 rounded-lg payroll-pending-warning mt-4'>
                                 <h3 class='text-sm font-semibold'>
@@ -281,6 +304,84 @@ class PayrollForm
     {
         $summary = self::getPendingApplicationsSummary($get);
         return $summary['has_pending'] ?? false;
+    }
+
+    public static function getPendingRequestTypeUrl(string $type, $branchId = null): ?string
+    {
+        try {
+            return match ($type) {
+                'Leave request', __('lang.leave_request') => EmployeeApplicationResource::getUrl('index', array_filter([
+                    'tab' => 'Leave request',
+                    'tableFilters' => array_filter([
+                        'status' => ['value' => 'pending'],
+                        'branch_id' => $branchId ? ['value' => $branchId] : null,
+                    ]),
+                ])),
+                'Missed check-in', __('lang.missed_checkin_request') => EmployeeApplicationResource::getUrl('index', array_filter([
+                    'tab' => 'Missed check-in',
+                    'tableFilters' => array_filter([
+                        'status' => ['value' => 'pending'],
+                        'branch_id' => $branchId ? ['value' => $branchId] : null,
+                    ]),
+                ])),
+                'Missed check-out', __('lang.missed_checkout_request') => EmployeeApplicationResource::getUrl('index', array_filter([
+                    'tab' => 'Missed check-out',
+                    'tableFilters' => array_filter([
+                        'status' => ['value' => 'pending'],
+                        'branch_id' => $branchId ? ['value' => $branchId] : null,
+                    ]),
+                ])),
+                'Advance request', __('lang.advance_request') => EmployeeApplicationResource::getUrl('index', array_filter([
+                    'tab' => 'Advance request',
+                    'tableFilters' => array_filter([
+                        'status' => ['value' => 'pending'],
+                        'branch_id' => $branchId ? ['value' => $branchId] : null,
+                    ]),
+                ])),
+                'Expense advance', __('lang.employee_meals_request') => EmployeeApplicationResource::getUrl('index', array_filter([
+                    'tab' => 'Expense advance',
+                    'tableFilters' => array_filter([
+                        'status' => ['value' => 'pending'],
+                        'branch_id' => $branchId ? ['value' => $branchId] : null,
+                    ]),
+                ])),
+                'Advance Finance Manager Pending' => EmployeeApplicationResource::getUrl('index', array_filter([
+                    'tab' => 'Advance request',
+                    'tableFilters' => array_filter([
+                        'branch_id' => $branchId ? ['value' => $branchId] : null,
+                    ]),
+                ])),
+                'Advance Wage' => AdvanceWageResource::getUrl('index', [
+                    'tableFilters' => [
+                        'status' => ['value' => 'pending'],
+                    ],
+                ]),
+                'Overtime', __('lang.overtime') => EmployeeOvertimeResource::getUrl('index', array_filter([
+                    'tableFilters' => array_filter([
+                        'status' => ['values' => ['pending']],
+                        'branch_id' => $branchId ? ['values' => [(string) $branchId]] : null,
+                    ]),
+                ])),
+                'Employee Reward' => EmployeeRewardResource::getUrl('index', [
+                    'tableFilters' => [
+                        'status' => ['value' => 'pending'],
+                    ],
+                ]),
+                'Penalty Deduction' => PenaltyDeductionResource::getUrl('index', [
+                    'tableFilters' => [
+                        'status' => ['value' => 'pending'],
+                    ],
+                ]),
+                'Unpaid Previous Payroll' => PayrollResource::getUrl('index', array_filter([
+                    'tableFilters' => array_filter([
+                        'branch_id' => $branchId ? ['value' => $branchId] : null,
+                    ]),
+                ])),
+                default => null,
+            };
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     private static function getZeroSalaryEmployees(Get $get): array

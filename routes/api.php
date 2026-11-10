@@ -356,9 +356,7 @@ require base_path('routes/custom_api_test.php');
 
 
 
-Route::get('/stores', [StoreController::class, 'index'])
-->middleware('auth:api')
-;
+Route::get('/stores', [StoreController::class, 'index']);
 // Route::get('/products', fn() => \App\Models\Product::select('id', 'name')->get());
 // Route::post('/stock-inventory', function(\Illuminate\Http\Request $request) {
 // من هنا تحفظ البيانات في جدول StockInventory وتعيد رسالة نجاح

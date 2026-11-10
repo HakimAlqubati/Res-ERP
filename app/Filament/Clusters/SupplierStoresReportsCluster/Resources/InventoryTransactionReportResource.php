@@ -16,6 +16,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class InventoryTransactionReportResource extends Resource
 {
@@ -125,5 +126,48 @@ class InventoryTransactionReportResource extends Resource
         }
 
         return false;
+    }
+
+    public static function isUserSuperAdmin(): bool
+    {
+        if (! auth()->check()) {
+            return false;
+        }
+
+        $user = auth()->user();
+
+        return $user->roles->contains('id', 1)
+            || $user->hasRole('super_admin')
+            || $user->isSuperAdmin();
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return static::isUserSuperAdmin();
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return static::isUserSuperAdmin();
+    }
+
+    public static function canForceDelete(Model $record): bool
+    {
+        return false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        return false;
+    }
+
+    public static function canRestore(Model $record): bool
+    {
+        return static::isUserSuperAdmin();
+    }
+
+    public static function canRestoreAny(): bool
+    {
+        return static::isUserSuperAdmin();
     }
 }

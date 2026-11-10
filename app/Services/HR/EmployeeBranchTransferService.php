@@ -181,32 +181,47 @@ class EmployeeBranchTransferService
         Employee $employee,
         int      $newBranchId,
         string   $startAt,
-        ?string  $endAt = null
+        ?string  $endAt = null,
+        ?string  $shiftStartDate = null
     ): void {
-        DB::transaction(function () use ($employee, $newBranchId, $startAt, $endAt) {
+        DB::transaction(function () use ($employee, $newBranchId, $startAt, $endAt, $shiftStartDate) {
 
-            $closureDate = Carbon::parse($startAt)->subDay()->toDateString();
+            $branchClosureDate = Carbon::parse($startAt)->subDay()->toDateString();
+            $shiftStart = $shiftStartDate ? Carbon::parse($shiftStartDate) : Carbon::parse($startAt);
+            $shiftClosureDate = $shiftStart->copy()->subDay()->toDateString();
 
-            // dd($newBranchId,$startAt,$endAt,$closureDate);
-            // ① حذف سجلات الفترات الحالية (hr_employee_periods) — الأساس
-            $employee->employeePeriods()->delete();
+            // ① معالجة سجلات الفترات الحالية (hr_employee_periods)
+            if ($shiftStart->gt(Carbon::parse($startAt))) {
+                $employee->employeePeriods()
+                    ->where('start_date', '>', $shiftClosureDate)
+                    ->delete();
+
+                $employee->employeePeriods()
+                    ->where('start_date', '<=', $shiftClosureDate)
+                    ->where(function ($q) use ($shiftClosureDate) {
+                        $q->whereNull('end_date')->orWhere('end_date', '>', $shiftClosureDate);
+                    })
+                    ->update(['end_date' => $shiftClosureDate]);
+            } else {
+                $employee->employeePeriods()->delete();
+            }
 
             // ② تجميد سجلات التاريخ النشطة (Snapshot + إغلاق end_date)
             $employee->periodHistories()
-                ->where(function ($q) use ($startAt) {
+                ->where(function ($q) use ($shiftStart) {
                     $q->whereNull('end_date')
-                        ->orWhere('end_date', '>=', $startAt);
+                        ->orWhere('end_date', '>=', $shiftStart->toDateString());
                 })
                 ->update([
                     'branch_id'  => $employee->branch_id, // Snapshot للفرع القديم
-                    'end_date'   => $closureDate,
+                    'end_date'   => $shiftClosureDate,
                     'updated_by' => Auth::id(),
                 ]);
 
             // ③ إغلاق سجل الفرع المفتوح
             $openLog = $employee->branchLogs()->whereNull('end_at')->first();
             if ($openLog) {
-                $finalEndAt = Carbon::parse($closureDate);
+                $finalEndAt = Carbon::parse($branchClosureDate);
                 $logStartAt = Carbon::parse($openLog->start_at);
 
                 // التأكد من أن تاريخ النهاية لا يقل عن تاريخ البداية

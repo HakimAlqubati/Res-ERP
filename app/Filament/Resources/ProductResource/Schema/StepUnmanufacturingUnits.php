@@ -36,6 +36,18 @@ class StepUnmanufacturingUnits
                     ->columnSpanFull()->minItems(1)
                     ->collapsible()->defaultItems(0)
                     ->relationship('allUnitPrices')
+                    ->mutateRelationshipDataBeforeFillUsing(function (array $data): array {
+                        if (isset($data['price']) && $data['price'] !== '') {
+                            $data['price'] = number_format((float) $data['price'], 2, '.', '');
+                        }
+                        if (isset($data['price_before_waste']) && $data['price_before_waste'] !== '') {
+                            $data['price_before_waste'] = number_format((float) $data['price_before_waste'], 2, '.', '');
+                        }
+                        if (isset($data['selling_price']) && $data['selling_price'] !== '') {
+                            $data['selling_price'] = number_format((float) $data['selling_price'], 2, '.', '');
+                        }
+                        return $data;
+                    })
                     ->table([
                         TableColumn::make(__('lang.unit'))->alignCenter()->width('14rem'),
                         TableColumn::make(__('lang.price'))->alignCenter()->width('18rem'),
@@ -46,7 +58,7 @@ class StepUnmanufacturingUnits
                     ->rules(function (Get $get, callable $livewire) {
                         return [
                             function (string $attribute, $value, Closure $fail) use ($get) {
-                                $units = $get('units') ?? [];
+                                $units = (is_array($value) && !empty($value)) ? $value : ($get('units') ?? []);
 
                                 // validation مع رسالة رسمية
                                 PRA::validateUnitsPackageSizeOrder($units, $fail);
@@ -84,7 +96,11 @@ class StepUnmanufacturingUnits
                             }),
                         TextInput::make('price')
                             ->prefix(settingWithDefault('currency_symbol', 'RM'))
-                            ->numeric()->default(1)->required()
+                            ->numeric()
+                            ->step('0.01')
+                            ->rules(['numeric', 'min:0'])
+                            ->formatStateUsing(fn ($state) => filled($state) ? number_format((float) $state, 2, '.', '') : '0.00')
+                            ->default('0.00')
                             ->label(__('lang.price'))
                             ->disabled(function (callable $get, $livewire, $record) {
                                 $isNew = is_null($get('id'));
@@ -95,7 +111,11 @@ class StepUnmanufacturingUnits
                             })
                             ->live(onBlur: true)
 
-                            ->afterStateHydrated(function (Set $set, Get $get) {
+                            ->afterStateHydrated(function (Set $set, Get $get, $state) {
+                                if (filled($state)) {
+                                    $set('price', number_format((float) $state, 2, '.', ''));
+                                    return;
+                                }
                                 $units = $get('../../units') ?? [];
 
                                 // نحاول نجيب بيانات هذا الصف الحالي
@@ -119,11 +139,14 @@ class StepUnmanufacturingUnits
                                 $firstPrice = $units[0]['price'] ?? null;
 
                                 if ($firstPrice && $currentPackageSize && $currentPackageSize != 0) {
-                                    $set('price', round($firstPrice / $currentPackageSize, 8));
+                                    $set('price', number_format((float) ($firstPrice / $currentPackageSize), 2, '.', ''));
                                 }
                             })
 
                             ->afterStateUpdated(function (Set $set, $state, $get) {
+                                if (filled($state) && is_numeric($state)) {
+                                    $set('price', number_format((float) $state, 2, '.', ''));
+                                }
                                 $units = $get('../../units') ?? [];
                                 if (count($units) < 2) {
                                     return; // لازم يكون فيه أكثر من وحدة عشان نوزع الأسعار
@@ -135,7 +158,7 @@ class StepUnmanufacturingUnits
                                 }
 
                                 $firstPackageSize = $firstUnit['package_size'] ?? null;
-                                $firstPrice       = $firstUnit['price'] ?? null;
+                                $firstPrice       = (float) ($firstUnit['price'] ?? 0);
 
                                 if (! $firstPackageSize || ! $firstPrice) {
                                     return;
@@ -145,14 +168,16 @@ class StepUnmanufacturingUnits
 
                                 foreach ($unitsArray as $index => $unit) {
                                     if ($index === 0) {
-                                        $newUnits[] = $unit; // أول وحدة السعر ثابت (الي عدله المستخدم)
+                                        $newUnits[] = array_merge($unit, [
+                                            'price' => number_format((float) ($unit['price'] ?? 0), 2, '.', ''),
+                                        ]);
                                         continue;
                                     }
 
                                     $currentPackageSize = $unit['package_size'] ?? 1;
 
                                     // 🧮 الحساب:
-                                    $newPrice = round($firstPrice * ($currentPackageSize / $firstPackageSize), 8);
+                                    $newPrice = number_format((float) ($firstPrice * ($currentPackageSize / $firstPackageSize)), 2, '.', '');
 
                                     $newUnits[] = array_merge($unit, [
                                         'price' => $newPrice,
@@ -164,7 +189,9 @@ class StepUnmanufacturingUnits
                                 $updatedUnits = array_combine($originalKeys, $newUnits);
 
                                 $set('../../units', $updatedUnits);
-                            })->minValue(0),
+                            })
+                            ->dehydrateStateUsing(fn ($state) => filled($state) ? (float) $state : null)
+                            ->required(),
                         TextInput::make('package_size')
 
                             ->numeric()->default(0)->required()->minValue(0.00000001)
@@ -199,7 +226,8 @@ class StepUnmanufacturingUnits
                                 $firstPackageSize = $firstUnit['package_size'] ?? null;
 
                                 if ($firstPrice && $state != 0) {
-                                    $set('price', round(($firstPrice / $firstPackageSize) * $state, 8));
+                                    $calculatedPrice = ($firstPrice / $firstPackageSize) * $state;
+                                    $set('price', number_format((float) $calculatedPrice, 2, '.', ''));
                                 }
                             })->disabled(function (callable $get, $livewire, $record) {
                                 $isNew = is_null($get('id'));

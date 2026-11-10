@@ -35,6 +35,18 @@ class EditPurchaseInvoice extends EditRecord
                     'unit_total_price' => $detail->quantity * $detail->price,
                 ]);
             }
+
+            if (blank($data['total_amount'] ?? null)) {
+                $data['total_amount'] = $purchaseInvoice->total_amount;
+            }
+        }
+        return $data;
+    }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        if (blank($data['total_amount'] ?? null)) {
+            $data['total_amount'] = (float) ($this->record?->details()->sum('total_price') ?? 0);
         }
         return $data;
     }

@@ -12,6 +12,7 @@ enum SalaryTransactionSubType: string
     case LOAN = 'loan';                     // خصم سلفة
     case MISSING_HOURS = 'missing_hours';
     case EARLY_DEPARTURE_HOURS = 'early_departure_hours';
+    case EXPENSE_ADVANCE = 'expense_advance';                     // سلفة مصاريف
 
         // أقساط السلف (Installments)
     case ADVANCE_INSTALLMENT = 'advance_installment';             // قسط سلفة (الشهر الحالي)
@@ -44,6 +45,7 @@ enum SalaryTransactionSubType: string
             self::LOAN,
             self::MISSING_HOURS,
             self::EARLY_DEPARTURE_HOURS,
+            self::EXPENSE_ADVANCE,
             self::ADVANCE_INSTALLMENT,
             self::EARLY_ADVANCE_INSTALLMENT => SalaryTransactionType::TYPE_DEDUCTION,
 

@@ -7,6 +7,7 @@ use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Actions\EditAction;
 use Filament\Actions\ActionGroup;
@@ -103,7 +104,7 @@ class GoodsReceivedNoteResource extends Resource
                                 '<div class="p-4 rounded-lg bg-danger-50 border border-danger-200 text-danger-700 dark:bg-danger-950/50 dark:border-danger-800 dark:text-danger-300">' .
                                 '<div class="font-bold text-sm mb-1">This Goods Received Note was rejected' . ($record?->rejectedBy?->name ? ' by ' . e($record->rejectedBy->name) : '') . '.</div>' .
                                 '<div><span class="font-semibold">Reason: </span>' . e($record?->rejected_reason) . '</div>' .
-                                ($record?->rejected_date ? '<div class="text-xs text-gray-500 mt-1">Rejected Date: ' . $record->rejected_date->format('Y-m-d H:i') . '</div>' : '') .
+                                ($record?->rejected_date ? '<div class="text-xs text-gray-500 mt-1">Rejected Date: ' . $record->rejected_date->format(getDateFormat() . ' H:i') . '</div>' : '') .
                                 '</div>'
                             )),
                     ])
@@ -153,6 +154,16 @@ class GoodsReceivedNoteResource extends Resource
                                     ->label(__('lang.attachment'))
                                     ->directory('goods-received-notes')
                                     ->columnSpanFull()
+                                    ->acceptedFileTypes(['application/pdf'])
+                                    ->validationMessages([
+                                        'mimetypes' => __('lang.invalid_file_type_pdf_only'),
+                                        'mimes' => __('lang.invalid_file_type_pdf_only'),
+                                    ])
+                                    ->helperText(__('lang.only_pdf_allowed'))
+                                    ->extraInputAttributes([
+                                        'data-label-file-type-not-allowed' => __('lang.invalid_file_type_pdf_only'),
+                                        'data-file-validate-type-label-expected-types' => __('lang.only_pdf_allowed'),
+                                    ])
                                     ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                                         return (string) str($file->getClientOriginalName())->prepend('grn-');
                                     })
@@ -160,6 +171,22 @@ class GoodsReceivedNoteResource extends Resource
                                     ->live()
                                     ->afterStateUpdated(function ($state, callable $set, callable $get, ?\Illuminate\Database\Eloquent\Model $record) {
                                         if (!$state) return;
+
+                                        $uploadedFile = is_array($state) ? (array_values($state)[0] ?? null) : $state;
+
+                                        if ($uploadedFile instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                                            $mime = $uploadedFile->getMimeType();
+                                            $ext = strtolower($uploadedFile->getClientOriginalExtension());
+                                            if ($mime !== 'application/pdf' && $ext !== 'pdf') {
+                                                $set('attachment', null);
+                                                \Filament\Notifications\Notification::make()
+                                                    ->title(__('lang.invalid_file_type_title'))
+                                                    ->body(__('lang.invalid_file_type_pdf_only'))
+                                                    ->danger()
+                                                    ->send();
+                                                return;
+                                            }
+                                        }
 
                                         $attempt = null;
                                         $repo = app(\App\Repositories\Contracts\DocumentAnalysisAttemptRepositoryInterface::class);
@@ -225,17 +252,25 @@ class GoodsReceivedNoteResource extends Resource
                                                                 ->value('id');
                                                         }
 
+                                                        $qty = (float)($item['quantity'] ?? 1);
+                                                        $unitPrice = (float)($item['unit_price'] ?? $item['price'] ?? 0);
+                                                        $totalRow = round($qty * $unitPrice, 2);
+
                                                         // 3) بناء عنصر الريبيتر بقيم نهائية (بدون Closures)
                                                         $items[] = [
                                                             'product_id'              => $item['existing_product_id'] ?? null,
                                                             'unit_id'                 => $unitId,                                    // ← قيمة رقمية أو null
                                                             'package_size'            => (float)($item['package_size'] ?? 0),
-                                                            'quantity'                => (float)($item['quantity'] ?? 1),
+                                                            'quantity'                => $qty,
+                                                            'price'                   => number_format($unitPrice, 2, '.', ''),
+                                                            'total_price'             => number_format($totalRow, 2, '.', ''),
                                                             'waste_stock_percentage'  => 0,
                                                         ];
                                                     }
 
                                                     $set('grnDetails', $items);
+                                                    $total = collect($items)->sum(fn($row) => (float)($row['total_price'] ?? 0));
+                                                    $set('total_amount', round($total, 2));
 
                                                     if ($attempt) {
                                                         $repo->markAsSuccess($attempt, $items);
@@ -311,18 +346,15 @@ class GoodsReceivedNoteResource extends Resource
                                     }
                                 }
 
+                                if (!$isPdf) {
+                                    return new \Illuminate\Support\HtmlString('<div class="text-danger-600 dark:text-danger-400 p-8 text-center border-2 border-dashed border-danger-300 dark:border-danger-700 rounded-lg">' . e(__('lang.invalid_file_type_pdf_only')) . '</div>');
+                                }
+
                                 if (!$url) {
-                                    if ($isPdf) {
-                                        return new \Illuminate\Support\HtmlString('<div class="text-gray-400 p-8 text-center border-2 border-dashed rounded-lg">PDF file is too large for live preview. Please save to view.</div>');
-                                    }
-                                    return new \Illuminate\Support\HtmlString('<div class="text-gray-400 p-8 text-center border-2 border-dashed rounded-lg">Preview not available</div>');
+                                    return new \Illuminate\Support\HtmlString('<div class="text-gray-400 p-8 text-center border-2 border-dashed rounded-lg">PDF file is too large for live preview. Please save to view.</div>');
                                 }
 
-                                if ($isPdf) {
-                                    return new \Illuminate\Support\HtmlString('<iframe src="' . $url . '" style="width: 100%; height: 75vh;" class="rounded-lg shadow border-0"></iframe>');
-                                }
-
-                                return new \Illuminate\Support\HtmlString('<img src="' . $url . '" style="width: 100%; max-height: 75vh; object-fit: contain;" class="rounded-lg shadow border" />');
+                                return new \Illuminate\Support\HtmlString('<iframe src="' . $url . '" style="width: 100%; height: 75vh;" class="rounded-lg shadow border-0"></iframe>');
                             })
 
 
@@ -334,11 +366,20 @@ class GoodsReceivedNoteResource extends Resource
                             Repeater::make('grnDetails')->columnSpanFull()
                                 ->relationship()
                                 ->mutateRelationshipDataBeforeFillUsing(function (array $data): array {
-                                    $data['total_price'] = round((float) ($data['quantity'] ?? 0) * (float) ($data['price'] ?? 0), 2);
+                                    $price = (float) ($data['price'] ?? 0);
+                                    $data['price'] = number_format($price, 2, '.', '');
+                                    $data['total_price'] = number_format((float) ($data['quantity'] ?? 0) * $price, 2, '.', '');
                                     return $data;
                                 })
                                 ->label('Items')
                                 ->columns(6)
+                                ->live()
+                                ->afterStateUpdated(function (callable $set, callable $get) {
+                                    static::recalculateTotalAmount($set, $get);
+                                })
+                                ->deleteAction(
+                                    fn (Action $action) => $action->after(fn (callable $set, callable $get) => static::recalculateTotalAmount($set, $get))
+                                )
                                 ->schema([
                                     Select::make('product_id')
                                         ->label(__('lang.product'))
@@ -373,10 +414,11 @@ class GoodsReceivedNoteResource extends Resource
                                         })
                                         ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->code . ' - ' . Product::find($value)?->name)
                                         ->reactive()
-                                        ->afterStateUpdated(function ($set, $state) {
+                                        ->afterStateUpdated(function ($set, $state, callable $get) {
                                             $set('unit_id', null);
                                             $product = Product::find($state);
                                             $set('waste_stock_percentage', $product?->waste_stock_percentage);
+                                            static::recalculateTotalAmount($set, $get);
                                         })
                                         ->searchable()->columnSpan(2)
                                         ->required(),
@@ -399,12 +441,13 @@ class GoodsReceivedNoteResource extends Resource
                                             )
                                                 ->where('unit_id', $state)->first();
                                             $set('package_size',  $unitPrice->package_size ?? 0);
+                                            static::recalculateTotalAmount($set, $get);
                                         })
                                         ->columnSpan(2)->required(),
                                     TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
                                         ->label(__('lang.package_size'))
-                                        ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
-                                        ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;', 'readonly' => true]),
+                                        ->extraAttributes(['class' => 'bg-readonly-gray'])
+                                        ->extraInputAttributes(['class' => 'cursor-not-allowed', 'readonly' => true]),
                                     TextInput::make('quantity')
                                         ->label(__('lang.quantity'))
                                         ->numeric()
@@ -415,35 +458,38 @@ class GoodsReceivedNoteResource extends Resource
                                         ->afterStateUpdated(function ($set, $get) {
                                             $quantity = (float) ($get('quantity') ?? 0);
                                             $price = (float) ($get('price') ?? 0);
-                                            $set('total_price', round($quantity * $price, 2));
+                                            $set('total_price', number_format($quantity * $price, 2, '.', ''));
+                                            static::recalculateTotalAmount($set, $get);
                                         })
                                         ->columnSpan(1)->required()
                                         ->formatStateUsing(fn($state) => round((float) $state, 2)),
                                     TextInput::make('price')
                                         ->label(__('lang.price'))
                                         ->numeric()
-                                        ->minValue(0.1)
+                                        ->minValue(0.01)
+                                        ->step(0.01)
                                         ->live(onBlur: true)
-                                        ->afterStateUpdated(function ($set, $get) {
+                                        ->afterStateUpdated(function ($set, $get, $state) {
                                             $quantity = (float) ($get('quantity') ?? 0);
-                                            $price = (float) ($get('price') ?? 0);
-                                            $set('total_price', round($quantity * $price, 2));
+                                            $price = (float) ($state ?? 0);
+                                            if (filled($state)) {
+                                                $set('price', number_format($price, 2, '.', ''));
+                                            }
+                                            $set('total_price', number_format($quantity * $price, 2, '.', ''));
+                                            static::recalculateTotalAmount($set, $get);
                                         })
                                         ->columnSpan(1)->required()
-                                        // ->formatStateUsing(fn($state) => round((float) $state, 2))
-                                        ,
+                                        ->formatStateUsing(fn($state) => filled($state) ? number_format((float) $state, 2, '.', '') : null),
                                     TextInput::make('total_price')
                                         ->label(__('lang.total_price'))
                                         ->readOnly()
-                                        ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
-                                        ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;', 'readonly' => true])
+                                        ->extraAttributes(['class' => 'bg-readonly-gray'])
+                                        ->extraInputAttributes(['class' => 'cursor-not-allowed', 'readonly' => true])
                                         ->numeric()
                                         ->default(0)
-                                        // ->minValue(0.1)
                                         ->live(onBlur: true)
                                         ->columnSpan(1)->required()
-                                        // ->formatStateUsing(fn($state) => round((float) $state, 2))
-                                        ,
+                                        ->formatStateUsing(fn($state) => filled($state) ? number_format((float) $state, 2, '.', '') : '0.00'),
 
 
                                 ])
@@ -466,6 +512,40 @@ class GoodsReceivedNoteResource extends Resource
                                     return true;
                                 })
                                 ->defaultItems(1),
+
+                            Group::make([
+                                TextInput::make('total_amount')
+                                    ->label(__('lang.total_amount'))
+                                    ->numeric()
+                                    ->readOnly()
+                                    ->default(0)
+                                    ->dehydrated(false)
+                                    ->extraFieldWrapperAttributes([
+                                        'style' => 'width: 14rem; max-width: 100%;',
+                                    ])
+                                    ->extraAttributes([
+                                        'class' => 'bg-readonly-gray',
+                                        'style' => 'width: 100%;',
+                                    ])
+                                    ->extraInputAttributes([
+                                        'class' => 'cursor-not-allowed font-bold text-end',
+                                        'readonly' => true,
+                                    ])
+                                    ->prefix(fn() => settingWithDefault('currency_symbol', 'RM'))
+                                    ->suffixIcon(Heroicon::Banknotes)
+                                    ->suffixIconColor('primary')
+                                    ->formatStateUsing(fn($state) => $state !== null ? number_format((float) $state, 2, '.', '') : '0.00')
+                                    ->afterStateHydrated(function ($set, $state, ?GoodsReceivedNote $record) {
+                                        if ($record) {
+                                            $set('total_amount', round((float) $record->actual_total_amount, 2));
+                                        }
+                                    }),
+                            ])
+                                ->columnSpanFull()
+                                ->extraAttributes([
+                                    'class' => 'flex justify-end w-full pt-2',
+                                    'style' => 'display: flex; justify-content: flex-end;',
+                                ]),
                         ]),
 
 
@@ -541,12 +621,15 @@ class GoodsReceivedNoteResource extends Resource
                     )
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')->alignCenter(true)
+                    ->dateTime()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
                 TextColumn::make('created_at')->alignCenter(true)
+                    ->dateTime()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
                 TextColumn::make('approve_date')->alignCenter(true)
+                    ->date()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
                 IconColumn::make('has_inventory_transaction')
@@ -818,5 +901,26 @@ class GoodsReceivedNoteResource extends Resource
                         return $record->status == GoodsReceivedNote::STATUS_CREATED && !$record->is_purchase_invoice_created  &&
                             (count(array_intersect($userRoles, $allowedRoles)) > 0);
          });
+    }
+
+    public static function recalculateTotalAmount(callable $set, callable $get): void
+    {
+        $rows = $get('../../grnDetails') ?? $get('../grnDetails') ?? $get('grnDetails') ?? [];
+
+        $total = collect($rows)->sum(function ($row) {
+            $qty = (float) ($row['quantity'] ?? 0);
+            $price = (float) ($row['price'] ?? 0);
+            return round($qty * $price, 2);
+        });
+
+        $total = round($total, 2);
+
+        if ($get('../../grnDetails') !== null) {
+            $set('../../total_amount', $total);
+        } elseif ($get('../grnDetails') !== null) {
+            $set('../total_amount', $total);
+        } else {
+            $set('total_amount', $total);
+        }
     }
 }

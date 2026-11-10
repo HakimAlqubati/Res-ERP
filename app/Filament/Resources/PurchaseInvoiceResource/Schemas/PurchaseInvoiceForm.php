@@ -98,25 +98,39 @@ class PurchaseInvoiceForm
                             // ->readOnly()            // نقرأه فقط من الـ repeater
                             ->default(0)
                             ->dehydrated()
+                            ->required()
+                            ->validationMessages([
+                                'required' => __('lang.total_amount_required'),
+                            ])
                             ->suffixIconColor('primary')
-                            ->rule(function (callable $get) {
-                                return function (string $attribute, $value, \Closure $fail) use ($get) {
-                                    // جمع كل total_price من الريبيتر
-                                    $rows = $get('units') ?? [];
-                                    $sum  = collect($rows)->sum(fn($row) => (float) ($row['total_price'] ?? 0));
+                            ->rule(function (callable $get, string $operation, ?\Illuminate\Database\Eloquent\Model $record) {
+                                return function (string $attribute, $value, \Closure $fail) use ($get, $operation, $record) {
+                                    if (blank($value)) {
+                                        $fail(__('lang.total_amount_required'));
+                                        return;
+                                    }
 
-                                    // توحيد الدقة لأربع منازل عشرية
-                                    $expected = round($sum, 4);
-                                    $current  = round((float) $value, 4);
+                                    if ($operation === 'create') {
+                                        // جمع كل total_price من الريبيتر
+                                        $rows = $get('units') ?? [];
+                                        if (!empty($rows)) {
+                                            $sum  = collect($rows)->sum(fn($row) => (float) ($row['total_price'] ?? 0));
 
-                                    if ($current !== $expected) {
-                                        $fail(__(
-                                            'The invoice total (:total) does not match the sum of item totals (:sum).',
-                                            [
-                                                'total' => $current,
-                                                'sum'   => $expected,
-                                            ]
-                                        ));
+                                            // توحيد الدقة لأربع منازل عشرية
+                                            $expected = round($sum, 4);
+                                            $current  = round((float) $value, 4);
+
+                                            if ($current !== $expected) {
+                                                $fail(__('lang.total_amount_mismatch', [
+                                                    'total' => $current,
+                                                    'sum'   => $expected,
+                                                ]));
+                                            }
+                                        }
+                                    } elseif ($operation === 'edit' && $record) {
+                                        if ((float) $value <= 0 && $record->details()->exists()) {
+                                            $fail(__('lang.total_amount_must_be_greater_than_zero'));
+                                        }
                                     }
                                 };
                             })
@@ -133,11 +147,17 @@ class PurchaseInvoiceForm
 
                         FileUpload::make('attachment')
                             ->label(__('lang.attachment'))
-                            // ->enableOpen()
-                            // ->enableDownload()
                             ->directory('purchase-invoices')
-                            // ->columnSpanFull()
-                            // ->acceptedFileTypes(['application/pdf'])
+                            ->acceptedFileTypes(['application/pdf'])
+                            ->validationMessages([
+                                'mimetypes' => __('lang.invalid_file_type_pdf_only'),
+                                'mimes' => __('lang.invalid_file_type_pdf_only'),
+                            ])
+                            ->helperText(__('lang.only_pdf_allowed'))
+                            ->extraInputAttributes([
+                                'data-label-file-type-not-allowed' => __('lang.invalid_file_type_pdf_only'),
+                                'data-file-validate-type-label-expected-types' => __('lang.only_pdf_allowed'),
+                            ])
                             ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                                 return (string) str($file->getClientOriginalName())->prepend('purchase-invoice-');
                             })
@@ -145,6 +165,22 @@ class PurchaseInvoiceForm
 
                             ->afterStateUpdated(function ($state, callable $set, callable $get, ?\Illuminate\Database\Eloquent\Model $record) {
                                 if (!$state) return;
+
+                                $uploadedFile = is_array($state) ? (array_values($state)[0] ?? null) : $state;
+
+                                if ($uploadedFile instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                                    $mime = $uploadedFile->getMimeType();
+                                    $ext = strtolower($uploadedFile->getClientOriginalExtension());
+                                    if ($mime !== 'application/pdf' && $ext !== 'pdf') {
+                                        $set('attachment', null);
+                                        \Filament\Notifications\Notification::make()
+                                            ->title(__('lang.invalid_file_type_title'))
+                                            ->body(__('lang.invalid_file_type_pdf_only'))
+                                            ->danger()
+                                            ->send();
+                                        return;
+                                    }
+                                }
 
                                 $attempt = null;
                                 $repo = app(\App\Repositories\Contracts\DocumentAnalysisAttemptRepositoryInterface::class);
@@ -300,18 +336,15 @@ class PurchaseInvoiceForm
                                     }
                                 }
 
+                                if (!$isPdf) {
+                                    return new \Illuminate\Support\HtmlString('<div class="text-danger-600 dark:text-danger-400 p-8 text-center border-2 border-dashed border-danger-300 dark:border-danger-700 rounded-lg">' . e(__('lang.invalid_file_type_pdf_only')) . '</div>');
+                                }
+
                                 if (!$url) {
-                                    if ($isPdf) {
-                                        return new \Illuminate\Support\HtmlString('<div class="text-gray-400 p-8 text-center border-2 border-dashed rounded-lg">PDF file is too large for live preview. Please save to view.</div>');
-                                    }
-                                    return new \Illuminate\Support\HtmlString('<div class="text-gray-400 p-8 text-center border-2 border-dashed rounded-lg">Preview not available</div>');
+                                    return new \Illuminate\Support\HtmlString('<div class="text-gray-400 p-8 text-center border-2 border-dashed rounded-lg">PDF file is too large for live preview. Please save to view.</div>');
                                 }
 
-                                if ($isPdf) {
-                                    return new \Illuminate\Support\HtmlString('<iframe src="' . $url . '" style="width: 100%; height: 75vh;" class="rounded-lg shadow border-0"></iframe>');
-                                }
-
-                                return new \Illuminate\Support\HtmlString('<img src="' . $url . '" style="width: 100%; max-height: 75vh; object-fit: contain;" class="rounded-lg shadow border" />');
+                                return new \Illuminate\Support\HtmlString('<iframe src="' . $url . '" style="width: 100%; height: 75vh;" class="rounded-lg shadow border-0"></iframe>');
                             })
                         //         ]),
                         // ])
@@ -380,24 +413,14 @@ class PurchaseInvoiceForm
                                 })
                                 ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->code . ' - ' . Product::find($value)?->name)
                                 ->reactive()
-                                ->afterStateUpdated(function ($set, $state, callable $get) {
+                                ->afterStateUpdated(function (Set $set, $state, callable $get) {
                                     $set('unit_id', null);
-                                    $product = Product::find($state);
-                                    $set('waste_stock_percentage', $product?->waste_stock_percentage);
+                                    $set('package_size', null);
+                                    $set('price', null);
+                                    $set('total_price', 0);
 
-                                    if ($product && $product->supplyUnitPrices->isNotEmpty()) {
-                                        $firstUnitPrice = $product->supplyUnitPrices->first();
-
-                                        // تعيين أول وحدة بشكل تلقائي
-                                        $set('unit_id', $firstUnitPrice->unit_id);
-                                        $set('price', $firstUnitPrice->price ?? 0);
-                                        $set('package_size', $firstUnitPrice->package_size ?? 0);
-
-                                        // حساب التوتال بناءً على الكمية الحالية (أو 1 افتراضياً)
-                                        $quantity = (float)($get('quantity') ?? 1);
-                                        $total = round($quantity * (float)($firstUnitPrice->price ?? 0), 2);
-                                        $set('total_price', $total);
-                                    }
+                                    $product = $state ? Product::find($state) : null;
+                                    $set('waste_stock_percentage', $product?->waste_stock_percentage ?? 0);
 
                                     // تحديث إجمالي الفاتورة
                                     self::recalculateTotalAmount($set, $get);
@@ -417,23 +440,22 @@ class PurchaseInvoiceForm
                                 ->searchable()
                                 ->reactive()
                                 ->afterStateUpdated(function (Set $set, $state, $get) {
-                                    $unitPrice = UnitPrice::where(
+                                    $unitPrice = $state ? UnitPrice::where(
                                         'product_id',
                                         $get('product_id')
                                     )
-                                        ->where('unit_id', $state)->first();
-                                    $set('price', $unitPrice->price ?? 0);
-                                    $total = round(((float) ($unitPrice->price ?? 0)) * ((float) $get('quantity')), 2) ?? 0;
+                                        ->where('unit_id', $state)->first() : null;
 
-                                    $set('total_price', $total ?? 0);
-                                    $set('package_size',  $unitPrice->package_size ?? 0);
+                                    $set('package_size',  $unitPrice?->package_size ?? 0);
+                                    $set('price', null);
+                                    $set('total_price', 0);
 
                                     self::recalculateTotalAmount($set, $get);
                                 })->columnSpan(2)->required(),
                             TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
                                 ->label(__('lang.package_size'))
-                                ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
-                                ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;', 'readonly' => true]),
+                                ->extraAttributes(['class' => 'bg-readonly-gray'])
+                                ->extraInputAttributes(['class' => 'cursor-not-allowed', 'readonly' => true]),
                             TextInput::make('quantity')
                                 ->label(__('lang.quantity'))
 
@@ -445,7 +467,9 @@ class PurchaseInvoiceForm
                                 ->disabledOn('edit')
                                 ->live(onBlur: true)
                                 ->afterStateUpdated(function (Set $set, $state, $get) {
-                                    $total = round(((float) $state) * ((float)$get('price') ?? 0), 2);
+                                    $qty = is_numeric($state) ? (float) $state : 0;
+                                    $price = is_numeric($get('price')) ? (float) $get('price') : 0;
+                                    $total = ($qty > 0 && $price > 0) ? round($qty * $price, 2) : 0;
                                     $set('total_price', $total);
                                     self::recalculateTotalAmount($set, $get);
                                 })->columnSpan(1)->required(),
@@ -458,7 +482,9 @@ class PurchaseInvoiceForm
                                 ->live(onBlur: true)
 
                                 ->afterStateUpdated(function (Set $set, $state, $get) {
-                                    $total = round(((float) $state) * ((float)$get('quantity')), 2);
+                                    $price = is_numeric($state) ? (float) $state : 0;
+                                    $qty = is_numeric($get('quantity')) ? (float) $get('quantity') : 0;
+                                    $total = ($price > 0 && $qty > 0) ? round($price * $qty, 2) : 0;
                                     $set('total_price', $total);
 
                                     self::recalculateTotalAmount($set, $get);
@@ -466,8 +492,8 @@ class PurchaseInvoiceForm
                             TextInput::make('total_price')->minValue(1)->label('Total Price')
                                 ->numeric()
                                 ->readOnly()
-                                ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
-                                ->extraInputAttributes(['class' => 'cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;', 'readonly' => true])->columnSpan(1),
+                                ->extraAttributes(['class' => 'bg-readonly-gray'])
+                                ->extraInputAttributes(['class' => 'cursor-not-allowed', 'readonly' => true])->columnSpan(1),
                             TextInput::make('waste_stock_percentage')
                                 ->label(__('lang.waste_stock_percentage'))
                                 ->suffix('%')

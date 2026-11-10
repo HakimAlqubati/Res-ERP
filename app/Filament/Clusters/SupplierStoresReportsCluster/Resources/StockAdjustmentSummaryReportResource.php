@@ -81,7 +81,7 @@ class StockAdjustmentSummaryReportResource extends Resource
                             ->default(now()),
                     ])
                     ->indicateUsing(function (array $data): ?string {
-                        return $data['from_date'] ? 'From: ' . $data['from_date'] : null;
+                        return $data['from_date'] ? 'From: ' . formatDate($data['from_date']) : null;
                     }),
 
                 Filter::make('to_date')
@@ -95,7 +95,7 @@ class StockAdjustmentSummaryReportResource extends Resource
                             ->default(now()),
                     ])
                     ->indicateUsing(function (array $data): ?string {
-                        return $data['to_date'] ? 'To: ' . $data['to_date'] : null;
+                        return $data['to_date'] ? 'To: ' . formatDate($data['to_date']) : null;
                     }),
             ], layout: FiltersLayout::AboveContent);
     }

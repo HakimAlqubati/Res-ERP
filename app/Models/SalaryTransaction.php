@@ -94,6 +94,19 @@ class SalaryTransaction extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function getFormattedSubTypeAttribute(): ?string
+    {
+        if (!$this->sub_type) {
+            return null;
+        }
+
+        if (in_array($this->sub_type, ['meal-deduction', 'expense_advance', 'meal_advance'])) {
+            return 'Expense advance';
+        }
+
+        return ucwords(str_replace(['_', '-'], ' ', (string) $this->sub_type));
+    }
+
     public static function typeOptions(): array
     {
         return collect(SalaryTransactionType::cases())

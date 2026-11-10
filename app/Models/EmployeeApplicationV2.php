@@ -102,7 +102,7 @@ class EmployeeApplicationV2 extends Model implements Auditable, HasMedia, Approv
         self::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => '?tab=Missed+check-in',
         self::APPLICATION_TYPE_ADVANCE_REQUEST => '?tab=Advance+request',
         self::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => '?tab=Missed+check-out',
-        self::APPLICATION_TYPE_MEAL_REQUEST => '?tab=Meal+advance',
+        self::APPLICATION_TYPE_MEAL_REQUEST => '?tab=Expense+advance',
     ];
 
     // Status constants
@@ -171,12 +171,12 @@ class EmployeeApplicationV2 extends Model implements Auditable, HasMedia, Approv
 
     public function missedCheckinRequest()
     {
-        return $this->hasOne(MissedCheckInRequest::class, 'application_id');
+        return $this->hasOne(MissedCheckInRequest::class, 'application_id')->withTrashed();
     }
 
     public function missedCheckoutRequest()
     {
-        return $this->hasOne(MissedCheckOutRequest::class, 'application_id');
+        return $this->hasOne(MissedCheckOutRequest::class, 'application_id')->withTrashed();
     }
 
     public function leaveRequest()
@@ -191,7 +191,7 @@ class EmployeeApplicationV2 extends Model implements Auditable, HasMedia, Approv
 
     public function mealRequest()
     {
-        return $this->hasOne(EmployeeMealRequest::class, 'application_id');
+        return $this->hasOne(EmployeeMealRequest::class, 'application_id')->withTrashed();
     }
 
     public function approvalEmployee(): ?Employee

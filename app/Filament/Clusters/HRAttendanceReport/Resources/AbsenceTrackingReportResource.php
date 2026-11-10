@@ -69,8 +69,12 @@ class AbsenceTrackingReportResource extends Resource
                                 $endNextMonth = Carbon::parse($state)->endOfMonth()->format('Y-m-d');
                                 $set('end_date', $endNextMonth);
                             })
+                            ->native(false)
+                            ->displayFormat(getDateFormat())
                             ->label('Start Date')->default(Carbon::now()->startOfMonth()->toDateString()),
                         DatePicker::make('end_date')
+                            ->native(false)
+                            ->displayFormat(getDateFormat())
                             ->default(Carbon::now()->endOfMonth()->toDateString())
                             ->label('End Date'),
 

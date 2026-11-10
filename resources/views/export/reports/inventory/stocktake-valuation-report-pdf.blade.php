@@ -107,7 +107,7 @@
                 <div class="meta-info">
                     Store: <strong>{{ $reportData->storeName }}</strong>
                     &nbsp;|&nbsp;
-                    Date: <strong>{{ $reportData->inventoryDate }}</strong>
+                    Date: <strong>{{ formatDate($reportData->inventoryDate) }}</strong>
                     @if(!empty($reportData->categoryName))
                         &nbsp;|&nbsp;
                         Category: <strong>{{ $reportData->categoryName }}</strong>
@@ -115,7 +115,7 @@
                 </div>
             </td>
             <td style="width: 25%; text-align: right; font-size: 9px; color: #6b7280;">
-                Generated: {{ now()->format('Y-m-d H:i') }}
+                Generated: {{ now()->format(getDateFormat() . ' H:i') }}
             </td>
         </tr>
     </table>

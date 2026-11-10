@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInve
 use App\Models\AppLog;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\StockInventory;
 use App\Models\Store;
 use App\Services\MultiProductsInventoryService;
 use App\Services\Stock\StockInventory\InventoryProductCacheService;
@@ -23,6 +24,8 @@ use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Schema;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\View;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class StockInventoryForm
 {
@@ -32,12 +35,12 @@ class StockInventoryForm
         $operaion = $schema->getOperation();
 
         /**
-         * 🔁 تحميل صفحة واحدة فقط إلى page_details (مع كاش وحدات EAGER).
+         * 🔁 تحميل صفحة واحدة فقط إلى page_details (مع استعلام تجميعي فائق السرعة).
          * - يحفظ الصفحة الحالية قبل التنقل.
-         * - إذا كانت الصفحة المطلوبة مُحمَّلة سابقاً، يعرضها كما هي بدون إعادة بناء.
-         * - خلاف ذلك يبني صفوف الصفحة من الـ pool مع ملء الكاش.
+         * - إذا كانت الصفحة المطلوبة مُحمَّلة سابقاً، يعرضها كما هي بدون إعادة استعلام.
+         * - خلاف ذلك يجلب الأرصدة دفعة واحدة باستعلام SQL مجمّع بدلاً من الاستعلام المتكرر.
          */
-        $loadPage = function (callable $get, callable $set, int $targetPage) {
+        $loadPage = function (callable $get, callable $set, int $targetPage, $livewire = null) {
             $pool        = (array) ($get('product_ids_pool') ?? []);
             $perPage     = max(1, (int) ($get('per_page') ?? 20));
             $storeId     = (int) ($get('store_id'));
@@ -50,6 +53,7 @@ class StockInventoryForm
                 $set('page_details', []);
                 $set('current_page', 1);
                 $set('total_pages', 0);
+                $set('page_selector_bottom', 1);
                 return;
             }
 
@@ -73,6 +77,11 @@ class StockInventoryForm
                 $set('page_details', $pagesCache[$targetPage]);
                 $set('current_page', $targetPage);
                 $set('total_pages', $totalPages);
+                $set('page_selector_bottom', $targetPage);
+
+                if ($livewire && method_exists($livewire, 'autoSaveDraft')) {
+                    $livewire->autoSaveDraft();
+                }
                 return;
             }
 
@@ -80,20 +89,29 @@ class StockInventoryForm
             $offset = ($targetPage - 1) * $perPage;
             $slice  = array_slice($pool, $offset, $perPage);
             if (empty($slice)) {
-                // لا توجد عناصر في هذه الصفحة (قد يحدث إن قلّ حجم الـpool)
                 $set('page_details', []);
                 $set('current_page', $targetPage);
                 $set('total_pages', $totalPages);
                 $set('details_pages', $pagesCache);
+                $set('page_selector_bottom', $targetPage);
                 return;
             }
 
             $started  = microtime(true);
 
+            // 🚀 تسريع الجرد: جلب الأرصدة دفعة واحدة باستعلام واحد مجمع فائق السرعة
+            $stockBalances = DB::table('inventory_transactions')
+                ->whereNull('deleted_at')
+                ->where('store_id', $storeId)
+                ->whereIn('product_id', $slice)
+                ->select('product_id', DB::raw("SUM(CASE WHEN movement_type = 'in' THEN (quantity * package_size) ELSE -(quantity * package_size) END) as rem_base_qty"))
+                ->groupBy('product_id')
+                ->pluck('rem_base_qty', 'product_id');
+
             $products = Product::with(['supplyOutUnitPrices.unit'])
                 ->whereIn('id', $slice)->get();
 
-            $rows = $products->map(function ($product) use ($storeId, $unitPreference) {
+            $rows = $products->map(function ($product) use ($storeId, $unitPreference, $stockBalances) {
                 $unitPrices  = $product->supplyOutUnitPrices ?? collect();
                 // اختيار الوحدة حسب تفضيل المستخدم (الأصغر أو الأكبر)
                 $selectedUnit = $unitPreference === 'smallest'
@@ -104,12 +122,12 @@ class StockInventoryForm
                 $rowUnitsCache     = $unitPrices->pluck('unit.name', 'unit_id')->toArray();
                 $rowInventoryCache = [];
 
+                $baseRem = (float) ($stockBalances[$product->id] ?? 0);
+
                 foreach ($unitPrices as $u) {
                     $unitId      = $u->unit_id;
                     $packageSize = (float) ($u->package_size ?? 0);
-
-                    $service      = new MultiProductsInventoryService(null, $product->id, $unitId, $storeId);
-                    $remainingQty = (float) ($service->getInventoryForProduct($product->id)[0]['remaining_qty'] ?? 0);
+                    $remainingQty = $packageSize > 0 ? round($baseRem / $packageSize, 4) : 0;
 
                     $rowInventoryCache[$unitId] = [
                         'package_size'  => $packageSize,
@@ -139,10 +157,15 @@ class StockInventoryForm
             $set('page_details', $rows);
             $set('current_page', $targetPage);
             $set('total_pages', $totalPages);
+            $set('page_selector_bottom', $targetPage);
+
+            if ($livewire && method_exists($livewire, 'autoSaveDraft')) {
+                $livewire->autoSaveDraft();
+            }
 
             $elapsed = round((microtime(true) - $started) * 1000);
             AppLog::write(
-                message: 'StockInventory load page (eager cache)',
+                message: 'StockInventory load page (batch optimized)',
                 level: AppLog::LEVEL_INFO,
                 context: 'StockInventory',
                 extra: [
@@ -155,7 +178,7 @@ class StockInventoryForm
         };
 
         /**
-         * ♻️ تحديث أرصدة جميع الصفحات عند تغيير المخزن مع الحفاظ على تعديلات المستخدم.
+         * ♻️ تحديث أرصدة جميع الصفحات عند تغيير المخزن مع الحفاظ على تعديلات المستخدم (دفعة واحدة).
          */
         $refreshPagesForStore = function (callable $get, callable $set, int $storeId) {
             $pagesCache  = (array) ($get('details_pages') ?? []);
@@ -163,10 +186,33 @@ class StockInventoryForm
             $currentPage = (int)   ($get('current_page') ?? 1);
 
             // احفظ الصفحة الحالية أولاً
-            $pagesCache[$currentPage] = $current;
+            if (! empty($current)) {
+                $pagesCache[$currentPage] = $current;
+            }
+
+            if (empty($pagesCache)) {
+                return;
+            }
+
+            // جمع كل معرّفات المنتجات الموجودة بالكاش لاستعلامها دفعة واحدة
+            $allProductIds = collect($pagesCache)
+                ->flatten(1)
+                ->pluck('product_id')
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+
+            $stockBalances = empty($allProductIds) ? collect() : DB::table('inventory_transactions')
+                ->whereNull('deleted_at')
+                ->where('store_id', $storeId)
+                ->whereIn('product_id', $allProductIds)
+                ->select('product_id', DB::raw("SUM(CASE WHEN movement_type = 'in' THEN (quantity * package_size) ELSE -(quantity * package_size) END) as rem_base_qty"))
+                ->groupBy('product_id')
+                ->pluck('rem_base_qty', 'product_id');
 
             foreach ($pagesCache as $pageIdx => $rows) {
-                $updated = collect($rows)->map(function ($item) use ($storeId) {
+                $updated = collect($rows)->map(function ($item) use ($storeId, $stockBalances) {
                     $productId = $item['product_id'] ?? null;
                     $unitId    = $item['unit_id'] ?? null;
 
@@ -174,8 +220,9 @@ class StockInventoryForm
                         return $item;
                     }
 
-                    $service      = new MultiProductsInventoryService(null, $productId, $unitId, $storeId);
-                    $remainingQty = (float) ($service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0);
+                    $baseRem = (float) ($stockBalances[$productId] ?? 0);
+                    $pkg = (float) ($item['package_size'] ?? 1);
+                    $remainingQty = $pkg > 0 ? round($baseRem / $pkg, 4) : 0;
 
                     $item['system_quantity'] = $remainingQty;
 
@@ -191,7 +238,7 @@ class StockInventoryForm
                     // حدّث الكاش للوحدة الحالية
                     $cache = (array) ($item['rowInventoryCache'] ?? []);
                     $cache[$unitId] = [
-                        'package_size'  => (float) ($cache[$unitId]['package_size'] ?? ($item['package_size'] ?? 0)),
+                        'package_size'  => $pkg,
                         'remaining_qty' => $remainingQty,
                     ];
                     $item['rowInventoryCache'] = $cache;
@@ -208,14 +255,16 @@ class StockInventoryForm
         };
 
         /**
-         * 🔢 مولّد خيارات الصفحات [1 => '1', 2 => '2', ...]
+         * 🔢 مولّد خيارات الصفحات [1 => 'صفحة 1 من X', ...]
          */
         $buildPageOptions = function (callable $get) {
             $pool    = (array) ($get('product_ids_pool') ?? []);
             $perPage = max(1, (int) ($get('per_page') ?? 20));
             $pages   = (int) ceil((count($pool) ?: 0) / $perPage);
             if ($pages < 1) $pages = 1;
-            return collect(range(1, $pages))->mapWithKeys(fn($i) => [$i => (string) $i])->toArray();
+            return collect(range(1, $pages))->mapWithKeys(function ($i) use ($pages) {
+                return [$i => __('lang.page_x_of_y', ['page' => $i, 'total' => $pages])];
+            })->toArray();
         };
 
         return $schema
@@ -259,6 +308,7 @@ class StockInventoryForm
                                 Hidden::make('current_page')->default(1)->dehydrated(false),
                                 Hidden::make('total_pages')->default(0)->dehydrated(false),
                                 Hidden::make('per_page')->default(20)->dehydrated(false),
+                                Hidden::make('saved_draft_id')->default(null)->dehydrated(true),
 
                                 // حقل details النهائي (يُرسل للعلاقة عند الحفظ)
                                 Hidden::make('_details_payload')
@@ -302,10 +352,10 @@ class StockInventoryForm
                                             ->inline()
                                             ->reactive()
                                             ->dehydrated(false)
-                                            ->afterStateUpdated(function (callable $set, callable $get, $state) use ($loadPage) {
+                                            ->afterStateUpdated(function (callable $set, callable $get, $state, $livewire) use ($loadPage) {
                                                 $categoryId = $get('category_id');
                                                 if ($categoryId) {
-                                                    self::loadCategoryProducts($set, $get, $categoryId, $loadPage);
+                                                    self::loadCategoryProducts($set, $get, $categoryId, $loadPage, $livewire);
                                                 }
                                             }),
 
@@ -313,9 +363,9 @@ class StockInventoryForm
                                             ->label('Category')->searchable()
                                             ->options(Category::active()->notForPos()->pluck('name', 'id'))
                                             ->live(onBlur: false, debounce: 100)
-                                            ->afterStateUpdated(function (callable $set, callable $get, $state) use ($loadPage) {
+                                            ->afterStateUpdated(function (callable $set, callable $get, $state, $livewire) use ($loadPage) {
                                                 if ($state) {
-                                                    self::loadCategoryProducts($set, $get, $state, $loadPage);
+                                                    self::loadCategoryProducts($set, $get, $state, $loadPage, $livewire);
                                                 }
                                             }),
                                         View::make('filament.forms.components.loading-overlay'),
@@ -330,71 +380,6 @@ class StockInventoryForm
                                     ->columnSpan(1),
                             ]),
 
-                        // 🧭 شريط تحكم الصفحات (قبل الريبيتر)
-                        Grid::make()->columns(12)->columnSpanFull()->visibleOn('create')->schema([
-                            Select::make('per_page_selector')
-                                ->label('Per page')
-                                ->hidden()
-                                ->options([
-                                    10 => '10',
-                                    20 => '20',
-                                    30 => '30',
-                                    // 50 => '50',
-                                ])
-                                ->default(20)
-                                ->dehydrated(false)
-                                ->reactive()
-                                ->afterStateUpdated(function (callable $get, callable $set, $state) use ($loadPage) {
-                                    $state = (int) $state ?: 20;
-                                    $set('per_page', $state);
-
-                                    // أعد حساب عدد الصفحات واذهب للصفحة 1
-                                    $pool       = (array) ($get('product_ids_pool') ?? []);
-                                    $totalPages = (int) ceil((count($pool) ?: 0) / max(1, $state));
-                                    $set('total_pages', $totalPages);
-                                    $loadPage($get, $set, 1);
-                                    $set('page_selector', 1);
-                                })
-                                ->columnSpan(2),
-
-                            Select::make('page_selector')
-                                ->label('Page')
-                                ->options(fn(callable $get) => $buildPageOptions($get))
-                                ->disabled(fn(callable $get) => (int) ($get('total_pages') ?? 0) <= 1)
-                                ->dehydrated(false)
-                                ->reactive()
-                                ->afterStateUpdated(function (callable $get, callable $set, $state) use ($loadPage) {
-                                    $page = (int) $state ?: 1;
-                                    $loadPage($get, $set, $page);
-                                })
-                                ->afterStateHydrated(function (callable $get, callable $set) {
-                                    // عند الفتح، اجعل القائمة تشير للصفحة الحالية
-                                    $set('page_selector', (int) ($get('current_page') ?? 1));
-                                })
-                                ->columnSpan(3),
-
-                            Action::make('prev_page')
-                                ->label('Prev')
-                                ->color('gray')
-                                ->action(function (callable $get, callable $set) use ($loadPage) {
-                                    $curr = (int) ($get('current_page') ?? 1);
-                                    $loadPage($get, $set, max(1, $curr - 1));
-                                    $set('page_selector', (int) ($get('current_page') ?? 1));
-                                })
-                                ->visible(fn(callable $get) => (int) ($get('total_pages') ?? 0) > 1),
-
-                            Action::make('next_page')
-                                ->label('Next')
-                                ->color('gray')
-                                ->action(function (callable $get, callable $set) use ($loadPage) {
-                                    $curr = (int) ($get('current_page') ?? 1);
-                                    $last = (int) ($get('total_pages') ?? 1);
-                                    $loadPage($get, $set, min($last, $curr + 1));
-                                    $set('page_selector', (int) ($get('current_page') ?? 1));
-                                })
-                                ->visible(fn(callable $get) => (int) ($get('total_pages') ?? 0) > 1),
-                        ]),
-
                         // ✅ Repeater للعرض فقط (بدون علاقة)، نكتب ناتجه في hidden(details)
                         Repeater::make('page_details')
                             ->statePath('page_details')
@@ -404,12 +389,16 @@ class StockInventoryForm
                             ->maxItems(30)
                             ->collapsed(fn(): bool => $operaion === 'edit')
                             ->label('Inventory Details')
-                            // ✅ عندما يتغير محتوى الصفحة الحالية، خزّنه داخل details_pages[current_page]
-                            ->afterStateUpdated(function ($state, callable $get, callable $set) {
+                            // ✅ عندما يتغير محتوى الصفحة الحالية، خزّنه داخل details_pages[current_page] وحفظ تلقائي
+                            ->afterStateUpdated(function ($state, callable $get, callable $set, $livewire) {
                                 $page  = (int) ($get('../../current_page') ?? 1);
                                 $pages = (array) ($get('../../details_pages') ?? []);
                                 $pages[$page] = (array) $state;
                                 $set('../../details_pages', $pages);
+
+                                if ($livewire && method_exists($livewire, 'autoSaveDraft')) {
+                                    $livewire->autoSaveDraft();
+                                }
                             })
                             ->table([
 
@@ -442,9 +431,14 @@ class StockInventoryForm
                                             ])
                                             ->toArray();
                                     })
-                                    ->getOptionLabelUsing(
-                                        fn($value) => Product::find($value)?->code . ' - ' . Product::find($value)?->name
-                                    )
+                                    ->getOptionLabelUsing(function ($value) {
+                                        static $labelsCache = [];
+                                        if (!isset($labelsCache[$value])) {
+                                            $p = Product::select(['id', 'code', 'name'])->find($value);
+                                            $labelsCache[$value] = $p ? "{$p->code} - {$p->name}" : '';
+                                        }
+                                        return $labelsCache[$value];
+                                    })
                                     ->reactive()
                                     ->afterStateUpdated(function (callable $set, callable $get, $state) {
                                         if (! $state) {
@@ -460,13 +454,18 @@ class StockInventoryForm
                                         $set('rowUnitsCache', $unitsList);
 
                                         $storeId = (int) $get('../../store_id');
+                                        $baseRem = (float) DB::table('inventory_transactions')
+                                            ->whereNull('deleted_at')
+                                            ->where('store_id', $storeId)
+                                            ->where('product_id', $state)
+                                            ->select(DB::raw("SUM(CASE WHEN movement_type = 'in' THEN (quantity * package_size) ELSE -(quantity * package_size) END) as rem_qty"))
+                                            ->value('rem_qty');
+
                                         $cache = [];
                                         foreach ($units as $u) {
                                             $unitId      = $u->unit_id;
                                             $packageSize = (float) ($u->package_size ?? 0);
-
-                                            $service       = new MultiProductsInventoryService(null, $state, $unitId, $storeId);
-                                            $remainingQty  = (float) ($service->getInventoryForProduct($state)[0]['remaining_qty'] ?? 0);
+                                            $remainingQty = $packageSize > 0 ? round($baseRem / $packageSize, 4) : 0;
 
                                             $cache[$unitId] = [
                                                 'package_size'  => $packageSize,
@@ -489,9 +488,14 @@ class StockInventoryForm
 
                                 Select::make('unit_id')->label('Unit')
                                     ->options(function (callable $get) {
-                                        $product = Product::find($get('product_id'));
-                                        if (! $product) return [];
-                                        return $product->supplyOutUnitPrices
+                                        $cached = (array) ($get('rowUnitsCache') ?? []);
+                                        if (! empty($cached)) {
+                                            return $cached;
+                                        }
+                                        $productId = $get('product_id');
+                                        if (! $productId) return [];
+                                        $product = Product::with('supplyOutUnitPrices.unit')->find($productId);
+                                        return $product?->supplyOutUnitPrices
                                             ->pluck('unit.name', 'unit_id')?->toArray() ?? [];
                                     })
                                     ->reactive()
@@ -534,12 +538,12 @@ class StockInventoryForm
 
                                 TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
                                     ->label(__('lang.package_size'))
-                                    ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
-                                    ->extraInputAttributes(['class' => 'text-center cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;', 'readonly' => true]),
+                                    ->extraAttributes(['class' => 'bg-readonly-gray'])
+                                    ->extraInputAttributes(['class' => 'text-center cursor-not-allowed', 'readonly' => true]),
 
                                 TextInput::make('physical_quantity')
                                     ->numeric()
-                                    ->reactive()
+                                    ->live(onBlur: true)
                                     ->prefixIcon('heroicon-o-pencil-square')
                                     ->prefixIconColor('danger')
                                     ->afterStateUpdatedJs(<<<'JS'
@@ -548,6 +552,19 @@ class StockInventoryForm
                                         const diff = +(ph - sys).toFixed(4);
                                         $set('difference', diff);
                                     JS)
+                                    ->afterStateUpdated(function ($state, callable $get, callable $set, $livewire) {
+                                        $page  = (int) ($get('../../current_page') ?? 1);
+                                        $pages = (array) ($get('../../details_pages') ?? []);
+                                        $currentRows = (array) ($get('../../page_details') ?? []);
+                                        if (! empty($currentRows)) {
+                                            $pages[$page] = $currentRows;
+                                            $set('../../details_pages', $pages);
+                                        }
+
+                                        if ($livewire && method_exists($livewire, 'autoSaveDraft')) {
+                                            $livewire->autoSaveDraft();
+                                        }
+                                    })
                                     ->minValue(0)
                                     ->label('Physical Qty')
                                     ->required()
@@ -557,19 +574,76 @@ class StockInventoryForm
                                     ->numeric()
                                     ->label('System Qty')
                                     ->required()
-                                    ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
-                                    ->extraInputAttributes(['class' => 'text-center cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;', 'readonly' => true]),
+                                    ->extraAttributes(['class' => 'bg-readonly-gray'])
+                                    ->extraInputAttributes(['class' => 'text-center cursor-not-allowed', 'readonly' => true]),
 
                                 TextInput::make('difference')->readOnly()
                                     ->numeric()
-                                    ->extraAttributes(['class' => 'bg-readonly-gray', 'style' => 'background-color: #e5e7eb !important; border-color: #cbd5e1 !important; cursor: not-allowed;'])
-                                    ->extraInputAttributes(['class' => 'text-center cursor-not-allowed', 'style' => 'background-color: #e5e7eb !important; color: #374151 !important; cursor: not-allowed;', 'readonly' => true]),
+                                    ->extraAttributes(['class' => 'bg-readonly-gray'])
+                                    ->extraInputAttributes(['class' => 'text-center cursor-not-allowed', 'readonly' => true]),
                             ])
                             ->addActionLabel('Add Item')
                             ->columns(8),
 
-                        // ⛔️ لا حاجة لأزرار تحميل إضافية — التنقل بالأعلى
-                        Actions::make([])->columnSpanFull(),
+                        // 🧭 شريط تحكم وتصفح الصفحات (أسفل الجدول - ممركز ومتناسق بالكامل)
+                        Actions::make([
+                            Action::make('prev_page_bottom')
+                                ->label(fn () => __('lang.previous'))
+                                ->icon(fn () => app()->getLocale() === 'ar' ? 'heroicon-m-chevron-right' : 'heroicon-m-chevron-left')
+                                ->color('gray')
+                                ->button()
+                                ->disabled(fn (callable $get) => (int) ($get('current_page') ?? 1) <= 1)
+                                ->action(function (callable $get, callable $set, $livewire) use ($loadPage) {
+                                    $curr = (int) ($get('current_page') ?? 1);
+                                    $target = max(1, $curr - 1);
+                                    $loadPage($get, $set, $target, $livewire);
+                                }),
+
+                            Action::make('page_selector_bottom')
+                                ->label(fn (callable $get) => __('lang.page_x_of_y', [
+                                    'page'  => (int) ($get('current_page') ?? 1),
+                                    'total' => max(1, (int) ($get('total_pages') ?? 1)),
+                                ]))
+                                ->icon('heroicon-m-arrows-up-down')
+                                ->color('gray')
+                                ->outlined()
+                                ->tooltip(fn () => app()->getLocale() === 'ar' ? 'اضغط لاختيار صفحة محددة' : 'Click to jump to a specific page')
+                                ->modalHeading(fn () => __('lang.jump_to_page'))
+                                ->modalWidth('xs')
+                                ->modalSubmitActionLabel(fn () => __('lang.go'))
+                                ->form([
+                                    Select::make('target_page')
+                                        ->label(fn () => __('lang.page'))
+                                        ->options(fn (callable $get) => $buildPageOptions($get))
+                                        ->default(fn (callable $get) => (int) ($get('current_page') ?? 1))
+                                        ->required(),
+                                ])
+                                ->action(function (array $data, callable $get, callable $set, $livewire) use ($loadPage) {
+                                    $page = (int) ($data['target_page'] ?? 1);
+                                    $loadPage($get, $set, $page, $livewire);
+                                }),
+
+                            Action::make('next_page_bottom')
+                                ->label(fn () => __('lang.next'))
+                                ->icon(fn () => app()->getLocale() === 'ar' ? 'heroicon-m-chevron-left' : 'heroicon-m-chevron-right')
+                                ->iconPosition(\Filament\Support\Enums\IconPosition::After)
+                                ->color('primary')
+                                ->button()
+                                ->disabled(fn (callable $get) => (int) ($get('current_page') ?? 1) >= (int) ($get('total_pages') ?? 1))
+                                ->action(function (callable $get, callable $set, $livewire) use ($loadPage) {
+                                    $curr = (int) ($get('current_page') ?? 1);
+                                    $last = (int) ($get('total_pages') ?? 1);
+                                    $target = min($last, $curr + 1);
+                                    $loadPage($get, $set, $target, $livewire);
+                                }),
+                        ])
+                        ->alignCenter()
+                        ->columnSpanFull()
+                        ->visibleOn('create')
+                        ->visible(fn (callable $get) => (int) ($get('total_pages') ?? 0) > 1)
+                        ->extraAttributes([
+                            'style' => 'display: flex !important; justify-content: center !important; align-items: center !important; width: 100% !important; padding-top: 1.25rem; margin-top: 0.5rem; border-top: 1px solid rgba(156, 163, 175, 0.2);',
+                        ]),
                     ]),
             ]);
     }
@@ -577,7 +651,7 @@ class StockInventoryForm
     /**
      * تحميل منتجات الفئة المحددة وتهيئة التقسيم والصفحات
      */
-    private static function loadCategoryProducts(callable $set, callable $get, int $categoryId, callable $loadPage): void
+    private static function loadCategoryProducts(callable $set, callable $get, int $categoryId, callable $loadPage, $livewire = null): void
     {
         try {
             $started = microtime(true);
@@ -599,8 +673,8 @@ class StockInventoryForm
             $set('total_pages', $totalPages);
 
             // حمّل الصفحة الأولى + ثبت المؤشر
-            $loadPage($get, $set, 1);
-            $set('page_selector', 1);
+            $loadPage($get, $set, 1, $livewire);
+            $set('page_selector_bottom', 1);
 
             $elapsed = round((microtime(true) - $started) * 1000);
             AppLog::write(

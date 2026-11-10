@@ -47,7 +47,7 @@ class PurchaseReturnTable
 
                 TextColumn::make('return_date')
                     ->label('Return Date')
-                    ->date('Y-m-d')
+                    ->date()
                     ->sortable(),
 
                 TextColumn::make('purchaseInvoice.invoice_no')
@@ -98,7 +98,7 @@ class PurchaseReturnTable
 
                 TextColumn::make('created_at')
                     ->label('Created At')
-                    ->dateTime('Y-m-d H:i')
+                    ->dateTime()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([

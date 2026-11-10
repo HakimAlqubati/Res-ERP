@@ -32,6 +32,8 @@ class StockInventoryObserver
      */
     public function updated(StockInventory $stockInventory): void
     {
+        cache()->forget("stock_inventory_closing_val_{$stockInventory->id}");
+
         // Check if 'finalized' was changed from false to true
         if ($stockInventory->wasChanged('finalized') && $stockInventory->finalized == true) {
             // 1. Create Closing + Opening Stock transactions (single valuation pass)
@@ -42,5 +44,10 @@ class StockInventoryObserver
             // 2. Generate Stock Adjustments for differences
             $this->adjustmentService->createFromInventory($stockInventory);
         }
+    }
+
+    public function deleted(StockInventory $stockInventory): void
+    {
+        cache()->forget("stock_inventory_closing_val_{$stockInventory->id}");
     }
 }

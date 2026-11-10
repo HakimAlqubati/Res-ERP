@@ -70,6 +70,11 @@ class InventoryTransactionController extends Controller
 
     public function destroy($id)
     {
+        $user = auth()->user();
+        if (! ($user && ($user->roles->contains('id', 1) || $user->hasRole('super_admin') || $user->isSuperAdmin()))) {
+            return response()->json(['message' => 'Unauthorized. Super Admin only.'], 403);
+        }
+
         $transaction = InventoryTransaction::findOrFail($id);
         
         DB::beginTransaction();

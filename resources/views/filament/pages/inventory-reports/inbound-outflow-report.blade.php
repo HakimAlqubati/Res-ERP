@@ -115,7 +115,7 @@
                                 {{ $record['price'] }}
                             </td>
                             <td class="border border-gray-300 px-4 py-2">
-                                {{ $record['transaction_date'] }}
+                                {{ formatDate($record['transaction_date']) }}
                             </td>
                             <td class="border border-gray-300 px-4 py-2">
                                 <table class="teal-striped-table w-full text-sm border mt-2">
@@ -134,7 +134,7 @@
                                                 <td>{{ $out['quantity'] }}</td>
                                                 <td>{{ $out['unit'] }}</td>
                                                 <td>{{ $out['price'] }}</td>
-                                                <td>{{ $out['transaction_date'] }}</td>
+                                                <td>{{ formatDate($out['transaction_date']) }}</td>
                                                 <td>
                                                     {{ class_basename($out['transactionable_type']) }}
                                                     #{{ $out['transactionable_id'] }}

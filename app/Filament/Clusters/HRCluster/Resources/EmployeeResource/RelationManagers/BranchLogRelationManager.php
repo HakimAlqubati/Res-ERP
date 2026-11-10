@@ -101,11 +101,11 @@ class BranchLogRelationManager extends RelationManager
                     ->searchable(),
                 TextColumn::make('start_at')
                     ->label('Start Date')
-                    ->date('Y-m-d')
+                    ->date()
                     ->sortable(),
                 TextColumn::make('end_at')
                     ->label('End Date')
-                    ->date('Y-m-d')
+                    ->date()
                     ->placeholder('Active/Ongoing')
                     ->sortable(),
                 TextColumn::make('createdBy.name')

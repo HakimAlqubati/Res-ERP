@@ -105,8 +105,8 @@
                 <p style="margin: 0; font-weight: bold; font-size: 13px;">{{ $branchName }}</p>
             </td>
             <td style="border: none; width: 33%; text-align: right; vertical-align: top;">
-                <p style="margin: 0 0 3px 0;"><strong>Start Date:</strong> {{ $dateFrom }}</p>
-                <p style="margin: 0;"><strong>End Date:</strong> {{ $dateTo }}</p>
+                <p style="margin: 0 0 3px 0;"><strong>Start Date:</strong> {{ formatDate($dateFrom) }}</p>
+                <p style="margin: 0;"><strong>End Date:</strong> {{ formatDate($dateTo) }}</p>
                 <img src="{{ public_path('storage/workbench.png') }}" alt="System Logo" style="height: 50px; margin-top: 10px; object-fit: contain; border-radius: 50%;">
             </td>
         </tr>
@@ -128,7 +128,7 @@
             <tr>
                 <td class="text-center">{{ $index + 1 }}</td>
                 <td>{{ $item['employee_name'] ?? '-' }}</td>
-                <td class="text-center">{{ $item['checkin_date'] }}</td>
+                <td class="text-center">{{ formatDate($item['checkin_date']) }}</td>
                 <td class="text-center">{{ $item['checkin_time'] ?? '-' }}</td>
                 <td class="text-center">{{ $item['period_name'] ?? '-' }} ({{ $item['period_start_at'] ?? '-' }} - {{ $item['period_end_at'] ?? '-' }})</td>
             </tr>

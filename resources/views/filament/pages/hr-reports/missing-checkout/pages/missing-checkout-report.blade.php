@@ -71,9 +71,9 @@
                             {{-- Far Right: Dates + System Logo --}}
                             <div style="display: flex; align-items: center; justify-content: flex-end; gap: 16px; flex-shrink: 0;">
                                 <div style="text-align: right; line-height: 1.8;">
-                                    <span style="font-weight: 600;">{{ __('lang.start_date') . ': ' . $date_from }}</span>
+                                    <span style="font-weight: 600;">{{ __('lang.start_date') . ': ' . formatDate($date_from) }}</span>
                                     <br>
-                                    <span style="font-weight: 600;">{{ __('lang.end_date') . ': ' . $date_to }}</span>
+                                    <span style="font-weight: 600;">{{ __('lang.end_date') . ': ' . formatDate($date_to) }}</span>
                                 </div>
                                 <div style="text-align: center;">
                                     <img class="circle-image" src="{{ url('/') . '/storage/workbench.png' }}" alt="System Logo" style="width: 80px; height: 80px; object-fit: contain;">
@@ -95,7 +95,7 @@
                 <tr>
                     <td>{{ $index + 1 }}</td>
                     <td>{{ $item['employee_name'] ?? '-' }}</td>
-                    <td style="text-align:center;">{{ $item['checkin_date'] }}</td>
+                    <td style="text-align:center;">{{ formatDate($item['checkin_date']) }}</td>
                     <td style="text-align:center;">{{ $item['checkin_time'] ?? '-' }}</td>
                     <td style="text-align:center;">{{ $item['period_name'] ?? '-' }} ({{ $item['period_start_at'] ?? '-' }} - {{ $item['period_end_at'] ?? '-' }})</td>
                 </tr>

@@ -45,12 +45,12 @@
                 <h1 class="text-3xl font-bold text-gray-900 tracking-tight">INCOME STATEMENT</h1>
                 <p class="text-sm text-gray-600 mt-2 font-medium">
                     @if($startDate && $endDate)
-                    For the Period from {{ \Carbon\Carbon::parse($startDate)->format('F d, Y') }} to {{ \Carbon\Carbon::parse($endDate)->format('F d, Y') }}
+                    For the Period from {{ formatDate($startDate) }} to {{ formatDate($endDate) }}
                     @else
                     For All Periods
                     @endif
                 </p>
-                <p class="text-xs text-gray-500 mt-1">Generated on {{ now()->format('F d, Y \a\t H:i') }}</p>
+                <p class="text-xs text-gray-500 mt-1">Generated on {{ formatDate(now()) }} at {{ now()->format('H:i') }}</p>
             </div>
         </div>
 

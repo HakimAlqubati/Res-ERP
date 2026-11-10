@@ -30,7 +30,7 @@ class AdvanceWagesTable
 
                 TextColumn::make('date')
                     ->label(__('Date'))
-                    ->date('Y-m-d')
+                    ->date()
                     ->sortable(),
 
                 TextColumn::make('amount')
@@ -62,7 +62,7 @@ class AdvanceWagesTable
 
                 TextColumn::make('settled_at')
                     ->label(__('Settled At'))
-                    ->dateTime('d-m-Y')
+                    ->date()
                     ->placeholder('—')
                     ->toggleable(isToggledHiddenByDefault: true),
 
@@ -73,7 +73,7 @@ class AdvanceWagesTable
 
                 TextColumn::make('created_at')
                     ->label(__('Created At'))
-                    ->dateTime('d-m-Y H:i')
+                    ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])

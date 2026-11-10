@@ -78,7 +78,7 @@ class AdvanceWageForm
                             ),
                         ])
                         ->native(false)
-                        ->displayFormat('Y-m-d')
+                        ->displayFormat(getDateFormat())
                         ->columnSpan(1),
 
                     Hidden::make('year')

@@ -51,29 +51,23 @@ trait EmployeeAccessorsTrait
         return sprintf('%02d:%02d', $hours, $minutes);
     }
 
-    public function getAvatarImageAttribute()
-    {
-        if ($this->avatar && Storage::disk('s3')->exists($this->avatar)) {
-            return Storage::disk('s3')->url($this->avatar);
-        }
-        if ($this->avatar && Storage::disk('public')->exists($this->avatar)) {
-            if (env('APP_ENV') == 'local') {
+   public function getAvatarImageAttribute()
+{
+    if ($this->avatar) {
+        try {
+            if (Storage::disk('s3')->exists($this->avatar)) {
+                return Storage::disk('s3')->url($this->avatar);
+            }
+            if (Storage::disk('public')->exists($this->avatar)) {
                 return Storage::disk('public')->url($this->avatar);
             }
-            return url('/') . Storage::disk('public')->url($this->avatar);
+        } catch (\Exception $e) {
+            return asset('imgs/avatar.png');
         }
-
-        $defaultAvatarPath = 'imgs/avatar.png';
-
-        if (Storage::disk('public')->exists($defaultAvatarPath)) {
-            if (env('APP_ENV') == 'local') {
-                return Storage::disk('public')->url($defaultAvatarPath);
-            }
-            return url('/') . Storage::disk('public')->url($defaultAvatarPath);
-        }
-
-        return asset('imgs/avatar.png');
     }
+
+    return asset('imgs/avatar.png');
+}
 
     public function getAvatarImageAttributeOld()
     {

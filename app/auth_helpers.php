@@ -104,6 +104,13 @@ if (!function_exists('isSystemManager')) {
     }
 }
 
+if (!function_exists('isOpsManager')) {
+    function isOpsManager()
+    {
+        return auth()?->user()?->isOpsManager();
+    }
+}
+
 if (!function_exists('isStoreManager')) {
     function isStoreManager()
     {

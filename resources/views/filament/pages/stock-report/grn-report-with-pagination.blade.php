@@ -81,7 +81,7 @@
                     @endif
 
                     <td>{{ $row->supplier_name }}</td>
-                    <td>{{ $row->grn_date }}</td>
+                    <td>{{ formatDate($row->grn_date) }}</td>
 
                     @if (!isStoreManager())
                         <td>{{ formatMoneyWithCurrency($unit_price) }}</td>

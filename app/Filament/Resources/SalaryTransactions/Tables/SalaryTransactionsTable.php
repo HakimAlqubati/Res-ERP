@@ -7,9 +7,10 @@ use App\Models\Employee;
 use App\Models\SalaryTransaction;
 use App\Filament\Resources\SalaryTransactions\SalaryTransactionResource;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
@@ -77,7 +78,7 @@ class SalaryTransactionsTable
                     ->searchable(),
                 TextColumn::make('sub_type')
                     ->label(__('Sub Type'))->toggleable()
-                    // ->alignCenter()
+                    ->formatStateUsing(fn ($record, $state) => $record?->formatted_sub_type ?? ($state ? ucwords(str_replace(['_', '-'], ' ', (string) $state)) : null))
                     ->sortable()
                     ->searchable(),
 
@@ -100,7 +101,7 @@ class SalaryTransactionsTable
                 // التاريخ
                 TextColumn::make('date')->alignCenter()->toggleable()
                     ->label(__('Date'))->toggleable(isToggledHiddenByDefault: true)
-                    ->date('d-m-Y')
+                    ->date()
                     ->sortable(),
 
                 // // الحالة
@@ -177,12 +178,13 @@ class SalaryTransactionsTable
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make()->visible(fn($record) => $record->status === SalaryTransaction::STATUS_PENDING),
+                DeleteAction::make()->visible(fn() => SalaryTransactionResource::isUserSuperAdmin()),
+                RestoreAction::make()->visible(fn() => SalaryTransactionResource::isUserSuperAdmin()),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                    ForceDeleteBulkAction::make(),
-                    RestoreBulkAction::make(),
+                    DeleteBulkAction::make()->visible(fn() => SalaryTransactionResource::isUserSuperAdmin()),
+                    RestoreBulkAction::make()->visible(fn() => SalaryTransactionResource::isUserSuperAdmin()),
                 ]),
             ]);
     }

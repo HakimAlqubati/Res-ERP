@@ -77,7 +77,7 @@ class AttendanceImagesUploadedResource extends Resource
                         ->openUrlInNewTab()
                         ->weight(FontWeight::Bold),
                     TextColumn::make('datetime')->label(__('lang.date'))
-                        ->date('Y-m-d')
+                        ->date(getDateFormat())
 
                     // ->hidden(fn($state) => blank($state))
                     ,
@@ -87,7 +87,7 @@ class AttendanceImagesUploadedResource extends Resource
                     ,
 
                     TextColumn::make('attendances.check_date')->label(__('lang.check_date'))->placeholder('--')
-                        ->date('Y-m-d')
+                        ->date(getDateFormat())
                         ->hidden(fn($state) => blank($state)),
                     TextColumn::make('attendances.check_time')->label(__('lang.check_time'))
                         ->placeholder('--')
@@ -127,8 +127,8 @@ class AttendanceImagesUploadedResource extends Resource
                 Filter::make('datetime')
                     ->label(__('lang.created_at'))
                     ->schema([
-                        DatePicker::make('created_from')->label(__('lang.from'))->default(now()->subMonth(1))->columnSpan(2),
-                        DatePicker::make('created_until')->label(__('lang.to'))->default(now())->columnSpan(2),
+                        DatePicker::make('created_from')->label(__('lang.from'))->default(now()->subMonth(1))->native(false)->displayFormat(getDateFormat())->columnSpan(2),
+                        DatePicker::make('created_until')->label(__('lang.to'))->default(now())->native(false)->displayFormat(getDateFormat())->columnSpan(2),
                     ])->columns(4)
                     ->query(function (Builder $query, array $data): Builder {
                         return $query

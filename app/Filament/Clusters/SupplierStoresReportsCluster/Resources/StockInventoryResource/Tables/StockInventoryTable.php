@@ -59,7 +59,7 @@ class StockInventoryTable
                 SoftDeleteColumn::make(),
                 TextColumn::make('id')->sortable()->label('ID')->searchable()->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('inventory_date')->sortable()->label('Date')->toggleable(),
+                TextColumn::make('inventory_date')->sortable()->label('Date')->date()->toggleable(),
                 TextColumn::make('categories_names')->limit(40)
                     ->weight(FontWeight::Medium)->tooltip(fn($record): string => $record->categories_names)
                     ->wrap()->label('Categories')->toggleable(),
@@ -72,8 +72,9 @@ class StockInventoryTable
                     ->toggleable()
                     ->summarize(
                         Summarizer::make()
-                            ->using(function (Table $table) {
-                                $total = $table->getRecords()->sum('closing_stock_value');
+                            ->using(function ($summarizer) {
+                                $records = $summarizer->getQuery()->with(['details.product', 'details.unit'])->get();
+                                $total = $records->sum('closing_stock_value');
                                 return is_numeric($total) ? formatMoneyWithCurrency($total) : $total;
                             })
                     )
@@ -86,7 +87,7 @@ class StockInventoryTable
                 IconColumn::make('finalized')->sortable()->label('Finalized')->boolean()->alignCenter(true)->toggleable(),
                 TextColumn::make('adjustment_date')
                     ->label('Finalized Date')
-                    ->date('Y-m-d')
+                    ->date()
                     ->sortable(false)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->state(function ($record) {
@@ -99,6 +100,7 @@ class StockInventoryTable
                     ->placeholder('-'),
 
                     TextColumn::make('created_at')
+                    ->dateTime()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('created_at'),
 
@@ -131,6 +133,14 @@ class StockInventoryTable
             ], FiltersLayout::Modal)
 
             ->recordActions([
+                \Filament\Actions\Action::make('continue_draft')
+                    ->label(fn () => __('lang.continue_stocktake'))
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('warning')
+                    ->button()
+                    ->visible(fn($record): bool => ! $record->finalized)
+                    ->url(fn($record): string => StockInventoryResource::getUrl('create', ['draft_id' => $record->id])),
+
                 EditAction::make()
                     ->label('Finalize')
                     ->button()

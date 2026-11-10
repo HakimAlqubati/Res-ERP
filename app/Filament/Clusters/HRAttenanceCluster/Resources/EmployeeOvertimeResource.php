@@ -89,11 +89,7 @@ class EmployeeOvertimeResource extends Resource
 
     public static function canCreate(): bool
     {
-        if (isSystemManager() || isSuperAdmin() || isBranchManager()) {
-            return true;
-        }
-
-        return false;
+        return EmployeeOvertimeTable::canManageOvertime();
     }
 
     public static function canForceDelete(Model $record): bool

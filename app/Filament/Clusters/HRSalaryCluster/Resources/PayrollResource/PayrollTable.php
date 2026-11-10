@@ -67,7 +67,7 @@ class PayrollTable
                 ->toggleable(isToggledHiddenByDefault: true),
             TextColumn::make('created_at')
                 ->label(__('Created At'))
-                ->dateTime('Y-m-d H:i')
+                ->dateTime()
                 ->sortable()
                 ->toggleable(isToggledHiddenByDefault: true),
             TextColumn::make('status')

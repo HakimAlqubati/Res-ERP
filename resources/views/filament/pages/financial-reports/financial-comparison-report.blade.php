@@ -74,9 +74,9 @@
                         <th colspan="2" class="no_border_right_left text-center">
                             <h3>{{ __('Financial Comparison Report') }}</h3>
                             <p class="text-sm text-gray-600">
-                                {{ __('Period 1') }}: {{ $filters['period_one']['start_date'] }} - {{ $filters['period_one']['end_date'] }}
+                                {{ __('Period 1') }}: {{ formatDate($filters['period_one']['start_date']) }} - {{ formatDate($filters['period_one']['end_date']) }}
                                 <br>
-                                {{ __('Period 2') }}: {{ $filters['period_two']['start_date'] }} - {{ $filters['period_two']['end_date'] }}
+                                {{ __('Period 2') }}: {{ formatDate($filters['period_two']['start_date']) }} - {{ formatDate($filters['period_two']['end_date']) }}
                             </p>
                         </th>
                         <th colspan="3"

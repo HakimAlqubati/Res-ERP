@@ -21,6 +21,7 @@ use App\Enums\ProductCodeGenerationMethod;
 use App\Enums\ProductUnitsSortDirection;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -215,13 +216,8 @@ class SettingResource extends Resource
                                                 ->columnSpan(2)
                                                 ->required(),
 
-                                            Select::make('payroll_salary_allocation_rule')
-                                                ->label('Salary Allocation Rule (Branch Transfers)')
-                                                ->helperText('Determines which branch pays the salary when an employee moves during the month.')
-                                                ->options(\App\Enums\HR\Payroll\SalaryAllocationRule::options())
-                                                ->default(\App\Enums\HR\Payroll\SalaryAllocationRule::PROPORTIONAL->value)
-                                                ->columnSpan(2)
-                                                ->required(),
+                                            Hidden::make('payroll_salary_allocation_rule')
+                                                ->default(\App\Enums\HR\Payroll\SalaryAllocationRule::PROPORTIONAL->value),
 
                                             TextInput::make('custom_month_days')
                                                 ->label('Custom Month Days')

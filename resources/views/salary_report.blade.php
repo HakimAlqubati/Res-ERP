@@ -44,7 +44,7 @@
         @foreach($transactions as $tx)
             <tr>
                 <td>{{ $loop->iteration }}</td>
-                <td>{{ \Carbon\Carbon::parse($tx->date)->format('Y-m-d') }}</td>
+                <td>{{ formatDate($tx->date) }}</td>
                 {{-- <td>
                     <span class="tx-type {{ $tx->type }}">
                         {{ __("transactions.types.$tx->type") ?? ucfirst($tx->type) }}

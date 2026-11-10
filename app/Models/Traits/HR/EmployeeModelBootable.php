@@ -24,21 +24,27 @@ trait EmployeeModelBootable
             }
 
             // Check if the 'branch_id' attribute is being updated
-            if ($employee->isDirty('branch_id')) {
-                // Log the branch change in the EmployeeBranchLog table
-                EmployeeBranchLog::create([
-                    'employee_id' => $employee->id,
-                    'branch_id'   => $employee->branch_id,
-                    'start_at'    => now(),        // Set the start time of the new branch
-                    'end_at'      => null,         // End time is null because this is the current branch
-                    'created_by'  => auth()->id(), // Who made the change
-                ]);
+            if ($employee->isDirty('branch_id') && $employee->branch_id) {
+                // Check if a log was already created for this branch and employee recently (e.g., by EmployeeBranchTransferService)
+                $alreadyLogged = EmployeeBranchLog::where('employee_id', $employee->id)
+                    ->where('branch_id', $employee->branch_id)
+                    ->whereNull('end_at')
+                    ->exists();
 
-                // Optionally, you could handle the previous branch log (if you want to mark the previous branch as ended)
-                $previousBranchLog = $employee->branchLogs()->whereNull('end_at')->latest()->first();
-                if ($previousBranchLog) {
-                    // Update the previous branch log with the 'end_at' timestamp
-                    $previousBranchLog->update(['end_at' => now()]);
+                if (! $alreadyLogged) {
+                    // Close the previous active branch log
+                    $employee->branchLogs()
+                        ->whereNull('end_at')
+                        ->update(['end_at' => now()]);
+
+                    // Log the branch change in the EmployeeBranchLog table
+                    EmployeeBranchLog::create([
+                        'employee_id' => $employee->id,
+                        'branch_id'   => $employee->branch_id,
+                        'start_at'    => now(),        // Set the start time of the new branch
+                        'end_at'      => null,         // End time is null because this is the current branch
+                        'created_by'  => auth()->id(), // Who made the change
+                    ]);
                 }
             }
         });

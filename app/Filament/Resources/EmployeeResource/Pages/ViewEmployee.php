@@ -15,6 +15,8 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Components\Component;
+use Illuminate\Contracts\View\View;
 
 class ViewEmployee extends ViewRecord
 {
@@ -23,6 +25,26 @@ class ViewEmployee extends ViewRecord
     public function hasCombinedRelationManagerTabsWithContent(): bool
     {
         return true;
+    }
+
+    public function getExtraBodyAttributes(): array
+    {
+        return [
+            'class' => 'employee-view-profile-page',
+        ];
+    }
+
+    public function getRelationManagersContentComponent(): Component
+    {
+        $component = parent::getRelationManagersContentComponent();
+
+        if (method_exists($component, 'extraAttributes')) {
+            $component->extraAttributes([
+                'class' => 'employee-profile-tabs',
+            ]);
+        }
+
+        return $component;
     }
 
     protected function mutateFormDataBeforeFill(array $data): array

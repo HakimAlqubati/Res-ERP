@@ -68,12 +68,19 @@ class PurchaseInvoiceTable
                     })
                     ->summarize(
                         Summarizer::make()
-                            ->using(function (Table $table) {
-                                $total  = $table->getRecords()->sum(fn($record) => $record->total_amount);
-                                if (is_numeric($total)) {
-                                    return formatMoneyWithCurrency($total);
+                            ->using(function ($summarizer) {
+                                $ids = $summarizer->getQuery()->pluck('purchase_invoices.id');
+
+                                if ($ids->isEmpty()) {
+                                    return formatMoneyWithCurrency(0);
                                 }
-                                return $total;
+
+                                $total = DB::table('purchase_invoice_details')
+                                    ->whereIn('purchase_invoice_id', $ids)
+                                    ->whereNull('deleted_at')
+                                    ->sum(DB::raw('quantity * price'));
+
+                                return formatMoneyWithCurrency($total ?? 0);
                             })
                     )
                     ->toggleable(isToggledHiddenByDefault: false),
@@ -102,10 +109,10 @@ class PurchaseInvoiceTable
                     ->label('Creator')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
-                    ->label('Created At')->date('Y-m-d')
+                    ->label('Created At')->dateTime()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('date')
-                    ->label('Date')->date('Y-m-d')
+                    ->label('Date')->date()
                     ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('has_outbound_transactions')
                     ->toggleable(isToggledHiddenByDefault: true)

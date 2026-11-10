@@ -23,6 +23,8 @@ final class CalculationContext
         public ?string $periodEndDate = null,
         public ?string $periodStartDate = null,   // ← بداية فترة الفرع (segment)
         public ?RateResult $rates = null,
+        public bool $isMultiSegment = false,     // ← هل الموظف لديه أكثر من فرع في الشهر
+        public bool $isFinalSegment = true,      // ← هل هذه شريحة الراتب النهائي للموظف في الشهر
     ) {}
 
     /**
@@ -42,6 +44,8 @@ final class CalculationContext
             periodEndDate:   $this->periodEndDate,
             periodStartDate: $this->periodStartDate,   // ← حفظ قيمة الـ segment
             rates:           $rates,
+            isMultiSegment:  $this->isMultiSegment,
+            isFinalSegment:  $this->isFinalSegment,
         );
     }
 

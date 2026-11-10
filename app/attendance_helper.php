@@ -624,16 +624,22 @@ if (!function_exists('formatHoursMinuts')) {
 if (!function_exists('getEmployeePeriodAttendnaceDetails')) {
     function getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date)
     {
-        $attenance = Attendance::where('employee_id', $employeeId)
+        $query = Attendance::where('employee_id', $employeeId)
             ->accepted()
             ->with('branch:id,name')
-            ->where('period_id', $periodId)
             ->where('check_date', $date)
-            ->select('check_time', 'check_type', 'period_id','branch_id')
-            ->orderBy('id', 'asc')
-            // ->groupBy('period_id')
-            ->get();
-        return $attenance;
+            ->select('check_time', 'check_type', 'period_id', 'branch_id')
+            ->orderBy('id', 'asc');
+
+        if ($periodId == -1 || empty($periodId)) {
+            $query->where(function ($q) {
+                $q->whereNull('period_id')->orWhere('period_id', -1);
+            });
+        } else {
+            $query->where('period_id', $periodId);
+        }
+
+        return $query->get();
     }
 }
 /**

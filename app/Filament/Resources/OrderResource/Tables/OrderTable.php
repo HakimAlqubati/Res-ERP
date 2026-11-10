@@ -125,32 +125,30 @@ class OrderTable
                     })
                     ->summarize(
                         Summarizer::make()
-                            ->using(function (Table $table) {
+                            ->using(function ($summarizer) {
                                 $service = app(OrderCostAnalysisService::class);
-                                $total = $table->getRecords()->sum(function ($record) use ($service) {
-                                    if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::IN_TRANSIT, Order::DELEVIRED])) {
+                                $records = $summarizer->getQuery()
+                                    ->with(['orderDetails'])
+                                    ->get();
+
+                                $total = $records->sum(function ($record) use ($service) {
+                                    if (in_array($record->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
                                         $analysis = $service->getOrderValues($record->id);
                                         return $analysis['total_cost_from_inventory_transactions'] ?? $record->total_amount;
                                     }
                                     return $record->total_amount;
                                 });
-                                if (is_numeric($total)) {
-                                    return formatMoneyWithCurrency($total);
-                                }
-                                return $total;
+
+                                return is_numeric($total) ? formatMoneyWithCurrency($total) : $total;
                             })
                     ),
                 TextColumn::make('created_at')
-                    ->formatStateUsing(function ($state) {
-                        return date('Y-m-d', strtotime($state)) . ' ' . date('H:i:s', strtotime($state));
-                    })
+                    ->dateTime()
                     ->label(__('lang.created_at'))
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->sortable(),
                 TextColumn::make('transfer_date')
-                    ->formatStateUsing(function ($state) {
-                        return date('Y-m-d', strtotime($state)) . ' ' . date('H:i:s', strtotime($state));
-                    })
+                    ->dateTime()
                     ->label(__('lang.transfer_date'))
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),

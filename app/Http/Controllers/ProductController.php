@@ -248,15 +248,23 @@ class ProductController extends Controller
         $paginator = $result['paginator'];
 
         return response()->json([
-            'success'                  => true,
-            'data'                     => $paginator->items(),
-            'grand_total'              => $result['grand_total'],
-            'current_page_total'       => $result['current_page_total'],
-            'current_page_price_total' => $result['current_page_price_total'],
-            'dataTotal'                => [
-                'grand_total'              => $result['grand_total'],
-                'current_page_total'       => $result['current_page_total'],
-                'current_page_price_total' => $result['current_page_price_total'],
+            'success'                     => true,
+            'data'                        => $paginator->items(),
+            'grand_total'                 => $result['grand_total'],
+            'grand_total_quantity'        => $result['grand_total_quantity'] ?? null,
+            'grand_average_price'         => $result['grand_average_price'] ?? null,
+            'current_page_total'          => $result['current_page_total'],
+            'current_page_price_total'    => $result['current_page_price_total'],
+            'current_page_quantity_total' => $result['current_page_quantity_total'] ?? null,
+            'current_page_average_price'  => $result['current_page_average_price'] ?? null,
+            'dataTotal'                   => [
+                'grand_total'                 => $result['grand_total'],
+                'grand_total_quantity'        => $result['grand_total_quantity'] ?? null,
+                'grand_average_price'         => $result['grand_average_price'] ?? null,
+                'current_page_total'          => $result['current_page_total'],
+                'current_page_price_total'    => $result['current_page_price_total'],
+                'current_page_quantity_total' => $result['current_page_quantity_total'] ?? null,
+                'current_page_average_price'  => $result['current_page_average_price'] ?? null,
             ],
             'meta'                     => [
                 'current_page' => $paginator->currentPage(),

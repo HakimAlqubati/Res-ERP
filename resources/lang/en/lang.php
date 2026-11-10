@@ -1170,8 +1170,18 @@ return [
     'terminated' => 'Terminated',
     'access_denied' => 'Access Denied',
     'undo_approve' => 'Undo Approve',
-    'undo_approve_confirmation_title' => 'Undo Approve Leave Request #{id}',
+    'undo_approve_confirmation_title' => 'Undo Approve Leave Request :id',
     'undo_approve_confirmation_body' => 'Are you sure you want to undo the approval of this leave request? This action cannot be undone.',
+    'undo_approve_leave_confirmation_title' => 'Undo Approve Leave Request :id',
+    'undo_approve_leave_confirmation_body' => 'Are you sure you want to undo the approval of this leave request? This action cannot be undone.',
+    'undo_approve_attendance_confirmation_title' => 'Undo Approve Attendance Request :id',
+    'undo_approve_attendance_confirmation_body' => 'Are you sure you want to undo the approval of this attendance request? This action cannot be undone.',
+    'undo_approve_departure_confirmation_title' => 'Undo Approve Departure Request :id',
+    'undo_approve_departure_confirmation_body' => 'Are you sure you want to undo the approval of this departure request? This action cannot be undone.',
+    'shift_start_date' => 'Shift Start Date',
+    'shift_start_date_helper_text' => 'The effective start date of the new shift in the new branch.',
+    'shift_change_must_be_next_day' => 'The employee has a check-in on the transfer date (:date). Shift change is only allowed from the next day (:next_day) onwards.',
+    'shift_start_date_cannot_be_before_transfer_date' => 'Shift start date cannot be before the branch transfer date.',
     'branch_logs_count' => 'Transfers',
     'attendance_type' => 'Attendance Type',
     'cannot_process_financial_clearance' => 'Cannot process financial clearance. The employee has outstanding advance installments amounting to: :amount',
@@ -1237,4 +1247,64 @@ return [
     'one_role_not_valid' => 'One of the selected roles is not valid for the current user type.',
     'roles_list_invalid' => 'The roles list format is invalid.',
     'role_required' => 'Please select at least one role.',
+
+    // ===========================================
+    // Employee Advance Installments
+    // ===========================================
+    'original_amount' => 'Original Amount',
+    'paid_by' => 'Paid By',
+    'installment' => 'Installment',
+    'skipped_reason' => 'Skipped Reason',
+    'cancelled_reason' => 'Cancelled Reason',
+    'scheduled' => 'Scheduled',
+    'skipped' => 'Skipped',
+    'due_from' => 'Due From',
+    'due_to' => 'Due To',
+    'overdue_only' => 'Overdue Only',
+    
+    // ===========================================
+    // Employee Branch Transfer Logs
+    // ===========================================
+    'employee_branch_transfers' => 'Staff Movement Log',
+    'employee_branch_transfer' => 'Staff Movement Log',
+    'transferred_to_branch' => 'Transferred To Branch',
+    'previous_branch' => 'Previous Branch',
+    'transfer_date' => 'Transfer Date',
+    'transfer_status' => 'Assignment Status',
+    'current_active_branch' => 'Current Branch',
+    'past_branches' => 'Past Branches',
+    'ongoing_in_branch' => 'Ongoing in Branch',
+
+    // ===========================================
+    // Requests Dashboard
+    // ===========================================
+    'requests_dashboard' => 'Requests Dashboard',
+    'requests_list' => 'Requests List',
+
+    // ===========================================
+    // Purchase Invoices
+    // ===========================================
+    'total_amount_required' => 'The invoice total field is required.',
+    'total_amount_must_be_greater_than_zero' => 'The invoice total must be greater than zero since items exist in the invoice.',
+    'total_amount_mismatch' => 'The invoice total (:total) does not match the sum of item totals (:sum).',
+    'only_pdf_allowed' => 'Only PDF files are allowed',
+    'invalid_file_type_pdf_only' => 'Invalid file type. Only PDF files are allowed.',
+    'invalid_file_type_title' => 'Unsupported File Type',
+    'smallest_package_size_greater_than_one' => 'The package size for the smallest unit cannot be greater than 1.',
+
+    // ===========================================
+    // Stock Inventory Pagination & Actions
+    // ===========================================
+    'previous' => 'Previous',
+    'next' => 'Next',
+    'page' => 'Page',
+    'page_x_of_y' => 'Page :page of :total',
+    'start_new_stocktake' => 'Start New Stocktake',
+    'continue_stocktake' => 'Continue Stocktake',
+    'create_stocktake' => 'Create Stocktake',
+    'jump_to_page' => 'Jump to Page',
+    'go' => 'Go',
 ];
+
+
+

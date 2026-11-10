@@ -23,10 +23,10 @@ class EmployeeBranchLog extends Model
     protected $table = 'hr_employee_branch_logs';
     protected $fillable = ['employee_id', 'branch_id', 'start_at', 'end_at', 'created_by'];
 
-    // protected $casts = [
-    //     'start_at' => 'datetime',
-    //     'end_at'   => 'datetime',
-    // ];
+    protected $casts = [
+        'start_at' => 'datetime',
+        'end_at'   => 'datetime',
+    ];
 
     // Define the relationship with the Employee model
     public function employee()
@@ -34,7 +34,7 @@ class EmployeeBranchLog extends Model
         return $this->belongsTo(Employee::class);
     }
 
-    // Define the relationship with the Branch model (assuming you have a Branch model)
+    // Define the relationship with the Branch model
     public function branch()
     {
         return $this->belongsTo(Branch::class);
@@ -43,6 +43,89 @@ class EmployeeBranchLog extends Model
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Get the previous branch this employee was assigned to before this log entry.
+     */
+    public function getPreviousBranchAttribute(): ?Branch
+    {
+        $previousLog = static::where('employee_id', $this->employee_id)
+            ->where(function ($q) {
+                $q->where('start_at', '<', $this->start_at)
+                    ->orWhere(function ($sub) {
+                        $sub->where('start_at', '=', $this->start_at)
+                            ->where('id', '<', $this->id);
+                    });
+            })
+            ->orderByDesc('start_at')
+            ->orderByDesc('id')
+            ->first();
+
+        return $previousLog?->branch;
+    }
+
+    /**
+     * Check if this assignment is currently active.
+     */
+    public function getIsActiveAttribute(): bool
+    {
+        return is_null($this->end_at) || Carbon::parse($this->end_at)->isFuture();
+    }
+
+    /**
+     * Scope for branch managers.
+     */
+    public function scopeForBranchManager(\Illuminate\Database\Eloquent\Builder $query, string $branchColumn = 'branch_id'): \Illuminate\Database\Eloquent\Builder
+    {
+        if (auth()->check() && (isSuperAdmin() || isSystemManager() || isHR())) {
+            return $query;
+        }
+
+        if (auth()->check() && isBranchManager()) {
+            $userBranchId = auth()->user()->branch_id;
+            return $query->where(function ($q) use ($userBranchId, $branchColumn) {
+                $q->where($branchColumn, $userBranchId)
+                    ->orWhereHas('employee', function ($eq) use ($userBranchId) {
+                        $eq->where('branch_id', $userBranchId);
+                    });
+            });
+        }
+
+        return $query;
+    }
+
+    /**
+     * Scope to filter only employees with multiple branch assignments (transfers).
+     */
+    public function scopeTransferredEmployees(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->whereIn('employee_id', function ($sub) {
+            $sub->select('employee_id')
+                ->from('hr_employee_branch_logs')
+                ->groupBy('employee_id')
+                ->havingRaw('count(*) > 1');
+        });
+    }
+
+    /**
+     * Scope for active logs.
+     */
+    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('end_at')
+                ->orWhere('end_at', '>=', now()->toDateString());
+        });
+    }
+
+    /**
+     * Scope for past/ended logs.
+     */
+    public function scopePast(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->whereNotNull('end_at')
+            ->where('end_at', '<', now()->toDateString());
     }
 
     // ─────────────────────────────────────────────────────────────

@@ -160,7 +160,7 @@
 
                         </p>
                         <p style="font-size: 14px; margin: 3px 0;">
-                            {{ $date ?? '-' }}
+                            {{ !empty($date) ? formatDate($date) : '-' }}
                         </p>
                     </div>
                 </th>

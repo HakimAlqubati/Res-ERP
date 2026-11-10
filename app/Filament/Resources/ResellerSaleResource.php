@@ -307,7 +307,7 @@ class ResellerSaleResource extends Resource
                 TextColumn::make('id')->sortable()->searchable()->toggleable()->alignCenter(),
                 TextColumn::make('branch.name')->label(__('lang.reseller'))->toggleable(),
                 TextColumn::make('store.name')->label(__('lang.store'))->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('sale_date')->date('Y-m-d')->toggleable(),
+                TextColumn::make('sale_date')->date()->toggleable(),
                 TextColumn::make('item_count')
                     ->label(__('lang.item_counts'))
                     ->alignCenter()

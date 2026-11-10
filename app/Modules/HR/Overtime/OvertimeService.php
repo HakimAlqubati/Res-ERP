@@ -24,9 +24,9 @@ class OvertimeService
             foreach ($employees as $index => $employee) {
                 $hours = $employee['hours'];
                 if (is_string($hours) && strpos($hours, ':') !== false) {
-                    [$h, $m] = explode(':', $hours);
-                    $hours = round((float)$h + ((float)$m / 60), 2);
+                    $hours = EmployeeOvertime::parseToDecimalHours($hours);
                 }
+
                 EmployeeOvertime::create([
                     'employee_id' => $employee['employee_id'],
                     'date'        => $data['date'],
@@ -336,16 +336,20 @@ class OvertimeService
      * Update overtime hours for a specific record.
      *
      * @param int $id
-     * @param float $hours
+     * @param float|int|string $hours
      * @return EmployeeOvertime
      * @throws Exception
      */
-    public function updateHours(int $id, float $hours): EmployeeOvertime
+    public function updateHours(int $id, float|int|string $hours): EmployeeOvertime
     {
         $overtime = EmployeeOvertime::findOrFail($id);
 
         if ($overtime->status === EmployeeOvertime::STATUS_APPROVED) {
             throw new Exception('Cannot update an approved overtime record. Please undo the approval first.', 403);
+        }
+
+        if (is_string($hours) && strpos($hours, ':') !== false) {
+            $hours = EmployeeOvertime::parseToDecimalHours($hours);
         }
 
         $overtime->update([
@@ -421,13 +425,19 @@ class OvertimeService
                     // The filament code picks index 0
                     if (isset($overtimeResults)) {
                         $result = $overtimeResults;
+                        $hoursFormatted = $result[0]['overtime_formatted']
+                            ?? (isset($result[0]['supposed_duration_minutes'])
+                                ? EmployeeOvertime::formatMinutes($result[0]['supposed_duration_minutes'])
+                                : EmployeeOvertime::formatHours($result[0]['overtime_hours']));
+
                         $employeesWithOvertime[] = [
-                            'employee_id' => $employee->id,
-                            'name'        => $employee->name,
-                            'start_time'  => $result[0]['overtime_start_time'],
-                            'end_time'    => $result[0]['overtime_end_time'],
-                            'hours'       => $result[0]['overtime_hours'],
-                            'notes'       => null,
+                            'employee_id'     => $employee->id,
+                            'name'            => $employee->name,
+                            'start_time'      => $result[0]['overtime_start_time'],
+                            'end_time'        => $result[0]['overtime_end_time'],
+                            'hours'           => $hoursFormatted,
+                            'hours_formatted' => $hoursFormatted,
+                            'notes'           => null,
                         ];
                     }
                 }
@@ -467,13 +477,19 @@ class OvertimeService
 
                     if (!empty($overtimeResults) && isset($overtimeResults[0])) {
                         $result = $overtimeResults[0];
+                        $hoursFormatted = $result['overtime_formatted']
+                            ?? (isset($result['supposed_duration_minutes'])
+                                ? EmployeeOvertime::formatMinutes($result['supposed_duration_minutes'])
+                                : EmployeeOvertime::formatHours($result['overtime_hours']));
+
                         $dailyOvertime[] = [
-                            'employee_id' => $employee->id,
-                            'name'        => $employee->name,
-                            'start_time'  => $result['overtime_start_time'],
-                            'end_time'    => $result['overtime_end_time'],
-                            'hours'       => $this->formatOvertimeHours($result),
-                            'notes'       => null,
+                            'employee_id'     => $employee->id,
+                            'name'            => $employee->name,
+                            'start_time'      => $result['overtime_start_time'],
+                            'end_time'        => $result['overtime_end_time'],
+                            'hours'           => $hoursFormatted,
+                            'hours_formatted' => $hoursFormatted,
+                            'notes'           => null,
                         ];
                     }
                 }
@@ -533,13 +549,19 @@ class OvertimeService
                 // استدعاء دالة الحساب التي تعمل على الـ Collections المحملة مسبقاً
                 $result = $employee->calculateOvertimeInMemory($dateString, $allowedOffset, $halfHourRule);
                 if (!empty($result)) {
+                    $hoursFormatted = $result['overtime_formatted']
+                        ?? (isset($result['supposed_duration_minutes'])
+                            ? EmployeeOvertime::formatMinutes($result['supposed_duration_minutes'])
+                            : EmployeeOvertime::formatHours($result['overtime_hours']));
+
                     $dailyOvertime[] = [
-                        'employee_id' => $employee->id,
-                        'name'        => $employee->name,
-                        'start_time'  => $result['overtime_start_time'],
-                        'end_time'    => $result['overtime_end_time'],
-                        'hours'       => $this->formatOvertimeHours($result),
-                        'notes'       => null,
+                        'employee_id'     => $employee->id,
+                        'name'            => $employee->name,
+                        'start_time'      => $result['overtime_start_time'],
+                        'end_time'        => $result['overtime_end_time'],
+                        'hours'           => $hoursFormatted,
+                        'hours_formatted' => $hoursFormatted,
+                        'notes'           => null,
                     ];
                 }
             }

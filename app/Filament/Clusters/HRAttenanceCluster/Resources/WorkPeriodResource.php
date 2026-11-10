@@ -183,7 +183,23 @@ class WorkPeriodResource extends Resource
                     ->searchable()->toggleable(),
 
                 TextColumn::make('branch_name')
-                    ->label('Branch')->searchable()->sortable()->toggleable(),
+                    ->label(__('lang.branch'))
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->where(function (Builder $q) use ($search) {
+                            $q->whereHas('branch', fn (Builder $bq) => $bq->where('name', 'like', "%{$search}%"));
+
+                            if (str_contains(mb_strtolower('All Branches'), mb_strtolower($search)) || str_contains(mb_strtolower('جميع الفروع'), mb_strtolower($search))) {
+                                $q->orWhere('all_branches', true);
+                            }
+                        });
+                    })
+                    ->sortable(query: function (Builder $query, string $direction): Builder {
+                        return $query->orderBy(
+                            Branch::select('name')->whereColumn('branches.id', 'hr_work_periods.branch_id'),
+                            $direction
+                        );
+                    })
+                    ->toggleable(),
 
                 BooleanColumn::make('active')->alignCenter(true)
                     ->label('Active')->toggleable(),
@@ -358,6 +374,7 @@ class WorkPeriodResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery()
+            ->with('branch')
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

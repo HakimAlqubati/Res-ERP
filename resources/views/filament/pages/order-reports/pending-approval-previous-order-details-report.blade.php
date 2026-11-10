@@ -44,7 +44,7 @@
                                         class="font-bold">{{ $detail['quantity'] }}</td>
                                     @if (!$groupByOrder)
                                         <td class="font-bold">
-                                            {{ date('Y-m-d', strtotime($detail['created_at'])) }}<br>
+                                            {{ formatDate($detail['created_at']) }}<br>
                                             {{ date('H:i:s', strtotime($detail['created_at'])) }}
                                         </td>
                                     @endif
@@ -66,7 +66,7 @@
 
                                 @if (!$groupByOrder)
                                     <td class="font-bold">
-                                        {{ date('Y-m-d', strtotime($row['created_at'])) }}<br>
+                                        {{ formatDate($row['created_at']) }}<br>
                                         {{ date('H:i:s', strtotime($row['created_at'])) }}
                                     </td>
                                 @endif
