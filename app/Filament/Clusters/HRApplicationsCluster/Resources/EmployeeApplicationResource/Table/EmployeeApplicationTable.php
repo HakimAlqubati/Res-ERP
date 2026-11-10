@@ -277,21 +277,9 @@ class EmployeeApplicationTable
             ->recordActions([
                 ActionGroup::make([
                     EmployeeApplicationResource::viewApprovalTrackAction(),
-                    EmployeeApplicationResource::approvePolicyStepAction(),
                     EmployeeApplicationResource::attachmentsAction(),
 
-                    EmployeeApplicationResource::approveLeaveRequest()->hidden(function ($record) {
-                        if (isstuff() || isHR()) {
-                            return true;
-                        }
-                        if (isset(Auth::user()->employee)) {
-                            if ($record->employee_id == Auth::user()->employee->id) {
-                                return true;
-                            }
-                        }
-
-                        return false;
-                    }),
+                    EmployeeApplicationResource::approveLeaveRequest(),
                     EmployeeApplicationResource::undoApproveLeaveRequest()->hidden(function ($record) {
                         if (isstuff() ||  isHR()) {
                             return true;
@@ -304,18 +292,7 @@ class EmployeeApplicationTable
 
                         return false;
                     }),
-                    EmployeeApplicationResource::rejectLeaveRequest()->hidden(function ($record) {
-                        if (isstuff() ||  isHR()) {
-                            return true;
-                        }
-                        if (isset(Auth::user()->employee)) {
-                            if ($record->employee_id == Auth::user()->employee->id) {
-                                return true;
-                            }
-                        }
-
-                        return false;
-                    }),
+                    EmployeeApplicationResource::rejectLeaveRequest(),
                     EmployeeApplicationResource::LeaveRequesttDetails()
                         ->visible(fn ($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST)),
                     EmployeeApplicationResource::departureRequesttDetails()
@@ -329,12 +306,8 @@ class EmployeeApplicationTable
                     EmployeeApplicationResource::exportAdvanceRequestPdf(),
 
                     EmployeeApplicationResource::advanceInstallmentsAction(),
-                    EmployeeApplicationResource::approveAdvanceRequest()->hidden(function ($record) {
-                        return false;
-                    }),
-                    EmployeeApplicationResource::rejectAdvanceRequest()->hidden(function ($record) {
-                        return false;
-                    }),
+                    EmployeeApplicationResource::approveAdvanceRequest(),
+                    EmployeeApplicationResource::rejectAdvanceRequest(),
                     EmployeeApplicationResource::financeApproveAdvanceRequest()
                         ->hidden(function ($record) {
                             if (isFinanceManager() || isHR() || isSuperAdmin()) {
@@ -470,30 +443,8 @@ class EmployeeApplicationTable
                     }
                 }),
 
-                EmployeeApplicationResource::approveDepartureRequest()->hidden(function ($record) {
-                    if (isstuff() ||  isHR()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-
-                    return false;
-                }),
-                EmployeeApplicationResource::rejectDepartureRequest()->hidden(function ($record) {
-                    if (isstuff() ||  isHR()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-
-                    return false;
-                }),
+                EmployeeApplicationResource::approveDepartureRequest(),
+                EmployeeApplicationResource::rejectDepartureRequest(),
                 EmployeeApplicationResource::undoApproveDepartureRequest()->hidden(function ($record) {
                     if (isstuff() ||  isHR()) {
                         return true;
@@ -507,32 +458,9 @@ class EmployeeApplicationTable
                     return false;
                 }),
 
-                EmployeeApplicationResource::approveAttendanceRequest()->hidden(function ($record) {
-                    // return false;
-                    if (isstuff() || isHR()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
+                EmployeeApplicationResource::approveAttendanceRequest(),
 
-                    return false;
-                }),
-
-                EmployeeApplicationResource::rejectAttendanceRequest()->hidden(function ($record) {
-                    if (isstuff() ||  isHR()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-
-                    return false;
-                }),
+                EmployeeApplicationResource::rejectAttendanceRequest(),
                 EmployeeApplicationResource::undoApproveAttendanceRequest()->hidden(function ($record) {
                     if (isstuff() ||  isHR()) {
                         return true;
@@ -546,31 +474,8 @@ class EmployeeApplicationTable
                     return false;
                 }),
 
-                EmployeeApplicationResource::approveMealRequest()
-                ->hidden(function ($record) {
-                    if (isstuff() ||  isHR()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-
-                    return false;
-                }),
-                EmployeeApplicationResource::rejectMealRequest()->hidden(function ($record) {
-                    if (isstuff() ||  isHR()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-
-                    return false;
-                }),
+                EmployeeApplicationResource::approveMealRequest(),
+                EmployeeApplicationResource::rejectMealRequest(),
                 EmployeeApplicationResource::mealRequestDetails()
                     ->visible(fn ($record): bool => ($record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST)),
 

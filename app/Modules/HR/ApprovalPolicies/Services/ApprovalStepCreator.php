@@ -27,7 +27,9 @@ class ApprovalStepCreator
                 'approver_employee_id' => $approver->employeeId,
                 'approver_user_id' => $approver->userId,
                 'approver_role_id' => $approver->roleId,
-                'status' => ApprovalStepStatus::PENDING,
+                'status' => $approver->isSkipped
+                    ? ApprovalStepStatus::SKIPPED
+                    : ApprovalStepStatus::PENDING,
                 'created_at' => now(),
                 'updated_at' => now(),
             ])

@@ -21,7 +21,9 @@ class UniqueApprovalPolicy implements ValidationRule
     ) {
         $this->ignoreId = $ignoreId ? (int) $ignoreId : null;
         $this->approvableType = $approvableType ? (string) $approvableType : null;
-        $this->applicationTypeId = $applicationTypeId ? (int) $applicationTypeId : null;
+        $this->applicationTypeId = ($applicationTypeId !== null && $applicationTypeId !== '' && $applicationTypeId !== 'all')
+            ? (int) $applicationTypeId
+            : null;
         $this->branchIds = is_array($branchIds) ? $branchIds : [];
     }
 
@@ -32,31 +34,40 @@ class UniqueApprovalPolicy implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $name = (string) $value;
-
-        // Find policies with the same name, approvable type, and application type
-        $query = ApprovalPolicy::query()
-            ->where('name', $name)
-            ->where('approvable_type', $this->approvableType)
-            ->where('application_type_id', $this->applicationTypeId);
-
-        if ($this->ignoreId) {
-            $query->where('id', '!=', $this->ignoreId);
+        if (! $this->approvableType) {
+            return;
         }
 
-        $duplicates = $query->get();
+        $query = ApprovalPolicy::query()
+            ->where('approvable_type', $this->approvableType)
+            ->when(
+                $this->applicationTypeId !== null,
+                fn ($q) => $q->where('application_type_id', $this->applicationTypeId),
+                fn ($q) => $q->whereNull('application_type_id')
+            );
 
-        $currentBranches = array_map('strval', $this->branchIds);
-        sort($currentBranches);
+        if ($this->ignoreId) {
+            $query->whereKeyNot($this->ignoreId);
+        }
+
+        $duplicates = $query->get(['id', 'name', 'branch_ids']);
+
+        if ($duplicates->isEmpty()) {
+            return;
+        }
+
+        $currentBranches = array_values(array_unique(array_filter(array_map('intval', $this->branchIds))));
 
         foreach ($duplicates as $duplicate) {
-            $duplicateBranches = is_array($duplicate->branch_ids) ? $duplicate->branch_ids : [];
-            $duplicateBranches = array_map('strval', $duplicateBranches);
-            sort($duplicateBranches);
+            $duplicateBranches = array_values(array_unique(array_filter(array_map('intval', (array) $duplicate->branch_ids))));
 
-            // If the selected branches perfectly match an existing policy's branches
-            if ($duplicateBranches === $currentBranches) {
-                $fail(__('An approval policy with the exact same name, subject, and branches already exists.'));
+            $isBothGlobal = empty($currentBranches) && empty($duplicateBranches);
+            $hasBranchOverlap = ! empty($currentBranches)
+                && ! empty($duplicateBranches)
+                && ! empty(array_intersect($currentBranches, $duplicateBranches));
+
+            if ($isBothGlobal || $hasBranchOverlap) {
+                $fail(__('An approval policy for the same subject and branch(es) already exists.'));
                 return;
             }
         }

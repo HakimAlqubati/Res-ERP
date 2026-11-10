@@ -8,6 +8,17 @@ final readonly class ApprovalApprover
         public ?int $userId,
         public ?int $employeeId = null,
         public ?int $roleId = null,
+        public bool $isSkipped = false,
     ) {
+    }
+
+    public static function skipped(): self
+    {
+        return new self(
+            userId: null,
+            employeeId: null,
+            roleId: null,
+            isSkipped: true,
+        );
     }
 }

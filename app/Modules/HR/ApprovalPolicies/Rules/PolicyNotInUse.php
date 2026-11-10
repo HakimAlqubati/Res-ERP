@@ -5,6 +5,7 @@ namespace App\Modules\HR\ApprovalPolicies\Rules;
 use App\Models\AdvanceWage;
 use App\Models\EmployeeApplicationV2;
 use App\Models\EmployeeOvertime;
+use App\Modules\HR\ApprovalPolicies\Enums\ApprovalStepStatus;
 use App\Modules\HR\ApprovalPolicies\Models\ApprovalPolicy;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -36,10 +37,11 @@ class PolicyNotInUse implements ValidationRule
 
         $isInUse = $policy->steps()
             ->whereIn('approvable_type', $restrictedModels)
+            ->where('status', ApprovalStepStatus::PENDING)
             ->exists();
 
         if ($isInUse) {
-            $fail(__('This policy is in use by applications and cannot be modified.'));
+            $fail(__('This policy is currently in use by pending applications and cannot be deleted.'));
         }
     }
 }

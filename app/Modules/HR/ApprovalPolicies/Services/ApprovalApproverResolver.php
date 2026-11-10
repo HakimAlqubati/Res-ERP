@@ -32,10 +32,16 @@ class ApprovalApproverResolver
         };
 
         $approvers = $approvers
-            ->filter(fn (ApprovalApprover $approver) => $approver->userId || $approver->roleId)
-            ->unique(fn (ApprovalApprover $approver) => $approver->roleId
-                ? "role:{$approver->roleId}"
-                : "user:{$approver->userId}")
+            ->filter(fn (ApprovalApprover $approver) => $approver->isSkipped || $approver->userId || $approver->roleId)
+            ->unique(function (ApprovalApprover $approver) {
+                if ($approver->isSkipped) {
+                    return 'skipped:' . spl_object_id($approver);
+                }
+
+                return $approver->roleId
+                    ? "role:{$approver->roleId}"
+                    : "user:{$approver->userId}";
+            })
             ->values();
 
         if ($approvers->isEmpty()) {
@@ -49,8 +55,8 @@ class ApprovalApproverResolver
     {
         $manager = $record->approvalEmployee()?->manager;
 
-        if (! $manager?->user_id) {
-            return collect();
+        if (! $manager?->user_id || $this->isApplicantSelf($record, (int) $manager->user_id, (int) $manager->id)) {
+            return collect([ApprovalApprover::skipped()]);
         }
 
         return collect([new ApprovalApprover((int) $manager->user_id, (int) $manager->id)]);
@@ -61,7 +67,7 @@ class ApprovalApproverResolver
         $branchId = $record->approvalBranchId();
 
         if (! $branchId) {
-            return collect();
+            return collect([ApprovalApprover::skipped()]);
         }
 
         $managerUserId = Branch::query()
@@ -69,7 +75,11 @@ class ApprovalApproverResolver
             ->value('manager_id');
 
         if (! $managerUserId) {
-            return collect();
+            return collect([ApprovalApprover::skipped()]);
+        }
+
+        if ($this->isApplicantSelf($record, (int) $managerUserId)) {
+            return $this->directManager($record);
         }
 
         return collect([new ApprovalApprover((int) $managerUserId)]);
@@ -80,7 +90,7 @@ class ApprovalApproverResolver
         $employee = $record->approvalEmployee();
 
         if (! $employee?->manager_id) {
-            return collect();
+            return collect([ApprovalApprover::skipped()]);
         }
 
         $chain = collect();
@@ -102,7 +112,7 @@ class ApprovalApproverResolver
                 break;
             }
 
-            if ($manager->user_id) {
+            if ($manager->user_id && ! $this->isApplicantSelf($record, (int) $manager->user_id, (int) $manager->id)) {
                 $chain->push(new ApprovalApprover((int) $manager->user_id, (int) $manager->id));
             }
 
@@ -113,7 +123,7 @@ class ApprovalApproverResolver
             $managerId = (int) $manager->manager_id;
         }
 
-        return $chain;
+        return $chain->isEmpty() ? collect([ApprovalApprover::skipped()]) : $chain;
     }
 
     private function customUsers(ApprovalPolicy $policy): Collection
@@ -172,6 +182,33 @@ class ApprovalApproverResolver
             return null;
         }
 
-        return $this->managerChain($record, $level)->last();
+        $chain = $this->managerChain($record, $level)
+            ->reject(fn (ApprovalApprover $approver) => $approver->isSkipped)
+            ->values();
+
+        if ($chain->count() < $level) {
+            return ApprovalApprover::skipped();
+        }
+
+        return $chain->last();
+    }
+
+    private function isApplicantSelf(Model&ApprovableRecord $record, ?int $userId, ?int $employeeId = null): bool
+    {
+        $employee = $record->approvalEmployee();
+
+        if (! $employee) {
+            return false;
+        }
+
+        if ($employeeId && (int) $employee->id === (int) $employeeId) {
+            return true;
+        }
+
+        if ($userId && $employee->user_id && (int) $employee->user_id === (int) $userId) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -6,6 +6,7 @@ use App\Models\EmployeeApplicationV2;
 use App\Models\User;
 use App\Modules\HR\ApprovalPolicies\Contracts\ApprovableRecord;
 use App\Modules\HR\ApprovalPolicies\Contracts\RejectionHandler;
+use App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowGuard;
 use App\Services\HR\Applications\EmployeeApplicationService;
 use Illuminate\Database\Eloquent\Model;
 
@@ -13,6 +14,7 @@ class EmployeeApplicationRejectionHandler implements RejectionHandler
 {
     public function __construct(
         private readonly EmployeeApplicationService $applicationService,
+        private readonly ApprovalWorkflowGuard $guard,
     ) {
     }
 
@@ -22,6 +24,8 @@ class EmployeeApplicationRejectionHandler implements RejectionHandler
             return;
         }
 
-        $this->applicationService->rejectApplication($record->id, $rejectedBy->id, $reason ?? '');
+        $this->guard->withoutGuard(
+            fn () => $this->applicationService->rejectApplication($record->id, $rejectedBy->id, $reason ?? '')
+        );
     }
 }

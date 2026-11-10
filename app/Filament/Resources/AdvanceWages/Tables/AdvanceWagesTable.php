@@ -107,8 +107,21 @@ class AdvanceWagesTable
                         [AdvanceWage::STATUS_PENDING, AdvanceWage::STATUS_SETTLED]
                     ))
                     ->action(function (AdvanceWage $record): void {
-                        $record->cancel();
-                        Notification::make()->success()->title(__('Advance wage cancelled.'))->send();
+                        try {
+                            if (
+                                $record->status === AdvanceWage::STATUS_PENDING
+                                && app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker::class)->requiresWorkflow($record)
+                            ) {
+                                app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService::class)->reject($record, auth()->user());
+                            } else {
+                                $record->cancel();
+                                app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService::class)->resetStepsOnRollback($record);
+                            }
+
+                            Notification::make()->success()->title(__('Advance wage cancelled.'))->send();
+                        } catch (\Throwable $e) {
+                            Notification::make()->danger()->title(__('Error'))->body($e->getMessage())->send();
+                        }
                     })
                     ->hidden(fn (AdvanceWage $record) => app(PayrollLockGuard::class)->isLocked(
                         (int) $record->employee_id,
@@ -125,8 +138,21 @@ class AdvanceWagesTable
                         [AdvanceWage::STATUS_PENDING, AdvanceWage::STATUS_CANCELLED]
                     ))
                     ->action(function (AdvanceWage $record): void {
-                        $record->update(['status' => AdvanceWage::STATUS_SETTLED]);
-                        Notification::make()->success()->title(__('Advance wage approved.'))->send();
+                        try {
+                            if ($record->status === AdvanceWage::STATUS_CANCELLED) {
+                                app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService::class)->resetStepsOnRollback($record);
+                            }
+
+                            if (app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker::class)->requiresWorkflow($record)) {
+                                app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService::class)->approve($record, auth()->user());
+                            } else {
+                                $record->update(['status' => AdvanceWage::STATUS_SETTLED]);
+                            }
+
+                            Notification::make()->success()->title(__('Advance wage approved.'))->send();
+                        } catch (\Throwable $e) {
+                            Notification::make()->danger()->title(__('Error'))->body($e->getMessage())->send();
+                        }
                     })
                     ->hidden(fn (AdvanceWage $record) => app(PayrollLockGuard::class)->isLocked(
                         (int) $record->employee_id,

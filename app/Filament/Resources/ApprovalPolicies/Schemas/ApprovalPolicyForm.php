@@ -48,20 +48,32 @@ class ApprovalPolicyForm
                                     ->schema([
                                         TextInput::make('name')
                                             ->label(__('Name'))
+                                            ->required()
                                             ->maxLength(255)
                                             ->placeholder(__('Example: Leave approval - branch manager'))
                                             ->rules([
-                                                fn (?\Illuminate\Database\Eloquent\Model $record) => function (string $attribute, $value, \Closure $fail) use ($record) {
-                                                    if ($record) {
-                                                        (new PolicyNotInUse($record))->validate($attribute, $value, $fail);
+                                                fn (Get $get, ?\Illuminate\Database\Eloquent\Model $record) => function (string $attribute, $value, \Closure $fail) use ($get, $record) {
+                                                    $type = $get('approvable_type');
+                                                    $appId = $get('application_type_id');
+                                                    $combined = $get('approval_subject_combined');
+
+                                                    if (! $type && $combined) {
+                                                        if (str_contains((string) $combined, ':')) {
+                                                            [$type, $rawAppId] = explode(':', (string) $combined, 2);
+                                                            $appId = $rawAppId === 'all' ? null : $rawAppId;
+                                                        } else {
+                                                            $type = $combined;
+                                                            $appId = null;
+                                                        }
                                                     }
+
+                                                    (new UniqueApprovalPolicy(
+                                                        ignoreId: $record?->id,
+                                                        approvableType: $type,
+                                                        applicationTypeId: $appId,
+                                                        branchIds: $get('branch_ids')
+                                                    ))->validate($attribute, $value, $fail);
                                                 },
-                                                fn (Get $get, ?\Illuminate\Database\Eloquent\Model $record) => new UniqueApprovalPolicy(
-                                                    ignoreId: $record?->id,
-                                                    approvableType: $get('approvable_type'),
-                                                    applicationTypeId: $get('application_type_id'),
-                                                    branchIds: $get('branch_ids')
-                                                ),
                                             ]),
 
 
@@ -76,6 +88,7 @@ class ApprovalPolicyForm
                                             ->multiple()
                                             ->searchable()
                                             ->nullable()
+                                            ->dehydrateStateUsing(fn ($state) => empty($state) ? null : array_values(array_map('intval', (array) $state)))
                                             ->helperText(__('Select all to apply this policy to every branch.')),
                                         Toggle::make('active')
                                             ->label(__('Active'))

@@ -157,15 +157,66 @@ class EmployeeApplicationResource extends Resource
         }
         return false;
     }
+
+    public static function canCurrentUserActOnApplication(EmployeeApplicationV2 $record, int $applicationTypeId): bool
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return false;
+        }
+
+        if (
+            $record->status !== EmployeeApplicationV2::STATUS_PENDING
+            || (int) $record->application_type_id !== $applicationTypeId
+        ) {
+            return false;
+        }
+
+        $workflowService = app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowService::class);
+        if ($workflowService->isSelfApproval($record, $user)) {
+            return false;
+        }
+
+        $requirementChecker = app(\App\Modules\HR\ApprovalPolicies\Services\ApprovalWorkflowRequirementChecker::class);
+        if ($requirementChecker->requiresWorkflow($record)) {
+            return $workflowService->canUserApprove($record, $user);
+        }
+
+        if (isStuff() || isHR()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static function handleRejectApplicationAction(EmployeeApplicationV2 $record, array $data): void
+    {
+        try {
+            app(\App\Services\HR\Applications\EmployeeApplicationService::class)
+                ->rejectApplication(
+                    $record->id,
+                    (int) auth()->id(),
+                    (string) ($data['rejected_reason'] ?? '')
+                );
+
+            showSuccessNotifiMessage('Rejected');
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            Notification::make()->danger()->title('Authorization error')->body($e->getMessage())->send();
+        } catch (\Throwable $th) {
+            Notification::make()->danger()->title('Rejection error')->body($th->getMessage())->send();
+        }
+    }
+
     public static function approveDepartureRequest(): Action
     {
         return Action::make('approveDepartureRequest')
             ->label(__('lang.approve'))
             ->button()
             ->visible(
-                fn($record): bool =>
-                $record->status == EmployeeApplicationV2::STATUS_PENDING
-                    && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST
+                fn (EmployeeApplicationV2 $record): bool => static::canCurrentUserActOnApplication(
+                    $record,
+                    EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST
+                )
             )
 
             // ✅ ملاحظة (Note) تظهر كـ Tooltip عندما يكون الزر Disabled
@@ -254,17 +305,14 @@ class EmployeeApplicationResource extends Resource
     public static function rejectDepartureRequest(): Action
     {
         return Action::make('rejectDepartureRequest')->label('Reject')->button()
-            ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST))
+            ->visible(fn (EmployeeApplicationV2 $record): bool => static::canCurrentUserActOnApplication(
+                $record,
+                EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST
+            ))
             ->color('danger')
             ->label(__('lang.reject'))
             ->icon('heroicon-o-x-mark')
-            ->action(function ($record) {
-                $record->update([
-                    'status'      => EmployeeApplicationV2::STATUS_REJECTED,
-                    'rejected_by' => auth()->user()->id,
-                    'rejected_at' => now(),
-                ]);
-            })
+            ->action(fn (EmployeeApplicationV2 $record, array $data) => static::handleRejectApplicationAction($record, $data))
             // ->disabledForm()
             ->schema(function ($record) {
                 return [
@@ -275,7 +323,10 @@ class EmployeeApplicationResource extends Resource
     public static function approveAdvanceRequest(): Action
     {
         return Action::make('approveAdvanceRequest')->label('Approve')->button()
-            ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST))
+            ->visible(fn (EmployeeApplicationV2 $record): bool => static::canCurrentUserActOnApplication(
+                $record,
+                EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST
+            ))
             ->color('success')
             ->icon('heroicon-o-check')
             ->modalSubmitActionLabel('Approve')
@@ -372,16 +423,13 @@ class EmployeeApplicationResource extends Resource
     public static function rejectAdvanceRequest(): Action
     {
         return Action::make('rejectAdvanceRequest')->label('Reject')->button()
-            ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST))
+            ->visible(fn (EmployeeApplicationV2 $record): bool => static::canCurrentUserActOnApplication(
+                $record,
+                EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST
+            ))
             ->color('danger')
             ->icon('heroicon-o-x-mark')
-            ->action(function ($record) {
-                $record->update([
-                    'status'      => EmployeeApplicationV2::STATUS_REJECTED,
-                    'rejected_by' => auth()->user()->id,
-                    'rejected_at' => now(),
-                ]);
-            })
+            ->action(fn (EmployeeApplicationV2 $record, array $data) => static::handleRejectApplicationAction($record, $data))
             // ->disabledForm()
             ->schema(function ($record) {
                 return [
@@ -760,9 +808,16 @@ class EmployeeApplicationResource extends Resource
                                 \Filament\Infolists\Components\TextEntry::make('approverName')
                                     ->label('Required Approver')
                                     ->state(function ($record) {
-                                        return $record->approverEmployee?->name 
-                                            ?: $record->approverUser?->name 
-                                            ?: ($record->approverRole?->name ? "Any {$record->approverRole->name}" : 'Unknown');
+                                        $personName = $record->approverEmployee?->name ?: $record->approverUser?->name;
+                                        $roleName = $record->approverRole?->name;
+
+                                        if ($personName && $roleName) {
+                                            return "{$personName} ({$roleName})";
+                                        }
+
+                                        return $personName
+                                            ?: ($roleName ? "Any {$roleName}" : null)
+                                            ?: ($record->status === \App\Modules\HR\ApprovalPolicies\Enums\ApprovalStepStatus::SKIPPED ? 'Skipped (No Manager)' : 'Unknown');
                                     }),
                                 \Filament\Infolists\Components\TextEntry::make('updated_at')
                                     ->label('Action Date')
@@ -839,7 +894,10 @@ class EmployeeApplicationResource extends Resource
     public static function approveLeaveRequest(): Action
     {
         return Action::make('approveLeaveRequest')->label('Approve')->button()
-            ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST))
+            ->visible(fn (EmployeeApplicationV2 $record): bool => static::canCurrentUserActOnApplication(
+                $record,
+                EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST
+            ))
             ->color('success')
             ->icon('heroicon-o-check')
             ->action(function ($record, $data) {
@@ -964,16 +1022,13 @@ class EmployeeApplicationResource extends Resource
     public static function rejectLeaveRequest(): Action
     {
         return Action::make('rejectLeaveRequest')->label('Reject')->button()
-            ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST))
+            ->visible(fn (EmployeeApplicationV2 $record): bool => static::canCurrentUserActOnApplication(
+                $record,
+                EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST
+            ))
             ->color('danger')
             ->icon('heroicon-o-x-mark')
-            ->action(function ($record) {
-                $record->update([
-                    'status'      => EmployeeApplicationV2::STATUS_REJECTED,
-                    'rejected_by' => auth()->user()->id,
-                    'rejected_at' => now(),
-                ]);
-            })
+            ->action(fn (EmployeeApplicationV2 $record, array $data) => static::handleRejectApplicationAction($record, $data))
             // ->disabledForm()
             ->schema(function ($record) {
                 return [
@@ -985,7 +1040,10 @@ class EmployeeApplicationResource extends Resource
     public static function approveAttendanceRequest(): Action
     {
         return Action::make('approveAttendanceRequest')->label('Approve')->button()
-            ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST))
+            ->visible(fn (EmployeeApplicationV2 $record): bool => static::canCurrentUserActOnApplication(
+                $record,
+                EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST
+            ))
             ->color('success')
             ->icon('heroicon-o-check')
             ->modalHeading(fn($record) => 'Request #' . $record->id)
@@ -1349,17 +1407,13 @@ class EmployeeApplicationResource extends Resource
     public static function rejectAttendanceRequest(): Action
     {
         return Action::make('rejectAttendanceRequest')->label('Reject')->button()
-            ->visible(fn($record): bool => ($record->status == EmployeeApplicationV2::STATUS_PENDING && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST))
+            ->visible(fn (EmployeeApplicationV2 $record): bool => static::canCurrentUserActOnApplication(
+                $record,
+                EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST
+            ))
             ->color('danger')
             ->icon('heroicon-o-x-mark')
-            ->action(function ($record, $data) {
-                $record->update([
-                    'status'      => EmployeeApplicationV2::STATUS_REJECTED,
-                    'rejected_reason'      => $data['rejected_reason'],
-                    'rejected_by' => auth()->user()->id,
-                    'rejected_at' => now(),
-                ]);
-            })
+            ->action(fn (EmployeeApplicationV2 $record, array $data) => static::handleRejectApplicationAction($record, $data))
             // ->disabledForm()
             ->schema(function ($record) {
                 return [
@@ -1391,9 +1445,10 @@ class EmployeeApplicationResource extends Resource
             ->button()
             ->requiresConfirmation()
             ->visible(
-                fn($record): bool =>
-                $record->status == EmployeeApplicationV2::STATUS_PENDING
-                    && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST
+                fn (EmployeeApplicationV2 $record): bool => static::canCurrentUserActOnApplication(
+                    $record,
+                    EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST
+                )
             )
             ->color('success')
             ->icon('heroicon-o-check')
@@ -1418,28 +1473,14 @@ class EmployeeApplicationResource extends Resource
             ->label(__('lang.reject'))
             ->button()
             ->visible(
-                fn($record): bool =>
-                $record->status == EmployeeApplicationV2::STATUS_PENDING
-                    && $record->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST
+                fn (EmployeeApplicationV2 $record): bool => static::canCurrentUserActOnApplication(
+                    $record,
+                    EmployeeApplicationV2::APPLICATION_TYPE_MEAL_REQUEST
+                )
             )
             ->color('danger')
             ->icon('heroicon-o-x-mark')
-            ->action(function ($record, $data) {
-                $record->update([
-                    'status'      => EmployeeApplicationV2::STATUS_REJECTED,
-                    'rejected_by' => auth()->id(),
-                    'rejected_at' => now(),
-                    'rejected_reason' => $data['rejected_reason'],
-                ]);
-
-                if ($record->mealRequest) {
-                    $record->mealRequest->update([
-                        'status' => 'rejected',
-                    ]);
-                }
-
-                showSuccessNotifiMessage('Rejected');
-            })
+            ->action(fn (EmployeeApplicationV2 $record, array $data) => static::handleRejectApplicationAction($record, $data))
             ->schema([
                 Textarea::make('rejected_reason')
                     ->label(__('lang.rejected_reason'))
@@ -2057,7 +2098,13 @@ class EmployeeApplicationResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = static::getModel()::query();
+        $query = static::getModel()::query()
+            ->with([
+                'employee',
+                'approvalSteps.approverUser:id,name',
+                'approvalSteps.approverEmployee:id,name',
+                'approvalSteps.approverRole:id,name',
+            ]);
 
         // if (isStuff()) {
         //     $query->where('employee_id', auth()->user()->employee->id);

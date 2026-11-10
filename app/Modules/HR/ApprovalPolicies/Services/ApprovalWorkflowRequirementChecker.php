@@ -9,12 +9,30 @@ use Illuminate\Database\Eloquent\Model;
 
 class ApprovalWorkflowRequirementChecker
 {
+    /**
+     * Request-scoped cache for active policy existence checks to eliminate N+1 queries.
+     *
+     * @var array<string, bool>
+     */
+    private static array $activePolicyCache = [];
+
+    public static function clearCache(): void
+    {
+        self::$activePolicyCache = [];
+    }
+
     public function requiresWorkflow(Model&ApprovableRecord $record): bool
     {
-        if ($record->exists && $record->approvalSteps()
-            ->where('status', ApprovalStepStatus::PENDING)
-            ->exists()) {
-            return true;
+        if ($record->exists) {
+            if ($record->relationLoaded('approvalSteps')) {
+                if ($record->approvalSteps->isNotEmpty()) {
+                    return $record->approvalSteps->contains('status', ApprovalStepStatus::PENDING);
+                }
+            } elseif ($record->approvalSteps()->exists()) {
+                return $record->approvalSteps()
+                    ->where('status', ApprovalStepStatus::PENDING)
+                    ->exists();
+            }
         }
 
         return $this->hasActivePolicy($record);
@@ -22,25 +40,18 @@ class ApprovalWorkflowRequirementChecker
 
     public function hasActivePolicy(Model&ApprovableRecord $record): bool
     {
-        return ApprovalPolicy::query()
-            ->where('approvable_type', $record::class)
-            ->where('active', true)
-            ->when(
-                $record->approvalApplicationTypeId(),
-                fn ($query, int $typeId) => $query->where(function ($q) use ($typeId) {
-                    $q->where('application_type_id', $typeId)
-                        ->orWhereNull('application_type_id');
-                }),
-                fn ($query) => $query->whereNull('application_type_id')
-            )
-            ->when(
-                $record->approvalBranchId(),
-                fn ($query, int $branchId) => $query->where(function ($q) use ($branchId) {
-                    $q->whereJsonContains('branch_ids', $branchId)
-                        ->orWhereNull('branch_ids');
-                }),
-                fn ($query) => $query->whereNull('branch_ids')
-            )
-            ->exists();
+        $cacheKey = implode(':', [
+            $record::class,
+            $record->approvalApplicationTypeId() ?? 'all',
+            $record->approvalBranchId() ?? 'global',
+        ]);
+
+        if (! array_key_exists($cacheKey, self::$activePolicyCache)) {
+            self::$activePolicyCache[$cacheKey] = ApprovalPolicy::query()
+                ->matchingRecord($record)
+                ->exists();
+        }
+
+        return self::$activePolicyCache[$cacheKey];
     }
 }
