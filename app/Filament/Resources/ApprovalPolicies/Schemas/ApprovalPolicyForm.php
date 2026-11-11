@@ -43,7 +43,7 @@ class ApprovalPolicyForm
                         ->columnSpanFull()
                         ->schema([
                             Fieldset::make()->columnSpanFull()->schema([
-                                Grid::make(3)
+                                Grid::make(4)
                                     ->columnSpanFull()
                                     ->schema([
                                         TextInput::make('name')
@@ -93,6 +93,11 @@ class ApprovalPolicyForm
                                         Toggle::make('active')
                                             ->label(__('Active'))
                                             ->default(true)
+                                            ->inline(false),
+                                        Toggle::make('allow_skip_steps')
+                                            ->label(__('Allow Skipping Steps'))
+                                            ->helperText(__('Allow higher-step approvers to bypass pending preceding steps.'))
+                                            ->default(false)
                                             ->inline(false),
 
                                     ]),

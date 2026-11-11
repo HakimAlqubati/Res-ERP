@@ -27,6 +27,7 @@ class ApprovalPolicy extends Model
         'levels',
         'custom_approver_user_ids',
         'active',
+        'allow_skip_steps',
     ];
 
     protected $casts = [
@@ -34,6 +35,7 @@ class ApprovalPolicy extends Model
         'levels' => 'integer',
         'custom_approver_user_ids' => 'array',
         'active' => 'boolean',
+        'allow_skip_steps' => 'boolean',
     ];
 
     /**

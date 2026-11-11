@@ -83,6 +83,10 @@ class ApprovalPoliciesTable
                     ->label(__('Active'))
                     ->sortable()
                     ->toggleable(),
+                ToggleColumn::make('allow_skip_steps')
+                    ->label(__('Allow Skipping Steps'))
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('created_at')
                     ->label(__('Created At'))
                     ->dateTime('Y-m-d H:i')

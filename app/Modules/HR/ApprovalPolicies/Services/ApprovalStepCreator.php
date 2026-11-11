@@ -30,6 +30,7 @@ class ApprovalStepCreator
                 'status' => $approver->isSkipped
                     ? ApprovalStepStatus::SKIPPED
                     : ApprovalStepStatus::PENDING,
+                'can_be_skipped' => (bool) $policy->allow_skip_steps,
                 'created_at' => now(),
                 'updated_at' => now(),
             ])

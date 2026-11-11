@@ -22,6 +22,7 @@ class ApprovalStep extends Model
         'approver_user_id',
         'approver_role_id',
         'status',
+        'can_be_skipped',
         'approved_at',
         'rejected_at',
         'notes',
@@ -33,6 +34,7 @@ class ApprovalStep extends Model
         'approver_employee_id' => 'integer',
         'approver_user_id' => 'integer',
         'approver_role_id' => 'integer',
+        'can_be_skipped' => 'boolean',
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
     ];

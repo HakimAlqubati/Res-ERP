@@ -627,4 +627,83 @@ class ApprovalWorkflowFixesTest extends TestCase
         $this->assertSame($roleApproverEmp->id, $stepAfter->approver_employee_id);
         $this->assertSame('Actual Role Approver', $stepAfter->approverEmployee->name);
     }
+
+    /**
+     * Skip-Steps Feature: Allowing a subsequent step approver (e.g. Second Manager)
+     * to approve and bypass a pending preceding step when `allow_skip_steps` is enabled.
+     */
+    public function test_allow_skip_steps_enables_second_manager_to_approve_when_first_manager_has_not_approved(): void
+    {
+        $branch = $this->createTestBranch('Branch Skip Feature');
+        [$firstManagerUser, $firstManagerEmp] = $this->createTestUserAndEmployee('First Direct Manager', $branch->id);
+        [$secondManagerUser, $secondManagerEmp] = $this->createTestUserAndEmployee('Second Higher Manager', $branch->id);
+        [$empUser, $employee] = $this->createTestUserAndEmployee('Employee Skip Feature', $branch->id, $firstManagerEmp->id);
+
+        $policy = ApprovalPolicy::query()->create([
+            'name' => 'Skip Steps Policy',
+            'approvable_type' => EmployeeApplicationV2::class,
+            'application_type_id' => EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST,
+            'branch_ids' => [$branch->id],
+            'mode' => ApprovalMode::CONFIGURED_STEPS,
+            'active' => true,
+            'allow_skip_steps' => false,
+        ]);
+
+        $policy->policySteps()->createMany([
+            [
+                'step_order' => 1,
+                'approver_type' => ApprovalPolicyStepType::DIRECT_MANAGER,
+            ],
+            [
+                'step_order' => 2,
+                'approver_type' => ApprovalPolicyStepType::CUSTOM_USER,
+                'approver_user_id' => $secondManagerUser->id,
+            ],
+        ]);
+
+        $app = $this->createLeaveApplication($employee, $empUser);
+        $workflowService = app(ApprovalWorkflowService::class);
+        $appService = app(EmployeeApplicationService::class);
+
+        // 1. While allow_skip_steps is false, Second Manager CANNOT approve while Step 1 is pending
+        $this->assertTrue($workflowService->canUserApprove($app, $firstManagerUser));
+        $this->assertFalse($workflowService->canUserApprove($app, $secondManagerUser));
+
+        try {
+            $appService->approveApplication($app->id, $secondManagerUser->id);
+            $this->fail('Second manager should not be able to bypass Step 1 when allow_skip_steps is false.');
+        } catch (AuthorizationException $e) {
+            $this->assertStringContainsString('Waiting for First Direct Manager to approve step #1', $e->getMessage());
+        }
+
+        // 2. Enable allow_skip_steps on the policy -> Observer syncs can_be_skipped on pending steps
+        $policy->update(['allow_skip_steps' => true]);
+        $app->unsetRelation('approvalSteps');
+
+        $this->assertTrue($workflowService->canUserApprove($app, $firstManagerUser));
+        $this->assertTrue($workflowService->canUserApprove($app, $secondManagerUser));
+
+        // 3. Second Manager approves directly while First Manager is absent
+        $appService->approveApplication($app->id, $secondManagerUser->id);
+
+        $app->refresh();
+        $this->assertSame(EmployeeApplicationV2::STATUS_APPROVED, $app->status);
+
+        $steps = $app->approvalSteps()->orderBy('step_order')->get();
+        $this->assertCount(2, $steps);
+
+        // Step 1 is automatically marked SKIPPED with explanatory note
+        $this->assertSame(ApprovalStepStatus::SKIPPED, $steps[0]->status);
+        $this->assertStringContainsString('Skipped: Approved by step #2', (string) $steps[0]->notes);
+
+        // Step 2 is marked APPROVED by Second Manager
+        $this->assertSame(ApprovalStepStatus::APPROVED, $steps[1]->status);
+        $this->assertSame($secondManagerUser->id, $steps[1]->approver_user_id);
+
+        // 4. Rolling back approval resets both Step 1 and Step 2 back to PENDING
+        $appService->undoApproveApplication($app->id, $secondManagerUser->id);
+        $stepsAfterRollback = $app->approvalSteps()->orderBy('step_order')->get();
+        $this->assertSame(ApprovalStepStatus::PENDING, $stepsAfterRollback[0]->status);
+        $this->assertSame(ApprovalStepStatus::PENDING, $stepsAfterRollback[1]->status);
+    }
 }

@@ -9,6 +9,7 @@ use App\Modules\HR\ApprovalPolicies\Enums\ApprovalStepStatus;
 use App\Modules\HR\ApprovalPolicies\Models\ApprovalStep;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class ApprovalWorkflowService
@@ -131,9 +132,7 @@ class ApprovalWorkflowService
 
         $this->ensureStepsExist($record);
 
-        $step = $this->currentStep($record);
-
-        return $step && $this->userCanApproveStep($step, $user);
+        return $this->resolveActionableStepForUser($this->pendingSteps($record), $user) !== null;
     }
 
     /**
@@ -147,13 +146,14 @@ class ApprovalWorkflowService
 
         $this->ensureStepsExist($record);
 
-        $step = $this->currentStep($record);
-        if (! $step) {
+        $pendingSteps = $this->pendingSteps($record);
+        if ($pendingSteps->isEmpty()) {
             throw new AuthorizationException('No pending approval step for this record.');
         }
 
-        if (! $this->userCanApproveStep($step, $user)) {
-            throw new AuthorizationException($this->notCurrentApproverMessage($step));
+        $step = $this->resolveActionableStepForUser($pendingSteps, $user);
+        if (! $step) {
+            throw new AuthorizationException($this->notCurrentApproverMessage($pendingSteps->first()));
         }
 
         return $step;
@@ -171,14 +171,30 @@ class ApprovalWorkflowService
 
             $this->ensureStepsExist($record);
 
-            $step = $this->currentStepForUpdate($record);
+            $pendingSteps = $this->pendingStepsForUpdate($record);
 
-            if (! $step) {
+            if ($pendingSteps->isEmpty()) {
                 throw new AuthorizationException('No pending approval step for this record.');
             }
 
-            if (! $this->userCanApproveStep($step, $user)) {
-                throw new AuthorizationException($this->notCurrentApproverMessage($step));
+            $step = $this->resolveActionableStepForUser($pendingSteps, $user);
+
+            if (! $step) {
+                throw new AuthorizationException($this->notCurrentApproverMessage($pendingSteps->first()));
+            }
+
+            // If a higher-level approver bypassed preceding skippable pending steps, mark them as skipped
+            if ($pendingSteps->first()->step_order < $step->step_order) {
+                ApprovalStep::query()
+                    ->where('approvable_type', $record::class)
+                    ->where('approvable_id', $record->getKey())
+                    ->where('status', ApprovalStepStatus::PENDING)
+                    ->where('step_order', '<', $step->step_order)
+                    ->update([
+                        'status' => ApprovalStepStatus::SKIPPED,
+                        'notes' => "Skipped: Approved by step #{$step->step_order} ({$user->name})",
+                        'updated_at' => now(),
+                    ]);
             }
 
             $step->update([
@@ -210,14 +226,16 @@ class ApprovalWorkflowService
 
             $this->ensureStepsExist($record);
 
-            $step = $this->currentStepForUpdate($record);
+            $pendingSteps = $this->pendingStepsForUpdate($record);
 
-            if (! $step) {
+            if ($pendingSteps->isEmpty()) {
                 throw new AuthorizationException('No pending approval step for this record.');
             }
 
-            if (! $this->userCanApproveStep($step, $user)) {
-                throw new AuthorizationException($this->notCurrentApproverMessage($step));
+            $step = $this->resolveActionableStepForUser($pendingSteps, $user);
+
+            if (! $step) {
+                throw new AuthorizationException($this->notCurrentApproverMessage($pendingSteps->first()));
             }
 
             $step->update([
@@ -228,7 +246,7 @@ class ApprovalWorkflowService
                 'notes' => $notes,
             ]);
 
-            // Mark any remaining subsequent pending steps as skipped so no step stays pending after rejection
+            // Mark any remaining pending steps (preceding or subsequent) as skipped so no step stays pending after rejection
             ApprovalStep::query()
                 ->where('approvable_type', $record::class)
                 ->where('approvable_id', $record->getKey())
@@ -244,26 +262,28 @@ class ApprovalWorkflowService
         });
     }
 
-    private function currentStep(Model&ApprovableRecord $record): ?ApprovalStep
+    /**
+     * @return Collection<int, ApprovalStep>
+     */
+    private function pendingSteps(Model&ApprovableRecord $record): Collection
     {
-        if ($record->relationLoaded('currentApprovalStep')) {
-            return $record->getRelation('currentApprovalStep');
-        }
-
         if ($record->relationLoaded('approvalSteps')) {
             return $record->approvalSteps
                 ->where('status', ApprovalStepStatus::PENDING)
                 ->sortBy('step_order')
-                ->first();
+                ->values();
         }
 
         return $record->approvalSteps()
             ->where('status', ApprovalStepStatus::PENDING)
             ->orderBy('step_order')
-            ->first();
+            ->get();
     }
 
-    private function currentStepForUpdate(Model&ApprovableRecord $record): ?ApprovalStep
+    /**
+     * @return Collection<int, ApprovalStep>
+     */
+    private function pendingStepsForUpdate(Model&ApprovableRecord $record): Collection
     {
         return ApprovalStep::query()
             ->with(['approverUser:id,name', 'approverEmployee:id,name', 'approverRole:id,name'])
@@ -272,7 +292,39 @@ class ApprovalWorkflowService
             ->where('status', ApprovalStepStatus::PENDING)
             ->orderBy('step_order')
             ->lockForUpdate()
-            ->first();
+            ->get();
+    }
+
+    /**
+     * Return all pending steps that are currently actionable in sequence:
+     * the first pending step is always actionable, and each subsequent pending step
+     * is actionable if all preceding pending steps have `can_be_skipped = true`.
+     *
+     * @param Collection<int, ApprovalStep> $pendingSteps
+     * @return Collection<int, ApprovalStep>
+     */
+    private function actionableSteps(Collection $pendingSteps): Collection
+    {
+        $actionable = collect();
+
+        foreach ($pendingSteps as $step) {
+            $actionable->push($step);
+
+            if (! $step->can_be_skipped) {
+                break;
+            }
+        }
+
+        return $actionable;
+    }
+
+    /**
+     * @param Collection<int, ApprovalStep> $pendingSteps
+     */
+    private function resolveActionableStepForUser(Collection $pendingSteps, User $user): ?ApprovalStep
+    {
+        return $this->actionableSteps($pendingSteps)
+            ->first(fn (ApprovalStep $step) => $this->userCanApproveStep($step, $user));
     }
 
     private function hasPendingSteps(Model&ApprovableRecord $record): bool
